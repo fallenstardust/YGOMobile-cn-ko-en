@@ -9,6 +9,37 @@
 
 namespace ygo {
 
+#ifdef _IRR_ANDROID_PLATFORM_
+class HostResult {
+public:
+	unsigned int host;
+	unsigned short port;
+	bool isValid() {
+		return host > 0 && port > 0;
+	}
+	HostResult() {
+		host = 0;
+		port = 0;
+	}
+};
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <random>
+#include <algorithm>
+struct SRVRecord {
+    uint16_t priority;
+    uint16_t weight;
+    uint16_t port;
+    std::string target;
+};
+#endif
+
 class DuelClient {
 private:
 	static unsigned int connect_state;
@@ -77,6 +108,13 @@ public:
 	static void BeginRefreshHost();
 	static int RefreshThread(event_base* broadev);
 	static void BroadcastReply(evutil_socket_t fd, short events, void* arg);
+
+#ifdef _IRR_ANDROID_PLATFORM_
+	static bool LookupSRV(char *hostname, HostResult* result);
+	static unsigned int LookupHost(char *host);
+	static std::string readDNSName(const uint8_t* data, size_t dataLen, size_t* offset);
+	static HostResult ParseHost(wchar_t* pstr, wchar_t* portstr);
+#endif
 };
 
 }

@@ -148,6 +148,28 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				bot_mode = false;
 				mainGame->TrimText(mainGame->ebJoinHost);
 				mainGame->TrimText(mainGame->ebJoinPort);
+				#ifdef _IRR_ANDROID_PLATFORM_
+				wchar_t pstr[100];
+				wchar_t portstr[10];
+				BufferIO::CopyWideString(mainGame->ebJoinHost->getText(), pstr);
+				BufferIO::CopyWideString(mainGame->ebJoinPort->getText(), portstr);
+				HostResult remote= DuelClient::ParseHost(pstr, portstr);
+				if(!remote.isValid()) {
+					mainGame->gMutex.lock();
+					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
+					mainGame->addMessageBox(L"", dataManager.GetSysString(1412));
+					mainGame->gMutex.unlock();
+					break;
+				}
+				unsigned int remote_port = std::wcstol(portstr, nullptr, 10);
+				BufferIO::CopyWideString(pstr, mainGame->gameConf.lasthost);
+				BufferIO::CopyWideString(portstr, mainGame->gameConf.lastport);
+				if(DuelClient::StartClient(remote.host, remote.port, false)) {
+					mainGame->btnCreateHost->setEnabled(false);
+					mainGame->btnJoinHost->setEnabled(false);
+					mainGame->btnJoinCancel->setEnabled(false);
+				}
+				#else
 				char ip[20];
 				wchar_t pstr[100];
 				wchar_t portstr[10];
@@ -189,6 +211,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 					mainGame->btnJoinHost->setEnabled(false);
 					mainGame->btnJoinCancel->setEnabled(false);
 				}
+				#endif
 				break;
 			}
 			case BUTTON_JOIN_CANCEL: {
