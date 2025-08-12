@@ -149,6 +149,10 @@ int32_t scriptlib::debug_reload_field_begin(lua_State *L) {
 		pduel->game_field->core.duel_rule = 1;
 	else
 		pduel->game_field->core.duel_rule = CURRENT_RULE;
+	if (pduel->game_field->core.duel_rule == MASTER_RULE3) {
+		pduel->game_field->player[0].szone_size = 8;
+		pduel->game_field->player[1].szone_size = 8;
+	}
 	return 0;
 }
 int32_t scriptlib::debug_reload_field_end(lua_State *L) {
@@ -176,10 +180,12 @@ int32_t scriptlib::debug_set_ai_name(lua_State *L) {
 }
 int32_t scriptlib::debug_show_hint(lua_State *L) {
 	check_param_count(L, 1);
-	check_param(L, PARAM_TYPE_STRING, 1);
 	duel* pduel = interpreter::get_duel_info(L);
+	lua_getglobal(L, "tostring");
+	lua_pushvalue(L, -2);
+	lua_pcall(L, 1, 1, 0);
 	pduel->write_buffer8(MSG_SHOW_HINT);
-	const char* pstr = lua_tostring(L, 1);
+	const char* pstr = lua_tostring(L, -1);
 	int len = (int)std::strlen(pstr);
 	if (len > SIZE_HINT_MSG - 1)
 		len = SIZE_HINT_MSG - 1;

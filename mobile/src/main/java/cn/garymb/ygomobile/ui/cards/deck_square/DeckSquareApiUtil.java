@@ -64,7 +64,6 @@ public class DeckSquareApiUtil {
     /**
      * 如果未登录（不存在token），显示toast提示用户。如果已登录，返回token
      *
-     * @return
      */
     public static LoginToken getLoginData() {
         String serverToken = SharedPreferenceUtil.getServerToken();
@@ -372,8 +371,6 @@ public class DeckSquareApiUtil {
         String url = "https://sapi.moecube.com:444/accounts/signin";
         // Create request body using Gson
         Gson gson = new Gson();
-//        userId = 107630627;
-//        password = "Qbz95qbz96";
         LoginRequest loginRequest = new LoginRequest(username, password);
 
         String json = gson.toJson(loginRequest);//"{\"id\":1,\"name\":\"John\"}";
@@ -456,9 +453,8 @@ public class DeckSquareApiUtil {
             while (onlineIterator.hasNext()) {
                 MyOnlineDeckDetail onlineDeck = onlineIterator.next();
                 String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
-
-                if (localDeckName.equals(onLineDeckName)) {//TODO 上个版本不支持卡组分类字段，新版本安装后必然会出现在线备份没卡组分类的场合与本地有分类的进行比较 && localDeck.getDeckType().equals(onlineDeck.getDeckType())
-                    // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
+                // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
+                if (localDeckName.equals(onLineDeckName) && localDeck.getDeckType().equals(onlineDeck.getDeckType())) {
                     localDeck.setDeckId(onlineDeck.getDeckId());
                     syncUploadDecks.add(localDeck);
                     localIterator.remove(); // 安全删除本地卡组（迭代器方法）
