@@ -118,9 +118,9 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         }
         holder.file_time.setText(convertToGMTDate(deckFile.getDate()));
         if (DEBUG) {
-            holder.file_time.setVisibility(View.VISIBLE);
+            holder.ll_deck_date.setVisibility(View.VISIBLE);
         } else {
-            holder.file_time.setVisibility(View.GONE);
+            holder.ll_deck_date.setVisibility(View.GONE);
         }
         if (deckFile.getTypeName().equals(YGOUtil.s(R.string.category_pack)) || deckFile.getPath().contains("cacheDeck")) {
             //卡包展示时不显示额外和副卡组数量文本
@@ -307,6 +307,7 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
     TextView extra;
     TextView side;
     TextView file_time;
+    LinearLayout ll_deck_date;
     LinearLayout ll_extra_n_side;
     View item_deck_list;
     View deck_info;
@@ -322,6 +323,7 @@ class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHo
         extra = findView(R.id.count_ex);
         side = findView(R.id.count_side);
         file_time = findView(R.id.file_time);
+        ll_deck_date = findView(R.id.ll_deck_date);
         ll_extra_n_side = findView(R.id.ll_extra_n_side);
         prerelease_star = findView(R.id.prerelease_star);
         banned_mark = findView(R.id.banned_mark);
