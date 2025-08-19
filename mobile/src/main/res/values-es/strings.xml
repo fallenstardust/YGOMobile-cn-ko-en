@@ -96,10 +96,10 @@
     <string name="server_ip">Host:</string>
     <string name="server_user">Apodo:</string>
     <string name="server_room_name">Contraseña de la sala:</string>
-    <string name="server_port">Puerto:</string>
+    <string name="server_port">Port:</string>
     <string name="server_room_pwd">PSW:</string>
     <string name="server_user_pwd">PSW:</string>
-    <string name="server_info_edit">Editar información del servidor</string>
+    <string name="server_info_edit">Editar info. del servidor</string>
     <string name="save">Guardar</string>
     <string name="must_info">Info. obligatoria</string>
     <string name="optional_info">Info. opcional</string>
@@ -139,7 +139,7 @@
     <string name="load_game">Iniciando juego</string>
     <string name="last_path">Directorio anterior</string>
     <string name="create_folder">Crear carpeta</string>
-    <string name="intpu_name">Ingresa el nombre del deck</string>
+    <string name="intpu_name">Nombre del deck</string>
     <string name="the_name_is_folder">El nombre actual es una carpeta</string>
     <string name="tab_search">Buscar</string>
     <string name="tab_result">Lista</string>
@@ -173,8 +173,8 @@
     <string name="add_card_tip_fail">Error al añadir la carta</string>
     <string name="tip_card_max" formatted="false">Número máximo de cartas:%d</string>
     <string name="file_exist">El archivo ya existe</string>
-    <string name="share_deck">Compartir deck</string>
-    <string name="code_share">Compartir código de deck</string>
+    <string name="share_deck">Compartir</string>
+    <string name="code_share">Compartir código del deck</string>
     <string name="screenshoot">Compartir imagen</string>
     <string name="ydk_share">Compartir archivo</string>
     <string name="no_share_app">No se encontró la aplicación para compartir</string>
@@ -375,7 +375,7 @@
     <string name="sign_out">Cambiar cuenta</string>
     <string name="deck_square">Deckrópolis</string>
     <string name="my_deck_online">DeckSync</string>
-    <string name="input_contributor_name">Nombre de autor</string>
+    <string name="input_contributor_name">Nombre del autor</string>
     <string name="sort_by_time">Por fecha</string>
     <string name="sort_by_thumb">Por popularidad</string>
     <string name="account_warning">¡Ingresa tu correo o nombre de usuario!</string>
@@ -383,3 +383,4 @@
     <string name="like_deck_thumb">Dar like al deck</string>
     <string name="pre_view">Vista previa</string>
 </resources>
+
