@@ -361,6 +361,7 @@
     <string name="in_personal_use">Em Uso Personal</string>
     <string name="register">Registro</string>
     <string name="sign_out">Sair</string>
+    <string name="down_complete">Download concluído</string>
     <string name="input_user_name">Insira o Nome de Usuário</string>
     <string name="input_pwd">Insira a Senha</string>
     <string name="deck_square">Praça de Decks</string>
@@ -372,5 +373,6 @@
     <string name="pwd_warning">Por favor, insira sua senha!</string>
     <string name="like_deck_thumb">Curtir o deck</string>
     <string name="pre_view">Prévia</string>
+    <string name="label_set_No_Setcode">Sem Card Set incluso</string>
 </resources>
 

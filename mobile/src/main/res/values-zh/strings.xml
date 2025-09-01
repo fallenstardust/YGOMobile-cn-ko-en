@@ -124,7 +124,7 @@
     <string name="label_limitlist">禁卡表</string>
     <string name="label_type">卡片类型</string>
     <string name="label_set">字段</string>
-    <string name="label_set_No_Setcode">无字段卡</string>
+    <string name="label_set_No_Setcode">无字段</string>
     <string name="label_level">星/标数</string>
     <string name="label_attr">属性</string>
     <string name="label_category">效果分类</string>

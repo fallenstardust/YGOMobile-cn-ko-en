@@ -121,7 +121,7 @@
     <string name="label_limitlist">リミットレギュレーション</string>
     <string name="label_type">カード種類</string>
     <string name="label_set">テキスト</string>
-    <string name="label_set_No_Setcode">无字段卡</string>
+    <string name="label_set_No_Setcode">カードセットを含まない</string>
     <string name="label_level">レベル/标数</string>
     <string name="label_attr">属性</string>
     <string name="label_category">効果分類</string>
@@ -372,6 +372,7 @@
     <string name="in_personal_use">私用中</string>
     <string name="register">登録する</string>
     <string name="sign_out">ログアウト</string>
+    <string name="down_complete">ダウンロードが終了</string>
     <string name="input_user_name">ユーザー名を入力してください</string>
     <string name="input_pwd">パスワードを入力してください</string>
     <string name="deck_square">デッキ広場</string>
