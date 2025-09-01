@@ -345,6 +345,8 @@ public class CardSearchInfo implements ICardFilter{
         //TODO setcode
         if (setcode > 0) {
             return card.isSetCode(setcode);
+        } else if (setcode == -1) {
+            return card.SetCode == 0;
         }
         return true;
     }

@@ -441,6 +441,7 @@ public class CardSearcher implements View.OnClickListener {
         List<CardSet> setnames = mStringManager.getCardSets();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_set)));
+        items.add(new SimpleSpinnerItem(-1, getString(R.string.label_set_No_Setcode)));
         for (CardSet set : setnames) {
             items.add(new SimpleSpinnerItem(set.getCode(), set.getName()));
         }
