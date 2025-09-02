@@ -453,6 +453,7 @@ public class DeckSquareApiUtil {
             while (onlineIterator.hasNext()) {
                 MyOnlineDeckDetail onlineDeck = onlineIterator.next();
                 String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
+                LogUtil.e(TAG,"在线备份名称："+onLineDeckName+"\n在线卡组分类："+onlineDeck.getDeckType()+"\n在线卡组ID："+onlineDeck.getDeckId());
                 // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
                 if (localDeckName.equals(onLineDeckName) && localDeck.getDeckType().equals(onlineDeck.getDeckType())) {
                     localDeck.setDeckId(onlineDeck.getDeckId());

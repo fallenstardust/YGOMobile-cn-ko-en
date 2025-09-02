@@ -128,7 +128,7 @@
     <string name="label_limitlist">Banlist</string>
     <string name="label_type">Tipo de carta</string>
     <string name="label_set">Arquetipo</string>
-    <string name="label_set_No_Setcode"> Sin Card Set incluido</string>
+    <string name="label_set_No_Setcode">" #Sin Card Set incluido"</string>
     <string name="label_level">Nvl/Rng/Lnk</string>
     <string name="label_attr">Atributo</string>
     <string name="label_category">Categoría</string>
