@@ -275,7 +275,7 @@ public class DeckSquareApiUtil {
                 deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
             }
             data.setDeckYdk(deckContent);
-            LogUtil.w(TAG, "syncMyDecks *要上传的* 本地卡组: \n是否删除？： " + data.isDelete() + "\n卡组分类：" + data.getDeckType() + "\n卡组名称： " + data.getDeckName() + "\n封面id： " + data.getDeckCoverCard1() + "\n卡组id： " + data.getDeckId());
+            LogUtil.w(TAG, "syncMyDecks *要上传的* 本地卡组:"+"\n卡组分类：" + data.getDeckType() + "\n卡组名称： " + data.getDeckName() + "\n封面id： " + data.getDeckCoverCard1() + "\n卡组id： " + data.getDeckId());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
@@ -455,7 +455,7 @@ public class DeckSquareApiUtil {
                 String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
                 LogUtil.e(TAG,"在线备份名称："+onLineDeckName+"\n在线卡组分类："+onlineDeck.getDeckType()+"\n在线卡组ID："+onlineDeck.getDeckId());
                 // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
-                if (localDeckName.equals(onLineDeckName) && localDeck.getDeckType().equals(onlineDeck.getDeckType())) {
+                if (localDeckName.equals(onLineDeckName)) {// && localDeck.getDeckType().equals(onlineDeck.getDeckType())
                     localDeck.setDeckId(onlineDeck.getDeckId());
                     syncUploadDecks.add(localDeck);
                     localIterator.remove(); // 安全删除本地卡组（迭代器方法）
