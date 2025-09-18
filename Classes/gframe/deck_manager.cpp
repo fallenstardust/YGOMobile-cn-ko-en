@@ -5,7 +5,6 @@
 
 namespace ygo {
 
-char DeckManager::deckBuffer[0x10000]{};
 DeckManager deckManager;
 
 void DeckManager::LoadLFListSingle(const char* path) {
@@ -247,14 +246,14 @@ bool DeckManager::LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec) {
 void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, bool showPack) {//hide packlist if showing on duelling ready
 	wchar_t catepath[256];
 	switch(index) {
-	case 0:
+	case DECK_CATEGORY_PACK:
 		if (showPack) {
 			myswprintf(catepath, L"./pack");
 		} else {
 			myswprintf(catepath, L"./windbot/Decks");
 		}
 		break;
-	case 1:
+	case DECK_CATEGORY_BOT:
 		if (showPack) {
 			myswprintf(catepath, L"./windbot/Decks");
 		} else {
@@ -262,8 +261,8 @@ void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, 
 		}
 		break;
 	case -1:
-	case 2:
-	case 3:
+	case DECK_CATEGORY_NONE:
+	case DECK_CATEGORY_SEPARATOR:
 		if (showPack) {
 			myswprintf(catepath, L"./deck");
 		} else {
@@ -304,6 +303,9 @@ bool DeckManager::LoadCurrentDeck(std::istringstream& deckStream, bool is_packli
 }
 bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 	current_deck.clear();
+	if (!file[0])
+		return false;
+	char deckBuffer[MAX_YDK_SIZE]{};
 	auto reader = OpenDeckReader(file);
 	if(!reader) {
 		wchar_t localfile[256];
@@ -330,11 +332,12 @@ bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 bool DeckManager::LoadCurrentDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
 	wchar_t filepath[256];
 	GetDeckFile(filepath, cbCategory, cbDeck);
-	bool is_packlist = (cbCategory->getSelected() == 0);
-	bool res = LoadCurrentDeck(filepath, is_packlist);
-	if (res && mainGame->is_building)
+	bool is_packlist = (cbCategory->getSelected() == DECK_CATEGORY_PACK);
+	if(!LoadCurrentDeck(filepath, is_packlist))
+		return false;
+	if (mainGame->is_building)
 		mainGame->deckBuilder.RefreshPackListScroll();
-	return res;
+	return true;
 }
 void DeckManager::SaveDeck(const Deck& deck, std::stringstream& deckStream) {
 	deckStream << "#created by ..." << std::endl;
