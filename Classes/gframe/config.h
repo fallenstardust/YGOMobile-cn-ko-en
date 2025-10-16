@@ -80,7 +80,7 @@ inline FILE* mywfopen(const wchar_t* filename, const char* mode) {
 using namespace irr::io;
 using namespace irr::os;
 
-extern const unsigned short PRO_VERSION;
+constexpr uint16_t PRO_VERSION = 0x1362;
 extern unsigned int enable_log;
 extern bool exit_on_return;
 extern bool bot_mode;
