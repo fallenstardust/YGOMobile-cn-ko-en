@@ -23,8 +23,6 @@
 #include <COGLESDriver.h>
 #endif
 
-const unsigned short PRO_VERSION = 0x1362;
-
 namespace ygo {
 
 Game* mainGame;

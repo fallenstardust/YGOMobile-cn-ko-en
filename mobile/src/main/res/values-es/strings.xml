@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <!--string name="app_name">YGOMobile</string-->
     <string name="action_settings">Configuración</string>
-    <string name="action_game">Un jugador</string>
+    <string name="action_game">Solitario</string>
     <string name="action_about">Acerca de</string>
     <string name="dont_start_game">No se puede iniciar el juego</string>
     <!-- check -->
@@ -134,7 +134,7 @@
     <string name="label_category">Categoría</string>
     <string name="linkmarker">◀F.Enlace▶</string>>
     <string name="searching">Cargando</string>
-    <string name="card_faq">Consultar reglas</string>
+    <string name="card_faq">Ver reglas</string>
     <string name="card_related">Relacionadas</string>
     <string name="no_webbrowser">No hay navegador instalado</string>
     <string name="load_game">Iniciando juego</string>
@@ -179,7 +179,7 @@
     <string name="screenshoot">Compartir imagen</string>
     <string name="ydk_share">Compartir archivo</string>
     <string name="no_share_app">No se encontró la aplicación para compartir</string>
-    <string name="intput_room_name">Ingresa la contraseña (opcional)</string>
+    <string name="intput_room_name">Ingresa la contraseña</string>
     <string name="join">Unirse</string>
     <string name="quick_join">Unirse a la sala</string>
     <string name="join_game">Entrar al juego</string>
@@ -384,4 +384,5 @@
     <string name="like_deck_thumb">Dar like al deck</string>
     <string name="pre_view">Vista previa</string>
 </resources>
+
 
