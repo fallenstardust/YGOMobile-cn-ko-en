@@ -200,6 +200,27 @@ public class CardSearchInfo implements ICardFilter{
         return false;
     }
 
+    public boolean chkAtkDef(int ct, String search) {
+        switch (search.charAt(0)) {
+            case '>':
+                if (search.length() > 1 && search.charAt(1) == '=') {
+                    return ct >= (TextUtils.isDigitsOnly(search.substring(2)) ? i(search.substring(2)) : -2);
+                } else {
+                    return ct > (TextUtils.isDigitsOnly(search.substring(1)) ? i(search.substring(1)) : -2);
+                }
+            case '<':
+                if (search.length() > 1 && search.charAt(1) == '=') {
+                    return ct <= (TextUtils.isDigitsOnly(search.substring(2)) ? i(search.substring(2)) : -2);
+                } else {
+                    return ct < (TextUtils.isDigitsOnly(search.substring(1)) ? i(search.substring(1)) : -2);
+                }
+            case '=':
+                return ct == (TextUtils.isDigitsOnly(search.substring(1)) ? i(search.substring(1)) : -2);
+            default:
+                return ct == (TextUtils.isDigitsOnly(search) ? i(search) : -2);
+        }
+    }
+
     @Override
     public boolean isValid(Card card) {
         if(keyWord != null && !keyWord.isValid(card)){
@@ -221,10 +242,8 @@ public class CardSearchInfo implements ICardFilter{
                 if (!(i(atks[0]) <= card.Attack && card.Attack <= i(atks[1]))) {
                     return false;
                 }
-            } else {
-                if (card.Attack != ((TextUtils.isDigitsOnly(atk) ? i(atk) : -2))) {
-                    return false;
-                }
+            } else if (!chkAtkDef(card.Attack, atk)) {
+                return false;
             }
         }
 
@@ -239,10 +258,8 @@ public class CardSearchInfo implements ICardFilter{
                     if (!(i(defs[0]) <= card.Defense && card.Defense <= i(defs[1]))) {
                         return false;
                     }
-                } else {
-                    if (card.Defense != ((TextUtils.isDigitsOnly(def) ? i(def) : -2))) {
-                        return false;
-                    }
+                } else if (card.isLink() || !chkAtkDef(card.Defense, def)) {
+                    return false;
                 }
             }
         }
