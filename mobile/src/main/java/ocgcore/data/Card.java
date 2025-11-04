@@ -83,6 +83,10 @@ public class Card extends CardData implements Parcelable {
         return (isType(Type, CardType.Fusion) || isType(Type, CardType.Synchro) || isType(Type, CardType.Xyz) || isType(Type, CardType.Link));
     }
 
+    public static boolean isLink(long Type) {
+        return isType(Type, CardType.Link);
+    }
+
     public Card type(long type) {
         this.Type = type;
         return this;
@@ -118,6 +122,10 @@ public class Card extends CardData implements Parcelable {
 
     public boolean isSpellTrap() {
         return isSpellTrap(Type);
+    }
+
+    public boolean isLink() {
+        return isType(Type, CardType.Link);
     }
 
     public boolean isExtraCard() {
