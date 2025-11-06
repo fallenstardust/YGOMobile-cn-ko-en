@@ -16,21 +16,15 @@
     特别感谢： 尸体233,废话多,大毛, zhuhongbo, JSY1728, 幻兽L 等的支持与努力.
 </pre>
 <ul>
-    <li style="color:#ffff00">3.12.6</li>
+    <li id="versionName" style="color:#ffff00"></li>
 </ul>
 <pre>
     更新：
     1.更新ygopro内核；
-    2.新卡DBPR+SD48+LPG1+T1302+VJ；
-    3.2025.10 OCG禁卡表；
-    4.2025.9 TCG禁卡表；
-    5.新增人机卡组：于贝尔；
+    2.新卡1303+CHO1+VJ；
     变更：
-    1.修正新注册萌卡用户无法备份在线卡组的问题；
-    2.修正自动同步备份时失去分类信息的问题；
-    3.修复相同卡组重复备份的问题；
-    4.筛选字段时，增加无字段卡选项搜索功能；
-
+    1.竖屏查询时支持大于小于符号来搜索攻击力与守备力范围（如：>=3000、<2500）；
+    2.修复查询守备力为1时错误搜索到↙箭头连接怪兽的问题；
 </pre>
 <h3 style="color:#ff0000">注意</h3>
 <pre>
@@ -39,5 +33,13 @@
        如果觉得不便可以在"我的"里修改资料语言；
     ③：卸载本软件将删除包含卡组在内的重要文件，卸载前请慎重；
 </pre>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof AppInterface !== "undefined" && AppInterface.getVersionName) {
+            document.getElementById("versionName").innerText = AppInterface.getVersionName();
+        }
+    });
+</script>
 </body>
 </html>

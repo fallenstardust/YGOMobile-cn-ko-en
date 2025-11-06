@@ -9,8 +9,8 @@ android {
         minSdkVersion 25
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 312000009
-        versionName "3.12.6fix1"
+        versionCode 312000010
+        versionName "3.12.7"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "21.3.6528147"
@@ -31,6 +31,8 @@ android {
     buildTypes {
         debug {
             debuggable true
+            minifyEnabled false
+            ext.alwaysUpdateBuildId = false
             buildConfigField 'boolean', 'DEBUG_MODE', 'true'
         }
         release {

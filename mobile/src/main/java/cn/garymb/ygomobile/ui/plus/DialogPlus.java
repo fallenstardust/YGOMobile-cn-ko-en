@@ -343,10 +343,21 @@ public class DialogPlus extends Dialog {
         return this;
     }
 
+        /**
+     * 加载指定URL并设置背景颜色
+     * @param url 要加载的网页地址
+     * @param bgColor WebView的背景颜色
+     * @return 返回当前DialogPlus实例，支持链式调用
+     */
     public DialogPlus loadUrl(String url, int bgColor) {
+        // 初始化WebView并设置背景色
         if (mWebView == null) {
             mWebView = initWebView();
             mWebView.setBackgroundColor(bgColor);
+            // 启用 JavaScript 来支持版本号注入
+            mWebView.getSettings().setJavaScriptEnabled(true);
+            // 添加 JavaScript 接口提供版本号
+            mWebView.addVersionJavaScriptInterface();
         }
         mUrl = url;
         return this;
