@@ -49,6 +49,71 @@ void DeckManager::LoadLFListSingle(const char* path) {
 		std::fclose(fp);
 	}
 }
+void DeckManager::LoadLFListSingle(irr::io::IReadFile* reader) {
+    if (!reader)
+        return;
+
+    auto cur = _lfList.rend();
+    char linebuf[256]{};
+    wchar_t strBuffer[256]{};
+
+    // 读取文件内容直到结束
+    while (reader->getPos() < reader->getSize()) {
+        // 手动读取一行
+        int i = 0;
+        char ch;
+        while (i < sizeof(linebuf) - 1 && reader->getPos() < reader->getSize()) {
+            reader->read(&ch, 1);
+            if (ch == '\n' || ch == '\r') {
+                // 处理换行符
+                if (ch == '\r' && reader->getPos() < reader->getSize()) {
+                    // 检查是否有\n
+                    long pos = reader->getPos();
+                    char nextCh;
+                    reader->read(&nextCh, 1);
+                    if (nextCh != '\n') {
+                        reader->seek(pos); // 回退
+                    }
+                }
+                break;
+            }
+            linebuf[i++] = ch;
+        }
+        linebuf[i] = '\0';
+
+        if(linebuf[0] == '#')
+            continue;
+        if(linebuf[0] == '!') {
+            auto len = std::strcspn(linebuf, "\r\n");
+            linebuf[len] = 0;
+            BufferIO::DecodeUTF8(&linebuf[1], strBuffer);
+            LFList newlist;
+            newlist.listName = strBuffer;
+            newlist.hash = 0x7dfcee6a;
+            _lfList.push_back(newlist);
+            cur = _lfList.rbegin();
+            continue;
+        }
+        if (cur == _lfList.rend())
+            continue;
+        char* pos = linebuf;
+        errno = 0;
+        auto result = std::strtoul(pos, &pos, 10);
+        if (errno || result > UINT32_MAX)
+            continue;
+        if (pos == linebuf || *pos != ' ')
+            continue;
+        uint32_t code = static_cast<uint32_t>(result);
+        errno = 0;
+        int count = std::strtol(pos, &pos, 10);
+        if (errno)
+            continue;
+        if (count < 0 || count > 2)
+            continue;
+        cur->content[code] = count;
+        cur->hash = cur->hash ^ ((code << 18) | (code >> 14)) ^ ((code << (27 + count)) | (code >> (5 - count)));
+    }
+}
 void DeckManager::LoadLFList(irr::android::InitOptions *options) {
     irr::io::path workingDir = options->getWorkDir();
 	LoadLFListSingle((workingDir + path("/expansions/lflist.conf")).c_str());

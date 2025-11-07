@@ -223,7 +223,6 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	is_building = false;
 	menuHandler.prev_operation = 0;
 	menuHandler.prev_sel = -1;
-	deckManager.LoadLFList(options);
 	driver = device->getVideoDriver();
 #ifdef _IRR_ANDROID_PLATFORM_
 	int quality = options->getCardQualityOp();
@@ -274,7 +273,8 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		ErrorLog("Failed to load strings!");
 		return false;
 	}
-	LoadExpansions();
+    LoadExpansions();
+    deckManager.LoadLFList(options);
 	env = device->getGUIEnvironment();
 	bool isAntialias = options->isFontAntiAliasEnabled();
 	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 18 * yScale, isAntialias, false);
@@ -1637,8 +1637,13 @@ void Game::LoadExpansions() {
 				continue;
 			}
 			if (IsExtension(fname, L".conf")) {
-				auto reader = dataManager.FileSystem->createAndOpenFile(uname);
-				dataManager.LoadStrings(reader);
+                auto reader = dataManager.FileSystem->createAndOpenFile(uname);
+                if (std::wcsstr(fname, L"lflist") != nullptr) {
+                    ALOGD("uname=%s",uname);
+                    deckManager.LoadLFListSingle(reader);
+                } else {
+                    dataManager.LoadStrings(reader);
+                }
 				continue;
 			}
 			if (!mywcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {

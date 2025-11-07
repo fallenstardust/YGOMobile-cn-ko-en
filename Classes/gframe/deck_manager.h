@@ -60,6 +60,7 @@ public:
 	static constexpr int MAX_YDK_SIZE = 0x10000;
 
 	void LoadLFListSingle(const char* path);
+	void LoadLFListSingle(irr::io::IReadFile* reader);
 	void LoadLFList(irr::android::InitOptions *options);
 	const wchar_t* GetLFListName(unsigned int lfhash);
 	const LFList* GetLFList(unsigned int lfhash);
