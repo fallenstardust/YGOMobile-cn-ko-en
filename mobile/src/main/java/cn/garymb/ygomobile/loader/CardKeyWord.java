@@ -41,6 +41,7 @@ public class CardKeyWord {
                         w = w.substring(1);
                     }
                     boolean onlyText = false;
+                    /*
                     if (w.startsWith("\"") || w.startsWith("“") || w.startsWith("”")) {
                         //只搜索文字
                         onlyText = true;
@@ -49,7 +50,7 @@ public class CardKeyWord {
                         } else {
                             w = w.substring(1);
                         }
-                    }
+                    }*/
                     Log.d(TAG, "filter:word=" + w + ", exclude=" + exclude + ", onlyText=" + onlyText);
                     filterList.add(new NameFilter(w, exclude, onlyText));
                 }
