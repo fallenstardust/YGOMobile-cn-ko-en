@@ -4,7 +4,6 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
-import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToUnixTimestamp;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -33,6 +32,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -127,6 +127,9 @@ import ocgcore.enums.LimitType;
  */
 public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODeckDialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     private static final String TAG = "DeckManagerFragment";
+    public static List<MyOnlineDeckDetail> originalData; // 保存原始数据
+    private final AppsSettings mSettings = AppsSettings.get();
+    public DeckAdapater mDeckAdapater;
     protected DrawerLayout mDrawerLayout;
     protected RecyclerView mListView;
     protected CardLoader mCardLoader;
@@ -135,19 +138,19 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     protected PackManager mPackManager;
     protected CardListAdapter mCardListAdapter;
     protected boolean isLoad = false;
+    protected int screenWidth;
+    long exitLasttime = 0;
     private HomeActivity activity;
     private String mDeckId;
     private LinearLayout ll_click_like;
     private TextView tv_add_1;
-    public static List<MyOnlineDeckDetail> originalData; // 保存原始数据
-    protected int screenWidth;
-
     //region ui onCreate/onDestroy
     private RecyclerView mRecyclerView;
-    public DeckAdapater mDeckAdapater;
-    private final AppsSettings mSettings = AppsSettings.get();
     private BaseActivity mContext;
-    long exitLasttime = 0;
+    // 历史记录列表，用于存储卡组状态
+    private List<DeckInfo> deckHistory = new ArrayList<>();
+    // 当前历史记录索引
+    private int historyIndex = -1;
 
     private File mPreLoadFile;//预加载卡组，用于外部打开ydk文件或通过卡组广场预览卡组时，值为file。当未通过预加载打开ydk（打开卡组时），值为null
     private DeckItemTouchHelper mDeckItemTouchHelper;
@@ -158,13 +161,21 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
 
+    private ImageButton btnUndo;
+    private ImageButton btnRedo;
+
+
     private View layoutView;
+
+    public static List<MyOnlineDeckDetail> getOriginalData() {
+        return originalData;
+    }
 
     /**
      * 创建并返回Fragment的视图层次结构
      *
-     * @param inflater 用于将XML布局文件转换为View对象的LayoutInflater实例，不可为空
-     * @param container 父容器ViewGroup，可为空
+     * @param inflater           用于将XML布局文件转换为View对象的LayoutInflater实例，不可为空
+     * @param container          父容器ViewGroup，可为空
      * @param savedInstanceState 保存Fragment状态的Bundle对象，可为空
      * @return 返回创建的View对象，如果创建失败则返回null
      */
@@ -295,6 +306,16 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     getActivity().getSupportFragmentManager(), "pagerDialog");
         });
 
+        // 初始化撤销/重做按钮
+        btnUndo = layoutView.findViewById(R.id.btn_undo);
+        btnRedo = layoutView.findViewById(R.id.btn_redo);
+
+        btnUndo.setOnClickListener(v -> undo());
+        btnRedo.setOnClickListener(v -> redo());
+
+        // 初始化按钮状态
+        updateUndoRedoButtons();
+
         mContext = (BaseActivity) getActivity();
 
         /**
@@ -367,7 +388,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 设置列表项点击监听器和滚动监听器
-     *
+     * <p>
      * 该方法主要完成以下功能：
      * 1. 为卡片列表适配器设置点击和长按事件监听器
      * 2. 为列表视图添加滚动监听器，用于控制图片加载框架的暂停和恢复
@@ -452,12 +473,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     }
 
-        /**
-     * 处理卡组中卡片的长按删除操作
-     * 当用户长按卡片时，根据设置决定是否显示删除确认对话框或直接删除
-     *
-     * @param pos 被长按的卡片在列表中的位置索引
-     */
     @Override
     public void onDragLongPress(int pos) {
         // 检查位置索引有效性
@@ -481,6 +496,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             dialogPlus.setLeftButtonListener((dlg, v) -> {
                 dlg.dismiss();
                 mDeckItemTouchHelper.remove(pos);
+                // 添加到历史记录
+                addDeckToHistory(mDeckAdapater.getCurrentState());
             });
             dialogPlus.show();
         } else {
@@ -493,7 +510,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     public void onDragLongPressEnd() {
         mDeckAdapater.hideHeadView();
     }
-    //endregion
 
     public void AnimationShake2(View view) {
         Animation shake = AnimationUtils.loadAnimation(getContext(), R.anim.shake);//加载动画资源文件
@@ -502,7 +518,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 隐藏所有打开的抽屉菜单
-     *
+     * <p>
      * 该方法会检查左右两侧的抽屉是否处于打开状态，如果打开则将其关闭。
      * 主要用于在特定场景下统一关闭所有抽屉菜单，确保界面的一致性。
      */
@@ -528,6 +544,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
     }
 
+    //region load deck
+
     protected void showResult(boolean autoClose) {
         if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
@@ -540,7 +558,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
     }
 
-    //region load deck
+    //region init
+
     /**
      * 从指定文件中加载卡牌包数据
      *
@@ -572,7 +591,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         });
     }
 
-    //region init
     /**
      * 初始化函数，用于加载卡组数据和相关配置
      *
@@ -635,8 +653,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 设置当前选中的卡组并更新界面显示
+     *
      * @param deckInfo 选中的卡组信息，如果为null则创建新的空卡组信息对象
-     * @param isPack 是否为卡包模式
+     * @param isPack   是否为卡包模式
      */
     private void setCurDeck(DeckInfo deckInfo, boolean isPack) {
         // 处理空卡组信息情况
@@ -653,7 +672,117 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         // 通知适配器更新卡组数据和界面
         mDeckAdapater.setDeck(deckInfo, isPack);
         mDeckAdapater.notifyDataSetChanged();
+
+        // 清空历史记录并添加初始状态
+        clearDeckHistory();
+        addDeckToHistory(deckInfo);
+
+        // 更新按钮状态
+        updateUndoRedoButtons();
     }
+
+    /**
+     * 清空卡组历史记录
+     */
+    private void clearDeckHistory() {
+        deckHistory.clear();
+        historyIndex = -1;
+    }
+
+    /**
+     * 将当前卡组状态添加到历史记录中
+     *
+     * @param deckInfo 当前卡组状态
+     */
+    private void addDeckToHistory(DeckInfo deckInfo) {
+        // 如果当前不在历史记录的最新位置，需要删除之后的历史记录
+        if (historyIndex < deckHistory.size() - 1) {
+            deckHistory.subList(historyIndex + 1, deckHistory.size()).clear();
+        }
+
+        // 添加新的历史记录
+        deckHistory.add(deckInfo); // 使用clone确保是深拷贝
+        historyIndex = deckHistory.size() - 1;
+
+        // 更新按钮状态
+        updateUndoRedoButtons();
+    }
+
+    /**
+     * 撤销操作
+     */
+    private void undo() {
+        if (canUndo()) {
+            historyIndex--;
+            DeckInfo previousState = deckHistory.get(historyIndex);
+            mDeckAdapater.setDeck(previousState, false);
+            mDeckAdapater.notifyDataSetChanged();
+            // 更新按钮状态
+            updateUndoRedoButtons();
+        }
+    }
+
+    /**
+     * 重做操作
+     */
+    private void redo() {
+        if (canRedo()) {
+            historyIndex++;
+            DeckInfo nextState = deckHistory.get(historyIndex);
+            mDeckAdapater.setDeck(nextState, false);
+            mDeckAdapater.notifyDataSetChanged();
+            // 更新按钮状态
+            updateUndoRedoButtons();
+        }
+    }
+
+    /**
+     * 检查是否可以撤销
+     *
+     * @return 如果可以撤销返回true，否则返回false
+     */
+    private boolean canUndo() {
+        return historyIndex > 0;
+    }
+
+    /**
+     * 检查是否可以重做
+     *
+     * @return 如果可以重做返回true，否则返回false
+     */
+    private boolean canRedo() {
+        return historyIndex < deckHistory.size() - 1;
+    }
+
+    /**
+     * 更新撤销/重做按钮的状态和可见性
+     */
+    private void updateUndoRedoButtons() {
+        if (btnUndo != null && btnRedo != null) {
+            // 只有历史记录大于1时才显示按钮
+            if (deckHistory.size() > 1) {
+                btnUndo.setVisibility(View.VISIBLE);
+                btnRedo.setVisibility(View.VISIBLE);
+
+                // 根据是否可以撤销/重做来启用/禁用按钮
+                btnUndo.setEnabled(canUndo());
+                btnRedo.setEnabled(canRedo());
+
+                // 当无法撤销或重做时隐藏对应按钮
+                if (!canUndo()) {
+                    btnUndo.setVisibility(View.GONE);
+                }
+                if (!canRedo()) {
+                    btnRedo.setVisibility(View.GONE);
+                }
+            } else {
+                // 历史记录小于等于1时隐藏按钮
+                btnUndo.setVisibility(View.GONE);
+                btnRedo.setVisibility(View.GONE);
+            }
+        }
+    }
+
 
     /**
      * 判断指定文件是否位于卡牌目录中
@@ -755,12 +884,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         return mDialog != null && mDialog.isShowing();
     }
 
-        /**
+    /**
      * 显示卡片详情对话框
      *
-     * @param provider  卡片列表提供者，用于获取当前卡片的上下文数据
-     * @param cardInfo  要显示的卡片信息，如果为null则不执行任何操作
-     * @param pos       当前卡片在列表中的位置
+     * @param provider 卡片列表提供者，用于获取当前卡片的上下文数据
+     * @param cardInfo 要显示的卡片信息，如果为null则不执行任何操作
+     * @param pos      当前卡片在列表中的位置
      */
     protected void showCardDialog(CardListProvider provider, Card cardInfo, int pos) {
         // 如果卡片信息为空，则不进行任何操作
@@ -855,7 +984,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
     }
 
-
     private void showSearchKeyWord(String keyword) {//使用此方法，可以适用关键词查询逻辑，让完全符合关键词的卡名置顶显示，并同时搜索字段和效果文本
         CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
         mCardLoader.search(searchInfo);
@@ -869,11 +997,21 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
     }
 
+    /**
+     * 添加到副卡组
+     *
+     * @param cardInfo 要添加的卡片信息
+     * @return 添加成功返回true，添加失败返回false
+     */
     private boolean addSideCard(Card cardInfo) {
+        // 检查卡片添加限制
         if (checkLimit(cardInfo)) {
+            // 执行添加卡片操作
             boolean rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.SideCard);
             if (rs) {
                 YGOUtil.showTextToast(R.string.add_card_tip_ok);
+                // 添加到历史记录
+                addDeckToHistory(mDeckAdapater.getCurrentState());
             } else {
                 YGOUtil.showTextToast(R.string.add_card_tip_fail);
             }
@@ -882,16 +1020,27 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         return false;
     }
 
+    /**
+     * 添加主卡组卡片
+     *
+     * @param cardInfo 要添加的卡片信息
+     * @return 添加成功返回true，否则返回false
+     */
     private boolean addMainCard(Card cardInfo) {
+        // 检查卡片添加限制
         if (checkLimit(cardInfo)) {
             boolean rs;
+            // 根据卡片类型选择添加位置
             if (cardInfo.isExtraCard()) {
                 rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.ExtraCard);
             } else {
                 rs = mDeckAdapater.AddCard(cardInfo, DeckItemType.MainCard);
             }
+            // 处理添加结果
             if (rs) {
                 YGOUtil.showTextToast(R.string.add_card_tip_ok);
+                // 添加到历史记录
+                addDeckToHistory(mDeckAdapater.getCurrentState());
             } else {
                 YGOUtil.showTextToast(R.string.add_card_tip_fail);
             }
@@ -1116,6 +1265,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 创建新的卡组文件
+     *
      * @param savePath 新卡组文件的保存路径
      */
     private void createDeck(String savePath) {
@@ -1260,7 +1410,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 //        shareUrl(uriString, label);
     }
 
-
     private void shareUrl(String uri, String label) {
         String url = getString(R.string.deck_share_head) + "  " + uri;
         ShareUtil.shareText(getContext(), getString(R.string.share_deck), url, null);
@@ -1283,6 +1432,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 从存储卡组的文件夹中获取所有名字以.ydk结尾的文件，并将mPreLoadFile也加入到返回结果中
+     *
      * @return 包含所有.ydk文件的文件列表，如果目录不存在或无法访问则返回null
      */
     private List<File> getYdkFiles() {
@@ -1311,8 +1461,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 初始化限制列表下拉框
+     *
      * @param spinner 要初始化的Spinner控件
-     * @param cur 当前选中的限制列表对象，用于设置默认选中项
+     * @param cur     当前选中的限制列表对象，用于设置默认选中项
      */
     private void initLimitListSpinners(Spinner spinner, LimitList cur) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
@@ -1360,6 +1511,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     /**
      * 设置限制列表并更新相关适配器
+     *
      * @param limitList 限制列表对象，如果为null则直接返回
      */
     private void setLimitList(LimitList limitList) {
@@ -1444,7 +1596,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
     }
 
-
     private void initBoomMenuButton(BoomMenuButton menu) {
         final SparseArray<Integer> mMenuIds = new SparseArray<>();
         addMenuButton(mMenuIds, menu, R.id.action_share_deck, R.string.share_deck, R.drawable.shareicon);
@@ -1511,10 +1662,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         YGOUtil.showTextToast(R.string.done);
     }
 
-    public static List<MyOnlineDeckDetail> getOriginalData() {
-        return originalData;
-    }
-
     //在卡组选择的dialog中点击某个卡组（来自本地或服务器）后，dialog通过本回调函数通知本页面。
     //在本页面中根据卡组来源（本地或服务器）显示卡组内容
     @Override
@@ -1532,7 +1679,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             }).done((deckData) -> {
                 if (deckData != null) {
                     mDeckId = deckData.getDeckId();
-                    LogUtil.i(TAG,deckData.toString());
+                    LogUtil.i(TAG, deckData.toString());
                     String fileFullName = deckData.getDeckName() + YDK_FILE_EX;
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
@@ -1559,7 +1706,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return;
         String currentDeckPath = deck.getAbsolutePath();
         for (DeckFile deckFile : deckFileList) {
-            LogUtil.w(TAG, "要删除的卡组："+"\n卡组分类"+deckFile.getTypeName()+ "\n卡组名称："+deckFile.getFileName()+"\n卡组id"+deckFile.getDeckId());
+            LogUtil.w(TAG, "要删除的卡组：" + "\n卡组分类" + deckFile.getTypeName() + "\n卡组名称：" + deckFile.getFileName() + "\n卡组id" + deckFile.getDeckId());
             if (TextUtils.equals(deckFile.getPath(), currentDeckPath)) {
                 List<File> files = getYdkFiles();
                 File file = null;
@@ -1627,6 +1774,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     @Override
     public void onDragEnd() {
+        // 在拖拽结束后添加当前状态到历史记录中
+        addDeckToHistory(mDeckAdapater.getCurrentState());
     }
 
     //https://www.jianshu.com/p/99649af3b191

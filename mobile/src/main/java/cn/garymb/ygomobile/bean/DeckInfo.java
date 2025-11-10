@@ -20,9 +20,9 @@ public class DeckInfo {
         Side,
     }
 
-    private final List<Card> mainCards;
-    private final List<Card> extraCards;
-    private final List<Card> sideCards;
+    public List<Card> mainCards;
+    public List<Card> extraCards;
+    public List<Card> sideCards;
     private final List<Card> allCards;
 
     public File source;//当前打开的ydk文件的file

@@ -40,12 +40,14 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private final SparseArray<Integer> mCount = new SparseArray<>();
     private final Context context;
     private final LayoutInflater mLayoutInflater;
+    private final int Padding = 1;
+    private final RecyclerView recyclerView;
+    private final Random mRandom;
+    private final ImageLoader imageLoader;
     private ImageTop mImageTop;
-
     private int mMainCount;
     private int mExtraCount;
     private int mSideCount;
-
     private int mMainMonsterCount;
     private int mMainSpellCount;
     private int mMainTrapCount;
@@ -56,18 +58,13 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private int mSideMonsterCount;
     private int mSideSpellCount;
     private int mSideTrapCount;
-
     private int mFullWidth;
     private int mWidth;
     private int mHeight;
-    private final int Padding = 1;
-    private final RecyclerView recyclerView;
-    private final Random mRandom;
     private DeckViewHolder mHeadHolder;
     private DeckItem mRemoveItem;
     private int mRemoveIndex;
     private LimitList mLimitList;
-    private final ImageLoader imageLoader;
     private boolean showHead = false;
     private String mDeckMd5;
     private DeckInfo mDeckInfo;
@@ -96,6 +93,46 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     public SparseArray<Integer> getCardCount() {
         return mCount;
+    }
+
+    /**
+     * 获取当前卡组状态的副本
+     *
+     * @return 当前卡组状态的副本
+     */
+    public DeckInfo getCurrentState() {
+        // 创建当前状态的深拷贝
+        DeckInfo currentState = new DeckInfo();
+
+        // 从 mItems 中提取不同类型的卡片
+        List<Card> mainCards = new ArrayList<>();
+        List<Card> extraCards = new ArrayList<>();
+        List<Card> sideCards = new ArrayList<>();
+
+        for (DeckItem item : mItems) {
+            if (item != null && item.getCardInfo() != null) {
+                switch (item.getType()) {
+                    case MainCard:
+                        mainCards.add(item.getCardInfo());
+                        break;
+                    case ExtraCard:
+                        extraCards.add(item.getCardInfo());
+                        break;
+                    case SideCard:
+                        sideCards.add(item.getCardInfo());
+                        break;
+                }
+            }
+        }
+
+        currentState.mainCards = mainCards;
+        currentState.extraCards = extraCards;
+        currentState.sideCards = sideCards;
+        // 通过 mDeckInfo 获取 source
+        if (mDeckInfo != null) {
+            currentState.source = mDeckInfo.source;
+        }
+        return currentState;
     }
 
     public boolean AddCard(Card cardInfo, DeckItemType type) {
@@ -149,10 +186,6 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
             Collections.swap(mItems, DeckItem.MainStart + i, DeckItem.MainStart + i + index);
         }
         notifyItemRangeChanged(DeckItem.MainStart, DeckItem.MainStart + getMainCount());
-    }
-
-    public void setLimitList(LimitList limitList) {
-        mLimitList = limitList;
     }
 
     private boolean comp(DeckItem d1, DeckItem d2) {
@@ -384,6 +417,10 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
 
     public LimitList getLimitList() {
         return mLimitList;
+    }
+
+    public void setLimitList(LimitList limitList) {
+        mLimitList = limitList;
     }
 
     public @Nullable
