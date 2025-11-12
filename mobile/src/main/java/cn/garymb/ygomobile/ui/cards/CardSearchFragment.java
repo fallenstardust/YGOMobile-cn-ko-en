@@ -6,7 +6,6 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -14,15 +13,16 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerViewItemListener;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerViewItemListener;
 
 import com.app.hubert.guide.NewbieGuide;
 import com.app.hubert.guide.model.GuidePage;
@@ -30,7 +30,6 @@ import com.app.hubert.guide.model.HighLight;
 import com.app.hubert.guide.model.HighlightOptions;
 import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
@@ -76,7 +75,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     private TextView mResult_count;
 
     private View layoutView;
-
+    private ImageButton btn_search;
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -97,7 +96,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mCardListAdapter.setItemBg(true);
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
-        Button btn_search = layoutView.findViewById(R.id.btn_search);
+        btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
         mPackManager = DataManager.get().getPackManager();
         mCardManager = DataManager.get().getCardManager();

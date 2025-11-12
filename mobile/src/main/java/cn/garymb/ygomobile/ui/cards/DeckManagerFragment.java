@@ -5,6 +5,7 @@ import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
+import android.animation.ObjectAnimator;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.DialogInterface;
@@ -14,6 +15,9 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.RotateDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -41,6 +45,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatSpinner;
+import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelperPlus;
@@ -308,8 +313,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 初始化撤销/重做按钮
         btnUndo = layoutView.findViewById(R.id.btn_undo);
+        animRotate(btnUndo);
         btnRedo = layoutView.findViewById(R.id.btn_redo);
-
+        animRotate(btnRedo);
         btnUndo.setOnClickListener(v -> undo());
         btnRedo.setOnClickListener(v -> redo());
 
@@ -770,15 +776,15 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
                 // 当无法撤销或重做时隐藏对应按钮
                 if (!canUndo()) {
-                    btnUndo.setVisibility(View.GONE);
+                    btnUndo.setVisibility(View.INVISIBLE);
                 }
                 if (!canRedo()) {
-                    btnRedo.setVisibility(View.GONE);
+                    btnRedo.setVisibility(View.INVISIBLE);
                 }
             } else {
                 // 历史记录小于等于1时隐藏按钮
-                btnUndo.setVisibility(View.GONE);
-                btnRedo.setVisibility(View.GONE);
+                btnUndo.setVisibility(View.INVISIBLE);
+                btnRedo.setVisibility(View.INVISIBLE);
             }
         }
     }
@@ -1602,13 +1608,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         addMenuButton(mMenuIds, menu, R.id.action_save, R.string.save_deck, R.drawable.save);
         addMenuButton(mMenuIds, menu, R.id.action_clear_deck, R.string.clear_deck, R.drawable.clear_deck);
 
-        addMenuButton(mMenuIds, menu, R.id.action_deck_new, R.string.new_deck, R.drawable.add);
+        addMenuButton(mMenuIds, menu, R.id.action_deck_new, R.string.new_deck, R.drawable.ic_add_2);
         addMenuButton(mMenuIds, menu, R.id.action_rename, R.string.rename_deck, R.drawable.rename);
         addMenuButton(mMenuIds, menu, R.id.action_delete_deck, R.string.delete_deck, R.drawable.delete);
 
         addMenuButton(mMenuIds, menu, R.id.action_unsort, R.string.unsort, R.drawable.unsort);
         addMenuButton(mMenuIds, menu, R.id.action_sort, R.string.sort, R.drawable.sort);
-        addMenuButton(mMenuIds, menu, R.id.action_deck_backup_n_restore, R.string.deck_backup_n_restore, R.drawable.downloadimages);
+        addMenuButton(mMenuIds, menu, R.id.action_deck_backup_n_restore, R.string.deck_backup_n_restore, R.drawable.back_restore);
 
         //设置展开或隐藏的延时。 默认值为 800ms。
         menu.setDuration(150);
@@ -1628,13 +1634,42 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     private void addMenuButton(SparseArray<Integer> mMenuIds, BoomMenuButton menuButton, int menuId, String str, int image) {
+        // 创建一个 LayerDrawable 来组合背景和图标
+        LayerDrawable layerDrawable = createDrawableWithBackground(image);
         TextOutsideCircleButton.Builder builder = new TextOutsideCircleButton.Builder()
                 .shadowColor(Color.TRANSPARENT)
                 .normalColor(Color.TRANSPARENT)
-                .normalImageRes(image)
+                .normalImageDrawable(layerDrawable)
                 .normalText(str);
         menuButton.addBuilder(builder);
         mMenuIds.put(mMenuIds.size(), menuId);
+    }
+
+    // 创建带背景的 drawable
+    private LayerDrawable createDrawableWithBackground(int imageRes) {
+        Drawable background = ContextCompat.getDrawable(getContext(), R.drawable.button_cube);
+        Drawable icon = ContextCompat.getDrawable(getContext(), imageRes);
+
+        Drawable[] layers = new Drawable[2];
+        layers[0] = background;
+        layers[1] = icon;
+
+        LayerDrawable layerDrawable = new LayerDrawable(layers);
+        // 可以调整图标的位置和大小
+        layerDrawable.setLayerInset(1, 200, 200, 200, 200); // left, top, right, bottom insets
+
+        return layerDrawable;
+    }
+    private void animRotate(View view) {
+        // 获取背景并启动旋转动画
+        LayerDrawable layerDrawable = (LayerDrawable) view.getBackground();
+        RotateDrawable rotateDrawable = (RotateDrawable) layerDrawable.findDrawableByLayerId(R.id.background_layer);
+
+        // 使用属性动画控制旋转
+        ObjectAnimator animator = ObjectAnimator.ofInt(rotateDrawable, "level", 0, 10000);
+        animator.setDuration(25000);//控制旋转速度
+        animator.setRepeatCount(ObjectAnimator.INFINITE);
+        animator.start();
     }
 
     private void doBackUpDeck() {

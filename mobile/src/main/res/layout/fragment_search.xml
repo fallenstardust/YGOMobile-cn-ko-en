@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/fragment_search">
 
     <androidx.drawerlayout.widget.DrawerLayout
@@ -35,14 +36,17 @@
                 android:layout_marginBottom="70dp"
                 android:orientation="vertical">
 
-                <Button
+                <ImageButton
                     android:id="@+id/btn_search"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:layout_gravity="center"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/search"
-                    android:gravity="center" />
+                    android:background="@drawable/button_cube"
+                    android:src="@drawable/search"
+                    android:scaleType="fitCenter"
+                    android:adjustViewBounds="true"
+                    android:padding="8dp"
+                    app:tint="@color/holo_blue_bright"/>
 
                 <TextView
                     android:id="@+id/search_result_count"

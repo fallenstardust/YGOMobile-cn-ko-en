@@ -26,7 +26,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:layout_marginLeft="10dp"
+                android:layout_margin="1dp"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -45,6 +45,13 @@
                         android:layout_weight="1"
                         android:orientation="horizontal">
 
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="bottom"
+                            android:src="@drawable/box_deck" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -55,6 +62,7 @@
                             android:shadowRadius="2"
                             android:text="@string/deck_name"
                             android:textColor="@color/holo_blue_light"
+                            android:textSize="10sp"
                             android:textStyle="bold" />
 
                         <LinearLayout
@@ -103,7 +111,7 @@
                         android:background="@drawable/button_radius_black_transparents"
                         android:ellipsize="end"
                         android:gravity="center|left"
-                        android:maxLines="1"
+                        android:maxLines="2"
                         android:paddingStart="5dp"
                         android:paddingEnd="5dp"
                         android:shadowColor="@color/black"
@@ -133,28 +141,35 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:layout_marginBottom="10dp"
+                        android:layout_marginBottom="20dp"
                         android:orientation="horizontal">
 
                         <ImageButton
                             android:id="@+id/btn_undo"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
                             android:layout_marginRight="5dp"
-                            android:gravity="center"
+                            android:adjustViewBounds="true"
+                            android:background="@drawable/rotate"
                             android:enabled="false"
-                            android:background="@drawable/ic_radius_bg"
-                            android:src="@drawable/ic_undo" />
+                            android:gravity="center"
+                            android:padding="14dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/undo" />
 
                         <ImageButton
                             android:id="@+id/btn_redo"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
                             android:layout_marginLeft="5dp"
-                            android:background="@drawable/ic_radius_bg"
-                            android:gravity="center"
+                            android:adjustViewBounds="true"
+                            android:background="@drawable/rotate"
                             android:enabled="false"
-                            android:src="@drawable/ic_redo" />
+                            android:gravity="center"
+                            android:padding="14dp"
+                            android:scaleType="fitCenter"
+                            android:scaleX="-1"
+                            android:src="@drawable/undo" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -167,14 +182,20 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom"
+                            android:layout_margin="2dp"
                             android:orientation="vertical">
 
-                            <ImageView
+                            <ImageButton
                                 android:id="@+id/btn_nav_list"
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
                                 android:layout_gravity="center"
-                                android:src="@drawable/listicon" />
+                                android:adjustViewBounds="true"
+                                android:background="@drawable/button_cube"
+                                android:padding="12dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/listicon"
+                                app:tint="@color/holo_blue_bright" />
 
                             <TextView
                                 android:layout_width="match_parent"
@@ -195,14 +216,20 @@
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
                             android:layout_gravity="bottom"
+                            android:layout_margin="2dp"
                             android:orientation="vertical">
 
-                            <ImageView
+                            <ImageButton
                                 android:id="@+id/btn_nav_search"
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
                                 android:layout_gravity="center"
-                                android:src="@drawable/search" />
+                                android:adjustViewBounds="true"
+                                android:background="@drawable/button_cube"
+                                android:padding="8dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/search"
+                                app:tint="@color/holo_blue_bright" />
 
                             <TextView
                                 android:layout_width="match_parent"
@@ -223,8 +250,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
                             android:layout_gravity="bottom"
-                            android:layout_marginLeft="2dp"
-                            android:layout_marginRight="2dp"
+                            android:layout_margin="2dp"
                             android:orientation="vertical">
 
                             <com.nightonke.boommenu.BoomMenuButton

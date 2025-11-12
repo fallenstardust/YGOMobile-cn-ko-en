@@ -1,0 +1,19 @@
+<!-- res/drawable/rotating_button_background.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/background_layer" android:state_pressed="true">
+        <rotate
+            android:drawable="@drawable/cube2"
+            android:pivotX="50%"
+            android:pivotY="50%"
+            android:fromDegrees="0"
+            android:toDegrees="-360" />
+    </item>
+    <item android:id="@id/background_layer">
+        <rotate
+            android:drawable="@drawable/cube2_pressed"
+            android:pivotX="50%"
+            android:pivotY="50%"
+            android:fromDegrees="0"
+            android:toDegrees="-360" />
+    </item>
+</layer-list>
