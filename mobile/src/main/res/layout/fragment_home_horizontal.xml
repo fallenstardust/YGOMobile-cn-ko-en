@@ -182,8 +182,6 @@
                             <ImageView
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:layout_marginLeft="10dp"
-                                android:layout_marginTop="10dp"
                                 android:scaleType="fitEnd"
                                 android:src="@drawable/start" />
 
@@ -220,8 +218,6 @@
                             <ImageView
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:layout_marginLeft="10dp"
-                                android:layout_marginTop="10dp"
                                 android:scaleType="fitEnd"
                                 android:src="@drawable/bot" />
 
@@ -266,8 +262,6 @@
                             <ImageView
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:layout_marginLeft="10dp"
-                                android:layout_marginTop="10dp"
                                 android:scaleType="fitEnd"
                                 android:src="@drawable/replay" />
 
@@ -304,8 +298,6 @@
                             <ImageView
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:layout_marginLeft="10dp"
-                                android:layout_marginTop="10dp"
                                 android:scaleType="fitEnd"
                                 android:src="@drawable/downloadimages" />
 
@@ -389,8 +381,6 @@
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:layout_marginLeft="10dp"
-                            android:layout_marginTop="10dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/help" />
 
@@ -427,10 +417,8 @@
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:layout_marginLeft="10dp"
-                            android:layout_marginTop="10dp"
                             android:scaleType="fitEnd"
-                            android:src="@drawable/about" />
+                            android:src="@drawable/donation" />
 
                         <TextView
                             android:layout_width="match_parent"

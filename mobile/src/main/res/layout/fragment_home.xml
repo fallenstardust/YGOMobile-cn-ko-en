@@ -175,14 +175,8 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="-10dp"
-                            android:layout_marginLeft="30dp"
-                            android:layout_marginTop="-10dp"
-                            android:layout_marginEnd="-10dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
-                            android:src="@drawable/help" />
+                            android:src="@drawable/masterrule" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -217,14 +211,8 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="-10dp"
-                            android:layout_marginLeft="30dp"
-                            android:layout_marginTop="-10dp"
-                            android:layout_marginEnd="-10dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
-                            android:src="@drawable/about" />
+                            android:src="@drawable/donation" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -281,12 +269,6 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="-10dp"
-                            android:layout_marginLeft="30dp"
-                            android:layout_marginTop="-10dp"
-                            android:layout_marginEnd="-10dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/start" />
 
@@ -323,12 +305,7 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="-10dp"
                             android:layout_marginLeft="30dp"
-                            android:layout_marginTop="-10dp"
-                            android:layout_marginEnd="-10dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/bot" />
 
@@ -366,12 +343,7 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="-10dp"
-                            android:layout_marginLeft="30dp"
-                            android:layout_marginTop="-10dp"
-                            android:layout_marginEnd="-10dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-10dp"
+
                             android:scaleType="fitEnd"
                             android:src="@drawable/replay" />
 
@@ -409,12 +381,6 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="-10dp"
-                            android:layout_marginLeft="30dp"
-                            android:layout_marginTop="-10dp"
-                            android:layout_marginEnd="-10dp"
-                            android:layout_marginRight="-20dp"
-                            android:layout_marginBottom="-10dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/downloadimages" />
 
