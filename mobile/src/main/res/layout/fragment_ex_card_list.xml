@@ -35,13 +35,17 @@ android:focusableInTouchMode="false"
         android:orientation="vertical"
         android:padding="10dp">
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_download_precard"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
             android:layout_marginBottom="5dp"
-            android:background="@drawable/downloadimages"
+            android:background="@drawable/button_cube"
+            android:src="@drawable/downloadimages"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:padding="12dp"
             android:clickable="false" />
 
         <TextView
