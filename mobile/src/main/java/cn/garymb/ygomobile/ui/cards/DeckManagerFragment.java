@@ -327,18 +327,24 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         /**
          * 自动同步服务器上的卡组信息（如果已登录）
          */
+        // 如果用户已登录（存在服务器令牌），则同步用户的在线卡组
         if (SharedPreferenceUtil.getServerToken() != null) {
             VUiKit.defer().when(() -> {
                 try {
+                    // 调用API同步卡组
                     DeckSquareApiUtil.synchronizeDecks();
                 } catch (IOException e) {
+                    // 发生IO异常时返回异常对象
                     return e;
                 }
+                // 正常执行完成后返回0表示成功
                 return 0;
             }).fail((e) -> {
+                // 同步失败时记录错误日志
                 LogUtil.e(TAG, "Sync decks failed: " + e);
                 //YGOUtil.showTextToast("Sync decks failed: " + e);
             }).done((result) -> {
+                // 同步成功后的处理逻辑（目前为空）
             });
         }
     }
