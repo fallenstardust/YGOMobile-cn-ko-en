@@ -173,7 +173,7 @@
                         android:layout_height="wrap_content">
 
                         <ImageView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:scaleType="fitEnd"
                             android:src="@drawable/masterrule" />
@@ -209,7 +209,7 @@
                         android:layout_height="wrap_content">
 
                         <ImageView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:scaleType="fitEnd"
                             android:src="@drawable/donation" />
@@ -267,7 +267,7 @@
                         android:layout_height="wrap_content">
 
                         <ImageView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:scaleType="fitEnd"
                             android:src="@drawable/start" />
@@ -303,9 +303,8 @@
                         android:layout_height="wrap_content">
 
                         <ImageView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginLeft="30dp"
                             android:scaleType="fitEnd"
                             android:src="@drawable/bot" />
 
@@ -341,9 +340,8 @@
                         android:layout_height="wrap_content">
 
                         <ImageView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-
                             android:scaleType="fitEnd"
                             android:src="@drawable/replay" />
 
@@ -379,7 +377,7 @@
                         android:layout_height="wrap_content">
 
                         <ImageView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:scaleType="fitEnd"
                             android:src="@drawable/downloadimages" />
