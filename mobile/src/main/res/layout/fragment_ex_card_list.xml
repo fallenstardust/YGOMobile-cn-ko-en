@@ -40,22 +40,23 @@ android:focusableInTouchMode="false"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
-            android:layout_marginBottom="5dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/button_cube"
             android:src="@drawable/downloadimages"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
-            android:padding="12dp"
+            android:padding="10dp"
             android:clickable="false" />
 
         <TextView
             android:id="@+id/text_download_precard"
-            android:layout_width="60dp"
-            android:layout_height="30dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:background="@drawable/ic_radius_bg"
             android:clickable="false"
             android:gravity="center"
             android:textAlignment="center"
+            android:text="0"
             android:textColor="@color/gold"
             android:textSize="10sp" />
     </LinearLayout>

@@ -662,56 +662,78 @@ uint32_t field::process() {
 		return pduel->buffer_size();
 	}
 	case PROCESSOR_SORT_DECK: {
-		uint8_t sort_player = it->arg1 & 0xffff;
-		uint8_t target_player = it->arg1 >> 16;
-		uint8_t count = it->arg2, i = 0;
-		if(count > player[target_player].list_main.size())
-			count = (uint8_t)player[target_player].list_main.size();
-		if(it->step == 0) {
-			core.select_cards.clear();
-			for(auto clit = player[target_player].list_main.rbegin(); i < count; ++i, ++clit)
-				core.select_cards.push_back(*clit);
-			add_process(PROCESSOR_SORT_CARD, 0, 0, 0, sort_player, 0);
-			++it->step;
-		} else {
-			if(returns.bvalue[0] != 0xff) {
-				card* tc[256];
-				for(i = 0; i < count; ++i)
-					player[target_player].list_main.pop_back();
-				for(i = 0; i < count; ++i)
-					tc[returns.bvalue[i]] = core.select_cards[i];
-				for(i = 0; i < count; ++i) {
-					player[target_player].list_main.push_back(tc[count - 1 - i]);
-				}
-				reset_sequence(target_player, LOCATION_DECK);
-				auto clit = player[target_player].list_main.rbegin();
-				for(i = 0; i < count; ++i, ++clit) {
-					card* pcard = *clit;
-					pduel->write_buffer8(MSG_MOVE);
-					pduel->write_buffer32(0);
-					pduel->write_buffer32(pcard->get_info_location());
-					pduel->write_buffer32(pcard->get_info_location());
-					pduel->write_buffer32(REASON_EFFECT);
-				}
-			}
-			if(core.global_flag & GLOBALFLAG_DECK_REVERSE_CHECK) {
-				if(count > 0) {
-					card* ptop = player[target_player].list_main.back();
-					if(core.deck_reversed || (ptop->current.position == POS_FACEUP_DEFENSE)) {
-						pduel->write_buffer8(MSG_DECK_TOP);
-						pduel->write_buffer8(target_player);
-						pduel->write_buffer8(0);
-						if(ptop->current.position != POS_FACEUP_DEFENSE)
-							pduel->write_buffer32(ptop->data.code);
-						else
-							pduel->write_buffer32(ptop->data.code | 0x80000000);
-					}
-				}
-			}
-			core.units.pop_front();
-		}
-		return pduel->buffer_size();
-	}
+    // 从参数中提取排序玩家、目标玩家和卡片数量
+    uint8_t sort_player = it->arg1 & 0xffff;      // 执行排序的玩家
+    uint8_t target_player = it->arg1 >> 16;       // 被排序卡组的玩家
+    uint8_t count = it->arg2, i = 0;              // 需要排序的卡片数量，循环变量初始化
+
+    // 如果要求排序的数量超过目标玩家主卡组的实际数量，则调整为实际数量
+    if(count > player[target_player].list_main.size())
+        count = (uint8_t)player[target_player].list_main.size();
+
+    // 第一步：准备需要排序的卡片并启动排序处理器
+    if(it->step == 0) {
+        core.select_cards.clear();                // 清空选择卡片列表
+        // 从目标玩家主卡组末尾开始，取count张卡片加入选择列表
+        for(auto clit = player[target_player].list_main.rbegin(); i < count; ++i, ++clit)
+            core.select_cards.push_back(*clit);
+        // 添加卡片排序处理器，让sort_player对这些卡片进行排序
+        add_process(PROCESSOR_SORT_CARD, 0, 0, 0, sort_player, 0);
+        ++it->step;                               // 进入下一步
+    } else {
+        // 第二步：处理排序结果
+        // 如果返回值不是0xff（表示排序未被取消）
+        if(returns.bvalue[0] != 0xff) {
+            card* tc[256];                        // 临时卡片数组，用于存储重新排序后的卡片
+            // 从目标玩家主卡组中移除之前取出的count张卡片
+            for(i = 0; i < count; ++i)
+                player[target_player].list_main.pop_back();
+            // 根据玩家的排序结果，将卡片放入临时数组的正确位置
+            for(i = 0; i < count; ++i)
+                tc[returns.bvalue[i]] = core.select_cards[i];
+            // 按照新的顺序将卡片重新放入目标玩家的主卡组
+            for(i = 0; i < count; ++i) {
+                player[target_player].list_main.push_back(tc[count - 1 - i]);
+            }
+            // 重置目标玩家主卡组中所有卡片的序列号
+            reset_sequence(target_player, LOCATION_DECK);
+            // 从卡组末尾开始遍历刚重新排序的卡片
+            auto clit = player[target_player].list_main.rbegin();
+            for(i = 0; i < count; ++i, ++clit) {
+                card* pcard = *clit;
+                // 向客户端发送卡片移动消息（虽然位置未变，但用于同步排序结果）
+                pduel->write_buffer8(MSG_MOVE);
+                pduel->write_buffer32(0);         // 原位置（这里用0表示无来源）
+                pduel->write_buffer32(pcard->get_info_location());  // 当前位置
+                pduel->write_buffer32(pcard->get_info_location());  // 目标位置
+                pduel->write_buffer32(REASON_EFFECT);               // 移动原因
+            }
+        }
+        // 如果启用了卡组顶部检查的全局标志
+        if(core.global_flag & GLOBALFLAG_DECK_REVERSE_CHECK) {
+            // 如果有卡片被排序
+            if(count > 0) {
+                // 获取目标玩家主卡组最上面的卡片
+                card* ptop = player[target_player].list_main.back();
+                // 如果卡组是翻转状态或者最上面的卡片是表侧守备表示
+                if(core.deck_reversed || (ptop->current.position == POS_FACEUP_DEFENSE)) {
+                    // 向客户端发送卡组顶部卡片信息
+                    pduel->write_buffer8(MSG_DECK_TOP);
+                    pduel->write_buffer8(target_player);            // 玩家
+                    pduel->write_buffer8(0);                        // 序号（0表示最上面）
+                    // 根据卡片位置发送卡片密码
+                    if(ptop->current.position != POS_FACEUP_DEFENSE)
+                        pduel->write_buffer32(ptop->data.code);     // 里侧表示
+                    else
+                        pduel->write_buffer32(ptop->data.code | 0x80000000); // 表侧表示
+                }
+            }
+        }
+        core.units.pop_front();                   // 移除当前处理单元
+    }
+    return pduel->buffer_size();                  // 返回缓冲区大小
+}
+
 	case PROCESSOR_REMOVE_OVERLAY: {
 		if(remove_overlay_card(it->step, it->arg3, (card*)(it->ptarget), it->arg1 >> 16,
 		                       (it->arg1 >> 8) & 0xff, it->arg1 & 0xff, it->arg2 & 0xffff, it->arg2 >> 16)) {

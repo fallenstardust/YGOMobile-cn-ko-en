@@ -42,101 +42,205 @@ std::vector<HostPacket> DuelClient::hosts;
 std::set<std::pair<unsigned int, unsigned short>> DuelClient::remotes;
 event* DuelClient::resp_event = 0;
 
+/**
+ * @brief 启动客户端连接到指定的服务器
+ * @param ip 服务器IP地址（网络字节序）
+ * @param port 服务器端口号（主机字节序）
+ * @param create_game 是否创建游戏房间
+ * @return 连接成功返回true，失败返回false
+ */
 bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_game) {
+	// 检查当前是否已经处于连接状态
 	if(connect_state)
 		return false;
 	sockaddr_in sin;
+	// 创建libevent事件基础结构
 	client_base = event_base_new();
 	if(!client_base)
 		return false;
+	// 初始化socket地址结构
 	std::memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = htonl(ip);
 	sin.sin_port = htons(port);
+	// 创建buffered event用于异步socket操作
 	client_bev = bufferevent_socket_new(client_base, -1, BEV_OPT_CLOSE_ON_FREE);
+	// 设置事件回调函数
 	bufferevent_setcb(client_bev, ClientRead, nullptr, ClientEvent, (void*)create_game);
+	// 尝试连接到服务器
 	if (bufferevent_socket_connect(client_bev, (sockaddr*)&sin, sizeof(sin)) < 0) {
+		// 连接失败，清理资源
 		bufferevent_free(client_bev);
 		event_base_free(client_base);
 		client_bev = 0;
 		client_base = 0;
 		return false;
 	}
+	// 设置连接状态为已连接
 	connect_state = 0x1;
+	// 初始化随机数种子
 	rnd.seed(std::random_device()());
+	// 如果不是创建游戏，则设置连接超时事件
 	if(!create_game) {
 		timeval timeout = {5, 0};
 		event* timeout_event = event_new(client_base, 0, EV_TIMEOUT, ConnectTimeout, 0);
 		event_add(timeout_event, &timeout);
 	}
+	// 启动客户端处理线程
 	std::thread(ClientThread).detach();
 	return true;
 }
+/**
+ * @brief 处理客户端连接超时事件的回调函数
+ *
+ * 当客户端连接服务器超时时，该函数会被libevent库调用。主要功能包括：
+ * 1. 检查当前连接状态，避免重复处理
+ * 2. 恢复界面上相关按钮的可用状态
+ * 3. 根据是否为机器人模式显示相应的窗口
+ * 4. 播放提示音效并显示连接超时的错误信息
+ * 5. 退出事件循环
+ *
+ * @param fd 触发事件的套接字文件描述符
+ * @param events 发生的事件类型
+ * @param arg 传递给回调函数的用户数据指针
+ */
 void DuelClient::ConnectTimeout(evutil_socket_t fd, short events, void* arg) {
+	// 如果连接状态为0x7（已完成状态），则直接返回不进行任何处理
 	if(connect_state == 0x7)
 		return;
+
+	// 检查客户端是否正在关闭过程中
 	if(!is_closing) {
+		// 恢复主界面所有操作按钮的可用状态
 		mainGame->btnCreateHost->setEnabled(true);
 		mainGame->btnJoinHost->setEnabled(true);
 		mainGame->btnJoinCancel->setEnabled(true);
 		mainGame->btnStartBot->setEnabled(true);
 		mainGame->btnBotCancel->setEnabled(true);
+
+		// 加锁保护GUI操作
 		mainGame->gMutex.lock();
+
+		// 根据机器人模式决定显示单人游戏窗口还是局域网窗口
 		if(bot_mode && !mainGame->wSinglePlay->isVisible())
 			mainGame->ShowElement(mainGame->wSinglePlay);
 		else if(!bot_mode && !mainGame->wLanWindow->isVisible())
 			mainGame->ShowElement(mainGame->wLanWindow);
+
+		// 播放连接失败的提示音效
 		mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
+		// 显示连接超时的系统提示信息
 		mainGame->addMessageBox(L"", dataManager.GetSysString(1400));
+
+		// 解锁GUI操作
 		mainGame->gMutex.unlock();
 	}
+
+	// 退出libevent事件循环
 	event_base_loopbreak(client_base);
 }
+/**
+ * @brief 停止客户端连接
+ * @param is_exiting 是否正在退出程序
+ *
+ * 该函数用于停止客户端的网络连接。当连接状态不为0x7时直接返回，
+ * 否则设置关闭标志并中断事件循环。
+ */
 void DuelClient::StopClient(bool is_exiting) {
+	// 检查连接状态，如果不是0x7状态则直接返回
 	if(connect_state != 0x7)
 		return;
-	is_closing = is_exiting;
-	if(!is_closing) {
 
-	}
+	// 设置关闭标志
+	is_closing = is_exiting;
+
+	// 中断客户端事件循环
 	event_base_loopbreak(client_base);
 }
+/**
+ * @brief 处理客户端网络数据读取的回调函数
+ *
+ * 该函数作为libevent的bufferevent读回调函数，负责从输入缓冲区中读取网络数据包，
+ * 解析数据包长度，并将完整的数据包传递给处理函数进行处理。
+ *
+ * @param bev 指向bufferevent结构的指针，表示当前的网络连接事件
+ * @param ctx 用户自定义上下文context指针，此处未使用
+ *
+ * @note 该函数假设数据包格式为：2字节长度字段 + 数据内容
+ * @note 数据包长度字段不包含自身长度(2字节)
+ */
 void DuelClient::ClientRead(bufferevent* bev, void* ctx) {
+	// 获取输入缓冲区并检查是否有足够数据
 	evbuffer* input = bufferevent_get_input(bev);
 	int len = evbuffer_get_length(input);
 	if (len < 2)
 		return;
+
+	// 分配临时缓冲区用于存储读取的数据包
 	unsigned char* duel_client_read = new unsigned char[SIZE_NETWORK_BUFFER];
 	uint16_t packet_len = 0;
+
+	// 循环处理输入缓冲区中的完整数据包
 	while (len >= 2) {
+		// 读取数据包长度字段（不移除数据）
 		evbuffer_copyout(input, &packet_len, sizeof packet_len);
+
+		// 检查缓冲区中是否有完整的数据包
 		if (len < packet_len + 2)
 			break;
+
+		// 从缓冲区中移除并读取完整数据包
 		int read_len = evbuffer_remove(input, duel_client_read, packet_len + 2);
+
+		// 处理有效的数据包内容（排除长度字段）
 		if (read_len > 2)
 			HandleSTOCPacketLan(&duel_client_read[2], read_len - 2);
+
+		// 更新剩余数据长度
 		len -= packet_len + 2;
 	}
+
+	// 释放临时缓冲区
 	delete[] duel_client_read;
 }
+/**
+ * @brief 处理客户端网络事件的回调函数。
+ *
+ * 当 libevent 的 bufferevent 发生特定事件（如连接成功、断开或错误）时，
+ * 此函数会被调用。根据事件类型执行不同的逻辑处理：
+ * - 若是连接成功的事件，则发送玩家信息及创建/加入房间请求；
+ * - 若是连接关闭或出错事件，则进行界面恢复与提示操作。
+ *
+ * @param bev 指向触发事件的 bufferevent 对象。
+ * @param events 表示发生的事件标志组合（例如：BEV_EVENT_CONNECTED 等）。
+ * @param ctx 上下文context指针，用于传递额外数据（此处表示是否创建游戏）。
+ */
 void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 	if (events & BEV_EVENT_CONNECTED) {
+		// 判断当前是否需要创建新游戏
 		bool create_game = (intptr_t)ctx;
-		if(!create_game) {
+
+		// 如果不是创建游戏而是加入已有房间，则发送主机名等地址相关信息到服务器
+		if (!create_game) {
 			uint16_t hostname_buf[LEN_HOSTNAME];
 			auto hostname_len = BufferIO::CopyCharArray(mainGame->ebJoinHost->getText(), hostname_buf);
 			auto hostname_msglen = (hostname_len + 1) * sizeof(uint16_t);
 			char buf[LEN_HOSTNAME * sizeof(uint16_t) + sizeof(uint32_t)];
-			memset(buf, 0, sizeof(uint32_t)); // real_ip
+			memset(buf, 0, sizeof(uint32_t)); // real_ip 字段初始化为0
 			memcpy(buf + sizeof(uint32_t), hostname_buf, hostname_msglen);
 			SendBufferToServer(CTOS_EXTERNAL_ADDRESS, buf, hostname_msglen + sizeof(uint32_t));
 		}
+
+		// 发送玩家昵称给服务器
 		CTOS_PlayerInfo cspi;
 		BufferIO::CopyCharArray(mainGame->ebNickName->getText(), cspi.name);
 		SendPacketToServer(CTOS_PLAYER_INFO, cspi);
-		if(create_game) {
+
+		// 根据是否创建游戏分别构造并发送对应的数据包
+		if (create_game) {
 			CTOS_CreateGame cscg;
-			if(bot_mode) {
+			if (bot_mode) {
+				// 设置机器人模式下的默认配置
 				BufferIO::CopyCharArray(L"Bot Game", cscg.name);
 				BufferIO::CopyCharArray(L"", cscg.pass);
 				cscg.info.rule = 5;
@@ -149,16 +253,16 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 				cscg.info.duel_rule = mainGame->cbBotRule->getSelected() + 3;
 				cscg.info.no_check_deck = mainGame->chkBotNoCheckDeck->isChecked();
 				cscg.info.no_shuffle_deck = mainGame->chkBotNoShuffleDeck->isChecked();
-			}
-			else {
+			} else {
+				// 获取用户输入的游戏设置，并填充至结构体中
 				BufferIO::CopyCharArray(mainGame->ebServerName->getText(), cscg.name);
 				BufferIO::CopyCharArray(mainGame->ebServerPass->getText(), cscg.pass);
 				cscg.info.rule = mainGame->cbRule->getSelected();
 				cscg.info.mode = mainGame->cbMatchMode->getSelected();
-				cscg.info.start_hand = std::wcstol(mainGame->ebStartHand->getText(),nullptr,10);
-				cscg.info.start_lp = std::wcstol(mainGame->ebStartLP->getText(),nullptr,10);
-				cscg.info.draw_count = std::wcstol(mainGame->ebDrawCount->getText(),nullptr,10);
-				cscg.info.time_limit = std::wcstol(mainGame->ebTimeLimit->getText(),nullptr,10);
+				cscg.info.start_hand = std::wcstol(mainGame->ebStartHand->getText(), nullptr, 10);
+				cscg.info.start_lp = std::wcstol(mainGame->ebStartLP->getText(), nullptr, 10);
+				cscg.info.draw_count = std::wcstol(mainGame->ebDrawCount->getText(), nullptr, 10);
+				cscg.info.time_limit = std::wcstol(mainGame->ebTimeLimit->getText(), nullptr, 10);
 				cscg.info.lflist = mainGame->cbHostLFlist->getItemData(mainGame->cbHostLFlist->getSelected());
 				cscg.info.duel_rule = mainGame->cbDuelRule->getSelected() + 1;
 				cscg.info.no_check_deck = mainGame->chkNoCheckDeck->isChecked();
@@ -166,33 +270,42 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 			}
 			SendPacketToServer(CTOS_CREATE_GAME, cscg);
 		} else {
+			// 构造并发送加入房间的信息
 			CTOS_JoinGame csjg;
 			csjg.version = PRO_VERSION;
 			csjg.gameid = 0;
 			BufferIO::CopyCharArray(mainGame->ebJoinPass->getText(), csjg.pass);
 			SendPacketToServer(CTOS_JOIN_GAME, csjg);
 		}
+
+		// 启用读取事件监听，并更新连接状态标记
 		bufferevent_enable(bev, EV_READ);
 		connect_state |= 0x2;
 	} else if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+		// 禁用该 bufferevent 的读取功能
 		bufferevent_disable(bev, EV_READ);
-		if(!is_closing) {
-			if(connect_state == 0x1) {
+
+		// 在未主动关闭的情况下根据不同连接阶段显示不同提示信息并重置界面
+		if (!is_closing) {
+			if (connect_state == 0x1) {
+				// 连接尚未完成即中断的情况
 				mainGame->btnCreateHost->setEnabled(true);
 				mainGame->btnJoinHost->setEnabled(true);
 				mainGame->btnJoinCancel->setEnabled(true);
 				mainGame->btnStartBot->setEnabled(true);
 				mainGame->btnBotCancel->setEnabled(true);
 				mainGame->gMutex.lock();
-				if(bot_mode && !mainGame->wSinglePlay->isVisible())
+				if (bot_mode && !mainGame->wSinglePlay->isVisible())
 					mainGame->ShowElement(mainGame->wSinglePlay);
-				else if(!bot_mode && !mainGame->wLanWindow->isVisible())
+				else if (!bot_mode && !mainGame->wLanWindow->isVisible())
 					mainGame->ShowElement(mainGame->wLanWindow);
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 				mainGame->addMessageBox(L"", dataManager.GetSysString(1400));
 				mainGame->gMutex.unlock();
-			} else if(connect_state == 0x7) {
-				if(!mainGame->dInfo.isStarted && !mainGame->is_building) {
+			} else if (connect_state == 0x7) {
+				// 已进入准备阶段后连接中断的情况
+				if (!mainGame->dInfo.isStarted && !mainGame->is_building) {
+					// 尚未开始决斗且不在卡组编辑器中的情况
 					mainGame->btnCreateHost->setEnabled(true);
 					mainGame->btnJoinHost->setEnabled(true);
 					mainGame->btnJoinCancel->setEnabled(true);
@@ -200,17 +313,19 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 					mainGame->btnBotCancel->setEnabled(true);
 					mainGame->gMutex.lock();
 					mainGame->HideElement(mainGame->wHostPrepare);
-					if(bot_mode)
+					if (bot_mode)
 						mainGame->ShowElement(mainGame->wSinglePlay);
 					else
 						mainGame->ShowElement(mainGame->wLanWindow);
 					mainGame->wChat->setVisible(false);
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-					if(events & BEV_EVENT_EOF)
+					if (events & BEV_EVENT_EOF)
 						mainGame->addMessageBox(L"", dataManager.GetSysString(1401));
-					else mainGame->addMessageBox(L"", dataManager.GetSysString(1402));
+					else
+						mainGame->addMessageBox(L"", dataManager.GetSysString(1402));
 					mainGame->gMutex.unlock();
 				} else {
+					// 决斗正在进行或在卡组构建过程中断开连接的情况
 					mainGame->gMutex.lock();
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 					mainGame->addMessageBox(L"", dataManager.GetSysString(1502));
@@ -221,9 +336,13 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 					mainGame->btnBotCancel->setEnabled(true);
 					mainGame->stTip->setVisible(false);
 					mainGame->gMutex.unlock();
+
+					// 触发关闭流程并等待其完成
 					mainGame->closeDoneSignal.Reset();
 					mainGame->closeSignal.Set();
 					mainGame->closeDoneSignal.Wait();
+
+					// 清除相关状态变量并重新加载主菜单界面
 					mainGame->gMutex.lock();
 					mainGame->dInfo.isStarted = false;
 					mainGame->dInfo.isInDuel = false;
@@ -231,7 +350,7 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 					mainGame->is_building = false;
 					mainGame->ResizeChatInputWindow();
 					mainGame->device->setEventReceiver(&mainGame->menuHandler);
-					if(bot_mode)
+					if (bot_mode)
 						mainGame->ShowElement(mainGame->wSinglePlay);
 					else
 						mainGame->ShowElement(mainGame->wLanWindow);
@@ -239,18 +358,35 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 				}
 			}
 		}
+
+		// 停止事件循环以结束客户端通信过程
 		event_base_loopexit(client_base, 0);
 	}
 }
+/**
+ * @brief 客户端线程主函数，处理网络事件循环
+ *
+ * 该函数负责启动事件循环，处理客户端的网络通信，
+ * 并在退出时清理相关的资源。
+ *
+ * @return int 返回0表示正常退出
+ */
 int DuelClient::ClientThread() {
+	// 启动事件循环，处理网络事件
 	event_base_dispatch(client_base);
+
+	// 清理缓冲事件和事件基础结构
 	bufferevent_free(client_bev);
 	event_base_free(client_base);
+
+	// 重置相关指针和状态
 	client_bev = 0;
 	client_base = 0;
 	connect_state = 0;
+
 	return 0;
 }
+
 void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 	unsigned char* pdata = data;
 	unsigned char pktType = BufferIO::Read<uint8_t>(pdata);
@@ -268,6 +404,7 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		std::memcpy(&packet, pdata, sizeof packet);
 		const auto* pkt = &packet;
 		switch(pkt->msg) {
+        // 加入房间时候出错时，显示各种错误消息
 		case ERRMSG_JOINERROR: {
 			mainGame->btnCreateHost->setEnabled(true);
 			mainGame->btnJoinHost->setEnabled(true);
@@ -457,44 +594,75 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		mainGame->gMutex.unlock();
 		break;
 	}
-	case STOC_JOIN_GAME: {
+	// 处理加入游戏房间的服务器响应消息
+    case STOC_JOIN_GAME: {
+		// 检查数据包长度是否足够，不足则返回
 		if (len < 1 + (int)sizeof(STOC_JoinGame))
 			return;
+		// 创建并复制数据包内容到结构体
 		STOC_JoinGame packet;
 		std::memcpy(&packet, pdata, sizeof packet);
+		// 获取数据包指针
 		const auto* pkt = &packet;
+		// 创建用于显示房间信息的字符串
 		std::wstring str;
+		/* 在决斗准备的窗口显示该房间的设置信息，一般结构如下：
+		 * 禁限卡表：
+		 * 卡片允许：
+		 * 决斗模式：
+		 * 每回合时间：
+		 * ==========
+		 * 初始基本分：
+		 * 初始手卡数：
+		 * 每回合抽卡：
+		 * *大师规则（3,2017）--目前不是默认大师规则2020才显示
+		 * *不检查卡组 --特殊设置才显示
+		 * *不洗切卡组 --特殊设置才显示
+		 * */
 		wchar_t msgbuf[256];
+		// 禁限卡表信息到房间信息文本
 		myswprintf(msgbuf, L"%ls%ls\n", dataManager.GetSysString(1226), deckManager.GetLFListName(pkt->info.lflist));
 		str.append(msgbuf);
+		// 卡片允许信息到房间信息文本
 		myswprintf(msgbuf, L"%ls%ls\n", dataManager.GetSysString(1225), dataManager.GetSysString(1481 + pkt->info.rule));
 		str.append(msgbuf);
+		// 决斗模式信息到房间信息文本
 		myswprintf(msgbuf, L"%ls%ls\n", dataManager.GetSysString(1227), dataManager.GetSysString(1244 + pkt->info.mode));
 		str.append(msgbuf);
+		// 如果设置了回合时间限制，就添加时限信息到房间信息文本
 		if(pkt->info.time_limit) {
 			myswprintf(msgbuf, L"%ls%d\n", dataManager.GetSysString(1237), pkt->info.time_limit);
 			str.append(msgbuf);
 		}
+		// 添加分隔线
 		str.append(L"==========\n");
+		// 初始基本分信息到显示字符串
 		myswprintf(msgbuf, L"%ls%d\n", dataManager.GetSysString(1231), pkt->info.start_lp);
 		str.append(msgbuf);
+		// 初始手卡数信息到显示字符串
 		myswprintf(msgbuf, L"%ls%d\n", dataManager.GetSysString(1232), pkt->info.start_hand);
 		str.append(msgbuf);
+		// 每回合抽卡数信息到显示字符串
 		myswprintf(msgbuf, L"%ls%d\n", dataManager.GetSysString(1233), pkt->info.draw_count);
 		str.append(msgbuf);
+		// 如果决斗规则不是默认规则，添加决斗规则信息（大师规则3，新大师规则2017，等）到显示字符串
 		if(pkt->info.duel_rule != DEFAULT_DUEL_RULE) {
 			myswprintf(msgbuf, L"*%ls\n", dataManager.GetSysString(1260 + pkt->info.duel_rule - 1));
 			str.append(msgbuf);
 		}
+		// 如果不检查卡组，添加 *不检查卡组 提示信息到显示字符串
 		if(pkt->info.no_check_deck) {
 			myswprintf(msgbuf, L"*%ls\n", dataManager.GetSysString(1229));
 			str.append(msgbuf);
 		}
+		// 如果不洗牌，添加*不洗切卡组 提示信息到显示字符串
 		if(pkt->info.no_shuffle_deck) {
 			myswprintf(msgbuf, L"*%ls\n", dataManager.GetSysString(1230));
 			str.append(msgbuf);
 		}
+		// 锁定图形界面互斥锁
 		mainGame->gMutex.lock();
+		// 根据游戏模式设置是否为TAG双打模式，并显示3楼和4楼玩家位置等相应界面元素
 		if(pkt->info.mode == 2) {
 			mainGame->dInfo.isTag = true;
 			mainGame->chkHostPrepReady[2]->setVisible(true);
@@ -508,33 +676,46 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 			mainGame->stHostPrepDuelist[2]->setVisible(false);
 			mainGame->stHostPrepDuelist[3]->setVisible(false);
 		}
+		// 重置准备状态和玩家信息显示
 		for(int i = 0; i < 4; ++i) {
 			mainGame->chkHostPrepReady[i]->setChecked(false);
 			mainGame->stHostPrepDuelist[i]->setText(L"");
 			mainGame->stHostPrepDuelist[i]->setToolTipText(L"");
 		}
+		// 显示准备按钮，隐藏取消准备按钮
 		mainGame->btnHostPrepReady->setVisible(true);
 		mainGame->btnHostPrepNotReady->setVisible(false);
+		// 设置游戏时间限制和时间显示
 		mainGame->dInfo.time_limit = pkt->info.time_limit;
 		mainGame->dInfo.time_left[0] = 0;
 		mainGame->dInfo.time_left[1] = 0;
 		mainGame->RefreshTimeDisplay();
+		// 设置卡组编辑DeckBuilder的当前禁卡表过滤列表
 		mainGame->deckBuilder.filterList = deckManager.GetLFList(pkt->info.lflist);
 		if(mainGame->deckBuilder.filterList == nullptr)
 			mainGame->deckBuilder.filterList = &deckManager._lfList[0];
+		// 清空观战者显示
 		mainGame->stHostPrepOB->setText(L"");
+		// 设置房间规则信息显示
 		mainGame->SetStaticText(mainGame->stHostPrepRule, 180 * mainGame->xScale, mainGame->guiFont, str.c_str());
+		// 刷新卡组分类和卡组选择下拉框（注意：此处界面布局已经被隐藏，但还是初始化方便卡组选择按钮弹出的卡组分类管理窗口能调用初始化后的值）
 		mainGame->RefreshCategoryDeck(mainGame->cbCategorySelect, mainGame->cbDeckSelect);
+		// 启用分类和卡组选择下拉框以及卡组选择按钮（注意：此处界面布局已经被隐藏，但还是初始化方便卡组选择按钮弹出的卡组分类管理窗口能调用初始化后的值）
 		mainGame->cbCategorySelect->setEnabled(true);
 		mainGame->cbDeckSelect->setEnabled(true);
 		mainGame->btnHostDeckSelect->setEnabled(true);
+		// 隐藏创建房间、局域网和单人游戏窗口，之后只显示房间准备界面
 		mainGame->HideElement(mainGame->wCreateHost);
 		mainGame->HideElement(mainGame->wLanWindow);
 		mainGame->HideElement(mainGame->wSinglePlay);
+		// 显示房间准备界面
 		mainGame->ShowElement(mainGame->wHostPrepare);
+		// 调整聊天输入窗口大小（在房间准备界面，还是显示在默认底部位置）
 		mainGame->ResizeChatInputWindow();
+		// 保存当前选择的卡组分类和卡组（注意：此处界面布局已经被隐藏，但还是初始化方便卡组选择按钮弹出的卡组分类管理窗口能调用初始化后的值）
 		mainGame->deckBuilder.prev_category = mainGame->cbCategorySelect->getSelected();
 		mainGame->deckBuilder.prev_deck = mainGame->cbDeckSelect->getSelected();
+        // 构造当前选择的卡组分类和卡组名称显示文本在按钮上
         wchar_t cate[256];
         wchar_t cate_deck[256];
         myswprintf(cate, L"%ls%ls", (mainGame->cbCategorySelect->getSelected())==1 ? L"" : mainGame->cbCategorySelect->getItem(mainGame->cbCategorySelect->getSelected()), (mainGame->cbCategorySelect->getSelected())==1 ? L"" : L"|");
@@ -543,14 +724,21 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		} else {
 			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
 		}
+        // 构造文本后设置到卡组选择按钮显示文本
         mainGame->btnHostDeckSelect->setText(cate_deck);
+		// 根据设置决定是否显示聊天窗口
 		if(!mainGame->chkIgnore1->isChecked())
 			mainGame->wChat->setVisible(true);
+		// 解锁图形界面互斥锁
 		mainGame->gMutex.unlock();
+		// 设置决斗规则和初始LP
 		mainGame->dInfo.duel_rule = pkt->info.duel_rule;
 		mainGame->dInfo.start_lp = pkt->info.start_lp;
+		// 重置观战者计数
 		watching = 0;
+		// 更新连接状态标志
 		connect_state |= 0x4;
+		// 跳出switch语句
 		break;
 	}
 	case STOC_TYPE_CHANGE: {
@@ -630,84 +818,144 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		mainGame->dInfo.player_type = selftype;
 		break;
 	}
-	case STOC_DUEL_START: {
+	// 处理决斗开始消息
+    case STOC_DUEL_START: {
+		// 隐藏房间准备界面和卡组管理界面
 		mainGame->HideElement(mainGame->wHostPrepare);
         mainGame->HideElement(mainGame->wDeckManage);
+		// 等待11帧，确保界面切换完成
 		mainGame->WaitFrameSignal(11);
+		// 锁定图形界面互斥锁
 		mainGame->gMutex.lock();
+		// 清空游戏场地
 		mainGame->dField.Clear();
+		// 设置决斗状态为已开始
 		mainGame->dInfo.isStarted = true;
+		// 设置决斗状态为未结束
 		mainGame->dInfo.isFinished = false;
+		// 初始化双方LP为0
 		mainGame->dInfo.lp[0] = 0;
 		mainGame->dInfo.lp[1] = 0;
+		// 清空LP显示字符串
 		mainGame->dInfo.strLP[0][0] = 0;
 		mainGame->dInfo.strLP[1][0] = 0;
+		// 初始化回合数为0
 		mainGame->dInfo.turn = 0;
+		// 初始化双方剩余时间
 		mainGame->dInfo.time_left[0] = 0;
 		mainGame->dInfo.time_left[1] = 0;
+		// 刷新时间显示
 		mainGame->RefreshTimeDisplay();
+		// 设置当前计时玩家为2(无)
 		mainGame->dInfo.time_player = 2;
+		// 设置回放交换状态为false
 		mainGame->dInfo.isReplaySwapped = false;
+		// 设置不在卡组构建状态
 		mainGame->is_building = false;
+		// 显示卡牌图像窗口
 		mainGame->wCardImg->setVisible(true);
+		// 显示信息窗口
 		mainGame->wInfos->setVisible(true);
+		// 显示调色板窗口
 		mainGame->wPallet->setVisible(true);
+		// 显示阶段窗口
 		mainGame->wPhase->setVisible(true);
+		// 隐藏侧边确定按钮
 		mainGame->btnSideOK->setVisible(false);
+		// 隐藏侧边洗牌按钮
 		mainGame->btnSideShuffle->setVisible(false);
+		// 隐藏侧边排序按钮
 		mainGame->btnSideSort->setVisible(false);
+		// 隐藏侧边重新加载按钮
 		mainGame->btnSideReload->setVisible(false);
+		// 隐藏阶段状态按钮
 		mainGame->btnPhaseStatus->setVisible(false);
+		// 隐藏战斗阶段按钮
 		mainGame->btnBP->setVisible(false);
+		// 隐藏主要阶段2按钮
 		mainGame->btnM2->setVisible(false);
+		// 隐藏结束阶段按钮
 		mainGame->btnEP->setVisible(false);
+		// 隐藏洗牌按钮
 		mainGame->btnShuffle->setVisible(false);
+		// 调整聊天输入窗口大小
 		mainGame->ResizeChatInputWindow();
+		// 根据设置决定是否显示聊天窗口
 		if(!mainGame->chkIgnore1->isChecked())
 			mainGame->wChat->setVisible(true);
+		// 根据默认连锁显示设置配置连锁相关变量
 		if(mainGame->chkDefaultShowChain->isChecked()) {
 			mainGame->always_chain = true;
 			mainGame->ignore_chain = false;
 			mainGame->chain_when_avail = false;
 		}
+		// 设置事件接收器为决斗场地
 		mainGame->device->setEventReceiver(&mainGame->dField);
+		// 非Tag模式处理
 		if(!mainGame->dInfo.isTag) {
+			// 如果是观战者(位置大于1)
 			if(selftype > 1) {
+				// 设置玩家类型为观战者
 				mainGame->dInfo.player_type = NETPLAYER_TYPE_OBSERVER;
+				// 设置离开游戏按钮文本为"观战"
 				mainGame->btnLeaveGame->setText(dataManager.GetSysString(1350));
+				// 显示离开游戏按钮
 				mainGame->btnLeaveGame->setVisible(true);
+				// 显示观战者交换按钮
 				mainGame->btnSpectatorSwap->setVisible(true);
 			}
+			// 根据玩家位置设置主机名和客机名
 			if(selftype != 1) {
+				// 复制第0位玩家的昵称作为主机名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[0]->getToolTipText().c_str(), mainGame->dInfo.hostname);
+				// 复制第1位玩家的昵称作为客机名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[1]->getToolTipText().c_str(), mainGame->dInfo.clientname);
 			} else {
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[1]->getToolTipText().c_str(), mainGame->dInfo.hostname);
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[0]->getToolTipText().c_str(), mainGame->dInfo.clientname);
 			}
 		} else {
+			// Tag模式处理
+			// 如果是观战者(位置大于3)
 			if(selftype > 3) {
+				// 设置玩家类型为观战者
 				mainGame->dInfo.player_type = NETPLAYER_TYPE_OBSERVER;
+				// 设置离开游戏按钮文本为"观战"
 				mainGame->btnLeaveGame->setText(dataManager.GetSysString(1350));
+				// 显示离开游戏按钮
 				mainGame->btnLeaveGame->setVisible(true);
+				// 显示观战者交换按钮
 				mainGame->btnSpectatorSwap->setVisible(true);
 			}
+			// 根据玩家位置设置主机名、主机标签名、客机名和客机标签名
 			if(selftype > 1 && selftype < 4) {
+				// 复制第2位玩家的工具提示文本作为主机名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[2]->getToolTipText().c_str(), mainGame->dInfo.hostname);
+				// 复制第3位玩家的工具提示文本作为主机标签名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[3]->getToolTipText().c_str(), mainGame->dInfo.hostname_tag);
+				// 复制第0位玩家的工具提示文本作为客机名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[0]->getToolTipText().c_str(), mainGame->dInfo.clientname);
+				// 复制第1位玩家的工具提示文本作为客机标签名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[1]->getToolTipText().c_str(), mainGame->dInfo.clientname_tag);
 			} else {
+				// 复制第0位玩家的工具提示文本作为主机名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[0]->getToolTipText().c_str(), mainGame->dInfo.hostname);
+				// 复制第1位玩家的工具提示文本作为主机标签名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[1]->getToolTipText().c_str(), mainGame->dInfo.hostname_tag);
+				// 复制第2位玩家的工具提示文本作为客机名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[2]->getToolTipText().c_str(), mainGame->dInfo.clientname);
+				// 复制第3位玩家的工具提示文本作为客机标签名
 				BufferIO::CopyWideString(mainGame->stHostPrepDuelist[3]->getToolTipText().c_str(), mainGame->dInfo.clientname_tag);
 			}
+			// 初始化Tag玩家状态
 			mainGame->dInfo.tag_player[0] = false;
 			mainGame->dInfo.tag_player[1] = false;
 		}
+		// 解锁图形界面互斥锁
 		mainGame->gMutex.unlock();
+		// 重置match_kill
 		match_kill = 0;
+		// 跳出switch语句
 		break;
 	}
 	case STOC_DUEL_END: {
@@ -3807,29 +4055,45 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		}
 		return true;
 	}
-	case MSG_PLAYER_HINT: {
+	// 处理玩家提示消息，用于更新玩家的状态提示信息
+    case MSG_PLAYER_HINT: {
+		// 读取目标玩家编号并转换为本地玩家编号
 		int player = mainGame->LocalPlayer(BufferIO::Read<uint8_t>(pbuf));
+		// 读取提示类型（添加或移除提示）
 		int chtype = BufferIO::Read<uint8_t>(pbuf);
+		// 读取提示值（具体的状态值）
 		int value = BufferIO::Read<int32_t>(pbuf);
+		// 获取目标玩家的描述提示映射表引用
 		auto& player_desc_hints = mainGame->dField.player_desc_hints[player];
+		// 特殊处理：当值为CARD_QUESTION且是本地玩家0时，控制墓地查看权限
 		if(value == CARD_QUESTION && player == 0) {
+			// 如果是添加提示，则禁止查看墓地
 			if(chtype == PHINT_DESC_ADD) {
 				mainGame->dField.cant_check_grave = true;
+			// 如果是移除提示，则允许查看墓地
 			} else if(chtype == PHINT_DESC_REMOVE) {
 				mainGame->dField.cant_check_grave = false;
 			}
 		}
+		// 其他情况的通用处理
 		else if(chtype == PHINT_DESC_ADD) {
+			// 增加该提示值的计数
 			player_desc_hints[value]++;
 		} else if(chtype == PHINT_DESC_REMOVE) {
+			// 减少该提示值的计数
 			player_desc_hints[value]--;
+			// 如果计数归零，则从映射表中移除该提示值
 			if(player_desc_hints[value] == 0)
 				player_desc_hints.erase(value);
 		}
+		// 消息处理完成，返回true
 		return true;
 	}
-	case MSG_MATCH_KILL: {
+    // 处理胜利龙等比赛胜利消息，当胜利龙或者WCS奖品卡拥有这种效果且被指定为比赛胜利条件时触发
+    case MSG_MATCH_KILL: {
+		// 读取指定的卡片密码，存储到match_kill变量中作为当前比赛的胜利条件
 		match_kill = BufferIO::Read<int32_t>(pbuf);
+		// 消息处理完成，返回true表示处理成功
 		return true;
 	}
 	case MSG_TAG_SWAP: {
@@ -3946,25 +4210,38 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		mainGame->dField.RefreshCardCountDisplay();
 		break;
 	}
-	case MSG_RELOAD_FIELD: {
+	// 处理重新加载场地消息，用于同步游戏场地状态
+    case MSG_RELOAD_FIELD: {
+		// 如果不是回放模式或不处于跳过状态，则锁定图形界面互斥锁
 		if(!mainGame->dInfo.isReplay || !mainGame->dInfo.isReplaySkiping) {
 			mainGame->gMutex.lock();
 		}
+		// 清空当前场地所有卡片信息
 		mainGame->dField.Clear();
+		// 读取当前决斗规则
 		mainGame->dInfo.duel_rule = BufferIO::Read<uint8_t>(pbuf);
 		int val = 0;
+		// 循环处理两名玩家的场地信息
 		for(int i = 0; i < 2; ++i) {
+			// 获取本地玩家编号
 			int p = mainGame->LocalPlayer(i);
+			// 读取玩家生命值并更新显示字符串
 			mainGame->dInfo.lp[p] = BufferIO::Read<int32_t>(pbuf);
 			myswprintf(mainGame->dInfo.strLP[p], L"%d", mainGame->dInfo.lp[p]);
+			// 处理怪兽区域(主怪兽区)的卡片
 			for(int seq = 0; seq < 7; ++seq) {
+				// 读取该位置是否有卡片
 				val = BufferIO::Read<uint8_t>(pbuf);
 				if(val) {
+					// 创建新卡片对象并添加到场地
 					ClientCard* ccard = new ClientCard;
 					mainGame->dField.AddCard(ccard, p, LOCATION_MZONE, seq);
+					// 读取卡片位置信息(正反面、攻击/防守状态等)
 					ccard->position = BufferIO::Read<uint8_t>(pbuf);
+					// 读取叠放卡片数量
 					val = BufferIO::Read<uint8_t>(pbuf);
 					if(val) {
+						// 为每张叠放卡片创建对象并建立叠放关系
 						for(int xyz = 0; xyz < val; ++xyz) {
 							ClientCard* xcard = new ClientCard;
 							ccard->overlayed.push_back(xcard);
@@ -3978,63 +4255,89 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 					}
 				}
 			}
+			// 处理魔法陷阱区域的卡片
 			for(int seq = 0; seq < 8; ++seq) {
+				// 读取该位置是否有卡片
 				val = BufferIO::Read<uint8_t>(pbuf);
 				if(val) {
+					// 创建新卡片对象并添加到场地
 					ClientCard* ccard = new ClientCard;
 					mainGame->dField.AddCard(ccard, p, LOCATION_SZONE, seq);
+					// 读取卡片位置信息
 					ccard->position = BufferIO::Read<uint8_t>(pbuf);
 				}
 			}
+			// 处理卡组中的卡片
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
 				ClientCard* ccard = new ClientCard;
 				mainGame->dField.AddCard(ccard, p, LOCATION_DECK, seq);
 			}
+			// 处理手牌
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
 				ClientCard* ccard = new ClientCard;
 				mainGame->dField.AddCard(ccard, p, LOCATION_HAND, seq);
 			}
+			// 处理墓地中的卡片
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
 				ClientCard* ccard = new ClientCard;
 				mainGame->dField.AddCard(ccard, p, LOCATION_GRAVE, seq);
 			}
+			// 处理除外状态的卡片
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
 				ClientCard* ccard = new ClientCard;
 				mainGame->dField.AddCard(ccard, p, LOCATION_REMOVED, seq);
 			}
+			// 处理额外卡组中的卡片
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
 				ClientCard* ccard = new ClientCard;
 				mainGame->dField.AddCard(ccard, p, LOCATION_EXTRA, seq);
 			}
+			// 读取额外卡组中灵摆卡片的数量
 			val = BufferIO::Read<uint8_t>(pbuf);
 			mainGame->dField.extra_p_count[p] = val;
 		}
+		// 刷新所有卡片的显示状态
 		mainGame->dField.RefreshAllCards();
+		// 读取连锁信息数量
 		val = BufferIO::Read<uint8_t>(pbuf); //chains
+		// 处理所有连锁信息
 		for(int i = 0; i < val; ++i) {
+			// 读取连锁卡片的密码
 			unsigned int code = BufferIO::Read<int32_t>(pbuf);
+			// 读取发动卡片的控制者
 			int pcc = mainGame->LocalPlayer(BufferIO::Read<uint8_t>(pbuf));
+			// 读取发动卡片的位置
 			unsigned int pcl = BufferIO::Read<uint8_t>(pbuf);
+			// 读取发动卡片的序列号
 			int pcs = BufferIO::Read<uint8_t>(pbuf);
+			// 读取子序列号(用于叠放卡片)
 			int subs = BufferIO::Read<uint8_t>(pbuf);
+			// 读取处理效果的控制者
 			int cc = mainGame->LocalPlayer(BufferIO::Read<uint8_t>(pbuf));
+			// 读取处理效果的位置
 			unsigned int cl = BufferIO::Read<uint8_t>(pbuf);
+			// 读取处理效果的序列号
 			int cs = BufferIO::Read<uint8_t>(pbuf);
+			// 读取效果描述
 			int desc = BufferIO::Read<int32_t>(pbuf);
+			// 获取发动效果的卡片对象
 			ClientCard* pcard = mainGame->dField.GetCard(pcc, pcl, pcs, subs);
+			// 设置当前连锁信息
 			mainGame->dField.current_chain.chain_card = pcard;
 			mainGame->dField.current_chain.code = code;
 			mainGame->dField.current_chain.desc = desc;
 			mainGame->dField.current_chain.controler = cc;
 			mainGame->dField.current_chain.location = cl;
 			mainGame->dField.current_chain.sequence = cs;
+			// 获取连锁效果的显示位置
 			mainGame->dField.GetChainLocation(cc, cl, cs, &mainGame->dField.current_chain.chain_pos);
 			mainGame->dField.current_chain.solved = false;
+			// 计算连锁编号，用于确定显示位置
 			int chc = 0;
 			for(auto chit = mainGame->dField.chains.begin(); chit != mainGame->dField.chains.end(); ++chit) {
 				if(cl == 0x10 || cl == 0x20) {
@@ -4045,16 +4348,20 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 						chc++;
 				}
 			}
+			// 根据（手卡和那以外）位置调整连锁效果的显示位置
 			if(cl == LOCATION_HAND)
 				mainGame->dField.current_chain.chain_pos.X += 0.35f;
 			else
 				mainGame->dField.current_chain.chain_pos.Y += chc * 0.25f;
+			// 将当前连锁添加到连锁列表中
 			mainGame->dField.chains.push_back(mainGame->dField.current_chain);
 		}
+		// 如果存在连锁，则更新事件字符串显示
 		if(val) {
 			myswprintf(event_string, dataManager.GetSysString(1609), dataManager.GetName(mainGame->dField.current_chain.code));
 			mainGame->dField.last_chain = true;
 		}
+		// 如果不是回放模式或不处于跳过状态，则解锁图形界面互斥锁
 		if(!mainGame->dInfo.isReplay || !mainGame->dInfo.isReplaySkiping) {
 			mainGame->gMutex.unlock();
 		}
@@ -4063,27 +4370,71 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 	}
 	return true;
 }
+/**
+ * @brief 切换场地状态
+ *
+ * 该函数用于标记当前正在进行场地切换操作，
+ * 通过设置is_swapping标志位来表示场地正在交换中。
+ *
+ * @note 该函数不接受任何参数，无返回值
+ */
 void DuelClient::SwapField() {
 	is_swapping = true;
 }
+
+/**
+ * @brief 设置响应数据为32位整数
+ *
+ * 将传入的32位整数复制到响应缓冲区中，并设置响应数据长度
+ *
+ * @param respI 要设置的32位整数响应数据
+ */
 void DuelClient::SetResponseI(int32_t respI) {
+	// 将整数数据拷贝到响应缓冲区
 	std::memcpy(response_buf, &respI, sizeof respI);
+	// 设置响应数据长度为整数大小
 	response_len = sizeof respI;
 }
+
+/**
+ * @brief 设置客户端的响应数据缓冲区
+ * @param respB 指向响应数据的指针
+ * @param len 响应数据的长度
+ *
+ * 该函数将传入的响应数据复制到内部缓冲区中，
+ * 并更新响应数据的实际长度。
+ */
 void DuelClient::SetResponseB(void* respB, size_t len) {
+	// 限制复制长度不超过缓冲区最大容量
 	if (len > SIZE_RETURN_VALUE)
 		len = SIZE_RETURN_VALUE;
+
+	// 将响应数据复制到内部缓冲区
 	std::memcpy(response_buf, respB, len);
+
+	// 更新响应数据长度
 	response_len = len;
 }
+
+/**
+ * @brief 发送游戏响应消息到服务器或单机模式处理函数
+ *
+ * 根据当前游戏消息类型清理相应的界面状态，并将响应数据发送到服务器
+ * 或设置给单机模式处理。主要用于处理用户在各种选择界面的操作结果。
+ *
+ * @note 该函数无参数且无返回值
+ */
 void DuelClient::SendResponse() {
+	// 根据当前消息类型清理对应的界面元素和选择状态
 	switch(mainGame->dInfo.curMsg) {
+	// 处理战斗阶段命令选择消息
 	case MSG_SELECT_BATTLECMD: {
 		mainGame->dField.ClearCommandFlag();
 		mainGame->btnM2->setVisible(false);
 		mainGame->btnEP->setVisible(false);
 		break;
 	}
+	// 处理空闲阶段命令选择消息
 	case MSG_SELECT_IDLECMD: {
 		mainGame->dField.ClearCommandFlag();
 		mainGame->btnBP->setVisible(false);
@@ -4091,6 +4442,7 @@ void DuelClient::SendResponse() {
 		mainGame->btnShuffle->setVisible(false);
 		break;
 	}
+	// 处理各种卡片选择相关消息
 	case MSG_SELECT_CARD:
 	case MSG_SELECT_UNSELECT_CARD:
 	case MSG_SELECT_TRIBUTE:
@@ -4099,79 +4451,118 @@ void DuelClient::SendResponse() {
 		mainGame->dField.ClearSelect();
 		break;
 	}
+	// 处理连锁选择消息
 	case MSG_SELECT_CHAIN: {
 		mainGame->dField.ClearChainSelect();
 		break;
 	}
 	}
+
+	// 根据游戏模式将响应数据发送到相应的目标
 	if(mainGame->dInfo.isSingleMode) {
+		// 单机模式：设置响应数据并触发信号
 		SingleMode::SetResponse(response_buf, response_len);
 		mainGame->singleSignal.Set();
 	} else {
+		// 联机模式：重置计时器并将响应数据发送到服务器
 		mainGame->dInfo.time_player = 2;
 		SendBufferToServer(CTOS_RESPONSE, response_buf, response_len);
 	}
 }
+/**
+ * @brief 开始刷新局域网主机列表
+ *
+ * 此函数用于启动局域网内主机的发现过程。它会初始化网络套接字并广播一个请求，
+ * 等待其他主机响应以构建可用主机列表。
+ *
+ * 主要功能包括：
+ * - 检查是否正在刷新，防止重复调用
+ * - 清空旧的主机列表和相关状态
+ * - 创建事件循环用于监听响应
+ * - 绑定接收响应的UDP端口（7921）
+ * - 启动独立线程处理事件循环
+ * - 构造并向局域网广播主机请求（端口7920）
+ *
+ * @note 此函数不接受参数也不返回值，所有操作基于对象内部状态
+ */
 void DuelClient::BeginRefreshHost() {
+	// 防止重复刷新
 	if(is_refreshing)
 		return;
 	is_refreshing = true;
+
+	// 禁用刷新按钮并清空现有列表
 	mainGame->btnLanRefresh->setEnabled(false);
 	mainGame->lstHostList->clear();
 	remotes.clear();
 	hosts.clear();
+
+	// 创建事件基础结构用于异步I/O处理
 	event_base* broadev = event_base_new();
+
 #ifdef _IRR_ANDROID_PLATFORM_
-    //get local ip address in android style
-    int ipaddr = irr::android::getLocalAddr(mainGame->appMain);
-    if (ipaddr == -1) {
-        return;
-    }
+	// Android平台下获取本地IP地址
+	int ipaddr = irr::android::getLocalAddr(mainGame->appMain);
+	if (ipaddr == -1) {
+		return;
+	}
 #else
+	// 其他平台通过主机名解析本地地址
 	char hname[256];
 	gethostname(hname, 256);
 	hostent* host = gethostbyname(hname);
 	if(!host)
 		return;
 #endif
+
+	// 创建UDP套接字用于接收主机响应
 	SOCKET reply = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	sockaddr_in reply_addr;
 	std::memset(&reply_addr, 0, sizeof reply_addr);
 	reply_addr.sin_family = AF_INET;
-	reply_addr.sin_port = htons(7921);
-	reply_addr.sin_addr.s_addr = 0;
+	reply_addr.sin_port = htons(7921);         // 监听端口7921
+	reply_addr.sin_addr.s_addr = 0;            // 绑定到所有接口
 	if(bind(reply, (sockaddr*)&reply_addr, sizeof(reply_addr)) == SOCKET_ERROR) {
 		closesocket(reply);
 		return;
 	}
-	timeval timeout = {3, 0};
+
+	// 设置超时时间，并注册事件处理器
+	timeval timeout = {3, 0};  // 3秒超时
 	resp_event = event_new(broadev, reply, EV_TIMEOUT | EV_READ | EV_PERSIST, BroadcastReply, broadev);
 	event_add(resp_event, &timeout);
+
+	// 启动新线程运行事件循环
 	std::thread(RefreshThread, broadev).detach();
-	//send request
+
+	// 准备发送广播请求的数据包
 	SOCKADDR_IN local;
 	local.sin_family = AF_INET;
-	local.sin_port = htons(7922);
+	local.sin_port = htons(7922);              // 发送源端口7922
 	SOCKADDR_IN sockTo;
-	sockTo.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	sockTo.sin_addr.s_addr = htonl(INADDR_BROADCAST);  // 广播地址
 	sockTo.sin_family = AF_INET;
-	sockTo.sin_port = htons(7920);
+	sockTo.sin_port = htons(7920);             // 目标端口7920
+
 	HostRequest hReq;
 	hReq.identifier = NETWORK_CLIENT_ID;
+
 #ifdef _IRR_ANDROID_PLATFORM_
-    local.sin_addr.s_addr = ipaddr;
-    SOCKET sSend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (sSend == INVALID_SOCKET)
-        return;
-    int opt = TRUE;
-    setsockopt(sSend, SOL_SOCKET, SO_BROADCAST, (const char*) &opt, sizeof opt);
-    if (bind(sSend, (sockaddr*) &local, sizeof(sockaddr)) == SOCKET_ERROR) {
-        closesocket(sSend);
-        return;
-    }
-    sendto(sSend, (const char*) &hReq, sizeof(HostRequest), 0, (sockaddr*) &sockTo, sizeof(sockaddr));
-    closesocket(sSend);
+	// Android平台发送单次广播请求
+	local.sin_addr.s_addr = ipaddr;
+	SOCKET sSend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sSend == INVALID_SOCKET)
+		return;
+	int opt = TRUE;
+	setsockopt(sSend, SOL_SOCKET, SO_BROADCAST, (const char*) &opt, sizeof opt);
+	if (bind(sSend, (sockaddr*) &local, sizeof(sockaddr)) == SOCKET_ERROR) {
+		closesocket(sSend);
+		return;
+	}
+	sendto(sSend, (const char*) &hReq, sizeof(HostRequest), 0, (sockaddr*) &sockTo, sizeof(sockaddr));
+	closesocket(sSend);
 #else
+	// 其他平台遍历多个本地地址发送广播请求
 	for(int i = 0; i < 8; ++i) {
 		if(host->h_addr_list[i] == 0)
 			break;
@@ -4192,23 +4583,52 @@ void DuelClient::BeginRefreshHost() {
 	}
 #endif
 }
+
+/**
+ * @brief 刷新线程处理函数
+ * @param broadev 事件基础结构体指针，用于事件循环处理
+ * @return 返回0表示执行成功
+ *
+ * 该函数负责处理刷新线程的事件循环，包括事件分发、资源清理等操作
+ */
 int DuelClient::RefreshThread(event_base* broadev) {
+	// 启动事件循环，处理网络事件
 	event_base_dispatch(broadev);
+
+	// 获取事件关联的套接字描述符并关闭连接
 	evutil_socket_t fd;
 	event_get_assignment(resp_event, 0, &fd, 0, 0, 0);
 	evutil_closesocket(fd);
+
+	// 释放事件和事件基础结构体资源
 	event_free(resp_event);
 	event_base_free(broadev);
+
+	// 更新刷新状态标志
 	is_refreshing = false;
 	return 0;
 }
+
+/**
+ * @brief 广播回复处理函数，用于处理局域网中其他主机广播的回应。
+ *
+ * 当监听到网络事件（如超时或可读事件）时被调用。如果是超时事件，则关闭套接字并终止事件循环；
+ * 如果是可读事件，则接收来自远程主机的数据包，并根据协议规则解析、验证后更新本地主机列表。
+ *
+ * @param fd 触发事件的套接字描述符
+ * @param events 发生的事件类型（EV_TIMEOUT 或 EV_READ）
+ * @param arg 指向 event_base 的指针，用于控制事件循环
+ */
 void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
+	// 处理超时事件：关闭套接字并退出事件循环
 	if(events & EV_TIMEOUT) {
 		evutil_closesocket(fd);
 		event_base_loopbreak((event_base*)arg);
 		if(!is_closing)
 			mainGame->btnLanRefresh->setEnabled(true);
-	} else if(events & EV_READ) {
+	}
+	// 处理可读事件：接收并解析广播数据包
+	else if(events & EV_READ) {
 		sockaddr_in bc_addr;
 		socklen_t sz = sizeof(sockaddr_in);
 		char buf[256];
@@ -4216,17 +4636,24 @@ void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 		HostPacket packet;
 		std::memcpy(&packet, buf, sizeof packet);
 		HostPacket* pHP = &packet;
+
+		// 验证数据包合法性及版本兼容性
 		if(is_closing || pHP->identifier != NETWORK_SERVER_ID)
 			return;
 		if(pHP->version != PRO_VERSION)
 			return;
+
+		// 构造远程地址信息并检查是否已存在
 		unsigned int ipaddr = bc_addr.sin_addr.s_addr;
 		const auto remote = std::make_pair(ipaddr, pHP->port);
 		if(remotes.find(remote) == remotes.end()) {
+			// 添加新发现的主机到列表中
 			mainGame->gMutex.lock();
 			remotes.insert(remote);
 			pHP->ipaddr = ipaddr;
 			hosts.push_back(*pHP);
+
+			// 构建显示字符串并添加到界面列表中
 			std::wstring hoststr;
 			hoststr.append(L"[");
 			hoststr.append(deckManager.GetLFListName(pHP->host.lflist));
@@ -4235,18 +4662,26 @@ void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 			hoststr.append(L"][");
 			hoststr.append(dataManager.GetSysString(pHP->host.mode + 1244));
 			hoststr.append(L"][");
+
+			// 判断游戏规则是否为默认设置
 			if(pHP->host.draw_count == 1 && pHP->host.start_hand == 5 && pHP->host.start_lp == 8000
 			        && !pHP->host.no_check_deck && !pHP->host.no_shuffle_deck
 			        && pHP->host.duel_rule == DEFAULT_DUEL_RULE)
-				hoststr.append(dataManager.GetSysString(1247));
-			else hoststr.append(dataManager.GetSysString(1248));
+				hoststr.append(dataManager.GetSysString(1247)); // 默认规则
+			else
+				hoststr.append(dataManager.GetSysString(1248)); // 自定义规则
+
 			hoststr.append(L"]");
+
+			// 获取并附加房间名称
 			wchar_t gamename[20];
 			BufferIO::CopyCharArray(pHP->name, gamename);
 			hoststr.append(gamename);
+
 			mainGame->lstHostList->addItem(hoststr.c_str());
 			mainGame->gMutex.unlock();
 		}
 	}
 }
+
 }

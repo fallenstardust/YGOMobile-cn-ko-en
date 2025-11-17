@@ -15,7 +15,6 @@ DuelMode* NetServer::duel_mode = 0;
 unsigned char NetServer::net_server_write[SIZE_NETWORK_BUFFER];
 size_t NetServer::last_sent = 0;
 
-/c++
 /**
  * @brief 启动网络服务器
  * @param port 服务器监听的端口号

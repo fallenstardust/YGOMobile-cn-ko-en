@@ -1094,21 +1094,45 @@ int32_t scriptlib::duel_confirm_cards(lua_State *L) {
 	pduel->game_field->add_process(PROCESSOR_WAIT, 0, 0, 0, 0, 0);
 	return lua_yield(L, 0);
 }
+/**
+ * @brief 让玩家重新排列自己卡组顶部的指定数量卡片
+ *
+ * 此函数用于启动一个卡组顶部卡片排序流程，允许指定的玩家重新排列目标玩家卡组顶部的若干张卡。
+ * 通常用于需要查看并重新排列卡组顶部卡片的效果处理。
+ *
+ * @param L Lua状态机指针，包含调用该函数所需的参数
+ *   - 参数1：sort_player（整数），执行排序操作的玩家ID（0或1）
+ *   - 参数2：target_player（整数），目标玩家ID，即其卡组将被排序（0或1）
+ *   - 参数3：count（整数），需要排序的卡片数量
+ *
+ * @return 返回lua_yield()的结果，表示这是一个异步操作
+ */
 int32_t scriptlib::duel_sort_decktop(lua_State *L) {
-	check_action_permission(L);
-	check_param_count(L, 3);
-	int32_t sort_player = (int32_t)lua_tointeger(L, 1);
-	int32_t target_player = (int32_t)lua_tointeger(L, 2);
-	int32_t count = (int32_t)lua_tointeger(L, 3);
-	if (!check_playerid(sort_player))
+	check_action_permission(L);              // 检查当前是否允许执行操作（如是否在正确的时点）
+	check_param_count(L, 3);                 // 检查是否提供了足够的参数（至少3个）
+
+	// 从Lua栈中获取参数并转换为整数类型
+	int32_t sort_player = (int32_t)lua_tointeger(L, 1);   // 获取执行排序的玩家ID
+	int32_t target_player = (int32_t)lua_tointeger(L, 2); // 获取目标玩家ID
+	int32_t count = (int32_t)lua_tointeger(L, 3);         // 获取需要排序的卡片数量
+
+	// 验证玩家ID的有效性
+	if (!check_playerid(sort_player))        // 检查执行排序的玩家ID是否有效（0或1）
 		return 0;
-	if (!check_playerid(target_player))
+	if (!check_playerid(target_player))      // 检查目标玩家ID是否有效（0或1）
 		return 0;
-	if (count < 1)
+	if (count < 1)                           // 检查排序数量是否至少为1
 		return 0;
-	duel* pduel = interpreter::get_duel_info(L);
+
+	duel* pduel = interpreter::get_duel_info(L);  // 获取当前决斗对象的指针
+
+	// 添加一个处理流程到游戏字段处理队列中
+	// PROCESSOR_SORT_DECK: 使用卡组排序处理器
+	// sort_player + (target_player << 16): 将两个玩家ID打包成一个整数传递
+	// count: 排序的卡片数量
 	pduel->game_field->add_process(PROCESSOR_SORT_DECK, 0, 0, 0, sort_player + (target_player << 16), count);
-	return lua_yield(L, 0);
+
+	return lua_yield(L, 0);                  // 挂起当前Lua线程，等待排序操作完成
 }
 int32_t scriptlib::duel_check_event(lua_State *L) {
 	check_param_count(L, 1);

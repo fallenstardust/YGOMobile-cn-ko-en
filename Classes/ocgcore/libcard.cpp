@@ -3188,46 +3188,80 @@ int32_t scriptlib::card_is_can_be_battle_target(lua_State *L) {
 	lua_pushboolean(L, pcard->is_capable_be_battle_target(bcard));
 	return 1;
 }
+/**
+ * @brief 为卡片添加怪物属性（如类型、种族、等级、攻击力、守备力等）
+ *
+ * 此函数用于动态地给一张卡牌设置其作为怪兽的基本属性。这些属性包括但不限于：
+ * 怪兽类型（通常由 type 参数指定）、属性、种族、等级以及攻防数值。
+ * 所有修改通过临时效果实现，并在特定事件时重置。
+ */
 int32_t scriptlib::card_add_monster_attribute(lua_State *L) {
-	check_param_count(L, 2);
-	check_param(L, PARAM_TYPE_CARD, 1);
-	int32_t type = (int32_t)lua_tointeger(L, 2);
-	int32_t attribute = (int32_t)lua_tointeger(L, 3);
-	int32_t race = (int32_t)lua_tointeger(L, 4);
-	int32_t level = (int32_t)lua_tointeger(L, 5);
-	int32_t atk = (int32_t)lua_tointeger(L, 6);
-	int32_t def = (int32_t)lua_tointeger(L, 7);
+	check_param_count(L, 2); // 检查至少传入两个参数
+	check_param(L, PARAM_TYPE_CARD, 1); // 确保第一个参数是有效的 card 类型
+
+	// 从 Lua 栈中提取各个参数值
+	int32_t type = (int32_t)lua_tointeger(L, 2);       // 怪兽类型（如 EFFECT_TYPE_MONSTER）
+	int32_t attribute = (int32_t)lua_tointeger(L, 3);  // 属性值（可选）
+	int32_t race = (int32_t)lua_tointeger(L, 4);       // 种族值（可选）
+	int32_t level = (int32_t)lua_tointeger(L, 5);      // 等级值（可选）
+	int32_t atk = (int32_t)lua_tointeger(L, 6);        // 攻击力值（可选）
+	int32_t def = (int32_t)lua_tointeger(L, 7);        // 防御力值（可选）
+
+	// 获取目标卡片对象和决斗对象
 	card* pcard = *(card**) lua_touserdata(L, 1);
 	duel* pduel = pcard->pduel;
+
+	// 清除"无等级"状态标志，允许设置等级相关属性
 	pcard->set_status(STATUS_NO_LEVEL, FALSE);
+
+	// 声明一个效果指针，用于创建各种临时效果
 	effect* peffect;
+
+	// 定义一个 Lambda 函数，用于创建并添加临时效果到卡片上
+	// code: 效果代码
+	// value: 效果值
+	// extra_reset_flag: 额外的重置标志（可选）
 	auto add_temp_effect = [&](uint32_t code, int32_t value, uint32_t extra_reset_flag = 0) {
-		peffect = pduel->new_effect();
-		peffect->owner = pcard;
-		peffect->type = EFFECT_TYPE_SINGLE;
-		peffect->code = code;
-		peffect->flag[0] = EFFECT_FLAG_CANNOT_DISABLE;
+		peffect = pduel->new_effect();           // 创建新效果
+		peffect->owner = pcard;                  // 设置效果所有者为当前卡片
+		peffect->type = EFFECT_TYPE_SINGLE;      // 设置为单体效果类型
+		peffect->code = code;                    // 设置效果代码
+		peffect->flag[0] = EFFECT_FLAG_CANNOT_DISABLE; // 设置效果不可被无效化
+		// 设置重置条件：在特定事件或0x47e0000指定的条件下重置，可添加额外重置标志
 		peffect->reset_flag = RESET_EVENT | 0x47e0000 | extra_reset_flag;
-		peffect->value = value;
-		pcard->add_effect(peffect);
+		peffect->value = value;                  // 设置效果值
+		pcard->add_effect(peffect);              // 将效果添加到卡片上
 	};
+
+	// 添加预设怪物类型的临时效果，并设置在连锁重置
 	add_temp_effect(EFFECT_PRE_MONSTER, type, RESET_CHAIN);
+
+	// 如果提供了属性值，则添加更改属性的临时效果
 	if(attribute) {
 		add_temp_effect(EFFECT_CHANGE_ATTRIBUTE, attribute);
 	}
+
+	// 如果提供了种族值，则添加更改种族的临时效果
 	if(race) {
 		add_temp_effect(EFFECT_CHANGE_RACE, race);
 	}
+
+	// 如果提供了等级值，则添加更改等级的临时效果
 	if(level) {
 		add_temp_effect(EFFECT_CHANGE_LEVEL, level);
 	}
+
+	// 如果提供了攻击力值，则添加设置基础攻击力的临时效果
 	if(atk) {
 		add_temp_effect(EFFECT_SET_BASE_ATTACK, atk);
 	}
+
+	// 如果提供了防御力值，则添加设置基础防御力的临时效果
 	if(def) {
 		add_temp_effect(EFFECT_SET_BASE_DEFENSE, def);
 	}
-	return 0;
+
+	return 0; // 返回0表示函数执行成功（Lua C API 规范）
 }
 int32_t scriptlib::card_cancel_to_grave(lua_State *L) {
 	check_param_count(L, 1);
