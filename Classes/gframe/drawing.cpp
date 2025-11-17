@@ -671,7 +671,7 @@ void Game::DrawMisc() {
 		for(auto cit = dField.conti_cards.begin(); cit != dField.conti_cards.end(); ++cit) {
 			im.setTranslation(pos);
 			driver->setTransform(irr::video::ETS_WORLD, im);
-			matManager.mCard.setTexture(0, imageManager.GetTexture((*cit)->code, true));
+			matManager.mCard.setTexture(0, imageManager.GetTexture((*cit)->code));
 			driver->setMaterial(matManager.mCard);
 			driver->drawVertexPrimitiveList(matManager.vCardFront, 4, matManager.iRectangle, 2);
 			pos.Z += 0.03f;
@@ -1162,7 +1162,7 @@ void Game::DrawSpec() {
     // 如果需要展示卡片，则进行相关绘图操作
     if(showcard) {
         // 获取当前要展示的卡片纹理
-        irr::video::ITexture* showimg = imageManager.GetTexture(showcardcode, true);
+        irr::video::ITexture* showimg = imageManager.GetTexture(showcardcode);
         if(showimg == NULL)
             return;
 
