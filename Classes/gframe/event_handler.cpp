@@ -16,12 +16,13 @@ namespace ygo {
 bool ClientField::OnEvent(const irr::SEvent& event) {
 	if(OnCommonEvent(event))
 		return false;
-#ifdef _IRR_ANDROID_PLATFORM_
-	irr::SEvent transferEvent;
-	if (irr::android::TouchEventTransferAndroid::OnTransferCommon(event, false)) {
-		return true;
-	}
-#endif
+
+	// 定义一个事件变量用于处理Android平台的触摸事件转换
+    irr::SEvent transferEvent;
+    // 调用Android平台的触摸事件转换处理函数，如果事件已被处理则返回true
+    if (irr::android::TouchEventTransferAndroid::OnTransferCommon(event, false)) {
+        return true;
+    }
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
 		if(mainGame->fadingList.size())
@@ -30,31 +31,47 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		switch(event.GUIEvent.EventType) {
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
-			case BUTTON_HAND1:
-			case BUTTON_HAND2:
-			case BUTTON_HAND3: {
-				mainGame->wHand->setVisible(false);
-				if(mainGame->dInfo.curMsg == MSG_ROCK_PAPER_SCISSORS) {
-					DuelClient::SetResponseI(id - BUTTON_HAND1 + 1);
-					DuelClient::SendResponse();
-				} else {
-					mainGame->stHintMsg->setText(L"");
-					mainGame->stHintMsg->setVisible(true);
-					CTOS_HandResult cshr;
-					cshr.res = id - BUTTON_HAND1 + 1;
-					DuelClient::SendPacketToServer(CTOS_HAND_RESULT, cshr);
-				}
-				break;
-			}
-			case BUTTON_FIRST:
-			case BUTTON_SECOND: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-				mainGame->HideElement(mainGame->wFTSelect);
-				CTOS_TPResult cstr;
-				cstr.res = BUTTON_SECOND - id;
-				DuelClient::SendPacketToServer(CTOS_TP_RESULT, cstr);
-				break;
-			}
+			// 处理猜拳选择的3个按钮的点击事件
+            case BUTTON_HAND1:
+            case BUTTON_HAND2:
+            case BUTTON_HAND3: {
+                // 隐藏手势选择窗口
+                mainGame->wHand->setVisible(false);
+                // 判断当前消息是否为猜拳(MSG_ROCK_PAPER_SCISSORS)
+                if(mainGame->dInfo.curMsg == MSG_ROCK_PAPER_SCISSORS) {
+                    // 设置响应值为按钮索引+1(1=石头,2=布,3=剪刀)
+                    DuelClient::SetResponseI(id - BUTTON_HAND1 + 1);
+                    // 发送响应给服务器
+                    DuelClient::SendResponse();
+                } else {
+                    // 清空提示信息文本
+                    mainGame->stHintMsg->setText(L"");
+                    // 显示提示信息窗口
+                    mainGame->stHintMsg->setVisible(true);
+                    // 创建手势结果数据包
+                    CTOS_HandResult cshr;
+                    // 设置手势结果为按钮索引+1
+                    cshr.res = id - BUTTON_HAND1 + 1;
+                    // 发送手势结果数据包到服务器
+                    DuelClient::SendPacketToServer(CTOS_HAND_RESULT, cshr);
+                }
+                break;
+            }
+            // 处理先后攻选择按钮的点击事件
+            case BUTTON_FIRST:
+            case BUTTON_SECOND: {
+                // 播放按钮点击音效
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                // 隐藏先后手选择窗口
+                mainGame->HideElement(mainGame->wFTSelect);
+                // 创建先后手选择结果数据包
+                CTOS_TPResult cstr;
+                // 设置选择结果(BUTTON_SECOND-BUTTON_FIRST=1表示先手，BUTTON_SECOND-BUTTON_SECOND=0表示后手)
+                cstr.res = BUTTON_SECOND - id;
+                // 发送先后手选择结果数据包到服务器
+                DuelClient::SendPacketToServer(CTOS_TP_RESULT, cstr);
+                break;
+            }
 			case BUTTON_REPLAY_START: {
 				if(!mainGame->dInfo.isReplay)
 					break;
@@ -533,75 +550,103 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CMD_SUMMON: {
-				HideMenu();
-				if(!menu_card)
-					break;
-				for(size_t i = 0; i < summonable_cards.size(); ++i) {
-					if(summonable_cards[i] == menu_card) {
-						ClearCommandFlag();
-						DuelClient::SetResponseI(i << 16);
-						DuelClient::SendResponse();
-						break;
-					}
-				}
-				break;
-			}
-			case BUTTON_CMD_SPSUMMON: {
-				HideMenu();
-				if(!list_command) {
-					if(!menu_card)
-						break;
-					for(size_t i = 0; i < spsummonable_cards.size(); ++i) {
-						if(spsummonable_cards[i] == menu_card) {
-							ClearCommandFlag();
-							DuelClient::SetResponseI((i << 16) + 1);
-							DuelClient::SendResponse();
-							break;
-						}
-					}
-				} else {
-					selectable_cards.clear();
-					switch(command_location) {
-					case LOCATION_DECK: {
-						for(size_t i = 0; i < deck[command_controler].size(); ++i)
-							if(deck[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
-								selectable_cards.push_back(deck[command_controler][i]);
-						break;
-					}
-					case LOCATION_GRAVE: {
-						for(size_t i = 0; i < grave[command_controler].size(); ++i)
-							if(grave[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
-								selectable_cards.push_back(grave[command_controler][i]);
-						break;
-					}
-					case LOCATION_EXTRA: {
-						for(size_t i = 0; i < extra[command_controler].size(); ++i)
-							if(extra[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
-								selectable_cards.push_back(extra[command_controler][i]);
-						break;
-					}
-					}
-					list_command = COMMAND_SPSUMMON;
-					mainGame->stCardSelect->setText(dataManager.GetSysString(509));
-					ShowSelectCard();
-					select_ready = false;
-					ShowCancelOrFinishButton(1);
-				}
-				break;
-			}
-			case BUTTON_CMD_MSET: {
-				HideMenu();
-				if(!menu_card)
-					break;
-				for(size_t i = 0; i < msetable_cards.size(); ++i) {
-					if(msetable_cards[i] == menu_card) {
-						DuelClient::SetResponseI((i << 16) + 3);
-						DuelClient::SendResponse();
-						break;
-					}
-				}
-				break;
-			}
+                // 隐藏右键菜单
+                HideMenu();
+                // 如果没有选中卡片则退出
+                if(!menu_card)
+                    break;
+                // 遍历可召唤卡片列表，找到与菜单选中卡片相同的卡片
+                for(size_t i = 0; i < summonable_cards.size(); ++i) {
+                    if(summonable_cards[i] == menu_card) {
+                        // 清除所有卡片的命令标记
+                        ClearCommandFlag();
+                        // 设置响应为召唤操作，i<<16表示召唤第i张可召唤的卡片
+                        DuelClient::SetResponseI(i << 16);
+                        // 发送响应到服务器
+                        DuelClient::SendResponse();
+                        break;
+                    }
+                }
+                break;
+            }
+            case BUTTON_CMD_SPSUMMON: {
+                // 隐藏右键菜单
+                HideMenu();
+                // 如果不是列表命令模式
+                if(!list_command) {
+                    // 如果没有选中菜单卡片则退出
+                    if(!menu_card)
+                        break;
+                    // 遍历可特殊召唤卡片列表，找到与菜单选中卡片相同的卡片
+                    for(size_t i = 0; i < spsummonable_cards.size(); ++i) {
+                        if(spsummonable_cards[i] == menu_card) {
+                            // 清除所有卡片的命令标记
+                            ClearCommandFlag();
+                            // 设置响应为特殊召唤操作，(i<<16)+1表示特殊召唤第i张可特殊召唤的卡片
+                            DuelClient::SetResponseI((i << 16) + 1);
+                            // 发送响应到服务器
+                            DuelClient::SendResponse();
+                            break;
+                        }
+                    }
+                } else {
+                    // 清空可选择卡片列表
+                    selectable_cards.clear();
+                    // 根据命令位置选择相应的卡片
+                    switch(command_location) {
+                        case LOCATION_DECK: {
+                            // 从卡组中筛选出可特殊召唤的卡片
+                            for(size_t i = 0; i < deck[command_controler].size(); ++i)
+                                if(deck[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
+                                    selectable_cards.push_back(deck[command_controler][i]);
+                            break;
+                        }
+                        case LOCATION_GRAVE: {
+                            // 从墓地中筛选出可特殊召唤的卡片
+                            for(size_t i = 0; i < grave[command_controler].size(); ++i)
+                                if(grave[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
+                                    selectable_cards.push_back(grave[command_controler][i]);
+                            break;
+                        }
+                        case LOCATION_EXTRA: {
+                            // 从额外卡组中筛选出可特殊召唤的卡片
+                            for(size_t i = 0; i < extra[command_controler].size(); ++i)
+                                if(extra[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
+                                    selectable_cards.push_back(extra[command_controler][i]);
+                            break;
+                        }
+                    }
+                    // 设置列表命令为特殊召唤命令
+                    list_command = COMMAND_SPSUMMON;
+                    // 设置卡片选择窗口标题为"选择怪兽"
+                    mainGame->stCardSelect->setText(dataManager.GetSysString(509));
+                    // 显示卡片选择窗口
+                    ShowSelectCard();
+                    // 设置选择未就绪状态
+                    select_ready = false;
+                    // 显示取消/完成按钮
+                    ShowCancelOrFinishButton(1);
+                }
+                break;
+            }
+            case BUTTON_CMD_MSET: {
+                // 隐藏右键菜单
+                HideMenu();
+                // 如果没有选中菜单卡片则退出
+                if(!menu_card)
+                    break;
+                // 遍历可放置卡片列表，找到与菜单选中卡片相同的卡片
+                for(size_t i = 0; i < msetable_cards.size(); ++i) {
+                    if(msetable_cards[i] == menu_card) {
+                        // 设置响应为放置操作，(i<<16)+3表示放置第i张可放置的卡片
+                        DuelClient::SetResponseI((i << 16) + 3);
+                        // 发送响应到服务器
+                        DuelClient::SendResponse();
+                        break;
+                    }
+                }
+                break;
+            }
 			case BUTTON_CMD_SSET: {
 				HideMenu();
 				if(!menu_card)
@@ -2633,100 +2678,154 @@ void ClientField::GetHoverField(int x, int y) {
 		}
 	}
 }
+/**
+ * @brief 显示右键菜单界面，根据传入的标志位决定显示哪些操作按钮。
+ *
+ * 此函数用于在游戏客户端中响应用户点击卡牌时弹出的操作菜单。它会根据传入的 flag 参数，
+ * 判断需要显示哪些命令按钮（如召唤、特殊召唤、设置等），并动态调整这些按钮的位置。
+ * 同时禁用部分主界面按钮以防止误操作，并将菜单窗口定位到指定坐标位置。
+ *
+ * @param flag 操作命令标志位组合，每一位代表一个可执行的操作类型。
+ * @param x 菜单左上角横坐标（屏幕像素）。
+ * @param y 菜单左上角纵坐标（屏幕像素）。
+ */
 void ClientField::ShowMenu(int flag, int x, int y) {
+	// 如果没有可用操作，则隐藏当前菜单并直接返回
 	if(!flag) {
 		HideMenu();
 		return;
 	}
+
+	// 记录被点击的卡牌对象
 	menu_card = clicked_card;
+
+	// 初始化菜单高度计数器，从顶部开始排列按钮
 	int height = 1;
+
+	// 根据标志位依次判断是否启用各个功能按钮，并设置其可见性和相对位置
+
+	// 【发动】按钮处理逻辑
 	if(flag & COMMAND_ACTIVATE) {
 		mainGame->btnActivate->setVisible(true);
 		mainGame->btnActivate->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnActivate->setVisible(false);
+	} else {
+		mainGame->btnActivate->setVisible(false);
+	}
+
+	// 【召唤】按钮处理逻辑
 	if(flag & COMMAND_SUMMON) {
 		mainGame->btnSummon->setVisible(true);
 		mainGame->btnSummon->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnSummon->setVisible(false);
+	} else {
+		mainGame->btnSummon->setVisible(false);
+	}
+
+	// 【特殊召唤】按钮处理逻辑
 	if(flag & COMMAND_SPSUMMON) {
 		mainGame->btnSPSummon->setVisible(true);
 		mainGame->btnSPSummon->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnSPSummon->setVisible(false);
+	} else {
+		mainGame->btnSPSummon->setVisible(false);
+	}
+
+	// 【盖放（怪兽区）】按钮处理逻辑
 	if(flag & COMMAND_MSET) {
 		mainGame->btnMSet->setVisible(true);
 		mainGame->btnMSet->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnMSet->setVisible(false);
+	} else {
+		mainGame->btnMSet->setVisible(false);
+	}
+
+	// 【盖放（魔法·陷阱区）】按钮处理逻辑
 	if(flag & COMMAND_SSET) {
+		// 区分怪兽卡与其他类型卡片的文字提示
 		if(!(clicked_card->type & TYPE_MONSTER))
-			mainGame->btnSSet->setText(dataManager.GetSysString(1153));
+			mainGame->btnSSet->setText(dataManager.GetSysString(1153)); // 设置魔法陷阱卡
 		else
-			mainGame->btnSSet->setText(dataManager.GetSysString(1159));
+			mainGame->btnSSet->setText(dataManager.GetSysString(1159)); // 设置怪兽卡为里侧守备
 		mainGame->btnSSet->setVisible(true);
 		mainGame->btnSSet->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnSSet->setVisible(false);
+	} else {
+		mainGame->btnSSet->setVisible(false);
+	}
+
+	// 【改变表示形式】按钮处理逻辑
 	if(flag & COMMAND_REPOS) {
+		// 根据当前卡牌状态设置不同的按钮文字
 		if(clicked_card->position & POS_FACEDOWN)
-			mainGame->btnRepos->setText(dataManager.GetSysString(1154));
+			mainGame->btnRepos->setText(dataManager.GetSysString(1154)); // 反转
 		else if(clicked_card->position & POS_ATTACK)
-			mainGame->btnRepos->setText(dataManager.GetSysString(1155));
+			mainGame->btnRepos->setText(dataManager.GetSysString(1155)); // 改为守备
 		else
-			mainGame->btnRepos->setText(dataManager.GetSysString(1156));
+			mainGame->btnRepos->setText(dataManager.GetSysString(1156)); // 改为攻击
 		mainGame->btnRepos->setVisible(true);
 		mainGame->btnRepos->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnRepos->setVisible(false);
+	} else {
+		mainGame->btnRepos->setVisible(false);
+	}
+
+	// 【攻击宣言】按钮处理逻辑
 	if(flag & COMMAND_ATTACK) {
 		mainGame->btnAttack->setVisible(true);
 		mainGame->btnAttack->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnAttack->setVisible(false);
+	} else {
+		mainGame->btnAttack->setVisible(false);
+	}
+
+	// 【查看连锁列表】按钮处理逻辑
 	if(flag & COMMAND_LIST) {
 		mainGame->btnShowList->setVisible(true);
 		mainGame->btnShowList->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnShowList->setVisible(false);
+	} else {
+		mainGame->btnShowList->setVisible(false);
+	}
+
+	// 【操作】按钮处理逻辑
 	if(flag & COMMAND_OPERATION) {
 		mainGame->btnOperation->setVisible(true);
 		mainGame->btnOperation->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnOperation->setVisible(false);
+	} else {
+		mainGame->btnOperation->setVisible(false);
+	}
+
+	// 【重置】按钮处理逻辑
 	if(flag & COMMAND_RESET) {
 		mainGame->btnReset->setVisible(true);
 		mainGame->btnReset->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnReset->setVisible(false);
+	} else {
+		mainGame->btnReset->setVisible(false);
+	}
+
+	// 设置当前面板为命令菜单窗口，并使其可见
 	panel = mainGame->wCmdMenu;
 	mainGame->wCmdMenu->setVisible(true);
+
+	// 禁用战斗阶段相关按钮避免冲突
 	mainGame->btnBP->setEnabled(false);
 	mainGame->btnM2->setEnabled(false);
 	mainGame->btnEP->setEnabled(false);
-	mainGame->wCmdMenu->setRelativePosition(irr::core::recti(x - 20 * mainGame->xScale , y - 30 * mainGame->yScale - height, x + 130 * mainGame->xScale, y - 30 * mainGame->yScale));
+
+	// 设置悬浮命令菜单窗口的位置与尺寸
+	mainGame->wCmdMenu->setRelativePosition(
+		irr::core::recti(
+			x - 20 * mainGame->xScale,
+			y - 30 * mainGame->yScale - height,
+			x + 130 * mainGame->xScale,
+			y - 30 * mainGame->yScale
+		)
+	);
 }
+
 void ClientField::HideMenu() {
 	mainGame->wCmdMenu->setVisible(false);
 	mainGame->btnBP->setEnabled(true);
@@ -2824,21 +2923,51 @@ void ClientField::ShowCardInfoInList(ClientCard* pcard, irr::gui::IGUIElement* e
 		mainGame->stCardListTip->setVisible(true);
 	}
 }
+/**
+ * @brief 设置客户端响应中选中的卡片信息
+ *
+ * 该函数将当前选中的卡片序列号打包成响应数据，并发送给决斗客户端。
+ * 响应数据格式为：第一个字节表示选中卡片数量，后续字节依次为各卡片的选择序号。
+ *
+ * @param 无参数
+ * @return 无返回值
+ */
 void ClientField::SetResponseSelectedCards() const {
+	// 准备响应数据缓冲区
 	unsigned char respbuf[SIZE_RETURN_VALUE]{};
+
+	// 获取选中卡片数量，最多不超过UINT8_MAX个
 	int len = (int)selected_cards.size();
 	if (len > UINT8_MAX)
 		len = UINT8_MAX;
+
+	// 设置响应数据：第一个字节为卡片数量
 	respbuf[0] = (unsigned char)len;
+
+	// 依次填充每张选中卡片的选择序号
 	for (int i = 0; i < len; ++i)
 		respbuf[i + 1] = selected_cards[i]->select_seq;
+
+	// 发送响应数据到决斗客户端
 	DuelClient::SetResponseB(respbuf, len + 1);
 }
+/**
+ * @brief 设置客户端选择的响应选项
+ *
+ * 根据当前游戏消息类型和选择的选项，设置相应的响应数据，
+ * 并隐藏选项窗口
+ *
+ * @param 无
+ * @return 无
+ */
 void ClientField::SetResponseSelectedOption() const {
+	// 处理选项选择消息
 	if(mainGame->dInfo.curMsg == MSG_SELECT_OPTION) {
 		DuelClient::SetResponseI(selected_option);
 	} else {
+		// 获取选择选项的索引
 		int index = select_options_index[selected_option];
+		// 根据不同的消息类型设置响应数据
 		if(mainGame->dInfo.curMsg == MSG_SELECT_IDLECMD) {
 			DuelClient::SetResponseI((index << 16) + 5);
 		} else if(mainGame->dInfo.curMsg == MSG_SELECT_BATTLECMD) {
@@ -2847,166 +2976,217 @@ void ClientField::SetResponseSelectedOption() const {
 			DuelClient::SetResponseI(index);
 		}
 	}
+	// 隐藏选项窗口
 	mainGame->HideElement(mainGame->wOptions, true);
 }
+/**
+ * @brief 处理取消或完成操作的函数
+ *
+ * 根据当前游戏消息类型处理相应的取消或完成逻辑，包括隐藏界面元素、设置响应数据、发送响应等操作
+ */
 void ClientField::CancelOrFinish() {
+	// 根据当前游戏消息类型进行不同的处理
 	switch(mainGame->dInfo.curMsg) {
-	case MSG_WAITING: {
-		if(mainGame->wCardSelect->isVisible()) {
-			mainGame->HideElement(mainGame->wCardSelect);
-			ShowCancelOrFinishButton(0);
-		}
-		break;
-	}
-	case MSG_SELECT_BATTLECMD: {
-		if(mainGame->wCardSelect->isVisible()) {
-			mainGame->HideElement(mainGame->wCardSelect);
-			ShowCancelOrFinishButton(0);
-		}
-		if(mainGame->wOptions->isVisible()) {
-			mainGame->HideElement(mainGame->wOptions);
-			ShowCancelOrFinishButton(0);
-		}
-		break;
-	}
-	case MSG_SELECT_IDLECMD: {
-		if(mainGame->wCardSelect->isVisible()) {
-			mainGame->HideElement(mainGame->wCardSelect);
-			ShowCancelOrFinishButton(0);
-		}
-		if(mainGame->wOptions->isVisible()) {
-			mainGame->HideElement(mainGame->wOptions);
-			ShowCancelOrFinishButton(0);
-		}
-		break;
-	}
-	case MSG_SELECT_YESNO:
-	case MSG_SELECT_EFFECTYN: {
-		if(highlighting_card)
-			highlighting_card->is_highlighting = false;
-		highlighting_card = 0;
-		DuelClient::SetResponseI(0);
-		mainGame->HideElement(mainGame->wQuery, true);
-		break;
-	}
-	case MSG_SELECT_CARD: {
-		if(selected_cards.size() == 0) {
-			if(select_cancelable) {
-				DuelClient::SetResponseI(-1);
-				ShowCancelOrFinishButton(0);
-				if(mainGame->wCardSelect->isVisible())
-					mainGame->HideElement(mainGame->wCardSelect, true);
-				else
-					DuelClient::SendResponse();
-			}
-		}
-		if(mainGame->wQuery->isVisible()) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-			mainGame->HideElement(mainGame->wQuery, true);
-			break;
-		}
-		if(select_ready) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-			if(mainGame->wCardSelect->isVisible())
-				mainGame->HideElement(mainGame->wCardSelect, true);
-			else
-				DuelClient::SendResponse();
-		}
-		break;
-	}
-	case MSG_SELECT_UNSELECT_CARD: {
-        if (select_cancelable) {
-            DuelClient::SetResponseI(-1);
-            ShowCancelOrFinishButton(0);
-            if (mainGame->wCardSelect->isVisible())
-                mainGame->HideElement(mainGame->wCardSelect, true);
-            else
-                DuelClient::SendResponse();
+        case MSG_WAITING: {
+            // 如果卡片选择窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wCardSelect->isVisible()) {
+                mainGame->HideElement(mainGame->wCardSelect);
+                ShowCancelOrFinishButton(0);
+            }
+            break;
         }
-        break;
-    }
-	case MSG_SELECT_TRIBUTE: {
-		if(selected_cards.size() == 0) {
-			if(select_cancelable) {
-				DuelClient::SetResponseI(-1);
-				ShowCancelOrFinishButton(0);
-				if(mainGame->wCardSelect->isVisible())
-					mainGame->HideElement(mainGame->wCardSelect, true);
-				else
-					DuelClient::SendResponse();
-			}
-			break;
-		}
-		if(mainGame->wQuery->isVisible()) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-			mainGame->HideElement(mainGame->wQuery, true);
-			break;
-		}
-		if(select_ready) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-			DuelClient::SendResponse();
-		}
-		break;
-	}
-	case MSG_SELECT_SUM: {
-		if (select_ready) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-
-			if(mainGame->wCardSelect->isVisible())
-				mainGame->HideElement(mainGame->wCardSelect, true);
-			else
-				DuelClient::SendResponse();
-		}
-		break;
-	}
-	case MSG_SELECT_CHAIN: {
-		if(chain_forced)
-			break;
-		if(mainGame->wCardSelect->isVisible()) {
-			mainGame->HideElement(mainGame->wCardSelect);
-			break;
-		}
-		if(mainGame->wQuery->isVisible()) {
-			DuelClient::SetResponseI(-1);
-			ShowCancelOrFinishButton(0);
-			mainGame->HideElement(mainGame->wQuery, true);
-		} else {
-			mainGame->PopupElement(mainGame->wQuery);
-			ShowCancelOrFinishButton(0);
-		}
-		if(mainGame->wOptions->isVisible()) {
-			DuelClient::SetResponseI(-1);
-			ShowCancelOrFinishButton(0);
-			mainGame->HideElement(mainGame->wOptions);
-		}
-		break;
-	}
-	case MSG_SORT_CARD: {
-		if(mainGame->wCardSelect->isVisible()) {
-			DuelClient::SetResponseI(-1);
-			mainGame->HideElement(mainGame->wCardSelect, true);
-			sort_list.clear();
-		}
-		break;
-	}
-	case MSG_SELECT_PLACE: {
-		if(select_cancelable) {
-			unsigned char respbuf[3];
-			respbuf[0] = mainGame->LocalPlayer(0);
-			respbuf[1] = 0;
-			respbuf[2] = 0;
-			mainGame->dField.selectable_field = 0;
-			DuelClient::SetResponseB(respbuf, 3);
-			DuelClient::SendResponse();
-			ShowCancelOrFinishButton(0);
-		}
-		break;
-	}
+        case MSG_SELECT_BATTLECMD: {
+            // 如果卡片选择窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wCardSelect->isVisible()) {
+                mainGame->HideElement(mainGame->wCardSelect);
+                ShowCancelOrFinishButton(0);
+            }
+            // 如果选项窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wOptions->isVisible()) {
+                mainGame->HideElement(mainGame->wOptions);
+                ShowCancelOrFinishButton(0);
+            }
+            break;
+        }
+        case MSG_SELECT_IDLECMD: {
+            // 如果卡片选择窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wCardSelect->isVisible()) {
+                mainGame->HideElement(mainGame->wCardSelect);
+                ShowCancelOrFinishButton(0);
+            }
+            // 如果选项窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wOptions->isVisible()) {
+                mainGame->HideElement(mainGame->wOptions);
+                ShowCancelOrFinishButton(0);
+            }
+            break;
+        }
+        case MSG_SELECT_YESNO:
+        case MSG_SELECT_EFFECTYN: {
+            // 如果有高亮显示的卡片，则取消高亮
+            if(highlighting_card)
+                highlighting_card->is_highlighting = false;
+            highlighting_card = 0;
+            // 设置响应为否(0)
+            DuelClient::SetResponseI(0);
+            // 隐藏询问窗口并发送响应
+            mainGame->HideElement(mainGame->wQuery, true);
+            break;
+        }
+        case MSG_SELECT_CARD: {
+            // 如果没有选择任何卡片且可以选择取消
+            if(selected_cards.size() == 0) {
+                if(select_cancelable) {
+                    // 设置响应为-1表示取消选择
+                    DuelClient::SetResponseI(-1);
+                    ShowCancelOrFinishButton(0);
+                    // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                    if(mainGame->wCardSelect->isVisible())
+                        mainGame->HideElement(mainGame->wCardSelect, true);
+                    else
+                        DuelClient::SendResponse();
+                }
+            }
+            // 如果询问窗口可见
+            if(mainGame->wQuery->isVisible()) {
+                // 设置选中卡片的响应并隐藏询问窗口
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                mainGame->HideElement(mainGame->wQuery, true);
+                break;
+            }
+            // 如果已准备好选择
+            if(select_ready) {
+                // 设置选中卡片的响应
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                if(mainGame->wCardSelect->isVisible())
+                    mainGame->HideElement(mainGame->wCardSelect, true);
+                else
+                    DuelClient::SendResponse();
+            }
+            break;
+        }
+        case MSG_SELECT_UNSELECT_CARD: {
+            // 如果可以选择取消
+            if (select_cancelable) {
+                // 设置响应为-1表示取消选择
+                DuelClient::SetResponseI(-1);
+                ShowCancelOrFinishButton(0);
+                // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                if (mainGame->wCardSelect->isVisible())
+                    mainGame->HideElement(mainGame->wCardSelect, true);
+                else
+                    DuelClient::SendResponse();
+            }
+            break;
+        }
+        case MSG_SELECT_TRIBUTE: {
+            // 如果没有选择任何卡片且可以选择取消
+            if(selected_cards.size() == 0) {
+                if(select_cancelable) {
+                    // 设置响应为-1表示取消选择
+                    DuelClient::SetResponseI(-1);
+                    ShowCancelOrFinishButton(0);
+                    // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                    if(mainGame->wCardSelect->isVisible())
+                        mainGame->HideElement(mainGame->wCardSelect, true);
+                    else
+                        DuelClient::SendResponse();
+                }
+                break;
+            }
+            // 如果询问窗口可见
+            if(mainGame->wQuery->isVisible()) {
+                // 设置选中卡片的响应并隐藏询问窗口
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                mainGame->HideElement(mainGame->wQuery, true);
+                break;
+            }
+            // 如果已准备好选择
+            if(select_ready) {
+                // 设置选中卡片的响应并发送
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                DuelClient::SendResponse();
+            }
+            break;
+        }
+        case MSG_SELECT_SUM: {
+            // 如果已准备好选择
+            if (select_ready) {
+                // 设置选中卡片的响应
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                if(mainGame->wCardSelect->isVisible())
+                    mainGame->HideElement(mainGame->wCardSelect, true);
+                else
+                    DuelClient::SendResponse();
+            }
+            break;
+        }
+        case MSG_SELECT_CHAIN: {
+            // 如果必须选择连锁则不能取消
+            if(chain_forced)
+                break;
+            // 如果卡片选择窗口可见则隐藏它
+            if(mainGame->wCardSelect->isVisible()) {
+                mainGame->HideElement(mainGame->wCardSelect);
+                break;
+            }
+            // 如果询问窗口可见
+            if(mainGame->wQuery->isVisible()) {
+                // 设置响应为-1表示不选择连锁并隐藏询问窗口
+                DuelClient::SetResponseI(-1);
+                ShowCancelOrFinishButton(0);
+                mainGame->HideElement(mainGame->wQuery, true);
+            } else {
+                // 弹出询问窗口
+                mainGame->PopupElement(mainGame->wQuery);
+                ShowCancelOrFinishButton(0);
+            }
+            // 如果选项窗口可见
+            if(mainGame->wOptions->isVisible()) {
+                // 设置响应为-1表示不选择选项并隐藏选项窗口
+                DuelClient::SetResponseI(-1);
+                ShowCancelOrFinishButton(0);
+                mainGame->HideElement(mainGame->wOptions);
+            }
+            break;
+        }
+        case MSG_SORT_CARD: {
+            // 如果卡片选择窗口可见
+            if(mainGame->wCardSelect->isVisible()) {
+                // 设置响应为-1表示取消排序并隐藏卡片选择窗口
+                DuelClient::SetResponseI(-1);
+                mainGame->HideElement(mainGame->wCardSelect, true);
+                // 清空排序列表
+                sort_list.clear();
+            }
+            break;
+        }
+        case MSG_SELECT_PLACE: {
+            // 如果可以选择取消
+            if(select_cancelable) {
+                // 准备响应数据，表示不选择任何位置
+                unsigned char respbuf[3];
+                respbuf[0] = mainGame->LocalPlayer(0);
+                respbuf[1] = 0;
+                respbuf[2] = 0;
+                // 清空可选择字段
+                mainGame->dField.selectable_field = 0;
+                // 设置并发送响应
+                DuelClient::SetResponseB(respbuf, 3);
+                DuelClient::SendResponse();
+                // 隐藏取消/完成按钮
+                ShowCancelOrFinishButton(0);
+            }
+            break;
+        }
 	}
 }
+
 }

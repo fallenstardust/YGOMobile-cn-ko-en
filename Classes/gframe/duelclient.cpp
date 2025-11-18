@@ -1231,39 +1231,86 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 	}
 }
 // Analyze STOC_GAME_MSG packet
+/**
+ * @brief 分析并处理来自服务器的游戏消息包
+ *
+ * 该函数负责解析从服务器接收到的STOC_GAME_MSG类型数据包，根据消息类型执行相应的游戏逻辑处理。
+ * 主要功能包括：
+ * 1. 读取消息类型并保存到游戏信息中
+ * 2. 保存最后一次成功处理的消息用于错误恢复
+ * 3. 隐藏当前显示的菜单界面
+ * 4. 处理非重播模式下的界面清理工作
+ * 5. 处理观战者视角切换
+ * 6. 根据不同的消息类型分发到对应的处理逻辑
+ *
+ * @param msg 指向消息数据包的指针
+ * @param len 消息数据包的长度
+ * @return bool 处理成功返回true，失败返回false
+ *
+ * @note 该函数是游戏核心逻辑处理函数，负责处理所有游戏过程中服务器发送的消息
+ * @note 对于MSG_RETRY消息会进行特殊处理，尝试恢复上一次成功的操作
+ * @note 在处理过程中会根据需要锁定和解锁图形界面互斥锁以保证线程安全
+ */
 bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
+	// 定义一个指针，用于遍历消息数据
 	unsigned char* pbuf = msg;
+	// 定义一个宽字符缓冲区，用于存储文本信息
 	wchar_t textBuffer[256];
+	// 从消息数据中读取当前消息类型，并存储到游戏信息结构中
 	mainGame->dInfo.curMsg = BufferIO::Read<uint8_t>(pbuf);
+	// 如果当前消息不是重试消息，则将当前消息保存为最后成功处理的消息
 	if(mainGame->dInfo.curMsg != MSG_RETRY) {
+		// 复制消息数据到last_successful_msg缓冲区
 		std::memcpy(last_successful_msg, msg, len);
+		// 记录消息长度
 		last_successful_msg_length = len;
 	}
+	// 隐藏当前显示的游戏菜单
 	mainGame->dField.HideMenu();
+	// 如果不是回放模式，且当前消息不是等待或卡片选择消息
 	if(!mainGame->dInfo.isReplay && mainGame->dInfo.curMsg != MSG_WAITING && mainGame->dInfo.curMsg != MSG_CARD_SELECTED) {
+		// 重置等待帧计数器
 		mainGame->waitFrame = -1;
+		// 隐藏提示信息显示
 		mainGame->stHintMsg->setVisible(false);
+		// 如果卡片选择窗口当前可见
 		if(mainGame->wCardSelect->isVisible()) {
+			// 锁定图形界面互斥锁
 			mainGame->gMutex.lock();
+			// 隐藏卡片选择窗口
 			mainGame->HideElement(mainGame->wCardSelect);
+			// 解锁图形界面互斥锁
 			mainGame->gMutex.unlock();
+			// 等待11帧确保界面操作完成
 			mainGame->WaitFrameSignal(11);
 		}
+		// 如果选项窗口当前可见
 		if(mainGame->wOptions->isVisible()) {
+			// 锁定图形界面互斥锁
 			mainGame->gMutex.lock();
+			// 隐藏选项窗口
 			mainGame->HideElement(mainGame->wOptions);
+			// 解锁图形界面互斥锁
 			mainGame->gMutex.unlock();
+			// 等待11帧确保界面操作完成
 			mainGame->WaitFrameSignal(11);
 		}
 	}
+	// 如果当前计时玩家是玩家1，则将计时玩家设置为2(无)
 	if(mainGame->dInfo.time_player == 1)
 		mainGame->dInfo.time_player = 2;
+	// 如果正在进行视角交换
 	if(is_swapping) {
+		// 锁定图形界面互斥锁
 		mainGame->gMutex.lock();
+		// 执行回放视角交换操作
 		mainGame->dField.ReplaySwap();
+		// 解锁图形界面互斥锁
 		mainGame->gMutex.unlock();
+		// 重置视角交换标志
 		is_swapping = false;
 	}
+	// 根据消息类型分发到相应的处理函数
 	switch(mainGame->dInfo.curMsg) {
 	case MSG_RETRY: {
 		if(last_successful_msg_length) {
@@ -3168,25 +3215,41 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		return true;
 	}
 	case MSG_SUMMONING: {
-		unsigned int code = BufferIO::Read<int32_t>(pbuf);
-		/*int cc = */mainGame->LocalPlayer(BufferIO::Read<uint8_t>(pbuf));
-		/*int cl = */BufferIO::Read<uint8_t>(pbuf);
-		/*int cs = */BufferIO::Read<uint8_t>(pbuf);
-		/*int cp = */BufferIO::Read<uint8_t>(pbuf);
-		if(!mainGame->dInfo.isReplay || !mainGame->dInfo.isReplaySkiping) {
-			if(!mainGame->soundManager->PlayChant(code))
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::SUMMON);
-			myswprintf(event_string, dataManager.GetSysString(1603), dataManager.GetName(code));
-			mainGame->showcardcode = code;
-			mainGame->showcarddif = 0;
-			mainGame->showcardp = 0;
-			mainGame->showcard = 7;
-			mainGame->WaitFrameSignal(30);
-			mainGame->showcard = 0;
-			mainGame->WaitFrameSignal(11);
-		}
-		return true;
-	}
+        // 从消息缓冲区读取召唤的卡片密码
+        unsigned int code = BufferIO::Read<int32_t>(pbuf);
+        // 读取控制者位置（被注释掉，未使用）
+        /*int cc = */mainGame->LocalPlayer(BufferIO::Read<uint8_t>(pbuf));
+        // 读取召唤位置（被注释掉，未使用）
+        /*int cl = */BufferIO::Read<uint8_t>(pbuf);
+        // 读取召唤区域序列（被注释掉，未使用）
+        /*int cs = */BufferIO::Read<uint8_t>(pbuf);
+        // 读取召唤位置（被注释掉，未使用）
+        /*int cp = */BufferIO::Read<uint8_t>(pbuf);
+        // 如果不是回放模式或者不是跳过回放，则执行以下操作
+        if(!mainGame->dInfo.isReplay || !mainGame->dInfo.isReplaySkiping) {
+            // 尝试播放在sound/chants/{code}.mp3 该卡片id相同文件名所在的音效，如果失败则播放普通召唤音效
+            if(!mainGame->soundManager->PlayChant(code))
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::SUMMON);
+            // 构造召唤事件字符串，显示"召唤了xxx"，会打印在消息记录窗口中
+            myswprintf(event_string, dataManager.GetSysString(1603), dataManager.GetName(code));
+            // 设置要显示的卡片密码
+            mainGame->showcardcode = code;
+            // 设置卡片显示差异参数为0
+            mainGame->showcarddif = 0;
+            // 设置卡片显示位置参数为0
+            mainGame->showcardp = 0;
+            // 设置显示卡片类型为7（召唤动画）
+            mainGame->showcard = 7;
+            // 等待30帧显示召唤动画
+            mainGame->WaitFrameSignal(30);
+            // 重置显示卡片类型
+            mainGame->showcard = 0;
+            // 再等待11帧
+            mainGame->WaitFrameSignal(11);
+        }
+        // 返回true表示处理成功
+        return true;
+    }
 	case MSG_SUMMONED: {
 		myswprintf(event_string, dataManager.GetSysString(1604));
 		return true;

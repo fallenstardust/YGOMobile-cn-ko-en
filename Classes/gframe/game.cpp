@@ -1903,105 +1903,149 @@ void Game::SaveConfig() {
 //	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
 }
 
+/**
+ * @brief 显示指定卡牌的信息。
+ *
+ * 此函数用于在游戏界面中显示一张卡牌的详细信息，包括图像、名称、类型、种族、属性、攻击力/守备力等，
+ * 并根据卡牌是否有效（存在于数据表中）以及其具体类型（怪兽卡、魔法卡、陷阱卡等）进行不同的处理。
+ * 同时会设置文本区域以展示卡牌描述，并调整控件位置与缩放。
+ *
+ * @param code 卡牌编号，用作查找卡牌数据的关键字。
+ */
 void Game::ShowCardInfo(int code) {
-	wchar_t formatBuffer[256];
-	auto& _datas = dataManager.GetDataTable();
-	auto cit = _datas.find(code);
-	bool is_valid = (cit != _datas.end());
-	imgCard->setImage(imageManager.GetTexture(code));
-	imgCard->setScaleImage(true);
-	if (is_valid) {
-		auto& cd = cit->second;
-		if (is_alternative(cd.code,cd.alias))
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-		else
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
-	}
-	else {
-		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
-	}
-	stName->setText(formatBuffer);
-	if((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
-		stName->setToolTipText(formatBuffer);
-	else
-		stName->setToolTipText(nullptr);
-	int offset = 0;
-	if (is_valid && !gameConf.hide_setname) {
-		auto& cd = cit->second;
-		auto target = cit;
-		if (cd.alias && _datas.find(cd.alias) != _datas.end()) {
-			target = _datas.find(cd.alias);
-		}
-		if (target->second.setcode[0]) {
-			offset = 23;// *yScale;
-			const auto& setname = dataManager.FormatSetName(target->second.setcode);
-			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), setname.c_str());
-			stSetName->setText(formatBuffer);
-		}
-		else
-			stSetName->setText(L"");
-	}
-	else {
-		stSetName->setText(L"");
-	}
-	if(is_valid && cit->second.type & TYPE_MONSTER) {
-		auto& cd = cit->second;
-		const auto& type = dataManager.FormatType(cd.type);
-		const auto& race = dataManager.FormatRace(cd.race);
-		const auto& attribute = dataManager.FormatAttribute(cd.attribute);
-		myswprintf(formatBuffer, L"[%ls] %ls/%ls", type.c_str(), race.c_str(), attribute.c_str());
-		stInfo->setText(formatBuffer);
-		int offset_info = 0;
-		irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
-		if(dtxt.Width > (300 * xScale - 13) - 15)
-			offset_info = 15;
-		const wchar_t* form = L"\u2605";
-		wchar_t adBuffer[64]{};
-		wchar_t scaleBuffer[16]{};
-		if(!(cd.type & TYPE_LINK)) {
-			if(cd.type & TYPE_XYZ)
-				form = L"\u2606";
-			if(cd.attack < 0 && cd.defense < 0)
-				myswprintf(adBuffer, L"?/?");
-			else if(cd.attack < 0)
-				myswprintf(adBuffer, L"?/%d", cd.defense);
-			else if(cd.defense < 0)
-				myswprintf(adBuffer, L"%d/?", cd.attack);
-			else
-				myswprintf(adBuffer, L"%d/%d", cd.attack, cd.defense);
-		} else {
-			form = L"LINK-";
-			const auto& link_marker = dataManager.FormatLinkMarker(cd.link_marker);
-			if(cd.attack < 0)
-				myswprintf(adBuffer, L"?/-   %ls", link_marker.c_str());
-			else
-				myswprintf(adBuffer, L"%d/-   %ls", cd.attack, link_marker.c_str());
-		}
-		if(cd.type & TYPE_PENDULUM) {
-			myswprintf(scaleBuffer, L"   %d/%d", cd.lscale, cd.rscale);
-		}
-		myswprintf(formatBuffer, L"[%ls%d] %ls%ls", form, cd.level, adBuffer, scaleBuffer);
-		stDataInfo->setText(formatBuffer);
-		stSetName->setRelativePosition(Resize(10, 83, 250, 106));
-		stText->setRelativePosition(Resize(10, 83 + offset, 251, 340));
-		scrCardText->setRelativePosition(Resize(255, 83 + offset, 258, 340));
-	}
-	else {
-		if (is_valid) {
-			const auto& type = dataManager.FormatType(cit->second.type);
-			myswprintf(formatBuffer, L"[%ls]", type.c_str());
-		}
-		else
-			myswprintf(formatBuffer, L"[%ls]", dataManager.unknown_string);
-		stInfo->setText(formatBuffer);
-		stDataInfo->setText(L"");
-		stSetName->setRelativePosition(Resize(10, 60, 250, 106));
-		stText->setRelativePosition(Resize(10, 60 + offset, 251, 340));
-		scrCardText->setRelativePosition(Resize(255, 60 + offset, 258, 340));
-	}
-	showingtext = dataManager.GetText(code);
-	const auto& tsize = stText->getRelativePosition();
-	InitStaticText(stText, tsize.getWidth(), tsize.getHeight(), textFont, showingtext);
+    // 定义格式化缓冲区和获取卡牌数据表引用
+    wchar_t formatBuffer[256];
+    auto& _datas = dataManager.GetDataTable();
+    auto cit = _datas.find(code);
+    bool is_valid = (cit != _datas.end());
+
+    // 设置卡片图片并启用自动缩放
+    imgCard->setImage(imageManager.GetTexture(code));
+    imgCard->setScaleImage(true);
+
+    // 根据卡牌是否存在决定如何显示名称：若存在且是替代卡则使用别名
+    if (is_valid) {
+        auto& cd = cit->second;
+        if (is_alternative(cd.code, cd.alias))
+            myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
+        else
+            myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+    }
+    else {
+        myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+    }
+
+    // 设置名称标签文本及提示工具文本（当文字超出宽度时）
+    stName->setText(formatBuffer);
+    if ((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
+        stName->setToolTipText(formatBuffer);
+    else
+        stName->setToolTipText(nullptr);
+
+    // 字段名显示逻辑
+    int offset = 0;
+    if (is_valid && !gameConf.hide_setname) {
+        auto& cd = cit->second;
+        auto target = cit;
+        // 若当前卡有同名卡并且该同名卡存在于数据库中，则使用该同名卡对应的数据
+        if (cd.alias && _datas.find(cd.alias) != _datas.end()) {
+            target = _datas.find(cd.alias);
+        }
+        // 如果目标卡具有字段码，则构造并显示字段名
+        if (target->second.setcode[0]) {
+            offset = 23; // 固定偏移量用于布局调整
+            const auto& setname = dataManager.FormatSetName(target->second.setcode);
+            myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), setname.c_str());
+            stSetName->setText(formatBuffer);
+        }
+        else
+            stSetName->setText(L"");
+    }
+    else {
+        stSetName->setText(L"");
+    }
+
+    // 怪物卡信息处理分支
+    if (is_valid && cit->second.type & TYPE_MONSTER) {
+        auto& cd = cit->second;
+
+        // 构造并显示怪物卡的基本信息（类型、种族、属性）
+        const auto& type = dataManager.FormatType(cd.type);
+        const auto& race = dataManager.FormatRace(cd.race);
+        const auto& attribute = dataManager.FormatAttribute(cd.attribute);
+        myswprintf(formatBuffer, L"[%ls] %ls/%ls", type.c_str(), race.c_str(), attribute.c_str());
+        stInfo->setText(formatBuffer);
+
+        // 判断文本长度是否需要换行偏移
+        int offset_info = 0;
+        irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
+        if (dtxt.Width > (300 * xScale - 13) - 15)
+            offset_info = 15;
+
+        // 准备等级符号和攻防数值字符串
+        const wchar_t* form = L"\u2605"; // 默认星数标记
+        wchar_t adBuffer[64]{};
+        wchar_t scaleBuffer[16]{};
+
+        // 非连接卡处理
+        if (!(cd.type & TYPE_LINK)) {
+            if (cd.type & TYPE_XYZ)
+                form = L"\u2606"; // XYZ卡使用不同标记
+
+            // 攻击力/防御力未知情况下的特殊处理
+            if (cd.attack < 0 && cd.defense < 0)
+                myswprintf(adBuffer, L"?/?");
+            else if (cd.attack < 0)
+                myswprintf(adBuffer, L"?/%d", cd.defense);
+            else if (cd.defense < 0)
+                myswprintf(adBuffer, L"%d/?", cd.attack);
+            else
+                myswprintf(adBuffer, L"%d/%d", cd.attack, cd.defense);
+        }
+        // 连接卡处理
+        else {
+            form = L"LINK-";
+            const auto& link_marker = dataManager.FormatLinkMarker(cd.link_marker);
+            if (cd.attack < 0)
+                myswprintf(adBuffer, L"?/-   %ls", link_marker.c_str());
+            else
+                myswprintf(adBuffer, L"%d/-   %ls", cd.attack, link_marker.c_str());
+        }
+
+        // 摆钟卡额外显示左右刻度
+        if (cd.type & TYPE_PENDULUM) {
+            myswprintf(scaleBuffer, L"   %d/%d", cd.lscale, cd.rscale);
+        }
+
+        // 组合最终数据信息并设置到界面上
+        myswprintf(formatBuffer, L"[%ls%d] %ls%ls", form, cd.level, adBuffer, scaleBuffer);
+        stDataInfo->setText(formatBuffer);
+
+        // 调整控件的位置
+        stSetName->setRelativePosition(Resize(10, 83, 250, 106));
+        stText->setRelativePosition(Resize(10, 83 + offset, 251, 340));
+        scrCardText->setRelativePosition(Resize(255, 83 + offset, 258, 340));
+    }else {// 非怪物卡或无效卡处理
+        if (is_valid) {
+            const auto& type = dataManager.FormatType(cit->second.type);
+            myswprintf(formatBuffer, L"[%ls]", type.c_str());
+        }
+        else
+            myswprintf(formatBuffer, L"[%ls]", dataManager.unknown_string);
+
+        stInfo->setText(formatBuffer);
+        stDataInfo->setText(L"");
+
+        // 调整控件位置适应非怪物卡布局
+        stSetName->setRelativePosition(Resize(10, 60, 250, 106));
+        stText->setRelativePosition(Resize(10, 60 + offset, 251, 340));
+        scrCardText->setRelativePosition(Resize(255, 60 + offset, 258, 340));
+    }
+
+    // 获取并初始化卡牌描述文本
+    showingtext = dataManager.GetText(code);
+    const auto& tsize = stText->getRelativePosition();
+    InitStaticText(stText, tsize.getWidth(), tsize.getHeight(), textFont, showingtext);
 }
 void Game::ClearCardInfo(int player) {
 	imgCard->setImage(imageManager.tCover[player]);
