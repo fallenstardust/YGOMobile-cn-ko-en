@@ -156,7 +156,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private List<DeckInfo> deckHistory = new ArrayList<>();
     // 当前历史记录索引
     private int historyIndex = -1;
-
+    private boolean isPackMode;
     private File mPreLoadFile;//预加载卡组，用于外部打开ydk文件或通过卡组广场预览卡组时，值为file。当未通过预加载打开ydk（打开卡组时），值为null
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private TextView tv_deck;
@@ -598,8 +598,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }).done((rs) -> {
             // 关闭加载对话框并设置当前卡牌包
             dlg.dismiss();
-            //setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()) || file.getParent().equals(mSettings.getCacheDeckDir()));
-            setCurDeck(rs, file.getParent().equals(mSettings.getPackDeckDir()));
+            // 根据资源路径判断是否进入卡包展示模式
+            isPackMode = rs.source.getParent().equals(mSettings.getPackDeckDir()) || rs.source.getParent().equals(mSettings.getCacheDeckDir());
+            setCurDeck(rs, isPackMode);
         });
     }
 
@@ -650,10 +651,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             dlg.dismiss();
             mCardSearcher.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
-
+            // 根据资源路径判断是否进入卡包展示模式
+            isPackMode = rs.source.getParent().equals(mSettings.getPackDeckDir()) || rs.source.getParent().equals(mSettings.getCacheDeckDir());
             // 设置当前卡组显示
             if (rs.source != null) {
-                setCurDeck(rs, rs.source.getParent().equals(mSettings.getPackDeckDir()));
+                setCurDeck(rs, isPackMode);
             } else {
                 setCurDeck(rs, false);
             }
@@ -684,6 +686,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         // 通知适配器更新卡组数据和界面
         mDeckAdapater.setDeck(deckInfo, isPack);
         mDeckAdapater.notifyDataSetChanged();
+        isPackMode = isPack;
 
         // 清空历史记录并添加初始状态
         clearDeckHistory();
@@ -702,7 +705,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     /**
-     * 将当前卡组状态添加到历史记录中
+     * 将当前卡组状态添加到历史记录中（仅当与上一个状态不同时）
      *
      * @param deckInfo 当前卡组状态
      */
@@ -712,9 +715,19 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             deckHistory.subList(historyIndex + 1, deckHistory.size()).clear();
         }
 
-        // 添加新的历史记录
-        deckHistory.add(deckInfo); // 使用clone确保是深拷贝
-        historyIndex = deckHistory.size() - 1;
+        // 检查当前状态是否与最近的历史记录相同
+        boolean isSameAsLast = false;
+        if (!deckHistory.isEmpty()) {
+            DeckInfo lastState = deckHistory.get(deckHistory.size() - 1);
+            // 这里将DeckInfo.toLongString来实现了 equals 方法来比较内容
+            isSameAsLast = lastState.toLongString().equals(deckInfo.toLongString());
+        }
+
+        // 只有在状态不同时才添加新的历史记录
+        if (!isSameAsLast) {
+            deckHistory.add(deckInfo);
+            historyIndex = deckHistory.size() - 1;
+        }
 
         // 更新按钮状态
         updateUndoRedoButtons();
@@ -771,8 +784,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
      */
     private void updateUndoRedoButtons() {
         if (btnUndo != null && btnRedo != null) {
-            // 只有历史记录大于1时才显示按钮
-            if (deckHistory.size() > 1) {
+            // 只有历史记录大于1且不是卡包展示模式时才显示按钮
+            if (deckHistory.size() > 1 && !isPackMode) {
                 btnUndo.setVisibility(View.VISIBLE);
                 btnRedo.setVisibility(View.VISIBLE);
 
@@ -788,7 +801,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     btnRedo.setVisibility(View.INVISIBLE);
                 }
             } else {
-                // 历史记录小于等于1时隐藏按钮
+                // 历史记录小于等于1或为卡包展示模式时隐藏按钮
                 btnUndo.setVisibility(View.INVISIBLE);
                 btnRedo.setVisibility(View.INVISIBLE);
             }
@@ -1666,6 +1679,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         return layerDrawable;
     }
+
     private void animRotate(View view) {
         // 获取背景并启动旋转动画
         LayerDrawable layerDrawable = (LayerDrawable) view.getBackground();
@@ -1735,6 +1749,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             });
 
         } else {
+            Log.d("seesee",deckFile.getPathFile().getAbsolutePath());
             loadDeckFromFile(deckFile.getPathFile());
             ll_click_like.setVisibility(View.GONE);
         }
