@@ -44,6 +44,11 @@ public class Deck implements Parcelable {
      */
     private boolean isCompleteDeck = true;
 
+    /**
+     * 卡组广场用的卡组id，可以为空
+     */
+    public String deckId = null;
+
     public Deck() {
         mainlist = new ArrayList<>();
         extraList = new ArrayList<>();
@@ -68,7 +73,6 @@ public class Deck implements Parcelable {
         this();
         this.name = name;
     }
-
 
     protected Deck(Parcel in) {
         this.name = in.readString();
@@ -189,5 +193,9 @@ public class Deck implements Parcelable {
         dest.writeList(this.mainlist);
         dest.writeList(this.extraList);
         dest.writeList(this.sideList);
+    }
+
+    public void setId(String id) {
+        deckId = id;
     }
 }

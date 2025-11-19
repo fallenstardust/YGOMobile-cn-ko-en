@@ -1603,7 +1603,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                         boolean ret = ydk.createNewFile();
                     } catch (Throwable ignore) {
                     }
-                    save(ydk);
+                    //新建卡组保留卡片不保留卡组id
+                    save(ydk, true);
                     loadDeckFromFile(ydk);
                 }
             } else {
@@ -1613,12 +1614,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         builder.show();
     }
 
+    private void save(File ydk, boolean withoutId) {
+        YGOUtil.showTextToast(mDeckAdapater.save(ydk, withoutId) ? R.string.save_tip_ok : R.string.save_tip_fail);
+    }
+
     private void save(File ydk) {
-        if (mDeckAdapater.save(ydk)) {
-            YGOUtil.showTextToast(R.string.save_tip_ok);
-        } else {
-            YGOUtil.showTextToast(R.string.save_tip_fail);
-        }
+        save(ydk, false);
     }
 
     private void initBoomMenuButton(BoomMenuButton menu) {

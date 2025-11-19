@@ -29,6 +29,8 @@ public class DeckInfo {
 
     private int mainCount, extraCount, sideCount;
 
+    public String deckId = null;//当前的卡组id（卡组广场）
+
     public DeckInfo() {
         mainCards = new ArrayList<>();
         extraCards = new ArrayList<>();
@@ -352,5 +354,9 @@ public class DeckInfo {
 
         }
         return allCards;
+    }
+
+    public void setId(String id) {
+        deckId = id;
     }
 }

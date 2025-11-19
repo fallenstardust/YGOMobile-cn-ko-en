@@ -117,7 +117,7 @@ class DeckItemUtils {
      * @param file 原有file
      * @return 如果file为null，返回false
      */
-    public static boolean save(List<DeckItem> items, File file) {
+    public static boolean save(List<DeckItem> items, String deckId, File file) {
         FileOutputStream outputStream = null;
         OutputStreamWriter writer = null;
         try {
@@ -164,6 +164,8 @@ class DeckItemUtils {
                     writer.write(("\n" + cardInfo.Code).toCharArray());
                 }
             }
+            if (deckId != null)
+                writer.write(("\n##" + deckId).toCharArray());
             writer.flush();
             outputStream.flush();
         } catch (IOException e) {
@@ -178,6 +180,8 @@ class DeckItemUtils {
 
     public static void makeItems(DeckInfo deckInfo, boolean isPack, DeckAdapater adapater) {
         if (deckInfo != null) {
+            if (deckInfo.deckId != null)
+                adapater.setId(deckInfo.deckId);
             DeckItem.resetLabel(deckInfo, isPack);
             adapater.addItem(new DeckItem(DeckItemType.MainLabel));
             List<Card> main = deckInfo.getMainCards();
