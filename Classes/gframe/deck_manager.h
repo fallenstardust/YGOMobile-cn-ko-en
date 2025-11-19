@@ -85,6 +85,8 @@ public:
 	static bool SaveDeckArray(const DeckArray& deck, const wchar_t* name);
 	
 	int TypeCount(std::vector<code_pointer> list, unsigned int ctype);
+private:
+    static std::vector<std::wstring> deckComments;  // 存储以##和###开头的注释行
 };
 
 extern DeckManager deckManager;

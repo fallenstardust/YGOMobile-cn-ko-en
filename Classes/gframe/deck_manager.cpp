@@ -6,7 +6,7 @@
 namespace ygo {
 
 DeckManager deckManager;
-
+std::vector<std::wstring> DeckManager::deckComments;
 void DeckManager::LoadLFListSingle(const char* path) {
 	auto cur = _lfList.rend();
 	FILE* fp = myfopen(path, "r");
@@ -259,29 +259,41 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 	return errorcode;
 }
 uint32_t DeckManager::LoadDeckFromStream(Deck& deck, std::istringstream& deckStream, bool is_packlist) {
-	int ct = 0;
-	int mainc = 0, sidec = 0;
-	uint32_t cardlist[PACK_MAX_SIZE]{};
-	bool is_side = false;
-	std::string linebuf;
-	while (std::getline(deckStream, linebuf, '\n') && ct < PACK_MAX_SIZE) {
-		if (linebuf[0] == '!') {
-			is_side = true;
-			continue;
-		}
-		if (linebuf[0] < '0' || linebuf[0] > '9')
-			continue;
-		errno = 0;
-		auto code = std::strtoul(linebuf.c_str(), nullptr, 10);
-		if (errno || code > UINT32_MAX)
-			continue;
-		cardlist[ct++] = code;
-		if (is_side)
-			++sidec;
-		else
-			++mainc;
-	}
-	return LoadDeck(deck, cardlist, mainc, sidec, is_packlist);
+    // 清空之前的注释
+    deckComments.clear();
+
+    int ct = 0;
+    int mainc = 0, sidec = 0;
+    uint32_t cardlist[PACK_MAX_SIZE]{};
+    bool is_side = false;
+    std::string linebuf;
+
+    while (std::getline(deckStream, linebuf, '\n') && ct < PACK_MAX_SIZE) {
+        // 缓存以##或###开头的注释行
+        if (linebuf.length() >= 2 && linebuf[0] == '#' && linebuf[1] == '#') {
+            wchar_t wline[256];
+            BufferIO::DecodeUTF8(linebuf.c_str(), wline);
+            deckComments.push_back(wline);
+            continue;
+        }
+
+        if (linebuf[0] == '!') {
+            is_side = true;
+            continue;
+        }
+        if (linebuf[0] < '0' || linebuf[0] > '9')
+            continue;
+        errno = 0;
+        auto code = std::strtoul(linebuf.c_str(), nullptr, 10);
+        if (errno || code > UINT32_MAX)
+            continue;
+        cardlist[ct++] = code;
+        if (is_side)
+            ++sidec;
+        else
+            ++mainc;
+    }
+    return LoadDeck(deck, cardlist, mainc, sidec, is_packlist);
 }
 bool DeckManager::LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec) {
 	std::unordered_map<uint32_t, int> pcount;
@@ -404,26 +416,65 @@ bool DeckManager::LoadCurrentDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::
 		mainGame->deckBuilder.RefreshPackListScroll();
 	return true;
 }
+/**
+ * @brief 将卡牌组保存到字符串流中
+ * @param deck 要保存的卡牌组对象
+ * @param deckStream 用于存储卡牌组数据的字符串流
+ *
+ * 该函数将卡牌组按照特定格式保存到字符串流中，
+ * 包括主卡组、额外卡组和副卡组的内容
+ */
 void DeckManager::SaveDeck(const Deck& deck, std::stringstream& deckStream) {
+	// 写入文件头标识和创建者信息
 	deckStream << "#created by ..." << std::endl;
+
+	// 保存主卡组卡片
 	deckStream << "#main" << std::endl;
 	for(size_t i = 0; i < deck.main.size(); ++i)
 		deckStream << deck.main[i]->first << std::endl;
+
+	// 保存额外卡组卡片
 	deckStream << "#extra" << std::endl;
 	for(size_t i = 0; i < deck.extra.size(); ++i)
 		deckStream << deck.extra[i]->first << std::endl;
+
+	// 保存副卡组卡片
 	deckStream << "!side" << std::endl;
 	for(size_t i = 0; i < deck.side.size(); ++i)
 		deckStream << deck.side[i]->first << std::endl;
+
+    // 将缓存的注释写入文件末尾
+    if (!deckComments.empty()) {
+        deckStream << "\r\n";  // 添加换行符隔断
+        for (const auto& comment : deckComments) {
+            char utf8line[512];
+            BufferIO::EncodeUTF8(comment.c_str(), utf8line);
+            deckStream << utf8line << std::endl;
+        }
+    }
 }
+
+/**
+ * @brief 保存卡组数据到指定文件
+ * @param deck 要保存的卡组对象
+ * @param file 保存的目标文件路径
+ * @return 保存成功返回true，失败返回false
+ */
 bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
+	// 检查并创建deck目录
 	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
 		return false;
+
+	// 打开卡组文件用于写入
 	FILE* fp = OpenDeckFile(file, "w");
 	if(!fp)
 		return false;
+
+	// 将卡组数据序列化到字符串流中
 	std::stringstream deckStream;
 	SaveDeck(deck, deckStream);
+
+	// 将序列化的数据写入文件
 	std::fputs(deckStream.str().c_str(), fp);
 	std::fclose(fp);
 	return true;
