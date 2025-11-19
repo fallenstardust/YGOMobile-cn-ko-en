@@ -1603,6 +1603,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                         boolean ret = ydk.createNewFile();
                     } catch (Throwable ignore) {
                     }
+                    //新建卡组保留卡片不保留卡组id
                     save(ydk, true);
                     loadDeckFromFile(ydk);
                 }

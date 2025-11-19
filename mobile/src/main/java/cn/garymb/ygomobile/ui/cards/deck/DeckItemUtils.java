@@ -117,7 +117,7 @@ class DeckItemUtils {
      * @param file 原有file
      * @return 如果file为null，返回false
      */
-    public static boolean save(List<DeckItem> items, String deck_id, File file) {
+    public static boolean save(List<DeckItem> items, String deckId, File file) {
         FileOutputStream outputStream = null;
         OutputStreamWriter writer = null;
         try {
@@ -164,8 +164,8 @@ class DeckItemUtils {
                     writer.write(("\n" + cardInfo.Code).toCharArray());
                 }
             }
-            if (deck_id != null)
-                writer.write(("\n##" + deck_id).toCharArray());
+            if (deckId != null)
+                writer.write(("\n##" + deckId).toCharArray());
             writer.flush();
             outputStream.flush();
         } catch (IOException e) {
