@@ -62,6 +62,8 @@ public class DeckUtils {
             for (Card card : deck.getSideCards()) {
                 writer.write(("\n" + card.Code).toCharArray());
             }
+            if (deck.deckId != null)
+                writer.write(("\n##" + deck.deckId).toCharArray());
             writer.flush();
             outputStream.flush();
         } catch (IOException e) {

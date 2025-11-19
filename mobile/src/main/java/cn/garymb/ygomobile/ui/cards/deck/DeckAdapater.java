@@ -68,6 +68,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private boolean showHead = false;
     private String mDeckMd5;
     private DeckInfo mDeckInfo;
+    private String deckId = null;
 
     public DeckAdapater(Context context, RecyclerView recyclerView, ImageLoader imageLoader) {
         this.context = context;
@@ -446,10 +447,10 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return DeckLoader.readDeck(cardLoader, file);
     }
 
-    public boolean save(File file) {
+    public boolean save(File file, boolean withoutId) {
         //保存了，记录状态
         mDeckMd5 = DeckItemUtils.makeMd5(mItems);
-        return DeckItemUtils.save(mItems, file);
+        return DeckItemUtils.save(mItems, withoutId ? null : deckId, file);
     }
 
     public Deck toDeck(File file) {
@@ -461,6 +462,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     private void loadData(DeckInfo deckInfo, boolean isPack) {
+        deckId = null;
         mCount.clear();
         mMainCount = 0;
         mExtraCount = 0;
@@ -658,5 +660,9 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     @Override
     public int getItemCount() {
         return mItems.size();
+    }
+
+    public void setId(String id) {
+        deckId = id;
     }
 }
