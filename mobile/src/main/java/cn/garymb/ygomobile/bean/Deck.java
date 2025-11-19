@@ -48,6 +48,10 @@ public class Deck implements Parcelable {
      * 卡组广场用的卡组id，可以为空
      */
     public String deckId = null;
+    /**
+     * 卡组广场用的用户id，可以为空
+     */
+    public String userId = null;
 
     public Deck() {
         mainlist = new ArrayList<>();
@@ -195,7 +199,11 @@ public class Deck implements Parcelable {
         dest.writeList(this.sideList);
     }
 
-    public void setId(String id) {
+    public void setDeckId(String id) {
         deckId = id;
+    }
+
+    public void setUserId(String id) {
+        userId = id;
     }
 }
