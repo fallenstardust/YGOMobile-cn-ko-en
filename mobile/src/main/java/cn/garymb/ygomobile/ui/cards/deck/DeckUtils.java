@@ -64,6 +64,8 @@ public class DeckUtils {
             }
             if (deck.deckId != null)
                 writer.write(("\n##" + deck.deckId).toCharArray());
+            if (deck.userId != null)
+                writer.write(("\n###" + deck.userId).toCharArray());
             writer.flush();
             outputStream.flush();
         } catch (IOException e) {

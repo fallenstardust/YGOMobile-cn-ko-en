@@ -70,10 +70,14 @@ public class DeckLoader {
                         type = DeckItemType.MainCard;
                     } else if (line.startsWith("#extra")) {
                         type = DeckItemType.ExtraCard;
+                    } else if (line.startsWith("###")) {
+                        line = line.trim().substring(3);
+                        if (line.length() > 0)
+                            deck.setUserId(line);
                     } else if (line.startsWith("##")) {
                         line = line.trim().substring(2);
                         if (line.length() > 0)
-                            deck.setId(line);
+                            deck.setDeckId(line);
                     } else {
                         type = DeckItemType.Pack;
                     }
@@ -137,7 +141,9 @@ public class DeckLoader {
         int code;
         isChanged = false;
         if (deck.deckId != null)
-            deckInfo.setId(deck.deckId);
+            deckInfo.setDeckId(deck.deckId);
+        if (deck.userId != null)
+            deckInfo.setUserId(deck.userId);
         for (Integer id : deck.getMainlist()) {
             if (tmp.get(id) != null) {
                 if (released_code_list.contains(tmp.get(id).getCode())) {//先查看id对应的卡片密码是否在正式数组中存在
