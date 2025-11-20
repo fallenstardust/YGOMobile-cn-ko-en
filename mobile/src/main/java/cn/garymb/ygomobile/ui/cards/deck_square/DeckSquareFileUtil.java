@@ -71,9 +71,9 @@ public class DeckSquareFileUtil {
                // LogUtil.i(TAG, line);
                 if (line.startsWith("###")) {//注意，先判断###，后判断##。因为###会包括##的情况
                     try {
-                        String data = line.replace("#", "");
-                        if (!data.isEmpty()) {
-                            deckId = data;
+                        line = line.replace("#", "");
+                        if (!line.isEmpty()) {
+                            userId = Integer.parseInt(line);
                         }
                         // userId = Integer.parseInt(line.replaceAll("###", ""));
                     } catch (NumberFormatException e) {
@@ -81,8 +81,7 @@ public class DeckSquareFileUtil {
                     }
 
                 } else if (line.startsWith("##")) {
-                    line = line.replace("#", "");
-                    userId = Integer.parseInt(line);
+                    deckId = line.replace("#", "");
 
                 }
 
@@ -266,14 +265,14 @@ public class DeckSquareFileUtil {
             IOUtils.close(inputStream);
         }
 
+        if (!deckIdFlag) {//原始ydk中不存在deckId，添加deckId行
+            contentBuilder.append("\n");
+            contentBuilder.append("##" + deckId);
+        }
 
         if (!userIdFlag) {//原始ydk中不存在userId，添加userId行
             contentBuilder.append("\n");
-            contentBuilder.append("##" + userId);
-        }
-        if (!deckIdFlag) {//原始ydk中不存在deckId，添加deckId行
-            contentBuilder.append("\n");
-            contentBuilder.append("###" + deckId);
+            contentBuilder.append("###" + userId);
         }
 
         String content = contentBuilder.toString();

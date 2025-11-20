@@ -30,7 +30,7 @@ public class DeckInfo {
     private int mainCount, extraCount, sideCount;
 
     public String deckId = null;//当前的卡组id（卡组广场）
-    public String userId = null;//当前的用户id（卡组广场）
+    public Integer userId = null;//当前的用户id（卡组广场）
 
     public DeckInfo() {
         mainCards = new ArrayList<>();
@@ -361,7 +361,7 @@ public class DeckInfo {
         deckId = id;
     }
 
-    public void setUserId(String id) {
+    public void setUserId(Integer id) {
         userId = id;
     }
 }

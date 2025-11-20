@@ -117,7 +117,7 @@ class DeckItemUtils {
      * @param file 原有file
      * @return 如果file为null，返回false
      */
-    public static boolean save(List<DeckItem> items, String deckId, String userId, File file) {
+    public static boolean save(List<DeckItem> items, String deckId, Integer userId, File file) {
         FileOutputStream outputStream = null;
         OutputStreamWriter writer = null;
         try {

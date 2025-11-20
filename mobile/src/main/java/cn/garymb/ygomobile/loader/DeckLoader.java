@@ -73,7 +73,7 @@ public class DeckLoader {
                     } else if (line.startsWith("###")) {
                         line = line.trim().substring(3);
                         if (line.length() > 0)
-                            deck.setUserId(line);
+                            deck.setUserId(Integer.parseInt(line));
                     } else if (line.startsWith("##")) {
                         line = line.trim().substring(2);
                         if (line.length() > 0)

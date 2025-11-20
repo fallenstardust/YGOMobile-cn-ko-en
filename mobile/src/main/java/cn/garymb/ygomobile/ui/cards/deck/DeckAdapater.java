@@ -69,7 +69,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private String mDeckMd5;
     private DeckInfo mDeckInfo;
     private String deckId = null;
-    private String userId = null;
+    private Integer userId = null;
 
     public DeckAdapater(Context context, RecyclerView recyclerView, ImageLoader imageLoader) {
         this.context = context;
@@ -668,7 +668,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         deckId = id;
     }
 
-    public void setUserId(String id) {
+    public void setUserId(Integer id) {
         userId = id;
     }
 }

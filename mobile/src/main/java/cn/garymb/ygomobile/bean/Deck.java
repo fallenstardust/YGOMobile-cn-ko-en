@@ -51,7 +51,7 @@ public class Deck implements Parcelable {
     /**
      * 卡组广场用的用户id，可以为空
      */
-    public String userId = null;
+    public Integer userId = null;
 
     public Deck() {
         mainlist = new ArrayList<>();
@@ -203,7 +203,7 @@ public class Deck implements Parcelable {
         deckId = id;
     }
 
-    public void setUserId(String id) {
+    public void setUserId(Integer id) {
         userId = id;
     }
 }
