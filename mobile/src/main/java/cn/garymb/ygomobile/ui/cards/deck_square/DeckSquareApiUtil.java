@@ -448,7 +448,7 @@ public class DeckSquareApiUtil {
             localDeck.setDeckName(localDeckName);
             localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
             localDeck.setDelete(false);
-            LogUtil.e(TAG,"本地卡组名称："+localDeck.getDeckName()+"\n本地卡组分类："+localDeck.getDeckType()+"\n本地卡组ID："+localDeck.getDeckId());
+            LogUtil.e(TAG,"本地卡组名称："+localDeck.getDeckType()+"-"+localDeck.getDeckName()+"\n本地卡组ID："+localDeck.getDeckId());
             // 2. 使用在线卡组的迭代器遍历（支持安全删除）
             Iterator<MyOnlineDeckDetail> onlineIterator = onlineDecks.iterator();
             while (onlineIterator.hasNext()) {
