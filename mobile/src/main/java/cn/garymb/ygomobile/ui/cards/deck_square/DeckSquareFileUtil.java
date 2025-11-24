@@ -55,7 +55,7 @@ public class DeckSquareFileUtil {
     }
 
     //读取file指定的ydk文件，返回其内包含的deckId。如果不包含deckId，返回null
-    public static String getId(File file) {
+    public static String getDeckId(File file) {
         String deckId = null;
         Integer userId = null;
         FileInputStream inputStream = null;
@@ -73,9 +73,8 @@ public class DeckSquareFileUtil {
                     try {
                         line = line.replace("#", "");
                         if (!line.isEmpty()) {
-                            userId = Integer.parseInt(line);
+                            userId = Integer.parseInt(line.replaceAll("###", ""));
                         }
-                        // userId = Integer.parseInt(line.replaceAll("###", ""));
                     } catch (NumberFormatException e) {
                         LogUtil.e(TAG, "getId(77): integer" + line + "parse error" + e.toString());
                     }
@@ -206,7 +205,7 @@ public class DeckSquareFileUtil {
         List<MyDeckItem> result = new ArrayList<>();
         File[] files = getAllYdk();
         for (File file : files) {
-            String deckId = getId(file);
+            String deckId = getDeckId(file);
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(file.getName());
             //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类

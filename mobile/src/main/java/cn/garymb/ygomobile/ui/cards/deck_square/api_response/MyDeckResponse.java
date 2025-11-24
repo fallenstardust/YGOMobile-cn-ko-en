@@ -24,6 +24,7 @@ public class MyDeckResponse {
     }
 
     public List<MyOnlineDeckDetail> getData() {
+        List<MyOnlineDeckDetail> data = this.data;
         //根据deckType排序，提高观感
         if (!data.isEmpty() || data != null) {
             data.sort((o1, o2) -> {
