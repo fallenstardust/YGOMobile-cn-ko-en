@@ -153,4 +153,11 @@
             android:persistent="true"
             android:title="@string/settings_test_replace_kernel" />
     </PreferenceCategory-->
+
+    <PreferenceCategory android:title="@string/settings_sister_projects">
+        <Preference
+            android:key="pref_key_sister_mycard"
+            android:title="@string/settings_sister_mycard" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

@@ -374,5 +374,7 @@
     <string name="like_deck_thumb">Curtir o deck</string>
     <string name="pre_view">Prévia</string>
     <string name="label_set_No_Setcode">#Sem Card Set incluso</string>
+    <string name="settings_sister_projects">友情链接</string>
+    <string name="settings_sister_mycard">MyCard</string>
 </resources>
 

@@ -388,4 +388,6 @@
     <string name="pwd_warning">请填写你的密码！</string>
     <string name="like_deck_thumb">为卡组点赞</string>
     <string name="pre_view">预览</string>
+    <string name="settings_sister_projects">友情链接</string>
+    <string name="settings_sister_mycard">MyCard</string>
 </resources>

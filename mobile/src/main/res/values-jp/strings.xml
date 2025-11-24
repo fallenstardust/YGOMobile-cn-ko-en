@@ -384,4 +384,6 @@
     <string name="pwd_warning">パスワードを入力してください！</string>
     <string name="like_deck_thumb">デッキに「いいね」をつける</string>
     <string name="pre_view">プレビュー</string>
+    <string name="settings_sister_projects">友情链接</string>
+    <string name="settings_sister_mycard">MyCard</string>
 </resources>

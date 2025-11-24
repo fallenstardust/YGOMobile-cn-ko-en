@@ -11,6 +11,8 @@ import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.ORI_PICS;
 import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
+import static cn.garymb.ygomobile.Constants.PREF_SISTER_MYCARD;
+import static cn.garymb.ygomobile.Constants.PREF_SISTER_MYCARD_LINK;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 import static cn.garymb.ygomobile.Constants.PREF_KEY_WORDS_SPLIT;
@@ -151,6 +153,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_READ_EX, mSettings.isReadExpansions());
         bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
+        bind(PREF_SISTER_MYCARD, PREF_SISTER_MYCARD_LINK);
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
         bind(PREF_KEY_WORDS_SPLIT, mSettings.getKeyWordsSplit());
         bind(PREF_DATA_LANGUAGE, mSettings.getDataLanguage());
@@ -358,6 +361,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
         if (PREF_JOIN_QQ.equals(key)) {
             String groupkey = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
             joinQQGroup(groupkey);
+        }
+        if (PREF_SISTER_MYCARD.equals(key)) {
+            StartBrowser(PREF_SISTER_MYCARD_LINK);
         }
         if (PREF_CHECK_UPDATE.equals(key)) {
             checkUpgrade(URL_HOME_VERSION);
@@ -681,6 +687,16 @@ public class SettingFragment extends PreferenceFragmentPlus {
             return true;
         } catch (Exception e) {
             // 未安装手Q或安装的版本不支持
+            return false;
+        }
+    }
+
+    public boolean StartBrowser(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        try {
+            startActivity(intent);
+            return true;
+        } catch (Exception e) {
             return false;
         }
     }
