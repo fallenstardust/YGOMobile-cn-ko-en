@@ -135,6 +135,7 @@ public class DeckSquareApiUtil {
         String responseBodyString = response.body().string();
         Gson gson = new Gson();
         result = gson.fromJson(responseBodyString, MyDeckResponse.class);
+        result.chkId();
 
 
         if (result.code == 20) {//用户身份验证失败

@@ -44,5 +44,19 @@ public class MyDeckResponse {
         this.data = data;
     }
 
+    public void chkId() {
+        for (MyOnlineDeckDetail item : this.data) {
+            String ydk = item.getDeckYdk();
+            String contains;
+            contains = "##" + item.getDeckId();
+            if (!ydk.contains(contains))
+                ydk += "\n" + contains;
+            contains = "###" + item.getUserId();
+            if (!ydk.contains(contains))
+                ydk += "\n" + contains;
+            item.setDeckYdk(ydk);
+        }
+    }
+
 
 }
