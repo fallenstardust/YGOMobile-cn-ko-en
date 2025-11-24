@@ -202,6 +202,9 @@ public class MyOnlineDeckDetail implements Parcelable {
     }
 
     public String getDeckYdk() {
+        String deckYdk = this.deckYdk;
+        if(!deckYdk.contains("##"+ deckId)) this.deckYdk += ("\n##"+ deckId);
+        if(!deckYdk.contains("###"+ userId)) this.deckYdk += ("\n###"+ userId);
         return deckYdk;
     }
 
