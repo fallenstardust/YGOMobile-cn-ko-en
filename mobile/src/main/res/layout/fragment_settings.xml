@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="0.7">
+
+    <!-- 决斗助手服务开关 -->
+    <Switch
+        android:id="@+id/switch_service_duel_assistant"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:text="@string/reset_game_res" />
+
+    <!-- 锁定屏幕方向 -->
+    <Switch
+        android:id="@+id/switch_lock_screen"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:text="@string/Start_ServiceDuelAssistant" />
+
+    <!-- 字体抗锯齿 -->
+    <Switch
+        android:id="@+id/switch_font_antialias"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:text="@string/settings_game_font_antialias" />
+
+    <!-- 沉浸模式 -->
+    <Switch
+        android:id="@+id/switch_immersive_mode"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:text="@string/settings_game_immersive_mode" />
+
+    <!-- 摆钟缩放 -->
+    <Switch
+        android:id="@+id/switch_pendulum_scale"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:text="@string/settings_game_lab_pendulum_scale" />
+    <!-- 使用扩展卡包 -->
+    <Switch
+        android:id="@+id/switch_read_ex"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:text="@string/title_use_ex" />
+    <!-- 保持比例 -->
+    <Switch
+        android:id="@+id/switch_keep_scale"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:text="@string/about_pref_settings_keep_scale" />
+
+</LinearLayout>

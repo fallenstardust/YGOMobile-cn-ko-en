@@ -1,7 +1,7 @@
 /*
  * jdarith.c
  *
- * Developed 1997-2013 by Guido Vollbeding.
+ * Developed 1997-2011 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -345,15 +345,12 @@ decode_mcu_AC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
   /* Sections F.2.4.2 & F.1.4.4.2: Decoding of AC coefficients */
 
   /* Figure F.20: Decode_AC_coefficients */
-  k = cinfo->Ss - 1;
-  do {
-    st = entropy->ac_stats[tbl] + 3 * k;
+  for (k = cinfo->Ss; k <= cinfo->Se; k++) {
+    st = entropy->ac_stats[tbl] + 3 * (k - 1);
     if (arith_decode(cinfo, st)) break;		/* EOB flag */
-    for (;;) {
-      k++;
-      if (arith_decode(cinfo, st + 1)) break;
-      st += 3;
-      if (k >= cinfo->Se) {
+    while (arith_decode(cinfo, st + 1) == 0) {
+      st += 3; k++;
+      if (k > cinfo->Se) {
 	WARNMS(cinfo, JWRN_ARITH_BAD_CODE);
 	entropy->ct = -1;			/* spectral overflow */
 	return TRUE;
@@ -387,7 +384,7 @@ decode_mcu_AC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
     v += 1; if (sign) v = -v;
     /* Scale and output coefficient in natural (dezigzagged) order */
     (*block)[natural_order[k]] = (JCOEF) (v << cinfo->Al);
-  } while (k < cinfo->Se);
+  }
 
   return TRUE;
 }
@@ -395,8 +392,6 @@ decode_mcu_AC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
 
 /*
  * MCU decoding for DC successive approximation refinement scan.
- * Note: we assume such scans can be multi-component,
- * although the spec is not very clear on the point.
  */
 
 METHODDEF(boolean)
@@ -462,18 +457,15 @@ decode_mcu_AC_refine (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
   m1 = (-1) << cinfo->Al;	/* -1 in the bit position being coded */
 
   /* Establish EOBx (previous stage end-of-block) index */
-  kex = cinfo->Se;
-  do {
+  for (kex = cinfo->Se; kex > 0; kex--)
     if ((*block)[natural_order[kex]]) break;
-  } while (--kex);
 
-  k = cinfo->Ss - 1;
-  do {
-    st = entropy->ac_stats[tbl] + 3 * k;
-    if (k >= kex)
+  for (k = cinfo->Ss; k <= cinfo->Se; k++) {
+    st = entropy->ac_stats[tbl] + 3 * (k - 1);
+    if (k > kex)
       if (arith_decode(cinfo, st)) break;	/* EOB flag */
     for (;;) {
-      thiscoef = *block + natural_order[++k];
+      thiscoef = *block + natural_order[k];
       if (*thiscoef) {				/* previously nonzero coef */
 	if (arith_decode(cinfo, st + 2)) {
 	  if (*thiscoef < 0)
@@ -490,14 +482,14 @@ decode_mcu_AC_refine (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
 	  *thiscoef = p1;
 	break;
       }
-      st += 3;
-      if (k >= cinfo->Se) {
+      st += 3; k++;
+      if (k > cinfo->Se) {
 	WARNMS(cinfo, JWRN_ARITH_BAD_CODE);
 	entropy->ct = -1;			/* spectral overflow */
 	return TRUE;
       }
     }
-  } while (k < cinfo->Se);
+  }
 
   return TRUE;
 }
@@ -746,17 +738,6 @@ start_pass (j_decompress_ptr cinfo)
 
 
 /*
- * Finish up at the end of an arithmetic-compressed scan.
- */
-
-METHODDEF(void)
-finish_pass (j_decompress_ptr cinfo)
-{
-  /* no work necessary here */
-}
-
-
-/*
  * Module initialization routine for arithmetic entropy decoding.
  */
 
@@ -769,9 +750,8 @@ jinit_arith_decoder (j_decompress_ptr cinfo)
   entropy = (arith_entropy_ptr)
     (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
 				SIZEOF(arith_entropy_decoder));
-  cinfo->entropy = &entropy->pub;
+  cinfo->entropy = (struct jpeg_entropy_decoder *) entropy;
   entropy->pub.start_pass = start_pass;
-  entropy->pub.finish_pass = finish_pass;
 
   /* Mark tables unallocated */
   for (i = 0; i < NUM_ARITH_TBLS; i++) {
