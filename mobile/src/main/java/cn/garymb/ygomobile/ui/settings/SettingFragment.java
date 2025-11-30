@@ -444,7 +444,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
             showFileChooser(preference, ".so", mSettings.getResourcePath(), "内核文件选择");
         }
         return false;
-    }    @SuppressLint("HandlerLeak")
+    }
+
+    @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {

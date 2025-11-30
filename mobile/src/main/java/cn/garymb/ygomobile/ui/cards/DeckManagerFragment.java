@@ -652,7 +652,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             mCardSearcher.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             // 根据资源路径判断是否进入卡包展示模式
-            isPackMode = rs.source.getParent().equals(mSettings.getPackDeckDir()) || rs.source.getParent().equals(mSettings.getCacheDeckDir());
+            if (rs.source != null) {
+                String parentPath = rs.source.getParent();
+                isPackMode = parentPath != null &&
+                        (parentPath.equals(mSettings.getPackDeckDir()) ||
+                                parentPath.equals(mSettings.getCacheDeckDir()));
+            } else {
+                isPackMode = false;
+            }
             // 设置当前卡组显示
             if (rs.source != null) {
                 setCurDeck(rs, isPackMode);

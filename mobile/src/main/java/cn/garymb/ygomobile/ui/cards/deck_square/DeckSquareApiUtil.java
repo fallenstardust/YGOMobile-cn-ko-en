@@ -447,7 +447,7 @@ public class DeckSquareApiUtil {
             localDeck.setDeckName(localDeckName);
             localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
             localDeck.setDelete(false);
-            LogUtil.e(TAG,"本地卡组名称："+localDeck.getDeckType()+"-"+localDeck.getDeckName()+"  ID："+localDeck.getDeckId());
+            LogUtil.d(TAG,"本地卡组名称："+localDeck.getDeckType()+"-"+localDeck.getDeckName()+"  ID："+localDeck.getDeckId());
             // 2. 使用在线卡组的迭代器遍历（支持安全删除）
             Iterator<MyOnlineDeckDetail> onlineIterator = onlineDecks.iterator();
             while (onlineIterator.hasNext()) {
@@ -467,10 +467,11 @@ public class DeckSquareApiUtil {
         }
 
         // 上传本地卡组覆盖在线卡组
+        LogUtil.w(TAG, "+同步的 本地卡组: " + syncUploadDecks.size());
         syncMyDecks(syncUploadDecks, loginToken);
 
         // 剩余的本地卡组都是新增卡组（本地独有，需要上传）
-        LogUtil.w(TAG, "+上传新增的 本地卡组: " + localDecks);
+        LogUtil.w(TAG, "+上传新增的 本地卡组: " + localDecks.size());
         if (!localDecks.isEmpty()) {
             PushMultiResponse result = requestIdAndPushNewDecks(localDecks, loginToken);
             LogUtil.w(TAG, "上传结果数：" + result.getData());
