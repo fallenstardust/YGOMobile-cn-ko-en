@@ -116,7 +116,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             holder.side.setText("-");
             holder.side.setTextColor(Color.RED);
         }
-        holder.file_time.setText(convertToGMTDate(deckFile.getDate()));
+        holder.file_time.setText(deckFile.getDeckId());
         if (DEBUG) {
             holder.ll_deck_date.setVisibility(View.VISIBLE);
         } else {
