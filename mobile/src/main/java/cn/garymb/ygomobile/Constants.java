@@ -30,7 +30,7 @@ public interface Constants {
     String PREF_FONT_ANTIALIAS = "pref_key_game_font_antialias";
     boolean PREF_DEF_FONT_ANTIALIAS = true;
     String PREF_OPENGL_VERSION = "pref_key_game_ogles_config";
-    int PREF_DEF_OPENGL_VERSION = 1;
+    int PREF_DEF_OPENGL_VERSION = 2;
     String PREF_PENDULUM_SCALE = "pref_key_game_lab_pendulum_scale";
     boolean PREF_DEF_PENDULUM_SCALE = true;
     String PREF_START_SERVICEDUELASSISTANT = "pref_key_start_serviceduelassistant";
@@ -170,6 +170,7 @@ public interface Constants {
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
     String URL_HOME_VERSION = "https://ygom.top/ver_code.txt";
     String URL_HOME_VERSION_ALT = "https://cdn02.moecube.com:444/ygom-site/ver_code.txt";
+    String URL_BILIBILI_DYNAMIC = "https://m.bilibili.com/space/16033444/";
     String ID1 = "[versionname]";
     String ID2 = "[download_link]";
     String ID3 = "#pre_release_code";

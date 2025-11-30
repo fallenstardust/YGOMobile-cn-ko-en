@@ -257,7 +257,7 @@
     <string name="avatarSelect">アバタを選択してください</string>
     <string name="ClickLinkArrows">クリック矢印を発光する</string>
     <string name="tip_no_permission" formatted="false"> %s 権限はあなたに禁止されています</string>
-    <string name="Already_Lastest">最新バージョンです</string>
+    <string name="Already_Lastest">新バージョンなし。作者の最新情報を確認？</string>
     <string name="about_immersive_mode">开启它的同时会自动隐藏虚拟键</string>
     <string name="Download">ダウンロード</string>
     <string name="Downloading">ダウンロード中…</string>

@@ -265,7 +265,7 @@
     <string name="bgSelect">click background and select files</string>
     <string name="avatarSelect">click avatar and select files</string>
     <string name="ClickLinkArrows">click link arrows</string>
-    <string name="Already_Lastest">Already be the Lastest Version</string>
+    <string name="Already_Lastest">No new version available. Check the author\'s feed?</string>
     <string name="tip_no_permission" formatted="false">the permission %s is denied.</string>
     <string name="about_immersive_mode">it will hide virtual-key</string>
     <string name="Download">Download</string>

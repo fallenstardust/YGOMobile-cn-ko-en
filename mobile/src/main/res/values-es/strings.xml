@@ -261,7 +261,7 @@
     <string name="avatarSelect">Toca para elegir el ávatar</string>
     <string name="ClickLinkArrows">Activar flechas</string>
     <string name="tip_no_permission" formatted="false">El permiso %s está desactivado</string>
-    <string name="Already_Lastest">No hay nuevas versiones</string>
+    <string name="Already_Lastest">No se ha encontrado ninguna nueva versión. ¿Por qué no revisas las actualizaciones del autor para más detalles?</string>
     <string name="about_immersive_mode">Oculta automáticamente los botones virtuales</string>
     <string name="Download">Descargar</string>
     <string name="Downloading">Descargando, espera...</string>

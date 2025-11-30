@@ -7,13 +7,11 @@ import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
 import static cn.garymb.ygomobile.Constants.ID1;
 import static cn.garymb.ygomobile.Constants.ID2;
 import static cn.garymb.ygomobile.Constants.ID3;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.ORI_PICS;
 import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
-import static cn.garymb.ygomobile.Constants.PREF_KEY_WORDS_SPLIT;
 import static cn.garymb.ygomobile.Constants.PREF_DATA_LANGUAGE;
 import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
 import static cn.garymb.ygomobile.Constants.PREF_DEL_EX;
@@ -25,6 +23,7 @@ import static cn.garymb.ygomobile.Constants.PREF_IMAGE_QUALITY;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_JOIN_QQ;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
+import static cn.garymb.ygomobile.Constants.PREF_KEY_WORDS_SPLIT;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
@@ -39,6 +38,7 @@ import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
 import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
+import static cn.garymb.ygomobile.Constants.URL_BILIBILI_DYNAMIC;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.Cache_pre_release_code;
 import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
@@ -59,18 +59,12 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
-
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.signature.MediaStoreSignature;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -101,7 +95,6 @@ import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -166,7 +159,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
         bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
         bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
-        bind(PREF_USER_PRIVACY_POLICY,getString(R.string.about_user_privacy_policy));
+        bind(PREF_USER_PRIVACY_POLICY, getString(R.string.about_user_privacy_policy));
         isInit = false;
     }
 
@@ -275,51 +268,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }
         return true;
     }
-
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case TYPE_SETTING_GET_VERSION_OK:
-                    if (msg.obj.toString().contains(ID1) && msg.obj.toString().contains(ID2) && msg.obj.toString().contains(ID3)) {
-                        Version = msg.obj.toString().substring(msg.obj.toString().indexOf(ID1) + ID1.length(), msg.obj.toString().indexOf(";"));//截取版本号
-                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf(ID2) + ID2.length(), msg.obj.toString().indexOf("$"));//截取下载地址
-                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
-                        if (!TextUtils.isEmpty(Cache_pre_release_code)) {
-                            arrangeCodeList(Cache_pre_release_code);//转换成两个数组
-                        }
-                        if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
-                            DialogPlus dialog = new DialogPlus(getContext());
-                            dialog.setMessage(R.string.Found_Update);
-                            dialog.setLeftButtonText(R.string.download_home);
-                            dialog.setLeftButtonListener((dlg, s) -> {
-                                Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setData(Uri.parse(Cache_link));
-                                startActivity(intent);
-                                dialog.dismiss();
-                            });
-                            dialog.show();
-                        } else {
-                            YGOUtil.showTextToast(R.string.Already_Lastest);
-                        }
-                    } else {
-                        YGOUtil.showTextToast(R.string.Checking_Update_Failed);
-                    }
-                    break;
-                case TYPE_SETTING_GET_VERSION_FAILED:
-                    ++FailedCount;
-                    if (FailedCount <= 2) {
-                        checkUpgrade(URL_HOME_VERSION);
-                    } else {
-                        YGOUtil.showTextToast(getString(R.string.Checking_Update_Failed) + msg.obj.toString());
-                    }
-                    break;
-            }
-
-        }
-    };
 
     @Override
     public boolean onPreferenceClick(Preference preference) {
@@ -496,7 +444,52 @@ public class SettingFragment extends PreferenceFragmentPlus {
             showFileChooser(preference, ".so", mSettings.getResourcePath(), "内核文件选择");
         }
         return false;
-    }
+    }    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case TYPE_SETTING_GET_VERSION_OK:
+                    if (msg.obj.toString().contains(ID1) && msg.obj.toString().contains(ID2) && msg.obj.toString().contains(ID3)) {
+                        Version = msg.obj.toString().substring(msg.obj.toString().indexOf(ID1) + ID1.length(), msg.obj.toString().indexOf(";"));//截取版本号
+                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf(ID2) + ID2.length(), msg.obj.toString().indexOf("$"));//截取下载地址
+                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
+                        if (!TextUtils.isEmpty(Cache_pre_release_code)) {
+                            arrangeCodeList(Cache_pre_release_code);//转换成两个数组
+                        }
+                        if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
+                            DialogPlus dialog = new DialogPlus(getContext());
+                            dialog.setMessage(R.string.Found_Update);
+                            dialog.setLeftButtonText(R.string.download_home);
+                            dialog.setLeftButtonListener((dlg, s) -> {
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setData(Uri.parse(Cache_link));
+                                startActivity(intent);
+                                dialog.dismiss();
+                            });
+                            dialog.show();
+                        } else {
+                            showBilibiliDialog();
+
+
+                        }
+                    } else {
+                        YGOUtil.showTextToast(R.string.Checking_Update_Failed);
+                    }
+                    break;
+                case TYPE_SETTING_GET_VERSION_FAILED:
+                    ++FailedCount;
+                    if (FailedCount <= 2) {
+                        checkUpgrade(URL_HOME_VERSION);
+                    } else {
+                        showBilibiliDialog();
+                    }
+                    break;
+            }
+
+        }
+    };
 
     @Override
     protected void onChooseFileFail(Preference preference) {
@@ -758,6 +751,23 @@ public class SettingFragment extends PreferenceFragmentPlus {
             showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1]);
         }
 
+    }
+
+    private void showBilibiliDialog() {
+        DialogPlus dialog = new DialogPlus(getContext());
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        dialog.setMessage(R.string.Already_Lastest);
+        dialog.setLeftButtonText(R.string.Cancel);
+        dialog.setLeftButtonListener((dlg, s) -> {
+            dialog.dismiss();
+        });
+        dialog.setRightButtonText(R.string.OK);
+        dialog.setRightButtonListener((dlg, s) -> {
+            intent.setData(Uri.parse(URL_BILIBILI_DYNAMIC));
+            startActivity(intent);
+            dialog.dismiss();
+        });
+        dialog.show();
     }
 
 }

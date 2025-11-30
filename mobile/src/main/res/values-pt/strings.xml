@@ -253,7 +253,7 @@
     <string name="avatarSelect">Toque no avatar para alterar a imagem</string>
     <string name="ClickLinkArrows">Toque nas setas</string>
     <string name="tip_no_permission" formatted="false">A permissão %s foi negada.</string>
-	<string name="Already_Lastest">Você já possui a versão mais recente do YGOMobile!</string>
+	<string name="Already_Lastest">Nenhuma nova versão encontrada. Por que não verificar as atualizações do autor? Talvez haja notícias importantes</string>
     <string name="about_immersive_mode">O teclado virtual será ocultado</string>
     <string name="Download">Baixar</string>
     <string name="Downloading">Baixando, por favor espere...</string>
