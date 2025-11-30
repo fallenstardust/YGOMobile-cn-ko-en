@@ -599,7 +599,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             // 关闭加载对话框并设置当前卡牌包
             dlg.dismiss();
             // 根据资源路径判断是否进入卡包展示模式
-            isPackMode = rs.source.getParent().equals(mSettings.getPackDeckDir()) || rs.source.getParent().equals(mSettings.getCacheDeckDir());
+            if (rs != null && rs.source != null) {
+                String parentPath = rs.source.getParent();
+                isPackMode = parentPath != null &&
+                        (parentPath.equals(mSettings.getPackDeckDir()) ||
+                                parentPath.equals(mSettings.getCacheDeckDir()));
+            } else {
+                isPackMode = false;
+            }
             setCurDeck(rs, isPackMode);
         });
     }
@@ -652,7 +659,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             mCardSearcher.initItems();
             initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
             // 根据资源路径判断是否进入卡包展示模式
-            if (rs.source != null) {
+            if (rs != null && rs.source != null) {
                 String parentPath = rs.source.getParent();
                 isPackMode = parentPath != null &&
                         (parentPath.equals(mSettings.getPackDeckDir()) ||
@@ -661,7 +668,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 isPackMode = false;
             }
             // 设置当前卡组显示
-            if (rs.source != null) {
+            if (rs != null && rs.source != null) {
                 setCurDeck(rs, isPackMode);
             } else {
                 setCurDeck(rs, false);
@@ -1266,11 +1273,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                     builder.setLeftButtonListener((dlg, rs) -> {
                         if (mDeckAdapater.getYdkFile() != null) {
-                            FileUtils.deleteFile(mDeckAdapater.getYdkFile());
-                            // 统一调用批量删除在线卡组（这里只有1个）
+                            // 先删除在线卡组
                             List<DeckFile> deckFileList = new ArrayList<>();
                             deckFileList.add(new DeckFile(mDeckAdapater.getYdkFile()));
-                            onDeckDel(deckFileList);
+                            DeckSquareApiUtil.deleteDecks(deckFileList);
+
+                            // 再删除本地文件
+                            FileUtils.deleteFile(mDeckAdapater.getYdkFile());
                             YGOUtil.showTextToast(R.string.done);
                             dlg.dismiss();
                             File file = getFirstYdk();
@@ -1770,7 +1779,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return;
         String currentDeckPath = deck.getAbsolutePath();
         for (DeckFile deckFile : deckFileList) {
-            LogUtil.w(TAG, "要删除的卡组：" + "\n卡组分类" + deckFile.getTypeName() + "\n卡组名称：" + deckFile.getFileName() + "\n卡组id" + deckFile.getDeckId());
+            LogUtil.w(TAG, "要删除的卡组：" + "\n卡组分类: " + deckFile.getTypeName() + "\n卡组名称：" + deckFile.getFileName() + "\n卡组id: " + deckFile.getDeckId());
             if (TextUtils.equals(deckFile.getPath(), currentDeckPath)) {
                 List<File> files = getYdkFiles();
                 File file = null;
@@ -1782,10 +1791,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 } else {
                     setCurDeck(new DeckInfo(), false);
                 }
+                // 对于当前卡组，也应该删除在线卡组
+                DeckSquareApiUtil.deleteDecks(Arrays.asList(deckFile));
                 return;
             }
         }
-        //删除在线的同名卡组们
+        // 删除在线的同名卡组们
         DeckSquareApiUtil.deleteDecks(deckFileList);
         YGOUtil.showTextToast(R.string.done);
     }

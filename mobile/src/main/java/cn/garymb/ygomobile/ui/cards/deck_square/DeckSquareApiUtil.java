@@ -6,13 +6,14 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -275,7 +276,7 @@ public class DeckSquareApiUtil {
                 deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
             }
             data.setDeckYdk(deckContent);
-            LogUtil.w(TAG, "*要上传的* 本地卡组:" + data.getDeckType() + "、" + data.getDeckName() + "++id： " + data.getDeckId());
+            LogUtil.w(TAG, "*要上传的* 本地卡组:" + data.getDeckType() + "、" + data.getDeckName() + "++id： " + data.getDeckId() + "    " + data.isDelete());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
@@ -447,13 +448,13 @@ public class DeckSquareApiUtil {
             localDeck.setDeckName(localDeckName);
             localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
             localDeck.setDelete(false);
-            LogUtil.d(TAG,"本地卡组名称："+localDeck.getDeckType()+"-"+localDeck.getDeckName()+"  ID："+localDeck.getDeckId());
+            LogUtil.d(TAG, "本地卡组名称：" + localDeck.getDeckType() + "-" + localDeck.getDeckName() + "  ID：" + localDeck.getDeckId());
             // 2. 使用在线卡组的迭代器遍历（支持安全删除）
             Iterator<MyOnlineDeckDetail> onlineIterator = onlineDecks.iterator();
             while (onlineIterator.hasNext()) {
                 MyOnlineDeckDetail onlineDeck = onlineIterator.next();
                 String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
-                LogUtil.e(TAG,"在线备份名称："+onlineDeck.getDeckType()+"/"+onLineDeckName+"  在线卡组ID："+onlineDeck.getDeckId());
+                LogUtil.e(TAG, "在线备份名称：" + onlineDeck.getDeckType() + "/" + onLineDeckName + "  在线卡组ID：" + onlineDeck.getDeckId());
                 // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
                 if (localDeckName.equals(onLineDeckName)) {// && localDeck.getDeckType().equals(onlineDeck.getDeckType())
                     localDeck.setDeckId(onlineDeck.getDeckId());
@@ -507,50 +508,66 @@ public class DeckSquareApiUtil {
             return;
         }
 
-        if (SharedPreferenceUtil.getServerToken() != null) {
-            LoginToken loginToken = new LoginToken(
-                    SharedPreferenceUtil.getServerUserId(),
-                    SharedPreferenceUtil.getServerToken()
-            );
+        String serverToken = SharedPreferenceUtil.getServerToken();
+        if (serverToken == null) {
+            LogUtil.w(TAG, "服务器 Token 无效，无法执行删除操作");
+            return;
+        }
 
-            VUiKit.defer().when(() -> {
-                List<MyOnlineDeckDetail> originalData = DeckManagerFragment.getOriginalData();
+        LoginToken loginToken = new LoginToken(
+                SharedPreferenceUtil.getServerUserId(),
+                serverToken
+        );
 
-                synchronized (originalData) { // 加锁防止并发修改
-                    if (originalData.isEmpty()) {
-                        MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
-                        if (result != null && result.getData() != null) {
-                            originalData.addAll(result.getData());
-                        }
-                    }
+        VUiKit.defer().when(() -> {
+            List<MyOnlineDeckDetail> originalData = DeckManagerFragment.getOriginalData();
 
-                    for (DeckFile deleteDeckFile : deckFileList) {
-                        if (deleteDeckFile == null) continue;
-
-                        for (MyOnlineDeckDetail onlineDeckDetail : originalData) {
-                            if (deleteDeckFile.getName() != null &&
-                                    deleteDeckFile.getTypeName() != null &&
-                                    deleteDeckFile.getName().equals(onlineDeckDetail.getDeckName()) &&
-                                    deleteDeckFile.getTypeName().equals(onlineDeckDetail.getDeckType())) {
-
-                                onlineDeckDetail.setDelete(true);
-                                deleteDeckFile.setDeckId(onlineDeckDetail.getDeckId());
-                                break; // 匹配成功即跳出内层循环
-                            }
-                        }
+            synchronized (originalData) {
+                if (originalData.isEmpty()) {
+                    MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
+                    if (result != null && result.getData() != null) {
+                        originalData.addAll(result.getData());
+                    } else {
+                        throw new RuntimeException("获取用户卡组信息失败");
                     }
                 }
 
-                syncMyDecks(toDeckItemList(originalData), loginToken);
-                return true;
-            }).fail((e) -> {
-                LogUtil.e(TAG, "删除卡组失败!", e); // 增强日志输出
-            }).done((result) -> {
-                LogUtil.d(TAG, "卡组删除同步成功");
-            });
-        } else {
-            LogUtil.w(TAG, "服务器 Token 无效，无法执行删除操作");
-        }
+                // 提前过滤掉 null 元素
+                List<DeckFile> validDeckFiles = deckFileList.stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+
+                for (DeckFile deleteDeckFile : validDeckFiles) {
+                    String name = deleteDeckFile.getName();
+                    String typeName = deleteDeckFile.getTypeName();
+
+                    if (name == null || typeName == null) {
+                        LogUtil.w(TAG, "跳过无效卡组文件: name=" + name + ", type=" + typeName);
+                        continue;
+                    }
+
+                    LogUtil.d(TAG, "准备删除卡组：" + typeName + "/" + name);
+
+                    for (MyOnlineDeckDetail onlineDeckDetail : originalData) {
+                        if (name.equals(onlineDeckDetail.getDeckName()) &&
+                                typeName.equals(onlineDeckDetail.getDeckType())) {
+
+                            onlineDeckDetail.setDelete(true);
+                            deleteDeckFile.setDeckId(onlineDeckDetail.getDeckId());
+                            break;
+                        }
+                    }
+                }
+            }
+
+            syncMyDecks(toDeckItemList(originalData), loginToken);
+            return true;
+        }).fail((e) -> {
+            LogUtil.e(TAG, "删除卡组失败!", e);
+        }).done((result) -> {
+            LogUtil.d(TAG, "卡组删除同步成功");
+        });
     }
+
 
 }
