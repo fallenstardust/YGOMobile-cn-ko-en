@@ -12,7 +12,7 @@
 #include <thread>
 #include <string>
 #include <regex>
-#ifdef _IRR_ANDROID_PLATFORM_
+
 #include <android/CAndroidGUIEditBox.h>
 #include <android/CAndroidGUIComboBox.h>
 #include <android/CAndroidGUISkin.h>
@@ -21,13 +21,22 @@
 #include <COGLESExtensionHandler.h>
 #include <COGLES2Driver.h>
 #include <COGLESDriver.h>
-#endif
 
 namespace ygo {
 
 Game* mainGame;
 
+/**
+ * @brief 清空决斗信息结构体中的所有数据
+ *
+ * 该函数将DuelInfo结构体中的所有成员变量重置为初始状态，
+ * 包括决斗状态标志、玩家生命值、回合信息、时间限制等。
+ *
+ * @param this 指向DuelInfo对象的指针
+ * @return 无返回值
+ */
 void DuelInfo::Clear() {
+	// 重置决斗状态标志
 	isStarted = false;
 	isInDuel = false;
 	isFinished = false;
@@ -40,18 +49,26 @@ void DuelInfo::Clear() {
 	tag_player[0] = false;
 	tag_player[1] = false;
 	isReplaySwapped = false;
+
+	// 重置生命值相关数据
 	lp[0] = 0;
 	lp[1] = 0;
 	start_lp = 0;
+
+	// 重置决斗规则和回合信息
 	duel_rule = 0;
 	turn = 0;
 	curMsg = 0;
+
+	// 清空主机名和客户端名称
 	hostname[0] = 0;
 	clientname[0] = 0;
 	hostname_tag[0] = 0;
 	clientname_tag[0] = 0;
 	strLP[0][0] = 0;
 	strLP[1][0] = 0;
+
+	// 重置玩家类型和时间限制
 	player_type = 0;
 	time_player = 0;
 	time_limit = 0;
@@ -59,10 +76,20 @@ void DuelInfo::Clear() {
 	time_left[1] = 0;
 }
 
+/**
+ * @brief 处理游戏事件
+ * @param event 输入事件引用，包含鼠标或键盘等输入信息
+ *
+ * 该函数主要用于处理鼠标输入事件，对鼠标的坐标进行优化处理。
+ * 当事件类型为鼠标输入时，会获取当前鼠标坐标并调用optX和optY函数
+ * 对坐标进行转换或优化，然后更新鼠标输入事件中的坐标值。
+ */
 void Game::process(irr::SEvent &event) {
+	// 检查事件类型是否为鼠标输入事件
 	if (event.EventType == irr::EET_MOUSE_INPUT_EVENT) {
         irr::s32 x = event.MouseInput.X;
         irr::s32 y = event.MouseInput.Y;
+		// 对鼠标坐标进行优化处理并更新事件中的坐标值
 		event.MouseInput.X = optX(x);
 		event.MouseInput.Y = optY(y);
 	}
@@ -135,59 +162,85 @@ bool IsExtension(const char* filename, const char* extension) {
 }
 
 bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
+	// 保存应用程序句柄
 	this->appMain = app;
+	// 初始化随机数种子
 	srand(time(0));
+	// 创建Irrlicht引擎参数结构体
 	irr::SIrrlichtCreationParameters params{};
+	// 获取OpenGL版本设置
 	glversion = options->getOpenglVersion();
+	// 根据OpenGL版本选择渲染驱动类型
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
 	} else{
 		params.DriverType = irr::video::EDT_OGLES2;
 	}
+	// 设置应用程序私有数据
 	params.PrivateData = app;
+	// 设置颜色深度为24位
 	params.Bits = 24;
+	// 设置Z缓冲区深度为16位
 	params.ZBufferBits = 16;
-	params.AntiAlias  = 0;
+	// 关闭抗锯齿
+	params.AntiAlias  = 1;
+	// 设置窗口大小为自适应
 	params.WindowSize = irr::core::dimension2d<irr::u32>(0, 0);
 
+	// 创建Irrlicht设备实例
 	device = irr::createDeviceEx(params);
+	// 检查设备创建是否成功
 	if(!device) {
 		ErrorLog("Failed to create Irrlicht Engine device!");
 		return false;
 	}
+	// 执行Android平台特定的初始化技巧
 	if (!irr::android::perfromTrick(app)) {
 		return false;
 	}
+	// 初始化Java桥接并获取应用位置信息
 	irr::core::vector2di appPosition = irr::android::initJavaBridge(app, device);
+	// 设置位置修正参数
 	setPositionFix(appPosition);
+	// 设置进程接收器
 	device->setProcessReceiver(this);
 
+	// 设置输入事件处理函数
 	app->onInputEvent = irr::android::handleInput;
+    // 获取日志记录器
     irr::ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
+	// 检查是否启用钟摆刻度显示
 	isPSEnabled = options->isPendulumScaleEnabled();
 
+	// 获取文件系统并设置给数据管理器
 	dataManager.FileSystem = device->getFileSystem();
+    // 设置应用命令回调函数
     ((irr::CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
 
+	// 获取屏幕缩放比例
 	xScale = irr::android::getXScale(app);
 	yScale = irr::android::getYScale(app);
 
 	ALOGD("cc game: xScale = %f, yScale = %f", xScale, yScale);
 
-    SetCardS3DVertex();//reset cardfront cardback S3DVertex size
-	//io::path databaseDir = options->getDBDir();
+    // 重置卡片顶点数据大小
+    SetCardS3DVertex();
+	// 获取工作目录路径
     irr::io::path workingDir = options->getWorkDir();
     ALOGD("cc game: workingDir= %s", workingDir.c_str());
+	// 更改工作目录
 	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
 	 This example copies the media in the Android.mk makefile. */
+    // 定义媒体资源路径
     irr::core::stringc mediaPath = "media/";
 
 	// The Android assets file-system does not know which sub-directories it has (blame google).
 	// So we have to add all sub-directories in assets manually. Otherwise we could still open the files,
 	// but existFile checks will fail (which are for example needed by getFont).
+	// 遍历文件档案，为Android资产文件系统添加目录列表
 	for ( irr::u32 i=0; i < dataManager.FileSystem->getFileArchiveCount(); ++i )
 	{
 		IFileArchive* archive = dataManager.FileSystem->getFileArchive(i);
@@ -197,11 +250,12 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 			break;
 		}
 	}
-	//pics.zip, scripts.zip, ...zip
+	// 加载ZIP压缩包资源
 	irr::io::path* zips = options->getArchiveFiles();
 	int len = options->getArchiveCount();
 	for(int i=0;i<len;i++){
 		irr::io::path zip_path = zips[i];
+		// 添加文件档案
 		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
 		    ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
 	    }else{
@@ -209,7 +263,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		}
 	}
 
+	// 加载配置文件
 	LoadConfig();
+	// 初始化各种游戏状态变量
 	linePatternD3D = 0;
 	linePatternGL = 0x0f0f;
 	waitFrame = 0;
@@ -223,15 +279,19 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	is_building = false;
 	menuHandler.prev_operation = 0;
 	menuHandler.prev_sel = -1;
+	// 获取视频驱动和场景管理器
 	driver = device->getVideoDriver();
-#ifdef _IRR_ANDROID_PLATFORM_
+
+	// 获取卡片质量设置
 	int quality = options->getCardQualityOp();
+	// 检查是否支持非2次幂纹理
 	if (driver->getDriverType() == irr::video::EDT_OGLES2) {
 		isNPOTSupported = ((irr::video::COGLES2Driver *) driver)->queryOpenGLFeature(irr::video::COGLES2ExtensionHandler::IRR_OES_texture_npot);
 	} else {
 		isNPOTSupported = ((irr::video::COGLES1Driver *) driver)->queryOpenGLFeature(irr::video::COGLES1ExtensionHandler::IRR_OES_texture_npot);
 	}
 	ALOGD("cc game: isNPOTSupported = %d", isNPOTSupported);
+	// 根据纹理支持情况设置纹理创建标志
 	if (isNPOTSupported) {
 		if (quality == 1) {
 			driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
@@ -242,30 +302,33 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		driver->setTextureCreationFlag(irr::video::ETCF_ALLOW_NON_POWER_2, true);
 		driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
 	}
-#endif
+
+	// 设置纹理优化质量标志
 	driver->setTextureCreationFlag(irr::video::ETCF_OPTIMIZED_FOR_QUALITY, true);
+	// 初始化图像管理器
 	imageManager.SetDevice(device);
 	imageManager.ClearTexture();
+	// 初始化图像资源
 	if(!imageManager.Initial(workingDir)) {
 		ErrorLog("Failed to load textures!");
 		return false;
 	}
-	// LoadExpansions only load zips, the other cdb databases are still loaded by getDBFiles
+	// 加载数据库文件
 	irr::io::path* cdbs = options->getDBFiles();
 	len = options->getDbCount();
-	//os::Printer::log("load cdbs count %d", len);
 	for(int i=0;i<len;i++){
 		irr::io::path cdb_path = cdbs[i];
 		wchar_t wpath[1024];
+		// 解码UTF8路径
 		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
+		// 加载数据库
 		if(dataManager.LoadDB(wpath)) {
 		    ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
 	    }else{
 			ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
 		}
 	}
-	//if(!dataManager.LoadDB(workingDir.append("/cards.cdb").c_str()))
-	//	return false;
+	// 加载字符串配置文件
 	if(dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
 		ALOGD("cc game: loadStrings expansions/strings.conf");
 	}
@@ -273,27 +336,38 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		ErrorLog("Failed to load strings!");
 		return false;
 	}
+    // 加载扩展卡包
     LoadExpansions();
+    // 加载禁限卡表
     deckManager.LoadLFList(options);
+	// 获取GUI环境
 	env = device->getGUIEnvironment();
+	// 检查是否启用字体抗锯齿
 	bool isAntialias = options->isFontAntiAliasEnabled();
+	// 创建各种字体
 	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 18 * yScale, isAntialias, false);
 	adFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 12 * yScale, isAntialias, false);
 	lpcFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 48 * yScale, isAntialias, true);
 	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 18 * yScale, isAntialias, true);
     titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 32 * yScale, isAntialias, true);
 	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
+	// 检查字体创建是否成功
 	if(!numFont || !guiFont) {
 	  ALOGW("cc game: add font fail ");
 	}
+	// 获取场景管理器
 	smgr = device->getSceneManager();
+	// 设置窗口标题
 	device->setWindowCaption(L"[---]");
+	// 禁止窗口大小调整
 	device->setResizable(false);
+	// 创建并设置新的GUI皮肤
 	irr::gui::IGUISkin* newskin = irr::gui::CAndroidGUISkin::createAndroidSkin(irr::gui::EGST_BURNING_SKIN, driver, env, xScale, yScale);
 	newskin->setFont(guiFont);
 	env->setSkin(newskin);
+	// 释放皮肤资源
 	newskin->drop();
-#ifdef _IRR_ANDROID_PLATFORM_
+
 	//main menu
 	wMainMenu = env->addWindow(Resize(450, 40, 900, 600), false, L"");
 	wMainMenu->getCloseButton()->setVisible(false);
@@ -772,7 +846,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	scrOption->setLargeStep(1);
 	scrOption->setSmallStep(1);
 	scrOption->setMin(0);
-#endif
+
 	//pos select
 	wPosSelect = env->addWindow(irr::core::recti(660 * xScale - 223 * yScale, 160 * yScale, 660 * xScale + 223 * yScale, (160 + 228) * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
@@ -790,7 +864,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	btnPSDD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDD->setImageRotation(270);
 	btnPSDD->setImage(imageManager.tCover[0]);//show cover of player1
-#ifdef _IRR_ANDROID_PLATFORM_
+
 	//card select
 	wCardSelect = env->addWindow(irr::core::recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
 	wCardSelect->getCloseButton()->setVisible(false);
@@ -825,7 +899,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	scrDisplayList = env->addScrollBar(true, Resize_Y(30, 245, 30 + 620, 285), wCardDisplay, SCROLL_CARD_DISPLAY);
 	btnDisplayOK = env->addButton(Resize_Y(340 - 55, 295, 340 + 55, 335), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnDisplayOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
-#endif
+
 	//announce number
 	wANNumber = env->addWindow(Resize(500, 50, 800, 470), false, L"");
 	wANNumber->getCloseButton()->setVisible(false);
@@ -1012,7 +1086,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	for(int i = 1370; i <= 1373; i++)
 		cbSortType->addItem(dataManager.GetSysString(i));
 	wSort->setVisible(false);
-#ifdef _IRR_ANDROID_PLATFORM_
+
 	//filters
 	wFilter = env->addWindow(Resize(610, 1, 1020, 130), false, L"");
 	wFilter->getCloseButton()->setVisible(false);
@@ -1089,9 +1163,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	scrFilter->setLargeStep(10);
 	scrFilter->setSmallStep(1);
 	scrFilter->setVisible(false);
-#endif
 
-#ifdef _IRR_ANDROID_PLATFORM_
     //LINK MARKER SEARCH
 	btnMarksFilter = env->addButton(Resize(60, 80 + 125 / 6, 190, 100 + 125 / 6), wFilter, BUTTON_MARKS_FILTER, dataManager.GetSysString(1374));
  	   ChangeToIGUIImageButton(btnMarksFilter, imageManager.tButton_L, imageManager.tButton_L_pressed);
@@ -1283,7 +1355,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		chkMusicMode->setEnabled(false);
 		chkMusicMode->setVisible(false);
 	}
-#endif
+
 	//big picture
 	wBigCard = env->addWindow(Resize(0, 0, 0, 0), false, L"");
 	wBigCard->getCloseButton()->setVisible(false);
@@ -1325,112 +1397,167 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		col.setAlpha(200);
 		env->getSkin()->setColor((irr::gui::EGUI_DEFAULT_COLOR)i, col);
 	}
-#ifdef _IRR_ANDROID_PLATFORM_
-irr::gui::IGUIStaticText *text = env->addStaticText(L"", Resize(1,1,100,45), false, false, 0, GUI_INFO_FPS);
-#endif
+
+    irr::gui::IGUIStaticText *text = env->addStaticText(L"", Resize(1,1,100,45), false, false, 0, GUI_INFO_FPS);
+
 	hideChat = false;
 	hideChatTimer = 0;
 	
 	return true;
 }//bool Game::Initialize
+/**
+ * @brief 游戏主循环函数，负责渲染游戏画面、处理输入事件以及更新逻辑状态。
+ *
+ * 此函数初始化摄像机、设置投影矩阵与视图矩阵，并根据平台加载对应的着色器材质。
+ * 在主循环中进行场景绘制、界面刷新、音频播放等操作，并控制帧率和时间显示。
+ * 同时支持多线程同步机制（如互斥锁）以确保数据安全访问。
+ */
 void Game::MainLoop() {
-	wchar_t cap[256];
+	wchar_t cap[256]; // 字符缓冲区，用于临时存储宽字符文本
+
+	// 添加一个摄像机节点到场景管理器
 	camera = smgr->addCameraSceneNode(0);
+
+	// 构建并设置自定义的投影矩阵
 	irr::core::matrix4 mProjection;
 	BuildProjectionMatrix(mProjection, -0.90f, 0.45f, -0.42f, 0.42f, 1.0f, 100.0f);
 	camera->setProjectionMatrix(mProjection);
 
-	mProjection.buildCameraLookAtMatrixLH(irr::core::vector3df(4.2f, 8.0f, 7.8f), irr::core::vector3df(4.2f, 0, 0), irr::core::vector3df(0, 0, 1));
+	// 设置摄像机视角变换矩阵（LookAt）
+	mProjection.buildCameraLookAtMatrixLH(
+		irr::core::vector3df(4.2f, 8.0f, 7.8f),   // 摄像机位置
+		irr::core::vector3df(4.2f, 0, 0),         // 观察目标点
+		irr::core::vector3df(0, 0, 1)             // 上方向向量
+	);
 	camera->setViewMatrixAffector(mProjection);
+
+	// 设置环境光颜色为白色
 	smgr->setAmbientLight(irr::video::SColorf(1.0f, 1.0f, 1.0f));
-	float atkframe = 0.1f;
+
+	float atkframe = 0.1f; // 动画帧计数器初始值
+
+	// 获取设备定时器并重置时间为0
 	irr::ITimer* timer = device->getTimer();
 	timer->setTime(0);
-    // get FPS
-	irr::gui::IGUIElement *stat = device->getGUIEnvironment()->getRootGUIElement()->getElementFromId ( GUI_INFO_FPS );
-	int fps = 0;
-	int cur_time = 0;
-#if defined(_IRR_ANDROID_PLATFORM_)
+
+	// 获取GUI中的FPS信息控件
+	irr::gui::IGUIElement *stat = device->getGUIEnvironment()->getRootGUIElement()->getElementFromId(GUI_INFO_FPS);
+	int fps = 0;       // 当前秒内已渲染帧数
+	int cur_time = 0;  // 定时器当前时间戳
+
+	// 初始化OpenGL ES 2.0材质类型变量
 	ogles2Solid = 0;
 	ogles2TrasparentAlpha = 0;
 	ogles2BlendTexture = 0;
+
+	// 根据GL版本选择是否使用内置或外部着色器文件
 	if (glversion == 0 || glversion == 2) {
 		ogles2Solid = irr::video::EMT_SOLID;
 		ogles2TrasparentAlpha = irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL;
 		ogles2BlendTexture = irr::video::EMT_ONETEXTURE_BLEND;
 	} else {
-        irr::io::path solidvsFileName = "media/ogles2customsolid.frag";
-        irr::io::path TACvsFileName = "media/ogles2customTAC.frag";
-        irr::io::path blendvsFileName = "media/ogles2customblend.frag";
-        irr::io::path psFileName = "media/ogles2custom.vert";
+		// 着色器文件路径配置
+		irr::io::path solidvsFileName = "media/ogles2customsolid.frag";
+		irr::io::path TACvsFileName = "media/ogles2customTAC.frag";
+		irr::io::path blendvsFileName = "media/ogles2customblend.frag";
+		irr::io::path psFileName = "media/ogles2custom.vert";
+
+		// 检查硬件是否支持像素着色器
 		if (!driver->queryFeature(irr::video::EVDF_PIXEL_SHADER_1_1) &&
-				!driver->queryFeature(irr::video::EVDF_ARB_FRAGMENT_PROGRAM_1))
-		{
-			ALOGD("cc game: WARNING: Pixel shaders disabled "
-					"because of missing driver/hardware support.");
+		    !driver->queryFeature(irr::video::EVDF_ARB_FRAGMENT_PROGRAM_1)) {
+			ALOGD("cc game: WARNING: Pixel shaders disabled because of missing driver/hardware support.");
 			psFileName = "";
 		}
+
+		// 检查硬件是否支持顶点着色器
 		if (!driver->queryFeature(irr::video::EVDF_VERTEX_SHADER_1_1) &&
-				!driver->queryFeature(irr::video::EVDF_ARB_VERTEX_PROGRAM_1))
-		{
-			ALOGD("cc game: WARNING: Vertex shaders disabled "
-					"because of missing driver/hardware support.");
+		    !driver->queryFeature(irr::video::EVDF_ARB_VERTEX_PROGRAM_1)) {
+			ALOGD("cc game: WARNING: Vertex shaders disabled because of missing driver/hardware support.");
 			solidvsFileName = "";
 			TACvsFileName = "";
 			blendvsFileName = "";
 		}
-        irr::video::IGPUProgrammingServices* gpu = driver->getGPUProgrammingServices();
+
+		// 加载高级着色器程序
+		irr::video::IGPUProgrammingServices* gpu = driver->getGPUProgrammingServices();
 		if (gpu) {
 			const irr::video::E_GPU_SHADING_LANGUAGE shadingLanguage = irr::video::EGSL_DEFAULT;
+
 			ogles2Solid = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
-					solidvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
-					&customShadersCallback, irr::video::EMT_SOLID, 0, shadingLanguage);
+				psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+				solidvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+				&customShadersCallback, irr::video::EMT_SOLID, 0, shadingLanguage);
+
 			ogles2TrasparentAlpha = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
-					TACvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
-					&customShadersCallback, irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL, 0 , shadingLanguage);
+				psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+				TACvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+				&customShadersCallback, irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL, 0, shadingLanguage);
+
 			ogles2BlendTexture = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
-					blendvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
-					&customShadersCallback, irr::video::EMT_ONETEXTURE_BLEND, 0 , shadingLanguage);
+				psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+				blendvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+				&customShadersCallback, irr::video::EMT_ONETEXTURE_BLEND, 0, shadingLanguage);
+
 			ALOGD("cc game:ogles2Sold = %d", ogles2Solid);
 			ALOGD("cc game:ogles2BlendTexture = %d", ogles2BlendTexture);
 			ALOGD("cc game:ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
 		}
 	}
-	matManager.mCard.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
-	matManager.mBackLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mSelField.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mOutLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2Solid;
-	matManager.mTRTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
-	matManager.mATK.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+
+	// 将着色器材质应用至各个材质对象
+	// 设置卡片正面材质类型为混合纹理着色器
+    matManager.mCard.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+    // 设置纹理材质类型为透明alpha通道着色器
+    matManager.mTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
+    // 设置背景线条材质类型为混合纹理着色器
+    matManager.mBackLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+    // 设置选择区域材质类型为混合纹理着色器
+    matManager.mSelField.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+    // 设置轮廓线材质类型为纯色着色器
+    matManager.mOutLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2Solid;
+    // 设置透明纹理材质类型为透明alpha通道着色器
+    matManager.mTRTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
+    // 设置攻击指示器材质类型为混合纹理着色器
+    matManager.mATK.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+
+	// 若不支持非幂次纹理尺寸，则设置纹理环绕模式为边缘夹紧
 	if (!isNPOTSupported) {
-		matManager.mCard.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mCard.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mBackLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mBackLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mSelField.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mSelField.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mOutLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mOutLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mTRTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mTRTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mATK.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mATK.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 当不支持非2次幂纹理时，设置各个材质的纹理环绕模式为边缘夹紧(CLAMP_TO_EDGE)
+        // 卡片正面材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mCard.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mCard.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 纹理材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 背景线条材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mBackLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mBackLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 选择区域材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mSelField.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mSelField.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 轮廓线材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mOutLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mOutLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 透明纹理材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mTRTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mTRTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 攻击指示器材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mATK.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mATK.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
 	}
-#endif
+
+	// 主循环开始：持续运行直到窗口关闭
 	while(device->run()) {
-		//ALOGV("cc game draw frame");
-		linePatternD3D = (linePatternD3D + 1) % 30;
-		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
-		atkframe += 0.1f;
-		atkdy = (float)sin(atkframe);
+		linePatternD3D = (linePatternD3D + 1) % 30;     // 更新线条图案索引（Direct3D风格）
+		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15); // 更新线条图案掩码（OpenGL风格）
+
+		atkframe += 0.1f;                               // 增加动画帧计数
+		atkdy = (float)sin(atkframe);                   // 计算攻击动作偏移量
+
+		// 开始渲染场景
 		driver->beginScene(true, true, irr::video::SColor(0, 0, 0, 0));
-#ifdef _IRR_ANDROID_PLATFORM_
+
+		// 设置2D材质并启用2D渲染
 		driver->getMaterial2D().MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2Solid;
 		if (!isNPOTSupported) {
 			driver->getMaterial2D().TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
@@ -1438,88 +1565,121 @@ void Game::MainLoop() {
 		}
 		driver->enableMaterial2D(true);
 		driver->getMaterial2D().ZBuffer = irr::video::ECFN_NEVER;
+
+		// 绘制背景图像
 		if(imageManager.tBackGround) {
-			driver->draw2DImage(imageManager.tBackGround, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
+			driver->draw2DImage(imageManager.tBackGround, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT),
+			                    irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width,
+			                                     imageManager.tBackGround->getOriginalSize().Height));
 		}
 		if(imageManager.tBackGround_menu) {
-			driver->draw2DImage(imageManager.tBackGround_menu, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
+			driver->draw2DImage(imageManager.tBackGround_menu, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT),
+			                    irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width,
+			                                     imageManager.tBackGround->getOriginalSize().Height));
 		}
 		if(imageManager.tBackGround_deck) {
-			driver->draw2DImage(imageManager.tBackGround_deck, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
+			driver->draw2DImage(imageManager.tBackGround_deck, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT),
+			                    irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width,
+			                                     imageManager.tBackGround->getOriginalSize().Height));
 		}
 		driver->enableMaterial2D(false);
+
+		// 多线程保护：锁定互斥锁防止并发修改共享资源
 		gMutex.lock();
+
+		// 根据不同状态绘制对应内容
 		if(dInfo.isStarted) {
-			DrawBackImage(imageManager.tBackGround);
-			DrawBackGround();
-			DrawCards();
-			DrawMisc();
-			smgr->drawAll();
+			DrawBackImage(imageManager.tBackGround); // 背景图片
+			DrawBackGround();                        // 场地背景
+			DrawCards();                             // 所有卡牌
+			DrawMisc();                              // 其他元素
+			smgr->drawAll();                         // 渲染所有3D场景节点
 			driver->setMaterial(irr::video::IdentityMaterial);
-			driver->clearZBuffer();
+			driver->clearZBuffer();                  // 清除深度缓存
 		} else if(is_building) {
-			DrawBackImage(imageManager.tBackGround_deck);
+			DrawBackImage(imageManager.tBackGround_deck); // 牌组编辑界面背景
 			driver->enableMaterial2D(true);
-			DrawDeckBd();
+			DrawDeckBd();                            // 绘制牌组边框
 			driver->enableMaterial2D(false);
 		} else {
-			DrawBackImage(imageManager.tBackGround_menu);
+			DrawBackImage(imageManager.tBackGround_menu); // 菜单界面背景
 		}
+
+		// 绘制用户界面及特殊效果
 		driver->enableMaterial2D(true);
-		DrawGUI();
-		DrawSpec();
+		DrawGUI();                                   // UI组件
+		DrawSpec();                                  // 特效相关
 		driver->enableMaterial2D(false);
-		gMutex.unlock();
-		playBGM();
+
+		gMutex.unlock();                             // 解锁互斥锁
+
+		playBGM();                                   // 播放背景音乐
+
+		// 控制信号帧倒计时
 		if(signalFrame > 0) {
 			signalFrame--;
 			if(!signalFrame)
-				frameSignal.Set();
+				frameSignal.Set();                     // 发送信号通知其他线程
 		}
+
+		// 显示等待提示消息
 		if(waitFrame >= 0) {
 			waitFrame++;
 			if(waitFrame % 90 == 0) {
-				stHintMsg->setText(dataManager.GetSysString(1390));
+				stHintMsg->setText(dataManager.GetSysString(1390)); // 提示文字1
 			} else if(waitFrame % 90 == 30) {
-				stHintMsg->setText(dataManager.GetSysString(1391));
+				stHintMsg->setText(dataManager.GetSysString(1391)); // 提示文字2
 			} else if(waitFrame % 90 == 60) {
-				stHintMsg->setText(dataManager.GetSysString(1392));
+				stHintMsg->setText(dataManager.GetSysString(1392)); // 提示文字3
 			}
 		}
-		driver->endScene();
+
+		driver->endScene();                          // 结束渲染过程
+
+		// 检查是否需要退出对战窗口
 		if(closeSignal.Wait(1))
 			CloseDuelWindow();
-		fps++;
-		cur_time = timer->getTime();
+
+		fps++;                                       // 帧计数增加
+		cur_time = timer->getTime();                 // 获取当前时间
+
+		// 控制帧率为约60FPS（每帧最大延迟20毫秒）
 		if(cur_time < fps * 17 - 20)
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+		// 每秒钟更新一次FPS显示和剩余时间
 		if(cur_time >= 1000) {
-			if ( stat ) {
+			if(stat) {
 				irr::core::stringw str = L"FPS: ";
 				str += (irr::s32)device->getVideoDriver()->getFPS();
-				stat->setText ( str.c_str() );
+				stat->setText(str.c_str());
 			}
 			fps = 0;
 			cur_time -= 1000;
 			timer->setTime(0);
+
+			// 更新玩家剩余时间
 			if(dInfo.time_player == 0 || dInfo.time_player == 1)
 				if(dInfo.time_left[dInfo.time_player]) {
 					dInfo.time_left[dInfo.time_player]--;
 					RefreshTimeDisplay();
 				}
 		}
-		device->yield(); // probably nicer to the battery
-#endif
+
+		device->yield(); // 礼让CPU，节省电池电量
 	}
+
+	// 游戏结束后的清理工作
 	DuelClient::StopClient(true);
 	if(dInfo.isSingleMode)
 		SingleMode::StopPlay(true);
 
-	usleep(500000);
+	usleep(500000);      // 等待半秒后保存配置
 	SaveConfig();
-	usleep(500000);
+	usleep(500000);      // 再等待半秒后释放设备资源
 	device->drop();
 }
+
 void Game::RefreshTimeDisplay() {
 	for(int i = 0; i < 2; ++i) {
 		if(dInfo.time_left[i] && dInfo.time_limit) {
@@ -1611,7 +1771,6 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cW
 }
 void Game::LoadExpansions() {
 	// TODO: get isUseExtraCards
-#ifdef _IRR_ANDROID_PLATFORM_
 	DIR * dir;
 	struct dirent * dirp;
 	if((dir = opendir("./expansions/")) == NULL)
@@ -1625,7 +1784,7 @@ void Game::LoadExpansions() {
 		dataManager.FileSystem->addFileArchive(upath, true, false, EFAT_ZIP);
 	}
 	closedir(dir);
-#endif
+
 	for(irr::u32 i = 0; i < dataManager.FileSystem->getFileArchiveCount(); ++i) {
 		auto archive = dataManager.FileSystem->getFileArchive(i)->getFileList();
 		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
