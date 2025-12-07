@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
+import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.saveFile;
+import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.saveFileToPath;
 import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.toDeckItemList;
 
 import android.widget.Toast;
@@ -190,6 +192,7 @@ public class DeckSquareApiUtil {
         for (int i = 0; i < deckDataList.size(); i++) {
             MyDeckItem myDeckItem = deckDataList.get(i);
             String deckContent = DeckSquareFileUtil.setDeckId(myDeckItem.getDeckPath(), loginToken.getUserId(), deckIdList.get(i));
+            saveFileToPath(myDeckItem.getDeckPath(), deckContent, myDeckItem.getUpdateTimestamp());//用于将新申请的deckid写入对应的本地卡组中，以免下次重复申请
             PushMultiDeck.DeckData data = new PushMultiDeck.DeckData();
             data.setDeckYdk(deckContent);
             data.setDeckType(myDeckItem.getDeckType());
@@ -255,7 +258,7 @@ public class DeckSquareApiUtil {
      * @return
      * @throws IOException
      */
-    public static PushMultiResponse syncMyDecks(List<MyDeckItem> deckItems, LoginToken loginToken) throws IOException {
+    public static PushMultiResponse UploadMyDecks(List<MyDeckItem> deckItems, LoginToken loginToken) throws IOException {
         if (deckItems == null || deckItems.isEmpty()) {
             return null;
         }
@@ -274,6 +277,7 @@ public class DeckSquareApiUtil {
 
             } else {
                 deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
+                saveFileToPath(item.getDeckPath(), deckContent, item.getUpdateTimestamp());// 用于将新申请的deckid写入对应的本地卡组中，方便同步时进行比较
             }
             data.setDeckYdk(deckContent);
             LogUtil.w(TAG, "*要上传的* 本地卡组:" + data.getDeckType() + "、" + data.getDeckName() + "++id： " + data.getDeckId() + "    " + data.isDelete());
@@ -469,13 +473,15 @@ public class DeckSquareApiUtil {
 
         // 上传本地卡组覆盖在线卡组
         LogUtil.w(TAG, "+同步的 本地卡组: " + syncUploadDecks.size());
-        syncMyDecks(syncUploadDecks, loginToken);
-
+        if (!syncUploadDecks.isEmpty()) {
+            PushMultiResponse result = UploadMyDecks(syncUploadDecks, loginToken);
+            LogUtil.w(TAG, "本地已有卡组 上传结果数：" + result.getData());
+        }
         // 剩余的本地卡组都是新增卡组（本地独有，需要上传）
         LogUtil.w(TAG, "+上传新增的 本地卡组: " + localDecks.size());
         if (!localDecks.isEmpty()) {
             PushMultiResponse result = requestIdAndPushNewDecks(localDecks, loginToken);
-            LogUtil.w(TAG, "上传结果数：" + result.getData());
+            LogUtil.w(TAG, "本地新增卡组 上传结果数：" + result.getData());
         }
 
         // 剩余的在线卡组都是云端独有，需要下载
@@ -560,7 +566,7 @@ public class DeckSquareApiUtil {
                 }
             }
 
-            syncMyDecks(toDeckItemList(originalData), loginToken);
+            UploadMyDecks(toDeckItemList(originalData), loginToken);
             return true;
         }).fail((e) -> {
             LogUtil.e(TAG, "删除卡组失败!", e);

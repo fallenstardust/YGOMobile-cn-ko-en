@@ -195,7 +195,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
             }
 
         });
-        /** 自动同步 */
+        /* 自动同步 */
         VUiKit.defer().when(() -> {
             try {
                 DeckSquareApiUtil.synchronizeDecks();
