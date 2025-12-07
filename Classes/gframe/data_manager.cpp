@@ -7,21 +7,58 @@ namespace ygo {
 unsigned char DataManager::scriptBuffer[0x100000] = {};
 DataManager dataManager;
 
+/**
+ * @brief SQL查询语句，用于从数据库中获取卡片数据和文本信息
+ *
+ * 该查询语句通过INNER JOIN连接datas表和texts表，获取完整的卡片信息：
+ * - datas表包含：卡片ID、OCG/TCG限制、别名、字段码、类型、攻击力、守备力、等级、种族、属性、分类
+ * - texts表包含：卡片名称、描述、16个额外描述字段(str1-str16)
+ *
+ * 查询结果按照卡片ID进行匹配，确保每张卡片的数据和文本信息能够正确关联
+ */
+static const char SELECT_STMT[] = "SELECT datas.id, datas.ot, datas.alias, datas.setcode, datas.type, datas.atk, datas.def, datas.level, datas.race, datas.attribute, datas.category,"
+" texts.name, texts.desc, texts.str1, texts.str2, texts.str3, texts.str4, texts.str5, texts.str6, texts.str7, texts.str8,"
+" texts.str9, texts.str10, texts.str11, texts.str12, texts.str13, texts.str14, texts.str15, texts.str16 FROM datas INNER JOIN texts ON datas.id = texts.id";
+
+
+/**
+ * @brief DataManager构造函数
+ * @details 初始化DataManager对象，预分配数据容器和字符串容器的容量，
+ *          并初始化额外的设置码映射表：拟声希望皇和拟声蜥蜴
+ */
 DataManager::DataManager() : _datas(32768), _strings(32768) {
-	extra_setcode = { 
+	// 初始化额外设置码映射表，包含拟声希望皇和拟声蜥蜴的5字段setcode集合（因cdb最多4个字段，在此重新设置）
+	extra_setcode = {
 		{8512558u, {0x8f, 0x54, 0x59, 0x82, 0x13a}},
 		{55088578u, {0x8f, 0x54, 0x59, 0x82, 0x13a}},
 	};
 }
+
+/**
+ * @brief 从指定的 SQLite 数据库中读取卡牌数据并填充到内部数据结构中。
+ *
+ * 此函数执行一个预定义的 SQL 查询语句（SELECT_STMT），遍历查询结果，
+ * 并将每条记录解析为卡牌数据和字符串信息，分别存储在 [_datas](file://D:\YGOPro_New_Master_Rule\YGOMobile-cn-ko-en\Classes\gframe\data_manager.h#L123-L123) 和 [_strings](file://D:\YGOPro_New_Master_Rule\YGOMobile-cn-ko-en\Classes\gframe\data_manager.h#L124-L124) 中。
+ * 同时处理额外的 setcode 数据。
+ *
+ * @param pDB 指向已打开的 SQLite 数据库对象的指针。
+ * @return 成功读取并处理所有数据时返回 true；若发生错误则调用 Error 函数并返回其结果。
+ */
 bool DataManager::ReadDB(sqlite3* pDB) {
 	sqlite3_stmt* pStmt = nullptr;
-	const char* sql = "select * from datas,texts where datas.id=texts.id";
-	if (sqlite3_prepare_v2(pDB, sql, -1, &pStmt, nullptr) != SQLITE_OK)
+
+	// 准备 SQL 查询语句
+	if (sqlite3_prepare_v2(pDB, SELECT_STMT, -1, &pStmt, nullptr) != SQLITE_OK)
 		return Error(pDB, pStmt);
+
 	wchar_t strBuffer[4096];
+
+	// 遍历查询结果中的每一行
 	for (int step = sqlite3_step(pStmt); step != SQLITE_DONE; step = sqlite3_step(pStmt)) {
 		if (step != SQLITE_ROW)
 			return Error(pDB, pStmt);
+
+		// 提取基本字段数据
 		uint32_t code = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 0));
 		auto& cd = _datas[code];
 		cd.code = code;
@@ -32,47 +69,66 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 		cd.type = static_cast<decltype(cd.type)>(sqlite3_column_int64(pStmt, 4));
 		cd.attack = sqlite3_column_int(pStmt, 5);
 		cd.defense = sqlite3_column_int(pStmt, 6);
+
+		// 处理连接怪兽特殊逻辑：link_marker 存储在 defense 字段中
 		if (cd.type & TYPE_LINK) {
 			cd.link_marker = cd.defense;
 			cd.defense = 0;
 		}
 		else
 			cd.link_marker = 0;
+
+		// 解析等级、左右刻度等复合字段
 		uint32_t level = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 7));
 		cd.level = level & 0xff;
 		cd.lscale = (level >> 24) & 0xff;
 		cd.rscale = (level >> 16) & 0xff;
+
+		// 其他基础属性
 		cd.race = static_cast<decltype(cd.race)>(sqlite3_column_int64(pStmt, 8));
 		cd.attribute = static_cast<decltype(cd.attribute)>(sqlite3_column_int64(pStmt, 9));
 		cd.category = static_cast<decltype(cd.category)>(sqlite3_column_int64(pStmt, 10));
+
+		// 获取并解码名称与描述文本
 		auto& cs = _strings[code];
-		if (const char* text = (const char*)sqlite3_column_text(pStmt, 12)) {
+		if (const char* text = (const char*)sqlite3_column_text(pStmt, 11)) {
 			BufferIO::DecodeUTF8(text, strBuffer);
 			cs.name = strBuffer;
 		}
-		if (const char* text = (const char*)sqlite3_column_text(pStmt, 13)) {
+		if (const char* text = (const char*)sqlite3_column_text(pStmt, 12)) {
 			BufferIO::DecodeUTF8(text, strBuffer);
 			cs.text = strBuffer;
 		}
-		constexpr int desc_count = sizeof cs.desc / sizeof cs.desc[0];
-		for (int i = 0; i < desc_count; ++i) {
-			if (const char* text = (const char*)sqlite3_column_text(pStmt, i + 14)) {
+
+		// 解码多个描述字段
+		for (int i = 0; i < DESC_COUNT; ++i) {
+			if (const char* text = (const char*)sqlite3_column_text(pStmt, 13 + i)) {
 				BufferIO::DecodeUTF8(text, strBuffer);
 				cs.desc[i] = strBuffer;
 			}
 		}
 	}
+
+	// 清理 SQL 语句资源
 	sqlite3_finalize(pStmt);
+
+	// 应用额外的 setcode 数据（来自 extra_setcode）
 	for (const auto& entry : extra_setcode) {
 		const auto& code = entry.first;
 		const auto& list = entry.second;
+
+		// 忽略无效或超出大小限制的数据
 		if (list.size() > SIZE_SETCODE || list.empty())
 			continue;
+
 		auto it = _datas.find(code);
 		if (it == _datas.end())
 			continue;
+
+		// 将额外的 setcode 写入对应卡牌数据
 		std::memcpy(it->second.setcode, list.data(), list.size() * sizeof(uint16_t));
 	}
+
 	return true;
 }
 bool DataManager::LoadDB(const wchar_t* wfile) {

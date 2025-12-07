@@ -377,7 +377,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	btnLanMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
 	btnLanMode->setDrawBorder(false);
 	btnLanMode->setImage(imageManager.tTitleBar);
-    textLanMode = env->addStaticText(dataManager.GetSysString(1200), Resize(15, 25, 350, 60), false, false, btnLanMode);
+    textLanMode = env->addStaticText(dataManager.GetSysString(1200)/*本地联机*/, Resize(15, 25, 350, 60), false, false, btnLanMode);
     textLanMode->setOverrideFont(titleFont);
     textLanMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
     //version code
@@ -389,7 +389,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	btnSingleMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
 	btnSingleMode->setDrawBorder(false);
     btnSingleMode->setImage(imageManager.tTitleBar);
-	textSingleMode = env->addStaticText(dataManager.GetSysString(1201), Resize(15, 25, 350, 60), false, false, btnSingleMode);
+	textSingleMode = env->addStaticText(dataManager.GetSysString(1201)/*单人游戏*/, Resize(15, 25, 350, 60), false, false, btnSingleMode);
 	textSingleMode->setOverrideFont(titleFont);
     textSingleMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
     //button Replay Mode
@@ -397,7 +397,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     btnReplayMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
     btnReplayMode->setDrawBorder(false);
     btnReplayMode->setImage(imageManager.tTitleBar);
-	textReplayMode = env->addStaticText(dataManager.GetSysString(1202), Resize(15, 25, 350, 60), false, false, btnReplayMode);
+	textReplayMode = env->addStaticText(dataManager.GetSysString(1202)/*观看录像*/, Resize(15, 25, 350, 60), false, false, btnReplayMode);
 	textReplayMode->setOverrideFont(titleFont);
 	textReplayMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
     //button Deck Edit
@@ -405,7 +405,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     btnDeckEdit->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
     btnDeckEdit->setDrawBorder(false);
     btnDeckEdit->setImage(imageManager.tTitleBar);
-	textDeckEdit = env->addStaticText(dataManager.GetSysString(1204), Resize(15, 25, 350, 60), false, false, btnDeckEdit);
+	textDeckEdit = env->addStaticText(dataManager.GetSysString(1204)/*编辑卡组*/, Resize(15, 25, 350, 60), false, false, btnDeckEdit);
 	textDeckEdit->setOverrideFont(titleFont);
 	textDeckEdit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
     //button Settings
@@ -413,7 +413,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     btnSettings->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
 	btnSettings->setDrawBorder(false);
 	btnSettings->setImage(imageManager.tTitleBar);
-	textSettings = env->addStaticText(dataManager.GetSysString(1273), Resize(15, 25, 350, 60), false, false, btnSettings);
+	textSettings = env->addStaticText(dataManager.GetSysString(1273)/*系统设定*/, Resize(15, 25, 350, 60), false, false, btnSettings);
 	textSettings->setOverrideFont(titleFont);
 	textSettings->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
     //button Exit
@@ -421,57 +421,57 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     btnModeExit->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
 	btnModeExit->setDrawBorder(false);
 	btnModeExit->setImage(imageManager.tTitleBar);
-	textModeExit = env->addStaticText(dataManager.GetSysString(1210), Resize(15, 25, 350, 65), false, false, btnModeExit);
+	textModeExit = env->addStaticText(dataManager.GetSysString(1210)/*退出*/, Resize(15, 25, 350, 65), false, false, btnModeExit);
 	textModeExit->setOverrideFont(titleFont);
 	textModeExit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 
     //---------------------game windows---------------------
     //lan mode
-	wLanWindow = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1200));
+	wLanWindow = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1200)/*本地联机*/);
 	wLanWindow->getCloseButton()->setVisible(false);
 	wLanWindow->setVisible(false);
     ChangeToIGUIImageWindow(wLanWindow, &bgLanWindow, imageManager.tWindow);
-	env->addStaticText(dataManager.GetSysString(1220), Resize(30, 30, 70, 70), false, false, wLanWindow);
+	env->addStaticText(dataManager.GetSysString(1220)/*昵称：*/, Resize(30, 30, 70, 70), false, false, wLanWindow);
 	ebNickName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.nickname, true, env, Resize(110, 25, 420, 65), wLanWindow);
 	ebNickName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	lstHostList = env->addListBox(Resize(30, 75, 540, 240), wLanWindow, LISTBOX_LAN_HOST, true);
 	lstHostList->setItemHeight(30 * yScale);
 	btnLanRefresh = env->addButton(Resize(205, 250, 315, 290), wLanWindow, BUTTON_LAN_REFRESH, dataManager.GetSysString(1217));
 		ChangeToIGUIImageButton(btnLanRefresh, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	env->addStaticText(dataManager.GetSysString(1221), Resize(30, 305, 100, 340), false, false, wLanWindow);
+	env->addStaticText(dataManager.GetSysString(1221)/*主机信息：*/, Resize(30, 305, 100, 340), false, false, wLanWindow);
 	ebJoinHost = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.lasthost, true, env, Resize(110, 300, 270, 340), wLanWindow);
 	ebJoinHost->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	ebJoinPort = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.lastport, true, env, Resize(280, 300, 340, 340), wLanWindow);
 	ebJoinPort->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1222), Resize(30, 355, 100, 390), false, false, wLanWindow);
+	env->addStaticText(dataManager.GetSysString(1222)/*房间密码：*/, Resize(30, 355, 100, 390), false, false, wLanWindow);
 	ebJoinPass = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.roompass, true, env, Resize(110, 350, 340, 390), wLanWindow);
 	ebJoinPass->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnJoinHost = env->addButton(Resize(430, 300, 540, 340), wLanWindow, BUTTON_JOIN_HOST, dataManager.GetSysString(1223));
+	btnJoinHost = env->addButton(Resize(430, 300, 540, 340), wLanWindow, BUTTON_JOIN_HOST, dataManager.GetSysString(1223)/*加入游戏*/);
 		ChangeToIGUIImageButton(btnJoinHost, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnJoinCancel = env->addButton(Resize(430, 350, 540, 390), wLanWindow, BUTTON_JOIN_CANCEL, dataManager.GetSysString(1212));
+	btnJoinCancel = env->addButton(Resize(430, 350, 540, 390), wLanWindow, BUTTON_JOIN_CANCEL, dataManager.GetSysString(1212)/*取消*/);
 		ChangeToIGUIImageButton(btnJoinCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnCreateHost = env->addButton(Resize(430, 25, 540, 65), wLanWindow, BUTTON_CREATE_HOST, dataManager.GetSysString(1224));
+	btnCreateHost = env->addButton(Resize(430, 25, 540, 65), wLanWindow, BUTTON_CREATE_HOST, dataManager.GetSysString(1224)/*局域网建主*/);
 		ChangeToIGUIImageButton(btnCreateHost, imageManager.tButton_S, imageManager.tButton_S_pressed);
 
 	//create host
-	wCreateHost = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1224));
+	wCreateHost = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1224)/*局域网建主*/);
 	wCreateHost->getCloseButton()->setVisible(false);
 	wCreateHost->setVisible(false);
         ChangeToIGUIImageWindow(wCreateHost, &bgCreateHost, imageManager.tWindow);
-    env->addStaticText(dataManager.GetSysString(1226), Resize(20, 30, 90, 65), false, false, wCreateHost);
+    env->addStaticText(dataManager.GetSysString(1226)/*禁限卡表：*/, Resize(20, 30, 90, 65), false, false, wCreateHost);
 	cbHostLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 260, 65), wCreateHost);
 	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
 		cbHostLFlist->addItem(deckManager._lfList[i].listName.c_str(), deckManager._lfList[i].hash);
 	cbHostLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbHostLFlist->getItemCount() - 1);
-	env->addStaticText(dataManager.GetSysString(1225), Resize(20, 75, 100, 110), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1225)/*卡片允许：*/, Resize(20, 75, 100, 110), false, false, wCreateHost);
 	cbRule = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 75, 260, 115), wCreateHost);
 	cbRule->setMaxSelectionRows(10);
-	cbRule->addItem(dataManager.GetSysString(1481));
-	cbRule->addItem(dataManager.GetSysString(1482));
-	cbRule->addItem(dataManager.GetSysString(1483));
-	cbRule->addItem(dataManager.GetSysString(1484));
-	cbRule->addItem(dataManager.GetSysString(1485));
-	cbRule->addItem(dataManager.GetSysString(1486));
+	cbRule->addItem(dataManager.GetSysString(1481));// ＯＣＧ
+	cbRule->addItem(dataManager.GetSysString(1482));// ＴＣＧ
+	cbRule->addItem(dataManager.GetSysString(1483));// 简体中文
+	cbRule->addItem(dataManager.GetSysString(1484));// 自定义卡片
+	cbRule->addItem(dataManager.GetSysString(1485));// 无独有卡
+	cbRule->addItem(dataManager.GetSysString(1486));// 所有卡片
 	switch(gameConf.defaultOT) {
 	case 1:
 		cbRule->setSelected(0);
@@ -489,22 +489,22 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		cbRule->setSelected(5);
 		break;
 	}	
-	env->addStaticText(dataManager.GetSysString(1227), Resize(20, 130, 100, 165), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1227)/*决斗模式：*/, Resize(20, 130, 100, 165), false, false, wCreateHost);
 	cbMatchMode = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 125, 260, 165), wCreateHost);
-	cbMatchMode->addItem(dataManager.GetSysString(1244));
-	cbMatchMode->addItem(dataManager.GetSysString(1245));
-	cbMatchMode->addItem(dataManager.GetSysString(1246));
-	env->addStaticText(dataManager.GetSysString(1237), Resize(20, 180, 100, 215), false, false, wCreateHost);
+	cbMatchMode->addItem(dataManager.GetSysString(1244));// 单局模式
+	cbMatchMode->addItem(dataManager.GetSysString(1245));// 比赛模式
+	cbMatchMode->addItem(dataManager.GetSysString(1246));// TAG
+	env->addStaticText(dataManager.GetSysString(1237)/*每回合时间：*/, Resize(20, 180, 100, 215), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 180);
 	ebTimeLimit = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(110, 175, 260, 215), wCreateHost);
 	ebTimeLimit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1236), Resize(270, 30, 350, 65), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1236)/*规则：*/, Resize(270, 30, 350, 65), false, false, wCreateHost);
 	cbDuelRule = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(360, 25, 510, 65), wCreateHost);
-	cbDuelRule->addItem(dataManager.GetSysString(1260));
-	cbDuelRule->addItem(dataManager.GetSysString(1261));
-	cbDuelRule->addItem(dataManager.GetSysString(1262));
-	cbDuelRule->addItem(dataManager.GetSysString(1263));
-	cbDuelRule->addItem(dataManager.GetSysString(1264));
+	cbDuelRule->addItem(dataManager.GetSysString(1260));// 大师规则
+	cbDuelRule->addItem(dataManager.GetSysString(1261));// 大师规则２
+	cbDuelRule->addItem(dataManager.GetSysString(1262));// 大师规则３
+	cbDuelRule->addItem(dataManager.GetSysString(1263));// 新大师规则（2017）
+	cbDuelRule->addItem(dataManager.GetSysString(1264));// 大师规则（2020）
 	cbDuelRule->setSelected(gameConf.default_rule - 1);
 	chkNoCheckDeck = env->addCheckBox(false, Resize(250, 235, 350, 275), wCreateHost, -1, dataManager.GetSysString(1229));
 	chkNoShuffleDeck = env->addCheckBox(false, Resize(360, 235, 460, 275), wCreateHost, -1, dataManager.GetSysString(1230));
@@ -1626,11 +1626,11 @@ void Game::MainLoop() {
 		if(waitFrame >= 0) {
 			waitFrame++;
 			if(waitFrame % 90 == 0) {
-				stHintMsg->setText(dataManager.GetSysString(1390)); // 提示文字1
+				stHintMsg->setText(dataManager.GetSysString(1390)); // "等待行动中..."
 			} else if(waitFrame % 90 == 30) {
-				stHintMsg->setText(dataManager.GetSysString(1391)); // 提示文字2
+				stHintMsg->setText(dataManager.GetSysString(1391)); // "等待行动中...."
 			} else if(waitFrame % 90 == 60) {
-				stHintMsg->setText(dataManager.GetSysString(1392)); // 提示文字3
+				stHintMsg->setText(dataManager.GetSysString(1392)); // "等待行动中....."
 			}
 		}
 
@@ -1817,9 +1817,9 @@ void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGU
 	if (cbCategory == mainGame->cbDBCategory) {
 		cbCategory->addItem(dataManager.GetSysString(1450));
 	}
-	cbCategory->addItem(dataManager.GetSysString(1451));
-	cbCategory->addItem(dataManager.GetSysString(1452));
-	cbCategory->addItem(dataManager.GetSysString(1453));
+	cbCategory->addItem(dataManager.GetSysString(1451));// 人机卡组
+	cbCategory->addItem(dataManager.GetSysString(1452));// 未分类卡组
+	cbCategory->addItem(dataManager.GetSysString(1453));// --------（分割线）
 	FileSystem::TraversalDir(L"./deck", [cbCategory](const wchar_t* name, bool isdir) {
 		if(isdir) {
 			cbCategory->addItem(name);
@@ -1941,7 +1941,7 @@ void Game::RefreshBot() {
 		lstBotList->addItem(botInfo[i].name);
 	}
 	if(botInfo.size() == 0) {
-		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
+		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385)); // 此模式人机尚未实装
 	}
 	else {
 		RefreshCategoryDeck(cbBotDeckCategory, cbBotDeck);
@@ -1953,7 +1953,7 @@ void Game::RefreshBot() {
 		if (cbBotDeck->getItemCount() != 0) {
 			myswprintf(cate_deck, L"%ls%ls", cate, cbBotDeck->getItem(cbBotDeck->getSelected()));
 		} else {
-			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
+			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));// 未选择卡组！
 		}
 		mainGame->btnBotDeckSelect->setText(cate_deck);
 	}
@@ -2114,7 +2114,7 @@ void Game::ShowCardInfo(int code) {
         if (target->second.setcode[0]) {
             offset = 23; // 固定偏移量用于布局调整
             const auto& setname = dataManager.FormatSetName(target->second.setcode);
-            myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), setname.c_str());
+            myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), setname.c_str()); // 字段：
             stSetName->setText(formatBuffer);
         }
         else

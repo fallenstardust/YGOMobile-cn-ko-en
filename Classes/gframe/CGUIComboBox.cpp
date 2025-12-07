@@ -19,7 +19,15 @@ namespace irr
 namespace gui
 {
 
-//! constructor
+//! \brief 构造函数，用于初始化一个组合框（ComboBox）控件。
+//!
+//! 该构造函数会创建一个带有下拉按钮和文本显示区域的组合框控件，并设置其初始状态与样式。
+//! 它还会根据皮肤信息调整按钮大小、图标及颜色等视觉属性。
+//!
+//! \param environment GUI环境指针，提供GUI系统相关功能支持。
+//! \param parent 组合框的父级元素，可以为 NULL。
+//! \param id 控件ID，用于标识此控件。
+//! \param rectangle 控件的位置和尺寸矩形，定义了控件在屏幕上的位置和大小。
 CGUIComboBox::CGUIComboBox(IGUIEnvironment* environment, IGUIElement* parent,
 	s32 id, core::rect<s32> rectangle)
 	: IGUIComboBox(environment, parent, id, rectangle),
@@ -30,12 +38,15 @@ CGUIComboBox::CGUIComboBox(IGUIEnvironment* environment, IGUIElement* parent,
 	setDebugName("CGUIComboBox");
 	#endif
 
+	// 获取当前使用的皮肤资源
 	IGUISkin* skin = Environment->getSkin();
 
+	// 根据皮肤设定计算下拉按钮宽度，默认为15像素
 	s32 width = 15;
 	if (skin)
 		width = skin->getSize(EGDS_WINDOW_BUTTON_WIDTH);
 
+	// 设置下拉按钮的位置和大小
 	core::rect<s32> r;
 	r.UpperLeftCorner.X = rectangle.getWidth() - width - 2;
 	r.LowerRightCorner.X = rectangle.getWidth() - 2;
@@ -43,22 +54,27 @@ CGUIComboBox::CGUIComboBox(IGUIEnvironment* environment, IGUIElement* parent,
 	r.UpperLeftCorner.Y = 2;
 	r.LowerRightCorner.Y = rectangle.getHeight() - 2;
 
+	// 创建下拉按钮并设置其基本属性
 	ListButton = Environment->addButton(r, this, -1, L"");
 	if (skin && skin->getSpriteBank())
 	{
+		// 设置按钮使用的精灵图库以及上下状态时显示的图标和颜色
 		ListButton->setSpriteBank(skin->getSpriteBank());
 		ListButton->setSprite(EGBS_BUTTON_UP, skin->getIcon(EGDI_CURSOR_DOWN), skin->getColor(EGDC_WINDOW_SYMBOL));
 		ListButton->setSprite(EGBS_BUTTON_DOWN, skin->getIcon(EGDI_CURSOR_DOWN), skin->getColor(EGDC_WINDOW_SYMBOL));
 	}
+	// 设置按钮对齐方式和其他属性
 	ListButton->setAlignment(EGUIA_LOWERRIGHT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT);
 	ListButton->setSubElement(true);
 	ListButton->setTabStop(false);
 
+	// 设置选中文本区域的位置和大小
 	r.UpperLeftCorner.X = 2;
 	r.UpperLeftCorner.Y = 2;
 	r.LowerRightCorner.X = RelativeRect.getWidth() - (ListButton->getAbsolutePosition().getWidth() + 2);
 	r.LowerRightCorner.Y = RelativeRect.getHeight() - 2;
 
+	// 创建静态文本控件以显示当前选择项
 	SelectedText = Environment->addStaticText(L"", r, false, false, this, -1, false);
 	SelectedText->setSubElement(true);
 	SelectedText->setAlignment(EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT, EGUIA_UPPERLEFT, EGUIA_LOWERRIGHT);
@@ -67,10 +83,11 @@ CGUIComboBox::CGUIComboBox(IGUIEnvironment* environment, IGUIElement* parent,
 		SelectedText->setOverrideColor(skin->getColor(EGDC_BUTTON_TEXT));
 	SelectedText->enableOverrideColor(true);
 
-	// this element can be tabbed to
+	// 允许该控件接收 Tab 键焦点
 	setTabStop(true);
 	setTabOrder(-1);
 }
+
 
 
 void CGUIComboBox::setTextAlignment(EGUI_ALIGNMENT horizontal, EGUI_ALIGNMENT vertical)
