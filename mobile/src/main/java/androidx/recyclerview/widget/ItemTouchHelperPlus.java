@@ -2529,6 +2529,8 @@ public class ItemTouchHelperPlus extends RecyclerView.ItemDecoration
 
 
     //region callback
+    // 修改 ItemTouchHelperPlus.java 中的 Callback2 类
+
     public abstract static class Callback2 extends ItemTouchHelperPlus.Callback {
         private Handler mHandler;
         private ItemTouchHelperPlus mItemTouchHelper;
@@ -2539,6 +2541,7 @@ public class ItemTouchHelperPlus extends RecyclerView.ItemDecoration
         private boolean isLongPressCancel = false;
         private int mDx = 2;
         private int mDy = 2;
+        private boolean isDragging = false; // 添加拖拽状态标识
 
         public void setLongTime(long longTime) {
             mLongTime = longTime;
@@ -2573,7 +2576,9 @@ public class ItemTouchHelperPlus extends RecyclerView.ItemDecoration
                                     float dX, float dY, int actionState, boolean isCurrentlyActive) {
             super.onChildDrawOver(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
             if (isCurrentlyActive && actionState == ItemTouchHelperPlus.ACTION_STATE_DRAG) {
-                if (dX > mDx || dY > mDy) {
+                // 检测到真正的拖拽移动，设置拖拽状态并取消长按
+                if ((Math.abs(dX) > mDx || Math.abs(dY) > mDy) && !isDragging) {
+                    isDragging = true;
                     if (!isLongPressMode() && !isLongPressCancel) {
                         isLongPressCancel = true;
                         endLongPressMode();
@@ -2590,6 +2595,7 @@ public class ItemTouchHelperPlus extends RecyclerView.ItemDecoration
                     getOnDragListener().onDragStart();
                 }
                 isLongPressCancel = false;
+                isDragging = false; // 重置拖拽状态
                 mSelectId = viewHolder.getAdapterPosition();
                 longPressTime = System.currentTimeMillis();
                 mHandler.removeCallbacks(enterLongPress);
@@ -2598,18 +2604,21 @@ public class ItemTouchHelperPlus extends RecyclerView.ItemDecoration
                 }
             } else if (actionState == ItemTouchHelperPlus.ACTION_STATE_IDLE) {
                 endLongPressMode();
+                isDragging = false; // 重置拖拽状态
                 if (getOnDragListener() != null) {
                     getOnDragListener().onDragEnd();
                 }
             } else if (actionState == ItemTouchHelperPlus.ACTION_STATE_SWIPE) {
                 endLongPressMode();
+                isDragging = false; // 重置拖拽状态
             }
         }
 
         private final Runnable enterLongPress = new Runnable() {
             @Override
             public void run() {
-                if (System.currentTimeMillis() - longPressTime >= mLongTime) {
+                // 只有在非拖拽状态下才触发长按
+                if (!isDragging && System.currentTimeMillis() - longPressTime >= mLongTime) {
                     mLongPressMode = true;
                     if (!isLongPressCancel) {
                         if (getOnDragListener() != null && mSelectId >= 0) {

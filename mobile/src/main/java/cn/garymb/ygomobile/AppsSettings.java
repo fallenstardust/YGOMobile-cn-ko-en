@@ -131,7 +131,7 @@ public class AppsSettings {
     }
 
     public boolean isDialogDelete() {
-        return true;// mSharedPreferences.getBoolean(PREF_DECK_DELETE_DILAOG, PREF_DEF_DECK_DELETE_DILAOG);
+        return false;// mSharedPreferences.getBoolean(PREF_DECK_DELETE_DILAOG, PREF_DEF_DECK_DELETE_DILAOG);
     }
 
     public int getNotchHeight() {
