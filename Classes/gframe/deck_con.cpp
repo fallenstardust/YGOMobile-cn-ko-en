@@ -1857,24 +1857,101 @@ void DeckBuilder::pop_side(int seq) {
 	is_modified = true;
 	GetHoveredCard();
 }
+/**
+ * @brief 检查指定卡片在当前卡组中是否超过限制数量，并处理信用点数消耗逻辑。
+ *
+ * 此函数用于判断一张卡片（由 pointer 指定）能否被加入当前卡组，
+ * 包括常规禁卡表卡片的数量限制以及GeneSys存在的“信用点”数量限制。
+ *
+ * @param pointer 指向卡片信息的指针，包含卡片ID及别名等数据。
+ * @return 如果该卡片可以合法地加入卡组（未超出数量限制、信用点足够），则返回 true；否则返回 false。
+ */
 bool DeckBuilder::check_limit(code_pointer pointer) {
+	// 获取实际用于限制检查的卡片编码：如果存在别名则使用别名，否则使用原ID
 	auto limitcode = pointer->second.alias ? pointer->second.alias : pointer->first;
+
+	// 默认每张卡最多允许3张
 	int limit = 3;
+
+	// 查找此卡片是否有自定义的数量限制
 	auto flit = filterList->content.find(limitcode);
 	if(flit != filterList->content.end())
 		limit = flit->second;
+
+	// 记录已使用的各类信用点数
+	std::unordered_map<std::wstring, uint32_t> credit_used;
+
+	// Lambda 函数：尝试消费某张卡所需的信用点数，若超限则返回false
+	auto spend_credit = [&](uint32_t code) {
+		// 查找该卡所需信用点配置
+		auto code_credit_it = filterList->credits.find(code);
+		if(code_credit_it == filterList->credits.end())
+			return true; // 若无信用要求，默认通过
+
+		auto code_credit = code_credit_it->second;
+		auto valid = true;
+
+		// 遍历所有需要扣除的信用类型与数值
+		for(auto& credit_it : code_credit) {
+			auto key = credit_it.first;
+			auto credit_limit_it = filterList->credit_limits.find(key);
+			if(credit_limit_it == filterList->credit_limits.end())
+				continue; // 若没有设定上限，则跳过
+
+			auto credit_limit = credit_limit_it->second;
+
+			// 初始化该信用类型的已用量
+			if(credit_used.find(key) == credit_used.end())
+				credit_used[key] = 0;
+
+			// 判断是否会超出信用上限
+			auto credit_after = credit_used[key] + credit_it.second;
+			if(credit_after > credit_limit)
+				valid = false;
+
+			// 更新已用信用量
+			credit_used[key] = credit_after;
+		}
+
+		return valid;
+	};
+
+	// Lambda 函数：处理单张卡的计数和信用检查
+	auto handle_card = [&](ygo::code_pointer& card) {
+		// 如果是目标卡，则减少其剩余可放数量
+		if (card->first == limitcode || card->second.alias == limitcode) {
+			limit--;
+			if(limit <= 0)
+				return false; // 已达最大数量限制
+		}
+
+		// 获取真实卡号并尝试扣减信用点
+		auto code = card->second.alias ? card->second.alias : card->first;
+		spend_credit(code);
+
+		return true;
+	};
+
+	// 遍历主卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.main) {
-		if (card->first == limitcode || card->second.alias == limitcode)
-			limit--;
+		if(!handle_card(card))
+			return false;
 	}
+
+	// 遍历额外卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.extra) {
-		if (card->first == limitcode || card->second.alias == limitcode)
-			limit--;
+		if(!handle_card(card))
+			return false;
 	}
+
+	// 遍历副卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.side) {
-		if (card->first == limitcode || card->second.alias == limitcode)
-			limit--;
+		if(!handle_card(card))
+			return false;
 	}
-	return limit > 0;
+
+	// 最后尝试为当前要插入的卡扣除一次信用点数
+	return spend_credit(limitcode);
 }
+
 }

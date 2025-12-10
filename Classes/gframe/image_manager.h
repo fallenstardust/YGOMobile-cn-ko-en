@@ -47,6 +47,7 @@ public:
 	irr::video::ITexture* tTarget;
 	irr::video::ITexture* tChainTarget;
 	irr::video::ITexture* tLim;
+    irr::video::ITexture* tLimCredit;
 	irr::video::ITexture* tOT;
 	irr::video::ITexture* tHand[3];
 	irr::video::ITexture* tBackGround;

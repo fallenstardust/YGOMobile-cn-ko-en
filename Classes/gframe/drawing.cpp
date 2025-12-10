@@ -1537,7 +1537,33 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 			break;
 		}
 	}
-
+    auto lfcredit = lflist->credits.find(lcode);
+    auto current_limitloc = limitloc;
+    auto credit_max_display = CARD_THUMB_WIDTH / 20;
+    auto next_limitloc = [&]() {
+        auto this_limitloc = current_limitloc;
+        auto width = current_limitloc.getWidth();
+        current_limitloc.UpperLeftCorner.X += width;
+        current_limitloc.LowerRightCorner.X += width;
+        --credit_max_display;
+        return this_limitloc;
+    };
+    if(lfcredit != lflist->credits.end()) {
+        for(auto& credit_entry : lfcredit->second) {
+            if(credit_max_display <= 0)
+                break;
+            auto value = credit_entry.second;
+            if(value > 0 && value <= 100) {
+                auto cvalue = value - 1; // 1-100 => 0-99
+                // pick the first and second digit
+                auto digit1 = cvalue / 10;
+                auto digit2 = cvalue % 10;
+                auto credit_texture_offset_x = digit2 * 64;
+                auto credit_texture_offset_y = digit1 * 64;
+                driver->draw2DImage(imageManager.tLimCredit, next_limitloc(), irr::core::recti(credit_texture_offset_x, credit_texture_offset_y, credit_texture_offset_x + 64, credit_texture_offset_y + 64), 0, 0, true);
+            }
+        }
+    }
 	// 判断是否需要显示可用性相关图标
 	bool showAvail = false;
 	bool showNotAvail = false;

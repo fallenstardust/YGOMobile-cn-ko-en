@@ -35,6 +35,7 @@ bool ImageManager::Initial(const path dir) {
 	tTarget = driver->getTexture((dir + path("/textures/target.png")).c_str());
 	tChainTarget = driver->getTexture((dir + path("/textures/chaintarget.png")).c_str());
 	tLim = driver->getTexture((dir + path("/textures/lim.png")).c_str());
+	tLimCredit = driver->getTexture((dir + path("/textures/limCredit.png")).c_str());
 	tOT = driver->getTexture((dir + path("/textures/ot.png")).c_str());
 	tHand[0] = driver->getTexture((dir + path("/textures/f1.jpg")).c_str());
 	tHand[1] = driver->getTexture((dir + path("/textures/f2.jpg")).c_str());
