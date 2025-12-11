@@ -1537,7 +1537,6 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 			break;
 		}
 	}
-    auto lfcredit = lflist->credits.find(lcode);
     auto current_limitloc = limitloc;
     auto credit_max_display = CARD_THUMB_WIDTH / 20;
     auto next_limitloc = [&]() {
@@ -1548,6 +1547,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
         --credit_max_display;
         return this_limitloc;
     };
+	auto lfcredit = lflist->credits.find(lcode);
     if(lfcredit != lflist->credits.end()) {
         for(auto& credit_entry : lfcredit->second) {
             if(credit_max_display <= 0)
