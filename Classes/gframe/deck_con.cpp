@@ -1883,22 +1883,28 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 
 	// Lambda 函数：尝试消费某张卡所需的信用点数，若超限则返回false
 	auto spend_credit = [&](uint32_t code) {
+
 		// 查找该卡所需信用点配置
 		auto code_credit_it = filterList->credits.find(code);
-		if(code_credit_it == filterList->credits.end())
-			return true; // 若无信用要求，默认通过
+		if(code_credit_it == filterList->credits.end()) {
+            if (limit == 0) {
+                return false;// 若在为常规禁止卡，则不通过，用于实现指定ID被单独禁止（如列出的全部灵摆、连接卡}
+            } else {
+                return true; // 若无信用要求，默认通过
+            }
+        }
 
-		auto code_credit = code_credit_it->second;
+		auto code_credit = code_credit_it->second;//过滤一遍卡组中所有卡的信用分，把有信用分的卡归集一起
 		auto valid = true;
 
 		// 遍历所有需要扣除的信用类型与数值
 		for(auto& credit_it : code_credit) {
-			auto key = credit_it.first;
-			auto credit_limit_it = filterList->credit_limits.find(key);
+			auto key = credit_it.first;//一般得到的是“genesys”这个识别字符串
+			auto credit_limit_it = filterList->credit_limits.find(key);//按lflist中的“$genesys”识别字符串得到信用分上限，一般是100
 			if(credit_limit_it == filterList->credit_limits.end())
 				continue; // 若没有设定上限，则跳过
 
-			auto credit_limit = credit_limit_it->second;
+			auto credit_limit = credit_limit_it->second;//按lflist中的“genesys”识别字符串得到信用分上限，一般是100
 
 			// 初始化该信用类型的已用量
 			if(credit_used.find(key) == credit_used.end())
