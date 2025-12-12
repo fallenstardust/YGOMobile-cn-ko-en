@@ -1886,13 +1886,8 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 
 		// 查找该卡所需信用点配置
 		auto code_credit_it = filterList->credits.find(code);
-		if(code_credit_it == filterList->credits.end()) {
-            if (limit == 0) {
-                return false;// 若在为常规禁止卡，则不通过，用于实现指定ID被单独禁止（如列出的全部灵摆、连接卡}
-            } else {
-                return true; // 若无信用要求，默认通过
-            }
-        }
+		if(code_credit_it == filterList->credits.end())
+            return limit != 0;// 不在信用点表中的卡再检查是否是常规禁卡，以便实现对特定ID的禁止（geneSys表之下列出了全部灵摆、连接卡的ID做禁止）
 
 		auto code_credit = code_credit_it->second;//过滤一遍卡组中所有卡的信用分，把有信用分的卡归集一起
 		auto valid = true;
