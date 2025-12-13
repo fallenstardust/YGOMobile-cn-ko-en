@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.Map;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
 import ocgcore.data.CardSet;
 import ocgcore.data.LimitList;
 
@@ -63,7 +65,7 @@ public class LimitManager implements Closeable {
     }
 
     public LimitList getTopLimit() {
-        if (mLimitNames.size() == 0) {
+        if (mLimitNames.isEmpty()) {
             return null;
         }
         return mLimitLists.get(mLimitNames.get(0));
@@ -116,8 +118,10 @@ public class LimitManager implements Closeable {
         ++mCount;
         return rs1 && rs2 && res3;
     }
-        /**
+
+    /**
      * 从输入流加载配置文件数据
+     *
      * @param inputStream 配置文件的输入流
      * @return 加载成功返回true
      */
@@ -144,23 +148,38 @@ public class LimitManager implements Closeable {
                     tmp = new LimitList(name);
                     mLimitLists.put(name, tmp);
                     mLimitNames.add(name);
+                } else if (line.startsWith("$")) {
+                    // 去掉$前缀并按空格分割
+                    String[] words = line.substring(1).trim().split("[\t| ]+");
+                    if (words.length >= 2) {
+                        String creditType = words[0];  // 提取"genesys"
+                        int creditLimit = toNumber(words[1]);  // 提取100并转换为整数
+                        // 将creditType和creditLimit存储到LimitList对象中
+                        if (tmp != null) {
+                            tmp.addCreditLimit(creditType, creditLimit);
+                        }
+                    }
                 } else if (tmp != null) {
                     // 解析限制项配置
                     String[] words = line.trim().split("[\t| ]+");
                     if (words.length >= 2) {
-                        int id = toNumber(words[0]);
-                        int count = toNumber(words[1]);
-                        // 根据count值添加不同类型的限制
-                        switch (count) {
-                            case 0:
-                                tmp.addForbidden(id);
-                                break;
-                            case 1:
-                                tmp.addLimit(id);
-                                break;
-                            case 2:
-                                tmp.addSemiLimit(id);
-                                break;
+                        if(words[1].equals("$genesys")) {
+                            tmp.addCredits(toNumber(words[0]), toNumber(words[2]));//保存genesys行的卡牌id和信用分值
+                        } else {
+                            int id = toNumber(words[0]);
+                            int count = toNumber(words[1]);
+                            // 根据count值添加不同类型的限制
+                            switch (count) {
+                                case 0:
+                                    tmp.addForbidden(id);
+                                    break;
+                                case 1:
+                                    tmp.addLimit(id);
+                                    break;
+                                case 2:
+                                    tmp.addSemiLimit(id);
+                                    break;
+                            }
                         }
                     }
 
@@ -207,21 +226,37 @@ public class LimitManager implements Closeable {
                     tmp = new LimitList(name);
                     mLimitLists.put(name, tmp);
                     mLimitNames.add(name);
+                } else if (line.startsWith("$")) {
+                    // 去掉$前缀并按空格分割
+                    String[] words = line.substring(1).trim().split("[\t| ]+");
+                    if (words.length >= 2) {
+                        String creditType = words[0];  // 提取"genesys"
+                        int creditLimit = toNumber(words[1]);  // 提取100并转换为整数
+                        // 将creditType和creditLimit存储到LimitList对象中
+                        if (tmp != null) {
+                            tmp.addCreditLimit(creditType, creditLimit);
+                        }
+                    }
                 } else if (tmp != null) {
                     String[] words = line.trim().split("[\t| ]+");
                     if (words.length >= 2) {
-                        int id = toNumber(words[0]);
-                        int count = toNumber(words[1]);
-                        switch (count) {
-                            case 0:
-                                tmp.addForbidden(id);
-                                break;
-                            case 1:
-                                tmp.addLimit(id);
-                                break;
-                            case 2:
-                                tmp.addSemiLimit(id);
-                                break;
+                        if(words[1].equals("$genesys")) {
+                            tmp.addCredits(toNumber(words[0]), toNumber(words[2]));//保存genesys行的卡牌id和信用分值
+                        } else {
+                            int id = toNumber(words[0]);
+                            int count = toNumber(words[1]);
+                            // 根据count值添加不同类型的限制
+                            switch (count) {
+                                case 0:
+                                    tmp.addForbidden(id);
+                                    break;
+                                case 1:
+                                    tmp.addLimit(id);
+                                    break;
+                                case 2:
+                                    tmp.addSemiLimit(id);
+                                    break;
+                            }
                         }
                     }
 

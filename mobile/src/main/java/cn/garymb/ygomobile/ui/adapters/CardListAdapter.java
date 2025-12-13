@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -16,6 +17,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardListProvider;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+import cn.garymb.ygomobile.ui.cards.deck.ImageTop_GeneSys;
 import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -27,6 +29,7 @@ import ocgcore.enums.LimitType;
 public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolder> implements CardListProvider {
     private final StringManager mStringManager;
     private ImageTop mImageTop;
+    private ImageTop_GeneSys mImageTop_GeneSys;
     private LimitList mLimitList;
     private boolean mItemBg;
     private final ImageLoader imageLoader;
@@ -134,7 +137,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     @Override
     protected void convert(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, Card item) {
-        int position = holder.getAdapterPosition() - getHeaderLayoutCount();
+        int position = holder.getBindingAdapterPosition() - getHeaderLayoutCount();
         imageLoader.bindImage(holder.getView(R.id.card_image), item, ImageLoader.Type.small);
         holder.setText(R.id.card_name, item.Name);
         if (item.isType(CardType.Monster)) {
@@ -184,7 +187,11 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         if (mImageTop == null) {
             mImageTop = new ImageTop(context);
         }
+        if (mImageTop_GeneSys == null) {
+            mImageTop_GeneSys = new ImageTop_GeneSys(context);
+        }
         if (mLimitList != null) {
+
             holder.setGone(R.id.right_top, false);
             if (mLimitList.check(item, LimitType.Forbidden)) {
                 holder.setImageBitmap(R.id.right_top, mImageTop.forbidden);
@@ -192,6 +199,12 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                 holder.setImageBitmap(R.id.right_top, mImageTop.limit);
             } else if (mLimitList.check(item, LimitType.SemiLimit)) {
                 holder.setImageBitmap(R.id.right_top, mImageTop.semiLimit);
+            } else if (mLimitList.check(item, LimitType.GeneSys)) {
+                Integer creditValue = 0;
+                if (mLimitList.getCredits() != null) {
+                    creditValue = mLimitList.getCredits().get(item.Alias == 0 ? item.Code : item.Alias);
+                    holder.setImageBitmap(R.id.right_top, mImageTop_GeneSys.geneSysLimit.get(creditValue - 1));
+                }
             } else {
                 holder.setGone(R.id.right_top, true);
             }
@@ -200,9 +213,9 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         }
         //卡片类型
         holder.setText(R.id.card_type, CardUtils.getAllTypeString(item, mStringManager));
-        if (holder.getView(R.id.card_code) != null) {
-            holder.setText(R.id.card_code, String.format("%08d", item.getCode()));
-        }
+
+        holder.setText(R.id.card_code, String.format("%08d", item.getCode()));
+
         bindMenu(holder, position);
         if (mItemBg) {
             holder.setBackgroundResource(R.id.swipe_layout, R.drawable.list_item_bg);

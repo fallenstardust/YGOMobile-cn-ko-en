@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.widget;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -13,6 +14,7 @@ import androidx.annotation.Nullable;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+import cn.garymb.ygomobile.ui.cards.deck.ImageTop_GeneSys;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
@@ -70,7 +72,7 @@ public class CardView extends FrameLayout {
         }
     }
 
-    public void updateLimit(ImageTop imageTop, LimitList limitList) {
+    public void updateLimit(ImageTop imageTop, ImageTop_GeneSys imageTop_GeneSys, LimitList limitList) {
         if (mCard != null && imageTop != null) {
             mTopImage.setVisibility(View.VISIBLE);
             if (limitList != null) {
@@ -80,6 +82,25 @@ public class CardView extends FrameLayout {
                     mTopImage.setImageBitmap(imageTop.limit);
                 } else if (limitList.check(mCard, LimitType.SemiLimit)) {
                     mTopImage.setImageBitmap(imageTop.semiLimit);
+                } else if (limitList.check(mCard, LimitType.GeneSys)) {
+                    // 根据credits中的信用分值设置对应的图标
+                    if (imageTop_GeneSys != null && imageTop_GeneSys.geneSysLimit != null && !imageTop_GeneSys.geneSysLimit.isEmpty()) {
+                        // 获取卡牌的信用分值
+                        Integer creditValue = 0;
+                        if (limitList.getCredits() != null) {
+                            creditValue = limitList.getCredits().get(mCard.Alias == 0 ? mCard.Code : mCard.Alias);
+                            Log.d("cc","CreditValue: " + creditValue);
+                        }
+
+                        // 根据信用分值设置对应的图标索引
+                        if (creditValue != null && creditValue > 0 && creditValue <= imageTop_GeneSys.geneSysLimit.size()) {
+                            mTopImage.setImageBitmap(imageTop_GeneSys.geneSysLimit.get(creditValue - 1)); // 索引从0开始
+                        } else {
+                            mTopImage.setVisibility(View.GONE);
+                        }
+                    } else {
+                        mTopImage.setVisibility(View.GONE);
+                    }
                 } else {
                     mTopImage.setVisibility(View.GONE);
                 }
@@ -90,6 +111,7 @@ public class CardView extends FrameLayout {
             mTopImage.setVisibility(View.GONE);
         }
     }
+
 
     public void showCard(ImageLoader imageLoader, Card cardInfo) {
         if (mCard != null && mCard.equals(cardInfo)) return;

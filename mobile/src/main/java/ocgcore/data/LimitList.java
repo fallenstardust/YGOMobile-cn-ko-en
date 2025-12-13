@@ -1,7 +1,9 @@
 package ocgcore.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ocgcore.enums.LimitType;
 
@@ -14,6 +16,8 @@ import ocgcore.enums.LimitType;
  */
 public class LimitList {
     private String name = "?";
+    private Map<String, Integer> credit_limits;
+    private Map<Integer, Integer> credits;
     /**
      * 0
      */
@@ -72,6 +76,14 @@ public class LimitList {
         return strSemiLimit;
     }
 
+    public Map<String, Integer> getCreditLimits() {
+        return credit_limits;
+    }
+
+    public Map<Integer, Integer> getCredits() {
+        return credits;
+    }
+
     public String getName() {
         return name;
     }
@@ -93,6 +105,20 @@ public class LimitList {
         }
     }
 
+    public void addCreditLimit(String creditType, Integer limit) {
+        if (credit_limits == null) {
+            credit_limits = new HashMap<>();
+        }
+        credit_limits.put(creditType, limit);
+    }
+
+    public void addCredits(Integer cardId, Integer creditCost) {
+        if (credits == null) {
+            credits = new HashMap<>();
+        }
+        credits.put(cardId, creditCost);
+    }
+
     public boolean has(Long id) {
         return allList.contains(id);
     }
@@ -104,10 +130,11 @@ public class LimitList {
     }
 
     public List<Integer> getCodeList() {
-        if (allList.size() == 0) {
+        if (allList.isEmpty()) {
             allList.addAll(forbidden);
             allList.addAll(limit);
-            allList.addAll(semiLimit);
+            allList.addAll(semiLimit);;
+            allList.addAll(credits.keySet());
         }
         return allList;
     }
@@ -133,6 +160,8 @@ public class LimitList {
             return semiLimit.contains(code) || semiLimit.contains(alias);
         } else if (type == LimitType.Forbidden) {
             return forbidden.contains(code) || forbidden.contains(alias);
+        } else if (type == LimitType.GeneSys) {
+            return credits != null && (credits.containsKey(code) || credits.containsKey(alias));
         } else {
             return false;
         }
@@ -143,6 +172,7 @@ public class LimitList {
         int result = forbidden != null ? forbidden.hashCode() : 0;
         result = 31 * result + (limit != null ? limit.hashCode() : 0);
         result = 31 * result + (semiLimit != null ? semiLimit.hashCode() : 0);
+        result = 31 * result + (credits != null ? credits.hashCode() : 0);
         return result;
     }
 
@@ -150,6 +180,8 @@ public class LimitList {
     public String toString() {
         return "LimitList{" +
                 "name='" + name + '\'' +
+                ", credit_limits=" + credit_limits +
+                ", credits=" + credits +
                 ", forbidden=" + forbidden +
                 ", limit=" + limit +
                 ", semiLimit=" + semiLimit +

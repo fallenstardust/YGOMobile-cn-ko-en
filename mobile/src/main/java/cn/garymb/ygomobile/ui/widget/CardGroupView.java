@@ -17,6 +17,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+import cn.garymb.ygomobile.ui.cards.deck.ImageTop_GeneSys;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
@@ -47,14 +48,12 @@ public class CardGroupView extends FrameLayout {
         super(context, attrs, defStyleAttr);
         if (attrs != null) {
             TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.CardGroupView);
-            if (array != null) {
-                mMaxLines = array.getInteger(R.styleable.CardGroupView_lines, mMaxLines);
-                mCardWidth = array.getInteger(R.styleable.CardGroupView_card_width, mCardWidth);
-                mCardHeight = array.getInteger(R.styleable.CardGroupView_card_height, mCardHeight);
-                mLineLimit = array.getInteger(R.styleable.CardGroupView_line_limit, mLineLimit);
-                mLineMaxCount = array.getInteger(R.styleable.CardGroupView_line_max_count, mLineMaxCount);
-                mOrgLineLimit = mLineLimit;
-            }
+            mMaxLines = array.getInteger(R.styleable.CardGroupView_lines, mMaxLines);
+            mCardWidth = array.getInteger(R.styleable.CardGroupView_card_width, mCardWidth);
+            mCardHeight = array.getInteger(R.styleable.CardGroupView_card_height, mCardHeight);
+            mLineLimit = array.getInteger(R.styleable.CardGroupView_line_limit, mLineLimit);
+            mLineMaxCount = array.getInteger(R.styleable.CardGroupView_line_max_count, mLineMaxCount);
+            mOrgLineLimit = mLineLimit;
         }
     }
 
@@ -271,11 +270,11 @@ public class CardGroupView extends FrameLayout {
     }
 
 
-    public void updateTopImage(ImageTop imageTop, LimitList limitList) {
+    public void updateTopImage(ImageTop imageTop, ImageTop_GeneSys imageTop_GeneSys, LimitList limitList) {
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
             CardView cardView = (CardView) getChildAt(i);
-            cardView.updateLimit(imageTop, limitList);
+            cardView.updateLimit(imageTop, imageTop_GeneSys, limitList);
         }
     }
 }

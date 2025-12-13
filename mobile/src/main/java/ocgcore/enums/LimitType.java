@@ -5,14 +5,15 @@ import androidx.annotation.Nullable;
 public enum LimitType {
     None(0),
     All(999, 1310),
+    GeneSys(100, 1480),
     Forbidden(1, 1316),
     Limit(2, 1317),
     SemiLimit(3, 1318);
 
     private long value = 0;
-    private final int lang_index;
+    private final Integer lang_index;
 
-    public int getLanguageIndex() {
+    public Integer getLanguageIndex() {
         return lang_index;
     }
 
@@ -20,7 +21,7 @@ public enum LimitType {
         this(value, 0);
     }
 
-    LimitType(long value, int lang_index) {
+    LimitType(long value, Integer lang_index) {
         this.value = value;
         this.lang_index = lang_index;
     }
