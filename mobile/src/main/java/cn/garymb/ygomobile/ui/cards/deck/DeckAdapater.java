@@ -45,6 +45,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private final Random mRandom;
     private final ImageLoader imageLoader;
     private ImageTop mImageTop;
+    private ImageTop_GeneSys mImageTop_GeneSys;
     private int mMainCount;
     private int mExtraCount;
     private int mSideCount;
@@ -635,6 +636,9 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                     if (mImageTop == null) {
                         mImageTop = new ImageTop(context);
                     }
+                    if (mImageTop_GeneSys == null) {
+                        mImageTop_GeneSys = new ImageTop_GeneSys(context);
+                    }
                     if (mLimitList != null) {
                         if (mLimitList.check(cardInfo, LimitType.Forbidden)) {
                             holder.setRightImage(mImageTop.forbidden);
@@ -642,6 +646,12 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                             holder.setRightImage(mImageTop.limit);
                         } else if (mLimitList.check(cardInfo, LimitType.SemiLimit)) {
                             holder.setRightImage(mImageTop.semiLimit);
+                        } else if (mLimitList.check(cardInfo, LimitType.GeneSys)) {
+                            Integer creditValue = 0;
+                            if (mLimitList.getCredits() != null) {
+                                creditValue = mLimitList.getCredits().get(cardInfo.Alias == 0 ? cardInfo.Code : cardInfo.Alias);
+                                holder.setRightImage(mImageTop_GeneSys.geneSysLimit.get(creditValue - 1));
+                            }
                         } else {
                             holder.setRightImage(null);
                         }
