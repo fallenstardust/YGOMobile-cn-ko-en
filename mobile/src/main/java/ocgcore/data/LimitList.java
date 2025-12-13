@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import ocgcore.enums.LimitType;
 
@@ -54,7 +55,7 @@ public class LimitList {
 
     public List<String> getStringForbidden() {
         List<String> strFobidden = new ArrayList<>();
-        for (int i = 0; i< forbidden.size(); i++) {
+        for (int i = 0; i < forbidden.size(); i++) {
             strFobidden.add(forbidden.get(i).toString());
         }
         return strFobidden;
@@ -62,7 +63,7 @@ public class LimitList {
 
     public List<String> getStringLimit() {
         List<String> strLimit = new ArrayList<>();
-        for (int i = 0; i< limit.size(); i++) {
+        for (int i = 0; i < limit.size(); i++) {
             strLimit.add(limit.get(i).toString());
         }
         return strLimit;
@@ -70,7 +71,7 @@ public class LimitList {
 
     public List<String> getStringSemiLimit() {
         List<String> strSemiLimit = new ArrayList<>();
-        for (int i = 0; i< semiLimit.size(); i++) {
+        for (int i = 0; i < semiLimit.size(); i++) {
             strSemiLimit.add(semiLimit.get(i).toString());
         }
         return strSemiLimit;
@@ -133,11 +134,26 @@ public class LimitList {
         if (allList.isEmpty()) {
             allList.addAll(forbidden);
             allList.addAll(limit);
-            allList.addAll(semiLimit);;
+            allList.addAll(semiLimit);
+            ;
             allList.addAll(credits.keySet());
         }
         return allList;
     }
+
+    /**
+     * 获取按信用分值卡牌ID列表（不含禁止卡）
+     *
+     * @return 包含信用分卡牌ID列表
+     */
+    public List<Integer> getGeneSysCodeList() {
+        if (credits == null || credits.isEmpty()) {//防止空指针异常
+            return new ArrayList<>();
+        }
+
+        return new ArrayList<>(credits.keySet());
+    }
+
 
     public boolean check(Card cardInfo, LimitType type) {
         return check(cardInfo.Code, cardInfo.Alias, type);
@@ -145,6 +161,7 @@ public class LimitList {
 
     /**
      * 判断入参code或alias对应的卡片是否属于限制类型x，x由type确定
+     *
      * @param code
      * @param alias
      * @param type

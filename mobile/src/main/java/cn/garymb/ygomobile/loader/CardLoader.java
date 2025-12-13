@@ -167,7 +167,7 @@ public class CardLoader implements ICardSearcher {
 
     @Override
     public List<Card> sort(List<Card> cards) {
-        Collections.sort(cards, CardSort.ASC);
+        cards.sort(CardSort.ASC);
         return cards;
     }
 
@@ -210,6 +210,8 @@ public class CardLoader implements ICardSearcher {
                     ids = limitList.limit;
                 } else if (cardLimitType == LimitType.SemiLimit) {
                     ids = limitList.semiLimit;
+                } else if (cardLimitType == LimitType.GeneSys) {
+                    ids = limitList.getGeneSysCodeList();
                 } else if (cardLimitType == LimitType.All) {
                     ids = limitList.getCodeList();
                 } else {

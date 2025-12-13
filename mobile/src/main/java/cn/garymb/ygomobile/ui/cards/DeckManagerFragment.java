@@ -73,6 +73,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -1131,13 +1132,63 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         LimitList limitList = mDeckAdapater.getLimitList();
         int id = cardInfo.getGameCode();
         Integer count = mCount.get(id);
+
         if (limitList == null) {
             return count != null && count <= 3;
         }
+
         if (limitList.check(cardInfo, LimitType.Forbidden)) {
             YGOUtil.showTextToast(getString(R.string.tip_card_max, 0));
             return false;
         }
+
+        if (limitList.check(cardInfo, LimitType.GeneSys)) {
+            // 检查GeneSys信用分限制
+            if (limitList.getCredits() != null && limitList.getCreditLimits() != null) {
+                // 获取当前卡片的信用分值
+                Integer cardCreditValue = limitList.getCredits().get(cardInfo.Alias == 0 ? cardInfo.Code : cardInfo.Alias);
+
+                if (cardCreditValue != null && cardCreditValue > 0) {
+                    // 计算当前卡组中所有GeneSys卡片的信用分总和
+                    int totalCredit = 0;
+                    SparseArray<Integer> cardCounts = mDeckAdapater.getCardCount();
+
+                    for (int i = 0; i < cardCounts.size(); i++) {
+                        int cardId = cardCounts.keyAt(i);
+                        int cardQuantity = cardCounts.valueAt(i);
+
+                        // 检查这张卡是否是GeneSys卡
+                        if (limitList.getCredits().containsKey(cardId)) {
+                            Integer creditValue = limitList.getCredits().get(cardId);
+                            if (creditValue != null) {
+                                // 如果是当前要添加的卡片，需要考虑添加后的数量
+                                if (cardId == cardInfo.Code || cardId == cardInfo.Alias) {
+                                    totalCredit += creditValue * (cardQuantity + 1);
+                                } else {
+                                    totalCredit += creditValue * cardQuantity;
+                                }
+                            }
+                        }
+                    }
+
+                    // 检查是否超过信用分上限
+                    boolean overLimit = false;
+                    for (Map.Entry<String, Integer> entry : limitList.getCreditLimits().entrySet()) {
+                        Integer creditLimit = entry.getValue();
+
+                        if (creditLimit != null && totalCredit > creditLimit) {
+                            overLimit = true;
+                            break;
+                        }
+                    }
+                    if (overLimit) {
+                        YGOUtil.showTextToast("超过总分上限:" + limitList.getCreditLimits().entrySet());
+                        return false;
+                    }
+                }
+            }
+        }
+
         if (count != null) {
             if (limitList.check(cardInfo, LimitType.Limit)) {
                 if (count >= 1) {
@@ -1766,7 +1817,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             });
 
         } else {
-            Log.d("seesee",deckFile.getPathFile().getAbsolutePath());
+            Log.d("seesee", deckFile.getPathFile().getAbsolutePath());
             loadDeckFromFile(deckFile.getPathFile());
             ll_click_like.setVisibility(View.GONE);
         }
