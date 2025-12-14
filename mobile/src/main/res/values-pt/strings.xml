@@ -374,5 +374,6 @@
     <string name="like_deck_thumb">Curtir o deck</string>
     <string name="pre_view">Prévia</string>
     <string name="label_set_No_Setcode">#Sem Card Set incluso</string>
+    <string name="tip_credit_max">Excede o limite de %d</string>
 </resources>
 

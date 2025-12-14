@@ -384,4 +384,5 @@
     <string name="pwd_warning">パスワードを入力してください！</string>
     <string name="like_deck_thumb">デッキに「いいね」をつける</string>
     <string name="pre_view">プレビュー</string>
+    <string name="tip_credit_max">" %dの上限を超えています"</string>
 </resources>

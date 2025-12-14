@@ -383,6 +383,7 @@
     <string name="pwd_warning">¡Ingresa tu contraseña!</string>
     <string name="like_deck_thumb">Dar like al deck</string>
     <string name="pre_view">Vista previa</string>
+    <string name="tip_credit_max">Excede el límite de %d</string>
 </resources>
 
 

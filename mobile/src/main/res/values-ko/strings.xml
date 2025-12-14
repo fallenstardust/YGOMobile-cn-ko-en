@@ -79,6 +79,7 @@
     <string name="settings_game_immersive_mode">비 16:9 해상도 최적화</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">게임 아바타</string>
+    <string name="tip_credit_max">%d 상한선 초과</string>
     <string name="settings_author" translatable="false">菜菜、暗星\n浙ICP备2023031884号-2A
 </string>
     <string name="restart_app">앱을 다시 시작하십시오!</string>

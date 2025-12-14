@@ -180,7 +180,7 @@
     <string name="add_card_tip_ok">add card ok</string>
     <string name="add_card_tip_fail">add card fail</string>
     <string name="tip_card_max" formatted="false">card max count:%d</string>
-
+    <string name="tip_credit_max" formatted="false">Exceeds %d limit</string>
     <string name="file_exist">file is exist</string>
     <string name="share_deck">Share Deck</string>
     <string name="no_share_app">no find share app</string>

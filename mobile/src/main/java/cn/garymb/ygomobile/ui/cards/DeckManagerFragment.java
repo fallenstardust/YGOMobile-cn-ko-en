@@ -823,6 +823,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 btnRedo.setVisibility(View.INVISIBLE);
             }
         }
+        //同时刷新信用分总计
         refreshDeckCreditCount();
     }
 
@@ -1231,7 +1232,19 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                             }
                         }
                         if (overLimit) {
-                            YGOUtil.showTextToast("超过总分上限:" + limitList.getCreditLimits().entrySet());
+                            // 遍历获取第一个非空的信用分上限值
+                            Integer creditLimit = null;
+                            for (Integer limit : limitList.getCreditLimits().values()) {
+                                if (limit != null) {
+                                    creditLimit = limit;
+                                    break;
+                                }
+                            }
+                            YGOUtil.showTextToast(getString(R.string.tip_credit_max, creditLimit));
+                            return false;
+                        }
+                        if (count >= Constants.CARD_MAX_COUNT) {
+                            YGOUtil.showTextToast(getString(R.string.tip_card_max, 3));
                             return false;
                         }
                     }
