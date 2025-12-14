@@ -74,6 +74,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -162,6 +163,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private TextView tv_deck;
     private TextView tv_result_count;
+    private TextView tv_credit_count;
     private AppCompatSpinner mLimitSpinner;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
@@ -200,12 +202,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 检查并预加载外部ydk文件
         preLoadFile();
-
         // 注册事件总线监听器
         if (!EventBus.getDefault().isRegistered(this)) {//加上判断
             EventBus.getDefault().register(this);
         }
-
         // 显示新手引导
         showNewbieGuide("deckmain");
         return layoutView;
@@ -250,6 +250,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 查找顶部展示区域的文本控件
         tv_deck = layoutView.findViewById(R.id.tv_deck);
+        tv_credit_count = layoutView.findViewById(R.id.tv_credit_count);
         tv_result_count = layoutView.findViewById(R.id.result_count);
 
         // 初始化限制条件选择下拉框并设置背景颜色
@@ -309,7 +310,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         // 卡组标题点击打开管理对话框
         tv_deck.setOnClickListener(v -> {
             new DeckManageDialog(this).show(
-                    getActivity().getSupportFragmentManager(), "pagerDialog");
+                    requireActivity().getSupportFragmentManager(), "pagerDialog");
         });
 
         // 初始化撤销/重做按钮
@@ -319,9 +320,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         animRotate(btnRedo);
         btnUndo.setOnClickListener(v -> undo());
         btnRedo.setOnClickListener(v -> redo());
-
-        // 初始化按钮状态
-        updateUndoRedoButtons();
 
         mContext = (BaseActivity) getActivity();
 
@@ -509,14 +507,17 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             dialogPlus.setLeftButtonListener((dlg, v) -> {
                 dlg.dismiss();
                 mDeckItemTouchHelper.remove(pos);
-                // 添加到历史记录
-                addDeckToHistory(mDeckAdapater.getCurrentState());
             });
             dialogPlus.show();
         } else {
             // 直接显示删除头部视图
             mDeckAdapater.showHeadView();
+            mDeckItemTouchHelper.remove(pos);
+
         }
+        // 添加到历史记录
+        addDeckToHistory(mDeckAdapater.getCurrentState());
+
     }
 
     @Override
@@ -677,6 +678,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
             // 设置并显示收藏夹
             mCardSearcher.showFavorites(false);
+            // 初始化按钮状态
+            updateUndoRedoButtons();
         });
     }
 
@@ -707,7 +710,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         clearDeckHistory();
         addDeckToHistory(deckInfo);
 
-        // 更新按钮状态
+        // 更新按钮状态，初始化完毕后再执行，以便确保所有数据已加载
         updateUndoRedoButtons();
     }
 
@@ -743,7 +746,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             deckHistory.add(deckInfo);
             historyIndex = deckHistory.size() - 1;
         }
-
         // 更新按钮状态
         updateUndoRedoButtons();
     }
@@ -821,6 +823,42 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 btnRedo.setVisibility(View.INVISIBLE);
             }
         }
+        refreshDeckCreditCount();
+    }
+
+    private void refreshDeckCreditCount() {
+        // 更新信用分显示 分三个部分判断和拼接文本
+        StringBuilder creditText = new StringBuilder(getString(R.string.deck_name) + ": ");
+
+        try {
+            LimitList limitList = mDeckAdapater.getLimitList();
+            // 检查是否有有效的信用分限制
+            if (limitList.getCreditLimits() != null && !limitList.getCreditLimits().isEmpty()) {
+                // 获取信用分上限值
+                Integer creditLimit = null;
+                for (Integer limit : limitList.getCreditLimits().values()) {
+                    if (limit != null) {
+                        creditLimit = limit;
+                        break;
+                    }
+                }
+
+                // 仅当信用分上限不为null且不为0时显示信用分信息
+                if (creditLimit != null && creditLimit > 0) {
+                    creditText.append("(")
+                            .append(getCreditCount(mDeckAdapater.getCurrentState()))
+                            .append("/")
+                            .append(creditLimit)
+                            .append(")");
+                }
+            }
+
+        } catch (Exception e) {
+            // 记录异常日志
+            Log.e(TAG, "Error refreshing deck credit count", e);
+        }
+
+        tv_credit_count.setText(creditText.toString());
     }
 
 
@@ -1061,7 +1099,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     /**
-     * 添加主卡组卡片
+     * 添加主卡组卡片，判断如果属于额外卡组则添加到额外卡组
      *
      * @param cardInfo 要添加的卡片信息
      * @return 添加成功返回true，否则返回false
@@ -1142,53 +1180,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return false;
         }
 
-        if (limitList.check(cardInfo, LimitType.GeneSys)) {
-            // 检查GeneSys信用分限制
-            if (limitList.getCredits() != null && limitList.getCreditLimits() != null) {
-                // 获取当前卡片的信用分值
-                Integer cardCreditValue = limitList.getCredits().get(cardInfo.Alias == 0 ? cardInfo.Code : cardInfo.Alias);
-
-                if (cardCreditValue != null && cardCreditValue > 0) {
-                    // 计算当前卡组中所有GeneSys卡片的信用分总和
-                    int totalCredit = 0;
-                    SparseArray<Integer> cardCounts = mDeckAdapater.getCardCount();
-
-                    for (int i = 0; i < cardCounts.size(); i++) {
-                        int cardId = cardCounts.keyAt(i);
-                        int cardQuantity = cardCounts.valueAt(i);
-
-                        // 检查这张卡是否是GeneSys卡
-                        if (limitList.getCredits().containsKey(cardId)) {
-                            Integer creditValue = limitList.getCredits().get(cardId);
-                            if (creditValue != null) {
-                                // 如果是当前要添加的卡片，需要考虑添加后的数量
-                                if (cardId == cardInfo.Code || cardId == cardInfo.Alias) {
-                                    totalCredit += creditValue * (cardQuantity + 1);
-                                } else {
-                                    totalCredit += creditValue * cardQuantity;
-                                }
-                            }
-                        }
-                    }
-
-                    // 检查是否超过信用分上限
-                    boolean overLimit = false;
-                    for (Map.Entry<String, Integer> entry : limitList.getCreditLimits().entrySet()) {
-                        Integer creditLimit = entry.getValue();
-
-                        if (creditLimit != null && totalCredit > creditLimit) {
-                            overLimit = true;
-                            break;
-                        }
-                    }
-                    if (overLimit) {
-                        YGOUtil.showTextToast("超过总分上限:" + limitList.getCreditLimits().entrySet());
-                        return false;
-                    }
-                }
-            }
-        }
-
         if (count != null) {
             if (limitList.check(cardInfo, LimitType.Limit)) {
                 if (count >= 1) {
@@ -1200,12 +1191,81 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     YGOUtil.showTextToast(getString(R.string.tip_card_max, 2));
                     return false;
                 }
+            } else if (limitList.check(cardInfo, LimitType.GeneSys)) {
+                // 检查GeneSys信用分限制
+                if (limitList.getCredits() != null && limitList.getCreditLimits() != null) {
+                    // 获取当前卡片的信用分值
+                    Integer cardCreditValue = limitList.getCredits().get(cardInfo.Alias == 0 ? cardInfo.Code : cardInfo.Alias);
+
+                    if (cardCreditValue != null && cardCreditValue > 0) {
+                        // 计算当前卡组中所有GeneSys卡片的信用分总和
+                        int totalCredit = 0;
+                        SparseArray<Integer> cardCounts = mDeckAdapater.getCardCount();
+
+                        for (int i = 0; i < cardCounts.size(); i++) {
+                            int cardId = cardCounts.keyAt(i);
+                            int cardQuantity = cardCounts.valueAt(i);
+
+                            // 检查这张卡是否是GeneSys卡
+                            if (limitList.getCredits().containsKey(cardId)) {
+                                Integer creditValue = limitList.getCredits().get(cardId);
+                                if (creditValue != null) {
+                                    // 如果是当前要添加的卡片，需要考虑添加后的数量
+                                    if (cardId == cardInfo.Code || cardId == cardInfo.Alias) {
+                                        totalCredit += creditValue * (cardQuantity + 1);
+                                    } else {
+                                        totalCredit += creditValue * cardQuantity;
+                                    }
+                                }
+                            }
+                        }
+
+                        // 检查是否超过信用分上限
+                        boolean overLimit = false;
+                        for (Map.Entry<String, Integer> entry : limitList.getCreditLimits().entrySet()) {
+                            Integer creditLimit = entry.getValue();
+
+                            if (creditLimit != null && totalCredit >= creditLimit) {
+                                overLimit = true;
+                                break;
+                            }
+                        }
+                        if (overLimit) {
+                            YGOUtil.showTextToast("超过总分上限:" + limitList.getCreditLimits().entrySet());
+                            return false;
+                        }
+                    }
+                }
             } else if (count >= Constants.CARD_MAX_COUNT) {
                 YGOUtil.showTextToast(getString(R.string.tip_card_max, 3));
                 return false;
             }
         }
         return true;
+    }
+
+    private int getCreditCount(DeckInfo deckinfo) {
+        // 处理空值情况
+        if (deckinfo == null || mDeckAdapater == null || mDeckAdapater.getLimitList() == null) {
+            return -1;
+        }
+        LimitList limitList = mDeckAdapater.getLimitList();
+        // 计算当前卡组中所有GeneSys卡片的信用分总和
+        int totalCredit = 0;
+        List<Card> deck_info = deckinfo.getAllCards();
+        for (int i = 0; i < deck_info.size(); i++) {
+            int cardId = deck_info.get(i).getGameCode();//如果有alias则返回alias，否则返回code
+
+            // 检查这张卡是否是GeneSys卡
+            if (limitList.getCredits() != null && limitList.getCredits().containsKey(cardId)) {
+                Integer creditValue = limitList.getCredits().get(cardId);
+                if (creditValue != null) {
+                    totalCredit += creditValue;
+                }
+            }
+        }
+
+        return totalCredit;
     }
 
     @Override

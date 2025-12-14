@@ -348,7 +348,7 @@ public class DeckInfo {
     }
 
     public List<Card> getAllCards() {
-        if (allCards.size() == 0) {
+        if (allCards.isEmpty()) {
             allCards.addAll(mainCards);
             allCards.addAll(extraCards);
             allCards.addAll(sideCards);

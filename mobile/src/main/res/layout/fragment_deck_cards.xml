@@ -53,6 +53,7 @@
                             android:src="@drawable/box_deck" />
 
                         <TextView
+                            android:id="@+id/tv_credit_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom"
