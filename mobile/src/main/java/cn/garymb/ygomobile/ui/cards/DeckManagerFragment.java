@@ -1192,77 +1192,48 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     YGOUtil.showTextToast(getString(R.string.tip_card_max, 2));
                     return false;
                 }
-            } else if (limitList.check(cardInfo, LimitType.GeneSys)) {
-                // 检查GeneSys信用分限制
-                if (limitList.getCredits() != null && limitList.getCreditLimits() != null) {
-                    // 获取当前卡片的信用分值
-                    Integer cardCreditValue = limitList.getCredits().get(cardInfo.Alias == 0 ? cardInfo.Code : cardInfo.Alias);
-
-                    if (cardCreditValue != null && cardCreditValue > 0) {
-                        // 计算当前卡组中所有GeneSys卡片的信用分总和
-                        int totalCredit = 0;
-                        SparseArray<Integer> cardCounts = mDeckAdapater.getCardCount();
-
-                        for (int i = 0; i < cardCounts.size(); i++) {
-                            int cardId = cardCounts.keyAt(i);
-                            int cardQuantity = cardCounts.valueAt(i);
-
-                            // 检查这张卡是否是GeneSys卡
-                            if (limitList.getCredits().containsKey(cardId)) {
-                                Integer creditValue = limitList.getCredits().get(cardId);
-                                if (creditValue != null) {
-                                    // 如果是当前要添加的卡片，需要考虑添加后的数量
-                                    if (cardId == cardInfo.Code || cardId == cardInfo.Alias) {
-                                        totalCredit += creditValue * (cardQuantity + 1);
-                                    } else {
-                                        totalCredit += creditValue * cardQuantity;
-                                    }
-                                }
-                            }
-                        }
-
-                        // 检查是否超过信用分上限
-                        boolean overLimit = false;
-                        for (Map.Entry<String, Integer> entry : limitList.getCreditLimits().entrySet()) {
-                            Integer creditLimit = entry.getValue();
-
-                            if (creditLimit != null && totalCredit >= creditLimit) {
-                                overLimit = true;
-                                break;
-                            }
-                        }
-                        if (overLimit) {
-                            // 遍历获取第一个非空的信用分上限值
-                            Integer creditLimit = null;
-                            for (Integer limit : limitList.getCreditLimits().values()) {
-                                if (limit != null) {
-                                    creditLimit = limit;
-                                    break;
-                                }
-                            }
-                            YGOUtil.showTextToast(getString(R.string.tip_credit_max, creditLimit));
-                            return false;
-                        }
-                        if (count >= Constants.CARD_MAX_COUNT) {
-                            YGOUtil.showTextToast(getString(R.string.tip_card_max, 3));
-                            return false;
-                        }
-                    }
-                }
             } else if (count >= Constants.CARD_MAX_COUNT) {
                 YGOUtil.showTextToast(getString(R.string.tip_card_max, 3));
                 return false;
             }
         }
+        //检查卡片（也要判断不在卡组时，所以count是可以为null的情况）意图加入卡组是否会超限制，超过则return false
+        if (limitList.check(cardInfo, LimitType.GeneSys)) {// 检查GeneSys信用分限制
+            // 获取当前卡片的信用分值
+            Integer cardCreditValue = limitList.getCredits().get(cardInfo.Alias == 0 ? cardInfo.Code : cardInfo.Alias);
+
+            if (cardCreditValue != null && cardCreditValue > 0) {//genesys表中的卡需要进行检查，否则就是纯普通卡只需遵循最大3的规则
+                // 检查是否超过信用分上限
+                for (Map.Entry<String, Integer> entry : limitList.getCreditLimits().entrySet()) {
+
+                    Integer creditLimit = entry.getValue();//获取总分上限数，一般是100，但可能不同genesys表给的上限分不同
+
+                    int totalCredit = getCreditCount(mDeckAdapater.getCurrentState()) + cardCreditValue;//计算目前卡组信用分合计+当前卡的信用分的和，用于下面和上限值比较
+
+                    // 计算当前卡组中所有GeneSys卡片的信用分总和
+                    if (creditLimit != null && totalCredit > creditLimit) {
+                        YGOUtil.showTextToast(getString(R.string.tip_credit_max, creditLimit));
+                        return false;
+                    }
+                }
+            }
+        }
         return true;
     }
 
+    /**
+     * 获取指定卡组中所有GeneSys卡片的信用分总和
+     *
+     * @param deckinfo 卡组信息对象，包含卡组中的所有卡片信息
+     * @return 返回卡组中所有GeneSys卡片的信用分总和，如果输入参数为空或获取限制列表失败则返回-1
+     */
     private int getCreditCount(DeckInfo deckinfo) {
         // 处理空值情况
         if (deckinfo == null || mDeckAdapater == null || mDeckAdapater.getLimitList() == null) {
             return -1;
         }
         LimitList limitList = mDeckAdapater.getLimitList();
+
         // 计算当前卡组中所有GeneSys卡片的信用分总和
         int totalCredit = 0;
         List<Card> deck_info = deckinfo.getAllCards();
