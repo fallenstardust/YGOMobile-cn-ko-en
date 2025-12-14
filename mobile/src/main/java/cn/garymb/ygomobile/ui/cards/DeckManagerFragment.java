@@ -1225,12 +1225,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
      * 获取指定卡组中所有GeneSys卡片的信用分总和
      *
      * @param deckinfo 卡组信息对象，包含卡组中的所有卡片信息
-     * @return 返回卡组中所有GeneSys卡片的信用分总和，如果输入参数为空或获取限制列表失败则返回-1
+     * @return 返回卡组中所有GeneSys卡片的信用分总和，如果输入参数为空或获取限制列表失败则返回0
      */
     private int getCreditCount(DeckInfo deckinfo) {
         // 处理空值情况
         if (deckinfo == null || mDeckAdapater == null || mDeckAdapater.getLimitList() == null) {
-            return -1;
+            return 0;
         }
         LimitList limitList = mDeckAdapater.getLimitList();
 

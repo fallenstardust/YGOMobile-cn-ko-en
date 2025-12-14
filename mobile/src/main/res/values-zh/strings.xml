@@ -241,6 +241,8 @@
     <string name="deck_manager_v2">组卡器V2</string>
     <string name="reset_game_ver_fail">重置游戏版本失败</string>
     <string name="deck_name">卡组</string>
+    <string name="point_cost">消耗点数</string>
+    <string name="credit_limit">点数上限</string>
     <string name="category_name">卡组分类</string>
     <string name="save_quit">保存并退出</string>
     <string name="tip_reset_game_res">游戏数据检查完成</string>

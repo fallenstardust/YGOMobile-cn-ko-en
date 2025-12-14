@@ -384,6 +384,8 @@
     <string name="like_deck_thumb">Dar like al deck</string>
     <string name="pre_view">Vista previa</string>
     <string name="tip_credit_max">Excede el límite de %d</string>
+    <string name="point_cost">Consumo de puntos</string>
+    <string name="credit_limit">Límite de puntos</string>
 </resources>
 
 
