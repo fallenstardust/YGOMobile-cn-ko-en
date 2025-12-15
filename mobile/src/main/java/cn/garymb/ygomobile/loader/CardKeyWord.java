@@ -21,43 +21,68 @@ public class CardKeyWord {
     private final boolean empty;
 
     public CardKeyWord(String word) {
+        // 保存原始搜索关键词
         this.word = word;
+
+        // 如果关键词不为空，则进行解析和过滤器构建
         if (!TextUtils.isEmpty(word)) {
-            if (TextUtils.isDigitsOnly(word) && word.length() >= 5) {
-                //搜索卡密
+
+            // 判断是否为纯数字且长度大于等于5，若是则作为卡密搜索
+            if (TextUtils.isDigitsOnly(word) && word.length() >= 3) {
+                // 添加卡密过滤器
                 filterList.add(new CodeFilter(Long.parseLong(word)));
             } else {
+                // 按空格分割关键词
                 String[] ws = word.split(" ");
+
+                // 如果设置中的关键词分割符是"%%"，则重新分割
                 if (AppsSettings.get().getKeyWordsSplit() == AppsSettings.keyWordsSplitEnum.Percent.code) {
                     ws = word.split("%%");
                 }
+
+                // 遍历每个分割后的关键词
                 for (String w : ws) {
+                    // 跳过空字符串
                     if (TextUtils.isEmpty(w)) {
                         continue;
                     }
+
+                    // 初始化排除标记为false
                     boolean exclude = false;
-                    if (w.startsWith("-")) {
+                    // 如果关键词以"-"开头，则表示排除模式
+                    if (w.startsWith("-") && w.length() > 1) {
                         exclude = true;
+                        // 去掉"-"前缀
                         w = w.substring(1);
                     }
+
+                    // 初始化仅文本标记为false（当前被注释掉的功能）
                     boolean onlyText = false;
-                    /*
-                    if (w.startsWith("\"") || w.startsWith("“") || w.startsWith("”")) {
-                        //只搜索文字
-                        onlyText = true;
-                        if (w.endsWith("\"") || w.endsWith("“") || w.endsWith("”")) {
-                            w = w.substring(1, w.length() - 1);
-                        } else {
-                            w = w.substring(1);
-                        }
-                    }*/
+                /*
+                // 如果关键词以引号开头，则只搜索文本内容
+                if (w.startsWith("\"") || w.startsWith("“") || w.startsWith("”")) {
+                    // 设置仅文本标志
+                    onlyText = true;
+                    // 如果也以引号结尾，则去掉首尾引号
+                    if (w.endsWith("\"") || w.endsWith("“") || w.endsWith("”")) {
+                        w = w.substring(1, w.length() - 1);
+                    } else {
+                        // 否则只去掉开始的引号
+                        w = w.substring(1);
+                    }
+                }*/
+
+                    // 记录当前过滤器参数的日志
                     Log.d(TAG, "filter:word=" + w + ", exclude=" + exclude + ", onlyText=" + onlyText);
+                    // 添加名称过滤器
                     filterList.add(new NameFilter(w, exclude, onlyText));
                 }
             }
         }
-        empty = filterList.size() == 0;
+        // 判断是否有有效的过滤器
+        empty = filterList.isEmpty();
     }
+
 
     public String getValue() {
         return word;
@@ -85,7 +110,7 @@ public class CardKeyWord {
             this.setcode = onlyText ? 0 : DataManager.get().getStringManager().getSetCode(word, true);
             this.exclude = exclude;
             this.word = word.toLowerCase(Locale.US);
-            if(this.setcode > 0){
+            if (this.setcode > 0) {
                 Log.d(TAG, "filter:setcode=" + setcode + ", exclude=" + exclude + ", word=" + word);
             }
         }
