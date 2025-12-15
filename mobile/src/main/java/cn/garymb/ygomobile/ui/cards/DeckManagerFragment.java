@@ -155,7 +155,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private RecyclerView mRecyclerView;
     private BaseActivity mContext;
     // 历史记录列表，用于存储卡组状态
-    private List<DeckInfo> deckHistory = new ArrayList<>();
+    private final List<DeckInfo> deckHistory = new ArrayList<>();
     // 当前历史记录索引
     private int historyIndex = -1;
     private boolean isPackMode;
@@ -166,7 +166,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private LinearLayout ll_genesys_scoreboard;
     private TextView tv_credit_count;
     private TextView tv_credit_limit;
-    private TextView tv_credit_difference;
+    private TextView tv_credit_remain;
     private AppCompatSpinner mLimitSpinner;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
@@ -255,7 +255,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         ll_genesys_scoreboard = layoutView.findViewById(R.id.ll_genesys_scoreboard);
         tv_credit_count = layoutView.findViewById(R.id.tv_credit_count);
         tv_credit_limit = layoutView.findViewById(R.id.tv_credit_limit);
-        tv_credit_difference = layoutView.findViewById(R.id.tv_credit_difference);
+        tv_credit_remain = layoutView.findViewById(R.id.tv_credit_remain);
 
         // 查找底部卡组名称展示区域的文本控件
         tv_deck = layoutView.findViewById(R.id.tv_deck);
@@ -294,8 +294,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         ll_click_like.setOnClickListener(v -> {
             if (mDeckId != null) {
                 VUiKit.defer().when(() -> {
-                    BasicResponse result = DeckSquareApiUtil.likeDeck(mDeckId);
-                    return result;
+                    return DeckSquareApiUtil.likeDeck(mDeckId);
                 }).fail(e -> {
                     LogUtil.i(TAG, "Like deck fail" + e.getMessage());
                     YGOUtil.showTextToast("点赞失败");
@@ -859,18 +858,18 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 // 当当前信用分超过限制时，设置文本为红色
                 if (currentCredit > creditLimit) {
                     tv_credit_count.setTextColor(Color.RED);
-                    tv_credit_difference.setTextColor(Color.RED);
+                    tv_credit_remain.setTextColor(Color.RED);
                 } else {
                     // 否则使用默认颜色
-                    tv_credit_count.setTextColor(tv_credit_count.getCurrentTextColor());
-                    tv_credit_difference.setTextColor(tv_credit_difference.getCurrentTextColor());
+                    tv_credit_count.setTextColor(Color.WHITE);
+                    tv_credit_remain.setTextColor(Color.WHITE);
                 }
             }
         }
 
         tv_credit_count.setText(String.valueOf(currentCredit));
         tv_credit_limit.setText(String.valueOf(creditLimit));
-        tv_credit_difference.setText(String.valueOf(creditLimit - currentCredit));
+        tv_credit_remain.setText(String.valueOf(creditLimit - currentCredit));
     }
 
 
@@ -928,7 +927,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         tv_result_count.setText(String.valueOf(cardInfos.size()));
         mCardListAdapter.set(cardInfos);
         mCardListAdapter.notifyDataSetChanged();
-        if (cardInfos != null && cardInfos.size() > 0) {
+        if (!cardInfos.isEmpty()) {
             mListView.smoothScrollToPosition(0);
         }
         if (!isHide)

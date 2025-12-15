@@ -108,89 +108,18 @@
                         android:background="@drawable/button_radius_black_transparents"
                         android:ellipsize="end"
                         android:gravity="center|left"
-                        android:weightSum="1"
                         android:orientation="vertical"
                         android:paddingStart="5dp"
-                        android:paddingEnd="5dp">
-
-                        <LinearLayout
-                            android:id="@+id/ll_genesys_scoreboard"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_weight="0.2"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="10dp"
-                                android:layout_height="10dp"
-                                android:layout_marginStart="1dp"
-                                android:layout_marginEnd="1dp"
-                                android:layout_gravity="center"
-                                android:src="@drawable/ic_gs" />
-
-                            <ImageView
-                                android:layout_width="10dp"
-                                android:layout_height="10dp"
-                                android:layout_marginStart="1dp"
-                                android:layout_marginEnd="1dp"
-                                android:layout_gravity="center"
-                                android:src="@drawable/ic_credit_limit" />
-                            <TextView
-                                android:id="@+id/tv_credit_limit"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:textSize="10sp"
-                                android:layout_marginStart="1dp"
-                                android:layout_marginEnd="1dp"
-                                android:textColor="@color/holo_blue_bright"
-                                android:background="@drawable/button_radius_black_transparents"
-                                android:gravity="center" />
-                            <ImageView
-                                android:layout_width="10dp"
-                                android:layout_height="10dp"
-                                android:layout_marginStart="1dp"
-                                android:layout_marginEnd="1dp"
-                                android:layout_gravity="center"
-                                android:src="@drawable/credit_count" />
-                            <TextView
-                                android:id="@+id/tv_credit_count"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:textSize="10sp"
-                                android:layout_marginStart="1dp"
-                                android:layout_marginEnd="1dp"
-                                android:textColor="@color/holo_blue_bright"
-                                android:background="@drawable/button_radius_black_transparents"
-                                android:gravity="center" />
-                            <ImageView
-                                android:layout_width="10dp"
-                                android:layout_height="10dp"
-                                android:layout_marginStart="1dp"
-                                android:layout_marginEnd="1dp"
-                                android:layout_gravity="center"
-                                android:src="@drawable/ic_credit_difference" />
-                            <TextView
-                                android:id="@+id/tv_credit_difference"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:textSize="10sp"
-                                android:layout_marginStart="1dp"
-                                android:layout_marginEnd="1dp"
-                                android:textColor="@color/holo_blue_bright"
-                                android:background="@drawable/button_radius_black_transparents"
-                                android:gravity="center" />
-                        </LinearLayout>
+                        android:paddingEnd="5dp"
+                        android:weightSum="1">
 
                         <androidx.appcompat.widget.AppCompatTextView
                             android:id="@+id/tv_deck"
                             android:layout_width="match_parent"
                             android:layout_height="0dp"
-                            android:layout_gravity="bottom"
-                            android:layout_weight="0.8"
+                            android:layout_gravity="top|start"
                             android:layout_marginTop="2dp"
+                            android:layout_weight="0.8"
                             android:maxLines="2"
                             android:shadowColor="@color/black"
                             android:shadowDx="1"
@@ -200,6 +129,110 @@
                             android:textColor="@color/white"
                             android:textSize="18sp"
                             android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:id="@+id/ll_genesys_scoreboard"
+                            android:layout_width="wrap_content"
+                            android:layout_height="0dp"
+                            android:layout_gravity="bottom|end"
+                            android:layout_weight="0.2"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="1dp"
+                                android:layout_marginEnd="1dp"
+                                android:background="@drawable/radius_background"
+                                android:gravity="center"
+                                android:text="限"
+                                android:textColor="@color/black"
+                                android:textSize="6sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_credit_limit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="1dp"
+                                android:layout_marginEnd="1dp"
+                                android:background="@drawable/button_radius_black_transparents"
+                                android:gravity="center"
+                                android:text="\?\?\?"
+                                android:textColor="@color/white"
+                                android:textSize="8sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="1dp"
+                                android:layout_marginEnd="1dp"
+
+                                android:background="@drawable/radius_background"
+                                android:gravity="center"
+                                android:text="计"
+                                android:textColor="@color/black"
+                                android:textSize="6sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_credit_count"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="1dp"
+                                android:layout_marginEnd="1dp"
+                                android:background="@drawable/button_radius_black_transparents"
+                                android:gravity="center"
+                                android:text="\?\?\?"
+                                android:textColor="@color/white"
+                                android:textSize="8sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="1dp"
+                                android:layout_marginEnd="1dp"
+                                android:background="@drawable/radius_background"
+                                android:gravity="center"
+                                android:text="余"
+                                android:textColor="@color/black"
+                                android:textSize="6sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_credit_remain"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top"
+                                android:layout_marginStart="1dp"
+                                android:layout_marginEnd="1dp"
+                                android:background="@drawable/button_radius_black_transparents"
+                                android:gravity="center"
+                                android:text="\?\?\?"
+                                android:textColor="@color/white"
+                                android:textSize="8sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="10dp"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="1dp"
+                                android:layout_marginEnd="1dp"
+                                android:background="@drawable/selected"
+                                android:gravity="center"
+                                android:text="  GENESYS  "
+                                android:textColor="@color/white"
+                                android:textSize="6sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
 
