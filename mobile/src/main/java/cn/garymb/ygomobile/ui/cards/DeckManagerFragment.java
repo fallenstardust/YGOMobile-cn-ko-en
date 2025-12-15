@@ -163,7 +163,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private DeckItemTouchHelper mDeckItemTouchHelper;
     private TextView tv_deck;
     private TextView tv_result_count;
+    private LinearLayout ll_genesys_scoreboard;
     private TextView tv_credit_count;
+    private TextView tv_credit_limit;
+    private TextView tv_credit_difference;
     private AppCompatSpinner mLimitSpinner;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
@@ -248,9 +251,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
         mCardSearcher.setCallBack(this);
 
-        // 查找顶部展示区域的文本控件
-        tv_deck = layoutView.findViewById(R.id.tv_deck);
+        //初始化genesys计分板
+        ll_genesys_scoreboard = layoutView.findViewById(R.id.ll_genesys_scoreboard);
         tv_credit_count = layoutView.findViewById(R.id.tv_credit_count);
+        tv_credit_limit = layoutView.findViewById(R.id.tv_credit_limit);
+        tv_credit_difference = layoutView.findViewById(R.id.tv_credit_difference);
+
+        // 查找底部卡组名称展示区域的文本控件
+        tv_deck = layoutView.findViewById(R.id.tv_deck);
         tv_result_count = layoutView.findViewById(R.id.result_count);
 
         // 初始化限制条件选择下拉框并设置背景颜色
@@ -828,38 +836,41 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     private void refreshDeckCreditCount() {
-        // 更新信用分显示 分三个部分判断和拼接文本
-        StringBuilder creditText = new StringBuilder(getString(R.string.deck_name) + ": ");
-
-        try {
-            LimitList limitList = mDeckAdapater.getLimitList();
-            // 检查是否有有效的信用分限制
-            if (limitList.getCreditLimits() != null && !limitList.getCreditLimits().isEmpty()) {
-                // 获取信用分上限值
-                Integer creditLimit = null;
-                for (Integer limit : limitList.getCreditLimits().values()) {
-                    if (limit != null) {
-                        creditLimit = limit;
-                        break;
-                    }
+        LimitList limitList = mDeckAdapater.getLimitList();
+        int currentCredit = 0 ;
+        int creditLimit = 0;
+        int difference = 0;
+        // 检查是否有有效的信用分限制
+        if (limitList.getCreditLimits() != null && !limitList.getCreditLimits().isEmpty()) {
+            // 获取信用分上限值
+            for (Integer limit : limitList.getCreditLimits().values()) {
+                if (limit != null) {
+                    creditLimit = limit;
+                    ll_genesys_scoreboard.setVisibility(View.VISIBLE);
+                } else {
+                    ll_genesys_scoreboard.setVisibility(View.GONE);
                 }
-
-                // 仅当信用分上限不为null且不为0时显示信用分信息
-                if (creditLimit != null && creditLimit > 0) {
-                    creditText.append("(")
-                            .append(getCreditCount(mDeckAdapater.getCurrentState()))
-                            .append("/")
-                            .append(creditLimit)
-                            .append(")");
-                }
+                break;
             }
 
-        } catch (Exception e) {
-            // 记录异常日志
-            Log.e(TAG, "Error refreshing deck credit count", e);
+            // 仅当信用分上限不为null且不为0时显示信用分信息
+            if (creditLimit > 0) {
+                currentCredit = getCreditCount(mDeckAdapater.getCurrentState());
+                // 当当前信用分超过限制时，设置文本为红色
+                if (currentCredit > creditLimit) {
+                    tv_credit_count.setTextColor(Color.RED);
+                    tv_credit_difference.setTextColor(Color.RED);
+                } else {
+                    // 否则使用默认颜色
+                    tv_credit_count.setTextColor(tv_credit_count.getCurrentTextColor());
+                    tv_credit_difference.setTextColor(tv_credit_difference.getCurrentTextColor());
+                }
+            }
         }
 
-        tv_credit_count.setText(creditText.toString());
+        tv_credit_count.setText(String.valueOf(currentCredit));
+        tv_credit_limit.setText(String.valueOf(creditLimit));
+        tv_credit_difference.setText(String.valueOf(creditLimit - currentCredit));
     }
 
 

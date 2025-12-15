@@ -28,7 +28,7 @@ public class CardKeyWord {
         if (!TextUtils.isEmpty(word)) {
 
             // 判断是否为纯数字且长度大于等于5，若是则作为卡密搜索
-            if (TextUtils.isDigitsOnly(word) && word.length() >= 3) {
+            if (TextUtils.isDigitsOnly(word) && word.length() >= 5) {
                 // 添加卡密过滤器
                 filterList.add(new CodeFilter(Long.parseLong(word)));
             } else {
