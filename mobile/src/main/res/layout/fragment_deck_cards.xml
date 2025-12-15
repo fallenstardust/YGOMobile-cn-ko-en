@@ -45,26 +45,6 @@
                         android:layout_weight="1"
                         android:orientation="horizontal">
 
-                        <ImageView
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
-                            android:layout_gravity="bottom"
-                            android:layout_marginEnd="5dp"
-                            android:src="@drawable/box_deck" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom"
-                            android:shadowColor="@color/black"
-                            android:shadowDx="1"
-                            android:shadowDy="1"
-                            android:shadowRadius="2"
-                            android:text="@string/deck_name"
-                            android:textColor="@color/holo_blue_light"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-
                         <LinearLayout
                             android:id="@+id/ll_click_like"
                             android:layout_width="wrap_content"
@@ -113,22 +93,40 @@
                         android:paddingEnd="5dp"
                         android:weightSum="1">
 
-                        <androidx.appcompat.widget.AppCompatTextView
-                            android:id="@+id/tv_deck"
+                        <!-- 将图标和文本放在同一个容器中 -->
+                        <FrameLayout
                             android:layout_width="match_parent"
                             android:layout_height="0dp"
-                            android:layout_gravity="top|start"
-                            android:layout_marginTop="2dp"
-                            android:layout_weight="0.8"
-                            android:maxLines="2"
-                            android:shadowColor="@color/black"
-                            android:shadowDx="1"
-                            android:shadowDy="1"
-                            android:shadowRadius="2"
-                            android:text="@string/select_deck"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+                            android:layout_weight="0.8">
+
+                            <!-- 文本视图 -->
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tv_deck"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top|start"
+                                android:layout_marginTop="2dp"
+                                android:maxLines="2"
+                                android:shadowColor="@color/black"
+                                android:shadowDx="1"
+                                android:shadowDy="1"
+                                android:shadowRadius="2"
+                                android:text="@string/select_deck"
+                                android:textColor="@color/white"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <!-- 图标叠在文本下方 -->
+                            <ImageView
+                                android:layout_width="60dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="bottom|end"
+                                android:scaleType="fitXY"
+                                android:scaleX="1"
+                                android:scaleY="1.4"
+                                android:src="@drawable/box_deck"
+                                android:alpha="0.1"/>
+                        </FrameLayout>
 
                         <LinearLayout
                             android:id="@+id/ll_genesys_scoreboard"
