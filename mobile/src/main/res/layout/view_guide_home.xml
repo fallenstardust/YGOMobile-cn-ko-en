@@ -108,7 +108,7 @@
             <ImageView
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:src="@drawable/help" />
+                android:src="@drawable/masterrule" />
 
             <TextView
                 android:layout_width="match_parent"

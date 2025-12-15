@@ -210,7 +210,7 @@
                                 android:id="@+id/tv_credit_remain"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_gravity="top"
+                                android:layout_gravity="center"
                                 android:layout_marginStart="1dp"
                                 android:layout_marginEnd="1dp"
                                 android:background="@drawable/button_radius_black_transparents"
