@@ -1684,6 +1684,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         // 更新卡片列表适配器的限制列表并通知数据变更
         mCardListAdapter.setLimitList(limitList);
         Objects.requireNonNull(getActivity()).runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
+        // 根据是否有Genesys信用分上限值来显示计分板
+        if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
+            ll_genesys_scoreboard.setVisibility(View.VISIBLE);
+        } else {
+            ll_genesys_scoreboard.setVisibility(View.GONE);
+        }
 
     }
 
