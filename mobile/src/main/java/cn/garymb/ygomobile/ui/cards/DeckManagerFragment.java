@@ -167,7 +167,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private TextView tv_credit_count;
     private TextView tv_credit_limit;
     private TextView tv_credit_remain;
-    private AppCompatSpinner mLimitSpinner;
+    private AppCompatSpinner mCardSearchLimitSpinner;
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
     private DialogPlus builderShareLoading;
@@ -261,9 +261,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         tv_deck = layoutView.findViewById(R.id.tv_deck);
         tv_result_count = layoutView.findViewById(R.id.result_count);
 
-        // 初始化限制条件选择下拉框并设置背景颜色
-        mLimitSpinner = layoutView.findViewById(R.id.sp_limit_list);
-        mLimitSpinner.setPopupBackgroundResource(R.color.colorNavy);
+        // 初始化右侧抽屉的条件搜索禁卡表下拉框并设置背景颜色
+        mCardSearchLimitSpinner = layoutView.findViewById(R.id.nav_view_list).findViewById(R.id.sp_limit_list);
+        mCardSearchLimitSpinner.setPopupBackgroundResource(R.color.colorNavy);
 
         // 初始化网格形式的卡组显示区域
         mRecyclerView = layoutView.findViewById(R.id.grid_cards);
@@ -631,7 +631,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         VUiKit.defer().when(() -> {
             // 加载数据管理器
-            DataManager.get().load(true);
+            DataManager.get().load();
 
             // 设置限制卡表列表，使用第一个可用的限制列表
             if (activity.getmLimitManager().getCount() > 0) {
@@ -643,7 +643,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             if (file == null || !file.exists()) {
                 // 当默认卡组不存在的时候，尝试获取其他可用的ydk文件
                 List<File> files = getYdkFiles();
-                if (files != null && files.size() > 0) {
+                if (files != null && !files.isEmpty()) {
                     file = files.get(0);
                 }
             }
@@ -666,7 +666,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             isLoad = true;
             dlg.dismiss();
             mCardSearcher.initItems();
-            initLimitListSpinners(mLimitSpinner, mCardLoader.getLimitList());
+            initLimitListSpinners(mCardSearchLimitSpinner, mCardLoader.getLimitList());
             // 根据资源路径判断是否进入卡包展示模式
             if (rs != null && rs.source != null) {
                 String parentPath = rs.source.getParent();
@@ -836,7 +836,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     private void refreshDeckCreditCount() {
         LimitList limitList = mDeckAdapater.getLimitList();
-        int currentCredit = 0 ;
+        int currentCredit = 0;
         int creditLimit = 0;
         int difference = 0;
         // 检查是否有有效的信用分限制
@@ -1612,6 +1612,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
      * @param cur     当前选中的限制列表对象，用于设置默认选中项
      */
     private void initLimitListSpinners(Spinner spinner, LimitList cur) {
+        // 首先清除所有现有的item
+        if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
+            ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
+            DataManager.get().getLimitManager().load();
+        }
+
         List<SimpleSpinnerItem> items = new ArrayList<>();
         List<String> limitLists = activity.getmLimitManager().getLimitNames();
         int index = -1;
@@ -1624,6 +1630,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         for (int i = 0; i < count; i++) {
             int j = i + 1;
             String name = limitLists.get(i);
+            LogUtil.w(TAG, i + ":" +"卡表名称:" + name);
             items.add(new SimpleSpinnerItem(j, name));
             if (cur != null && TextUtils.equals(cur.getName(), name)) {
                 index = j;
@@ -1651,6 +1658,16 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
+            }
+        });
+        spinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    // 重新初始化spinner
+                    initLimitListSpinners(spinner, cur);
+                }
+                return false;
             }
         });
     }

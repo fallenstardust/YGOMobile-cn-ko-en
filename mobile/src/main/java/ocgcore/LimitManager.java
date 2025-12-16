@@ -77,6 +77,9 @@ public class LimitManager implements Closeable {
      * @return boolean 加载成功返回true，否则返回false
      */
     public boolean load() {
+        // 清理旧数据，不让缓存干扰读取结果
+        mLimitLists.clear();
+        mLimitNames.clear();
         // 创建主资源路径下的限制文件对象
         File stringFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_LIMIT_PATH);
         boolean rs1 = true;
@@ -104,7 +107,7 @@ public class LimitManager implements Closeable {
                                 }
                             }
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            LogUtil.e("LimitManager", "读取压缩包失败", e);
                             res3 = false;
                         }
                     }
@@ -116,6 +119,7 @@ public class LimitManager implements Closeable {
         mLimitLists.put("N/A", blank_list);
         mLimitNames.add("N/A");
         ++mCount;
+        Log.e("加载情况","rs1="+rs1+"  rs2="+rs2+"  res3="+res3);
         return rs1 && rs2 && res3;
     }
 
@@ -194,6 +198,7 @@ public class LimitManager implements Closeable {
 
         // 更新限制列表计数
         mCount = mLimitLists.size();
+        Log.e("LimitManager", "限制列表数量：" + mCount);
         return true;
     }
 

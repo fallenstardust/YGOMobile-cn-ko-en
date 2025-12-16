@@ -245,7 +245,7 @@ public class GameUriManager {
                     activity.startActivity(startSetting);//todo ??再次打开MainActivity?
                     YGOUtil.showTextToast(activity.getString(R.string.start_game_error), Toast.LENGTH_LONG);
                 } else {
-                    DataManager.get().load(true);
+                    DataManager.get().load();
                     YGOUtil.showTextToast(activity.getString(R.string.ypk_installed), Toast.LENGTH_LONG);
                     loadServerInfoFromZipOrYpk(getActivity(), file);
                   //ypk不与excard机制相干涉
@@ -266,7 +266,7 @@ public class GameUriManager {
                     Log.w(Constants.TAG, "game is running");
                 }
             } else if (isConf) {
-                DataManager.get().load(true);
+                DataManager.get().load();
                 YGOUtil.showTextToast(activity.getString(R.string.restart_app), Toast.LENGTH_LONG);
             }
         } else {

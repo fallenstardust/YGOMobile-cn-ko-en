@@ -27,6 +27,8 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -60,7 +62,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     Handler han = new Handler() {
 
         @Override
-        public void handleMessage(Message msg) {
+        public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:
@@ -421,7 +423,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     private void loadData() {
         setMessage(mContext.getString(R.string.loading));
-        DataManager.get().load(false);
+        DataManager.get().load();
     }
 
     void copyCdbFile(String assetPath, boolean needsUpdate) throws IOException {
@@ -521,7 +523,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     mSettings.getDataBasePath() + "/" + DATABASE_NAME,
                     mSettings.getResourcePath() + "/" + CORE_BOT_CONF_PATH);
         } catch (Throwable e) {
-            e.printStackTrace();
+            LogUtil.e(TAG, "init windbot error " + e.getMessage());
         }
         IntentFilter filter = new IntentFilter();
         filter.addAction("RUN_WINDBOT");

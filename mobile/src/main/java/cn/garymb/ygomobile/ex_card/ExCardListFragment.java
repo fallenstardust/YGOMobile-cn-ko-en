@@ -218,7 +218,7 @@ public class ExCardListFragment extends Fragment {
                     SharedPreferenceUtil.setExpansionDataVer(ServerUtil.serverExCardVersion);
                     ServerUtil.exCardState = ServerUtil.ExCardState.UPDATED;
                     EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//安装后，通知UI做更新
-                    DataManager.get().load(true);
+                    DataManager.get().load();
 
 
                     YGOUtil.showTextToast(getString(R.string.ypk_installed));

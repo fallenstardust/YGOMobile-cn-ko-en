@@ -48,11 +48,11 @@ public class DataManager {
     }
     private boolean mInit;
 
-    public void load(boolean force) {
+    public void load() {
         //LogUtil.i("webCrawler", "DataManager load data");
         boolean needLoad = false;
         synchronized (this) {
-            if (!mInit || force) {
+            if (!mInit) {
                 needLoad = true;
             }
             mInit = true;

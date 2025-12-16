@@ -107,7 +107,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         setListeners();
         DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
         VUiKit.defer().when(() -> {
-            DataManager.get().load(true);
+            DataManager.get().load();
             if (activity.getmLimitManager().getCount() > 0) {
                 mCardLoader.setLimitList(activity.getmLimitManager().getTopLimit());
             }

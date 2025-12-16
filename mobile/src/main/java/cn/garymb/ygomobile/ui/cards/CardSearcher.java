@@ -13,7 +13,6 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView.OnEditorActionListener;
 
@@ -126,7 +125,7 @@ public class CardSearcher implements View.OnClickListener {
         };
 
         keyWord.setOnEditorActionListener(searchListener);
-        chk_multi_keyword.setChecked(mSettings.getKeyWordsSplit() == 0 ? false : true);
+        chk_multi_keyword.setChecked(mSettings.getKeyWordsSplit() != 0);
         chk_multi_keyword.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
