@@ -119,12 +119,12 @@ public class LimitManager implements Closeable {
         mLimitLists.put("N/A", blank_list);
         mLimitNames.add("N/A");
         ++mCount;
-        Log.e("加载情况","rs1="+rs1+"  rs2="+rs2+"  res3="+res3);
+        Log.e("LimitManager加载情况", "rs1=" + rs1 + "  rs2=" + rs2 + "  res3=" + res3);
         return rs1 && rs2 && res3;
     }
 
     /**
-     * 从输入流加载配置文件数据
+     * 从输入流加载配置文件数据，主要运用于读取压缩包的禁卡表
      *
      * @param inputStream 配置文件的输入流
      * @return 加载成功返回true
@@ -167,7 +167,7 @@ public class LimitManager implements Closeable {
                     // 解析限制项配置
                     String[] words = line.trim().split("[\t| ]+");
                     if (words.length >= 2) {
-                        if(words[1].equals("$genesys")) {
+                        if (words[1].equals("$genesys")) {
                             tmp.addCredits(toNumber(words[0]), toNumber(words[2]));//保存genesys行的卡牌id和信用分值
                         } else {
                             int id = toNumber(words[0]);
@@ -245,7 +245,7 @@ public class LimitManager implements Closeable {
                 } else if (tmp != null) {
                     String[] words = line.trim().split("[\t| ]+");
                     if (words.length >= 2) {
-                        if(words[1].equals("$genesys")) {
+                        if (words[1].equals("$genesys")) {
                             tmp.addCredits(toNumber(words[0]), toNumber(words[2]));//保存genesys行的卡牌id和信用分值
                         } else {
                             int id = toNumber(words[0]);

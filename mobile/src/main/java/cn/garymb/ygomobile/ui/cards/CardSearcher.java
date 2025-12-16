@@ -208,12 +208,9 @@ public class CardSearcher implements View.OnClickListener {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 long value = getSelect(limitListSpinner);
-                if (value <= 0) {
+                if (value <= 0)
                     reset(limitSpinner);
-                    limitSpinner.setVisibility(View.INVISIBLE);
-                } else {
-                    limitSpinner.setVisibility(View.VISIBLE);
-                }
+
             }
 
             @Override
@@ -597,7 +594,6 @@ public class CardSearcher implements View.OnClickListener {
         }
         keyWord.setText(null);
         reset(otSpinner);
-        reset(limitSpinner);
 //        reset(limitListSpinner);
         if (limitListSpinner.getAdapter().getCount() > 1) {
             limitListSpinner.setSelection(1);
