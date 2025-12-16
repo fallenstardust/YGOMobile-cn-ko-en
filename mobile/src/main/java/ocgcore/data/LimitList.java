@@ -17,7 +17,7 @@ import ocgcore.enums.LimitType;
  */
 public class LimitList {
     private String name = "?";
-    private Map<String, Integer> credit_limits;//GeneSys模式特有的总分值
+    private Integer credit_limits;//GeneSys模式特有的总分值
     private Map<Integer, Integer> credits;//GeneSys模式特有的单张卡ID和其信用分
     /**
      * 0
@@ -77,7 +77,7 @@ public class LimitList {
         return strSemiLimit;
     }
 
-    public Map<String, Integer> getCreditLimits() {
+    public Integer getCreditLimits() {
         return credit_limits;
     }
 
@@ -106,11 +106,8 @@ public class LimitList {
         }
     }
 
-    public void addCreditLimit(String creditType, Integer limit) {
-        if (credit_limits == null) {
-            credit_limits = new HashMap<>();
-        }
-        credit_limits.put(creditType, limit);
+    public void addCreditLimit(Integer limit) {
+        credit_limits = limit ;
     }
 
     public void addCredits(Integer cardId, Integer creditCost) {

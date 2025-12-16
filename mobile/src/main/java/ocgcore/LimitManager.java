@@ -155,12 +155,11 @@ public class LimitManager implements Closeable {
                 } else if (line.startsWith("$")) {
                     // 去掉$前缀并按空格分割
                     String[] words = line.substring(1).trim().split("[\t| ]+");
-                    if (words.length >= 2) {
-                        String creditType = words[0];  // 提取"genesys"
-                        int creditLimit = toNumber(words[1]);  // 提取100并转换为整数
+                    if (words[0].equals("genesys")) {//查询到genesys上限分值前缀识别文本
+                        Integer creditLimit = toNumber(words[1]);  // 提取上限值（通常为100）并转换为整数
                         // 将creditType和creditLimit存储到LimitList对象中
                         if (tmp != null) {
-                            tmp.addCreditLimit(creditType, creditLimit);
+                            tmp.addCreditLimit(creditLimit);
                         }
                     }
                 } else if (tmp != null) {
@@ -234,12 +233,11 @@ public class LimitManager implements Closeable {
                 } else if (line.startsWith("$")) {
                     // 去掉$前缀并按空格分割
                     String[] words = line.substring(1).trim().split("[\t| ]+");
-                    if (words.length >= 2) {
-                        String creditType = words[0];  // 提取"genesys"
-                        int creditLimit = toNumber(words[1]);  // 提取100并转换为整数
+                    if (words[0].equals("genesys")) {//查询到genesys上限分值前缀识别文本
+                        Integer creditLimit = toNumber(words[1]);  // 提取上限值（通常为100）并转换为整数
                         // 将creditType和creditLimit存储到LimitList对象中
                         if (tmp != null) {
-                            tmp.addCreditLimit(creditType, creditLimit);
+                            tmp.addCreditLimit(creditLimit);
                         }
                     }
                 } else if (tmp != null) {

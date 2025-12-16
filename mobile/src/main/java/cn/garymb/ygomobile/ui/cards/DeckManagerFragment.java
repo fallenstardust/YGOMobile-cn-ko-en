@@ -101,7 +101,6 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckManageDialog;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
@@ -665,7 +664,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             // 初始化完成后的处理逻辑
             isLoad = true;
             dlg.dismiss();
+            // 初始化卡片搜索器中的项目列表,为卡片搜索功能准备基础数据
             mCardSearcher.initItems();
+            // 初始化禁卡表列表下拉框,并通知整个卡组界面都显示为当前使用的禁卡表
             initLimitListSpinners(mCardSearchLimitSpinner, mCardLoader.getLimitList());
             // 根据资源路径判断是否进入卡包展示模式
             if (rs != null && rs.source != null) {
@@ -838,33 +839,20 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         LimitList limitList = mDeckAdapater.getLimitList();
         int currentCredit = 0;
         int creditLimit = 0;
-        int difference = 0;
         // 检查是否有有效的信用分限制
-        if (limitList.getCreditLimits() != null && !limitList.getCreditLimits().isEmpty()) {
-            // 获取信用分上限值
-            for (Integer limit : limitList.getCreditLimits().values()) {
-                if (limit != null) {
-                    creditLimit = limit;
-                    ll_genesys_scoreboard.setVisibility(View.VISIBLE);
-                } else {
-                    ll_genesys_scoreboard.setVisibility(View.GONE);
-                }
-                break;
+        if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
+            creditLimit = limitList.getCreditLimits();
+            currentCredit = getCreditCount(mDeckAdapater.getCurrentState());
+            // 当当前信用分超过限制时，设置文本为红色
+            if (currentCredit > creditLimit) {
+                tv_credit_count.setTextColor(Color.RED);
+                tv_credit_remain.setTextColor(Color.RED);
+            } else {
+                // 否则使用默认颜色
+                tv_credit_count.setTextColor(Color.WHITE);
+                tv_credit_remain.setTextColor(Color.WHITE);
             }
 
-            // 仅当信用分上限不为null且不为0时显示信用分信息
-            if (creditLimit > 0) {
-                currentCredit = getCreditCount(mDeckAdapater.getCurrentState());
-                // 当当前信用分超过限制时，设置文本为红色
-                if (currentCredit > creditLimit) {
-                    tv_credit_count.setTextColor(Color.RED);
-                    tv_credit_remain.setTextColor(Color.RED);
-                } else {
-                    // 否则使用默认颜色
-                    tv_credit_count.setTextColor(Color.WHITE);
-                    tv_credit_remain.setTextColor(Color.WHITE);
-                }
-            }
         }
 
         tv_credit_count.setText(String.valueOf(currentCredit));
@@ -1213,19 +1201,17 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             Integer cardCreditValue = limitList.getCredits().get(cardInfo.Alias == 0 ? cardInfo.Code : cardInfo.Alias);
 
             if (cardCreditValue != null && cardCreditValue > 0) {//genesys表中的卡需要进行检查，否则就是纯普通卡只需遵循最大3的规则
-                // 检查是否超过信用分上限
-                for (Map.Entry<String, Integer> entry : limitList.getCreditLimits().entrySet()) {
+                // 获取当前禁卡表的信用分上限，一般是100，但可能不同genesys禁卡表给的上限分不同
+                Integer creditLimit = limitList.getCreditLimits();//
+                // 计算当前卡组的信用总分
+                int totalCredit = getCreditCount(mDeckAdapater.getCurrentState()) + cardCreditValue;//计算目前卡组信用分合计+当前卡的信用分的和，用于下面和上限值比较
 
-                    Integer creditLimit = entry.getValue();//获取总分上限数，一般是100，但可能不同genesys表给的上限分不同
-
-                    int totalCredit = getCreditCount(mDeckAdapater.getCurrentState()) + cardCreditValue;//计算目前卡组信用分合计+当前卡的信用分的和，用于下面和上限值比较
-
-                    // 计算当前卡组中所有GeneSys卡片的信用分总和
-                    if (creditLimit != null && totalCredit > creditLimit) {
-                        YGOUtil.showTextToast(getString(R.string.tip_credit_max, creditLimit));
-                        return false;
-                    }
+                // 计算该卡片信用分+卡组信用总分的和是否大于上限值，是的话就无法加入卡组，不是就通过，会被加入卡组
+                if (creditLimit != null && totalCredit > creditLimit) {
+                    YGOUtil.showTextToast(getString(R.string.tip_credit_max, creditLimit));
+                    return false;
                 }
+
             }
         }
         return true;
@@ -1609,7 +1595,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
      * 初始化限制列表下拉框
      *
      * @param spinner 要初始化的Spinner控件
-     * @param cur     当前选中的限制列表对象，用于设置默认选中项
+     * @param cur     当前选中的禁卡表对象，用于设置默认选中项，同时通知整个界面都显示该禁卡表的禁限情况
      */
     private void initLimitListSpinners(Spinner spinner, LimitList cur) {
         // 首先清除所有现有的item
@@ -1630,7 +1616,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         for (int i = 0; i < count; i++) {
             int j = i + 1;
             String name = limitLists.get(i);
-            LogUtil.w(TAG, i + ":" +"卡表名称:" + name);
+            LogUtil.w(TAG, i + ":" + "卡表名称:" + name);
             items.add(new SimpleSpinnerItem(j, name));
             if (cur != null && TextUtils.equals(cur.getName(), name)) {
                 index = j;
@@ -1652,6 +1638,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                //同时通知整个界面都显示该禁卡表的禁限情况
                 setLimitList(activity.getmLimitManager().getLimit(SimpleSpinnerAdapter.getSelectText(spinner)));
             }
 
@@ -1673,7 +1660,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     /**
-     * 设置限制列表并更新相关适配器
+     * 设置传参禁卡表的禁限，并更新相关适配器
      *
      * @param limitList 限制列表对象，如果为null则直接返回
      */
@@ -1687,7 +1674,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         // 如果限制列表发生变化，则更新牌组适配器并通知数据变更
         if (!nochanged) {
             mDeckAdapater.setLimitList(limitList);
-            getActivity().runOnUiThread(() -> {
+            Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.MainStart, DeckItem.MainEnd);
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.ExtraStart, DeckItem.ExtraEnd);
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.SideStart, DeckItem.SideEnd);
@@ -1696,7 +1683,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 更新卡片列表适配器的限制列表并通知数据变更
         mCardListAdapter.setLimitList(limitList);
-        getActivity().runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
+
     }
 
     private void inputDeckName(File oldYdk, String savePath, boolean keepOld) {
