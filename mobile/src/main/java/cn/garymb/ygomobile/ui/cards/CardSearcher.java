@@ -359,17 +359,42 @@ public class CardSearcher implements View.OnClickListener {
         return mContext.getString(id);
     }
 
+    private boolean isGeneSysMode() {
+        // 获取当前限制列表
+        LimitList currentLimitList = null;
+        if (mICardSearcher != null) {
+            currentLimitList = mICardSearcher.getLimitList();
+        }
+
+        // 如果当前限制列表的credit limit不为null或大于0，则认为是Genesys模式
+        if (currentLimitList != null) {
+            Integer creditLimit = currentLimitList.getCreditLimits();
+            return creditLimit != null && creditLimit > 0;
+        }
+        return false;
+    }
+
     private void initLimitSpinners(Spinner spinner) {
-        LimitType[] eitems = LimitType.values();
+        // 先清空所有现有的item
+        if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
+            ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
+        }
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        for (LimitType item : eitems) {
-            if (item == LimitType.None) {
-                items.add(new SimpleSpinnerItem(item.getId(), getString(R.string.label_limit)));
-            } else if (item == LimitType.All) {
-                items.add(new SimpleSpinnerItem(item.getId(), getString(R.string.all)));
-            } else {
-                items.add(new SimpleSpinnerItem(item.getId(), mStringManager.getLimitString(item.getId())));
-            }
+
+        // 添加默认选项
+        items.add(new SimpleSpinnerItem(LimitType.None.getId(), getString(R.string.label_limit)));
+        items.add(new SimpleSpinnerItem(LimitType.All.getId(), getString(R.string.all)));
+
+        // 根据是否为GeneSys模式添加相应的限制类型选项
+        if (isGeneSysMode()) {
+            // GeneSys模式下只添加GeneSys和Forbidden选项
+            items.add(new SimpleSpinnerItem(LimitType.GeneSys.getId(), mStringManager.getLimitString(LimitType.GeneSys.getId())));
+            items.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), mStringManager.getLimitString(LimitType.Forbidden.getId())));
+        } else {
+            // 普通模式下添加Forbidden、Limit和SemiLimit选项
+            items.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), mStringManager.getLimitString(LimitType.Forbidden.getId())));
+            items.add(new SimpleSpinnerItem(LimitType.Limit.getId(), mStringManager.getLimitString(LimitType.Limit.getId())));
+            items.add(new SimpleSpinnerItem(LimitType.SemiLimit.getId(), mStringManager.getLimitString(LimitType.SemiLimit.getId())));
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);

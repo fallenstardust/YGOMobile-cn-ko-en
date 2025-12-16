@@ -261,7 +261,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         tv_result_count = layoutView.findViewById(R.id.result_count);
 
         // 初始化右侧抽屉的条件搜索禁卡表下拉框并设置背景颜色
-        mCardSearchLimitSpinner = layoutView.findViewById(R.id.nav_view_list).findViewById(R.id.sp_limit_list);
+        mCardSearchLimitSpinner = mCardSearcher.findViewById(R.id.sp_limit_list);
         mCardSearchLimitSpinner.setPopupBackgroundResource(R.color.colorNavy);
 
         // 初始化网格形式的卡组显示区域
@@ -1616,7 +1616,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         for (int i = 0; i < count; i++) {
             int j = i + 1;
             String name = limitLists.get(i);
-            LogUtil.w(TAG, i + ":" + "卡表名称:" + name);
             items.add(new SimpleSpinnerItem(j, name));
             if (cur != null && TextUtils.equals(cur.getName(), name)) {
                 index = j;
@@ -1684,9 +1683,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         // 更新卡片列表适配器的限制列表并通知数据变更
         mCardListAdapter.setLimitList(limitList);
         Objects.requireNonNull(getActivity()).runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
+
         // 根据是否有Genesys信用分上限值来显示计分板
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
             ll_genesys_scoreboard.setVisibility(View.VISIBLE);
+            // 重新初始化卡片搜索器中的限制类型下拉框
+            mCardSearcher.initItems();
         } else {
             ll_genesys_scoreboard.setVisibility(View.GONE);
         }
