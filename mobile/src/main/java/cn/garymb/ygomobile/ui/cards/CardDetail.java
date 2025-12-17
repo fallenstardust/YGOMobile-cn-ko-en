@@ -187,7 +187,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         lbSetCode = findViewById(R.id.label_setcode);
         cardManager = DataManager.get().getCardManager();
         packManager = DataManager.get().getPackManager();
-        cardLoader = new CardLoader(context);
+        cardLoader = new CardLoader();
         close.setOnClickListener((v) -> {
             if (mListener != null) {
                 mListener.onClose();

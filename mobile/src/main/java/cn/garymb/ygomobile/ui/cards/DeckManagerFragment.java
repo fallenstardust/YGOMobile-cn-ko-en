@@ -241,7 +241,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mCardManager = DataManager.get().getCardManager();
 
         // 初始化卡片加载器和回调接口
-        mCardLoader = new CardLoader(getContext());
+        mCardLoader = new CardLoader();
         mCardLoader.setCallBack(this);
 
         // 初始化卡片搜索器及其回调接口
@@ -665,7 +665,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             // 初始化卡片搜索器中的项目列表,为卡片搜索功能准备基础数据
             mCardSearcher.initItems();
             // 初始化禁卡表列表下拉框,并通知整个卡组界面都显示为当前使用的禁卡表
-            initLimitListSpinners(mCardSearchLimitSpinner, mCardLoader.getLimitList());
+            initLimitListSpinners(mCardSearchLimitSpinner);
             // 根据资源路径判断是否进入卡包展示模式
             if (rs != null && rs.source != null) {
                 String parentPath = rs.source.getParent();
@@ -1602,9 +1602,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
      * 初始化限制列表下拉框
      *
      * @param spinner 要初始化的Spinner控件
-     * @param cur     当前选中的禁卡表对象，用于设置默认选中项，同时通知整个界面都显示该禁卡表的禁限情况
      */
-    private void initLimitListSpinners(Spinner spinner, LimitList cur) {
+    private void initLimitListSpinners(Spinner spinner) {
         // 刷新该spinner并配置选项
         refreshLimitListSpinnerItems(spinner);
 

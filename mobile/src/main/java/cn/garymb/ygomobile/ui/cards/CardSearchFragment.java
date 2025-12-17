@@ -100,7 +100,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         btn_search.setOnClickListener((v) -> showSearch(true));
         mPackManager = DataManager.get().getPackManager();
         mCardManager = DataManager.get().getCardManager();
-        mCardLoader = new CardLoader(getContext());
+        mCardLoader = new CardLoader();
         mCardLoader.setCallBack(this);
         mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
         mCardSearcher.setCallBack(this);

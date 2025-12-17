@@ -69,7 +69,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             }
         });
         //初始化
-        mCardLoader = new CardLoader(context);
+        mCardLoader = new CardLoader();
         imageLoader = new ImageLoader();
         mLimitList = new LimitList();
         mDeckLoader = new DeckLoader();

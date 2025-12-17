@@ -94,7 +94,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             savedInstanceState.putParcelable("android:support:fragments", null);
         }
         super.onCreate(savedInstanceState);
-        cardLoader = new CardLoader(getActivity());
+        cardLoader = new CardLoader();
         imageLoader = new ImageLoader();
         setContentView(R.layout.activity_home);
         setExitAnimEnable(false);
