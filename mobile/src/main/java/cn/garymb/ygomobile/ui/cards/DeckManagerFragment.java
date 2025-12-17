@@ -73,8 +73,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -1649,19 +1647,22 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             index = spinner.getSelectedItemPosition();
             //清除前先记录下当前选项总数量
             old_count = spinner.getCount();
+
+            //清空选项
             ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
-            DataManager.get().getLimitManager().load();
+            //重新加载禁卡表，获取可能存在的变动后情况
+            activity.getmLimitManager().load();
         }
 
         List<SimpleSpinnerItem> items = new ArrayList<>();
         List<String> limitLists = activity.getmLimitManager().getLimitNames();
-        int new_count = activity.getmLimitManager().getCount();
+        int limit_count = activity.getmLimitManager().getCount();
 
         // 添加默认选项
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
 
         // 遍历所有限制列表，构建下拉项
-        for (int i = 0; i < new_count; i++) {
+        for (int i = 0; i < limit_count; i++) {
             int j = i + 1;
             String name = limitLists.get(i);
             items.add(new SimpleSpinnerItem(j, name));
@@ -1673,8 +1674,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         adapter.set(items);
         spinner.setAdapter(adapter);
 
-        // 设置默认选中项，不论新禁卡表数量和旧的是否不同，都重设index值
-        index += Math.max(new_count - old_count, 1 - index);// 如果new_count<old_count，则index=1
+        // 禁卡表变化时，相应调整index
+        index += spinner.getCount() - old_count;
 
         if (index >= 0) {
             spinner.setSelection(index);
