@@ -835,14 +835,22 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         refreshDeckCreditCount();
     }
 
+    /**
+     * 刷新卡组信用分显示
+     * <p>
+     * 该方法用于更新界面上的信用分相关显示，包括当前信用分、信用分限制和剩余信用分。
+     * 根据当前信用分是否超过限制来设置相应的文本颜色。
+     */
     private void refreshDeckCreditCount() {
         LimitList limitList = mDeckAdapater.getLimitList();
         int currentCredit = 0;
         int creditLimit = 0;
-        // 检查是否有有效的信用分限制
+
+        // 检查并处理信用分限制逻辑
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
             creditLimit = limitList.getCreditLimits();
             currentCredit = getCreditCount(mDeckAdapater.getCurrentState());
+
             // 当当前信用分超过限制时，设置文本为红色
             if (currentCredit > creditLimit) {
                 tv_credit_count.setTextColor(Color.RED);
@@ -855,6 +863,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         }
 
+        // 更新信用分相关文本显示
         tv_credit_count.setText(String.valueOf(currentCredit));
         tv_credit_limit.setText(String.valueOf(creditLimit));
         tv_credit_remain.setText(String.valueOf(creditLimit - currentCredit));
@@ -1598,40 +1607,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
      * @param cur     当前选中的禁卡表对象，用于设置默认选中项，同时通知整个界面都显示该禁卡表的禁限情况
      */
     private void initLimitListSpinners(Spinner spinner, LimitList cur) {
-        // 首先清除所有现有的item
-        if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
-            ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
-            DataManager.get().getLimitManager().load();
-        }
-
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        List<String> limitLists = activity.getmLimitManager().getLimitNames();
-        int index = -1;
-        int count = activity.getmLimitManager().getCount();
-
-        // 添加默认选项
-        items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
-
-        // 遍历所有限制列表，构建下拉项并查找当前选中项的索引
-        for (int i = 0; i < count; i++) {
-            int j = i + 1;
-            String name = limitLists.get(i);
-            items.add(new SimpleSpinnerItem(j, name));
-            if (cur != null && TextUtils.equals(cur.getName(), name)) {
-                index = j;
-            }
-        }
-
-        // 设置适配器
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(getContext());
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
-
-        // 设置默认选中项
-        if (index >= 0) {
-            spinner.setSelection(index);
-        }
+        // 刷新该spinner并配置选项
+        refreshLimitListSpinnerItems(spinner);
 
         // 设置选择监听器
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1650,13 +1627,61 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_UP) {
-                    // 重新初始化spinner
-                    initLimitListSpinners(spinner, cur);
+                    // 刷新spinner
+                    refreshLimitListSpinnerItems(spinner);
                 }
                 return false;
             }
         });
     }
+
+    /**
+     * 仅刷新限制列表下拉框的项目列表
+     *
+     * @param spinner 要刷新的Spinner控件
+     */
+    private void refreshLimitListSpinnerItems(Spinner spinner) {
+        int index = 0;
+        int old_count = 0;
+        // 首先清除所有现有的item
+        if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
+            // 清除前先记录下当前选中项的索引
+            index = spinner.getSelectedItemPosition();
+            //清除前先记录下当前选项总数量
+            old_count = spinner.getCount();
+            ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
+            DataManager.get().getLimitManager().load();
+        }
+
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        List<String> limitLists = activity.getmLimitManager().getLimitNames();
+        int new_count = activity.getmLimitManager().getCount();
+
+        // 添加默认选项
+        items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
+
+        // 遍历所有限制列表，构建下拉项
+        for (int i = 0; i < new_count; i++) {
+            int j = i + 1;
+            String name = limitLists.get(i);
+            items.add(new SimpleSpinnerItem(j, name));
+        }
+
+        // 设置适配器
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(getContext());
+        adapter.setColor(Color.WHITE);
+        adapter.set(items);
+        spinner.setAdapter(adapter);
+
+        // 设置默认选中项，不论新禁卡表数量和旧的是否不同，都重设index值
+        index += Math.max(new_count - old_count, 1 - index);// 如果new_count<old_count，则index=1
+
+        if (index >= 0) {
+            spinner.setSelection(index);
+        }
+        // 不设置监听器，避免通知整个布局变化，降低性能占用，只在initLimitListSpinners执行后另行设置
+    }
+
 
     /**
      * 设置传参禁卡表的禁限，并更新相关适配器
@@ -1673,7 +1698,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         // 如果限制列表发生变化，则更新牌组适配器并通知数据变更
         if (!nochanged) {
             mDeckAdapater.setLimitList(limitList);
-            Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            requireActivity().runOnUiThread(() -> {
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.MainStart, DeckItem.MainEnd);
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.ExtraStart, DeckItem.ExtraEnd);
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.SideStart, DeckItem.SideEnd);
@@ -1682,7 +1707,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 更新卡片列表适配器的限制列表并通知数据变更
         mCardListAdapter.setLimitList(limitList);
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
+        requireActivity().runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
 
         // 根据是否有Genesys信用分上限值来显示计分板
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
