@@ -10,6 +10,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := YGOMobile
 
+LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384
+
 LOCAL_CFLAGS := -D_IRR_ANDROID_PLATFORM_ -pipe -fno-rtti -fno-exceptions -fstrict-aliasing -D_ANDROID -fPIC -DLUA_COMPAT_5_2
 TARGET_FORMAT_STRING_CFLAGS := 
 
