@@ -3,8 +3,12 @@ package cn.garymb.ygomobile.ui.home;
 import static cn.garymb.ygomobile.Constants.ID1;
 import static cn.garymb.ygomobile.Constants.ID2;
 import static cn.garymb.ygomobile.Constants.ID3;
+import static cn.garymb.ygomobile.Constants.URL_GENESYS_LFLIST_DOWNLOAD_LINK;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
+import static cn.garymb.ygomobile.ui.cards.CardDetail.TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+import static cn.garymb.ygomobile.ui.cards.CardDetail.TYPE_DOWNLOAD_CARD_IMAGE_ING;
+import static cn.garymb.ygomobile.ui.cards.CardDetail.TYPE_DOWNLOAD_CARD_IMAGE_OK;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -31,6 +35,7 @@ import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.sdk.QbSdk;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -39,6 +44,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
@@ -50,6 +56,8 @@ import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
+import cn.garymb.ygomobile.utils.DownloadUtil;
+import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
@@ -440,6 +448,41 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             Log.e(Constants.TAG, e + "");
         } finally {
         }
+    }
+
+    private void downloadGeneSysLflist() {
+        File geneSysLflist = new File(AppsSettings.get().getExpansionsPath() + "/" + Constants.CORE_GENESYS_LIMIT_PATH);
+        DownloadUtil.get().download(URL_GENESYS_LFLIST_DOWNLOAD_LINK, geneSysLflist.getParent(), geneSysLflist.getName(), new DownloadUtil.OnDownloadListener() {
+            @Override
+            public void onDownloadSuccess(File file) {
+                Message message = new Message();
+                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
+                    message.arg1 = code;
+                    handler.sendMessage(message);
+
+            }
+
+            @Override
+            public void onDownloading(int progress) {
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
+                message.arg1 = progress;
+                handler.sendMessage(message);
+            }
+
+            @Override
+            public void onDownloadFailed(Exception e) {
+                Log.w(IrrlichtBridge.TAG, "download image error:" + e.getMessage());
+                //下载失败后删除下载的文件
+                FileUtils.deleteFile(tmp);
+//                downloadCardImage(code, file);
+
+                Message message = new Message();
+                message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                message.obj = e.toString();
+                handler.sendMessage(message);
+            }
+        });
     }
 
 }

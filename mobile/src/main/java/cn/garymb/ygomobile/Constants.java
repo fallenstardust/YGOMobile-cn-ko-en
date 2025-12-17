@@ -76,6 +76,7 @@ public interface Constants {
     String FONT_DIRECTORY = "fonts";
     String CORE_STRING_PATH = "strings.conf";
     String CORE_LIMIT_PATH = "lflist.conf";
+    String CORE_GENESYS_LIMIT_PATH = "genesys_offical_lflist.conf";
     String CORE_CUSTOM_LIMIT_PATH = "expansions/lflist.conf";
     String CORE_CUSTOM_STRING_PATH = "pre-strings.conf";
     String CORE_SYSTEM_PATH = "system.conf";
@@ -175,7 +176,7 @@ public interface Constants {
     String ID1 = "[versionname]";
     String ID2 = "[download_link]";
     String ID3 = "#pre_release_code";
-    //String URL_YGO233_DOWNLOAD_LINK = "https://ygo233.com/download/ygomobile";
+    String URL_GENESYS_LFLIST_DOWNLOAD_LINK = "https://cdntx.moecube.com/ygopro-genesys/lflist.conf";
     String URL_YGO233_ADVANCE = "";//"https://ygo233.com/pre#pre_release_cards";//关闭233先行卡服务器，但不要删除该字段，许多未调用的遗留代码使用该contant
     String URL_CN_DATAVER = "https://cdn02.moecube.com:444/ygopro-super-pre/data/version.txt";
     String URL_PRE_CARD = "https://cdn02.moecube.com:444/ygopro-super-pre/data/test-release.json";
