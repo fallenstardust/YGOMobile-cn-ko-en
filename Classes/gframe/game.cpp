@@ -1769,15 +1769,28 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cW
 		pControl->setText(strBuffer);
 	return std::wstring(strBuffer);
 }
+/**
+ * @brief 加载游戏扩展包（如卡牌数据库、配置文件等）。
+ *
+ * 此函数会扫描 ./expansions/ 目录下的 .zip 或 .ypk 扩展包文件，
+ * 将其作为文件档案加载到文件系统中，并进一步解析其中的数据库文件 (.cdb)、
+ * 配置文件 (.conf) 和卡组文件 (.ydk)，用于初始化游戏数据。
+ *
+ */
 void Game::LoadExpansions() {
 	// TODO: get isUseExtraCards
+
+	// 打开 expansions 目录以查找扩展包文件
 	DIR * dir;
 	struct dirent * dirp;
 	if((dir = opendir("./expansions/")) == NULL)
 		return;
+
+	// 遍历目录中的所有文件，筛选出 .zip 和 .ypk 文件并加入文件系统
 	while((dirp = readdir(dir)) != NULL) {
 		size_t len = strlen(dirp->d_name);
-		if(len < 5 || strcasecmp(dirp->d_name + len - 4, ".zip") != 0 ||strcasecmp(dirp->d_name + len - 4, ".ypk") != 0)
+		// 检查文件名长度是否足够以及后缀是否为 .zip 或 .ypk（忽略大小写）
+		if(len < 5 || (strcasecmp(dirp->d_name + len - 4, ".zip") != 0 && strcasecmp(dirp->d_name + len - 4, ".ypk") != 0))
 			continue;
 		char upath[1024];
 		sprintf(upath, "./expansions/%s", dirp->d_name);
@@ -1785,18 +1798,26 @@ void Game::LoadExpansions() {
 	}
 	closedir(dir);
 
+	// 遍历已加载的所有文件档案，处理其中的内容
 	for(irr::u32 i = 0; i < dataManager.FileSystem->getFileArchiveCount(); ++i) {
 		auto archive = dataManager.FileSystem->getFileArchive(i)->getFileList();
+
+		// 遍历当前档案中的每一个文件
 		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
 			wchar_t fname[1024];
 			const char* uname = archive->getFullFileName(j).c_str();
 			BufferIO::DecodeUTF8(uname, fname);
+
+			// 如果是数据库文件 (.cdb)，则加载至数据管理器
 			if (IsExtension(fname, L".cdb")) {
 				dataManager.LoadDB(fname);
 				continue;
 			}
+
+			// 如果是配置文件 (.conf)，根据文件名决定加载方式
 			if (IsExtension(fname, L".conf")) {
                 auto reader = dataManager.FileSystem->createAndOpenFile(uname);
+                // 若文件名为 lflist 类型，则加载限卡表；否则加载字符串资源
                 if (std::wcsstr(fname, L"lflist") != nullptr) {
                     ALOGD("uname=%s",uname);
                     deckManager.LoadLFListSingle(reader);
@@ -1805,6 +1826,8 @@ void Game::LoadExpansions() {
                 }
 				continue;
 			}
+
+			// 如果路径前缀为 pack/ 并且是 ydk 卡组文件，则记录在扩展包列表中
 			if (!mywcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
@@ -1812,6 +1835,7 @@ void Game::LoadExpansions() {
 		}
 	}
 }
+
 void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused) {
 	cbCategory->clear();
 	if (cbCategory == mainGame->cbDBCategory) {

@@ -213,6 +213,7 @@ void DeckManager::LoadLFList(irr::android::InitOptions *options) {
     irr::io::path workingDir = options->getWorkDir();
 	LoadLFListSingle((workingDir + path("/expansions/lflist.conf")).c_str());
 	LoadLFListSingle((workingDir + path("/lflist.conf")).c_str());
+	LoadLFListSingle((workingDir + path("/expansions/genesys_official_lflist.conf")).c_str());
 	LFList nolimit;
 	nolimit.listName = L"N/A";
 	nolimit.hash = 0;

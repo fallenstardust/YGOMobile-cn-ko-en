@@ -76,7 +76,7 @@ public interface Constants {
     String FONT_DIRECTORY = "fonts";
     String CORE_STRING_PATH = "strings.conf";
     String CORE_LIMIT_PATH = "lflist.conf";
-    String CORE_GENESYS_LIMIT_PATH = "genesys_offical_lflist.conf";
+    String CORE_GENESYS_LIMIT_PATH = "genesys_official_lflist.conf";
     String CORE_CUSTOM_LIMIT_PATH = "expansions/lflist.conf";
     String CORE_CUSTOM_STRING_PATH = "pre-strings.conf";
     String CORE_SYSTEM_PATH = "system.conf";
