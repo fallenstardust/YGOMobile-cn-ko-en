@@ -210,6 +210,14 @@ public class SharedPreferenceUtil {
         getShareType().edit().putInt("server_user_id", userId).apply();
     }
 
+    public static void putString(String key, String value){
+        getShareRecord().edit().putString(key, value).commit();
+    }
+
+    public static String getString(String key, String defValue){
+        return getShareRecord().getString(key, defValue);
+    }
+
     public static boolean deleteServerToken() {
         // Get SharedPreferences instance
         SharedPreferences sharedPreferences = getShareRecord();

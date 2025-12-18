@@ -6,9 +6,6 @@ import static cn.garymb.ygomobile.Constants.ID3;
 import static cn.garymb.ygomobile.Constants.URL_GENESYS_LFLIST_DOWNLOAD_LINK;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
-import static cn.garymb.ygomobile.ui.cards.CardDetail.TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
-import static cn.garymb.ygomobile.ui.cards.CardDetail.TYPE_DOWNLOAD_CARD_IMAGE_ING;
-import static cn.garymb.ygomobile.ui.cards.CardDetail.TYPE_DOWNLOAD_CARD_IMAGE_OK;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -58,6 +55,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
@@ -71,9 +69,12 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public abstract class HomeActivity extends BaseActivity implements BottomNavigationBar.OnTabSelectedListener {
-
+    private static final String TAG = "HomeActivity";
     private static final int TYPE_GET_VERSION_OK = 0;
     private static final int TYPE_GET_VERSION_FAILED = 1;
+    private static final int TYPE_DOWNLOAD_GENESYS_LFLIST_OK = 2;
+    private static final int TYPE_DOWNLOAD_GENESYS_LFLIST_ING = 3;
+    private static final int TYPE_DOWNLOAD_GENESYS_LFLIST_FAILED = 4;
     public static String Version;
     public static String Cache_link;
     public static String Cache_pre_release_code;
@@ -112,6 +113,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         //
         checkNotch();
         checkUpgrade(URL_HOME_VERSION);
+        downloadGeneSysLflist();
         //showNewbieGuide("homePage");
         initBottomNavigationBar();
         onNewIntent(getIntent());
@@ -196,10 +198,11 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_GET_VERSION_OK:
-                    if (msg.obj.toString().contains(ID1) && msg.obj.toString().contains(ID2) && msg.obj.toString().contains(ID3)) {
-                        Version = msg.obj.toString().substring(msg.obj.toString().indexOf(ID1) + ID1.length(), msg.obj.toString().indexOf(";"));//截取版本号
-                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf(ID2) + ID2.length(), msg.obj.toString().indexOf("$"));//截取下载地址
-                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
+                    String verCodeTxt = msg.obj.toString();
+                    if (verCodeTxt.contains(ID1) && verCodeTxt.contains(ID2) && verCodeTxt.contains(ID3)) {
+                        Version = verCodeTxt.substring(verCodeTxt.indexOf(ID1) + ID1.length(), verCodeTxt.indexOf(";"));//截取版本号
+                        Cache_link = verCodeTxt.substring(verCodeTxt.indexOf(ID2) + ID2.length(), verCodeTxt.indexOf("$"));//截取下载地址
+                        Cache_pre_release_code = verCodeTxt.substring(verCodeTxt.indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
                         if (!TextUtils.isEmpty(Cache_pre_release_code)) {
                             arrangeCodeList(Cache_pre_release_code);//转换成两个数组
                         }
@@ -222,6 +225,15 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                     if (FailedCount <= 2) {
                         checkUpgrade(URL_HOME_VERSION_ALT);
                     }
+                    break;
+                case TYPE_DOWNLOAD_GENESYS_LFLIST_OK:
+                    LogUtil.d(TAG, "download_genesys_lflist_OK");
+                    break;
+                case TYPE_DOWNLOAD_GENESYS_LFLIST_ING:
+
+                    break;
+                case TYPE_DOWNLOAD_GENESYS_LFLIST_FAILED:
+                    LogUtil.d(TAG, "download_genesys_lflist_FAILED");
                     break;
             }
 
@@ -405,7 +417,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             super.onBackPressed();
         } else {
             exitLasttime = System.currentTimeMillis();
-            if (fragment_home.isVisible() || fragment_settings.isVisible()) YGOUtil.showTextToast(R.string.back_tip);
+            if (fragment_home.isVisible() || fragment_settings.isVisible())
+                YGOUtil.showTextToast(R.string.back_tip);
         }
     }
 
@@ -456,31 +469,27 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             @Override
             public void onDownloadSuccess(File file) {
                 Message message = new Message();
-                    message.what = TYPE_DOWNLOAD_CARD_IMAGE_OK;
-                    message.arg1 = code;
-                    handler.sendMessage(message);
-
+                message.what = TYPE_DOWNLOAD_GENESYS_LFLIST_OK;
+                message.arg1 = geneSysLflist.hashCode();
+                handlerHome.sendMessage(message);
             }
 
             @Override
             public void onDownloading(int progress) {
                 Message message = new Message();
-                message.what = TYPE_DOWNLOAD_CARD_IMAGE_ING;
+                message.what = TYPE_DOWNLOAD_GENESYS_LFLIST_ING;
                 message.arg1 = progress;
-                handler.sendMessage(message);
+                handlerHome.sendMessage(message);
             }
 
             @Override
             public void onDownloadFailed(Exception e) {
-                Log.w(IrrlichtBridge.TAG, "download image error:" + e.getMessage());
-                //下载失败后删除下载的文件
-                FileUtils.deleteFile(tmp);
-//                downloadCardImage(code, file);
+                Log.w(TAG, "download image error:" + e.getMessage());
 
                 Message message = new Message();
-                message.what = TYPE_DOWNLOAD_CARD_IMAGE_EXCEPTION;
+                message.what = TYPE_DOWNLOAD_GENESYS_LFLIST_FAILED;
                 message.obj = e.toString();
-                handler.sendMessage(message);
+                handlerHome.sendMessage(message);
             }
         });
     }
