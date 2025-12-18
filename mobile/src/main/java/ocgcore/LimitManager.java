@@ -80,18 +80,16 @@ public class LimitManager implements Closeable {
         // 清理旧数据，不让缓存干扰读取结果
         mLimitLists.clear();
         mLimitNames.clear();
-        // 创建主资源路径下的限制文件对象
-        File stringFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_LIMIT_PATH);
-        boolean rs1 = true;
-        boolean rs2 = true;
-        boolean res3 = true;
+        boolean expansion_rs2 = true;
+        boolean expansion_zip_rs1 = true;
+        boolean default_res3 = true;
         // 如果需要读取扩展包数据，则加载扩展包中的限制文件
         if (AppsSettings.get().isReadExpansions()) {
-            File stringFile2 = new File(AppsSettings.get().getExpansionsPath(), Constants.CORE_LIMIT_PATH);
-            rs1 = loadFile(stringFile2);
+
             File[] files = AppsSettings.get().getExpansionsPath().listFiles();
             if (files != null) {
                 for (File file : files) {
+                    // 1.读取扩展卡压缩包中的lflist.conf文件
                     if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX))) {
                         Log.e("LimitManager", "读取压缩包");
                         try {
@@ -102,25 +100,31 @@ public class LimitManager implements Closeable {
                                 entry = entris.nextElement();
                                 if (!entry.isDirectory()) {
                                     if (entry.getName().contains("lflist") && entry.getName().endsWith(".conf")) {
-                                        rs2 &= loadFile(zipFile.getInputStream(entry));
+                                        expansion_zip_rs1 &= loadFile(zipFile.getInputStream(entry));
                                     }
                                 }
                             }
                         } catch (IOException e) {
                             LogUtil.e("LimitManager", "读取压缩包失败", e);
-                            res3 = false;
+                            default_res3 = false;
                         }
+                    }
+                    if (file.isFile() && file.getName().contains("lflist") && file.getName().endsWith(".conf")) {
+                        expansion_rs2 = loadFile(file);
                     }
                 }
             }
         }
-        res3 = loadFile(stringFile);
+
+        // 3.加载主资源路径(ygocore文件夹）下的lflist.conf文件对象，这是内置默认文件
+        File ygocore_lflist = new File(AppsSettings.get().getResourcePath(), Constants.CORE_LIMIT_PATH);
+        default_res3 = loadFile(ygocore_lflist);
         LimitList blank_list = new LimitList("N/A");
         mLimitLists.put("N/A", blank_list);
         mLimitNames.add("N/A");
         ++mCount;
-        Log.e("LimitManager加载情况", "rs1=" + rs1 + "  rs2=" + rs2 + "  res3=" + res3);
-        return rs1 && rs2 && res3;
+        Log.e("LimitManager加载情况", "rs1=" + expansion_zip_rs1 + "  rs2=" + expansion_rs2 + "  res3=" + default_res3);
+        return expansion_zip_rs1 && expansion_rs2 && default_res3;
     }
 
     /**
