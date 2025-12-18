@@ -215,7 +215,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mCardListAdapter.set(cardInfos);
         mResult_count.setText(String.valueOf(cardInfos.size()));
         mCardListAdapter.notifyDataSetChanged();
-        if (cardInfos.size() > 0) {
+        if (!cardInfos.isEmpty()) {
             mListView.smoothScrollToPosition(0);
         }
     }

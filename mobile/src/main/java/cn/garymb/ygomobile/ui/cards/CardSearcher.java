@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -68,7 +69,7 @@ public class CardSearcher implements View.OnClickListener {
     private final Button resetButton;
     private final View view;
     private final View layout_monster;
-    private final ICardSearcher mICardSearcher;
+    private final ICardSearcher mICardSearcher;// ICardSearcher 即为CardLoader的接口;
     private final Context mContext;
     private final Button myFavButton;
     protected StringManager mStringManager;
@@ -218,6 +219,12 @@ public class CardSearcher implements View.OnClickListener {
 
             }
         });
+        limitListSpinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                refreshLimitListSpinnerItems(limitListSpinner);
+            }
+            return false; // 返回false以允许正常的spinner行为继续
+        });
         typeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -294,9 +301,7 @@ public class CardSearcher implements View.OnClickListener {
             mCallBack.onSearchStart();
         }
         if (reload) {
-            VUiKit.post(() -> {
-                search();
-            });
+            VUiKit.post(this::search);
         } else {
             if (mCallBack != null) {
                 VUiKit.post(() -> {
@@ -428,6 +433,52 @@ public class CardSearcher implements View.OnClickListener {
             spinner.setSelection(index);
         }
     }
+
+    private void refreshLimitListSpinnerItems(Spinner spinner) {
+        int index = 0;
+        int old_count = 0;
+        // 首先清除所有现有的item
+        if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
+            // 清除前先记录下当前选中项的索引
+            index = spinner.getSelectedItemPosition();
+            //清除前先记录下当前选项总数量
+            old_count = spinner.getCount();
+
+            //清空选项
+            ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
+            //重新加载禁卡表，获取可能存在的变动后情况
+            mLimitManager.load();
+        }
+
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        List<String> limitLists = mLimitManager.getLimitNames();
+        int limit_count = mLimitManager.getCount();
+
+        // 添加默认选项
+        items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
+
+        // 遍历所有限制列表，构建下拉项
+        for (int i = 0; i < limit_count; i++) {
+            int j = i + 1;
+            String name = limitLists.get(i);
+            items.add(new SimpleSpinnerItem(j, name));
+        }
+
+        // 设置适配器
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
+        adapter.setColor(Color.WHITE);
+        adapter.set(items);
+        spinner.setAdapter(adapter);
+
+        // 禁卡表变化时，相应调整index
+        index += spinner.getCount() - old_count;
+
+        if (index >= 0) {
+            spinner.setSelection(index);
+        }
+        // 不设置监听器，避免通知整个布局变化，降低性能占用，只在initLimitListSpinners执行后另行设置
+    }
+
 
     private void initPscaleSpinners(Spinner spinner) {
         List<SimpleSpinnerItem> items = new ArrayList<>();

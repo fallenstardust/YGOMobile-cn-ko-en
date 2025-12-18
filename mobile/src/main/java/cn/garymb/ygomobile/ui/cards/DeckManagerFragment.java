@@ -1620,16 +1620,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
             }
         });
-        spinner.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_UP) {
-                    // 刷新spinner
-                    refreshLimitListSpinnerItems(spinner);
-                }
-                return false;
-            }
-        });
     }
 
     /**

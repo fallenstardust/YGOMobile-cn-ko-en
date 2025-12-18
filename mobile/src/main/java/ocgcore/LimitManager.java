@@ -89,7 +89,7 @@ public class LimitManager implements Closeable {
             File[] files = AppsSettings.get().getExpansionsPath().listFiles();
             if (files != null) {
                 for (File file : files) {
-                    // 1.读取扩展卡压缩包中的lflist.conf文件
+                    // 1.读取expansions文件夹中压缩包中的名字包含lflist、.conf文件
                     if (file.isFile() && (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX))) {
                         Log.e("LimitManager", "读取压缩包");
                         try {
@@ -109,6 +109,7 @@ public class LimitManager implements Closeable {
                             default_res3 = false;
                         }
                     }
+                    // 2.读取扩展卡文件夹中的名字包含lflist、.conf文件
                     if (file.isFile() && file.getName().contains("lflist") && file.getName().endsWith(".conf")) {
                         expansion_rs2 = loadFile(file);
                     }
@@ -119,11 +120,12 @@ public class LimitManager implements Closeable {
         // 3.加载主资源路径(ygocore文件夹）下的lflist.conf文件对象，这是内置默认文件
         File ygocore_lflist = new File(AppsSettings.get().getResourcePath(), Constants.CORE_LIMIT_PATH);
         default_res3 = loadFile(ygocore_lflist);
-        LimitList blank_list = new LimitList("N/A");
-        mLimitLists.put("N/A", blank_list);
+
+        // 4.添加一个空卡表N/A（为了和ygopro显示一致才这么写） 无禁限
+        mLimitLists.put("N/A", new LimitList("N/A"));
         mLimitNames.add("N/A");
+
         ++mCount;
-        Log.e("LimitManager加载情况", "rs1=" + expansion_zip_rs1 + "  rs2=" + expansion_rs2 + "  res3=" + default_res3);
         return expansion_zip_rs1 && expansion_rs2 && default_res3;
     }
 
