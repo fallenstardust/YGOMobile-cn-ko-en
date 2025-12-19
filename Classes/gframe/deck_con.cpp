@@ -157,14 +157,20 @@ void DeckBuilder::Terminate() {
 		BufferIO::CopyWideString(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory);
 	    BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
 		irr::android::setLastCategory(mainGame->appMain, linebuf);
-		//irr:os::Printer::log("setLastCategory", linebuf);
+		ALOGD("setLastCategory", linebuf);
 	int decksel = mainGame->cbDBDecks->getSelected();
 	if (decksel >= 0)
 		BufferIO::CopyWideString(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck);
 		BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
 		irr::android::setLastDeck(mainGame->appMain, linebuf);
-		//os::Printer::log("setLastDeck", linebuf);
-	mainGame->SaveConfig();
+        ALOGD("setLastDeck", linebuf);
+    int Lflistsel = mainGame->cbLFlist->getSelected();
+    if (Lflistsel >= 0)
+        BufferIO::CopyWideString(mainGame->cbLFlist->getItem(Lflistsel), mainGame->gameConf.last_limit_list_name);
+        BufferIO::EncodeUTF8(mainGame->gameConf.last_limit_list_name, linebuf);
+		irr::android::setLastLimit(mainGame->appMain, linebuf);
+        ALOGD("setLastLimit", linebuf);
+    mainGame->SaveConfig();
 	if(exit_on_return)
 		mainGame->OnGameClose();
 }
@@ -375,7 +381,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			case BUTTON_MANAGE_DECK: {
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356)/*此操作将放弃对当前卡组的修改，是否继续？*/);
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
@@ -386,7 +392,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_NEW_CATEGORY: {
 				mainGame->gMutex.lock();
-				mainGame->stDMMessage->setText(dataManager.GetSysString(1469));
+				mainGame->stDMMessage->setText(dataManager.GetSysString(1469)/*请输入分类名：*/);
 				mainGame->ebDMName->setVisible(true);
 				mainGame->ebDMName->setText(L"");
 				mainGame->PopupElement(mainGame->wDMQuery);

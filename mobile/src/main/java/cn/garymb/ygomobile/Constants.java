@@ -8,6 +8,8 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 public interface Constants {
     boolean DEBUG = BuildConfig.DEBUG;
     String PREF_START = "game_pref_";
+    String PREF_LAST_LIMIT = "pref_last_limit";
+    String PREF_DEF_LAST_LIMIT = "";
     String PREF_LAST_DECK_PATH = "pref_last_deck_path";
     String PREF_LAST_YDK = "pref_last_ydk";
     String PREF_DEF_LAST_YDK = "new";

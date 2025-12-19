@@ -11,10 +11,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.CardSort;
 import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -49,12 +51,16 @@ public class CardLoader implements ICardSearcher {
     public CardLoader() {
         mLimitManager = DataManager.get().getLimitManager();
         mCardManager = DataManager.get().getCardManager();
-        mLimitList = mLimitManager.getTopLimit();
+
+        // 读取上次使用的LimitList，如果有非空值存在且和禁卡表列表中有相同名称对应，则使用，否则设置第一个禁卡表
+        mLimitList = mLimitManager.getLastLimit();
     }
 
     @Override
     public void setLimitList(LimitList limitList) {
         mLimitList = limitList;
+        if (limitList != null)
+            AppsSettings.get().setLastLimit(limitList.getName());
         if (mCallBack != null) {
             mCallBack.onLimitListChanged(limitList);
         }

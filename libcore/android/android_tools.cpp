@@ -415,6 +415,11 @@ irr::io::path getLastDeck(ANDROID_APP app) {
 	return getSetting(app, "lastdeck");
 }
 
+//Retrive last limit list name.
+irr::io::path getLastLimit(ANDROID_APP app) {
+	return getSetting(app, "lastlimit");
+}
+
 //Retrive last category name.
 irr::io::path getLastCategory(ANDROID_APP app) {
 	return getSetting(app, "lastcategory");
@@ -453,6 +458,11 @@ irr::io::path getSetting(ANDROID_APP app, const char* key) {
 	jni->ReleaseStringUTFChars(retString, chars);
 	app->activity->vm->DetachCurrentThread();
 	return ret;
+}
+
+//save last limit name.
+void setLastLimit(ANDROID_APP app, const char* limitname) {
+	saveSetting(app, "lastlimit", limitname);
 }
 
 //save last deck name.

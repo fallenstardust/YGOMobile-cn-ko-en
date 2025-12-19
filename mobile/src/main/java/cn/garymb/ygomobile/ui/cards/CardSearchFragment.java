@@ -109,7 +109,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         VUiKit.defer().when(() -> {
             DataManager.get().load();
             if (activity.getmLimitManager().getCount() > 0) {
-                mCardLoader.setLimitList(activity.getmLimitManager().getTopLimit());
+                mCardLoader.setLimitList(activity.getmLimitManager().getLastLimit());
             }
         }).fail((e) -> {
             YGOUtil.showTextToast(getString(R.string.tip_load_cdb_error), Toast.LENGTH_SHORT);

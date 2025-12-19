@@ -635,7 +635,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
             // 设置限制卡表列表，使用第一个可用的限制列表
             if (activity.getmLimitManager().getCount() > 0) {
-                mCardLoader.setLimitList(activity.getmLimitManager().getTopLimit());
+                mCardLoader.setLimitList(activity.getmLimitManager().getLastLimit());
             }
 
             // 处理卡组文件加载逻辑

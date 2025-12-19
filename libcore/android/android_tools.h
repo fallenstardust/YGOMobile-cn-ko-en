@@ -159,6 +159,9 @@ extern float getYScale(ANDROID_APP app);
 //Retrive font path.
 extern irr::io::path getFontPath(ANDROID_APP app);
 
+//Retrive last limit name.
+extern irr::io::path getLastLimit(ANDROID_APP app);
+
 //Retrive last deck name.
 extern irr::io::path getLastDeck(ANDROID_APP app);
 
@@ -168,6 +171,9 @@ extern irr::io::path getLastCategory(ANDROID_APP app);
 extern int getIntSetting(ANDROID_APP app, const char* key,int defvalue);
 
 extern irr::io::path getSetting(ANDROID_APP app, const char* key);
+
+//save last limit name.
+extern void setLastLimit(ANDROID_APP app, const char* limitname);
 
 //save last deck name.
 extern void setLastDeck(ANDROID_APP app, const char* deckname);

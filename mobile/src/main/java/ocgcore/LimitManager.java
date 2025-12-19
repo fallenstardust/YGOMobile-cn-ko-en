@@ -1,6 +1,7 @@
 package ocgcore;
 
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -17,8 +18,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +27,6 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
-import ocgcore.data.CardSet;
 import ocgcore.data.LimitList;
 
 public class LimitManager implements Closeable {
@@ -62,6 +60,15 @@ public class LimitManager implements Closeable {
 
     public @Nullable LimitList getLimit(String name) {
         return mLimitLists.get(name);
+    }
+
+    public LimitList getLastLimit() {
+        if (mLimitNames.isEmpty()) {
+            return null;
+        }
+        // 读取上次使用的LimitList，如果有非空值存在且和禁卡表列表中有相同名称对应，则使用，否则设置第一个禁卡表
+        String lastLimitName = AppsSettings.get().getLastLimit();
+        return TextUtils.isEmpty(lastLimitName) ? getTopLimit() : getLimit(lastLimitName);
     }
 
     public LimitList getTopLimit() {

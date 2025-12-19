@@ -54,6 +54,7 @@ import org.json.JSONArray;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -611,9 +612,23 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_SENSOR_REFRESH, PREF_DEF_SENSOR_REFRESH);
     }
 
-    public String getCurLastDeck() {
-        return mSharedPreferences.getString(Constants.PREF_DEF_LAST_YDK, null);
+    /**
+     * 保存最后禁卡表名
+     *
+     */
+    public void setLastLimit(String limitname) {
+        mSharedPreferences.putString(Constants.PREF_LAST_LIMIT, limitname);
     }
+
+    /**
+     * 获取最后选择的限制条件
+     *
+     * @return 返回存储的限制条件字符串，如果未找到则返回默认限制条件
+     */
+    public String getLastLimit() {
+        return mSharedPreferences.getString(Constants.PREF_LAST_LIMIT, Constants.PREF_DEF_LAST_LIMIT);
+    }
+
 
     /**
      * 获得（最后）上次打开的卡组的绝对路径
@@ -625,13 +640,13 @@ public class AppsSettings {
     String getLastDeckPath() {
         String path;
         if (TextUtils.equals(context.getString(R.string.category_pack), getLastCategory())) {
-            path = getResourcePath() + "/" + CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+            path = Paths.get(getResourcePath(), CORE_PACK_PATH, getLastDeckName() + YDK_FILE_EX).toString();
         } else if (TextUtils.equals(context.getString(R.string.category_windbot_deck), getLastCategory())) {
-            path = getResourcePath() + "/" + WINDBOT_PATH + "/" + WINDBOT_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+            path = Paths.get(getResourcePath(), WINDBOT_PATH, WINDBOT_DECK_PATH, getLastDeckName() + YDK_FILE_EX).toString();
         } else if (TextUtils.equals(context.getString(R.string.category_Uncategorized), getLastCategory())) {
-            path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
+            path = Paths.get(getResourcePath(), CORE_DECK_PATH, getLastDeckName() + YDK_FILE_EX).toString();
         } else {
-            path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
+            path = Paths.get(getResourcePath(), CORE_DECK_PATH, getLastCategory(), getLastDeckName() + YDK_FILE_EX).toString();
         }
         Log.e(TAG, "拼接最后路径" + path);
         return path;

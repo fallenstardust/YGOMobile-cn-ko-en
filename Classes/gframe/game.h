@@ -65,6 +65,7 @@ struct Config {
 	wchar_t gamename[20]{};
 	wchar_t roompass[20]{};
 	//path
+    wchar_t last_limit_list_name[256]{};
 	wchar_t lastcategory[256]{};
 	wchar_t lastdeck[256]{};
 	wchar_t textfont[256]{};

@@ -399,9 +399,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_OPTION_0:
-			case BUTTON_OPTION_1: 
-			case BUTTON_OPTION_2: 
-			case BUTTON_OPTION_3: 
+			case BUTTON_OPTION_1:
+			case BUTTON_OPTION_2:
+			case BUTTON_OPTION_3:
 			case BUTTON_OPTION_4: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				int step = mainGame->scrOption->isVisible() ? mainGame->scrOption->getPos() : 0;
@@ -2095,8 +2095,28 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 			case CHECKBOX_LFLIST: {
 				mainGame->gameConf.use_lflist = mainGame->chkLFlist->isChecked() ? 1 : 0;
 				mainGame->cbLFlist->setEnabled(mainGame->gameConf.use_lflist);
-				mainGame->cbLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbLFlist->getItemCount() - 1);
-				mainGame->cbHostLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbHostLFlist->getItemCount() - 1);
+                // 获取保存的最后禁卡表名称
+                wchar_t lastLimitName[256];
+                BufferIO::CopyWideString(mainGame->gameConf.last_limit_list_name, lastLimitName);
+                // 在禁卡表列表中查找匹配的名称
+                int selectedIndex = -1;
+                for (unsigned int i = 0; i < mainGame->cbLFlist->getItemCount(); i++) {
+                    if (!wcscmp(lastLimitName, mainGame->cbLFlist->getItem(i))) {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+
+                // 如果找到了匹配的名称，则设置选中项，否则使用默认选项
+                if (selectedIndex >= 0) {
+                    mainGame->cbLFlist->setSelected(selectedIndex);
+                    mainGame->cbHostLFlist->setSelected(selectedIndex);
+                } else {
+                    // 回退到原来的逻辑
+                    mainGame->cbLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbLFlist->getItemCount() - 1);
+                    mainGame->cbHostLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbHostLFlist->getItemCount() - 1);
+                }
+
 				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->cbLFlist->getSelected()];
 				return true;
 				break;

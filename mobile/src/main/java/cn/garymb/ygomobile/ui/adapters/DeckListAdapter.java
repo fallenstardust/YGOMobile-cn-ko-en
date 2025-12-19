@@ -74,7 +74,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         mLimitList = new LimitList();
         mDeckLoader = new DeckLoader();
         deckInfo = new DeckInfo();
-        mLimitList = DataManager.get().getLimitManager().getTopLimit();
+        mLimitList = DataManager.get().getLimitManager().getLastLimit();
         mContext = context;
     }
 
@@ -245,6 +245,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     public interface OnItemSelectListener<T> {
         void onItemSelect(int position, T item);
     }
+
     /**
      * 从deckList中检索包含keyword的卡组
      *
@@ -261,9 +262,11 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         }
         return resultList;
     }
+
     /**
      * 将文本中包含关键词的部分高亮显示
-     * @param text 原始文本
+     *
+     * @param text    原始文本
      * @param keyword 关键词
      * @return 处理后的SpannableString
      */
