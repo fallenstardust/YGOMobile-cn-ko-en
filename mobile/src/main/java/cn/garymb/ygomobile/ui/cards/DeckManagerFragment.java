@@ -44,6 +44,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.AppCompatSpinner;
 import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -69,10 +70,12 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -882,6 +885,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     @Override
+    public void setLimit(LimitList limit) {
+        setLimitList(limit);
+    }
+
+    @Override
     public void onSearchStart() {
         hideDrawers();
     }
@@ -1604,74 +1612,36 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
      * @param spinner 要初始化的Spinner控件
      */
     private void initLimitListSpinners(Spinner spinner) {
-        // 刷新该spinner并配置选项
-        refreshLimitListSpinnerItems(spinner);
-
-        // 设置选择监听器
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                //同时通知整个界面都显示该禁卡表的禁限情况
-                setLimitList(activity.getmLimitManager().getLimit(SimpleSpinnerAdapter.getSelectText(spinner)));
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-    }
-
-    /**
-     * 仅刷新限制列表下拉框的项目列表
-     *
-     * @param spinner 要刷新的Spinner控件
-     */
-    private void refreshLimitListSpinnerItems(Spinner spinner) {
-        int index = 0;
-        int old_count = 0;
-        // 首先清除所有现有的item
-        if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
-            // 清除前先记录下当前选中项的索引
-            index = spinner.getSelectedItemPosition();
-            //清除前先记录下当前选项总数量
-            old_count = spinner.getCount();
-
-            //清空选项
-            ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
-            //重新加载禁卡表，获取可能存在的变动后情况
-            activity.getmLimitManager().load();
-        }
-
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        List<String> limitLists = activity.getmLimitManager().getLimitNames();
-        int limit_count = activity.getmLimitManager().getCount();
-
+        List<String> limits = activity.getmLimitManager().getLimitNames();
+        int index = -1;
+        int count = activity.getmLimitManager().getCount();
+        LimitList cur = null;
+        if (mCardLoader != null) {
+            cur = mCardLoader.getLimitList();
+        }
         // 添加默认选项
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
 
         // 遍历所有限制列表，构建下拉项
-        for (int i = 0; i < limit_count; i++) {
+        for (int i = 0; i < count; i++) {
             int j = i + 1;
-            String name = limitLists.get(i);
+            String name = limits.get(i);
             items.add(new SimpleSpinnerItem(j, name));
+            if (cur != null && TextUtils.equals(cur.getName(), name)) {
+                index = j;
+            }
         }
 
         // 设置适配器
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(getContext());
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
         adapter.set(items);
         spinner.setAdapter(adapter);
-
-        // 禁卡表变化时，相应调整index
-        index += spinner.getCount() - old_count;
-
         if (index >= 0) {
             spinner.setSelection(index);
         }
-        // 不设置监听器，避免通知整个布局变化，降低性能占用，只在initLimitListSpinners执行后另行设置
     }
-
 
     /**
      * 设置传参禁卡表的禁限，并更新相关适配器
@@ -1703,7 +1673,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
             ll_genesys_scoreboard.setVisibility(View.VISIBLE);
             // 重新初始化卡片搜索器中的限制类型下拉框
-            mCardSearcher.initItems();
+            //mCardSearcher.initItems();
         } else {
             ll_genesys_scoreboard.setVisibility(View.GONE);
         }
@@ -1869,6 +1839,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     //在卡组选择的dialog中点击某个卡组（来自本地或服务器）后，dialog通过本回调函数通知本页面。
     //在本页面中根据卡组来源（本地或服务器）显示卡组内容
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onDeckSelect(DeckFile deckFile) {
         if (!deckFile.isLocal()) {//不在本地，在云上（卡组广场中或用户的云上）
@@ -1891,7 +1862,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), deckData.getDeckUpdateDate());
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
-                        preLoadFile(dir.getPath() + "/" + fileFullName);
+                        preLoadFile(Paths.get(dir.getPath(),fileFullName).toString());
                         tv_add_1.setText(R.string.like_deck_thumb);
                         ll_click_like.setVisibility(View.VISIBLE);
                     }
@@ -1899,7 +1870,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             });
 
         } else {
-            Log.d("seesee", deckFile.getPathFile().getAbsolutePath());
+            Log.d(TAG, deckFile.getPathFile().getAbsolutePath());
             loadDeckFromFile(deckFile.getPathFile());
             ll_click_like.setVisibility(View.GONE);
         }
@@ -1916,7 +1887,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             if (TextUtils.equals(deckFile.getPath(), currentDeckPath)) {
                 List<File> files = getYdkFiles();
                 File file = null;
-                if (files != null && files.size() > 0) {
+                if (files != null && !files.isEmpty()) {
                     file = files.get(0);
                 }
                 if (file != null) {
@@ -1925,7 +1896,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     setCurDeck(new DeckInfo(), false);
                 }
                 // 对于当前卡组，也应该删除在线卡组
-                DeckSquareApiUtil.deleteDecks(Arrays.asList(deckFile));
+                DeckSquareApiUtil.deleteDecks(List.of(deckFile));
                 return;
             }
         }

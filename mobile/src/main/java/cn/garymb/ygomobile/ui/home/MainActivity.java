@@ -124,7 +124,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                     });
                     dialog.setOnDismissListener(dialogInterface -> {
                         DialogPlus dialogplus = new DialogPlus(this);
-                        File oldypk = new File(AppsSettings.get().getExpansionsPath() + "/" + officialExCardPackageName + Constants.YPK_FILE_EX);
+                        File oldypk = new File(AppsSettings.get().getExpansionsPath(), officialExCardPackageName + Constants.YPK_FILE_EX);
                         if (oldypk.exists()) {
                             FileUtils.deleteFile(oldypk);
                             dialogplus.setMessage(R.string.tip_ypk_is_deleted);

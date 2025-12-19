@@ -231,6 +231,12 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     }
 
     @Override
+    public void setLimit(LimitList limit) {
+        mCardListAdapter.setLimitList(limit);
+        mCardListAdapter.notifyDataSetChanged();
+    }
+
+    @Override
     public void onSearchStart() {
         if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
@@ -242,7 +248,6 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         if (mDrawerlayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerlayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         }
-        mCardListAdapter.setLimitList(limitList);
     }
 
     @Override

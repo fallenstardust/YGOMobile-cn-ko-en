@@ -432,6 +432,20 @@ public class CardSearcher implements View.OnClickListener {
         if (index >= 0) {
             spinner.setSelection(index);
         }
+        // 设置选择监听器
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.e("onItemSelected", "position:" + position + " id:" + id);
+                //同时通知整个界面都显示该禁卡表的禁限情况
+                mCallBack.setLimit(mLimitManager.getLimit(SimpleSpinnerAdapter.getSelectText(spinner)));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     private void refreshLimitListSpinnerItems(Spinner spinner) {
@@ -696,6 +710,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     public interface CallBack {
+        void setLimit(LimitList limit);
         void onSearchStart();
 
         void onSearchResult(List<Card> Cards, boolean isHide);

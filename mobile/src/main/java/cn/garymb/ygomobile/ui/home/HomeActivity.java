@@ -464,7 +464,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     }
 
     private void downloadGeneSysLflist() {
-        File geneSysLflist = new File(AppsSettings.get().getExpansionsPath() + "/" + Constants.CORE_GENESYS_LIMIT_PATH);
+        File geneSysLflist = new File(AppsSettings.get().getExpansionsPath(), Constants.CORE_GENESYS_LIMIT_PATH);
         DownloadUtil.get().download(URL_GENESYS_LFLIST_DOWNLOAD_LINK, geneSysLflist.getParent(), geneSysLflist.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
