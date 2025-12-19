@@ -471,7 +471,7 @@ public class CardSearcher implements View.OnClickListener {
         // 添加默认选项
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
 
-        // 遍历所有限制列表，构建下拉项
+        // 遍历所有限制列表，构建下拉项 //TODO 此处刷新时，当前选择的禁卡表名称可能会改变，故而以记录index位置的形式判断当前选择的禁卡表
         for (int i = 0; i < limit_count; i++) {
             int j = i + 1;
             String name = limitLists.get(i);

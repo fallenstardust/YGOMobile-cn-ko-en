@@ -1671,8 +1671,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 根据是否有Genesys信用分上限值来显示计分板
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
+            refreshDeckCreditCount();
             ll_genesys_scoreboard.setVisibility(View.VISIBLE);
-            // 重新初始化卡片搜索器中的限制类型下拉框
+            // 重新初始化卡片搜索器中的限制类型下拉框//TODO 功能未实现
             //mCardSearcher.initItems();
         } else {
             ll_genesys_scoreboard.setVisibility(View.GONE);
