@@ -667,23 +667,15 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             dlg.dismiss();
             // 初始化卡片搜索器中的项目列表,为卡片搜索功能准备基础数据
             mCardSearcher.initItems();
-            // 初始化禁卡表列表下拉框,并通知整个卡组界面都显示为当前使用的禁卡表
-            initLimitListSpinners(mCardSearchLimitSpinner);
             // 根据资源路径判断是否进入卡包展示模式
             if (rs != null && rs.source != null) {
                 String parentPath = rs.source.getParent();
-                isPackMode = parentPath != null &&
-                        (parentPath.equals(mSettings.getPackDeckDir()) ||
-                                parentPath.equals(mSettings.getCacheDeckDir()));
+                isPackMode = parentPath.equals(mSettings.getPackDeckDir()) || parentPath.equals(mSettings.getCacheDeckDir());
             } else {
                 isPackMode = false;
             }
             // 设置当前卡组显示
-            if (rs != null && rs.source != null) {
-                setCurDeck(rs, isPackMode);
-            } else {
-                setCurDeck(rs, false);
-            }
+            setCurDeck(rs, isPackMode);
 
             // 设置并显示收藏夹
             mCardSearcher.showFavorites(false);
@@ -1604,43 +1596,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return list;
         }
         return null;
-    }
-
-    /**
-     * 初始化限制列表下拉框
-     *
-     * @param spinner 要初始化的Spinner控件
-     */
-    private void initLimitListSpinners(Spinner spinner) {
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        List<String> limits = activity.getmLimitManager().getLimitNames();
-        int index = -1;
-        int count = activity.getmLimitManager().getCount();
-        LimitList cur = null;
-        if (mCardLoader != null) {
-            cur = mCardLoader.getLimitList();
-        }
-        // 添加默认选项
-        items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
-
-        // 遍历所有限制列表，构建下拉项
-        for (int i = 0; i < count; i++) {
-            int j = i + 1;
-            String name = limits.get(i);
-            items.add(new SimpleSpinnerItem(j, name));
-            if (cur != null && TextUtils.equals(cur.getName(), name)) {
-                index = j;
-            }
-        }
-
-        // 设置适配器
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
-        if (index >= 0) {
-            spinner.setSelection(index);
-        }
     }
 
     /**

@@ -617,7 +617,6 @@ public class AppsSettings {
      *
      */
     public void setLastLimit(String limitName) {
-        Log.w(TAG, "setLastLimit= "+limitName);
         App.get().saveSetting("lastlimit", limitName);
         mSharedPreferences.putString(Constants.PREF_LAST_LIMIT, limitName);
     }
@@ -745,7 +744,6 @@ public class AppsSettings {
     }*/
 
     public void saveSettings(String key, String value) {
-        Log.e(TAG, "cc: saveSettings: "+key + ":" + value);
         if ("lastdeck".equals(key)) mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
         if ("lastcategory".equals(key)) mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
         if ("lastLimit".equals(key)) setLastLimit(value);
@@ -753,7 +751,6 @@ public class AppsSettings {
     }
 
     public String getSettings(String key) {
-        Log.e(TAG, "getSettings: "+ ("lastLimit".equals(key) ? getLastLimit() : key));
         if ("lastdeck".equals(key)) return getLastDeckName();
         if ("lastcategory".equals(key)) return getLastCategory();
         if ("lastLimit".equals(key)) return getLastLimit();
