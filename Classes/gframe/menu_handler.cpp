@@ -551,6 +551,8 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_CLOSE_SETTINGS: {
                 mainGame->HideElement(mainGame->wSettings);
                 mainGame->ShowElement(mainGame->wMainMenu);
+
+                DeckBuilder::setLastLimit();
 				break;
 			}
 			}

@@ -27,6 +27,7 @@ public:
 	void InstantSearch();
 	void ClearSearch();
 	void SortList();
+    static void setLastLimit();
 
 	void RefreshDeckList(bool showPack);//
 	void RefreshReadonly(int catesel);

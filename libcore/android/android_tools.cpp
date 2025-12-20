@@ -410,14 +410,14 @@ float getYScale(ANDROID_APP app){
 	return ret;
 }
 
+//Retrive last limit list name.
+irr::io::path getLastLimit(ANDROID_APP app) {
+    return getSetting(app, "lastlimit");
+}
+
 //Retrive last deck name.
 irr::io::path getLastDeck(ANDROID_APP app) {
 	return getSetting(app, "lastdeck");
-}
-
-//Retrive last limit list name.
-irr::io::path getLastLimit(ANDROID_APP app) {
-	return getSetting(app, "lastlimit");
 }
 
 //Retrive last category name.
@@ -425,40 +425,82 @@ irr::io::path getLastCategory(ANDROID_APP app) {
 	return getSetting(app, "lastcategory");
 }
 
+// 定义一个函数，用于从 Android 应用中获取指定键的设置值
 irr::io::path getSetting(ANDROID_APP app, const char* key) {
+	// 初始化返回路径对象
 	irr::io::path ret;
+
+	// 检查传入的应用实例是否有效
 	if (!app || !app->activity || !app->activity->vm)
-		return ret;
+		return ret; // 如果无效则直接返回空路径
+
+	// 声明 JNI 环境指针
 	JNIEnv* jni = nullptr;
+
+	// 将当前线程附加到 Java 虚拟机并获取 JNI 环境
 	app->activity->vm->AttachCurrentThread(&jni, NULL);
+
+	// 检查 JNI 环境是否成功获取
 	if (!jni)
-		return ret;
-	// Retrieves NativeActivity.
+		return ret; // 获取失败则返回空路径
+
+	// 获取 NativeActivity 对象
 	jobject lNativeActivity = app->activity->clazz;
+
+	// 获取 NativeActivity 类的 jclass 引用
 	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+
+	// 查找 getApplication 方法 ID，用于获取 Application 实例
 	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
 			"getApplication", "()Landroid/app/Application;");
+
+	// 调用 getApplication 方法获得 Application 对象
 	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
+
+	// 获取 Application 类的 jclass 引用
 	jclass classApp = jni->GetObjectClass(application);
+
+	// 查找 getSetting 方法 ID，该方法接收字符串参数并返回字符串
 	jmethodID lastdeckMethod = jni->GetMethodID(classApp, "getSetting",
 			"(Ljava/lang/String;)Ljava/lang/String;");
+
+	// 创建 Java 字符串表示键名
 	jstring keystring = jni->NewStringUTF(key);
+
+	// 调用 Java 层的 getSetting 方法，并获取结果字符串
 	jstring retString = (jstring) jni->CallObjectMethod(application,
 			lastdeckMethod, keystring);
+
+	// 删除局部引用 keystring 以避免内存泄漏
 	if (keystring) {
 		jni->DeleteLocalRef(keystring);
 	}
+
+	// 删除局部引用 classApp 和 ClassNativeActivity
 	jni->DeleteLocalRef(classApp);
 	jni->DeleteLocalRef(ClassNativeActivity);
+
+	// 检查返回的字符串是否为空
 	if(retString == NULL){
-		return ret;
+		return ret; // 若为空，则返回空路径
 	}
+
+	// 获取 Java 字符串的内容（UTF-8 编码）
 	const char* chars = jni->GetStringUTFChars(retString, NULL);
+
+	// 将字符内容追加到返回路径对象中
 	ret.append(chars);
+
+	// 释放之前获取的字符串内容资源
 	jni->ReleaseStringUTFChars(retString, chars);
+
+	// 分离当前线程与 JVM 的连接
 	app->activity->vm->DetachCurrentThread();
+
+	// 返回获取到的设置值路径
 	return ret;
 }
+
 
 //save last limit name.
 void setLastLimit(ANDROID_APP app, const char* limitname) {

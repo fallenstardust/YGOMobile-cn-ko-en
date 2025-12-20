@@ -616,8 +616,10 @@ public class AppsSettings {
      * 保存最后禁卡表名
      *
      */
-    public void setLastLimit(String limitname) {
-        mSharedPreferences.putString(Constants.PREF_LAST_LIMIT, limitname);
+    public void setLastLimit(String limitName) {
+        Log.w(TAG, "setLastLimit= "+limitName);
+        App.get().saveSetting("lastlimit", limitName);
+        mSharedPreferences.putString(Constants.PREF_LAST_LIMIT, limitName);
     }
 
     /**
@@ -626,7 +628,9 @@ public class AppsSettings {
      * @return 返回存储的限制条件字符串，如果未找到则返回默认限制条件
      */
     public String getLastLimit() {
-        return mSharedPreferences.getString(Constants.PREF_LAST_LIMIT, Constants.PREF_DEF_LAST_LIMIT);
+        String limitName = App.get().getSetting("lastlimit");
+        return limitName == null || TextUtils.isEmpty(limitName) ?
+                mSharedPreferences.getString(Constants.PREF_LAST_LIMIT, Constants.PREF_DEF_LAST_LIMIT) : limitName;
     }
 
 
@@ -634,7 +638,6 @@ public class AppsSettings {
      * 获得（最后）上次打开的卡组的绝对路径
      * setCurDeck()方法负责设置上次打开的卡组的路径
      *
-     * @return
      */
     public @Nullable
     String getLastDeckPath() {
@@ -742,26 +745,18 @@ public class AppsSettings {
     }*/
 
     public void saveSettings(String key, String value) {
-        if ("lastdeck".equals(key)) {
-            Log.e(TAG, value);
-            mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
-        } else if ("lastcategory".equals(key)) {
-            Log.e(TAG, value);
-            mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
-        } else {
-            mSharedPreferences.putString(Constants.PREF_START + key, value);
-        }
+        Log.e(TAG, "cc: saveSettings: "+key + ":" + value);
+        if ("lastdeck".equals(key)) mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
+        if ("lastcategory".equals(key)) mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
+        if ("lastLimit".equals(key)) setLastLimit(value);
+        mSharedPreferences.putString(Constants.PREF_START + key, value);
     }
 
     public String getSettings(String key) {
-        String val;
-        if ("lastdeck".equals(key)) {
-            val = getLastDeckName();
-            return val;
-        } else if ("lastcategory".equals(key)) {
-            val = getLastCategory();
-            return val;
-        }
+        Log.e(TAG, "getSettings: "+ ("lastLimit".equals(key) ? getLastLimit() : key));
+        if ("lastdeck".equals(key)) return getLastDeckName();
+        if ("lastcategory".equals(key)) return getLastCategory();
+        if ("lastLimit".equals(key)) return getLastLimit();
         return mSharedPreferences.getString(Constants.PREF_START + key, null);
     }
 

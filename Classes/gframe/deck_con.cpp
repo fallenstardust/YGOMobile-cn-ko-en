@@ -151,28 +151,38 @@ void DeckBuilder::Terminate() {
 	mainGame->scrFilter->setVisible(false);
 	mainGame->scrPackCards->setVisible(false);
 	mainGame->scrPackCards->setPos(0);
+
+    char linebuf[256];
 	int catesel = mainGame->cbDBCategory->getSelected();
-	char linebuf[256];
-	if (catesel >= 0)
-		BufferIO::CopyWideString(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory);
-	    BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
-		irr::android::setLastCategory(mainGame->appMain, linebuf);
-		ALOGD("setLastCategory", linebuf);
+	if (catesel >= 0) {
+        BufferIO::CopyWideString(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory);
+        BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
+        irr::android::setLastCategory(mainGame->appMain, linebuf);
+        ALOGD("setLastCategory=%s", linebuf);
+    }
+
 	int decksel = mainGame->cbDBDecks->getSelected();
-	if (decksel >= 0)
-		BufferIO::CopyWideString(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck);
-		BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
-		irr::android::setLastDeck(mainGame->appMain, linebuf);
-        ALOGD("setLastDeck", linebuf);
-    int Lflistsel = mainGame->cbLFlist->getSelected();
-    if (Lflistsel >= 0)
-        BufferIO::CopyWideString(mainGame->cbLFlist->getItem(Lflistsel), mainGame->gameConf.last_limit_list_name);
-        BufferIO::EncodeUTF8(mainGame->gameConf.last_limit_list_name, linebuf);
-		irr::android::setLastLimit(mainGame->appMain, linebuf);
-        ALOGD("setLastLimit", linebuf);
+	if (decksel >= 0) {
+        BufferIO::CopyWideString(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck);
+        BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
+        irr::android::setLastDeck(mainGame->appMain, linebuf);
+        ALOGD("setLastDeck=%s", linebuf);
+    }
+    setLastLimit();
     mainGame->SaveConfig();
 	if(exit_on_return)
 		mainGame->OnGameClose();
+}
+
+void DeckBuilder::setLastLimit() {
+    char linebuf[256];
+    int lflistsel = mainGame->cbLFlist->getSelected();
+    if (lflistsel >= 0) {
+        BufferIO::CopyWideString(mainGame->cbLFlist->getItem(lflistsel), mainGame->gameConf.last_limit_list_name);
+        BufferIO::EncodeUTF8(mainGame->cbLFlist->getItem(lflistsel), linebuf);
+        irr::android::setLastLimit(mainGame->appMain, linebuf);
+        ALOGD("cc: game: setLastLimit=%s", linebuf);
+    }
 }
 bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -321,6 +331,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			    mainGame->HideElement(mainGame->wSettings);
                 mainGame->imgSettings->setPressed(false);
+
+                setLastLimit();
 			    break;
 			}
 			case BUTTON_SHOW_LOG: {

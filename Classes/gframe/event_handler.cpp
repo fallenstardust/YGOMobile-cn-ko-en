@@ -2102,20 +2102,13 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                 int selectedIndex = -1;
                 for (unsigned int i = 0; i < mainGame->cbLFlist->getItemCount(); i++) {
                     if (!wcscmp(lastLimitName, mainGame->cbLFlist->getItem(i))) {
-                        selectedIndex = i;
+                        mainGame->gameConf.default_lflist = i;
                         break;
                     }
                 }
-
-                // 如果找到了匹配的名称，则设置选中项，否则使用默认选项
-                if (selectedIndex >= 0) {
-                    mainGame->cbLFlist->setSelected(selectedIndex);
-                    mainGame->cbHostLFlist->setSelected(selectedIndex);
-                } else {
-                    // 回退到原来的逻辑
-                    mainGame->cbLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbLFlist->getItemCount() - 1);
-                    mainGame->cbHostLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbHostLFlist->getItemCount() - 1);
-                }
+                // 重设2个禁卡表选择combobox的选中项
+                mainGame->cbLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbLFlist->getItemCount() - 1);
+                mainGame->cbHostLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbHostLFlist->getItemCount() - 1);
 
 				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->cbLFlist->getSelected()];
 				return true;
@@ -2149,6 +2142,8 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 			case COMBOBOX_LFLIST: {
 				mainGame->gameConf.default_lflist = mainGame->cbLFlist->getSelected();
 				mainGame->cbHostLFlist->setSelected(mainGame->gameConf.default_lflist);
+                // 保存最后使用的禁卡表名称
+                BufferIO::CopyWideString(mainGame->cbLFlist->getItem(mainGame->gameConf.default_lflist), mainGame->gameConf.last_limit_list_name);
 				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
 				return true;
 				break;
