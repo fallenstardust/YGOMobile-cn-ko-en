@@ -105,24 +105,13 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
         mCardSearcher.setCallBack(this);
         setListeners();
-        DialogPlus dlg = DialogPlus.show(getContext(), null, getString(R.string.loading));
-        VUiKit.defer().when(() -> {
-            DataManager.get().load();
-            if (activity.getmLimitManager().getCount() > 0) {
-                mCardLoader.setLimitList(activity.getmLimitManager().getLastLimit());
-            }
-        }).fail((e) -> {
-            YGOUtil.showTextToast(getString(R.string.tip_load_cdb_error), Toast.LENGTH_SHORT);
-            Log.e(IrrlichtBridge.TAG, "load cdb", e);
-        }).done((rs) -> {
-            dlg.dismiss();
-            isLoad = true;
-            mCardLoader.loadData();
-            mCardSearcher.initItems();
-            //数据库初始化完毕后搜索被传入的关键字
-            intentSearch(intentSearchMessage);
-            isInitCdbOk = true;
-        });
+        isLoad = true;
+        mCardLoader.loadData();
+        mCardSearcher.initItems();
+        //数据库初始化完毕后搜索被传入的关键字
+        intentSearch(intentSearchMessage);
+        isInitCdbOk = true;
+
     }
 
     @Override

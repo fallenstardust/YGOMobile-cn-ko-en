@@ -213,7 +213,6 @@ public class CardSearcher implements View.OnClickListener {
                 if (value <= 0)
                     reset(limitSpinner);
 
-                Log.e("onItemSelected", "position:" + position + " id:" + id+" name:" + getSelectText(limitListSpinner));
                 LimitList limit = mLimitManager.getLimit(getSelectText(limitListSpinner));
                 mICardSearcher.setLimitList(limit);
                 //同时通知整个界面都显示该禁卡表的禁限情况
@@ -678,9 +677,9 @@ public class CardSearcher implements View.OnClickListener {
         keyWord.setText(null);
         reset(otSpinner);
 //        reset(limitListSpinner);
-        if (limitListSpinner.getAdapter().getCount() > 1) {
-            limitListSpinner.setSelection(1);
-        }
+//        if (limitListSpinner.getAdapter().getCount() > 1) {//因为禁卡表选择记录已变为保存形式，所以这里不再重置为第一个禁卡表
+//            limitListSpinner.setSelection(1);
+//        }
         reset(limitSpinner);
         reset(typeSpinner);
         reset(typeSpellSpinner);
