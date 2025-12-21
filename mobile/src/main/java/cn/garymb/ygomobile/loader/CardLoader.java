@@ -61,9 +61,6 @@ public class CardLoader implements ICardSearcher {
         mLimitList = limitList;
         if (limitList != null)
             AppsSettings.get().setLastLimit(limitList.getName());
-        if (mCallBack != null) {
-            mCallBack.onLimitListChanged(limitList);
-        }
     }
 
     /**

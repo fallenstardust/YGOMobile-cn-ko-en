@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ICardSearcher;
@@ -381,21 +380,6 @@ public class CardSearcher implements View.OnClickListener {
         return mContext.getString(id);
     }
 
-    private boolean isGeneSysMode() {
-        // 获取当前限制列表
-        LimitList currentLimitList = null;
-        if (mICardSearcher != null) {
-            currentLimitList = mICardSearcher.getLimitList();
-        }
-
-        // 如果当前限制列表的credit limit不为null或大于0，则认为是Genesys模式
-        if (currentLimitList != null) {
-            Integer creditLimit = currentLimitList.getCreditLimits();
-            return creditLimit != null && creditLimit > 0;
-        }
-        return false;
-    }
-
     private void initLimitSpinners(Spinner spinner) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
 
@@ -430,6 +414,7 @@ public class CardSearcher implements View.OnClickListener {
         adapter.set(items);
         spinner.setAdapter(adapter);
     }
+
     private void initLimitListSpinners(Spinner spinner) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
         List<String> limits = mLimitManager.getLimitNames();
@@ -458,48 +443,14 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void refreshLimitListSpinnerItems(Spinner spinner) {
-        int index = 0;
-        int old_count = 0;
         // 首先清除所有现有的item
         if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
-            // 清除前先记录下当前选中项的索引
-            index = spinner.getSelectedItemPosition();
-            //清除前先记录下当前选项总数量
-            old_count = spinner.getCount();
-
             //清空选项
             ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
             //重新加载禁卡表，获取可能存在的变动后情况
             mLimitManager.load();
         }
-
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        List<String> limitLists = mLimitManager.getLimitNames();
-        int limit_count = mLimitManager.getCount();
-
-        // 添加默认选项
-        items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
-
-        // 遍历所有限制列表，构建下拉项 //TODO 此处刷新时，当前选择的禁卡表名称可能会改变，故而以记录index位置的形式判断当前选择的禁卡表
-        for (int i = 0; i < limit_count; i++) {
-            int j = i + 1;
-            String name = limitLists.get(i);
-            items.add(new SimpleSpinnerItem(j, name));
-        }
-
-        // 设置适配器
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
-
-        // 禁卡表变化时，相应调整index
-        index += spinner.getCount() - old_count;
-
-        if (index >= 0) {
-            spinner.setSelection(index);
-        }
-        // 不设置监听器，避免通知整个布局变化，降低性能占用，只在initLimitListSpinners执行后另行设置
+        initLimitListSpinners(spinner);
     }
 
 
@@ -721,6 +672,7 @@ public class CardSearcher implements View.OnClickListener {
 
     public interface CallBack {
         void setLimit(LimitList limit);
+
         void onSearchStart();
 
         void onSearchResult(List<Card> Cards, boolean isHide);
