@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 public enum LimitType {
     None(0),
     All(999, 1310),
-    GeneSys(100, 1480),
+    GeneSys(100, 1699),
     Forbidden(1, 1316),
     Limit(2, 1317),
     SemiLimit(3, 1318);

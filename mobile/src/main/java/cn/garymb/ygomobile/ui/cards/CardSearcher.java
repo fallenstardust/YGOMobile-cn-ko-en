@@ -51,6 +51,7 @@ public class CardSearcher implements View.OnClickListener {
     private final CheckBox chk_multi_keyword;
     private final Spinner otSpinner;
     private final Spinner limitSpinner;
+    private final Spinner genesys_limitSpinner;
     private final Spinner limitListSpinner;
     private final Spinner typeSpinner;
     private final Spinner typeMonsterSpinner;
@@ -91,6 +92,7 @@ public class CardSearcher implements View.OnClickListener {
         chk_multi_keyword = findViewById(R.id.chk_multi_keyword);
         otSpinner = findViewById(R.id.sp_ot);
         limitSpinner = findViewById(R.id.sp_limit);
+        genesys_limitSpinner = findViewById(R.id.sp_genesys_limit);//初始化genesys禁限选项布局
         limitListSpinner = findViewById(R.id.sp_limit_list);
         typeSpinner = findViewById(R.id.sp_type_card);
         typeMonsterSpinner = findViewById(R.id.sp_type_monster);
@@ -210,10 +212,18 @@ public class CardSearcher implements View.OnClickListener {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 long value = getSelect(limitListSpinner);
-                if (value <= 0)
+                if (value <= 0) {
                     reset(limitSpinner);
-
+                    reset(genesys_limitSpinner);
+                }
                 LimitList limit = mLimitManager.getLimit(getSelectText(limitListSpinner));
+                if (limit.getName().toLowerCase().contains("genesys")) {
+                    genesys_limitSpinner.setVisibility(View.VISIBLE);
+                    limitSpinner.setVisibility(View.GONE);
+                } else {
+                    genesys_limitSpinner.setVisibility(View.GONE);
+                    limitSpinner.setVisibility(View.VISIBLE);
+                }
                 mICardSearcher.setLimitList(limit);
                 //同时通知整个界面都显示该禁卡表的禁限情况
                 mCallBack.setLimit(limit);
@@ -319,7 +329,8 @@ public class CardSearcher implements View.OnClickListener {
 
     public void initItems() {
         initOtSpinners(otSpinner);
-        initLimitSpinners(limitSpinner);
+        initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
+        initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
         initLimitListSpinners(limitListSpinner);
         initTypeSpinners(typeSpinner, new CardType[]{CardType.None, CardType.Monster, CardType.Spell, CardType.Trap});
         initTypeSpinners(typeMonsterSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Effect, CardType.Fusion, CardType.Ritual,
@@ -386,33 +397,39 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void initLimitSpinners(Spinner spinner) {
-        // 先清空所有现有的item
-        if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
-            ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
-        }
         List<SimpleSpinnerItem> items = new ArrayList<>();
 
         // 添加默认选项
         items.add(new SimpleSpinnerItem(LimitType.None.getId(), getString(R.string.label_limit)));
         items.add(new SimpleSpinnerItem(LimitType.All.getId(), getString(R.string.all)));
 
-        // 根据是否为GeneSys模式添加相应的限制类型选项
-        if (isGeneSysMode()) {
-            // GeneSys模式下只添加GeneSys和Forbidden选项
-            items.add(new SimpleSpinnerItem(LimitType.GeneSys.getId(), mStringManager.getLimitString(LimitType.GeneSys.getId())));
-            items.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), mStringManager.getLimitString(LimitType.Forbidden.getId())));
-        } else {
-            // 普通模式下添加Forbidden、Limit和SemiLimit选项
-            items.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), mStringManager.getLimitString(LimitType.Forbidden.getId())));
-            items.add(new SimpleSpinnerItem(LimitType.Limit.getId(), mStringManager.getLimitString(LimitType.Limit.getId())));
-            items.add(new SimpleSpinnerItem(LimitType.SemiLimit.getId(), mStringManager.getLimitString(LimitType.SemiLimit.getId())));
-        }
+        // 常规禁卡表下添加Forbidden（禁止）、Limit（限制）和SemiLimit（准限制）选项
+        items.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), mStringManager.getLimitString(LimitType.Forbidden.getId())));
+        items.add(new SimpleSpinnerItem(LimitType.Limit.getId(), mStringManager.getLimitString(LimitType.Limit.getId())));
+        items.add(new SimpleSpinnerItem(LimitType.SemiLimit.getId(), mStringManager.getLimitString(LimitType.SemiLimit.getId())));
+
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
         adapter.set(items);
         spinner.setAdapter(adapter);
     }
 
+    private void initLimitGenesysSpinners(Spinner spinner) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+
+        // 添加默认选项
+        items.add(new SimpleSpinnerItem(LimitType.None.getId(), getString(R.string.label_limit)));
+        items.add(new SimpleSpinnerItem(LimitType.All.getId(), getString(R.string.all)));
+
+        // GeneSys模式下只添加GeneSys和Forbidden选项
+        items.add(new SimpleSpinnerItem(LimitType.GeneSys.getId(), mStringManager.getLimitString(LimitType.GeneSys.getId())));
+        items.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), mStringManager.getLimitString(LimitType.Forbidden.getId())));
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
+        adapter.setColor(Color.WHITE);
+        adapter.set(items);
+        spinner.setAdapter(adapter);
+    }
     private void initLimitListSpinners(Spinner spinner) {
         List<SimpleSpinnerItem> items = new ArrayList<>();
         List<String> limits = mLimitManager.getLimitNames();
@@ -652,6 +669,7 @@ public class CardSearcher implements View.OnClickListener {
                     .def(text(defText))
                     .pscale(getIntSelect(pScale))
                     .limitType(getIntSelect(limitSpinner))
+                    .limitType(getIntSelect(genesys_limitSpinner))
                     .limitName(getSelectText(limitListSpinner))
                     .setcode(getSelect(setCodeSpinner))
                     .category(getSelect(categorySpinner))
