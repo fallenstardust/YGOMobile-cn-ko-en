@@ -1568,13 +1568,13 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 	bool showAvail = false;
 	bool showNotAvail = false;
 	int filter_lm = cbLimit->getSelected();
-	bool avail = !((filter_lm == 4 && !(cp->second.ot & AVAIL_OCG)
-				|| (filter_lm == 5 && !(cp->second.ot & AVAIL_TCG))
-				|| (filter_lm == 6 && !(cp->second.ot & AVAIL_SC))
-				|| (filter_lm == 7 && !(cp->second.ot & AVAIL_CUSTOM))
-				|| (filter_lm == 8 && (cp->second.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG)));
+	bool avail = !((filter_lm == 5 && !(cp->second.ot & AVAIL_OCG)
+				|| (filter_lm == 6 && !(cp->second.ot & AVAIL_TCG))
+				|| (filter_lm == 7 && !(cp->second.ot & AVAIL_SC))
+				|| (filter_lm == 8 && !(cp->second.ot & AVAIL_CUSTOM))
+				|| (filter_lm == 9 && (cp->second.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG)));
 
-	if(filter_lm >= 4) {
+	if(filter_lm >= 5) {
 		showAvail = avail;
 		showNotAvail = !avail;
 	} else if(!(cp->second.ot & gameConf.defaultOT)) {
@@ -1766,10 +1766,10 @@ void Game::DrawDeckBd() {
 		driver->draw2DRectangleOutline(Resize(805, 136, 930,157));
 
 		// 显示“搜索结果”标题
-        DrawShadowText(guiFont, dataManager.GetSysString(1333),Resize(795, 136, 930,156),Resize(0, 1, 2, 0), 0xffffffff,0xff000000, true, false);
+        DrawShadowText(guiFont, dataManager.GetSysString(1333),Resize(810, 136, 875,156),Resize(0, 1, 2, 0), 0xffffffff,0xff000000,false, false);
 
 		// 显示搜索结果数量
-        DrawShadowText(numFont, deckBuilder.result_string,Resize(865, 136, 930,156),Resize(0, 1, 2, 0), 0xffffffff,0xff000000, true, false);
+        DrawShadowText(numFont, deckBuilder.result_string,Resize(880, 136, 930,156),Resize(0, 1, 2, 0), 0xffffffff,0xff000000,false, false);
 
 		// 搜索结果内容区背景与边框
 		driver->draw2DRectangle(Resize(806, 160, 1020, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);

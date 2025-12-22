@@ -1121,39 +1121,48 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	cbLimit->addItem(dataManager.GetSysString(1316));// 禁止
 	cbLimit->addItem(dataManager.GetSysString(1317));// 限制
 	cbLimit->addItem(dataManager.GetSysString(1318));// 准限制
+	cbLimit->addItem(dataManager.GetSysString(1699));// 点数
 	cbLimit->addItem(dataManager.GetSysString(1481));// ＯＣＧ
 	cbLimit->addItem(dataManager.GetSysString(1482));// ＴＣＧ
 	cbLimit->addItem(dataManager.GetSysString(1483));// 简体中文
 	cbLimit->addItem(dataManager.GetSysString(1484));// 自定义卡片
 	cbLimit->addItem(dataManager.GetSysString(1485));// 无独有卡
+    // 筛选卡片的条件：属性
 	stAttribute = env->addStaticText(dataManager.GetSysString(1319)/*属性：*/, Resize(10, 28, 70, 48), false, false, wFilter);
 	cbAttribute = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 26, 190, 46), wFilter, COMBOBOX_ATTRIBUTE);
 	cbAttribute->setMaxSelectionRows(10);
 	cbAttribute->addItem(dataManager.GetSysString(1310)/*（无）*/, 0);
 	for (int i = 0; i < ATTRIBUTES_COUNT; ++i)
 		cbAttribute->addItem(dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i), 0x1U << i);
+    // 筛选卡片的条件：种族
 	env->addStaticText(dataManager.GetSysString(1321)/*种族：*/, Resize(10, 51, 70, 71), false, false, wFilter);
 	cbRace = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 40 + 75 / 6, 190, 60 + 75 / 6), wFilter, COMBOBOX_RACE);
 	cbRace->setMaxSelectionRows(10);
 	cbRace->addItem(dataManager.GetSysString(1310)/*（无）*/, 0);
 	for (int i = 0; i < RACES_COUNT; ++i)
 		cbRace->addItem(dataManager.GetSysString(DataManager::STRING_ID_RACE + i), 0x1U << i);
-	env->addStaticText(dataManager.GetSysString(1322)/*攻击：*/, Resize(205, 28, 280, 48), false, false, wFilter);
+	// 筛选卡片的条件：攻击力
+    env->addStaticText(dataManager.GetSysString(1322)/*攻击：*/, Resize(205, 28, 280, 48), false, false, wFilter);
 	ebAttack = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 26, 340, 46), wFilter, EDITBOX_INPUTS);
 	ebAttack->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1323)/*守备：*/, Resize(205, 51, 280, 71), false, false, wFilter);
+	// 筛选卡片的条件：防御力
+    env->addStaticText(dataManager.GetSysString(1323)/*守备：*/, Resize(205, 51, 280, 71), false, false, wFilter);
 	ebDefense = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 49, 340, 69), wFilter, EDITBOX_INPUTS);
 	ebDefense->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1324)/*星数：*/, Resize(10, 74, 80, 94), false, false, wFilter);
+	// 筛选卡片的条件：星数
+    env->addStaticText(dataManager.GetSysString(1324)/*星数：*/, Resize(10, 74, 80, 94), false, false, wFilter);
 	ebStar = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(60, 60 + 100 / 6, 100, 80 + 100 / 6), wFilter, EDITBOX_INPUTS);
 	ebStar->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1336)/*刻度：*/, Resize(101, 60 + 100 / 6, 150 * xScale, 82 + 100 / 6), false, false, wFilter);
+	// 筛选卡片的条件：刻度
+    env->addStaticText(dataManager.GetSysString(1336)/*刻度：*/, Resize(101, 60 + 100 / 6, 150 * xScale, 82 + 100 / 6), false, false, wFilter);
 	ebScale = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(150, 60 + 100 / 6, 190, 80 + 100 / 6), wFilter, EDITBOX_INPUTS);
 	ebScale->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1325)/*关键字：*/, Resize(205, 60 + 100 / 6, 280, 82 + 100 / 6), false, false, wFilter);
+	// 筛选卡片的条件：关键字
+    env->addStaticText(dataManager.GetSysString(1325)/*关键字：*/, Resize(205, 60 + 100 / 6, 280, 82 + 100 / 6), false, false, wFilter);
 	ebCardName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 72, 390, 92), wFilter, EDITBOX_KEYWORD);
 	ebCardName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnEffectFilter = env->addButton(Resize(345, 28, 390, 69), wFilter, BUTTON_EFFECT_FILTER, dataManager.GetSysString(1326));
+    // 筛选卡片的条件：效果
+	btnEffectFilter = env->addButton(Resize(345, 28, 390, 69), wFilter, BUTTON_EFFECT_FILTER, dataManager.GetSysString(1326)/*效果*/);
 		ChangeToIGUIImageButton(btnEffectFilter, imageManager.tButton_C, imageManager.tButton_C_pressed);
 	btnStartFilter = env->addButton(Resize(210, 96, 390, 118), wFilter, BUTTON_START_FILTER, dataManager.GetSysString(1327));
 		ChangeToIGUIImageButton(btnStartFilter, imageManager.tButton_L, imageManager.tButton_L_pressed);

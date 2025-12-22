@@ -1429,10 +1429,22 @@ void DeckBuilder::GetHoveredCard() {
 			imageManager.RemoveTexture(pre_code);
 	}
 }
+
+/**
+ * @brief 开始卡片过滤操作
+ *
+ * 该函数用于启动卡片过滤流程，根据用户界面中选择的过滤条件来筛选卡片。
+ * 首先获取基本的过滤类型、二级类型和限制条件，如果是一般怪兽过滤类型，
+ * 还会进一步获取属性、种族、攻击力、守备力、等级和刻度等详细过滤条件，
+ * 最后调用FilterCards函数执行实际的卡片过滤操作。
+ */
 void DeckBuilder::StartFilter() {
+	// 获取基础过滤条件：卡片类型、二级类型和限制条件
 	filter_type = mainGame->cbCardType->getSelected();
 	filter_type2 = mainGame->cbCardType2->getItemData(mainGame->cbCardType2->getSelected());
 	filter_lm = mainGame->cbLimit->getSelected();
+
+	// 当选择的过滤类型为1时，获取详细的怪兽卡片过滤条件
 	if(filter_type == 1) {
 		filter_attrib = mainGame->cbAttribute->getItemData(mainGame->cbAttribute->getSelected());
 		filter_race = mainGame->cbRace->getItemData(mainGame->cbRace->getSelected());
@@ -1441,40 +1453,70 @@ void DeckBuilder::StartFilter() {
 		filter_lv = parse_filter(mainGame->ebStar->getText(), &filter_lvtype);
 		filter_scl = parse_filter(mainGame->ebScale->getText(), &filter_scltype);
 	}
+
+	// 执行卡片过滤操作
 	FilterCards();
 }
+
+/**
+ * @brief 根据用户输入的关键字和其他筛选条件过滤卡牌数据，并将结果存储在results中。
+ *
+ * 此函数首先解析用户输入的搜索关键字（支持多关键字、排除模式等），然后遍历所有卡牌，
+ * 应用类型、种族、属性、攻击力、守备力、等级、灵摆刻度、效果分类、连接标记、限制状态等多种筛选条件，
+ * 最终筛选出符合条件的卡牌并更新界面显示。
+ *
+ * @note 该函数会清空之前的筛选结果(results)，并对结果进行排序和分页处理。
+ */
 void DeckBuilder::FilterCards() {
+	// 清除上一次的筛选结果
 	results.clear();
+
+	/**
+	 * 定义用于解析查询字符串的结构体元素
+	 * 包含关键字(keyword)、对应的系列码(setcodes)、匹配类型(type)以及是否排除(exclude)
+	 */
 	struct element_t {
-		std::wstring keyword;
-		std::vector<unsigned int> setcodes;
+		std::wstring keyword;                      ///< 搜索关键词
+		std::vector<unsigned int> setcodes;        ///< 对应的系列码列表
 		enum class type_t {
-			all,
-			name,
-			setcode
-		} type{ type_t::all };
-		bool exclude{ false };
+			all,                                   ///< 全字段匹配
+			name,                                  ///< 名称匹配
+			setcode                                ///< 字段码匹配
+		} type{ type_t::all };                     ///< 当前匹配类型，默认为全字段匹配
+		bool exclude{ false };                     ///< 是否是排除项
 	};
+
+	// 获取用户输入的文本内容
 	const wchar_t* pstr = mainGame->ebCardName->getText();
-	int trycode = BufferIO::GetVal(pstr);
-	std::wstring str{ pstr };
-	std::vector<element_t> query_elements;
+	int trycode = BufferIO::GetVal(pstr);          // 尝试将输入转换为卡号
+	std::wstring str{ pstr };                      // 转换为宽字符字符串便于处理
+
+	std::vector<element_t> query_elements;         // 存储解析后的查询元素
+
+	// 处理多个关键字的情况（根据配置决定使用空格还是+作为分隔符）
 	if(mainGame->gameConf.search_multiple_keywords) {
 		const wchar_t separator = mainGame->gameConf.search_multiple_keywords == 1 ? L' ' : L'+';
-		const wchar_t minussign = L'-';
-		const wchar_t quotation = L'\"';
+		const wchar_t minussign = L'-';            // 表示排除的关键字
+		const wchar_t quotation = L'\"';           // 引号表示精确匹配范围
+
 		size_t element_start = 0;
+
+		// 循环解析每一个关键字片段
 		for(;;) {
 			element_start = str.find_first_not_of(separator, element_start);
 			if(element_start == std::wstring::npos)
 				break;
+
 			element_t element;
+			// 判断是否有排除标志 '-'
 			if(str[element_start] == minussign) {
 				element.exclude = true;
 				element_start++;
 			}
 			if(element_start >= str.size())
 				break;
+
+			// 判断匹配方式：$表示名称匹配，@表示系列码匹配
 			if(str[element_start] == L'$') {
 				element.type = element_t::type_t::name;
 				element_start++;
@@ -1484,26 +1526,37 @@ void DeckBuilder::FilterCards() {
 			}
 			if(element_start >= str.size())
 				break;
+
+			// 判断是否存在引号包裹的内容
 			wchar_t delimiter = separator;
 			if(str[element_start] == quotation) {
 				delimiter = quotation;
 				element_start++;
 			}
+
+			// 提取关键字部分
 			size_t element_end = str.find_first_of(delimiter, element_start);
 			if(element_end != std::wstring::npos) {
 				size_t length = element_end - element_start;
 				element.keyword = str.substr(element_start, length);
-			} else
+			} else {
 				element.keyword = str.substr(element_start);
+			}
+
+			// 获取对应系列码
 			element.setcodes = dataManager.GetSetCodes(element.keyword);
 			query_elements.push_back(element);
+
 			if(element_end == std::wstring::npos)
 				break;
 			element_start = element_end + 1;
 		}
 	} else {
+		// 不启用多关键字时只处理第一个关键字
 		element_t element;
 		size_t element_start = 0;
+
+		// 同样判断匹配方式
 		if(str[element_start] == L'$') {
 			element.type = element_t::type_t::name;
 			element_start++;
@@ -1511,67 +1564,97 @@ void DeckBuilder::FilterCards() {
 			element.type = element_t::type_t::setcode;
 			element_start++;
 		}
+
 		if(element_start < str.size()) {
 			element.keyword = str.substr(element_start);
 			element.setcodes = dataManager.GetSetCodes(element.keyword);
 			query_elements.push_back(element);
 		}
 	}
+
+	// 获取卡牌数据库中的数据表与字符串表
 	auto& _datas = dataManager.GetDataTable();
 	auto& _strings = dataManager.GetStringTable();
+
+	// 遍历每一张卡牌进行筛选
 	for (code_pointer ptr = _datas.begin(); ptr != _datas.end(); ++ptr) {
 		auto& code = ptr->first;
 		auto& data = ptr->second;
 		auto strpointer = _strings.find(code);
 		if (strpointer == _strings.end())
 			continue;
+
 		const CardString& strings = strpointer->second;
+
+		// 排除TOKEN类型的卡片
 		if(data.type & TYPE_TOKEN)
 			continue;
+
+		// 根据主类别进行初步筛选
 		switch(filter_type) {
-		case 1: {
+		case 1: { // 怪兽卡筛选逻辑
 			if(!(data.type & TYPE_MONSTER) || (data.type & filter_type2) != filter_type2)
 				continue;
 			if(filter_race && data.race != filter_race)
 				continue;
 			if(filter_attrib && data.attribute != filter_attrib)
 				continue;
+
+			// 攻击力筛选
 			if(filter_atktype) {
-				if((filter_atktype == 1 && data.attack != filter_atk) || (filter_atktype == 2 && data.attack < filter_atk)
-				        || (filter_atktype == 3 && data.attack <= filter_atk) || (filter_atktype == 4 && (data.attack > filter_atk || data.attack < 0))
-				        || (filter_atktype == 5 && (data.attack >= filter_atk || data.attack < 0)) || (filter_atktype == 6 && data.attack != -2))
+				if((filter_atktype == 1 && data.attack != filter_atk) ||
+				   (filter_atktype == 2 && data.attack < filter_atk) ||
+				   (filter_atktype == 3 && data.attack <= filter_atk) ||
+				   (filter_atktype == 4 && (data.attack > filter_atk || data.attack < 0)) ||
+				   (filter_atktype == 5 && (data.attack >= filter_atk || data.attack < 0)) ||
+				   (filter_atktype == 6 && data.attack != -2))
 					continue;
 			}
+
+			// 守备力筛选
 			if(filter_deftype) {
-				if((filter_deftype == 1 && data.defense != filter_def) || (filter_deftype == 2 && data.defense < filter_def)
-				        || (filter_deftype == 3 && data.defense <= filter_def) || (filter_deftype == 4 && (data.defense > filter_def || data.defense < 0))
-				        || (filter_deftype == 5 && (data.defense >= filter_def || data.defense < 0)) || (filter_deftype == 6 && data.defense != -2)
-				        || (data.type & TYPE_LINK))
+				if((filter_deftype == 1 && data.defense != filter_def) ||
+				   (filter_deftype == 2 && data.defense < filter_def) ||
+				   (filter_deftype == 3 && data.defense <= filter_def) ||
+				   (filter_deftype == 4 && (data.defense > filter_def || data.defense < 0)) ||
+				   (filter_deftype == 5 && (data.defense >= filter_def || data.defense < 0)) ||
+				   (filter_deftype == 6 && data.defense != -2) ||
+				   (data.type & TYPE_LINK))
 					continue;
 			}
+
+			// 等级/阶级筛选
 			if(filter_lvtype) {
-				if((filter_lvtype == 1 && data.level != filter_lv) || (filter_lvtype == 2 && data.level < filter_lv)
-				        || (filter_lvtype == 3 && data.level <= filter_lv) || (filter_lvtype == 4 && data.level > filter_lv)
-				        || (filter_lvtype == 5 && data.level >= filter_lv) || filter_lvtype == 6)
+				if((filter_lvtype == 1 && data.level != filter_lv) ||
+				   (filter_lvtype == 2 && data.level < filter_lv) ||
+				   (filter_lvtype == 3 && data.level <= filter_lv) ||
+				   (filter_lvtype == 4 && data.level > filter_lv) ||
+				   (filter_lvtype == 5 && data.level >= filter_lv) ||
+				   filter_lvtype == 6)
 					continue;
 			}
+
+			// 灵摆刻度筛选
 			if(filter_scltype) {
-				if((filter_scltype == 1 && data.lscale != filter_scl) || (filter_scltype == 2 && data.lscale < filter_scl)
-				        || (filter_scltype == 3 && data.lscale <= filter_scl) || (filter_scltype == 4 && (data.lscale > filter_scl))
-				        || (filter_scltype == 5 && (data.lscale >= filter_scl)) || filter_scltype == 6
-				        || !(data.type & TYPE_PENDULUM))
+				if((filter_scltype == 1 && data.lscale != filter_scl) ||
+				   (filter_scltype == 2 && data.lscale < filter_scl) ||
+				   (filter_scltype == 3 && data.lscale <= filter_scl) ||
+				   (filter_scltype == 4 && (data.lscale > filter_scl)) ||
+				   (filter_scltype == 5 && (data.lscale >= filter_scl)) ||
+				   filter_scltype == 6 ||
+				   !(data.type & TYPE_PENDULUM))
 					continue;
 			}
 			break;
 		}
-		case 2: {
+		case 2: { // 魔法卡筛选逻辑
 			if(!(data.type & TYPE_SPELL))
 				continue;
 			if(filter_type2 && data.type != filter_type2)
 				continue;
 			break;
 		}
-		case 3: {
+		case 3: { // 陷阱卡筛选逻辑
 			if(!(data.type & TYPE_TRAP))
 				continue;
 			if(filter_type2 && data.type != filter_type2)
@@ -1579,51 +1662,96 @@ void DeckBuilder::FilterCards() {
 			break;
 		}
 		}
+
+		// 效果分类筛选
 		if(filter_effect && !(data.category & filter_effect))
 			continue;
+
+		// 连接标记筛选
 		if(filter_marks && (data.link_marker & filter_marks) != filter_marks)
 			continue;
-		if(filter_lm) {
-			if(filter_lm <= 3 && (!filterList->content.count(ptr->first) || filterList->content.at(ptr->first) != filter_lm - 1))
-				continue;
-			if(filter_lm == 4 && !(data.ot & AVAIL_OCG))
-				continue;
-			if(filter_lm == 5 && !(data.ot & AVAIL_TCG))
-				continue;
-			if(filter_lm == 6 && !(data.ot & AVAIL_SC))
-				continue;
-			if(filter_lm == 7 && !(data.ot & AVAIL_CUSTOM))
-				continue;
-			if(filter_lm == 8 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
-				continue;
-		}
+
+		// 限制状态筛选
+        if(filter_lm) {
+            // 检查当前卡片是否符合指定的禁限状态
+            if(filter_lm <= 4) {
+                // 普通禁限卡检查
+                if(filter_lm <= 3 && (!filterList->content.count(ptr->first) || filterList->content.at(ptr->first) != filter_lm - 1))
+                    continue;
+                // genesys点数检查 (filter_lm == 4 对应点数限制)
+                else if(filter_lm == 4) {
+                    // 检查该卡片是否在genesys禁卡表中有点数限制
+                    auto credit_it = filterList->credits.find(ptr->first);
+                    // 同时检查卡片的alias是否在genesys禁卡表中有点数限制
+                    auto alias_credit_it = (ptr->second.alias != 0) ? filterList->credits.find(ptr->second.alias) : filterList->credits.end();
+
+                    // 如果卡片本身和alias都不在genesys列表中，则不符合筛选条件
+                    if(credit_it == filterList->credits.end() && alias_credit_it == filterList->credits.end())
+                        continue; // 如果不在genesys列表中，则不符合筛选条件
+                }
+            }
+
+            // filter_lm == 5 表示只显示OCG卡
+            if(filter_lm == 5 && !(data.ot & AVAIL_OCG))
+                continue;
+
+            // filter_lm == 6 表示只显示TCG卡
+            if(filter_lm == 6 && !(data.ot & AVAIL_TCG))
+                continue;
+
+            // filter_lm == 7 表示只显示SC卡（可能是简体中文卡）
+            if(filter_lm == 7 && !(data.ot & AVAIL_SC))
+                continue;
+
+            // filter_lm == 8 表示只显示CUSTOM卡（自定义卡）
+            if(filter_lm == 8 && !(data.ot & AVAIL_CUSTOM))
+                continue;
+
+            // filter_lm == 9 表示只显示同时属于OCG和TCG的卡片
+            if(filter_lm == 9 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
+                continue;
+        }
+
+
+		// 关键词匹配检查
 		bool is_target = true;
 		for (auto elements_iterator = query_elements.begin(); elements_iterator != query_elements.end(); ++elements_iterator) {
 			bool match = false;
+
+			// 根据不同匹配类型执行不同的比较操作
 			if (elements_iterator->type == element_t::type_t::name) {
 				match = CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str());
 			} else if (elements_iterator->type == element_t::type_t::setcode) {
 				match = data.is_setcodes(elements_iterator->setcodes);
-			} else if (trycode && (data.code == trycode || data.alias == trycode && is_alternative(data.code, data.alias))){
+			} else if (trycode && (data.code == trycode || data.alias == trycode && is_alternative(data.code, data.alias))) {
 				match = true;
 			} else {
 				match = CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str())
-					|| strings.text.find(elements_iterator->keyword) != std::wstring::npos
-					|| data.is_setcodes(elements_iterator->setcodes);
+						|| strings.text.find(elements_iterator->keyword) != std::wstring::npos
+						|| data.is_setcodes(elements_iterator->setcodes);
 			}
+
+			// 若为排除项则反转匹配结果
 			if(elements_iterator->exclude)
 				match = !match;
+
 			if(!match) {
 				is_target = false;
 				break;
 			}
 		}
+
+		// 符合所有条件则加入结果集
 		if(is_target)
 			results.push_back(ptr);
 		else
 			continue;
 	}
+
+	// 更新结果数量显示
 	myswprintf(result_string, L"%d", results.size());
+
+	// 控制滚动条可见性及位置设置
 	if(results.size() > 7) {
 		mainGame->scrFilter->setVisible(true);
 		mainGame->scrFilter->setMax(results.size() - 7);
@@ -1632,8 +1760,11 @@ void DeckBuilder::FilterCards() {
 		mainGame->scrFilter->setVisible(false);
 		mainGame->scrFilter->setPos(0);
 	}
+
+	// 对最终结果进行排序
 	SortList();
 }
+
 void DeckBuilder::InstantSearch() {
 	if(mainGame->gameConf.auto_search_limit >= 0 && ((int)std::wcslen(mainGame->ebCardName->getText()) >= mainGame->gameConf.auto_search_limit))
 		StartFilter();
