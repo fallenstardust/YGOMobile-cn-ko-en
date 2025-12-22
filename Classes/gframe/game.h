@@ -611,6 +611,15 @@ public:
 	irr::gui::IGUIButton* btnSideSort;
 	irr::gui::IGUIButton* btnSideReload;
 	irr::gui::IGUIEditBox* ebDeckname;
+    // Genesys计分板
+	irr::gui::IGUIStaticText* stGenesysLimit;
+	irr::gui::IGUIStaticText* stGenesysLimit_Num;
+	irr::gui::IGUIStaticText* stGenesysCount;
+	irr::gui::IGUIStaticText* stGenesysCount_Num;
+	irr::gui::IGUIStaticText* stGenesysRemain;
+	irr::gui::IGUIStaticText* stGenesysRemain_Num;
+	irr::gui::IGUIStaticText* stGenesysSignal;
+
 	irr::gui::IGUIStaticText* stDBCategory;
 	irr::gui::IGUIStaticText* stDeck;
 	irr::gui::IGUIStaticText* stCategory;

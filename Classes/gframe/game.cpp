@@ -999,10 +999,20 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	//deck edit
 	wDeckEdit = env->addWindow(Resize(310, 1, 600, 130), false, L"");
     wDeckEdit->getCloseButton()->setVisible(false);
+    wDeckEdit->setDraggable(false);
     wDeckEdit->setDrawTitlebar(false);
 	wDeckEdit->setVisible(false);
 	    ChangeToIGUIImageWindow(wDeckEdit, &bgDeckEdit, imageManager.tDialog_L);
-	btnManageDeck = env->addButton(Resize(10, 35, 220, 75), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
+	btnManageDeck = env->addButton(Resize(10, 35, 220, 75), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460)/*卡组管理（其实它实际会显示分类名\n卡组名）*/);
+
+    stGenesysLimit = env->addStaticText(L"限", Resize_Y(25, 5, 50, 30), true, false, wDeckEdit, -1,true);
+    stGenesysLimit_Num = env->addStaticText(L"000", Resize_Y(55, 5, 85, 30), false, false, wDeckEdit, -1,true);
+    stGenesysCount = env->addStaticText(L"计", Resize_Y(90, 5, 115, 30), true, false, wDeckEdit, -1,true);
+    stGenesysCount_Num = env->addStaticText(L"000", Resize_Y(120, 5, 150, 30), false, false, wDeckEdit, -1,true);
+    stGenesysRemain = env->addStaticText(L"余", Resize_Y(155, 5, 180, 30), true, false, wDeckEdit, -1,true);
+    stGenesysRemain_Num = env->addStaticText(L"000", Resize_Y(185, 5, 215, 30), false, false, wDeckEdit, -1,true);
+    stGenesysSignal = env->addStaticText(L"GENESYS", Resize_Y(220, 5, 290, 30), true, false, wDeckEdit, -1,true);
+
     //deck manage
 	wDeckManage = env->addWindow(Resize(530, 10, 920, 460), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);

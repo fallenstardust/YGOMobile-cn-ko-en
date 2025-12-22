@@ -1885,10 +1885,10 @@ void DeckBuilder::ShowDeckManage() {
 	mainGame->cbDBDecks->setSelected(prev_deck);
 	irr::gui::IGUIListBox* lstCategories = mainGame->lstCategories;
 	lstCategories->clear();
-	lstCategories->addItem(dataManager.GetSysString(1450));
-	lstCategories->addItem(dataManager.GetSysString(1451));
-	lstCategories->addItem(dataManager.GetSysString(1452));
-	lstCategories->addItem(dataManager.GetSysString(1453));
+	lstCategories->addItem(dataManager.GetSysString(1450));// 卡包展示
+	lstCategories->addItem(dataManager.GetSysString(1451));// 人机卡组
+	lstCategories->addItem(dataManager.GetSysString(1452));// 未分类卡组
+	lstCategories->addItem(dataManager.GetSysString(1453));//--------(分割线)
 	FileSystem::TraversalDir(L"./deck", [lstCategories](const wchar_t* name, bool isdir) {
 		if(isdir) {
 			lstCategories->addItem(name);
