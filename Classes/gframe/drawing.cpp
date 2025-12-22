@@ -1637,6 +1637,21 @@ void Game::DrawDeckBd() {
 	driver->draw2DImage(imageManager.tCardType, Resize(745, 136, 745+14+3/8, 156), irr::core::recti(46, 0, 69, 32), 0, 0, true);
     DrawShadowText(numFont, dataManager.GetNumString(deckManager.TypeCount(deckManager.current_deck.main, TYPE_TRAP)), Resize(770, 137, 790, 157), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
 
+    // 显示“限”的文字图标
+
+    auto it = deckBuilder.filterList->credit_limits.find(L"genesys");
+    if (it != deckBuilder.filterList->credit_limits.end()) {
+        uint32_t value = it->second;
+        DrawShadowText(guiFont, &L""[value], Resize(475, 136, 500, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
+        DrawShadowText(guiFont, L"限", Resize(450, 136, 470, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
+        // Genesys计分板背景
+        driver->draw2DRectangle(Resize(450, 137, 600, 157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+        // Genesys计分板外框
+        driver->draw2DRectangleOutline(Resize(450, 136, 600, 157));
+    }
+
+    DrawShadowText(numFont, dataManager.GetNumString(deckManager.TypeCount(deckManager.current_deck.main, TYPE_MONSTER)), Resize(670, 137, 690, 157), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
+
 	// 计算主卡组每行显示的列数和间距
 	int lx;                      // 每行显示的列数
 	int dy = 68;                 // 每行之间的垂直间距，默认为68像素
@@ -1674,7 +1689,7 @@ void Game::DrawDeckBd() {
 		driver->draw2DRectangleOutline(Resize(309, 439, 410, 460));
 
 		// 显示“额外卡组”标题
-        DrawShadowText(guiFont, dataManager.GetSysString(1331), Resize(300, 439, 395, 459), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false, 0);
+        DrawShadowText(guiFont, dataManager.GetSysString(1331), Resize(310, 439, 395, 459), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false, 0);
 
 		// 显示额外卡组数量
         DrawShadowText(numFont, dataManager.GetNumString(deckManager.current_deck.extra.size()), Resize(360, 440, 420, 460), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false, 0);

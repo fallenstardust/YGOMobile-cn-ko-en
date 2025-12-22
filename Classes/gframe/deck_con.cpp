@@ -221,7 +221,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			switch(id) {
 			case BUTTON_CLEAR_DECK: {
 				mainGame->gMutex.lock();
-				mainGame->SetStaticText(mainGame->stQMessage, 370, mainGame->guiFont, dataManager.GetSysString(1339));
+				mainGame->SetStaticText(mainGame->stQMessage, 370, mainGame->guiFont, dataManager.GetSysString(1339)/*是否清空正在编辑的卡组？*/);
 				mainGame->PopupElement(mainGame->wQuery);
 				mainGame->gMutex.unlock();
 				prev_operation = id;
@@ -295,7 +295,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				mainGame->gMutex.lock();
 				wchar_t textBuffer[256];
-				myswprintf(textBuffer, L"%ls\n%ls", mainGame->cbDBDecks->getItem(sel), dataManager.GetSysString(1337));
+				myswprintf(textBuffer, L"%ls\n%ls", mainGame->cbDBDecks->getItem(sel), dataManager.GetSysString(1337)/*是否删除这个卡组？*/);
 				mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, textBuffer);
 				mainGame->PopupElement(mainGame->wQuery);
 				mainGame->gMutex.unlock();
@@ -307,7 +307,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			case BUTTON_LEAVE_GAME: {
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356)/*此操作将放弃对当前卡组的修改，是否继续？*/);
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
@@ -926,7 +926,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356)/*此操作将放弃对当前卡组的修改，是否继续？*/);
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
@@ -942,7 +942,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame-> xScale, mainGame->guiFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame-> xScale, mainGame->guiFont, dataManager.GetSysString(1356)/*此操作将放弃对当前卡组的修改，是否继续？*/);
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
