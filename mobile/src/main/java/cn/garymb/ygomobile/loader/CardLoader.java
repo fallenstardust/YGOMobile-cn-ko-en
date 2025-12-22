@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.loader;
 
-import android.content.Context;
 import android.text.TextUtils;
 import android.util.SparseArray;
 
@@ -16,7 +15,6 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.CardSort;
 import cn.garymb.ygomobile.utils.LogUtil;
-import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -53,7 +51,7 @@ public class CardLoader implements ICardSearcher {
         mCardManager = DataManager.get().getCardManager();
 
         // 读取上次使用的LimitList，如果有非空值存在且和禁卡表列表中有相同名称对应，则使用，否则设置第一个禁卡表
-        mLimitList = mLimitManager.getLastLimit();
+        mLimitList = mLimitManager.getLastLimit() != null ? mLimitManager.getLastLimit() : mLimitManager.getTopLimit();
     }
 
     @Override

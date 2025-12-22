@@ -416,31 +416,50 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void initLimitListSpinners(Spinner spinner) {
+        // 创建一个列表用于存储下拉选项
         List<SimpleSpinnerItem> items = new ArrayList<>();
+        // 获取所有禁卡表名称列表
         List<String> limits = mLimitManager.getLimitNames();
+        // 初始化选中项索引为-1（表示未选中）
         int index = -1;
+        // 获取禁卡表总数
         int count = mLimitManager.getCount();
+        // 当前选中的禁卡表，初始化为null
         LimitList cur = null;
+        // 如果卡片搜索器不为null，则获取当前使用的禁卡表
         if (mICardSearcher != null) {
             cur = mICardSearcher.getLimitList();
         }
+        // 添加默认选项"选择禁卡表"
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
+        // 遍历所有禁卡表
         for (int i = 0; i < count; i++) {
+            // 计算选项索引（从1开始）
             int j = i + 1;
+            // 获取禁卡表名称
             String name = limits.get(i);
+            // 创建并添加禁卡表选项到列表
             items.add(new SimpleSpinnerItem(j, name));
+            // 如果当前禁卡表不为null且名称匹配，则记录选中索引
             if (cur != null && TextUtils.equals(cur.getName(), name)) {
                 index = j;
             }
         }
+        // 创建适配器用于绑定数据到Spinner
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
+        // 设置文字颜色为白色
         adapter.setColor(Color.WHITE);
+        // 设置适配器的数据源
         adapter.set(items);
+        // 将适配器设置给Spinner
         spinner.setAdapter(adapter);
+        // 如果找到了匹配的禁卡表，则设置Spinner的选中项
+        Log.w(TAG, "index:" + index);
         if (index >= 0) {
             spinner.setSelection(index);
         }
     }
+
 
     private void refreshLimitListSpinnerItems(Spinner spinner) {
         // 首先清除所有现有的item

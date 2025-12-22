@@ -4,8 +4,6 @@ package ocgcore;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import com.file.zip.ZipEntry;
 import com.file.zip.ZipFile;
 
@@ -58,7 +56,7 @@ public class LimitManager implements Closeable {
         return mLimitNames;
     }
 
-    public @Nullable LimitList getLimit(String name) {
+    public LimitList getLimit(String name) {
         return mLimitLists.get(name);
     }
 
@@ -68,7 +66,7 @@ public class LimitManager implements Closeable {
         }
         // 读取上次使用的LimitList，如果有非空值存在且和禁卡表列表中有相同名称对应，则使用，否则设置第一个禁卡表
         String lastLimitName = AppsSettings.get().getLastLimit();
-        return TextUtils.isEmpty(lastLimitName) ? getTopLimit() : getLimit(lastLimitName);
+        return lastLimitName == null || TextUtils.isEmpty(lastLimitName) ? getTopLimit() : getLimit(lastLimitName);
     }
 
     public LimitList getTopLimit() {

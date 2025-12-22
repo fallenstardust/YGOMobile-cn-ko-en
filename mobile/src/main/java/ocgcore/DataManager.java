@@ -38,14 +38,22 @@ public class DataManager {
                 AppsSettings.get().getExpansionsPath().getAbsolutePath());
     }
 
-    public StringManager getStringManager() { return mStringManager;}
-    public PackManager getPackManager() { return mPackManager;}
+    public StringManager getStringManager() {
+        return mStringManager;
+    }
+
+    public PackManager getPackManager() {
+        return mPackManager;
+    }
+
     public LimitManager getLimitManager() {
         return mLimitManager;
     }
+
     public CardManager getCardManager() {
         return mCardManager;
     }
+
     private boolean mInit;
 
     public void load() {

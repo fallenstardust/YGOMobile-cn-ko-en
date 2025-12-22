@@ -745,7 +745,8 @@ public class AppsSettings {
 
     public void saveSettings(String key, String value) {
         if ("lastdeck".equals(key)) mSharedPreferences.putString(Constants.PREF_LAST_YDK, value);
-        if ("lastcategory".equals(key)) mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
+        if ("lastcategory".equals(key))
+            mSharedPreferences.putString(Constants.PREF_LAST_CATEGORY, value);
         if ("lastLimit".equals(key)) setLastLimit(value);
         mSharedPreferences.putString(Constants.PREF_START + key, value);
     }

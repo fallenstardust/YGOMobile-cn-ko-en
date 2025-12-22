@@ -33,7 +33,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -75,7 +74,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -93,7 +91,6 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
-import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckAdapater;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
@@ -839,7 +836,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         int currentCredit = 0;
         int creditLimit = 0;
 
-        // 检查并处理信用分限制逻辑
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
             creditLimit = limitList.getCreditLimits();
             currentCredit = getCreditCount(mDeckAdapater.getCurrentState());
@@ -1818,7 +1814,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), deckData.getDeckUpdateDate());
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
-                        preLoadFile(Paths.get(dir.getPath(),fileFullName).toString());
+                        preLoadFile(Paths.get(dir.getPath(), fileFullName).toString());
                         tv_add_1.setText(R.string.like_deck_thumb);
                         ll_click_like.setVisibility(View.VISIBLE);
                     }
