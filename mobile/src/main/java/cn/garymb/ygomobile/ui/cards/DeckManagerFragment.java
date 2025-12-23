@@ -836,11 +836,19 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         int currentCredit = 0;
         int creditLimit = 0;
 
+        // 禁卡表为空值以防止空指针异常
+        if (limitList == null) {
+            // 如果limitList为null，隐藏计分板并返回
+            if (ll_genesys_scoreboard != null) {
+                ll_genesys_scoreboard.setVisibility(View.GONE);
+            }
+            return;
+        }
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
             creditLimit = limitList.getCreditLimits();
             currentCredit = getCreditCount(mDeckAdapater.getCurrentState());
 
-            // 当当前信用分超过限制时，设置文本为红色
+            // 当当前点数超过限制时，设置文本为红色
             if (currentCredit > creditLimit) {
                 tv_credit_count.setTextColor(Color.RED);
                 tv_credit_remain.setTextColor(Color.RED);

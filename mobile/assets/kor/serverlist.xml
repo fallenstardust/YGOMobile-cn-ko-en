@@ -19,6 +19,14 @@
         <keep>true</keep>
     </server>
     <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>GENESYS 포맷 정식 서버</name>
+        <desc>GENESYS 포인트표 기준 제한 적용하여 덱 구성. TCG 환경</desc>
+        <ip>exp.baldlee.top</ip>
+        <port>23333</port>
+        <keep>true</keep>
+    </server>
+    <server>
         <player-name>신선한 고기</player-name>
         <name>YGOPRO 중국 서버 1</name>
         <desc>unknow upgrade time</desc>
@@ -32,14 +40,6 @@
         <desc>use random deck to duel</desc>
         <ip>2333.duelstart.com</ip>
         <port>2333</port>
-        <keep>true</keep>
-    </server>
-    <server>
-        <player-name>신선한 고기</player-name>
-        <name>2 Pick MyCard 모에</name>
-        <desc>build new deck to duel</desc>
-        <ip>2pick.moecube.com</ip>
-        <port>765</port>
         <keep>true</keep>
     </server>
 </servers>

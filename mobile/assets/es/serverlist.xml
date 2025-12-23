@@ -20,6 +20,14 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
+        <name>Servidor oficial del formato GENESYS</name>
+        <desc>Construye mazos con restricciones según la Tabla de Puntos GENESYS.</desc>
+        <ip>exp.baldlee.top</ip>
+        <port>23333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
         <name>Evolution TCG Server</name>
         <desc>TCG environments</desc>
         <ip>server.evolutionygo.com</ip>

@@ -20,6 +20,14 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
+        <name>GENESYS Format Server</name>
+        <desc>Construct decks with restrictions according to the GENESYS Point List.</desc>
+        <ip>exp.baldlee.top</ip>
+        <port>23333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
         <name>Duel Chronicles</name>
         <desc>use random deck to duel</desc>
         <ip>2333.duelstart.com</ip>

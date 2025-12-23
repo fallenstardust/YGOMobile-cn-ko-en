@@ -19,6 +19,14 @@
         <keep>true</keep>
     </server>
     <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>Servidor oficial do formato GENESYS</name>
+        <desc>Construa decks com restrições de acordo com a Tabela de Pontos GENESYS.</desc>
+        <ip>exp.baldlee.top</ip>
+        <port>23333</port>
+        <keep>true</keep>
+    </server>
+    <server>
         <player-name>Cavaleiro de Hanoi</player-name>
         <name>Servidor Evolution TCG</name>
         <desc>Ambientes TCG</desc>

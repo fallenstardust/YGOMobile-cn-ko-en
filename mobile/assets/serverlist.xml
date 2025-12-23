@@ -20,6 +20,14 @@
     </server>
     <server>
         <player-name>Knight of Hanoi</player-name>
+        <name>起源赛制正式服</name>
+        <desc>按照genesys点数表禁限构筑牌组。TCG环境</desc>
+        <ip>exp.baldlee.top</ip>
+        <port>23333</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
         <name>决斗编年史</name>
         <desc>由系统随机分配卡组决斗</desc>
         <ip>duels.link</ip>
