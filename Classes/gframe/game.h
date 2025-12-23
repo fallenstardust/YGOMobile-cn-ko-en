@@ -251,6 +251,7 @@ public:
 	irr::core::recti ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 width);
 	irr::core::recti ResizeWin(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::recti Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+    irr::core::recti Resize_X_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::vector2di Resize_Y(irr::s32 x, irr::s32 y);
     template<typename T>
     static std::vector<T> TokenizeString(T input, const T& token);

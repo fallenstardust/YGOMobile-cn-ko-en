@@ -2557,6 +2557,14 @@ irr::core::recti Game::Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2
     y2 = y2 * yScale;
 	return irr::core::recti(x, y, x2, y2);
 }
+irr::core::recti Game::Resize_X_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
+    irr::s32 w = x2 - x;
+    x = x * xScale;
+    y = y * yScale;
+    x2 = x + w * yScale;
+    y2 = y2 * yScale;
+    return irr::core::recti(x, y, x2, y2);
+}
 irr::core::vector2di Game::Resize_Y(irr::s32 x, irr::s32 y) {
     x = x * yScale;
     y = y * yScale;

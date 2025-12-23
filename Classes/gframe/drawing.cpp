@@ -1608,7 +1608,7 @@ void Game::DrawDeckBd() {
 
 	// 主卡组区域背景渐变色与白色边框
 	int mainsize = deckManager.current_deck.main.size();
-	driver->draw2DRectangle(Resize(310, 137, 410, 157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+	driver->draw2DRectangle(Resize(310, 136, 410, 157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(Resize(309, 136, 410, 157));
 
 	// 显示“主卡组”的文字
@@ -1636,14 +1636,14 @@ void Game::DrawDeckBd() {
     auto it = deckBuilder.filterList->credit_limits.find(L"genesys");
     if (it != deckBuilder.filterList->credit_limits.end()) {
         // Genesys计分板背景
-        driver->draw2DRectangle(Resize(420, 137, 628, 157), 0xff000000, 0xff000000, 0x40000000, 0x40000000);
+        driver->draw2DRectangle(Resize(420, 136, 628, 157), 0xff000000, 0xff000000, 0x40000000, 0x40000000);
         // Genesys计分板外框
         driver->draw2DRectangleOutline(Resize(420, 136, 628, 157));
 
         // 显示“限”的文字图标
-        driver->draw2DImage(imageManager.tGSC, ResizeWin(425, 136, 445, 157), irr::core::recti(0, 0, 64, 64), 0, 0, true);
+        driver->draw2DImage(imageManager.tGSC, Resize_X_Y(425, 137, 445, 156), irr::core::recti(0, 0, 64, 64), 0, 0, true);
         int intValue = static_cast<int>(it->second);//获取被选定的genesys禁卡表的上限值，并显示在界面上
-        DrawShadowText(guiFont, std::to_wstring(intValue), ResizeWin(450, 136, 470, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
+        DrawShadowText(guiFont, std::to_wstring(intValue), Resize_X_Y(450, 137, 470, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
 
         //遍历genesys禁卡表的卡片点数表，统计当前卡组点数合计值
         int totalCredits = 0;
@@ -1699,18 +1699,18 @@ void Game::DrawDeckBd() {
             }
         }
         irr::video::SColor color = 0xffffffff;// 设置默认数字颜色值为白色
-        driver->draw2DImage(imageManager.tGSC, ResizeWin(480, 136, 500, 157), irr::core::recti(64, 0, 128, 64), 0, 0, true);
+        driver->draw2DImage(imageManager.tGSC, Resize_X_Y(480, 137, 500, 156), irr::core::recti(64, 0, 128, 64), 0, 0, true);
         color = totalCredits > intValue ? 0xffff0000 : 0xffffffff;// 如果点数总和超过上限则设置数字颜色为红色，否则为白色
-        DrawShadowText(guiFont, std::to_wstring(totalCredits), ResizeWin(505, 136, 525, 156), Resize(0, 1, 2, 0), color, 0xff000000, true,true);
+        DrawShadowText(guiFont, std::to_wstring(totalCredits), Resize_X_Y(505, 137, 525, 156), Resize(0, 1, 2, 0), color, 0xff000000, true,true);
 
         // 显示剩余点数
-        driver->draw2DImage(imageManager.tGSC, ResizeWin(535, 136, 555, 157), irr::core::recti(128, 0, 192, 64), 0, 0, true);
+        driver->draw2DImage(imageManager.tGSC, Resize_X_Y(535, 137, 555, 156), irr::core::recti(128, 0, 192, 64), 0, 0, true);
         int remaining = intValue - totalCredits;
         color = remaining < 0 ? 0xffff0000 : 0xffffffff;// 剩余点数小于0则设置数字颜色为红色，否则为白色
-        DrawShadowText(guiFont, std::to_wstring(remaining), ResizeWin(560, 136, 580, 156), Resize(0, 1, 2, 0), color, 0xff000000, true,true);
+        DrawShadowText(guiFont, std::to_wstring(remaining), Resize_X_Y(560, 137, 580, 156), Resize(0, 1, 2, 0), color, 0xff000000, true,true);
 
         // Genesys标志
-        driver->draw2DImage(imageManager.tGSC, Resize(590, 136, 623, 156), irr::core::recti(192, 0, 448, 64), 0, 0, true);
+        driver->draw2DImage(imageManager.tGSC, Resize(590, 137, 623, 156), irr::core::recti(192, 0, 448, 64), 0, 0, true);
     }
 
     // 主卡组内容区背景与边框
