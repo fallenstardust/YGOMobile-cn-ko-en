@@ -57,6 +57,7 @@ public:
 	irr::video::ITexture* tFieldTransparent[2];
 	irr::video::ITexture* tRScale[14];
 	irr::video::ITexture* tLScale[14];
+	irr::video::ITexture* tGSC;
 	irr::video::ITexture* tClock;
 	irr::video::ITexture* tCardType;
 	irr::video::ITexture* tAvatar[2];

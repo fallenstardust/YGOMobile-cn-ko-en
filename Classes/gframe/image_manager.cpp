@@ -86,6 +86,7 @@ bool ImageManager::Initial(const path dir) {
 		snprintf(buff, 100, "/textures/extra/lscale_%d.png", i);
 		tLScale[i] = driver->getTexture((dir + path(buff)).c_str());
 	}
+    tGSC = driver->getTexture((dir + path("/textures/extra/gsc.png")).c_str());
 	tClock = driver->getTexture((dir + path("/textures/tiktok.png")).c_str());
 	support_types.push_back(std::string("jpg"));
 	support_types.push_back(std::string("png"));
