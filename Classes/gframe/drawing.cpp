@@ -1617,10 +1617,6 @@ void Game::DrawDeckBd() {
 	// 显示主卡组数量数字
     DrawShadowText(numFont, dataManager.GetNumString(mainsize), Resize(360, 137, 420, 157), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
 
-	// 主卡组内容区背景与边框
-	driver->draw2DRectangle(Resize(310, 160, 797, deckBuilder.showing_pack ? 630 : 436), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-	driver->draw2DRectangleOutline(Resize(309, 159, 798, deckBuilder.showing_pack ? 630 : 436));
-
 	// 类型计数区域背景与边框
 	driver->draw2DRectangle(Resize(638, 137, 798, 157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 	driver->draw2DRectangleOutline(Resize(637, 136, 798, 157));
@@ -1637,20 +1633,90 @@ void Game::DrawDeckBd() {
 	driver->draw2DImage(imageManager.tCardType, Resize(745, 136, 745+14+3/8, 156), irr::core::recti(46, 0, 69, 32), 0, 0, true);
     DrawShadowText(numFont, dataManager.GetNumString(deckManager.TypeCount(deckManager.current_deck.main, TYPE_TRAP)), Resize(770, 137, 790, 157), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
 
-    // 显示“限”的文字图标
-
     auto it = deckBuilder.filterList->credit_limits.find(L"genesys");
     if (it != deckBuilder.filterList->credit_limits.end()) {
-        uint32_t value = it->second;
-        DrawShadowText(guiFont, &L""[value], Resize(475, 136, 500, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
-        DrawShadowText(guiFont, L"限", Resize(450, 136, 470, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
         // Genesys计分板背景
-        driver->draw2DRectangle(Resize(450, 137, 600, 157), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+        driver->draw2DRectangle(Resize(420, 137, 628, 157), 0xff000000, 0xff000000, 0x40000000, 0x40000000);
         // Genesys计分板外框
-        driver->draw2DRectangleOutline(Resize(450, 136, 600, 157));
+        driver->draw2DRectangleOutline(Resize(420, 136, 628, 157));
+
+        // 显示“限”的文字图标
+        DrawShadowText(guiFont, L"限", Resize(425, 136, 435, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
+
+        int intValue = static_cast<int>(it->second);//获取被选定的genesys禁卡表的上限值，并显示在界面上
+        DrawShadowText(guiFont, std::to_wstring(intValue), Resize(440, 136, 460, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
+
+        //遍历genesys禁卡表的卡片点数表，统计当前卡组点数合计值
+        int totalCredits = 0;
+        for (auto& card : deckManager.current_deck.main) {
+            auto cardCode = card->first;
+            auto aliasCode = card->second.alias;
+            if (aliasCode == 0)
+                aliasCode = cardCode;
+
+            auto credit_it = deckBuilder.filterList->credits.find(aliasCode);
+            if (credit_it != deckBuilder.filterList->credits.end()) {
+                for (auto& credit_entry : credit_it->second) {
+                    if (credit_entry.first == L"genesys") {
+                        totalCredits += credit_entry.second;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 统计额外卡组中的点数
+        for (auto& card : deckManager.current_deck.extra) {
+            auto cardCode = card->first;
+            auto aliasCode = card->second.alias;
+            if (aliasCode == 0)
+                aliasCode = cardCode;
+
+            auto credit_it = deckBuilder.filterList->credits.find(aliasCode);
+            if (credit_it != deckBuilder.filterList->credits.end()) {
+                for (auto& credit_entry : credit_it->second) {
+                    if (credit_entry.first == L"genesys") {
+                        totalCredits += credit_entry.second;
+                        break;
+                    }
+                }
+            }
+        }
+        // 统计副卡组的点数
+        for (auto& card : deckManager.current_deck.side) {
+            auto cardCode = card->first;
+            auto aliasCode = card->second.alias;
+            if (aliasCode == 0)
+                aliasCode = cardCode;
+
+            auto credit_it = deckBuilder.filterList->credits.find(aliasCode);
+            if (credit_it != deckBuilder.filterList->credits.end()) {
+                for (auto& credit_entry : credit_it->second) {
+                    if (credit_entry.first == L"genesys") {
+                        totalCredits += credit_entry.second;
+                        break;
+                    }
+                }
+            }
+        }
+        irr::video::SColor color = 0xffffffff;// 设置默认数字颜色值为白色
+        DrawShadowText(guiFont, L"计", Resize(470, 136, 480, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
+        color = totalCredits > intValue ? 0xffff0000 : 0xffffffff;// 如果点数总和超过上限则设置数字颜色为红色，否则为白色
+        DrawShadowText(guiFont, std::to_wstring(totalCredits), Resize(485, 136, 505, 156), Resize(0, 1, 2, 0), color, 0xff000000, true,true);
+
+        // 显示剩余点数
+        DrawShadowText(guiFont, L"余", Resize(515, 136, 525, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
+        int remaining = intValue - totalCredits;
+        color = remaining < 0 ? 0xffff0000 : 0xffffffff;// 剩余点数小于0则设置数字颜色为红色，否则为白色
+        DrawShadowText(guiFont, std::to_wstring(remaining), Resize(530, 136, 550, 156), Resize(0, 1, 2, 0), color, 0xff000000, true,true);
+
+        // Genesys标志
+        DrawShadowText(guiFont, L"GENESYS", Resize(560, 136, 623, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
     }
 
-    DrawShadowText(numFont, dataManager.GetNumString(deckManager.TypeCount(deckManager.current_deck.main, TYPE_MONSTER)), Resize(670, 137, 690, 157), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true, false);
+    // 主卡组内容区背景与边框
+    driver->draw2DRectangle(Resize(310, 160, 797, deckBuilder.showing_pack ? 630 : 436), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+    driver->draw2DRectangleOutline(Resize(309, 159, 798, deckBuilder.showing_pack ? 630 : 436));
 
 	// 计算主卡组每行显示的列数和间距
 	int lx;                      // 每行显示的列数
