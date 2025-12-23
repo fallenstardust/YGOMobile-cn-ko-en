@@ -88,6 +88,7 @@ public class LimitManager implements Closeable {
         boolean expansion_rs2 = true;
         boolean expansion_zip_rs1 = true;
         boolean default_res3 = true;
+        boolean default_genesys_res4 = true;
         // 如果需要读取扩展包数据，则加载扩展包中的限制文件
         if (AppsSettings.get().isReadExpansions()) {
 
@@ -114,24 +115,25 @@ public class LimitManager implements Closeable {
                             default_res3 = false;
                         }
                     }
-                    // 2.读取扩展卡文件夹中的名字包含lflist、.conf文件
-                    if (file.isFile() && file.getName().contains("lflist") && file.getName().endsWith(".conf")) {
+                    // 2.读取扩展卡文件夹中的lflist.conf文件
+                    if (file.isFile() && file.getName().equals(Constants.CORE_CUSTOM_LIMIT_PATH)) {
                         expansion_rs2 = loadFile(file);
                     }
                 }
             }
         }
-
         // 3.加载主资源路径(ygocore文件夹）下的lflist.conf文件对象，这是内置默认文件
         File ygocore_lflist = new File(AppsSettings.get().getResourcePath(), Constants.CORE_LIMIT_PATH);
         default_res3 = loadFile(ygocore_lflist);
-
+        File genesys_lflist = new File(AppsSettings.get().getExpansionsPath(), Constants.CORE_GENESYS_LIMIT_PATH);
+        default_genesys_res4 = loadFile(genesys_lflist);
+        
         // 4.添加一个空卡表N/A（为了和ygopro显示一致才这么写） 无禁限
         mLimitLists.put("N/A", new LimitList("N/A"));
         mLimitNames.add("N/A");
 
         ++mCount;
-        return expansion_zip_rs1 && expansion_rs2 && default_res3;
+        return expansion_zip_rs1 && expansion_rs2 && default_res3 && default_genesys_res4;
     }
 
     /**
