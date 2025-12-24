@@ -217,7 +217,12 @@ public class CardLoader implements ICardSearcher {
         LimitList limitList = null;
         List<Integer> inCards = null;
         if (!TextUtils.isEmpty(limitName)) {
-            limitList = mLimitManager.getLimit(limitName);
+            if(limitName.toLowerCase().contains("genesys")) {
+                limitList = mLimitManager.getGenesysLimit(limitName);
+            } else {
+                limitList = mLimitManager.getLimit(limitName);
+            }
+
             setLimitList(limitList);
             if (limitList != null) {
                 LimitType cardLimitType = LimitType.valueOf(limit);

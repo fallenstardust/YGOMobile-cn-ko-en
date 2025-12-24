@@ -251,7 +251,6 @@ public class LimitManager implements Closeable {
         // 更新限制列表计数
         mCount = mLimitLists.size();
         mGenesys_Count = mGenesys_LimitLists.size();
-        Log.e("LimitManager", "限制列表数量：" + mCount);
         return true;
     }
 
@@ -332,8 +331,6 @@ public class LimitManager implements Closeable {
         }
         mCount = mLimitLists.size();
         mGenesys_Count = mGenesys_LimitLists.size();
-        Log.e("LimitManager", "限制列表数量：" + mCount);
-        Log.e("LimitManager", "Genesys限制列表数量：" + mGenesys_Count);
         return true;
     }
 

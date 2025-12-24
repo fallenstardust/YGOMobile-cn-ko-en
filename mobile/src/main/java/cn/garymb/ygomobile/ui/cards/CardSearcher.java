@@ -210,7 +210,7 @@ public class CardSearcher implements View.OnClickListener {
                 });
             }
         });
-
+        genesys_Switch.setChecked(mSettings.getGenesysMode() != 0);
         genesys_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 genesys_limitListSpinner.setVisibility(View.VISIBLE);
@@ -218,7 +218,6 @@ public class CardSearcher implements View.OnClickListener {
                 limitListSpinner.setVisibility(View.GONE);
                 limitSpinner.setVisibility(View.GONE);
             } else {
-
                 genesys_limitListSpinner.setVisibility(View.GONE);
                 genesys_limitSpinner.setVisibility(View.GONE);
                 limitListSpinner.setVisibility(View.VISIBLE);
@@ -227,6 +226,7 @@ public class CardSearcher implements View.OnClickListener {
             genesys_Switch.setText(isChecked ? "起源赛制模式" : "传统禁限模式");
             mSettings.setGenesysMode(isChecked ? 1 : 0);
         });
+        limitListSpinner.setVisibility(genesys_Switch.isChecked() ? View.GONE : View.VISIBLE);
         limitListSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -252,6 +252,9 @@ public class CardSearcher implements View.OnClickListener {
             }
             return false; // 返回false以允许正常的spinner行为继续
         });
+        limitSpinner.setVisibility(genesys_Switch.isChecked() ? View.GONE : View.VISIBLE);
+        genesys_limitSpinner.setVisibility(genesys_Switch.isChecked() ? View.VISIBLE : View.GONE);
+        genesys_limitListSpinner.setVisibility(genesys_Switch.isChecked() ? View.VISIBLE : View.GONE);
         genesys_limitListSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -259,7 +262,7 @@ public class CardSearcher implements View.OnClickListener {
                 if (value <= 0) {
                     reset(genesys_limitSpinner);
                 }
-                LimitList genesyslimit = mLimitManager.getLimit(getSelectText(genesys_limitListSpinner));
+                LimitList genesyslimit = mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner));
                 mICardSearcher.setLimitList(genesyslimit);
                 //同时通知整个界面都显示该禁卡表的禁限情况
                 mCallBack.setLimit(genesyslimit);
@@ -368,7 +371,7 @@ public class CardSearcher implements View.OnClickListener {
         initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
         initLimitListSpinners(limitListSpinner);
-        initGenesysLimitListSpinners(genesys_limitSpinner);
+        initGenesysLimitListSpinners(genesys_limitListSpinner);
         initTypeSpinners(typeSpinner, new CardType[]{CardType.None, CardType.Monster, CardType.Spell, CardType.Trap});
         initTypeSpinners(typeMonsterSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Effect, CardType.Fusion, CardType.Ritual,
                 CardType.Synchro, CardType.Pendulum, CardType.Xyz, CardType.Link, CardType.Spirit, CardType.Union,
@@ -537,7 +540,7 @@ public class CardSearcher implements View.OnClickListener {
         // 将适配器设置给Spinner
         spinner.setAdapter(adapter);
         // 如果找到了匹配的禁卡表，则设置Spinner的选中项
-        Log.w(TAG, "index:" + index);
+        Log.w(TAG, " genesys index:" + index);
         if (index >= 0) {
             spinner.setSelection(index);
         }
@@ -730,8 +733,8 @@ public class CardSearcher implements View.OnClickListener {
                     .atk(text(atkText))
                     .def(text(defText))
                     .pscale(getIntSelect(pScale))
-                    .limitType(limitSpinner.getVisibility() == View.VISIBLE ? getIntSelect(limitSpinner) : getIntSelect(genesys_limitSpinner))
-                    .limitName(getSelectText(limitListSpinner))
+                    .limitType(genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner) )
+                    .limitName(genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner))
                     .setcode(getSelect(setCodeSpinner))
                     .category(getSelect(categorySpinner))
                     .ot(getIntSelect(otSpinner))
