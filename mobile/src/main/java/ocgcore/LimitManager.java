@@ -116,7 +116,7 @@ public class LimitManager implements Closeable {
                         }
                     }
                     // 2.读取扩展卡文件夹中的lflist.conf文件
-                    if (file.isFile() && file.getName().equals(Constants.CORE_CUSTOM_LIMIT_PATH)) {
+                    if (file.isFile() && file.getName().equals(Constants.CORE_LIMIT_PATH)) {
                         expansion_rs2 = loadFile(file);
                     }
                 }
