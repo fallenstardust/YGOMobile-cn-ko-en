@@ -15,6 +15,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView.OnEditorActionListener;
 
 import java.util.ArrayList;
@@ -49,9 +50,11 @@ public class CardSearcher implements View.OnClickListener {
     private final EditText keyWord;
     private final CheckBox chk_multi_keyword;
     private final Spinner otSpinner;
+    private final Switch genesys_Switch;
     private final Spinner limitSpinner;
     private final Spinner genesys_limitSpinner;
     private final Spinner limitListSpinner;
+    private final Spinner genesys_limitListSpinner;
     private final Spinner typeSpinner;
     private final Spinner typeMonsterSpinner;
     private final Spinner typeMonsterSpinner2;
@@ -90,9 +93,11 @@ public class CardSearcher implements View.OnClickListener {
         keyWord = findViewById(R.id.edt_word1);
         chk_multi_keyword = findViewById(R.id.chk_multi_keyword);
         otSpinner = findViewById(R.id.sp_ot);
+        genesys_Switch = findViewById(R.id.sw_genesys_mode);//genesys模式开关
         limitSpinner = findViewById(R.id.sp_limit);
         genesys_limitSpinner = findViewById(R.id.sp_genesys_limit);//初始化genesys禁限选项布局
         limitListSpinner = findViewById(R.id.sp_limit_list);
+        genesys_limitListSpinner = findViewById(R.id.sp_genesys_limit_list);//初始化genesys禁卡表布局
         typeSpinner = findViewById(R.id.sp_type_card);
         typeMonsterSpinner = findViewById(R.id.sp_type_monster);
         typeMonsterSpinner2 = findViewById(R.id.sp_type_monster2);
@@ -206,23 +211,30 @@ public class CardSearcher implements View.OnClickListener {
             }
         });
 
+        genesys_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                genesys_limitListSpinner.setVisibility(View.VISIBLE);
+                genesys_limitSpinner.setVisibility(View.VISIBLE);
+                limitListSpinner.setVisibility(View.GONE);
+                limitSpinner.setVisibility(View.GONE);
+            } else {
 
+                genesys_limitListSpinner.setVisibility(View.GONE);
+                genesys_limitSpinner.setVisibility(View.GONE);
+                limitListSpinner.setVisibility(View.VISIBLE);
+                limitSpinner.setVisibility(View.VISIBLE);
+            }
+            genesys_Switch.setText(isChecked ? "起源赛制模式" : "传统禁限模式");
+            mSettings.setGenesysMode(isChecked ? 1 : 0);
+        });
         limitListSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 long value = getSelect(limitListSpinner);
                 if (value <= 0) {
                     reset(limitSpinner);
-                    reset(genesys_limitSpinner);
                 }
                 LimitList limit = mLimitManager.getLimit(getSelectText(limitListSpinner));
-                if (limit.getName().toLowerCase().contains("genesys")) {
-                    genesys_limitSpinner.setVisibility(View.VISIBLE);
-                    limitSpinner.setVisibility(View.GONE);
-                } else {
-                    genesys_limitSpinner.setVisibility(View.GONE);
-                    limitSpinner.setVisibility(View.VISIBLE);
-                }
                 mICardSearcher.setLimitList(limit);
                 //同时通知整个界面都显示该禁卡表的禁限情况
                 mCallBack.setLimit(limit);
@@ -237,6 +249,31 @@ public class CardSearcher implements View.OnClickListener {
         limitListSpinner.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 refreshLimitListSpinnerItems(limitListSpinner);
+            }
+            return false; // 返回false以允许正常的spinner行为继续
+        });
+        genesys_limitListSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                long value = getSelect(genesys_limitListSpinner);
+                if (value <= 0) {
+                    reset(genesys_limitSpinner);
+                }
+                LimitList genesyslimit = mLimitManager.getLimit(getSelectText(genesys_limitListSpinner));
+                mICardSearcher.setLimitList(genesyslimit);
+                //同时通知整个界面都显示该禁卡表的禁限情况
+                mCallBack.setLimit(genesyslimit);
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        genesys_limitListSpinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                refreshGenesysLimitListSpinnerItems(genesys_limitListSpinner);
             }
             return false; // 返回false以允许正常的spinner行为继续
         });
@@ -331,6 +368,7 @@ public class CardSearcher implements View.OnClickListener {
         initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
         initLimitListSpinners(limitListSpinner);
+        initGenesysLimitListSpinners(genesys_limitSpinner);
         initTypeSpinners(typeSpinner, new CardType[]{CardType.None, CardType.Monster, CardType.Spell, CardType.Trap});
         initTypeSpinners(typeMonsterSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Effect, CardType.Fusion, CardType.Ritual,
                 CardType.Synchro, CardType.Pendulum, CardType.Xyz, CardType.Link, CardType.Spirit, CardType.Union,
@@ -460,7 +498,50 @@ public class CardSearcher implements View.OnClickListener {
         }
     }
 
-
+    private void initGenesysLimitListSpinners(Spinner spinner) {
+        // 创建一个列表用于存储下拉选项
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        // 获取所有禁卡表名称列表
+        List<String> genesys_limit_names = mLimitManager.getGenesysLimitNames();
+        // 初始化选中项索引为-1（表示未选中）
+        int index = -1;
+        // 获取禁卡表总数
+        int genesys_count = mLimitManager.getGenesysCount();
+        // 当前选中的禁卡表，初始化为null
+        LimitList cur = null;
+        // 如果卡片搜索器不为null，则获取当前使用的禁卡表
+        if (mICardSearcher != null) {
+            cur = mICardSearcher.getGenesysLimitList();
+        }
+        // 添加默认选项"禁卡表"
+        items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
+        // 遍历所有禁卡表
+        for (int i = 0; i < genesys_count; i++) {
+            // 计算选项索引（从1开始）
+            int j = i + 1;
+            // 获取禁卡表名称
+            String name = genesys_limit_names.get(i);
+            // 创建并添加禁卡表选项到列表
+            items.add(new SimpleSpinnerItem(j, name));
+            // 如果当前禁卡表不为null且名称匹配，则记录选中索引
+            if (cur != null && TextUtils.equals(cur.getName(), name)) {
+                index = j;
+            }
+        }
+        // 创建适配器用于绑定数据到Spinner
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
+        // 设置文字颜色为白色
+        adapter.setColor(Color.WHITE);
+        // 设置适配器的数据源
+        adapter.set(items);
+        // 将适配器设置给Spinner
+        spinner.setAdapter(adapter);
+        // 如果找到了匹配的禁卡表，则设置Spinner的选中项
+        Log.w(TAG, "index:" + index);
+        if (index >= 0) {
+            spinner.setSelection(index);
+        }
+    }
     private void refreshLimitListSpinnerItems(Spinner spinner) {
         // 首先清除所有现有的item
         if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
@@ -470,6 +551,17 @@ public class CardSearcher implements View.OnClickListener {
             mLimitManager.load();
         }
         initLimitListSpinners(spinner);
+    }
+
+    private void refreshGenesysLimitListSpinnerItems(Spinner spinner) {
+        // 首先清除所有现有的item
+        if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
+            //清空选项
+            ((SimpleSpinnerAdapter) spinner.getAdapter()).clear();
+            //重新加载禁卡表，获取可能存在的变动后情况
+            mLimitManager.load();
+        }
+        initGenesysLimitListSpinners(spinner);
     }
 
 
@@ -667,7 +759,7 @@ public class CardSearcher implements View.OnClickListener {
 //        if (limitListSpinner.getAdapter().getCount() > 1) {//因为禁卡表选择记录已变为保存形式，所以这里不再重置为第一个禁卡表
 //            limitListSpinner.setSelection(1);
 //        }
-        reset(limitSpinner);
+        reset(limitSpinner.getVisibility() == View.VISIBLE ? limitSpinner : genesys_limitSpinner);
         reset(typeSpinner);
         reset(typeSpellSpinner);
         reset(typeTrapSpinner);

@@ -17,8 +17,8 @@ import ocgcore.enums.LimitType;
  */
 public class LimitList {
     private String name = "?";
-    private Integer credit_limits;//GeneSys模式特有的总分值
-    private Map<Integer, Integer> credits;//GeneSys模式特有的单张卡ID和其信用分
+    private Integer credit_limits;//GeneSys模式特有的上限值
+    private Map<Integer, Integer> credits;//GeneSys模式特有的单张卡ID和其点数
     /**
      * 0
      */

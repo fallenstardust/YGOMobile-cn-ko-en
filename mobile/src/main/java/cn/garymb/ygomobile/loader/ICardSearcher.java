@@ -7,4 +7,5 @@ public interface ICardSearcher extends ICardLoader{
     void onReset();
     void setLimitList(LimitList limit);
     LimitList getLimitList();
+    LimitList getGenesysLimitList();
 }

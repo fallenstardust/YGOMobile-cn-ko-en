@@ -9,7 +9,11 @@ public interface Constants {
     boolean DEBUG = BuildConfig.DEBUG;
     String PREF_START = "game_pref_";
     String PREF_LAST_LIMIT = "pref_last_limit";
+    String PREF_LAST_GENESYS_MODE = "pref_last_genesys_mode";
+    int PREF_DEF_LAST_GENESYS_MODE = 0;//0代表传统禁限模式，1代表Genesys模式
     String PREF_DEF_LAST_LIMIT = "";
+    String PREF_LAST_GENESYS_LIMIT = "pref_last_genesys_limit";
+    String PREF_DEF_LAST_GENESYS_LIMIT = "";
     String PREF_LAST_DECK_PATH = "pref_last_deck_path";
     String PREF_LAST_YDK = "pref_last_ydk";
     String PREF_DEF_LAST_YDK = "new";

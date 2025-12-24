@@ -54,6 +54,21 @@
                     android:layout_height="@dimen/label_width_small"
                     android:orientation="horizontal">
 
+                    <Switch
+                        android:id="@+id/sw_genesys_mode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:gravity="center"
+                        android:text="切换为起源(GENESYS)赛制模式" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/label_width_small"
+                    android:orientation="horizontal">
+
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_limit_list"
                         style="@style/itemSpinnerStyle"
@@ -62,19 +77,27 @@
                         android:layout_weight="1" />
 
                     <androidx.appcompat.widget.AppCompatSpinner
-                        android:id="@+id/sp_limit"
+                        android:id="@+id/sp_genesys_limit_list"
                         style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:visibility="gone"/>
+                        android:visibility="gone" />
+
+                    <androidx.appcompat.widget.AppCompatSpinner
+                        android:id="@+id/sp_limit"
+                        style="@style/itemSpinnerStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1" />
+
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_genesys_limit"
                         style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:visibility="gone"/>
+                        android:visibility="gone" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -249,8 +272,8 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
-                android:layout_marginLeft="10dp">
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp">
 
                 <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/edt_word1"
@@ -269,11 +292,11 @@
                 android:id="@+id/chk_multi_keyword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
                 android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
                 android:layout_marginBottom="30dp"
-                android:textSize="10sp"
-                android:text="@string/settings_key_words_split"/>
+                android:text="@string/settings_key_words_split"
+                android:textSize="10sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"

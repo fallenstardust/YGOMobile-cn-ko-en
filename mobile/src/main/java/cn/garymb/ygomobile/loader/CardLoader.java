@@ -33,6 +33,7 @@ public class CardLoader implements ICardSearcher {
     private final CardManager mCardManager;
     private CallBack mCallBack;
     private LimitList mLimitList;
+    private LimitList mGenesys_LimitList;
     private static final String TAG = CardLoader.class.getSimpleName();
     private final static boolean DEBUG = false;
 
@@ -52,13 +53,20 @@ public class CardLoader implements ICardSearcher {
 
         // 读取上次使用的LimitList，如果有非空值存在且和禁卡表列表中有相同名称对应，则使用，否则设置第一个禁卡表
         mLimitList = mLimitManager.getLastLimit() != null ? mLimitManager.getLastLimit() : mLimitManager.getTopLimit();
+        mGenesys_LimitList = mLimitManager.getLastGenesysLimit() != null ? mLimitManager.getLastGenesysLimit() : mLimitManager.getGenesysTopLimit();
     }
 
     @Override
     public void setLimitList(LimitList limitList) {
-        mLimitList = limitList;
-        if (limitList != null)
-            AppsSettings.get().setLastLimit(limitList.getName());
+        if (limitList != null) {
+            if(limitList.getCreditLimits() != null) {
+                mGenesys_LimitList = limitList;
+                AppsSettings.get().setLastGenesysLimit(limitList.getName());
+            } else {
+                mLimitList = limitList;
+                AppsSettings.get().setLastLimit(limitList.getName());
+            }
+        }
     }
 
     /**
@@ -98,10 +106,21 @@ public class CardLoader implements ICardSearcher {
         loadData(null, null);
     }
 
+    /**
+     * 获取限制列表
+     * 这即是ICardSearcher的getLimitList()映射的方法
+     * @return 返回当前对象的限制列表，非空
+     */
     @Override
     public @NonNull
     LimitList getLimitList() {
         return mLimitList;
+    }
+
+    @Override
+    public @NonNull
+    LimitList getGenesysLimitList() {
+        return mGenesys_LimitList;
     }
 
     public SparseArray<Card> readAllCardCodes() {

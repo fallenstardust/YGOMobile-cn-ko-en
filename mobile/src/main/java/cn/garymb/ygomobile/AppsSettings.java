@@ -632,6 +632,23 @@ public class AppsSettings {
                 mSharedPreferences.getString(Constants.PREF_LAST_LIMIT, Constants.PREF_DEF_LAST_LIMIT) : limitName;
     }
 
+    public void setLastGenesysLimit(String limitName) {
+        App.get().saveSetting("lastGenesysLimit", limitName);
+        mSharedPreferences.putString(Constants.PREF_LAST_GENESYS_LIMIT, limitName);
+    }
+
+    public String getLastGenesysLimit() {
+        String limitName = App.get().getSetting("lastGenesysLimit");
+        return limitName == null || TextUtils.isEmpty(limitName) ?
+                mSharedPreferences.getString(Constants.PREF_LAST_GENESYS_LIMIT, Constants.PREF_DEF_LAST_GENESYS_LIMIT) : limitName;
+    }
+    public void setGenesysMode(int value) {
+        App.get().saveIntSetting("lastGenesysMode", value);
+        mSharedPreferences.putInt(Constants.PREF_LAST_GENESYS_MODE, value);
+    }
+    public int getGenesysMode () {
+        return mSharedPreferences.getInt(Constants.PREF_LAST_GENESYS_MODE, Constants.PREF_DEF_LAST_GENESYS_MODE);
+    }
 
     /**
      * 获得（最后）上次打开的卡组的绝对路径

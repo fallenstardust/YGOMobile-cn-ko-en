@@ -30,9 +30,13 @@ import ocgcore.data.LimitList;
 public class LimitManager implements Closeable {
     /* key为时间，如“2023.7” ，value为禁止卡、限制卡、准限制卡的列表 */
     private final Map<String, LimitList> mLimitLists = new HashMap<>();
+    // Genesys禁卡表单独整合为一个列表
+    private final Map<String, LimitList> mGenesys_LimitLists = new HashMap<>();
     /* 只存储key的列表，其元素形如“2023.7” */
     private final List<String> mLimitNames = new ArrayList<>();
+    private final List<String> mGenesys_LimitNames = new ArrayList<>();
     private int mCount;
+    private int mGenesys_Count;
 
     public LimitManager() {
 
@@ -41,23 +45,37 @@ public class LimitManager implements Closeable {
     @Override
     public void close() {
         mLimitNames.clear();
+        mGenesys_LimitNames.clear();
         mLimitLists.clear();
+        mGenesys_LimitLists.clear();
     }
 
     public int getCount() {
         return mCount;
     }
+    public int getGenesysCount() {
+        return mGenesys_Count;
+    }
 
     public Map<String, LimitList> getLimitLists() {
         return mLimitLists;
+    }
+    public Map<String, LimitList> getGenesys_LimitLists() {
+        return mGenesys_LimitLists;
     }
 
     public List<String> getLimitNames() {
         return mLimitNames;
     }
+    public List<String> getGenesysLimitNames() {
+        return mGenesys_LimitNames;
+    }
 
     public LimitList getLimit(String name) {
         return mLimitLists.get(name);
+    }
+    public LimitList getGenesysLimit(String name) {
+        return mGenesys_LimitLists.get(name);
     }
 
     public LimitList getLastLimit() {
@@ -69,11 +87,27 @@ public class LimitManager implements Closeable {
         return lastLimitName == null || TextUtils.isEmpty(lastLimitName) ? getTopLimit() : getLimit(lastLimitName);
     }
 
+    public LimitList getLastGenesysLimit() {
+        if (mGenesys_LimitNames.isEmpty()) {
+            return null;
+        }
+        // 读取上次使用的LimitList，如果有非空值存在且和禁卡表列表中有相同名称对应，则使用，否则设置第一个禁卡表
+        String lastLimitName = AppsSettings.get().getLastGenesysLimit();
+        return lastLimitName == null || TextUtils.isEmpty(lastLimitName) ? getGenesysTopLimit() : getGenesysLimit(lastLimitName);
+    }
+
     public LimitList getTopLimit() {
         if (mLimitNames.isEmpty()) {
             return null;
         }
         return mLimitLists.get(mLimitNames.get(0));
+    }
+
+    public LimitList getGenesysTopLimit() {
+        if (mGenesys_LimitNames.isEmpty()) {
+            return null;
+        }
+        return mGenesys_LimitLists.get(mGenesys_LimitNames.get(0));
     }
 
     /**
@@ -85,10 +119,11 @@ public class LimitManager implements Closeable {
         // 清理旧数据，不让缓存干扰读取结果
         mLimitLists.clear();
         mLimitNames.clear();
+        mGenesys_LimitLists.clear();
+        mGenesys_LimitNames.clear();
         boolean expansion_rs2 = true;
         boolean expansion_zip_rs1 = true;
         boolean default_res3 = true;
-        boolean default_genesys_res4 = true;
         // 如果需要读取扩展包数据，则加载扩展包中的限制文件
         if (AppsSettings.get().isReadExpansions()) {
 
@@ -116,7 +151,7 @@ public class LimitManager implements Closeable {
                         }
                     }
                     // 2.读取扩展卡文件夹中的lflist.conf文件
-                    if (file.isFile() && file.getName().equals(Constants.CORE_LIMIT_PATH)) {
+                    if (file.isFile() && file.getName().contains(Constants.CORE_LIMIT_PATH)) {
                         expansion_rs2 = loadFile(file);
                     }
                 }
@@ -125,15 +160,15 @@ public class LimitManager implements Closeable {
         // 3.加载主资源路径(ygocore文件夹）下的lflist.conf文件对象，这是内置默认文件
         File ygocore_lflist = new File(AppsSettings.get().getResourcePath(), Constants.CORE_LIMIT_PATH);
         default_res3 = loadFile(ygocore_lflist);
-        File genesys_lflist = new File(AppsSettings.get().getExpansionsPath(), Constants.CORE_GENESYS_LIMIT_PATH);
-        default_genesys_res4 = loadFile(genesys_lflist);
         
         // 4.添加一个空卡表N/A（为了和ygopro显示一致才这么写） 无禁限
         mLimitLists.put("N/A", new LimitList("N/A"));
         mLimitNames.add("N/A");
+        mGenesys_LimitLists.put("N/A", new LimitList("N/A"));
+        mGenesys_LimitNames.add("N/A");
 
         ++mCount;
-        return expansion_zip_rs1 && expansion_rs2 && default_res3 && default_genesys_res4;
+        return expansion_zip_rs1 && expansion_rs2 && default_res3;
     }
 
     /**
@@ -163,8 +198,13 @@ public class LimitManager implements Closeable {
                 if (line.startsWith("!")) {
                     name = line.substring(1);
                     tmp = new LimitList(name);
-                    mLimitLists.put(name, tmp);
-                    mLimitNames.add(name);
+                    if (name.toLowerCase().contains("genesys")) {
+                        mGenesys_LimitLists.put(name, tmp);
+                        mGenesys_LimitNames.add(name);
+                    } else {
+                        mLimitLists.put(name, tmp);
+                        mLimitNames.add(name);
+                    }
                 } else if (line.startsWith("$")) {
                     // 去掉$前缀并按空格分割
                     String[] words = line.substring(1).trim().split("[\t| ]+");
@@ -180,7 +220,7 @@ public class LimitManager implements Closeable {
                     String[] words = line.trim().split("[\t| ]+");
                     if (words.length >= 2) {
                         if (words[1].equals("$genesys")) {
-                            tmp.addCredits(toNumber(words[0]), toNumber(words[2]));//保存genesys行的卡牌id和信用分值
+                            tmp.addCredits(toNumber(words[0]), toNumber(words[2]));//保存genesys行的卡牌id和点数
                         } else {
                             int id = toNumber(words[0]);
                             int count = toNumber(words[1]);
@@ -210,6 +250,7 @@ public class LimitManager implements Closeable {
 
         // 更新限制列表计数
         mCount = mLimitLists.size();
+        mGenesys_Count = mGenesys_LimitLists.size();
         Log.e("LimitManager", "限制列表数量：" + mCount);
         return true;
     }
@@ -241,8 +282,13 @@ public class LimitManager implements Closeable {
                 if (line.startsWith("!")) {
                     name = line.substring(1);
                     tmp = new LimitList(name);
-                    mLimitLists.put(name, tmp);
-                    mLimitNames.add(name);
+                    if (name.toLowerCase().contains("genesys")) {
+                        mGenesys_LimitLists.put(name, tmp);
+                        mGenesys_LimitNames.add(name);
+                    } else {
+                        mLimitLists.put(name, tmp);
+                        mLimitNames.add(name);
+                    }
                 } else if (line.startsWith("$")) {
                     // 去掉$前缀并按空格分割
                     String[] words = line.substring(1).trim().split("[\t| ]+");
@@ -257,7 +303,7 @@ public class LimitManager implements Closeable {
                     String[] words = line.trim().split("[\t| ]+");
                     if (words.length >= 2) {
                         if (words[1].equals("$genesys")) {
-                            tmp.addCredits(toNumber(words[0]), toNumber(words[2]));//保存genesys行的卡牌id和信用分值
+                            tmp.addCredits(toNumber(words[0]), toNumber(words[2]));//保存genesys行的卡牌id和点数
                         } else {
                             int id = toNumber(words[0]);
                             int count = toNumber(words[1]);
@@ -285,6 +331,9 @@ public class LimitManager implements Closeable {
             IOUtils.close(in);
         }
         mCount = mLimitLists.size();
+        mGenesys_Count = mGenesys_LimitLists.size();
+        Log.e("LimitManager", "限制列表数量：" + mCount);
+        Log.e("LimitManager", "Genesys限制列表数量：" + mGenesys_Count);
         return true;
     }
 

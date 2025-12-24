@@ -81,6 +81,14 @@ public class PackManager implements Closeable {
         return true;
     }
 
+    /**
+     * 处理文件并提取其中的ID列表
+     * 该方法读取指定文件，解析其中的数字ID（跳过以#开头的注释行），
+     * 并将有效的ID添加到packList中
+     *
+     * @param file 需要处理的文件对象
+     * @throws IOException 文件读取过程中可能抛出的IO异常
+     */
     private void processFile(File file) throws IOException {
         List<Integer> ids = new ArrayList<>();
         try (FileInputStream inputStream = new FileInputStream(file);
@@ -99,6 +107,7 @@ public class PackManager implements Closeable {
                     Log.w(TAG, "Skipping invalid line in file " + file.getName() + ": " + line);
                 }
             }
+            // 将解析出的ID列表添加到packList中，如果ID列表不为空
             if (!ids.isEmpty()) {
                 packList.add(new AbstractMap.SimpleEntry<>(file.getName(), ids));
             }
