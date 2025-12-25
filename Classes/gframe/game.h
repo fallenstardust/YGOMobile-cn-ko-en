@@ -66,6 +66,7 @@ struct Config {
 	wchar_t roompass[20]{};
 	//path
     wchar_t last_limit_list_name[256]{};
+    wchar_t last_genesys_limit_list_name[256]{};
 	wchar_t lastcategory[256]{};
 	wchar_t lastdeck[256]{};
 	wchar_t textfont[256]{};
@@ -82,6 +83,8 @@ struct Config {
 	int chkIgnore2{ 0 };
 	int use_lflist{ 1 };
 	int default_lflist{ 0 };
+    int use_genesys_lflist{ 0 };
+	int default_genesys_lflist{ 0 };
 	int default_rule{ DEFAULT_DUEL_RULE };
 	int hide_setname{ 0 };
 	int hide_hint_button{ 0 };
@@ -382,6 +385,8 @@ public:
 	irr::gui::IGUICheckBox* chkPreferExpansionScript;
 	irr::gui::IGUICheckBox* chkLFlist;
 	irr::gui::IGUIComboBox* cbLFlist;
+    irr::gui::IGUICheckBox* chkGenesysLFlist;
+	irr::gui::IGUIComboBox* cbGenesysLFlist;
 	//sound
 	irr::gui::IGUICheckBox* chkEnableSound;
 	irr::gui::IGUICheckBox* chkEnableMusic;

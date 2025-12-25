@@ -699,8 +699,11 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     posY += 40;
 	chkDefaultShowChain = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1354));
 	chkDefaultShowChain->setChecked(gameConf.chkDefaultShowChain != 0);
-	posY += 40;
-    chkQuickAnimation = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
+    posY += 40;
+    chkHidePlayerName = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_HIDE_PLAYER_NAME, dataManager.GetSysString(1289));
+    chkHidePlayerName->setChecked(gameConf.hide_player_name != 0);
+	posY += 0;
+    chkQuickAnimation = env->addCheckBox(false, Resize(0, 0, 0, 0), wSettings, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
 	chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
     posY += 40;
     chkDrawFieldSpell = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1283));
@@ -725,14 +728,25 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     cbLFlist->setEnabled(gameConf.use_lflist);
     cbLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbLFlist->getItemCount() - 1);
 	posY += 40;
-	chkIgnore1 = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
+    // 勾选启用禁卡表
+    chkGenesysLFlist = env->addCheckBox(false, Resize(posX, posY, posX + 100, posY + 30), wSettings, CHECKBOX_LFLIST, dataManager.GetSysString(1288));
+    chkGenesysLFlist->setChecked(gameConf.use_genesys_lflist);
+    // 启用禁卡表的combobox
+    cbGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 230, posY + 30), wSettings, COMBOBOX_LFLIST);
+    cbGenesysLFlist->setMaxSelectionRows(6);
+    for(unsigned int i = 0; i < deckManager._genesys_lfList.size(); ++i) {
+        cbLFlist->addItem(deckManager._genesys_lfList[i].listName.c_str());
+        if(!wcscmp(deckManager._genesys_lfList[i].listName.c_str(), gameConf.last_genesys_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值
+            gameConf.default_genesys_lflist = i;
+        }
+    }
+	posY += 0;
+	chkIgnore1 = env->addCheckBox(false, Resize(0, 0, 0, 0), wSettings, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
 	posY += 40;
 	chkIgnore2 = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1291));
 	chkIgnore2->setChecked(gameConf.chkIgnore2 != 0);
-	posY += 40;
-	chkHidePlayerName = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_HIDE_PLAYER_NAME, dataManager.GetSysString(1289));
-	chkHidePlayerName->setChecked(gameConf.hide_player_name != 0);
+
 	posY += 40;
 	chkIgnoreDeckChanges = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1357));
 	chkIgnoreDeckChanges->setChecked(gameConf.chkIgnoreDeckChanges != 0);

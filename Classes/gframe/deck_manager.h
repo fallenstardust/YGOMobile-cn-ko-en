@@ -58,6 +58,7 @@ class DeckManager {
 public:
 	Deck current_deck;
 	std::vector<LFList> _lfList;
+	std::vector<LFList> _genesys_lfList;
 
 	static constexpr int MAX_YDK_SIZE = 0x10000;
 

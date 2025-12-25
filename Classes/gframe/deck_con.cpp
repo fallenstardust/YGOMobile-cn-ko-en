@@ -176,13 +176,26 @@ void DeckBuilder::Terminate() {
 
 void DeckBuilder::setLastLimit() {
     char linebuf[256];
-    int lflistsel = mainGame->cbLFlist->getSelected();
-    if (lflistsel >= 0) {
-        BufferIO::CopyWideString(mainGame->cbLFlist->getItem(lflistsel), mainGame->gameConf.last_limit_list_name);
-        BufferIO::EncodeUTF8(mainGame->cbLFlist->getItem(lflistsel), linebuf);
-        irr::android::setLastLimit(mainGame->appMain, linebuf);
-        ALOGD("cc: game: setLastLimit=%s", linebuf);
+    if (mainGame->gameConf.use_lflist) {
+        int lflistsel = mainGame->cbLFlist->getSelected();
+        if (lflistsel >= 0) {
+            BufferIO::CopyWideString(mainGame->cbLFlist->getItem(lflistsel), mainGame->gameConf.last_limit_list_name);
+            BufferIO::EncodeUTF8(mainGame->cbLFlist->getItem(lflistsel), linebuf);
+            irr::android::setLastLimit(mainGame->appMain, linebuf);
+            ALOGD("cc: game: setLastLimit=%s", linebuf);
+        }
     }
+    if (mainGame->gameConf.use_genesys_lflist) {
+        int lflistsel = mainGame->cbGenesysLFlist->getSelected();
+        if (lflistsel >= 0) {
+            BufferIO::CopyWideString(mainGame->cbGenesysLFlist->getItem(lflistsel),
+                                     mainGame->gameConf.last_genesys_limit_list_name);
+            BufferIO::EncodeUTF8(mainGame->cbGenesysLFlist->getItem(lflistsel), linebuf);
+            irr::android::setLastGenesysLimit(mainGame->appMain, linebuf);
+            ALOGD("cc: game: setLastGenesysLimit=%s", linebuf);
+        }
+    }
+
 }
 bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 #ifdef _IRR_ANDROID_PLATFORM_
