@@ -7,95 +7,191 @@ namespace ygo {
 
 DeckManager deckManager;
 std::vector<std::wstring> DeckManager::deckComments;
+    // 检查宽字符串是否包含指定子串（不区分大小写）
+    bool ContainsIgnoreCase(const std::wstring& str, const std::wstring& substr) {
+        if (substr.empty()) return true;
+        if (str.empty()) return false;
+
+        std::wstring lowerStr = str;
+        std::wstring lowerSubstr = substr;
+
+        // 转换为小写
+        std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::towlower);
+        std::transform(lowerSubstr.begin(), lowerSubstr.end(), lowerSubstr.begin(), ::towlower);
+
+        // 查找子串
+        return lowerStr.find(lowerSubstr) != std::wstring::npos;
+    }
 
 void DeckManager::LoadLFListSingle(const char* path) {
-	auto cur = _lfList.rend();
-	FILE* fp = myfopen(path, "r");
-	char linebuf[256]{};
-	wchar_t strBuffer[256]{};
-	if(fp) {
-		while(std::fgets(linebuf, sizeof linebuf, fp)) {
-			if(linebuf[0] == '#')
-				continue;
-			if(linebuf[0] == '!') {
-				auto len = std::strcspn(linebuf, "\r\n");
-				linebuf[len] = 0;
-				BufferIO::DecodeUTF8(&linebuf[1], strBuffer);
-				LFList newlist;
-				newlist.listName = strBuffer;
-				newlist.hash = 0x7dfcee6a;
-				_lfList.push_back(newlist);
-				cur = _lfList.rbegin();
-				continue;
-			}
-			if (cur == _lfList.rend())
-				continue;
-			if(linebuf[0] == '$') {
-				char* keyPos = linebuf + 1;
-				keyPos += std::strspn(keyPos, " \t");
-				auto keyLen = std::strcspn(keyPos, " \t\r\n");
-				if(!keyLen)
-					continue;
-				char keybuf[256];
-				if(keyLen >= sizeof keybuf)
-					keyLen = sizeof keybuf - 1;
-				std::memcpy(keybuf, keyPos, keyLen);
-				keybuf[keyLen] = 0;
-				keyPos += keyLen;
-				keyPos += std::strspn(keyPos, " \t");
-				errno = 0;
-				char* valuePos = keyPos;
-				auto limitValue = std::strtoul(keyPos, &keyPos, 10);
-				if(errno || valuePos == keyPos)
-					continue;
-				BufferIO::DecodeUTF8(keybuf, strBuffer);
-				cur->credit_limits[strBuffer] = static_cast<uint32_t>(limitValue);
-				continue;
-			}
-			char* pos = linebuf;
-			errno = 0;
-			char* codePos = pos;
-			auto result = std::strtoul(pos, &pos, 10);
-			if(errno || result > UINT32_MAX || codePos == pos)
-				continue;
-			if(*pos != ' ' && *pos != '\t')
-				continue;
-			pos += std::strspn(pos, " \t");
-			uint32_t code = static_cast<uint32_t>(result);
-			if(*pos == '$') {
-				++pos;
-				pos += std::strspn(pos, " \t");
-				auto creditKeyLen = std::strcspn(pos, " \t\r\n");
-				if(!creditKeyLen)
-					continue;
-				char keybuf[256];
-				if(creditKeyLen >= sizeof keybuf)
-					creditKeyLen = sizeof keybuf - 1;
-				std::memcpy(keybuf, pos, creditKeyLen);
-				keybuf[creditKeyLen] = 0;
-				pos += creditKeyLen;
-				pos += std::strspn(pos, " \t");
-				errno = 0;
-				char* creditValuePos = pos;
-				auto creditValue = std::strtoul(pos, &pos, 10);
-				if(errno || creditValuePos == pos)
-					continue;
-				BufferIO::DecodeUTF8(keybuf, strBuffer);
-				cur->credits[code][strBuffer] = static_cast<uint32_t>(creditValue);
-				continue;
-			}
-			errno = 0;
-			char* countPos = pos;
-			int count = std::strtol(pos, &pos, 10);
-			if(errno || countPos == pos)
-				continue;
-			if(count < 0 || count > 2)
-				continue;
-			cur->content[code] = count;
-			cur->hash = cur->hash ^ ((code << 18) | (code >> 14)) ^ ((code << (27 + count)) | (code >> (5 - count)));
-		}
-	}
+    // 初始化迭代器，指向_lfList容器的反向末尾位置
+    auto cur = _lfList.rend();
+    // 以只读模式打开指定路径的文件
+    FILE* fp = myfopen(path, "r");
+    // 定义字符缓冲区，用于存储从文件读取的单行内容
+    char linebuf[256]{};
+    // 定义宽字符缓冲区，用于存储转换后的字符串
+    wchar_t strBuffer[256]{};
+    // 检查文件是否成功打开
+    if(fp) {
+        // 循环读取文件中的每一行，直到文件结束
+        while(std::fgets(linebuf, sizeof linebuf, fp)) {
+            // 跳过以#开头的注释行
+            if(linebuf[0] == '#')
+                continue;
+            // 处理以!开头的列表名称定义行
+            if(linebuf[0] == '!') {
+                // 查找行中换行符或回车符的位置
+                auto len = std::strcspn(linebuf, "\r\n");
+                // 在找到的位置添加字符串结束符
+                linebuf[len] = 0;
+                // 将UTF-8编码的字符串转换为宽字符串
+                BufferIO::DecodeUTF8(&linebuf[1], strBuffer);
+                // 创建新的限制列表对象
+                LFList newlist;
+                // 设置列表名称
+                newlist.listName = strBuffer;
+                // 设置默认哈希值
+                newlist.hash = 0x7dfcee6a;
+                // 判断列表名称是否包含"genesys"（不区分大小写）
+                if(ContainsIgnoreCase(newlist.listName, L"Genesys")) {
+                    _genesys_lfList.push_back(newlist);
+                    // 更新cur迭代器，使其指向新添加的列表
+                    cur = _genesys_lfList.rbegin();
+                } else {
+                    _lfList.push_back(newlist);
+                    // 更新cur迭代器，使其指向新添加的列表
+                    cur = _lfList.rbegin();
+                }
+                continue;
+            }
+            // 如果cur仍指向_lfList的反向末尾位置（即没有有效的列表），则跳过后续处理
+            if (cur == _lfList.rend() || cur == _genesys_lfList.rend())
+                continue;
+            // 处理以$开头的信用限制定义行
+            if(linebuf[0] == '$') {
+                // 指向$符号后的第一个非空白字符
+                char* keyPos = linebuf + 1;
+                keyPos += std::strspn(keyPos, " \t");
+                // 计算关键字的长度（到空白字符或行结束符为止）
+                auto keyLen = std::strcspn(keyPos, " \t\r\n");
+                // 如果关键字长度为0，则跳过
+                if(!keyLen)
+                    continue;
+                // 临时缓冲区，用于存储关键字
+                char keybuf[256];
+                // 确保关键字长度不超过缓冲区大小
+                if(keyLen >= sizeof keybuf)
+                    keyLen = sizeof keybuf - 1;
+                // 复制关键字到缓冲区
+                std::memcpy(keybuf, keyPos, keyLen);
+                // 添加字符串结束符
+                keybuf[keyLen] = 0;
+                // 移动到关键字后的第一个非空白字符
+                keyPos += keyLen;
+                keyPos += std::strspn(keyPos, " \t");
+                // 重置错误标志
+                errno = 0;
+                // 记录数值开始位置
+                char* valuePos = keyPos;
+                // 将字符串转换为无符号长整型
+                auto limitValue = std::strtoul(keyPos, &keyPos, 10);
+                // 如果转换出错或没有读取到数值，则跳过
+                if(errno || valuePos == keyPos)
+                    continue;
+                // 将UTF-8编码的关键字转换为宽字符串
+                BufferIO::DecodeUTF8(keybuf, strBuffer);
+                // 在当前列表的信用限制映射中添加键值对
+                cur->credit_limits[strBuffer] = static_cast<uint32_t>(limitValue);
+                continue;
+            }
+            // 从行的开始位置解析卡牌代码
+            char* pos = linebuf;
+            // 重置错误标志
+            errno = 0;
+            // 记录代码开始位置
+            char* codePos = pos;
+            // 将字符串转换为无符号长整型（卡牌代码）
+            auto result = std::strtoul(pos, &pos, 10);
+            // 如果转换出错、超出范围或没有读取到数值，则跳过
+            if(errno || result > UINT32_MAX || codePos == pos)
+                continue;
+            // 检查数值后是否跟有空格或制表符
+            if(*pos != ' ' && *pos != '\t')
+                continue;
+            // 跳过空格和制表符
+            pos += std::strspn(pos, " \t");
+            // 将结果转换为32位无符号整型
+            uint32_t code = static_cast<uint32_t>(result);
+            // 处理包含信用分的行（以$开头）
+            if(*pos == '$') {
+                // 跳过$符号
+                ++pos;
+                // 跳过空白字符
+                pos += std::strspn(pos, " \t");
+                // 获取信用分键的长度
+                auto creditKeyLen = std::strcspn(pos, " \t\r\n");
+                // 如果键长度为0，则跳过
+                if(!creditKeyLen)
+                    continue;
+                // 临时缓冲区存储信用分键
+                char keybuf[256];
+                // 确保键长度不超过缓冲区大小
+                if(creditKeyLen >= sizeof keybuf)
+                    creditKeyLen = sizeof keybuf - 1;
+                // 复制键到缓冲区
+                std::memcpy(keybuf, pos, creditKeyLen);
+                // 添加字符串结束符
+                keybuf[creditKeyLen] = 0;
+                // 跳过键后的空白字符
+                pos += creditKeyLen;
+                pos += std::strspn(pos, " \t");
+                // 重置错误标志
+                errno = 0;
+                // 记录信用分数值开始位置
+                char* creditValuePos = pos;
+                // 将字符串转换为无符号长整型（信用分数值）
+                auto creditValue = std::strtoul(pos, &pos, 10);
+                // 如果转换出错或没有读取到数值，则跳过
+                if(errno || creditValuePos == pos)
+                    continue;
+                // 将UTF-8编码的键转换为宽字符串
+                BufferIO::DecodeUTF8(keybuf, strBuffer);
+                // 在当前列表的卡牌信用分映射中添加键值对
+                cur->credits[code][strBuffer] = static_cast<uint32_t>(creditValue);
+                continue;
+            }
+            // 重置错误标志
+            errno = 0;
+            // 记录数量开始位置
+            char* countPos = pos;
+            // 将字符串转换为长整型（卡牌数量限制）
+            int count = std::strtol(pos, &pos, 10);
+            // 如果转换出错或没有读取到数值，则跳过
+            if(errno || countPos == pos)
+                continue;
+            // 检查数量是否在有效范围内（0-2）
+            if(count < 0 || count > 2)
+                continue;
+            // 将卡牌代码和数量限制添加到当前列表的内容映射中
+            cur->content[code] = count;
+            // 更新当前列表的哈希值（用于验证）
+            cur->hash = cur->hash ^ ((code << 18) | (code >> 14)) ^ ((code << (27 + count)) | (code >> (5 - count)));
+        }
+    }
 }
+/**
+ * @brief 从文件中加载单个限制列表（LFList）数据
+ *
+ * 该函数解析一个包含限制列表信息的文本文件，支持以下格式：
+ * - 以'#'开头的行为注释行，会被跳过
+ * - 以'!'开头的行为列表名称定义行
+ * - 以'$'开头的行为信用限制定义行
+ * - 普通行为卡片代码和数量定义行
+ *
+ * @param reader 指向IReadFile的指针，用于读取限制列表文件内容
+ * @return void 无返回值
+ */
 void DeckManager::LoadLFListSingle(irr::io::IReadFile* reader) {
     if (!reader)
         return;
@@ -137,11 +233,17 @@ void DeckManager::LoadLFListSingle(irr::io::IReadFile* reader) {
             LFList newlist;
             newlist.listName = strBuffer;
             newlist.hash = 0x7dfcee6a;
-            _lfList.push_back(newlist);
-            cur = _lfList.rbegin();
+            // 判断列表名称是否包含"genesys"（不区分大小写）
+            if(ContainsIgnoreCase(newlist.listName, L"Genesys")) {
+                _genesys_lfList.push_back(newlist);
+                cur = _genesys_lfList.rbegin();
+            } else {
+                _lfList.push_back(newlist);
+                cur = _lfList.rbegin();
+            }
             continue;
         }
-        if (cur == _lfList.rend())
+        if (cur == _lfList.rend() || cur == _genesys_lfList.rend())
             continue;
 		if(linebuf[0] == '$') {
 			char* keyPos = linebuf + 1;
@@ -206,7 +308,7 @@ void DeckManager::LoadLFListSingle(irr::io::IReadFile* reader) {
             continue;
         cur->content[code] = count;
         cur->hash = cur->hash ^ ((code << 18) | (code >> 14)) ^ ((code << (27 + count)) | (code >> (5 - count)));
-	
+
     }
 }
 void DeckManager::LoadLFList(irr::android::InitOptions *options) {
@@ -220,20 +322,39 @@ void DeckManager::LoadLFList(irr::android::InitOptions *options) {
 	_lfList.push_back(nolimit);
 }
 const wchar_t* DeckManager::GetLFListName(unsigned int lfhash) {
-	auto lit = std::find_if(_lfList.begin(), _lfList.end(), [lfhash](const ygo::LFList& list) {
-		return list.hash == lfhash;
-	});
-	if(lit != _lfList.end())
-		return lit->listName.c_str();
-	return dataManager.unknown_string;
+    // 在_lfList中搜索
+    auto lit = std::find_if(_lfList.begin(), _lfList.end(), [lfhash](const ygo::LFList& list) {
+        return list.hash == lfhash;
+    });
+    if(lit != _lfList.end())
+        return lit->listName.c_str();
+
+    // 在_genesys_lfList中搜索
+    auto glit = std::find_if(_genesys_lfList.begin(), _genesys_lfList.end(), [lfhash](const ygo::LFList& list) {
+        return list.hash == lfhash;
+    });
+    if(glit != _genesys_lfList.end())
+        return glit->listName.c_str();
+
+    return dataManager.unknown_string;
 }
+
 const LFList* DeckManager::GetLFList(unsigned int lfhash) {
-	auto lit = std::find_if(_lfList.begin(), _lfList.end(), [lfhash](const ygo::LFList& list) {
-		return list.hash == lfhash;
-	});
-	if (lit != _lfList.end())
-		return &(*lit);
-	return nullptr;
+    // 在_lfList中搜索
+    auto lit = std::find_if(_lfList.begin(), _lfList.end(), [lfhash](const ygo::LFList& list) {
+        return list.hash == lfhash;
+    });
+    if (lit != _lfList.end())
+        return &(*lit);
+
+    // 在_genesys_lfList中搜索
+    auto glit = std::find_if(_genesys_lfList.begin(), _genesys_lfList.end(), [lfhash](const ygo::LFList& list) {
+        return list.hash == lfhash;
+    });
+    if (glit != _genesys_lfList.end())
+        return &(*glit);
+
+    return nullptr;
 }
 static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
 	if((ot & avail) == avail)

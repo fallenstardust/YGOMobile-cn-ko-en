@@ -735,7 +735,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     cbGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 230, posY + 30), wSettings, COMBOBOX_LFLIST);
     cbGenesysLFlist->setMaxSelectionRows(6);
     for(unsigned int i = 0; i < deckManager._genesys_lfList.size(); ++i) {
-        cbLFlist->addItem(deckManager._genesys_lfList[i].listName.c_str());
+        cbGenesysLFlist->addItem(deckManager._genesys_lfList[i].listName.c_str());
         if(!wcscmp(deckManager._genesys_lfList[i].listName.c_str(), gameConf.last_genesys_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值
             gameConf.default_genesys_lflist = i;
         }
@@ -2031,6 +2031,9 @@ void Game::LoadConfig() {
     // 获取 lastLimit 值并存储到 gameConf.last_limit_list_name
     BufferIO::DecodeUTF8(irr::android::getLastLimit(appMain).c_str(), wstr);
     BufferIO::CopyWStr(wstr, gameConf.last_limit_list_name, 64);
+    // 获取 lastGenesysLimit 值并存储到 gameConf.last_genesys_limit_list_name
+    BufferIO::DecodeUTF8(irr::android::getLastGenesysLimit(appMain).c_str(), wstr);
+    BufferIO::CopyWStr(wstr, gameConf.last_genesys_limit_list_name, 64);
     ALOGW("cc game: lastLimit: %ls", wstr);
     // 获取 lastCategory 值并存储到 gameConf.lastcategory
     BufferIO::DecodeUTF8(irr::android::getLastCategory(appMain).c_str(), wstr);;

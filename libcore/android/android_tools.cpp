@@ -414,6 +414,9 @@ float getYScale(ANDROID_APP app){
 irr::io::path getLastLimit(ANDROID_APP app) {
     return getSetting(app, "lastlimit");
 }
+irr::io::path getLastGenesysLimit(ANDROID_APP app) {
+    return getSetting(app, "lastGenesysLimit");
+}
 
 //Retrive last deck name.
 irr::io::path getLastDeck(ANDROID_APP app) {
@@ -505,6 +508,9 @@ irr::io::path getSetting(ANDROID_APP app, const char* key) {
 //save last limit name.
 void setLastLimit(ANDROID_APP app, const char* limitname) {
 	saveSetting(app, "lastlimit", limitname);
+}
+void setLastGenesysLimit(ANDROID_APP app, const char* limitname) {
+	saveSetting(app, "lastGenesysLimit", limitname);
 }
 
 //save last deck name.
