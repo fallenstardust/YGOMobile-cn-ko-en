@@ -211,6 +211,7 @@ public class CardSearcher implements View.OnClickListener {
             }
         });
         genesys_Switch.setChecked(mSettings.getGenesysMode() != 0);
+        genesys_Switch.setText(mSettings.getGenesysMode() != 0 ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
         genesys_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             //根据开关切换两种模式禁卡表的显示和隐藏
             genesys_limitListSpinner.setVisibility(isChecked ? View.VISIBLE : View.GONE);

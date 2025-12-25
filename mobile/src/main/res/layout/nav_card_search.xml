@@ -38,6 +38,9 @@
 
                     <Switch
                         android:id="@+id/sw_genesys_mode"
+                        style="@style/CustomSwitch"
+                        android:thumbTint="@color/switch_thumb_color_selector"
+                        android:trackTint="@color/switch_track_color_selector"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"

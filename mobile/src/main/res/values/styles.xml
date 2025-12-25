@@ -114,12 +114,17 @@
         <item name="android:backgroundDimEnabled">true</item>
     </style>
 
-    <style name="itemSpinnerStyle" parent="Widget.AppCompat.DropDownItem.Spinner">
-
+    <style
+        name="itemSpinnerStyle" parent="Widget.AppCompat.DropDownItem.Spinner">
     </style>
     <style name="wallet_third_tab_layout">
         <item name="android:textSize">8sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textColor">@color/selector_text_color_white_gold</item>
+    </style>
+
+    <style name="CustomSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:thumbTint">@color/switch_thumb_color_selector</item>
+        <item name="android:trackTint">@color/switch_track_color_selector</item>
     </style>
 </resources>
