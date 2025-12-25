@@ -121,6 +121,8 @@
     <string name="label_ot_No_Exclusive">无独有卡</string>
     <string name="label_ot_All">全部卡片</string>
     <string name="label_limit">不限制</string>
+    <string name="switch_genesys_mode">起源点数模式</string>
+    <string name="switch_banlist_mode">禁限常规模式</string>
     <string name="label_limitlist">禁卡表</string>
     <string name="label_type">卡片类型</string>
     <string name="label_set">字段</string>
@@ -128,7 +130,7 @@
     <string name="label_level">星/标数</string>
     <string name="label_attr">属性</string>
     <string name="label_category">效果分类</string>
-    <string name="linkmarker">◀连接标记▶</string>>
+    <string name="linkmarker">连接标记▶</string>>
     <string name="searching">读取中</string>
     <string name="card_faq">裁定查询</string>
     <string name="card_related">关联卡片</string>

@@ -27,41 +27,23 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="40dp">
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_ot"
                         style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
-                        android:layout_height="@dimen/label_width_small"
-                        android:layout_weight="1"
-                        android:textSize="12sp" />
-
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btn_my_fav"
-                        android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@color/transparent"
-                        android:text="@string/my_favorites"
-                        android:textColor="@color/selector_text_color_white_gold"
-                        android:visibility="visible" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/label_width_small"
-                    android:orientation="horizontal">
+                        android:layout_weight="1" />
 
                     <Switch
                         android:id="@+id/sw_genesys_mode"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
                         android:gravity="center"
-                        android:text="切换为起源(GENESYS)赛制模式" />
+                        android:text="@string/switch_banlist_mode" />
+
                 </LinearLayout>
 
                 <LinearLayout
@@ -105,28 +87,6 @@
                     android:layout_height="@dimen/label_width_small"
                     android:orientation="horizontal">
 
-                    <androidx.appcompat.widget.AppCompatSpinner
-                        android:id="@+id/sp_category"
-                        style="@style/itemSpinnerStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1" />
-
-                    <androidx.appcompat.widget.AppCompatSpinner
-                        android:id="@+id/sp_scale"
-                        style="@style/itemSpinnerStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="@dimen/label_width_small"
-                        android:layout_weight="1"
-                        android:visibility="invisible" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/label_width_small"
-                    android:orientation="horizontal">
-
                     <cn.garymb.ygomobile.ui.widget.SearchableSpinner
                         android:id="@+id/sp_setcode"
                         style="@style/itemSpinnerStyle"
@@ -135,15 +95,12 @@
                         android:layout_weight="1"
                         app:searchTitle="@string/label_set" />
 
-                    <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/btn_linkmarker"
+                    <androidx.appcompat.widget.AppCompatSpinner
+                        android:id="@+id/sp_category"
+                        style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@color/transparent"
-                        android:text="@string/linkmarker"
-                        android:visibility="visible" />
-
+                        android:layout_weight="1" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -160,6 +117,7 @@
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_race"
+                        style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/label_width_small"
                         android:layout_weight="1"
@@ -228,6 +186,30 @@
                             android:layout_weight="1" />
                     </LinearLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/label_width_small"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.AppCompatButton
+                            android:id="@+id/btn_linkmarker"
+                            style="@style/itemSpinnerStyle"
+                            android:layout_width="0dp"
+                            android:layout_marginLeft="10dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/transparent"
+                            android:text="@string/linkmarker"
+                            android:visibility="visible" />
+
+                        <androidx.appcompat.widget.AppCompatSpinner
+                            android:id="@+id/sp_scale"
+                            style="@style/itemSpinnerStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="@dimen/label_width_small"
+                            android:layout_weight="1"
+                            android:visibility="invisible" />
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -288,19 +270,37 @@
                     android:textColorHint="@color/gold" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <CheckBox
-                android:id="@+id/chk_multi_keyword"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="@dimen/label_width_small"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
-                android:layout_marginBottom="30dp"
-                android:text="@string/settings_key_words_split"
-                android:textSize="10sp" />
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/chk_multi_keyword"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+
+                    android:layout_weight="1"
+                    android:text="@string/settings_key_words_split"
+                    android:textSize="10sp" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btn_my_fav"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_radius_black_transparents"
+                    android:text="@string/my_favorites"
+                    android:textColor="@color/selector_text_color_white_gold"
+                    android:visibility="visible" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
                 android:orientation="horizontal">
 
                 <androidx.appcompat.widget.AppCompatButton

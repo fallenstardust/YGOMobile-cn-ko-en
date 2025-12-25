@@ -123,7 +123,7 @@
     <string name="label_level">Nvl/Rng/Lnk</string>
     <string name="label_attr">Atributo</string>
 	<string name="label_category">Categoria</string>
-    <string name="linkmarker">◀F.Enlace▶</string>
+    <string name="linkmarker">F.Enlace▶</string>
     <string name="searching">Buscar</string>
     <string name="card_faq">FAQ</string>
     <string name="no_webbrowser">Nenhum navegador da web instalado</string>
@@ -377,5 +377,7 @@
     <string name="tip_credit_max">Excede o limite de %d</string>
     <string name="point_cost">Consumo de puntos</string>
     <string name="credit_limit">Limite de pontos</string>
+    <string name="switch_genesys_mode">Modo de GENESYS</string>
+    <string name="switch_banlist_mode">Modo de Restrição</string>
 </resources>
 

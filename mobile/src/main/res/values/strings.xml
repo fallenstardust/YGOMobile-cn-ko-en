@@ -147,7 +147,7 @@
     <string name="label_set_No_Setcode">#No Card Set included</string>
     <string name="label_level">Lv/Rk/Lmk</string>
     <string name="label_attr">Attribute</string>
-    <string name="linkmarker">◀LinkArrows▶</string>>
+    <string name="linkmarker">LinkArrows▶</string>>
     <string name="label_category">Category</string>
     <string name="searching">Search Cards</string>
     <string name="card_faq">FAQ</string>
@@ -417,4 +417,6 @@
     <string name="pre_view">pre view</string>
     <string name="point_cost">Point Costs</string>
     <string name="credit_limit">Point Limit</string>
+    <string name="switch_genesys_mode">GENESYS Mode</string>
+    <string name="switch_banlist_mode">BANLIST Mode</string>
 </resources>

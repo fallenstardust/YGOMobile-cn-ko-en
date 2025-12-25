@@ -223,7 +223,7 @@ public class CardSearcher implements View.OnClickListener {
             mCallBack.setLimit(limit);
             // 重置禁限筛选条件，以免切换时出现不合预期的结果
             reset(isChecked ? genesys_limitSpinner : limitSpinner);
-            genesys_Switch.setText(isChecked ? "起源赛制模式" : "传统禁限模式");
+            genesys_Switch.setText(isChecked ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
             mSettings.setGenesysMode(isChecked ? 1 : 0);
         });
         limitListSpinner.setVisibility(genesys_Switch.isChecked() ? View.GONE : View.VISIBLE);
