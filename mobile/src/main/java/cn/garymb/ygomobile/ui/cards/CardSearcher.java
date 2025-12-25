@@ -212,17 +212,16 @@ public class CardSearcher implements View.OnClickListener {
         });
         genesys_Switch.setChecked(mSettings.getGenesysMode() != 0);
         genesys_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                genesys_limitListSpinner.setVisibility(View.VISIBLE);
-                genesys_limitSpinner.setVisibility(View.VISIBLE);
-                limitListSpinner.setVisibility(View.GONE);
-                limitSpinner.setVisibility(View.GONE);
-            } else {
-                genesys_limitListSpinner.setVisibility(View.GONE);
-                genesys_limitSpinner.setVisibility(View.GONE);
-                limitListSpinner.setVisibility(View.VISIBLE);
-                limitSpinner.setVisibility(View.VISIBLE);
-            }
+            //根据开关切换两种模式禁卡表的显示和隐藏
+            genesys_limitListSpinner.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            genesys_limitSpinner.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            limitListSpinner.setVisibility(isChecked ? View.GONE : View.VISIBLE);
+            limitSpinner.setVisibility(isChecked ? View.GONE : View.VISIBLE);
+            //同时通知整个界面都显示该禁卡表的禁限情况
+            LimitList limit = mLimitManager.getLimit(getSelectText(isChecked ? genesys_limitListSpinner : limitListSpinner));
+            mICardSearcher.setLimitList(limit);
+            mCallBack.setLimit(limit);
+            reset(isChecked ? genesys_limitSpinner : limitSpinner);
             genesys_Switch.setText(isChecked ? "起源赛制模式" : "传统禁限模式");
             mSettings.setGenesysMode(isChecked ? 1 : 0);
         });
@@ -545,6 +544,7 @@ public class CardSearcher implements View.OnClickListener {
             spinner.setSelection(index);
         }
     }
+
     private void refreshLimitListSpinnerItems(Spinner spinner) {
         // 首先清除所有现有的item
         if (spinner.getAdapter() != null && spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
@@ -733,7 +733,7 @@ public class CardSearcher implements View.OnClickListener {
                     .atk(text(atkText))
                     .def(text(defText))
                     .pscale(getIntSelect(pScale))
-                    .limitType(genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner) )
+                    .limitType(genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner))
                     .limitName(genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner))
                     .setcode(getSelect(setCodeSpinner))
                     .category(getSelect(categorySpinner))
