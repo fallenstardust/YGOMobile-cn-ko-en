@@ -218,9 +218,10 @@ public class CardSearcher implements View.OnClickListener {
             limitListSpinner.setVisibility(isChecked ? View.GONE : View.VISIBLE);
             limitSpinner.setVisibility(isChecked ? View.GONE : View.VISIBLE);
             //同时通知整个界面都显示该禁卡表的禁限情况
-            LimitList limit = mLimitManager.getLimit(getSelectText(isChecked ? genesys_limitListSpinner : limitListSpinner));
+            LimitList limit = isChecked ? mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner)) : mLimitManager.getLimit(getSelectText(limitListSpinner));
             mICardSearcher.setLimitList(limit);
             mCallBack.setLimit(limit);
+            // 重置禁限筛选条件，以免切换时出现不合预期的结果
             reset(isChecked ? genesys_limitSpinner : limitSpinner);
             genesys_Switch.setText(isChecked ? "起源赛制模式" : "传统禁限模式");
             mSettings.setGenesysMode(isChecked ? 1 : 0);
