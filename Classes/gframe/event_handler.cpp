@@ -2092,6 +2092,39 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}*/
+            case CHECKBOX_ENABLE_GENESYS_MODE: {
+				mainGame->gameConf.enable_genesys_mode = mainGame->chkEnableGenesysMode->isChecked() ? 1 : 0;
+                if (mainGame->gameConf.enable_genesys_mode == 1) {// 判断是否启用genesys模式
+                    // 常规禁卡表开关和下拉菜单隐藏
+                    mainGame->chkLFlist->setVisible(false);
+                    mainGame->cbLFlist->setVisible(false);
+                    // 局域网建主-常规禁卡表下拉菜单隐藏
+                    mainGame->cbHostLFlist->setVisible(false);
+                    // genesys禁卡表开关和下拉菜单显示
+                    mainGame->chkGenesysLFlist->setVisible(true);
+                    mainGame->cbGenesysLFlist->setVisible(true);
+                    mainGame->cbHostGenesysLFlist->setVisible(true);
+                    // 立刻启用被选择的禁卡表
+                    mainGame->deckBuilder.filterList = &deckManager._genesys_lfList[mainGame->cbGenesysLFlist->getSelected()];
+
+                } else {// 如果是禁限常规模式
+                    // 常规禁卡表开关和下拉菜单显示
+                    mainGame->chkLFlist->setVisible(true);
+                    mainGame->cbLFlist->setVisible(true);
+                    // 局域网建主-常规禁卡表下拉菜单显示
+                    mainGame->cbHostLFlist->setVisible(true);
+                    // genesys禁卡表开关和下拉菜单隐藏
+                    mainGame->chkGenesysLFlist->setVisible(false);
+                    mainGame->cbGenesysLFlist->setVisible(false);
+                    // 局域网建主-genesys禁卡表下拉菜单隐藏
+                    mainGame->cbHostGenesysLFlist->setVisible(false);
+                    // 立刻启用被选择的禁卡表
+                    mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->cbLFlist->getSelected()];
+                }
+
+                return true;
+				break;
+			}
 			case CHECKBOX_LFLIST: {
 				mainGame->gameConf.use_lflist = mainGame->chkLFlist->isChecked() ? 1 : 0;
 				mainGame->cbLFlist->setEnabled(mainGame->gameConf.use_lflist);
@@ -2106,14 +2139,36 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                         break;
                     }
                 }
-                // 重设2个禁卡表选择combobox的选中项
+                // 重设2个禁卡表选择combobox的选中项,如果use_lflist的值代表未启用，则设置选项为N/A
                 mainGame->cbLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbLFlist->getItemCount() - 1);
                 mainGame->cbHostLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbHostLFlist->getItemCount() - 1);
-
+                // 立刻启用被选择的禁卡表
 				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->cbLFlist->getSelected()];
 				return true;
 				break;
 			}
+            case CHECKBOX_GENESYS_LFLIST: {
+                mainGame->gameConf.use_genesys_lflist = mainGame->chkGenesysLFlist->isChecked() ? 1 : 0;
+                mainGame->cbGenesysLFlist->setEnabled(mainGame->gameConf.use_genesys_lflist);
+                // 获取保存的最后禁卡表名称
+                wchar_t lastLimitName[256];
+                BufferIO::CopyWideString(mainGame->gameConf.last_genesys_limit_list_name, lastLimitName);
+                // 在禁卡表列表中查找匹配的名称
+                int selectedIndex = -1;
+                for (unsigned int i = 0; i < mainGame->cbGenesysLFlist->getItemCount(); i++) {
+                    if (!wcscmp(lastLimitName, mainGame->cbGenesysLFlist->getItem(i))) {
+                        mainGame->gameConf.default_genesys_lflist = i;
+                        break;
+                    }
+                }
+                // 重设2个禁卡表选择combobox的选中项,如果use_lflist的值代表未启用，则设置选项为N/A
+                mainGame->cbGenesysLFlist->setSelected(mainGame->gameConf.use_genesys_lflist ? mainGame->gameConf.default_genesys_lflist : mainGame->cbGenesysLFlist->getItemCount() - 1);
+                mainGame->cbHostGenesysLFlist->setSelected(mainGame->gameConf.use_genesys_lflist ? mainGame->gameConf.default_genesys_lflist : mainGame->cbHostGenesysLFlist->getItemCount() - 1);
+                // 立刻启用被选择的禁卡表
+                mainGame->deckBuilder.filterList = &deckManager._genesys_lfList[mainGame->cbGenesysLFlist->getSelected()];
+                return true;
+                break;
+            }
  			case CHECKBOX_DRAW_FIELD_SPELL: {
  			    mainGame->gameConf.draw_field_spell = mainGame->chkDrawFieldSpell->isChecked() ? 1 : 0;
 				return true;
@@ -2153,7 +2208,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                 mainGame->cbHostLFlist->setSelected(mainGame->gameConf.default_genesys_lflist);
                 // 保存最后使用的禁卡表名称
                 BufferIO::CopyWideString(mainGame->cbGenesysLFlist->getItem(mainGame->gameConf.default_genesys_lflist), mainGame->gameConf.last_genesys_limit_list_name);
-                mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->gameConf.default_genesys_lflist];
+                mainGame->deckBuilder.filterList = &deckManager._genesys_lfList[mainGame->gameConf.default_genesys_lflist];
                 return true;
                 break;
             }

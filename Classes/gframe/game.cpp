@@ -466,15 +466,17 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
             gameConf.default_lflist = i;
         }
     }
+    cbHostLFlist->setVisible(!gameConf.enable_genesys_mode);
     cbHostLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbHostLFlist->getItemCount() - 1);// 设置默认选中的禁限卡表
-    // 局域网建主的禁卡表选择combobox
-    cbHostGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(185, 25, 260, 65), wCreateHost);
+    // 局域网建主的genesys禁卡表选择combobox
+    cbHostGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 180, 65), wCreateHost);
 	for(unsigned int i = 0; i < deckManager._genesys_lfList.size(); ++i) {
         cbHostGenesysLFlist->addItem(deckManager._genesys_lfList[i].listName.c_str(), deckManager._genesys_lfList[i].hash);
         if(!wcscmp(deckManager._genesys_lfList[i].listName.c_str(), gameConf.last_genesys_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值
             gameConf.default_genesys_lflist = i;
         }
     }
+    cbHostGenesysLFlist->setVisible(gameConf.enable_genesys_mode);
     cbHostGenesysLFlist->setSelected(gameConf.use_genesys_lflist ? gameConf.default_genesys_lflist : cbHostGenesysLFlist->getItemCount() - 1);// 设置默认选中的禁限卡表
     // 局域网建主的卡片允许的选择combobox
 	env->addStaticText(dataManager.GetSysString(1225)/*卡片允许：*/, Resize(20, 75, 100, 110), false, false, wCreateHost);
@@ -690,7 +692,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wSettings->setVisible(false);
 	    ChangeToIGUIImageWindow(wSettings, &bgSettings, imageManager.tWindow);
 	int posX = 20;
-	int posY = 40;
+	int posY = 80;
 	chkMAutoPos = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1274));
 	chkMAutoPos->setChecked(gameConf.chkMAutoPos != 0);
 	posY += 40;
@@ -720,13 +722,17 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     posY += 40;
     chkDrawSingleChain = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
 	chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
-	posX = 250;//another Column
-	posY = 40;
+	posX = 250;//重启一列显示
+	posY = 80;//重新设定posY的初始值为80，作为新一行的初始位置
+    chkEnableGenesysMode = env->addCheckBox(false, Resize(posX, posY, posX + 230, posY + 30), wSettings, CHECKBOX_ENABLE_GENESYS_MODE, dataManager.GetSysString(1698));
+    chkEnableGenesysMode->setChecked(gameConf.enable_genesys_mode);
+    posY += 40;
     // 勾选启用禁卡表
     chkLFlist = env->addCheckBox(false, Resize(posX, posY, posX + 100, posY + 30), wSettings, CHECKBOX_LFLIST, dataManager.GetSysString(1288));
     chkLFlist->setChecked(gameConf.use_lflist);
+    chkLFlist->setVisible(!gameConf.enable_genesys_mode);
     // 启用禁卡表的combobox
-    cbLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 230, posY + 30), wSettings, COMBOBOX_LFLIST);
+    cbLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 280, posY + 30), wSettings, COMBOBOX_LFLIST);
     cbLFlist->setMaxSelectionRows(6);
     for(unsigned int i = 0; i < deckManager._lfList.size(); ++i) {
         cbLFlist->addItem(deckManager._lfList[i].listName.c_str());
@@ -734,14 +740,15 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
             gameConf.default_lflist = i;
         }
     }
+    cbLFlist->setVisible(!gameConf.enable_genesys_mode);
     cbLFlist->setEnabled(gameConf.use_lflist);
     cbLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbLFlist->getItemCount() - 1);
-	posY += 40;
     // 勾选启用genesys禁卡表
     chkGenesysLFlist = env->addCheckBox(false, Resize(posX, posY, posX + 100, posY + 30), wSettings, CHECKBOX_GENESYS_LFLIST, dataManager.GetSysString(1288));
     chkGenesysLFlist->setChecked(gameConf.use_genesys_lflist);
+    chkGenesysLFlist->setVisible(gameConf.enable_genesys_mode);
     // 启用genesys禁卡表的combobox
-    cbGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 230, posY + 30), wSettings, COMBOBOX_GENESYS_LFLIST);
+    cbGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 280, posY + 30), wSettings, COMBOBOX_GENESYS_LFLIST);
     cbGenesysLFlist->setMaxSelectionRows(6);
     for(unsigned int i = 0; i < deckManager._genesys_lfList.size(); ++i) {
         cbGenesysLFlist->addItem(deckManager._genesys_lfList[i].listName.c_str());
@@ -749,6 +756,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
             gameConf.default_genesys_lflist = i;
         }
     }
+    cbGenesysLFlist->setVisible(gameConf.enable_genesys_mode);
+    cbGenesysLFlist->setEnabled(gameConf.use_genesys_lflist);
+    cbGenesysLFlist->setSelected(gameConf.use_genesys_lflist ? gameConf.default_genesys_lflist : cbGenesysLFlist->getItemCount() - 1);
 	posY += 0;//隐藏此布局，因为决斗界面已经有快捷按钮
 	chkIgnore1 = env->addCheckBox(false, Resize(0, 0, 0, 0), wSettings, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
@@ -2037,6 +2047,8 @@ void Game::LoadConfig() {
 	gameConf.textfontsize = irr::android::getIntSetting(appMain, "textfontsize", 18);;
 	gameConf.nickname[0] = 0;
 	gameConf.gamename[0] = 0;
+    // 获取 enable_genesys_mode 值并存储到 gameConf.enable_genesys_mode
+    gameConf.enable_genesys_mode = irr::android::getIntSetting(appMain, "enable_genesys_mode", 0);;
     // 获取 lastLimit 值并存储到 gameConf.last_limit_list_name
     BufferIO::DecodeUTF8(irr::android::getLastLimit(appMain).c_str(), wstr);
     BufferIO::CopyWStr(wstr, gameConf.last_limit_list_name, 64);
@@ -2077,7 +2089,11 @@ void Game::LoadConfig() {
 	gameConf.enable_music = irr::android::getIntSetting(appMain, "enable_music", 1);
 	gameConf.music_volume = irr::android::getIntSetting(appMain, "music_volume", 50);
 	gameConf.music_mode = irr::android::getIntSetting(appMain, "music_mode", 1);
+    // 加载是否启用常规禁限卡表的开关值
 	gameConf.use_lflist = irr::android::getIntSetting(appMain, "use_lflist", 1);
+    // 加载是否启用genesys禁限卡表的开关值
+	gameConf.use_lflist = irr::android::getIntSetting(appMain, "use_genesys_lflist", 1);
+
 	gameConf.chkDefaultShowChain = irr::android::getIntSetting(appMain, "chkDefaultShowChain", 0);
 	gameConf.hide_player_name = irr::android::getIntSetting(appMain, "chkHidePlayerName", 0);
 	//defult Setting without checked
@@ -2108,7 +2124,11 @@ void Game::SaveConfig() {
     irr::android::saveIntSetting(appMain, "chkWaitChain", gameConf.chkWaitChain);
 
 	//system
-	gameConf.chkIgnore1 = chkIgnore1->isChecked() ? 1 : 0;
+    //保存启用起源点数模式的勾选值
+    gameConf.enable_genesys_mode = chkEnableGenesysMode->isChecked() ? 1 : 0;
+    irr::android::saveIntSetting(appMain, "enable_genesys_mode", gameConf.enable_genesys_mode);
+
+    gameConf.chkIgnore1 = chkIgnore1->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "chkIgnore1", gameConf.chkIgnore1);
 	gameConf.chkIgnore2 = chkIgnore2->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "chkIgnore2", gameConf.chkIgnore2);
@@ -2132,9 +2152,14 @@ void Game::SaveConfig() {
     irr::android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
 	gameConf.music_volume = (double)scrMusicVolume->getPos();
     irr::android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
+    // 保存启用LFLIST的勾选值
 	gameConf.use_lflist = chkLFlist->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "use_lflist", gameConf.use_lflist);
-	gameConf.chkDefaultShowChain = chkDefaultShowChain->isChecked() ? 1 : 0;
+    // 保存启用Genesys LFLIST的勾选值
+	gameConf.use_genesys_lflist = chkGenesysLFlist->isChecked() ? 1 : 0;
+    irr::android::saveIntSetting(appMain, "use_genesys_lflist", gameConf.use_genesys_lflist);
+
+    gameConf.chkDefaultShowChain = chkDefaultShowChain->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "chkDefaultShowChain", gameConf.chkDefaultShowChain);
 	gameConf.hide_player_name  = chkHidePlayerName->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "chkHidePlayerName", gameConf.hide_player_name);

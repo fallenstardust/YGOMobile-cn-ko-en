@@ -81,6 +81,7 @@ struct Config {
 	int chkDefaultShowChain{ 0 };
 	int chkIgnore1{ 0 };
 	int chkIgnore2{ 0 };
+	int enable_genesys_mode{ 0 };
 	int use_lflist{ 1 };
 	int default_lflist{ 0 };
     int use_genesys_lflist{ 0 };
@@ -383,6 +384,7 @@ public:
 	irr::gui::IGUICheckBox* chkAutoSearch;
 	irr::gui::IGUICheckBox* chkMultiKeywords;
 	irr::gui::IGUICheckBox* chkPreferExpansionScript;
+	irr::gui::IGUICheckBox* chkEnableGenesysMode;
 	irr::gui::IGUICheckBox* chkLFlist;
 	irr::gui::IGUIComboBox* cbLFlist;
     irr::gui::IGUICheckBox* chkGenesysLFlist;
@@ -983,7 +985,8 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 #define BUTTON_BIG_CARD_ZOOM_IN		381
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
-
+#define CHECKBOX_ENABLE_GENESYS_MODE    398//启用genesys模式
+#define CHECKBOX_GENESYS_LFLIST		399//genesys禁卡表勾选
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
 #define AVAIL_CUSTOM				0x4
