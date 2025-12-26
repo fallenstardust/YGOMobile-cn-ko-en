@@ -643,11 +643,11 @@ public class AppsSettings {
                 mSharedPreferences.getString(Constants.PREF_LAST_GENESYS_LIMIT, Constants.PREF_DEF_LAST_GENESYS_LIMIT) : limitName;
     }
     public void setGenesysMode(int value) {
-        App.get().saveIntSetting("lastGenesysMode", value);
+        App.get().saveIntSetting("enable_genesys_mode", value);
         mSharedPreferences.putInt(Constants.PREF_LAST_GENESYS_MODE, value);
     }
     public int getGenesysMode () {
-        return mSharedPreferences.getInt(Constants.PREF_LAST_GENESYS_MODE, Constants.PREF_DEF_LAST_GENESYS_MODE);
+        return App.get().getIntSetting("enable_genesys_mode", Constants.PREF_DEF_LAST_GENESYS_MODE);
     }
 
     /**
