@@ -459,7 +459,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
         ChangeToIGUIImageWindow(wCreateHost, &bgCreateHost, imageManager.tWindow);
     env->addStaticText(dataManager.GetSysString(1226)/*禁限卡表：*/, Resize(20, 30, 90, 65), false, false, wCreateHost);
     // 局域网建主的禁卡表选择combobox
-    cbHostLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 180, 65), wCreateHost);
+    cbHostLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 260, 65), wCreateHost);
 	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i) {
         cbHostLFlist->addItem(deckManager._lfList[i].listName.c_str(), deckManager._lfList[i].hash);
         if(!wcscmp(deckManager._lfList[i].listName.c_str(), gameConf.last_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值
@@ -469,7 +469,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     cbHostLFlist->setVisible(!gameConf.enable_genesys_mode);
     cbHostLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbHostLFlist->getItemCount() - 1);// 设置默认选中的禁限卡表
     // 局域网建主的genesys禁卡表选择combobox
-    cbHostGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 180, 65), wCreateHost);
+    cbHostGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 260, 65), wCreateHost);
 	for(unsigned int i = 0; i < deckManager._genesys_lfList.size(); ++i) {
         cbHostGenesysLFlist->addItem(deckManager._genesys_lfList[i].listName.c_str(), deckManager._genesys_lfList[i].hash);
         if(!wcscmp(deckManager._genesys_lfList[i].listName.c_str(), gameConf.last_genesys_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值

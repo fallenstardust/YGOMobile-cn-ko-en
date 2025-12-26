@@ -263,7 +263,7 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 				cscg.info.start_lp = std::wcstol(mainGame->ebStartLP->getText(), nullptr, 10);
 				cscg.info.draw_count = std::wcstol(mainGame->ebDrawCount->getText(), nullptr, 10);
 				cscg.info.time_limit = std::wcstol(mainGame->ebTimeLimit->getText(), nullptr, 10);
-				cscg.info.lflist = mainGame->cbHostLFlist->getItemData(mainGame->cbHostLFlist->getSelected());
+				cscg.info.lflist = mainGame->gameConf.enable_genesys_mode == 1 ? mainGame->cbHostGenesysLFlist->getItemData(mainGame->cbHostGenesysLFlist->getSelected()) : mainGame->cbHostLFlist->getItemData(mainGame->cbHostLFlist->getSelected());
 				cscg.info.duel_rule = mainGame->cbDuelRule->getSelected() + 1;
 				cscg.info.no_check_deck = mainGame->chkNoCheckDeck->isChecked();
 				cscg.info.no_shuffle_deck = mainGame->chkNoShuffleDeck->isChecked();

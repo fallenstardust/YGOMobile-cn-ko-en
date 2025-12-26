@@ -3,6 +3,7 @@
 #include "single_duel.h"
 #include "tag_duel.h"
 #include "deck_manager.h"
+#include "game.h"
 #include <thread>
 
 namespace ygo {
@@ -491,18 +492,35 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 
 		// 查找合法的禁限卡表哈希值，如果找不到则默认使用第一个可用项
 		bool found = false;
-		for (const auto& lflist : deckManager._lfList) {
-			if(pkt->info.lflist == lflist.hash) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			if (deckManager._lfList.size())
-				pkt->info.lflist = deckManager._lfList[0].hash;
-			else
-				pkt->info.lflist = 0;
-		}
+        if (mainGame->gameConf.enable_genesys_mode == 1) {
+            // 使用genesys模式时验证genesys禁卡表
+            for (const auto& genesys_lflist : deckManager._genesys_lfList) {
+                if(pkt->info.lflist == genesys_lflist.hash) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                if (deckManager._genesys_lfList.size())
+                    pkt->info.lflist = deckManager._genesys_lfList[0].hash;
+                else
+                    pkt->info.lflist = 0;
+            }
+        } else {
+            // 使用标准模式时验证标准禁卡表
+            for (const auto& lflist : deckManager._lfList) {
+                if(pkt->info.lflist == lflist.hash) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                if (deckManager._lfList.size())
+                    pkt->info.lflist = deckManager._lfList[0].hash;
+                else
+                    pkt->info.lflist = 0;
+            }
+        }
 
 		// 根据游戏模式创建相应的决斗实例
 		if (pkt->info.mode == MODE_SINGLE) {
