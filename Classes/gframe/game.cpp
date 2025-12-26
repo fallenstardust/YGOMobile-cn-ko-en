@@ -2092,7 +2092,7 @@ void Game::LoadConfig() {
     // 加载是否启用常规禁限卡表的开关值
 	gameConf.use_lflist = irr::android::getIntSetting(appMain, "use_lflist", 1);
     // 加载是否启用genesys禁限卡表的开关值
-	gameConf.use_lflist = irr::android::getIntSetting(appMain, "use_genesys_lflist", 1);
+	gameConf.use_genesys_lflist = irr::android::getIntSetting(appMain, "use_genesys_lflist", 1);
 
 	gameConf.chkDefaultShowChain = irr::android::getIntSetting(appMain, "chkDefaultShowChain", 0);
 	gameConf.hide_player_name = irr::android::getIntSetting(appMain, "chkHidePlayerName", 0);
