@@ -2148,6 +2148,15 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}
+            case COMBOBOX_GENESYS_LFLIST: {
+                mainGame->gameConf.default_genesys_lflist = mainGame->cbGenesysLFlist->getSelected();
+                mainGame->cbHostLFlist->setSelected(mainGame->gameConf.default_genesys_lflist);
+                // 保存最后使用的禁卡表名称
+                BufferIO::CopyWideString(mainGame->cbGenesysLFlist->getItem(mainGame->gameConf.default_genesys_lflist), mainGame->gameConf.last_genesys_limit_list_name);
+                mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->gameConf.default_genesys_lflist];
+                return true;
+                break;
+            }
 			}
 			break;
 		}

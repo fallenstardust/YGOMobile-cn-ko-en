@@ -424,6 +424,7 @@ public:
 	irr::gui::IGUIWindow* wCreateHost;
 	irr::gui::IGUIImage* bgCreateHost;
 	irr::gui::IGUIComboBox* cbHostLFlist;
+	irr::gui::IGUIComboBox* cbHostGenesysLFlist;
 	irr::gui::IGUIComboBox* cbMatchMode;
 	irr::gui::IGUIComboBox* cbRule;
 	irr::gui::IGUIEditBox* ebTimeLimit;
@@ -952,6 +953,7 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 #define BUTTON_DM_CANCEL			342
 #define BUTTON_CLOSE_DECKMANAGER	343
 #define COMBOBOX_LFLIST				349
+#define COMBOBOX_GENESYS_LFLIST		398//genesys禁卡表下拉菜单
 
 #define BUTTON_CLEAR_LOG			350
 #define LISTBOX_LOG					351
@@ -974,6 +976,7 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 //#define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
+#define CHECKBOX_GENESYS_LFLIST		399//genesys禁卡表勾选
 #define CHECKBOX_HIDE_PLAYER_NAME	376
 #define BUTTON_QUICK_ANIMIATION	    379
 #define BUTTON_BIG_CARD_CLOSE		380

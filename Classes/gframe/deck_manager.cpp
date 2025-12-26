@@ -320,6 +320,7 @@ void DeckManager::LoadLFList(irr::android::InitOptions *options) {
 	nolimit.listName = L"N/A";
 	nolimit.hash = 0;
 	_lfList.push_back(nolimit);
+	_genesys_lfList.push_back(nolimit);
 }
 const wchar_t* DeckManager::GetLFListName(unsigned int lfhash) {
     // 在_lfList中搜索
