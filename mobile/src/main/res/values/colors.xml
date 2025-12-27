@@ -17,6 +17,7 @@
     <color name="red">#EF3934</color>
     <color name="colorAccent">@color/red</color>
     <color name="colorAccentDark">#CF3934</color>
+    <color name="yellow">#FFFF00</color>
     <color name="item_title">@color/gold</color>
     <color name="item_bg">#65ffffff</color>
     <color name="item_bg2">#70ffffff</color>

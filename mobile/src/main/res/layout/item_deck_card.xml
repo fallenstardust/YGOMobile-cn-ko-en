@@ -41,4 +41,14 @@
         android:visibility="visible"
         app:srcCompat="@drawable/ic_close_black_24dp" />
 
+    <TextView
+        android:id="@+id/tv_deck_limit_num"
+        android:layout_width="@dimen/right_size2"
+        android:layout_height="@dimen/right_size2"
+        android:layout_alignParentRight="true"
+        android:textSize="8sp"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:visibility="visible" />
+
 </RelativeLayout>

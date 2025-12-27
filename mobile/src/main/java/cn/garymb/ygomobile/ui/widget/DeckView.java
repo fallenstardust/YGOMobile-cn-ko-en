@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
-import cn.garymb.ygomobile.ui.cards.deck.ImageTop_GeneSys;
 import cn.garymb.ygomobile.ui.cards.deck.LabelInfo;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -20,7 +19,6 @@ public class DeckView extends LinearLayout {
     private final LabelInfo mLabelInfo;
     private LimitList mLimitList;
     private final ImageTop mImageTop;
-    private final ImageTop_GeneSys mImageTop_GeneSys;
     private boolean mAutoSort, mEditMode, mLimitChanged;
 
     private ImageLoader mImageLoader;
@@ -38,7 +36,6 @@ public class DeckView extends LinearLayout {
         super(context, attrs, defStyleAttr);
         setOrientation(VERTICAL);
         mImageTop = new ImageTop(getContext());
-        mImageTop_GeneSys = new ImageTop_GeneSys(getContext());
         mLabelInfo = new LabelInfo(context);
         mMainLabel = new DeckLabel(context);
         mExtraLabel = new DeckLabel(context);
@@ -83,9 +80,6 @@ public class DeckView extends LinearLayout {
 
     public ImageTop getImageTop() {
         return mImageTop;
-    }
-    public ImageTop_GeneSys getImageTop_GeneSys() {
-        return mImageTop_GeneSys;
     }
 
     public boolean isAutoSort() {
@@ -161,9 +155,9 @@ public class DeckView extends LinearLayout {
         mExtraLabel.setText(mLabelInfo.getExtraString());
         mSideLabel.setText(mLabelInfo.getSideString());
         if (mLimitChanged) {
-            mMainGroup.updateTopImage(getImageTop(), getImageTop_GeneSys(), mLimitList);
-            mExtraGroup.updateTopImage(getImageTop(), getImageTop_GeneSys(), mLimitList);
-            mSideGroup.updateTopImage(getImageTop(), getImageTop_GeneSys(), mLimitList);
+            mMainGroup.updateTopImage(getImageTop(), mLimitList);
+            mExtraGroup.updateTopImage(getImageTop(), mLimitList);
+            mSideGroup.updateTopImage(getImageTop(), mLimitList);
         }
         mLimitChanged = false;
     }

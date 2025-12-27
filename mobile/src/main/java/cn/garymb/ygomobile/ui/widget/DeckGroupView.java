@@ -6,7 +6,6 @@ import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import androidx.annotation.AttrRes;
 import androidx.annotation.NonNull;
@@ -22,7 +21,6 @@ import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
-import cn.garymb.ygomobile.ui.cards.deck.ImageTop_GeneSys;
 import cn.garymb.ygomobile.ui.cards.deck.LabelInfo;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.data.Card;
@@ -33,7 +31,6 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
     private final LabelInfo mLabelInfo;
     private final DeckInfo mDeckInfo;
     private final ImageTop mImageTop;
-    private final ImageTop_GeneSys mImageTop_GeneSys;
     private LimitList mLimitList;
     private final int mainTop;
     private final int extraTop;
@@ -79,7 +76,6 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
         mLabelInfo = new LabelInfo(context);
         mDeckInfo = new DeckInfo();
         mImageTop = new ImageTop(getContext());
-        mImageTop_GeneSys = new ImageTop_GeneSys(getContext());
         if (mCardWidth <= 0) {
             int width = (getMeasuredWidth() - getPaddingLeft() - getPaddingRight());
             mCardWidth = width / 10;
@@ -200,9 +196,6 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
     public ImageTop getImageTop() {
         return mImageTop;
     }
-    public ImageTop_GeneSys getmImageTop_GeneSys() {
-        return mImageTop_GeneSys;
-    }
 
     public void setDeck(DeckInfo deck) {
         setEditMode(EditMode.None);
@@ -277,7 +270,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
                         count--;
                     }
                     if (mLimitChanged) {
-                        cardView.updateLimit(getImageTop(), getmImageTop_GeneSys(), mLimitList);
+                        cardView.updateLimit(getImageTop(), mLimitList);
                     }
                 } else {
                     cardView.showCard(mImageLoader, null);
@@ -307,7 +300,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
 
                         }
                         if (mLimitChanged) {
-                            mMainViews.get(i).updateLimit(getImageTop(), getmImageTop_GeneSys(), mLimitList);
+                            mMainViews.get(i).updateLimit(getImageTop(), mLimitList);
                         }
                     } else {
                         cardView.showCard(mImageLoader, null);
@@ -327,7 +320,7 @@ public class DeckGroupView extends FrameLayout implements View.OnClickListener {
                         count--;
                     }
                     if (mLimitChanged) {
-                        cardView.updateLimit(getImageTop(), getmImageTop_GeneSys(), mLimitList);
+                        cardView.updateLimit(getImageTop(), mLimitList);
                     }
                 } else {
                     cardView.showCard(mImageLoader, null);

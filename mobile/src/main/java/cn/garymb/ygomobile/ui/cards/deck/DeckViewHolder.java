@@ -21,6 +21,7 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
     private final View headView;
     private final View textlayout;
     private final TextView labelText;
+    private final TextView tv_deck_limit_num;
     public final ImageView cardImage;
     private final ImageView rightImage;
 
@@ -38,6 +39,7 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         rightImage = $(R.id.right_top);
         labelText = $(R.id.label);
         textlayout = $(R.id.layout_label);
+        tv_deck_limit_num = $(R.id.tv_deck_limit_num);
         headView = null;// $(R.id.head);
     }
 
@@ -105,7 +107,11 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         cardImage.setVisibility(View.GONE);
         rightImage.setVisibility(View.GONE);
     }
-
+    public void setLimitText(String text, int color, int textSize) {
+        tv_deck_limit_num.setText(text);
+        tv_deck_limit_num.setTextColor(color);
+        tv_deck_limit_num.setTextSize(textSize);
+    }
     /**
      * 展示卡图，隐藏分隔标签
      */

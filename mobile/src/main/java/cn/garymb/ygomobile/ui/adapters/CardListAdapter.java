@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -17,8 +16,8 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardListProvider;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
-import cn.garymb.ygomobile.ui.cards.deck.ImageTop_GeneSys;
 import cn.garymb.ygomobile.utils.CardUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -29,7 +28,7 @@ import ocgcore.enums.LimitType;
 public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolder> implements CardListProvider {
     private final StringManager mStringManager;
     private ImageTop mImageTop;
-    private ImageTop_GeneSys mImageTop_GeneSys;
+    private TextView tv_limit_num;
     private LimitList mLimitList;
     private boolean mItemBg;
     private final ImageLoader imageLoader;
@@ -100,8 +99,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
 
-
-
     private int getColor(int id) {
         return context.getResources().getColor(id);
     }
@@ -134,6 +131,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
     private View mShowMenuView;
+
 
     @Override
     protected void convert(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, Card item) {
@@ -187,29 +185,39 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         if (mImageTop == null) {
             mImageTop = new ImageTop(context);
         }
-        if (mImageTop_GeneSys == null) {
-            mImageTop_GeneSys = new ImageTop_GeneSys(context);
-        }
+        TextView tv_limit_num = holder.getView(R.id.tv_limit_num);//创建该布局的对象，以便对它的字体颜色，大小，文本进行自由设置
         if (mLimitList != null) {
 
             holder.setGone(R.id.right_top, false);
             if (mLimitList.check(item, LimitType.Forbidden)) {
                 holder.setImageBitmap(R.id.right_top, mImageTop.forbidden);
+                tv_limit_num.setText("");
             } else if (mLimitList.check(item, LimitType.Limit)) {
                 holder.setImageBitmap(R.id.right_top, mImageTop.limit);
+                tv_limit_num.setText("1");
+                tv_limit_num.setTextSize(12);
+                tv_limit_num.setTextColor(YGOUtil.c(R.color.yellow));
             } else if (mLimitList.check(item, LimitType.SemiLimit)) {
                 holder.setImageBitmap(R.id.right_top, mImageTop.semiLimit);
+                tv_limit_num.setText("2");
+                tv_limit_num.setTextSize(12);
+                tv_limit_num.setTextColor(YGOUtil.c(R.color.yellow));
             } else if (mLimitList.check(item, LimitType.GeneSys)) {
                 Integer creditValue = 0;
                 if (mLimitList.getCredits() != null) {
                     creditValue = mLimitList.getCredits().get(item.Alias == 0 ? item.Code : item.Alias);
-                    holder.setImageBitmap(R.id.right_top, mImageTop_GeneSys.geneSysLimit.get(creditValue - 1));
+                    holder.setImageBitmap(R.id.right_top, mImageTop.credits);
+                    tv_limit_num.setText(creditValue.toString());
+                    tv_limit_num.setTextSize((creditValue > -10 && creditValue < 100) ? 10 : 8);
+                    tv_limit_num.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
                 }
             } else {
                 holder.setGone(R.id.right_top, true);
+                holder.setText(R.id.tv_limit_num, "");
             }
         } else {
             holder.setGone(R.id.right_top, true);
+            holder.setText(R.id.tv_limit_num, "");
         }
         //卡片类型
         holder.setText(R.id.card_type, CardUtils.getAllTypeString(item, mStringManager));
@@ -234,7 +242,7 @@ class ViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder {
     TextView cardDef;
     TextView TextDef;
     TextView cardScale;
-
+    TextView tv_limit_num;
     ImageView rightImage;
     View layout_atk;
     View layout_def;
@@ -264,6 +272,7 @@ class ViewHolder extends BaseRecyclerAdapterPlus.BaseViewHolder {
         layout_def = $(R.id.layout_def);
         view_bar = $(R.id.view_bar);
         rightImage = $(R.id.right_top);
+        tv_limit_num = $(R.id.tv_limit_num);
         codeView = $(R.id.card_code);
         TextDef = $(R.id.TextDef);
         btnMain = $(R.id.btn_add_main);

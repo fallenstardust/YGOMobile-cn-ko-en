@@ -24,7 +24,7 @@
             android:background="@drawable/list_item_bg"
             android:gravity="center"
             android:src="@drawable/ic_to_main"
-            android:tooltipText="@string/card_add_main"/>
+            android:tooltipText="@string/card_add_main" />
 
         <View
             android:layout_width="0dp"
@@ -40,7 +40,7 @@
             android:background="@drawable/list_item_bg"
             android:gravity="center"
             android:src="@drawable/ic_to_side"
-            android:tooltipText="@string/card_add_side"/>
+            android:tooltipText="@string/card_add_side" />
     </LinearLayout>
 
     <LinearLayout
@@ -70,6 +70,16 @@
                 android:layout_alignParentRight="true"
                 android:visibility="visible"
                 tools:src="@drawable/ic_close_black_24dp" />
+
+            <TextView
+                android:id="@+id/tv_limit_num"
+                android:layout_width="@dimen/right_size"
+                android:layout_height="@dimen/right_size"
+                android:layout_alignParentRight="true"
+                android:gravity="center"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="visible" />
         </RelativeLayout>
 
         <LinearLayout

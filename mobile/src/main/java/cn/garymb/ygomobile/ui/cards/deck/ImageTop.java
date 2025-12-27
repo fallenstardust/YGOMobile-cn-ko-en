@@ -11,6 +11,7 @@ public class ImageTop {
     public final Bitmap forbidden;
     public final Bitmap limit;
     public final Bitmap semiLimit;
+    public final Bitmap credits;
 
     public ImageTop(Context context) {
         this(BitmapUtil.getBitmapFormAssets(context, ASSET_LIMIT_PNG, 0, 0));
@@ -22,11 +23,13 @@ public class ImageTop {
             int height = img.getHeight();
             forbidden = Bitmap.createBitmap(img, 0, 0, width / 2, height / 2);
             limit = Bitmap.createBitmap(img, width / 2, 0, width / 2, height / 2);
-            semiLimit = Bitmap.createBitmap(img, 0, height / 2, width / 2, height / 2);
+            semiLimit = Bitmap.createBitmap(img, width / 2, 0, width / 2, height / 2);
+            credits = Bitmap.createBitmap(img, 0, height / 2, width / 2, height / 2);
         } else {
             forbidden = null;
             limit = null;
             semiLimit = null;
+            credits = null;
         }
         BitmapUtil.destroy(img);
     }
@@ -35,5 +38,6 @@ public class ImageTop {
         BitmapUtil.destroy(forbidden);
         BitmapUtil.destroy(limit);
         BitmapUtil.destroy(semiLimit);
+        BitmapUtil.destroy(credits);
     }
 }

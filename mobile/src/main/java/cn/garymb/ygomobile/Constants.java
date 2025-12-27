@@ -72,7 +72,7 @@ public interface Constants {
     String ASSETS_PT = "pt/";
     String ASSETS_PATH = "data/";
     String ASSET_SERVER_LIST = "serverlist.xml";
-    String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/lim.png";
+    String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/icon_lim.png";
     String ASSET_GENESYS_LIMIT_PNG = ASSETS_PATH + "textures/lim_credit.png";
     String DEFAULT_FONT_NAME = "ygo.ttf";
     String DATABASE_NAME = "cards.cdb";

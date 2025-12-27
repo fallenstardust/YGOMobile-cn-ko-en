@@ -1609,7 +1609,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 		else if(cp->second.ot & AVAIL_TCG)
 			driver->draw2DImage(imageManager.tOT, otloc, irr::core::recti(0, 64, 128, 128), 0, 0, true);
 		else if(!avail)
-			driver->draw2DImage(imageManager.tLim, otloc, irr::core::recti(0, 0, 64, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLimit, otloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
 	}
 }
 

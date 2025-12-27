@@ -17,7 +17,6 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
-import cn.garymb.ygomobile.ui.cards.deck.ImageTop_GeneSys;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
@@ -270,11 +269,11 @@ public class CardGroupView extends FrameLayout {
     }
 
 
-    public void updateTopImage(ImageTop imageTop, ImageTop_GeneSys imageTop_GeneSys, LimitList limitList) {
+    public void updateTopImage(ImageTop imageTop, LimitList limitList) {
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
             CardView cardView = (CardView) getChildAt(i);
-            cardView.updateLimit(imageTop, imageTop_GeneSys, limitList);
+            cardView.updateLimit(imageTop, limitList);
         }
     }
 }
