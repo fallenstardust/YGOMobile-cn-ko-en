@@ -1573,7 +1573,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
                 break;
             auto value = credit_entry.second;
             driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(0, 64, 64, 128), 0, 0, true);
-            if (value > -10 || value < 100) {
+            if (value > -10 || value < 100) {//数字只两个占位符（-9~99）时用攻守数字正好，否则就用更迷你的字体
                 DrawBoldText(adFont, std::to_wstring(static_cast<int>(value)), limitloc, 0xff00ffff, 0xff00ffff, true, true);
             } else {
                 DrawBoldText(miniFont, std::to_wstring(static_cast<int>(value)), limitloc, 0xff00ffff, 0xff00ffff, true, true);

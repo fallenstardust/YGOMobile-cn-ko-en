@@ -350,8 +350,8 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 18 * yScale, isAntialias, true);
     titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 32 * yScale, isAntialias, true);
 	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
-	miniFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 8 * yScale, isAntialias, true);
-    icFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 14 * yScale, isAntialias, true);
+	miniFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 8 * yScale, isAntialias, true);//最小的文字，用于genesys点数图标
+    icFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 14 * yScale, isAntialias, true);// 图标数字，用于禁限①②的图标
 	// 检查字体创建是否成功
 	if(!numFont || !guiFont) {
 	  ALOGW("cc game: add font fail ");
