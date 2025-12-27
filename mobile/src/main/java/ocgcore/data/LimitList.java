@@ -38,6 +38,7 @@ public class LimitList {
         forbidden = new ArrayList<>();
         limit = new ArrayList<>();
         semiLimit = new ArrayList<>();
+        credits = new HashMap<>();
         allList = new ArrayList<>();
     }
 
