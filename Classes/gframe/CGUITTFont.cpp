@@ -185,7 +185,19 @@ void SGUITTGlyph::unload() {
 
 //////////////////////
 
+/**
+ * 创建TrueType字体对象
+ * 该函数负责初始化FreeType库（如果尚未初始化），创建CGUITTFont实例并加载指定的字体文件
+ *
+ * @param env GUI环境指针，用于字体渲染和管理
+ * @param filename 字体文件路径
+ * @param size 字体大小
+ * @param antialias 是否启用抗锯齿
+ * @param transparency 是否启用透明度
+ * @return 成功时返回CGUITTFont指针，失败时返回0
+ */
 CGUITTFont* CGUITTFont::createTTFont(IGUIEnvironment *env, const io::path& filename, const u32 size, const bool antialias, const bool transparency) {
+	// 检查FreeType库是否已加载，如果未加载则进行初始化
 	if (!c_libraryLoaded) {
 		if (FT_Init_FreeType(&c_library))
 			return 0;
@@ -194,6 +206,7 @@ CGUITTFont* CGUITTFont::createTTFont(IGUIEnvironment *env, const io::path& filen
 
 	CGUITTFont* font = new CGUITTFont(env);
 	bool ret = font->load(filename, size, antialias, transparency);
+	// 如果字体加载失败，释放已创建的字体对象并返回空指针
 	if (!ret) {
 		font->drop();
 		return 0;

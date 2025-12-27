@@ -582,6 +582,31 @@ void Game::DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const irr::
 	// 再绘制主文字，覆盖在阴影之上形成阴影效果
 	font->drawUstring(text, position, color, hcenter, vcenter, clip);
 }
+/**
+ * @brief 绘制带有阴影效果的粗体文本
+ *
+ * 该函数通过在原始文本周围绘制多个阴影字符来创建粗体/阴影效果
+ *
+ * @param font 指向 irr::gui::CGUITTFont 字体对象的指针，用于文本渲染
+ * @param text 要绘制的文本内容，模板类型支持多种文本格式
+ * @param position 文本绘制的位置矩形区域
+ * @param color 原始文本的颜色
+ * @param shadowcolor 阴影文本的颜色
+ * @param hcenter 是否水平居中对齐
+ * @param vcenter 是否垂直居中对齐
+ * @return void 无返回值
+ */
+template<typename T>
+void Game::DrawBoldText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position,
+                              irr::video::SColor color, irr::video::SColor shadowcolor, bool hcenter, bool vcenter) {
+    // 绘制八个方向的阴影字符：左、右、上、下、左上、右上、左下、右下
+    font->drawUstring(text, irr::core::recti(position.UpperLeftCorner.X-1, position.UpperLeftCorner.Y, position.LowerRightCorner.X-1, position.LowerRightCorner.Y), shadowcolor, hcenter, vcenter);
+    font->drawUstring(text, irr::core::recti(position.UpperLeftCorner.X+1, position.UpperLeftCorner.Y, position.LowerRightCorner.X+1, position.LowerRightCorner.Y), shadowcolor, hcenter, vcenter);
+    font->drawUstring(text, irr::core::recti(position.UpperLeftCorner.X, position.UpperLeftCorner.Y-1, position.LowerRightCorner.X, position.LowerRightCorner.Y-1), shadowcolor, hcenter, vcenter);
+    font->drawUstring(text, irr::core::recti(position.UpperLeftCorner.X, position.UpperLeftCorner.Y+1, position.LowerRightCorner.X, position.LowerRightCorner.Y+1), shadowcolor, hcenter, vcenter);
+    // 最后绘制原始字符
+    font->drawUstring(text, position, color, hcenter, vcenter);
+}
 
 /**
  * @brief 绘制游戏中的各种辅助元素和界面信息。
@@ -1531,11 +1556,11 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 			break;
 		case 1:
 			driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
-            icFont->drawUstring(L"1", limitloc, 0xffffff00, true, true);
+            DrawBoldText(icFont, L"1", limitloc, 0xffffff00, 0xffffff00, true, true);
             break;
 		case 2:
 			driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
-            icFont->drawUstring(L"2", limitloc, 0xffffff00, true, true);
+            DrawBoldText(icFont, L"2", limitloc, 0xffffff00, 0xffffff00, true, true);
 			break;
 		}
 	}
@@ -1549,9 +1574,9 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
             auto value = credit_entry.second;
             driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(0, 64, 64, 128), 0, 0, true);
             if (value > -10 || value < 100) {
-                adFont->drawUstring(std::to_wstring(static_cast<int>(value)), limitloc, 0xff00ffff, true, true);
+                DrawBoldText(adFont, std::to_wstring(static_cast<int>(value)), limitloc, 0xff00ffff, 0xff00ffff, true, true);
             } else {
-                miniFont->drawUstring(std::to_wstring(static_cast<int>(value)), limitloc, 0xff00ffff, true, true);
+                DrawBoldText(miniFont, std::to_wstring(static_cast<int>(value)), limitloc, 0xff00ffff, 0xff00ffff, true, true);
             }
         }
     }

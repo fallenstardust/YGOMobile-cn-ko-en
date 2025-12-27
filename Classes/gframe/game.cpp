@@ -350,7 +350,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 18 * yScale, isAntialias, true);
     titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 32 * yScale, isAntialias, true);
 	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
-	miniFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 10 * yScale, isAntialias, true);
+	miniFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 8 * yScale, isAntialias, true);
     icFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 14 * yScale, isAntialias, true);
 	// 检查字体创建是否成功
 	if(!numFont || !guiFont) {
