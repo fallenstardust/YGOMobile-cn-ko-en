@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.utils;
 
+import static cn.garymb.ygomobile.Constants.URL_GENESYS_LFLIST_DOWNLOAD_LINK;
+
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -62,9 +64,8 @@ public class DownloadUtil {
 
         // 添加 If-None-Match 头部（如果有保存的 ETag）
         String savedETag = getSavedETag(url);
-        if (!TextUtils.isEmpty(savedETag)) {
+        if (url.equals(URL_GENESYS_LFLIST_DOWNLOAD_LINK) && !TextUtils.isEmpty(savedETag)) {//TODO 姑且只对genesys下载地址添加etag，实际需要更完善的逻辑
             Log.d("cc 当前etag", savedETag);
-
             builder.addHeader("If-None-Match", savedETag);
         }
 
@@ -97,11 +98,14 @@ public class DownloadUtil {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                Log.e("DownloadUtil", "onResponse:" + response.code() + "  eTag:" + response.header("ETag"));
                 if (response.code() == 304) {
                     // 内容未修改，无需重新下载
-                    Log.d("cc 下载genesys表", "If-None-Match = " + request.header("If-None-Match"));
-                    return;
+                    listener.onDownloadFailed(new Exception());
+                    File destFile = new File(destFileDir, destFileName);
+                    if (!destFile.exists()) {//如果目标文件本不存在，但已经保存过etag，则需要重置etag确保能重新下载
+                        saveETag(url, "");
+                        download(url, destFileDir, destFileName, listener);
+                    }
                 }
                 // 响应无效则直接回调失败
                 if (!response.isSuccessful()) {
