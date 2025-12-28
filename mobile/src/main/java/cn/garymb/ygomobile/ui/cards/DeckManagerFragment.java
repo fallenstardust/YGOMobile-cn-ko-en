@@ -631,8 +631,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             DataManager.get().load();
 
             // 设置限制卡表列表，使用第一个可用的限制列表
-            if (activity.getmLimitManager().getCount() > 0) {
-                mCardLoader.setLimitList(activity.getmLimitManager().getLastLimit());
+            if (activity.getmLimitManager().getCount() > 0 || activity.getmLimitManager().getGenesysCount() > 0) {
+                mCardLoader.setLimitList(mSettings.getGenesysMode() == 1 ? activity.getmLimitManager().getLastGenesysLimit() : activity.getmLimitManager().getLastLimit());
             }
 
             // 处理卡组文件加载逻辑
@@ -654,7 +654,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
             // 读取卡组文件内容
             if (mCardLoader.isOpen() && file.exists()) {
-                return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
+                return mDeckAdapater.read(mCardLoader, file, mSettings.getGenesysMode() == 1 ? mCardLoader.getGenesysLimitList() : mCardLoader.getLimitList());
             } else {
                 return new DeckInfo();
             }
@@ -1622,18 +1622,15 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.ExtraStart, DeckItem.ExtraEnd);
                 mDeckAdapater.notifyItemRangeChanged(DeckItem.SideStart, DeckItem.SideEnd);
             });
+            // 更新卡片列表适配器的限制列表并通知数据变更
+            mCardListAdapter.setLimitList(limitList);
+            requireActivity().runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
         }
-
-        // 更新卡片列表适配器的限制列表并通知数据变更
-        mCardListAdapter.setLimitList(limitList);
-        requireActivity().runOnUiThread(() -> mCardListAdapter.notifyDataSetChanged());
 
         // 根据是否有Genesys信用分上限值来显示计分板
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
             refreshDeckCreditCount();
             ll_genesys_scoreboard.setVisibility(View.VISIBLE);
-            // 重新初始化卡片搜索器中的限制类型下拉框//TODO 功能未实现
-            //mCardSearcher.initItems();
         } else {
             ll_genesys_scoreboard.setVisibility(View.GONE);
         }

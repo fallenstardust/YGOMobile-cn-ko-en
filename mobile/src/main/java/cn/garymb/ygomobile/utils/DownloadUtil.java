@@ -63,6 +63,8 @@ public class DownloadUtil {
         // 添加 If-None-Match 头部（如果有保存的 ETag）
         String savedETag = getSavedETag(url);
         if (!TextUtils.isEmpty(savedETag)) {
+            Log.d("cc 当前etag", savedETag);
+
             builder.addHeader("If-None-Match", savedETag);
         }
 
@@ -77,9 +79,8 @@ public class DownloadUtil {
             }
         }
         // 构建HTTP请求对象
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
+        Request request = builder.build();
+
         // 异步执行网络请求
         Call call = okHttpClient.newCall(request);
         call.enqueue(new Callback() {
@@ -99,7 +100,7 @@ public class DownloadUtil {
                 Log.e("DownloadUtil", "onResponse:" + response.code() + "  eTag:" + response.header("ETag"));
                 if (response.code() == 304) {
                     // 内容未修改，无需重新下载
-                    listener.onDownloadSuccess(new File(destFileDir, destFileName));
+                    Log.d("cc 下载genesys表", "If-None-Match = " + request.header("If-None-Match"));
                     return;
                 }
                 // 响应无效则直接回调失败

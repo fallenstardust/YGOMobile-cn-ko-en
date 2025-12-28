@@ -22,8 +22,8 @@
         <player-name>Knight of Hanoi</player-name>
         <name>起源赛制正式服</name>
         <desc>按照genesys点数表禁限构筑牌组。TCG环境</desc>
-        <ip>exp.baldlee.top</ip>
-        <port>23333</port>
+        <ip>e.ygo.pro</ip>
+        <port>13518</port>
         <keep>true</keep>
     </server>
     <server>

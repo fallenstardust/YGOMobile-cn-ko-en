@@ -22,8 +22,8 @@
         <player-name>Knight of Hanoi</player-name>
         <name>Servidor oficial del formato GENESYS</name>
         <desc>Construye mazos con restricciones según la Tabla de Puntos GENESYS.</desc>
-        <ip>exp.baldlee.top</ip>
-        <port>23333</port>
+        <ip>e.ygo.pro</ip>
+        <port>13518</port>
         <keep>true</keep>
     </server>
     <server>

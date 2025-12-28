@@ -1717,23 +1717,23 @@ void DeckBuilder::FilterCards() {
                 }
             }
 
-            // filter_lm == 5 表示只显示OCG卡
+            // filter_lm == 5 表示只显示OCG卡+非独有卡
             if(filter_lm == 5 && !(data.ot & AVAIL_OCG))
                 continue;
 
-            // filter_lm == 6 表示只显示TCG卡
+            // filter_lm == 6 表示只显示TCG卡+非独有卡
             if(filter_lm == 6 && !(data.ot & AVAIL_TCG))
                 continue;
 
-            // filter_lm == 7 表示只显示SC卡（可能是简体中文卡）
+            // filter_lm == 7 表示只显示简体中文卡
             if(filter_lm == 7 && !(data.ot & AVAIL_SC))
                 continue;
 
-            // filter_lm == 8 表示只显示CUSTOM卡（自定义卡）
+            // filter_lm == 8 表示只显示自定义卡
             if(filter_lm == 8 && !(data.ot & AVAIL_CUSTOM))
                 continue;
 
-            // filter_lm == 9 表示只显示同时属于OCG和TCG的卡片
+            // filter_lm == 9 表示只显示同时属于OCG和TCG的卡片（无独有卡）
             if(filter_lm == 9 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
                 continue;
         }
