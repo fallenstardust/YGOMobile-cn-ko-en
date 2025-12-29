@@ -67,7 +67,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     private DeckViewHolder mHeadHolder;
     private DeckItem mRemoveItem;
     private int mRemoveIndex;
-    private LimitList mLimitList;
+    private LimitList mLimitList;//同时只能适用一种禁卡表，所以不管是常规禁限还是genesys禁限，只能使用一个
     private boolean showHead = false;
     private String mDeckMd5;
     private DeckInfo mDeckInfo;

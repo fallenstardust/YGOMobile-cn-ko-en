@@ -29,7 +29,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     private final StringManager mStringManager;
     private ImageTop mImageTop;
     private TextView tv_limit_num;
-    private LimitList mLimitList;
+    private LimitList mLimitList;//同时只能适用一种禁卡表，所以不管是常规禁限还是genesys禁限，只能使用一个
     private boolean mItemBg;
     private final ImageLoader imageLoader;
     private boolean mEnableSwipe = false;

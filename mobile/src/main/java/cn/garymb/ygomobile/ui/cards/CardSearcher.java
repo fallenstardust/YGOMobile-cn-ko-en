@@ -218,14 +218,14 @@ public class CardSearcher implements View.OnClickListener {
             genesys_limitSpinner.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             limitListSpinner.setVisibility(isChecked ? View.GONE : View.VISIBLE);
             limitSpinner.setVisibility(isChecked ? View.GONE : View.VISIBLE);
+            mSettings.setGenesysMode(isChecked ? 1 : 0);
             //同时通知整个界面都显示该禁卡表的禁限情况
             LimitList limit = isChecked ? mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner)) : mLimitManager.getLimit(getSelectText(limitListSpinner));
-            mICardSearcher.setLimitList(limit);
             mCallBack.setLimit(limit);
+            Log.w(TAG, "setLimitList: mCallBack.setLimit(limit)  " + mSettings.getGenesysMode());
             // 重置禁限筛选条件，以免切换时出现不合预期的结果
             reset(isChecked ? genesys_limitSpinner : limitSpinner);
             genesys_Switch.setText(isChecked ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
-            mSettings.setGenesysMode(isChecked ? 1 : 0);
         });
         limitListSpinner.setVisibility(genesys_Switch.isChecked() ? View.GONE : View.VISIBLE);
         limitListSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
