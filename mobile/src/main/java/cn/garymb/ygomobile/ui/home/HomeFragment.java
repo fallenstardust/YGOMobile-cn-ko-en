@@ -722,7 +722,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     protected void openGame() {
         YGOStarter.startGame(getActivity(), null);
-        getParentFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
+        //getParentFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
     }
 
     private void duelAssistantCheck() {
