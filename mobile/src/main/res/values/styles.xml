@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="BaseTheme" parent="Theme.AppCompat"></style>
+    <style name="BaseTheme" parent="Theme.AppCompat" />
 
-    <style name="AppBaseTheme" parent="BaseTheme"></style>
+    <style name="AppBaseTheme" parent="BaseTheme" />
 
-    <style name="AppTheme" parent="AppBaseTheme">
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorNavy</item>
         <item name="colorAccent">@color/colorAccent</item>
