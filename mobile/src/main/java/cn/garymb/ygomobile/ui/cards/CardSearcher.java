@@ -213,19 +213,19 @@ public class CardSearcher implements View.OnClickListener {
         genesys_Switch.setChecked(mSettings.getGenesysMode() != 0);
         genesys_Switch.setText(mSettings.getGenesysMode() != 0 ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
         genesys_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            //同时通知整个界面都显示该禁卡表的禁限情况
+            LimitList limit = isChecked ? mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner)) : mLimitManager.getLimit(getSelectText(limitListSpinner));
+            mCallBack.setLimit(limit);
+
+            // 重置禁限筛选条件，以免切换时出现不合预期的结果
+            reset(isChecked ? genesys_limitSpinner : limitSpinner);
+            genesys_Switch.setText(isChecked ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
             //根据开关切换两种模式禁卡表的显示和隐藏
             genesys_limitListSpinner.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             genesys_limitSpinner.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             limitListSpinner.setVisibility(isChecked ? View.GONE : View.VISIBLE);
             limitSpinner.setVisibility(isChecked ? View.GONE : View.VISIBLE);
-            mSettings.setGenesysMode(isChecked ? 1 : 0);
-            //同时通知整个界面都显示该禁卡表的禁限情况
-            LimitList limit = isChecked ? mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner)) : mLimitManager.getLimit(getSelectText(limitListSpinner));
-            mCallBack.setLimit(limit);
-            Log.w(TAG, "setLimitList: mCallBack.setLimit(limit)  " + mSettings.getGenesysMode());
-            // 重置禁限筛选条件，以免切换时出现不合预期的结果
-            reset(isChecked ? genesys_limitSpinner : limitSpinner);
-            genesys_Switch.setText(isChecked ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
+
         });
         limitListSpinner.setVisibility(genesys_Switch.isChecked() ? View.GONE : View.VISIBLE);
         limitListSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -238,7 +238,8 @@ public class CardSearcher implements View.OnClickListener {
                 LimitList limit = mLimitManager.getLimit(getSelectText(limitListSpinner));
                 mICardSearcher.setLimitList(limit);
                 //同时通知整个界面都显示该禁卡表的禁限情况
-                mCallBack.setLimit(limit);
+                if (mSettings.getGenesysMode() == 0)//对模式进行判断，避免重复执行通知刷新界面增加性能负担
+                    mCallBack.setLimit(limit);
 
             }
 
@@ -266,7 +267,8 @@ public class CardSearcher implements View.OnClickListener {
                 LimitList genesyslimit = mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner));
                 mICardSearcher.setLimitList(genesyslimit);
                 //同时通知整个界面都显示该禁卡表的禁限情况
-                mCallBack.setLimit(genesyslimit);
+                if (mSettings.getGenesysMode() == 1)//对模式进行判断，避免重复执行通知刷新界面增加性能负担
+                    mCallBack.setLimit(genesyslimit);
 
             }
 
