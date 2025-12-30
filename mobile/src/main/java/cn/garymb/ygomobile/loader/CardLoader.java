@@ -62,9 +62,11 @@ public class CardLoader implements ICardSearcher {
             if(limitList.getCreditLimits() != null) {
                 mGenesys_LimitList = limitList;
                 AppsSettings.get().setLastGenesysLimit(limitList.getName());
+                AppsSettings.get().setGenesysMode(1);
             } else {
                 mLimitList = limitList;
                 AppsSettings.get().setLastLimit(limitList.getName());
+                AppsSettings.get().setGenesysMode(0);
             }
         }
     }

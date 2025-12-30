@@ -213,13 +213,16 @@ public class CardSearcher implements View.OnClickListener {
         genesys_Switch.setChecked(mSettings.getGenesysMode() != 0);
         genesys_Switch.setText(mSettings.getGenesysMode() != 0 ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
         genesys_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+
             //同时通知整个界面都显示该禁卡表的禁限情况
             LimitList limit = isChecked ? mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner)) : mLimitManager.getLimit(getSelectText(limitListSpinner));
-            mCallBack.setLimit(limit);
+            mCallBack.setLimit(limit, "genesy切换开关");
+            mICardSearcher.setLimitList(limit);
 
             // 重置禁限筛选条件，以免切换时出现不合预期的结果
             reset(isChecked ? genesys_limitSpinner : limitSpinner);
             genesys_Switch.setText(isChecked ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
+
             //根据开关切换两种模式禁卡表的显示和隐藏
             genesys_limitListSpinner.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             genesys_limitSpinner.setVisibility(isChecked ? View.VISIBLE : View.GONE);
@@ -228,26 +231,6 @@ public class CardSearcher implements View.OnClickListener {
 
         });
         limitListSpinner.setVisibility(genesys_Switch.isChecked() ? View.GONE : View.VISIBLE);
-        limitListSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                long value = getSelect(limitListSpinner);
-                if (value <= 0) {
-                    reset(limitSpinner);
-                }
-                LimitList limit = mLimitManager.getLimit(getSelectText(limitListSpinner));
-                mICardSearcher.setLimitList(limit);
-                //同时通知整个界面都显示该禁卡表的禁限情况
-                if (mSettings.getGenesysMode() == 0)//对模式进行判断，避免重复执行通知刷新界面增加性能负担
-                    mCallBack.setLimit(limit);
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
         limitListSpinner.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 refreshLimitListSpinnerItems(limitListSpinner);
@@ -257,26 +240,6 @@ public class CardSearcher implements View.OnClickListener {
         limitSpinner.setVisibility(genesys_Switch.isChecked() ? View.GONE : View.VISIBLE);
         genesys_limitSpinner.setVisibility(genesys_Switch.isChecked() ? View.VISIBLE : View.GONE);
         genesys_limitListSpinner.setVisibility(genesys_Switch.isChecked() ? View.VISIBLE : View.GONE);
-        genesys_limitListSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                long value = getSelect(genesys_limitListSpinner);
-                if (value <= 0) {
-                    reset(genesys_limitSpinner);
-                }
-                LimitList genesyslimit = mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner));
-                mICardSearcher.setLimitList(genesyslimit);
-                //同时通知整个界面都显示该禁卡表的禁限情况
-                if (mSettings.getGenesysMode() == 1)//对模式进行判断，避免重复执行通知刷新界面增加性能负担
-                    mCallBack.setLimit(genesyslimit);
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
         genesys_limitListSpinner.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 refreshGenesysLimitListSpinnerItems(genesys_limitListSpinner);
@@ -460,6 +423,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void initLimitListSpinners(Spinner spinner) {
+        spinner.setOnItemSelectedListener(null);
         // 创建一个列表用于存储下拉选项
         List<SimpleSpinnerItem> items = new ArrayList<>();
         // 获取所有禁卡表名称列表
@@ -502,9 +466,29 @@ public class CardSearcher implements View.OnClickListener {
         if (index >= 0) {
             spinner.setSelection(index);
         }
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                long value = getSelect(spinner);
+                if (value <= 0) {
+                    reset(spinner);
+                }
+                LimitList limit = mLimitManager.getLimit(getSelectText(spinner));
+                //同时通知整个界面都显示该禁卡表的禁限情况
+                mCallBack.setLimit(limit, "初始化 常规 禁卡表");
+                mICardSearcher.setLimitList(limit);
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     private void initGenesysLimitListSpinners(Spinner spinner) {
+        spinner.setOnItemSelectedListener(null);
         // 创建一个列表用于存储下拉选项
         List<SimpleSpinnerItem> items = new ArrayList<>();
         // 获取所有禁卡表名称列表
@@ -547,6 +531,27 @@ public class CardSearcher implements View.OnClickListener {
         if (index >= 0) {
             spinner.setSelection(index);
         }
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                long value = getSelect(spinner);
+                if (value <= 0) {
+                    reset(spinner);
+                }
+
+                LimitList genesyslimit = mLimitManager.getGenesysLimit(getSelectText(spinner));
+                //同时通知整个界面都显示该禁卡表的禁限情况
+                mCallBack.setLimit(genesyslimit, "初始化 genesys 禁卡表");
+                mICardSearcher.setLimitList(genesyslimit);
+
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     private void refreshLimitListSpinnerItems(Spinner spinner) {
@@ -788,7 +793,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     public interface CallBack {
-        void setLimit(LimitList limit);
+        void setLimit(LimitList limit, String caller);
 
         void onSearchStart();
 

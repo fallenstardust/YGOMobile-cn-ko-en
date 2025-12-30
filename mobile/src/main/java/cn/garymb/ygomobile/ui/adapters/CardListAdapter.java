@@ -10,6 +10,7 @@ import com.tubb.smrv.SwipeHorizontalMenuLayout;
 
 import org.greenrobot.eventbus.EventBus;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -108,6 +109,11 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
     public void setLimitList(LimitList limitList) {
+        if(limitList.getCreditLimits() != null) {
+            AppsSettings.get().setGenesysMode(1);
+        } else {
+            AppsSettings.get().setGenesysMode(0);
+        }
         mLimitList = limitList;
     }
 

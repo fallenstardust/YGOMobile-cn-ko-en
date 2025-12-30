@@ -881,8 +881,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     @Override
-    public void setLimit(LimitList limit) {//由cardsearcher通知更新适用禁卡表的方法
-        Log.w(TAG, "override: setLimitList genesys模式为: "+ mSettings.getGenesysMode());
+    public void setLimit(LimitList limit, String caller) {//由cardsearcher通知更新适用禁卡表的方法
+        Log.w(TAG, caller+" override: setLimitList genesys模式为: "+ mSettings.getGenesysMode());
         setLimitList(limit);
     }
 

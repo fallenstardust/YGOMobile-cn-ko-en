@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
@@ -425,6 +426,11 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     public void setLimitList(LimitList limitList) {
+        if(limitList.getCreditLimits() != null) {
+            AppsSettings.get().setGenesysMode(1);
+        } else {
+            AppsSettings.get().setGenesysMode(0);
+        }
         mLimitList = limitList;
     }
 

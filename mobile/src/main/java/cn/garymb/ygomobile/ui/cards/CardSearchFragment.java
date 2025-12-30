@@ -220,7 +220,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     }
 
     @Override
-    public void setLimit(LimitList limit) {
+    public void setLimit(LimitList limit, String caller) {
         mCardListAdapter.setLimitList(limit);
         mCardListAdapter.notifyDataSetChanged();
     }
