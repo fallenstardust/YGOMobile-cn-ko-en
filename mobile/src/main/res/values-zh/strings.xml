@@ -200,7 +200,7 @@
     <string name="question_clear_deck">清空当前卡组?</string>
     <string name="delete_server_info">删除当前服务器信息？</string>
     <string name="exit_edit_mode">退出编辑模式</string>
-    <string name="logo_text">感谢您对我们的支持</string>
+    <string name="logo_text">YGOMobile十岁啦！非常感谢一直以来的支持</string>
     <string name="start_game_error">启动游戏失败</string>
     <string name="set_font_size">游戏内字体大小</string>
     <string name="copy_to_clipbroad">已经复制到粘贴板</string>
