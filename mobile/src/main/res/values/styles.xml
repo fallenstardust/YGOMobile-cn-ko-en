@@ -5,7 +5,7 @@
 
     <style name="AppBaseTheme" parent="BaseTheme" />
 
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
+    <style name="AppTheme" parent="AppBaseTheme">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorNavy</item>
         <item name="colorAccent">@color/colorAccent</item>
