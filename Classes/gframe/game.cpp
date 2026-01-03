@@ -335,10 +335,10 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	}
     // 加载配置文件
     LoadConfig();
-    // 加载禁限卡表
-    deckManager.LoadLFList(options);
     // 加载扩展卡包
     LoadExpansions();
+    // 加载禁限卡表
+    deckManager.LoadLFList(options);
 	// 获取GUI环境
 	env = device->getGUIEnvironment();
 	// 检查是否启用字体抗锯齿
@@ -1849,12 +1849,17 @@ void Game::LoadExpansions() {
 	while((dirp = readdir(dir)) != NULL) {
 		size_t len = strlen(dirp->d_name);
 		// 检查文件名长度是否足够以及后缀是否为 .zip 或 .ypk（忽略大小写）
-		if(len < 5 || (strcasecmp(dirp->d_name + len - 4, ".zip") != 0 && strcasecmp(dirp->d_name + len - 4, ".ypk") != 0))
-			continue;
-		char upath[1024];
-		sprintf(upath, "./expansions/%s", dirp->d_name);
-		ALOGW("扩展卡文件: %s", upath);
-		dataManager.FileSystem->addFileArchive(upath, true, false, EFAT_ZIP);
+		if(len > 4 && (strcasecmp(dirp->d_name + len - 4, ".zip") == 0 || strcasecmp(dirp->d_name + len - 4, ".ypk") == 0)) {
+			char upath[1024];
+			sprintf(upath, "./expansions/%s", dirp->d_name);
+			ALOGW("扩展卡文件: %s", upath);
+			dataManager.FileSystem->addFileArchive(upath, true, false, EFAT_ZIP);
+		} else if (len > 11 && strcasecmp(dirp->d_name + len - 11, "lflist.conf") == 0) {
+			char upath[1024];
+			sprintf(upath, "./expansions/%s", dirp->d_name);
+			ALOGW("拓展禁卡表文件: %s", upath);
+			deckManager.LoadLFListSingle((const char*)upath);
+		}
 	}
 	closedir(dir);
 
