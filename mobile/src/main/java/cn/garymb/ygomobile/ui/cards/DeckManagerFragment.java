@@ -597,7 +597,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         VUiKit.defer().when(() -> {
             // 双重检查卡牌加载器状态和文件存在性，确保数据加载安全
             if (mCardLoader.isOpen() && file.exists()) {
-                return mDeckAdapater.read(mCardLoader, file, mCardLoader.getLimitList());
+                return mDeckAdapater.read(mCardLoader, file, mSettings.getGenesysMode() == 1 ? mCardLoader.getGenesysLimitList() : mCardLoader.getLimitList());
             } else {
                 return new DeckInfo();
             }
@@ -676,8 +676,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
             // 设置并显示收藏夹
             mCardSearcher.showFavorites(false);
-            // 初始化按钮状态
-            updateUndoRedoButtons();
         });
     }
 
