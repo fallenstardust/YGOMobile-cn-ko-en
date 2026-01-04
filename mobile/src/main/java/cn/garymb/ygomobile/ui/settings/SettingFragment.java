@@ -196,7 +196,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 //如果是设置额外卡库的选项
                 if (preference.getKey().equals(PREF_READ_EX)) {
                     //设置使用额外卡库后重新加载卡片数据
-                    DataManager.get().load();
+                    DataManager.get().load(true);
                     EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPrefChange));
                     //ServerUtil.initExCardState();
                 }
@@ -258,7 +258,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     }
                     mSettings.setDataLanguage(Integer.valueOf(listPreference.getValue()));
                     YGOUtil.showTextToast(R.string.restart_app, Toast.LENGTH_LONG);
-                    DataManager.get().load();
+                    DataManager.get().load(true);
                 }
                 mSharedPreferences.edit().putString(preference.getKey(), listPreference.getValue()).apply();
             } else {
@@ -334,7 +334,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     simpleListAdapter.remove(pos);
                     simpleListAdapter.notifyDataSetChanged();
                     FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
-                    DataManager.get().load();
+                    DataManager.get().load(true);
                     YGOUtil.showTextToast(R.string.done, Toast.LENGTH_LONG);
                     if (name.contains(Constants.officialExCardPackageName)) {//如果删除的是官方先行卡ypk，则更新其相关UI状态
                         SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态

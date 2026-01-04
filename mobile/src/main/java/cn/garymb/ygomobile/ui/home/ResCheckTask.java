@@ -423,7 +423,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
     private void loadData() {
         setMessage(mContext.getString(R.string.loading));
-        DataManager.get().load();
+        DataManager.get().load(true);
     }
 
     void copyCdbFile(String assetPath, boolean needsUpdate) throws IOException {

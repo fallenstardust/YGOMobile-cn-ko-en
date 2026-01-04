@@ -628,7 +628,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         VUiKit.defer().when(() -> {
             // 加载数据管理器
-            DataManager.get().load();
+            DataManager.get().load(true);
 
             // 设置限制卡表列表，使用第一个可用的限制列表
             if (activity.getmLimitManager().getCount() > 0 || activity.getmLimitManager().getGenesysCount() > 0) {
