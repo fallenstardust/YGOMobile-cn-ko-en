@@ -248,7 +248,7 @@ class DeckDrager {
         if (right >= sidecount) {
             right = sidecount - 1;
         }
-        if (sidecount >= Constants.DECK_SIDE_MAX + 5) {
+        if (sidecount >= Constants.DECK_SIDE_MAX) {
             return false;
         }
         //交换
@@ -309,7 +309,7 @@ class DeckDrager {
         if (right >= sidecount) {
             right = sidecount - 1;
         }
-        if (sidecount >= Constants.DECK_SIDE_MAX + 5) {
+        if (sidecount >= Constants.DECK_SIDE_MAX) {
             return false;
         }
         //交换

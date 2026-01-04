@@ -822,11 +822,11 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 break;
             case R.id.action_replay:
                 YGOStarter.startGame(getActivity(), null, "-k", "-r");
-                getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
+                //getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
                 break;
             case R.id.action_bot:
                 YGOStarter.startGame(getActivity(), null, "-k", "-s");
-                getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
+                //getFragmentManager().beginTransaction().remove(activity.fragment_deck_cards).commit();
                 break;
             case R.id.action_download_ex:
 
