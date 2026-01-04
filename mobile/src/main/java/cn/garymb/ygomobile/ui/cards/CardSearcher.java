@@ -216,8 +216,14 @@ public class CardSearcher implements View.OnClickListener {
 
             //同时通知整个界面都显示该禁卡表的禁限情况
             LimitList limit = isChecked ? mLimitManager.getGenesysLimit(getSelectText(genesys_limitListSpinner)) : mLimitManager.getLimit(getSelectText(limitListSpinner));
-            mCallBack.setLimit(limit, "genesy切换开关");
-            mICardSearcher.setLimitList(limit);
+            if (limit != null) {
+                //同时通知整个界面都显示该禁卡表的禁限情况
+                mCallBack.setLimit(limit, "genesy切换开关");
+                mICardSearcher.setLimitList(limit);
+            } else {
+                mCallBack.setLimit(new LimitList(), "genesy切换开关 - null禁卡表");
+                mICardSearcher.setLimitList(new LimitList());
+            }
 
             // 重置禁限筛选条件，以免切换时出现不合预期的结果
             reset(isChecked ? genesys_limitSpinner : limitSpinner);
@@ -474,9 +480,16 @@ public class CardSearcher implements View.OnClickListener {
                     reset(spinner);
                 }
                 LimitList limit = mLimitManager.getLimit(getSelectText(spinner));
-                //同时通知整个界面都显示该禁卡表的禁限情况
-                mCallBack.setLimit(limit, "初始化 常规 禁卡表");
-                mICardSearcher.setLimitList(limit);
+                // 添加空值检查
+                if (limit != null) {
+                    //同时通知整个界面都显示该禁卡表的禁限情况
+                    mCallBack.setLimit(limit, "初始化 常规 禁卡表");
+                    mICardSearcher.setLimitList(limit);
+                } else {
+                    // 可以选择设置一个默认的LimitList或空的LimitList
+                    mCallBack.setLimit(new LimitList(), "初始化 常规 禁卡表 - 标题");
+                    mICardSearcher.setLimitList(new LimitList());
+                }
 
             }
 
@@ -540,9 +553,16 @@ public class CardSearcher implements View.OnClickListener {
                 }
 
                 LimitList genesyslimit = mLimitManager.getGenesysLimit(getSelectText(spinner));
-                //同时通知整个界面都显示该禁卡表的禁限情况
-                mCallBack.setLimit(genesyslimit, "初始化 genesys 禁卡表");
-                mICardSearcher.setLimitList(genesyslimit);
+                // 添加空值检查
+                if (genesyslimit != null) {
+                    //同时通知整个界面都显示该禁卡表的禁限情况
+                    mCallBack.setLimit(genesyslimit, "初始化 genesys 禁卡表");
+                    mICardSearcher.setLimitList(genesyslimit);
+                } else {
+                    // 可以选择设置一个默认的LimitList或空的LimitList
+                    mCallBack.setLimit(new LimitList(), "初始化 常规 禁卡表 - 标题");
+                    mICardSearcher.setLimitList(new LimitList());
+                }
 
 
             }
