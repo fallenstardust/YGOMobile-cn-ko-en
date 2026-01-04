@@ -426,7 +426,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     }
 
     public void setLimitList(LimitList limitList) {
-        if(limitList.getCreditLimits() != null) {
+        if (limitList.getCreditLimits() != null) {
             AppsSettings.get().setGenesysMode(1);
         } else {
             AppsSettings.get().setGenesysMode(0);
@@ -596,6 +596,19 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         //根据data的内容调整view的样式
 
         DeckItem item = mItems.get(position);
+
+        // 确保每次绑定时都重置视图状态
+        holder.clear(); // 清理旧图片和状态
+
+        if (item != null && item.getCardInfo() != null) {
+            // 绑定新数据
+            holder.bind(item, imageLoader);
+            holder.showImage();
+        } else {
+            // 显示空状态
+            holder.showEmpty();
+        }
+
         holder.setItemType(item.getType());
         if (item.getType() == DeckItemType.MainLabel || item.getType() == DeckItemType.SideLabel
                 || item.getType() == DeckItemType.ExtraLabel) {//处理分隔栏的item view
@@ -663,7 +676,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                             }
                         } else {
                             holder.setRightImage(null);
-                            holder.setLimitText("",  YGOUtil.c(R.color.white), 10);
+                            holder.setLimitText("", YGOUtil.c(R.color.white), 10);
                         }
                     } else {
                         holder.setRightImage(null);

@@ -21,8 +21,8 @@ public class DeckItemTouchHelper extends ItemTouchHelperPlus.Callback2 {
     private static final boolean DEBUG = false;
     private final DeckAdapater deckAdapater;
 
-    public DeckItemTouchHelper(DeckAdapater deckAdapater) {
-        this.mDeckDrager = new DeckDrager(deckAdapater);
+    public DeckItemTouchHelper(DeckAdapater deckAdapater, RecyclerView recyclerView) {
+        this.mDeckDrager = new DeckDrager(deckAdapater, recyclerView);
         this.deckAdapater = deckAdapater;
         int size = (int) deckAdapater.getContext().getResources().getDimension(R.dimen.drag_rect);
         //长按手抖范围

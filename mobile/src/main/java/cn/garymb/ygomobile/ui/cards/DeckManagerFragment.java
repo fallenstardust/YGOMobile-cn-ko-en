@@ -271,7 +271,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         mRecyclerView.setLayoutManager(new DeckLayoutManager(getContext(), Constants.DECK_WIDTH_COUNT));
 
         // 配置拖拽支持与触摸助手
-        mDeckItemTouchHelper = new DeckItemTouchHelper(mDeckAdapater);
+        mDeckItemTouchHelper = new DeckItemTouchHelper(mDeckAdapater, mRecyclerView);
         ItemTouchHelperPlus touchHelper = new ItemTouchHelperPlus(getContext(), mDeckItemTouchHelper);
         touchHelper.setItemDragListener(this);
         touchHelper.setEnableClickDrag(Constants.DECK_SINGLE_PRESS_DRAG);
@@ -494,15 +494,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         if (pos < 0) return;
         if (Constants.DEBUG)
             Log.d(TAG, "delete " + pos);
-
+        // 获取要删除的卡组项
+        DeckItem deckItem = mDeckAdapater.getItem(pos);
+        if (deckItem == null || deckItem.getCardInfo() == null) {
+            return;
+        }
         // 根据设置决定删除方式：弹窗确认删除 或 直接显示删除头部视图
         if (mSettings.isDialogDelete()) {
-            // 获取要删除的卡组项
-            DeckItem deckItem = mDeckAdapater.getItem(pos);
-            if (deckItem == null || deckItem.getCardInfo() == null) {
-                return;
-            }
-
             // 创建并显示删除确认对话框
             DialogPlus dialogPlus = new DialogPlus(getContext());
             dialogPlus.setTitle(R.string.question);
@@ -514,10 +512,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             });
             dialogPlus.show();
         } else {
+            mDeckItemTouchHelper.remove(pos);
             // 直接显示删除头部视图
             mDeckAdapater.showHeadView();
-            mDeckItemTouchHelper.remove(pos);
-
         }
         // 添加到历史记录
         addDeckToHistory(mDeckAdapater.getCurrentState());

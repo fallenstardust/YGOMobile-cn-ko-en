@@ -2620,10 +2620,8 @@ public class ItemTouchHelperPlus extends RecyclerView.ItemDecoration
                 // 只有在非拖拽状态下才触发长按
                 if (!isDragging && System.currentTimeMillis() - longPressTime >= mLongTime) {
                     mLongPressMode = true;
-                    if (!isLongPressCancel) {
-                        if (getOnDragListener() != null && mSelectId >= 0) {
-                            getOnDragListener().onDragLongPress(mSelectId);
-                        }
+                    if (getOnDragListener() != null && mSelectId >= 0) {
+                        getOnDragListener().onDragLongPress(mSelectId);
                     }
                 }
             }

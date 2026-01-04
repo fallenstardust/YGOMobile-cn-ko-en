@@ -2,14 +2,18 @@ package cn.garymb.ygomobile.ui.cards.deck;
 
 import android.util.Log;
 
+import androidx.recyclerview.widget.RecyclerView;
+
 import cn.garymb.ygomobile.Constants;
 import ocgcore.data.Card;
 
 class DeckDrager {
     private final DeckAdapater deckAdapater;
+    private final RecyclerView mRecyclerView;
 
-    public DeckDrager(DeckAdapater deckAdapater) {
+    public DeckDrager(DeckAdapater deckAdapater, RecyclerView recyclerView) {
         this.deckAdapater = deckAdapater;
+        this.mRecyclerView = recyclerView;
     }
 
     public void resotre(int id, DeckItem deckItem) {
@@ -120,6 +124,12 @@ class DeckDrager {
     public DeckItem removeMain(int pos) {
         int left = pos - DeckItem.MainStart;
         if (left >= 0 && left < deckAdapater.getMainCount()) {
+            // 在删除前先清理视图
+            RecyclerView.ViewHolder holder = mRecyclerView.findViewHolderForAdapterPosition(pos);
+            if (holder instanceof DeckViewHolder) {
+                ((DeckViewHolder) holder).clear();
+            }
+
             DeckItem deckItem = deckAdapater.removeItem(pos);
             deckAdapater.addItem(DeckItem.MainEnd, new DeckItem());
             deckAdapater.notifyItemRemoved(pos);
@@ -133,6 +143,12 @@ class DeckDrager {
     public DeckItem removeExtra(int pos) {
         int left = pos - DeckItem.ExtraStart;
         if (left >= 0 && left < deckAdapater.getExtraCount()) {
+            // 在删除前先清理视图
+            RecyclerView.ViewHolder holder = mRecyclerView.findViewHolderForAdapterPosition(pos);
+            if (holder instanceof DeckViewHolder) {
+                ((DeckViewHolder) holder).clear();
+            }
+
             DeckItem deckItem = deckAdapater.removeItem(pos);
             deckAdapater.addItem(DeckItem.ExtraEnd, new DeckItem());
             deckAdapater.notifyItemRemoved(pos);
@@ -146,6 +162,12 @@ class DeckDrager {
     public DeckItem removeSide(int pos) {
         int left = pos - DeckItem.SideStart;
         if (left >= 0 && left < deckAdapater.getSideCount()) {
+            // 在删除前先清理视图
+            RecyclerView.ViewHolder holder = mRecyclerView.findViewHolderForAdapterPosition(pos);
+            if (holder instanceof DeckViewHolder) {
+                ((DeckViewHolder) holder).clear();
+            }
+
             DeckItem deckItem = deckAdapater.removeItem(pos);
             deckAdapater.addItem(DeckItem.SideEnd, new DeckItem());
             deckAdapater.notifyItemRemoved(pos);

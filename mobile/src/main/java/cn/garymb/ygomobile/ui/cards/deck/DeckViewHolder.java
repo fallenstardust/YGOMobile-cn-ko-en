@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 // Provide a direct reference to each of the views within a data item
 // Used to cache the views within the item layout for fast access
@@ -27,6 +28,7 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
 
     private long mCardType;
     private DeckItemType mItemType;
+
     // Create a constructor that accepts the entire item row
     // and does the view lookups to find each subview
     public DeckViewHolder(View view) {
@@ -41,6 +43,32 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         textlayout = $(R.id.layout_label);
         tv_deck_limit_num = $(R.id.tv_deck_limit_num);
         headView = null;// $(R.id.head);
+    }
+
+    public void clear() {
+        if (cardImage != null) {
+            // 清除图片加载任务
+            GlideCompat.with(itemView.getContext()).clear(cardImage);
+            // 设置默认占位图
+            cardImage.setImageResource(R.drawable.unknown);
+        }
+        // 清理禁限数字显示
+        if (tv_deck_limit_num != null) {
+            tv_deck_limit_num.setText("");
+            tv_deck_limit_num.setVisibility(View.GONE);
+        }
+        // 确保视图处于正确状态
+        showEmpty();
+    }
+
+    public void bind(DeckItem item, ImageLoader imageLoader) {
+        if (item != null && item.getCardInfo() != null) {
+            showImage(); // 显示卡片图片
+            // 使用 setResourceImage 方法加载卡片图片
+            imageLoader.bindImage(cardImage, item.getCardInfo(), ImageLoader.Type.small);
+        } else {
+            showEmpty(); // 显示空状态
+        }
     }
 
     public DeckItemType getItemType() {
@@ -99,6 +127,7 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
 
     /**
      * 只展示分隔标签（例如“主卡组：60怪兽：21“），隐藏掉卡图ImageView
+     *
      * @param text
      */
     public void setText(String text) {
@@ -107,11 +136,13 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         cardImage.setVisibility(View.GONE);
         rightImage.setVisibility(View.GONE);
     }
+
     public void setLimitText(String text, int color, int textSize) {
         tv_deck_limit_num.setText(text);
         tv_deck_limit_num.setTextColor(color);
         tv_deck_limit_num.setTextSize(textSize);
     }
+
     /**
      * 展示卡图，隐藏分隔标签
      */
@@ -119,12 +150,20 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         textlayout.setVisibility(View.GONE);
         cardImage.setVisibility(View.VISIBLE);
         rightImage.setVisibility(View.VISIBLE);
+        // 禁限数字在需要时再单独设置
+        if (tv_deck_limit_num != null) {
+            tv_deck_limit_num.setVisibility(View.VISIBLE);
+        }
     }
 
     public void showEmpty() {
         textlayout.setVisibility(View.GONE);
         cardImage.setVisibility(View.INVISIBLE);
         rightImage.setVisibility(View.GONE);
+        // 同时隐藏禁限数字
+        if (tv_deck_limit_num != null) {
+            tv_deck_limit_num.setVisibility(View.GONE);
+        }
     }
 
     public void setRightImage(Bitmap bitmap) {
