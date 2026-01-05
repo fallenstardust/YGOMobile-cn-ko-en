@@ -792,7 +792,8 @@ public class CardSearcher implements View.OnClickListener {
                     .setcode(new ArrayList<>(Arrays.asList(0x9fL, 0x99L)))//娱乐伙伴，异色眼
                     .category(new ArrayList<>(Arrays.asList()))
                     .ot(getIntSelect(otSpinner))
-                    .types(new ArrayList<>(Arrays.asList(0x20L, 0x40L)))//效果，融合
+                    .types(new ArrayList<>(Arrays.asList(0x20L)))//效果
+                    .except_types(new ArrayList<>(Arrays.asList(0x40L)))//排除：融合
                     .linkKey(lineKey)
                     .type_logic(true)//and逻辑
                     .setcode_logic(true)

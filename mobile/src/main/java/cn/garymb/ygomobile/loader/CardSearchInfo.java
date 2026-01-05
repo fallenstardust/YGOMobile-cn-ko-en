@@ -24,6 +24,7 @@ public class CardSearchInfo implements ICardFilter{
     private List<Long> race;
     private List<Long> category;
     private List<Long> types;
+    private List<Long> except_types;
     private List<Long> setcode;
 
     //true为and逻辑, false为or逻辑
@@ -83,6 +84,10 @@ public class CardSearchInfo implements ICardFilter{
 
     public List<Long> getTypes() {
         return types;
+    }
+
+    public List<Long> getExceptTypes() {
+        return except_types;
     }
 
     public List<Long> getSetcode() {
@@ -169,6 +174,11 @@ public class CardSearchInfo implements ICardFilter{
             return this;
         }
 
+        public Builder except_types(List<Long> except_types) {
+            searchInfo.except_types = except_types;
+            return this;
+        }
+
         public Builder setcode(List<Long> setcode) {
             searchInfo.setcode = setcode;
             return this;
@@ -200,6 +210,7 @@ public class CardSearchInfo implements ICardFilter{
                 ", LINK=" + getLinkKey() +
                 ", Race=" + getRace() +
                 ", Type=" + getTypes() +
+                ", ExceptType=" + getExceptTypes() +
                 ", SetCode=" + getSetcode() +
                 ", TypeLogic=" + getTypeLogice() +
                 ", SetCodeLogic=" + getSetCodeLogice() +
@@ -316,6 +327,11 @@ public class CardSearchInfo implements ICardFilter{
         }
         if (!category.isEmpty()
             && category.stream().filter(i -> (card.Category & i) == i).count() == 0
+        ) {
+            return false;
+        }
+        if (!except_types.isEmpty()
+            && except_types.stream().filter(type -> (card.Type & type) == type).count() > 0
         ) {
             return false;
         }
