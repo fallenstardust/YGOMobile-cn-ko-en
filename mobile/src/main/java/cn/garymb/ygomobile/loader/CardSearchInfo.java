@@ -335,16 +335,18 @@ public class CardSearchInfo implements ICardFilter{
         ) {
             return false;
         }
-        long type_ct = types.stream().filter(type -> (card.Type & type) == type).count();
         if (!types.isEmpty()
-            && (type_logic ? type_ct != types.size() : type_ct == 0)
+            && (type_logic ?
+                types.stream().filter(type -> (card.Type & type) == type).count() != types.size()
+                    : types.stream().filter(type -> (card.Type & type) == type).count() == 0)
         ) {
             return false;
         }
         //TODO setcode
-        long setcode_ct = setcode.stream().filter(i -> card.isSetCode(i)).count();
         if (!setcode.isEmpty()
-            && (setcode_logic ? setcode_ct != setcode.size() : setcode_ct == 0)
+            && (setcode_logic ?
+                setcode.stream().filter(i -> card.isSetCode(i)).count() != setcode.size()
+                    : setcode.stream().filter(i -> card.isSetCode(i)).count()t == 0)
         ) {
             return false;
         }
