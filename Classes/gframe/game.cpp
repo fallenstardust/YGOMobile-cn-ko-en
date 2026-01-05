@@ -2381,7 +2381,8 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 		if(player < 11 || player > 19)
 			chatMsg[0].append(L"[---]: ");
 	}
-	chatMsg[0].append(msg);
+    std::wstring processedMsg = AppendCardNames(msg);
+    chatMsg[0].append(processedMsg);
 }
 void Game::ClearChatMsg() {
 	for(int i = 7; i >= 0; --i) {
@@ -2399,39 +2400,24 @@ std::string WCharToUTF8(const wchar_t* input) {
 }
 
 void Game::AddDebugMsg(const char* msg) {
-    std::string message(msg);
-    unsigned int cardID = 0;
-    std::regex cardIdPattern(R"((\d{3,9}))");
-    auto words_begin = std::sregex_iterator(message.begin(), message.end(), cardIdPattern);
-    auto words_end = std::sregex_iterator();
-    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
-        std::smatch match = *i;
-        cardID = std::stoul(match.str());
-        break;
-    }
-    std::string cardName = "Unknown";
-    if(cardID != 0) {
-        cardName = WCharToUTF8(dataManager.GetName(cardID));
-    }
-    std::string fullMsg;
-    if(cardID != 0 && cardName != "???") {
-        fullMsg += cardName;
-        fullMsg += ":";
-    } else {
-        fullMsg += "";
-    }
-    fullMsg += message;
 	if (enable_log & 0x1) {
 		wchar_t wbuf[1024];
-        BufferIO::DecodeUTF8(fullMsg.c_str(), wbuf);
-		AddChatMsg(wbuf, 9);
+		BufferIO::DecodeUTF8(msg, wbuf);
+		// 使用 AppendCardNames 处理消息
+		std::wstring processedMsg = AppendCardNames(std::wstring(wbuf));
+		AddChatMsg(processedMsg.c_str(), 9);
 	}
 	if (enable_log & 0x2) {
+		// 对于错误日志，也可以先处理消息内容
+		wchar_t wbuf[1024];
+		BufferIO::DecodeUTF8(msg, wbuf);
+		std::wstring processedMsg = AppendCardNames(std::wstring(wbuf));
 		char msgbuf[1040];
-        mysnprintf(msgbuf, "[Script Error]: %s", fullMsg.c_str());
+		BufferIO::EncodeUTF8(processedMsg.c_str(), msgbuf);
 		ErrorLog(msgbuf);
 	}
 }
+
 void Game::ErrorLog(const char* msg) {
 	std::fprintf(stderr, "%s\n", msg);
 	FILE* fp = myfopen("error.log", "a");
@@ -2649,4 +2635,33 @@ void Game::OnGameClose() {
 	irr::android::onGameExit(appMain);
     this->device->closeDevice();
 }
+std::wstring Game::AppendCardNames(const std::wstring& msg) {
+    // 实现卡片ID到名称的转换逻辑
+    std::wstring result = msg;
+
+    // 使用正则表达式匹配可能的卡片ID（5-8位数字）
+    std::wregex cardIdPattern(L"\\b(\\d{3,9})\\b");
+    std::wstring::const_iterator start = msg.begin();
+    std::wstring::const_iterator end = msg.end();
+    std::wsregex_iterator iter(start, end, cardIdPattern);
+    std::wsregex_iterator iterEnd;
+
+    for (; iter != iterEnd; ++iter) {
+        std::wstring cardIdStr = iter->str();
+        int cardId = std::stoi(cardIdStr);
+
+        // 查询卡片名称
+        const wchar_t* cardName = dataManager.GetName(cardId);
+        if (cardName && wcscmp(cardName, L"") != 0) {
+            // 替换卡片ID为 [ID:卡片名称] 格式
+            std::wstring replacement = L"[" + cardIdStr + L":" + std::wstring(cardName) + L"]";
+            result = std::regex_replace(result,
+                                      std::wregex(L"\\b" + cardIdStr + L"\\b"),
+                                      replacement);
+        }
+    }
+
+    return result;
+}
+
 }

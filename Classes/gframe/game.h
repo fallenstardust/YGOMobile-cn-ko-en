@@ -247,6 +247,7 @@ public:
 		editbox->setText(text.c_str());
 	}
 
+    virtual std::wstring AppendCardNames(const std::wstring& msg);
 	void ResizeChatInputWindow();
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);
