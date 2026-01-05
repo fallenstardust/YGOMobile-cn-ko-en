@@ -51,10 +51,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         return getItem(posotion);
     }
 
-    public void setEnableSwipe(boolean enableSwipe) {
-        mEnableSwipe = enableSwipe;
-    }
-
     public boolean isShowMenu(View view) {
         if (view != null) {
             Object tag = view.getTag(view.getId());
@@ -74,31 +70,11 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         }
     }
 
-    public void hideMenu(View view) {
-        if (view == null) {
-            view = mShowMenuView;
-        }
-        if (view != null) {
-            Object tag = view.getTag(view.getId());
-            if (tag != null && tag instanceof ViewHolder) {
-                ViewHolder viewHolder = (ViewHolder) tag;
-                if (viewHolder.mMenuLayout.isMenuOpen()) {
-                    viewHolder.mMenuLayout.smoothCloseMenu();
-                }
-            }
-        }
-    }
+    private boolean showAddButtons = true; // 默认显示添加按钮
 
-    public void showMenu(View view) {
-        if (view != null) {
-            Object tag = view.getTag(view.getId());
-            if (tag != null && tag instanceof ViewHolder) {
-                ViewHolder viewHolder = (ViewHolder) tag;
-                viewHolder.mMenuLayout.smoothOpenMenu();
-            }
-        }
+    public void setShowAddButtons(boolean show) {
+        this.showAddButtons = show;
     }
-
 
     private int getColor(int id) {
         return context.getResources().getColor(id);
@@ -109,7 +85,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
     public void setLimitList(LimitList limitList) {
-        if(limitList.getCreditLimits() != null) {
+        if (limitList.getCreditLimits() != null) {
             AppsSettings.get().setGenesysMode(1);
         } else {
             AppsSettings.get().setGenesysMode(0);
@@ -117,27 +93,26 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         mLimitList = limitList;
     }
 
+    /**
+     * 绑定菜单项的点击事件和滑动功能
+     * 为菜单中的添加按钮设置点击监听器，并启用滑动菜单功能
+     *
+     * @param holder   ViewHolder对象，用于获取视图组件
+     * @param position 当前菜单项在列表中的位置索引
+     */
     public void bindMenu(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, int position) {
+        if (showAddButtons) {
+            // 设置主卡组添加按钮的点击事件监听器
+            holder.getView(R.id.btn_add_main).setOnClickListener((v) -> {
 
-//        if (holder.btnMain != null) {
-        holder.getView(R.id.btn_add_main).setOnClickListener((v) -> {
-            mShowMenuView = holder.itemView;
-            EventBus.getDefault().post(new CardInfoEvent(position, true));
-            //((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).smoothCloseMenu();
-        });
-//        }
-//        if (holder.btnSide != null) {
-        holder.getView(R.id.btn_add_side).setOnClickListener((v) -> {
-            mShowMenuView = holder.itemView;
-            EventBus.getDefault().post(new CardInfoEvent(position, false));
-            //((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).smoothCloseMenu();
-        });
-//        }
-        ((SwipeHorizontalMenuLayout) holder.getView(R.id.swipe_layout)).setSwipeEnable(mEnableSwipe);
+                EventBus.getDefault().post(new CardInfoEvent(position, true));
+            });
+            // 设置副卡组添加按钮的点击事件监听器
+            holder.getView(R.id.btn_add_side).setOnClickListener((v) -> {
+                EventBus.getDefault().post(new CardInfoEvent(position, false));
+            });
+        }
     }
-
-    private View mShowMenuView;
-
 
     @Override
     protected void convert(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, Card item) {
@@ -229,6 +204,9 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         holder.setText(R.id.card_type, CardUtils.getAllTypeString(item, mStringManager));
 
         holder.setText(R.id.card_code, String.format("%08d", item.getCode()));
+
+        // 根据设置控制添加按钮的可见性
+        holder.getView(R.id.ll_add_btn).setVisibility(showAddButtons ? View.VISIBLE : View.GONE);
 
         bindMenu(holder, position);
         if (mItemBg) {

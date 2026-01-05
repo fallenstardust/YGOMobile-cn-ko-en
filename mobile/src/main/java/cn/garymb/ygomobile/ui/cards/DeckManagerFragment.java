@@ -229,7 +229,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 设置卡片列表适配器并启用滑动删除功能
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
-        mCardListAdapter.setEnableSwipe(true);
+        mCardListAdapter.setShowAddButtons(true); // 显示添加按钮
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
 
@@ -904,14 +904,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         int pos = event.position;
         Card cardInfo = mCardListAdapter.getItem(pos);
         if (cardInfo == null) {
-            mCardListAdapter.hideMenu(null);
+
         } else if (event.toMain) {
-            if (!addMainCard(cardInfo)) {// || !checkLimit(cardInfo, false)) {
-                mCardListAdapter.hideMenu(null);
+            if (!addMainCard(cardInfo)) {
+
             }
         } else {
-            if (!addSideCard(cardInfo)) {// || !checkLimit(cardInfo, false)) {
-                mCardListAdapter.hideMenu(null);
+            if (!addSideCard(cardInfo)) {
+
             }
         }
     }

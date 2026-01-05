@@ -93,7 +93,9 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mDrawerlayout = layoutView.findViewById(R.id.drawer_layout);
         mListView = layoutView.findViewById(R.id.list_cards);
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
+        mCardListAdapter.setShowAddButtons(false); // 隐藏添加按钮
         mCardListAdapter.setItemBg(true);
+
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
         btn_search = layoutView.findViewById(R.id.btn_search);
