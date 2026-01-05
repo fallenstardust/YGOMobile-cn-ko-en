@@ -223,7 +223,6 @@
                         android:layout_gravity="center"
                         android:background="@drawable/list_item_bg"
                         android:gravity="center"
-
                         android:src="@drawable/ic_to_main"
                         android:tooltipText="@string/card_add_main" />
 

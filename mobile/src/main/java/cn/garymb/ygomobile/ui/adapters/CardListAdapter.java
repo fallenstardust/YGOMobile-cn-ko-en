@@ -36,7 +36,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     private boolean mEnableSwipe = false;
 
     public CardListAdapter(Context context, ImageLoader imageLoader) {
-        super(context, R.layout.item_search_card_swipe);
+        super(context, R.layout.item_search_card);
         this.imageLoader = imageLoader;
         mStringManager = DataManager.get().getStringManager();
     }

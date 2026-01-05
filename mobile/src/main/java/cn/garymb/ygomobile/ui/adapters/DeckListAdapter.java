@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.adapters;
 
 import static cn.garymb.ygomobile.Constants.DEBUG;
-import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -52,7 +51,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     private String currentKeyword = "";
 
     public DeckListAdapter(Context context, List<T> data, int select) {
-        super(R.layout.item_deck_list_swipe, data);
+        super(R.layout.item_deck_list_, data);
         this.selectPosition = select;
         isSelect = select >= 0;
         isManySelect = false;
