@@ -781,19 +781,19 @@ public class CardSearcher implements View.OnClickListener {
             //这是一个调用示例
             CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                     .keyword(text(keyWord))
-                    .attribute(new ArrayList<>(Arrays.asList()))
+                    .attribute(new ArrayList<>(List.of()))
                     .level(new ArrayList<>(Arrays.asList(8, 4)))
-                    .race(new ArrayList<>(Arrays.asList()))
+                    .race(new ArrayList<>(List.of()))
                     .atk(text(atkText))
                     .def(text(defText))
                     .pscale(new ArrayList<>())
                     .limitType(genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner))
                     .limitName(genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner))
                     .setcode(new ArrayList<>(Arrays.asList(0x9fL, 0x99L)))//娱乐伙伴，异色眼
-                    .category(new ArrayList<>(Arrays.asList()))
+                    .category(new ArrayList<>(List.of()))
                     .ot(getIntSelect(otSpinner))
-                    .types(new ArrayList<>(Arrays.asList(0x20L)))//效果
-                    .except_types(new ArrayList<>(Arrays.asList(0x40L)))//排除：融合
+                    .types(new ArrayList<>(List.of(0x20L)))//效果
+                    .except_types(new ArrayList<>(List.of(0x40L)))//排除：融合
                     .linkKey(lineKey)
                     .type_logic(true)//and逻辑
                     .setcode_logic(true)

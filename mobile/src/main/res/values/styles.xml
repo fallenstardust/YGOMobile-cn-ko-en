@@ -127,4 +127,17 @@
         <item name="android:thumbTint">@color/switch_thumb_color_selector</item>
         <item name="android:trackTint">@color/switch_track_color_selector</item>
     </style>
+    <!-- 筛选按钮通用样式 -->
+    <style name="CardFilterBtn">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:background">@drawable/ic_radius_bg</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:padding">4dp</item>
+        <item name="android:shape">rectangle</item>
+        <item name="android:radius">8dp</item>
+    </style>
 </resources>

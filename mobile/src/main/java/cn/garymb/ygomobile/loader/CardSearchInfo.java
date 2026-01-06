@@ -4,6 +4,8 @@ import java.util.List;
 
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
+
 import ocgcore.data.Card;
 import ocgcore.enums.CardOt;
 import ocgcore.enums.CardType;
@@ -195,6 +197,7 @@ public class CardSearchInfo implements ICardFilter{
         }
     }
 
+    @NonNull
     public String toString(){
         return "CardSearchInfo{" +
                 "LimitType="+getLimitType() +
@@ -326,27 +329,27 @@ public class CardSearchInfo implements ICardFilter{
             return false;
         }
         if (!category.isEmpty()
-            && category.stream().filter(i -> (card.Category & i) == i).count() == 0
+            && category.stream().noneMatch(i -> (card.Category & i) == i)
         ) {
             return false;
         }
         if (!except_types.isEmpty()
-            && except_types.stream().filter(type -> (card.Type & type) == type).count() > 0
+            && except_types.stream().anyMatch(type -> (card.Type & type) == type)
         ) {
             return false;
         }
         if (!types.isEmpty()
             && (type_logic ?
                 types.stream().filter(type -> (card.Type & type) == type).count() != types.size()
-                    : types.stream().filter(type -> (card.Type & type) == type).count() == 0)
+                    : types.stream().noneMatch(type -> (card.Type & type) == type))
         ) {
             return false;
         }
         //TODO setcode
         if (!setcode.isEmpty()
             && (setcode_logic ?
-                setcode.stream().filter(i -> card.isSetCode(i)).count() != setcode.size()
-                    : setcode.stream().filter(i -> card.isSetCode(i)).count()t == 0)
+                setcode.stream().filter(card::isSetCode).count() != setcode.size()
+                    : setcode.stream().noneMatch(card::isSetCode))
         ) {
             return false;
         }
@@ -355,7 +358,7 @@ public class CardSearchInfo implements ICardFilter{
 
     private int i(String str) {
         try {
-            return Integer.valueOf(str);
+            return Integer.parseInt(str);
         } catch (Exception e) {
             return 0;
         }

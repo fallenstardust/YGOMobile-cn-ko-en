@@ -39,13 +39,13 @@
                     <Switch
                         android:id="@+id/sw_genesys_mode"
                         style="@style/CustomSwitch"
-                        android:thumbTint="@color/switch_thumb_color_selector"
-                        android:trackTint="@color/switch_track_color_selector"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="@string/switch_banlist_mode" />
+                        android:text="@string/switch_banlist_mode"
+                        android:thumbTint="@color/switch_thumb_color_selector"
+                        android:trackTint="@color/switch_track_color_selector" />
 
                 </LinearLayout>
 
@@ -104,6 +104,587 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1" />
+                </LinearLayout>
+                <!-- 属性筛选 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawableRight="@drawable/ic_close_black_24dp"
+                        android:text="属性 ?"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp" />
+
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="7"
+                        android:rowCount="1"
+                        android:spacing="8dp">
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="暗" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="光" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="地" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="水" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="炎" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="风" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="神" />
+                    </GridLayout>
+                </LinearLayout>
+                <!-- 种族筛选 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawableRight="@drawable/ic_close_black_24dp"
+                        android:text="种族 ?"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp" />
+
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="5"
+                        android:rowCount="5"
+                        android:spacing="8dp">
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="魔法师族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="龙族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="不死族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="战士族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="兽战士族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="兽族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="鸟兽族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="恶魔族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="天使族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="昆虫族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="恐龙族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="爬虫类族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="鱼族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="海龙族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="水族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="炎族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="雷族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="岩石族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="植物族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="机械族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="念动力族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="幻龙族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="电子界族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="幻想魔族" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="幻神兽族" />
+                    </GridLayout>
+
+                </LinearLayout>
+                <!-- 怪兽类型筛选（带AND/OR单选） -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:drawableRight="@drawable/ic_close_black_24dp"
+                            android:text="怪兽类型 ?"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp" />
+
+                        <RadioGroup
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="right"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:buttonTint="#FFFFFF"
+                                android:text="and"
+                                android:textColor="#FFFFFF" />
+
+                            <RadioButton
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:buttonTint="#FFFFFF"
+                                android:checked="true"
+                                android:text="or"
+                                android:textColor="#FFFFFF" />
+                        </RadioGroup>
+                    </LinearLayout>
+
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="5"
+                        android:rowCount="3"
+                        android:spacing="8dp">
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="通常" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="效果" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="仪式" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="融合" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="同步" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="超量" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="卡通" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="灵魂" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="联合" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="二重" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="协调" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="反转" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="灵摆" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="特殊召唤" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="连接" />
+                    </GridLayout>
+                </LinearLayout>
+                <!-- 怪兽类型 排除项 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:drawableRight="@drawable/ic_close_black_24dp"
+                            android:text="排除类型 ?"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp" />
+
+                        <GridLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:columnCount="5"
+                            android:rowCount="3">
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="通常" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="效果" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="仪式" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="融合" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="同步" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="超量" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="卡通" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="灵魂" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="联合" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="二重" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="协调" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="反转" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="灵摆" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="特殊召唤" />
+
+                            <Button
+                                style="@style/CardFilterBtn"
+                                android:text="连接" />
+                        </GridLayout>
+                    </LinearLayout>
+
+                </LinearLayout>
+                <!-- 等级/阶级/连接数 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginHorizontal="@dimen/dp_10">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawableRight="@drawable/ic_close_black_24dp"
+                        android:text="等级/阶级/连接数 ?"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp" />
+
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="7"
+                        android:rowCount="2"
+                        android:spacing="8dp">
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="1" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="2" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="3" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="4" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="5" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="6" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="7" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="8" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="9" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="10" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="11" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="12" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="13" />
+                    </GridLayout>
+                </LinearLayout>
+
+                <!-- 灵摆刻度 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawableRight="@drawable/ic_close_black_24dp"
+                        android:text="灵摆刻度 ?"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp" />
+
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="7"
+                        android:rowCount="2"
+                        android:spacing="8dp">
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="0" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="1" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="2" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="3" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="4" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="5" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="6" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="7" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="8" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="9" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="10" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="11" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="12" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="13" />
+                    </GridLayout>
+                </LinearLayout>
+                <!-- 魔陷种类筛选 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawableRight="@drawable/ic_close_black_24dp"
+                        android:text="魔陷种类 ?"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp" />
+
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="7"
+                        android:rowCount="2"
+                        android:spacing="8dp">
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="装备" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="场地" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="速攻" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="仪式" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="永续" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="反击" />
+
+                        <Button
+                            style="@style/CardFilterBtn"
+                            android:text="通常" />
+                    </GridLayout>
                 </LinearLayout>
 
                 <LinearLayout
@@ -198,8 +779,8 @@
                             android:id="@+id/btn_linkmarker"
                             style="@style/itemSpinnerStyle"
                             android:layout_width="0dp"
-                            android:layout_marginLeft="10dp"
                             android:layout_height="match_parent"
+                            android:layout_marginLeft="10dp"
                             android:layout_weight="1"
                             android:background="@color/transparent"
                             android:text="@string/linkmarker"
