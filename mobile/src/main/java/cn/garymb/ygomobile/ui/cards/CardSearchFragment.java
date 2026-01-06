@@ -31,6 +31,7 @@ import com.app.hubert.guide.model.HighlightOptions;
 import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.base.BaseFragemnt;
@@ -346,7 +347,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     }
 
     private void showSearchKeyWord(String keyword) {//使用此方法，可以适用关键词查询逻辑，让完全符合关键词的卡置顶显示，并同时搜索字段和效果文本
-        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new long[]{}).build();//构建CardSearchInfo时type不能为null
+        CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).types(new ArrayList<>()).build();//构建CardSearchInfo时type不能为null
         mCardLoader.search(searchInfo);
     }
 

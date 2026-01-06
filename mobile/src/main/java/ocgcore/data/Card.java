@@ -152,6 +152,9 @@ public class Card extends CardData implements Parcelable {
     }
 
     public boolean isSetCode(long _setcode) {
+        //无字段
+        if (_setcode == -1)
+            return SetCode == 0;
         int settype = (int) _setcode & 0xfff;
         int setsubtype = (int) _setcode & 0xf000;
         long[] setcodes = getSetCode();
