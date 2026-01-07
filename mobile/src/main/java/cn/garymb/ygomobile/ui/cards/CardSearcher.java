@@ -1,8 +1,12 @@
 package cn.garymb.ygomobile.ui.cards;
 
 
+import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
+
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -31,6 +35,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.BitmapUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -58,23 +63,31 @@ public class CardSearcher implements View.OnClickListener {
     private final Spinner typeSpinner;
     // 属性筛选按钮
     private Button[] attributeButtons;
-    private List<Long> attributeList;
+    private List<Integer> attributeList;
     // 种族筛选按钮
     private Button[] raceButtons;
+    private List<Long> raceList;
     private Button[] iconButtons;
+    private List<Long> iconList;
     // 怪兽类型按钮
     private Button[] typeButtons;
+    private List<Long> typeList;
     private Button[] exclude_typeButtons;
+    private List<Long> excludTypeList;
     // 等级\阶级\连接数
     private Button[] levelButtons;
+    private List<Integer> levelList;
     // 灵摆刻度数
     private Button[] pendulumScaleButtons;
+    private List<Integer> pendulumScaleList;
     private final Spinner typeMonsterSpinner;
     private final Spinner typeMonsterSpinner2;
     private final Spinner typeSpellSpinner;
     private final Spinner typeTrapSpinner;
     private final Spinner setCodeSpinner;
+    List<Long> setCodeList;
     private final Spinner categorySpinner;
+    List<Long> categoryList;
     private final Spinner raceSpinner;
     private final Spinner levelSpinner;
     private final Spinner attributeSpinner;
@@ -142,8 +155,9 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_race_cyberse),// 电子界
                 view.findViewById(R.id.btn_race_illusion)// 幻想魔
         };
+        raceList = new ArrayList<>();
         // 初始化类型按钮
-        typeButtons = new Button[] {
+        typeButtons = new Button[]{
                 view.findViewById(R.id.btn_type_normal),// 通常
                 view.findViewById(R.id.btn_type_effect),// 效果
                 view.findViewById(R.id.btn_type_fusion),// 融合
@@ -160,7 +174,8 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_type_link),// 连接
                 view.findViewById(R.id.btn_type_token)
         };
-        exclude_typeButtons = new Button[] {
+        typeList = new ArrayList<>();
+        exclude_typeButtons = new Button[]{
                 view.findViewById(R.id.btn_exclude_type_normal),
                 view.findViewById(R.id.btn_exclude_type_effect),
                 view.findViewById(R.id.btn_exclude_type_fusion),
@@ -177,7 +192,8 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_exclude_type_link),
                 view.findViewById(R.id.btn_exclude_type_token)
         };
-        iconButtons = new Button[] {
+        excludTypeList = new ArrayList<>();
+        iconButtons = new Button[]{
                 view.findViewById(R.id.btn_icon_quickPlay),// 速攻
                 view.findViewById(R.id.btn_icon_continuous),// 永续
                 view.findViewById(R.id.btn_icon_equip),// 装备
@@ -185,7 +201,7 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_icon_counter),// 反击
                 view.findViewById(R.id.btn_icon_ritual),// 仪式
         };
-
+        iconList = new ArrayList<>();
         levelButtons = new Button[]{
                 view.findViewById(R.id.btn_LRA_1),
                 view.findViewById(R.id.btn_LRA_2),
@@ -200,8 +216,8 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_LRA_11),
                 view.findViewById(R.id.btn_LRA_12),
         };
-
-        pendulumScaleButtons = new Button[] {
+        levelList = new ArrayList<>();
+        pendulumScaleButtons = new Button[]{
                 view.findViewById(R.id.btn_Pscale_0),
                 view.findViewById(R.id.btn_Pscale_1),
                 view.findViewById(R.id.btn_Pscale_2),
@@ -217,6 +233,7 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_Pscale_12),
                 view.findViewById(R.id.btn_Pscale_13),
         };
+        pendulumScaleList = new ArrayList<>();
         //TODO这些组件需要替换成多选界面
         typeMonsterSpinner = findViewById(R.id.sp_type_monster);
         typeMonsterSpinner2 = findViewById(R.id.sp_type_monster2);
@@ -779,9 +796,32 @@ public class CardSearcher implements View.OnClickListener {
         adapter.set(items);
         spinner.setAdapter(adapter);
     }
+
+    // 辅助方法：更新按钮背景
+    private void updateButtonBackground(Button button, boolean isSelected) {
+        if (isSelected) {
+            button.setBackgroundColor(Color.parseColor("#40808080")); // 选中时的背景色
+            button.setAlpha(0.7f); // 选中时稍微透明
+        } else {
+            button.setBackgroundColor(Color.TRANSPARENT); // 默认透明背景
+            button.setAlpha(1.0f); // 正常透明度
+        }
+    }
+
     private void initAttributeButtons() {
+        // 定义图标资源ID数组
+        final Drawable[] attributeIcons = {
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_dark.png", 0, 0)),// 暗属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_light.png", 0, 0)),// 光属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_earth.png", 0, 0)),// 地属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_water.png", 0, 0)),// 水属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_fire.png", 0, 0)),// 火属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_wind.png", 0, 0)),// 风属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_divine.png", 0, 0)),// 神属性图标
+        };
+
         // 初始化属性按钮
-        attributeButtons = new Button[] {
+        attributeButtons = new Button[]{
                 view.findViewById(R.id.btn_attr_dark),// 暗
                 view.findViewById(R.id.btn_attr_light),// 光
                 view.findViewById(R.id.btn_attr_earth),// 地
@@ -790,35 +830,52 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_attr_wind),// 风
                 view.findViewById(R.id.btn_attr_divine)// 神
         };
+
         // 定义属性对应的ID值，使用long类型
-        final long[] attributeIds = {
-                CardAttribute.Dark.getId(),    // 暗
-                CardAttribute.Light.getId(),   // 光
-                CardAttribute.Earth.getId(),   // 地
-                CardAttribute.Water.getId(),   // 水
-                CardAttribute.Fire.getId(),    // 火
-                CardAttribute.Wind.getId(),    // 风
-                CardAttribute.Divine.getId()   // 神
+        final Integer[] attributeIds = {
+                1,    // 暗
+                2,   // 光
+                3,   // 地
+                4,   // 水
+                5,    // 火
+                6,    // 风
+                7   // 神
         };
-        for (int i = 0; i < attributeButtons.length; i++) {//第一个是none
+        // 定义说明文字
+        final String[] attributeTexts = {
+                mStringManager.getAttributeString(CardAttribute.Dark.getId()),
+                mStringManager.getAttributeString(CardAttribute.Light.getId()),
+                mStringManager.getAttributeString(CardAttribute.Earth.getId()),
+                mStringManager.getAttributeString(CardAttribute.Water.getId()),
+                mStringManager.getAttributeString(CardAttribute.Fire.getId()),
+                mStringManager.getAttributeString(CardAttribute.Wind.getId()),
+                mStringManager.getAttributeString(CardAttribute.Divine.getId())
+        };
+        for (int i = 0; i < attributeButtons.length; i++) {
             final int index = i;
-            final long attributeId = attributeIds[i];
+            final Integer attributeId = attributeIds[i];
+            Button button = attributeButtons[index];
+            button.setCompoundDrawablePadding(4); // 图标和文字间距
+            // 设置图标和文字
+            button.setCompoundDrawablesWithIntrinsicBounds(null, attributeIcons[index], null, null);
+            button.setText(attributeTexts[index]);
 
             attributeButtons[i].setOnClickListener(v -> {
                 if (attributeList == null) {
                     attributeList = new ArrayList<>();
                 }
-                Button button = attributeButtons[index];
-                if (button.isPressed()) {
-                    button.setPressed(false);
+
+                if (button.isSelected()) {
+                    button.setSelected(false);
                     attributeList.remove(attributeId);
                 } else {
-                    button.setPressed(true);
+                    button.setSelected(true);
                     attributeList.add(attributeId);
                 }
             });
         }
     }
+
     private void initAttributes(Spinner spinner) {
         CardAttribute[] attributes = CardAttribute.values();
         List<SimpleSpinnerItem> items = new ArrayList<>();
@@ -942,23 +999,22 @@ public class CardSearcher implements View.OnClickListener {
             CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                     .keyword(text(keyWord))
                     .attribute(attributeList)
-                    .level(new ArrayList<>(Arrays.asList(8, 7,6,5, 4, 3,2,1)))
-                    .race(new ArrayList<>(List.of()))
+                    .level(levelList)
+                    .race(raceList)
                     .atk(text(atkText))
                     .def(text(defText))
-                    .pscale(new ArrayList<>())
+                    .pscale(pendulumScaleList)
                     .limitType(genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner))
                     .limitName(genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner))
-                    .setcode(new ArrayList<>(Arrays.asList(0x9fL, 0x99L)))//娱乐伙伴，异色眼
-                    .category(new ArrayList<>(List.of()))
+                    .setcode(setCodeList)
+                    .category(categoryList)
                     .ot(getIntSelect(otSpinner))
-                    .types(new ArrayList<>(List.of(0x20L)))//效果
-                    .except_types(new ArrayList<>(List.of(0x40L)))//排除：融合
+                    .types(typeList)
+                    .except_types(excludTypeList)
                     .linkKey(lineKey)
-                    .type_logic(true)//and逻辑
-                    .setcode_logic(true)
+                    .type_logic(false)//or逻辑
+                    .setcode_logic(false)
                     .build();
-                    //搜索结果：娱乐伙伴 异色眼钢爪狼
             Log.i(TAG, searchInfo.toString());
             mICardSearcher.search(searchInfo);
         }
