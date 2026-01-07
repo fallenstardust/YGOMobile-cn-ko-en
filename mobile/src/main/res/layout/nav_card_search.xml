@@ -128,30 +128,37 @@
                         android:spacing="8dp">
 
                         <Button
+                            android:id="@+id/btn_attr_dark"
                             style="@style/CardFilterBtn"
                             android:text="暗" />
 
                         <Button
+                            android:id="@+id/btn_attr_light"
                             style="@style/CardFilterBtn"
                             android:text="光" />
 
                         <Button
+                            android:id="@+id/btn_attr_earth"
                             style="@style/CardFilterBtn"
                             android:text="地" />
 
                         <Button
+                            android:id="@+id/btn_attr_water"
                             style="@style/CardFilterBtn"
                             android:text="水" />
 
                         <Button
+                            android:id="@+id/btn_attr_fire"
                             style="@style/CardFilterBtn"
                             android:text="炎" />
 
                         <Button
+                            android:id="@+id/btn_attr_wind"
                             style="@style/CardFilterBtn"
                             android:text="风" />
 
                         <Button
+                            android:id="@+id/btn_attr_divine"
                             style="@style/CardFilterBtn"
                             android:text="神" />
                     </GridLayout>
@@ -174,109 +181,138 @@
                     <GridLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="5"
-                        android:rowCount="5"
-                        android:spacing="8dp">
+                        android:columnCount="7"
+                        android:rowCount="5">
 
                         <Button
+                            android:id="@+id/btn_race_spellcaster"
                             style="@style/CardFilterBtn"
-                            android:text="魔法师族" />
+                            android:text="魔法师" />
 
                         <Button
+                            android:id="@+id/btn_race_dragon"
                             style="@style/CardFilterBtn"
-                            android:text="龙族" />
+                            android:text="龙" />
 
                         <Button
+                            android:id="@+id/btn_race_zombie"
                             style="@style/CardFilterBtn"
-                            android:text="不死族" />
+                            android:text="不死" />
 
                         <Button
+                            android:id="@+id/btn_race_warrior"
                             style="@style/CardFilterBtn"
-                            android:text="战士族" />
+                            android:text="战士" />
 
                         <Button
+                            android:id="@+id/btn_race_beastWarrior"
                             style="@style/CardFilterBtn"
-                            android:text="兽战士族" />
+                            android:text="兽战士" />
 
                         <Button
+                            android:id="@+id/btn_race_beast"
                             style="@style/CardFilterBtn"
-                            android:text="兽族" />
+                            android:text="兽" />
 
                         <Button
+                            android:id="@+id/btn_race_wingedBeast"
                             style="@style/CardFilterBtn"
-                            android:text="鸟兽族" />
+                            android:text="鸟兽" />
 
                         <Button
+                            android:id="@+id/btn_race_fiend"
                             style="@style/CardFilterBtn"
-                            android:text="恶魔族" />
+                            android:text="恶魔" />
 
                         <Button
+                            android:id="@+id/btn_race_fairy"
                             style="@style/CardFilterBtn"
-                            android:text="天使族" />
+                            android:text="天使" />
 
                         <Button
+                            android:id="@+id/btn_race_insect"
                             style="@style/CardFilterBtn"
-                            android:text="昆虫族" />
+                            android:text="昆虫" />
 
                         <Button
+                            android:id="@+id/btn_race_dinosaur"
                             style="@style/CardFilterBtn"
-                            android:text="恐龙族" />
+                            android:text="恐龙" />
 
                         <Button
+                            android:id="@+id/btn_race_reptile"
                             style="@style/CardFilterBtn"
-                            android:text="爬虫类族" />
+                            android:text="爬虫类" />
 
                         <Button
+                            android:id="@+id/btn_race_fish"
                             style="@style/CardFilterBtn"
-                            android:text="鱼族" />
+                            android:text="鱼" />
 
                         <Button
+                            android:id="@+id/btn_race_seaSerpent"
                             style="@style/CardFilterBtn"
-                            android:text="海龙族" />
+                            android:text="海龙" />
 
                         <Button
+                            android:id="@+id/btn_race_aqua"
                             style="@style/CardFilterBtn"
-                            android:text="水族" />
+                            android:text="水" />
 
                         <Button
+                            android:id="@+id/btn_race_pyro"
                             style="@style/CardFilterBtn"
-                            android:text="炎族" />
+                            android:text="炎" />
 
                         <Button
+                            android:id="@+id/btn_race_thunder"
                             style="@style/CardFilterBtn"
-                            android:text="雷族" />
+                            android:text="雷" />
 
                         <Button
+                            android:id="@+id/btn_race_rock"
                             style="@style/CardFilterBtn"
-                            android:text="岩石族" />
+                            android:text="岩石" />
 
                         <Button
+                            android:id="@+id/btn_race_plant"
                             style="@style/CardFilterBtn"
-                            android:text="植物族" />
+                            android:text="植物" />
 
                         <Button
+                            android:id="@+id/btn_race_machine"
                             style="@style/CardFilterBtn"
-                            android:text="机械族" />
+                            android:text="机械" />
 
                         <Button
+                            android:id="@+id/btn_race_psychic"
                             style="@style/CardFilterBtn"
-                            android:text="念动力族" />
+                            android:text="念动力" />
 
                         <Button
+                            android:id="@+id/btn_race_wyrm"
                             style="@style/CardFilterBtn"
-                            android:text="幻龙族" />
+                            android:text="幻龙" />
 
                         <Button
+                            android:id="@+id/btn_race_cyberse"
                             style="@style/CardFilterBtn"
-                            android:text="电子界族" />
+                            android:text="电子界" />
 
                         <Button
+                            android:id="@+id/btn_race_illusion"
                             style="@style/CardFilterBtn"
-                            android:text="幻想魔族" />
+                            android:text="幻想魔" />
 
                         <Button
+                            android:id="@+id/btn_race_divineBeast"
                             style="@style/CardFilterBtn"
-                            android:text="幻神兽族" />
+                            android:text="幻神兽" />
+
+                        <Button
+                            android:id="@+id/btn_race_creatorGod"
+                            style="@style/CardFilterBtn"
+                            android:text="创造神" />
                     </GridLayout>
 
                 </LinearLayout>
@@ -326,69 +362,88 @@
                     <GridLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="5"
-                        android:rowCount="3"
-                        android:spacing="8dp">
+                        android:columnCount="4"
+                        android:rowCount="4">
 
                         <Button
+                            android:id="@+id/btn_type_normal"
                             style="@style/CardFilterBtn"
                             android:text="通常" />
 
                         <Button
+                            android:id="@+id/btn_type_effect"
                             style="@style/CardFilterBtn"
                             android:text="效果" />
 
                         <Button
+                            android:id="@+id/btn_type_ritual"
                             style="@style/CardFilterBtn"
                             android:text="仪式" />
 
                         <Button
+                            android:id="@+id/btn_type_fusion"
                             style="@style/CardFilterBtn"
                             android:text="融合" />
 
                         <Button
+                            android:id="@+id/btn_type_synchro"
                             style="@style/CardFilterBtn"
-                            android:text="同步" />
+                            android:text="同调" />
 
                         <Button
+                            android:id="@+id/btn_type_xyz"
                             style="@style/CardFilterBtn"
                             android:text="超量" />
 
                         <Button
+                            android:id="@+id/btn_type_link"
+                            style="@style/CardFilterBtn"
+                            android:text="连接" />
+
+                        <Button
+                            android:id="@+id/btn_type_toon"
                             style="@style/CardFilterBtn"
                             android:text="卡通" />
 
                         <Button
+                            android:id="@+id/btn_type_spirit"
                             style="@style/CardFilterBtn"
                             android:text="灵魂" />
 
                         <Button
+                            android:id="@+id/btn_type_union"
                             style="@style/CardFilterBtn"
                             android:text="联合" />
 
                         <Button
+                            android:id="@+id/btn_type_gemini"
                             style="@style/CardFilterBtn"
                             android:text="二重" />
 
                         <Button
+                            android:id="@+id/btn_type_tuner"
                             style="@style/CardFilterBtn"
-                            android:text="协调" />
+                            android:text="调整" />
 
                         <Button
+                            android:id="@+id/btn_type_flip"
                             style="@style/CardFilterBtn"
                             android:text="反转" />
 
                         <Button
+                            android:id="@+id/btn_type_pendulum"
                             style="@style/CardFilterBtn"
                             android:text="灵摆" />
 
                         <Button
+                            android:id="@+id/btn_type_specialSummon"
                             style="@style/CardFilterBtn"
                             android:text="特殊召唤" />
 
                         <Button
+                            android:id="@+id/btn_type_token"
                             style="@style/CardFilterBtn"
-                            android:text="连接" />
+                            android:text="衍生物" />
                     </GridLayout>
                 </LinearLayout>
                 <!-- 怪兽类型 排除项 -->
@@ -414,68 +469,88 @@
                         <GridLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:columnCount="5"
-                            android:rowCount="3">
+                            android:columnCount="4"
+                            android:rowCount="4">
 
                             <Button
+                                android:id="@+id/btn_exclude_type_normal"
                                 style="@style/CardFilterBtn"
                                 android:text="通常" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_effect"
                                 style="@style/CardFilterBtn"
                                 android:text="效果" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_ritual"
                                 style="@style/CardFilterBtn"
                                 android:text="仪式" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_fusion"
                                 style="@style/CardFilterBtn"
                                 android:text="融合" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_synchro"
                                 style="@style/CardFilterBtn"
-                                android:text="同步" />
+                                android:text="同调" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_xyz"
                                 style="@style/CardFilterBtn"
                                 android:text="超量" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_link"
+                                style="@style/CardFilterBtn"
+                                android:text="连接" />
+
+                            <Button
+                                android:id="@+id/btn_exclude_type_toon"
                                 style="@style/CardFilterBtn"
                                 android:text="卡通" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_spirit"
                                 style="@style/CardFilterBtn"
                                 android:text="灵魂" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_union"
                                 style="@style/CardFilterBtn"
-                                android:text="联合" />
+                                android:text="同盟" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_gemini"
                                 style="@style/CardFilterBtn"
                                 android:text="二重" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_tuner"
                                 style="@style/CardFilterBtn"
-                                android:text="协调" />
+                                android:text="调整" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_flip"
                                 style="@style/CardFilterBtn"
                                 android:text="反转" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_pendulum"
                                 style="@style/CardFilterBtn"
                                 android:text="灵摆" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_specialSummon"
                                 style="@style/CardFilterBtn"
                                 android:text="特殊召唤" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_token"
                                 style="@style/CardFilterBtn"
-                                android:text="连接" />
+                                android:text="衍生物" />
                         </GridLayout>
                     </LinearLayout>
 
@@ -484,8 +559,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginHorizontal="@dimen/dp_10">
+                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:orientation="vertical">
 
                     <TextView
                         android:layout_width="match_parent"
@@ -503,54 +578,67 @@
                         android:spacing="8dp">
 
                         <Button
+                            android:id="@+id/btn_LRA_1"
                             style="@style/CardFilterBtn"
                             android:text="1" />
 
                         <Button
+                            android:id="@+id/btn_LRA_2"
                             style="@style/CardFilterBtn"
                             android:text="2" />
 
                         <Button
+                            android:id="@+id/btn_LRA_3"
                             style="@style/CardFilterBtn"
                             android:text="3" />
 
                         <Button
+                            android:id="@+id/btn_LRA_4"
                             style="@style/CardFilterBtn"
                             android:text="4" />
 
                         <Button
+                            android:id="@+id/btn_LRA_5"
                             style="@style/CardFilterBtn"
                             android:text="5" />
 
                         <Button
+                            android:id="@+id/btn_LRA_6"
                             style="@style/CardFilterBtn"
                             android:text="6" />
 
                         <Button
+                            android:id="@+id/btn_LRA_7"
                             style="@style/CardFilterBtn"
                             android:text="7" />
 
                         <Button
+                            android:id="@+id/btn_LRA_8"
                             style="@style/CardFilterBtn"
                             android:text="8" />
 
                         <Button
+                            android:id="@+id/btn_LRA_9"
                             style="@style/CardFilterBtn"
                             android:text="9" />
 
                         <Button
+                            android:id="@+id/btn_LRA_10"
                             style="@style/CardFilterBtn"
                             android:text="10" />
 
                         <Button
+                            android:id="@+id/btn_LRA_11"
                             style="@style/CardFilterBtn"
                             android:text="11" />
 
                         <Button
+                            android:id="@+id/btn_LRA_12"
                             style="@style/CardFilterBtn"
                             android:text="12" />
 
                         <Button
+                            android:id="@+id/btn_LRA_13"
                             style="@style/CardFilterBtn"
                             android:text="13" />
                     </GridLayout>
@@ -579,58 +667,72 @@
                         android:spacing="8dp">
 
                         <Button
+                            android:id="@+id/btn_Pscale_0"
                             style="@style/CardFilterBtn"
                             android:text="0" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_1"
                             style="@style/CardFilterBtn"
                             android:text="1" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_2"
                             style="@style/CardFilterBtn"
                             android:text="2" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_3"
                             style="@style/CardFilterBtn"
                             android:text="3" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_4"
                             style="@style/CardFilterBtn"
                             android:text="4" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_5"
                             style="@style/CardFilterBtn"
                             android:text="5" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_6"
                             style="@style/CardFilterBtn"
                             android:text="6" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_7"
                             style="@style/CardFilterBtn"
                             android:text="7" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_8"
                             style="@style/CardFilterBtn"
                             android:text="8" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_9"
                             style="@style/CardFilterBtn"
                             android:text="9" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_10"
                             style="@style/CardFilterBtn"
                             android:text="10" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_11"
                             style="@style/CardFilterBtn"
                             android:text="11" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_12"
                             style="@style/CardFilterBtn"
                             android:text="12" />
 
                         <Button
+                            android:id="@+id/btn_Pscale_13"
                             style="@style/CardFilterBtn"
                             android:text="13" />
                     </GridLayout>
@@ -658,30 +760,37 @@
                         android:spacing="8dp">
 
                         <Button
+                            android:id="@+id/btn_icon_equip"
                             style="@style/CardFilterBtn"
                             android:text="装备" />
 
                         <Button
+                            android:id="@+id/btn_icon_field"
                             style="@style/CardFilterBtn"
                             android:text="场地" />
 
                         <Button
+                            android:id="@+id/btn_icon_quickPlay"
                             style="@style/CardFilterBtn"
                             android:text="速攻" />
 
                         <Button
+                            android:id="@+id/btn_icon_ritual"
                             style="@style/CardFilterBtn"
                             android:text="仪式" />
 
                         <Button
+                            android:id="@+id/btn_icon_continuous"
                             style="@style/CardFilterBtn"
                             android:text="永续" />
 
                         <Button
+                            android:id="@+id/btn_icon_counter"
                             style="@style/CardFilterBtn"
                             android:text="反击" />
 
                         <Button
+                            android:id="@+id/btn_icon_normal"
                             style="@style/CardFilterBtn"
                             android:text="通常" />
                     </GridLayout>

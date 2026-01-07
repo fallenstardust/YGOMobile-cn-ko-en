@@ -12,10 +12,10 @@ public enum CardType {
     Effect(0x20, 1055),
     Fusion(0x40, 1056),
     Ritual(0x80, 1057),
-    TrapMonster(0x100, 1058),
+    TrapMonster(0x100, 1058),//
     Spirit(0x200, 1059),
     Union(0x400, 1060),
-    Dual(0x800, 1061),
+    Dual(0x800, 1061),//
     Tuner(0x1000, 1062),
     Synchro(0x2000, 1063),
     Token(0x4000, 1064),

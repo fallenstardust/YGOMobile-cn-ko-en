@@ -24,7 +24,7 @@ public enum CardRace {
     Fish(0x20000, 1037),
     SeaSerpent(0x40000, 1038),
     Reptile(0x80000, 1039),
-    Psycho(0x100000, 1040),
+    Psychic(0x100000, 1040),
     DivineBeast(0x200000, 1041),
     Creatorgod(0x400000, 1042),
     Wyrm(0x800000, 1043),

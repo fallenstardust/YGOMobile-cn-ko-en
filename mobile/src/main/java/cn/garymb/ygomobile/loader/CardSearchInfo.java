@@ -21,7 +21,7 @@ public class CardSearchInfo implements ICardFilter{
     private int limitType;
     private String limitName;
 
-    private List<Integer> attribute;
+    private List<Long> attribute;
     private List<Integer> level;
     private List<Long> race;
     private List<Long> category;
@@ -48,7 +48,7 @@ public class CardSearchInfo implements ICardFilter{
         return keyWord;
     }
 
-    public List<Integer> getAttribute() {
+    public List<Long> getAttribute() {
         return attribute;
     }
 
@@ -126,7 +126,7 @@ public class CardSearchInfo implements ICardFilter{
             return this;
         }
 
-        public Builder attribute(List<Integer> val) {
+        public Builder attribute(List<Long> val) {
             searchInfo.attribute = val;
             return this;
         }
