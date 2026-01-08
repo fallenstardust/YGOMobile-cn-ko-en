@@ -109,7 +109,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:layout_marginHorizontal="20dp"
                     android:orientation="vertical">
 
                     <TextView
@@ -167,7 +167,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:layout_marginHorizontal="20dp"
                     android:orientation="vertical">
 
                     <TextView
@@ -320,7 +320,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:layout_marginHorizontal="20dp"
                     android:orientation="vertical">
 
                     <LinearLayout
@@ -450,7 +450,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:layout_marginHorizontal="20dp"
                     android:orientation="vertical">
 
                     <LinearLayout
@@ -559,7 +559,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:layout_marginHorizontal="20dp"
                     android:orientation="vertical">
 
                     <TextView
@@ -648,7 +648,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:layout_marginHorizontal="20dp"
                     android:orientation="vertical">
 
                     <TextView
@@ -741,7 +741,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/dp_10"
+                    android:layout_marginHorizontal="20dp"
                     android:orientation="vertical">
 
                     <TextView

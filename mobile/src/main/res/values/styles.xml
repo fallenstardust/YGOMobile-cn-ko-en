@@ -133,7 +133,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
         <item name="android:layout_columnWeight">1</item>
-        <item name="android:background">@drawable/radius_p</item>
+        <item name="android:background">@drawable/button_radius_black_transparents</item>
         <item name="android:textColor">@color/gray</item>
         <item name="android:textSize">8sp</item>
         <item name="android:padding">4dp</item>

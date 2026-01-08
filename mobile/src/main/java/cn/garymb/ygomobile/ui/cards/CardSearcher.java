@@ -833,24 +833,17 @@ public class CardSearcher implements View.OnClickListener {
                 CardAttribute.Wind.getId(),    // 风
                 CardAttribute.Divine.getId()   // 神
         };
-        // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
-        final String[] attributeTexts = {
-                mStringManager.getAttributeString(attributeIds[0]),
-                mStringManager.getAttributeString(attributeIds[1]),
-                mStringManager.getAttributeString(attributeIds[2]),
-                mStringManager.getAttributeString(attributeIds[3]),
-                mStringManager.getAttributeString(attributeIds[4]),
-                mStringManager.getAttributeString(attributeIds[5]),
-                mStringManager.getAttributeString(attributeIds[6])
-        };
         for (int i = 0; i < attributeButtons.length; i++) {
             final int index = i;
             final long attributeId = attributeIds[i];
+            //设置按钮样式
             Button button = attributeButtons[index];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
-            // 设置图标和文字
+            // 设置图标
             button.setCompoundDrawablesWithIntrinsicBounds(null, attributeIcons[index], null, null);
-            button.setText(attributeTexts[index]);
+
+            // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
+            button.setText(mStringManager.getAttributeString(attributeIds[index]));
 
             attributeButtons[i].setOnClickListener(v -> {
                 if (attributeList == null) {
@@ -859,7 +852,7 @@ public class CardSearcher implements View.OnClickListener {
 
                 if (button.isSelected()) {
                     button.setSelected(false);
-                    button.setBackground(mContext.getDrawable(R.drawable.radius_p));
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
                     button.setTextColor(YGOUtil.c(R.color.gray));
                     attributeList.remove(attributeId);
                 } else {
