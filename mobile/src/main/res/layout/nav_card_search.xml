@@ -107,6 +107,7 @@
                 </LinearLayout>
                 <!-- 属性筛选 -->
                 <LinearLayout
+                    android:id="@+id/ll_attribute"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
@@ -165,6 +166,7 @@
                 </LinearLayout>
                 <!-- 种族筛选 -->
                 <LinearLayout
+                    android:id="@+id/ll_race"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
@@ -324,6 +326,7 @@
                     android:orientation="vertical">
 
                     <LinearLayout
+                        android:id="@+id/ll_monster_type"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
@@ -448,6 +451,7 @@
                 </LinearLayout>
                 <!-- 怪兽类型 排除项 -->
                 <LinearLayout
+                    android:id="@+id/ll_exclude_type"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
@@ -809,14 +813,6 @@
                         android:layout_weight="1" />
 
                     <androidx.appcompat.widget.AppCompatSpinner
-                        android:id="@+id/sp_race"
-                        style="@style/itemSpinnerStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="@dimen/label_width_small"
-                        android:layout_weight="1"
-                        android:visibility="gone" />
-
-                    <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_type_spell"
                         style="@style/itemSpinnerStyle"
                         android:layout_width="0dp"
@@ -846,13 +842,6 @@
 
                         <androidx.appcompat.widget.AppCompatSpinner
                             android:id="@+id/sp_level"
-                            style="@style/itemSpinnerStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1" />
-
-                        <androidx.appcompat.widget.AppCompatSpinner
-                            android:id="@+id/sp_attribute"
                             style="@style/itemSpinnerStyle"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"

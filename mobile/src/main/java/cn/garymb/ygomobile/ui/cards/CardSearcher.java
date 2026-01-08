@@ -1,8 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
-
 import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
-
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -18,6 +16,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView.OnEditorActionListener;
@@ -63,16 +62,21 @@ public class CardSearcher implements View.OnClickListener {
     private final Spinner genesys_limitListSpinner;
     private final Spinner typeSpinner;
     // 属性筛选按钮
+    private LinearLayout ll_attribute;
     private Button[] attributeButtons;
     private List<Long> attributeList;
     // 种族筛选按钮
+    private LinearLayout ll_race;
     private Button[] raceButtons;
     private List<Long> raceList;
     private Button[] iconButtons;
     private List<Long> iconList;
     // 怪兽类型按钮
+    private LinearLayout ll_monster_type;
     private Button[] typeButtons;
     private List<Long> typeList;
+    // 排除怪兽类型按钮
+    private LinearLayout ll_exclude_type;
     private Button[] exclude_typeButtons;
     private List<Long> excludTypeList;
     // 等级\阶级\连接数
@@ -89,9 +93,7 @@ public class CardSearcher implements View.OnClickListener {
     List<Long> setCodeList;
     private final Spinner categorySpinner;
     List<Long> categoryList;
-    private final Spinner raceSpinner;
     private final Spinner levelSpinner;
-    private final Spinner attributeSpinner;
     private final EditText atkText;
     private final EditText defText;
     private final Spinner pScale;
@@ -126,37 +128,6 @@ public class CardSearcher implements View.OnClickListener {
         limitListSpinner = findViewById(R.id.sp_limit_list);
         genesys_limitListSpinner = findViewById(R.id.sp_genesys_limit_list);//初始化genesys禁卡表布局
         typeSpinner = findViewById(R.id.sp_type_card);
-
-        // 初始化种族按钮数组
-        raceButtons = new Button[]{
-                view.findViewById(R.id.btn_race_warrior),// 战士
-                view.findViewById(R.id.btn_race_spellcaster),// 魔法师
-                view.findViewById(R.id.btn_race_fairy),// 天使
-                view.findViewById(R.id.btn_race_fiend),// 恶魔
-                view.findViewById(R.id.btn_race_zombie),// 不死
-                view.findViewById(R.id.btn_race_machine),// 机械
-                view.findViewById(R.id.btn_race_aqua),// 水
-                view.findViewById(R.id.btn_race_pyro),// 炎
-                view.findViewById(R.id.btn_race_rock),// 岩石
-                view.findViewById(R.id.btn_race_wingedBeast),// 鸟兽
-                view.findViewById(R.id.btn_race_plant),// 植物
-                view.findViewById(R.id.btn_race_insect),// 昆虫
-                view.findViewById(R.id.btn_race_thunder),// 雷
-                view.findViewById(R.id.btn_race_dragon),// 龙
-                view.findViewById(R.id.btn_race_beast),// 兽
-                view.findViewById(R.id.btn_race_beastWarrior),// 兽战士
-                view.findViewById(R.id.btn_race_dinosaur),// 恐龙
-                view.findViewById(R.id.btn_race_fish),// 鱼
-                view.findViewById(R.id.btn_race_seaSerpent),// 海龙
-                view.findViewById(R.id.btn_race_reptile),// 爬虫
-                view.findViewById(R.id.btn_race_psychic),// 念动力
-                view.findViewById(R.id.btn_race_divineBeast),// 幻神兽
-                view.findViewById(R.id.btn_race_creatorGod),// 创造神
-                view.findViewById(R.id.btn_race_wyrm),// 幻龙
-                view.findViewById(R.id.btn_race_cyberse),// 电子界
-                view.findViewById(R.id.btn_race_illusion)// 幻想魔
-        };
-        raceList = new ArrayList<>();
         // 初始化类型按钮
         typeButtons = new Button[]{
                 view.findViewById(R.id.btn_type_normal),// 通常
@@ -173,7 +144,7 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_type_pendulum),// 灵摆
                 view.findViewById(R.id.btn_type_specialSummon),// 特殊召唤
                 view.findViewById(R.id.btn_type_link),// 连接
-                view.findViewById(R.id.btn_type_token)
+                view.findViewById(R.id.btn_type_token)// 衍生物
         };
         typeList = new ArrayList<>();
         exclude_typeButtons = new Button[]{
@@ -244,9 +215,7 @@ public class CardSearcher implements View.OnClickListener {
         typeTrapSpinner = findViewById(R.id.sp_type_trap);
         setCodeSpinner = findViewById(R.id.sp_setcode);
         categorySpinner = findViewById(R.id.sp_category);
-        raceSpinner = findViewById(R.id.sp_race);
         levelSpinner = findViewById(R.id.sp_level);
-        attributeSpinner = findViewById(R.id.sp_attribute);
         layout_monster = findViewById(R.id.layout_monster);
         //
         atkText = findViewById(R.id.edt_atk);
@@ -398,7 +367,6 @@ public class CardSearcher implements View.OnClickListener {
                 long value = getSelect(typeSpinner);
                 if (value == 0) {
                     layout_monster.setVisibility(View.INVISIBLE);
-                    raceSpinner.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.GONE);
                     typeTrapSpinner.setVisibility(View.GONE);
                     pScale.setVisibility(View.INVISIBLE);
@@ -406,7 +374,8 @@ public class CardSearcher implements View.OnClickListener {
                     resetMonster();
                 } else if (value == CardType.Spell.getId()) {
                     layout_monster.setVisibility(View.INVISIBLE);
-                    raceSpinner.setVisibility(View.GONE);
+                    ll_attribute.setVisibility(View.GONE);
+                    ll_race.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.VISIBLE);
                     typeTrapSpinner.setVisibility(View.GONE);
                     pScale.setVisibility(View.INVISIBLE);
@@ -414,7 +383,8 @@ public class CardSearcher implements View.OnClickListener {
                     resetMonster();
                 } else if (value == CardType.Trap.getId()) {
                     layout_monster.setVisibility(View.INVISIBLE);
-                    raceSpinner.setVisibility(View.GONE);
+                    ll_attribute.setVisibility(View.INVISIBLE);
+                    ll_race.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.GONE);
                     typeTrapSpinner.setVisibility(View.VISIBLE);
                     pScale.setVisibility(View.INVISIBLE);
@@ -422,7 +392,8 @@ public class CardSearcher implements View.OnClickListener {
                     resetMonster();
                 } else {
                     layout_monster.setVisibility(View.VISIBLE);
-                    raceSpinner.setVisibility(View.VISIBLE);
+                    ll_attribute.setVisibility(View.VISIBLE);
+                    ll_race.setVisibility(View.VISIBLE);
                     typeSpellSpinner.setVisibility(View.GONE);
                     typeTrapSpinner.setVisibility(View.GONE);
                     pScale.setVisibility(View.VISIBLE);
@@ -430,7 +401,7 @@ public class CardSearcher implements View.OnClickListener {
                 }
 
                 reset(pScale);
-                reset(raceSpinner);
+                //raceList.clear();
                 reset(typeSpellSpinner);
                 reset(typeTrapSpinner);
                 reset(typeMonsterSpinner);
@@ -479,6 +450,8 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     public void initItems() {
+        initAttributeButtons();
+        initRaceButtons();
         initOtSpinners(otSpinner);
         initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
@@ -498,9 +471,6 @@ public class CardSearcher implements View.OnClickListener {
         });
         initLevelSpinners(levelSpinner);
         initPscaleSpinners(pScale);
-        initAttributeButtons();
-        initAttributes(attributeSpinner);
-        initRaceSpinners(raceSpinner);
         initSetNameSpinners(setCodeSpinner);
         initCategorySpinners(categorySpinner);
     }
@@ -865,37 +835,126 @@ public class CardSearcher implements View.OnClickListener {
         }
     }
 
-    private void initAttributes(Spinner spinner) {
-        CardAttribute[] attributes = CardAttribute.values();
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        for (CardAttribute item : attributes) {
-            if (item == CardAttribute.None) {
-                items.add(new SimpleSpinnerItem(CardAttribute.None.getId(), getString(R.string.label_attr)));
-            } else {
-                items.add(new SimpleSpinnerItem(item.getId(), mStringManager.getAttributeString(item.getId())));
-            }
-        }
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
-    }
+    private void initRaceButtons() {
+        // 定义图标资源ID数组
+        final Drawable[] raceIcons = {
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "warrior.png", 0, 0)),// 战士族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "spellcaster.png", 0, 0)),// 魔法师族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "fairy.png", 0, 0)),// 天使族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "fiend.png", 0, 0)),// 恶魔族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "zombie.png", 0, 0)),// 不死族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "machine.png", 0, 0)),// 机械族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "aqua.png", 0, 0)),// 水族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "pyro.png", 0, 0)),// 炎族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "rock.png", 0, 0)),// 岩石族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "winged_beast.png", 0, 0)),// 鸟兽族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "plant.png", 0, 0)),// 植物族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "insect.png", 0, 0)),// 昆虫族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "thunder.png", 0, 0)),// 雷族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "dragon.png", 0, 0)),// 龙族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "beast.png", 0, 0)),// 兽族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "beast_warrior.png", 0, 0)),// 兽战士族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "dinosaur.png", 0, 0)),// 恐龙族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "fish.png", 0, 0)),// 鱼族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "sea_serpent.png", 0, 0)),// 海龙族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "reptile.png", 0, 0)),// 爬虫类族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "psychic.png", 0, 0)),// 念动力族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "divine_beast.png", 0, 0)),// 幻神兽族图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "creator_god.png", 0, 0)),// 创造神图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "wyrm.png", 0, 0)),// 幻龙图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "cyberse.png", 0, 0)),// 电子界图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "illusion.png", 0, 0)),// 幻想魔图标
+        };
 
-    private void initRaceSpinners(Spinner spinner) {
-        CardRace[] attributes = CardRace.values();
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        for (CardRace item : attributes) {
-            long val = item.value();
-            if (val == 0) {
-                items.add(new SimpleSpinnerItem(val, mContext.getString(R.string.label_race)));
-            } else {
-                items.add(new SimpleSpinnerItem(val, mStringManager.getRaceString(val)));
-            }
+        // 初始化属性按钮
+        raceButtons = new Button[]{
+                view.findViewById(R.id.btn_race_warrior),// 战士
+                view.findViewById(R.id.btn_race_spellcaster),// 魔法师
+                view.findViewById(R.id.btn_race_fairy),// 天使
+                view.findViewById(R.id.btn_race_fiend),// 恶魔
+                view.findViewById(R.id.btn_race_zombie),// 不死
+                view.findViewById(R.id.btn_race_machine),// 机械
+                view.findViewById(R.id.btn_race_aqua),// 水
+                view.findViewById(R.id.btn_race_pyro),// 炎
+                view.findViewById(R.id.btn_race_rock),// 岩石
+                view.findViewById(R.id.btn_race_wingedBeast),// 鸟兽
+                view.findViewById(R.id.btn_race_plant),// 植物
+                view.findViewById(R.id.btn_race_insect),// 昆虫
+                view.findViewById(R.id.btn_race_thunder),// 雷
+                view.findViewById(R.id.btn_race_dragon),// 龙
+                view.findViewById(R.id.btn_race_beast),// 兽
+                view.findViewById(R.id.btn_race_beastWarrior),// 兽战士
+                view.findViewById(R.id.btn_race_dinosaur),// 恐龙
+                view.findViewById(R.id.btn_race_fish),// 鱼
+                view.findViewById(R.id.btn_race_seaSerpent),// 海龙
+                view.findViewById(R.id.btn_race_reptile),// 爬虫类
+                view.findViewById(R.id.btn_race_psychic),// 念动力
+                view.findViewById(R.id.btn_race_divineBeast),// 幻神兽
+                view.findViewById(R.id.btn_race_creatorGod),// 创造神
+                view.findViewById(R.id.btn_race_wyrm),// 幻龙
+                view.findViewById(R.id.btn_race_cyberse),// 电子界
+                view.findViewById(R.id.btn_race_illusion),// 幻想魔
+        };
+
+        // 定义属性对应的ID值，使用long类型
+        final long[] raceIds = {
+                CardRace.Warrior.value(),    // 战士
+                CardRace.SpellCaster.value(),   // 魔法师
+                CardRace.Fairy.value(),   // 天使
+                CardRace.Fiend.value(),   // 恶魔
+                CardRace.Zombie.value(),   // 不死
+                CardRace.Machine.value(),   // 机械
+                CardRace.Aqua.value(),   // 水
+                CardRace.Pyro.value(),   // 炎
+                CardRace.Rock.value(),   // 岩石
+                CardRace.WingedBeast.value(),   // 鸟兽族
+                CardRace.Plant.value(),   // 植物
+                CardRace.Insect.value(),   // 昆虫
+                CardRace.Thunder.value(),   // 雷
+                CardRace.Dragon.value(),   // 龙
+                CardRace.Beast.value(),   // 兽
+                CardRace.BeastWarrior.value(),   // 兽战士
+                CardRace.Dinosaur.value(),   // 恐龙
+                CardRace.Fish.value(),   // 鱼
+                CardRace.SeaSerpent.value(),   // 海龙
+                CardRace.Reptile.value(),   // 爬虫类
+                CardRace.Psychic.value(),   // 念动力
+                CardRace.DivineBeast.value(),   // 幻神兽
+                CardRace.CreatorGod.value(),   // 创造神
+                CardRace.Wyrm.value(),   // 幻龙
+                CardRace.Cyberse.value(),   // 电子界
+                CardRace.Illusionist.value(),   // 幻想魔
+        };
+        for (int i = 0; i < raceButtons.length; i++) {
+            final int index = i;
+            final long raceId = raceIds[i];
+            //设置按钮样式
+            Button button = raceButtons[index];
+            button.setCompoundDrawablePadding(4); // 图标和文字间距
+            // 设置图标
+            button.setCompoundDrawablesWithIntrinsicBounds(null, raceIcons[index], null, null);
+
+            // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
+            button.setText(mStringManager.getRaceString(raceIds[index]));
+
+            raceButtons[i].setOnClickListener(v -> {
+                if (raceList == null) {
+                    raceList = new ArrayList<>();
+                }
+
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    button.setTextColor(YGOUtil.c(R.color.gray));
+                    raceList.remove(raceId);
+                } else {
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    button.setTextColor(YGOUtil.c(R.color.yellow));
+                    raceList.add(raceId);
+                }
+            });
         }
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
     }
 
     private void initCategorySpinners(Spinner spinner) {
@@ -1032,9 +1091,7 @@ public class CardSearcher implements View.OnClickListener {
         reset(pScale);
         reset(typeMonsterSpinner);
         reset(typeMonsterSpinner2);
-        reset(raceSpinner);
         reset(levelSpinner);
-        reset(attributeSpinner);
         atkText.setText(null);
         defText.setText(null);
         lineKey = 0;
