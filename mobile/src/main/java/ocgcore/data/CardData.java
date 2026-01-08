@@ -19,7 +19,7 @@ public class CardData implements Parcelable {
     public long SetCode;
     public long Type;
     public int Level;
-    public int Attribute;
+    public long Attribute;
     public long Race;
     public int Attack;
     public int Defense;
@@ -60,7 +60,7 @@ public class CardData implements Parcelable {
         dest.writeLong(this.SetCode);
         dest.writeLong(this.Type);
         dest.writeInt(this.Level);
-        dest.writeInt(this.Attribute);
+        dest.writeLong(this.Attribute);
         dest.writeLong(this.Race);
         dest.writeInt(this.Attack);
         dest.writeInt(this.Defense);
@@ -76,7 +76,7 @@ public class CardData implements Parcelable {
         this.SetCode = in.readLong();
         this.Type = in.readLong();
         this.Level = in.readInt();
-        this.Attribute = in.readInt();
+        this.Attribute = in.readLong();
         this.Race = in.readLong();
         this.Attack = in.readInt();
         this.Defense = in.readInt();

@@ -63,7 +63,7 @@ public class CardSearcher implements View.OnClickListener {
     private final Spinner typeSpinner;
     // 属性筛选按钮
     private Button[] attributeButtons;
-    private List<Integer> attributeList;
+    private List<Long> attributeList;
     // 种族筛选按钮
     private Button[] raceButtons;
     private List<Long> raceList;
@@ -234,6 +234,8 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_Pscale_13),
         };
         pendulumScaleList = new ArrayList<>();
+        categoryList = new ArrayList<>();
+        setCodeList = new ArrayList<>();
         //TODO这些组件需要替换成多选界面
         typeMonsterSpinner = findViewById(R.id.sp_type_monster);
         typeMonsterSpinner2 = findViewById(R.id.sp_type_monster2);
@@ -832,28 +834,28 @@ public class CardSearcher implements View.OnClickListener {
         };
 
         // 定义属性对应的ID值，使用long类型
-        final Integer[] attributeIds = {
-                1,    // 暗
-                2,   // 光
-                3,   // 地
-                4,   // 水
-                5,    // 火
-                6,    // 风
-                7   // 神
+        final long[] attributeIds = {
+                CardAttribute.Dark.getId(),    // 暗
+                CardAttribute.Light.getId(),   // 光
+                CardAttribute.Earth.getId(),   // 地
+                CardAttribute.Water.getId(),   // 水
+                CardAttribute.Fire.getId(),    // 火
+                CardAttribute.Wind.getId(),    // 风
+                CardAttribute.Divine.getId()   // 神
         };
         // 定义说明文字
         final String[] attributeTexts = {
-                mStringManager.getAttributeString(CardAttribute.Dark.getId()),
-                mStringManager.getAttributeString(CardAttribute.Light.getId()),
-                mStringManager.getAttributeString(CardAttribute.Earth.getId()),
-                mStringManager.getAttributeString(CardAttribute.Water.getId()),
-                mStringManager.getAttributeString(CardAttribute.Fire.getId()),
-                mStringManager.getAttributeString(CardAttribute.Wind.getId()),
-                mStringManager.getAttributeString(CardAttribute.Divine.getId())
+                mStringManager.getAttributeString(attributeIds[0]),
+                mStringManager.getAttributeString(attributeIds[1]),
+                mStringManager.getAttributeString(attributeIds[2]),
+                mStringManager.getAttributeString(attributeIds[3]),
+                mStringManager.getAttributeString(attributeIds[4]),
+                mStringManager.getAttributeString(attributeIds[5]),
+                mStringManager.getAttributeString(attributeIds[6])
         };
         for (int i = 0; i < attributeButtons.length; i++) {
             final int index = i;
-            final Integer attributeId = attributeIds[i];
+            final long attributeId = attributeIds[i];
             Button button = attributeButtons[index];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
             // 设置图标和文字

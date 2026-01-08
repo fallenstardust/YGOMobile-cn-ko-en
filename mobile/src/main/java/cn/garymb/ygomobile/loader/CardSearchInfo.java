@@ -1,16 +1,17 @@
 package cn.garymb.ygomobile.loader;
 
-import java.util.List;
-
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import java.util.List;
 
 import ocgcore.data.Card;
 import ocgcore.enums.CardOt;
 import ocgcore.enums.CardType;
 
-public class CardSearchInfo implements ICardFilter{
+public class CardSearchInfo implements ICardFilter {
     //名字或者描述
     private CardKeyWord keyWord;
     private int ot;
@@ -21,7 +22,7 @@ public class CardSearchInfo implements ICardFilter{
     private int limitType;
     private String limitName;
 
-    private List<Integer> attribute;
+    private List<Long> attribute;
     private List<Integer> level;
     private List<Long> race;
     private List<Long> category;
@@ -48,7 +49,7 @@ public class CardSearchInfo implements ICardFilter{
         return keyWord;
     }
 
-    public List<Integer> getAttribute() {
+    public List<Long> getAttribute() {
         return attribute;
     }
 
@@ -111,7 +112,7 @@ public class CardSearchInfo implements ICardFilter{
             return searchInfo;
         }
 
-        public Builder limitType(int limit){
+        public Builder limitType(int limit) {
             searchInfo.limitType = limit;
             return this;
         }
@@ -126,7 +127,7 @@ public class CardSearchInfo implements ICardFilter{
             return this;
         }
 
-        public Builder attribute(List<Integer> val) {
+        public Builder attribute(List<Long> val) {
             searchInfo.attribute = val;
             return this;
         }
@@ -198,9 +199,9 @@ public class CardSearchInfo implements ICardFilter{
     }
 
     @NonNull
-    public String toString(){
+    public String toString() {
         return "CardSearchInfo{" +
-                "LimitType="+getLimitType() +
+                "LimitType=" + getLimitType() +
                 ", Ot=" + getOt() +
                 ", LimitName=" + getLimitName() +
                 ", KeyWord=" + getKeyWord() +
@@ -263,17 +264,28 @@ public class CardSearchInfo implements ICardFilter{
         }
     }
 
+    /**
+     * 验证卡片是否符合当前过滤器的所有条件
+     *
+     * @param card 待验证的卡片对象
+     * @return 如果卡片符合所有过滤条件则返回true，否则返回false
+     */
     @Override
     public boolean isValid(Card card) {
-        if(keyWord != null && !keyWord.isValid(card)){
+        // 检查关键词过滤条件
+        if (keyWord != null && !keyWord.isValid(card)) {
             return false;
         }
+        Log.i("CardSearchInfo",attribute + "isValid: " + card.Attribute);
+        // 检查属性过滤条件
         if (!attribute.isEmpty() && !attribute.contains(card.Attribute)) {
             return false;
         }
+        // 检查等级/星级过滤条件
         if (!level.isEmpty() && !level.contains(card.getStar())) {
             return false;
         }
+        // 检查攻击力过滤条件（支持范围和精确值）
         if (!TextUtils.isEmpty(atk)) {
             if (atk.contains("-")) {
                 String[] atks = atk.split("-");
@@ -285,6 +297,7 @@ public class CardSearchInfo implements ICardFilter{
             }
         }
 
+        // 检查链接值过滤条件（如果是链接怪兽）或防御力过滤条件
         if (linkKey > 0) {
             if (!((card.Defense & linkKey) == linkKey && (card.isType(CardType.Link)))) {
                 return false;
@@ -301,6 +314,8 @@ public class CardSearchInfo implements ICardFilter{
                 }
             }
         }
+
+        // 检查卡片OCG\TCG独有过滤条件
         if (ot > CardOt.ALL.getId()) {
             if (ot == CardOt.NO_EXCLUSIVE.getId()) {
                 if (card.Ot == CardOt.OCG.getId() || card.Ot == CardOt.TCG.getId() || card.Ot == CardOt.CUSTOM.getId()) {
@@ -315,46 +330,51 @@ public class CardSearchInfo implements ICardFilter{
             }
         }
 
+        // 检查灵摆刻度过滤条件
         if (!pscale.isEmpty()
-            && (!card.isType(CardType.Pendulum)
+                && (!card.isType(CardType.Pendulum)
                 || (!pscale.contains(card.LeftScale)
-                    && !pscale.contains(card.RightScale)
-                )
-            )
+                && !pscale.contains(card.RightScale)))
         ) {
             return false;
         }
 
+        // 检查种族过滤条件
         if (!race.isEmpty() && !race.contains(card.Race)) {
             return false;
         }
+        // 检查分类过滤条件
         if (!category.isEmpty()
-            && category.stream().noneMatch(i -> (card.Category & i) == i)
+                && category.stream().noneMatch(i -> (card.Category & i) == i)
         ) {
             return false;
         }
+        // 检查排除类型过滤条件
         if (!except_types.isEmpty()
-            && except_types.stream().anyMatch(type -> (card.Type & type) == type)
+                && except_types.stream().anyMatch(type -> (card.Type & type) == type)
         ) {
             return false;
         }
+        // 检查卡片类型过滤条件（支持逻辑与/或）
         if (!types.isEmpty()
-            && (type_logic ?
+                && (type_logic ?
                 types.stream().filter(type -> (card.Type & type) == type).count() != types.size()
-                    : types.stream().noneMatch(type -> (card.Type & type) == type))
+                : types.stream().noneMatch(type -> (card.Type & type) == type))
         ) {
             return false;
         }
         //TODO setcode
+        // 检查系列代码过滤条件（支持逻辑与/或）
         if (!setcode.isEmpty()
-            && (setcode_logic ?
+                && (setcode_logic ?
                 setcode.stream().filter(card::isSetCode).count() != setcode.size()
-                    : setcode.stream().noneMatch(card::isSetCode))
+                : setcode.stream().noneMatch(card::isSetCode))
         ) {
             return false;
         }
         return true;
     }
+
 
     private int i(String str) {
         try {
