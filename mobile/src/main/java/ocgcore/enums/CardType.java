@@ -15,7 +15,7 @@ public enum CardType {
     TrapMonster(0x100, 1058),//
     Spirit(0x200, 1059),
     Union(0x400, 1060),
-    Dual(0x800, 1061),//
+    Gemini(0x800, 1061),//
     Tuner(0x1000, 1062),
     Synchro(0x2000, 1063),
     Token(0x4000, 1064),

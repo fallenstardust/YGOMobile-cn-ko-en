@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -456,7 +457,7 @@ public class CardSearcher implements View.OnClickListener {
         initTypeSpinners(typeSpinner, new CardType[]{CardType.None, CardType.Monster, CardType.Spell, CardType.Trap});
         initTypeSpinners(typeMonsterSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Effect, CardType.Fusion, CardType.Ritual,
                 CardType.Synchro, CardType.Pendulum, CardType.Xyz, CardType.Link, CardType.Spirit, CardType.Union,
-                CardType.Dual, CardType.Tuner, CardType.Flip, CardType.Toon, CardType.Sp_Summon, CardType.Token
+                CardType.Gemini, CardType.Tuner, CardType.Flip, CardType.Toon, CardType.Sp_Summon, CardType.Token
         });
         initTypeSpinners(typeMonsterSpinner2, new CardType[]{CardType.None, CardType.Pendulum, CardType.Tuner, CardType.Non_Effect
         });
@@ -820,23 +821,54 @@ public class CardSearcher implements View.OnClickListener {
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
                     button.setTextColor(YGOUtil.c(R.color.gray));
                     if(button == iconButtons[6]) {
-//TODO 添加通常按钮的排除逻辑
+                        // 移除魔法和陷阱类型
+                        typeList.remove(CardType.Spell.getId());
+                        typeList.remove(CardType.Trap.getId());
+
+                        // 排除怪兽类型
+                        excludTypeList.remove(CardType.Monster.getId());
+                        // 将其他图标类型移出排除列表
+                        for (long id : iconIds) {
+                            if (id != CardType.Normal.getId() && !typeList.contains(id) && !excludTypeList.contains(id)) {
+                                excludTypeList.remove(id);
+                            }
+                        }
+                    } else {
+                        typeList.remove(iconId);
+                        excludTypeList.remove(iconId);
                     }
                     typeList.remove(iconId);
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
                     button.setTextColor(YGOUtil.c(R.color.yellow));
-                    // 检查是否是通常按钮（索引为6，对应数组中的第7个元素）
                     if (button == iconButtons[6]) { // 通常是第7个按钮，索引为6
-                        // 遍历所有图标ID，将不在typeList中的添加到excludTypeList
+                        // 添加魔法和陷阱类型
+                        if (!typeList.contains(CardType.Spell.getId())) {
+                            typeList.add(CardType.Spell.getId());
+                        }
+                        if (!typeList.contains(CardType.Trap.getId())) {
+                            typeList.add(CardType.Trap.getId());
+                        }
+
+                        // 排除怪兽类型
+                        if (!excludTypeList.contains(CardType.Monster.getId())) {
+                            excludTypeList.add(CardType.Monster.getId());
+                        }
+
+                        // 将其他图标类型添加到排除列表中
                         for (long id : iconIds) {
-                            if (!typeList.contains(id) && !excludTypeList.contains(id)) {
+                            if (id != CardType.Normal.getId() && !typeList.contains(id) && !excludTypeList.contains(id)) {
                                 excludTypeList.add(id);
                             }
                         }
+                    } else {
+                        if (!typeList.contains(iconId)) {
+                            typeList.add(iconId);
+                        }
+                        excludTypeList.remove(iconId);
+
                     }
-                    typeList.add(iconId);
                 }
             });
         }
