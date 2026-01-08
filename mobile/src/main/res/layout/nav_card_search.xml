@@ -105,6 +105,64 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1" />
                 </LinearLayout>
+                <!-- 魔陷种类筛选 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:drawableRight="@drawable/ic_close_black_24dp"
+                        android:text="魔陷种类 ?"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp" />
+
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="7"
+                        android:rowCount="2"
+                        android:spacing="8dp">
+
+                        <Button
+                            android:id="@+id/btn_icon_equip"
+                            style="@style/CardFilterBtn"
+                            android:text="装备" />
+
+                        <Button
+                            android:id="@+id/btn_icon_field"
+                            style="@style/CardFilterBtn"
+                            android:text="场地" />
+
+                        <Button
+                            android:id="@+id/btn_icon_quickPlay"
+                            style="@style/CardFilterBtn"
+                            android:text="速攻" />
+
+                        <Button
+                            android:id="@+id/btn_icon_ritual"
+                            style="@style/CardFilterBtn"
+                            android:text="仪式" />
+
+                        <Button
+                            android:id="@+id/btn_icon_continuous"
+                            style="@style/CardFilterBtn"
+                            android:text="永续" />
+
+                        <Button
+                            android:id="@+id/btn_icon_counter"
+                            style="@style/CardFilterBtn"
+                            android:text="反击" />
+
+                        <Button
+                            android:id="@+id/btn_icon_normal"
+                            style="@style/CardFilterBtn"
+                            android:text="通常" />
+                    </GridLayout>
+                </LinearLayout>
                 <!-- 属性筛选 -->
                 <LinearLayout
                     android:id="@+id/ll_attribute"
@@ -365,8 +423,8 @@
                     <GridLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="4"
-                        android:rowCount="4">
+                        android:columnCount="7"
+                        android:rowCount="3">
 
                         <Button
                             android:id="@+id/btn_type_normal"
@@ -473,8 +531,8 @@
                         <GridLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:columnCount="4"
-                            android:rowCount="4">
+                            android:columnCount="7"
+                            android:rowCount="3">
 
                             <Button
                                 android:id="@+id/btn_exclude_type_normal"
@@ -741,64 +799,7 @@
                             android:text="13" />
                     </GridLayout>
                 </LinearLayout>
-                <!-- 魔陷种类筛选 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="20dp"
-                    android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:drawableRight="@drawable/ic_close_black_24dp"
-                        android:text="魔陷种类 ?"
-                        android:textColor="#FFFFFF"
-                        android:textSize="16sp" />
-
-                    <GridLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:columnCount="7"
-                        android:rowCount="2"
-                        android:spacing="8dp">
-
-                        <Button
-                            android:id="@+id/btn_icon_equip"
-                            style="@style/CardFilterBtn"
-                            android:text="装备" />
-
-                        <Button
-                            android:id="@+id/btn_icon_field"
-                            style="@style/CardFilterBtn"
-                            android:text="场地" />
-
-                        <Button
-                            android:id="@+id/btn_icon_quickPlay"
-                            style="@style/CardFilterBtn"
-                            android:text="速攻" />
-
-                        <Button
-                            android:id="@+id/btn_icon_ritual"
-                            style="@style/CardFilterBtn"
-                            android:text="仪式" />
-
-                        <Button
-                            android:id="@+id/btn_icon_continuous"
-                            style="@style/CardFilterBtn"
-                            android:text="永续" />
-
-                        <Button
-                            android:id="@+id/btn_icon_counter"
-                            style="@style/CardFilterBtn"
-                            android:text="反击" />
-
-                        <Button
-                            android:id="@+id/btn_icon_normal"
-                            style="@style/CardFilterBtn"
-                            android:text="通常" />
-                    </GridLayout>
-                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"

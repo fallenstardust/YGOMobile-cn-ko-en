@@ -70,7 +70,6 @@ public class CardSearcher implements View.OnClickListener {
     private Button[] raceButtons;
     private List<Long> raceList;
     private Button[] iconButtons;
-    private List<Long> iconList;
     // 怪兽类型按钮
     private LinearLayout ll_monster_type;
     private Button[] typeButtons;
@@ -164,16 +163,8 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_exclude_type_link),
                 view.findViewById(R.id.btn_exclude_type_token)
         };
-        excludTypeList = new ArrayList<>();
-        iconButtons = new Button[]{
-                view.findViewById(R.id.btn_icon_quickPlay),// 速攻
-                view.findViewById(R.id.btn_icon_continuous),// 永续
-                view.findViewById(R.id.btn_icon_equip),// 装备
-                view.findViewById(R.id.btn_icon_field),// 场地
-                view.findViewById(R.id.btn_icon_counter),// 反击
-                view.findViewById(R.id.btn_icon_ritual),// 仪式
-        };
-        iconList = new ArrayList<>();
+
+
         levelButtons = new Button[]{
                 view.findViewById(R.id.btn_LRA_1),
                 view.findViewById(R.id.btn_LRA_2),
@@ -205,6 +196,10 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_Pscale_12),
                 view.findViewById(R.id.btn_Pscale_13),
         };
+        attributeList = new ArrayList<>();
+        raceList = new ArrayList<>();
+        typeList = new ArrayList<>();
+        excludTypeList = new ArrayList<>();
         pendulumScaleList = new ArrayList<>();
         categoryList = new ArrayList<>();
         setCodeList = new ArrayList<>();
@@ -452,6 +447,7 @@ public class CardSearcher implements View.OnClickListener {
     public void initItems() {
         initAttributeButtons();
         initRaceButtons();
+        initIconButtons();
         initOtSpinners(otSpinner);
         initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
@@ -770,16 +766,91 @@ public class CardSearcher implements View.OnClickListener {
         spinner.setAdapter(adapter);
     }
 
+    private void initIconButtons() {
+        // 定义图标资源ID数组
+        final Drawable[] Icons = {
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "quickplay.png", 0, 0)),// 速攻图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "continuous.png", 0, 0)),// 永续图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "equip.png", 0, 0)),// 装备图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "field.png", 0, 0)),// 场地图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "counter.png", 0, 0)),// 反击图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "ritual.png", 0, 0)),// 仪式图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "??.png", 0, 0)),// 通常图标
+        };
+
+        iconButtons = new Button[]{
+                view.findViewById(R.id.btn_icon_quickPlay),// 速攻
+                view.findViewById(R.id.btn_icon_continuous),// 永续
+                view.findViewById(R.id.btn_icon_equip),// 装备
+                view.findViewById(R.id.btn_icon_field),// 场地
+                view.findViewById(R.id.btn_icon_counter),// 反击
+                view.findViewById(R.id.btn_icon_ritual),// 仪式
+                view.findViewById(R.id.btn_icon_normal),// 通常
+        };
+
+        // 定义属性对应的ID值，使用long类型
+        final long[] iconIds = {
+                CardType.QuickPlay.getId(),// 速攻
+                CardType.Continuous.getId(),// 永续
+                CardType.Equip.getId(),// 装备
+                CardType.Field.getId(),// 场地
+                CardType.Counter.getId(),// 反击
+                CardType.Ritual.getId(),// 仪式
+                CardType.Normal.getId()// 通常
+        };
+        for (int i = 0; i < iconButtons.length; i++) {
+            final int index = i;
+            final long iconId = iconIds[i];
+            //设置按钮样式
+            Button button = iconButtons[index];
+            button.setCompoundDrawablePadding(4); // 图标和文字间距
+            // 设置图标
+            button.setCompoundDrawablesWithIntrinsicBounds(null, Icons[index], null, null);
+
+            // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
+            button.setText(mStringManager.getTypeString(iconIds[index]));
+
+            iconButtons[i].setOnClickListener(v -> {
+                if (typeList == null) {
+                    typeList = new ArrayList<>();
+                }
+
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    button.setTextColor(YGOUtil.c(R.color.gray));
+                    if(button == iconButtons[6]) {
+//TODO 添加通常按钮的排除逻辑
+                    }
+                    typeList.remove(iconId);
+                } else {//未选中时的逻辑
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    button.setTextColor(YGOUtil.c(R.color.yellow));
+                    // 检查是否是通常按钮（索引为6，对应数组中的第7个元素）
+                    if (button == iconButtons[6]) { // 通常是第7个按钮，索引为6
+                        // 遍历所有图标ID，将不在typeList中的添加到excludTypeList
+                        for (long id : iconIds) {
+                            if (!typeList.contains(id) && !excludTypeList.contains(id)) {
+                                excludTypeList.add(id);
+                            }
+                        }
+                    }
+                    typeList.add(iconId);
+                }
+            });
+        }
+    }
     private void initAttributeButtons() {
         // 定义图标资源ID数组
         final Drawable[] attributeIcons = {
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_dark.png", 0, 0)),// 暗属性图标
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_light.png", 0, 0)),// 光属性图标
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_earth.png", 0, 0)),// 地属性图标
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_water.png", 0, 0)),// 水属性图标
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_fire.png", 0, 0)),// 火属性图标
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_wind.png", 0, 0)),// 风属性图标
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "attribute_icon_divine.png", 0, 0)),// 神属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "dark.png", 0, 0)),// 暗属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "light.png", 0, 0)),// 光属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "earth.png", 0, 0)),// 地属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "water.png", 0, 0)),// 水属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "fire.png", 0, 0)),// 火属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "wind.png", 0, 0)),// 风属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "divine.png", 0, 0)),// 神属性图标
         };
 
         // 初始化属性按钮
