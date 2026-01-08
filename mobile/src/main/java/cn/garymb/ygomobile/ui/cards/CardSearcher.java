@@ -36,6 +36,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.BitmapUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -799,17 +800,6 @@ public class CardSearcher implements View.OnClickListener {
         spinner.setAdapter(adapter);
     }
 
-    // 辅助方法：更新按钮背景
-    private void updateButtonBackground(Button button, boolean isSelected) {
-        if (isSelected) {
-            button.setBackgroundColor(Color.parseColor("#40808080")); // 选中时的背景色
-            button.setAlpha(0.7f); // 选中时稍微透明
-        } else {
-            button.setBackgroundColor(Color.TRANSPARENT); // 默认透明背景
-            button.setAlpha(1.0f); // 正常透明度
-        }
-    }
-
     private void initAttributeButtons() {
         // 定义图标资源ID数组
         final Drawable[] attributeIcons = {
@@ -843,7 +833,7 @@ public class CardSearcher implements View.OnClickListener {
                 CardAttribute.Wind.getId(),    // 风
                 CardAttribute.Divine.getId()   // 神
         };
-        // 定义说明文字
+        // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
         final String[] attributeTexts = {
                 mStringManager.getAttributeString(attributeIds[0]),
                 mStringManager.getAttributeString(attributeIds[1]),
@@ -869,9 +859,13 @@ public class CardSearcher implements View.OnClickListener {
 
                 if (button.isSelected()) {
                     button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius_p));
+                    button.setTextColor(YGOUtil.c(R.color.gray));
                     attributeList.remove(attributeId);
                 } else {
                     button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    button.setTextColor(YGOUtil.c(R.color.yellow));
                     attributeList.add(attributeId);
                 }
             });
