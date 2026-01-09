@@ -64,7 +64,6 @@ public class CardSearcher implements View.OnClickListener {
     private final Spinner genesys_limitSpinner;
     private final Spinner limitListSpinner;
     private final Spinner genesys_limitListSpinner;
-    private final Spinner typeSpinner;
     // 属性筛选按钮
     private LinearLayout ll_attribute;
     private Button[] attributeButtons;
@@ -82,16 +81,18 @@ public class CardSearcher implements View.OnClickListener {
     private LinearLayout ll_exclude_type;
     private Button[] exclude_typeButtons;
     private List<Long> excludTypeList;
+
     // 等级\阶级\连接数
+    private LinearLayout ll_level_rank_link;
     private ImageButton[] levelButtons;
     private List<Integer> levelList;
     // 灵摆刻度数
+    private LinearLayout ll_pendulum_scale;
     private ImageButton[] pendulumScaleButtons;
     private List<Integer> pendulumScaleList;
+    private LinearLayout ll_icon;
     private final Spinner typeMonsterSpinner;
     private final Spinner typeMonsterSpinner2;
-    private final Spinner typeSpellSpinner;
-    private final Spinner typeTrapSpinner;
     private final Spinner setCodeSpinner;
     List<Long> setCodeList;
     private final Spinner categorySpinner;
@@ -128,7 +129,15 @@ public class CardSearcher implements View.OnClickListener {
         genesys_limitSpinner = findViewById(R.id.sp_genesys_limit);//初始化genesys禁限选项布局
         limitListSpinner = findViewById(R.id.sp_limit_list);
         genesys_limitListSpinner = findViewById(R.id.sp_genesys_limit_list);//初始化genesys禁卡表布局
-        typeSpinner = findViewById(R.id.sp_type_card);
+        //怪兽类型多选布局
+        ll_attribute = findViewById(R.id.ll_attribute);
+        ll_race = findViewById(R.id.ll_race);
+        ll_monster_type = findViewById(R.id.ll_monster_type);
+        ll_exclude_type = findViewById(R.id.ll_exclude_type);
+        ll_level_rank_link = findViewById(R.id.ll_level_rank_link);
+        ll_pendulum_scale = findViewById(R.id.ll_pendulum_scale);
+        //魔法陷阱icon多选布局
+        ll_icon = findViewById(R.id.ll_icon);
         // 初始化类型按钮
         typeButtons = new Button[]{
                 view.findViewById(R.id.btn_type_normal),// 通常
@@ -176,8 +185,6 @@ public class CardSearcher implements View.OnClickListener {
         //TODO这些组件需要替换成多选界面
         typeMonsterSpinner = findViewById(R.id.sp_type_monster);
         typeMonsterSpinner2 = findViewById(R.id.sp_type_monster2);
-        typeSpellSpinner = findViewById(R.id.sp_type_spell);
-        typeTrapSpinner = findViewById(R.id.sp_type_trap);
         setCodeSpinner = findViewById(R.id.sp_setcode);
         categorySpinner = findViewById(R.id.sp_category);
         layout_monster = findViewById(R.id.layout_monster);
@@ -324,51 +331,6 @@ public class CardSearcher implements View.OnClickListener {
             }
             return false; // 返回false以允许正常的spinner行为继续
         });
-        typeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                long value = getSelect(typeSpinner);
-                if (value == 0) {
-                    layout_monster.setVisibility(View.INVISIBLE);
-                    typeSpellSpinner.setVisibility(View.GONE);
-                    typeTrapSpinner.setVisibility(View.GONE);
-                    LinkMarkerButton.setVisibility(View.INVISIBLE);
-                    resetMonster();
-                } else if (value == CardType.Spell.getId()) {
-                    layout_monster.setVisibility(View.INVISIBLE);
-                    ll_attribute.setVisibility(View.GONE);
-                    ll_race.setVisibility(View.GONE);
-                    typeSpellSpinner.setVisibility(View.VISIBLE);
-                    typeTrapSpinner.setVisibility(View.GONE);
-                    LinkMarkerButton.setVisibility(View.INVISIBLE);
-                    resetMonster();
-                } else if (value == CardType.Trap.getId()) {
-                    layout_monster.setVisibility(View.INVISIBLE);
-                    ll_attribute.setVisibility(View.INVISIBLE);
-                    ll_race.setVisibility(View.GONE);
-                    typeSpellSpinner.setVisibility(View.GONE);
-                    typeTrapSpinner.setVisibility(View.VISIBLE);
-                    LinkMarkerButton.setVisibility(View.INVISIBLE);
-                    resetMonster();
-                } else {
-                    layout_monster.setVisibility(View.VISIBLE);
-                    ll_attribute.setVisibility(View.VISIBLE);
-                    ll_race.setVisibility(View.VISIBLE);
-                    typeSpellSpinner.setVisibility(View.GONE);
-                    typeTrapSpinner.setVisibility(View.GONE);
-                    LinkMarkerButton.setVisibility(View.VISIBLE);
-                }
-                reset(typeSpellSpinner);
-                reset(typeTrapSpinner);
-                reset(typeMonsterSpinner);
-                reset(typeMonsterSpinner2);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
     }
 
     public void setCallBack(CallBack callBack) {
@@ -406,6 +368,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     public void initItems() {
+        initTypeButtons();
         initAttributeButtons();
         initRaceButtons();
         initIconButtons();
@@ -416,17 +379,11 @@ public class CardSearcher implements View.OnClickListener {
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
         initLimitListSpinners(limitListSpinner);
         initGenesysLimitListSpinners(genesys_limitListSpinner);
-        initTypeSpinners(typeSpinner, new CardType[]{CardType.None, CardType.Monster, CardType.Spell, CardType.Trap});
         initTypeSpinners(typeMonsterSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Effect, CardType.Fusion, CardType.Ritual,
                 CardType.Synchro, CardType.Pendulum, CardType.Xyz, CardType.Link, CardType.Spirit, CardType.Union,
                 CardType.Gemini, CardType.Tuner, CardType.Flip, CardType.Toon, CardType.Sp_Summon, CardType.Token
         });
         initTypeSpinners(typeMonsterSpinner2, new CardType[]{CardType.None, CardType.Pendulum, CardType.Tuner, CardType.Non_Effect
-        });
-        initTypeSpinners(typeSpellSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.QuickPlay, CardType.Ritual,
-                CardType.Continuous, CardType.Equip, CardType.Field
-        });
-        initTypeSpinners(typeTrapSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Continuous, CardType.Counter
         });
         initSetNameSpinners(setCodeSpinner);
         initCategorySpinners(categorySpinner);
@@ -697,7 +654,7 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_Pscale_12),
                 view.findViewById(R.id.btn_Pscale_13),
         };
-        for(int i = 0; i < pendulumScaleButtons.length; i++) {
+        for (int i = 0; i < pendulumScaleButtons.length; i++) {
             final Integer index = i;
             //设置按钮样式
             ImageButton button = pendulumScaleButtons[index];
@@ -756,7 +713,7 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_LRA_12),
                 view.findViewById(R.id.btn_LRA_13)
         };
-        for(int i = 0; i < levelButtons.length; i++) {
+        for (int i = 0; i < levelButtons.length; i++) {
             final int index = i;
             //设置按钮样式
             ImageButton button = levelButtons[index];
@@ -810,6 +767,109 @@ public class CardSearcher implements View.OnClickListener {
         adapter.setColor(Color.WHITE);
         adapter.set(items);
         spinner.setAdapter(adapter);
+    }
+
+    private void initTypeButtons() {
+        //从一个整体图片中裁切出3个卡片图片
+        Bitmap chainNumber = BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/cardtype.png", 0, 0);
+        int width = chainNumber.getWidth() / 3;
+        int height = chainNumber.getHeight() / 3;
+
+        final Drawable[] cardTypeIcon = new Drawable[]{
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, 0, 0, width, height)),// 1
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width, 0, width, height)),// 2
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 2, 0, width, height)),// 3
+        };
+        typeButtons = new Button[]{
+                view.findViewById(R.id.btn_type_monster),
+                view.findViewById(R.id.btn_type_spell),
+                view.findViewById(R.id.btn_type_trap)
+        };
+        final long[] typeIds = {
+                CardType.Monster.getId(),
+                CardType.Spell.getId(),
+                CardType.Trap.getId()
+        };
+        for (int i = 0; i < typeButtons.length; i++) {
+            final int index = i;
+            final long typeId = typeIds[i];
+            //设置按钮样式
+            Button button = typeButtons[index];
+            button.setCompoundDrawablePadding(4); // 图标和文字间距
+            // 设置图标
+            button.setCompoundDrawablesWithIntrinsicBounds(cardTypeIcon[index], null, null, null);
+
+            // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
+            button.setText(mStringManager.getTypeString(typeIds[index]));
+
+            typeButtons[i].setOnClickListener(v -> {
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    button.setTextColor(YGOUtil.c(R.color.gray));
+                    if (button == typeButtons[0]) {// 怪兽卡
+                        ll_attribute.setVisibility(View.GONE);
+                        ll_race.setVisibility(View.GONE);
+                        ll_monster_type.setVisibility(View.GONE);
+                        ll_exclude_type.setVisibility(View.GONE);
+                        ll_level_rank_link.setVisibility(View.GONE);
+                        ll_pendulum_scale.setVisibility(View.GONE);
+                    } else if (button == typeButtons[1]) {// 魔法卡
+                        findViewById(R.id.btn_icon_equip).setVisibility(View.GONE);
+                        findViewById(R.id.btn_icon_field).setVisibility(View.GONE);
+                        findViewById(R.id.btn_icon_quickPlay).setVisibility(View.GONE);
+                        findViewById(R.id.btn_icon_ritual).setVisibility(View.GONE);
+                        findViewById(R.id.btn_icon_continuous).setVisibility(View.GONE);
+                        if(!typeButtons[2].isSelected()) {
+                            ll_icon.setVisibility(View.GONE);
+                            findViewById(R.id.btn_icon_counter).setVisibility(View.GONE);
+                        }
+                    } else {// 陷阱卡
+                        findViewById(R.id.btn_icon_continuous).setVisibility(View.GONE);
+                        findViewById(R.id.btn_icon_counter).setVisibility(View.GONE);
+                        if(!typeButtons[1].isSelected()) {
+                            ll_icon.setVisibility(View.GONE);
+                            findViewById(R.id.btn_icon_equip).setVisibility(View.GONE);
+                            findViewById(R.id.btn_icon_field).setVisibility(View.GONE);
+                            findViewById(R.id.btn_icon_quickPlay).setVisibility(View.GONE);
+                            findViewById(R.id.btn_icon_ritual).setVisibility(View.GONE);
+                        }
+                    }
+                } else {
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    button.setTextColor(YGOUtil.c(R.color.yellow));
+                    if (button == typeButtons[0]) {// 怪兽卡
+                        ll_attribute.setVisibility(View.VISIBLE);
+                        ll_race.setVisibility(View.VISIBLE);
+                        ll_monster_type.setVisibility(View.VISIBLE);
+                        ll_exclude_type.setVisibility(View.VISIBLE);
+                        ll_level_rank_link.setVisibility(View.VISIBLE);
+                        ll_pendulum_scale.setVisibility(View.VISIBLE);
+                    } else if (button == typeButtons[1]) {// 魔法卡
+                        ll_icon.setVisibility(View.VISIBLE);
+                        findViewById(R.id.btn_icon_equip).setVisibility(View.VISIBLE);
+                        findViewById(R.id.btn_icon_field).setVisibility(View.VISIBLE);
+                        findViewById(R.id.btn_icon_quickPlay).setVisibility(View.VISIBLE);
+                        findViewById(R.id.btn_icon_ritual).setVisibility(View.VISIBLE);
+                        findViewById(R.id.btn_icon_continuous).setVisibility(View.VISIBLE);
+                        if(!typeButtons[2].isSelected()) {
+                            findViewById(R.id.btn_icon_counter).setVisibility(View.GONE);
+                        }
+                    } else {// 陷阱卡
+                        ll_icon.setVisibility(View.VISIBLE);
+                        findViewById(R.id.btn_icon_continuous).setVisibility(View.VISIBLE);
+                        findViewById(R.id.btn_icon_counter).setVisibility(View.VISIBLE);
+                        if(!typeButtons[1].isSelected()) {
+                            findViewById(R.id.btn_icon_equip).setVisibility(View.GONE);
+                            findViewById(R.id.btn_icon_field).setVisibility(View.GONE);
+                            findViewById(R.id.btn_icon_quickPlay).setVisibility(View.GONE);
+                            findViewById(R.id.btn_icon_ritual).setVisibility(View.GONE);
+                        }
+                    }
+                }
+            });
+        }
     }
 
     private void initIconButtons() {
@@ -1236,14 +1296,7 @@ public class CardSearcher implements View.OnClickListener {
         }
         keyWord.setText(null);
         reset(otSpinner);
-//        reset(limitListSpinner);
-//        if (limitListSpinner.getAdapter().getCount() > 1) {//因为禁卡表选择记录已变为保存形式，所以这里不再重置为第一个禁卡表
-//            limitListSpinner.setSelection(1);
-//        }
         reset(limitSpinner.getVisibility() == View.VISIBLE ? limitSpinner : genesys_limitSpinner);
-        reset(typeSpinner);
-        reset(typeSpellSpinner);
-        reset(typeTrapSpinner);
         reset(setCodeSpinner);
         reset(categorySpinner);
         resetMonster();

@@ -125,23 +125,24 @@
                         android:columnCount="6"
                         android:rowCount="1">
                         <Button
-                            android:id="@+id/btn_monster"
+                            android:id="@+id/btn_type_monster"
                             style="@style/CardFilterBtn"
                             android:text="怪兽" />
 
                         <Button
-                            android:id="@+id/btn_spell"
+                            android:id="@+id/btn_type_spell"
                             style="@style/CardFilterBtn"
                             android:text="魔法" />
 
                         <Button
-                            android:id="@+id/btn_trap"
+                            android:id="@+id/btn_type_trap"
                             style="@style/CardFilterBtn"
                             android:text="陷阱" />
                     </GridLayout>
                 </LinearLayout>
                 <!-- 魔陷种类筛选 -->
                 <LinearLayout
+                    android:id="@+id/ll_icon"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
@@ -412,13 +413,13 @@
                 </LinearLayout>
                 <!-- 怪兽类型筛选（带AND/OR单选） -->
                 <LinearLayout
+                    android:id="@+id/ll_monster_type"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
                     android:orientation="vertical">
 
                     <LinearLayout
-                        android:id="@+id/ll_monster_type"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
@@ -653,6 +654,7 @@
                 </LinearLayout>
                 <!-- 等级/阶级/连接数 -->
                 <LinearLayout
+                    android:id="@+id/ll_level_rank_link"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
@@ -729,6 +731,7 @@
 
                 <!-- 灵摆刻度 -->
                 <LinearLayout
+                    android:id="@+id/ll_pendulum_scale"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
@@ -819,35 +822,6 @@
                             style="@style/CardFilterBtn"
                             android:text="13" />
                     </GridLayout>
-                </LinearLayout>
-                
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <androidx.appcompat.widget.AppCompatSpinner
-                        android:id="@+id/sp_type_card"
-                        style="@style/itemSpinnerStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="@dimen/label_width_small"
-                        android:layout_weight="1" />
-
-                    <androidx.appcompat.widget.AppCompatSpinner
-                        android:id="@+id/sp_type_spell"
-                        style="@style/itemSpinnerStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="@dimen/label_width_small"
-                        android:layout_weight="1"
-                        android:visibility="gone" />
-
-                    <androidx.appcompat.widget.AppCompatSpinner
-                        android:id="@+id/sp_type_trap"
-                        style="@style/itemSpinnerStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="@dimen/label_width_small"
-                        android:layout_weight="1"
-                        android:visibility="gone" />
                 </LinearLayout>
 
                 <LinearLayout
