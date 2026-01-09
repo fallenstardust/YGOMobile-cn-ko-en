@@ -820,8 +820,7 @@
                             android:text="13" />
                     </GridLayout>
                 </LinearLayout>
-
-
+                
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -863,19 +862,6 @@
                         android:orientation="horizontal">
 
                         <androidx.appcompat.widget.AppCompatSpinner
-                            android:id="@+id/sp_level"
-                            style="@style/itemSpinnerStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/label_width_small"
-                        android:orientation="horizontal">
-
-                        <androidx.appcompat.widget.AppCompatSpinner
                             android:id="@+id/sp_type_monster"
                             style="@style/itemSpinnerStyle"
                             android:layout_width="0dp"
@@ -905,14 +891,6 @@
                             android:background="@color/transparent"
                             android:text="@string/linkmarker"
                             android:visibility="visible" />
-
-                        <androidx.appcompat.widget.AppCompatSpinner
-                            android:id="@+id/sp_scale"
-                            style="@style/itemSpinnerStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="@dimen/label_width_small"
-                            android:layout_weight="1"
-                            android:visibility="invisible" />
                     </LinearLayout>
 
                     <LinearLayout

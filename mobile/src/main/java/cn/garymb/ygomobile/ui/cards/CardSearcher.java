@@ -96,10 +96,8 @@ public class CardSearcher implements View.OnClickListener {
     List<Long> setCodeList;
     private final Spinner categorySpinner;
     List<Long> categoryList;
-    private final Spinner levelSpinner;
     private final EditText atkText;
     private final EditText defText;
-    private final Spinner pScale;
     private final Button LinkMarkerButton;
     private final Button searchButton;
     private final Button resetButton;
@@ -167,26 +165,7 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_exclude_type_link),
                 view.findViewById(R.id.btn_exclude_type_token)
         };
-
-
-
         levelList = new ArrayList<>();
-        pendulumScaleButtons = new ImageButton[]{
-                view.findViewById(R.id.btn_Pscale_0),
-                view.findViewById(R.id.btn_Pscale_1),
-                view.findViewById(R.id.btn_Pscale_2),
-                view.findViewById(R.id.btn_Pscale_3),
-                view.findViewById(R.id.btn_Pscale_4),
-                view.findViewById(R.id.btn_Pscale_5),
-                view.findViewById(R.id.btn_Pscale_6),
-                view.findViewById(R.id.btn_Pscale_7),
-                view.findViewById(R.id.btn_Pscale_8),
-                view.findViewById(R.id.btn_Pscale_9),
-                view.findViewById(R.id.btn_Pscale_10),
-                view.findViewById(R.id.btn_Pscale_11),
-                view.findViewById(R.id.btn_Pscale_12),
-                view.findViewById(R.id.btn_Pscale_13),
-        };
         attributeList = new ArrayList<>();
         raceList = new ArrayList<>();
         typeList = new ArrayList<>();
@@ -201,7 +180,6 @@ public class CardSearcher implements View.OnClickListener {
         typeTrapSpinner = findViewById(R.id.sp_type_trap);
         setCodeSpinner = findViewById(R.id.sp_setcode);
         categorySpinner = findViewById(R.id.sp_category);
-        levelSpinner = findViewById(R.id.sp_level);
         layout_monster = findViewById(R.id.layout_monster);
         //
         atkText = findViewById(R.id.edt_atk);
@@ -210,7 +188,6 @@ public class CardSearcher implements View.OnClickListener {
         myFavButton = findViewById(R.id.btn_my_fav);
         searchButton = findViewById(R.id.btn_search);
         resetButton = findViewById(R.id.btn_reset);
-        pScale = findViewById(R.id.sp_scale);
         myFavButton.setOnClickListener(this);
         LinkMarkerButton.setOnClickListener(this);
         searchButton.setOnClickListener(this);
@@ -355,7 +332,6 @@ public class CardSearcher implements View.OnClickListener {
                     layout_monster.setVisibility(View.INVISIBLE);
                     typeSpellSpinner.setVisibility(View.GONE);
                     typeTrapSpinner.setVisibility(View.GONE);
-                    pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
                 } else if (value == CardType.Spell.getId()) {
@@ -364,7 +340,6 @@ public class CardSearcher implements View.OnClickListener {
                     ll_race.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.VISIBLE);
                     typeTrapSpinner.setVisibility(View.GONE);
-                    pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
                 } else if (value == CardType.Trap.getId()) {
@@ -373,7 +348,6 @@ public class CardSearcher implements View.OnClickListener {
                     ll_race.setVisibility(View.GONE);
                     typeSpellSpinner.setVisibility(View.GONE);
                     typeTrapSpinner.setVisibility(View.VISIBLE);
-                    pScale.setVisibility(View.INVISIBLE);
                     LinkMarkerButton.setVisibility(View.INVISIBLE);
                     resetMonster();
                 } else {
@@ -382,12 +356,8 @@ public class CardSearcher implements View.OnClickListener {
                     ll_race.setVisibility(View.VISIBLE);
                     typeSpellSpinner.setVisibility(View.GONE);
                     typeTrapSpinner.setVisibility(View.GONE);
-                    pScale.setVisibility(View.VISIBLE);
                     LinkMarkerButton.setVisibility(View.VISIBLE);
                 }
-
-                reset(pScale);
-                //raceList.clear();
                 reset(typeSpellSpinner);
                 reset(typeTrapSpinner);
                 reset(typeMonsterSpinner);
@@ -440,6 +410,7 @@ public class CardSearcher implements View.OnClickListener {
         initRaceButtons();
         initIconButtons();
         initLevelButtons();
+        initPendulumScaleButtons();
         initOtSpinners(otSpinner);
         initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
@@ -457,7 +428,6 @@ public class CardSearcher implements View.OnClickListener {
         });
         initTypeSpinners(typeTrapSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Continuous, CardType.Counter
         });
-        initPscaleSpinners(pScale);
         initSetNameSpinners(setCodeSpinner);
         initCategorySpinners(categorySpinner);
     }
@@ -694,21 +664,62 @@ public class CardSearcher implements View.OnClickListener {
         initGenesysLimitListSpinners(spinner);
     }
 
-
-    private void initPscaleSpinners(Spinner spinner) {
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        for (int i = -1; i <= 13; i++) {
-            if (i == -1) {
-                items.add(new SimpleSpinnerItem(i, getString(R.string.label_pendulum)));
-            } else {
-                items.add(new SimpleSpinnerItem(i, "" + i));
-            }
+    private void initPendulumScaleButtons() {
+        final Drawable[] PScaleIcon = new Drawable[]{
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/lscale_0.png", 0, 0)),// 0
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/lscale_1.png", 0, 0)),// 1
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/lscale_2.png", 0, 0)),// 2
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/lscale_3.png", 0, 0)),// 3
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/lscale_4.png", 0, 0)),// 4
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/lscale_5.png", 0, 0)),// 5
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/lscale_6.png", 0, 0)),// 6
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/rscale_7.png", 0, 0)),// 7
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/rscale_8.png", 0, 0)),// 8
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/rscale_9.png", 0, 0)),// 9
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/rscale_10.png", 0, 0)),// 10
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/rscale_11.png", 0, 0)),// 11
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/rscale_12.png", 0, 0)),// 12
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/rscale_13.png", 0, 0)),// 13
+        };
+        pendulumScaleButtons = new ImageButton[]{
+                view.findViewById(R.id.btn_Pscale_0),
+                view.findViewById(R.id.btn_Pscale_1),
+                view.findViewById(R.id.btn_Pscale_2),
+                view.findViewById(R.id.btn_Pscale_3),
+                view.findViewById(R.id.btn_Pscale_4),
+                view.findViewById(R.id.btn_Pscale_5),
+                view.findViewById(R.id.btn_Pscale_6),
+                view.findViewById(R.id.btn_Pscale_7),
+                view.findViewById(R.id.btn_Pscale_8),
+                view.findViewById(R.id.btn_Pscale_9),
+                view.findViewById(R.id.btn_Pscale_10),
+                view.findViewById(R.id.btn_Pscale_11),
+                view.findViewById(R.id.btn_Pscale_12),
+                view.findViewById(R.id.btn_Pscale_13),
+        };
+        for(int i = 0; i < pendulumScaleButtons.length; i++) {
+            final Integer index = i;
+            //设置按钮样式
+            ImageButton button = pendulumScaleButtons[index];
+            // 设置图标
+            button.setImageDrawable(PScaleIcon[index]);
+            pendulumScaleButtons[i].setOnClickListener(v -> {
+                if (pendulumScaleList == null) {
+                    pendulumScaleList = new ArrayList<>();
+                }
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    pendulumScaleList.remove(index);
+                } else {//未选中时的逻辑
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    pendulumScaleList.add(index);
+                }
+            });
         }
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
     }
+
     private void initLevelButtons() {
         //从一个整体图片中裁切出13个数字图片
         Bitmap chainNumber = BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/number.png", 0, 0);
@@ -1239,10 +1250,8 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetMonster() {
-        reset(pScale);
         reset(typeMonsterSpinner);
         reset(typeMonsterSpinner2);
-        reset(levelSpinner);
         atkText.setText(null);
         defText.setText(null);
         lineKey = 0;
