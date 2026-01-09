@@ -673,70 +673,57 @@
                         android:rowCount="2"
                         android:spacing="8dp">
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_1"
-                            style="@style/CardFilterBtn"
-                            android:text="1" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_2"
-                            style="@style/CardFilterBtn"
-                            android:text="2" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_3"
-                            style="@style/CardFilterBtn"
-                            android:text="3" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_4"
-                            style="@style/CardFilterBtn"
-                            android:text="4" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_5"
-                            style="@style/CardFilterBtn"
-                            android:text="5" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_6"
-                            style="@style/CardFilterBtn"
-                            android:text="6" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_7"
-                            style="@style/CardFilterBtn"
-                            android:text="7" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_8"
-                            style="@style/CardFilterBtn"
-                            android:text="8" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_9"
-                            style="@style/CardFilterBtn"
-                            android:text="9" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_10"
-                            style="@style/CardFilterBtn"
-                            android:text="10" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_11"
-                            style="@style/CardFilterBtn"
-                            android:text="11" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_12"
-                            style="@style/CardFilterBtn"
-                            android:text="12" />
+                            style="@style/CardFilterBtn" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_LRA_13"
-                            style="@style/CardFilterBtn"
-                            android:text="13" />
+                            style="@style/CardFilterBtn" />
                     </GridLayout>
                 </LinearLayout>
 
@@ -762,72 +749,72 @@
                         android:rowCount="2"
                         android:spacing="8dp">
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_0"
                             style="@style/CardFilterBtn"
                             android:text="0" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_1"
                             style="@style/CardFilterBtn"
                             android:text="1" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_2"
                             style="@style/CardFilterBtn"
                             android:text="2" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_3"
                             style="@style/CardFilterBtn"
                             android:text="3" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_4"
                             style="@style/CardFilterBtn"
                             android:text="4" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_5"
                             style="@style/CardFilterBtn"
                             android:text="5" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_6"
                             style="@style/CardFilterBtn"
                             android:text="6" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_7"
                             style="@style/CardFilterBtn"
                             android:text="7" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_8"
                             style="@style/CardFilterBtn"
                             android:text="8" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_9"
                             style="@style/CardFilterBtn"
                             android:text="9" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_10"
                             style="@style/CardFilterBtn"
                             android:text="10" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_11"
                             style="@style/CardFilterBtn"
                             android:text="11" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_12"
                             style="@style/CardFilterBtn"
                             android:text="12" />
 
-                        <Button
+                        <ImageButton
                             android:id="@+id/btn_Pscale_13"
                             style="@style/CardFilterBtn"
                             android:text="13" />

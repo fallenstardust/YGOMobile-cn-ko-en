@@ -1,8 +1,10 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import static cn.garymb.ygomobile.Constants.ASSETS_PATH;
 import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -17,6 +19,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -80,10 +83,10 @@ public class CardSearcher implements View.OnClickListener {
     private Button[] exclude_typeButtons;
     private List<Long> excludTypeList;
     // 等级\阶级\连接数
-    private Button[] levelButtons;
+    private ImageButton[] levelButtons;
     private List<Integer> levelList;
     // 灵摆刻度数
-    private Button[] pendulumScaleButtons;
+    private ImageButton[] pendulumScaleButtons;
     private List<Integer> pendulumScaleList;
     private final Spinner typeMonsterSpinner;
     private final Spinner typeMonsterSpinner2;
@@ -166,22 +169,9 @@ public class CardSearcher implements View.OnClickListener {
         };
 
 
-        levelButtons = new Button[]{
-                view.findViewById(R.id.btn_LRA_1),
-                view.findViewById(R.id.btn_LRA_2),
-                view.findViewById(R.id.btn_LRA_3),
-                view.findViewById(R.id.btn_LRA_4),
-                view.findViewById(R.id.btn_LRA_5),
-                view.findViewById(R.id.btn_LRA_6),
-                view.findViewById(R.id.btn_LRA_7),
-                view.findViewById(R.id.btn_LRA_8),
-                view.findViewById(R.id.btn_LRA_9),
-                view.findViewById(R.id.btn_LRA_10),
-                view.findViewById(R.id.btn_LRA_11),
-                view.findViewById(R.id.btn_LRA_12),
-        };
+
         levelList = new ArrayList<>();
-        pendulumScaleButtons = new Button[]{
+        pendulumScaleButtons = new ImageButton[]{
                 view.findViewById(R.id.btn_Pscale_0),
                 view.findViewById(R.id.btn_Pscale_1),
                 view.findViewById(R.id.btn_Pscale_2),
@@ -449,6 +439,7 @@ public class CardSearcher implements View.OnClickListener {
         initAttributeButtons();
         initRaceButtons();
         initIconButtons();
+        initLevelButtons();
         initOtSpinners(otSpinner);
         initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
@@ -466,7 +457,6 @@ public class CardSearcher implements View.OnClickListener {
         });
         initTypeSpinners(typeTrapSpinner, new CardType[]{CardType.None, CardType.Normal, CardType.Continuous, CardType.Counter
         });
-        initLevelSpinners(levelSpinner);
         initPscaleSpinners(pScale);
         initSetNameSpinners(setCodeSpinner);
         initCategorySpinners(categorySpinner);
@@ -719,20 +709,64 @@ public class CardSearcher implements View.OnClickListener {
         adapter.set(items);
         spinner.setAdapter(adapter);
     }
+    private void initLevelButtons() {
+        //从一个整体图片中裁切出13个数字图片
+        Bitmap chainNumber = BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/number.png", 0, 0);
+        int width = chainNumber.getWidth() / 5;
+        int height = chainNumber.getHeight() / 4;
 
-    private void initLevelSpinners(Spinner spinner) {
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        for (int i = 0; i <= 13; i++) {
-            if (i == 0) {
-                items.add(new SimpleSpinnerItem(i, getString(R.string.label_level)));
-            } else {
-                items.add(new SimpleSpinnerItem(i, "" + i));
-            }
+        final Drawable[] numberIcon = new Drawable[]{
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, 0, 0, width, height)),// 1
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width, 0, width, height)),// 2
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 2, 0, width, height)),// 3
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 3, 0, width, height)),// 4
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 4, 0, width, height)),// 5
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, 0, height, width, height)),// 6
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width, height, width, height)),// 7
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 2, height, width, height)),// 8
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 3, height, width, height)),// 9
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 4, height, width, height)),// 10
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, 0, height * 2, width, height)),// 11
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width, height * 2, width, height)),// 12
+                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 2, height * 2, width, height)),// 13
+        };
+        levelButtons = new ImageButton[]{
+                view.findViewById(R.id.btn_LRA_1),
+                view.findViewById(R.id.btn_LRA_2),
+                view.findViewById(R.id.btn_LRA_3),
+                view.findViewById(R.id.btn_LRA_4),
+                view.findViewById(R.id.btn_LRA_5),
+                view.findViewById(R.id.btn_LRA_6),
+                view.findViewById(R.id.btn_LRA_7),
+                view.findViewById(R.id.btn_LRA_8),
+                view.findViewById(R.id.btn_LRA_9),
+                view.findViewById(R.id.btn_LRA_10),
+                view.findViewById(R.id.btn_LRA_11),
+                view.findViewById(R.id.btn_LRA_12),
+                view.findViewById(R.id.btn_LRA_13)
+        };
+        for(int i = 0; i < levelButtons.length; i++) {
+            final int index = i;
+            //设置按钮样式
+            ImageButton button = levelButtons[index];
+            // 设置图标
+            button.setImageDrawable(numberIcon[index]);
+            levelButtons[i].setOnClickListener(v -> {
+                if (levelList == null) {
+                    levelList = new ArrayList<>();
+                }
+                Integer levelValue = index + 1;
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    levelList.remove(levelValue);
+                } else {//未选中时的逻辑
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    levelList.add(levelValue);
+                }
+            });
         }
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
     }
 
     private void initSetNameSpinners(Spinner spinner) {
