@@ -797,7 +797,7 @@ public class CardSearcher implements View.OnClickListener {
                 CardType.Field.getId(),// 场地
                 CardType.Counter.getId(),// 反击
                 CardType.Ritual.getId(),// 仪式
-                CardType.Normal.getId()// 通常
+                CardType.Normal.getId()// 通常（是指通常怪兽，这里只用于获取strings.conf对应的文本）
         };
         for (int i = 0; i < iconButtons.length; i++) {
             final int index = i;
@@ -820,7 +820,7 @@ public class CardSearcher implements View.OnClickListener {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
                     button.setTextColor(YGOUtil.c(R.color.gray));
-                    if(button == iconButtons[6]) {
+                    if (button == iconButtons[6]) {
                         // 移除魔法和陷阱类型
                         typeList.remove(CardType.Spell.getId());
                         typeList.remove(CardType.Trap.getId());
@@ -833,6 +833,10 @@ public class CardSearcher implements View.OnClickListener {
                                 excludTypeList.remove(id);
                             }
                         }
+                    } else if (button == iconButtons[5]) { // 仪式按钮，索引为5
+                        // 如果是仪式按钮被取消选择，也需要移除仪式类型并停止排除怪兽类型
+                        typeList.remove(CardType.Ritual.getId());
+                        excludTypeList.remove(CardType.Monster.getId());
                     } else {
                         typeList.remove(iconId);
                         excludTypeList.remove(iconId);
@@ -842,7 +846,7 @@ public class CardSearcher implements View.OnClickListener {
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
                     button.setTextColor(YGOUtil.c(R.color.yellow));
-                    if (button == iconButtons[6]) { // 通常是第7个按钮，索引为6
+                    if (button == iconButtons[6]) { // 通常 索引为6 （和实际布局位置顺序无关）
                         // 添加魔法和陷阱类型
                         if (!typeList.contains(CardType.Spell.getId())) {
                             typeList.add(CardType.Spell.getId());
@@ -862,6 +866,15 @@ public class CardSearcher implements View.OnClickListener {
                                 excludTypeList.add(id);
                             }
                         }
+                    } else if (button == iconButtons[5]) {//仪式 索引为5
+                        // 添加仪式类型
+                        if (!typeList.contains(CardType.Ritual.getId())) {
+                            typeList.add(CardType.Ritual.getId());
+                        }
+                        // 排除怪兽类型
+                        if (!excludTypeList.contains(CardType.Monster.getId())) {
+                            excludTypeList.add(CardType.Monster.getId());
+                        }
                     } else {
                         if (!typeList.contains(iconId)) {
                             typeList.add(iconId);
@@ -873,6 +886,7 @@ public class CardSearcher implements View.OnClickListener {
             });
         }
     }
+
     private void initAttributeButtons() {
         // 定义图标资源ID数组
         final Drawable[] attributeIcons = {
