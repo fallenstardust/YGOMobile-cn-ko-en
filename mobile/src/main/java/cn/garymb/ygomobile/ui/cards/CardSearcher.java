@@ -764,7 +764,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = typeButtons[index];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
             // 设置图标
-            button.setCompoundDrawablesWithIntrinsicBounds(cardTypeIcon[index], null, null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(null, cardTypeIcon[index], null, null);
 
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
             button.setText(mStringManager.getTypeString(typeIds[index]));
@@ -787,23 +787,56 @@ public class CardSearcher implements View.OnClickListener {
                 if (typeButtons[1].isSelected() || typeButtons[2].isSelected()) {// 魔法陷阱卡被选中时显示图标栏
                     ll_icon.setVisibility(View.VISIBLE);
                 } else {
-                    ll_icon.setVisibility(View.GONE);
+                    ll_icon.setVisibility(View.GONE);//不选择魔法和陷阱类型时因此图标栏
+                    // 取消选择所有可能被选中的图标，以免视觉上误导条件
+                    for (int j = 0; j < iconButtons.length; j++) {
+                        iconButtons[j].setSelected(false);
+                    }
+
+                    typeList.remove(CardType.Spell.getId());
+                    excludTypeList.remove(CardType.Spell.getId());
+
+                    typeList.remove(CardType.Trap.getId());
+                    excludTypeList.remove(CardType.Trap.getId());
+
                 }
-                if(!typeButtons[1].isSelected()) {// 魔法卡
+                if (!typeButtons[1].isSelected()) {// 魔法卡
                     findViewById(R.id.btn_icon_equip).setVisibility(View.GONE);
+                    findViewById(R.id.btn_icon_equip).setSelected(false);
+
                     findViewById(R.id.btn_icon_field).setVisibility(View.GONE);
+                    findViewById(R.id.btn_icon_field).setSelected(false);
+
                     findViewById(R.id.btn_icon_quickPlay).setVisibility(View.GONE);
+                    findViewById(R.id.btn_icon_quickPlay).setSelected(false);
+
                     findViewById(R.id.btn_icon_ritual).setVisibility(View.GONE);
+                    findViewById(R.id.btn_icon_ritual).setSelected(false);
+
+                    typeList.remove(typeIds[1]);
+                    excludTypeList.remove(typeIds[1]);
                 } else {
                     findViewById(R.id.btn_icon_equip).setVisibility(View.VISIBLE);
                     findViewById(R.id.btn_icon_field).setVisibility(View.VISIBLE);
                     findViewById(R.id.btn_icon_quickPlay).setVisibility(View.VISIBLE);
                     findViewById(R.id.btn_icon_ritual).setVisibility(View.VISIBLE);
+                    if (!typeList.contains(typeIds[1])) {
+                        typeList.add(typeIds[1]);
+                    }
+                    excludTypeList.remove(typeIds[1]);
                 }
-                if(!typeButtons[2].isSelected()) {// 陷阱卡
+                if (!typeButtons[2].isSelected()) {// 陷阱卡
                     findViewById(R.id.btn_icon_counter).setVisibility(View.GONE);
+                    findViewById(R.id.btn_icon_counter).setSelected(false);
+
+                    typeList.remove(typeIds[2]);
+                    excludTypeList.remove(typeIds[2]);
                 } else {
                     findViewById(R.id.btn_icon_counter).setVisibility(View.VISIBLE);
+                    if (!typeList.contains(typeIds[2])) {
+                        typeList.add(typeIds[2]);
+                    }
+                    excludTypeList.remove(typeIds[2]);
                 }
                 if (!typeButtons[0].isSelected() && !typeButtons[1].isSelected() && !typeButtons[2].isSelected()) {// 全没选中时显示全部
                     layout_monster.setVisibility(View.VISIBLE);
@@ -814,7 +847,7 @@ public class CardSearcher implements View.OnClickListener {
                     findViewById(R.id.btn_icon_ritual).setVisibility(View.VISIBLE);
                     findViewById(R.id.btn_icon_counter).setVisibility(View.VISIBLE);
                 }
-
+                Log.d("CardSearcher", "[btn怪魔陷]包含种类:" + typeList + "\n排除种类:" + excludTypeList);
             });
         }
     }
@@ -828,7 +861,7 @@ public class CardSearcher implements View.OnClickListener {
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "field.png", 0, 0)),// 场地图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "counter.png", 0, 0)),// 反击图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "ritual.png", 0, 0)),// 仪式图标
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "??.png", 0, 0)),// 通常图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "normal.png", 0, 0)),// 通常图标
         };
 
         iconButtons = new Button[]{
@@ -872,69 +905,127 @@ public class CardSearcher implements View.OnClickListener {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
                     button.setTextColor(YGOUtil.c(R.color.gray));
-                    if (button == iconButtons[6]) {
-                        // 移除魔法和陷阱类型
-                        typeList.remove(CardType.Spell.getId());
-                        typeList.remove(CardType.Trap.getId());
-
-                        // 排除怪兽类型
-                        excludTypeList.remove(CardType.Monster.getId());
-                        // 将其他图标类型移出排除列表
-                        for (long id : iconIds) {
-                            if (id != CardType.Normal.getId() && !typeList.contains(id) && !excludTypeList.contains(id)) {
-                                excludTypeList.remove(id);
-                            }
-                        }
-                    } else if (button == iconButtons[5]) { // 仪式按钮，索引为5
-                        // 如果是仪式按钮被取消选择，也需要移除仪式类型并停止排除怪兽类型
-                        typeList.remove(CardType.Ritual.getId());
-                        excludTypeList.remove(CardType.Monster.getId());
-                    } else {
-                        typeList.remove(iconId);
-                        excludTypeList.remove(iconId);
-                    }
-                    typeList.remove(iconId);
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
                     button.setTextColor(YGOUtil.c(R.color.yellow));
-                    if (button == iconButtons[6]) { // 通常 索引为6 （和实际布局位置顺序无关）
-                        // 添加魔法和陷阱类型
+                }
+                // 速攻按钮的点击时
+                if (iconButtons[0].isSelected()) {
+                    if (!typeList.contains(iconIds[0])) {
+                        typeList.add(iconIds[0]);
+                    }
+                    excludTypeList.remove(iconIds[0]);
+                } else {
+                    typeList.remove(iconIds[0]);
+                }
+                // 永续按钮的点击时
+                if (iconButtons[1].isSelected()) {
+                    if (!typeList.contains(iconIds[1])) {
+                        typeList.add(iconIds[1]);
+                    }
+                    excludTypeList.remove(iconIds[1]);
+                } else {
+                    typeList.remove(iconIds[1]);
+                }
+                // 装备按钮的点击时
+                if (iconButtons[2].isSelected()) {
+                    if (!typeList.contains(iconIds[2])) {
+                        typeList.add(iconIds[2]);
+                    }
+                    excludTypeList.remove(iconIds[2]);
+                } else {
+                    typeList.remove(iconIds[2]);
+                }
+                // 场地按钮的点击时
+                if (iconButtons[3].isSelected()) {
+                    if (!typeList.contains(iconIds[3])) {
+                        typeList.add(iconIds[3]);
+                    }
+                    excludTypeList.remove(iconIds[3]);
+                } else {
+                    typeList.remove(iconIds[3]);
+                }
+                // 反击按钮的点击时
+                if (iconButtons[4].isSelected()) {
+                    if (!typeList.contains(iconIds[4])) {
+                        typeList.add(iconIds[4]);
+                    }
+                    excludTypeList.remove(iconIds[4]);
+                } else {
+                    typeList.remove(iconIds[4]);
+                }
+                // 仪式按钮的点击时
+                if (iconButtons[5].isSelected()) {
+                    // 如果是仪式按钮被选择，则只包括仪式魔法，则需要排除怪兽类型
+                    if (!typeList.contains(iconIds[5])) {
+                        typeList.add(iconIds[5]);
+                    }
+                    if (!excludTypeList.contains(CardType.Monster.getId())) {
+                        excludTypeList.add(CardType.Monster.getId());
+                    }
+                    excludTypeList.remove(iconIds[5]);
+                } else {
+                    // 如果是仪式按钮被取消选择，需要移除仪式类型并停止排除怪兽类型
+                    typeList.remove(iconIds[5]);
+                    excludTypeList.remove(CardType.Monster.getId());
+
+                }
+                // 通常魔陷按钮的点击时
+                if (iconButtons[6].isSelected()) {//通常按钮被取消选择的点击时
+                    // 排除其他类型，只留下纯魔法or陷阱的类型
+                    if (!excludTypeList.contains(iconIds[0]) && !iconButtons[0].isSelected()) {
+                        excludTypeList.add(iconIds[0]);
+                    }
+                    if (!excludTypeList.contains(iconIds[1]) && !iconButtons[1].isSelected()) {
+                        excludTypeList.add(iconIds[1]);
+                    }
+                    if (!excludTypeList.contains(iconIds[2]) && !iconButtons[2].isSelected()) {
+                        excludTypeList.add(iconIds[2]);
+                    }
+                    if (!excludTypeList.contains(iconIds[3]) && !iconButtons[3].isSelected()) {
+                        excludTypeList.add(iconIds[3]);
+                    }
+                    if (!excludTypeList.contains(iconIds[4]) && !iconButtons[4].isSelected()) {
+                        excludTypeList.add(iconIds[4]);
+                    }
+                    if (!excludTypeList.contains(iconIds[5]) && !iconButtons[5].isSelected()) {
+                        excludTypeList.add(iconIds[5]);
+                    }
+                    if (!excludTypeList.contains(CardType.Monster.getId()) && !typeButtons[0].isSelected()) {
+                        excludTypeList.add(CardType.Monster.getId());
+                    }
+                    // 考虑typeButton没有被点击筛选
+                    if (!typeButtons[1].isSelected() && !typeButtons[2].isSelected()) {
                         if (!typeList.contains(CardType.Spell.getId())) {
                             typeList.add(CardType.Spell.getId());
                         }
+                        excludTypeList.remove(CardType.Spell.getId());
                         if (!typeList.contains(CardType.Trap.getId())) {
                             typeList.add(CardType.Trap.getId());
                         }
-
-                        // 排除怪兽类型
-                        if (!excludTypeList.contains(CardType.Monster.getId())) {
-                            excludTypeList.add(CardType.Monster.getId());
-                        }
-
-                        // 将其他图标类型添加到排除列表中
-                        for (long id : iconIds) {
-                            if (id != CardType.Normal.getId() && !typeList.contains(id) && !excludTypeList.contains(id)) {
-                                excludTypeList.add(id);
-                            }
-                        }
-                    } else if (button == iconButtons[5]) {//仪式 索引为5
-                        // 添加仪式类型
-                        if (!typeList.contains(CardType.Ritual.getId())) {
-                            typeList.add(CardType.Ritual.getId());
-                        }
-                        // 排除怪兽类型
-                        if (!excludTypeList.contains(CardType.Monster.getId())) {
-                            excludTypeList.add(CardType.Monster.getId());
-                        }
-                    } else {
-                        if (!typeList.contains(iconId)) {
-                            typeList.add(iconId);
-                        }
-                        excludTypeList.remove(iconId);
-
+                        excludTypeList.remove(CardType.Trap.getId());
                     }
+                } else {
+                    if (!iconButtons[0].isSelected()) excludTypeList.remove(iconIds[0]);
+                    if (!iconButtons[1].isSelected()) excludTypeList.remove(iconIds[1]);
+                    if (!iconButtons[2].isSelected()) excludTypeList.remove(iconIds[2]);
+                    if (!iconButtons[3].isSelected()) excludTypeList.remove(iconIds[3]);
+                    if (!iconButtons[4].isSelected()) excludTypeList.remove(iconIds[4]);
+                    if (!iconButtons[5].isSelected()) excludTypeList.remove(iconIds[5]);
+                    excludTypeList.remove(CardType.Monster.getId());
+                    // 考虑typeButton没有被点击筛选
+                    if (!typeButtons[1].isSelected()) {
+                        typeList.remove(CardType.Spell.getId());
+                        excludTypeList.remove(CardType.Spell.getId());
+                    }
+                    if (!typeButtons[2].isSelected()) {
+                        typeList.remove(CardType.Trap.getId());
+                        excludTypeList.remove(CardType.Trap.getId());
+                    }
+
                 }
+                Log.d("CardSearcher", "[btn图标]包含种类:" + typeList + "\n排除种类:" + excludTypeList);
             });
         }
     }
