@@ -1215,9 +1215,8 @@ public class CardSearcher implements View.OnClickListener {
                     long selected = selecteds[i];
                     if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
-                    } else if (normalSpellTrap && spellTrapTypeList.contains(selected)) {
-                        types.add(selected);
-                    } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
+                    }
+                    if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
                         types.add(selected);
                     }
                 }
