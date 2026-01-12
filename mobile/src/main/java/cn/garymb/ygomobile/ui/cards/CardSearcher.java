@@ -77,6 +77,7 @@ public class CardSearcher implements View.OnClickListener {
     private LinearLayout ll_monster_type;
     private Button[] typeButtons;
     private List<Long> typeList;
+    private List<Long> spellTrapTypeList;
     // 排除怪兽类型按钮
     private LinearLayout ll_exclude_type;
     private Button[] exclude_typeButtons;
@@ -149,7 +150,6 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_type_link),// 连接
                 view.findViewById(R.id.btn_type_token)// 衍生物
         };
-        typeList = new ArrayList<>();
         exclude_typeButtons = new Button[]{
                 view.findViewById(R.id.btn_exclude_type_normal),
                 view.findViewById(R.id.btn_exclude_type_effect),
@@ -175,6 +175,7 @@ public class CardSearcher implements View.OnClickListener {
         pendulumScaleList = new ArrayList<>();
         categoryList = new ArrayList<>();
         setCodeList = new ArrayList<>();
+        spellTrapTypeList = new ArrayList<>();
         //TODO这些组件需要替换成多选界面
         setCodeSpinner = findViewById(R.id.sp_setcode);
         categorySpinner = findViewById(R.id.sp_category);
@@ -781,8 +782,14 @@ public class CardSearcher implements View.OnClickListener {
                 }
                 if (!typeButtons[0].isSelected()) {// 怪兽卡
                     layout_monster.setVisibility(View.GONE);
+
+                    typeList.remove(typeIds[0]);
                 } else {
                     layout_monster.setVisibility(View.VISIBLE);
+
+                    if (!typeList.contains(typeIds[0])) {
+                        typeList.add(typeIds[0]);
+                    }
                 }
                 if (typeButtons[1].isSelected() || typeButtons[2].isSelected()) {// 魔法陷阱卡被选中时显示图标栏
                     ll_icon.setVisibility(View.VISIBLE);
@@ -797,11 +804,7 @@ public class CardSearcher implements View.OnClickListener {
 
                     }
                     typeList.remove(CardType.Spell.getId());
-                    excludTypeList.remove(CardType.Spell.getId());
-
                     typeList.remove(CardType.Trap.getId());
-                    excludTypeList.remove(CardType.Trap.getId());
-
                 }
                 if (!typeButtons[1].isSelected()) {// 魔法卡
                     findViewById(R.id.btn_icon_equip).setVisibility(View.GONE);
@@ -821,7 +824,6 @@ public class CardSearcher implements View.OnClickListener {
                     findViewById(R.id.btn_icon_ritual).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     typeList.remove(typeIds[1]);
-                    excludTypeList.remove(typeIds[1]);
                 } else {
                     findViewById(R.id.btn_icon_equip).setVisibility(View.VISIBLE);
                     findViewById(R.id.btn_icon_field).setVisibility(View.VISIBLE);
@@ -830,7 +832,6 @@ public class CardSearcher implements View.OnClickListener {
                     if (!typeList.contains(typeIds[1])) {
                         typeList.add(typeIds[1]);
                     }
-                    excludTypeList.remove(typeIds[1]);
                 }
                 if (!typeButtons[2].isSelected()) {// 陷阱卡
                     findViewById(R.id.btn_icon_counter).setVisibility(View.GONE);
@@ -838,13 +839,11 @@ public class CardSearcher implements View.OnClickListener {
                     findViewById(R.id.btn_icon_counter).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     typeList.remove(typeIds[2]);
-                    excludTypeList.remove(typeIds[2]);
                 } else {
                     findViewById(R.id.btn_icon_counter).setVisibility(View.VISIBLE);
                     if (!typeList.contains(typeIds[2])) {
                         typeList.add(typeIds[2]);
                     }
-                    excludTypeList.remove(typeIds[2]);
                 }
                 if (!typeButtons[0].isSelected() && !typeButtons[1].isSelected() && !typeButtons[2].isSelected()) {// 全没选中时显示全部
                     layout_monster.setVisibility(View.VISIBLE);
@@ -918,121 +917,14 @@ public class CardSearcher implements View.OnClickListener {
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
                     button.setTextColor(YGOUtil.c(R.color.yellow));
                 }
-                // 速攻按钮的点击时
-                if (iconButtons[0].isSelected()) {
-                    if (!typeList.contains(iconIds[0])) {
-                        typeList.add(iconIds[0]);
-                    }
-                    excludTypeList.remove(iconIds[0]);
-                } else {
-                    typeList.remove(iconIds[0]);
-                }
-                // 永续按钮的点击时
-                if (iconButtons[1].isSelected()) {
-                    if (!typeList.contains(iconIds[1])) {
-                        typeList.add(iconIds[1]);
-                    }
-                    excludTypeList.remove(iconIds[1]);
-                } else {
-                    typeList.remove(iconIds[1]);
-                }
-                // 装备按钮的点击时
-                if (iconButtons[2].isSelected()) {
-                    if (!typeList.contains(iconIds[2])) {
-                        typeList.add(iconIds[2]);
-                    }
-                    excludTypeList.remove(iconIds[2]);
-                } else {
-                    typeList.remove(iconIds[2]);
-                }
-                // 场地按钮的点击时
-                if (iconButtons[3].isSelected()) {
-                    if (!typeList.contains(iconIds[3])) {
-                        typeList.add(iconIds[3]);
-                    }
-                    excludTypeList.remove(iconIds[3]);
-                } else {
-                    typeList.remove(iconIds[3]);
-                }
-                // 反击按钮的点击时
-                if (iconButtons[4].isSelected()) {
-                    if (!typeList.contains(iconIds[4])) {
-                        typeList.add(iconIds[4]);
-                    }
-                    excludTypeList.remove(iconIds[4]);
-                } else {
-                    typeList.remove(iconIds[4]);
-                }
-                // 仪式按钮的点击时
-                if (iconButtons[5].isSelected()) {
-                    // 如果是仪式按钮被选择，则只包括仪式魔法，则需要排除怪兽类型
-                    if (!typeList.contains(iconIds[5])) {
-                        typeList.add(iconIds[5]);
-                    }
-                    if (!excludTypeList.contains(CardType.Monster.getId())) {
-                        excludTypeList.add(CardType.Monster.getId());
-                    }
-                    excludTypeList.remove(iconIds[5]);
-                } else {
-                    // 如果是仪式按钮被取消选择，需要移除仪式类型并停止排除怪兽类型
-                    typeList.remove(iconIds[5]);
-                    excludTypeList.remove(CardType.Monster.getId());
-
-                }
-                // 通常魔陷按钮的点击时
-                if (iconButtons[6].isSelected()) {//通常按钮被取消选择的点击时
-                    // 排除其他类型，只留下纯魔法or陷阱的类型
-                    if (!excludTypeList.contains(iconIds[0]) && !iconButtons[0].isSelected()) {
-                        excludTypeList.add(iconIds[0]);
-                    }
-                    if (!excludTypeList.contains(iconIds[1]) && !iconButtons[1].isSelected()) {
-                        excludTypeList.add(iconIds[1]);
-                    }
-                    if (!excludTypeList.contains(iconIds[2]) && !iconButtons[2].isSelected()) {
-                        excludTypeList.add(iconIds[2]);
-                    }
-                    if (!excludTypeList.contains(iconIds[3]) && !iconButtons[3].isSelected()) {
-                        excludTypeList.add(iconIds[3]);
-                    }
-                    if (!excludTypeList.contains(iconIds[4]) && !iconButtons[4].isSelected()) {
-                        excludTypeList.add(iconIds[4]);
-                    }
-                    if (!excludTypeList.contains(iconIds[5]) && !iconButtons[5].isSelected()) {
-                        excludTypeList.add(iconIds[5]);
-                    }
-                    if (!excludTypeList.contains(CardType.Monster.getId()) && !typeButtons[0].isSelected()) {
-                        excludTypeList.add(CardType.Monster.getId());
-                    }
-                    // 考虑typeButton没有被点击筛选
-                    if (!typeButtons[1].isSelected() && !typeButtons[2].isSelected()) {
-                        if (!typeList.contains(CardType.Spell.getId())) {
-                            typeList.add(CardType.Spell.getId());
+                for (int j = 0; j < iconButtons.length; j++) {
+                    if (iconButtons[j].isSelected()) {
+                        if (!spellTrapTypeList.contains(iconIds[j])) {
+                            spellTrapTypeList.add(iconIds[j]);
                         }
-                        excludTypeList.remove(CardType.Spell.getId());
-
-                        if (!typeList.contains(CardType.Trap.getId())) {
-                            typeList.add(CardType.Trap.getId());
-                        }
-                        excludTypeList.remove(CardType.Trap.getId());
+                    } else {
+                        spellTrapTypeList.remove(iconIds[j]);
                     }
-                } else {
-                    if (!iconButtons[0].isSelected()) excludTypeList.remove(iconIds[0]);
-                    if (!iconButtons[1].isSelected()) excludTypeList.remove(iconIds[1]);
-                    if (!iconButtons[2].isSelected()) excludTypeList.remove(iconIds[2]);
-                    if (!iconButtons[3].isSelected()) excludTypeList.remove(iconIds[3]);
-                    if (!iconButtons[4].isSelected()) excludTypeList.remove(iconIds[4]);
-                    if (!iconButtons[5].isSelected()) excludTypeList.remove(iconIds[5]);
-                    excludTypeList.remove(CardType.Monster.getId());
-                    // 考虑typeButton没有被点击筛选
-                    if (!typeButtons[1].isSelected()) {
-                        typeList.remove(CardType.Spell.getId());
-                        excludTypeList.remove(CardType.Spell.getId());
-                    }
-                    if (!typeButtons[2].isSelected()) {
-                        typeList.remove(CardType.Trap.getId());
-                        excludTypeList.remove(CardType.Trap.getId());
-                    }
-
                 }
                 Log.d("CardSearcher", "[btn图标]包含种类:" + typeList + "\n排除种类:" + excludTypeList);
             });
@@ -1312,28 +1204,104 @@ public class CardSearcher implements View.OnClickListener {
                     .linkKey(lineKey)
                     .build();*/
 
-            //这是一个调用示例
-            CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                    .keyword(text(keyWord))
+            //全不选=全选
+            boolean noTypeSelect = !typeList.contains(CardType.Spell.getId()) && !typeList.contains(CardType.Trap.getId()) && !typeList.contains(CardType.Monster.getId());
+            int ot = getIntSelect(otSpinner);
+            int limitType = genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner);
+            String limitName = genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner);
+            String keyword = text(keyWord);
+            List<CardSearchInfo> searchInfos = new ArrayList<>();
+            //魔法
+            if (typeList.contains(CardType.Spell.getId()) || noTypeSelect) {
+                List<Long> types = new ArrayList<>();
+                List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Trap.getId()));
+                long[] selecteds = {
+                    CardType.Continuous.getId(),
+                    CardType.QuickPlay.getId(),
+                    CardType.Equip.getId(),
+                    CardType.Field.getId(),
+                    CardType.Ritual.getId()
+                };
+                for (int i = 0; i < selecteds.length; i++) {
+                    long selected = selecteds[i];
+                    if (spellTrapTypeList.contains(CardType.Normal.getId()) && !spellTrapTypeList.contains(selected)) {
+                        excludTypes.add(selected);
+                    } else if (!spellTrapTypeList.contains(CardType.Normal.getId()) && spellTrapTypeList.contains(selected)) {
+                        types.add(selected);
+                    }
+                }
+                CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                    .keyword(keyword)
+                    .ot(ot)
+                    .limitType(limitType)
+                    .limitName(limitName)
+                    .setcode(setCodeList)
+                    .category(categoryList)
+                    .types(types)
+                    .except_types(excludTypes)
+                    .type_logic(false)
+                    .setcode_logic(false)
+                    .build();
+                searchInfos.add(searchInfo);
+            }
+            //陷阱
+            if (typeList.contains(CardType.Trap.getId()) || noTypeSelect) {
+                List<Long> types = new ArrayList<>();
+                List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Spell.getId()));
+                long[] selecteds = {
+                    CardType.Continuous.getId(),
+                    CardType.Counter.getId()
+                };
+                for (int i = 0; i < selecteds.length; i++) {
+                    long selected = selecteds[i];
+                    if (spellTrapTypeList.contains(CardType.Normal.getId()) && !spellTrapTypeList.contains(selected)) {
+                        excludTypes.add(selected);
+                    } else if (!spellTrapTypeList.contains(CardType.Normal.getId()) && spellTrapTypeList.contains(selected)) {
+                        types.add(selected);
+                    }
+                }
+                CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                    .keyword(keyword)
+                    .ot(ot)
+                    .limitType(limitType)
+                    .limitName(limitName)
+                    .setcode(setCodeList)
+                    .category(categoryList)
+                    .types(types)
+                    .except_types(excludTypes)
+                    .type_logic(false)
+                    .setcode_logic(false)
+                    .build();
+                searchInfos.add(searchInfo);
+            }
+            //怪兽
+            if (typeList.contains(CardType.Monster.getId()) || noTypeSelect) {
+                List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Spell.getId(), CardType.Trap.getId()));
+                excludTypes.addAll(excludTypeList);
+                CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                    .keyword(keyword)
                     .attribute(attributeList)
                     .level(levelList)
                     .race(raceList)
                     .atk(text(atkText))
                     .def(text(defText))
                     .pscale(pendulumScaleList)
-                    .limitType(genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner))
-                    .limitName(genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner))
+                    .limitType(limitType)
+                    .limitName(limitName)
                     .setcode(setCodeList)
                     .category(categoryList)
-                    .ot(getIntSelect(otSpinner))
+                    .ot(ot)
                     .types(typeList)
-                    .except_types(excludTypeList)
+                    .except_types(excludTypes)
                     .linkKey(lineKey)
                     .type_logic(false)//or逻辑
                     .setcode_logic(false)
                     .build();
-            Log.i(TAG, searchInfo.toString());
-            mICardSearcher.search(searchInfo);
+                searchInfos.add(searchInfo);
+            }
+            
+            Log.i(TAG, searchInfos.toString());
+            mICardSearcher.search(searchInfos);
         }
     }
 

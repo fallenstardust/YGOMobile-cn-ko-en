@@ -285,7 +285,6 @@ public class CardSearchInfo implements ICardFilter {
         if (keyWord != null && !keyWord.isValid(card)) {
             return false;
         }
-        Log.i("CardSearchInfo",attribute + "isValid: " + card.Attribute);
         // 检查属性过滤条件
         if (!attribute.isEmpty() && !attribute.contains(card.Attribute)) {
             return false;
