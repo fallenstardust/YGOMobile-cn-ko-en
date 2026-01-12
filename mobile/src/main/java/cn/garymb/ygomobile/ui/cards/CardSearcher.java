@@ -73,11 +73,14 @@ public class CardSearcher implements View.OnClickListener {
     private Button[] raceButtons;
     private List<Long> raceList;
     private Button[] iconButtons;
-    // 怪兽类型按钮
+    // 卡片类型按钮
     private LinearLayout ll_monster_type;
     private Button[] typeButtons;
     private List<Long> typeList;
     private List<Long> spellTrapTypeList;
+    //怪兽类型按钮
+    private Button[] monsterTypeButtons;
+    private long[] monsterTypeIds;
     // 排除怪兽类型按钮
     private LinearLayout ll_exclude_type;
     private Button[] exclude_typeButtons;
@@ -133,23 +136,7 @@ public class CardSearcher implements View.OnClickListener {
         //魔法陷阱icon多选布局
         ll_icon = findViewById(R.id.ll_icon);
         // 初始化类型按钮
-        typeButtons = new Button[]{
-                view.findViewById(R.id.btn_type_normal),// 通常
-                view.findViewById(R.id.btn_type_effect),// 效果
-                view.findViewById(R.id.btn_type_fusion),// 融合
-                view.findViewById(R.id.btn_type_ritual),// 仪式
-                view.findViewById(R.id.btn_type_spirit),// 灵魂
-                view.findViewById(R.id.btn_type_union),// 同盟
-                view.findViewById(R.id.btn_type_tuner),// 调整
-                view.findViewById(R.id.btn_type_synchro),// 同调
-                view.findViewById(R.id.btn_type_flip),// 反转
-                view.findViewById(R.id.btn_type_toon),// 卡通
-                view.findViewById(R.id.btn_type_xyz),// 超量
-                view.findViewById(R.id.btn_type_pendulum),// 灵摆
-                view.findViewById(R.id.btn_type_specialSummon),// 特殊召唤
-                view.findViewById(R.id.btn_type_link),// 连接
-                view.findViewById(R.id.btn_type_token)// 衍生物
-        };
+
         exclude_typeButtons = new Button[]{
                 view.findViewById(R.id.btn_exclude_type_normal),
                 view.findViewById(R.id.btn_exclude_type_effect),
@@ -364,6 +351,8 @@ public class CardSearcher implements View.OnClickListener {
         initAttributeButtons();
         initRaceButtons();
         initIconButtons();
+        initMonsterTypeButton();
+        initExcludeTypeButton();
         initLevelButtons();
         initPendulumScaleButtons();
         initOtSpinners(otSpinner);
@@ -607,6 +596,116 @@ public class CardSearcher implements View.OnClickListener {
         initGenesysLimitListSpinners(spinner);
     }
 
+    private void initMonsterTypeButton() {
+        /*final Drawable[] TypeIcon = new Drawable[]{
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/type_normal.png", 0, 0)),// 0
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/type_effect.png", 0, 0)),// 1
+        };*/
+        monsterTypeButtons = new Button[]{
+                view.findViewById(R.id.btn_type_normal),// 通常
+                view.findViewById(R.id.btn_type_effect),// 效果
+                view.findViewById(R.id.btn_type_fusion),// 融合
+                view.findViewById(R.id.btn_type_ritual),// 仪式
+                view.findViewById(R.id.btn_type_spirit),// 灵魂
+                view.findViewById(R.id.btn_type_union),// 同盟
+                view.findViewById(R.id.btn_type_gemini),// 二重
+                view.findViewById(R.id.btn_type_tuner),// 调整
+                view.findViewById(R.id.btn_type_synchro),// 同调
+                view.findViewById(R.id.btn_type_flip),// 反转
+                view.findViewById(R.id.btn_type_toon),// 卡通
+                view.findViewById(R.id.btn_type_xyz),// 超量
+                view.findViewById(R.id.btn_type_pendulum),// 灵摆
+                view.findViewById(R.id.btn_type_specialSummon),// 特殊召唤
+                view.findViewById(R.id.btn_type_link),// 连接
+                view.findViewById(R.id.btn_type_token)// 衍生物
+        };
+        monsterTypeIds = new long[]{
+                CardType.Normal.getId(),
+                CardType.Effect.getId(),
+                CardType.Fusion.getId(),
+                CardType.Ritual.getId(),
+                CardType.Spirit.getId(),
+                CardType.Union.getId(),
+                CardType.Gemini.getId(),
+                CardType.Tuner.getId(),
+                CardType.Synchro.getId(),
+                CardType.Flip.getId(),
+                CardType.Toon.getId(),
+                CardType.Xyz.getId(),
+                CardType.Pendulum.getId(),
+                CardType.Sp_Summon.getId(),
+                CardType.Link.getId(),
+                CardType.Token.getId()
+        };
+        for (int i = 0; i < monsterTypeButtons.length; i++) {
+            final int index = i;
+            //设置按钮样式
+            Button button = monsterTypeButtons[index];
+            // 设置图标
+            //button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
+            button.setOnClickListener(v -> {
+                if (typeList == null) {
+                    typeList = new ArrayList<>();
+                }
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    typeList.remove(monsterTypeIds[index]);
+                } else {//未选中时的逻辑
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    typeList.add(monsterTypeIds[index]);
+                }
+            });
+        }
+    }
+
+    private void initExcludeTypeButton() {
+        /*final Drawable[] TypeIcon = new Drawable[]{
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/type_normal.png", 0, 0)),// 0
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/type_effect.png", 0, 0)),// 1
+        };*/
+        exclude_typeButtons = new Button[]{
+                view.findViewById(R.id.btn_exclude_type_normal),// 通常
+                view.findViewById(R.id.btn_exclude_type_effect),// 效果
+                view.findViewById(R.id.btn_exclude_type_fusion),// 融合
+                view.findViewById(R.id.btn_exclude_type_ritual),// 仪式
+                view.findViewById(R.id.btn_exclude_type_spirit),// 灵魂
+                view.findViewById(R.id.btn_exclude_type_union),// 同盟
+                view.findViewById(R.id.btn_exclude_type_gemini),// 二重
+                view.findViewById(R.id.btn_exclude_type_tuner),// 调整
+                view.findViewById(R.id.btn_exclude_type_synchro),// 同调
+                view.findViewById(R.id.btn_exclude_type_flip),// 反转
+                view.findViewById(R.id.btn_exclude_type_toon),// 卡通
+                view.findViewById(R.id.btn_exclude_type_xyz),// 超量
+                view.findViewById(R.id.btn_exclude_type_pendulum),// 灵摆
+                view.findViewById(R.id.btn_exclude_type_specialSummon),// 特殊召唤
+                view.findViewById(R.id.btn_exclude_type_link),// 连接
+                view.findViewById(R.id.btn_exclude_type_token)// 衍生物
+        };
+        for (int i = 0; i < exclude_typeButtons.length; i++) {
+            final int index = i;
+            //设置按钮样式
+            Button button = exclude_typeButtons[index];
+            // 设置图标
+            //button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
+            button.setOnClickListener(v -> {
+                if (excludTypeList == null) {
+                    excludTypeList = new ArrayList<>();
+                }
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    excludTypeList.remove(monsterTypeIds[index]);
+                } else {//未选中时的逻辑
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    excludTypeList.add(monsterTypeIds[index]);
+                }
+            });
+        }
+    }
+
     private void initPendulumScaleButtons() {
         final Drawable[] PScaleIcon = new Drawable[]{
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/lscale_0.png", 0, 0)),// 0
@@ -646,7 +745,7 @@ public class CardSearcher implements View.OnClickListener {
             ImageButton button = pendulumScaleButtons[index];
             // 设置图标
             button.setImageDrawable(PScaleIcon[index]);
-            pendulumScaleButtons[i].setOnClickListener(v -> {
+            button.setOnClickListener(v -> {
                 if (pendulumScaleList == null) {
                     pendulumScaleList = new ArrayList<>();
                 }
@@ -705,7 +804,7 @@ public class CardSearcher implements View.OnClickListener {
             ImageButton button = levelButtons[index];
             // 设置图标
             button.setImageDrawable(numberIcon[index]);
-            levelButtons[i].setOnClickListener(v -> {
+            button.setOnClickListener(v -> {
                 if (levelList == null) {
                     levelList = new ArrayList<>();
                 }
