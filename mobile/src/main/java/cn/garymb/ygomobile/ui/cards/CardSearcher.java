@@ -1213,13 +1213,13 @@ public class CardSearcher implements View.OnClickListener {
                 };
                 for (int i = 0; i < selecteds.length; i++) {
                     long selected = selecteds[i];
-                    if (spellTrapTypeList.contains(selected)) {
-                        types.add(selected);
-                    } else if (normalSpellTrap) {
+                    if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
+                    } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
+                        types.add(selected);
                     }
                 }
-                if (spellTrapTypeList.isEmpty() || !types.isEmpty() || excludTypes.size() > 2) {
+                if (spellTrapTypeList.isEmpty() || (!types.isEmpty() || excludTypes.size() > 2)) {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
                         .attribute(attributeList)
@@ -1250,14 +1250,13 @@ public class CardSearcher implements View.OnClickListener {
                 };
                 for (int i = 0; i < selecteds.length; i++) {
                     long selected = selecteds[i];
-                    
-                    if (spellTrapTypeList.contains(selected)) {
-                        types.add(selected);
-                    } else if (normalSpellTrap) {
+                    if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
+                    } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
+                        types.add(selected);
                     }
                 }
-                if (spellTrapTypeList.isEmpty() || !types.isEmpty() || excludTypes.size() > 2) {
+                if (spellTrapTypeList.isEmpty() || (!types.isEmpty() || excludTypes.size() > 2)) {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
                         .attribute(attributeList)
