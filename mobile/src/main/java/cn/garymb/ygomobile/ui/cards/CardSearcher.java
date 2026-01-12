@@ -1215,11 +1215,13 @@ public class CardSearcher implements View.OnClickListener {
                     long selected = selecteds[i];
                     if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
+                    } else if (normalSpellTrap && spellTrapTypeList.contains(selected)) {
+                        types.add(selected);
                     } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
                         types.add(selected);
                     }
                 }
-                if (spellTrapTypeList.isEmpty() || (!types.isEmpty() || excludTypes.size() > 2)) {
+                if (spellTrapTypeList.isEmpty() || normalSpellTrap || !types.isEmpty()) {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
                         .attribute(attributeList)
@@ -1256,7 +1258,7 @@ public class CardSearcher implements View.OnClickListener {
                         types.add(selected);
                     }
                 }
-                if (spellTrapTypeList.isEmpty() || (!types.isEmpty() || excludTypes.size() > 2)) {
+                if (spellTrapTypeList.isEmpty() || normalSpellTrap || !types.isEmpty()) {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
                         .attribute(attributeList)
