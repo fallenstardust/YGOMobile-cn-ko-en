@@ -787,12 +787,15 @@ public class CardSearcher implements View.OnClickListener {
                 if (typeButtons[1].isSelected() || typeButtons[2].isSelected()) {// 魔法陷阱卡被选中时显示图标栏
                     ll_icon.setVisibility(View.VISIBLE);
                 } else {
-                    ll_icon.setVisibility(View.GONE);//不选择魔法和陷阱类型时因此图标栏
+                    ll_icon.setVisibility(View.GONE);//不选择魔法和陷阱类型时隐藏图标栏
                     // 取消选择所有可能被选中的图标，以免视觉上误导条件
                     for (int j = 0; j < iconButtons.length; j++) {
-                        iconButtons[j].setSelected(false);
-                    }
+                        if(iconButtons[j].isSelected()) {
+                            iconButtons[j].setSelected(false);
+                            iconButtons[j].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                        }
 
+                    }
                     typeList.remove(CardType.Spell.getId());
                     excludTypeList.remove(CardType.Spell.getId());
 
@@ -803,15 +806,19 @@ public class CardSearcher implements View.OnClickListener {
                 if (!typeButtons[1].isSelected()) {// 魔法卡
                     findViewById(R.id.btn_icon_equip).setVisibility(View.GONE);
                     findViewById(R.id.btn_icon_equip).setSelected(false);
+                    findViewById(R.id.btn_icon_equip).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     findViewById(R.id.btn_icon_field).setVisibility(View.GONE);
                     findViewById(R.id.btn_icon_field).setSelected(false);
+                    findViewById(R.id.btn_icon_field).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     findViewById(R.id.btn_icon_quickPlay).setVisibility(View.GONE);
                     findViewById(R.id.btn_icon_quickPlay).setSelected(false);
+                    findViewById(R.id.btn_icon_quickPlay).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     findViewById(R.id.btn_icon_ritual).setVisibility(View.GONE);
                     findViewById(R.id.btn_icon_ritual).setSelected(false);
+                    findViewById(R.id.btn_icon_ritual).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     typeList.remove(typeIds[1]);
                     excludTypeList.remove(typeIds[1]);
@@ -828,6 +835,7 @@ public class CardSearcher implements View.OnClickListener {
                 if (!typeButtons[2].isSelected()) {// 陷阱卡
                     findViewById(R.id.btn_icon_counter).setVisibility(View.GONE);
                     findViewById(R.id.btn_icon_counter).setSelected(false);
+                    findViewById(R.id.btn_icon_counter).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     typeList.remove(typeIds[2]);
                     excludTypeList.remove(typeIds[2]);
@@ -1001,6 +1009,7 @@ public class CardSearcher implements View.OnClickListener {
                             typeList.add(CardType.Spell.getId());
                         }
                         excludTypeList.remove(CardType.Spell.getId());
+
                         if (!typeList.contains(CardType.Trap.getId())) {
                             typeList.add(CardType.Trap.getId());
                         }
