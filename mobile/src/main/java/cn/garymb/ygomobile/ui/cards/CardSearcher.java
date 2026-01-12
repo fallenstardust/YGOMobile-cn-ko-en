@@ -1206,6 +1206,8 @@ public class CardSearcher implements View.OnClickListener {
 
             //全不选=全选
             boolean noTypeSelect = !typeList.contains(CardType.Spell.getId()) && !typeList.contains(CardType.Trap.getId()) && !typeList.contains(CardType.Monster.getId());
+            boolean normalSpellTrap = spellTrapTypeList.contains(CardType.Normal.getId());
+
             int ot = getIntSelect(otSpinner);
             int limitType = genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner);
             String limitName = genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner);
@@ -1224,28 +1226,30 @@ public class CardSearcher implements View.OnClickListener {
                 };
                 for (int i = 0; i < selecteds.length; i++) {
                     long selected = selecteds[i];
-                    if (spellTrapTypeList.contains(CardType.Normal.getId()) && !spellTrapTypeList.contains(selected)) {
+                    if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
-                    } else if (!spellTrapTypeList.contains(CardType.Normal.getId()) && spellTrapTypeList.contains(selected)) {
+                    } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
                         types.add(selected);
                     }
                 }
-                CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                    .keyword(keyword)
-                    .ot(ot)
-                    .limitType(limitType)
-                    .limitName(limitName)
-                    .setcode(setCodeList)
-                    .category(categoryList)
-                    .types(types)
-                    .except_types(excludTypes)
-                    .type_logic(false)
-                    .setcode_logic(false)
-                    .build();
-                searchInfos.add(searchInfo);
+                if ((!spellTrapTypeList.isEmpty() && (!types.isEmpty() || excludTypes.size() > 2)) || spellTrapTypeList.isEmpty()) {
+                    CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                        .keyword(keyword)
+                        .ot(ot)
+                        .limitType(limitType)
+                        .limitName(limitName)
+                        .setcode(setCodeList)
+                        .category(categoryList)
+                        .types(types)
+                        .except_types(excludTypes)
+                        .type_logic(false)
+                        .setcode_logic(false)
+                        .build();
+                    searchInfos.add(searchInfo);
+                }
             }
             //陷阱
-            if (typeList.contains(CardType.Trap.getId()) || noTypeSelect) {
+            if ((typeList.contains(CardType.Trap.getId()) || noTypeSelect)) {
                 List<Long> types = new ArrayList<>();
                 List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Spell.getId()));
                 long[] selecteds = {
@@ -1254,25 +1258,27 @@ public class CardSearcher implements View.OnClickListener {
                 };
                 for (int i = 0; i < selecteds.length; i++) {
                     long selected = selecteds[i];
-                    if (spellTrapTypeList.contains(CardType.Normal.getId()) && !spellTrapTypeList.contains(selected)) {
+                    if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
-                    } else if (!spellTrapTypeList.contains(CardType.Normal.getId()) && spellTrapTypeList.contains(selected)) {
+                    } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
                         types.add(selected);
                     }
                 }
-                CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                    .keyword(keyword)
-                    .ot(ot)
-                    .limitType(limitType)
-                    .limitName(limitName)
-                    .setcode(setCodeList)
-                    .category(categoryList)
-                    .types(types)
-                    .except_types(excludTypes)
-                    .type_logic(false)
-                    .setcode_logic(false)
-                    .build();
-                searchInfos.add(searchInfo);
+                if ((!spellTrapTypeList.isEmpty() && (!types.isEmpty() || excludTypes.size() > 2)) || spellTrapTypeList.isEmpty()) {
+                    CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                        .keyword(keyword)
+                        .ot(ot)
+                        .limitType(limitType)
+                        .limitName(limitName)
+                        .setcode(setCodeList)
+                        .category(categoryList)
+                        .types(types)
+                        .except_types(excludTypes)
+                        .type_logic(false)
+                        .setcode_logic(false)
+                        .build();
+                    searchInfos.add(searchInfo);
+                }
             }
             //怪兽
             if (typeList.contains(CardType.Monster.getId()) || noTypeSelect) {
