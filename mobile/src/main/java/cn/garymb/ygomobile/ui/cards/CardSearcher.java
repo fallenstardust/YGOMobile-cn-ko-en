@@ -799,6 +799,7 @@ public class CardSearcher implements View.OnClickListener {
                     for (int j = 0; j < iconButtons.length; j++) {
                         if(iconButtons[j].isSelected()) {
                             iconButtons[j].setSelected(false);
+                            iconButtons[j].setTextColor(YGOUtil.c(R.color.gray));
                             iconButtons[j].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
                         }
 
@@ -808,40 +809,47 @@ public class CardSearcher implements View.OnClickListener {
                     spellTrapTypeList = new ArrayList<>();
                 }
                 if (!typeButtons[1].isSelected()) {// 魔法卡
-                    findViewById(R.id.btn_icon_equip).setVisibility(View.GONE);
-                    findViewById(R.id.btn_icon_equip).setSelected(false);
-                    findViewById(R.id.btn_icon_equip).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-
-                    findViewById(R.id.btn_icon_field).setVisibility(View.GONE);
-                    findViewById(R.id.btn_icon_field).setSelected(false);
-                    findViewById(R.id.btn_icon_field).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-
-                    findViewById(R.id.btn_icon_quickPlay).setVisibility(View.GONE);
-                    findViewById(R.id.btn_icon_quickPlay).setSelected(false);
-                    findViewById(R.id.btn_icon_quickPlay).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-
-                    findViewById(R.id.btn_icon_ritual).setVisibility(View.GONE);
-                    findViewById(R.id.btn_icon_ritual).setSelected(false);
-                    findViewById(R.id.btn_icon_ritual).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    //速攻魔法0
+                    iconButtons[0].setVisibility(View.GONE);
+                    iconButtons[0].setSelected(false);
+                    iconButtons[0].setTextColor(YGOUtil.c(R.color.gray));
+                    iconButtons[0].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    //装备魔法2
+                    iconButtons[2].setVisibility(View.GONE);
+                    iconButtons[2].setSelected(false);
+                    iconButtons[2].setTextColor(YGOUtil.c(R.color.gray));
+                    iconButtons[2].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    //场地魔法3
+                    iconButtons[3].setVisibility(View.GONE);
+                    iconButtons[3].setSelected(false);
+                    iconButtons[3].setTextColor(YGOUtil.c(R.color.gray));
+                    iconButtons[3].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    //仪式魔法5
+                    iconButtons[5].setVisibility(View.GONE);
+                    iconButtons[5].setSelected(false);
+                    iconButtons[5].setTextColor(YGOUtil.c(R.color.gray));
+                    iconButtons[5].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     typeList.remove(typeIds[1]);
                 } else {
-                    findViewById(R.id.btn_icon_equip).setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_icon_field).setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_icon_quickPlay).setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_icon_ritual).setVisibility(View.VISIBLE);
+                    iconButtons[0].setVisibility(View.VISIBLE);// 速攻0
+                    iconButtons[2].setVisibility(View.VISIBLE);// 装备2
+                    iconButtons[3].setVisibility(View.VISIBLE);// 场地3
+                    iconButtons[5].setVisibility(View.VISIBLE);// 仪式5
                     if (!typeList.contains(typeIds[1])) {
                         typeList.add(typeIds[1]);
                     }
                 }
                 if (!typeButtons[2].isSelected()) {// 陷阱卡
-                    findViewById(R.id.btn_icon_counter).setVisibility(View.GONE);
-                    findViewById(R.id.btn_icon_counter).setSelected(false);
-                    findViewById(R.id.btn_icon_counter).setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    //反击陷阱4
+                    iconButtons[4].setVisibility(View.GONE);
+                    iconButtons[4].setSelected(false);
+                    iconButtons[4].setTextColor(YGOUtil.c(R.color.gray));
+                    iconButtons[4].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
 
                     typeList.remove(typeIds[2]);
                 } else {
-                    findViewById(R.id.btn_icon_counter).setVisibility(View.VISIBLE);
+                    iconButtons[4].setVisibility(View.VISIBLE);// 反击4
                     if (!typeList.contains(typeIds[2])) {
                         typeList.add(typeIds[2]);
                     }
@@ -849,11 +857,13 @@ public class CardSearcher implements View.OnClickListener {
                 if (!typeButtons[0].isSelected() && !typeButtons[1].isSelected() && !typeButtons[2].isSelected()) {// 全没选中时显示全部
                     layout_monster.setVisibility(View.VISIBLE);
                     ll_icon.setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_icon_equip).setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_icon_field).setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_icon_quickPlay).setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_icon_ritual).setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_icon_counter).setVisibility(View.VISIBLE);
+                    //魔法图标
+                    iconButtons[0].setVisibility(View.VISIBLE);// 速攻0
+                    iconButtons[2].setVisibility(View.VISIBLE);// 装备2
+                    iconButtons[3].setVisibility(View.VISIBLE);// 场地3
+                    iconButtons[5].setVisibility(View.VISIBLE);// 仪式5
+                    //陷阱图标
+                    iconButtons[4].setVisibility(View.VISIBLE);// 反击4
                 }
                 Log.d("CardSearcher", "[btn怪魔陷]包含种类:" + typeList + "\n排除种类:" + excludTypeList);
             });
@@ -873,13 +883,13 @@ public class CardSearcher implements View.OnClickListener {
         };
 
         iconButtons = new Button[]{
-                view.findViewById(R.id.btn_icon_quickPlay),// 速攻
-                view.findViewById(R.id.btn_icon_continuous),// 永续
-                view.findViewById(R.id.btn_icon_equip),// 装备
-                view.findViewById(R.id.btn_icon_field),// 场地
-                view.findViewById(R.id.btn_icon_counter),// 反击
-                view.findViewById(R.id.btn_icon_ritual),// 仪式
-                view.findViewById(R.id.btn_icon_normal),// 通常
+                view.findViewById(R.id.btn_icon_quickPlay),// 速攻0
+                view.findViewById(R.id.btn_icon_continuous),// 永续1
+                view.findViewById(R.id.btn_icon_equip),// 装备2
+                view.findViewById(R.id.btn_icon_field),// 场地3
+                view.findViewById(R.id.btn_icon_counter),// 反击4
+                view.findViewById(R.id.btn_icon_ritual),// 仪式5
+                view.findViewById(R.id.btn_icon_normal),// 通常6
         };
 
         // 定义属性对应的ID值，使用long类型
@@ -1181,30 +1191,6 @@ public class CardSearcher implements View.OnClickListener {
 
     private void search() {
         if (mICardSearcher != null) {
-            /*
-            CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                    .keyword(text(keyWord))
-                    .attribute(getIntSelect(attributeSpinner))
-                    .level(getIntSelect(levelSpinner))
-                    .race(getSelect(raceSpinner))
-                    .atk(text(atkText))
-                    .def(text(defText))
-                    .pscale(getIntSelect(pScale))
-                    .limitType(genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner))
-                    .limitName(genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner))
-                    .setcode(getSelect(setCodeSpinner))
-                    .category(getSelect(categorySpinner))
-                    .ot(getIntSelect(otSpinner))
-                    .types(new long[]{
-                            getSelect(typeSpinner),
-                            getSelect(typeMonsterSpinner),
-                            getSelect(typeSpellSpinner),
-                            getSelect(typeTrapSpinner),
-                            getSelect(typeMonsterSpinner2)
-                    })
-                    .linkKey(lineKey)
-                    .build();*/
-
             //全不选=全选
             boolean noTypeSelect = !typeList.contains(CardType.Spell.getId()) && !typeList.contains(CardType.Trap.getId()) && !typeList.contains(CardType.Monster.getId());
             boolean normalSpellTrap = spellTrapTypeList.contains(CardType.Normal.getId());
@@ -1233,7 +1219,7 @@ public class CardSearcher implements View.OnClickListener {
                         types.add(selected);
                     }
                 }
-                if ((!spellTrapTypeList.isEmpty() && (!types.isEmpty() || excludTypes.size() > 2)) || spellTrapTypeList.isEmpty()) {
+                if (spellTrapTypeList.isEmpty() || (!types.isEmpty() || excludTypes.size() > 2)) {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
                         .attribute(attributeList)
@@ -1270,7 +1256,7 @@ public class CardSearcher implements View.OnClickListener {
                         types.add(selected);
                     }
                 }
-                if ((!spellTrapTypeList.isEmpty() && (!types.isEmpty() || excludTypes.size() > 2)) || spellTrapTypeList.isEmpty()) {
+                if (spellTrapTypeList.isEmpty() || (!types.isEmpty() || excludTypes.size() > 2)) {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
                         .attribute(attributeList)
