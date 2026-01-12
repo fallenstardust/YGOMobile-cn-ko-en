@@ -1235,6 +1235,11 @@ public class CardSearcher implements View.OnClickListener {
                 if ((!spellTrapTypeList.isEmpty() && (!types.isEmpty() || excludTypes.size() > 2)) || spellTrapTypeList.isEmpty()) {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
+                        .attribute(attributeList)
+                        .level(levelList)
+                        .race(raceList)
+                        .atk(text(atkText))
+                        .def(text(defText))
                         .ot(ot)
                         .limitType(limitType)
                         .limitName(limitName)
@@ -1249,7 +1254,7 @@ public class CardSearcher implements View.OnClickListener {
                 }
             }
             //陷阱
-            if ((typeList.contains(CardType.Trap.getId()) || noTypeSelect)) {
+            if (typeList.contains(CardType.Trap.getId()) || noTypeSelect) {
                 List<Long> types = new ArrayList<>();
                 List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Spell.getId()));
                 long[] selecteds = {
@@ -1267,6 +1272,11 @@ public class CardSearcher implements View.OnClickListener {
                 if ((!spellTrapTypeList.isEmpty() && (!types.isEmpty() || excludTypes.size() > 2)) || spellTrapTypeList.isEmpty()) {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
+                        .attribute(attributeList)
+                        .level(levelList)
+                        .race(raceList)
+                        .atk(text(atkText))
+                        .def(text(defText))
                         .ot(ot)
                         .limitType(limitType)
                         .limitName(limitName)
@@ -1281,7 +1291,7 @@ public class CardSearcher implements View.OnClickListener {
                 }
             }
             //怪兽
-            if (typeList.contains(CardType.Monster.getId()) || noTypeSelect) {
+            if (spellTrapTypeList.isEmpty()) {
                 List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Spell.getId(), CardType.Trap.getId()));
                 excludTypes.addAll(excludTypeList);
                 CardSearchInfo searchInfo = new CardSearchInfo.Builder()
