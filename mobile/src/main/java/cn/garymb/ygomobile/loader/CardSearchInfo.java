@@ -6,6 +6,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import ocgcore.data.Card;
 import ocgcore.enums.CardOt;
@@ -109,6 +110,14 @@ public class CardSearchInfo implements ICardFilter {
         private final CardSearchInfo searchInfo = new CardSearchInfo();
 
         public CardSearchInfo build() {
+            searchInfo.attribute = searchInfo.attribute != null ? searchInfo.attribute : new ArrayList<>();
+            searchInfo.level = searchInfo.level != null ? searchInfo.level : new ArrayList<>();
+            searchInfo.pscale = searchInfo.pscale != null ? searchInfo.pscale : new ArrayList<>();
+            searchInfo.race = searchInfo.race != null ? searchInfo.race : new ArrayList<>();
+            searchInfo.category = searchInfo.category != null ? searchInfo.category : new ArrayList<>();
+            searchInfo.types = searchInfo.types != null ? searchInfo.types : new ArrayList<>();
+            searchInfo.except_types = searchInfo.except_types != null ? searchInfo.except_types : new ArrayList<>();
+            searchInfo.setcode = searchInfo.setcode != null ? searchInfo.setcode : new ArrayList<>();
             return searchInfo;
         }
 
