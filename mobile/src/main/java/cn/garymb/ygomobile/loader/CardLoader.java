@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Arrays;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -139,12 +140,12 @@ public class CardLoader implements ICardSearcher {
         }
     }
 
-    private void loadData(CardSearchInfo searchInfo, List<Integer> inCards) {
+    private void loadData(List<CardSearchInfo> searchInfos, List<Integer> inCards) {
         if (!isOpen()) {
             return;
         }
         if (Constants.DEBUG)
-            LogUtil.i(TAG, "searchInfo=" + searchInfo);
+            LogUtil.i(TAG, "searchInfo=" + searchInfos);
         if (mCallBack != null) {
             mCallBack.onSearchStart();
         }
@@ -158,12 +159,12 @@ public class CardLoader implements ICardSearcher {
                 if (inCards != null && !inCards.contains(card.getCode())) {
                     continue;
                 }
-                if (searchInfo != null && card.Name.equals(searchInfo.getKeyWord().getValue())) {
+                if (searchInfos != null && card.Name.equals(searchInfos.get(0).getKeyWord().getValue())) {
                     cards.remove(i);
                     keywordtmp.add(card);
                     continue;//避免重复
                 }
-                if (searchInfo == null || searchInfo.isValid(card)) {
+                if (searchInfos == null || searchInfos.stream().anyMatch(searchInfo -> searchInfo.isValid(card))) {
                     list.add(card);
                 }
             }
@@ -213,9 +214,9 @@ public class CardLoader implements ICardSearcher {
     }
 
     @Override
-    public void search(CardSearchInfo searchInfo) {
-        String limitName = searchInfo.getLimitName();
-        int limit = searchInfo.getLimitType();
+    public void search(List<CardSearchInfo> searchInfos) {
+        String limitName = searchInfos.get(0).getLimitName();
+        int limit = searchInfos.get(0).getLimitType();
         LimitList limitList = null;
         List<Integer> inCards = null;
         if (!TextUtils.isEmpty(limitName)) {
@@ -247,6 +248,11 @@ public class CardLoader implements ICardSearcher {
         } else {
             setLimitList(null);
         }
-        loadData(searchInfo, inCards);
+        loadData(searchInfos, inCards);
+    }
+
+    @Override
+    public void search(CardSearchInfo searchInfo) {
+        search(new ArrayList<>(Arrays.asList(searchInfo)));
     }
 }
