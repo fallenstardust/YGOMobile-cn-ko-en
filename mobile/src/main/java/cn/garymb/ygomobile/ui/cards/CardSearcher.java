@@ -805,6 +805,7 @@ public class CardSearcher implements View.OnClickListener {
                     }
                     typeList.remove(CardType.Spell.getId());
                     typeList.remove(CardType.Trap.getId());
+                    spellTrapTypeList = new ArrayList<>();
                 }
                 if (!typeButtons[1].isSelected()) {// 魔法卡
                     findViewById(R.id.btn_icon_equip).setVisibility(View.GONE);
