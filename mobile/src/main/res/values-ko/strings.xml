@@ -134,15 +134,15 @@
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="reset">리셋</string>
-    <string name="label_race">종족</string>
+    <string name="label_race">종족:</string>
     <string name="label_ot">룰</string>
     <string name="label_limit">제한 종류</string>
     <string name="label_limitlist">리미트 레귤레이션</string>
-    <string name="label_type">카드 종류</string>
+    <string name="label_type">카드 종류:</string>
     <string name="label_set">카드군</string>
     <string name="label_set_No_Setcode">#카드 세트가 포함되지 않음</string>
-    <string name="label_level">레벨/랭크/링크</string>
-    <string name="label_attr">속성</string>
+    <string name="label_level">레벨/랭크/링크:</string>
+    <string name="label_attr">속성:</string>
     <string name="linkmarker">링크 마커▶</string>>
     <string name="label_category">카테고리</string>
     <string name="searching">카드 검색</string>
@@ -185,7 +185,7 @@
     <string name="quick_join">게임 입장</string>
     <string name="join_game">게임 입장</string>
     <string name="settings_game_sensor_refresh">인터페이스 새로 고침</string>
-    <string name="label_pendulum">펜듈럼 스케일</string>
+    <string name="label_pendulum">펜듈럼 스케일:</string>
     <string name="all">전부</string>
     <string name="refresh">새로 고침</string>
     <string name="select_deck">덱을 선택하세요</string>
@@ -407,4 +407,7 @@
     <string name="credit_limit">포인트 상한</string>
     <string name="switch_genesys_mode">기원제식 모드</string>
     <string name="switch_banlist_mode">일반금한 모드</string>
+    <string name="label_spelltrap_type">마법/함정:</string>
+    <string name="label_monsterType">몬스터 타입：</string>
+    <string name="label_excludeType">제외 타입:</string>
 </resources>

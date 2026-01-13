@@ -116,7 +116,7 @@
     <string name="hit_keyword1">Palabra clave</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
-    <string name="label_race">Raza</string>
+    <string name="label_race">Raza:</string>
     <string name="label_ot">Exclusivas</string>
     <string name="label_ot_OCG">OCG</string>
     <string name="label_ot_TCG">TCG</string>
@@ -126,11 +126,11 @@
     <string name="label_ot_All">Todo</string>
     <string name="label_limit">Límite</string>
     <string name="label_limitlist">Banlist</string>
-    <string name="label_type">Tipo de carta</string>
+    <string name="label_type">Tipo de carta:</string>
     <string name="label_set">Arquetipo</string>
     <string name="label_set_No_Setcode">" #Sin Card Set incluido"</string>
-    <string name="label_level">Nvl/Rng/Lnk</string>
-    <string name="label_attr">Atributo</string>
+    <string name="label_level">Nvl/Rng/Lnk:</string>
+    <string name="label_attr">Atributo:</string>
     <string name="label_category">Categoría</string>
     <string name="linkmarker">F.Enlace▶</string>>
     <string name="searching">Cargando</string>
@@ -184,7 +184,7 @@
     <string name="quick_join">Unirse a la sala</string>
     <string name="join_game">Entrar al juego</string>
     <string name="settings_game_sensor_refresh">Agitar para refrescar</string>
-    <string name="label_pendulum">Escala de péndulo</string>
+    <string name="label_pendulum">Escala de péndulo:</string>
     <string name="all">Todas las cartas</string>
     <string name="donation">Apóyanos</string>
     <string name="refresh">Actualizar</string>
@@ -388,6 +388,9 @@
     <string name="credit_limit">Límite de puntos</string>
     <string name="switch_genesys_mode">GENESYS</string>
     <string name="switch_banlist_mode">Clásico</string>
+    <string name="label_spelltrap_type">Mágica/Trampa:</string>
+    <string name="label_monsterType">Tipo de Monstruo:</string>
+    <string name="label_excludeType">Tipo de Excluido:</string>
 </resources>
 
 

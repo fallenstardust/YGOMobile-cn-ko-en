@@ -138,15 +138,15 @@
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="reset">Reset</string>
-    <string name="label_race">Race</string>
+    <string name="label_race">Race:</string>
     <string name="label_ot">Rule</string>
     <string name="label_limit">Limit Type</string>
     <string name="label_limitlist">Limit List</string>
-    <string name="label_type">Card Type</string>
+    <string name="label_type">Card Type:</string>
     <string name="label_set">Card Set</string>
     <string name="label_set_No_Setcode">#No Card Set included</string>
-    <string name="label_level">Lv/Rk/Lmk</string>
-    <string name="label_attr">Attribute</string>
+    <string name="label_level">Level/Rank/LinkArrows:</string>
+    <string name="label_attr">Attribute:</string>
     <string name="linkmarker">LinkArrows▶</string>>
     <string name="label_category">Category</string>
     <string name="searching">Search Cards</string>
@@ -189,7 +189,7 @@
     <string name="quick_join">join game</string>
     <string name="join_game">Join game</string>
     <string name="settings_game_sensor_refresh">Sensor Refresh Game</string>
-    <string name="label_pendulum">Pendulum scale</string>
+    <string name="label_pendulum">Pendulum scale:</string>
     <string name="all">All</string>
     <string name="refresh">Refresh</string>
     <string name="select_deck">Click here to select Deck</string>
@@ -419,4 +419,7 @@
     <string name="credit_limit">Point Limit</string>
     <string name="switch_genesys_mode">GENESYS Mode</string>
     <string name="switch_banlist_mode">BANLIST Mode</string>
+    <string name="label_spelltrap_type">Spell/Trap:</string>
+    <string name="label_monsterType">Monster Type:</string>
+    <string name="label_excludeType">Excluded Type:</string>
 </resources>

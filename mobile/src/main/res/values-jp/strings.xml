@@ -109,7 +109,7 @@
     <string name="hit_keyword1">キーワード</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
-    <string name="label_race">種族</string>
+    <string name="label_race">種族:</string>
     <string name="label_ot">専用</string>
     <string name="label_ot_OCG">OCG</string>
     <string name="label_ot_TCG">TCG</string>
@@ -119,11 +119,11 @@
     <string name="label_ot_All">全カード</string>
     <string name="label_limit">制限なし</string>
     <string name="label_limitlist">リミットレギュレーション</string>
-    <string name="label_type">カード種類</string>
+    <string name="label_type">カード種類:</string>
     <string name="label_set">テキスト</string>
     <string name="label_set_No_Setcode">カードセットを含まない</string>
-    <string name="label_level">レベル/标数</string>
-    <string name="label_attr">属性</string>
+    <string name="label_level">レベル/标数:</string>
+    <string name="label_attr">属性:</string>
     <string name="label_category">効果分類</string>
     <string name="linkmarker">リンクマーカー▶</string>>
     <string name="searching">ロード中</string>
@@ -178,7 +178,7 @@
     <string name="quick_join">部屋に入る</string>
     <string name="join_game">開始</string>
     <string name="settings_game_sensor_refresh">UIをリフレッシュする</string>
-    <string name="label_pendulum">ペンデュラムスケール</string>
+    <string name="label_pendulum">ペンデュラムスケール:</string>
     <string name="all">全カード</string>
     <string name="donation">寄付</string>
     <string name="refresh">リフレッシュ</string>
@@ -389,4 +389,7 @@
     <string name="credit_limit">ポイント上限</string>
     <string name="switch_genesys_mode">起源点数モード</string>
     <string name="switch_banlist_mode">禁限通常モード</string>
+    <string name="label_spelltrap_type">魔法/罠カード:</string>
+    <string name="label_monsterType">モンスタータイプ：</string>
+    <string name="label_excludeType">除外項目:</string>
 </resources>

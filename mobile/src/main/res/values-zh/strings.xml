@@ -112,7 +112,7 @@
     <string name="hit_keyword1">关键词</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
-    <string name="label_race">种族</string>
+    <string name="label_race">种族：</string>
     <string name="label_ot">专属</string>
     <string name="label_ot_OCG">OCG</string>
     <string name="label_ot_TCG">TCG</string>
@@ -124,12 +124,15 @@
     <string name="switch_genesys_mode">起源点数模式</string>
     <string name="switch_banlist_mode">禁限常规模式</string>
     <string name="label_limitlist">禁卡表</string>
-    <string name="label_type">卡片类型</string>
+    <string name="label_type">卡片类型：</string>
+    <string name="label_monsterType">怪兽类型：</string>
+    <string name="label_excludeType">排除类型：</string>
+    <string name="label_spelltrap_type">魔法/陷阱类型：</string>
     <string name="label_set">字段</string>
     <string name="label_set_No_Setcode">#无字段</string>
-    <string name="label_level">星/标数</string>
-    <string name="label_attr">属性</string>
-    <string name="label_category">效果分类</string>
+    <string name="label_level">等级/阶级/连接数：</string>
+    <string name="label_attr">属性：</string>
+    <string name="label_category">效果分类：</string>
     <string name="linkmarker">连接标记▶</string>>
     <string name="searching">读取中</string>
     <string name="card_faq">裁定查询</string>
@@ -184,7 +187,7 @@
     <string name="quick_join">加入房间</string>
     <string name="join_game">进入游戏</string>
     <string name="settings_game_sensor_refresh">摇一摇刷新界面</string>
-    <string name="label_pendulum">灵摆刻度</string>
+    <string name="label_pendulum">灵摆刻度：</string>
     <string name="all">全卡表</string>
     <string name="donation">支持我们</string>
     <string name="refresh">刷新</string>
