@@ -24,7 +24,6 @@ import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -1473,8 +1472,30 @@ public class CardSearcher implements View.OnClickListener {
 
     private void search() {
         if (mICardSearcher != null) {
-            //全不选=全选
-            boolean noTypeSelect = !typeList.contains(CardType.Spell.getId()) && !typeList.contains(CardType.Trap.getId()) && !typeList.contains(CardType.Monster.getId());
+            // 判断基本卡片类型选择状态
+            boolean hasBasicSpell = typeList.contains(CardType.Spell.getId());
+            boolean hasBasicTrap = typeList.contains(CardType.Trap.getId());
+            boolean hasBasicMonster = typeList.contains(CardType.Monster.getId());
+
+            // 判断是否有怪兽具体类型选择
+            boolean hasMonsterSpecificType = typeList.stream()
+                    .anyMatch(id -> id != CardType.Monster.getId() &&
+                            id != CardType.Spell.getId() &&
+                            id != CardType.Trap.getId() &&
+                            monsterTypeIds.length > 0 &&
+                            Arrays.stream(monsterTypeIds).anyMatch(mid -> mid == id));
+
+            // 判断是否有魔法陷阱具体类型选择
+            boolean hasSpellTrapSpecificType = !spellTrapTypeList.isEmpty();
+
+            // 只有当三个基本类型都没选时才算"全不选"
+            boolean noTypeSelect = !hasBasicSpell && !hasBasicTrap && !hasBasicMonster;
+
+            // 确定需要搜索哪些类型
+            boolean shouldSearchSpells = hasBasicSpell || (noTypeSelect && !hasMonsterSpecificType && hasSpellTrapSpecificType);
+            boolean shouldSearchTraps = hasBasicTrap || (noTypeSelect && !hasMonsterSpecificType && hasSpellTrapSpecificType);
+            boolean shouldSearchMonsters = hasBasicMonster || noTypeSelect && (hasMonsterSpecificType || !hasSpellTrapSpecificType);
+
             boolean normalSpellTrap = spellTrapTypeList.contains(CardType.Normal.getId());
 
             int ot = getIntSelect(otSpinner);
@@ -1482,57 +1503,18 @@ public class CardSearcher implements View.OnClickListener {
             String limitName = genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner);
             String keyword = text(keyWord);
             List<CardSearchInfo> searchInfos = new ArrayList<>();
-            //魔法
-            if (typeList.contains(CardType.Spell.getId()) || noTypeSelect) {
+            // 魔法
+            if (shouldSearchSpells) {
                 List<Long> types = new ArrayList<>();
                 List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Trap.getId()));
-                long[] selecteds = {
+                long[] spellSelecteds = {
                         CardType.Continuous.getId(),
                         CardType.QuickPlay.getId(),
                         CardType.Equip.getId(),
                         CardType.Field.getId(),
                         CardType.Ritual.getId()
                 };
-                for (int i = 0; i < selecteds.length; i++) {
-                    long selected = selecteds[i];
-                    if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
-                        excludTypes.add(selected);
-                    }
-                    if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
-                        types.add(selected);
-                    }
-                }
-                if (spellTrapTypeList.isEmpty() || normalSpellTrap || !types.isEmpty()) {
-                    CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                            .keyword(keyword)
-                            .attribute(attributeList)
-                            .level(levelList)
-                            .race(raceList)
-                            .atk(text(atkText))
-                            .def(text(defText))
-                            .ot(ot)
-                            .limitType(limitType)
-                            .limitName(limitName)
-                            .setcode(setCodeList)
-                            .setcode_logic(setcode_isAnd)// 字段的and or逻辑
-                            .category(categoryList)
-                            .types(types)
-                            .except_types(excludTypes)
-                            .type_logic(false)
-                            .build();
-                    searchInfos.add(searchInfo);
-                }
-            }
-            //陷阱
-            if (typeList.contains(CardType.Trap.getId()) || noTypeSelect) {
-                List<Long> types = new ArrayList<>();
-                List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Spell.getId()));
-                long[] selecteds = {
-                    CardType.Continuous.getId(),
-                    CardType.Counter.getId()
-                };
-                for (int i = 0; i < selecteds.length; i++) {
-                    long selected = selecteds[i];
+                for (long selected : spellSelecteds) {
                     if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
                     } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
@@ -1543,15 +1525,15 @@ public class CardSearcher implements View.OnClickListener {
                     CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                             .keyword(keyword)
                             .attribute(attributeList)
-                            .level(levelList)
-                            .race(raceList)
-                            .atk(text(atkText))
-                            .def(text(defText))
+                            .level(levelList) // 注意：魔法卡实际上不使用等级，也没有魔法怪兽，可以不传
+                            .race(raceList)   // 同上，可以传空list
+                            .atk(text(atkText))// 同上，可以传空list
+                            .def(text(defText))// 同上，可以传空list
                             .ot(ot)
                             .limitType(limitType)
                             .limitName(limitName)
                             .setcode(setCodeList)
-                            .setcode_logic(setcode_isAnd)// 字段的and or逻辑
+                            .setcode_logic(setcode_isAnd)
                             .category(categoryList)
                             .types(types)
                             .except_types(excludTypes)
@@ -1560,10 +1542,58 @@ public class CardSearcher implements View.OnClickListener {
                     searchInfos.add(searchInfo);
                 }
             }
-            //怪兽
-            if (spellTrapTypeList.isEmpty()) {
+            // 陷阱
+            if (shouldSearchTraps) {
+                List<Long> types = new ArrayList<>();
+                List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Spell.getId()));
+
+                long[] trapSelecteds = {
+                        CardType.Continuous.getId(),
+                        CardType.Counter.getId()
+                };
+
+                for (long selected : trapSelecteds) {
+                    if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
+                        excludTypes.add(selected);
+                    } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
+                        types.add(selected);
+                    }
+                }
+
+                if (spellTrapTypeList.isEmpty() || normalSpellTrap || !types.isEmpty()) {
+                    CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                            .keyword(keyword)
+                            .attribute(attributeList)
+                            .level(levelList) // 如果需要允许搜索到陷阱怪兽，可以允许传值等级
+                            .race(raceList)   // 同上，可以允许传值种族
+                            .atk(text(atkText))// 同上，可以允许传攻击力
+                            .def(text(defText))// 同上，可以允许传守备力
+                            .ot(ot)
+                            .limitType(limitType)
+                            .limitName(limitName)
+                            .setcode(setCodeList)
+                            .setcode_logic(setcode_isAnd)
+                            .category(categoryList)
+                            .types(types)
+                            .except_types(excludTypes)
+                            .type_logic(false)
+                            .build();
+                    searchInfos.add(searchInfo);
+                }
+            }
+            // 怪兽
+            if (shouldSearchMonsters) {
                 List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Spell.getId(), CardType.Trap.getId()));
                 excludTypes.addAll(excludeTypeList);
+
+                // 只包括真正的怪兽类型（排除基本的Spell/Trap/Monster类型）
+                List<Long> monsterTypes = new ArrayList<>();
+                for (Long typeId : typeList) {
+                    if (Arrays.stream(monsterTypeIds).anyMatch(id -> id == typeId)) {
+                        monsterTypes.add(typeId);
+                    }
+                }
+
                 CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                         .keyword(keyword)
                         .attribute(attributeList)
@@ -1575,12 +1605,33 @@ public class CardSearcher implements View.OnClickListener {
                         .limitType(limitType)
                         .limitName(limitName)
                         .setcode(setCodeList)
-                        .setcode_logic(setcode_isAnd)// 字段的and or逻辑
+                        .setcode_logic(setcode_isAnd)
                         .category(categoryList)
                         .ot(ot)
-                        .types(typeList)
-                        .type_logic(isAnd)// 怪兽种类的and or逻辑
+                        .types(monsterTypes)
+                        .type_logic(isAnd)
                         .except_types(excludTypes)
+                        .linkKey(lineKey)
+                        .build();
+                searchInfos.add(searchInfo);
+            }
+
+            // 如果没有任何搜索条件，执行通用搜索
+            if (searchInfos.isEmpty()) {
+                CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                        .keyword(keyword)
+                        .attribute(attributeList)
+                        .level(levelList)
+                        .race(raceList)
+                        .atk(text(atkText))
+                        .def(text(defText))
+                        .pscale(pendulumScaleList)
+                        .limitType(limitType)
+                        .limitName(limitName)
+                        .setcode(setCodeList)
+                        .setcode_logic(setcode_isAnd)
+                        .category(categoryList)
+                        .ot(ot)
                         .linkKey(lineKey)
                         .build();
                 searchInfos.add(searchInfo);
