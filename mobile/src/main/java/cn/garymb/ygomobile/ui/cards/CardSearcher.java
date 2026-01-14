@@ -72,7 +72,7 @@ public class CardSearcher implements View.OnClickListener {
     // 卡片类型按钮
     private GridLayout gl_cardType;
     private ImageView iv_hide_cardType;
-    private Button[] typeButtons;
+    private Button[] cardTypeButtons;
     // 魔陷图标
     private LinearLayout ll_icon;
     private GridLayout gl_icon;
@@ -89,19 +89,18 @@ public class CardSearcher implements View.OnClickListener {
     private GridLayout gl_race;
     private ImageView iv_hide_race;
     private List<Long> raceList;
-    private List<Long> typeList;
     //怪兽类型按钮
     private GridLayout gl_monsterType;
     private ImageView iv_hide_monsterType;
     private Button[] monsterTypeButtons;
     private long[] monsterTypeIds;
+    private List<Long> typeList;
     private boolean isAnd;
     // 排除怪兽类型按钮
     private GridLayout gl_exclude_type;
     private ImageView iv_hide_exclude_type;
     private Button[] exclude_typeButtons;
     private List<Long> excludeTypeList;
-
     // 等级\阶级\连接数
     private GridLayout gl_level_rank_link;
     private ImageView iv_hide_level_rank_link;
@@ -112,8 +111,10 @@ public class CardSearcher implements View.OnClickListener {
     private ImageView iv_hide_pendulum_scale;
     private ImageButton[] pendulumScaleButtons;
     private List<Integer> pendulumScaleList;
+    // 字段
     private final Spinner setCodeSpinner;
     List<Long> setCodeList;
+    // 效果分类
     private final Spinner categorySpinner;
     List<Long> categoryList;
     private final EditText atkText;
@@ -155,42 +156,43 @@ public class CardSearcher implements View.OnClickListener {
         ll_icon = findViewById(R.id.ll_icon);//需要隐藏时控制整个布局
         gl_icon = findViewById(R.id.gl_icon);
         iv_hide_spelltrap = findViewById(R.id.iv_hide_spelltrap);
-
+        spellTrapTypeList = new ArrayList<>();
         // 怪兽类型总布局-----------------------
         layout_monster = findViewById(R.id.layout_monster);
         // 属性宫格布局
-        gl_attr = findViewById(R.id.gl_attr);  // 修正此行
+        gl_attr = findViewById(R.id.gl_attr);
         iv_hide_attr = findViewById(R.id.iv_hide_attr);
+        attributeList = new ArrayList<>();
         // 种族宫格布局
         gl_race = findViewById(R.id.gl_race);
         iv_hide_race = findViewById(R.id.iv_hide_race);
+        raceList = new ArrayList<>();
         // 怪兽种类宫格布局
         gl_monsterType = findViewById(R.id.gl_monsterType);
         iv_hide_monsterType = findViewById(R.id.iv_hide_monsterType);
+        typeList = new ArrayList<>();
+        isAnd = false;
         // 排除种类宫格布局
         gl_exclude_type = findViewById(R.id.gl_excludeType);
         iv_hide_exclude_type = findViewById(R.id.iv_hide_excludeType);
+        excludeTypeList = new ArrayList<>();
         // 等级、阶级、连接数宫格布局
         gl_level_rank_link = findViewById(R.id.gl_level);
         iv_hide_level_rank_link = findViewById(R.id.iv_hide_level);
+        levelList = new ArrayList<>();
         // 等级、阶级、连接数宫格布局
         gl_pendulum_scale = findViewById(R.id.gl_pScale);
         iv_hide_pendulum_scale = findViewById(R.id.iv_hide_pScale);
-
-        levelList = new ArrayList<>();
-        attributeList = new ArrayList<>();
-        raceList = new ArrayList<>();
-        typeList = new ArrayList<>();
-        isAnd = false;
-        excludeTypeList = new ArrayList<>();
         pendulumScaleList = new ArrayList<>();
-        categoryList = new ArrayList<>();
-        setCodeList = new ArrayList<>();
-        spellTrapTypeList = new ArrayList<>();
-        //TODO这些组件需要替换成多选界面
-        setCodeSpinner = findViewById(R.id.sp_setcode);
-        categorySpinner = findViewById(R.id.sp_category);
 
+
+        //TODO这些组件需要替换成多选界面
+        // 字段
+        setCodeList = new ArrayList<>();
+        setCodeSpinner = findViewById(R.id.sp_setcode);
+        // 效果分类
+        categorySpinner = findViewById(R.id.sp_category);
+        categoryList = new ArrayList<>();
         //
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
@@ -645,7 +647,7 @@ public class CardSearcher implements View.OnClickListener {
                 new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width, 0, width, height)),// 2
                 new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 2, 0, width, height)),// 3
         };
-        typeButtons = new Button[]{
+        cardTypeButtons = new Button[]{
                 view.findViewById(R.id.btn_type_monster),
                 view.findViewById(R.id.btn_type_spell),
                 view.findViewById(R.id.btn_type_trap)
@@ -655,10 +657,10 @@ public class CardSearcher implements View.OnClickListener {
                 CardType.Spell.getId(),
                 CardType.Trap.getId()
         };
-        for (int i = 0; i < typeButtons.length; i++) {
+        for (int i = 0; i < cardTypeButtons.length; i++) {
             final int index = i;
             //设置按钮样式
-            Button button = typeButtons[index];
+            Button button = cardTypeButtons[index];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
             // 设置图标
             button.setCompoundDrawablesWithIntrinsicBounds(null, cardTypeIcon[index], null, null);
@@ -666,7 +668,7 @@ public class CardSearcher implements View.OnClickListener {
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
             button.setText(mStringManager.getTypeString(typeIds[index]));
 
-            typeButtons[i].setOnClickListener(v -> {
+            cardTypeButtons[i].setOnClickListener(v -> {
                 if (button.isSelected()) {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
@@ -676,7 +678,7 @@ public class CardSearcher implements View.OnClickListener {
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
                     button.setTextColor(YGOUtil.c(R.color.yellow));
                 }
-                if (!typeButtons[0].isSelected()) {// 怪兽卡
+                if (!cardTypeButtons[0].isSelected()) {// 怪兽卡
                     layout_monster.setVisibility(View.GONE);
 
                     typeList.remove(typeIds[0]);
@@ -687,7 +689,7 @@ public class CardSearcher implements View.OnClickListener {
                         typeList.add(typeIds[0]);
                     }
                 }
-                if (typeButtons[1].isSelected() || typeButtons[2].isSelected()) {// 魔法陷阱卡被选中时显示图标栏
+                if (cardTypeButtons[1].isSelected() || cardTypeButtons[2].isSelected()) {// 魔法陷阱卡被选中时显示图标栏
                     ll_icon.setVisibility(View.VISIBLE);
                 } else {
                     ll_icon.setVisibility(View.GONE);//不选择魔法和陷阱类型时隐藏图标栏
@@ -704,7 +706,7 @@ public class CardSearcher implements View.OnClickListener {
                     typeList.remove(typeIds[2]);
                     spellTrapTypeList = new ArrayList<>();
                 }
-                if (!typeButtons[1].isSelected()) {// 魔法卡
+                if (!cardTypeButtons[1].isSelected()) {// 魔法卡
                     //速攻魔法0
                     iconButtons[0].setVisibility(View.GONE);
                     iconButtons[0].setSelected(false);
@@ -736,7 +738,7 @@ public class CardSearcher implements View.OnClickListener {
                         typeList.add(typeIds[1]);
                     }
                 }
-                if (!typeButtons[2].isSelected()) {// 陷阱卡
+                if (!cardTypeButtons[2].isSelected()) {// 陷阱卡
                     //反击陷阱4
                     iconButtons[4].setVisibility(View.GONE);
                     iconButtons[4].setSelected(false);
@@ -750,7 +752,7 @@ public class CardSearcher implements View.OnClickListener {
                         typeList.add(typeIds[2]);
                     }
                 }
-                if (!typeButtons[0].isSelected() && !typeButtons[1].isSelected() && !typeButtons[2].isSelected()) {// 全没选中时显示全部
+                if (!cardTypeButtons[0].isSelected() && !cardTypeButtons[1].isSelected() && !cardTypeButtons[2].isSelected()) {// 全没选中时显示全部
                     layout_monster.setVisibility(View.VISIBLE);
                     ll_icon.setVisibility(View.VISIBLE);
                     //魔法图标
@@ -761,7 +763,7 @@ public class CardSearcher implements View.OnClickListener {
                     //陷阱图标
                     iconButtons[4].setVisibility(View.VISIBLE);// 反击4
                 }
-                Log.d("CardSearcher", "[btn怪魔陷]包含种类:" + typeList + "\n排除种类:" + excludeTypeList);
+                Log.d("CardSearcher", "[btn魔陷]包含种类:" + spellTrapTypeList);
             });
         }
         view.findViewById(R.id.ll_cardType).setOnClickListener(v -> {
@@ -775,10 +777,10 @@ public class CardSearcher implements View.OnClickListener {
             }
         });
         view.findViewById(R.id.btn_clear_card_type).setOnClickListener(v -> {
-            for (int i = 0; i < typeButtons.length; i++) {
-                typeButtons[i].setSelected(false);
-                typeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                typeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            for (int i = 0; i < cardTypeButtons.length; i++) {
+                cardTypeButtons[i].setSelected(false);
+                cardTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                cardTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
                 typeList.remove(typeIds[i]);
             }
         });
