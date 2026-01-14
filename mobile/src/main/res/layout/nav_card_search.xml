@@ -39,7 +39,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_arrow_right_24" />
+                        android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -92,7 +92,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_arrow_right_24" />
+                        android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -159,7 +159,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_arrow_right_24" />
+                        android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -192,7 +192,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -212,7 +211,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_arrow_right_24" />
+                        android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -224,8 +223,8 @@
 
                     <ImageButton
                         android:id="@+id/btn_clear_card_type"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
                         android:layout_gravity="center"
                         android:background="@drawable/button_radius_black_transparents"
                         android:scaleType="fitXY"
@@ -275,7 +274,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:src="@drawable/baseline_arrow_right_24" />
+                        android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -287,8 +286,8 @@
 
                     <ImageButton
                         android:id="@+id/btn_clear_spelltrap_type"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
                         android:layout_gravity="center"
                         android:background="@drawable/button_radius_black_transparents"
                         android:scaleType="fitXY"
@@ -364,7 +363,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:src="@drawable/baseline_arrow_right_24" />
+                            android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -376,8 +375,8 @@
 
                         <ImageButton
                             android:id="@+id/btn_clear_attr"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
                             android:layout_gravity="center"
                             android:background="@color/transparent"
                             android:scaleType="fitXY"
@@ -447,7 +446,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:src="@drawable/baseline_arrow_right_24" />
+                            android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -459,8 +458,8 @@
 
                         <ImageButton
                             android:id="@+id/btn_clear_race"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
                             android:layout_gravity="center"
                             android:background="@drawable/button_radius_black_transparents"
                             android:scaleType="fitXY"
@@ -629,7 +628,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
-                                android:src="@drawable/baseline_arrow_right_24" />
+                                android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -640,6 +639,7 @@
                                 android:textColor="#FFFFFF" />
 
                             <RadioGroup
+                                android:id="@+id/radio_group"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
@@ -647,6 +647,7 @@
                                 android:orientation="horizontal">
 
                                 <RadioButton
+                                    android:id="@+id/rb_and"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:buttonTint="#FFFFFF"
@@ -654,6 +655,7 @@
                                     android:textColor="#FFFFFF" />
 
                                 <RadioButton
+                                    android:id="@+id/rb_or"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:buttonTint="#FFFFFF"
@@ -664,8 +666,8 @@
 
                             <ImageButton
                                 android:id="@+id/btn_clear_monsterType"
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
+                                android:layout_width="15dp"
+                                android:layout_height="15dp"
                                 android:layout_gravity="center"
                                 android:background="@drawable/button_radius_black_transparents"
                                 android:scaleType="fitXY"
@@ -784,7 +786,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
-                                android:src="@drawable/baseline_arrow_right_24" />
+                                android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -912,7 +914,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
-                                android:src="@drawable/baseline_arrow_right_24" />
+                                android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -1011,7 +1013,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:src="@drawable/baseline_arrow_right_24" />
+                            android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
                             android:layout_width="wrap_content"

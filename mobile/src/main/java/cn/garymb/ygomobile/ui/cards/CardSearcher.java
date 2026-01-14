@@ -12,6 +12,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -23,6 +24,8 @@ import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView.OnEditorActionListener;
@@ -92,6 +95,7 @@ public class CardSearcher implements View.OnClickListener {
     private ImageView iv_hide_monsterType;
     private Button[] monsterTypeButtons;
     private long[] monsterTypeIds;
+    private boolean isAnd;
     // 排除怪兽类型按钮
     private GridLayout gl_exclude_type;
     private ImageView iv_hide_exclude_type;
@@ -177,6 +181,7 @@ public class CardSearcher implements View.OnClickListener {
         attributeList = new ArrayList<>();
         raceList = new ArrayList<>();
         typeList = new ArrayList<>();
+        isAnd = false;
         excludeTypeList = new ArrayList<>();
         pendulumScaleList = new ArrayList<>();
         categoryList = new ArrayList<>();
@@ -764,8 +769,9 @@ public class CardSearcher implements View.OnClickListener {
                 gl_cardType.setVisibility(View.GONE);
                 iv_hide_cardType.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
             } else {
+                gl_cardType.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_cardType.setVisibility(View.VISIBLE);
-                iv_hide_cardType.setImageResource(R.drawable.baseline_arrow_right_24);
+                iv_hide_cardType.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
         view.findViewById(R.id.btn_clear_card_type).setOnClickListener(v -> {
@@ -853,8 +859,9 @@ public class CardSearcher implements View.OnClickListener {
                 gl_icon.setVisibility(View.GONE);
                 iv_hide_spelltrap.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
             } else {
+                gl_icon.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_icon.setVisibility(View.VISIBLE);
-                iv_hide_spelltrap.setImageResource(R.drawable.baseline_arrow_right_24);
+                iv_hide_spelltrap.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
         view.findViewById(R.id.btn_clear_spelltrap_type).setOnClickListener(v -> {
@@ -935,8 +942,9 @@ public class CardSearcher implements View.OnClickListener {
                 gl_attr.setVisibility(View.GONE);
                 iv_hide_attr.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
             } else {
+                gl_attr.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_attr.setVisibility(View.VISIBLE);
-                iv_hide_attr.setImageResource(R.drawable.baseline_arrow_right_24);
+                iv_hide_attr.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
         view.findViewById(R.id.btn_clear_attr).setOnClickListener(v -> {
@@ -1074,8 +1082,9 @@ public class CardSearcher implements View.OnClickListener {
                 gl_race.setVisibility(View.GONE);
                 iv_hide_race.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
             } else {
+                gl_race.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_race.setVisibility(View.VISIBLE);
-                iv_hide_race.setImageResource(R.drawable.baseline_arrow_right_24);
+                iv_hide_race.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
         view.findViewById(R.id.btn_clear_race).setOnClickListener(v -> {
@@ -1150,13 +1159,22 @@ public class CardSearcher implements View.OnClickListener {
                 }
             });
         }
+        RadioGroup radioGroup = findViewById(R.id.radio_group);// 切换怪兽类型内部逻辑
+        radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rb_and) {
+                isAnd = true;
+            } else if (checkedId == R.id.rb_or) {
+                isAnd = false;
+            }
+        });
         view.findViewById(R.id.ll_monsterType).setOnClickListener(v -> {
             if (gl_monsterType.getVisibility() == View.VISIBLE) {
                 gl_monsterType.setVisibility(View.GONE);
                 iv_hide_monsterType.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
             } else {
+                gl_monsterType.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_monsterType.setVisibility(View.VISIBLE);
-                iv_hide_monsterType.setImageResource(R.drawable.baseline_arrow_right_24);
+                iv_hide_monsterType.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
         view.findViewById(R.id.btn_clear_monsterType).setOnClickListener(v -> {
@@ -1218,8 +1236,9 @@ public class CardSearcher implements View.OnClickListener {
                 gl_exclude_type.setVisibility(View.GONE);
                 iv_hide_exclude_type.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
             } else {
+                gl_exclude_type.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_exclude_type.setVisibility(View.VISIBLE);
-                iv_hide_exclude_type.setImageResource(R.drawable.baseline_arrow_right_24);
+                iv_hide_exclude_type.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
         view.findViewById(R.id.btn_clear_excludeType).setOnClickListener(v -> {
@@ -1295,8 +1314,9 @@ public class CardSearcher implements View.OnClickListener {
                 gl_level_rank_link.setVisibility(View.GONE);
                 iv_hide_level_rank_link.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
             } else {
+                gl_level_rank_link.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_level_rank_link.setVisibility(View.VISIBLE);
-                iv_hide_level_rank_link.setImageResource(R.drawable.baseline_arrow_right_24);
+                iv_hide_level_rank_link.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
         view.findViewById(R.id.btn_clear_level).setOnClickListener(v -> {
@@ -1368,8 +1388,9 @@ public class CardSearcher implements View.OnClickListener {
                 gl_pendulum_scale.setVisibility(View.GONE);
                 iv_hide_pendulum_scale.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
             } else {
+                gl_pendulum_scale.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_pendulum_scale.setVisibility(View.VISIBLE);
-                iv_hide_pendulum_scale.setImageResource(R.drawable.baseline_arrow_right_24);
+                iv_hide_pendulum_scale.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
         view.findViewById(R.id.btn_clear_pScale).setOnClickListener(v -> {
@@ -1551,7 +1572,7 @@ public class CardSearcher implements View.OnClickListener {
                     .types(typeList)
                     .except_types(excludTypes)
                     .linkKey(lineKey)
-                    .type_logic(false)//or逻辑
+                    .type_logic(isAnd)//怪兽种类的and or逻辑
                     .setcode_logic(false)
                     .build();
                 searchInfos.add(searchInfo);
