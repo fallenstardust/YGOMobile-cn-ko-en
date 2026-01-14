@@ -96,7 +96,7 @@ public class CardSearcher implements View.OnClickListener {
     private GridLayout gl_exclude_type;
     private ImageView iv_hide_exclude_type;
     private Button[] exclude_typeButtons;
-    private List<Long> excludTypeList;
+    private List<Long> excludeTypeList;
 
     // 等级\阶级\连接数
     private GridLayout gl_level_rank_link;
@@ -177,7 +177,7 @@ public class CardSearcher implements View.OnClickListener {
         attributeList = new ArrayList<>();
         raceList = new ArrayList<>();
         typeList = new ArrayList<>();
-        excludTypeList = new ArrayList<>();
+        excludeTypeList = new ArrayList<>();
         pendulumScaleList = new ArrayList<>();
         categoryList = new ArrayList<>();
         setCodeList = new ArrayList<>();
@@ -756,7 +756,7 @@ public class CardSearcher implements View.OnClickListener {
                     //陷阱图标
                     iconButtons[4].setVisibility(View.VISIBLE);// 反击4
                 }
-                Log.d("CardSearcher", "[btn怪魔陷]包含种类:" + typeList + "\n排除种类:" + excludTypeList);
+                Log.d("CardSearcher", "[btn怪魔陷]包含种类:" + typeList + "\n排除种类:" + excludeTypeList);
             });
         }
         view.findViewById(R.id.ll_cardType).setOnClickListener(v -> {
@@ -768,7 +768,14 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_cardType.setImageResource(R.drawable.baseline_arrow_right_24);
             }
         });
-        view.findViewById(R.id.btn_clear_card_type).setOnClickListener(v -> { });
+        view.findViewById(R.id.btn_clear_card_type).setOnClickListener(v -> {
+            for (int i = 0; i < typeButtons.length; i++) {
+                typeButtons[i].setSelected(false);
+                typeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                typeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+                typeList.remove(typeIds[i]);
+            }
+        });
     }
 
     private void initIconButtons() {
@@ -838,7 +845,7 @@ public class CardSearcher implements View.OnClickListener {
                         spellTrapTypeList.remove(iconIds[j]);
                     }
                 }
-                Log.d("CardSearcher", "[btn图标]包含种类:" + typeList + "\n排除种类:" + excludTypeList);
+                Log.d("CardSearcher", "[btn图标]包含种类:" + typeList + "\n排除种类:" + excludeTypeList);
             });
         }
         view.findViewById(R.id.ll_icon).setOnClickListener(v -> {
@@ -850,7 +857,14 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_spelltrap.setImageResource(R.drawable.baseline_arrow_right_24);
             }
         });
-        view.findViewById(R.id.btn_clear_spelltrap_type).setOnClickListener(v -> { });
+        view.findViewById(R.id.btn_clear_spelltrap_type).setOnClickListener(v -> {
+            for (int i = 0; i < iconButtons.length; i++) {
+                iconButtons[i].setSelected(false);
+                iconButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                iconButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+                spellTrapTypeList.remove(iconIds[i]);
+            }
+        });
     }
 
     private void initAttributeButtons() {
@@ -925,7 +939,14 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_attr.setImageResource(R.drawable.baseline_arrow_right_24);
             }
         });
-        view.findViewById(R.id.btn_clear_attr).setOnClickListener(v -> { });
+        view.findViewById(R.id.btn_clear_attr).setOnClickListener(v -> {
+            for (int i = 0; i < attributeButtons.length; i++) {
+                attributeButtons[i].setSelected(false);
+                attributeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                attributeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+                attributeList.remove(attributeIds[i]);
+            }
+        });
     }
 
     private void initRaceButtons() {
@@ -1057,7 +1078,14 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_race.setImageResource(R.drawable.baseline_arrow_right_24);
             }
         });
-        view.findViewById(R.id.btn_clear_race).setOnClickListener(v -> { });
+        view.findViewById(R.id.btn_clear_race).setOnClickListener(v -> {
+            for (int i = 0; i < raceButtons.length; i++) {
+                raceButtons[i].setSelected(false);
+                raceButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                raceButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+                raceList.remove(raceIds[i]);
+            }
+        });
     }
 
     private void initMonsterTypeButton() {
@@ -1131,7 +1159,14 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_monsterType.setImageResource(R.drawable.baseline_arrow_right_24);
             }
         });
-        view.findViewById(R.id.btn_clear_monsterType).setOnClickListener(v -> { });
+        view.findViewById(R.id.btn_clear_monsterType).setOnClickListener(v -> {
+            for (int i = 0; i < monsterTypeButtons.length; i++) {
+                monsterTypeButtons[i].setSelected(false);
+                monsterTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                monsterTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+                typeList.remove(monsterTypeIds[i]);
+            }
+        });
     }
 
     private void initExcludeTypeButton() {
@@ -1164,17 +1199,17 @@ public class CardSearcher implements View.OnClickListener {
             // 设置图标
             //button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
             button.setOnClickListener(v -> {
-                if (excludTypeList == null) {
-                    excludTypeList = new ArrayList<>();
+                if (excludeTypeList == null) {
+                    excludeTypeList = new ArrayList<>();
                 }
                 if (button.isSelected()) {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                    excludTypeList.remove(monsterTypeIds[index]);
+                    excludeTypeList.remove(monsterTypeIds[index]);
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
-                    excludTypeList.add(monsterTypeIds[index]);
+                    excludeTypeList.add(monsterTypeIds[index]);
                 }
             });
         }
@@ -1187,7 +1222,14 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_exclude_type.setImageResource(R.drawable.baseline_arrow_right_24);
             }
         });
-        view.findViewById(R.id.btn_clear_excludeType).setOnClickListener(v -> { });
+        view.findViewById(R.id.btn_clear_excludeType).setOnClickListener(v -> {
+            for (int i = 0; i < exclude_typeButtons.length; i++) {
+                exclude_typeButtons[i].setSelected(false);
+                exclude_typeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                exclude_typeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+                excludeTypeList.remove(monsterTypeIds[i]);
+            }
+        });
     }
 
     private void initLevelButtons() {
@@ -1257,7 +1299,14 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_level_rank_link.setImageResource(R.drawable.baseline_arrow_right_24);
             }
         });
-        view.findViewById(R.id.btn_clear_level).setOnClickListener(v -> { });
+        view.findViewById(R.id.btn_clear_level).setOnClickListener(v -> {
+            for (int i = 0; i < levelButtons.length; i++) {
+                levelButtons[i].setSelected(false);
+                levelButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                Integer levelValue = i + 1;
+                levelList.remove(levelValue);
+            }
+        });
     }
 
     private void initPendulumScaleButtons() {
@@ -1323,7 +1372,14 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_pendulum_scale.setImageResource(R.drawable.baseline_arrow_right_24);
             }
         });
-        view.findViewById(R.id.btn_clear_pScale).setOnClickListener(v -> { });
+        view.findViewById(R.id.btn_clear_pScale).setOnClickListener(v -> {
+            for (int i = 0; i < pendulumScaleButtons.length; i++) {
+                pendulumScaleButtons[i].setSelected(false);
+                pendulumScaleButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                Integer pendulumScaleValue = i;
+                pendulumScaleList.remove(pendulumScaleValue);
+            }
+        });
     }
 
     private void initCategorySpinners(Spinner spinner) {
@@ -1478,7 +1534,7 @@ public class CardSearcher implements View.OnClickListener {
             //怪兽
             if (spellTrapTypeList.isEmpty()) {
                 List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Spell.getId(), CardType.Trap.getId()));
-                excludTypes.addAll(excludTypeList);
+                excludTypes.addAll(excludeTypeList);
                 CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                     .keyword(keyword)
                     .attribute(attributeList)
