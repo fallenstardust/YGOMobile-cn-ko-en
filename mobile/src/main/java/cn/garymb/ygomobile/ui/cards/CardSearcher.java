@@ -88,11 +88,13 @@ public class CardSearcher implements View.OnClickListener {
     private Button[] attributeButtons;
     private GridLayout gl_attr;
     private ImageView iv_hide_attr;
+    private long[] attributeIds;
     private List<Long> attributeList;
     // 种族筛选按钮
     private Button[] raceButtons;
     private GridLayout gl_race;
     private ImageView iv_hide_race;
+    private long[] raceIds;
     private List<Long> raceList;
     //怪兽类型按钮
     private GridLayout gl_monsterType;
@@ -175,36 +177,7 @@ public class CardSearcher implements View.OnClickListener {
         gl_icon = findViewById(R.id.gl_icon);
         iv_hide_spelltrap = findViewById(R.id.iv_hide_spelltrap);
         spellTrapTypeList = new ArrayList<>();
-        iconButtons = new Button[]{
-                view.findViewById(R.id.btn_icon_quickPlay),// 速攻0
-                view.findViewById(R.id.btn_icon_continuous),// 永续1
-                view.findViewById(R.id.btn_icon_equip),// 装备2
-                view.findViewById(R.id.btn_icon_field),// 场地3
-                view.findViewById(R.id.btn_icon_counter),// 反击4
-                view.findViewById(R.id.btn_icon_ritual),// 仪式5
-                view.findViewById(R.id.btn_icon_normal),// 通常6
-        };
-        // 定义属性对应的ID值，使用long类型
-        iconIds = new long[]{
-                CardType.QuickPlay.getId(),// 速攻
-                CardType.Continuous.getId(),// 永续
-                CardType.Equip.getId(),// 装备
-                CardType.Field.getId(),// 场地
-                CardType.Counter.getId(),// 反击
-                CardType.Ritual.getId(),// 仪式
-                CardType.Normal.getId()// 通常（是指通常怪兽，这里只用于获取strings.conf对应的文本）
-        };
-        spellIds = new long[]{
-                CardType.QuickPlay.getId(),
-                CardType.Continuous.getId(),
-                CardType.Equip.getId(),
-                CardType.Field.getId(),
-                CardType.Ritual.getId()
-        };
-        trapIds = new long[]{
-                CardType.Continuous.getId(),
-                CardType.Counter.getId()
-        };
+
         // 怪兽类型总布局-----------------------
         layout_monster = findViewById(R.id.layout_monster);
         // 属性宫格布局
@@ -232,7 +205,6 @@ public class CardSearcher implements View.OnClickListener {
         gl_pendulum_scale = findViewById(R.id.gl_pScale);
         iv_hide_pendulum_scale = findViewById(R.id.iv_hide_pScale);
         pendulumScaleList = new ArrayList<>();
-
 
         //TODO这些组件需要替换成多选界面
         // 字段
@@ -798,6 +770,7 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_cardType.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
+        // 解除所有卡片种类的选中状态
         view.findViewById(R.id.btn_clear_card_type).setOnClickListener(v -> {
             for (int i = 0; i < cardTypeButtons.length; i++) {
                 cardTypeButtons[i].setSelected(false);
@@ -818,6 +791,25 @@ public class CardSearcher implements View.OnClickListener {
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "counter.png", 0, 0)),// 反击图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "ritual.png", 0, 0)),// 仪式图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "normal.png", 0, 0)),// 通常图标
+        };
+        iconButtons = new Button[]{
+                view.findViewById(R.id.btn_icon_quickPlay),// 速攻0
+                view.findViewById(R.id.btn_icon_continuous),// 永续1
+                view.findViewById(R.id.btn_icon_equip),// 装备2
+                view.findViewById(R.id.btn_icon_field),// 场地3
+                view.findViewById(R.id.btn_icon_counter),// 反击4
+                view.findViewById(R.id.btn_icon_ritual),// 仪式5
+                view.findViewById(R.id.btn_icon_normal),// 通常6
+        };
+        // 定义属性对应的ID值，使用long类型
+        iconIds = new long[]{
+                CardType.QuickPlay.getId(),// 速攻
+                CardType.Continuous.getId(),// 永续
+                CardType.Equip.getId(),// 装备
+                CardType.Field.getId(),// 场地
+                CardType.Counter.getId(),// 反击
+                CardType.Ritual.getId(),// 仪式
+                CardType.Normal.getId()// 通常（是指通常怪兽，这里只用于获取strings.conf对应的文本）
         };
 
         for (int i = 0; i < iconButtons.length; i++) {
@@ -901,7 +893,7 @@ public class CardSearcher implements View.OnClickListener {
         };
 
         // 定义属性对应的ID值，使用long类型
-        final long[] attributeIds = {
+        attributeIds = new long[]{
                 CardAttribute.Dark.getId(),    // 暗
                 CardAttribute.Light.getId(),   // 光
                 CardAttribute.Earth.getId(),   // 地
@@ -950,13 +942,9 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_attr.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
+        // 点击解除所有选择的属性
         view.findViewById(R.id.btn_clear_attr).setOnClickListener(v -> {
-            for (int i = 0; i < attributeButtons.length; i++) {
-                attributeButtons[i].setSelected(false);
-                attributeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                attributeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-                attributeList.remove(attributeIds[i]);
-            }
+            resetAttribute();
         });
     }
 
@@ -1022,7 +1010,7 @@ public class CardSearcher implements View.OnClickListener {
         };
 
         // 定义属性对应的ID值，使用long类型
-        final long[] raceIds = {
+        raceIds = new long[]{
                 CardRace.Warrior.value(),    // 战士
                 CardRace.SpellCaster.value(),   // 魔法师
                 CardRace.Fairy.value(),   // 天使
@@ -1090,13 +1078,9 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_race.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
+        // 解除所有选中的种族
         view.findViewById(R.id.btn_clear_race).setOnClickListener(v -> {
-            for (int i = 0; i < raceButtons.length; i++) {
-                raceButtons[i].setSelected(false);
-                raceButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                raceButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-                raceList.remove(raceIds[i]);
-            }
+            resetRace();
         });
     }
 
@@ -1182,13 +1166,9 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_monsterType.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
+        // 解除所有选中的怪兽子种类
         view.findViewById(R.id.btn_clear_monsterType).setOnClickListener(v -> {
-            for (int i = 0; i < monsterTypeButtons.length; i++) {
-                monsterTypeButtons[i].setSelected(false);
-                monsterTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                monsterTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-                typeList.remove(monsterTypeIds[i]);
-            }
+            resetMonsterType();
         });
     }
 
@@ -1248,13 +1228,9 @@ public class CardSearcher implements View.OnClickListener {
                 iv_hide_exclude_type.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
         });
+        // 解除所有选中的排除怪兽子种类
         view.findViewById(R.id.btn_clear_excludeType).setOnClickListener(v -> {
-            for (int i = 0; i < exclude_typeButtons.length; i++) {
-                exclude_typeButtons[i].setSelected(false);
-                exclude_typeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                exclude_typeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-                excludeTypeList.remove(monsterTypeIds[i]);
-            }
+            resetExcludeType();
         });
     }
 
@@ -1327,12 +1303,7 @@ public class CardSearcher implements View.OnClickListener {
             }
         });
         view.findViewById(R.id.btn_clear_level).setOnClickListener(v -> {
-            for (int i = 0; i < levelButtons.length; i++) {
-                levelButtons[i].setSelected(false);
-                levelButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                Integer levelValue = i + 1;
-                levelList.remove(levelValue);
-            }
+            resetLevel();
         });
     }
 
@@ -1401,12 +1372,7 @@ public class CardSearcher implements View.OnClickListener {
             }
         });
         view.findViewById(R.id.btn_clear_pScale).setOnClickListener(v -> {
-            for (int i = 0; i < pendulumScaleButtons.length; i++) {
-                pendulumScaleButtons[i].setSelected(false);
-                pendulumScaleButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                Integer pendulumScaleValue = i;
-                pendulumScaleList.remove(pendulumScaleValue);
-            }
+            resetPScale();
         });
     }
 
@@ -1508,6 +1474,13 @@ public class CardSearcher implements View.OnClickListener {
                 List<Long> types = new ArrayList<>();
                 List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Trap.getId()));
 
+                spellIds = new long[]{
+                        CardType.QuickPlay.getId(),
+                        CardType.Continuous.getId(),
+                        CardType.Equip.getId(),
+                        CardType.Field.getId(),
+                        CardType.Ritual.getId()
+                };
                 for (long selected : spellIds) {
                     if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
@@ -1521,9 +1494,9 @@ public class CardSearcher implements View.OnClickListener {
                             .keyword(keyword)
                             .attribute(attributeList)
                             .level(levelList) // 注意：魔法卡实际上不使用等级，也没有魔法怪兽，可以不传
-                            .race(raceList)   // 同上，可以传空list
-                            .atk(text(atkText))// 同上，可以传空list
-                            .def(text(defText))// 同上，可以传空list
+                            .race(raceList)   // 同上，可以注释掉不传
+                            .atk(text(atkText))// 同上，可以注释掉不传
+                            .def(text(defText))// 同上，可以注释掉不传
                             .ot(ot)
                             .limitType(limitType)
                             .limitName(limitName)
@@ -1542,6 +1515,10 @@ public class CardSearcher implements View.OnClickListener {
                 List<Long> types = new ArrayList<>();
                 List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Spell.getId()));
 
+                trapIds = new long[]{
+                        CardType.Continuous.getId(),
+                        CardType.Counter.getId()
+                };
                 for (long selected : trapIds) {
                     if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
                         excludTypes.add(selected);
@@ -1654,59 +1631,70 @@ public class CardSearcher implements View.OnClickListener {
         cardTypeButtons[0].setTextColor(YGOUtil.c(R.color.gray));
         typeList.remove(CardType.Monster.getId()); // 从typeList中移除怪兽相关的ID
 
-        // 重置属性按钮为未选中
-        for (Button attributeButton : attributeButtons) {
-            attributeButton.setSelected(false);
-            attributeButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-            attributeButton.setTextColor(YGOUtil.c(R.color.gray));
-        }
-        attributeList.clear();
-
-        // 重置种族按钮为未选中
-        for (Button raceButton : raceButtons) {
-            raceButton.setSelected(false);
-            raceButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-            raceButton.setTextColor(YGOUtil.c(R.color.gray));
-        }
-        raceList.clear();
-
-        // 重置怪兽子种类按钮为未选中
-        for (Button monsterTypeButton : monsterTypeButtons) {
-            monsterTypeButton.setSelected(false);
-            monsterTypeButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-            monsterTypeButton.setTextColor(YGOUtil.c(R.color.gray));
-        }
-        // 重置排除种类按钮为未选中
-        for (Button excludeTypeButton : exclude_typeButtons) {
-            excludeTypeButton.setSelected(false);
-            excludeTypeButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-            excludeTypeButton.setTextColor(YGOUtil.c(R.color.gray));
-        }
-        // 移除所有怪兽子类型id
-        for (long monsterTypeId : monsterTypeIds) {
-            // 清除typeList中的怪兽相关ID
-            typeList.remove(monsterTypeId);
-            // 清除excludeTypeList中的怪兽相关ID
-            excludeTypeList.remove(monsterTypeId);
-        }
-
-        // 重置等级按钮为未选中
-        for (ImageButton levelButton : levelButtons) {
-            levelButton.setSelected(false);
-            levelButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-        }
-        levelList.clear(); // 清除等级筛选
-
-        // 重置灵摆刻度按钮为未选中
-        for (ImageButton pScaleButton : pendulumScaleButtons) {
-            pScaleButton.setSelected(false);
-            pScaleButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-        }
-        pendulumScaleList.clear(); // 清除灵摆刻度筛选
+        resetAttribute();// 重置属性按钮为未选中
+        resetRace();// 重置种族按钮为未选中
+        resetMonsterType();// 重置怪兽子种类按钮为未选中
+        resetExcludeType();// 重置排除种类按钮为未选中
+        resetLevel();// 重置等级按钮为未选中
+        resetPScale();// 重置灵摆刻度按钮为未选中
 
         atkText.setText(null);// 清除输入的攻击力
         defText.setText(null);// 清除输入的守备力
         lineKey = 0;// 清除灵摆键值
+    }
+
+    private void resetAttribute() {
+        for (int i = 0; i < attributeButtons.length; i++) {
+            attributeButtons[i].setSelected(false);
+            attributeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            attributeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            attributeList.remove(attributeIds[i]);
+        }
+    }
+
+    private void resetRace() {
+        for (int i = 0; i < raceButtons.length; i++) {
+            raceButtons[i].setSelected(false);
+            raceButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            raceButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            raceList.remove(raceIds[i]);
+        }
+    }
+
+    private void resetMonsterType() {
+        for (int i = 0; i < monsterTypeButtons.length; i++) {
+            monsterTypeButtons[i].setSelected(false);
+            monsterTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            monsterTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            typeList.remove(monsterTypeIds[i]);
+        }
+    }
+
+    private void resetExcludeType() {
+        for (int i = 0; i < exclude_typeButtons.length; i++) {
+            exclude_typeButtons[i].setSelected(false);
+            exclude_typeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            exclude_typeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            excludeTypeList.remove(monsterTypeIds[i]);
+        }
+    }
+
+    private void resetLevel() {
+        for (int i = 0; i < levelButtons.length; i++) {
+            levelButtons[i].setSelected(false);
+            levelButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            Integer levelValue = i + 1;
+            levelList.remove(levelValue);
+        }
+    }
+
+    private void resetPScale() {
+        for (int i = 0; i < pendulumScaleButtons.length; i++) {
+            pendulumScaleButtons[i].setSelected(false);
+            pendulumScaleButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            Integer pendulumScaleValue = i;
+            pendulumScaleList.remove(pendulumScaleValue);
+        }
     }
 
     private void resetSpell() {
