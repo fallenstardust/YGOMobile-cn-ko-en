@@ -231,8 +231,8 @@ public class FileUtils {
 
         if (file.isDirectory()) {
             File[] files = file.listFiles();
-            for (int i = 0; i < files.length; i++) {
-                File f = files[i];
+            if (files == null) return;
+            for (File f : files) {
                 deleteFile(f);
             }
             //file.delete();

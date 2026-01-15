@@ -1765,8 +1765,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     private void doBackUpDeck() {
-        FileUtils.delFile(ORI_DECK);//备份前删除原备份
         try {
+            FileUtils.delFile(ORI_DECK);//备份前删除原备份
             FileUtils.copyDir(mSettings.getDeckDir(), ORI_DECK, true);
             File ydks = new File(ORI_DECK);
             File[] subYdks = ydks.listFiles();
