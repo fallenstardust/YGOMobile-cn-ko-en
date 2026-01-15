@@ -648,15 +648,11 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void initTypeButtons() {
-        //从一个整体图片中裁切出13个数字图片
-        Bitmap chainNumber = BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/cardtype.png", 0, 0);
-        int width = chainNumber.getWidth() / 3;
-        int height = chainNumber.getHeight() / 3;
-
-        final Drawable[] cardTypeIcon = new Drawable[]{
-                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, 0, 0, width, height)),// 1
-                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width, 0, width, height)),// 2
-                new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 2, 0, width, height)),// 3
+        // 定义图标资源ID数组
+        final Drawable[] cardTypeIcon = {
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "cardType_monster.png", 0, 0)),// 速攻图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "cardType_spell.png", 0, 0)),// 永续图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "cardType_trap.png", 0, 0)),// 装备图标
         };
 
         cardTypeButtons = new Button[]{
@@ -1445,22 +1441,15 @@ public class CardSearcher implements View.OnClickListener {
 
             // 判断是否有怪兽具体类型选择
             boolean hasMonsterSpecificType = typeList.stream()
-                    .anyMatch(id -> id != CardType.Monster.getId() &&
-                            id != CardType.Spell.getId() &&
-                            id != CardType.Trap.getId() &&
-                            monsterTypeIds.length > 0 &&
-                            Arrays.stream(monsterTypeIds).anyMatch(mid -> mid == id));
+                    .anyMatch(id -> Arrays.stream(monsterTypeIds).anyMatch(mid -> mid == id));
 
             // 判断是否有魔法陷阱具体类型选择
             boolean hasSpellTrapSpecificType = !spellTrapTypeList.isEmpty();
 
-            // 只有当三个基本类型都没选时才算"全不选"
-            boolean noTypeSelect = !hasBasicSpell && !hasBasicTrap && !hasBasicMonster;
-
             // 确定需要搜索哪些类型
-            boolean shouldSearchSpells = hasBasicSpell || (noTypeSelect && !hasMonsterSpecificType && hasSpellTrapSpecificType);
-            boolean shouldSearchTraps = hasBasicTrap || (noTypeSelect && !hasMonsterSpecificType && hasSpellTrapSpecificType);
-            boolean shouldSearchMonsters = hasBasicMonster || noTypeSelect && (hasMonsterSpecificType || !hasSpellTrapSpecificType);
+            boolean shouldSearchSpells = hasBasicSpell || (!hasBasicMonster && !hasBasicTrap && hasSpellTrapSpecificType);
+            boolean shouldSearchTraps = hasBasicTrap || (!hasBasicMonster && !hasBasicSpell && hasSpellTrapSpecificType);
+            boolean shouldSearchMonsters = hasBasicMonster || hasMonsterSpecificType;
 
             boolean normalSpellTrap = spellTrapTypeList.contains(CardType.Normal.getId());
 
