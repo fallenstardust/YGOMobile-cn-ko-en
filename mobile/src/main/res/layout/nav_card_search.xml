@@ -18,7 +18,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginVertical="2dp"
             android:orientation="vertical">
 
             <LinearLayout
@@ -77,6 +77,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
                 android:orientation="vertical">
 
                 <LinearLayout
@@ -101,7 +102,6 @@
                         android:layout_weight="1"
                         android:text="@string/label_limitlist"
                         android:textColor="#FFFFFF" />
-
                 </LinearLayout>
 
                 <LinearLayout
@@ -144,6 +144,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
                 android:orientation="vertical">
 
                 <LinearLayout
@@ -343,7 +344,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="15dp"
-                android:layout_marginVertical="2dp"
                 android:orientation="vertical">
                 <!-- 属性筛选 -->
                 <LinearLayout
@@ -355,6 +355,7 @@
                         android:id="@+id/ll_attr"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginVertical="2dp"
                         android:background="@drawable/veil"
                         android:orientation="horizontal">
 
@@ -767,6 +768,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginVertical="2dp"
                     android:orientation="vertical">
 
                     <LinearLayout
@@ -900,6 +902,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginVertical="2dp"
                     android:orientation="vertical">
 
                     <LinearLayout
@@ -999,6 +1002,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginVertical="2dp"
                     android:orientation="vertical">
 
                     <LinearLayout
