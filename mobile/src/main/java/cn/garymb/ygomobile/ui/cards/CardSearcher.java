@@ -161,16 +161,6 @@ public class CardSearcher implements View.OnClickListener {
         // 卡片类型宫格布局
         gl_cardType = findViewById(R.id.gl_cardType);
         iv_hide_cardType = findViewById(R.id.iv_hide_cardType);
-        cardTypeButtons = new Button[]{
-                view.findViewById(R.id.btn_type_monster),
-                view.findViewById(R.id.btn_type_spell),
-                view.findViewById(R.id.btn_type_trap)
-        };
-        typeIds = new long[]{
-                CardType.Monster.getId(),
-                CardType.Spell.getId(),
-                CardType.Trap.getId()
-        };
 
         // 魔陷类型宫格布局
         ll_icon = findViewById(R.id.ll_icon);//需要隐藏时控制整个布局
@@ -669,6 +659,16 @@ public class CardSearcher implements View.OnClickListener {
                 new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 2, 0, width, height)),// 3
         };
 
+        cardTypeButtons = new Button[]{
+                view.findViewById(R.id.btn_type_monster),
+                view.findViewById(R.id.btn_type_spell),
+                view.findViewById(R.id.btn_type_trap)
+        };
+        typeIds = new long[]{
+                CardType.Monster.getId(),
+                CardType.Spell.getId(),
+                CardType.Trap.getId()
+        };
         for (int i = 0; i < cardTypeButtons.length; i++) {
             final int index = i;
             //设置按钮样式
@@ -1719,7 +1719,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetTrap() {
-        //解除魔法卡选中状态
+        //解除陷阱卡选中状态
         cardTypeButtons[2].setSelected(false);
         cardTypeButtons[2].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         cardTypeButtons[2].setTextColor(YGOUtil.c(R.color.gray));
@@ -1740,13 +1740,17 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_icon_normal),// 通常
         };
         //解除魔法陷阱共有种类永续、通常图标按钮的选中状态
-        for (Button iconButton : conti_normal_icons) {
-            iconButton.setSelected(false);
-            iconButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-            iconButton.setTextColor(YGOUtil.c(R.color.gray));
+        for (Button bothButton : conti_normal_icons) {
+            bothButton.setSelected(false);
+            bothButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            bothButton.setTextColor(YGOUtil.c(R.color.gray));
         }
         spellTrapTypeList.remove(CardType.Continuous.getId());
         spellTrapTypeList.remove(CardType.Normal.getId());
+        // 将所有icon全部显示
+        for (Button iconButton : iconButtons) {
+            iconButton.setVisibility(View.VISIBLE);
+        }
     }
 
     public interface CallBack {
