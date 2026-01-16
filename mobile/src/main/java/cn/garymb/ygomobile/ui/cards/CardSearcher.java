@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -101,6 +102,7 @@ public class CardSearcher implements View.OnClickListener {
     private ImageView iv_hide_monsterType;
     private Button[] monsterTypeButtons;
     private long[] monsterTypeIds;
+    private Drawable[] TypeIcon;
     private List<Long> typeList;
     private boolean isAnd;
     // 排除怪兽类型按钮
@@ -1081,10 +1083,24 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void initMonsterTypeButton() {
-        /*final Drawable[] TypeIcon = new Drawable[]{
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/type_normal.png", 0, 0)),// 0
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/type_effect.png", 0, 0)),// 1
-        };*/
+        TypeIcon = new Drawable[]{
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_normal.png", 0, 0)),// 通常
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_effect.png", 0, 0)),// 效果
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_fusion.png", 0, 0)),// 融合
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_ritual.png", 0, 0)),// 仪式
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_spirit.png", 0, 0)),// 灵魂
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_union.png", 0, 0)),// 同盟
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_gemini.png", 0, 0)),// 二重
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_tuner.png", 0, 0)),// 调整
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_synchro.png", 0, 0)),// 同调
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_flip.png", 0, 0)),// 反转
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_toon.png", 0, 0)),// 卡通
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_xyz.png", 0, 0)),// 超量
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_pendulum.png", 0, 0)),// 灵摆
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_specialSummon.png", 0, 0)),// 特殊召唤
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_link.png", 0, 0)),// 连接
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_token.png", 0, 0)),// 衍生物
+        };
         monsterTypeButtons = new Button[]{
                 view.findViewById(R.id.btn_type_normal),// 通常
                 view.findViewById(R.id.btn_type_effect),// 效果
@@ -1127,7 +1143,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = monsterTypeButtons[index];
             button.setText(mStringManager.getTypeString(monsterTypeIds[i]));
             // 设置图标
-            //button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
             button.setOnClickListener(v -> {
                 if (typeList == null) {
                     typeList = new ArrayList<>();
@@ -1169,10 +1185,6 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void initExcludeTypeButton() {
-        /*final Drawable[] TypeIcon = new Drawable[]{
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/type_normal.png", 0, 0)),// 0
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSETS_PATH + "textures/extra/type_effect.png", 0, 0)),// 1
-        };*/
         exclude_typeButtons = new Button[]{
                 view.findViewById(R.id.btn_exclude_type_normal),// 通常
                 view.findViewById(R.id.btn_exclude_type_effect),// 效果
@@ -1197,7 +1209,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = exclude_typeButtons[index];
             button.setText(mStringManager.getTypeString(monsterTypeIds[i]));
             // 设置图标
-            //button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
             button.setOnClickListener(v -> {
                 if (excludeTypeList == null) {
                     excludeTypeList = new ArrayList<>();
@@ -1208,7 +1220,7 @@ public class CardSearcher implements View.OnClickListener {
                     excludeTypeList.remove(monsterTypeIds[index]);
                 } else {//未选中时的逻辑
                     button.setSelected(true);
-                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    button.setBackground(mContext.getDrawable(R.drawable.radius_p));
                     excludeTypeList.add(monsterTypeIds[index]);
                 }
                 Log.w("CardSearcher", "[排除种类]:" + excludeTypeList);
@@ -1251,6 +1263,22 @@ public class CardSearcher implements View.OnClickListener {
                 new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width, height * 2, width, height)),// 12
                 new BitmapDrawable(mContext.getResources(), Bitmap.createBitmap(chainNumber, width * 2, height * 2, width, height)),// 13
         };
+
+        // 创建不同等级范围的背景图片数组
+        final Drawable[] backgrounds = new Drawable[13];
+        for (int i = 0; i < backgrounds.length; i++) {
+            if (i < 8) { // 等级1-8 (索引0-7)
+                Bitmap star1_8Bitmap = BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "star_1_8.png", 0, 0);
+                backgrounds[i] = new BitmapDrawable(mContext.getResources(), star1_8Bitmap);
+            } else if (i < 12) { // 等级9-12 (索引8-11)
+                Bitmap star9_12Bitmap = BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "star_9_12.png", 0, 0);
+                backgrounds[i] = new BitmapDrawable(mContext.getResources(), star9_12Bitmap);
+            } else { // 等级13 (索引12)
+                Bitmap rankBitmap = BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "star_rank.png", 0, 0);
+                backgrounds[i] = new BitmapDrawable(mContext.getResources(), rankBitmap);
+            }
+        }
+
         levelButtons = new ImageButton[]{
                 view.findViewById(R.id.btn_LRA_1),
                 view.findViewById(R.id.btn_LRA_2),
@@ -1271,7 +1299,16 @@ public class CardSearcher implements View.OnClickListener {
             //设置按钮样式
             ImageButton button = levelButtons[index];
             // 设置图标
-            button.setImageDrawable(numberIcon[index]);
+            // 创建图层：背景在下，前景（数字）在上
+            Drawable[] layers = new Drawable[2];
+            layers[0] = backgrounds[index]; // 背景
+            layers[1] = numberIcon[index];  // 数字
+            LayerDrawable layerDrawable = new LayerDrawable(layers);
+            // 设置前景的位置（居中）
+            int padding = 4; // 可调整边距
+            layerDrawable.setLayerInset(1, padding, padding, padding, padding);
+            button.setImageDrawable(layerDrawable);
+
             button.setOnClickListener(v -> {
                 if (levelList == null) {
                     levelList = new ArrayList<>();
