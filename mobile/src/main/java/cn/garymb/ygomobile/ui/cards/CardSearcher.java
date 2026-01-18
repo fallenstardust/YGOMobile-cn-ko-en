@@ -184,10 +184,12 @@ public class CardSearcher implements View.OnClickListener {
         // 属性宫格布局
         gl_attr = findViewById(R.id.gl_attr);
         iv_hide_attr = findViewById(R.id.iv_hide_attr);
+        attributeIds = CardAttribute.values();
         attributeList = new ArrayList<>();
         // 种族宫格布局
         gl_race = findViewById(R.id.gl_race);
         iv_hide_race = findViewById(R.id.iv_hide_race);
+        raceIds = CardRace.values();
         raceList = new ArrayList<>();
         // 怪兽种类宫格布局
         gl_monsterType = findViewById(R.id.gl_monsterType);
@@ -657,6 +659,40 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void initCategoryButtons() {
+        Drawable[] categoryIcon = new Drawable[]{
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_destroySpellTrap.png", 0, 0)),// 魔陷破坏
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_destroyMonster.png", 0, 0)),// 怪兽破坏
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_banish.png", 0, 0)),// 卡片除外
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_sendToGraveyard.png", 0, 0)),// 送去墓地
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_returnToHand.png", 0, 0)),// 返回手卡
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_returnToDeck.png", 0, 0)),// 返回卡组
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_destroyHand.png", 0, 0)),// 手卡破坏
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_destroyDeck.png", 0, 0)),// 卡组破坏
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_draw.png", 0, 0)),// 抽卡辅助
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_search.png", 0, 0)),// 卡组检索
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_recovery.png", 0, 0)),// 卡片回收
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_position.png", 0, 0)),// 表示形式
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_control.png", 0, 0)),// 控制权
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_changeAtkDef.png", 0, 0)),// 攻守变化
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_piercing.png", 0, 0)),// 穿刺伤害
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_repeatAttack.png", 0, 0)),// 多次攻击
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_limitAttack.png", 0, 0)),// 攻击限制
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_directAttack.png", 0, 0)),// 直接攻击
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_specialSummon.png", 0, 0)),// 特殊召唤
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_token.png", 0, 0)),// 衍生物
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_raceRelated.png", 0, 0)),// 种族相关
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_attributeRelated.png", 0, 0)),// 属性相关
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_damageLP.png", 0, 0)),// LP伤害
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_recoverLP.png", 0, 0)),// LP回复
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_undestroyable.png", 0, 0)),// 破坏耐性
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_ineffective.png", 0, 0)),// 效果耐性
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_counter.png", 0, 0)),// 指示物
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_gamble.png", 0, 0)),// 幸运
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_fusionRelated.png", 0, 0)),// 融合相关
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_synchroRelated.png", 0, 0)),// 同调相关
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_xyzRelated.png", 0, 0)),// 超量相关
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "category_negateEffect.png", 0, 0)),// 效果无效
+        };
         categoryButtons = new Button[]{
                 view.findViewById(R.id.btn_category_destroySpellTrap),// 魔陷破坏
                 view.findViewById(R.id.btn_category_destroyMonster),// 怪兽破坏
@@ -666,7 +702,7 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_category_returnToDeck),// 返回卡组
                 view.findViewById(R.id.btn_category_destroyHand),// 手卡破坏
                 view.findViewById(R.id.btn_category_destroyDeck),// 卡组破坏
-                view.findViewById(R.id.btn_category_drawCard),// 抽卡辅助
+                view.findViewById(R.id.btn_category_draw),// 抽卡辅助
                 view.findViewById(R.id.btn_category_search),// 卡组检索
                 view.findViewById(R.id.btn_category_recovery),// 卡片回收
                 view.findViewById(R.id.btn_category_position),// 表示形式
@@ -683,7 +719,7 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_category_damageLP),// LP伤害
                 view.findViewById(R.id.btn_category_recoverLP),// LP回复
                 view.findViewById(R.id.btn_category_undestroyable),// 破坏耐性
-                view.findViewById(R.id.btn_category_uneffective),// 效果耐性
+                view.findViewById(R.id.btn_category_ineffective),// 效果耐性
                 view.findViewById(R.id.btn_category_counter),// 指示物
                 view.findViewById(R.id.btn_category_gamble),// 幸运
                 view.findViewById(R.id.btn_category_fusionRelated),// 融合相关
@@ -697,7 +733,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = categoryButtons[i];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
             // 设置图标
-            //button.setCompoundDrawablesWithIntrinsicBounds(null, categoryIcon[index], null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(null, categoryIcon[i], null, null);
 
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
             button.setText(mStringManager.getCategoryString(categories[i].value()));
@@ -970,7 +1006,6 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_attr_divine)// 神
         };
 
-        attributeIds = CardAttribute.values();
         for (int i = 0; i < attributeButtons.length; i++) {
             final int index = i;
             final long attributeId = attributeIds[i].getId();
@@ -1080,7 +1115,6 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_race_illusion),// 幻想魔
         };
 
-        raceIds = CardRace.values();
         for (int i = 0; i < raceButtons.length; i++) {
             final int index = i;
             final long raceId = raceIds[i].value();
