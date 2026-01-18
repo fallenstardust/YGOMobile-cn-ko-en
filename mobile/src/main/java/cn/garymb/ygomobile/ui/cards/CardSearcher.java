@@ -69,6 +69,12 @@ public class CardSearcher implements View.OnClickListener {
     private final Spinner genesys_limitSpinner;
     private final Spinner limitListSpinner;
     private final Spinner genesys_limitListSpinner;
+    // 效果类型按钮
+    private GridLayout gl_category;
+    private ImageView iv_hide_category;
+    private Button[] categoryButtons;
+    private CardCategory[] categories;
+    List<Long> categoryList;
     // 卡片类型按钮
     private GridLayout gl_cardType;
     private ImageView iv_hide_cardType;
@@ -89,13 +95,13 @@ public class CardSearcher implements View.OnClickListener {
     private Button[] attributeButtons;
     private GridLayout gl_attr;
     private ImageView iv_hide_attr;
-    private long[] attributeIds;
+    private CardAttribute[] attributeIds;
     private List<Long> attributeList;
     // 种族筛选按钮
     private Button[] raceButtons;
     private GridLayout gl_race;
     private ImageView iv_hide_race;
-    private long[] raceIds;
+    private CardRace[] raceIds;
     private List<Long> raceList;
     //怪兽类型按钮
     private GridLayout gl_monsterType;
@@ -124,9 +130,7 @@ public class CardSearcher implements View.OnClickListener {
     private final Spinner setCodeSpinner;
     List<Long> setCodeList;
     boolean setcode_isAnd;
-    // 效果分类
-    private final Spinner categorySpinner;
-    List<Long> categoryList;
+
     private final EditText atkText;
     private final EditText defText;
     private final Button LinkMarkerButton;
@@ -160,6 +164,11 @@ public class CardSearcher implements View.OnClickListener {
         limitListSpinner = findViewById(R.id.sp_limit_list);
         genesys_limitListSpinner = findViewById(R.id.sp_genesys_limit_list);//初始化genesys禁卡表布局
 
+        // 效果类型宫格布局
+        gl_category = findViewById(R.id.gl_category);
+        iv_hide_category = findViewById(R.id.iv_hide_category);
+        categories = CardCategory.values();
+        categoryList = new ArrayList<>();
         // 卡片类型宫格布局
         gl_cardType = findViewById(R.id.gl_cardType);
         iv_hide_cardType = findViewById(R.id.iv_hide_cardType);
@@ -203,9 +212,7 @@ public class CardSearcher implements View.OnClickListener {
         setCodeList = new ArrayList<>();
         setCodeSpinner = findViewById(R.id.sp_setcode);
         boolean setcode_isAnd = false;
-        // 效果分类
-        categorySpinner = findViewById(R.id.sp_category);
-        categoryList = new ArrayList<>();
+
         //
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
@@ -386,6 +393,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     public void initItems() {
+        initCategoryButtons();
         initTypeButtons();
         initAttributeButtons();
         initRaceButtons();
@@ -400,7 +408,6 @@ public class CardSearcher implements View.OnClickListener {
         initLimitListSpinners(limitListSpinner);
         initGenesysLimitListSpinners(genesys_limitListSpinner);
         initSetNameSpinners(setCodeSpinner);
-        initCategorySpinners(categorySpinner);
     }
 
     protected <T extends View> T findViewById(int id) {
@@ -649,6 +656,84 @@ public class CardSearcher implements View.OnClickListener {
         spinner.setAdapter(adapter);
     }
 
+    private void initCategoryButtons() {
+        categoryButtons = new Button[]{
+                view.findViewById(R.id.btn_category_destroySpellTrap),// 魔陷破坏
+                view.findViewById(R.id.btn_category_destroyMonster),// 怪兽破坏
+                view.findViewById(R.id.btn_category_banish),// 卡片除外
+                view.findViewById(R.id.btn_category_sendToGraveyard),// 送去墓地
+                view.findViewById(R.id.btn_category_returnToHand),// 返回手卡
+                view.findViewById(R.id.btn_category_returnToDeck),// 返回卡组
+                view.findViewById(R.id.btn_category_destroyHand),// 手卡破坏
+                view.findViewById(R.id.btn_category_destroyDeck),// 卡组破坏
+                view.findViewById(R.id.btn_category_drawCard),// 抽卡辅助
+                view.findViewById(R.id.btn_category_search),// 卡组检索
+                view.findViewById(R.id.btn_category_recovery),// 卡片回收
+                view.findViewById(R.id.btn_category_position),// 表示形式
+                view.findViewById(R.id.btn_category_control),// 控制权
+                view.findViewById(R.id.btn_category_changeAtkDef),// 攻守变化
+                view.findViewById(R.id.btn_category_piercing),// 穿刺伤害
+                view.findViewById(R.id.btn_category_repeatAttack),// 多次攻击
+                view.findViewById(R.id.btn_category_limitAttack),// 攻击限制
+                view.findViewById(R.id.btn_category_directAttack),// 直接攻击
+                view.findViewById(R.id.btn_category_specialSummon),// 特殊召唤
+                view.findViewById(R.id.btn_category_token),// 衍生物
+                view.findViewById(R.id.btn_category_raceRelated),// 种族相关
+                view.findViewById(R.id.btn_category_attributeRelated),// 属性相关
+                view.findViewById(R.id.btn_category_damageLP),// LP伤害
+                view.findViewById(R.id.btn_category_recoverLP),// LP回复
+                view.findViewById(R.id.btn_category_undestroyable),// 破坏耐性
+                view.findViewById(R.id.btn_category_uneffective),// 效果耐性
+                view.findViewById(R.id.btn_category_counter),// 指示物
+                view.findViewById(R.id.btn_category_gamble),// 幸运
+                view.findViewById(R.id.btn_category_fusionRelated),// 融合相关
+                view.findViewById(R.id.btn_category_synchroRelated),// 同调相关
+                view.findViewById(R.id.btn_category_xyzRelated),// 超量相关
+                view.findViewById(R.id.btn_category_negateEffect)// 效果无效
+        };
+
+        for (int i = 0; i < categoryButtons.length; i++) {
+            //设置按钮样式
+            Button button = categoryButtons[i];
+            button.setCompoundDrawablePadding(4); // 图标和文字间距
+            // 设置图标
+            //button.setCompoundDrawablesWithIntrinsicBounds(null, categoryIcon[index], null, null);
+
+            // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
+            button.setText(mStringManager.getCategoryString(categories[i].value()));
+            int index = i;
+            button.setOnClickListener(v -> {
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    button.setTextColor(YGOUtil.c(R.color.gray));
+                    categoryList.remove(categories[index].value());
+                } else {
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    button.setTextColor(YGOUtil.c(R.color.yellow));
+                    if (!categoryList.contains(categories[index].value())) {
+                        categoryList.add(categories[index].value());
+                    }
+                }
+            });
+        }
+        view.findViewById(R.id.ll_category).setOnClickListener(v -> {
+            if (gl_category.getVisibility() == View.VISIBLE) {
+                gl_category.setVisibility(View.GONE);
+                iv_hide_category.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+            } else {
+                gl_category.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
+                gl_category.setVisibility(View.VISIBLE);
+                iv_hide_category.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
+            }
+        });
+        // 解除所有卡片种类的选中状态
+        view.findViewById(R.id.btn_clear_category).setOnClickListener(v -> {
+            resetCategory();
+        });
+    }
+
     private void initTypeButtons() {
         // 定义图标资源ID数组
         final Drawable[] cardTypeIcon = {
@@ -678,7 +763,7 @@ public class CardSearcher implements View.OnClickListener {
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
             button.setText(mStringManager.getTypeString(typeIds[index]));
 
-            cardTypeButtons[i].setOnClickListener(v -> {
+            button.setOnClickListener(v -> {
                 if (button.isSelected()) {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
@@ -770,12 +855,7 @@ public class CardSearcher implements View.OnClickListener {
         });
         // 解除所有卡片种类的选中状态
         view.findViewById(R.id.btn_clear_card_type).setOnClickListener(v -> {
-            for (int i = 0; i < cardTypeButtons.length; i++) {
-                cardTypeButtons[i].setSelected(false);
-                cardTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                cardTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-                typeList.remove(typeIds[i]);
-            }
+            resetCardType();
         });
     }
 
@@ -870,39 +950,30 @@ public class CardSearcher implements View.OnClickListener {
     private void initAttributeButtons() {
         // 定义图标资源ID数组
         final Drawable[] attributeIcons = {
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "dark.png", 0, 0)),// 暗属性图标
-                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "light.png", 0, 0)),// 光属性图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "earth.png", 0, 0)),// 地属性图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "water.png", 0, 0)),// 水属性图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "fire.png", 0, 0)),// 火属性图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "wind.png", 0, 0)),// 风属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "light.png", 0, 0)),// 光属性图标
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "dark.png", 0, 0)),// 暗属性图标
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "divine.png", 0, 0)),// 神属性图标
         };
 
         // 初始化属性按钮
         attributeButtons = new Button[]{
-                view.findViewById(R.id.btn_attr_dark),// 暗
-                view.findViewById(R.id.btn_attr_light),// 光
                 view.findViewById(R.id.btn_attr_earth),// 地
                 view.findViewById(R.id.btn_attr_water),// 水
                 view.findViewById(R.id.btn_attr_fire),// 火
                 view.findViewById(R.id.btn_attr_wind),// 风
+                view.findViewById(R.id.btn_attr_light),// 光
+                view.findViewById(R.id.btn_attr_dark),// 暗
                 view.findViewById(R.id.btn_attr_divine)// 神
         };
 
-        // 定义属性对应的ID值，使用long类型
-        attributeIds = new long[]{
-                CardAttribute.Dark.getId(),    // 暗
-                CardAttribute.Light.getId(),   // 光
-                CardAttribute.Earth.getId(),   // 地
-                CardAttribute.Water.getId(),   // 水
-                CardAttribute.Fire.getId(),    // 火
-                CardAttribute.Wind.getId(),    // 风
-                CardAttribute.Divine.getId()   // 神
-        };
+        attributeIds = CardAttribute.values();
         for (int i = 0; i < attributeButtons.length; i++) {
             final int index = i;
-            final long attributeId = attributeIds[i];
+            final long attributeId = attributeIds[i].getId();
             //设置按钮样式
             Button button = attributeButtons[index];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
@@ -910,9 +981,9 @@ public class CardSearcher implements View.OnClickListener {
             button.setCompoundDrawablesWithIntrinsicBounds(null, attributeIcons[index], null, null);
 
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
-            button.setText(mStringManager.getAttributeString(attributeIds[index]));
+            button.setText(mStringManager.getAttributeString(attributeId));
 
-            attributeButtons[i].setOnClickListener(v -> {
+            button.setOnClickListener(v -> {
                 if (attributeList == null) {
                     attributeList = new ArrayList<>();
                 }
@@ -926,7 +997,9 @@ public class CardSearcher implements View.OnClickListener {
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
                     button.setTextColor(YGOUtil.c(R.color.yellow));
-                    attributeList.add(attributeId);
+                    if (!attributeList.contains(attributeId)) {
+                        attributeList.add(attributeId);
+                    }
                 }
             });
         }
@@ -1007,38 +1080,10 @@ public class CardSearcher implements View.OnClickListener {
                 view.findViewById(R.id.btn_race_illusion),// 幻想魔
         };
 
-        // 定义属性对应的ID值，使用long类型
-        raceIds = new long[]{
-                CardRace.Warrior.value(),    // 战士
-                CardRace.SpellCaster.value(),   // 魔法师
-                CardRace.Fairy.value(),   // 天使
-                CardRace.Fiend.value(),   // 恶魔
-                CardRace.Zombie.value(),   // 不死
-                CardRace.Machine.value(),   // 机械
-                CardRace.Aqua.value(),   // 水
-                CardRace.Pyro.value(),   // 炎
-                CardRace.Rock.value(),   // 岩石
-                CardRace.WingedBeast.value(),   // 鸟兽族
-                CardRace.Plant.value(),   // 植物
-                CardRace.Insect.value(),   // 昆虫
-                CardRace.Thunder.value(),   // 雷
-                CardRace.Dragon.value(),   // 龙
-                CardRace.Beast.value(),   // 兽
-                CardRace.BeastWarrior.value(),   // 兽战士
-                CardRace.Dinosaur.value(),   // 恐龙
-                CardRace.Fish.value(),   // 鱼
-                CardRace.SeaSerpent.value(),   // 海龙
-                CardRace.Reptile.value(),   // 爬虫类
-                CardRace.Psychic.value(),   // 念动力
-                CardRace.DivineBeast.value(),   // 幻神兽
-                CardRace.CreatorGod.value(),   // 创造神
-                CardRace.Wyrm.value(),   // 幻龙
-                CardRace.Cyberse.value(),   // 电子界
-                CardRace.Illusionist.value(),   // 幻想魔
-        };
+        raceIds = CardRace.values();
         for (int i = 0; i < raceButtons.length; i++) {
             final int index = i;
-            final long raceId = raceIds[i];
+            final long raceId = raceIds[i].value();
             //设置按钮样式
             Button button = raceButtons[index];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
@@ -1046,7 +1091,7 @@ public class CardSearcher implements View.OnClickListener {
             button.setCompoundDrawablesWithIntrinsicBounds(null, raceIcons[index], null, null);
 
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
-            button.setText(mStringManager.getRaceString(raceIds[index]));
+            button.setText(mStringManager.getRaceString(raceId));
 
             raceButtons[i].setOnClickListener(v -> {
                 if (raceList == null) {
@@ -1062,7 +1107,8 @@ public class CardSearcher implements View.OnClickListener {
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
                     button.setTextColor(YGOUtil.c(R.color.yellow));
-                    raceList.add(raceId);
+                    if (!raceList.contains(raceId))
+                        raceList.add(raceId);
                 }
             });
         }
@@ -1155,7 +1201,8 @@ public class CardSearcher implements View.OnClickListener {
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
-                    typeList.add(monsterTypeIds[index]);
+                    if (!typeList.contains(monsterTypeIds[index]))
+                        typeList.add(monsterTypeIds[index]);
                 }
                 Log.w("CardSearcher", "[怪兽 种类]:" + typeList);
             });
@@ -1221,7 +1268,8 @@ public class CardSearcher implements View.OnClickListener {
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius_p));
-                    excludeTypeList.add(monsterTypeIds[index]);
+                    if (!excludeTypeList.contains(monsterTypeIds[index]))
+                        excludeTypeList.add(monsterTypeIds[index]);
                 }
                 Log.w("CardSearcher", "[排除种类]:" + excludeTypeList);
             });
@@ -1321,7 +1369,9 @@ public class CardSearcher implements View.OnClickListener {
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
-                    levelList.add(levelValue);
+                    if (!levelList.contains(levelValue)) {
+                        levelList.add(levelValue);
+                    }
                 }
             });
         }
@@ -1390,7 +1440,9 @@ public class CardSearcher implements View.OnClickListener {
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
-                    pendulumScaleList.add(index);
+                    if (!pendulumScaleList.contains(index)) {
+                        pendulumScaleList.add(index);
+                    }
                 }
             });
         }
@@ -1407,23 +1459,6 @@ public class CardSearcher implements View.OnClickListener {
         view.findViewById(R.id.btn_clear_pScale).setOnClickListener(v -> {
             resetPScale();
         });
-    }
-
-    private void initCategorySpinners(Spinner spinner) {
-        CardCategory[] attributes = CardCategory.values();
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        for (CardCategory item : attributes) {
-            long val = item.value();
-            if (val == 0) {
-                items.add(new SimpleSpinnerItem(val, mContext.getString(R.string.label_category)));
-            } else {
-                items.add(new SimpleSpinnerItem(val, mStringManager.getCategoryString(val)));
-            }
-        }
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
     }
 
     private void reset(Spinner spinner) {
@@ -1643,11 +1678,30 @@ public class CardSearcher implements View.OnClickListener {
         reset(otSpinner);
         reset(limitSpinner.getVisibility() == View.VISIBLE ? limitSpinner : genesys_limitSpinner);
         reset(setCodeSpinner);
-        reset(categorySpinner);
+        resetCategory();
+        resetCardType();
         resetMonster();
         resetIcons();
         if (layout_monster.getVisibility() == View.GONE) layout_monster.setVisibility(View.VISIBLE);
         if (ll_icon.getVisibility() == View.GONE) ll_icon.setVisibility(View.VISIBLE);
+    }
+
+    private void resetCategory() {
+        for (int i = 0; i < categoryButtons.length; i++) {
+            categoryButtons[i].setSelected(false);
+            categoryButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            categoryButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            categoryList.remove(categories[i].value());
+        }
+    }
+
+    private void resetCardType() {
+        for (int i = 0; i < cardTypeButtons.length; i++) {
+            cardTypeButtons[i].setSelected(false);
+            cardTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            cardTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            typeList.remove(typeIds[i]);
+        }
     }
 
     private void resetMonster() {

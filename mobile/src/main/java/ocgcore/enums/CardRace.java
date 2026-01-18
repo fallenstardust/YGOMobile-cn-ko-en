@@ -3,7 +3,7 @@ package ocgcore.enums;
 import androidx.annotation.Nullable;
 
 public enum CardRace {
-    None(0),
+    //None(0),
     Warrior(0x1, 1020),
     SpellCaster(0x2, 1021),
     Fairy(0x4, 1022),

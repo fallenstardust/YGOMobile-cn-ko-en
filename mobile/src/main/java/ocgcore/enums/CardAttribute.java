@@ -3,7 +3,7 @@ package ocgcore.enums;
 import androidx.annotation.Nullable;
 
 public enum CardAttribute {
-    None(0),
+    //None(0),
     Earth(0x01, 1010),
     Water(0x02, 1011),
     Fire(0x04, 1012),

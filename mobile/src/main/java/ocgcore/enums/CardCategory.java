@@ -1,38 +1,38 @@
 package ocgcore.enums;
 
 public enum CardCategory {
-    None(0),
-    DESTROY(0x1, 1100),//破坏效果
-    RELEASE(0x2, 1101),//解放效果
-    REMOVE(0x4, 1102),//除外效果
-    TOHAND(0x8, 1103),//加入手牌效果
-    TODECK(0x10, 1104),//回卡组效果
-    TOGRAVE(0x20, 1105),//送去墓地效果
-    DECKDES(0x40, 1106),//卡组破坏效果
-    HANDES(0x80, 1107),//手牌破坏效果
-    SUMMON(0x100, 1108),//含召唤的效果
-    SPECIAL_SUMMON(0x200, 1109),//含特殊召唤的效果
-    TOKEN(0x400, 1110),//含衍生物效果
-    FLIP(0x800, 1111),//含翻转效果
-    POSITION(0x1000, 1112),//改变表示形式效果
-    CONTROL(0x2000, 1113),//改变控制权效果
-    DISABLE(0x4000, 1114),//使效果无效效果
-    DISABLE_SUMMON(0x8000, 1115),//无效召唤效果
-    DRAW(0x10000, 1116),//抽卡效果
-    SEARCH(0x20000, 1117),//检索卡组效果
-    EQUIP(0x40000, 1118),//装备效果
-    DAMAGE(0x80000, 1119),//伤害效果
-    RECOVER(0x100000, 1120),//回复效果
-    ATKCHANGE(0x200000, 1121),//改变攻击效果
-    DEFCHANGE(0x400000, 1122),//改变防御效果
-    COUNTER(0x800000, 1123),//指示物效果
-    COIN(0x1000000, 1124),//硬币效果
-    DICE(0x2000000, 1125),//骰子效果
-    LEAVE_GRAVE(0x4000000, 1126),//离开墓地效果
-    LVCHANGE(0x8000000, 1127),//改变等级效果
-    NEGATE(0x10000000, 1128),//融合相关
-    ANNOUNCE(0x20000000, 1129),//同调相关
-    FUSION_SUMMON(0x40000000, 1130),//超量相关
+    //None(0),
+    DESTROY_SPELL_TRAP(0x1, 1100),//魔陷破坏
+    DESTROY_MONSTER(0x2, 1101),//怪兽破坏
+    BANISH(0x4, 1102),//卡片除外
+    TOGRAVEYARD(0x8, 1103),//送去墓地
+    RETURNTOHAND(0x10, 1104),//返回手卡
+    RETURNTODECK(0x20, 1105),//返回卡组
+    DESTROY_HAND(0x40, 1106),//手卡破坏
+    DESTROY_DECK(0x80, 1107),//卡组破坏
+    DRAW(0x100, 1108),//抽卡辅助
+    SEARCH(0x200, 1109),//卡组检索
+    RECOVERY(0x400, 1110),//卡片回收
+    POSITION(0x800, 1111),//表示形式
+    CONTROL(0x1000, 1112),//控制权
+    CHANGE_ATK_DEF(0x2000, 1113),//攻守变化
+    PIERCING(0x4000, 1114),//穿刺伤害
+    REPEAT_ATTACK(0x8000, 1115),//多次攻击
+    LIMIT_ATTACK(0x10000, 1116),//攻击限制
+    DIRECT_ATTACK(0x20000, 1117),//直接攻击
+    SPECIAL_SUMMON(0x40000, 1118),//特殊召唤
+    TOKEN(0x80000, 1119),//衍生物
+    RACE_RELATED(0x100000, 1120),//种族相关
+    ATTRIBUTE_RELATED(0x200000, 1121),//属性相关
+    DAMAGE_LP(0x400000, 1122),//LP伤害
+    RECOVER_LP(0x800000, 1123),//LP回复
+    UNDESTORYABLE(0x1000000, 1124),//破坏耐性
+    UNEFFECTIVE(0x2000000, 1125),//效果耐性
+    COUNTER(0x4000000, 1126),//指示物
+    GAMBLE(0x8000000, 1127),//幸运
+    FUSION_RELATED(0x10000000, 1128),//融合相关
+    SYNCHRO_RELATED(0x20000000, 1129),//同调相关
+    XYZ_RELATED(0x40000000, 1130),//超量相关
     NEGATE_EFFECT(0x80000000L, 1131);//效果无效
 
     private long value = 0;

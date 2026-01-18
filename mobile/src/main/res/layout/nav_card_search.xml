@@ -144,6 +144,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="15dp"
                 android:layout_marginVertical="2dp"
                 android:orientation="vertical">
 
@@ -151,7 +152,6 @@
                     android:id="@+id/ll_setcode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="15dp"
                     android:background="@drawable/veil"
                     android:orientation="horizontal">
 
@@ -171,26 +171,13 @@
                         android:textColor="#FFFFFF" />
                 </LinearLayout>
 
-                <LinearLayout
+                <cn.garymb.ygomobile.ui.widget.SearchableSpinner
+                    android:id="@+id/sp_setcode"
+                    style="@style/itemSpinnerStyle"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/label_width_small"
-                    android:orientation="horizontal">
-
-                    <cn.garymb.ygomobile.ui.widget.SearchableSpinner
-                        android:id="@+id/sp_setcode"
-                        style="@style/itemSpinnerStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="@dimen/label_width_small"
-                        android:layout_weight="1"
-                        app:searchTitle="@string/label_set" />
-
-                    <androidx.appcompat.widget.AppCompatSpinner
-                        android:id="@+id/sp_category"
-                        style="@style/itemSpinnerStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1" />
-                </LinearLayout>
+                    android:layout_weight="1"
+                    app:searchTitle="@string/label_set" />
             </LinearLayout>
             <!-- 效果类型 -->
             <LinearLayout
@@ -202,6 +189,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="15dp"
                     android:orientation="vertical">
 
                     <LinearLayout
@@ -240,7 +228,7 @@
                         android:id="@+id/gl_category"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="6"
+                        android:columnCount="7"
                         android:rowCount="3">
 
                         <Button
