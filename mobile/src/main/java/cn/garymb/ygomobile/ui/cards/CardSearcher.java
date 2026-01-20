@@ -211,10 +211,10 @@ public class CardSearcher implements View.OnClickListener {
 
         //TODO这些组件需要替换成多选界面
         // 字段
-        setCodeList = new ArrayList<>();
-        setCodeSpinner = findViewById(R.id.sp_setcode);
-        boolean setcode_isAnd = false;
 
+        setCodeSpinner = findViewById(R.id.sp_setcode);
+        setcode_isAnd = false;
+        setCodeList = new ArrayList<>();
         //
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
@@ -1540,6 +1540,7 @@ public class CardSearcher implements View.OnClickListener {
 
     private void search() {
         if (mICardSearcher != null) {
+            Log.i("cardsearcher", "setcodeList: " + setCodeList.toString());
             // 判断基本卡片类型选择状态
             boolean hasBasicSpell = typeList.contains(CardType.Spell.getId());
             boolean hasBasicTrap = typeList.contains(CardType.Trap.getId());
