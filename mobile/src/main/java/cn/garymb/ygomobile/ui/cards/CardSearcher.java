@@ -28,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.ui.widget.SearchableListDialog;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -127,7 +129,7 @@ public class CardSearcher implements View.OnClickListener {
     private ImageButton[] pendulumScaleButtons;
     private List<Integer> pendulumScaleList;
     // 字段
-    private final Spinner setCodeSpinner;
+    private final LinearLayout tag_setcode;
     List<Long> setCodeList;
     boolean setcode_isAnd;
 
@@ -212,7 +214,7 @@ public class CardSearcher implements View.OnClickListener {
         //TODO这些组件需要替换成多选界面
         // 字段
 
-        setCodeSpinner = findViewById(R.id.sp_setcode);
+        tag_setcode = findViewById(R.id.tag_setcode);
         setcode_isAnd = false;
         setCodeList = new ArrayList<>();
         //
@@ -409,7 +411,7 @@ public class CardSearcher implements View.OnClickListener {
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
         initLimitListSpinners(limitListSpinner);
         initGenesysLimitListSpinners(genesys_limitListSpinner);
-        initSetNameSpinners(setCodeSpinner);
+        initSetnameSearchFeature();
     }
 
     protected <T extends View> T findViewById(int id) {
@@ -644,18 +646,86 @@ public class CardSearcher implements View.OnClickListener {
         initGenesysLimitListSpinners(spinner);
     }
 
-    private void initSetNameSpinners(Spinner spinner) {
+    private void initSetnameSearchFeature() {
+        // 找到 setcode 相关的控件并添加点击事件
+        tag_setcode.setOnClickListener(v -> {
+            showSetnameSearchableDialog();
+        });
+    }
+
+    private void showSetnameSearchableDialog() {
+        // 获取所有 setname 数据
         List<CardSet> setnames = mStringManager.getCardSets();
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        items.add(new SimpleSpinnerItem(0, getString(R.string.label_set)));
-        items.add(new SimpleSpinnerItem(-1, getString(R.string.label_set_No_Setcode)));
+
+        // 创建用于显示的列表和映射
+        List<Object> displayItems = new ArrayList<>();
+        List<CardSet> setcode = new ArrayList<>();
+
+        // 添加"无字段"选项
+        displayItems.add(getString(R.string.label_set_No_Setcode));
+        setcode.add(null); // 对应"无字段"选项
+
+        // 添加所有 setname
         for (CardSet set : setnames) {
-            items.add(new SimpleSpinnerItem(set.getCode(), set.getName()));
+            displayItems.add(set.getName());
+            setcode.add(set);
         }
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
+
+        // 创建 SearchableListDialog
+        SearchableListDialog dialog = new SearchableListDialog(mContext);
+        dialog.setTitle(getString(R.string.label_set));
+
+        // 设置点击监听器
+        dialog.setOnSearchableItemClickListener((item, position) -> {
+            if (position == 0) {
+                // 处理"无setcode"选项
+                if (!setCodeList.contains(-1L)) {
+                    setCodeList.add(-1L);
+                    addSetcodeTag(getString(R.string.label_set_No_Setcode), -1L);
+                }
+            } else {
+                // 从映射中获取 CardSet 对象
+                CardSet selectedSet = setcode.get(position);
+                if (selectedSet != null) {
+                    long setCode = selectedSet.getCode();
+                    String setName = selectedSet.getName();
+
+                    // 添加到 setCodeList (避免重复)
+                    if (!setCodeList.contains(setCode)) {
+                        setCodeList.add(setCode);
+                        addSetcodeTag(setName, setCode);
+                    }
+                }
+            }
+        });
+
+        // 显示对话框
+        dialog.show(displayItems);
+    }
+
+
+    // 在界面上添加 setcode 标签
+    private void addSetcodeTag(String setName, long setCode) {
+        // 创建标签容器布局
+        LinearLayout tagLayout = new LinearLayout(mContext);
+        tagLayout.setOrientation(LinearLayout.HORIZONTAL);
+        tagLayout.setBackgroundResource(R.drawable.radius); // 使用适当的背景资源
+        tagLayout.setPadding(8, 4, 8, 4);
+
+        // 创建标签文本
+        TextView tagView = new TextView(mContext);
+        tagView.setText(setName);
+        tagView.setTextSize(14);
+        tagView.setPadding(8, 0, 8, 0);
+        tagView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        // 将文本和关闭图标添加到标签容器
+        tagLayout.addView(tagView);
+
+        // 将新标签添加到容器中
+        tag_setcode.addView(tagLayout);
     }
 
     private void initCategoryButtons() {
@@ -1712,7 +1782,6 @@ public class CardSearcher implements View.OnClickListener {
         keyWord.setText(null);
         reset(otSpinner);
         reset(limitSpinner.getVisibility() == View.VISIBLE ? limitSpinner : genesys_limitSpinner);
-        reset(setCodeSpinner);
         resetCategory();
         resetCardType();
         resetMonster();
