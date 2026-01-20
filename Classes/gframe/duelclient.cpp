@@ -1104,11 +1104,11 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		break;
 	}
 	case STOC_HS_PLAYER_ENTER: {
-		if (len < 1 + STOC_HS_PlayerEnter_size)
+		if (len < 1 + sizeof(STOC_HS_PlayerEnter))
 			return;
 		mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::PLAYER_ENTER);
 		STOC_HS_PlayerEnter packet;
-		std::memcpy(&packet, pdata, STOC_HS_PlayerEnter_size);
+		std::memcpy(&packet, pdata, sizeof(STOC_HS_PlayerEnter));
 		auto pkt = &packet;
 		if(pkt->pos > 3)
 			break;
@@ -4531,6 +4531,19 @@ void DuelClient::SendResponse() {
 		mainGame->dInfo.time_player = 2;
 		SendBufferToServer(CTOS_RESPONSE, response_buf, response_len);
 	}
+}
+void DuelClient::SendUpdateDeck(const Deck& deck) {
+	std::vector<unsigned char> deckbuf;
+	deckbuf.reserve(1024);
+	BufferIO::VectorWrite<int32_t>(deckbuf, static_cast<int32_t>(deck.main.size() + deck.extra.size()));
+	BufferIO::VectorWrite<int32_t>(deckbuf, static_cast<int32_t>(deck.side.size()));
+	for (const auto& card: deck.main)
+		BufferIO::VectorWrite<uint32_t>(deckbuf, card->first);
+	for (const auto& card: deck.extra)
+		BufferIO::VectorWrite<uint32_t>(deckbuf, card->first);
+	for (const auto& card: deck.side)
+		BufferIO::VectorWrite<uint32_t>(deckbuf, card->first);
+	SendBufferToServer(CTOS_UPDATE_DECK, deckbuf.data(), deckbuf.size());
 }
 /**
  * @brief 开始刷新局域网主机列表

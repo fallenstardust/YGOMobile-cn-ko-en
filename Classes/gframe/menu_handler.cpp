@@ -21,18 +21,8 @@ void UpdateDeck() {
 	BufferIO::CopyWStr(mainGame->cbDeckSelect->getItem(mainGame->cbDeckSelect->getSelected()), mainGame->gameConf.lastdeck, 64);
 	BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
     irr::android::setLastDeck(mainGame->appMain, linebuf);
-		
-	unsigned char deckbuf[1024]{};
-	auto pdeck = deckbuf;
-	BufferIO::Write<int32_t>(pdeck, static_cast<int32_t>(deckManager.current_deck.main.size() + deckManager.current_deck.extra.size()));
-	BufferIO::Write<int32_t>(pdeck, static_cast<int32_t>(deckManager.current_deck.side.size()));
-	for(size_t i = 0; i < deckManager.current_deck.main.size(); ++i)
-		BufferIO::Write<uint32_t>(pdeck, deckManager.current_deck.main[i]->first);
-	for(size_t i = 0; i < deckManager.current_deck.extra.size(); ++i)
-		BufferIO::Write<uint32_t>(pdeck, deckManager.current_deck.extra[i]->first);
-	for(size_t i = 0; i < deckManager.current_deck.side.size(); ++i)
-		BufferIO::Write<uint32_t>(pdeck, deckManager.current_deck.side[i]->first);
-	DuelClient::SendBufferToServer(CTOS_UPDATE_DECK, deckbuf, pdeck - deckbuf);
+
+	DuelClient::SendUpdateDeck(deckManager.current_deck);
 }
 
 void ShowHostPrepareDeckManage(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDecks) {
