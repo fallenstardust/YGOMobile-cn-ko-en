@@ -143,4 +143,5 @@ dependencies {
     implementation 'com.github.feihuaduo:YGODuelAssistantLib:1.0.8'
     // jsoup HTML parser library @ https://jsoup.org/
     implementation 'org.jsoup:jsoup:1.15.3'
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
 }

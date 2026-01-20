@@ -42,12 +42,8 @@
                         android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_weight="1"
-                        android:text="@string/label_ot"
-                        android:textColor="#FFFFFF" />
+                        style="@style/Title"
+                        android:text="@string/label_ot" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -96,12 +92,8 @@
                         android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_weight="1"
-                        android:text="@string/label_limitlist"
-                        android:textColor="#FFFFFF" />
+                        style="@style/Title"
+                        android:text="@string/label_limitlist" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -163,29 +155,37 @@
                         android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        style="@style/Title"
+                        android:text="@string/label_set" />
+
+                    <ImageButton
+                        android:id="@+id/btn_clear_setcode"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="center"
-                        android:layout_weight="1"
-                        android:text="@string/label_set"
-                        android:textColor="#FFFFFF" />
+                        android:background="@drawable/ic_radius_bg"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/delete" />
                 </LinearLayout>
 
-                <LinearLayout
+                <com.google.android.flexbox.FlexboxLayout
                     android:id="@+id/tag_setcode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    app:flexWrap="wrap"
+                    app:alignItems="flex_start"
+                    app:alignContent="flex_start"
+                    app:justifyContent="flex_start">
 
                     <TextView
                         android:id="@+id/tv_setcode"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:paddingHorizontal="8dp"
                         android:background="@drawable/selected"
+                        android:paddingHorizontal="8dp"
                         android:text="@string/label_set" />
-                </LinearLayout>
+                </com.google.android.flexbox.FlexboxLayout>
 
             </LinearLayout>
             <!-- 效果类型 -->
@@ -216,21 +216,17 @@
                             android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="1"
-                            android:text="@string/label_category"
-                            android:textColor="#FFFFFF" />
+                            style="@style/Title"
+                            android:text="@string/label_category" />
 
                         <ImageButton
                             android:id="@+id/btn_clear_category"
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:layout_gravity="center"
-                            android:background="@drawable/button_radius_black_transparents"
+                            android:background="@drawable/ic_radius_bg"
                             android:scaleType="fitXY"
-                            android:src="@drawable/clear_deck" />
+                            android:src="@drawable/delete" />
                     </LinearLayout>
 
                     <GridLayout
@@ -425,21 +421,17 @@
                         android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_weight="1"
-                        android:text="@string/label_type"
-                        android:textColor="#FFFFFF" />
+                        style="@style/Title"
+                        android:text="@string/label_type" />
 
                     <ImageButton
                         android:id="@+id/btn_clear_card_type"
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="center"
-                        android:background="@drawable/button_radius_black_transparents"
+                        android:background="@drawable/ic_radius_bg"
                         android:scaleType="fitXY"
-                        android:src="@drawable/clear_deck" />
+                        android:src="@drawable/delete" />
                 </LinearLayout>
 
                 <GridLayout
@@ -476,7 +468,7 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:background="@drawable/veil"
                     android:orientation="horizontal">
 
@@ -488,21 +480,17 @@
                         android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:layout_weight="1"
-                        android:text="@string/label_spelltrap_type"
-                        android:textColor="#FFFFFF" />
+                        style="@style/Title"
+                        android:text="@string/label_spelltrap_type" />
 
                     <ImageButton
                         android:id="@+id/btn_clear_spelltrap_type"
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="center"
-                        android:background="@drawable/button_radius_black_transparents"
+                        android:background="@drawable/ic_radius_bg"
                         android:scaleType="fitXY"
-                        android:src="@drawable/clear_deck" />
+                        android:src="@drawable/delete" />
                 </LinearLayout>
 
                 <GridLayout
@@ -577,21 +565,17 @@
                             android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="1"
-                            android:text="@string/label_attr"
-                            android:textColor="#FFFFFF" />
+                            style="@style/Title"
+                            android:text="@string/label_attr" />
 
                         <ImageButton
                             android:id="@+id/btn_clear_attr"
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:layout_gravity="center"
-                            android:background="@color/transparent"
+                            android:background="@drawable/ic_radius_bg"
                             android:scaleType="fitXY"
-                            android:src="@drawable/clear_deck" />
+                            android:src="@drawable/delete" />
                     </LinearLayout>
 
                     <GridLayout
@@ -660,21 +644,17 @@
                             android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="1"
-                            android:text="@string/label_race"
-                            android:textColor="#FFFFFF" />
+                            style="@style/Title"
+                            android:text="@string/label_race" />
 
                         <ImageButton
                             android:id="@+id/btn_clear_race"
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:layout_gravity="center"
-                            android:background="@drawable/button_radius_black_transparents"
+                            android:background="@drawable/ic_radius_bg"
                             android:scaleType="fitXY"
-                            android:src="@drawable/clear_deck" />
+                            android:src="@drawable/delete" />
                     </LinearLayout>
 
                     <GridLayout
@@ -852,7 +832,7 @@
                             <RadioGroup
                                 android:id="@+id/radio_group"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
+                                android:layout_height="20dp"
                                 android:layout_gravity="center"
                                 android:layout_weight="1"
                                 android:orientation="horizontal">
@@ -860,7 +840,7 @@
                                 <RadioButton
                                     android:id="@+id/rb_and"
                                     android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
+                                    android:layout_height="match_parent"
                                     android:buttonTint="#FFFFFF"
                                     android:text="and"
                                     android:textColor="#FFFFFF" />
@@ -877,12 +857,12 @@
 
                             <ImageButton
                                 android:id="@+id/btn_clear_monsterType"
-                                android:layout_width="15dp"
-                                android:layout_height="15dp"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
                                 android:layout_gravity="center"
-                                android:background="@drawable/button_radius_black_transparents"
+                                android:background="@drawable/ic_radius_bg"
                                 android:scaleType="fitXY"
-                                android:src="@drawable/clear_deck" />
+                                android:src="@drawable/delete" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -1001,21 +981,17 @@
                                 android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                             <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:layout_weight="1"
-                                android:text="@string/label_excludeType"
-                                android:textColor="#FFFFFF" />
+                                style="@style/Title"
+                                android:text="@string/label_excludeType" />
 
                             <ImageButton
                                 android:id="@+id/btn_clear_excludeType"
-                                android:layout_width="15dp"
-                                android:layout_height="15dp"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
                                 android:layout_gravity="center"
-                                android:background="@drawable/button_radius_black_transparents"
+                                android:background="@drawable/ic_radius_bg"
                                 android:scaleType="fitXY"
-                                android:src="@drawable/clear_deck" />
+                                android:src="@drawable/delete" />
                         </LinearLayout>
 
                         <GridLayout
@@ -1130,21 +1106,17 @@
                             android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="1"
-                            android:text="@string/label_level"
-                            android:textColor="#FFFFFF" />
+                            style="@style/Title"
+                            android:text="@string/label_level" />
 
                         <ImageButton
                             android:id="@+id/btn_clear_level"
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:layout_gravity="center"
-                            android:background="@drawable/button_radius_black_transparents"
+                            android:background="@drawable/ic_radius_bg"
                             android:scaleType="fitXY"
-                            android:src="@drawable/clear_deck" />
+                            android:src="@drawable/delete" />
                     </LinearLayout>
 
                     <GridLayout
@@ -1230,21 +1202,17 @@
                             android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="1"
-                            android:text="@string/label_pendulum"
-                            android:textColor="#FFFFFF" />
+                            style="@style/Title"
+                            android:text="@string/label_pendulum" />
 
                         <ImageButton
                             android:id="@+id/btn_clear_pScale"
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:layout_gravity="center"
-                            android:background="@drawable/button_radius_black_transparents"
+                            android:background="@drawable/ic_radius_bg"
                             android:scaleType="fitXY"
-                            android:src="@drawable/clear_deck" />
+                            android:src="@drawable/delete" />
                     </LinearLayout>
 
                     <GridLayout

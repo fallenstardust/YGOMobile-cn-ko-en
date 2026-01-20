@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.widget;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
@@ -15,6 +16,8 @@ import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.TextView;
 
+import com.google.android.flexbox.FlexboxLayout;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +32,7 @@ public class SearchableListDialog extends DialogPlus implements
     private OnSearchTextChanged _onSearchTextChanged;
     private final SearchView _searchView;
     private final List<Object> items = new ArrayList<>();
-    private LinearLayout tagsContainer;
+    private final FlexboxLayout tagsContainer;
 
     public SearchableListDialog(Context context) {
         super(context);

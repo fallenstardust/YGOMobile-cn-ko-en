@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AnimationUtils;
@@ -30,6 +31,8 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
+
+import com.google.android.flexbox.FlexboxLayout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,7 +132,7 @@ public class CardSearcher implements View.OnClickListener {
     private ImageButton[] pendulumScaleButtons;
     private List<Integer> pendulumScaleList;
     // 字段
-    private final LinearLayout tag_setcode;
+    private final FlexboxLayout tag_setcode;
     List<Long> setCodeList;
     boolean setcode_isAnd;
 
@@ -703,18 +706,18 @@ public class CardSearcher implements View.OnClickListener {
         dialog.show(displayItems);
     }
 
-
     // 在界面上添加 setcode 标签
     private void addSetcodeTag(String setName, long setCode) {
         // 创建标签容器布局
         LinearLayout tagLayout = new LinearLayout(mContext);
         tagLayout.setOrientation(LinearLayout.HORIZONTAL);
-        tagLayout.setBackgroundResource(R.drawable.radius); // 使用适当的背景资源
+        tagLayout.setBackgroundResource(R.drawable.selected); // 使用适当的背景资源
         tagLayout.setPadding(8, 4, 8, 4);
 
         // 创建标签文本
         TextView tagView = new TextView(mContext);
         tagView.setText(setName);
+        tagView.setGravity(Gravity.CENTER);
         tagView.setTextSize(14);
         tagView.setPadding(8, 0, 8, 0);
         tagView.setLayoutParams(new LinearLayout.LayoutParams(
