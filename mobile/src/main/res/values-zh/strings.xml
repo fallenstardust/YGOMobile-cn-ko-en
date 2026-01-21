@@ -396,4 +396,5 @@
     <string name="pwd_warning">请填写你的密码！</string>
     <string name="like_deck_thumb">为卡组点赞</string>
     <string name="pre_view">预览</string>
+    <string name="select_setcode">点击添加要搜索的字段</string>
 </resources>

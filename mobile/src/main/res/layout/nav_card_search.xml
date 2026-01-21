@@ -214,7 +214,8 @@
                         android:layout_gravity="center"
                         android:background="@drawable/selected"
                         android:paddingHorizontal="8dp"
-                        android:text="@string/label_set" />
+                        android:layout_margin="@dimen/dp_10"
+                        android:text="@string/select_setcode" />
                 </com.google.android.flexbox.FlexboxLayout>
 
             </LinearLayout>

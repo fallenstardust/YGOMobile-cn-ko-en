@@ -391,6 +391,7 @@
     <string name="label_spelltrap_type">Mágica/Trampa:</string>
     <string name="label_monsterType">Tipo de Monstruo:</string>
     <string name="label_excludeType">Tipo de Excluido:</string>
+    <string name="select_setcode">Adicionar Arquétipo de Pesquisa</string>
 </resources>
 
 

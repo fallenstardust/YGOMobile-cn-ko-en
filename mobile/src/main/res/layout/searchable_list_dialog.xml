@@ -5,13 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <!-- 新增标签容器 -->
-
-
+    <!-- 标签容器 -->
     <com.google.android.flexbox.FlexboxLayout
         android:id="@+id/tagsContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="@dimen/dp_10"
         app:flexWrap="wrap"
         app:alignItems="flex_start"
         app:alignContent="flex_start"

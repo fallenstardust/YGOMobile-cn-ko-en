@@ -22,6 +22,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class SearchableListDialog extends DialogPlus implements
         SearchView.OnQueryTextListener, SearchView.OnCloseListener {
@@ -111,11 +112,18 @@ public class SearchableListDialog extends DialogPlus implements
             tagLayout.setOrientation(LinearLayout.HORIZONTAL);
             tagLayout.setBackgroundResource(R.drawable.selected); // 需要创建标签背景
             tagLayout.setPadding(8, 4, 8, 4);
+            // 创建布局参数并设置边距
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(2, 2, 2, 2);
+            tagLayout.setLayoutParams(params);
 
             // 创建标签文本
             TextView tagView = new TextView(getContext());
             tagView.setText(tagText);
-            tagView.setTextSize(16);
+            tagView.setTextColor(YGOUtil.c(R.color.gold));
             tagView.setPadding(8, 0, 8, 0);
             tagView.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,

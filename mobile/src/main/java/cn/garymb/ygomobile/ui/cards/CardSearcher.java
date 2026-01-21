@@ -792,12 +792,19 @@ public class CardSearcher implements View.OnClickListener {
         tagLayout.setOrientation(LinearLayout.HORIZONTAL);
         tagLayout.setBackgroundResource(R.drawable.selected); // 使用适当的背景资源
         tagLayout.setPadding(8, 4, 8, 4);
+        // 创建布局参数并设置边距
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(2, 2, 2, 2);
+        tagLayout.setLayoutParams(params); // 应用布局参数
 
         // 创建标签文本
         TextView tagView = new TextView(mContext);
         tagView.setText(setName);
         tagView.setGravity(Gravity.CENTER);
-        tagView.setTextSize(14);
+        tagView.setTextColor(YGOUtil.c(R.color.gold));
         tagView.setPadding(8, 0, 8, 0);
         tagView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,

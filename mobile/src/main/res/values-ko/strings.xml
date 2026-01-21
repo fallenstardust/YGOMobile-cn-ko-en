@@ -410,4 +410,5 @@
     <string name="label_spelltrap_type">마법/함정:</string>
     <string name="label_monsterType">몬스터 타입：</string>
     <string name="label_excludeType">제외 타입:</string>
+    <string name="select_setcode">클릭으로 검색 카드군 추가</string>
 </resources>

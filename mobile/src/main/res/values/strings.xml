@@ -422,4 +422,5 @@
     <string name="label_spelltrap_type">Spell/Trap:</string>
     <string name="label_monsterType">Monster Type:</string>
     <string name="label_excludeType">Excluded Type:</string>
+    <string name="select_setcode">Add Search Series</string>
 </resources>
