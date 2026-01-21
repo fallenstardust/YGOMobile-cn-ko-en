@@ -132,7 +132,7 @@
     <string name="label_level">Nvl/Rng/Lnk:</string>
     <string name="label_attr">Atributo:</string>
     <string name="label_category">Categoría</string>
-    <string name="linkmarker">F.Enlace▶</string>>
+    <string name="linkmarker">F.Enlace:</string>>
     <string name="searching">Cargando</string>
     <string name="card_faq">Ver reglas</string>
     <string name="card_related">Relacionadas</string>

@@ -147,7 +147,7 @@
     <string name="label_set_No_Setcode">#No Series included</string>
     <string name="label_level">Level/Rank/LinkArrows:</string>
     <string name="label_attr">Attribute:</string>
-    <string name="linkmarker">LinkArrows▶</string>>
+    <string name="linkmarker">LinkArrows:</string>>
     <string name="label_category">Category</string>
     <string name="searching">Search Cards</string>
     <string name="card_faq">FAQ</string>

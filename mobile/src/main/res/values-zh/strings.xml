@@ -133,7 +133,7 @@
     <string name="label_level">等级/阶级/连接数：</string>
     <string name="label_attr">属性：</string>
     <string name="label_category">效果分类：</string>
-    <string name="linkmarker">连接标记▶</string>>
+    <string name="linkmarker">连接标记：</string>>
     <string name="searching">读取中</string>
     <string name="card_faq">裁定查询</string>
     <string name="card_related">关联卡片</string>

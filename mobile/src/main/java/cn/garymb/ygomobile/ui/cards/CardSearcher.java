@@ -140,7 +140,6 @@ public class CardSearcher implements View.OnClickListener {
 
     private final EditText atkText;
     private final EditText defText;
-    private final Button LinkMarkerButton;
     private final Button searchButton;
     private final Button resetButton;
     private final View view;
@@ -225,12 +224,10 @@ public class CardSearcher implements View.OnClickListener {
         //
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
-        LinkMarkerButton = findViewById(R.id.btn_linkmarker);
         myFavButton = findViewById(R.id.btn_my_fav);
         searchButton = findViewById(R.id.btn_search);
         resetButton = findViewById(R.id.btn_reset);
         myFavButton.setOnClickListener(this);
-        LinkMarkerButton.setOnClickListener(this);
         searchButton.setOnClickListener(this);
         resetButton.setOnClickListener(this);
 
@@ -259,68 +256,6 @@ public class CardSearcher implements View.OnClickListener {
                 hideFavorites(true);
             } else {
                 showFavorites(true);
-            }
-        });
-
-        LinkMarkerButton.setOnClickListener(v -> {
-            Arrays.fill(BtnVals, "0");
-            DialogPlus viewDialog = new DialogPlus(mContext);
-            viewDialog.setContentView(R.layout.item_linkmarker);
-            viewDialog.setTitle(R.string.ClickLinkArrows);
-            viewDialog.show();
-            int[] ids = new int[]{
-                    R.id.button_1,
-                    R.id.button_2,
-                    R.id.button_3,
-                    R.id.button_4,
-                    R.id.button_5,
-                    R.id.button_6,
-                    R.id.button_7,
-                    R.id.button_8,
-                    R.id.button_9,
-            };
-            int[] enImgs = new int[]{
-                    R.drawable.left_bottom_1,
-                    R.drawable.bottom_1,
-                    R.drawable.right_bottom_1,
-                    R.drawable.left_1,
-                    0,
-                    R.drawable.right_1,
-                    R.drawable.left_top_1,
-                    R.drawable.top_1,
-                    R.drawable.right_top_1,
-            };
-            int[] disImgs = new int[]{
-                    R.drawable.left_bottom_0,
-                    R.drawable.bottom_0,
-                    R.drawable.right_bottom_0,
-                    R.drawable.left_0,
-                    0,
-                    R.drawable.right_0,
-                    R.drawable.left_top_0,
-                    R.drawable.top_0,
-                    R.drawable.right_top_0,
-            };
-            for (int i = 0; i < ids.length; i++) {
-                final int index = i;
-                viewDialog.findViewById(ids[index]).setOnClickListener((btn) -> {
-                    if (index == 4) {
-                        String mLinkStr = BtnVals[8] + BtnVals[7] + BtnVals[6] + BtnVals[5] + "0"
-                                + BtnVals[3] + BtnVals[2] + BtnVals[1] + BtnVals[0];
-                        lineKey = Integer.parseInt(mLinkStr, 2);
-                        if (viewDialog.isShowing()) {
-                            viewDialog.dismiss();
-                        }
-                    } else {
-                        if ("0".equals(BtnVals[index])) {
-                            btn.setBackgroundResource(enImgs[index]);
-                            BtnVals[index] = "1";
-                        } else {
-                            btn.setBackgroundResource(disImgs[index]);
-                            BtnVals[index] = "0";
-                        }
-                    }
-                });
             }
         });
         genesys_Switch.setChecked(mSettings.getGenesysMode() != 0);
@@ -411,6 +346,7 @@ public class CardSearcher implements View.OnClickListener {
         initExcludeTypeButton();
         initLevelButtons();
         initPendulumScaleButtons();
+        initLinkMarkerButton();
         initOtSpinners(otSpinner);
         initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
@@ -1683,6 +1619,58 @@ public class CardSearcher implements View.OnClickListener {
         view.findViewById(R.id.btn_clear_pScale).setOnClickListener(v -> {
             resetPScale();
         });
+    }
+
+    private void initLinkMarkerButton() {
+        Arrays.fill(BtnVals, "0");
+        int[] ids = new int[]{
+                R.id.button_1,
+                R.id.button_2,
+                R.id.button_3,
+                R.id.button_4,
+                R.id.button_5,
+                R.id.button_6,
+                R.id.button_7,
+                R.id.button_8,
+                R.id.button_9,
+        };
+        int[] enImgs = new int[]{
+                R.drawable.left_bottom_1,
+                R.drawable.bottom_1,
+                R.drawable.right_bottom_1,
+                R.drawable.left_1,
+                0,
+                R.drawable.right_1,
+                R.drawable.left_top_1,
+                R.drawable.top_1,
+                R.drawable.right_top_1,
+        };
+        int[] disImgs = new int[]{
+                R.drawable.left_bottom_0,
+                R.drawable.bottom_0,
+                R.drawable.right_bottom_0,
+                R.drawable.left_0,
+                0,
+                R.drawable.right_0,
+                R.drawable.left_top_0,
+                R.drawable.top_0,
+                R.drawable.right_top_0,
+        };
+        for (int i = 0; i < ids.length; i++) {
+            final int index = i;
+            view.findViewById(ids[index]).setOnClickListener((btn) -> {
+                if ("0".equals(BtnVals[index])) {
+                    btn.setBackgroundResource(enImgs[index]);
+                    BtnVals[index] = "1";
+                } else {
+                    btn.setBackgroundResource(disImgs[index]);
+                    BtnVals[index] = "0";
+                }
+                String mLinkStr = BtnVals[8] + BtnVals[7] + BtnVals[6] + BtnVals[5] + "0"
+                        + BtnVals[3] + BtnVals[2] + BtnVals[1] + BtnVals[0];
+                lineKey = Integer.parseInt(mLinkStr, 2);
+            });
+        }
     }
 
     private void reset(Spinner spinner) {

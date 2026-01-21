@@ -143,7 +143,7 @@
     <string name="label_set_No_Setcode">#카드 세트가 포함되지 않음</string>
     <string name="label_level">레벨/랭크/링크:</string>
     <string name="label_attr">속성:</string>
-    <string name="linkmarker">링크 마커▶</string>>
+    <string name="linkmarker">링크 마커:</string>>
     <string name="label_category">카테고리</string>
     <string name="searching">카드 검색</string>
     <string name="card_faq">FAQ</string>

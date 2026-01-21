@@ -136,6 +136,14 @@
         <item name="android:layout_weight">1</item>
         <item name="android:textColor">@color/white</item>
     </style>
+    <style name="ImageButton_close">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">20dp</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:background">@drawable/ic_radius_bg</item>
+        <item name="android:scaleType">fitXY</item>
+        <item name="android:src">@drawable/delete</item>
+    </style>
     <!-- 筛选按钮通用样式 -->
     <style name="CardFilterBtn">
         <item name="android:layout_width">0dp</item>

@@ -54,7 +54,7 @@
             android:layout_height="70dp"
             android:background="@drawable/button_bg"
             android:text="OK"
-            android:visibility="visible" />
+            android:visibility="invisible" />
 
         <Button
             android:id="@+id/button_6"

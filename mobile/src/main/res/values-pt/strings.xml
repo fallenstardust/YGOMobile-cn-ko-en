@@ -123,7 +123,7 @@
     <string name="label_level">Nvl/Rng/Lnk:</string>
     <string name="label_attr">Atributo:</string>
 	<string name="label_category">Categoria</string>
-    <string name="linkmarker">F.Enlace▶</string>
+    <string name="linkmarker">F.Enlace:</string>
     <string name="searching">Buscar</string>
     <string name="card_faq">FAQ</string>
     <string name="no_webbrowser">Nenhum navegador da web instalado</string>
