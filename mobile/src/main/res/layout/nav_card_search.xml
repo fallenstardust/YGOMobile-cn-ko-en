@@ -155,8 +155,38 @@
                         android:src="@drawable/baseline_keyboard_arrow_up_24" />
 
                     <TextView
-                        style="@style/Title"
-                        android:text="@string/label_set" />
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:text="@string/label_set"
+                        android:textColor="@color/white"/>
+
+                    <RadioGroup
+                        android:id="@+id/radio_group_setcode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:id="@+id/rb_and_setcode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:buttonTint="#FFFFFF"
+                            android:text="and"
+                            android:textColor="#FFFFFF" />
+
+                        <RadioButton
+                            android:id="@+id/rb_or_setcode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:buttonTint="#FFFFFF"
+                            android:checked="true"
+                            android:text="or"
+                            android:textColor="#FFFFFF" />
+                    </RadioGroup>
 
                     <ImageButton
                         android:id="@+id/btn_clear_setcode"
@@ -827,7 +857,7 @@
                                 android:layout_gravity="center"
                                 android:layout_weight="1"
                                 android:text="@string/label_monsterType"
-                                android:textColor="#FFFFFF" />
+                                android:textColor="@color/white" />
 
                             <RadioGroup
                                 android:id="@+id/radio_group"

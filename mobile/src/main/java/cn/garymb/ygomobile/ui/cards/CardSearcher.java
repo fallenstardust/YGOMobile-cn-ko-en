@@ -658,6 +658,14 @@ public class CardSearcher implements View.OnClickListener {
         btn_clear_setcode.setOnClickListener(v -> {
             resetSetcode();
         });
+        RadioGroup radioGroupSetcode = findViewById(R.id.radio_group_setcode);// 切换怪兽类型内部逻辑
+        radioGroupSetcode.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rb_and_setcode) {
+                setcode_isAnd = true;
+            } else if (checkedId == R.id.rb_or_setcode) {
+                setcode_isAnd = false;
+            }
+        });
         // 初始化时确保提示文本正确显示
         updateSetcodeHintVisibility();
     }
