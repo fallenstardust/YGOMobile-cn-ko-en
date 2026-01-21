@@ -1283,7 +1283,7 @@
                     android:orientation="vertical">
 
                     <LinearLayout
-
+                        android:id="@+id/ll_linkmarker"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@drawable/veil"
@@ -1300,17 +1300,14 @@
                             style="@style/Title"
                             android:text="@string/linkmarker" />
 
-                        <ImageButton
-                            android:id="@+id/btn_clear_linkmarker"
-                            style="@style/ImageButton_close" />
                     </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/ll_linkmarker"
-                        android:layout_width="match_parent"
+                        android:id="@+id/ll_linkcontrol"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:layout_marginVertical="2dp"
+                        android:layout_marginVertical="5dp"
                         android:orientation="horizontal">
 
                         <include

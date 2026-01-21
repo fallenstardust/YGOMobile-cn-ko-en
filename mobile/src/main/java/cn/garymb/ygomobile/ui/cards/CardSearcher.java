@@ -137,7 +137,12 @@ public class CardSearcher implements View.OnClickListener {
     private ImageView iv_hide_pendulum_scale;
     private ImageButton[] pendulumScaleButtons;
     private List<Integer> pendulumScaleList;
-
+    // 连接箭头
+    private LinearLayout ll_linkControl;
+    private ImageView iv_hide_linkmarker;
+    private Button[] linkButton;
+    private int[] disImgs;
+    private int lineKey;
     private final EditText atkText;
     private final EditText defText;
     private final Button searchButton;
@@ -150,7 +155,7 @@ public class CardSearcher implements View.OnClickListener {
     protected StringManager mStringManager;
     protected LimitManager mLimitManager;
     protected AppsSettings mSettings;
-    private int lineKey;
+
     private CallBack mCallBack;
     private boolean mShowFavorite;
 
@@ -169,7 +174,12 @@ public class CardSearcher implements View.OnClickListener {
         genesys_limitSpinner = findViewById(R.id.sp_genesys_limit);//初始化genesys禁限选项布局
         limitListSpinner = findViewById(R.id.sp_limit_list);
         genesys_limitListSpinner = findViewById(R.id.sp_genesys_limit_list);//初始化genesys禁卡表布局
-
+        // 字段
+        iv_hide_setCode = findViewById(R.id.iv_hide_setCode);
+        btn_clear_setcode = findViewById(R.id.btn_clear_setcode);
+        tag_setcode = findViewById(R.id.tag_setcode);
+        setcode_isAnd = false;
+        setCodeList = new ArrayList<>();
         // 效果类型宫格布局
         gl_category = findViewById(R.id.gl_category);
         iv_hide_category = findViewById(R.id.iv_hide_category);
@@ -214,14 +224,10 @@ public class CardSearcher implements View.OnClickListener {
         gl_pendulum_scale = findViewById(R.id.gl_pScale);
         iv_hide_pendulum_scale = findViewById(R.id.iv_hide_pScale);
         pendulumScaleList = new ArrayList<>();
+        // 连接箭头布局
+        ll_linkControl = findViewById(R.id.ll_linkcontrol);
+        iv_hide_linkmarker = findViewById(R.id.iv_hide_linkmarker);
 
-        // 字段
-        iv_hide_setCode = findViewById(R.id.iv_hide_setCode);
-        btn_clear_setcode = findViewById(R.id.btn_clear_setcode);
-        tag_setcode = findViewById(R.id.tag_setcode);
-        setcode_isAnd = false;
-        setCodeList = new ArrayList<>();
-        //
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
         myFavButton = findViewById(R.id.btn_my_fav);
@@ -1623,16 +1629,16 @@ public class CardSearcher implements View.OnClickListener {
 
     private void initLinkMarkerButton() {
         Arrays.fill(BtnVals, "0");
-        int[] ids = new int[]{
-                R.id.button_1,
-                R.id.button_2,
-                R.id.button_3,
-                R.id.button_4,
-                R.id.button_5,
-                R.id.button_6,
-                R.id.button_7,
-                R.id.button_8,
-                R.id.button_9,
+       linkButton = new Button[]{
+               view.findViewById(R.id.button_1),
+               view.findViewById(R.id.button_2),
+               view.findViewById(R.id.button_3),
+               view.findViewById(R.id.button_4),
+               view.findViewById(R.id.button_5),
+               view.findViewById(R.id.button_6),
+               view.findViewById(R.id.button_7),
+               view.findViewById(R.id.button_8),
+               view.findViewById(R.id.button_9)
         };
         int[] enImgs = new int[]{
                 R.drawable.left_bottom_1,
@@ -1645,7 +1651,7 @@ public class CardSearcher implements View.OnClickListener {
                 R.drawable.top_1,
                 R.drawable.right_top_1,
         };
-        int[] disImgs = new int[]{
+        disImgs = new int[]{
                 R.drawable.left_bottom_0,
                 R.drawable.bottom_0,
                 R.drawable.right_bottom_0,
@@ -1656,9 +1662,10 @@ public class CardSearcher implements View.OnClickListener {
                 R.drawable.top_0,
                 R.drawable.right_top_0,
         };
-        for (int i = 0; i < ids.length; i++) {
+        for (int i = 0; i < linkButton.length; i++) {
             final int index = i;
-            view.findViewById(ids[index]).setOnClickListener((btn) -> {
+            Button button = linkButton[index];
+            button.setOnClickListener((btn) -> {
                 if ("0".equals(BtnVals[index])) {
                     btn.setBackgroundResource(enImgs[index]);
                     BtnVals[index] = "1";
@@ -1671,6 +1678,17 @@ public class CardSearcher implements View.OnClickListener {
                 lineKey = Integer.parseInt(mLinkStr, 2);
             });
         }
+        view.findViewById(R.id.ll_linkmarker).setOnClickListener(v -> {
+            if (ll_linkControl.getVisibility() == View.VISIBLE) {
+                ll_linkControl.setVisibility(View.GONE);
+                iv_hide_linkmarker.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetLinkMarker();
+            } else {
+                ll_linkControl.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
+                ll_linkControl.setVisibility(View.VISIBLE);
+                iv_hide_linkmarker.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
+            }
+        });
     }
 
     private void reset(Spinner spinner) {
@@ -1949,6 +1967,7 @@ public class CardSearcher implements View.OnClickListener {
         resetExcludeType();// 重置排除种类按钮为未选中
         resetLevel();// 重置等级按钮为未选中
         resetPScale();// 重置灵摆刻度按钮为未选中
+        resetLinkMarker(); // 重置链接标记按钮为未选中
 
         atkText.setText(null);// 清除输入的攻击力
         defText.setText(null);// 清除输入的守备力
@@ -2007,6 +2026,17 @@ public class CardSearcher implements View.OnClickListener {
             Integer pendulumScaleValue = i;
             pendulumScaleList.remove(pendulumScaleValue);
         }
+    }
+
+    private void resetLinkMarker() {
+        for (int i = 0; i < linkButton.length; i++) {
+            linkButton[i].setSelected(false);
+            if (linkButton[i] != linkButton[4]) {// 跳过第5个按钮
+                linkButton[i].setBackground(mContext.getDrawable(disImgs[i]));
+            }
+
+        }
+        lineKey = 0;
     }
 
     private void resetSpell() {
