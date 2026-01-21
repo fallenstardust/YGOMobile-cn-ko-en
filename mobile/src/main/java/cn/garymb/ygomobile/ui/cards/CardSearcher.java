@@ -133,6 +133,7 @@ public class CardSearcher implements View.OnClickListener {
     private List<Integer> pendulumScaleList;
     // 字段
     private final FlexboxLayout tag_setcode;
+    private ImageButton btn_clear_setcode;
     List<Long> setCodeList;
     boolean setcode_isAnd;
 
@@ -216,7 +217,7 @@ public class CardSearcher implements View.OnClickListener {
 
         //TODO这些组件需要替换成多选界面
         // 字段
-
+        btn_clear_setcode = findViewById(R.id.btn_clear_setcode);
         tag_setcode = findViewById(R.id.tag_setcode);
         setcode_isAnd = false;
         setCodeList = new ArrayList<>();
@@ -650,10 +651,15 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void initSetnameSearchFeature() {
-        // 找到 setcode 相关的控件并添加点击事件
+        // 以布局点击事件作为初始化
         tag_setcode.setOnClickListener(v -> {
             showSetnameSearchableDialog();
         });
+        btn_clear_setcode.setOnClickListener(v -> {
+            resetSetcode();
+        });
+        // 初始化时确保提示文本正确显示
+        updateSetcodeHintVisibility();
     }
 
     private void showSetnameSearchableDialog() {
@@ -678,8 +684,42 @@ public class CardSearcher implements View.OnClickListener {
         SearchableListDialog dialog = new SearchableListDialog(mContext);
         dialog.setTitle(getString(R.string.label_set));
 
+        // 设置标签删除监听器
+        dialog.setOnTagDeleteListener(tagName -> {
+            // 在 tag_setcode 中查找并删除对应的标签
+            for (int i = 0; i < tag_setcode.getChildCount(); i++) {
+                View child = tag_setcode.getChildAt(i);
+                if (child instanceof LinearLayout) {
+                    LinearLayout tagLayout = (LinearLayout) child;
+                    if (tagLayout.getChildCount() >= 1 &&
+                            tagLayout.getChildAt(0) instanceof TextView) {
+                        TextView textView = (TextView) tagLayout.getChildAt(0);
+                        if (tagName.equals(textView.getText().toString())) {
+                            // 找到匹配的标签，从 tag_setcode 中移除
+                            tag_setcode.removeViewAt(i);
+
+                            // 同时从 setCodeList 中移除对应的 ID
+                            if (tagName.equals(getString(R.string.label_set_No_Setcode))) {
+                                setCodeList.remove(Long.valueOf(-1L));
+                            } else {
+                                // 查找对应的 CardSet 并移除其 code
+                                for (CardSet set : setnames) {
+                                    if (set.getName().equals(tagName)) {
+                                        setCodeList.remove(Long.valueOf(set.getCode()));
+                                        break;
+                                    }
+                                }
+                            }
+                            break; // 找到并删除后退出循环
+                        }
+                    }
+                }
+            }
+            // 更新提示文本的可见性
+            updateSetcodeHintVisibility();
+        });
+
         // 在显示对话框前，将当前已选的标签添加到对话框
-        // 遍历 setCodeList，将对应的标签添加到对话框中
         for (long setCodeId : setCodeList) {
             if (setCodeId == -1L) {
                 // 处理"无字段"选项
@@ -697,15 +737,27 @@ public class CardSearcher implements View.OnClickListener {
 
         // 设置点击监听器
         dialog.setOnSearchableItemClickListener((item, position) -> {
-            if (position == 0) {
+            // 通过 item 内容判断是否为"无字段"选项
+            if (item.toString().equals(getString(R.string.label_set_No_Setcode))) {
                 // 处理"无setcode"选项
                 if (!setCodeList.contains(-1L)) {
                     setCodeList.add(-1L);
                     addSetcodeTag(getString(R.string.label_set_No_Setcode), -1L);
+                    // 如果对话框中有相同标签，也要添加
+                    dialog.addTagToListFrom(getString(R.string.label_set_No_Setcode));
                 }
             } else {
                 // 从映射中获取 CardSet 对象
-                CardSet selectedSet = setcode.get(position);
+                // 遍历 setcode 列表找到匹配的项
+                CardSet selectedSet = null;
+                for (int i = 0; i < setcode.size(); i++) {
+                    CardSet set = setcode.get(i);
+                    if (set != null && set.getName().equals(item.toString())) {
+                        selectedSet = set;
+                        break;
+                    }
+                }
+
                 if (selectedSet != null) {
                     long setCode = selectedSet.getCode();
                     String setName = selectedSet.getName();
@@ -714,6 +766,8 @@ public class CardSearcher implements View.OnClickListener {
                     if (!setCodeList.contains(setCode)) {
                         setCodeList.add(setCode);
                         addSetcodeTag(setName, setCode);
+                        // 如果对话框中有相同标签，也要添加
+                        dialog.addTagToListFrom(setName);
                     }
                 }
             }
@@ -741,11 +795,30 @@ public class CardSearcher implements View.OnClickListener {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        // 将文本和关闭图标添加到标签容器
+        // 将文本添加到标签容器
         tagLayout.addView(tagView);
 
         // 将新标签添加到容器中
         tag_setcode.addView(tagLayout);
+
+        // 检查是否需要隐藏提示文本
+        updateSetcodeHintVisibility();
+    }
+
+    // 更新 setcode 提示文本的可见性
+    private void updateSetcodeHintVisibility() {
+        // 计算除了初始的 tv_setcode 之外的标签数量
+        int actualTagCount = tag_setcode.getChildCount() - 1; // 减去1是因为保留了初始的提示标签
+
+        // 获取 tv_setcode 引用（它是布局中的第一个子视图）
+        if (tag_setcode.getChildCount() > 0) {
+            View firstChild = tag_setcode.getChildAt(0);
+            if (firstChild instanceof TextView &&
+                    firstChild.getId() == R.id.tv_setcode) {
+                // 如果实际标签数量大于0，隐藏提示文本；否则显示提示文本
+                firstChild.setVisibility(actualTagCount > 0 ? View.GONE : View.VISIBLE);
+            }
+        }
     }
 
     private void initCategoryButtons() {
@@ -1808,6 +1881,25 @@ public class CardSearcher implements View.OnClickListener {
         resetIcons();
         if (layout_monster.getVisibility() == View.GONE) layout_monster.setVisibility(View.VISIBLE);
         if (ll_icon.getVisibility() == View.GONE) ll_icon.setVisibility(View.VISIBLE);
+    }
+
+    private void resetSetcode() {
+        // 清空 setCodeList
+        setCodeList.clear();
+
+        // 移除所有标签，但保留第一个提示标签 (tv_setcode)
+        while (tag_setcode.getChildCount() > 1) {
+            tag_setcode.removeViewAt(1); // 从索引1开始移除，保留索引0的提示标签
+        }
+
+        // 确保提示标签是可见的
+        if (tag_setcode.getChildCount() > 0) {
+            View firstChild = tag_setcode.getChildAt(0);
+            if (firstChild instanceof TextView &&
+                    firstChild.getId() == R.id.tv_setcode) {
+                firstChild.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     private void resetCategory() {

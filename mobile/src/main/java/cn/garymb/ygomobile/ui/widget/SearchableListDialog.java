@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.widget;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
@@ -15,8 +14,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.TextView;
-
-import androidx.annotation.NonNull;
 
 import com.google.android.flexbox.FlexboxLayout;
 
@@ -136,6 +133,10 @@ public class SearchableListDialog extends DialogPlus implements
             // 添加删除功能
             closeIcon.setOnClickListener(v -> {
                 tagsContainer.removeView(tagLayout);
+                // 通知外部监听器标签已被删除
+                if (onTagDeleteListener != null) {
+                    onTagDeleteListener.onTagDeleted(tagText);
+                }
             });
 
             // 将文本和关闭图标添加到标签容器
@@ -198,7 +199,14 @@ public class SearchableListDialog extends DialogPlus implements
         }
         return true;
     }
+    public interface OnTagDeleteListener {
+        void onTagDeleted(String tagName);
+    }
 
+    private OnTagDeleteListener onTagDeleteListener;
+    public void setOnTagDeleteListener(OnTagDeleteListener listener) {
+        this.onTagDeleteListener = listener;
+    }
     public interface onSearchItemClickListener {
         void onSearchableItemClicked(Object item, int position);
     }
