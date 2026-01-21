@@ -143,8 +143,8 @@
     <string name="label_limit">Limit Type</string>
     <string name="label_limitlist">Limit List</string>
     <string name="label_type">Card Type:</string>
-    <string name="label_set">Card Set</string>
-    <string name="label_set_No_Setcode">#No Card Set included</string>
+    <string name="label_set">Series:</string>
+    <string name="label_set_No_Setcode">#No Series included</string>
     <string name="label_level">Level/Rank/LinkArrows:</string>
     <string name="label_attr">Attribute:</string>
     <string name="linkmarker">LinkArrows▶</string>>

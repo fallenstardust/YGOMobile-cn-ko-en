@@ -119,7 +119,7 @@
     <string name="label_limit">Tipo de Limite</string>
     <string name="label_limitlist">Banlist</string>
     <string name="label_type">Tipo de Cartas:</string>
-    <string name="label_set">Arquétipo</string>
+    <string name="label_set">Arquétipo:</string>
     <string name="label_level">Nvl/Rng/Lnk:</string>
     <string name="label_attr">Atributo:</string>
 	<string name="label_category">Categoria</string>

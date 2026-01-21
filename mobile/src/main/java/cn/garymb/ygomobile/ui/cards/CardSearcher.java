@@ -74,6 +74,12 @@ public class CardSearcher implements View.OnClickListener {
     private final Spinner genesys_limitSpinner;
     private final Spinner limitListSpinner;
     private final Spinner genesys_limitListSpinner;
+    // 字段标签栏
+    private final ImageView iv_hide_setCode;
+    private final FlexboxLayout tag_setcode;
+    private ImageButton btn_clear_setcode;
+    List<Long> setCodeList;
+    boolean setcode_isAnd;
     // 效果类型按钮
     private GridLayout gl_category;
     private ImageView iv_hide_category;
@@ -131,11 +137,6 @@ public class CardSearcher implements View.OnClickListener {
     private ImageView iv_hide_pendulum_scale;
     private ImageButton[] pendulumScaleButtons;
     private List<Integer> pendulumScaleList;
-    // 字段
-    private final FlexboxLayout tag_setcode;
-    private ImageButton btn_clear_setcode;
-    List<Long> setCodeList;
-    boolean setcode_isAnd;
 
     private final EditText atkText;
     private final EditText defText;
@@ -215,8 +216,8 @@ public class CardSearcher implements View.OnClickListener {
         iv_hide_pendulum_scale = findViewById(R.id.iv_hide_pScale);
         pendulumScaleList = new ArrayList<>();
 
-        //TODO这些组件需要替换成多选界面
         // 字段
+        iv_hide_setCode = findViewById(R.id.iv_hide_setCode);
         btn_clear_setcode = findViewById(R.id.btn_clear_setcode);
         tag_setcode = findViewById(R.id.tag_setcode);
         setcode_isAnd = false;
@@ -655,6 +656,17 @@ public class CardSearcher implements View.OnClickListener {
         tag_setcode.setOnClickListener(v -> {
             showSetnameSearchableDialog();
         });
+        view.findViewById(R.id.ll_setcode).setOnClickListener(v -> {
+            if (tag_setcode.getVisibility() == View.VISIBLE) {
+                tag_setcode.setVisibility(View.GONE);
+                iv_hide_setCode.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+            } else {
+                tag_setcode.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
+                tag_setcode.setVisibility(View.VISIBLE);
+                iv_hide_setCode.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
+            }
+        });
+        // 清空所有字段
         btn_clear_setcode.setOnClickListener(v -> {
             resetSetcode();
         });
@@ -1890,6 +1902,7 @@ public class CardSearcher implements View.OnClickListener {
         keyWord.setText(null);
         reset(otSpinner);
         reset(limitSpinner.getVisibility() == View.VISIBLE ? limitSpinner : genesys_limitSpinner);
+        resetSetcode();
         resetCategory();
         resetCardType();
         resetMonster();

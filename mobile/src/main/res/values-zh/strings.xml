@@ -128,7 +128,7 @@
     <string name="label_monsterType">怪兽类型：</string>
     <string name="label_excludeType">排除类型：</string>
     <string name="label_spelltrap_type">魔法/陷阱类型：</string>
-    <string name="label_set">字段</string>
+    <string name="label_set">字段：</string>
     <string name="label_set_No_Setcode">#无字段</string>
     <string name="label_level">等级/阶级/连接数：</string>
     <string name="label_attr">属性：</string>

@@ -120,7 +120,7 @@
     <string name="label_limit">制限なし</string>
     <string name="label_limitlist">リミットレギュレーション</string>
     <string name="label_type">カード種類:</string>
-    <string name="label_set">テキスト</string>
+    <string name="label_set">カテゴリ:</string>
     <string name="label_set_No_Setcode">カードセットを含まない</string>
     <string name="label_level">レベル/标数:</string>
     <string name="label_attr">属性:</string>

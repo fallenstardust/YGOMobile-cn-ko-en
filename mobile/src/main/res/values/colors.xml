@@ -31,6 +31,7 @@
     <color name="colorMain">#2196F3</color>
     <color name="background">#ECEFF1</color>
     <color name="transparent">#00000000</color>
+    <color name="klein_blue">#002FA7</color>
 
     <color name="search_text_color">#ff8800</color>
     <color name="search_list_item_color">#b8be35</color>
