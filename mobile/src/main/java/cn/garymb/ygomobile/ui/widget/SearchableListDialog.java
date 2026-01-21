@@ -16,6 +16,8 @@ import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.google.android.flexbox.FlexboxLayout;
 
 import java.util.ArrayList;
@@ -80,6 +82,11 @@ public class SearchableListDialog extends DialogPlus implements
         });
         setContentView(rootView);
         hideButton();
+    }
+
+
+    public void addTagToListFrom(String tagText) {
+        addTagToList(tagText);
     }
 
     private void addTagToList(String tagText) {

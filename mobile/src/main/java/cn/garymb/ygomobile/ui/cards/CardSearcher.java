@@ -678,6 +678,23 @@ public class CardSearcher implements View.OnClickListener {
         SearchableListDialog dialog = new SearchableListDialog(mContext);
         dialog.setTitle(getString(R.string.label_set));
 
+        // 在显示对话框前，将当前已选的标签添加到对话框
+        // 遍历 setCodeList，将对应的标签添加到对话框中
+        for (long setCodeId : setCodeList) {
+            if (setCodeId == -1L) {
+                // 处理"无字段"选项
+                dialog.addTagToListFrom(getString(R.string.label_set_No_Setcode));
+            } else {
+                // 查找对应的 setname 并添加
+                for (CardSet set : setnames) {
+                    if (set.getCode() == setCodeId) {
+                        dialog.addTagToListFrom(set.getName());
+                        break;
+                    }
+                }
+            }
+        }
+
         // 设置点击监听器
         dialog.setOnSearchableItemClickListener((item, position) -> {
             if (position == 0) {
