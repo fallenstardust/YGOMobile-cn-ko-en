@@ -24,13 +24,13 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="15dp"
                 android:orientation="vertical">
 
                 <LinearLayout
                     android:id="@+id/ll_ot"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="15dp"
+                    android:layout_height="30dp"
                     android:background="@drawable/veil"
                     android:orientation="horizontal">
 
@@ -73,14 +73,14 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="15dp"
                 android:layout_marginVertical="2dp"
                 android:orientation="vertical">
 
                 <LinearLayout
                     android:id="@+id/ll_banlist"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="15dp"
+                    android:layout_height="30dp"
                     android:background="@drawable/veil"
                     android:orientation="horizontal">
 
@@ -143,7 +143,7 @@
                 <LinearLayout
                     android:id="@+id/ll_setcode"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:background="@drawable/veil"
                     android:orientation="horizontal">
 
@@ -224,7 +224,7 @@
                     <LinearLayout
                         android:id="@+id/ll_category"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="30dp"
                         android:background="@drawable/veil"
                         android:orientation="horizontal">
 
@@ -420,7 +420,7 @@
                 <LinearLayout
                     android:id="@+id/ll_cardType"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:background="@drawable/veil"
                     android:orientation="horizontal">
 
@@ -470,7 +470,7 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="30dp"
                     android:background="@drawable/veil"
                     android:orientation="horizontal">
 
@@ -540,13 +540,13 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginVertical="2dp"
                     android:orientation="vertical">
 
                     <LinearLayout
                         android:id="@+id/ll_attr"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginVertical="2dp"
+                        android:layout_height="30dp"
                         android:background="@drawable/veil"
                         android:orientation="horizontal">
 
@@ -616,7 +616,7 @@
                     <LinearLayout
                         android:id="@+id/ll_race"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="30dp"
                         android:background="@drawable/veil"
                         android:orientation="horizontal">
 
@@ -785,7 +785,7 @@
                         <LinearLayout
                             android:id="@+id/ll_monsterType"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="30dp"
                             android:background="@drawable/veil"
                             android:orientation="horizontal">
 
@@ -934,7 +934,7 @@
                         <LinearLayout
                             android:id="@+id/ll_excludeType"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="30dp"
                             android:background="@drawable/veil"
                             android:orientation="horizontal">
 
@@ -1050,7 +1050,7 @@
                     <LinearLayout
                         android:id="@+id/ll_level"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="30dp"
                         android:background="@drawable/veil"
                         android:orientation="horizontal">
 
@@ -1137,7 +1137,7 @@
                     <LinearLayout
                         android:id="@+id/ll_pScale"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="30dp"
                         android:background="@drawable/veil"
                         android:orientation="horizontal">
 
@@ -1242,7 +1242,7 @@
                     <LinearLayout
                         android:id="@+id/ll_linkmarker"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="30dp"
                         android:background="@drawable/veil"
                         android:orientation="horizontal">
 
@@ -1276,7 +1276,6 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
                     android:orientation="horizontal">
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -1350,6 +1349,11 @@
                 android:layout_height="wrap_content"
                 android:text="@string/settings_key_words_split"
                 android:textSize="10sp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btn_my_fav"
