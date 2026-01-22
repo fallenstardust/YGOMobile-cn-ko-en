@@ -17,7 +17,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -245,15 +244,14 @@ public class ImageLoader implements Closeable {
 
     public File getImageFile(long code) {
         for (String ex : Constants.IMAGE_EX) {
-            File file = new File(new File(AppsSettings.get().getResourcePath(), Constants.CORE_IMAGE_PATH), code + ex);
+            File file = new File(AppsSettings.get().getResourcePath(), Constants.CORE_IMAGE_PATH + "/" + code + ex);
             if (file.exists()) {
                 return file;
             }
-            File file_ex = new File(new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS_IMAGE_PATH), code + ex);
+            File file_ex = new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code + ex);
             if (file_ex.exists()) {
                 return file_ex;
             }
-
         }
         return null;
     }
@@ -263,9 +261,8 @@ public class ImageLoader implements Closeable {
             Log.v(TAG, "bind image:" + code + ", type=" + type);
         }
         imageview.setImageResource(R.drawable.unknown);
-
-        String name = Paths.get(Constants.CORE_IMAGE_PATH, String.valueOf(code)).toString();
-        String name_ex = Paths.get(Constants.CORE_EXPANSIONS_IMAGE_PATH, String.valueOf(code)).toString();
+        String name = Constants.CORE_IMAGE_PATH + "/" + code;
+        String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
 
         //cache
         if (useCache) {

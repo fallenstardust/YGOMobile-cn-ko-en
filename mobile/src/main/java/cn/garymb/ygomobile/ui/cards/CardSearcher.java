@@ -45,7 +45,6 @@ import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.SearchableListDialog;
 import cn.garymb.ygomobile.utils.BitmapUtil;
@@ -1598,16 +1597,16 @@ public class CardSearcher implements View.OnClickListener {
 
     private void initLinkMarkerButton() {
         Arrays.fill(BtnVals, "0");
-       linkButton = new Button[]{
-               view.findViewById(R.id.button_1),
-               view.findViewById(R.id.button_2),
-               view.findViewById(R.id.button_3),
-               view.findViewById(R.id.button_4),
-               view.findViewById(R.id.button_5),
-               view.findViewById(R.id.button_6),
-               view.findViewById(R.id.button_7),
-               view.findViewById(R.id.button_8),
-               view.findViewById(R.id.button_9)
+        linkButton = new Button[]{
+                view.findViewById(R.id.button_1),
+                view.findViewById(R.id.button_2),
+                view.findViewById(R.id.button_3),
+                view.findViewById(R.id.button_4),
+                view.findViewById(R.id.button_5),
+                view.findViewById(R.id.button_6),
+                view.findViewById(R.id.button_7),
+                view.findViewById(R.id.button_8),
+                view.findViewById(R.id.button_9)
         };
         int[] enImgs = new int[]{
                 R.drawable.left_bottom_1,

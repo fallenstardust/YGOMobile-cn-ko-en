@@ -54,7 +54,6 @@ import org.json.JSONArray;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -642,11 +641,13 @@ public class AppsSettings {
         return limitName == null || TextUtils.isEmpty(limitName) ?
                 mSharedPreferences.getString(Constants.PREF_LAST_GENESYS_LIMIT, Constants.PREF_DEF_LAST_GENESYS_LIMIT) : limitName;
     }
+
     public void setGenesysMode(int value) {
         App.get().saveIntSetting("enable_genesys_mode", value);
         mSharedPreferences.putInt(Constants.PREF_LAST_GENESYS_MODE, value);
     }
-    public int getGenesysMode () {
+
+    public int getGenesysMode() {
         return App.get().getIntSetting("enable_genesys_mode", Constants.PREF_DEF_LAST_GENESYS_MODE);
     }
 
@@ -659,13 +660,13 @@ public class AppsSettings {
     String getLastDeckPath() {
         String path;
         if (TextUtils.equals(context.getString(R.string.category_pack), getLastCategory())) {
-            path = Paths.get(getResourcePath(), CORE_PACK_PATH, getLastDeckName() + YDK_FILE_EX).toString();
+            path = getResourcePath() + "/" + CORE_PACK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
         } else if (TextUtils.equals(context.getString(R.string.category_windbot_deck), getLastCategory())) {
-            path = Paths.get(getResourcePath(), WINDBOT_PATH, WINDBOT_DECK_PATH, getLastDeckName() + YDK_FILE_EX).toString();
+            path = getResourcePath() + "/" + WINDBOT_PATH + "/" + WINDBOT_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
         } else if (TextUtils.equals(context.getString(R.string.category_Uncategorized), getLastCategory())) {
-            path = Paths.get(getResourcePath(), CORE_DECK_PATH, getLastDeckName() + YDK_FILE_EX).toString();
+            path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastDeckName() + YDK_FILE_EX;
         } else {
-            path = Paths.get(getResourcePath(), CORE_DECK_PATH, getLastCategory(), getLastDeckName() + YDK_FILE_EX).toString();
+            path = getResourcePath() + "/" + CORE_DECK_PATH + "/" + getLastCategory() + "/" + getLastDeckName() + YDK_FILE_EX;
         }
         Log.e(TAG, "拼接最后路径" + path);
         return path;

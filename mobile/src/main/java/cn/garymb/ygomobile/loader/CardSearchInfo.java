@@ -1,12 +1,11 @@
 package cn.garymb.ygomobile.loader;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import ocgcore.data.Card;
 import ocgcore.enums.CardOt;

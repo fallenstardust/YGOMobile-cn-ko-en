@@ -69,7 +69,6 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -877,7 +876,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     @Override
     public void setLimit(LimitList limit, String caller) {//由cardsearcher通知更新适用禁卡表的方法
-        Log.w(TAG, caller+" override: setLimitList genesys模式为: "+ mSettings.getGenesysMode());
+        Log.w(TAG, caller + " override: setLimitList genesys模式为: " + mSettings.getGenesysMode());
         setLimitList(limit);
     }
 
@@ -1814,7 +1813,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), deckData.getDeckUpdateDate());
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
-                        preLoadFile(Paths.get(dir.getPath(), fileFullName).toString());
+                        preLoadFile(dir.getPath() + "/" + fileFullName);
                         tv_add_1.setText(R.string.like_deck_thumb);
                         ll_click_like.setVisibility(View.VISIBLE);
                     }

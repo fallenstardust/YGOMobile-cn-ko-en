@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -162,7 +160,7 @@ public class ImageUpdater implements DialogInterface.OnCancelListener {
         private boolean existImage() {
             String name;
             if (item.isField) {
-                name = Paths.get(Constants.CORE_IMAGE_FIELD_PATH, String.valueOf(item.code)).toString();
+                name = Constants.CORE_IMAGE_FIELD_PATH + "/" + item.code;
             } else {
                 name = "" + item.code;
             }
