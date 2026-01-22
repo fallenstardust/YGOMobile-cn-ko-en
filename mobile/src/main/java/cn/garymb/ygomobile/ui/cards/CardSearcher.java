@@ -1004,19 +1004,16 @@ public class CardSearcher implements View.OnClickListener {
                 Log.i("CardSearcher", "[魔陷图标 卡片种类]:" + typeList);
             });
         }
+        gl_cardType.setVisibility(View.GONE);
+        iv_hide_cardType.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 默认折叠状态
         view.findViewById(R.id.ll_cardType).setOnClickListener(v -> {
             if (gl_cardType.getVisibility() == View.VISIBLE) {
-                gl_cardType.setVisibility(View.GONE);
-                iv_hide_cardType.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetCardType();
             } else {
                 gl_cardType.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_cardType.setVisibility(View.VISIBLE);
                 iv_hide_cardType.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
-        });
-        // 解除所有卡片种类的选中状态
-        view.findViewById(R.id.btn_clear_card_type).setOnClickListener(v -> {
-            resetCardType();
         });
     }
 
@@ -1062,7 +1059,7 @@ public class CardSearcher implements View.OnClickListener {
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
             button.setText(mStringManager.getTypeString(iconIds[index]));
 
-            iconButtons[i].setOnClickListener(v -> {
+            button.setOnClickListener(v -> {
                 if (typeList == null) {
                     typeList = new ArrayList<>();
                 }
@@ -1088,22 +1085,17 @@ public class CardSearcher implements View.OnClickListener {
                 Log.d("CardSearcher", "[魔陷图标]包含种类:" + spellTrapTypeList);
             });
         }
+        gl_icon.setVisibility(View.GONE);
+        iv_hide_spelltrap.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 默认为折叠状态
         view.findViewById(R.id.ll_icon).setOnClickListener(v -> {
             if (gl_icon.getVisibility() == View.VISIBLE) {
                 gl_icon.setVisibility(View.GONE);
                 iv_hide_spelltrap.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetIcons();
             } else {
                 gl_icon.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_icon.setVisibility(View.VISIBLE);
                 iv_hide_spelltrap.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
-            }
-        });
-        view.findViewById(R.id.btn_clear_spelltrap_type).setOnClickListener(v -> {
-            for (int i = 0; i < iconButtons.length; i++) {
-                iconButtons[i].setSelected(false);
-                iconButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                iconButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-                spellTrapTypeList.remove(iconIds[i]);
             }
         });
     }
@@ -1889,7 +1881,6 @@ public class CardSearcher implements View.OnClickListener {
         resetCategory();
         resetCardType();
         resetMonster();
-        resetIcons();
         if (layout_monster.getVisibility() == View.GONE) layout_monster.setVisibility(View.VISIBLE);
         if (ll_icon.getVisibility() == View.GONE) ll_icon.setVisibility(View.VISIBLE);
     }
@@ -1927,12 +1918,16 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetCardType() {
+        gl_cardType.setVisibility(View.GONE);
+        iv_hide_cardType.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < cardTypeButtons.length; i++) {
             cardTypeButtons[i].setSelected(false);
             cardTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
             cardTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
             typeList.remove(typeIds[i]);
         }
+        resetIcons();
+        layout_monster.setVisibility(View.VISIBLE);
     }
 
     private void resetMonster() {
@@ -2035,24 +2030,32 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetSpell() {
-        //解除魔法卡选中状态
+        //解除魔法卡种类选中状态
         cardTypeButtons[1].setSelected(false);
         cardTypeButtons[1].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         cardTypeButtons[1].setTextColor(YGOUtil.c(R.color.gray));
+        typeList.remove(CardType.Spell.getId());
+
         spellButtons = new Button[]{
                 view.findViewById(R.id.btn_icon_quickPlay),// 速攻0
                 view.findViewById(R.id.btn_icon_equip),// 装备2
                 view.findViewById(R.id.btn_icon_field),// 场地3
                 view.findViewById(R.id.btn_icon_ritual),// 仪式5
         };
+        long[] spellIds = new long[]{
+                CardType.QuickPlay.getId(),
+                CardType.Equip.getId(),
+                CardType.Field.getId(),
+                CardType.Ritual.getId()
+        };
         //解除魔法相关图标按钮的选中状态
-        for (Button spellButton : spellButtons) {
-            spellButton.setSelected(false);
-            spellButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-            spellButton.setTextColor(YGOUtil.c(R.color.gray));
+        for (int i = 0; i < spellButtons.length; i++) {
+            spellButtons[i].setSelected(false);
+            spellButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            spellButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            spellTrapTypeList.remove(spellIds[i]);
         }
 
-        typeList.remove(CardType.Spell.getId());
     }
 
     private void resetTrap() {
@@ -2060,19 +2063,23 @@ public class CardSearcher implements View.OnClickListener {
         cardTypeButtons[2].setSelected(false);
         cardTypeButtons[2].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         cardTypeButtons[2].setTextColor(YGOUtil.c(R.color.gray));
+        typeList.remove(CardType.Trap.getId());
+
         //解除陷阱相关图标按钮的选中状态
         Button trapButton = view.findViewById(R.id.btn_icon_counter);// 反击4
         trapButton.setSelected(false);
         trapButton.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         trapButton.setTextColor(YGOUtil.c(R.color.gray));
-
-        typeList.remove(CardType.Trap.getId());
+        spellTrapTypeList.remove(CardType.Counter.getId());
     }
 
     private void resetIcons() {
+        gl_icon.setVisibility(View.GONE);
+        iv_hide_spelltrap.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 重置为折叠状态
         resetSpell();// 解除魔法独有类型的选中状态
         resetTrap();// 解除陷阱独有类型的选中状态（也就反击陷阱）
-        Button[] conti_normal_icons = new Button[]{
+
+        Button[] conti_normal_icons = new Button[]{// 单独处理魔法和陷阱都有的种类
                 view.findViewById(R.id.btn_icon_continuous),// 永续
                 view.findViewById(R.id.btn_icon_normal),// 通常
         };

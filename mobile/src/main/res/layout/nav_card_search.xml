@@ -434,10 +434,6 @@
                     <TextView
                         style="@style/Title"
                         android:text="@string/label_type" />
-
-                    <ImageButton
-                        android:id="@+id/btn_clear_card_type"
-                        style="@style/ImageButton_close" />
                 </LinearLayout>
 
                 <GridLayout
@@ -488,10 +484,6 @@
                     <TextView
                         style="@style/Title"
                         android:text="@string/label_spelltrap_type" />
-
-                    <ImageButton
-                        android:id="@+id/btn_clear_spelltrap_type"
-                        style="@style/ImageButton_close" />
                 </LinearLayout>
 
                 <GridLayout
