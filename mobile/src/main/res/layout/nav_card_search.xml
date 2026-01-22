@@ -167,7 +167,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
-                        android:layout_weight="1"
                         android:orientation="horizontal">
 
                         <RadioButton
@@ -187,10 +186,6 @@
                             android:text="or"
                             android:textColor="#FFFFFF" />
                     </RadioGroup>
-
-                    <ImageButton
-                        android:id="@+id/btn_clear_setcode"
-                        style="@style/ImageButton_close" />
                 </LinearLayout>
 
                 <com.google.android.flexbox.FlexboxLayout

@@ -77,7 +77,6 @@ public class CardSearcher implements View.OnClickListener {
     // 字段标签栏
     private final ImageView iv_hide_setCode;
     private final FlexboxLayout tag_setcode;
-    private ImageButton btn_clear_setcode;
     List<Long> setCodeList;
     boolean setcode_isAnd;
     // 效果类型按钮
@@ -176,7 +175,6 @@ public class CardSearcher implements View.OnClickListener {
         genesys_limitListSpinner = findViewById(R.id.sp_genesys_limit_list);//初始化genesys禁卡表布局
         // 字段
         iv_hide_setCode = findViewById(R.id.iv_hide_setCode);
-        btn_clear_setcode = findViewById(R.id.btn_clear_setcode);
         tag_setcode = findViewById(R.id.tag_setcode);
         setcode_isAnd = false;
         setCodeList = new ArrayList<>();
@@ -595,22 +593,22 @@ public class CardSearcher implements View.OnClickListener {
 
     private void initSetnameSearchFeature() {
         // 以布局点击事件作为初始化
-        tag_setcode.setOnClickListener(v -> {
-            showSetnameSearchableDialog();
-        });
+        tag_setcode.setVisibility(View.GONE);
+        iv_hide_setCode.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         view.findViewById(R.id.ll_setcode).setOnClickListener(v -> {
             if (tag_setcode.getVisibility() == View.VISIBLE) {
                 tag_setcode.setVisibility(View.GONE);
                 iv_hide_setCode.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetSetcode();
             } else {
                 tag_setcode.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 tag_setcode.setVisibility(View.VISIBLE);
                 iv_hide_setCode.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
+                showSetnameSearchableDialog();
             }
         });
-        // 清空所有字段
-        btn_clear_setcode.setOnClickListener(v -> {
-            resetSetcode();
+        tag_setcode.setOnClickListener(v -> {
+            showSetnameSearchableDialog();
         });
         RadioGroup radioGroupSetcode = findViewById(R.id.radio_group_setcode);// 切换怪兽类型内部逻辑
         radioGroupSetcode.setOnCheckedChangeListener((group, checkedId) -> {
