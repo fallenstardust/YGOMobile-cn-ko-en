@@ -89,6 +89,7 @@ public class CardSearcher implements View.OnClickListener {
     private ImageView iv_hide_cardType;
     private Button[] cardTypeButtons;
     private long[] typeIds;
+    private List<Long> cardTypeList;
     // 魔陷图标
     private LinearLayout ll_icon;
     private GridLayout gl_icon;
@@ -118,7 +119,7 @@ public class CardSearcher implements View.OnClickListener {
     private Button[] monsterTypeButtons;
     private long[] monsterTypeIds;
     private Drawable[] TypeIcon;
-    private List<Long> typeList;
+    private List<Long> monsterTypeList;
     private boolean isAnd;
     // 排除怪兽类型按钮
     private final GridLayout gl_exclude_type;
@@ -185,7 +186,7 @@ public class CardSearcher implements View.OnClickListener {
         // 卡片类型宫格布局
         gl_cardType = findViewById(R.id.gl_cardType);
         iv_hide_cardType = findViewById(R.id.iv_hide_cardType);
-
+        cardTypeList = new ArrayList<>();
         // 魔陷类型宫格布局
         ll_icon = findViewById(R.id.ll_icon);//需要隐藏时控制整个布局
         gl_icon = findViewById(R.id.gl_icon);
@@ -207,7 +208,7 @@ public class CardSearcher implements View.OnClickListener {
         // 怪兽种类宫格布局
         gl_monsterType = findViewById(R.id.gl_monsterType);
         iv_hide_monsterType = findViewById(R.id.iv_hide_monsterType);
-        typeList = new ArrayList<>();
+        monsterTypeList = new ArrayList<>();
         isAnd = false;
         // 排除种类宫格布局
         gl_exclude_type = findViewById(R.id.gl_excludeType);
@@ -939,8 +940,8 @@ public class CardSearcher implements View.OnClickListener {
                     resetMonster();
                 } else {
                     layout_monster.setVisibility(View.VISIBLE);
-                    if (!typeList.contains(typeIds[0])) {
-                        typeList.add(typeIds[0]);
+                    if (!cardTypeList.contains(typeIds[0])) {
+                        cardTypeList.add(typeIds[0]);
                     }
                 }
 
@@ -957,8 +958,8 @@ public class CardSearcher implements View.OnClickListener {
                         }
 
                     }
-                    typeList.remove(typeIds[1]);
-                    typeList.remove(typeIds[2]);
+                    cardTypeList.remove(typeIds[1]);
+                    cardTypeList.remove(typeIds[2]);
                 }
                 if (cardTypeButtons[1].isSelected()) {// 魔法卡
                     iconButtons[0].setVisibility(View.VISIBLE);// 速攻0
@@ -966,8 +967,8 @@ public class CardSearcher implements View.OnClickListener {
                     iconButtons[3].setVisibility(View.VISIBLE);// 场地3
                     iconButtons[5].setVisibility(View.VISIBLE);// 仪式5
 
-                    if (!typeList.contains(typeIds[1])) {
-                        typeList.add(typeIds[1]);
+                    if (!cardTypeList.contains(typeIds[1])) {
+                        cardTypeList.add(typeIds[1]);
                     }
                 } else {
                     iconButtons[0].setVisibility(View.GONE);//速攻0
@@ -980,8 +981,8 @@ public class CardSearcher implements View.OnClickListener {
 
                 if (cardTypeButtons[2].isSelected()) {// 陷阱卡
                     iconButtons[4].setVisibility(View.VISIBLE);// 反击4
-                    if (!typeList.contains(typeIds[2])) {
-                        typeList.add(typeIds[2]);
+                    if (!cardTypeList.contains(typeIds[2])) {
+                        cardTypeList.add(typeIds[2]);
                     }
                 } else {
                     //反击陷阱4
@@ -1000,7 +1001,7 @@ public class CardSearcher implements View.OnClickListener {
                     //陷阱图标
                     iconButtons[4].setVisibility(View.VISIBLE);// 反击4
                 }
-                Log.i("CardSearcher", "[魔陷图标 卡片种类]:" + typeList);
+                Log.i("CardSearcher", "[卡片种类]:" + cardTypeList);
             });
         }
         gl_cardType.setVisibility(View.GONE);
@@ -1059,8 +1060,8 @@ public class CardSearcher implements View.OnClickListener {
             button.setText(mStringManager.getTypeString(iconIds[index]));
 
             button.setOnClickListener(v -> {
-                if (typeList == null) {
-                    typeList = new ArrayList<>();
+                if (spellTrapTypeList == null) {
+                    spellTrapTypeList = new ArrayList<>();
                 }
 
                 if (button.isSelected()) {
@@ -1335,20 +1336,20 @@ public class CardSearcher implements View.OnClickListener {
             // 设置图标
             button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
             button.setOnClickListener(v -> {
-                if (typeList == null) {
-                    typeList = new ArrayList<>();
+                if (monsterTypeList == null) {
+                    monsterTypeList = new ArrayList<>();
                 }
                 if (button.isSelected()) {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
-                    typeList.remove(monsterTypeIds[index]);
+                    monsterTypeList.remove(monsterTypeIds[index]);
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
-                    if (!typeList.contains(monsterTypeIds[index]))
-                        typeList.add(monsterTypeIds[index]);
+                    if (!monsterTypeList.contains(monsterTypeIds[index]))
+                        monsterTypeList.add(monsterTypeIds[index]);
                 }
-                Log.w("CardSearcher", "[怪兽 种类]:" + typeList);
+                Log.w("CardSearcher", "[怪兽 种类]:" + monsterTypeList);
             });
         }
         RadioGroup radioGroup = findViewById(R.id.radio_group);// 切换怪兽类型内部逻辑
@@ -1704,168 +1705,34 @@ public class CardSearcher implements View.OnClickListener {
 
     private void search() {
         if (mICardSearcher != null) {
-            Log.i("cardsearcher", "setcodeList: " + setCodeList.toString());
-            // 判断基本卡片类型选择状态
-            boolean hasBasicSpell = typeList.contains(CardType.Spell.getId());
-            boolean hasBasicTrap = typeList.contains(CardType.Trap.getId());
-            boolean hasBasicMonster = typeList.contains(CardType.Monster.getId());
-
-            // 判断是否有怪兽具体类型选择
-            boolean hasMonsterSpecificType = typeList.stream()
-                    .anyMatch(id -> Arrays.stream(monsterTypeIds).anyMatch(mid -> mid == id));
-
-            // 判断是否有魔法陷阱具体类型选择
-            boolean hasSpellTrapSpecificType = !spellTrapTypeList.isEmpty();
-
-            // 确定需要搜索哪些类型
-            boolean shouldSearchSpells = hasBasicSpell || (!hasBasicMonster && !hasBasicTrap && hasSpellTrapSpecificType);
-            boolean shouldSearchTraps = hasBasicTrap || (!hasBasicMonster && !hasBasicSpell && hasSpellTrapSpecificType);
-            boolean shouldSearchMonsters = hasBasicMonster || hasMonsterSpecificType;
-
-            boolean normalSpellTrap = spellTrapTypeList.contains(CardType.Normal.getId());
-
+            Log.d(TAG, "cardsearcher: " + "卡片种类："+cardTypeList);
+            Log.d(TAG, "cardsearcher: " + "魔法陷阱种类："+spellTrapTypeList);
+            Log.d(TAG, "cardsearcher: " + "怪兽 子种类："+monsterTypeList);
             int ot = getIntSelect(otSpinner);
             int limitType = genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner);
             String limitName = genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner);
             String keyword = text(keyWord);
-            List<CardSearchInfo> searchInfos = new ArrayList<>();
-            // 魔法
-            if (shouldSearchSpells) {
-                List<Long> types = new ArrayList<>();
-                List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Trap.getId()));
+            CardSearchInfo searchInfo = new CardSearchInfo.Builder()
+                    .ot(ot)
+                    .limitName(limitName)
+                    .limitType(limitType)
+                    .setcode(setCodeList)
+                    .setcode_logic(setcode_isAnd)
+                    .category(categoryList)
+                    .cardTypes(cardTypeList)
+                    .spellTrapTypes(spellTrapTypeList)
+                    .attribute(attributeList)
+                    .level(levelList)
+                    .race(raceList)
+                    .monsterTypes(monsterTypeList)
+                    .except_types(excludeTypeList)
+                    .type_logic(isAnd)
+                    .atk(text(atkText))
+                    .def(text(defText))
+                    .keyword(keyword)
+                    .build();
 
-                spellIds = new long[]{
-                        CardType.QuickPlay.getId(),
-                        CardType.Continuous.getId(),
-                        CardType.Equip.getId(),
-                        CardType.Field.getId(),
-                        CardType.Ritual.getId()
-                };
-                for (long selected : spellIds) {
-                    if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
-                        excludTypes.add(selected);
-                    } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
-                        types.add(selected);
-                    }
-                }
-
-                if (spellTrapTypeList.isEmpty() || normalSpellTrap || !types.isEmpty()) {
-                    CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                            .keyword(keyword)
-                            .attribute(attributeList)
-                            .level(levelList) // 注意：魔法卡实际上不使用等级，也没有魔法怪兽，可以不传
-                            .race(raceList)   // 同上，可以注释掉不传
-                            .atk(text(atkText))// 同上，可以注释掉不传
-                            .def(text(defText))// 同上，可以注释掉不传
-                            .ot(ot)
-                            .limitType(limitType)
-                            .limitName(limitName)
-                            .setcode(setCodeList)
-                            .setcode_logic(setcode_isAnd)
-                            .category(categoryList)
-                            .types(types)
-                            .except_types(excludTypes)
-                            .type_logic(false)
-                            .build();
-                    searchInfos.add(searchInfo);
-                }
-            }
-            // 陷阱
-            if (shouldSearchTraps) {
-                List<Long> types = new ArrayList<>();
-                List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Monster.getId(), CardType.Spell.getId()));
-
-                trapIds = new long[]{
-                        CardType.Continuous.getId(),
-                        CardType.Counter.getId()
-                };
-                for (long selected : trapIds) {
-                    if (normalSpellTrap && !spellTrapTypeList.contains(selected)) {
-                        excludTypes.add(selected);
-                    } else if (!normalSpellTrap && spellTrapTypeList.contains(selected)) {
-                        types.add(selected);
-                    }
-                }
-
-                if (spellTrapTypeList.isEmpty() || normalSpellTrap || !types.isEmpty()) {
-                    CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                            .keyword(keyword)
-                            .attribute(attributeList)
-                            .level(levelList) // 如果需要允许搜索到陷阱怪兽，可以允许传值等级
-                            .race(raceList)   // 同上，可以允许传值种族
-                            .atk(text(atkText))// 同上，可以允许传攻击力
-                            .def(text(defText))// 同上，可以允许传守备力
-                            .ot(ot)
-                            .limitType(limitType)
-                            .limitName(limitName)
-                            .setcode(setCodeList)
-                            .setcode_logic(setcode_isAnd)
-                            .category(categoryList)
-                            .types(types)
-                            .except_types(excludTypes)
-                            .type_logic(false)
-                            .build();
-                    searchInfos.add(searchInfo);
-                }
-            }
-            // 怪兽
-            if (shouldSearchMonsters) {
-                List<Long> excludTypes = new ArrayList<>(Arrays.asList(CardType.Spell.getId(), CardType.Trap.getId()));
-                excludTypes.addAll(excludeTypeList);
-
-                // 只包括真正的怪兽类型（排除基本的Spell/Trap/Monster类型）
-                List<Long> monsterTypes = new ArrayList<>();
-                for (Long typeId : typeList) {
-                    if (Arrays.stream(monsterTypeIds).anyMatch(id -> id == typeId)) {
-                        monsterTypes.add(typeId);
-                    }
-                }
-
-                CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                        .keyword(keyword)
-                        .attribute(attributeList)
-                        .level(levelList)
-                        .race(raceList)
-                        .atk(text(atkText))
-                        .def(text(defText))
-                        .pscale(pendulumScaleList)
-                        .limitType(limitType)
-                        .limitName(limitName)
-                        .setcode(setCodeList)
-                        .setcode_logic(setcode_isAnd)
-                        .category(categoryList)
-                        .ot(ot)
-                        .types(monsterTypes)
-                        .type_logic(isAnd)
-                        .except_types(excludTypes)
-                        .linkKey(lineKey)
-                        .build();
-                searchInfos.add(searchInfo);
-            }
-
-            // 如果没有任何搜索条件，执行通用搜索
-            if (searchInfos.isEmpty()) {
-                CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                        .keyword(keyword)
-                        .attribute(attributeList)
-                        .level(levelList)
-                        .race(raceList)
-                        .atk(text(atkText))
-                        .def(text(defText))
-                        .pscale(pendulumScaleList)
-                        .limitType(limitType)
-                        .limitName(limitName)
-                        .setcode(setCodeList)
-                        .setcode_logic(setcode_isAnd)
-                        .category(categoryList)
-                        .ot(ot)
-                        .linkKey(lineKey)
-                        .build();
-                searchInfos.add(searchInfo);
-            }
-
-            Log.i(TAG, searchInfos.toString());
-            mICardSearcher.search(searchInfos);
+            mICardSearcher.search(searchInfo);
         }
     }
 
@@ -1923,7 +1790,7 @@ public class CardSearcher implements View.OnClickListener {
             cardTypeButtons[i].setSelected(false);
             cardTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
             cardTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-            typeList.remove(typeIds[i]);
+            cardTypeList.remove(typeIds[i]);
         }
         resetIcons();
         layout_monster.setVisibility(View.VISIBLE);
@@ -1934,7 +1801,7 @@ public class CardSearcher implements View.OnClickListener {
         cardTypeButtons[0].setSelected(false);
         cardTypeButtons[0].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         cardTypeButtons[0].setTextColor(YGOUtil.c(R.color.gray));
-        typeList.remove(CardType.Monster.getId()); // 从typeList中移除怪兽相关的ID
+        monsterTypeList.remove(CardType.Monster.getId()); // 从monstertypeList中移除怪兽相关的ID
 
         resetAttribute();// 重置属性按钮为未选中
         resetRace();// 重置种族按钮为未选中
@@ -1978,7 +1845,7 @@ public class CardSearcher implements View.OnClickListener {
             monsterTypeButtons[i].setSelected(false);
             monsterTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
             monsterTypeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-            typeList.remove(monsterTypeIds[i]);
+            monsterTypeList.remove(monsterTypeIds[i]);
         }
     }
 
@@ -2033,7 +1900,7 @@ public class CardSearcher implements View.OnClickListener {
         cardTypeButtons[1].setSelected(false);
         cardTypeButtons[1].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         cardTypeButtons[1].setTextColor(YGOUtil.c(R.color.gray));
-        typeList.remove(CardType.Spell.getId());
+        cardTypeList.remove(CardType.Spell.getId());
 
         spellButtons = new Button[]{
                 view.findViewById(R.id.btn_icon_quickPlay),// 速攻0
@@ -2062,7 +1929,7 @@ public class CardSearcher implements View.OnClickListener {
         cardTypeButtons[2].setSelected(false);
         cardTypeButtons[2].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         cardTypeButtons[2].setTextColor(YGOUtil.c(R.color.gray));
-        typeList.remove(CardType.Trap.getId());
+        cardTypeList.remove(CardType.Trap.getId());
 
         //解除陷阱相关图标按钮的选中状态
         Button trapButton = view.findViewById(R.id.btn_icon_counter);// 反击4

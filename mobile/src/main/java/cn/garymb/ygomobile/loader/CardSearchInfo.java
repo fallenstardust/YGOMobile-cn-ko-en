@@ -21,12 +21,13 @@ public class CardSearchInfo implements ICardFilter {
     private int linkKey;
     private int limitType;
     private String limitName;
-
+    private List<Long> cardtypes;
+    private List<Long> spelltraptypes;
     private List<Long> attribute;
     private List<Integer> level;
     private List<Long> race;
     private List<Long> category;
-    private List<Long> types;
+    private List<Long> monstertypes;
     private List<Long> except_types;
     private List<Long> setcode;
 
@@ -85,8 +86,14 @@ public class CardSearchInfo implements ICardFilter {
         return linkKey;
     }
 
-    public List<Long> getTypes() {
-        return types;
+    public List<Long> getCardTypes() {
+        return cardtypes;
+    }
+    public List<Long> getSpellTrapTypes() {
+        return spelltraptypes;
+    }
+    public List<Long> getMonsterType() {
+        return monstertypes;
     }
 
     public List<Long> getExceptTypes() {
@@ -109,12 +116,14 @@ public class CardSearchInfo implements ICardFilter {
         private final CardSearchInfo searchInfo = new CardSearchInfo();
 
         public CardSearchInfo build() {
+            searchInfo.cardtypes = searchInfo.cardtypes != null ? searchInfo.cardtypes : new ArrayList<>();
+            searchInfo.spelltraptypes = searchInfo.spelltraptypes != null ? searchInfo.spelltraptypes : new ArrayList<>();
             searchInfo.attribute = searchInfo.attribute != null ? searchInfo.attribute : new ArrayList<>();
             searchInfo.level = searchInfo.level != null ? searchInfo.level : new ArrayList<>();
             searchInfo.pscale = searchInfo.pscale != null ? searchInfo.pscale : new ArrayList<>();
             searchInfo.race = searchInfo.race != null ? searchInfo.race : new ArrayList<>();
             searchInfo.category = searchInfo.category != null ? searchInfo.category : new ArrayList<>();
-            searchInfo.types = searchInfo.types != null ? searchInfo.types : new ArrayList<>();
+            searchInfo.monstertypes = searchInfo.monstertypes != null ? searchInfo.monstertypes : new ArrayList<>();
             searchInfo.except_types = searchInfo.except_types != null ? searchInfo.except_types : new ArrayList<>();
             searchInfo.setcode = searchInfo.setcode != null ? searchInfo.setcode : new ArrayList<>();
             return searchInfo;
@@ -180,8 +189,18 @@ public class CardSearchInfo implements ICardFilter {
             return this;
         }
 
-        public Builder types(List<Long> types) {
-            searchInfo.types = types;
+        public Builder cardTypes(List<Long> types) {
+            searchInfo.cardtypes = types;
+            return this;
+        }
+
+        public Builder spellTrapTypes(List<Long> types) {
+            searchInfo.spelltraptypes = types;
+            return this;
+        }
+
+        public Builder monsterTypes(List<Long> types) {
+            searchInfo.monstertypes = types;
             return this;
         }
 
@@ -213,6 +232,8 @@ public class CardSearchInfo implements ICardFilter {
                 ", Ot=" + getOt() +
                 ", LimitName=" + getLimitName() +
                 ", KeyWord=" + getKeyWord() +
+                ", cardType=" + getCardTypes() +
+                ", spellTrapType=" + getSpellTrapTypes() +
                 ", Attribute=" + getAttribute() +
                 ", Level=" + getLevel() +
                 ", PScale=" + getPscale() +
@@ -221,7 +242,7 @@ public class CardSearchInfo implements ICardFilter {
                 ", DEF=" + getDef() +
                 ", LINK=" + getLinkKey() +
                 ", Race=" + getRace() +
-                ", Type=" + getTypes() +
+                ", Type=" + getMonsterType() +
                 ", ExceptType=" + getExceptTypes() +
                 ", SetCode=" + getSetcode() +
                 ", TypeLogic=" + getTypeLogice() +
@@ -356,32 +377,40 @@ public class CardSearchInfo implements ICardFilter {
         ) {
             return false;
         }
+
+        // 检查基础卡片类型过滤条件（魔法、陷阱、怪兽等）
+        if (!cardtypes.isEmpty() && (cardtypes.stream().noneMatch(type -> (card.Type & type) == type))) {
+            return false;
+        }
+
+        // TODO 检查魔法卡子类型过滤条件
+        if (!spelltraptypes.isEmpty() && (card.isType(CardType.Spell) || card.isType(CardType.Trap))) {
+            boolean spellTrapTypeMatch = spelltraptypes.stream().anyMatch(type -> (card.Type & type) == type);
+            if (!spellTrapTypeMatch) {
+                return false;
+            }
+        }
+
+        // TODO 检查怪兽卡子类型过滤条件
+        if (!monstertypes.isEmpty() && card.isType(CardType.Monster)) {
+            boolean monsterTypeMatch = (type_logic ?
+                    monstertypes.stream().filter(type -> (card.Type & type) == type).count() != monstertypes.size()
+                    : monstertypes.stream().noneMatch(type -> (card.Type & type) == type));
+
+            if (monsterTypeMatch) {
+                return false;
+            }
+        }
         // 检查排除类型过滤条件
-        if (!except_types.isEmpty()
-                && except_types.stream().anyMatch(type -> (card.Type & type) == type)
-        ) {
+        if (!except_types.isEmpty() && except_types.stream().anyMatch(type -> (card.Type & type) == type)) {
             return false;
         }
-        // 检查卡片类型过滤条件（支持逻辑与/或）
-        if (!types.isEmpty()
-                && (type_logic ?
-                types.stream().filter(type -> (card.Type & type) == type).count() != types.size()
-                : types.stream().noneMatch(type -> (card.Type & type) == type))
-        ) {
-            return false;
-        }
-        //TODO setcode
-        // 检查系列代码过滤条件（支持逻辑与/或）
-        if (!setcode.isEmpty()
-                && (setcode_logic ?
-                setcode.stream().filter(card::isSetCode).count() != setcode.size()
-                : setcode.stream().noneMatch(card::isSetCode))
-        ) {
+        // 检查字段过滤条件（支持逻辑与/或）
+        if (!setcode.isEmpty() && (setcode_logic ? setcode.stream().filter(card::isSetCode).count() != setcode.size() : setcode.stream().noneMatch(card::isSetCode))) {
             return false;
         }
         return true;
     }
-
 
     private int i(String str) {
         try {
