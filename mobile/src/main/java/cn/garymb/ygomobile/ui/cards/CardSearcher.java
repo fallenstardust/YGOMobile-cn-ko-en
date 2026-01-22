@@ -597,8 +597,6 @@ public class CardSearcher implements View.OnClickListener {
         iv_hide_setCode.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         view.findViewById(R.id.ll_setcode).setOnClickListener(v -> {
             if (tag_setcode.getVisibility() == View.VISIBLE) {
-                tag_setcode.setVisibility(View.GONE);
-                iv_hide_setCode.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
                 resetSetcode();
             } else {
                 tag_setcode.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
@@ -884,19 +882,16 @@ public class CardSearcher implements View.OnClickListener {
                 }
             });
         }
+        gl_category.setVisibility(View.GONE);
+        iv_hide_category.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 初始化时默认为折叠状态
         view.findViewById(R.id.ll_category).setOnClickListener(v -> {
             if (gl_category.getVisibility() == View.VISIBLE) {
-                gl_category.setVisibility(View.GONE);
-                iv_hide_category.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetCategory();
             } else {
                 gl_category.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_category.setVisibility(View.VISIBLE);
                 iv_hide_category.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
-        });
-        // 解除所有卡片种类的选中状态
-        view.findViewById(R.id.btn_clear_category).setOnClickListener(v -> {
-            resetCategory();
         });
     }
 
@@ -1168,19 +1163,16 @@ public class CardSearcher implements View.OnClickListener {
                 }
             });
         }
+        gl_attr.setVisibility(View.GONE);
+        iv_hide_attr.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         view.findViewById(R.id.ll_attr).setOnClickListener(v -> {
             if (gl_attr.getVisibility() == View.VISIBLE) {
-                gl_attr.setVisibility(View.GONE);
-                iv_hide_attr.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetAttribute();// 点击解除所有选择的属性
             } else {
                 gl_attr.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_attr.setVisibility(View.VISIBLE);
                 iv_hide_attr.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
-        });
-        // 点击解除所有选择的属性
-        view.findViewById(R.id.btn_clear_attr).setOnClickListener(v -> {
-            resetAttribute();
         });
     }
 
@@ -1276,19 +1268,16 @@ public class CardSearcher implements View.OnClickListener {
                 }
             });
         }
+        gl_race.setVisibility(View.GONE);
+        iv_hide_race.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 初始化时默认为折叠状态
         view.findViewById(R.id.ll_race).setOnClickListener(v -> {
             if (gl_race.getVisibility() == View.VISIBLE) {
-                gl_race.setVisibility(View.GONE);
-                iv_hide_race.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetRace();
             } else {
                 gl_race.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_race.setVisibility(View.VISIBLE);
                 iv_hide_race.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
-        });
-        // 解除所有选中的种族
-        view.findViewById(R.id.btn_clear_race).setOnClickListener(v -> {
-            resetRace();
         });
     }
 
@@ -1379,19 +1368,16 @@ public class CardSearcher implements View.OnClickListener {
                 isAnd = false;
             }
         });
+        gl_monsterType.setVisibility(View.GONE);
+        iv_hide_monsterType.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 初始化时默认为折叠状态
         view.findViewById(R.id.ll_monsterType).setOnClickListener(v -> {
             if (gl_monsterType.getVisibility() == View.VISIBLE) {
-                gl_monsterType.setVisibility(View.GONE);
-                iv_hide_monsterType.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetMonsterType();
             } else {
                 gl_monsterType.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_monsterType.setVisibility(View.VISIBLE);
                 iv_hide_monsterType.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
-        });
-        // 解除所有选中的怪兽子种类
-        view.findViewById(R.id.btn_clear_monsterType).setOnClickListener(v -> {
-            resetMonsterType();
         });
     }
 
@@ -1438,19 +1424,16 @@ public class CardSearcher implements View.OnClickListener {
                 Log.w("CardSearcher", "[排除种类]:" + excludeTypeList);
             });
         }
+        gl_exclude_type.setVisibility(View.GONE);
+        iv_hide_exclude_type.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 初始化时默认为折叠状态
         view.findViewById(R.id.ll_excludeType).setOnClickListener(v -> {
             if (gl_exclude_type.getVisibility() == View.VISIBLE) {
-                gl_exclude_type.setVisibility(View.GONE);
-                iv_hide_exclude_type.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetExcludeType();// 解除所有选中的排除怪兽子种类
             } else {
                 gl_exclude_type.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_exclude_type.setVisibility(View.VISIBLE);
                 iv_hide_exclude_type.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
-        });
-        // 解除所有选中的排除怪兽子种类
-        view.findViewById(R.id.btn_clear_excludeType).setOnClickListener(v -> {
-            resetExcludeType();
         });
     }
 
@@ -1539,18 +1522,16 @@ public class CardSearcher implements View.OnClickListener {
                 }
             });
         }
+        gl_level_rank_link.setVisibility(View.GONE);
+        iv_hide_level_rank_link.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 初始化时默认为折叠状态
         view.findViewById(R.id.ll_level).setOnClickListener(v -> {
             if (gl_level_rank_link.getVisibility() == View.VISIBLE) {
-                gl_level_rank_link.setVisibility(View.GONE);
-                iv_hide_level_rank_link.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetLevel();
             } else {
                 gl_level_rank_link.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_level_rank_link.setVisibility(View.VISIBLE);
                 iv_hide_level_rank_link.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
-        });
-        view.findViewById(R.id.btn_clear_level).setOnClickListener(v -> {
-            resetLevel();
         });
     }
 
@@ -1610,18 +1591,16 @@ public class CardSearcher implements View.OnClickListener {
                 }
             });
         }
+        gl_pendulum_scale.setVisibility(View.GONE);
+        iv_hide_pendulum_scale.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 初始化时默认为折叠状态
         view.findViewById(R.id.ll_pScale).setOnClickListener(v -> {
             if (gl_pendulum_scale.getVisibility() == View.VISIBLE) {
-                gl_pendulum_scale.setVisibility(View.GONE);
-                iv_hide_pendulum_scale.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+                resetPScale();
             } else {
                 gl_pendulum_scale.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
                 gl_pendulum_scale.setVisibility(View.VISIBLE);
                 iv_hide_pendulum_scale.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
             }
-        });
-        view.findViewById(R.id.btn_clear_pScale).setOnClickListener(v -> {
-            resetPScale();
         });
     }
 
@@ -1676,10 +1655,10 @@ public class CardSearcher implements View.OnClickListener {
                 lineKey = Integer.parseInt(mLinkStr, 2);
             });
         }
+        ll_linkControl.setVisibility(View.GONE);// 初始化时默认为折叠状态
+        iv_hide_linkmarker.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         view.findViewById(R.id.ll_linkmarker).setOnClickListener(v -> {
             if (ll_linkControl.getVisibility() == View.VISIBLE) {
-                ll_linkControl.setVisibility(View.GONE);
-                iv_hide_linkmarker.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
                 resetLinkMarker();
             } else {
                 ll_linkControl.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
@@ -1916,6 +1895,8 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetSetcode() {
+        tag_setcode.setVisibility(View.GONE);
+        iv_hide_setCode.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         // 清空 setCodeList
         setCodeList.clear();
 
@@ -1935,6 +1916,8 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetCategory() {
+        gl_category.setVisibility(View.GONE);
+        iv_hide_category.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < categoryButtons.length; i++) {
             categoryButtons[i].setSelected(false);
             categoryButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
@@ -1973,24 +1956,30 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetAttribute() {
+        gl_attr.setVisibility(View.GONE);
+        iv_hide_attr.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < attributeButtons.length; i++) {
             attributeButtons[i].setSelected(false);
             attributeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
             attributeButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-            attributeList.remove(attributeIds[i]);
+            attributeList.remove(attributeIds[i].getId());
         }
     }
 
     private void resetRace() {
+        gl_race.setVisibility(View.GONE);
+        iv_hide_race.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < raceButtons.length; i++) {
             raceButtons[i].setSelected(false);
             raceButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
             raceButtons[i].setTextColor(YGOUtil.c(R.color.gray));
-            raceList.remove(raceIds[i]);
+            raceList.remove(raceIds[i].value());
         }
     }
 
     private void resetMonsterType() {
+        gl_monsterType.setVisibility(View.GONE);
+        iv_hide_monsterType.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < monsterTypeButtons.length; i++) {
             monsterTypeButtons[i].setSelected(false);
             monsterTypeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
@@ -2000,6 +1989,8 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetExcludeType() {
+        gl_exclude_type.setVisibility(View.GONE);
+        iv_hide_exclude_type.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < exclude_typeButtons.length; i++) {
             exclude_typeButtons[i].setSelected(false);
             exclude_typeButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
@@ -2009,6 +2000,8 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetLevel() {
+        gl_level_rank_link.setVisibility(View.GONE);
+        iv_hide_level_rank_link.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < levelButtons.length; i++) {
             levelButtons[i].setSelected(false);
             levelButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
@@ -2018,6 +2011,8 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetPScale() {
+        gl_pendulum_scale.setVisibility(View.GONE);
+        iv_hide_pendulum_scale.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < pendulumScaleButtons.length; i++) {
             pendulumScaleButtons[i].setSelected(false);
             pendulumScaleButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
@@ -2027,6 +2022,8 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetLinkMarker() {
+        ll_linkControl.setVisibility(View.GONE);
+        iv_hide_linkmarker.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
         for (int i = 0; i < linkButton.length; i++) {
             linkButton[i].setSelected(false);
             if (linkButton[i] != linkButton[4]) {// 跳过第5个按钮

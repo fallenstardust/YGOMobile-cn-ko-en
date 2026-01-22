@@ -202,7 +202,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:layout_margin="@dimen/dp_10"
                         android:background="@drawable/selected"
                         android:paddingHorizontal="8dp"
                         android:text="@string/select_setcode" />
@@ -239,10 +238,6 @@
                         <TextView
                             style="@style/Title"
                             android:text="@string/label_category" />
-
-                        <ImageButton
-                            android:id="@+id/btn_clear_category"
-                            style="@style/ImageButton_close" />
                     </LinearLayout>
 
                     <GridLayout
@@ -573,10 +568,6 @@
                         <TextView
                             style="@style/Title"
                             android:text="@string/label_attr" />
-
-                        <ImageButton
-                            android:id="@+id/btn_clear_attr"
-                            style="@style/ImageButton_close" />
                     </LinearLayout>
 
                     <GridLayout
@@ -647,10 +638,6 @@
                         <TextView
                             style="@style/Title"
                             android:text="@string/label_race" />
-
-                        <ImageButton
-                            android:id="@+id/btn_clear_race"
-                            style="@style/ImageButton_close" />
                     </LinearLayout>
 
                     <GridLayout
@@ -830,7 +817,6 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="20dp"
                                 android:layout_gravity="center"
-                                android:layout_weight="1"
                                 android:orientation="horizontal">
 
                                 <RadioButton
@@ -850,10 +836,6 @@
                                     android:text="or"
                                     android:textColor="#FFFFFF" />
                             </RadioGroup>
-
-                            <ImageButton
-                                android:id="@+id/btn_clear_monsterType"
-                                style="@style/ImageButton_close" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -861,7 +843,7 @@
                         android:id="@+id/gl_monsterType"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="7"
+                        android:columnCount="6"
                         android:rowCount="3">
 
                         <Button
@@ -974,17 +956,13 @@
                             <TextView
                                 style="@style/Title"
                                 android:text="@string/label_excludeType" />
-
-                            <ImageButton
-                                android:id="@+id/btn_clear_excludeType"
-                                style="@style/ImageButton_close" />
                         </LinearLayout>
 
                         <GridLayout
                             android:id="@+id/gl_excludeType"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:columnCount="7"
+                            android:columnCount="6"
                             android:rowCount="3">
 
                             <Button
@@ -1094,10 +1072,6 @@
                         <TextView
                             style="@style/Title"
                             android:text="@string/label_level" />
-
-                        <ImageButton
-                            android:id="@+id/btn_clear_level"
-                            style="@style/ImageButton_close" />
                     </LinearLayout>
 
                     <GridLayout
@@ -1185,10 +1159,6 @@
                         <TextView
                             style="@style/Title"
                             android:text="@string/label_pendulum" />
-
-                        <ImageButton
-                            android:id="@+id/btn_clear_pScale"
-                            style="@style/ImageButton_close" />
                     </LinearLayout>
 
                     <GridLayout
