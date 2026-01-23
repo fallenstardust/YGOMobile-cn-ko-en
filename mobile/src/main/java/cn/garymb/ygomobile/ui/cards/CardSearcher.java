@@ -1720,10 +1720,12 @@ public class CardSearcher implements View.OnClickListener {
                     .level(levelList)
                     .race(raceList)
                     .monsterTypes(monsterTypeList)
-                    .except_types(excludeTypeList)
                     .type_logic(isAnd)
+                    .except_types(excludeTypeList)
+                    .linkKey(lineKey)
                     .atk(text(atkText))
                     .def(text(defText))
+
                     .keyword(keyword)
                     .build();
 
