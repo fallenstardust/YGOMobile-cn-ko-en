@@ -386,10 +386,19 @@ public class CardSearchInfo implements ICardFilter {
         if (!cardtypes.isEmpty() && (cardtypes.stream().noneMatch(type -> (card.Type & type) == type))) {
             return false;
         }
-
+        // 检查怪兽卡子类型过滤条件
+        if (!monstertypes.isEmpty()) {
+            if (card.isType(CardType.Monster)) {
+                if (type_logic ? monstertypes.stream().filter(type -> (card.Type & type) == type).count() != monstertypes.size()
+                        : monstertypes.stream().noneMatch(type -> (card.Type & type) == type)) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
         // 检查魔法陷阱卡子类型过滤条件
         if (!spelltraptypes.isEmpty()) {
-            Log.d("spelltraptypes: ", spelltraptypes.toString());
             if (card.isType(CardType.Spell) || card.isType(CardType.Trap)) {
                 long[] SPELL_TRAP_SUBTYPES = {
                         CardType.Ritual.getId(),
@@ -417,18 +426,6 @@ public class CardSearchInfo implements ICardFilter {
             }
         }
 
-        // 检查怪兽卡子类型过滤条件
-        if (!monstertypes.isEmpty()) {
-            Log.w("monstertypes: ", monstertypes.toString());
-            if (card.isType(CardType.Monster)) {
-                if (type_logic ? monstertypes.stream().filter(type -> (card.Type & type) == type).count() != monstertypes.size()
-                        : monstertypes.stream().noneMatch(type -> (card.Type & type) == type)) {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        }
         // 检查排除类型过滤条件
         if (!except_types.isEmpty() && except_types.stream().anyMatch(type -> (card.Type & type) == type)) {
             return false;
