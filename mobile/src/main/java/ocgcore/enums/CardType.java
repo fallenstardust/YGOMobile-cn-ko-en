@@ -3,7 +3,7 @@ package ocgcore.enums;
 import androidx.annotation.Nullable;
 
 public enum CardType {
-    None(0),
+    //None(0),
     Monster(0x1, 1050),
     Spell(0x2, 1051),
     Trap(0x4, 1052),

@@ -1068,18 +1068,13 @@ public class CardSearcher implements View.OnClickListener {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
                     button.setTextColor(YGOUtil.c(R.color.gray));
+                    spellTrapTypeList.remove(iconIds[index]);
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
                     button.setTextColor(YGOUtil.c(R.color.yellow));
-                }
-                for (int j = 0; j < iconButtons.length; j++) {
-                    if (iconButtons[j].isSelected()) {
-                        if (!spellTrapTypeList.contains(iconIds[j])) {
-                            spellTrapTypeList.add(iconIds[j]);
-                        }
-                    } else {
-                        spellTrapTypeList.remove(iconIds[j]);
+                    if (!spellTrapTypeList.contains(iconIds[index])) {
+                        spellTrapTypeList.add(iconIds[index]);
                     }
                 }
                 Log.d("CardSearcher", "[魔陷图标]包含种类:" + spellTrapTypeList);
@@ -1801,7 +1796,7 @@ public class CardSearcher implements View.OnClickListener {
         cardTypeButtons[0].setSelected(false);
         cardTypeButtons[0].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         cardTypeButtons[0].setTextColor(YGOUtil.c(R.color.gray));
-        monsterTypeList.remove(CardType.Monster.getId()); // 从monstertypeList中移除怪兽相关的ID
+        cardTypeList.remove(CardType.Monster.getId()); // 从monstertypeList中移除怪兽相关的ID
 
         resetAttribute();// 重置属性按钮为未选中
         resetRace();// 重置种族按钮为未选中
@@ -1925,7 +1920,7 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void resetTrap() {
-        //解除陷阱卡选中状态
+        //解除卡片分类的陷阱卡选中状态
         cardTypeButtons[2].setSelected(false);
         cardTypeButtons[2].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         cardTypeButtons[2].setTextColor(YGOUtil.c(R.color.gray));

@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.loader;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -89,9 +90,11 @@ public class CardSearchInfo implements ICardFilter {
     public List<Long> getCardTypes() {
         return cardtypes;
     }
+
     public List<Long> getSpellTrapTypes() {
         return spelltraptypes;
     }
+
     public List<Long> getMonsterType() {
         return monstertypes;
     }
@@ -305,6 +308,11 @@ public class CardSearchInfo implements ICardFilter {
         if (keyWord != null && !keyWord.isValid(card)) {
             return false;
         }
+
+        // 检查字段过滤条件（支持逻辑与/或）
+        if (!setcode.isEmpty() && (setcode_logic ? setcode.stream().filter(card::isSetCode).count() != setcode.size() : setcode.stream().noneMatch(card::isSetCode))) {
+            return false;
+        }
         // 检查属性过滤条件
         if (!attribute.isEmpty() && !attribute.contains(card.Attribute)) {
             return false;
@@ -359,11 +367,7 @@ public class CardSearchInfo implements ICardFilter {
         }
 
         // 检查灵摆刻度过滤条件
-        if (!pscale.isEmpty()
-                && (!card.isType(CardType.Pendulum)
-                || (!pscale.contains(card.LeftScale)
-                && !pscale.contains(card.RightScale)))
-        ) {
+        if (!pscale.isEmpty() && (!card.isType(CardType.Pendulum) || (!pscale.contains(card.LeftScale) && !pscale.contains(card.RightScale)))) {
             return false;
         }
 
@@ -383,30 +387,50 @@ public class CardSearchInfo implements ICardFilter {
             return false;
         }
 
-        // TODO 检查魔法卡子类型过滤条件
-        if (!spelltraptypes.isEmpty() && (card.isType(CardType.Spell) || card.isType(CardType.Trap))) {
-            boolean spellTrapTypeMatch = spelltraptypes.stream().anyMatch(type -> (card.Type & type) == type);
-            if (!spellTrapTypeMatch) {
+        // 检查魔法陷阱卡子类型过滤条件
+        if (!spelltraptypes.isEmpty()) {
+            Log.d("spelltraptypes: ", spelltraptypes.toString());
+            if (card.isType(CardType.Spell) || card.isType(CardType.Trap)) {
+                long[] SPELL_TRAP_SUBTYPES = {
+                        CardType.Ritual.getId(),
+                        CardType.QuickPlay.getId(),
+                        CardType.Continuous.getId(),
+                        CardType.Equip.getId(),
+                        CardType.Field.getId(),
+                        CardType.Counter.getId()
+                };
+                if (spelltraptypes.contains(CardType.Normal.getId())) {//特殊处理包含通常怪兽的ID时需要过滤出无子分类魔法陷阱的情况
+                    // 遍历魔法/陷阱卡子类型数组，检查卡片是否包含其中任何一个子类型
+                    for (long type : SPELL_TRAP_SUBTYPES) {
+                        // 如果卡片具有魔法陷阱子类型，则判断spelltraptypes是否也包含，是则也是在搜索条件内不要排除
+                        if ((card.Type & type) == type) {
+                            return spelltraptypes.contains(type);
+                        }
+                    }
+
+                } else {
+                    // 当spelltraptypes不包含CardType.Normal.getId()时，检查spelltraptypes中是否有匹配的类型
+                    return (spelltraptypes.stream().anyMatch(type -> (card.Type & type) == type));
+                }
+            } else {
                 return false;
             }
         }
 
-        // TODO 检查怪兽卡子类型过滤条件
-        if (!monstertypes.isEmpty() && card.isType(CardType.Monster)) {
-            boolean monsterTypeMatch = (type_logic ?
-                    monstertypes.stream().filter(type -> (card.Type & type) == type).count() != monstertypes.size()
-                    : monstertypes.stream().noneMatch(type -> (card.Type & type) == type));
-
-            if (monsterTypeMatch) {
+        // 检查怪兽卡子类型过滤条件
+        if (!monstertypes.isEmpty()) {
+            Log.w("monstertypes: ", monstertypes.toString());
+            if (card.isType(CardType.Monster)) {
+                if (type_logic ? monstertypes.stream().filter(type -> (card.Type & type) == type).count() != monstertypes.size()
+                        : monstertypes.stream().noneMatch(type -> (card.Type & type) == type)) {
+                    return false;
+                }
+            } else {
                 return false;
             }
         }
         // 检查排除类型过滤条件
         if (!except_types.isEmpty() && except_types.stream().anyMatch(type -> (card.Type & type) == type)) {
-            return false;
-        }
-        // 检查字段过滤条件（支持逻辑与/或）
-        if (!setcode.isEmpty() && (setcode_logic ? setcode.stream().filter(card::isSetCode).count() != setcode.size() : setcode.stream().noneMatch(card::isSetCode))) {
             return false;
         }
         return true;
