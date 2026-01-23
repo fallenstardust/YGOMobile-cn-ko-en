@@ -81,6 +81,12 @@
                     layout="@layout/item_linkmaker_small"
                     android:visibility="gone" />
 
+                <ImageView
+                    android:id="@+id/card_star"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_gravity="center" />
+
                 <TextView
                     android:id="@+id/card_level"
                     android:layout_width="wrap_content"
@@ -94,7 +100,8 @@
                     android:singleLine="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                     android:textColor="@color/star"
-                    tools:text="★4" />
+                    android:textStyle="bold"
+                    tools:text="4" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -102,6 +109,12 @@
                     android:layout_gravity="center"
                     android:layout_marginLeft="10dp"
                     android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/icon_attr"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:layout_gravity="center" />
 
                     <TextView
                         android:id="@+id/card_attr"
@@ -118,13 +131,12 @@
                         android:textColor="@color/gray"
                         tools:text="Dark" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="/"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@android:color/holo_green_light" />
+                    <ImageView
+                        android:id="@+id/icon_race"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_gravity="center" />
 
                     <TextView
                         android:id="@+id/card_race"

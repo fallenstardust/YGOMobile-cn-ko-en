@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
+import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 import android.annotation.SuppressLint;
@@ -50,6 +51,7 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.adapters.BaseAdapterPlus;
 import cn.garymb.ygomobile.ui.widget.Shimmer;
 import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
+import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -59,6 +61,8 @@ import ocgcore.DataManager;
 import ocgcore.PackManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
+import ocgcore.enums.CardAttribute;
+import ocgcore.enums.CardRace;
 import ocgcore.enums.CardType;
 
 /***
@@ -78,8 +82,13 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final TextView name;
     private final LinearLayout btn_related;
     private final TextView desc;
-    private final TextView level;
     private final TextView type;
+    private final ImageView icon_star;
+    private final TextView level;
+
+    private final ImageView icon_attribute;
+    private final TextView attrView;
+    private final ImageView icon_race;
     private final TextView race;
     private final TextView cardAtk;
     private final TextView cardDef;
@@ -87,7 +96,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final ShimmerTextView packName;
     private final TextView setName;
     private final TextView otView;
-    private final TextView attrView;
+
     private final View monsterLayout;
     private final ImageButton close;
     private final LinearLayout faq;
@@ -166,8 +175,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         desc = findViewById(R.id.text_desc);
         close = findViewById(R.id.btn_close);
         cardCode = findViewById(R.id.card_code);
+        // 等级/阶级/连接箭头显示
+        icon_star = findViewById(R.id.icon_star);
         level = findViewById(R.id.card_level);
         linkArrow = findViewById(R.id.detail_link_arrows);
+
         type = findViewById(R.id.card_type);
         faq = findViewById(R.id.btn_faq);
         cardAtk = findViewById(R.id.card_atk);
@@ -178,12 +190,17 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         monsterLayout = findViewById(R.id.layout_monster);
         layoutDetailPScale = findViewById(R.id.detail_p_scale);
         detailCardScale = findViewById(R.id.detail_cardscale);
+        // 属性
+        icon_attribute = findViewById(R.id.icon_attribute);
+        attrView = findViewById(R.id.card_attribute);
+        // 种族
+        icon_race = findViewById(R.id.icon_race);
         race = findViewById(R.id.card_race);
         setName = findViewById(R.id.card_setname);
         addMain = findViewById(R.id.btn_add_main);
         addSide = findViewById(R.id.btn_add_side);
         otView = findViewById(R.id.card_ot);
-        attrView = findViewById(R.id.card_attribute);
+
         lbSetCode = findViewById(R.id.label_setcode);
         cardManager = DataManager.get().getCardManager();
         packManager = DataManager.get().getPackManager();
@@ -545,7 +562,17 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mImageFav.setSelected(CardFavorites.get().hasCard(cardInfo.Code));
 
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
+
+        // 属性
+        if (cardInfo.Attribute == CardAttribute.Dark.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dark.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Light.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "light.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Earth.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "earth.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Wind.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wind.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Water.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "water.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Fire.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fire.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Divine.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "divine.png", 0, 0));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
+
         otView.setText(mStringManager.getOtString(cardInfo.Ot, true));
         long[] sets = cardInfo.getSetCode();
         setName.setText("");
@@ -571,16 +598,17 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         if (cardInfo.isType(CardType.Monster)) {
             atkdefView.setVisibility(View.VISIBLE);
             monsterLayout.setVisibility(View.VISIBLE);
+            // 种族
+            icon_race.setVisibility(View.VISIBLE);
             race.setVisibility(View.VISIBLE);
-            String star = "★" + cardInfo.getStar();
-           /* for (int i = 0; i < cardInfo.getStar(); i++) {
-                star += "★";
-            }*/
-            level.setText(star);
+
+            level.setText(String.valueOf(cardInfo.getStar()));
             if (cardInfo.isType(CardType.Xyz)) {
-                level.setTextColor(context.getResources().getColor(R.color.star_rank));
+                icon_star.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "star_rank.png", 0, 0));
+                level.setTextColor(YGOUtil.c(R.color.star_rank));
             } else {
-                level.setTextColor(context.getResources().getColor(R.color.star));
+                icon_star.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "star_level.png", 0, 0));
+                level.setTextColor(YGOUtil.c(R.color.star));
             }
             if (cardInfo.isType(CardType.Pendulum)) {
                 layoutDetailPScale.setVisibility(View.VISIBLE);
@@ -591,18 +619,47 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             cardAtk.setText((cardInfo.Attack < 0 ? "?" : String.valueOf(cardInfo.Attack)));
             //连接怪兽设置
             if (cardInfo.isType(CardType.Link)) {
+                icon_star.setVisibility(View.GONE);
                 level.setVisibility(View.GONE);
                 linkArrow.setVisibility(View.VISIBLE);
                 cardDef.setText((cardInfo.getStar() < 0 ? "?" : "LINK-" + cardInfo.getStar()));
                 BaseActivity.showLinkArrows(cardInfo, view);
             } else {
+                icon_star.setVisibility(View.VISIBLE);
                 level.setVisibility(View.VISIBLE);
                 linkArrow.setVisibility(View.GONE);
                 cardDef.setText((cardInfo.Defense < 0 ? "?" : String.valueOf(cardInfo.Defense)));
             }
+            // 种族
+            if (cardInfo.Race == CardRace.Warrior.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "warrior.png", 0, 0));
+            if (cardInfo.Race == CardRace.SpellCaster.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "spellcaster.png", 0, 0));
+            if (cardInfo.Race == CardRace.Fairy.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fairy.png", 0, 0));
+            if (cardInfo.Race == CardRace.Fiend.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fiend.png", 0, 0));
+            if (cardInfo.Race == CardRace.Zombie.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "zombie.png", 0, 0));
+            if (cardInfo.Race == CardRace.Machine.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "machine.png", 0, 0));
+            if (cardInfo.Race == CardRace.Aqua.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "aqua.png", 0, 0));
+            if (cardInfo.Race == CardRace.Pyro.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "pyro.png", 0, 0));
+            if (cardInfo.Race == CardRace.Rock.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "rock.png", 0, 0));
+            if (cardInfo.Race == CardRace.WingedBeast.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "winged_beast.png", 0, 0));
+            if (cardInfo.Race == CardRace.Plant.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "plant.png", 0, 0));
+            if (cardInfo.Race == CardRace.Insect.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "insect.png", 0, 0));
+            if (cardInfo.Race == CardRace.Thunder.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "thunder.png", 0, 0));
+            if (cardInfo.Race == CardRace.Dragon.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dragon.png", 0, 0));
+            if (cardInfo.Race == CardRace.Beast.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "beast.png", 0, 0));
+            if (cardInfo.Race == CardRace.BeastWarrior.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "beast_warrior.png", 0, 0));
+            if (cardInfo.Race == CardRace.Dinosaur.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dinosaur.png", 0, 0));
+            if (cardInfo.Race == CardRace.Fish.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fish.png", 0, 0));
+            if (cardInfo.Race == CardRace.SeaSerpent.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "sea_serpent.png", 0, 0));
+            if (cardInfo.Race == CardRace.Reptile.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "reptile.png", 0, 0));
+            if (cardInfo.Race == CardRace.Psychic.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "psychic.png", 0, 0));
+            if (cardInfo.Race == CardRace.DivineBeast.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "divine_beast.png", 0, 0));
+            if (cardInfo.Race == CardRace.CreatorGod.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "creator_god.png", 0, 0));
+            if (cardInfo.Race == CardRace.Wyrm.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wyrm.png", 0, 0));
+            if (cardInfo.Race == CardRace.Cyberse.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cyberse.png", 0, 0));
             race.setText(mStringManager.getRaceString(cardInfo.Race));
         } else {
             atkdefView.setVisibility(View.GONE);
+            icon_race.setVisibility(View.GONE);
             race.setVisibility(View.GONE);
             monsterLayout.setVisibility(View.GONE);
             level.setVisibility(View.GONE);
