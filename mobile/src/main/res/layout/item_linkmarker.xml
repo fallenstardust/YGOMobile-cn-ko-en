@@ -13,14 +13,14 @@
 
         <Button
             android:id="@+id/button_7"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@drawable/left_top_0"
             android:visibility="visible" />
 
         <Button
             android:id="@+id/button_8"
-            android:layout_width="80dp"
+            android:layout_width="60dp"
             android:layout_height="30dp"
             android:background="@drawable/top_0"
             android:paddingTop="15dp"
@@ -28,8 +28,8 @@
 
         <Button
             android:id="@+id/button_9"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@drawable/right_top_0"
             android:visibility="visible" />
     </LinearLayout>
@@ -43,15 +43,15 @@
         <Button
             android:id="@+id/button_4"
             android:layout_width="30dp"
-            android:layout_height="80dp"
+            android:layout_height="60dp"
             android:layout_marginRight="20dp"
             android:background="@drawable/left_0"
             android:visibility="visible" />
 
         <Button
             android:id="@+id/button_5"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="@drawable/button_bg"
             android:text="OK"
             android:visibility="invisible" />
@@ -59,7 +59,7 @@
         <Button
             android:id="@+id/button_6"
             android:layout_width="30dp"
-            android:layout_height="80dp"
+            android:layout_height="60dp"
             android:layout_marginLeft="20dp"
             android:background="@drawable/right_0"
             android:visibility="visible" />
@@ -73,14 +73,14 @@
 
         <Button
             android:id="@+id/button_1"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@drawable/left_bottom_0"
             android:visibility="visible" />
 
         <Button
             android:id="@+id/button_2"
-            android:layout_width="80dp"
+            android:layout_width="60dp"
             android:layout_height="30dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/bottom_0"
@@ -88,8 +88,8 @@
 
         <Button
             android:id="@+id/button_3"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@drawable/right_bottom_0" />
     </LinearLayout>
 

@@ -1889,6 +1889,7 @@ public class CardSearcher implements View.OnClickListener {
             }
 
         }
+        Arrays.fill(BtnVals, "0");
         lineKey = 0;
     }
 
