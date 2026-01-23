@@ -206,7 +206,11 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         holder.setText(R.id.card_code, String.format("%08d", item.getCode()));
 
         // 根据设置控制添加按钮的可见性
-        holder.getView(R.id.ll_add_btn).setVisibility(showAddButtons ? View.VISIBLE : View.GONE);
+        if (item.isType(CardType.Token)) {//衍生物不显示添加按钮
+            holder.getView(R.id.ll_add_btn).setVisibility(View.GONE);
+        } else {
+            holder.getView(R.id.ll_add_btn).setVisibility(showAddButtons ? View.VISIBLE : View.GONE);
+        }
 
         bindMenu(holder, position);
         if (mItemBg) {
