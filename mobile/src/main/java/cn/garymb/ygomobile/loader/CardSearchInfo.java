@@ -15,7 +15,7 @@ import ocgcore.enums.CardType;
 public class CardSearchInfo implements ICardFilter {
     //名字或者描述
     private CardKeyWord keyWord;
-    private int ot;
+    private List<Integer> ot;
     private List<Integer> pscale;
     private String atk;
     private String def;
@@ -59,7 +59,7 @@ public class CardSearchInfo implements ICardFilter {
         return level;
     }
 
-    public int getOt() {
+    public List<Integer> getOt() {
         return ot;
     }
 
@@ -119,6 +119,7 @@ public class CardSearchInfo implements ICardFilter {
         private final CardSearchInfo searchInfo = new CardSearchInfo();
 
         public CardSearchInfo build() {
+            searchInfo.ot = searchInfo.ot != null ? searchInfo.ot : new ArrayList<>();
             searchInfo.cardtypes = searchInfo.cardtypes != null ? searchInfo.cardtypes : new ArrayList<>();
             searchInfo.spelltraptypes = searchInfo.spelltraptypes != null ? searchInfo.spelltraptypes : new ArrayList<>();
             searchInfo.attribute = searchInfo.attribute != null ? searchInfo.attribute : new ArrayList<>();
@@ -157,7 +158,7 @@ public class CardSearchInfo implements ICardFilter {
             return this;
         }
 
-        public Builder ot(int val) {
+        public Builder ot(List<Integer> val) {
             searchInfo.ot = val;
             return this;
         }
@@ -352,16 +353,25 @@ public class CardSearchInfo implements ICardFilter {
         }
 
         // 检查卡片OCG\TCG独有过滤条件
-        if (ot > CardOt.ALL.getId()) {
-            if (ot == CardOt.NO_EXCLUSIVE.getId()) {
-                if (card.Ot == CardOt.OCG.getId() || card.Ot == CardOt.TCG.getId() || card.Ot == CardOt.CUSTOM.getId()) {
-                    return false;
+        if (!ot.isEmpty()) {
+            boolean otMatch = ot.stream().anyMatch(otValue -> {
+                // NO_EXCLUSIVE情况：匹配OCG、TCG或SC_OCG
+                if (otValue == CardOt.NO_EXCLUSIVE.getId() && (card.Ot == CardOt.OCG.getId() || card.Ot == CardOt.TCG.getId() || card.Ot == CardOt.SC_OCG.getId())) {
+                    return true;
                 }
-            } else if (ot == CardOt.OCG.getId() || ot == CardOt.TCG.getId()) {
-                if (card.Ot != ot) {
-                    return false;
+                // 具体OT类型匹配：OCG、TCG、CUSTOM
+                if ((otValue == CardOt.OCG.getId() || otValue == CardOt.TCG.getId() || otValue == CardOt.CUSTOM.getId()) && ot.contains(card.Ot)) {
+                    return true;
                 }
-            } else if ((card.Ot & ot) == 0) {
+                // SC_OCG情况：匹配大于等于8的OT值
+                if (otValue == CardOt.SC_OCG.getId() && card.Ot >= CardOt.SC_OCG.getId()) {
+                    return true;
+                }
+                return false;
+            });
+
+            // 如果没有任何OT条件匹配，则返回false
+            if (!otMatch) {
                 return false;
             }
         }

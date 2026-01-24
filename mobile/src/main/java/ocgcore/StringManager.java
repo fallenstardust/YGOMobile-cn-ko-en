@@ -271,7 +271,15 @@ public class StringManager implements Closeable {
         return getSystemString(value.getLanguageIndex(), value.name());
     }
 
+    /**
+     * 根据OT值获取对应的字符串表示
+     *
+     * @param ot   OT值，用于标识卡片类型
+     * @param full 是否返回完整的OT字符串组合，如果为true则返回所有匹配的OT类型的组合字符串；如果为false则返回单个OT类型的字符串
+     * @return 对应的字符串表示，如果无法找到对应类型则返回OT值的字符串形式
+     */
     public String getOtString(int ot, boolean full) {
+        // 当不需要完整模式或OT值为0时，直接返回单个OT类型的字符串表示
         if (!full || ot == 0) {
             CardOt value = CardOt.valueOf(ot);
             if (value == null) {
@@ -279,6 +287,8 @@ public class StringManager implements Closeable {
             }
             return getSystemString(value.getLanguageIndex(), value.name());
         }
+
+        // 构建完整模式下的OT类型组合字符串
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
         for (CardOt _ot : CardOt.values()) {

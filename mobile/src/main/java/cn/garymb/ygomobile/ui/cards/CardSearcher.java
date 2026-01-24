@@ -67,12 +67,17 @@ public class CardSearcher implements View.OnClickListener {
     final String[] BtnVals = new String[9];
     private final EditText keyWord;
     private final CheckBox chk_multi_keyword;
-    private final Spinner otSpinner;
+
     private final Switch genesys_Switch;
     private final Spinner limitSpinner;
     private final Spinner genesys_limitSpinner;
     private final Spinner limitListSpinner;
     private final Spinner genesys_limitListSpinner;
+    private GridLayout gl_ot;
+    private ImageView iv_hide_ot;
+    private Button[] otButtons;
+    private CardOt[] otIds;
+    List<Integer> otList;
     // 字段标签栏
     private final ImageView iv_hide_setCode;
     private final FlexboxLayout tag_setcode;
@@ -167,12 +172,16 @@ public class CardSearcher implements View.OnClickListener {
         mLimitManager = DataManager.get().getLimitManager();
         keyWord = findViewById(R.id.edt_word1);
         chk_multi_keyword = findViewById(R.id.chk_multi_keyword);
-        otSpinner = findViewById(R.id.sp_ot);
         genesys_Switch = findViewById(R.id.sw_genesys_mode);//genesys模式开关
         limitSpinner = findViewById(R.id.sp_limit);
         genesys_limitSpinner = findViewById(R.id.sp_genesys_limit);//初始化genesys禁限选项布局
         limitListSpinner = findViewById(R.id.sp_limit_list);
         genesys_limitListSpinner = findViewById(R.id.sp_genesys_limit_list);//初始化genesys禁卡表布局
+        // 专属（OCG TCG OCG|TCG SC_OCG CUSTOM）
+        gl_ot = findViewById(R.id.gl_ot);
+        iv_hide_ot = findViewById(R.id.iv_hide_ot);
+        otIds = CardOt.values();
+        otList = new ArrayList<>();
         // 字段
         iv_hide_setCode = findViewById(R.id.iv_hide_setCode);
         tag_setcode = findViewById(R.id.tag_setcode);
@@ -346,12 +355,12 @@ public class CardSearcher implements View.OnClickListener {
         initAttributeButtons();
         initRaceButtons();
         initIconButtons();
-        initMonsterTypeButton();
-        initExcludeTypeButton();
+        initMonsterTypeButtons();
+        initExcludeTypeButtons();
         initLevelButtons();
         initPendulumScaleButtons();
-        initLinkMarkerButton();
-        initOtSpinners(otSpinner);
+        initLinkMarkerButtons();
+        initOtButtons();
         initLimitSpinners(limitSpinner);//初始化常规禁限选项：禁止、限制、准限制
         initLimitGenesysSpinners(genesys_limitSpinner);//初始化Genesys禁限选项：Genesys、禁止
         initLimitListSpinners(limitListSpinner);
@@ -365,19 +374,6 @@ public class CardSearcher implements View.OnClickListener {
             ((Spinner) v).setPopupBackgroundResource(R.color.colorNavy);
         }
         return v;
-    }
-
-    private void initOtSpinners(Spinner spinner) {
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        for (CardOt item : CardOt.values()) {
-            items.add(new SimpleSpinnerItem(item.getId(),
-                    mStringManager.getOtString(item.getId(), false)));
-        }
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
-        adapter.setColor(Color.WHITE);
-        adapter.setColor(Color.WHITE);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
     }
 
     public boolean isShowFavorite() {
@@ -589,6 +585,61 @@ public class CardSearcher implements View.OnClickListener {
             mLimitManager.load();
         }
         initGenesysLimitListSpinners(spinner);
+    }
+
+    private void initOtButtons() {
+        Drawable[] otIcon = new Drawable[]{
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "ot_ocg.png", 0, 0)),// OCG
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "ot_tcg.png", 0, 0)),// TCG
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "ot_custom.png", 0, 0)),// 自定义卡片
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "ot_sc.png", 0, 0)),// 简中
+                new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "ot_ocgtcg.png", 0, 0)),// 非独有卡
+        };
+        otButtons = new Button[]{
+                view.findViewById(R.id.btn_ot_OCG),// OCG
+                view.findViewById(R.id.btn_ot_TCG),// TCG
+                view.findViewById(R.id.btn_ot_CUSTOM),// 自定义卡片
+                view.findViewById(R.id.btn_ot_SC),// 简中
+                view.findViewById(R.id.btn_ot_OCGTCG),// 非独有卡
+
+        };
+        for (int i = 0; i < otButtons.length; i++) {
+            //设置按钮样式
+            Button button = otButtons[i];
+            button.setCompoundDrawablePadding(4); // 图标和文字间距
+            // 设置图标
+            button.setCompoundDrawablesWithIntrinsicBounds(null, otIcon[i], null, null);
+
+            // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
+            button.setText(mStringManager.getOtString(otIds[i].getId(), false));
+            int index = i;
+            button.setOnClickListener(v -> {
+                if (button.isSelected()) {
+                    button.setSelected(false);
+                    button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    button.setTextColor(YGOUtil.c(R.color.gray));
+                    otList.remove(Integer.valueOf(otIds[index].getId()));
+                } else {
+                    button.setSelected(true);
+                    button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    button.setTextColor(YGOUtil.c(R.color.yellow));
+                    if (!otList.contains(otIds[index].getId())) {
+                        otList.add(otIds[index].getId());
+                    }
+                }
+            });
+        }
+        gl_ot.setVisibility(View.GONE);
+        iv_hide_ot.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 初始化时默认为折叠状态
+        view.findViewById(R.id.ll_ot).setOnClickListener(v -> {
+            if (gl_ot.getVisibility() == View.VISIBLE) {
+                resetOt();
+            } else {
+                gl_ot.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
+                gl_ot.setVisibility(View.VISIBLE);
+                iv_hide_ot.setImageResource(R.drawable.baseline_keyboard_arrow_up_24);
+            }
+        });
     }
 
     private void initSetnameSearchFeature() {
@@ -1268,7 +1319,7 @@ public class CardSearcher implements View.OnClickListener {
         });
     }
 
-    private void initMonsterTypeButton() {
+    private void initMonsterTypeButtons() {
         TypeIcon = new Drawable[]{
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_normal.png", 0, 0)),// 通常
                 new BitmapDrawable(mContext.getResources(), BitmapUtil.getBitmapFormAssets(mContext, ASSET_ATTR_RACE + "type_effect.png", 0, 0)),// 效果
@@ -1337,10 +1388,12 @@ public class CardSearcher implements View.OnClickListener {
                 if (button.isSelected()) {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    button.setTextColor(YGOUtil.c(R.color.gray));
                     monsterTypeList.remove(monsterTypeIds[index]);
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius));
+                    button.setTextColor(YGOUtil.c(R.color.yellow));
                     if (!monsterTypeList.contains(monsterTypeIds[index]))
                         monsterTypeList.add(monsterTypeIds[index]);
                 }
@@ -1368,7 +1421,7 @@ public class CardSearcher implements View.OnClickListener {
         });
     }
 
-    private void initExcludeTypeButton() {
+    private void initExcludeTypeButtons() {
         exclude_typeButtons = new Button[]{
                 view.findViewById(R.id.btn_exclude_type_normal),// 通常
                 view.findViewById(R.id.btn_exclude_type_effect),// 效果
@@ -1401,10 +1454,12 @@ public class CardSearcher implements View.OnClickListener {
                 if (button.isSelected()) {
                     button.setSelected(false);
                     button.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                    button.setTextColor(YGOUtil.c(R.color.gray));
                     excludeTypeList.remove(monsterTypeIds[index]);
                 } else {//未选中时的逻辑
                     button.setSelected(true);
                     button.setBackground(mContext.getDrawable(R.drawable.radius_p));
+                    button.setTextColor(YGOUtil.c(R.color.yellow));
                     if (!excludeTypeList.contains(monsterTypeIds[index]))
                         excludeTypeList.add(monsterTypeIds[index]);
                 }
@@ -1591,7 +1646,7 @@ public class CardSearcher implements View.OnClickListener {
         });
     }
 
-    private void initLinkMarkerButton() {
+    private void initLinkMarkerButtons() {
         Arrays.fill(BtnVals, "0");
         linkButton = new Button[]{
                 view.findViewById(R.id.button_1),
@@ -1700,15 +1755,11 @@ public class CardSearcher implements View.OnClickListener {
 
     private void search() {
         if (mICardSearcher != null) {
-            Log.d(TAG, "cardsearcher: " + "卡片种类："+cardTypeList);
-            Log.d(TAG, "cardsearcher: " + "魔法陷阱种类："+spellTrapTypeList);
-            Log.d(TAG, "cardsearcher: " + "怪兽 子种类："+monsterTypeList);
-            int ot = getIntSelect(otSpinner);
             int limitType = genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner);
             String limitName = genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner);
             String keyword = text(keyWord);
             CardSearchInfo searchInfo = new CardSearchInfo.Builder()
-                    .ot(ot)
+                    .ot(otList)
                     .limitName(limitName)
                     .limitType(limitType)
                     .setcode(setCodeList)
@@ -1738,14 +1789,25 @@ public class CardSearcher implements View.OnClickListener {
             mICardSearcher.onReset();
         }
         keyWord.setText(null);
-        reset(otSpinner);
         reset(limitSpinner.getVisibility() == View.VISIBLE ? limitSpinner : genesys_limitSpinner);
+        resetOt();
         resetSetcode();
         resetCategory();
         resetCardType();
         resetMonster();
         if (layout_monster.getVisibility() == View.GONE) layout_monster.setVisibility(View.VISIBLE);
         if (ll_icon.getVisibility() == View.GONE) ll_icon.setVisibility(View.VISIBLE);
+    }
+
+    private void resetOt() {
+        gl_ot.setVisibility(View.GONE);
+        iv_hide_ot.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
+        for (int i = 0; i < otButtons.length; i++) {
+            otButtons[i].setSelected(false);
+            otButtons[i].setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+            otButtons[i].setTextColor(YGOUtil.c(R.color.gray));
+            otList.remove(Integer.valueOf(otIds[i].getId()));//需要int转Integer再移除以免超过索引
+        }
     }
 
     private void resetSetcode() {
