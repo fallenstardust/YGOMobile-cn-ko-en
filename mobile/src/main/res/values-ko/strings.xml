@@ -135,9 +135,9 @@
     <string name="hit_def">DEF</string>
     <string name="reset">리셋</string>
     <string name="label_race">종족:</string>
-    <string name="label_ot">룰</string>
+    <string name="label_ot">룰:</string>
     <string name="label_limit">제한 종류</string>
-    <string name="label_limitlist">리미트 레귤레이션</string>
+    <string name="label_limitlist">리미트 레귤레이션:</string>
     <string name="label_type">카드 종류:</string>
     <string name="label_set">카드군:</string>
     <string name="label_set_No_Setcode">#카드 세트가 포함되지 않음</string>

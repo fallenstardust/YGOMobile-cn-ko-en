@@ -125,7 +125,7 @@
     <string name="label_ot_No_Exclusive">No exclusivas</string>
     <string name="label_ot_All">Todo</string>
     <string name="label_limit">Límite</string>
-    <string name="label_limitlist">Banlist</string>
+    <string name="label_limitlist">Banlist:</string>
     <string name="label_type">Tipo de carta:</string>
     <string name="label_set">Arquetipo:</string>
     <string name="label_set_No_Setcode">" #Sin Card Set incluido"</string>

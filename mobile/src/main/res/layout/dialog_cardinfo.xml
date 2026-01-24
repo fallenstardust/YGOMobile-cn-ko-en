@@ -205,7 +205,7 @@
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@color/star"
-                tools:text="★4" />
+                tools:text="13" />
 
             <View
                 android:layout_width="0dp"
@@ -438,6 +438,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/label_set"
+                    android:textIsSelectable="true"
                     android:textAppearance="@style/TextAppearance.AppCompat.Caption"
                     android:textColor="@color/item_title"
                     android:visibility="invisible"
@@ -487,12 +488,32 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <View
-                    android:id="@+id/view_bar"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="4dp"
-                    android:background="@color/white" />
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="2dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/card_code"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:gravity="left|center"
+                        android:textSize="8sp"
+                        android:layout_marginHorizontal="2dp"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                        android:textColor="@color/gray"
+                        android:textIsSelectable="true"
+                        tools:text="12345678" />
+
+                    <View
+                        android:id="@+id/view_bar"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_gravity="center"
+                        android:background="@color/white" />
+                </LinearLayout>
 
                 <FrameLayout
                     android:layout_width="match_parent"
@@ -500,34 +521,21 @@
                     android:paddingLeft="4dp"
                     android:paddingRight="10dp">
 
-                    <TextView
-                        android:id="@+id/card_code"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom"
-                        android:gravity="left"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                        android:textColor="@color/holo_blue_bright"
-                        android:textIsSelectable="true"
-                        tools:text="12345678" />
-
                     <LinearLayout
                         android:id="@+id/layout_atkdef2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="bottom|right"
-                        android:layout_marginTop="2dp"
+                        android:layout_gravity="center|right"
                         android:orientation="horizontal">
 
                         <TextView
                             android:id="@+id/card_atk"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginRight="5dp"
                             android:gravity="right"
                             android:maxLines="1"
                             android:singleLine="true"
-                            android:text="0"
+                            android:text="5000"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                             android:textColor="@color/white" />
 
@@ -535,6 +543,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:maxLines="1"
+                            android:layout_marginHorizontal="5dp"
                             android:singleLine="true"
                             android:text="/"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
@@ -544,11 +553,10 @@
                             android:id="@+id/card_def"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginLeft="5dp"
                             android:gravity="right"
                             android:maxLines="1"
                             android:singleLine="true"
-                            android:text="0"
+                            android:text="5000"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                             android:textColor="@color/white" />
                     </LinearLayout>

@@ -110,7 +110,7 @@
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="label_race">種族:</string>
-    <string name="label_ot">専用</string>
+    <string name="label_ot">専用:</string>
     <string name="label_ot_OCG">OCG</string>
     <string name="label_ot_TCG">TCG</string>
     <string name="label_ot_SC_OCG">简体中文</string>
@@ -118,7 +118,7 @@
     <string name="label_ot_No_Exclusive">ユニークではない</string>
     <string name="label_ot_All">全カード</string>
     <string name="label_limit">制限なし</string>
-    <string name="label_limitlist">リミットレギュレーション</string>
+    <string name="label_limitlist">リミットレギュレーション:</string>
     <string name="label_type">カード種類:</string>
     <string name="label_set">カテゴリ:</string>
     <string name="label_set_No_Setcode">カードセットを含まない</string>

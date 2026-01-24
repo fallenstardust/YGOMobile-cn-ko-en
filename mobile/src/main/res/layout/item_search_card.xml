@@ -135,8 +135,8 @@
                         android:id="@+id/icon_race"
                         android:layout_width="15dp"
                         android:layout_height="15dp"
-                        android:layout_marginLeft="10dp"
-                        android:layout_gravity="center" />
+                        android:layout_gravity="center"
+                        android:layout_marginLeft="10dp" />
 
                     <TextView
                         android:id="@+id/card_race"
@@ -251,12 +251,34 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <View
-                android:id="@+id/view_bar"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="3dp"
-                android:background="@color/gray" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/view_bar"
+                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:layout_gravity="center"
+                    android:layout_height="1dp"
+                    android:background="@color/gray" />
+
+                <TextView
+                    android:id="@+id/card_code"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:textSize="8sp"
+                    android:layout_marginHorizontal="2dp"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:textColor="@color/gray"
+                    android:textIsSelectable="true"
+                    tools:text="12345678" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -322,24 +344,6 @@
                         android:textColor="@color/holo_blue_bright"
                         tools:text="2500" />
                 </LinearLayout>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/card_code"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="right"
-                    android:gravity="center_vertical"
-                    android:maxLines="1"
-                    android:singleLine="true"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-                    android:textColor="@color/gray"
-                    android:textSize="8sp"
-                    tools:text="123456789" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

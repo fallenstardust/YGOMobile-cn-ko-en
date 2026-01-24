@@ -109,7 +109,7 @@
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="label_race">Raça:</string>
-    <string name="label_ot">Regra</string>
+    <string name="label_ot">Regra:</string>
 	<string name="label_ot_OCG">OCG</string>
 	<string name="label_ot_TCG">TCG</string>
 	<string name="label_ot_SC_OCG">Chino.S OCG</string>
@@ -117,7 +117,7 @@
 	<string name="label_ot_No_Exclusive">Não exclusivo</string>
     <string name="label_ot_All">Todo</string>
     <string name="label_limit">Tipo de Limite</string>
-    <string name="label_limitlist">Banlist</string>
+    <string name="label_limitlist">Banlist:</string>
     <string name="label_type">Tipo de Cartas:</string>
     <string name="label_set">Arquétipo:</string>
     <string name="label_level">Nvl/Rng/Lnk:</string>
