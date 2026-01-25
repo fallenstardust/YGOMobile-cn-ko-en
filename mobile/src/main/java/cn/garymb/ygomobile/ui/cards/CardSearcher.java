@@ -1947,7 +1947,7 @@ public class CardSearcher implements View.OnClickListener {
         isEqual = false;
         btn_equal.setSelected(false);
         btn_equal.setTextColor(YGOUtil.c(R.color.default_bmb_shadow_color));
-        btn_equal.setBackground(mContext.getDrawable(R.drawable.selected));
+        btn_equal.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
         lineKey = 0;// 清除灵摆键值
     }
 
