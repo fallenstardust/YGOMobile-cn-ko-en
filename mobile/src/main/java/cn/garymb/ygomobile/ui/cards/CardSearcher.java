@@ -1011,6 +1011,7 @@ public class CardSearcher implements View.OnClickListener {
                     }
                     cardTypeList.remove(typeIds[1]);
                     cardTypeList.remove(typeIds[2]);
+                    spellTrapTypeList.clear();
                 }
                 if (cardTypeButtons[1].isSelected()) {// 魔法卡
                     iconButtons[0].setVisibility(View.VISIBLE);// 速攻0
@@ -1135,8 +1136,6 @@ public class CardSearcher implements View.OnClickListener {
         iv_hide_spelltrap.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);// 默认为折叠状态
         view.findViewById(R.id.ll_icon).setOnClickListener(v -> {
             if (gl_icon.getVisibility() == View.VISIBLE) {
-                gl_icon.setVisibility(View.GONE);
-                iv_hide_spelltrap.setImageResource(R.drawable.baseline_keyboard_arrow_down_24);
                 resetIcons();
             } else {
                 gl_icon.startAnimation(AnimationUtils.loadAnimation(mContext, R.anim.push_in));
@@ -1777,7 +1776,6 @@ public class CardSearcher implements View.OnClickListener {
                     .linkKey(lineKey)
                     .atk(text(atkText))
                     .def(text(defText))
-
                     .keyword(keyword)
                     .build();
 
