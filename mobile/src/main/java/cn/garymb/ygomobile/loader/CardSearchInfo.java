@@ -385,10 +385,8 @@ public class CardSearchInfo implements ICardFilter {
         if (!race.isEmpty() && !race.contains(card.Race)) {
             return false;
         }
-        // 检查分类过滤条件
-        if (!category.isEmpty()
-                && category.stream().noneMatch(i -> (card.Category & i) == i)
-        ) {
+        // 检查效果分类过滤条件
+        if (!category.isEmpty() && category.stream().noneMatch(i -> (card.Category & i) == i)) {
             return false;
         }
 
@@ -410,22 +408,9 @@ public class CardSearchInfo implements ICardFilter {
         // 检查魔法陷阱卡子类型过滤条件
         if (!spelltraptypes.isEmpty()) {
             if (card.isType(CardType.Spell) || card.isType(CardType.Trap)) {
-                long[] SPELL_TRAP_SUBTYPES = {
-                        CardType.Ritual.getId(),
-                        CardType.QuickPlay.getId(),
-                        CardType.Continuous.getId(),
-                        CardType.Equip.getId(),
-                        CardType.Field.getId(),
-                        CardType.Counter.getId()
-                };
                 if (spelltraptypes.contains(CardType.Normal.getId())) {//特殊处理包含通常怪兽的ID时需要过滤出无子分类魔法陷阱的情况
                     // 遍历魔法/陷阱卡子类型数组，检查卡片是否包含其中任何一个子类型
-                    for (long type : SPELL_TRAP_SUBTYPES) {
-                        // 如果卡片具有魔法陷阱子类型，则判断spelltraptypes是否也包含，是则也是在搜索条件内不要排除
-                        if ((card.Type & type) == type) {
-                            return spelltraptypes.contains(type);
-                        }
-                    }
+                    return (spelltraptypes.stream().anyMatch(type -> (card.onlyType(CardType.Spell) || card.onlyType(CardType.Trap)|| (card.Type & type) == type)));
 
                 } else {
                     // 当spelltraptypes不包含CardType.Normal.getId()时，检查spelltraptypes中是否有匹配的类型
