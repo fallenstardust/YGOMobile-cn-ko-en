@@ -147,8 +147,13 @@ public class CardSearcher implements View.OnClickListener {
     private Button[] linkButton;
     private int[] disImgs;
     private int lineKey;
+
     private final EditText atkText;
     private final EditText defText;
+    private Button btn_equal;
+    private Boolean isEqual;
+    private boolean isUpdating = false; // 防止两个文本框相互触发更新造成无限循环
+
     private final Button searchButton;
     private final Button resetButton;
     private final View view;
@@ -234,9 +239,13 @@ public class CardSearcher implements View.OnClickListener {
         // 连接箭头布局
         ll_linkControl = findViewById(R.id.ll_linkcontrol);
         iv_hide_linkmarker = findViewById(R.id.iv_hide_linkmarker);
-
+        // 攻击力、守备力、设置是否相等
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
+        isEqual = false;
+        btn_equal = findViewById(R.id.btn_equal);
+        btn_equal.setOnClickListener(this);
+
         myFavButton = findViewById(R.id.btn_my_fav);
         searchButton = findViewById(R.id.btn_search);
         resetButton = findViewById(R.id.btn_reset);
@@ -264,13 +273,6 @@ public class CardSearcher implements View.OnClickListener {
             }
         });
 
-        myFavButton.setOnClickListener(v -> {
-            if (isShowFavorite()) {
-                hideFavorites(true);
-            } else {
-                showFavorites(true);
-            }
-        });
         genesys_Switch.setChecked(mSettings.getGenesysMode() != 0);
         genesys_Switch.setText(mSettings.getGenesysMode() != 0 ? R.string.switch_genesys_mode : R.string.switch_banlist_mode);
         genesys_Switch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -366,6 +368,7 @@ public class CardSearcher implements View.OnClickListener {
         initLimitListSpinners(limitListSpinner);
         initGenesysLimitListSpinners(genesys_limitListSpinner);
         initSetnameSearchFeature();
+        initAttackDefenseSync();
     }
 
     protected <T extends View> T findViewById(int id) {
@@ -1709,6 +1712,50 @@ public class CardSearcher implements View.OnClickListener {
         });
     }
 
+    private void initAttackDefenseSync() {
+        // 监听攻击力文本框
+        atkText.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (isEqual && !isUpdating) {
+                    isUpdating = true; // 防止循环更新
+                    defText.setText(s);
+                    defText.setSelection(s.length()); // 保持光标位置
+                    isUpdating = false;
+                }
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+
+        // 监听守备力文本框
+        defText.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (isEqual && !isUpdating) {
+                    isUpdating = true; // 防止循环更新
+                    atkText.setText(s);
+                    atkText.setSelection(s.length()); // 保持光标位置
+                    isUpdating = false;
+                }
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+    }
+
     private void reset(Spinner spinner) {
         if (spinner.getCount() > 0) {
             spinner.setSelection(0);
@@ -1741,6 +1788,31 @@ public class CardSearcher implements View.OnClickListener {
             hideFavorites(true);
         } else if (v.getId() == R.id.btn_reset) {
             resetAll();
+        } else if (v.getId() == myFavButton.getId()) {
+            if (isShowFavorite()) {
+                hideFavorites(true);
+            } else {
+                showFavorites(true);
+            }
+        } else if (v.getId() == R.id.btn_equal) {
+            if (btn_equal.isSelected()) {
+                btn_equal.setSelected(false);
+                btn_equal.setTextColor(YGOUtil.c(R.color.default_bmb_shadow_color));
+                btn_equal.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                isEqual = false;
+            } else {//未选中时的逻辑
+                btn_equal.setSelected(true);
+                btn_equal.setTextColor(YGOUtil.c(R.color.yellow));
+                btn_equal.setBackground(mContext.getDrawable(R.drawable.radius));
+                isEqual = true;
+
+                if (!text(atkText).isEmpty() && text(defText).isEmpty()) {
+                    defText.setText(atkText.getText());
+                }
+                if (text(atkText).isEmpty() && !text(defText).isEmpty()) {
+                    atkText.setText(defText.getText());
+                }
+            }
         }
     }
 
@@ -1776,6 +1848,7 @@ public class CardSearcher implements View.OnClickListener {
                     .linkKey(lineKey)
                     .atk(text(atkText))
                     .def(text(defText))
+                    .equal_logic(isEqual)
                     .keyword(keyword)
                     .build();
 
@@ -1871,6 +1944,10 @@ public class CardSearcher implements View.OnClickListener {
 
         atkText.setText(null);// 清除输入的攻击力
         defText.setText(null);// 清除输入的守备力
+        isEqual = false;
+        btn_equal.setSelected(false);
+        btn_equal.setTextColor(YGOUtil.c(R.color.default_bmb_shadow_color));
+        btn_equal.setBackground(mContext.getDrawable(R.drawable.selected));
         lineKey = 0;// 清除灵摆键值
     }
 

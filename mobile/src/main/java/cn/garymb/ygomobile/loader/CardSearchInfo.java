@@ -35,6 +35,7 @@ public class CardSearchInfo implements ICardFilter {
     //true为and逻辑, false为or逻辑
     private boolean type_logic;
     private boolean setcode_logic;
+    private boolean equal_logic;
 
     public CardSearchInfo() {
     }
@@ -113,6 +114,10 @@ public class CardSearchInfo implements ICardFilter {
 
     public String getSetCodeLogice() {
         return setcode_logic ? "and" : "or";
+    }
+
+    public String getEqualLogice() {
+        return equal_logic ? "true" : "false";
     }
 
     public static class Builder {
@@ -227,6 +232,11 @@ public class CardSearchInfo implements ICardFilter {
             searchInfo.setcode_logic = logic;
             return this;
         }
+
+        public Builder equal_logic(boolean logic) {
+            searchInfo.equal_logic = logic;
+            return this;
+        }
     }
 
     @NonNull
@@ -251,6 +261,7 @@ public class CardSearchInfo implements ICardFilter {
                 ", SetCode=" + getSetcode() +
                 ", TypeLogic=" + getTypeLogice() +
                 ", SetCodeLogic=" + getSetCodeLogice() +
+                ", SetEqualLogic=" + getEqualLogice() +
                 '}';
     }
 
@@ -349,6 +360,11 @@ public class CardSearchInfo implements ICardFilter {
                 } else if (card.isLink() || !chkAtkDef(card.Defense, def)) {
                     return false;
                 }
+            } else if (TextUtils.isEmpty(atk) && equal_logic) {
+                // 当 atk 和 def 都为空且 equal_logic 为 true 时，检查攻击力和守备力是否相等
+                if (card.Attack != card.Defense) {
+                    return false;
+                }
             }
         }
 
@@ -410,7 +426,7 @@ public class CardSearchInfo implements ICardFilter {
             if (card.isType(CardType.Spell) || card.isType(CardType.Trap)) {
                 if (spelltraptypes.contains(CardType.Normal.getId())) {//特殊处理包含通常怪兽的ID时需要过滤出无子分类魔法陷阱的情况
                     // 遍历魔法/陷阱卡子类型数组，检查卡片是否包含其中任何一个子类型
-                    return (spelltraptypes.stream().anyMatch(type -> (card.onlyType(CardType.Spell) || card.onlyType(CardType.Trap)|| (card.Type & type) == type)));
+                    return (spelltraptypes.stream().anyMatch(type -> (card.onlyType(CardType.Spell) || card.onlyType(CardType.Trap) || (card.Type & type) == type)));
 
                 } else {
                     // 当spelltraptypes不包含CardType.Normal.getId()时，检查spelltraptypes中是否有匹配的类型

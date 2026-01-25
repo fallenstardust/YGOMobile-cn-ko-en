@@ -1317,6 +1317,16 @@
                             tools:text="100" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <Button
+                        android:id="@+id/btn_equal"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center|bottom"
+                        android:layout_marginHorizontal="2dp"
+                        android:background="@drawable/button_radius_black_transparents"
+                        android:text="="
+                        android:textColor="@color/default_bmb_shadow_color" />
+
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
