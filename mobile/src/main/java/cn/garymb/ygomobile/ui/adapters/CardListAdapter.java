@@ -266,6 +266,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             holder.setGone(R.id.card_attr, true);
             holder.setGone(R.id.icon_race, true);
             holder.setGone(R.id.card_race, true);
+            holder.setGone(R.id.p_scale, true);
             holder.setGone(R.id.search_link_arrows, true);
             holder.setGone(R.id.layout_atk, true);
             holder.setGone(R.id.layout_def, true);

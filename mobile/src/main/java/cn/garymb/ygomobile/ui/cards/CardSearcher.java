@@ -1773,6 +1773,7 @@ public class CardSearcher implements View.OnClickListener {
                     .monsterTypes(monsterTypeList)
                     .type_logic(isAnd)
                     .except_types(excludeTypeList)
+                    .pscale(pendulumScaleList)
                     .linkKey(lineKey)
                     .atk(text(atkText))
                     .def(text(defText))
