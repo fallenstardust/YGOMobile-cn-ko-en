@@ -85,7 +85,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final TextView type;
     private final ImageView icon_star;
     private final TextView level;
-
+    private final ImageView icon;
     private final ImageView icon_attribute;
     private final TextView attrView;
     private final ImageView icon_race;
@@ -179,6 +179,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         icon_star = findViewById(R.id.icon_star);
         level = findViewById(R.id.card_level);
         linkArrow = findViewById(R.id.detail_link_arrows);
+        icon = findViewById(R.id.icon);
 
         type = findViewById(R.id.card_type);
         faq = findViewById(R.id.btn_faq);
@@ -503,8 +504,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             if (card.Name == null || card.Desc == null) continue;
             // 检查卡片名或描述是否包含给定卡片的名字
             if (!card.Name.equals(cardInfo.Name)) {
-                if ((card.Name != null && card.Name.contains(cardInfo.Name)) ||
-                        (card.Desc != null && card.Desc.contains(cardInfo.Name))) {
+                if (card.Name.contains(cardInfo.Name) || card.Desc.contains(cardInfo.Name)) {
                     matchingCards.add(card);
                 }
             }
@@ -582,7 +582,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 if (index != 0) {
                     setName.append("\n");
                 }
-                setName.append("" + mStringManager.getSetName(set));
+                setName.append(mStringManager.getSetName(set));
                 index++;
             }
         }
@@ -657,7 +657,24 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             if (cardInfo.Race == CardRace.Wyrm.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wyrm.png", 0, 0));
             if (cardInfo.Race == CardRace.Cyberse.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cyberse.png", 0, 0));
             race.setText(mStringManager.getRaceString(cardInfo.Race));
+            icon.setVisibility(View.GONE);
         } else {
+            icon.setVisibility(View.VISIBLE);
+            icon_star.setVisibility(View.VISIBLE);
+            if (cardInfo.isType(CardType.Spell)) icon_star.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_spell.png", 0, 0));
+            if (cardInfo.isType(CardType.Trap)) icon_star.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_trap.png", 0, 0));
+            if (cardInfo.onlyType(CardType.Spell)) {
+                icon.setImageBitmap(null);
+            } else if (cardInfo.onlyType(CardType.Trap)) {
+                icon.setImageBitmap(null);
+            }
+            if (cardInfo.isType(CardType.QuickPlay)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "quickplay.png", 0, 0));
+            if (cardInfo.isType(CardType.Continuous)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "continuous.png", 0, 0));
+            if (cardInfo.isType(CardType.Equip)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "equip.png", 0, 0));
+            if (cardInfo.isType(CardType.Field)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "field.png", 0, 0));
+            if (cardInfo.isType(CardType.Counter)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "counter.png", 0, 0));
+            if (cardInfo.isType(CardType.Ritual)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "ritual.png", 0, 0));
+
             atkdefView.setVisibility(View.GONE);
             icon_race.setVisibility(View.GONE);
             race.setVisibility(View.GONE);

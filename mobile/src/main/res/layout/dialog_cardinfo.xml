@@ -206,7 +206,12 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@color/star"
                 tools:text="13" />
-
+            <ImageView
+                android:id="@+id/icon"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_gravity="center"
+                android:layout_marginLeft="5dp" />
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"

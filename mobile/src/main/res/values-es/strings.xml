@@ -117,7 +117,7 @@
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="label_race">Raza:</string>
-    <string name="label_ot">Exclusivas</string>
+    <string name="label_ot">Exclusivas:</string>
     <string name="label_ot_OCG">OCG</string>
     <string name="label_ot_TCG">TCG</string>
     <string name="label_ot_SC_OCG">Chino.S</string>
