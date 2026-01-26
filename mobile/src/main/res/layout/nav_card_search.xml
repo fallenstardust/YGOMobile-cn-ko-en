@@ -1312,6 +1312,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/hit_atk"
+                            android:gravity="center"
                             android:maxLines="1"
                             android:singleLine="true"
                             tools:text="100" />
@@ -1323,7 +1324,7 @@
                         android:layout_height="30dp"
                         android:layout_gravity="center|bottom"
                         android:layout_marginHorizontal="2dp"
-                        android:background="@drawable/button_radius_black_transparents"
+                        android:background="@drawable/selected_dark"
                         android:text="="
                         android:textColor="@color/default_bmb_shadow_color" />
 
@@ -1337,11 +1338,18 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/hit_def"
+                            android:gravity="center"
                             android:maxLines="1"
                             android:singleLine="true"
                             tools:text="100" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="6sp"
+                    android:text="@string/tips_atkDef"/>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

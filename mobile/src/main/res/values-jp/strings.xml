@@ -393,4 +393,5 @@
     <string name="label_monsterType">モンスタータイプ：</string>
     <string name="label_excludeType">除外項目:</string>
     <string name="select_setcode">クリックで検索カテゴリ追加</string>
+    <string name="tips_atkDef">対応：＞＜＝・ハイフン範囲（1000-2000）</string>
 </resources>

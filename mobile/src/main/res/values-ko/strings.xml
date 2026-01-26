@@ -411,4 +411,5 @@
     <string name="label_monsterType">몬스터 타입：</string>
     <string name="label_excludeType">제외 타입:</string>
     <string name="select_setcode">클릭으로 검색 카드군 추가</string>
+    <string name="tips_atkDef">지원：＞ ＜ ＝ - 하이픈 범위（1000-2000）</string>
 </resources>

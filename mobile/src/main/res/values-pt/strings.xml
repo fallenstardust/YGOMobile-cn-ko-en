@@ -383,5 +383,6 @@
     <string name="label_monsterType">Tipo de Monstro:</string>
     <string name="label_excludeType">Tipo de Excluído:</string>
     <string name="select_setcode">Agregar Arquetipo de Búsqueda</string>
+    <string name="tips_atkDef">Suporta: ＞＜ = - e Intervalo com Hífen (1000-2000)</string>
 </resources>
 

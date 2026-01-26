@@ -392,6 +392,7 @@
     <string name="label_monsterType">Tipo de Monstruo:</string>
     <string name="label_excludeType">Tipo de Excluido:</string>
     <string name="select_setcode">Adicionar Arquétipo de Pesquisa</string>
+    <string name="tips_atkDef"> Admite: ＞＜ = - y Rango con Guion (1000-2000)</string>
 </resources>
 
 

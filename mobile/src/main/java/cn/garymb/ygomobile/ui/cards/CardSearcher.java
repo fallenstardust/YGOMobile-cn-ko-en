@@ -1798,7 +1798,7 @@ public class CardSearcher implements View.OnClickListener {
             if (btn_equal.isSelected()) {
                 btn_equal.setSelected(false);
                 btn_equal.setTextColor(YGOUtil.c(R.color.default_bmb_shadow_color));
-                btn_equal.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+                btn_equal.setBackground(mContext.getDrawable(R.drawable.selected_dark));
                 isEqual = false;
             } else {//未选中时的逻辑
                 btn_equal.setSelected(true);
@@ -1947,7 +1947,7 @@ public class CardSearcher implements View.OnClickListener {
         isEqual = false;
         btn_equal.setSelected(false);
         btn_equal.setTextColor(YGOUtil.c(R.color.default_bmb_shadow_color));
-        btn_equal.setBackground(mContext.getDrawable(R.drawable.button_radius_black_transparents));
+        btn_equal.setBackground(mContext.getDrawable(R.drawable.selected_dark));
         lineKey = 0;// 清除灵摆键值
     }
 
