@@ -1805,7 +1805,7 @@ public class CardSearcher implements View.OnClickListener {
                 btn_equal.setTextColor(YGOUtil.c(R.color.yellow));
                 btn_equal.setBackground(mContext.getDrawable(R.drawable.radius));
                 isEqual = true;
-
+                //开启时，将空的输入框填写上有内容的输入框的文本
                 if (!text(atkText).isEmpty() && text(defText).isEmpty()) {
                     defText.setText(atkText.getText());
                 }
