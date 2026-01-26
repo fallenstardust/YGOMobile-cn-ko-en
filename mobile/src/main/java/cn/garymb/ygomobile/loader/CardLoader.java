@@ -60,7 +60,7 @@ public class CardLoader implements ICardSearcher {
     @Override
     public void setLimitList(LimitList limitList) {
         if (limitList != null) {
-            if(limitList.getCreditLimits() != null) {
+            if (limitList.getCreditLimits() != null) {
                 mGenesys_LimitList = limitList;
                 AppsSettings.get().setLastGenesysLimit(limitList.getName());
                 AppsSettings.get().setGenesysMode(1);
@@ -112,6 +112,7 @@ public class CardLoader implements ICardSearcher {
     /**
      * 获取限制列表
      * 这即是ICardSearcher的getLimitList()映射的方法
+     *
      * @return 返回当前对象的限制列表，非空
      */
     @Override
@@ -127,17 +128,7 @@ public class CardLoader implements ICardSearcher {
     }
 
     public SparseArray<Card> readAllCardCodes() {
-        if (DEBUG) {
-            SparseArray<Card> tmp = new SparseArray<>();
-            tmp.put(269012, new Card(269012).type(524290L));
-            tmp.put(27551, new Card(27551).type(131076L));
-            tmp.put(32864, new Card(32864).type(131076L));
-            tmp.put(62121, new Card(62121).type(131076L));
-            tmp.put(135598, new Card(135598).type(131076L));
-            return tmp;
-        } else {
-            return mCardManager.getAllCards();
-        }
+        return mCardManager.getAllCards();
     }
 
     private void loadData(List<CardSearchInfo> searchInfos, List<Integer> inCards) {
@@ -153,7 +144,7 @@ public class CardLoader implements ICardSearcher {
         VUiKit.defer().when(() -> {
             SparseArray<Card> cards = mCardManager.getAllCards();
             List<Card> list = new ArrayList<>();
-            List<Card> keywordtmp = new ArrayList<>();
+            List<Card> keywordTmp = new ArrayList<>();
             for (int i = 0; i < cards.size(); i++) {
                 Card card = cards.valueAt(i);
                 if (inCards != null && !inCards.contains(card.getCode())) {
@@ -162,15 +153,17 @@ public class CardLoader implements ICardSearcher {
                 if (searchInfos == null || searchInfos.stream().anyMatch(searchInfo -> searchInfo.isValid(card))) {
                     if (searchInfos != null && card.Name.equals(searchInfos.get(0).getKeyWord().getValue())) {
                         cards.remove(i);
-                        keywordtmp.add(card);
+                        keywordTmp.add(card);
                         continue;//避免重复
                     }
                     list.add(card);
                 }
             }
-            Collections.sort(list, CardSort.ASC);
-            keywordtmp.addAll(list);
-            return keywordtmp;
+
+            // 对列表进行排序
+            list.sort(CardSort.ASC_inCards(inCards));
+            keywordTmp.addAll(list);
+            return keywordTmp;
         }).fail((e) -> {
             if (mCallBack != null) {
                 ArrayList<Card> noting = new ArrayList<Card>();
@@ -220,7 +213,7 @@ public class CardLoader implements ICardSearcher {
         LimitList limitList = null;
         List<Integer> inCards = null;
         if (!TextUtils.isEmpty(limitName)) {
-            if(limitName.toLowerCase().contains("genesys")) {
+            if (limitName.toLowerCase().contains("genesys")) {
                 limitList = mLimitManager.getGenesysLimit(limitName);
             } else {
                 limitList = mLimitManager.getLimit(limitName);

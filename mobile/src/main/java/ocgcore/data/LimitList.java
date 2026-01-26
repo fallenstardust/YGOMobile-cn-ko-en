@@ -148,7 +148,11 @@ public class LimitList {
             return new ArrayList<>();
         }
 
-        return new ArrayList<>(credits.keySet());
+        // 按照分数从高到低排序
+        return credits.entrySet().stream()
+                .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 
 

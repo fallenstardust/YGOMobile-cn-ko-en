@@ -7,13 +7,22 @@ import ocgcore.enums.CardType;
 
 
 public class CardSort implements Comparator<Card> {
-    public static final CardSort ASC = new CardSort(false);
-    public static final CardSort FULL_ASC = new CardSort(true);
+    public static final CardSort ASC = new CardSort(false, null);
+    public static final CardSort FULL_ASC = new CardSort(true, null);
     private final boolean full;
-    private CardSort(boolean full) {
+    private final java.util.List<Integer> priorityOrder;
+    private CardSort(boolean full, java.util.List<Integer> priorityOrder) {
         this.full = full;
+        this.priorityOrder = priorityOrder;
     }
 
+    public static CardSort ASC_inCards(java.util.List<Integer> priorityOrder) {
+        return new CardSort(false, priorityOrder);
+    }
+
+    public static CardSort FULL_ASC_inCards(java.util.List<Integer> priorityOrder) {
+        return new CardSort(true, priorityOrder);
+    }
     private int comp(long l1, long l2) {
         return Long.compare(l1, l2);
     }
@@ -55,6 +64,25 @@ public class CardSort implements Comparator<Card> {
 
     @Override
     public int compare(Card c1, Card c2) {
+        // 首先检查是否有预定义的优先级顺序
+        if (priorityOrder != null && !priorityOrder.isEmpty()) {
+            int index1 = priorityOrder.indexOf(c1.getCode());
+            int index2 = priorityOrder.indexOf(c2.getCode());
+
+            if (index1 != -1 && index2 != -1) {
+                // 两张卡都在优先级列表中，按列表顺序排序
+                return Integer.compare(index1, index2);
+            } else if (index1 != -1) {
+                // 只有c1在优先级列表中，c1优先
+                return -1;
+            } else if (index2 != -1) {
+                // 只有c2在优先级列表中，c2优先
+                return 1;
+            }
+            // 如果两张卡都不在优先级列表中，继续使用默认排序逻辑
+        }
+
+        // 原有的比较逻辑
         if (c1 == null) {
             return c2 != null ? 1 : 0;
         }
