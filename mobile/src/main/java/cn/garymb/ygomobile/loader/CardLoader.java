@@ -159,12 +159,12 @@ public class CardLoader implements ICardSearcher {
                 if (inCards != null && !inCards.contains(card.getCode())) {
                     continue;
                 }
-                if (searchInfos != null && card.Name.equals(searchInfos.get(0).getKeyWord().getValue())) {
-                    cards.remove(i);
-                    keywordtmp.add(card);
-                    continue;//避免重复
-                }
                 if (searchInfos == null || searchInfos.stream().anyMatch(searchInfo -> searchInfo.isValid(card))) {
+                    if (searchInfos != null && card.Name.equals(searchInfos.get(0).getKeyWord().getValue())) {
+                        cards.remove(i);
+                        keywordtmp.add(card);
+                        continue;//避免重复
+                    }
                     list.add(card);
                 }
             }
