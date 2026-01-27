@@ -3692,10 +3692,22 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 		battle_destroyed[1] = bd[1];
 	}
 }
+
+/**
+ * @brief 处理游戏回合流程的函数
+ *
+ * 该函数根据不同的步骤编号处理游戏回合中的各个阶段，包括抽卡阶段、准备阶段、主要阶段、战斗阶段和结束阶段等。
+ * 每个阶段都有相应的初始化、事件触发和状态重置操作。
+ *
+ * @param step 当前处理的步骤编号，用于确定执行哪个阶段的操作
+ * @param turn_player 当前回合的玩家ID
+ * @return int32_t 返回处理结果，TRUE表示完成，FALSE表示继续处理
+ */
 int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 	switch(step) {
 	case 0: {
 		//Pre Draw
+		// 清理上一回合使用的事件和效果
 		for(const auto& ev : core.used_event) {
 			if(ev.event_cards)
 				pduel->delete_group(ev.event_cards);
@@ -3708,6 +3720,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		core.effect_count_code[0].clear();
 		core.effect_count_code[1].clear();
 		core.effect_count_code[PLAYER_NONE].clear();
+		// 重置场上所有卡片的状态和计数器
 		for(uint8_t p = 0; p < 2; ++p) {
 			for(auto& pcard : player[p].list_mzone) {
 				if(!pcard)
@@ -3732,6 +3745,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 				pcard->set_status(STATUS_SET_TURN, FALSE);
 				pcard->indestructable_effects.clear();
 			}
+			// 重置各种召唤和攻击计数器
 			core.summon_state_count[p] = 0;
 			core.normalsummon_state_count[p] = 0;
 			core.flipsummon_state_count[p] = 0;
@@ -3743,9 +3757,11 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 			core.extra_summon[p] = 0;
 			core.spsummon_once_map[p].clear();
 		}
+		// 重置计算回合的效果
 		for(auto& peffect : effects.rechargeable)
 			if(!peffect->is_flag(EFFECT_FLAG_NO_TURN_RESET))
 				peffect->recharge();
+		// 重置各种计数器
 		for(auto& iter : core.summon_counter)
 			iter.second.second = 0;
 		for(auto& iter : core.normalsummon_counter)
@@ -3758,6 +3774,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 			iter.second.second = 0;
 		for(auto& iter : core.chain_counter)
 			iter.second.second = 0;
+		// 重置特殊召唤计数
 		if(core.global_flag & GLOBALFLAG_SPSUMMON_COUNT) {
 			for(auto& peffect : effects.spsummon_count_eff) {
 				card* pcard = peffect->get_handler();
@@ -3766,6 +3783,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 				}
 			}
 		}
+		// 更新回合信息并检查跳过回合效果
 		++infos.turn_id;
 		++infos.turn_id_by_player[turn_player];
 		infos.turn_player = turn_player;
@@ -3790,10 +3808,12 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 1: {
+		// 清理连锁相关容器
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
 		core.delayed_quick_tmp.clear();
+		// 检查是否跳过抽卡阶段
 		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_DP)) {
 			core.units.begin()->step = 2;
 			reset_phase(PHASE_DRAW);
@@ -3813,7 +3833,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 2: {
-		// Draw, new ruling
+		// 抽卡阶段：根据规则版本和回合数决定是否抽卡
 		if((core.duel_rule <= 2) || (infos.turn_id > 1)) {
 			int32_t count = get_draw_count(infos.turn_player);
 			if(count > 0) {
@@ -3829,7 +3849,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 4: {
-		//Standby Phase
+		// 准备阶段：初始化阶段变量并检查跳过效果
 		infos.phase = PHASE_STANDBY;
 		core.phase_action = FALSE;
 		core.new_fchain.clear();
@@ -3849,14 +3869,14 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 5: {
-		// EVENT_PHASE_START + PHASE_STANDBY is a special case(c89642993)
+		// 处理准备阶段的即时事件和阶段事件
 		if(core.new_fchain.size() || core.new_ochain.size() || core.instant_event.back().event_code != EVENT_PHASE_START + PHASE_STANDBY)
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		add_process(PROCESSOR_PHASE_EVENT, 0, 0, 0, PHASE_STANDBY, 0);
 		return FALSE;
 	}
 	case 6: {
-		//Main1
+		// 主要阶段1：开始第一个主要阶段
 		infos.phase = PHASE_MAIN1;
 		core.phase_action = FALSE;
 		raise_event(nullptr, EVENT_PHASE_START + PHASE_MAIN1, 0, 0, 0, turn_player, 0);
@@ -3868,6 +3888,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 8: {
+		// 清理连锁容器并进入空闲命令处理器
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
@@ -3878,6 +3899,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 9: {
+		// 检查是否直接进入结束阶段或开始战斗阶段
 		if(returns.ivalue[0] == 7) { // End Phase
 			core.units.begin()->step = 14;
 			return FALSE;
@@ -3891,7 +3913,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		++core.battle_phase_count[infos.turn_player];
 		pduel->write_buffer8(MSG_NEW_PHASE);
 		pduel->write_buffer16(infos.phase);
-		// Show the texts to indicate that BP is entered and skipped
+		// 检查是否跳过战斗阶段
 		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_BP)) {
 			core.units.begin()->step = 14;
 			reset_phase(PHASE_BATTLE_START);
@@ -3906,12 +3928,14 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 10: {
+		// 处理战斗开始阶段的连锁事件
 		if(core.new_fchain.size() || core.new_ochain.size())
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		add_process(PROCESSOR_PHASE_EVENT, 0, 0, 0, PHASE_BATTLE_START, 0);
 		return FALSE;
 	}
 	case 11: {
+		// 战斗步骤：进入战斗步骤并启动战斗命令处理器
 		infos.phase = PHASE_BATTLE_STEP;
 		core.new_fchain.clear();
 		core.new_ochain.clear();
@@ -3923,6 +3947,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 12: {
+		// 处理第二次战斗阶段或进入主阶段2
 		if(core.units.begin()->arg2 == 0 && returns.ivalue[1]) { // 2nd Battle Phase
 			core.units.begin()->arg2 = 1;
 			core.units.begin()->step = 8;
@@ -3940,11 +3965,14 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 			}
 			return FALSE;
 		}
+		// 确保"entered 2nd Battle Phase"标记不会影响主阶段2
+		core.units.begin()->arg2 = 0;
+
 		core.skip_m2 = FALSE;
 		if(returns.ivalue[0] == 3) { // End Phase
 			core.skip_m2 = TRUE;
 		}
-		//Main2
+		// 主要阶段2：开始第二个主要阶段
 		infos.phase = PHASE_MAIN2;
 		core.phase_action = FALSE;
 		raise_event(nullptr, EVENT_PHASE_START + PHASE_MAIN2, 0, 0, 0, turn_player, 0);
@@ -3953,11 +3981,13 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 13: {
+		// 处理主阶段2的连锁事件
 		if(core.new_fchain.size() || core.new_ochain.size())
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		return FALSE;
 	}
 	case 14: {
+		// 清理连锁容器并进入空闲命令处理器（结束阶段前）
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
@@ -3969,7 +3999,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 15: {
-		//End Phase
+		// 结束阶段：开始回合结束阶段并检查跳过效果
 		infos.phase = PHASE_END;
 		core.phase_action = FALSE;
 		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_EP)) {
@@ -3986,11 +4016,13 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 16: {
+		// 处理结束阶段的连锁事件
 		if(core.new_fchain.size() || core.new_ochain.size())
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		return FALSE;
 	}
 	case 17: {
+		// 清理连锁容器并处理结束阶段事件
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
@@ -3999,12 +4031,14 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 18: {
+		// 触发回合结束事件
 		raise_event(nullptr, EVENT_TURN_END, 0, 0, 0, turn_player, 0);
 		process_instant_event();
 		adjust_all();
 		return FALSE;
 	}
 	case 19: {
+		// 清理连锁容器并准备下一回合
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
@@ -4016,6 +4050,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 	}
 	return TRUE;
 }
+
 /**
  * @brief 处理连锁的添加过程
  *

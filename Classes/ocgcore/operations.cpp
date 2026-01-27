@@ -3436,20 +3436,41 @@ int32_t field::destroy_replace(uint16_t step, group* targets, card* target, uint
 	}
 	return TRUE;
 }
+
+/**
+ * @brief 执行卡片销毁操作的多步骤处理函数
+ *
+ * 该函数处理游戏中的卡片销毁逻辑，包括检查不可破坏效果、代破效果、替换效果等，
+ * 并根据不同的步骤执行相应的销毁流程。支持多种销毁原因和玩家。
+ *
+ * @param step 当前执行步骤，不同步骤对应不同的处理阶段
+ * @param targets 要销毁的目标卡片组
+ * @param reason_effect 销毁的原因效果指针
+ * @param reason 销毁的原因标志位
+ * @param reason_player 执行销毁操作的玩家ID
+ * @return int32_t 返回处理结果，TRUE表示完成，FALSE表示继续处理
+ */
 int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, uint32_t reason, uint8_t reason_player) {
 	switch (step) {
 	case 0: {
+		// 初始化各种集合用于存储不可破坏卡片、效果集、替代卡片等
 		card_set extra;
 		effect_set eset;
 		card_set indestructable_set;
 		std::set<effect*> indestructable_effect_set;
+
+		// 遍历目标卡片，检查各种不可破坏条件和替代效果
 		for (auto cit = targets->container.begin(); cit != targets->container.end();) {
 			card* pcard = *cit;
+
+			// 检查卡片是否可被破坏
 			if(!pcard->is_destructable()) {
 				indestructable_set.insert(pcard);
 				++cit;
 				continue;
 			}
+
+			// 检查规则或成本原因的特殊处理
 			if (!(pcard->current.reason & (REASON_RULE | REASON_COST))) {
 				bool is_destructable = true;
 				if (pcard->is_affect_by_effect(pcard->current.reason_effect)) {
@@ -3467,6 +3488,8 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 					continue;
 				}
 			}
+
+			// 检查EFFECT_INDESTRUCTABLE效果
 			eset.clear();
 			pcard->filter_effect(EFFECT_INDESTRUCTABLE, &eset);
 			if(eset.size()) {
@@ -3488,7 +3511,8 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 					continue;
 				}
 			}
-			// monsters with EFFECT_INDESTRUCTABLE_COUNT cannot apply EFFECT_DESTROY_REPLACE
+
+			// 检查EFFECT_INDESTRUCTABLE_COUNT效果，这些卡片不能应用EFFECT_DESTROY_REPLACE
 			eset.clear();
 			pcard->filter_effect(EFFECT_INDESTRUCTABLE_COUNT, &eset);
 			if (eset.size()) {
@@ -3524,6 +3548,8 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 					continue;
 				}
 			}
+
+			// 检查EFFECT_DESTROY_SUBSTITUTE效果（代替破坏）
 			eset.clear();
 			pcard->filter_effect(EFFECT_DESTROY_SUBSTITUTE, &eset);
 			if (eset.size()) {
@@ -3548,6 +3574,8 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 			}
 			++cit;
 		}
+
+		// 处理不可破坏的卡片，从目标中移除并恢复状态
 		for (auto& pcard : indestructable_set) {
 			pcard->current.reason = pcard->temp.reason;
 			pcard->current.reason_effect = pcard->temp.reason_effect;
@@ -3555,12 +3583,16 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 			pcard->set_status(STATUS_DESTROY_CONFIRMED, FALSE);
 			targets->container.erase(pcard);
 		}
+
+		// 处理有次数计数的不会被破坏的卡片
 		for (auto& pcard : core.indestructable_count_set) {
 			pcard->current.reason = pcard->temp.reason;
 			pcard->current.reason_effect = pcard->temp.reason_effect;
 			pcard->current.reason_player = pcard->temp.reason_player;
 			targets->container.erase(pcard);
 		}
+
+		// 添加要代替破坏的卡片到目标中
 		for (auto& rep : extra) {
 			if(targets->container.count(rep) == 0) {
 				rep->temp.reason = rep->current.reason;
@@ -3573,6 +3605,8 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 				targets->container.insert(rep);
 			}
 		}
+
+		// 减少不可破坏效果的计数并发送提示信息
 		for (auto& peffect : indestructable_effect_set) {
 			peffect->dec_count();
 			pduel->write_buffer8(MSG_HINT);
@@ -3580,16 +3614,20 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 			pduel->write_buffer8(0);
 			pduel->write_buffer32(peffect->owner->data.code);
 		}
+
+		// 启动代替破坏效果处理
 		operation_replace(EFFECT_DESTROY_REPLACE, 5, targets);
 		return FALSE;
 	}
 	case 1: {
+		// 为每个目标卡片添加销毁替换处理进程
 		for (auto& pcard : targets->container) {
 			add_process(PROCESSOR_DESTROY_REPLACE, 0, nullptr, targets, 0, 0, 0, 0, pcard);
 		}
 		return FALSE;
 	}
 	case 2: {
+		// 清理销毁取消和不可破坏计数相关的状态
 		for (auto& pcard : core.destroy_canceled)
 			pcard->set_status(STATUS_DESTROY_CONFIRMED, FALSE);
 		core.destroy_canceled.clear();
@@ -3599,15 +3637,20 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 		return FALSE;
 	}
 	case 3: {
+		// 检查是否有目标卡片需要处理
 		if(!targets->container.size()) {
 			returns.ivalue[0] = 0;
 			core.operated_set.clear();
 			pduel->delete_group(targets);
 			return TRUE;
 		}
+
+		// 对目标卡片进行排序以便统一处理
 		card_vector cv(targets->container.begin(), targets->container.end());
 		if(cv.size() > 1)
 			std::sort(cv.begin(), cv.end(), card::card_operation_sort);
+
+		// 处理每个目标卡片的销毁事件
 		for (auto& pcard : cv) {
 			if(pcard->current.location & (LOCATION_GRAVE | LOCATION_REMOVED)) {
 				pcard->current.reason = pcard->temp.reason;
@@ -3620,13 +3663,14 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 			core.hint_timing[pcard->current.controler] |= TIMING_DESTROY;
 			raise_single_event(pcard, 0, EVENT_DESTROY, pcard->current.reason_effect, pcard->current.reason, pcard->current.reason_player, 0, 0);
 		}
-		adjust_instant();
+		adjust_disable_check_list();
 		process_single_event();
 		raise_event(targets->container, EVENT_DESTROY, reason_effect, reason, reason_player, 0, 0);
 		process_instant_event();
 		return FALSE;
 	}
 	case 4: {
+		// 创建发送目标组并设置发送参数
 		group* sendtargets = pduel->new_group(targets->container);
 		sendtargets->is_readonly = GTYPE_READ_ONLY;
 		for(auto& pcard : sendtargets->container) {
@@ -3640,11 +3684,13 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 				dest = LOCATION_GRAVE;
 			pcard->sendto_param.location = dest;
 		}
+		// 启动发送替换效果处理
 		operation_replace(EFFECT_SEND_REPLACE, 5, sendtargets);
 		add_process(PROCESSOR_SENDTO, 1, reason_effect, sendtargets, reason | REASON_DESTROY, reason_player);
 		return FALSE;
 	}
 	case 5: {
+		// 最终处理：清理操作集并返回结果
 		core.operated_set.clear();
 		core.operated_set = targets->container;
 		for(auto cit = core.operated_set.begin(); cit != core.operated_set.end();) {
@@ -3655,12 +3701,16 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 		}
 		returns.ivalue[0] = (int32_t)core.operated_set.size();
 		pduel->delete_group(targets);
+		adjust_self_destroy_set();
 		return TRUE;
 	}
 	case 10: {
+		// 特殊情况下的破坏处理（通常用于战斗相关破坏）
 		effect_set eset;
 		for (auto cit = targets->container.begin(); cit != targets->container.end();) {
 			card* pcard = *cit;
+
+			// 检查卡片是否可被破坏
 			if (!pcard->is_destructable()) {
 				pcard->current.reason = pcard->temp.reason;
 				pcard->current.reason_effect = pcard->temp.reason_effect;
@@ -3669,6 +3719,8 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 				cit = targets->container.erase(cit);
 				continue;
 			}
+
+			// 检查EFFECT_INDESTRUCTABLE效果
 			eset.clear();
 			pcard->filter_effect(EFFECT_INDESTRUCTABLE, &eset);
 			if(eset.size()) {
@@ -3695,6 +3747,8 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 					continue;
 				}
 			}
+
+			// 检查EFFECT_INDESTRUCTABLE_COUNT效果
 			eset.clear();
 			pcard->filter_effect(EFFECT_INDESTRUCTABLE_COUNT, &eset);
 			if (eset.size()) {
@@ -3740,6 +3794,8 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 					continue;
 				}
 			}
+
+			// 检查EFFECT_DESTROY_SUBSTITUTE效果
 			eset.clear();
 			pcard->filter_effect(EFFECT_DESTROY_SUBSTITUTE, &eset);
 			if (eset.size()) {
@@ -3764,18 +3820,22 @@ int32_t field::destroy(uint16_t step, group * targets, effect * reason_effect, u
 			}
 			++cit;
 		}
+
+		// 如果还有目标卡片，启动销毁替换效果处理
 		if(targets->container.size()) {
 			operation_replace(EFFECT_DESTROY_REPLACE, 12, targets);
 		}
 		return FALSE;
 	}
 	case 11: {
+		// 为每个目标卡片添加代替破坏处理进程（战斗相关）
 		for (auto& pcard : targets->container) {
 			add_process(PROCESSOR_DESTROY_REPLACE, 0, nullptr, targets, 0, TRUE, 0, 0, pcard);
 		}
 		return FALSE;
 	}
 	case 12: {
+		// 清理战斗破坏取消状态并返回完成
 		for (auto& pcard : core.destroy_canceled)
 			pcard->set_status(STATUS_DESTROY_CONFIRMED, FALSE);
 		core.destroy_canceled.clear();
