@@ -398,4 +398,6 @@
     <string name="pre_view">预览</string>
     <string name="select_setcode">点击添加要搜索的字段</string>
     <string name="tips_atkDef">支持＞、＜、=、-（如：1000-3000）符号范围查询</string>
+    <string name="sum_atkDef">攻击力·守备力的合计</string>
+    <string name="or_atkDef">攻击力或守备力是</string>
 </resources>

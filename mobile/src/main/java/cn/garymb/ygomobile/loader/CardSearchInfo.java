@@ -36,6 +36,8 @@ public class CardSearchInfo implements ICardFilter {
     private boolean type_logic;
     private boolean setcode_logic;
     private boolean equal_logic;
+    private boolean sum_logic;
+    private boolean atk_or_def_logic;
 
     public CardSearchInfo() {
     }
@@ -118,6 +120,14 @@ public class CardSearchInfo implements ICardFilter {
 
     public String getEqualLogice() {
         return equal_logic ? "true" : "false";
+    }
+
+    public String getSumLogice() {
+        return sum_logic ? "true" : "false";
+    }
+
+    public String getAtkOrDefLogice() {
+        return atk_or_def_logic ? "true" : "false";
     }
 
     public static class Builder {
@@ -237,6 +247,16 @@ public class CardSearchInfo implements ICardFilter {
             searchInfo.equal_logic = logic;
             return this;
         }
+
+        public Builder sum_logic(boolean logic) {
+            searchInfo.sum_logic = logic;
+            return this;
+        }
+
+        public Builder atk_or_def_logic(boolean logic) {
+            searchInfo.atk_or_def_logic = logic;
+            return this;
+        }
     }
 
     @NonNull
@@ -262,6 +282,8 @@ public class CardSearchInfo implements ICardFilter {
                 ", TypeLogic=" + getTypeLogice() +
                 ", SetCodeLogic=" + getSetCodeLogice() +
                 ", SetEqualLogic=" + getEqualLogice() +
+                ", SetSumLogic=" + getSumLogice() +
+                ", SetAtkOrDefLogic=" + getAtkOrDefLogice() +
                 '}';
     }
 
@@ -335,13 +357,42 @@ public class CardSearchInfo implements ICardFilter {
         }
         // 检查攻击力过滤条件（支持范围和精确值）
         if (!TextUtils.isEmpty(atk)) {
-            if (atk.contains("-")) {
-                String[] atks = atk.split("-");
-                if (!(i(atks[0]) <= card.Attack && card.Attack <= i(atks[1]))) {
+            if (sum_logic) {
+                // 当 sum_logic 为 true 时，检查攻击力和守备力总和是否与 atk 相等
+                int sum = card.Attack + card.Defense;
+                if (atk.contains("-")) {
+                    String[] atks = atk.split("-");
+                    if (!(i(atks[0]) <= sum && sum <= i(atks[1]))) {
+                        return false;
+                    }
+                } else if (!chkAtkDef(sum, atk)) {
                     return false;
                 }
-            } else if (!chkAtkDef(card.Attack, atk)) {
-                return false;
+            } else if (atk_or_def_logic) {
+                // 当 atk_or_def_logic 为 true 时，检查攻击力或守备力是否与 atk 相等
+                int attack = card.Attack;
+                int defense = card.Defense;
+                if (atk.contains("-")) {
+                    String[] atks = atk.split("-");
+                    // 检查攻击力或守备力是否在范围内
+                    if (!((i(atks[0]) <= attack && attack <= i(atks[1])) || (i(atks[0]) <= defense && defense <= i(atks[1])))) {
+                        return false;
+                    }
+                } else {
+                    // 检查攻击力或守备力是否等于指定值
+                    if (!chkAtkDef(attack, atk) && !chkAtkDef(defense, atk)) {
+                        return false;
+                    }
+                }
+            } else {
+                if (atk.contains("-")) {
+                    String[] atks = atk.split("-");
+                    if (!(i(atks[0]) <= card.Attack && card.Attack <= i(atks[1]))) {
+                        return false;
+                    }
+                } else if (!chkAtkDef(card.Attack, atk)) {
+                    return false;
+                }
             }
         }
 

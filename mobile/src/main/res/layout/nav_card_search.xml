@@ -1303,6 +1303,7 @@
                     android:orientation="horizontal">
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_atk"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1">
@@ -1311,45 +1312,75 @@
                             android:id="@+id/edt_atk"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:gravity="center"
                             android:hint="@string/hit_atk"
-                            android:gravity="center"
                             android:maxLines="1"
                             android:singleLine="true"
                             tools:text="100" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <Button
-                        android:id="@+id/btn_equal"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center|bottom"
-                        android:layout_marginHorizontal="2dp"
-                        android:background="@drawable/selected_dark"
-                        android:text="="
-                        android:textColor="@color/default_bmb_shadow_color" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:id="@+id/ll_equal_def"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1">
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
 
-                        <androidx.appcompat.widget.AppCompatEditText
-                            android:id="@+id/edt_def"
-                            android:layout_width="match_parent"
+                        <Button
+                            android:id="@+id/btn_equal"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="center|bottom"
+                            android:layout_marginHorizontal="2dp"
+                            android:background="@drawable/selected_dark"
+                            android:text="="
+                            android:textColor="@color/default_bmb_shadow_color" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:hint="@string/hit_def"
-                            android:gravity="center"
-                            android:maxLines="1"
-                            android:singleLine="true"
-                            tools:text="100" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:layout_weight="1">
+
+                            <androidx.appcompat.widget.AppCompatEditText
+                                android:id="@+id/edt_def"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:hint="@string/hit_def"
+                                android:maxLines="1"
+                                android:singleLine="true"
+                                tools:text="100" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
                 </LinearLayout>
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:textSize="6sp"
-                    android:text="@string/tips_atkDef"/>
+                    android:text="@string/tips_atkDef"
+                    android:textSize="6sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <CheckBox
+                        android:id="@+id/chk_atkDef_sum"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/sum_atkDef"
+                        android:textSize="10sp" />
+
+                    <CheckBox
+                        android:id="@+id/chk_atkDef_or"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/or_atkDef"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

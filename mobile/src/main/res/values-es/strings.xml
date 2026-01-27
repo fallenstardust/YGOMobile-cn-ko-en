@@ -393,6 +393,8 @@
     <string name="label_excludeType">Tipo de Excluido:</string>
     <string name="select_setcode">Adicionar Arquétipo de Pesquisa</string>
     <string name="tips_atkDef"> Admite: ＞＜ = - y Rango con Guion (1000-2000)</string>
+    <string name="sum_atkDef">" ATK &amp; DEF combinados sean igual a"</string>
+    <string name="or_atkDef">ATK y/o DEF</string>
 </resources>
 
 

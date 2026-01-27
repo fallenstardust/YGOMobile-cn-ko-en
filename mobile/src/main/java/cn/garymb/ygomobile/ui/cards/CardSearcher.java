@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 import com.google.android.flexbox.FlexboxLayout;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -150,6 +151,12 @@ public class CardSearcher implements View.OnClickListener {
 
     private final EditText atkText;
     private final EditText defText;
+    private TextInputLayout til_atk;
+    private LinearLayout ll_equal_def;
+    private CheckBox chk_atkDef_sum;
+    private CheckBox chk_atkDef_or;
+    private Boolean isOr;
+    private Boolean isSum;
     private Button btn_equal;
     private Boolean isEqual;
     private boolean isUpdating = false; // 防止两个文本框相互触发更新造成无限循环
@@ -239,12 +246,21 @@ public class CardSearcher implements View.OnClickListener {
         // 连接箭头布局
         ll_linkControl = findViewById(R.id.ll_linkcontrol);
         iv_hide_linkmarker = findViewById(R.id.iv_hide_linkmarker);
-        // 攻击力、守备力、设置是否相等
+        // 攻击力、守备力
         atkText = findViewById(R.id.edt_atk);
         defText = findViewById(R.id.edt_def);
-        isEqual = false;
+
+        isEqual = false;// 攻击力和守备力相等满足的逻辑开关
         btn_equal = findViewById(R.id.btn_equal);
         btn_equal.setOnClickListener(this);
+
+        til_atk = findViewById(R.id.til_atk);
+        ll_equal_def = findViewById(R.id.ll_equal_def);
+        chk_atkDef_sum = findViewById(R.id.chk_atkDef_sum);
+        isSum = false;// 攻击力与守备力之和满足的逻辑开关
+
+        chk_atkDef_or = findViewById(R.id.chk_atkDef_or);
+        isOr = false;// 攻击力或守备力其中之一满足的逻辑开关
 
         myFavButton = findViewById(R.id.btn_my_fav);
         searchButton = findViewById(R.id.btn_search);
@@ -263,7 +279,43 @@ public class CardSearcher implements View.OnClickListener {
             }
             return false;
         };
+        chk_atkDef_sum.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                String hintText = isChecked ? YGOUtil.s(R.string.sum_atkDef) : (chk_atkDef_or.isChecked() ? YGOUtil.s(R.string.or_atkDef) : "ATK");
+                til_atk.setHint(hintText);
+                atkText.setHint(hintText);
+                // 只有当chk_atkDef_sum和chk_atkDef_or都没被勾选时才显示ll_equal_def
+                ll_equal_def.setVisibility(!isChecked && !chk_atkDef_or.isChecked() ? View.VISIBLE : View.GONE);
+                isSum = isChecked;
+                if (isChecked) {
+                    til_atk.setHint(YGOUtil.s(R.string.sum_atkDef));
+                    atkText.setHint(YGOUtil.s(R.string.sum_atkDef));
+                    defText.setText("");
+                    resetEqualButton();//重置相等模式按钮
+                    isOr = false;
+                    chk_atkDef_or.setChecked(false);
+                }
+            }
+        });
+        chk_atkDef_or.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                String hintText = isChecked ? YGOUtil.s(R.string.or_atkDef) : (chk_atkDef_sum.isChecked() ? YGOUtil.s(R.string.sum_atkDef) : "ATK");
+                til_atk.setHint(hintText);
+                atkText.setHint(hintText);
+                // 只有当chk_atkDef_sum和chk_atkDef_or都没被勾选时才显示ll_equal_def
+                ll_equal_def.setVisibility(!isChecked && !chk_atkDef_sum.isChecked() ? View.VISIBLE : View.GONE);
+                isOr = isChecked;
+                if (isChecked) {
+                    defText.setText("");
+                    resetEqualButton();//重置相等模式按钮
+                    isSum = false;
+                    chk_atkDef_sum.setChecked(false);
 
+                }
+            }
+        });
         keyWord.setOnEditorActionListener(searchListener);
         chk_multi_keyword.setChecked(mSettings.getKeyWordsSplit() != 0);
         chk_multi_keyword.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -1796,10 +1848,7 @@ public class CardSearcher implements View.OnClickListener {
             }
         } else if (v.getId() == R.id.btn_equal) {
             if (btn_equal.isSelected()) {
-                btn_equal.setSelected(false);
-                btn_equal.setTextColor(YGOUtil.c(R.color.default_bmb_shadow_color));
-                btn_equal.setBackground(mContext.getDrawable(R.drawable.selected_dark));
-                isEqual = false;
+                resetEqualButton();//重置相等模式按钮
             } else {//未选中时的逻辑
                 btn_equal.setSelected(true);
                 btn_equal.setTextColor(YGOUtil.c(R.color.yellow));
@@ -1849,6 +1898,8 @@ public class CardSearcher implements View.OnClickListener {
                     .atk(text(atkText))
                     .def(text(defText))
                     .equal_logic(isEqual)
+                    .sum_logic(isSum)
+                    .atk_or_def_logic(isOr)
                     .keyword(keyword)
                     .build();
 
@@ -1941,13 +1992,12 @@ public class CardSearcher implements View.OnClickListener {
         resetLevel();// 重置等级按钮为未选中
         resetPScale();// 重置灵摆刻度按钮为未选中
         resetLinkMarker(); // 重置链接标记按钮为未选中
-
+        resetEqualButton();//重置相等模式按钮
+        resetSumCheckbox();// 重置攻守合计checkbox为未选中
+        resetOrCheckbox();// 重置攻或守满足checkbox为未选中
         atkText.setText(null);// 清除输入的攻击力
         defText.setText(null);// 清除输入的守备力
-        isEqual = false;
-        btn_equal.setSelected(false);
-        btn_equal.setTextColor(YGOUtil.c(R.color.default_bmb_shadow_color));
-        btn_equal.setBackground(mContext.getDrawable(R.drawable.selected_dark));
+
         lineKey = 0;// 清除灵摆键值
     }
 
@@ -2097,6 +2147,25 @@ public class CardSearcher implements View.OnClickListener {
         for (Button iconButton : iconButtons) {
             iconButton.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void resetEqualButton() {
+        btn_equal.setSelected(false);
+        btn_equal.setTextColor(YGOUtil.c(R.color.default_bmb_shadow_color));
+        btn_equal.setBackground(mContext.getDrawable(R.drawable.selected_dark));
+        isEqual = false;
+    }
+
+    private void resetSumCheckbox() {
+        chk_atkDef_sum.setChecked(false);
+        ll_equal_def.setVisibility(View.VISIBLE);
+        isSum = false;
+    }
+
+    private void resetOrCheckbox() {
+        chk_atkDef_or.setChecked(false);
+        ll_equal_def.setVisibility(View.VISIBLE);
+        isOr = false;
     }
 
     public interface CallBack {

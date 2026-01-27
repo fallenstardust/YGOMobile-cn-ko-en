@@ -394,4 +394,6 @@
     <string name="label_excludeType">除外項目:</string>
     <string name="select_setcode">クリックで検索カテゴリ追加</string>
     <string name="tips_atkDef">対応：＞＜＝・ハイフン範囲（1000-2000）</string>
+    <string name="sum_atkDef">攻撃力・守備力の合計が</string>
+    <string name="or_atkDef">攻撃力か守備力が</string>
 </resources>
