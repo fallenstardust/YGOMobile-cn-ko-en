@@ -2652,7 +2652,7 @@ std::wstring Game::AppendCardNames(const std::wstring& msg) {
 
         // 查询卡片名称
         const wchar_t* cardName = dataManager.GetName(cardId);
-        if (cardName && wcscmp(cardName, L"") != 0) {
+        if (cardName && wcscmp(cardName, L"") != 0 && wcscmp(cardName, dataManager.unknown_string) != 0) {
             // 替换卡片ID为 [ID:卡片名称] 格式
             std::wstring replacement = L"[" + cardIdStr + L":" + std::wstring(cardName) + L"]";
             result = std::regex_replace(result,
