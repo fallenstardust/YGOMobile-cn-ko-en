@@ -376,6 +376,7 @@ public class CardSearcher implements View.OnClickListener {
     public void showFavorites(boolean showList) {
         mShowFavorite = true;
         myFavButton.setSelected(true);
+        myFavButton.setBackground(mContext.getDrawable(R.drawable.radius));
         if (mCallBack != null) {
             mCallBack.onSearchStart();
         }
@@ -389,6 +390,7 @@ public class CardSearcher implements View.OnClickListener {
     public void hideFavorites(boolean reload) {
         mShowFavorite = false;
         myFavButton.setSelected(false);
+        myFavButton.setBackground(mContext.getDrawable(R.drawable.selected_dark));
         if (mCallBack != null) {
             mCallBack.onSearchStart();
         }
