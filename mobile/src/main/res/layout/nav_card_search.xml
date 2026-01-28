@@ -32,7 +32,7 @@
                     android:id="@+id/ll_banlist"
                     android:layout_width="match_parent"
                     android:layout_height="30dp"
-                    android:background="@drawable/veil"
+                    android:background="@drawable/selected_dark"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -107,7 +107,7 @@
                     android:id="@+id/ll_ot"
                     android:layout_width="match_parent"
                     android:layout_height="30dp"
-                    android:background="@drawable/veil"
+                    android:background="@drawable/selected_dark"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -166,7 +166,7 @@
                     android:id="@+id/ll_setcode"
                     android:layout_width="match_parent"
                     android:layout_height="30dp"
-                    android:background="@drawable/veil"
+                    android:background="@drawable/selected_dark"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -189,6 +189,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
+                        android:layout_marginHorizontal="5dp"
                         android:orientation="horizontal">
 
                         <RadioButton
@@ -240,6 +241,7 @@
                 android:orientation="vertical">
 
                 <LinearLayout
+                    android:id="@+id/ll_holder_category"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="15dp"
@@ -249,7 +251,7 @@
                         android:id="@+id/ll_category"
                         android:layout_width="match_parent"
                         android:layout_height="30dp"
-                        android:background="@drawable/veil"
+                        android:background="@drawable/selected_dark"
                         android:orientation="horizontal">
 
                         <ImageView
@@ -445,7 +447,7 @@
                     android:id="@+id/ll_cardType"
                     android:layout_width="match_parent"
                     android:layout_height="30dp"
-                    android:background="@drawable/veil"
+                    android:background="@drawable/selected_dark"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -495,7 +497,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="30dp"
-                    android:background="@drawable/veil"
+                    android:background="@drawable/selected_dark"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -571,7 +573,7 @@
                         android:id="@+id/ll_attr"
                         android:layout_width="match_parent"
                         android:layout_height="30dp"
-                        android:background="@drawable/veil"
+                        android:background="@drawable/selected_dark"
                         android:orientation="horizontal">
 
                         <ImageView
@@ -641,7 +643,7 @@
                         android:id="@+id/ll_race"
                         android:layout_width="match_parent"
                         android:layout_height="30dp"
-                        android:background="@drawable/veil"
+                        android:background="@drawable/selected_dark"
                         android:orientation="horizontal">
 
                         <ImageView
@@ -810,7 +812,7 @@
                             android:id="@+id/ll_monsterType"
                             android:layout_width="match_parent"
                             android:layout_height="30dp"
-                            android:background="@drawable/veil"
+                            android:background="@drawable/selected_dark"
                             android:orientation="horizontal">
 
                             <ImageView
@@ -833,6 +835,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="20dp"
                                 android:layout_gravity="center"
+                                android:layout_marginHorizontal="5dp"
                                 android:orientation="horizontal">
 
                                 <RadioButton
@@ -959,7 +962,7 @@
                             android:id="@+id/ll_excludeType"
                             android:layout_width="match_parent"
                             android:layout_height="30dp"
-                            android:background="@drawable/veil"
+                            android:background="@drawable/selected_dark"
                             android:orientation="horizontal">
 
                             <ImageView
@@ -1075,7 +1078,7 @@
                         android:id="@+id/ll_level"
                         android:layout_width="match_parent"
                         android:layout_height="30dp"
-                        android:background="@drawable/veil"
+                        android:background="@drawable/selected_dark"
                         android:orientation="horizontal">
 
                         <ImageView
@@ -1162,7 +1165,7 @@
                         android:id="@+id/ll_pScale"
                         android:layout_width="match_parent"
                         android:layout_height="30dp"
-                        android:background="@drawable/veil"
+                        android:background="@drawable/selected_dark"
                         android:orientation="horizontal">
 
                         <ImageView
@@ -1267,7 +1270,7 @@
                         android:id="@+id/ll_linkmarker"
                         android:layout_width="match_parent"
                         android:layout_height="30dp"
-                        android:background="@drawable/veil"
+                        android:background="@drawable/selected_dark"
                         android:orientation="horizontal">
 
                         <ImageView
@@ -1300,87 +1303,95 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/til_atk"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
-
-                        <androidx.appcompat.widget.AppCompatEditText
-                            android:id="@+id/edt_atk"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:hint="@string/hit_atk"
-                            android:maxLines="1"
-                            android:singleLine="true"
-                            tools:text="100" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                    android:background="@drawable/selected_dark"
+                    android:orientation="vertical">
 
                     <LinearLayout
-                        android:id="@+id/ll_equal_def"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:orientation="horizontal">
 
-                        <Button
-                            android:id="@+id/btn_equal"
-                            android:layout_width="30dp"
-                            android:layout_height="30dp"
-                            android:layout_gravity="center|bottom"
-                            android:layout_marginHorizontal="2dp"
-                            android:background="@drawable/selected_dark"
-                            android:text="="
-                            android:textColor="@color/default_bmb_shadow_color" />
+                        <CheckBox
+                            android:id="@+id/chk_atkDef_sum"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sum_atkDef"
+                            android:textSize="10sp" />
+
+                        <CheckBox
+                            android:id="@+id/chk_atkDef_or"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/or_atkDef"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/til_atk"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1">
 
                             <androidx.appcompat.widget.AppCompatEditText
-                                android:id="@+id/edt_def"
+                                android:id="@+id/edt_atk"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:gravity="center"
-                                android:hint="@string/hit_def"
+                                android:hint="@string/hit_atk"
                                 android:maxLines="1"
                                 android:singleLine="true"
                                 tools:text="100" />
                         </com.google.android.material.textfield.TextInputLayout>
+
+                        <LinearLayout
+                            android:id="@+id/ll_equal_def"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/btn_equal"
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_gravity="center|bottom"
+                                android:layout_marginHorizontal="2dp"
+                                android:background="@drawable/selected_dark"
+                                android:text="="
+                                android:textColor="@color/default_bmb_shadow_color" />
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1">
+
+                                <androidx.appcompat.widget.AppCompatEditText
+                                    android:id="@+id/edt_def"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:hint="@string/hit_def"
+                                    android:maxLines="1"
+                                    android:singleLine="true"
+                                    tools:text="100" />
+                            </com.google.android.material.textfield.TextInputLayout>
+                        </LinearLayout>
                     </LinearLayout>
-                </LinearLayout>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="@string/tips_atkDef"
-                    android:textSize="6sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <CheckBox
-                        android:id="@+id/chk_atkDef_sum"
-                        android:layout_width="wrap_content"
+                    <TextView
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/sum_atkDef"
-                        android:textSize="10sp" />
+                        android:gravity="center"
+                        android:layout_marginVertical="2dp"
+                        android:text="@string/tips_atkDef"
+                        android:textSize="6sp" />
 
-                    <CheckBox
-                        android:id="@+id/chk_atkDef_or"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/or_atkDef"
-                        android:textSize="10sp" />
                 </LinearLayout>
-
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
@@ -1432,7 +1443,7 @@
                 android:id="@+id/btn_my_fav"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/button_radius_black_transparents"
+                android:background="@drawable/selected_dark"
                 android:text="@string/my_favorites"
                 android:textColor="@color/selector_text_color_white_gold"
                 android:visibility="visible" />
