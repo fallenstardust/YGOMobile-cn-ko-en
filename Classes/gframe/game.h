@@ -246,6 +246,11 @@ public:
 		text.trim();
 		editbox->setText(text.c_str());
 	}
+    // 表情显示方法
+    void ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe);
+    void UpdateEmoticonDisplay();
+    void DrawEmoticon();
+    std::wstring OnReceiveChatMessage(const std::wstring& msg, bool isFromMe);
 
     virtual std::wstring AppendCardNames(const std::wstring& msg);
 	void ResizeChatInputWindow();
@@ -753,7 +758,13 @@ public:
     void process(irr::SEvent &event);
 private:
 	irr::core::position2di InputFix;
-    };
+    // 表情显示相关
+    bool showingEmoticon = false;          // 是否正在显示表情
+
+    bool isMyEmoticon = false;             // 是否是自己的表情
+    std::wstring currentEmoticonCode;      // 当前显示的表情代码
+
+};
 
 extern Game* mainGame;
 template<typename T>

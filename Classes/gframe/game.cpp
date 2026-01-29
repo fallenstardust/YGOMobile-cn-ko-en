@@ -2375,8 +2375,8 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 		if(player < 11 || player > 19)
 			chatMsg[0].append(L"[---]: ");
 	}
-    std::wstring processedMsg = AppendCardNames(msg);
-    chatMsg[0].append(processedMsg);
+    // 处理消息
+    chatMsg[0].append(OnReceiveChatMessage(msg,player == 0 || player == 2));
 }
 void Game::ClearChatMsg() {
 	for(int i = 7; i >= 0; --i) {
@@ -2629,19 +2629,39 @@ void Game::OnGameClose() {
 	irr::android::onGameExit(appMain);
     this->device->closeDevice();
 }
-std::wstring Game::AppendCardNames(const std::wstring& msg) {
+/**
+ * @brief 显示表情包
+ * @param emoticonCode 表情代码（如 &smile）
+ * @param isFromMe 是否是自己发送的消息
+ */
+void Game::ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe) {
+    currentEmoticonCode = emoticonCode;
+    isMyEmoticon = isFromMe;
+    showingEmoticon = true;
+    DrawEmoticon();
+}
+// 过滤消息中包含的表情代码和卡片数字ID
+std::wstring Game::OnReceiveChatMessage(const std::wstring& msg, bool isFromMe) {
     // 实现卡片ID到名称的转换逻辑
     std::wstring result = msg;
-
-    // 使用正则表达式匹配可能的卡片ID（5-8位数字）
-    std::wregex cardIdPattern(L"\\b(\\d{3,9})\\b");
-    std::wstring::const_iterator start = msg.begin();
-    std::wstring::const_iterator end = msg.end();
-    std::wsregex_iterator iter(start, end, cardIdPattern);
+    // 检查消息中是否包含表情代码
+    std::wregex emoticonPattern(L"&([a-zA-Z0-9_]+)");
+    std::wsregex_iterator iter(msg.begin(), msg.end(), emoticonPattern);
     std::wsregex_iterator iterEnd;
+    // 如果找到了表情代码，则显示表情
+    if(iter != iterEnd) {
+        std::wstring emoticonCode = iter->str();
+        mainGame->ShowEmoticon(emoticonCode, isFromMe);
+        result = std::regex_replace(result, std::wregex(emoticonCode), L"");
+    }
 
-    for (; iter != iterEnd; ++iter) {
-        std::wstring cardIdStr = iter->str();
+    // 使用正则表达式匹配可能的卡片ID（3-9位数字）
+    std::wregex cardIdPattern(L"\\b(\\d{3,9})\\b");
+    std::wsregex_iterator iter2(result.begin(), result.end(), cardIdPattern);
+    std::wsregex_iterator iterEnd2;
+
+    for (; iter2 != iterEnd2; ++iter2) {
+        std::wstring cardIdStr = iter2->str();
         int cardId = std::stoi(cardIdStr);
 
         // 查询卡片名称
@@ -2649,9 +2669,7 @@ std::wstring Game::AppendCardNames(const std::wstring& msg) {
         if (cardName && wcscmp(cardName, L"") != 0 && wcscmp(cardName, dataManager.unknown_string) != 0) {
             // 替换卡片ID为 [ID:卡片名称] 格式
             std::wstring replacement = L"[" + cardIdStr + L":" + std::wstring(cardName) + L"]";
-            result = std::regex_replace(result,
-                                      std::wregex(L"\\b" + cardIdStr + L"\\b"),
-                                      replacement);
+            result = std::regex_replace(result,std::wregex(L"\\b" + cardIdStr + L"\\b"),replacement);
         }
     }
 

@@ -27,6 +27,9 @@ public:
 	std::unordered_map<int, irr::video::ITexture*> tMap;
 	std::unordered_map<int, irr::video::ITexture*> tThumb;
 	std::unordered_map<int, irr::video::ITexture*> tFields;
+    std::unordered_map<std::wstring, irr::core::recti> emoticonRects;  // 存储每个表情的位置
+
+    irr::video::ITexture* tEmoticons;
 	irr::IrrlichtDevice* device;
 	irr::video::IVideoDriver* driver;
 	irr::video::ITexture* tCover[4];

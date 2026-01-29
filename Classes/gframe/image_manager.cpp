@@ -65,7 +65,42 @@ bool ImageManager::Initial(const path dir) {
 	tButton_S_pressed = driver->getTexture((dir + path("/textures/extra/sButton_S_pressed.png")).c_str());
 	tButton_C = driver->getTexture((dir + path("/textures/extra/sButton_C.png")).c_str());
 	tButton_C_pressed = driver->getTexture((dir + path("/textures/extra/sButton_C_pressed.png")).c_str());
-
+    // 加载各种表情图片
+    tEmoticons = driver->getTexture(dir + path("/textures/extra/emoticons.png").c_str());
+    if(tEmoticons) {
+        // &laugh 在左上角 (0,0) - (80,80)
+        emoticonRects[L"&laugh"] = irr::core::recti(0, 0, 80, 80);
+        // &ridiculous 在第一行第二个 (80,0) - (160,80)
+        emoticonRects[L"&ridiculous"] = irr::core::recti(80, 0, 160, 80);
+        // &stick_tongue 在第一行第三个 (160,0) - (240,80)
+        emoticonRects[L"&stick_tongue"] = irr::core::recti(160, 0, 240, 80);
+        // &reluctant 在第一行第四个 (240,0) - (320,80)
+        emoticonRects[L"&reluctant"] = irr::core::recti(240, 0, 320, 80);
+        // &sweat 在第二行第一个 (0,80) - (80,160)
+        emoticonRects[L"&sweat"] = irr::core::recti(0, 80, 80, 160);
+        // &confused 在第二行第二个 (80,80) - (160,160)
+        emoticonRects[L"&confused"] = irr::core::recti(80, 80, 160, 160);
+        // &surprised 在第二行第三个 (160,80) - (240,160)
+        emoticonRects[L"&surprised"] = irr::core::recti(160, 80, 240, 160);
+        // &bawl 在第二行第四个 (240,80) - (320,160)
+        emoticonRects[L"&bawl"] = irr::core::recti(240, 80, 320, 160);
+        // &angry 在第三行第一个 (0,160) - (80,240)
+        emoticonRects[L"&angry"] = irr::core::recti(0, 160, 80, 240);
+        // &rage 在第三行第二个 (80,160) - (160,240)
+        emoticonRects[L"&rage"] = irr::core::recti(80, 160, 160, 240);
+        // &sneaky 在第三行第三个 (160,160) - (240,240)
+        emoticonRects[L"&sneaky"] = irr::core::recti(160, 160, 240, 240);
+        // &obedient 在第三行第四个 (240,160) - (320,240)
+        emoticonRects[L"&obedient"] = irr::core::recti(240, 160, 320, 240);
+        // &good 在第四行第一个 (0,240) - (80,320)
+        emoticonRects[L"&good"] = irr::core::recti(0, 240, 80, 320);
+        // &yeah 在第四行第二个 (80,240) - (160,320)
+        emoticonRects[L"&yeah"] = irr::core::recti(80, 240, 160, 320);
+        // &gotcha 在第四行第三个 (160,240) - (240,320)
+        emoticonRects[L"&gotcha"] = irr::core::recti(160, 240, 240, 320);
+        // &love 在第四行第四个 (240,240) - (320,320)
+        emoticonRects[L"&love"] = irr::core::recti(240, 240, 320, 320);
+    }
     if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());

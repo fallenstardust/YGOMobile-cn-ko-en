@@ -543,9 +543,7 @@ void Game::DrawCard(ClientCard* pcard) {
 			driver->setMaterial(matManager.mTexture);
 			driver->drawVertexPrimitiveList(matManager.vPScale, 4, matManager.iRectangle, 2);
 		}//pendulum RIGHT scale image
-	}
-	// 兼容旧版灵摆规则下的额外灵摆区（序列大于5的情况）
-	else {
+	} else {// 兼容旧版灵摆规则下的额外灵摆区（序列大于5的情况）
 		if(isPSEnabled && (pcard->type & TYPE_PENDULUM) && ((pcard->location & LOCATION_SZONE) && pcard->sequence > 5)) {
 			int scale = pcard->sequence == 6 ? pcard->lscale : pcard->rscale;
 			matManager.mTexture.setTexture(0, pcard->sequence == 6 ? imageManager.tLScale[scale] : imageManager.tRScale[scale]);
@@ -1183,7 +1181,7 @@ void Game::DrawGUI() {
  * - 控制并渲染聊天窗口内容。
  */
 void Game::DrawSpec() {
-
+    DrawEmoticon();
     // 如果需要展示卡片，则进行相关绘图操作
     if(showcard) {
         // 获取当前要展示的卡片纹理
@@ -1937,5 +1935,27 @@ void Game::DrawDeckBd() {
 		DrawThumb(deckBuilder.draging_pointer, irr::core::vector2di(deckBuilder.dragx - CARD_THUMB_WIDTH / 2 * mainGame->xScale, deckBuilder.dragy - CARD_THUMB_HEIGHT / 2 * mainGame->yScale), deckBuilder.filterList, true);
 	}
 }
+/**
+ * @brief 绘制表情包
+ */
+    void Game::DrawEmoticon() {
+        int emoticonShowTime = 120;// 表情显示计时
+        if(showingEmoticon) {
+            emoticonShowTime--;
+            if(emoticonShowTime <= 0) {
+                showingEmoticon = false;
+            }
+        }
+        if(!showingEmoticon) {
+            return;
+        }
 
+        // 根据发送者决定显示位置
+        irr::core::recti emoticonRect = isMyEmoticon ? Resize_Y(335, 80, 390, 135) : Resize_Y(930, 80, 985, 135);
+
+        driver->draw2DRectangle(emoticonRect, 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
+        driver->draw2DRectangleOutline(emoticonRect);
+        // 绘制表情图片
+        driver->draw2DImage(imageManager.tEmoticons, emoticonRect, imageManager.emoticonRects[currentEmoticonCode], nullptr,nullptr,true);
+    }
 }
