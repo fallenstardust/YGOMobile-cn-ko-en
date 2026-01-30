@@ -1222,7 +1222,7 @@ void Game::DrawSpec() {
                 showcarddif += 4;
             break;
         }
-        case 4: { // 卡片淡入效果：透明度逐步增加到不透明
+        case 4: { // 卡片淡入效果：透明度逐步增加到不透明//
             matManager.c2d[0] = (showcarddif << 24) | 0xffffff;
             matManager.c2d[1] = (showcarddif << 24) | 0xffffff;
             matManager.c2d[2] = (showcarddif << 24) | 0xffffff;
@@ -1938,24 +1938,24 @@ void Game::DrawDeckBd() {
 /**
  * @brief 绘制表情包
  */
-    void Game::DrawEmoticon() {
-        int emoticonShowTime = 120;// 表情显示计时
-        if(showingEmoticon) {
-            emoticonShowTime--;
-            if(emoticonShowTime <= 0) {
-                showingEmoticon = false;
-            }
-        }
-        if(!showingEmoticon) {
-            return;
-        }
+void Game::DrawEmoticon() {
+    static int emoticonShowTime = 120;// 表情显示计时（改为静态变量）
 
-        // 根据发送者决定显示位置
-        irr::core::recti emoticonRect = isMyEmoticon ? Resize_Y(335, 80, 390, 135) : Resize_Y(930, 80, 985, 135);
-
-        driver->draw2DRectangle(emoticonRect, 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
-        driver->draw2DRectangleOutline(emoticonRect);
-        // 绘制表情图片
-        driver->draw2DImage(imageManager.tEmoticons, emoticonRect, imageManager.emoticonRects[currentEmoticonCode], nullptr,nullptr,true);
+    if(showingEmoticon) {
+        emoticonShowTime--;
+        if(emoticonShowTime <= 0) {
+            emoticonShowTime = 120; // 重置计时器
+            showingEmoticon = false;
+        }
     }
+    if(!showingEmoticon) {
+        return;
+    }
+
+    // 根据发送者决定显示位置
+    irr::core::recti emoticonRect = isMyEmoticon ? Resize_X_Y(335, 80, 390, 135) : Resize_X_Y(930, 80, 985, 135);
+    // 绘制表情图片
+    driver->draw2DImage(imageManager.tEmoticons, emoticonRect, imageManager.emoticonRects[currentEmoticonCode], nullptr,nullptr,true);
+}
+
 }

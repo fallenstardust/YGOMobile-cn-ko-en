@@ -95,11 +95,11 @@ bool ImageManager::Initial(const path dir) {
         // &good 在第四行第一个 (0,240) - (80,320)
         emoticonRects[L"&good"] = irr::core::recti(0, 240, 80, 320);
         // &yeah 在第四行第二个 (80,240) - (160,320)
-        emoticonRects[L"&yeah"] = irr::core::recti(80, 240, 160, 320);
+        emoticonRects[L"&cool"] = irr::core::recti(80, 240, 160, 320);
         // &gotcha 在第四行第三个 (160,240) - (240,320)
-        emoticonRects[L"&gotcha"] = irr::core::recti(160, 240, 240, 320);
+        emoticonRects[L"&despise"] = irr::core::recti(160, 240, 240, 320);
         // &love 在第四行第四个 (240,240) - (320,320)
-        emoticonRects[L"&love"] = irr::core::recti(240, 240, 320, 320);
+        emoticonRects[L"&shy"] = irr::core::recti(240, 240, 320, 320);
     }
     if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;

@@ -248,9 +248,8 @@ public:
 	}
     // 表情显示方法
     void ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe);
-    void UpdateEmoticonDisplay();
     void DrawEmoticon();
-    std::wstring OnReceiveChatMessage(const std::wstring& msg, bool isFromMe);
+    virtual std::wstring OnReceiveChatMessage(const std::wstring& msg, bool isFromMe);
 
     virtual std::wstring AppendCardNames(const std::wstring& msg);
 	void ResizeChatInputWindow();

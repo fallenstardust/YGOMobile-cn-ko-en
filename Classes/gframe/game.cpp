@@ -2640,7 +2640,33 @@ void Game::ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe) {
     showingEmoticon = true;
     DrawEmoticon();
 }
-// 过滤消息中包含的表情代码和卡片数字ID
+// 过滤消息中的卡片数字ID
+std::wstring Game::AppendCardNames(const std::wstring& msg) {
+    // 实现卡片ID到名称的转换逻辑
+    std::wstring result = msg;
+
+    // 使用正则表达式匹配可能的卡片ID（3-9位数字）
+    std::wregex cardIdPattern(L"\\b(\\d{3,9})\\b");
+    std::wstring::const_iterator start = msg.begin();
+    std::wstring::const_iterator end = msg.end();
+    std::wsregex_iterator iter(start, end, cardIdPattern);
+    std::wsregex_iterator iterEnd;
+
+    for (; iter != iterEnd; ++iter) {
+        std::wstring cardIdStr = iter->str();
+        int cardId = std::stoi(cardIdStr);
+        // 查询卡片名称
+        const wchar_t* cardName = dataManager.GetName(cardId);
+        if (cardName && wcscmp(cardName, L"") != 0 && wcscmp(cardName, dataManager.unknown_string) != 0) {
+            // 替换卡片ID为 [ID:卡片名称] 格式
+            std::wstring replacement = L"[" + cardIdStr + L":" + std::wstring(cardName) + L"]";
+            result = std::regex_replace(result,std::wregex(L"\\b" + cardIdStr + L"\\b"),replacement);
+        }
+    }
+
+    return result;
+}
+// 过滤消息中包含的表情代码
 std::wstring Game::OnReceiveChatMessage(const std::wstring& msg, bool isFromMe) {
     // 实现卡片ID到名称的转换逻辑
     std::wstring result = msg;
@@ -2655,25 +2681,7 @@ std::wstring Game::OnReceiveChatMessage(const std::wstring& msg, bool isFromMe) 
         result = std::regex_replace(result, std::wregex(emoticonCode), L"");
     }
 
-    // 使用正则表达式匹配可能的卡片ID（3-9位数字）
-    std::wregex cardIdPattern(L"\\b(\\d{3,9})\\b");
-    std::wsregex_iterator iter2(result.begin(), result.end(), cardIdPattern);
-    std::wsregex_iterator iterEnd2;
-
-    for (; iter2 != iterEnd2; ++iter2) {
-        std::wstring cardIdStr = iter2->str();
-        int cardId = std::stoi(cardIdStr);
-
-        // 查询卡片名称
-        const wchar_t* cardName = dataManager.GetName(cardId);
-        if (cardName && wcscmp(cardName, L"") != 0 && wcscmp(cardName, dataManager.unknown_string) != 0) {
-            // 替换卡片ID为 [ID:卡片名称] 格式
-            std::wstring replacement = L"[" + cardIdStr + L":" + std::wstring(cardName) + L"]";
-            result = std::regex_replace(result,std::wregex(L"\\b" + cardIdStr + L"\\b"),replacement);
-        }
-    }
-
-    return result;
+    return AppendCardNames(result);//之后过滤消息中的卡片数字ID
 }
 
 }
