@@ -1365,18 +1365,28 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	//chat
     imgChat = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 300, 45, 300 + 45), wPallet, BUTTON_CHATTING);
     imgChat->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
-    if (gameConf.chkIgnore1) {
-        imgChat->setImage(imageManager.tShut);
-    } else {
-        imgChat->setImage(imageManager.tTalk);
-    }
+    imgChat->setImage(gameConf.chkIgnore1 ? imageManager.tShut : imageManager.tTalk);
 	wChat = env->addWindow(Resize(305, 605, 1020, 640), false, L"");
 	wChat->getCloseButton()->setVisible(false);
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
 	wChat->setVisible(false);
 	ebChatInput = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(3, 2, 710, 28), wChat, EDITBOX_CHAT);
-	//swap
+	// chat Emoticon
+
+    wEmoticon = env->addWindow(Resize_Y(300, 595 - 44 * 4, 305 + 44 * 4, 600), false, L"");
+    wEmoticon->getCloseButton()->setVisible(false);
+    wEmoticon->setDraggable(false);
+    wEmoticon->setDrawTitlebar(false);
+    wEmoticon->setVisible(true);//TODO 完成再默认隐藏
+
+    // 创建4x4宫格表情按钮
+    for (int i = 0; i < 16; i++) {
+        btnEmoticon[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(2 + i % 4 * 44, 2 + i / 4 * 44, 2 + (i % 4 + 1) * 44, 2 + (i / 4 + 1) * 44), wEmoticon, BUTTON_EMOTICON_0 + i);
+        btnEmoticon[i]->setImage(imageManager.GetEmoticon(imageManager.emoticonCodes[i]));
+        btnEmoticon[i]->setImageScale(irr::core::vector2df(yScale * 0.5, yScale * 0.5));
+    }
+    //swap
 	btnSpectatorSwap = env->addButton(Resize_Y(3 + CARD_IMG_WIDTH, 70, 310, 70 + 40), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
         ChangeToIGUIImageButton(btnSpectatorSwap, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnSpectatorSwap->setVisible(false);

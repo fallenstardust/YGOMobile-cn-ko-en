@@ -101,6 +101,31 @@ bool ImageManager::Initial(const path dir) {
         // &love 在第四行第四个 (240,240) - (320,320)
         emoticonRects[L"&shy"] = irr::core::recti(240, 240, 320, 320);
     }
+    // 裁剪并创建独立的表情纹理
+    for (const auto& pair : emoticonRects) {
+        // 获取源纹理的图像数据
+        irr::video::IImage* sourceImage = driver->createImageFromData(tEmoticons->getColorFormat(),tEmoticons->getSize(),tEmoticons->lock(),false);
+        if (sourceImage) {
+            tEmoticons->unlock(); // 解锁纹理
+            // 创建目标图像（裁剪区域大小）
+            irr::core::dimension2d<irr::u32> cropSize(pair.second.getWidth(),pair.second.getHeight());
+            irr::video::IImage* targetImage = driver->createImage(sourceImage->getColorFormat(),cropSize);
+
+            if (targetImage) {
+                // 从源图像的指定区域复制到目标图像
+                sourceImage->copyTo(targetImage,irr::core::position2d<irr::s32>(0, 0),pair.second);
+                // 创建唯一纹理名称
+                std::wstring textureName = L"emoticon_" + pair.first;
+                // 添加纹理到驱动程序
+                irr::video::ITexture* emoticonTexture = driver->addTexture(textureName.c_str(),targetImage);
+                if (emoticonTexture) {
+                    emoticons[pair.first] = emoticonTexture;
+                }
+                targetImage->drop(); // 释放目标图像
+            }
+            sourceImage->drop(); // 释放源图像
+        }
+    }
     if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());
@@ -148,6 +173,7 @@ void ImageManager::ClearTexture() {
 	tMap.clear();
 	tThumb.clear();
 	tFields.clear();
+    ClearEmoticons();
 	if(tBigPicture != nullptr) {
 		driver->removeTexture(tBigPicture);
 		tBigPicture = nullptr;
@@ -288,4 +314,22 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	else
 		return nullptr;
 }
+// 添加获取表情图的函数
+    irr::video::ITexture* ImageManager::GetEmoticon(const std::wstring& emoticonName) {
+        auto it = emoticons.find(emoticonName);
+        if (it != emoticons.end()) {
+            return it->second;
+        }
+        return nullptr;
+    }
+
+// 添加清理表情图的函数
+    void ImageManager::ClearEmoticons() {
+        for (auto& pair : emoticons) {
+            if (pair.second) {
+                driver->removeTexture(pair.second);
+            }
+        }
+        emoticons.clear();
+    }
 }

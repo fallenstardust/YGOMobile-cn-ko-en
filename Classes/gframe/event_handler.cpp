@@ -252,12 +252,41 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->imgChat->setImage(imageManager.tShut);
 				}
 				mainGame->chkIgnore1->setChecked(mainGame->gameConf.chkIgnore1);
-				bool show = mainGame->is_building ? false : !mainGame->chkIgnore1->isChecked();
+				bool show = !mainGame->is_building && !mainGame->chkIgnore1->isChecked();
 				mainGame->wChat->setVisible(show);
 				if(!show)
 					mainGame->ClearChatMsg();
 			    break;
 			}
+            case BUTTON_EMOTICON_0:
+            case BUTTON_EMOTICON_1:
+            case BUTTON_EMOTICON_2:
+            case BUTTON_EMOTICON_3:
+            case BUTTON_EMOTICON_4:
+            case BUTTON_EMOTICON_5:
+            case BUTTON_EMOTICON_6:
+            case BUTTON_EMOTICON_7:
+            case BUTTON_EMOTICON_8:
+            case BUTTON_EMOTICON_9:
+            case BUTTON_EMOTICON_10:
+            case BUTTON_EMOTICON_11:
+            case BUTTON_EMOTICON_12:
+            case BUTTON_EMOTICON_13:
+            case BUTTON_EMOTICON_14:
+            case BUTTON_EMOTICON_15: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                int emoticonIndex = id - BUTTON_EMOTICON_0;
+                if (emoticonIndex >= 0 && emoticonIndex < 16) {
+                    const wchar_t* emoticonText = imageManager.emoticonCodes[emoticonIndex];
+                    // 使用与聊天输入框相同的发送逻辑
+                    uint16_t msgbuf[LEN_CHAT_MSG];
+                    int len = BufferIO::CopyCharArray(emoticonText, msgbuf);
+                    if(len > 0) {
+                        DuelClient::SendBufferToServer(CTOS_CHAT, msgbuf, (len + 1) * sizeof(uint16_t));
+                    }
+                }
+                break;
+            }
 			case BUTTON_CHAIN_IGNORE: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->ignore_chain = mainGame->btnChainIgnore->isPressed();

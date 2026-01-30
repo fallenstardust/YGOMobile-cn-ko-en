@@ -607,6 +607,8 @@ public:
 	irr::gui::IGUIEditBox* ebChatInput;
 	irr::gui::IGUICheckBox* chkIgnore1;
 	irr::gui::IGUICheckBox* chkIgnore2;
+    irr::gui::IGUIWindow* wEmoticon;
+    irr::gui::CGUIImageButton* btnEmoticon[16];
 	//phase button
 	irr::gui::IGUIStaticText* wPhase;
 	irr::gui::IGUIButton* btnPhaseStatus;
@@ -1003,6 +1005,22 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
 #define CHECKBOX_ENABLE_GENESYS_MODE    398//启用genesys模式
 #define CHECKBOX_GENESYS_LFLIST		399//genesys禁卡表勾选
+#define BUTTON_EMOTICON_0           1000
+#define BUTTON_EMOTICON_1           1001
+#define BUTTON_EMOTICON_2           1002
+#define BUTTON_EMOTICON_3           1003
+#define BUTTON_EMOTICON_4           1004
+#define BUTTON_EMOTICON_5           1005
+#define BUTTON_EMOTICON_6           1006
+#define BUTTON_EMOTICON_7           1007
+#define BUTTON_EMOTICON_8           1008
+#define BUTTON_EMOTICON_9           1009
+#define BUTTON_EMOTICON_10          1010
+#define BUTTON_EMOTICON_11          1011
+#define BUTTON_EMOTICON_12          1012
+#define BUTTON_EMOTICON_13          1013
+#define BUTTON_EMOTICON_14          1014
+#define BUTTON_EMOTICON_15          1015
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
 #define AVAIL_CUSTOM				0x4

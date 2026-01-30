@@ -28,7 +28,28 @@ public:
 	std::unordered_map<int, irr::video::ITexture*> tThumb;
 	std::unordered_map<int, irr::video::ITexture*> tFields;
     std::unordered_map<std::wstring, irr::core::recti> emoticonRects;  // 存储每个表情的位置
-
+    std::unordered_map<std::wstring, irr::video::ITexture*> emoticons;
+    irr::video::ITexture* GetEmoticon(const std::wstring& emoticonName);
+    // 在文件顶部添加全局数组
+    const wchar_t* emoticonCodes[16] = {
+            L"&laugh",      // 大笑
+            L"&ridiculous", // 滑稽
+            L"&stick_tongue",// 吐舌
+            L"&reluctant",  // 勉强
+            L"&sweat",     // 流汗
+            L"&confused",   // 疑问
+            L"&surprised",  // 惊讶
+            L"&bawl",      // 大哭
+            L"&angry",     // 生气
+            L"&rage",      // 发怒
+            L"&sneaky",    // 阴险
+            L"&obedient",  // 喷水
+            L"&good",      // 点赞
+            L"&cool",      // 酷
+            L"&despise",   // 鄙视
+            L"&shy"        // 害羞
+    };
+    void ClearEmoticons();
     irr::video::ITexture* tEmoticons;
 	irr::IrrlichtDevice* device;
 	irr::video::IVideoDriver* driver;
