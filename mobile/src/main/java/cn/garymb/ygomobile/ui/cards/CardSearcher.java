@@ -1920,8 +1920,6 @@ public class CardSearcher implements View.OnClickListener {
         resetCategory();
         resetCardType();
         resetMonster();
-        if (layout_monster.getVisibility() == View.GONE) layout_monster.setVisibility(View.VISIBLE);
-        if (ll_icon.getVisibility() == View.GONE) ll_icon.setVisibility(View.VISIBLE);
     }
 
     private void resetOt() {
@@ -1977,7 +1975,8 @@ public class CardSearcher implements View.OnClickListener {
             cardTypeList.remove(typeIds[i]);
         }
         resetIcons();
-        layout_monster.setVisibility(View.VISIBLE);
+        if (ll_icon.getVisibility() == View.GONE) ll_icon.setVisibility(View.VISIBLE);
+        if (layout_monster.getVisibility() == View.GONE) layout_monster.setVisibility(View.VISIBLE);
     }
 
     private void resetMonster() {
