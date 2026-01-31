@@ -359,6 +359,7 @@ public:
     irr::gui::CGUIImageButton* imgQuickAnimation;
 	//imageButton Chatting
     irr::gui::CGUIImageButton* imgChat;
+    irr::gui::CGUIImageButton* imgEmoticon;
 	//Settings
 	irr::gui::CGUIImageButton* imgSettings;
 	irr::gui::IGUIWindow* wSettings;
@@ -1005,6 +1006,7 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
 #define CHECKBOX_ENABLE_GENESYS_MODE    398//启用genesys模式
 #define CHECKBOX_GENESYS_LFLIST		399//genesys禁卡表勾选
+#define BUTTON_EMOTICON             999
 #define BUTTON_EMOTICON_0           1000
 #define BUTTON_EMOTICON_1           1001
 #define BUTTON_EMOTICON_2           1002

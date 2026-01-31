@@ -9,8 +9,12 @@ ImageManager imageManager;
 bool ImageManager::Initial(const path dir) {
 	tCover[0] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
 	tCover[1] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
-	if(!tCover[1])
-		tCover[1] = tCover[0];
+    if(!tCover[1])
+        tCover[1] = tCover[0];
+	tCover[2] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
+	tCover[3] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
+	if(!tCover[3])
+		tCover[3] = tCover[2];
 	tUnknown = driver->getTexture((dir + path("/textures/unknown.jpg")).c_str());
 	tBigPicture = nullptr;
 	tAct = driver->getTexture((dir + path("/textures/act.png")).c_str());
@@ -67,6 +71,7 @@ bool ImageManager::Initial(const path dir) {
 	tButton_C_pressed = driver->getTexture((dir + path("/textures/extra/sButton_C_pressed.png")).c_str());
     // 加载各种表情图片
     tEmoticons = driver->getTexture(dir + path("/textures/extra/emoticons.png").c_str());
+    tEmoticon = driver->getTexture(dir + path("/textures/extra/temoticon.png").c_str());
     if(tEmoticons) {
         // &laugh 在左上角 (0,0) - (80,80)
         emoticonRects[L"&laugh"] = irr::core::recti(0, 0, 80, 80);
@@ -170,40 +175,24 @@ void ImageManager::ClearTexture() {
 		if(field.second)
 			driver->removeTexture(field.second);
 	}
-	tMap.clear();
-	tThumb.clear();
-	tFields.clear();
     ClearEmoticons();
 	if(tBigPicture != nullptr) {
 		driver->removeTexture(tBigPicture);
 		tBigPicture = nullptr;
 	}
 }
-void ImageManager::RemoveTexture(int code) {
-	auto tit = tMap.find(code);
-	if(tit != tMap.end()) {
-		if(tit->second)
-			driver->removeTexture(tit->second);
-		tMap.erase(tit);
-	}
-}
 irr::video::ITexture* ImageManager::GetTexture(int code) {
 	if(code == 0)
 		return tUnknown;
-//	int width = CARD_IMG_WIDTH;
-//	int height = CARD_IMG_HEIGHT;
 	auto tit = tMap.find(code);
 	if(tit == tMap.end()) {
 		char file[256];
-//		char file_img[256];
 		snprintf(file, sizeof file, "expansions/pics/%d.jpg", code);
 		irr::video::ITexture* img = nullptr;
 		std::list<std::string>::iterator iter;
 		for (iter = support_types.begin(); iter != support_types.end(); ++iter) {	
 			snprintf(file, sizeof file, "/expansions/pics/%d.%s", code, iter->c_str());
 			img = driver->getTexture(image_work_path + path(file));
-//			sprintf(file_img, "%s", (image_work_path + path(file)).c_str());
-//			img = GetTextureFromFile(file_img, width, height);
 			if (img != nullptr) {
 				break;
 			}
@@ -212,7 +201,6 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 			for (iter = support_types.begin(); iter != support_types.end(); ++iter) {
 				snprintf(file, sizeof file, "%s/%d.%s", irr::android::getCardImagePath(mainGame->appMain).c_str(), code, iter->c_str());
 				img = driver->getTexture(file);
-//				img = GetTextureFromFile(file, width, height);
 				if (img != nullptr) {
 					break;
 				}
@@ -233,7 +221,7 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 		}
 		if(img == nullptr) {
 			tMap[code] = nullptr;
-			return GetTextureThumb(code);
+			return tUnknown;;
 		} else {
 			tMap[code] = img;
 			return img;
@@ -242,7 +230,7 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 	if(tit->second)
 		return tit->second;
 	else
-		return GetTextureThumb(code);
+		return tUnknown;
 }
 irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
 	if(code == 0)
@@ -274,9 +262,6 @@ irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
 	srcimg->drop();
 	tBigPicture = texture;
 	return texture;
-}
-irr::video::ITexture* ImageManager::GetTextureThumb(int code) {
-	return tUnknown;
 }
 irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	if(code == 0)
@@ -315,21 +300,21 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 		return nullptr;
 }
 // 添加获取表情图的函数
-    irr::video::ITexture* ImageManager::GetEmoticon(const std::wstring& emoticonName) {
-        auto it = emoticons.find(emoticonName);
-        if (it != emoticons.end()) {
-            return it->second;
-        }
-        return nullptr;
+irr::video::ITexture* ImageManager::GetEmoticon(const std::wstring& emoticonName) {
+    auto it = emoticons.find(emoticonName);
+    if (it != emoticons.end()) {
+        return it->second;
     }
+    return nullptr;
+}
 
 // 添加清理表情图的函数
-    void ImageManager::ClearEmoticons() {
-        for (auto& pair : emoticons) {
-            if (pair.second) {
-                driver->removeTexture(pair.second);
-            }
+void ImageManager::ClearEmoticons() {
+    for (auto& pair : emoticons) {
+        if (pair.second) {
+            driver->removeTexture(pair.second);
         }
-        emoticons.clear();
     }
+    emoticons.clear();
+}
 }

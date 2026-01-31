@@ -546,6 +546,7 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		mainGame->ResizeChatInputWindow();
 		mainGame->wChat->setVisible(false);
 		mainGame->imgChat->setVisible(false);
+		mainGame->imgEmoticon->setVisible(false);
 		mainGame->wDeckEdit->setVisible(false);
 		mainGame->wFilter->setVisible(false);
 		mainGame->wSort->setVisible(false);

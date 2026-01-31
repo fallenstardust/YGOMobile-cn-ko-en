@@ -602,7 +602,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wCardImg->setBackgroundColor(0xc0c0c0c0);
 	wCardImg->setVisible(false);
 	imgCard = env->addImage(Resize_Y(2, 2, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), wCardImg);
-	imgCard->setImage(imageManager.tCover[0]);
+	imgCard->setImage(imageManager.tCover[2]);
 	imgCard->setScaleImage(true);
 	imgCard->setUseAlphaChannel(true);
 
@@ -903,14 +903,14 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	btnPSAU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_AD);
 	btnPSAD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
-	btnPSAD->setImage(imageManager.tCover[0]);//show cover of player1
+	btnPSAD->setImage(imageManager.tCover[2]);//show cover of player1
 	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_DU);
 	btnPSDU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDU->setImageRotation(270);
 	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_DD);
 	btnPSDD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDD->setImageRotation(270);
-	btnPSDD->setImage(imageManager.tCover[0]);//show cover of player1
+	btnPSDD->setImage(imageManager.tCover[2]);//show cover of player1
 
 	//card select
 	wCardSelect = env->addWindow(irr::core::recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
@@ -1373,12 +1373,13 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wChat->setVisible(false);
 	ebChatInput = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(3, 2, 710, 28), wChat, EDITBOX_CHAT);
 	// chat Emoticon
-
-    wEmoticon = env->addWindow(Resize_Y(300, 595 - 44 * 4, 305 + 44 * 4, 600), false, L"");
+    imgEmoticon = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 250, 45, 250 + 45), wPallet, BUTTON_EMOTICON);
+    imgEmoticon->setImage(imageManager.tEmoticon);
+    wEmoticon = env->addWindow(Resize_Y(300 - 44 * 4, 595 - 44 * 4, 305, 600), false, L"");
     wEmoticon->getCloseButton()->setVisible(false);
     wEmoticon->setDraggable(false);
     wEmoticon->setDrawTitlebar(false);
-    wEmoticon->setVisible(true);//TODO 完成再默认隐藏
+    wEmoticon->setVisible(false);
 
     // 创建4x4宫格表情按钮
     for (int i = 0; i < 16; i++) {
@@ -2442,7 +2443,7 @@ void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
 	ClearCardInfo(0);
-	imgCard->setImage(imageManager.tCover[0]);
+	imgCard->setImage(imageManager.tCover[2]);
 	scrCardText->setVisible(false);
 	imgCard->setScaleImage(true);
 	btnPSAU->setImage();

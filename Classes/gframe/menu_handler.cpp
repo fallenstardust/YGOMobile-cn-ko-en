@@ -331,6 +331,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->wInfos->setVisible(true);
 				mainGame->wPallet->setVisible(true);
 				mainGame->imgChat->setVisible(false);
+				mainGame->imgEmoticon->setVisible(false);
 				mainGame->wReplay->setVisible(true);
 				mainGame->wReplayControl->setVisible(true);
 				mainGame->btnReplayStart->setVisible(false);
@@ -469,6 +470,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_LOAD_SINGLEPLAY: {
                 mainGame->imgChat->setVisible(false);
+                mainGame->imgEmoticon->setVisible(false);
 				if(mainGame->lstSinglePlayList->getSelected() == -1)
 					break;
 				mainGame->singleSignal.SetNoWait(false);

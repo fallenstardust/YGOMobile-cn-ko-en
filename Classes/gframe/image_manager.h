@@ -20,7 +20,6 @@ public:
 //	irr::video::ITexture* GetTextureFromFile(char* file, s32 width, s32 height);
 	irr::video::ITexture* GetTexture(int code);
 	irr::video::ITexture* GetBigPicture(int code, float zoom);
-	irr::video::ITexture* GetTextureThumb(int code);
 	irr::video::ITexture* GetTextureField(int code);
 	path image_work_path;
 
@@ -51,6 +50,7 @@ public:
     };
     void ClearEmoticons();
     irr::video::ITexture* tEmoticons;
+    irr::video::ITexture* tEmoticon;
 	irr::IrrlichtDevice* device;
 	irr::video::IVideoDriver* driver;
 	irr::video::ITexture* tCover[4];
