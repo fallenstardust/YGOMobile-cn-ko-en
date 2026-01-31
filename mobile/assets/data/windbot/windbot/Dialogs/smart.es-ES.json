@@ -3,41 +3,41 @@
     "Hola soy el mejor."
   ],
   "deckerror": [
-    "Lo siento, parece que hay algún problema con el número de {0} en mi Deck."
+    "Lo siento, parece que hay algún problema con el número de {0} en mi Deck.&sneaky"
   ],
   "duelstart": [
-    "Tengamos un duelo justo (Dragón Escondido en el Bolsillo)."
+    "Tengamos un duelo justo (Dragón Escondido en el Bolsillo).&ridiculous"
   ],
   "newturn": [
-    "La siguiente es mi etapa."
+    "La siguiente es mi etapa.&cool"
   ],
   "endturn": [
-    "Cada uno tiene objetivos diferentes. Yo me concentro más en la intensidad. Sólo quiero ganar."
+    "Cada uno tiene objetivos diferentes. Yo me concentro más en la intensidad. Sólo quiero ganar.&ridiculou"
   ],
   "directattack": [
-    "Estoy aquí para quitarte la vida."
+    "Estoy aquí para quitarte la vida.&rage"
   ],
   "attack": [
-    "Desaparece, maldito bastardo."
+    "Desaparece, maldito bastardo.&cool"
   ],
   "ondirectattack": [
-    "Papá, por favor perdóname.",
-    "Tan temible."
+    "Papá, por favor perdóname.&bawl",
+    "Tan temible.&surprised"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "La activo. Aunque el efecto de esta carta no está escrito en ella, se puede usar así."
+    "La activo. Aunque el efecto de esta carta no está escrito en ella, se puede usar así.&ridiculous"
   ],
   "summon": [
-    "Fuerte, invencible.",
-    "Invoco a {0}, gana el duelo.",
-    "{0} es simplemente una carta falsa.",
-    "Siempre me gusta {0}."
+    "Fuerte, invencible.&good",
+    "Invoco a {0}, gana el duelo.&stick_tongue",
+    "{0} es simplemente una carta falsa.&reluctant",
+    "Siempre me gusta {0}.&cool"
   ],
   "setmonster": [
-    "Estoy estancado de nuevo."
+    "Estoy estancado de nuevo.&obedient"
   ],
   "chaining": [
-    "Manco, mírame y te diré qué hacer."
+    "Manco, mírame y te diré qué hacer.&sneaky"
   ]
 }
