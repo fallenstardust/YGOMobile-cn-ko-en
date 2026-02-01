@@ -5,60 +5,60 @@
     "还好我不玩游戏王"
   ],
   "deckerror": [
-    "卡组里{0}鸽了"
+    "卡组里{0}鸽了&reluctant"
   ],
   "duelstart": [
-    "不想干活怎么办",
-    "智商欠费不想干活怎么办"
+    "不想干活怎么办&ridiculous",
+    "智商欠费不想干活怎么办&ridiculous"
   ],
   "newturn": [
-    "好多可怕的新卡啊",
-    "这游戏好难玩",
-    "so lazy cant move"
+    "好多可怕的新卡啊&bawl",
+    "这游戏好难玩&sweat",
+    "so lazy cant move&reluctant"
   ],
   "endturn": [
     "搞得我只能鸽了",
-    "不是在此时，不知在何时",
-    "too hot need ice cream"
+    "不是在此时，不知在何时&cool",
+    "too hot need ice cream&cool"
   ],
   "directattack": [
-    "听起来很鸽",
-    "老鸽，稳"
+    "听起来很鸽&confused",
+    "老鸽，稳&good"
   ],
   "attack": [
-    "听起来不是很鸽",
-    "可怕"
+    "听起来不是很鸽&cool",
+    "可怕&sweat"
   ],
   "ondirectattack": [
-    "哇！",
-    "这么可怕的吗",
-    "听起来非常鸽",
-    "承受不住"
+    "哇！&bawl",
+    "这么可怕的吗&obedient",
+    "听起来非常鸽&rage",
+    "承受不住&obedient"
   ],
   "facedownmonstername": "鸽子",
   "activate": [
-    "不明觉鸽",
-    "鸽了，爽"
+    "不明觉鸽&confused",
+    "鸽了，爽&good"
   ],
   "summon": [
-    "可怕",
-    "不关我事",
-    "那还是不关我事",
-    "鸽了，爽"
+    "可怕&surprised",
+    "不关我事&sweat",
+    "那还是不关我事&sneaky",
+    "鸽了，爽&good"
   ],
   "setmonster": [
-    "摸鱼中，不想更新",
-    "那还是鸽置吧"
+    "摸鱼中，不想更新&stick_tongue",
+    "那还是鸽置吧&shy"
   ],
   "chaining": [
-    "那是什么",
-    "但我鸽了",
-    "无此服务",
-    "可怕"
+    "那是什么&confused",
+    "但我鸽了&ridiculous",
+    "无此服务&despise",
+    "可怕&surprised"
   ],
   "surrender": [
-    "太可怕了（跑路",
-    "这游戏好难玩（跑路",
-    "还好我不玩游戏王（跑路"
+    "太可怕了（跑路&obedient",
+    "这游戏好难玩（跑路&sweat",
+    "还好我不玩游戏王（跑路&laugh"
   ]
 }

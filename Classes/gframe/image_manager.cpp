@@ -9,8 +9,12 @@ ImageManager imageManager;
 bool ImageManager::Initial(const path dir) {
 	tCover[0] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
 	tCover[1] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
-	if(!tCover[1])
-		tCover[1] = tCover[0];
+    if(!tCover[1])
+        tCover[1] = tCover[0];
+	tCover[2] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
+	tCover[3] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
+	if(!tCover[3])
+		tCover[3] = tCover[2];
 	tUnknown = driver->getTexture((dir + path("/textures/unknown.jpg")).c_str());
 	tBigPicture = nullptr;
 	tAct = driver->getTexture((dir + path("/textures/act.png")).c_str());
@@ -65,7 +69,68 @@ bool ImageManager::Initial(const path dir) {
 	tButton_S_pressed = driver->getTexture((dir + path("/textures/extra/sButton_S_pressed.png")).c_str());
 	tButton_C = driver->getTexture((dir + path("/textures/extra/sButton_C.png")).c_str());
 	tButton_C_pressed = driver->getTexture((dir + path("/textures/extra/sButton_C_pressed.png")).c_str());
+    // 加载各种表情图片
+    tEmoticons = driver->getTexture(dir + path("/textures/extra/emoticons.png").c_str());
+    tEmoticon = driver->getTexture(dir + path("/textures/extra/temoticon.png").c_str());
+    if(tEmoticons) {
+        // &laugh 在左上角 (0,0) - (80,80)
+        emoticonRects[L"&laugh"] = irr::core::recti(0, 0, 80, 80);
+        // &ridiculous 在第一行第二个 (80,0) - (160,80)
+        emoticonRects[L"&ridiculous"] = irr::core::recti(80, 0, 160, 80);
+        // &stick_tongue 在第一行第三个 (160,0) - (240,80)
+        emoticonRects[L"&stick_tongue"] = irr::core::recti(160, 0, 240, 80);
+        // &reluctant 在第一行第四个 (240,0) - (320,80)
+        emoticonRects[L"&reluctant"] = irr::core::recti(240, 0, 320, 80);
+        // &sweat 在第二行第一个 (0,80) - (80,160)
+        emoticonRects[L"&sweat"] = irr::core::recti(0, 80, 80, 160);
+        // &confused 在第二行第二个 (80,80) - (160,160)
+        emoticonRects[L"&confused"] = irr::core::recti(80, 80, 160, 160);
+        // &surprised 在第二行第三个 (160,80) - (240,160)
+        emoticonRects[L"&surprised"] = irr::core::recti(160, 80, 240, 160);
+        // &bawl 在第二行第四个 (240,80) - (320,160)
+        emoticonRects[L"&bawl"] = irr::core::recti(240, 80, 320, 160);
+        // &angry 在第三行第一个 (0,160) - (80,240)
+        emoticonRects[L"&angry"] = irr::core::recti(0, 160, 80, 240);
+        // &rage 在第三行第二个 (80,160) - (160,240)
+        emoticonRects[L"&rage"] = irr::core::recti(80, 160, 160, 240);
+        // &sneaky 在第三行第三个 (160,160) - (240,240)
+        emoticonRects[L"&sneaky"] = irr::core::recti(160, 160, 240, 240);
+        // &obedient 在第三行第四个 (240,160) - (320,240)
+        emoticonRects[L"&obedient"] = irr::core::recti(240, 160, 320, 240);
+        // &good 在第四行第一个 (0,240) - (80,320)
+        emoticonRects[L"&good"] = irr::core::recti(0, 240, 80, 320);
+        // &yeah 在第四行第二个 (80,240) - (160,320)
+        emoticonRects[L"&cool"] = irr::core::recti(80, 240, 160, 320);
+        // &gotcha 在第四行第三个 (160,240) - (240,320)
+        emoticonRects[L"&despise"] = irr::core::recti(160, 240, 240, 320);
+        // &love 在第四行第四个 (240,240) - (320,320)
+        emoticonRects[L"&shy"] = irr::core::recti(240, 240, 320, 320);
+    }
+    // 裁剪并创建独立的表情纹理
+    for (const auto& pair : emoticonRects) {
+        // 获取源纹理的图像数据
+        irr::video::IImage* sourceImage = driver->createImageFromData(tEmoticons->getColorFormat(),tEmoticons->getSize(),tEmoticons->lock(),false);
+        if (sourceImage) {
+            tEmoticons->unlock(); // 解锁纹理
+            // 创建目标图像（裁剪区域大小）
+            irr::core::dimension2d<irr::u32> cropSize(pair.second.getWidth(),pair.second.getHeight());
+            irr::video::IImage* targetImage = driver->createImage(sourceImage->getColorFormat(),cropSize);
 
+            if (targetImage) {
+                // 从源图像的指定区域复制到目标图像
+                sourceImage->copyTo(targetImage,irr::core::position2d<irr::s32>(0, 0),pair.second);
+                // 创建唯一纹理名称
+                std::wstring textureName = L"emoticon_" + pair.first;
+                // 添加纹理到驱动程序
+                irr::video::ITexture* emoticonTexture = driver->addTexture(textureName.c_str(),targetImage);
+                if (emoticonTexture) {
+                    emoticons[pair.first] = emoticonTexture;
+                }
+                targetImage->drop(); // 释放目标图像
+            }
+            sourceImage->drop(); // 释放源图像
+        }
+    }
     if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());
@@ -110,39 +175,24 @@ void ImageManager::ClearTexture() {
 		if(field.second)
 			driver->removeTexture(field.second);
 	}
-	tMap.clear();
-	tThumb.clear();
-	tFields.clear();
+    ClearEmoticons();
 	if(tBigPicture != nullptr) {
 		driver->removeTexture(tBigPicture);
 		tBigPicture = nullptr;
 	}
 }
-void ImageManager::RemoveTexture(int code) {
-	auto tit = tMap.find(code);
-	if(tit != tMap.end()) {
-		if(tit->second)
-			driver->removeTexture(tit->second);
-		tMap.erase(tit);
-	}
-}
 irr::video::ITexture* ImageManager::GetTexture(int code) {
 	if(code == 0)
 		return tUnknown;
-//	int width = CARD_IMG_WIDTH;
-//	int height = CARD_IMG_HEIGHT;
 	auto tit = tMap.find(code);
 	if(tit == tMap.end()) {
 		char file[256];
-//		char file_img[256];
 		snprintf(file, sizeof file, "expansions/pics/%d.jpg", code);
 		irr::video::ITexture* img = nullptr;
 		std::list<std::string>::iterator iter;
 		for (iter = support_types.begin(); iter != support_types.end(); ++iter) {	
 			snprintf(file, sizeof file, "/expansions/pics/%d.%s", code, iter->c_str());
 			img = driver->getTexture(image_work_path + path(file));
-//			sprintf(file_img, "%s", (image_work_path + path(file)).c_str());
-//			img = GetTextureFromFile(file_img, width, height);
 			if (img != nullptr) {
 				break;
 			}
@@ -151,7 +201,6 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 			for (iter = support_types.begin(); iter != support_types.end(); ++iter) {
 				snprintf(file, sizeof file, "%s/%d.%s", irr::android::getCardImagePath(mainGame->appMain).c_str(), code, iter->c_str());
 				img = driver->getTexture(file);
-//				img = GetTextureFromFile(file, width, height);
 				if (img != nullptr) {
 					break;
 				}
@@ -172,7 +221,7 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 		}
 		if(img == nullptr) {
 			tMap[code] = nullptr;
-			return GetTextureThumb(code);
+			return tUnknown;;
 		} else {
 			tMap[code] = img;
 			return img;
@@ -181,7 +230,7 @@ irr::video::ITexture* ImageManager::GetTexture(int code) {
 	if(tit->second)
 		return tit->second;
 	else
-		return GetTextureThumb(code);
+		return tUnknown;
 }
 irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
 	if(code == 0)
@@ -213,9 +262,6 @@ irr::video::ITexture* ImageManager::GetBigPicture(int code, float zoom) {
 	srcimg->drop();
 	tBigPicture = texture;
 	return texture;
-}
-irr::video::ITexture* ImageManager::GetTextureThumb(int code) {
-	return tUnknown;
 }
 irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	if(code == 0)
@@ -252,5 +298,23 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 		return tit->second;
 	else
 		return nullptr;
+}
+// 添加获取表情图的函数
+irr::video::ITexture* ImageManager::GetEmoticon(const std::wstring& emoticonName) {
+    auto it = emoticons.find(emoticonName);
+    if (it != emoticons.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+// 添加清理表情图的函数
+void ImageManager::ClearEmoticons() {
+    for (auto& pair : emoticons) {
+        if (pair.second) {
+            driver->removeTexture(pair.second);
+        }
+    }
+    emoticons.clear();
 }
 }

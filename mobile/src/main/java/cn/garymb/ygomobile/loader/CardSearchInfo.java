@@ -423,7 +423,7 @@ public class CardSearchInfo implements ICardFilter {
         if (!ot.isEmpty()) {
             boolean otMatch = ot.stream().anyMatch(otValue -> {
                 // NO_EXCLUSIVE情况：匹配OCG、TCG或SC_OCG
-                if (otValue == CardOt.NO_EXCLUSIVE.getId() && (card.Ot == CardOt.OCG.getId() || card.Ot == CardOt.TCG.getId() || card.Ot == CardOt.SC_OCG.getId())) {
+                if (otValue == CardOt.NO_EXCLUSIVE.getId() && (card.Ot == CardOt.NO_EXCLUSIVE.getId() || card.Ot == CardOt.NO_EXCLUSIVE.getId() + CardOt.SC_OCG.getId())) {
                     return true;
                 }
                 // 具体OT类型匹配：OCG、TCG、CUSTOM

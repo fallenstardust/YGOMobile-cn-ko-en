@@ -89,6 +89,7 @@ void DeckBuilder::Initialize() {
     mainGame->btnSortDeck->setVisible(true);
     mainGame->btnClearDeck->setVisible(true);
 	mainGame->imgChat->setVisible(false);
+	mainGame->imgEmoticon->setVisible(false);
 	mainGame->imgQuickAnimation->setVisible(false);
 	mainGame->btnSideOK->setVisible(false);
 	mainGame->btnSideShuffle->setVisible(false);
@@ -154,6 +155,7 @@ void DeckBuilder::Terminate() {
     mainGame->btnClearDeck->setVisible(false);
 	mainGame->ResizeChatInputWindow();
     mainGame->imgChat->setVisible(true);
+    mainGame->imgEmoticon->setVisible(true);
     mainGame->imgQuickAnimation->setVisible(true);
     mainGame->wSettings->setVisible(false);
     mainGame->wLogs->setVisible(false);
@@ -802,6 +804,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				mainGame->ClearCardInfo();
 				mainGame->imgChat->setVisible(true);
+				mainGame->imgEmoticon->setVisible(true);
 				DuelClient::SendUpdateDeck(deckManager.current_deck);
 				break;
 			}
@@ -1441,8 +1444,6 @@ void DeckBuilder::GetHoveredCard() {
 	if(!is_draging && pre_code != hovered_code) {
 		if(hovered_code)
 			mainGame->ShowCardInfo(hovered_code);
-		if(pre_code)
-			imageManager.RemoveTexture(pre_code);
 	}
 }
 

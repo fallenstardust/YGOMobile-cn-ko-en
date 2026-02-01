@@ -543,9 +543,7 @@ void Game::DrawCard(ClientCard* pcard) {
 			driver->setMaterial(matManager.mTexture);
 			driver->drawVertexPrimitiveList(matManager.vPScale, 4, matManager.iRectangle, 2);
 		}//pendulum RIGHT scale image
-	}
-	// 兼容旧版灵摆规则下的额外灵摆区（序列大于5的情况）
-	else {
+	} else {// 兼容旧版灵摆规则下的额外灵摆区（序列大于5的情况）
 		if(isPSEnabled && (pcard->type & TYPE_PENDULUM) && ((pcard->location & LOCATION_SZONE) && pcard->sequence > 5)) {
 			int scale = pcard->sequence == 6 ? pcard->lscale : pcard->rscale;
 			matManager.mTexture.setTexture(0, pcard->sequence == 6 ? imageManager.tLScale[scale] : imageManager.tRScale[scale]);
@@ -847,14 +845,14 @@ void Game::DrawMisc() {
 		DrawShadowText(numFont, dInfo.str_time_left[0], Resize(595, 49, 625, 68), Resize(0, 1, 2, 0), dInfo.time_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_time_left[1], Resize(713, 49, 743, 68), Resize(0, 1, 2, 0), dInfo.time_color[1], 0xff000000, true, false);
 
-		driver->draw2DImage(imageManager.tCover[0], Resize(537, 51, 550, 70), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
-		driver->draw2DImage(imageManager.tCover[1], Resize(745, 51, 758, 70), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[2], Resize(537, 51, 550, 70), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[3], Resize(745, 51, 758, 70), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
 
 		DrawShadowText(numFont, dInfo.str_card_count[0], Resize(550, 49, 575, 68), Resize(0, 1, 2, 0), dInfo.card_count_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_card_count[1], Resize(757, 49, 782, 68), Resize(0, 1, 2, 0), dInfo.card_count_color[1], 0xff000000, true, false);
 	} else {
-		driver->draw2DImage(imageManager.tCover[0], Resize(588, 48, 601, 68), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
-		driver->draw2DImage(imageManager.tCover[1], Resize(697, 48, 710, 68), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[2], Resize(588, 48, 601, 68), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[3], Resize(697, 48, 710, 68), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
 
 		DrawShadowText(numFont, dInfo.str_card_count[0], Resize(600, 51, 625, 70), Resize(0, 1, 2, 0), dInfo.card_count_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_card_count[1], Resize(710, 51, 735, 70), Resize(0, 1, 2, 0), dInfo.card_count_color[1], 0xff000000, true, false);
@@ -1183,7 +1181,7 @@ void Game::DrawGUI() {
  * - 控制并渲染聊天窗口内容。
  */
 void Game::DrawSpec() {
-
+    DrawEmoticon();
     // 如果需要展示卡片，则进行相关绘图操作
     if(showcard) {
         // 获取当前要展示的卡片纹理
@@ -1224,7 +1222,7 @@ void Game::DrawSpec() {
                 showcarddif += 4;
             break;
         }
-        case 4: { // 卡片淡入效果：透明度逐步增加到不透明
+        case 4: { // 卡片淡入效果：透明度逐步增加到不透明//
             matManager.c2d[0] = (showcarddif << 24) | 0xffffff;
             matManager.c2d[1] = (showcarddif << 24) | 0xffffff;
             matManager.c2d[2] = (showcarddif << 24) | 0xffffff;
@@ -1936,6 +1934,28 @@ void Game::DrawDeckBd() {
 	if(deckBuilder.is_draging) {
 		DrawThumb(deckBuilder.draging_pointer, irr::core::vector2di(deckBuilder.dragx - CARD_THUMB_WIDTH / 2 * mainGame->xScale, deckBuilder.dragy - CARD_THUMB_HEIGHT / 2 * mainGame->yScale), deckBuilder.filterList, true);
 	}
+}
+/**
+ * @brief 绘制表情包
+ */
+void Game::DrawEmoticon() {
+    static int emoticonShowTime = 120;// 表情显示计时（改为静态变量）
+
+    if(showingEmoticon) {
+        emoticonShowTime--;
+        if(emoticonShowTime <= 0) {
+            emoticonShowTime = 120; // 重置计时器
+            showingEmoticon = false;
+        }
+    }
+    if(!showingEmoticon) {
+        return;
+    }
+
+    // 根据发送者决定显示位置
+    irr::core::recti emoticonRect = isMyEmoticon ? Resize_X_Y(335, 80, 390, 135) : Resize_X_Y(930, 80, 985, 135);
+    // 绘制表情图片
+    driver->draw2DImage(imageManager.tEmoticons, emoticonRect, imageManager.emoticonRects[currentEmoticonCode], nullptr,nullptr,true);
 }
 
 }

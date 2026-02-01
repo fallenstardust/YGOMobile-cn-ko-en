@@ -602,7 +602,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wCardImg->setBackgroundColor(0xc0c0c0c0);
 	wCardImg->setVisible(false);
 	imgCard = env->addImage(Resize_Y(2, 2, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), wCardImg);
-	imgCard->setImage(imageManager.tCover[0]);
+	imgCard->setImage(imageManager.tCover[2]);
 	imgCard->setScaleImage(true);
 	imgCard->setUseAlphaChannel(true);
 
@@ -903,14 +903,14 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	btnPSAU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_AD);
 	btnPSAD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
-	btnPSAD->setImage(imageManager.tCover[0]);//show cover of player1
+	btnPSAD->setImage(imageManager.tCover[2]);//show cover of player1
 	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_DU);
 	btnPSDU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDU->setImageRotation(270);
 	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_DD);
 	btnPSDD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
 	btnPSDD->setImageRotation(270);
-	btnPSDD->setImage(imageManager.tCover[0]);//show cover of player1
+	btnPSDD->setImage(imageManager.tCover[2]);//show cover of player1
 
 	//card select
 	wCardSelect = env->addWindow(irr::core::recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
@@ -1365,18 +1365,29 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	//chat
     imgChat = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 300, 45, 300 + 45), wPallet, BUTTON_CHATTING);
     imgChat->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
-    if (gameConf.chkIgnore1) {
-        imgChat->setImage(imageManager.tShut);
-    } else {
-        imgChat->setImage(imageManager.tTalk);
-    }
+    imgChat->setImage(gameConf.chkIgnore1 ? imageManager.tShut : imageManager.tTalk);
 	wChat = env->addWindow(Resize(305, 605, 1020, 640), false, L"");
 	wChat->getCloseButton()->setVisible(false);
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
 	wChat->setVisible(false);
 	ebChatInput = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(3, 2, 710, 28), wChat, EDITBOX_CHAT);
-	//swap
+	// chat Emoticon
+    imgEmoticon = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 250, 45, 250 + 45), wPallet, BUTTON_EMOTICON);
+    imgEmoticon->setImage(imageManager.tEmoticon);
+    wEmoticon = env->addWindow(Resize_Y(300 - 44 * 4, 595 - 44 * 4, 305, 600), false, L"");
+    wEmoticon->getCloseButton()->setVisible(false);
+    wEmoticon->setDraggable(false);
+    wEmoticon->setDrawTitlebar(false);
+    wEmoticon->setVisible(false);
+
+    // 创建4x4宫格表情按钮
+    for (int i = 0; i < 16; i++) {
+        btnEmoticon[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(2 + i % 4 * 44, 2 + i / 4 * 44, 2 + (i % 4 + 1) * 44, 2 + (i / 4 + 1) * 44), wEmoticon, BUTTON_EMOTICON_0 + i);
+        btnEmoticon[i]->setImage(imageManager.GetEmoticon(imageManager.emoticonCodes[i]));
+        btnEmoticon[i]->setImageScale(irr::core::vector2df(yScale * 0.5, yScale * 0.5));
+    }
+    //swap
 	btnSpectatorSwap = env->addButton(Resize_Y(3 + CARD_IMG_WIDTH, 70, 310, 70 + 40), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
         ChangeToIGUIImageButton(btnSpectatorSwap, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnSpectatorSwap->setVisible(false);
@@ -2375,8 +2386,8 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 		if(player < 11 || player > 19)
 			chatMsg[0].append(L"[---]: ");
 	}
-    std::wstring processedMsg = AppendCardNames(msg);
-    chatMsg[0].append(processedMsg);
+    // 处理消息
+    chatMsg[0].append(OnReceiveChatMessage(msg,player == 0 || player == 2));
 }
 void Game::ClearChatMsg() {
 	for(int i = 7; i >= 0; --i) {
@@ -2432,7 +2443,7 @@ void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
 	ClearCardInfo(0);
-	imgCard->setImage(imageManager.tCover[0]);
+	imgCard->setImage(imageManager.tCover[2]);
 	scrCardText->setVisible(false);
 	imgCard->setScaleImage(true);
 	btnPSAU->setImage();
@@ -2629,11 +2640,23 @@ void Game::OnGameClose() {
 	irr::android::onGameExit(appMain);
     this->device->closeDevice();
 }
+/**
+ * @brief 显示表情包
+ * @param emoticonCode 表情代码（如 &smile）
+ * @param isFromMe 是否是自己发送的消息
+ */
+void Game::ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe) {
+    currentEmoticonCode = emoticonCode;
+    isMyEmoticon = isFromMe;
+    showingEmoticon = true;
+    DrawEmoticon();
+}
+// 过滤消息中的卡片数字ID
 std::wstring Game::AppendCardNames(const std::wstring& msg) {
     // 实现卡片ID到名称的转换逻辑
     std::wstring result = msg;
 
-    // 使用正则表达式匹配可能的卡片ID（5-8位数字）
+    // 使用正则表达式匹配可能的卡片ID（3-9位数字）
     std::wregex cardIdPattern(L"\\b(\\d{3,9})\\b");
     std::wstring::const_iterator start = msg.begin();
     std::wstring::const_iterator end = msg.end();
@@ -2643,19 +2666,33 @@ std::wstring Game::AppendCardNames(const std::wstring& msg) {
     for (; iter != iterEnd; ++iter) {
         std::wstring cardIdStr = iter->str();
         int cardId = std::stoi(cardIdStr);
-
         // 查询卡片名称
         const wchar_t* cardName = dataManager.GetName(cardId);
         if (cardName && wcscmp(cardName, L"") != 0 && wcscmp(cardName, dataManager.unknown_string) != 0) {
             // 替换卡片ID为 [ID:卡片名称] 格式
             std::wstring replacement = L"[" + cardIdStr + L":" + std::wstring(cardName) + L"]";
-            result = std::regex_replace(result,
-                                      std::wregex(L"\\b" + cardIdStr + L"\\b"),
-                                      replacement);
+            result = std::regex_replace(result,std::wregex(L"\\b" + cardIdStr + L"\\b"),replacement);
         }
     }
 
     return result;
+}
+// 过滤消息中包含的表情代码
+std::wstring Game::OnReceiveChatMessage(const std::wstring& msg, bool isFromMe) {
+    // 实现卡片ID到名称的转换逻辑
+    std::wstring result = msg;
+    // 检查消息中是否包含表情代码
+    std::wregex emoticonPattern(L"&([a-zA-Z0-9_]+)");
+    std::wsregex_iterator iter(msg.begin(), msg.end(), emoticonPattern);
+    std::wsregex_iterator iterEnd;
+    // 如果找到了表情代码，则显示表情
+    if(iter != iterEnd) {
+        std::wstring emoticonCode = iter->str();
+        mainGame->ShowEmoticon(emoticonCode, isFromMe);
+        result = std::regex_replace(result, std::wregex(emoticonCode), L"");
+    }
+
+    return AppendCardNames(result);//之后过滤消息中的卡片数字ID
 }
 
 }
