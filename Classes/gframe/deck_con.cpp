@@ -2039,7 +2039,7 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 	// 默认每张卡最多允许3张
 	int limit = 3;
 
-	// 查找此卡片是否有自定义的数量限制
+	// 查找此卡片是否在禁卡表有数量限制
 	auto flit = filterList->content.find(limitcode);
 	if(flit != filterList->content.end())
 		limit = flit->second;
@@ -2049,16 +2049,16 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 
 	// Lambda 函数：尝试消费某张卡所需的信用点数，若超限则返回false
 	auto spend_credit = [&](uint32_t code) {
-
+        ALOGD("handle_card, code=%d", code);
 		// 查找该卡所需信用点配置
 		auto code_credit_it = filterList->credits.find(code);
 		if(code_credit_it == filterList->credits.end())
-            return limit != 0;// 不在信用点表中的卡再检查是否是常规禁卡，以便实现对特定ID的禁止（geneSys表之下列出了全部灵摆、连接卡的ID做禁止）
+            return limit > 0;// 不在信用点表中的卡再检查是否是常规禁卡，以便实现对特定ID的禁止（geneSys表之下列出了全部灵摆、连接卡的ID做禁止）
 
-		auto code_credit = code_credit_it->second;//过滤一遍卡组中所有卡的信用分，把有信用分的卡归集一起
+		auto code_credit = code_credit_it->second;//过滤一遍卡组中所有卡的点数，把有点数的卡归集一起
 		auto valid = true;
 
-		// 遍历所有需要扣除的信用类型与数值
+		// 遍历所有需要扣除的点数类型与数值
 		for(auto& credit_it : code_credit) {
 			auto key = credit_it.first;//一般得到的是“genesys”这个识别字符串
 			auto credit_limit_it = filterList->credit_limits.find(key);//按lflist中的“$genesys”识别字符串得到信用分上限，一般是100
@@ -2067,23 +2067,23 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 
 			auto credit_limit = credit_limit_it->second;//按lflist中的“genesys”识别字符串得到信用分上限，一般是100
 
-			// 初始化该信用类型的已用量
+			// 初始化该点数类型的已用量
 			if(credit_used.find(key) == credit_used.end())
 				credit_used[key] = 0;
 
-			// 判断是否会超出信用上限
+			// 判断是否会超出点数上限
 			auto credit_after = credit_used[key] + credit_it.second;
 			if(credit_after > credit_limit)
 				valid = false;
 
-			// 更新已用信用量
+			// 更新已用点数量
 			credit_used[key] = credit_after;
 		}
 
 		return valid;
 	};
 
-	// Lambda 函数：处理单张卡的计数和信用检查
+	// Lambda 函数：处理单张卡的计数和点数检查
 	auto handle_card = [&](ygo::code_pointer& card) {
 		// 如果是目标卡，则减少其剩余可放数量
 		if (card->first == limitcode || card->second.alias == limitcode) {
@@ -2093,10 +2093,12 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 		}
 
 		// 获取真实卡号并尝试扣减信用点
-		auto code = card->second.alias ? card->second.alias : card->first;
-		spend_credit(code);
-
-		return true;
+        auto code = (card->second.alias != 0 &&
+                     abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) > 0 &&
+                     abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) <= 20)
+                    ? card->second.alias
+                    : card->first;
+        return spend_credit(code);
 	};
 
 	// 遍历主卡组中的所有卡片进行检查
@@ -2118,7 +2120,7 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 	}
 
 	// 最后尝试为当前要插入的卡扣除一次信用点数
-	return spend_credit(limitcode);
+	return handle_card(pointer);
 }
 
 }

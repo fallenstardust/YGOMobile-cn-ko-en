@@ -1520,7 +1520,8 @@ void Game::WaitFrameSignal(int frame) {
  * @param drag 是否处于拖拽状态，影响图像绘制区域大小。
  */
 void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lflist, bool drag) {
-	auto code = cp->first;
+	// 获取卡牌卡号和别名卡号，如果有别名则使用别名
+    auto code = cp->first;
 	auto lcode = cp->second.alias;
 	if(lcode == 0)
 		lcode = code;
@@ -1563,12 +1564,10 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 		}
 	}
 
-    auto credit_max_display = CARD_THUMB_WIDTH / 20;
-	auto lfcredit = lflist->credits.find(lcode);
+    // 获取卡片点数，并不能简单判断是否有alias，而是要判断是否是异画还是规则上同名的不同卡，TODO 暂定最大差异值是20，因为目前单张卡异画数量还未到这个值，未来很大可能会出现更多，需要即时调整
+	auto lfcredit = lflist->credits.find(cp->second.alias && abs(static_cast<int>(cp->second.alias) - static_cast<int>(cp->first)) <= 20 ? cp->second.alias : cp->first);
     if(lfcredit != lflist->credits.end()) {
         for(auto& credit_entry : lfcredit->second) {
-            if (credit_max_display <= 0)
-                break;
             auto value = credit_entry.second;
             driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(0, 64, 64, 128), 0, 0, true);
             if (value > -10 || value < 100) {//数字只两个占位符（-9~99）时用攻守数字正好，否则就用更迷你的字体
@@ -1662,12 +1661,11 @@ void Game::DrawDeckBd() {
         //遍历genesys禁卡表的卡片点数表，统计当前卡组点数合计值
         int totalCredits = 0;
         for (auto& card : deckManager.current_deck.main) {
-            auto cardCode = card->first;
-            auto aliasCode = card->second.alias;
-            if (aliasCode == 0)
-                aliasCode = cardCode;
-
-            auto credit_it = deckBuilder.filterList->credits.find(aliasCode);
+            auto code = (card->second.alias != 0 &&
+                         abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) > 0 &&
+                         abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) <= 20)
+                        ? card->second.alias
+                        : card->first;		            auto credit_it = deckBuilder.filterList->credits.find(code);
             if (credit_it != deckBuilder.filterList->credits.end()) {
                 for (auto& credit_entry : credit_it->second) {
                     if (credit_entry.first == L"genesys") {
@@ -1680,12 +1678,11 @@ void Game::DrawDeckBd() {
 
         // 统计额外卡组中的点数
         for (auto& card : deckManager.current_deck.extra) {
-            auto cardCode = card->first;
-            auto aliasCode = card->second.alias;
-            if (aliasCode == 0)
-                aliasCode = cardCode;
-
-            auto credit_it = deckBuilder.filterList->credits.find(aliasCode);
+            auto code = (card->second.alias != 0 &&
+                         abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) > 0 &&
+                         abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) <= 20)
+                        ? card->second.alias
+                        : card->first;		            auto credit_it = deckBuilder.filterList->credits.find(code);
             if (credit_it != deckBuilder.filterList->credits.end()) {
                 for (auto& credit_entry : credit_it->second) {
                     if (credit_entry.first == L"genesys") {
@@ -1697,12 +1694,12 @@ void Game::DrawDeckBd() {
         }
         // 统计副卡组的点数
         for (auto& card : deckManager.current_deck.side) {
-            auto cardCode = card->first;
-            auto aliasCode = card->second.alias;
-            if (aliasCode == 0)
-                aliasCode = cardCode;
-
-            auto credit_it = deckBuilder.filterList->credits.find(aliasCode);
+            auto code = (card->second.alias != 0 &&
+                              abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) > 0 &&
+                              abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) <= 20)
+                             ? card->second.alias
+                             : card->first;
+            auto credit_it = deckBuilder.filterList->credits.find(code);
             if (credit_it != deckBuilder.filterList->credits.end()) {
                 for (auto& credit_entry : credit_it->second) {
                     if (credit_entry.first == L"genesys") {

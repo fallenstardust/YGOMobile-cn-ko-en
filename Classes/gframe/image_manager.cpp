@@ -175,11 +175,14 @@ void ImageManager::ClearTexture() {
 		if(field.second)
 			driver->removeTexture(field.second);
 	}
-    ClearEmoticons();
 	if(tBigPicture != nullptr) {
 		driver->removeTexture(tBigPicture);
 		tBigPicture = nullptr;
 	}
+    tMap.clear();
+    tThumb.clear();
+    tFields.clear();
+    ClearEmoticons();
 }
 irr::video::ITexture* ImageManager::GetTexture(int code) {
 	if(code == 0)

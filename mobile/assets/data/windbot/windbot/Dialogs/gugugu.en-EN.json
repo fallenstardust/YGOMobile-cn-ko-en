@@ -5,60 +5,60 @@
 "Fortunately I don't play Yu-Gi-Oh"
 ],
 "deckerror": [
-"{0} in the deck is dead"
+"{0} in the deck is dead&reluctant"
 ],
 "duelstart": [
-"What if I don't want to work",
-"What if I don't want to work because my IQ is low"
+"What if I don't want to work&ridiculous",
+"What if I don't want to work because my IQ is low&ridiculous"
 ],
 "newturn": [
-"So many terrible new cards",
-"This game is so hard to play",
-"so lazy can't move"
+"So many terrible new cards&bawl",
+"This game is so hard to play&sweat",
+"so lazy can't move&reluctant"
 ],
 "endturn": [
-"I have no choice but to die",
-"Not now, I don't know when",
-"too hot need ice cream"
+"I have no choice but to die&obedient",
+"Not now, I don't know when&cool",
+"too hot need ice cream&cool"
 ],
 "directattack": [
-"Sounds like a deadbeat",
-"Old deadbeat, steady"
+"Sounds like a deadbeat&confused",
+"Old deadbeat, steady&good"
 ],
 "attack": [
-"Doesn't sound like a deadbeat",
-"Scary"
+"Doesn't sound like a deadbeat&cool",
+"Scary&sweat"
 ],
 "ondirectattack": [
-"Wow!",
-"Is it that terrible",
-"Sounds like a deadbeat",
-"I can't bear it"
+"Wow!&bawl",
+"Is it that terrible&obedient",
+"Sounds like a deadbeat&rage",
+"I can't bear it&obedient"
 ],
 "facedownmonstername": "Pigeon",
 "activate": [
-"I don't know why I'm passing",
-"I've passed, feels good"
+"I don't know why I'm passing&confused",
+"I've passed, feels good&good"
 ],
 "summon": [
-"Terrible",
-"It's none of my business",
-"That is still, It's none of my business",
+"Terrible&surprised",
+"It's none of my business&sweat",
+"That is still, It's none of my business&sneaky",
 "I've passed, feels good"
 ],
 "setmonster": [
-"I'm slacking off, I don't want to update",
-"Then I'll pass it"
+"I'm slacking off, I don't want to update&stick_tongue",
+"Then I'll pass it&shy"
 ],
 "chaining": [
-"What is that",
-"But I passed",
-"No good",
-"Terrible"
+"What is that&confused",
+"But I passed&ridiculous",
+"No good&despise",
+"Terrible&surprised"
 ],
 "surrender": [
-"It's terrible (run away)",
-"This game is hard to play (run away)",
-"Fortunately I don't play Yu-Gi-Oh (run away)"
+"It's terrible (run away)&obedient",
+"This game is hard to play (run away)&sweat",
+"Fortunately I don't play Yu-Gi-Oh (run away)&laugh"
 ]
 }

@@ -294,7 +294,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             } else if (mLimitList.check(item, LimitType.GeneSys)) {
                 Integer creditValue = 0;
                 if (mLimitList.getCredits() != null) {
-                    creditValue = mLimitList.getCredits().get(item.Alias == 0 ? item.Code : item.Alias);
+                    creditValue = mLimitList.getCredits().get(item.getCode());
                     holder.setImageBitmap(R.id.right_top, mImageTop.credits);
                     tv_limit_num.setText(creditValue.toString());
                     tv_limit_num.setTextSize((creditValue > -10 && creditValue < 100) ? 10 : 8);

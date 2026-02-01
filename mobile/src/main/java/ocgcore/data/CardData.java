@@ -13,6 +13,7 @@ public class CardData implements Parcelable {
     public CardData(int code) {
         Code = code;
     }
+
     public int Code;
     public int Ot;
     public int Alias;
@@ -86,32 +87,25 @@ public class CardData implements Parcelable {
     }
 
     /**
-     * 规则同名卡
+     * 规则同名卡，如果有alias则返回alias，否则返回code，判断严格，用于卡组投入最大数量的判断
      */
-    public int getGameCode(){
-        if (Alias > 0) {
-            return Alias;
-        } else {
-            return Code;
-        }
+    public int getGameCode() {
+        return Alias > 0 ? Alias : Code;
     }
 
     /**
      * 同卡，不同卡图
+     * 只对异画的情况如果有alias则返回alias，否则返回code，判断较为宽松，适合规则上视为同名卡但效果不同的卡，适合计算genesys点数或者判断
+     * TODO 暂定最大差异值是20，因为目前单张卡异画数量还未到这个值，未来很大可能会出现更多，需要即时调整
      */
-    public int getCode(){
-        //TODO 暂时的兼容做法
-        if (Alias > 0 && Math.abs(Alias - Code) <= 10) {
-           return Alias;
-        } else {
-           return Code;
-        }
+    public int getCode() {
+        return Alias > 0 && Math.abs(Alias - Code) <= 20 ? Alias : Code;
     }
 
     /**
      * 根据卡密判断是否是一张卡，只判断多卡图的
      */
-    public boolean isSame(long code){
+    public boolean isSame(long code) {
         return this.Code == code || getCode() == code;
     }
 

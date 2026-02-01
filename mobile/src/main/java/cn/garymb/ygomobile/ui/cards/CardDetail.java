@@ -338,7 +338,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     }
 
     private void showPackList(Card cardInfo) {
-        Integer idToUse = cardInfo.Alias != 0 ? cardInfo.Alias : cardInfo.Code;
+        Integer idToUse = cardInfo.getCode();
         mListener.onShowCardList(packManager.getCards(cardLoader, idToUse), false);
     }
 
@@ -537,7 +537,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
         });
-        packName.setText(packManager.findPackNameById((cardInfo.Alias != 0 && Math.abs(cardInfo.Alias - cardInfo.Code) <= 20) ? cardInfo.Alias : cardInfo.Code));
+        packName.setText(packManager.findPackNameById((cardInfo.getCode())));
         name.setText(cardInfo.Name);
         setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
         btn_related.setVisibility(relatable(cardInfo) ? View.VISIBLE : View.INVISIBLE);

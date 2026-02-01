@@ -86,7 +86,7 @@ public class CardView extends FrameLayout {
                     // 获取卡牌的信用分值
                     Integer creditValue = 0;
                     if (limitList.getCredits() != null) {
-                        creditValue = limitList.getCredits().get(mCard.Alias == 0 ? mCard.Code : mCard.Alias);
+                        creditValue = limitList.getCredits().get(mCard.getCode());//使用getCode而不是getGameCode，因为getCode判断较为宽松，适合规则上视为同名卡但效果不同的卡
                         Log.d("cc", "CreditValue: " + creditValue);
                     }
                     // 根据信用分值设置对应的图标索引

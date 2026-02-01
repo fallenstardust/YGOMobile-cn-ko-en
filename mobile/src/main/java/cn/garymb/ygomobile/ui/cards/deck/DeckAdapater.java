@@ -670,7 +670,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                         } else if (mLimitList.check(cardInfo, LimitType.GeneSys)) {
                             Integer creditValue = 0;
                             if (mLimitList.getCredits() != null) {
-                                creditValue = mLimitList.getCredits().get(cardInfo.Alias == 0 ? cardInfo.Code : cardInfo.Alias);
+                                creditValue = mLimitList.getCredits().get(cardInfo.getCode());//使用getCode而不是getGameCode，因为getCode判断较为宽松，适合规则上视为同名卡但效果不同的卡
                                 holder.setRightImage(mImageTop.credits);
                                 holder.setLimitText(creditValue.toString(), YGOUtil.c(R.color.holo_blue_bright), (creditValue > -10 && creditValue < 100) ? 8 : 6);
                             }

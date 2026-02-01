@@ -192,7 +192,7 @@ public class CardManager {
                 if (c.isSame(alias)) {
                     //多图同名，它们属性必定是一致
                     c.setRealCode(alias.Code);
-                } else if (Math.abs(c.Alias - c.Code) <= 10) {
+                } else if (Math.abs(c.Alias - c.Code) <= 17) {
                     Log.w(TAG, c.Name + ":" + c.Code + " is same card " + c.Alias);
                 }
             }
