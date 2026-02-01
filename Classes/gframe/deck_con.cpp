@@ -2120,7 +2120,7 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 	}
 
 	// 最后尝试为当前要插入的卡扣除一次信用点数
-	return handle_card(pointer);
+	return spend_credit(pointer->first);
 }
 
 }
