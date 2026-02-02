@@ -1950,9 +1950,49 @@ void Game::DrawEmoticon() {
     }
 
     // 根据发送者决定显示位置
-    irr::core::recti emoticonRect = isMyEmoticon ? Resize_X_Y(335, 80, 390, 135) : Resize_X_Y(930, 80, 985, 135);
+    irr::core::recti emoticonRect = isMyEmoticon ? Resize_X_Y(335, 90, 390, 145) : Resize_X_Y(930, 90, 985, 145);
     // 绘制表情图片
     driver->draw2DImage(imageManager.tEmoticons, emoticonRect, imageManager.emoticonRects[currentEmoticonCode], nullptr,nullptr,true);
+    // 根据发送者决定显示位置
+    irr::core::recti BubbleHeptagonBorderRect = isMyEmoticon ? Resize_X_Y(335, 80, 390, 150) : Resize_X_Y(930, 80, 985, 150);
+    // 绘制对话气泡形状的7边形外框
+    DrawBubbleHeptagonBorder(BubbleHeptagonBorderRect, 0xffffffff, 2);
+}
+
+/**
+ * @brief 绘制对话气泡形状的7边形外框
+ * 由正方形底部和顶部三角形组成
+ */
+void Game::DrawBubbleHeptagonBorder(const irr::core::recti& rect, irr::video::SColor color, int borderWidth) const {
+    // 计算中心点和尺寸
+    float centerX = (rect.UpperLeftCorner.X + rect.LowerRightCorner.X) / 2.0f;
+    float centerY = (rect.UpperLeftCorner.Y + rect.LowerRightCorner.Y) / 2.0f;
+    float width = rect.getWidth();
+    float height = rect.getHeight();
+
+    // 定义7边形的7个顶点（按顺时针方向）- 使用整数类型
+    irr::core::position2d<irr::s32> vertices[7];
+
+    // 1. 左下角
+    vertices[0] = irr::core::position2d<irr::s32>(rect.UpperLeftCorner.X - static_cast<irr::s32>(height * 0.1f), rect.LowerRightCorner.Y);
+    // 2. 右下角
+    vertices[1] = irr::core::position2d<irr::s32>(rect.LowerRightCorner.X + static_cast<irr::s32>(height * 0.1f), rect.LowerRightCorner.Y);
+    // 3. 右上角（接近三角形起点）
+    vertices[2] = irr::core::position2d<irr::s32>(rect.LowerRightCorner.X + static_cast<irr::s32>(height * 0.1f), rect.UpperLeftCorner.Y + static_cast<irr::s32>(height * 0.1f));
+    // 4. 三角形右顶点
+    vertices[3] = irr::core::position2d<irr::s32>(static_cast<irr::s32>(centerX + width * 0.15f), rect.UpperLeftCorner.Y + static_cast<irr::s32>(height * 0.1f));
+    // 5. 三角形顶点
+    vertices[4] = irr::core::position2d<irr::s32>(static_cast<irr::s32>(centerX), rect.UpperLeftCorner.Y - static_cast<irr::s32>(height * 0.1f)); // 三角形尖端稍微超出矩形
+    // 6. 三角形左顶点
+    vertices[5] = irr::core::position2d<irr::s32>(static_cast<irr::s32>(centerX - width * 0.15f), rect.UpperLeftCorner.Y + static_cast<irr::s32>(height * 0.1f));
+    // 7. 左上角（接近三角形起点）
+    vertices[6] = irr::core::position2d<irr::s32>(rect.UpperLeftCorner.X - static_cast<irr::s32>(height * 0.1f), rect.UpperLeftCorner.Y + static_cast<irr::s32>(height * 0.1f));
+
+    // 绘制7条边
+    for(int i = 0; i < 7; i++) {
+        int nextIndex = (i + 1) % 7;
+        driver->draw2DLine(vertices[i], vertices[nextIndex], color);
+    }
 }
 
 }
