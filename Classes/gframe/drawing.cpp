@@ -1396,17 +1396,17 @@ void Game::DrawSpec() {
                 maxwidth = 205 * xScale;
             }
 
-            std::wstring msg = SetStaticText(nullptr, maxwidth, guiFont, chatMsg[i].c_str());
-            int w = guiFont->getDimension(msg).Width;
-            int h = guiFont->getDimension(msg).Height + 2;
+            std::wstring msg = SetStaticText(nullptr, maxwidth, icFont, chatMsg[i].c_str());
+            int w = icFont->getDimension(msg).Width;
+            int h = icFont->getDimension(msg).Height + 2;
 
             irr::core::recti rectloc(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
             irr::core::recti msgloc(x, y - chatRectY - h, x - 4, y - chatRectY);
             irr::core::recti shadowloc = msgloc + irr::core::vector2di(1, 1);
 
             driver->draw2DRectangle(rectloc, 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
-            guiFont->drawUstring(msg, msgloc, 0xff000000, false, false);
-            guiFont->drawUstring(msg, shadowloc, chatColor[chatType[i]], false, false);
+            icFont->drawUstring(msg, msgloc, 0xff000000, false, false);
+            icFont->drawUstring(msg, shadowloc, chatColor[chatType[i]], false, false);
 
             chatRectY += h;
         }
