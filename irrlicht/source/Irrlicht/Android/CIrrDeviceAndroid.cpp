@@ -280,7 +280,7 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 		    break;
 		case APP_CMD_LOST_FOCUS:
 			os::Printer::log("Android command APP_CMD_LOST_FOCUS", ELL_DEBUG);
-			device->Focused = false;
+			//device->Focused = false;
 		break;
 		case APP_CMD_DESTROY:
 			os::Printer::log("Android command APP_CMD_DESTROY", ELL_DEBUG);
@@ -288,7 +288,7 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 			break;
 		case APP_CMD_PAUSE:
 			os::Printer::log("Android command APP_CMD_PAUSE", ELL_DEBUG);
-			device->Paused = true;
+			//device->Paused = true;
 			break;
 		case APP_CMD_STOP:
 			os::Printer::log("Android command APP_CMD_STOP", ELL_DEBUG);
