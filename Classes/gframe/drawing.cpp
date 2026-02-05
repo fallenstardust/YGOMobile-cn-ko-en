@@ -1375,7 +1375,9 @@ void Game::DrawSpec() {
     }
 
     // 绘制聊天信息区域
-    int chatRectY = 0;
+    int x, y, maxwidth;
+    int chatRectY = 0, myChatRectY = 0, opChatRectY = 0;
+    irr::core::recti rectloc, msgloc, shadowloc;
     for(int i = 0; i < 8; ++i) {
         static unsigned int chatColor[] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xff8080ff, 0xffff4040, 0xffff4040,
                                            0xffff4040, 0xff40ff40, 0xff4040ff, 0xff40ffff, 0xffff40ff, 0xffffff40, 0xffffffff, 0xff808080, 0xff404040};
@@ -1387,22 +1389,56 @@ void Game::DrawSpec() {
                 if(!showChat && i > 2)
                     continue;
             }
-
-            int x = wChat->getRelativePosition().UpperLeftCorner.X;
-            int y = (GAME_HEIGHT - 25) * mainGame->yScale;
-            int maxwidth = 705 * xScale;
-            if(is_building) {
-                x = 810 * xScale;
+            if(!dInfo.isStarted) {
+                maxwidth = 705 * xScale;
+                x = wChat->getRelativePosition().UpperLeftCorner.X;
+                y = (GAME_HEIGHT - 35) * mainGame->yScale;
+            } else if(is_building) {
                 maxwidth = 205 * xScale;
+                x = 810 * xScale;
+                y = (GAME_HEIGHT - 35) * mainGame->yScale;
+            } else {
+                if(i >= 3) continue;
+                if (chatType[i] == 0 || chatType[i] == 2) {
+                    maxwidth = 230 * xScale;
+                    x = 390 * xScale;
+                    y = 90 * yScale;
+                } else if (chatType[i] == 1 || chatType[i] == 3) {
+                    maxwidth = 230 * xScale;
+                    x = 700 * xScale;
+                    y = 90 * yScale;
+                } else {
+                    maxwidth = 705 * xScale;
+                    x = wChat->getRelativePosition().UpperLeftCorner.X;
+                    y = (GAME_HEIGHT - 35) * mainGame->yScale;
+                }
             }
 
             std::wstring msg = SetStaticText(nullptr, maxwidth, icFont, chatMsg[i].c_str());
             int w = icFont->getDimension(msg).Width;
             int h = icFont->getDimension(msg).Height + 2;
 
-            irr::core::recti rectloc(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
-            irr::core::recti msgloc(x, y - chatRectY - h, x - 4, y - chatRectY);
-            irr::core::recti shadowloc = msgloc + irr::core::vector2di(1, 1);
+            if(!dInfo.isStarted || is_building) {
+                rectloc = irr::core::recti(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
+                msgloc = irr::core::recti(x, y - chatRectY - h, x - 4, y - chatRectY);
+            } else {
+                if (chatType[i] < 4) {
+                    if (chatType[i] == 0 || chatType[i] == 2) {
+                        rectloc = irr::core::recti(x, y - myChatRectY - h, x + 2 + w,y - myChatRectY);
+                        msgloc = irr::core::recti(x, y - myChatRectY - h, x - 4, y - myChatRectY);
+                        myChatRectY += h;
+                    }
+                    if (chatType[i] == 1 || chatType[i] == 3) {
+                        rectloc = irr::core::recti(x, y - opChatRectY - h, x + 2 + w, y - opChatRectY);
+                        msgloc = irr::core::recti(x, y - opChatRectY - h, x - 4, y - opChatRectY);
+                        opChatRectY += h;
+                    }
+                } else {
+                    rectloc = irr::core::recti(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
+                    msgloc = irr::core::recti(x, y - chatRectY - h, x - 4, y - chatRectY);
+                }
+            }
+            shadowloc = msgloc + irr::core::vector2di(1, 1);
 
             driver->draw2DRectangle(rectloc, 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
             icFont->drawUstring(msg, msgloc, 0xff000000, false, false);
