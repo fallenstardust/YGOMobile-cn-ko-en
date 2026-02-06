@@ -2386,8 +2386,8 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 		if(player < 11 || player > 19)
 			chatMsg[0].append(L"[---]: ");
 	}
-    // 处理消息
-    chatMsg[0].append(OnReceiveChatMessage(msg,player == 0 || player == 2));
+    // 处理消息,player是0，2，10(隐藏nickname)视为自己发的
+    chatMsg[0].append(OnReceiveChatMessage(msg,player == 0 || player == 2 || player == 10));
 }
 void Game::ClearChatMsg() {
 	for(int i = 7; i >= 0; --i) {
