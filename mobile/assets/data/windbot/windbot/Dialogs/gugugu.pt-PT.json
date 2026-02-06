@@ -5,60 +5,60 @@
     "Felizmente, eu não jogo Yu-Gi-Oh!"
   ],
   "deckerror": [
-    "Há {0} pombas no deck."
+    "Há {0} pombas no deck.&reluctant"
   ],
   "duelstart": [
-    "O que devo fazer se não quiser trabalhar?",
-    "O que devo fazer se não quiser trabalhar porque estou em modo preguiçoso?"
+    "O que devo fazer se não quiser trabalhar?&ridiculous",
+    "O que devo fazer se não quiser trabalhar porque estou em modo preguiçoso?&ridiculous"
   ],
   "newturn": [
-    "Tantas cartas novas e assustadoras.",
-    "Este jogo é muito difícil de jogar.",
-    "Tão preguiçoso, não consigo me mover."
+    "Tantas cartas novas e assustadoras.&bawl",
+    "Este jogo é muito difícil de jogar.&sweat",
+    "Tão preguiçoso, não consigo me mover.&reluctant"
   ],
   "endturn": [
-    "Então só posso fazer pomba.",
-    "Neste momento não, não sei quando.",
-    "Muito calor, preciso de um sorvete."
+    "Então só posso fazer pomba.&obedient",
+    "Neste momento não, não sei quando.&cool",
+    "Muito calor, preciso de um sorvete.&cool"
   ],
   "directattack": [
-    "Soa como pomba.",
-    "Pomba velha, ataque."
+    "Soa como pomba.&confused",
+    "Pomba velha, ataque.&good"
   ],
   "attack": [
-    "Você não soa muito pombalhão.",
-    "Horrível."
+    "Você não soa muito pombalhão.&cool",
+    "Horrível.&sweat"
   ],
   "ondirectattack": [
-    "Uau!",
-    "Dá tanto medo?",
-    "Soa muito pombalhão.",
-    "Não aguento mais."
+    "Uau!&bawl",
+    "Dá tanto medo?&obedient",
+    "Soa muito pombalhão.&rage",
+    "Não aguento mais.&obedient"
   ],
   "facedownmonstername": "Pomba",
   "activate": [
-    "Pomba inconsciente.",
-    "É legal, é legal."
+    "Pomba inconsciente.&confused",
+    "É legal, é legal.&good"
   ],
   "summon": [
-    "Horrível.",
-    "Não é da minha conta.",
-    "Isso ainda não é da minha conta.",
-    "É legal, é legal."
+    "Horrível.&surprised",
+    "Não é da minha conta.&sweat",
+    "Isso ainda não é da minha conta.&sneaky",
+    "É legal, é legal.&good"
   ],
   "setmonster": [
-    "Estou no processo de pescar e não quero atualizar.",
-    "Então continua sendo uma posição de pomba, né?"
+    "Estou no processo de pescar e não quero atualizar.&stick_tongue",
+    "Então continua sendo uma posição de pomba, né?&shy"
   ],
   "chaining": [
-    "O que é isso?",
-    "Mas eu perdi.",
-    "Não existe tal serviço.",
-    "Horrível."
+    "O que é isso?&confused",
+    "Mas eu perdi.&ridiculous",
+    "Não existe tal serviço.&despise",
+    "Horrível.&surprised"
   ],
   "surrender": [
-    "É terrível (sai correndo).",
-    "Este jogo é muito difícil de jogar (sai correndo).",
-    "Por sorte, eu não jogo Yu-Gi-Oh! (sai correndo)."
+    "É terrível (sai correndo).&obedient",
+    "Este jogo é muito difícil de jogar (sai correndo).&sweat",
+    "Por sorte, eu não jogo Yu-Gi-Oh! (sai correndo).&laugh"
   ]
 }

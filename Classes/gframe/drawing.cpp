@@ -1378,7 +1378,7 @@ void Game::DrawSpec() {
     static unsigned int chatColor[] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xff8080ff, 0xffff4040, 0xffff4040,
                                            0xffff4040, 0xff40ff40, 0xff4040ff, 0xff40ffff, 0xffff40ff, 0xffffff40, 0xffffffff, 0xff808080, 0xff404040};
     int x, y, maxwidth;
-    int chatRectY = 0, myChatRectY = 0, opChatRectY = 0;
+    int offsetX = 0, chatRectY = 0, myChatRectY = 0, opChatRectY = 0;
     irr::core::recti rectloc, msgloc, shadowloc;
     for(int i = 0; i < 8; ++i) {
         if(chatTiming[i]) {
@@ -1398,7 +1398,7 @@ void Game::DrawSpec() {
                 x = 810 * xScale;
                 y = (GAME_HEIGHT - 35) * mainGame->yScale;
             } else {
-                if(i >= 3) continue;
+                if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
                 if (chatType[i] == 0 || chatType[i] == 2) {
                     maxwidth = 230 * xScale;
                     x = 390 * xScale;
@@ -1409,8 +1409,8 @@ void Game::DrawSpec() {
                     y = 80 * yScale;
                 } else {
                     maxwidth = 705 * xScale;
-                    x = wChat->getRelativePosition().UpperLeftCorner.X;
-                    y = (GAME_HEIGHT - 35) * mainGame->yScale;
+                    x = wChat->getRelativePosition().LowerRightCorner.X;
+                    y = 90 * mainGame->yScale;
                 }
             }
 
@@ -1434,8 +1434,11 @@ void Game::DrawSpec() {
                         opChatRectY += h;
                     }
                 } else {
-                    rectloc = irr::core::recti(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
-                    msgloc = irr::core::recti(x, y - chatRectY - h, x - 4, y - chatRectY);
+                    // 根据 chatTiming[i] 计算偏移量，值越小偏移越大
+                    offsetX = (1200 - chatTiming[i]) * 4; // 1200 是addChatMsg设置的初始chatTiming值，可根据需要调整系数
+
+                    rectloc = irr::core::recti(x - offsetX, y + chatRectY, x + 2 + w - offsetX, y + chatRectY + h);
+                    msgloc = irr::core::recti(x - offsetX, y + chatRectY, x - 4 - offsetX, y + chatRectY + h);
                 }
             }
             shadowloc = msgloc + irr::core::vector2di(1, 1);
