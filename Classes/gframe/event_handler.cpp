@@ -2434,11 +2434,11 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     eventElement == mainGame->wReplay ||
                     eventElement == mainGame->wSinglePlay ||
                     eventElement == mainGame->wLanWindow) {
-                    mainGame->gMutex.lock();
+                    mainGame->wEmoticon->isVisible() ? mainGame->HideElement(mainGame->wEmoticon) : mainGame->ShowElement(mainGame->wEmoticon);
                     mainGame->textFont->setTransparency(true);
 					mainGame->guiFont->setTransparency(true);
                     mainGame->ClearChatMsg();
-                    mainGame->gMutex.unlock();
+
                     break;
                 }//touch the target place to refresh textfonts
                 leftuptime = mainGame->device->getTimer()->getRealTime();
