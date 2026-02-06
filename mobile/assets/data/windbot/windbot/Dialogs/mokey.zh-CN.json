@@ -8,34 +8,34 @@
     "抱歉，我的卡组里的{0}的数量似乎出了问题。"
   ],
   "duelstart": [
-    "别打我！"
+    "别打我！&bawl"
   ],
   "newturn": [
-    ""
+    "&shy"
   ],
   "endturn": [
-    ""
+    "&shy"
   ],
   "directattack": [
-    ""
+    "&bawl"
   ],
   "attack": [
-    ""
+    "&bawl"
   ],
   "ondirectattack": [
-    "我生气了！"
+    "我生气了！&angry"
   ],
   "facedownmonstername": "怪兽",
   "activate": [
-    "我喜欢{0}。"
+    "我喜欢{0}。&laugh"
   ],
   "summon": [
-    ""
+    "&shy"
   ],
   "setmonster": [
-    ""
+    "&shy"
   ],
   "chaining": [
-    ""
+    "&shy"
   ]
 }
