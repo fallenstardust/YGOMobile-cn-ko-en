@@ -2434,7 +2434,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     eventElement == mainGame->wReplay ||
                     eventElement == mainGame->wSinglePlay ||
                     eventElement == mainGame->wLanWindow) {
-                    mainGame->wEmoticon->isVisible() ? mainGame->HideElement(mainGame->wEmoticon) : mainGame->ShowElement(mainGame->wEmoticon);
+                    if (mainGame->wEmoticon->isVisible()) mainGame->HideElement(mainGame->wEmoticon);
                     mainGame->textFont->setTransparency(true);
 					mainGame->guiFont->setTransparency(true);
                     mainGame->ClearChatMsg();
