@@ -1380,7 +1380,7 @@ void Game::DrawSpec() {
     int x, y, maxwidth;
     int offsetX = 0, chatRectY = 0, myChatRectY = 0, opChatRectY = 0;
     irr::core::recti rectloc, msgloc, shadowloc;
-    for(int i = 0; i < 8; ++i) {
+    for(int i = 7; i > 0; --i) {
         if(chatTiming[i]) {
             chatTiming[i]--;
             if(!is_building) {
@@ -1392,13 +1392,13 @@ void Game::DrawSpec() {
             if(!dInfo.isStarted) {
                 maxwidth = 705 * xScale;
                 x = wChat->getRelativePosition().UpperLeftCorner.X;
-                y = (GAME_HEIGHT - 35) * mainGame->yScale;
+                y = 10 * mainGame->yScale;
             } else if(is_building) {
                 maxwidth = 205 * xScale;
                 x = 810 * xScale;
-                y = (GAME_HEIGHT - 35) * mainGame->yScale;
+                y = 10 * mainGame->yScale;
             } else {
-                if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
+                //if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
                 if (chatType[i] == 0 || chatType[i] == 2) {
                     maxwidth = 230 * xScale;
                     x = 390 * xScale;
@@ -1419,8 +1419,8 @@ void Game::DrawSpec() {
             int h = icFont->getDimension(msg).Height + 2;
 
             if(!dInfo.isStarted || is_building) {
-                rectloc = irr::core::recti(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
-                msgloc = irr::core::recti(x, y - chatRectY - h, x - 4, y - chatRectY);
+                rectloc = irr::core::recti(x, y + chatRectY, x + 2 + w, y + chatRectY + h);
+                msgloc = irr::core::recti(x, y + chatRectY, x - 4, y + chatRectY + h);
             } else {
                 if (chatType[i] < 4) {
                     if (chatType[i] == 0 || chatType[i] == 2) {
@@ -1437,8 +1437,8 @@ void Game::DrawSpec() {
                     // 根据 chatTiming[i] 计算偏移量，值越小偏移越大
                     offsetX = (1200 - chatTiming[i]) * 4; // 1200 是addChatMsg设置的初始chatTiming值，可根据需要调整系数
 
-                    rectloc = irr::core::recti(x - offsetX, y + chatRectY, x + 2 + w - offsetX, y + chatRectY + h);
-                    msgloc = irr::core::recti(x - offsetX, y + chatRectY, x - 4 - offsetX, y + chatRectY + h);
+                    rectloc = irr::core::recti(x - offsetX + w * i, y, x + 2 + w * (i + 1) - offsetX, y + h);
+                    msgloc = irr::core::recti(x - offsetX+ w * i, y, x - 4 - offsetX + w * (i + 1), y + h);
                 }
             }
             shadowloc = msgloc + irr::core::vector2di(1, 1);
