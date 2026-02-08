@@ -2340,6 +2340,7 @@ void Game::AddLog(const wchar_t* msg, int param) {
 	}
 }
 void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
+    ALOGW("AddChatMsg= %ls, player= %d", msg, player);
 	for(int i = 7; i > 0; --i) {
 		chatMsg[i] = chatMsg[i - 1];
 		chatTiming[i] = chatTiming[i - 1];
@@ -2386,8 +2387,8 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 		if(player < 11 || player > 19)
 			chatMsg[0].append(L"[---]: ");
 	}
-    // 处理消息
-    chatMsg[0].append(OnReceiveChatMessage(msg,player == 0 || player == 2));
+    // 处理消息,player是0，2，10(隐藏nickname)视为自己发的
+    chatMsg[0].append(OnReceiveChatMessage(msg,player == 0 || player == 2 || player == 10));
 }
 void Game::ClearChatMsg() {
 	for(int i = 7; i >= 0; --i) {
@@ -2496,6 +2497,7 @@ void Game::CloseDuelWindow() {
 	wChat->setVisible(false);
 	wPallet->setVisible(false);
 	imgChat->setVisible(true);
+    wEmoticon->setVisible(false);
 	wSettings->setVisible(false);
 	wLogs->setVisible(false);
 	btnSideOK->setVisible(false);

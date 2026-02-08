@@ -1375,10 +1375,12 @@ void Game::DrawSpec() {
     }
 
     // 绘制聊天信息区域
-    int chatRectY = 0;
-    for(int i = 0; i < 8; ++i) {
-        static unsigned int chatColor[] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xff8080ff, 0xffff4040, 0xffff4040,
+    static unsigned int chatColor[] = {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xff8080ff, 0xffff4040, 0xffff4040,
                                            0xffff4040, 0xff40ff40, 0xff4040ff, 0xff40ffff, 0xffff40ff, 0xffffff40, 0xffffffff, 0xff808080, 0xff404040};
+    int x, y, maxwidth;
+    int offsetX = 0, chatRectY = 0, myChatRectY = 0, opChatRectY = 0;
+    irr::core::recti rectloc, msgloc, shadowloc;
+    for(int i = 0; i < 8; ++i) {
         if(chatTiming[i]) {
             chatTiming[i]--;
             if(!is_building) {
@@ -1387,22 +1389,59 @@ void Game::DrawSpec() {
                 if(!showChat && i > 2)
                     continue;
             }
-
-            int x = wChat->getRelativePosition().UpperLeftCorner.X;
-            int y = (GAME_HEIGHT - 25) * mainGame->yScale;
-            int maxwidth = 705 * xScale;
-            if(is_building) {
-                x = 810 * xScale;
+            if(!dInfo.isStarted) {
+                maxwidth = 705 * xScale;
+                x = wChat->getRelativePosition().UpperLeftCorner.X;
+                y = (GAME_HEIGHT - 35) * mainGame->yScale;
+            } else if(is_building) {
                 maxwidth = 205 * xScale;
+                x = 810 * xScale;
+                y = (GAME_HEIGHT - 35) * mainGame->yScale;
+            } else {
+                if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
+                if (chatType[i] == 0 || chatType[i] == 2) {
+                    maxwidth = 230 * xScale;
+                    x = 390 * xScale;
+                    y = 80 * yScale;
+                } else if (chatType[i] == 1 || chatType[i] == 3) {
+                    maxwidth = 300 * xScale;
+                    x = 700 * xScale;
+                    y = 80 * yScale;
+                } else {
+                    maxwidth = 705 * xScale;
+                    x = wChat->getRelativePosition().LowerRightCorner.X;
+                    y = 90 * mainGame->yScale;
+                }
             }
 
             std::wstring msg = SetStaticText(nullptr, maxwidth, icFont, chatMsg[i].c_str());
             int w = icFont->getDimension(msg).Width;
             int h = icFont->getDimension(msg).Height + 2;
 
-            irr::core::recti rectloc(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
-            irr::core::recti msgloc(x, y - chatRectY - h, x - 4, y - chatRectY);
-            irr::core::recti shadowloc = msgloc + irr::core::vector2di(1, 1);
+            if(!dInfo.isStarted || is_building) {
+                rectloc = irr::core::recti(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
+                msgloc = irr::core::recti(x, y - chatRectY - h, x - 4, y - chatRectY);
+            } else {
+                if (chatType[i] < 4) {
+                    if (chatType[i] == 0 || chatType[i] == 2) {
+                        rectloc = irr::core::recti(x, y + myChatRectY, x + 2 + w,y + myChatRectY + h);
+                        msgloc = irr::core::recti(x, y + myChatRectY, x + 2 + w, y + myChatRectY + h);
+                        myChatRectY += h;
+                    }
+                    if (chatType[i] == 1 || chatType[i] == 3) {
+                        rectloc = irr::core::recti(x, y + opChatRectY, x + 2 + w, y + opChatRectY + h);
+                        msgloc = irr::core::recti(x, y + opChatRectY, x + 2 + w, y + opChatRectY + h);
+                        opChatRectY += h;
+                    }
+                } else {
+                    // 根据 chatTiming[i] 计算偏移量，值越小偏移越大
+                    offsetX = (1200 - chatTiming[i]) * 4; // 1200 是addChatMsg设置的初始chatTiming值，可根据需要调整系数
+
+                    rectloc = irr::core::recti(x - offsetX, y + chatRectY, x + 2 + w - offsetX, y + chatRectY + h);
+                    msgloc = irr::core::recti(x - offsetX, y + chatRectY, x - 4 - offsetX, y + chatRectY + h);
+                }
+            }
+            shadowloc = msgloc + irr::core::vector2di(1, 1);
 
             driver->draw2DRectangle(rectloc, 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
             icFont->drawUstring(msg, msgloc, 0xff000000, false, false);
@@ -1936,7 +1975,7 @@ void Game::DrawDeckBd() {
  * @brief 绘制表情包
  */
 void Game::DrawEmoticon() {
-    static int emoticonShowTime = 120;// 表情显示计时（改为静态变量）
+    static int emoticonShowTime = 120;// 表情显示计时
 
     if(showingEmoticon) {
         emoticonShowTime--;
@@ -1977,7 +2016,7 @@ void Game::DrawBubbleHeptagonBorder(const irr::core::recti& rect, irr::video::SC
     vertices[0] = irr::core::position2d<irr::s32>(rect.UpperLeftCorner.X - static_cast<irr::s32>(height * 0.1f), rect.LowerRightCorner.Y);
     // 2. 右下角
     vertices[1] = irr::core::position2d<irr::s32>(rect.LowerRightCorner.X + static_cast<irr::s32>(height * 0.1f), rect.LowerRightCorner.Y);
-    // 3. 右上角（接近三角形起点）
+    // 3. 右上角
     vertices[2] = irr::core::position2d<irr::s32>(rect.LowerRightCorner.X + static_cast<irr::s32>(height * 0.1f), rect.UpperLeftCorner.Y + static_cast<irr::s32>(height * 0.1f));
     // 4. 三角形右顶点
     vertices[3] = irr::core::position2d<irr::s32>(static_cast<irr::s32>(centerX + width * 0.15f), rect.UpperLeftCorner.Y + static_cast<irr::s32>(height * 0.1f));
@@ -1985,7 +2024,7 @@ void Game::DrawBubbleHeptagonBorder(const irr::core::recti& rect, irr::video::SC
     vertices[4] = irr::core::position2d<irr::s32>(static_cast<irr::s32>(centerX), rect.UpperLeftCorner.Y - static_cast<irr::s32>(height * 0.1f)); // 三角形尖端稍微超出矩形
     // 6. 三角形左顶点
     vertices[5] = irr::core::position2d<irr::s32>(static_cast<irr::s32>(centerX - width * 0.15f), rect.UpperLeftCorner.Y + static_cast<irr::s32>(height * 0.1f));
-    // 7. 左上角（接近三角形起点）
+    // 7. 左上角
     vertices[6] = irr::core::position2d<irr::s32>(rect.UpperLeftCorner.X - static_cast<irr::s32>(height * 0.1f), rect.UpperLeftCorner.Y + static_cast<irr::s32>(height * 0.1f));
 
     // 绘制7条边

@@ -857,7 +857,7 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		mainGame->wCardImg->setVisible(true);
 		// 显示信息窗口
 		mainGame->wInfos->setVisible(true);
-		// 显示调色板窗口
+		// 显示快捷按钮窗口
 		mainGame->wPallet->setVisible(true);
 		// 显示阶段窗口
 		mainGame->wPhase->setVisible(true);
@@ -865,9 +865,9 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		mainGame->btnSideOK->setVisible(false);
 		// 隐藏侧边洗牌按钮
 		mainGame->btnSideShuffle->setVisible(false);
-		// 隐藏侧边排序按钮
+		// 隐藏副卡组排序按钮
 		mainGame->btnSideSort->setVisible(false);
-		// 隐藏侧边重新加载按钮
+		// 隐藏副卡组重置按钮
 		mainGame->btnSideReload->setVisible(false);
 		// 隐藏阶段状态按钮
 		mainGame->btnPhaseStatus->setVisible(false);

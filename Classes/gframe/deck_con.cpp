@@ -259,10 +259,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				std::sort(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), DataManager::deck_sort_lv);
 				std::sort(deckManager.current_deck.extra.begin(), deckManager.current_deck.extra.end(), DataManager::deck_sort_lv);
 				std::sort(deckManager.current_deck.side.begin(), deckManager.current_deck.side.end(), DataManager::deck_sort_lv);
+				is_modified = true;
 				break;
 			}
 			case BUTTON_SHUFFLE_DECK: {
 				std::shuffle(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), rnd);
+				is_modified = true;
 				break;
 			}
 			case BUTTON_SAVE_DECK: {
@@ -1170,6 +1172,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_LEFT_UP: {
 			is_starting_dragging = false;
 			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
+			if(!is_draging && !mainGame->is_siding && root->getElementFromPoint(mouse_pos) == mainGame->imgCard) {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
+				break;
+			}
 			if(!is_draging)
 				break;
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
@@ -1196,6 +1202,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_DOUBLE_CLICK: {
 			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
 			if(!is_draging && !mainGame->is_siding && root->getElementFromPoint(mouse_pos) == root && hovered_code) {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
 				break;
 			}
 			break;

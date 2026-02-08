@@ -5,61 +5,66 @@
 	"당연하겠지만 유희왕 인합니다."
   ],
   "deckerror": [
-    "덱에 {0}이(가) 들어가있다."
+    "덱에 {0}이(가) 들어가있다.&reluctant"
   ],
   "duelstart": [
-    "구구구구",
-	"IQ 충전",
-	"유희왕... 게임 방법"
+    "구구구구&obedient",
+	"IQ 충전&ridiculous",
+	"유희왕... 게임 방법&ridiculous"
   ],
   "newturn": [
-    "진행 하시죠. 0",
-	"이 게임은 너무 어려워",
-	"So lazy can't move"
+    "진행 하시죠.&bawl",
+	"이 게임은 너무 어려워&sweat",
+	"So lazy can't move&reluctant"
   ],
   "endturn": [
-  "비둘기개 됄거야. 구구구구",
-    "구구구구",
-	"IQ 상실, 기억도 상실",
-	"더 이상은 몰라요오오오오오"
+  "비둘기개 됄거야. 구구구구&obedient",
+    "구구구구&obedient",
+	"IQ 상실, 기억도 상실&cool",
+	"더 이상은 몰라요오오오오오&cool"
   ],
   "directattack": [
-    "완전 비둘기네요.",
-	"비둘기같은 녀석",
-	"∠(:>」∠)_ 233 서버 조정이 될 때까지 기다려주십시오."
+    "완전 비둘기네요.&confused",
+	"비둘기같은 녀석&good",
+	"∠(:>」∠)_ 233 서버 조정이 될 때까지 기다려주십시오.&good"
   ],
   "attack": [
-  "비둘기 공격!",
-    "구구구구",
-	"존나좋군."
+    "비둘기 공격!&cool",
+    "구구구구&obedient",
+	"존나좋군.&sweat"
   ],
   "ondirectattack": [
-    "Go!",
-	"비둘기 Go!",
-	"구구구구",
-	"이제 한계다."
+    "Go!&bawl",
+	"비둘기 Go!&obedient",
+	"구구구구&rage",
+	"이제 한계다.&obedient"
   ],
   "facedownmonstername": "비둘기",
   "activate": [
-    "{0} 구구구구?",
-	"{0} 효과 발동"
+    "{0} 구구구구?&confused",
+	"{0} 효과 발동&good"
   ],
   "summon": [
-    "{0} 소환",
-    "알 필요 없어요.",
-    "알 바 아니야.",
-	"{0}이(가) 비둘기같군."
+    "{0} 소환&surprised",
+    "알 필요 없어요.&sweat",
+    "알 바 아니야.&sneaky",
+	"{0}이(가) 비둘기같군.&good"
   ],
   "setmonster": [
-    "구구구구",
-	"비둘기가 됄 거야!",
-	"비둘기같이 세트!"
+    "구구구구&surprised",
+	"비둘기가 됄 거야!&stick_tongue",
+	"비둘기같이 세트!&shy"
   ],
   "chaining": [
-"그거 뭐야?",
-    "하지만 나는 비둘기",
-    "그거 없음",
-	"알 수 없는 비둘기",
-	"구구구구"
+    "그거 뭐야?&confused",
+    "하지만 나는 비둘기&ridiculous",
+    "그거 없음&ridiculous",
+	"알 수 없는 비둘기&despise",
+	"구구구구&surprised"
+  ],
+  "surrender": [
+    "구구구구&obedient",
+    "구구구구&sweat",
+    "구구구구&laugh"
   ]
 }
