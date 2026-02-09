@@ -1398,15 +1398,17 @@ void Game::DrawSpec() {
                 x = 810 * xScale;
                 y = 10 * mainGame->yScale;
             } else {
-                if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
-                if (chatType[i] == 0 || chatType[i] == 2) {
-                    maxwidth = 230 * xScale;
-                    x = 390 * xScale;
-                    y = 80 * yScale;
-                } else if (chatType[i] == 1 || chatType[i] == 3) {
-                    maxwidth = 310 * xScale;
-                    x = 700 * xScale;
-                    y = 80 * yScale;
+                if (chatType[i] < 4) {
+                    if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
+                    if (chatType[i] == 0 || chatType[i] == 2) {
+                        maxwidth = 230 * xScale;
+                        x = 390 * xScale;
+                        y = 80 * yScale;
+                    } else if (chatType[i] == 1 || chatType[i] == 3) {
+                        maxwidth = 310 * xScale;
+                        x = 700 * xScale;
+                        y = 80 * yScale;
+                    }
                 } else {
                     maxwidth = 705 * xScale;
                     x = wChat->getRelativePosition().LowerRightCorner.X;
