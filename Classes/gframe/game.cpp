@@ -2340,7 +2340,7 @@ void Game::AddLog(const wchar_t* msg, int param) {
 	}
 }
 void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
-    ALOGW("AddChatMsg= %ls, player= %d", msg, player);
+    //ALOGW("AddChatMsg= %ls, player= %d", msg, player);
 	for(int i = 7; i > 0; --i) {
 		chatMsg[i] = chatMsg[i - 1];
 		chatTiming[i] = chatTiming[i - 1];

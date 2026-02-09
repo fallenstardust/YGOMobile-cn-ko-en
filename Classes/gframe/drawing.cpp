@@ -1380,7 +1380,7 @@ void Game::DrawSpec() {
     int x, y, maxwidth;
     int offsetX = 0, chatRectY = 0, myChatRectY = 0, opChatRectY = 0;
     irr::core::recti rectloc, msgloc, shadowloc;
-    for(int i = 7; i > 0; --i) {
+    for(int i = 7; i >= 0; --i) {
         if(chatTiming[i]) {
             chatTiming[i]--;
             if(!is_building) {
@@ -1398,19 +1398,19 @@ void Game::DrawSpec() {
                 x = 810 * xScale;
                 y = 10 * mainGame->yScale;
             } else {
-                //if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
+                if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
                 if (chatType[i] == 0 || chatType[i] == 2) {
                     maxwidth = 230 * xScale;
                     x = 390 * xScale;
                     y = 80 * yScale;
                 } else if (chatType[i] == 1 || chatType[i] == 3) {
-                    maxwidth = 300 * xScale;
+                    maxwidth = 310 * xScale;
                     x = 700 * xScale;
                     y = 80 * yScale;
                 } else {
                     maxwidth = 705 * xScale;
                     x = wChat->getRelativePosition().LowerRightCorner.X;
-                    y = 90 * mainGame->yScale;
+                    y = 10 * mainGame->yScale;
                 }
             }
 
@@ -1436,16 +1436,16 @@ void Game::DrawSpec() {
                 } else {
                     // 根据 chatTiming[i] 计算偏移量，值越小偏移越大
                     offsetX = (1200 - chatTiming[i]) * 4; // 1200 是addChatMsg设置的初始chatTiming值，可根据需要调整系数
+                    rectloc = irr::core::recti(x - offsetX, y + chatRectY, x + 2 + w - offsetX, y + chatRectY + h);
+                    msgloc = irr::core::recti(x - offsetX, y + chatRectY, x - 4 - offsetX, y + chatRectY + h);
 
-                    rectloc = irr::core::recti(x - offsetX + w * i, y, x + 2 + w * (i + 1) - offsetX, y + h);
-                    msgloc = irr::core::recti(x - offsetX+ w * i, y, x - 4 - offsetX + w * (i + 1), y + h);
                 }
             }
             shadowloc = msgloc + irr::core::vector2di(1, 1);
 
             driver->draw2DRectangle(rectloc, 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
-            icFont->drawUstring(msg, msgloc, 0xff000000, false, false);
-            icFont->drawUstring(msg, shadowloc, chatColor[chatType[i]], false, false);
+            icFont->drawUstring(msg, shadowloc, 0xff000000, false, false);
+            icFont->drawUstring(msg, msgloc, chatColor[chatType[i]], false, false);
 
             chatRectY += h;
         }
