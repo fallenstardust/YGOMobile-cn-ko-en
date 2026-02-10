@@ -7,30 +7,22 @@ namespace ygo {
 ImageManager imageManager;
 
 bool ImageManager::Initial(const path dir) {
-	tCover[0] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
-	tCover[1] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
-    if(!tCover[1])
-        tCover[1] = tCover[0];
-	tCover[2] = driver->getTexture((dir + path("/textures/cover.jpg")).c_str());
-	tCover[3] = driver->getTexture((dir + path("/textures/cover2.jpg")).c_str());
+	tCover[0] = nullptr;
+	tCover[1] = nullptr;
+	tCover[2] = GetTextureFromFile((dir + path("/textures/cover.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
+	tCover[3] = GetTextureFromFile((dir + path("/textures/cover2.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
 	if(!tCover[3])
 		tCover[3] = tCover[2];
-	tUnknown = driver->getTexture((dir + path("/textures/unknown.jpg")).c_str());
+	tUnknown = nullptr;
+	tUnknownFit = nullptr;
+	tUnknownThumb = nullptr;
 	tBigPicture = nullptr;
+	tLoading = nullptr;
+	tThumbLoadingThreadRunning = false;
 	tAct = driver->getTexture((dir + path("/textures/act.png")).c_str());
 	tAttack = driver->getTexture((dir + path("/textures/attack.png")).c_str());
-	tTotalAtk = driver->getTexture((dir + path("/textures/totalAtk.png")).c_str());
 	tChain = driver->getTexture((dir + path("/textures/chain.png")).c_str());
 	tNegated = driver->getTexture((dir + path("/textures/negated.png")).c_str());
-	tSelField = driver->getTexture((dir + path("/textures/selfield.png")).c_str());
-	tSelFieldLinkArrows[1] = driver->getTexture((dir + path("/textures/link_marker_on_1.png")).c_str());
-	tSelFieldLinkArrows[2] = driver->getTexture((dir + path("/textures/link_marker_on_2.png")).c_str());
-	tSelFieldLinkArrows[3] = driver->getTexture((dir + path("/textures/link_marker_on_3.png")).c_str());
-	tSelFieldLinkArrows[4] = driver->getTexture((dir + path("/textures/link_marker_on_4.png")).c_str());
-	tSelFieldLinkArrows[6] = driver->getTexture((dir + path("/textures/link_marker_on_6.png")).c_str());
-	tSelFieldLinkArrows[7] = driver->getTexture((dir + path("/textures/link_marker_on_7.png")).c_str());
-	tSelFieldLinkArrows[8] = driver->getTexture((dir + path("/textures/link_marker_on_8.png")).c_str());
-	tSelFieldLinkArrows[9] = driver->getTexture((dir + path("/textures/link_marker_on_9.png")).c_str());
 	tNumber = driver->getTexture((dir + path("/textures/number.png")).c_str());
 	tLPBar = driver->getTexture((dir + path("/textures/lp3.png")).c_str());
 	tLPFrame = driver->getTexture((dir + path("/textures/lpf.png")).c_str());
@@ -43,6 +35,25 @@ bool ImageManager::Initial(const path dir) {
 	tHand[0] = driver->getTexture((dir + path("/textures/f1.jpg")).c_str());
 	tHand[1] = driver->getTexture((dir + path("/textures/f2.jpg")).c_str());
 	tHand[2] = driver->getTexture((dir + path("/textures/f3.jpg")).c_str());
+	tBackGround = nullptr;
+	tBackGround_menu = nullptr;
+	tBackGround_deck = nullptr;
+	tField[0] = driver->getTexture((dir + path("/textures/field2.png")).c_str());
+	tFieldTransparent[0] = driver->getTexture((dir + path("/textures/field-transparent2.png")).c_str());
+	tField[1] = driver->getTexture((dir + path("/textures/field3.png")).c_str());
+	tFieldTransparent[1] = driver->getTexture((dir + path("/textures/field-transparent3.png")).c_str());
+	
+	ResizeTexture(dir);
+	tTotalAtk = driver->getTexture((dir + path("/textures/totalAtk.png")).c_str());
+	tSelField = driver->getTexture((dir + path("/textures/selfield.png")).c_str());
+	tSelFieldLinkArrows[1] = driver->getTexture((dir + path("/textures/link_marker_on_1.png")).c_str());
+	tSelFieldLinkArrows[2] = driver->getTexture((dir + path("/textures/link_marker_on_2.png")).c_str());
+	tSelFieldLinkArrows[3] = driver->getTexture((dir + path("/textures/link_marker_on_3.png")).c_str());
+	tSelFieldLinkArrows[4] = driver->getTexture((dir + path("/textures/link_marker_on_4.png")).c_str());
+	tSelFieldLinkArrows[6] = driver->getTexture((dir + path("/textures/link_marker_on_6.png")).c_str());
+	tSelFieldLinkArrows[7] = driver->getTexture((dir + path("/textures/link_marker_on_7.png")).c_str());
+	tSelFieldLinkArrows[8] = driver->getTexture((dir + path("/textures/link_marker_on_8.png")).c_str());
+	tSelFieldLinkArrows[9] = driver->getTexture((dir + path("/textures/link_marker_on_9.png")).c_str());
 	tBackGround = driver->getTexture((dir + path("/textures/bg.jpg")).c_str());
 	tBackGround_menu = driver->getTexture((dir + path("/textures/bg_menu.jpg")).c_str());
 	tCardType = driver->getTexture((dir + path("/textures/cardtype.png")).c_str());
@@ -131,15 +142,6 @@ bool ImageManager::Initial(const path dir) {
             sourceImage->drop(); // 释放源图像
         }
     }
-    if(!tBackGround_menu)
-		tBackGround_menu = tBackGround;
-	tBackGround_deck = driver->getTexture((dir + path("/textures/bg_deck.jpg")).c_str());
-	if(!tBackGround_deck)
-		tBackGround_deck = tBackGround;
-	tField[0] = driver->getTexture((dir + path("/textures/field2.png")).c_str());
-	tFieldTransparent[0] = driver->getTexture((dir + path("/textures/field-transparent2.png")).c_str());
-	tField[1] = driver->getTexture((dir + path("/textures/field3.png")).c_str());
-	tFieldTransparent[1] = driver->getTexture((dir + path("/textures/field-transparent3.png")).c_str());
 	int i = 0;
 	char buff[100];
 	for (; i < 14; i++) {
@@ -156,7 +158,6 @@ bool ImageManager::Initial(const path dir) {
 	support_types.push_back(std::string("png"));
 	support_types.push_back(std::string("bpg"));
 	image_work_path = dir;
-	ResizeTexture();
 	return true;
 }
 void ImageManager::SetDevice(irr::IrrlichtDevice* dev) {
@@ -196,7 +197,7 @@ void ImageManager::ClearTexture() {
 	tThumbLoadingMutex.unlock();
 	ClearEmoticons();
 }
-void ImageManager::ResizeTexture() {
+void ImageManager::ResizeTexture(const path dir) {
 	irr::s32 imgWidth = CARD_IMG_WIDTH * mainGame->xScale;
 	irr::s32 imgHeight = CARD_IMG_HEIGHT * mainGame->yScale;
 	irr::s32 imgWidthThumb = CARD_THUMB_WIDTH * mainGame->xScale;
@@ -208,26 +209,26 @@ void ImageManager::ResizeTexture() {
 	irr::s32 bgHeight = 640 * mainGame->yScale;
 	driver->removeTexture(tCover[0]);
 	driver->removeTexture(tCover[1]);
-	tCover[0] = GetTextureFromFile("textures/cover.jpg", imgWidth, imgHeight);
-	tCover[1] = GetTextureFromFile("textures/cover2.jpg", imgWidth, imgHeight);
+	tCover[0] = GetTextureFromFile((dir + path("textures/cover.jpg")).c_str(), imgWidth, imgHeight);
+	tCover[1] = GetTextureFromFile((dir + path("textures/cover2.jpg")).c_str(), imgWidth, imgHeight);
 	if(!tCover[1])
 		tCover[1] = tCover[0];
 	driver->removeTexture(tUnknown);
 	driver->removeTexture(tUnknownFit);
 	driver->removeTexture(tUnknownThumb);
 	driver->removeTexture(tLoading);
-	tLoading = GetTextureFromFile("textures/cover.jpg", imgWidthThumb, imgHeightThumb);
-	tUnknown = GetTextureFromFile("textures/unknown.jpg", CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
-	tUnknownFit = GetTextureFromFile("textures/unknown.jpg", imgWidthFit, imgHeightFit);
-	tUnknownThumb = GetTextureFromFile("textures/unknown.jpg", imgWidthThumb, imgHeightThumb);
+	tLoading = GetTextureFromFile((dir + path("textures/cover.jpg")).c_str(), imgWidthThumb, imgHeightThumb);
+	tUnknown = GetTextureFromFile((dir + path("textures/unknown.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
+	tUnknownFit = GetTextureFromFile((dir + path("textures/unknown.jpg")).c_str(), imgWidthFit, imgHeightFit);
+	tUnknownThumb = GetTextureFromFile((dir + path("textures/unknown.jpg")).c_str(), imgWidthThumb, imgHeightThumb);
 	driver->removeTexture(tBackGround);
-	tBackGround = GetTextureFromFile("textures/bg.jpg", bgWidth, bgHeight);
+	tBackGround = GetTextureFromFile((dir + path("textures/bg.jpg")).c_str(), bgWidth, bgHeight);
 	driver->removeTexture(tBackGround_menu);
-	tBackGround_menu = GetTextureFromFile("textures/bg_menu.jpg", bgWidth, bgHeight);
+	tBackGround_menu = GetTextureFromFile((dir + path("textures/bg_menu.jpg")).c_str(), bgWidth, bgHeight);
 	if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	driver->removeTexture(tBackGround_deck);
-	tBackGround_deck = GetTextureFromFile("textures/bg_deck.jpg", bgWidth, bgHeight);
+	tBackGround_deck = GetTextureFromFile((dir + path("textures/bg_deck.jpg")).c_str(), bgWidth, bgHeight);
 	if(!tBackGround_deck)
 		tBackGround_deck = tBackGround;
 }

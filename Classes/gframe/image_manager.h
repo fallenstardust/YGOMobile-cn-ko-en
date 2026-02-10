@@ -18,7 +18,7 @@ public:
 	bool Initial(const irr::io::path dir);
 	void SetDevice(irr::IrrlichtDevice* dev);
 	void ClearTexture();
-	void ResizeTexture();
+	void ResizeTexture(const irr::io::path dir);
 	irr::video::ITexture* GetTextureFromFile(const char* file, irr::s32 width, irr::s32 height);
 	irr::video::IImage* GetImage(int code);
 	irr::video::ITexture* GetTexture(int code, irr::s32 width, irr::s32 height);
