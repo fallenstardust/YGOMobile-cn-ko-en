@@ -122,7 +122,7 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
 //        if (layoutParams != null) {
 //            layoutParams.height = h;
 //        }
-//        imageLoader.$(outFile, cardImage, outFile.getName().endsWith(Constants.BPG), 0, null);
+//        imageLoader.$(outFile, cardImage, outFile.getName().endsWith(Constants.JPG), 0, null);
     }
 
     /**
