@@ -1592,14 +1592,14 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 	if (lfit != lflist->content.end()) {
 		switch(lfit->second) {
 		case 0:
-			driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(0, 0, 64, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, irr::core::recti(0, 0, 64, 64), 0, 0, true);
 			break;
 		case 1:
-			driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
             DrawBoldText(icFont, L"1", limitloc, 0xffffff00, 0xffffff00, true, true);
             break;
 		case 2:
-			driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
             DrawBoldText(icFont, L"2", limitloc, 0xffffff00, 0xffffff00, true, true);
 			break;
 		}
@@ -1610,7 +1610,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
     if(lfcredit != lflist->credits.end()) {
         for(auto& credit_entry : lfcredit->second) {
             auto value = credit_entry.second;
-            driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(0, 64, 64, 128), 0, 0, true);
+            driver->draw2DImage(imageManager.tLim, limitloc, irr::core::recti(0, 64, 64, 128), 0, 0, true);
             if (value > -10 || value < 100) {//数字只两个占位符（-9~99）时用攻守数字正好，否则就用更迷你的字体
                 DrawBoldText(adFont, std::to_wstring(static_cast<int>(value)), limitloc, 0xff00ffff, 0xff00ffff, true, true);
             } else {
@@ -1647,7 +1647,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 		else if(cp->second.ot & AVAIL_TCG)
 			driver->draw2DImage(imageManager.tOT, otloc, irr::core::recti(0, 64, 128, 128), 0, 0, true);
 		else if(!avail)
-			driver->draw2DImage(imageManager.tLimit, otloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, otloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
 	}
 }
 

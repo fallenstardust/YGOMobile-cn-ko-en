@@ -54,7 +54,7 @@ public:
 	irr::video::ITexture* tEquip;
 	irr::video::ITexture* tTarget;
 	irr::video::ITexture* tChainTarget;
-    irr::video::ITexture* tLimit;
+    irr::video::ITexture* tLim;
 	irr::video::ITexture* tOT;
 	irr::video::ITexture* tHand[3];
 	irr::video::ITexture* tBackGround;
@@ -62,7 +62,6 @@ public:
 	irr::video::ITexture* tBackGround_deck;
 	irr::video::ITexture* tField[2];
 	irr::video::ITexture* tFieldTransparent[2];
-	void RemoveTexture(int code);
 	path image_work_path;
     std::unordered_map<std::wstring, irr::core::recti> emoticonRects;  // 存储每个表情的位置
     std::unordered_map<std::wstring, irr::video::ITexture*> emoticons;
