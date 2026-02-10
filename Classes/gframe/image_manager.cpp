@@ -47,6 +47,7 @@ bool ImageManager::Initial(const path dir) {
 	tField[1] = driver->getTexture((dir + path("/textures/field3.png")).c_str());
 	tFieldTransparent[1] = driver->getTexture((dir + path("/textures/field-transparent3.png")).c_str());
 	ResizeTexture(dir);
+	
 	tTotalAtk = driver->getTexture((dir + path("/textures/totalAtk.png")).c_str());
 	tSelField = driver->getTexture((dir + path("/textures/selfield.png")).c_str());
 	tSelFieldLinkArrows[1] = driver->getTexture((dir + path("/textures/link_marker_on_1.png")).c_str());
@@ -210,26 +211,26 @@ void ImageManager::ResizeTexture(const path dir) {
 	irr::s32 bgHeight = 640 * mainGame->yScale;
 	driver->removeTexture(tCover[0]);
 	driver->removeTexture(tCover[1]);
-	tCover[0] = GetTextureFromFile((dir + path("textures/cover.jpg")).c_str(), imgWidth, imgHeight);
-	tCover[1] = GetTextureFromFile((dir + path("textures/cover2.jpg")).c_str(), imgWidth, imgHeight);
+	tCover[0] = GetTextureFromFile((dir + path("/textures/cover.jpg")).c_str(), imgWidth, imgHeight);
+	tCover[1] = GetTextureFromFile((dir + path("/textures/cover2.jpg")).c_str(), imgWidth, imgHeight);
 	if(!tCover[1])
 		tCover[1] = tCover[0];
 	driver->removeTexture(tUnknown);
 	driver->removeTexture(tUnknownFit);
 	driver->removeTexture(tUnknownThumb);
 	driver->removeTexture(tLoading);
-	tLoading = GetTextureFromFile((dir + path("textures/cover.jpg")).c_str(), imgWidthThumb, imgHeightThumb);
-	tUnknown = GetTextureFromFile((dir + path("textures/unknown.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
-	tUnknownFit = GetTextureFromFile((dir + path("textures/unknown.jpg")).c_str(), imgWidthFit, imgHeightFit);
-	tUnknownThumb = GetTextureFromFile((dir + path("textures/unknown.jpg")).c_str(), imgWidthThumb, imgHeightThumb);
+	tLoading = GetTextureFromFile((dir + path("/textures/cover.jpg")).c_str(), imgWidthThumb, imgHeightThumb);
+	tUnknown = GetTextureFromFile((dir + path("/textures/unknown.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
+	tUnknownFit = GetTextureFromFile((dir + path("/textures/unknown.jpg")).c_str(), imgWidthFit, imgHeightFit);
+	tUnknownThumb = GetTextureFromFile((dir + path("/textures/unknown.jpg")).c_str(), imgWidthThumb, imgHeightThumb);
 	driver->removeTexture(tBackGround);
-	tBackGround = GetTextureFromFile((dir + path("textures/bg.jpg")).c_str(), bgWidth, bgHeight);
+	tBackGround = GetTextureFromFile((dir + path("/textures/bg.jpg")).c_str(), bgWidth, bgHeight);
 	driver->removeTexture(tBackGround_menu);
-	tBackGround_menu = GetTextureFromFile((dir + path("textures/bg_menu.jpg")).c_str(), bgWidth, bgHeight);
+	tBackGround_menu = GetTextureFromFile((dir + path("/textures/bg_menu.jpg")).c_str(), bgWidth, bgHeight);
 	if(!tBackGround_menu)
 		tBackGround_menu = tBackGround;
 	driver->removeTexture(tBackGround_deck);
-	tBackGround_deck = GetTextureFromFile((dir + path("textures/bg_deck.jpg")).c_str(), bgWidth, bgHeight);
+	tBackGround_deck = GetTextureFromFile((dir + path("/textures/bg_deck.jpg")).c_str(), bgWidth, bgHeight);
 	if(!tBackGround_deck)
 		tBackGround_deck = tBackGround;
 }

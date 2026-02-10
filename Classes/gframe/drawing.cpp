@@ -845,14 +845,14 @@ void Game::DrawMisc() {
 		DrawShadowText(numFont, dInfo.str_time_left[0], Resize(595, 49, 625, 68), Resize(0, 1, 2, 0), dInfo.time_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_time_left[1], Resize(713, 49, 743, 68), Resize(0, 1, 2, 0), dInfo.time_color[1], 0xff000000, true, false);
 
-		driver->draw2DImage(imageManager.tCover[2], Resize(537, 51, 550, 70), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
-		driver->draw2DImage(imageManager.tCover[3], Resize(745, 51, 758, 70), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[2], Resize(537, 51, 550, 70), irr::core::rect<irr::s32>(0, 0,  177, 254), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[3], Resize(745, 51, 758, 70), irr::core::rect<irr::s32>(0, 0,  177, 254), 0, 0, true);
 
 		DrawShadowText(numFont, dInfo.str_card_count[0], Resize(550, 49, 575, 68), Resize(0, 1, 2, 0), dInfo.card_count_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_card_count[1], Resize(757, 49, 782, 68), Resize(0, 1, 2, 0), dInfo.card_count_color[1], 0xff000000, true, false);
 	} else {
-		driver->draw2DImage(imageManager.tCover[2], Resize(588, 48, 601, 68), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
-		driver->draw2DImage(imageManager.tCover[3], Resize(697, 48, 710, 68), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[2], Resize(588, 48, 601, 68), irr::core::rect<irr::s32>(0, 0, 177, 254), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[3], Resize(697, 48, 710, 68), irr::core::rect<irr::s32>(0, 0, 177, 254), 0, 0, true);
 
 		DrawShadowText(numFont, dInfo.str_card_count[0], Resize(600, 51, 625, 70), Resize(0, 1, 2, 0), dInfo.card_count_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_card_count[1], Resize(710, 51, 735, 70), Resize(0, 1, 2, 0), dInfo.card_count_color[1], 0xff000000, true, false);

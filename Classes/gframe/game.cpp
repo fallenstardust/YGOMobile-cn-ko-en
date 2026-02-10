@@ -602,7 +602,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wCardImg->setBackgroundColor(0xc0c0c0c0);
 	wCardImg->setVisible(false);
 	imgCard = env->addImage(Resize_Y(2, 2, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), wCardImg);
-	imgCard->setImage(imageManager.tCover[2]);
+	imgCard->setImage(imageManager.tCover[0]);
 	imgCard->setScaleImage(true);
 	imgCard->setUseAlphaChannel(true);
 
@@ -2420,9 +2420,6 @@ void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
 	ClearCardInfo(0);
-	imgCard->setImage(imageManager.tCover[2]);
-	scrCardText->setVisible(false);
-	imgCard->setScaleImage(true);
 	btnPSAU->setImage();
 	btnPSDU->setImage();
 	for(int i=0; i<=4; ++i) {
