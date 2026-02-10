@@ -6,8 +6,6 @@
 #include <unordered_map>
 #include <queue>
 #include <mutex>
-#include <list>
-#include <string>
 
 namespace ygo {
 
@@ -118,7 +116,6 @@ public:
 	irr::video::ITexture* tButton_S_pressed;
 	irr::video::ITexture* tButton_C;
 	irr::video::ITexture* tButton_C_pressed;
-    std::list<std::string> support_types;
 };
 
 extern ImageManager imageManager;

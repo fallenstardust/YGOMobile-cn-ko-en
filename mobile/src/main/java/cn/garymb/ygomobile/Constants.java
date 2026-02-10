@@ -127,11 +127,8 @@ public interface Constants {
 
     int[] CORE_SKIN_CARD_COVER_SIZE = new int[]{200, 290};
     int[] CORE_SKIN_AVATAR_SIZE = new int[]{128, 128};
-    boolean SUPPORT_BPG = true;
-    String BPG = ".bpg";
     int CARD_MAX_COUNT = 3;
-    String[] IMAGE_EX = SUPPORT_BPG ? new String[]{".bpg", ".jpg", ".png"}
-            : new String[]{".jpg", ".png"};
+    String[] IMAGE_EX = new String[]{".jpg", ".png"};
 
     String[] FILE_IMAGE_EX = new String[]{".bmp", ".jpg", ".png", ".gif"};
 

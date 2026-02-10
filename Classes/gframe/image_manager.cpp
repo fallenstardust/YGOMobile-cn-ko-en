@@ -156,9 +156,6 @@ bool ImageManager::Initial(const path dir) {
 	}
     tGSC = driver->getTexture((dir + path("/textures/extra/gsc.png")).c_str());
 	tClock = driver->getTexture((dir + path("/textures/tiktok.png")).c_str());
-	support_types.push_back(std::string("jpg"));
-	support_types.push_back(std::string("png"));
-	support_types.push_back(std::string("bpg"));
 	image_work_path = dir;
 	return true;
 }
