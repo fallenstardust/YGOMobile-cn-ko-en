@@ -1636,24 +1636,6 @@ void Game::MainLoop() {
 		driver->enableMaterial2D(true);
 		driver->getMaterial2D().ZBuffer = irr::video::ECFN_NEVER;
 
-		// 绘制背景图像
-		if(imageManager.tBackGround) {
-			driver->draw2DImage(imageManager.tBackGround, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT),
-			                    irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width,
-			                                     imageManager.tBackGround->getOriginalSize().Height));
-		}
-		if(imageManager.tBackGround_menu) {
-			driver->draw2DImage(imageManager.tBackGround_menu, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT),
-			                    irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width,
-			                                     imageManager.tBackGround->getOriginalSize().Height));
-		}
-		if(imageManager.tBackGround_deck) {
-			driver->draw2DImage(imageManager.tBackGround_deck, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT),
-			                    irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width,
-			                                     imageManager.tBackGround->getOriginalSize().Height));
-		}
-		driver->enableMaterial2D(false);
-
 		// 多线程保护：锁定互斥锁防止并发修改共享资源
 		gMutex.lock();
 
@@ -1668,23 +1650,16 @@ void Game::MainLoop() {
 			driver->clearZBuffer();                  // 清除深度缓存
 		} else if(is_building) {
 			DrawBackImage(imageManager.tBackGround_deck); // 牌组编辑界面背景
-			driver->enableMaterial2D(true);
 			DrawDeckBd();                            // 绘制牌组边框
-			driver->enableMaterial2D(false);
 		} else {
 			DrawBackImage(imageManager.tBackGround_menu); // 菜单界面背景
 		}
 
 		// 绘制用户界面及特殊效果
-		driver->enableMaterial2D(true);
 		DrawGUI();                                   // UI组件
 		DrawSpec();                                  // 特效相关
-		driver->enableMaterial2D(false);
-
 		gMutex.unlock();                             // 解锁互斥锁
-
 		playBGM();                                   // 播放背景音乐
-
 		// 控制信号帧倒计时
 		if(signalFrame > 0) {
 			signalFrame--;
@@ -2119,6 +2094,7 @@ void Game::LoadConfig() {
 	enable_log = 3;
 	//TEST BOT MODE
 	gameConf.enable_bot_mode = 1;
+	gameConf.use_image_scale_multi_thread = 1;
 }
 
 void Game::SaveConfig() {

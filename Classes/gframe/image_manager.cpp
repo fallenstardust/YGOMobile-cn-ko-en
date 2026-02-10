@@ -1,6 +1,10 @@
 #include "image_manager.h"
 #include "game.h"
+#include <cmath>
 #include <thread>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace ygo {
 
@@ -42,7 +46,6 @@ bool ImageManager::Initial(const path dir) {
 	tFieldTransparent[0] = driver->getTexture((dir + path("/textures/field-transparent2.png")).c_str());
 	tField[1] = driver->getTexture((dir + path("/textures/field3.png")).c_str());
 	tFieldTransparent[1] = driver->getTexture((dir + path("/textures/field-transparent3.png")).c_str());
-	
 	ResizeTexture(dir);
 	tTotalAtk = driver->getTexture((dir + path("/textures/totalAtk.png")).c_str());
 	tSelField = driver->getTexture((dir + path("/textures/selfield.png")).c_str());
@@ -54,8 +57,6 @@ bool ImageManager::Initial(const path dir) {
 	tSelFieldLinkArrows[7] = driver->getTexture((dir + path("/textures/link_marker_on_7.png")).c_str());
 	tSelFieldLinkArrows[8] = driver->getTexture((dir + path("/textures/link_marker_on_8.png")).c_str());
 	tSelFieldLinkArrows[9] = driver->getTexture((dir + path("/textures/link_marker_on_9.png")).c_str());
-	tBackGround = driver->getTexture((dir + path("/textures/bg.jpg")).c_str());
-	tBackGround_menu = driver->getTexture((dir + path("/textures/bg_menu.jpg")).c_str());
 	tCardType = driver->getTexture((dir + path("/textures/cardtype.png")).c_str());
 	tAvatar[0] = driver->getTexture((dir + path("/textures/me.jpg")).c_str());
 	tAvatar[1] = driver->getTexture((dir + path("/textures/opponent.jpg")).c_str());
@@ -326,7 +327,7 @@ irr::video::ITexture* ImageManager::addTexture(const char* name, irr::video::IIm
 		texture = driver->addTexture(name, srcimg);
 	} else {
 		irr::video::IImage* destimg = driver->createImage(srcimg->getColorFormat(), irr::core::dimension2d<irr::u32>(width, height));
-        imageScaleNNAA(srcimg, destimg, 1);
+		imageScaleNNAA(srcimg, destimg, mainGame->gameConf.use_image_scale_multi_thread);
 		texture = driver->addTexture(name, destimg);
 		destimg->drop();
 	}
@@ -447,7 +448,7 @@ int ImageManager::LoadThumbThread() {
 				imageManager.tThumbLoadingMutex.unlock();
 			} else {
 				irr::video::IImage *destimg = imageManager.driver->createImage(img->getColorFormat(), irr::core::dimension2d<irr::u32>(width, height));
-				imageScaleNNAA(img, destimg, 1);
+				imageScaleNNAA(img, destimg, mainGame->gameConf.use_image_scale_multi_thread);
 				img->drop();
 				imageManager.tThumbLoadingMutex.lock();
 				if(imageManager.tThumbLoadingThreadRunning)
@@ -473,7 +474,7 @@ irr::video::ITexture* ImageManager::GetTextureThumb(int code) {
 	if(code == 0)
 		return tUnknownThumb;
 	auto tit = tThumb.find(code);
-	if(tit == tThumb.end() && !1) {
+	if(tit == tThumb.end() && !mainGame->gameConf.use_image_load_background_thread) {
 		int width = CARD_THUMB_WIDTH * mainGame->xScale;
 		int height = CARD_THUMB_HEIGHT * mainGame->yScale;
 		irr::video::ITexture* texture = GetTexture(code, width, height);
@@ -514,25 +515,31 @@ irr::video::ITexture* ImageManager::GetTextureThumb(int code) {
 	else
 		return tUnknownThumb;
 }
+/**
+ * Load managed duel field texture.
+ * @return Texture pointer. Should NOT be removed nor dropped.
+ */
 irr::video::ITexture* ImageManager::GetTextureField(int code) {
 	if(code == 0)
 		return nullptr;
 	auto tit = tFields.find(code);
 	if(tit == tFields.end()) {
+		irr::s32 width = 512 * mainGame->xScale;
+		irr::s32 height = 512 * mainGame->yScale;
 		char file[256];
-		mysnprintf(file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-		irr::video::ITexture* img = driver->getTexture(file);
+		mysnprintf(file, "expansions/pics/field/%d.png", code);
+		irr::video::ITexture* img = GetTextureFromFile(file, width, height);
 		if(img == nullptr) {
-			mysnprintf(file, "field/%s/%d.jpg", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-			img = driver->getTexture(file);
+			mysnprintf(file, "expansions/pics/field/%d.jpg", code);
+			img = GetTextureFromFile(file, width, height);
 		}
 		if(img == nullptr) {
-			mysnprintf(file, "field/%s/%d.png", irr::android::getCardImagePath(mainGame->appMain).c_str(), code);
-			img = driver->getTexture(file);
+			mysnprintf(file, "pics/field/%d.png", code);
+			img = GetTextureFromFile(file, width, height);
 		}
 		if(img == nullptr) {
 			mysnprintf(file, "pics/field/%d.jpg", code);
-			img = driver->getTexture(file);
+			img = GetTextureFromFile(file, width, height);
 			if(img == nullptr) {
 				tFields[code] = nullptr;
 				return nullptr;
