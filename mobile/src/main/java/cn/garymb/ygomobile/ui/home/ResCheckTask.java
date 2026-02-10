@@ -289,6 +289,25 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
             }
+            // 移动 picsFolder 文件到 expansionsCardImagePath
+            File picsFolder = new File(mSettings.getCardImagePath());
+            if (picsFolder.exists() && picsFolder.isDirectory()) {
+                File[] picFiles = picsFolder.listFiles();
+                if (picFiles != null && picFiles.length > 0) {
+                    File expansionsFolder = new File(mSettings.getExpansionCardImagePath());
+                    if (!expansionsFolder.exists()) {
+                        expansionsFolder.mkdirs();
+                    }
+                    for (File picFile : picFiles) {
+                        File destFile = new File(expansionsFolder, picFile.getName());
+                        try {
+                            FileUtils.moveFile(picFile.getAbsolutePath(), destFile.getAbsolutePath());
+                        } catch (IOException e) {
+                            Log.e(TAG, "Failed to move file: " + picFile.getAbsolutePath(), e);
+                        }
+                    }
+                }
+            }
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);
             //根据系统语言复制特定资料文件
