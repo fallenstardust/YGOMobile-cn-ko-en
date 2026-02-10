@@ -288,6 +288,7 @@ void CIrrDeviceAndroid::handleAndroidCommand(ANDROID_APP app, int32_t cmd)
 			break;
 		case APP_CMD_PAUSE:
 			os::Printer::log("Android command APP_CMD_PAUSE", ELL_DEBUG);
+            device->Focused = false;
 			device->Paused = true;
 			break;
 		case APP_CMD_STOP:
