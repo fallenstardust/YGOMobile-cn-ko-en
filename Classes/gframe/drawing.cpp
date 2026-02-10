@@ -1185,7 +1185,7 @@ void Game::DrawSpec() {
     // 如果需要展示卡片，则进行相关绘图操作
     if(showcard) {
         // 获取当前要展示的卡片纹理
-        irr::video::ITexture* showimg = imageManager.GetTexture(showcardcode);
+        irr::video::ITexture* showimg = imageManager.GetTexture(showcardcode, true);
         if(showimg == NULL)
             return;
 

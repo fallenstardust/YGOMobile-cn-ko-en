@@ -2172,8 +2172,7 @@ void Game::ShowCardInfo(int code) {
     bool is_valid = (cit != _datas.end());
 
     // 设置卡片图片并启用自动缩放
-    imgCard->setImage(imageManager.GetTexture(code));
-    imgCard->setScaleImage(true);
+    imgCard->setImage(imageManager.GetTexture(code, true));
 
     // 根据卡牌是否存在决定如何显示名称：若存在且是替代卡则使用别名
     if (is_valid) {
