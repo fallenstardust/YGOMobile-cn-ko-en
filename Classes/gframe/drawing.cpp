@@ -1568,7 +1568,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 		lcode = code;
 
 	// 获取卡片纹理图像
-	irr::video::ITexture* img = imageManager.GetTexture(code);
+	irr::video::ITexture* img = imageManager.GetTextureThumb(code);
 	if(img == nullptr)
 		return; // 防止空指针访问导致崩溃
 
@@ -1908,10 +1908,14 @@ void Game::DrawDeckBd() {
 		driver->draw2DRectangle(Resize(806, 160, 1020, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(Resize(805, 159, 1020, 630));
 	}
-
-	// 绘制搜索结果列表项
-	for(int i = 0; i < 9 && i + scrFilter->getPos() < (int)deckBuilder.results.size(); ++i) {
+	int max_result = mainGame->gameConf.use_image_load_background_thread ? 9 : 7;
+	for(int i = 0; i < max_result && i + scrFilter->getPos() < (int)deckBuilder.results.size(); ++i) {
 		code_pointer ptr = deckBuilder.results[i + scrFilter->getPos()];
+		if(i >= 7)
+		{
+			imageManager.GetTextureThumb(ptr->second.code);
+			break;
+		}
 		if(deckBuilder.hovered_pos == 4 && deckBuilder.hovered_seq == (int)i)
 			driver->draw2DRectangle(0x80000000, Resize(806, 164 + i * 66, 1019, 230 + i * 66));
 		DrawThumb(ptr, Resize(805, 165 + i * 66),deckBuilder.filterList);
