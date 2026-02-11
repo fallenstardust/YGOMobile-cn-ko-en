@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -289,25 +290,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
                         resPath, needsUpdate);
             }
-            // 移动 picsFolder 文件到 expansionsCardImagePath
-            File picsFolder = new File(mSettings.getCardImagePath());
-            if (picsFolder.exists() && picsFolder.isDirectory()) {
-                File[] picFiles = picsFolder.listFiles();
-                if (picFiles != null && picFiles.length > 0) {
-                    File expansionsFolder = new File(mSettings.getExpansionCardImagePath());
-                    if (!expansionsFolder.exists()) {
-                        expansionsFolder.mkdirs();
-                    }
-                    for (File picFile : picFiles) {
-                        File destFile = new File(expansionsFolder, picFile.getName());
-                        try {
-                            FileUtils.moveFile(picFile.getAbsolutePath(), destFile.getAbsolutePath());
-                        } catch (IOException e) {
-                            Log.e(TAG, "Failed to move file: " + picFile.getAbsolutePath(), e);
-                        }
-                    }
-                }
-            }
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);
             //根据系统语言复制特定资料文件
@@ -320,9 +302,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         copyKorData(true);
                     } else if (language.equals(languageEnum.Spanish.name)) {
                         copyEsData(true);
-                    } else if (language.equals(languageEnum.Japanese)){
+                    } else if (language.equals(languageEnum.Japanese)) {
                         copyJpData(true);
-                    } else if (language.equals(languageEnum.Portuguese)){
+                    } else if (language.equals(languageEnum.Portuguese)) {
                         copyPtData(true);
                     } else {
                         copyEnData(true);
@@ -336,14 +318,40 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                     if (mSettings.getDataLanguage() == languageEnum.Portuguese.code) copyPtData(true);
                 }
             }
+            movePicsToExpansions();
             han.sendEmptyMessage(0);
 
             loadData();
         } catch (Exception e) {
+            Toast.makeText(mContext, "ERROR COPY: " + e, Toast.LENGTH_SHORT).show();
             Log.e(TAG, "ERROR COPY", e);
             return ERROR_COPY;
         }
         return ERROR_NONE;
+    }
+
+    // 移动 picsFolder 文件到 expansionsCardImagePath
+    public void movePicsToExpansions() {
+        File picsFolder = new File(mSettings.getCardImagePath());
+        if (picsFolder.exists() && picsFolder.isDirectory()) {
+            File[] picFiles = picsFolder.listFiles();
+            if (picFiles != null && picFiles.length > 0) {
+                File expansionsFolder = new File(mSettings.getExpansionCardImagePath());
+                if (!expansionsFolder.exists()) {
+                    expansionsFolder.mkdirs();
+                }
+                
+                try {
+                    for (File picFile : picFiles) {
+                        File destFile = new File(expansionsFolder, picFile.getName());
+                        // 执行移动操作
+                        FileUtils.moveFile(picFile.getAbsolutePath(), destFile.getAbsolutePath());
+                    }
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to move file: " + picsFolder.getAbsolutePath(), e);
+                }
+            }
+        }
     }
 
     public int copyCnData(Boolean needsUpdate) throws IOException {
