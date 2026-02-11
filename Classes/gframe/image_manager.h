@@ -11,6 +11,7 @@ namespace ygo {
 
 class ImageManager {
 private:
+	void resizeImage(irr::video::IImage* src, irr::video::IImage* dest, bool use_threading);
 	irr::video::ITexture* addTexture(const char* name, irr::video::IImage* srcimg, irr::s32 width, irr::s32 height);
 public:
 	bool Initial(const irr::io::path dir);
@@ -52,7 +53,7 @@ public:
 	irr::video::ITexture* tEquip;
 	irr::video::ITexture* tTarget;
 	irr::video::ITexture* tChainTarget;
-    irr::video::ITexture* tLim;
+	irr::video::ITexture* tLim;
 	irr::video::ITexture* tOT;
 	irr::video::ITexture* tHand[3];
 	irr::video::ITexture* tBackGround;

@@ -66,6 +66,7 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/android/android_tools.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/game.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/gframe.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/image_manager.cpp \
+				$(LOCAL_PATH)/../Classes/gframe/image_resizer.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/materials.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/menu_handler.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/netserver.cpp \
