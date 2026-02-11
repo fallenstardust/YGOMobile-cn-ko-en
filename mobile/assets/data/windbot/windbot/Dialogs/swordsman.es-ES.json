@@ -1,75 +1,75 @@
 {
   "welcome": [
     "Hola, soy un robot.",
-    "La función de IA está bajo prueba. Si encuentra algún problema, infórmelo a tiempo."
+    "Las funciones de IA están en prueba. Por favor, envía feedback inmediatamente si encuentras algún problema."
   ],
   "deckerror": [
-    "Lo siento, parece que hay algún problema con el número de {0} en mi Deck."
+    "Perdón, parece haber un problema con la cantidad de {0} en mi deck."
   ],
   "duelstart": [
-    "¡La diversión apenas comienza!",
-    "¡Te haré sonreír con este duelo!"
+    "¡El verdadero show apenas comienza! &laugh",
+    "¡Deja que los duelos traigan sonrisas! &laugh"
   ],
   "newturn": [
-    "¡Es mi turno, robo una carta!",
-    "¡Mi turno, robo una carta!",
-    "Saqué una carta."
+    "¡Es mi turno, robar! &reluctant",
+    "¡Mi turno, robar! &laugh",
+    "He robado una carta. &reluctant"
   ],
   "endturn": [
-    "La ronda ha terminado.",
-    "Mi turno ha terminado.",
-    "Tu turno."
+    "Turno finalizado. &reluctant",
+    "Mi turno ha terminado. &ridiculous",
+    "Tu turno. &reluctant"
   ],
   "directattack": [
-    "{0}, ¡Ataque directo!",
-    "{0}, ¡Ataca al oponente directamente!",
-    "{0}, El oponente está indefenzo, ¡Ataca!",
-    "{0}, ¡Ataca los Puntos de Vida del oponente!",
-    "{0}, ¡Ataca directamente los Puntos de Vida del oponente!",
-    "{0}, ¡Derrota al oponente con un ataque directo!",
-    "{0}, ¡Usa un ataque directo para derrotar al oponente!",
-    "{0}, ¡Ataca directamente para liberar tu poder!",
-    "¡Mi {0} aplastará tus Puntos de Vida!",
-    "¡Muestra tu fuerza a tus oponentes, {0}!",
-    "Ya no puedes detenerme. {0}, ¡Ataca!"
+    "{0}, ¡ataque directo! &reluctant",
+    "{0}, ¡ataque directo al oponente! &ridiculous",
+    "{0}, ¡no hay defensa, ataca! &stick_tongue",
+    "{0}, ¡ataca los Puntos de Vida del oponente! &reluctant",
+    "{0}, ¡ataque directo a los Puntos de Vida del oponente! &stick_tongue",
+    "{0}, ¡derrota al oponente con ataque directo! &ridiculous",
+    "{0}, ¡usa ataque directo para derrotar al oponente! &reluctant",
+    "{0}, ¡ataque directo y libera tu poder! &ridiculous",
+    "¡Mi {0} aplastará tus Puntos de Vida! &stick_tongue",
+    "¡Muéstrale tu poder al oponente, {0}! &reluctant",
+    "Ya no me puedes detener. {0}, ¡ataca! &stick_tongue"
   ],
   "attack": [
-    "¡{0}, Ataca a su {1}!",
-    "¡{0}, Destruye su {1}!",
-    "¡{0}, Derrota a {1}!",
-    "¡{0}, Abalánzate sobre {1}!",
-    "¡{0}, Libera tu poder sobre {1}!"
+    "{0}, ¡ataca este {1}! &reluctant",
+    "{0}, ¡destruye este {1}! &ridiculous",
+    "{0}, ¡derrota a {1}! &reluctant",
+    "{0}, ¡carga contra ese {1}! &stick_tongue",
+    "{0}, ¡libera tu poder sobre {1}! &ridiculous"
   ],
   "ondirectattack": [
-    "Eso incomoda……",
-    "¡Es solo {0}!",
-    "¿Crees que puedes derrotarme así?"
+    "Maldición……&shy",
+    "¡Solo es {0}! &despise",
+    "¿Crees que esto puede derrotarme? &despise"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "Activo {0}.",
-    "Yo uso el efecto de {0}.",
-    "Yo uso el poder de {0}."
+    "Activo {0}. &laugh",
+    "Uso el efecto de {0}. &laugh",
+    "Uso el poder de {0}. &laugh"
   ],
   "summon": [
-    "Convoco a {0}.",
-    "¡Sal, {0}!",
-    "¡Aparece, {0}!",
-    "¡Convoqué al poderoso {0}!",
-    "¡Llamo a {0} para que se una a la batalla!",
-    "Llamé a {0}.",
-    "Déjame convocar a {0}."
+    "Invoco a {0}. &cool",
+    "¡Ven, {0}! &cool",
+    "¡Aparece, {0}! &laugh",
+    "¡Invocé al poderoso {0}!",
+    "¡Llamo a {0} a unirse a la batalla! &cool",
+    "Convierto a {0}. &laugh",
+    "Déjame invocar a {0}. &cool"
   ],
   "setmonster": [
-    "Coloqué un monstruo.",
-    "He colocado un monstruo, ¿cuál será?."
+    "Coloqué un monstruo. &laugh",
+    "Coloqué un monstruo en posición boca abajo. &laugh"
   ],
   "chaining": [
-    "¡Mírame! ¡Activo {0}!",
-    "Yo uso el poder de {0}.",
-    "¡Prepárate! ¡Yo uso {0}!",
-    "No estoy de acuerdo. {0}, ¡Activado!",
-    "¡Parece que olvidaste mi {0}!",
-    "¿Has considerado que tengo {0}?"
+    "¡Mira aquí! ¡Activo {0}! &laugh",
+    "Uso el poder de {0}. &ridiculous",
+    "¡Listo! ¡Uso {0}! &laugh",
+    "No estoy de acuerdo. ¡Activa {0}! &despise",
+    "¡Parece que olvidaste mi {0}! &despise",
+    "¿Alguna vez pensaste que tuviera {0}? &despise"
   ]
 }

@@ -1,75 +1,75 @@
 {
   "welcome": [
-    "Olá, sou um robô.",
-    "A função de IA está em teste. Se encontrar algum problema, informe-o a tempo."
+    "Olá, eu sou um robô.",
+    "As funções de IA estão em teste. Por favor, envie feedback prontamente se encontrar algum problema."
   ],
   "deckerror": [
-    "Desculpe, parece que há um problema com o número de {0} no meu Deck."
+    "Desculpe, parece haver um problema com a quantidade de {0} no meu deck."
   ],
   "duelstart": [
-    "Este Deck é tão velho...",
-    "O que aconteceu com as crianças que usaram este Deck..."
+    "Este deck é tão velho……&shy",
+    "O que aconteceu com a criança que usava este deck……&surprised"
   ],
   "newturn": [
-    "É meu turno, compro uma carta!",
-    "Meu turno, compro uma carta!",
-    "Tirei uma carta muito boa."
+    "É o meu turno, comprar! &laugh",
+    "Meu turno, comprar! &stick_tongue",
+    "Eu comprei uma carta. &shy"
   ],
   "endturn": [
-    "A rodada terminou.",
-    "Meu turno terminou.",
-    "Agora é sua vez."
+    "Turno finalizado. &laugh",
+    "Meu turno acabou. &sneaky",
+    "Seu turno. &laugh"
   ],
   "directattack": [
-    "{0}, ataque direto!",
-    "{0}, ataca diretamente o oponente!",
-    "{0}, o oponente está indefeso, ataca!",
-    "{0}, ataque os pontos de vida do oponente!",
-    "{0}, ataque diretamente os pontos de vida do oponente!",
-    "{0}, derrote o oponente com um ataque direto!",
-    "{0}, use um ataque direto para derrotar o oponente!",
-    "{0}, ataque diretamente para liberar seu poder!",
-    "Meu {0} vai esmagar seus pontos de vida!",
-    "Mostre sua força aos seus oponentes, {0}!",
-    "Agora você não pode me parar. {0}, ataque!"
+    "{0}, ataque direto! &cool",
+    "{0}, ataque direto ao oponente! &laugh",
+    "{0}, não há defesa, ataque! &cool",
+    "{0}, ataque os Pontos de Vida do oponente! &rage",
+    "{0}, ataque direto aos Pontos de Vida do oponente! &stick_tongue",
+    "{0}, derrote o oponente com ataque direto! &laugh",
+    "{0}, use ataque direto para derrotar o oponente! &laugh",
+    "{0}, ataque direto e liberte seu poder! &cool",
+    "Meu {0} vai esmagar seus Pontos de Vida! &rage",
+    "Mostre seu poder ao oponente, {0}! &cool",
+    "Você não pode me parar mais. {0}, ataque! &rage"
   ],
   "attack": [
-    "¡{0}, ataque ao {1}!",
-    "¡{0}, destrua o {1}!",
-    "¡{0}, derrote o {1}!",
-    "¡{0}, avance sobre o {1}!",
-    "¡{0}, libere seu poder sobre o {1}!"
+    "{0}, ataque este {1}! &cool",
+    "{0}, destrua este {1}! &laugh",
+    "{0}, derrote {1}! &cool",
+    "{0}, avance contra aquele {1}! &laugh",
+    "{0}, liberte seu poder em {1}! &cool"
   ],
   "ondirectattack": [
-    "Odiado...",
-    "É só {0}!",
-    "Ejem..."
+    "Droga……&shy",
+    "É só {0}! &despise",
+    "Cofa cofa……&sneaky"
   ],
   "facedownmonstername": "Monstro",
   "activate": [
-    "Ativo {0}.",
-    "Uso o efeito de {0}.",
-    "Uso o poder de {0}."
+    "Eu ativo {0}. &laugh",
+    "Eu uso o efeito de {0}. &good",
+    "Eu uso o poder de {0}. &angry"
   ],
   "summon": [
-    "Convoco {0}.",
-    "Saia, {0}!",
-    "Apareça, {0}!",
-    "Convoco o poderoso {0}!",
-    "Chamo {0} para se juntar à batalha!",
-    "Chamei {0}.",
-    "Deixe-me convocar {0}."
+    "Eu invoco {0}. &good",
+    "Venha, {0}! &surprised",
+    "Apareça, {0}! &laugh",
+    "Eu invoquei o poderoso {0}! &good",
+    "Eu chamo {0} para participar da batalha! &angry",
+    "Eu convoco {0}. &good",
+    "Deixe-me invocar {0}. &laugh"
   ],
   "setmonster": [
-    "Coloquei um monstro.",
-    "Coloquei um monstro, se atreva a atacá-lo."
+    "Eu coloquei um monstro. &shy",
+    "Eu coloquei um monstro em posição de rosto para baixo. &shy"
   ],
   "chaining": [
-    "Hahaha! Ativo {0}!",
-    "Uso o poder de {0}.",
-    "Prepare-se! Uso {0}!",
-    "Não concordo. {0}, ativado!",
-    "Parece que você esqueceu do meu {0}!",
-    "Você considerou que eu tenho {0}?"
+    "Olhe aqui! Eu ativo {0}! &laugh",
+    "Eu uso o poder de {0}. &laugh",
+    "Pronto! Eu uso {0}! &good",
+    "Eu não concordo. Ative {0}! &sneaky",
+    "Parece que você esqueceu do meu {0}! &confused",
+    "Você pensou que eu tinha {0}? &sneaky"
   ]
 }

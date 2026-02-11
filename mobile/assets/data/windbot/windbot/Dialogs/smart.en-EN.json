@@ -1,43 +1,43 @@
 {
-"welcome": [
-"Hello, I'm so handsome."
-],
-"deckerror": [
-"Sorry, there seems to be a problem with the number of {0} in my deck.&sneaky"
-],
-"duelstart": [
-"Let's have a fair duel (Dragon Hidden in the Crotch)&ridiculous"
-],
-"newturn": [
-"Next is my stage&cool"
-],
-"endturn": [
-"Everyone has different goals. I focus more on strength. I just want to win.&ridiculous"
-],
-"directattack": [
-"I'm here to kill you!&rage"
-],
-"attack": [
-"Disappear, trash&cool"
-],
-"ondirectattack": [
-"Dad, spare my life&bawl",
-"So scary&surprised"
-],
-"facedownmonstername": "Monster",
-"activate": [
-"I activate the effect of this card. Although it's not written on it, it can be used like this.&ridiculous"
-],
-"summon": [
-"Strong, invincible&good",
-"Summon {0}, make a fortune&stick_tongue",
-"{0} is a fake card&reluctant",
-"I always like {0}&cool"
-],
-"setmonster": [
-"It's stuck again&obedient"
-],
-"chaining": [
-"Stupid, watch me counter it&sneaky"
-]
+  "welcome": [
+    "Hello, I'm way too handsome."
+  ],
+  "deckerror": [
+    "Sorry, there seems to be an issue with the number of {0} in my deck. &sneaky"
+  ],
+  "duelstart": [
+    "Let's have an upright duel (hiding a dragon in my pants) &ridiculous"
+  ],
+  "newturn": [
+    "Now it's my stage &cool"
+  ],
+  "endturn": [
+    "Everyone has different goals; I care more about power, I just want to win. &ridiculous"
+  ],
+  "directattack": [
+    "I'm coming for you, gonna take your life &rage"
+  ],
+  "attack": [
+    "Vanish, fodder &cool"
+  ],
+  "ondirectattack": [
+    "Dad, spare me &bawl",
+    "So terrifying &surprised"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "This card's effect, even though it's not written on it, can be used like this anyway. &ridiculous"
+  ],
+  "summon": [
+    "OP, invincible &good",
+    "Summon {0}, huge profit &stick_tongue",
+    "{0} is basically a fake card &reluctant",
+    "I will always love {0} &cool"
+  ],
+  "setmonster": [
+    "Bricked again &obedient"
+  ],
+  "chaining": [
+    "Foolish, watch me counter your every move &sneaky"
+  ]
 }

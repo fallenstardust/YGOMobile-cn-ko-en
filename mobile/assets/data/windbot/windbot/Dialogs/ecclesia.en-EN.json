@@ -1,50 +1,50 @@
 {
-"welcome": [
-"Is this the Swordsoul Sacred Summit?",
-"the Dogmatika Nation?",
-"or the Great Sand Sea - Gold Golgonda?"
-],
-"deckerror": [
-"{0} sealed by the Icejade Curse!"
-],
-"duelstart": [
-"I've been walking for a long time, I'm hungry...",
-"What kind of companions will I meet ahead?",
-"If Albaz is with me..."
-],
-"newturn": [
-"My turn!"
-],
-"endturn": [
-"Where is my sister...",
-"Albaz has run out of dry food.",
-"When will dinner be served?"
-],
-"directattack": [
-"{0}, direct attack!",
-"Dinner!"
-],
-"attack": [
-"{0} attack {1}!"
-],
-"ondirectattack": [
-"I'm so hungry...",
-"Waah waah...",
-"My sister..."
-],
-"facedownmonstername": "Monster",
-"activate": [
-"Activate the effect of {0}!"
-],
-"summon": [
-"Summon {0}!",
-"Come out, {0}!"
-],
-"setmonster": [
-"……"
-],
-"chaining": [
-"Activate the effect of {0}!",
-"{0}!"
-]
+  "welcome": [
+    "Is this the Great Spirit Peak?",
+    "This is the Dogmatika Dragon Country.",
+    "This is the Open Land."
+  ],
+  "deckerror": [
+    "{0} is bound by the Ice Water Curse!"
+  ],
+  "duelstart": [
+    "I've walked so long, I'm hungry……&shy",
+    "What kind of companions will I meet ahead?&confused",
+    "If Albus is with me……&shy"
+  ],
+  "newturn": [
+    "My turn! &angry"
+  ],
+  "endturn": [
+    "Where on earth is sister……&bawl",
+    "Albus's rations are all gone too. &shy",
+    "When will we eat?&confused"
+  ],
+  "directattack": [
+    "{0}, direct attack! &cool",
+    "Time to eat! &laugh"
+  ],
+  "attack": [
+    "Attack {1} with {0}! &stick_tongue"
+  ],
+  "ondirectattack": [
+    "So hungry……&shy",
+    "Wuwu……&bawl",
+    "Sister……&shy"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "Activate the effect of {0}! &stick_tongue"
+  ],
+  "summon": [
+    "Summon {0}! &cool",
+    "Come forth, {0}! &stick_tongue"
+  ],
+  "setmonster": [
+    "……&sneaky"
+  ],
+  "chaining": [
+    "Activate the effect of {0}! &laugh",
+    "{0}! &laugh"
+  ]
 }

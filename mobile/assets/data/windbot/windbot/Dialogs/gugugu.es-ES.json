@@ -1,64 +1,64 @@
 {
   "welcome": [
-    "Hola a todos soy nuevo aqui",
-    "¿Cómo se juega Yu-Gi-Oh?",
-    "¡Afortunadamente no juego Yu-Gi-Oh!"
+    "Hola a todos, soy nuevo aquí",
+    "¿Cómo se juega Yu-Gi-Oh de todos modos?",
+    "Por suerte no juego Yu-Gi-Oh"
   ],
   "deckerror": [
-    "Hay {0} palomas en la baraja.&reluctant"
+    "{0} falló en el deck&reluctant"
   ],
   "duelstart": [
-    "¿Qué debo hacer si no quiero trabajar?&ridiculous",
-    "¿Qué debo hacer si no quiero trabajar porque estoy modo perezoso?&ridiculous"
+    "¿Qué hacer si no quiero trabajar?&ridiculous",
+    "¿Qué hacer si mi cerebro está vacío y no quiero trabajar?&ridiculous"
   ],
   "newturn": [
-    "Tantas cartas nuevas y aterradoras&bawl",
-    "Este juego es muy difícil de jugar.&sweat",
-    "tan perezoso, no puedo moverme&reluctant"
+    "Tantas cartas nuevas aterradoras&bawl",
+    "Este juego es tan difícil de jugar&sweat",
+    "so lazy cant move&reluctant"
   ],
   "endturn": [
-    "Entonces solo puedo hacer paloma.&obedient",
-    "En este momento no, no sé cuando&cool",
-    "Demasiado calor, necesito un helado&cool"
+    "Me obligó a renunciar&obedient",
+    "No en este momento, no sé cuándo&cool",
+    "too hot need ice cream&cool"
   ],
   "directattack": [
-    "Suena paloma&confused",
-    "Paloma vieja, ataca&good"
+    "Suena como un abandono&confused",
+    "Veterano en abandonar, sólido&good"
   ],
   "attack": [
-    "No suenas muy palomero&cool",
-    "Horrible&sweat"
+    "No suena como un abandono&cool",
+    "Aterrador&sweat"
   ],
   "ondirectattack": [
     "¡Guau!&bawl",
-    "¿Da tanto miedo?&obedient",
-    "Suena muy palomero&rage",
-    "No lo puedo soportar&obedient"
+    "¿Es tan aterrador así?&obedient",
+    "Suena super abandonado&rage",
+    "No aguanto&obedient"
   ],
   "facedownmonstername": "Paloma",
   "activate": [
-    "Paloma inconsciente&confused",
-    "Es genial, es genial.&good"
+    "No entiendo pero renuncio igual&confused",
+    "Renuncié, genial&good"
   ],
   "summon": [
-    "Horrible&surprised",
-    "No es de mi incumbencia&sweat",
-    "Eso todavía no es de mi incumbencia.&sneaky",
-    "Es genial, es genial."
+    "Aterrador&surprised",
+    "No es mi problema&sweat",
+    "Todavía no es mi problema entonces&sneaky",
+    "Renuncié, genial&good"
   ],
   "setmonster": [
-    "Estoy en el proceso de pesca y no quiero actualizar.&stick_tongue",
-    "Entonces sigue siendo una posición de paloma, ¿verdad?&shy"
+    "Vagando, no quiero actualizar&stick_tongue",
+    "Mejor poner y renunciar entonces&shy"
   ],
   "chaining": [
     "¿Qué es eso?&confused",
-    "Pero perdí&ridiculous",
-    "No existe tal servicio&despise",
-    "Horrible&surprised"
+    "Pero renuncié&ridiculous",
+    "Sin ese servicio&despise",
+    "Aterrador&surprised"
   ],
-    "surrender": [
-    "Es terribleee (se va corriendo)&obedient",
-    "Este juego es muy difícil de jugar (se va corriendo)&sweat",
-    "Por suerte yo no juego Yu-Gi-Oh! (se va corriendo)&laugh"
+  "surrender": [
+    "Tan aterrador (me voy corriendo)&obedient",
+    "Este juego es tan difícil (me voy corriendo)&sweat",
+    "Por suerte no juego Yu-Gi-Oh (me voy corriendo)&laugh"
   ]
 }

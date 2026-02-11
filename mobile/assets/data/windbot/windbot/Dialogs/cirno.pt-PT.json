@@ -1,64 +1,64 @@
 {
   "welcome": [
-    "Sou Cirno, a garota mais forte!",
-    "A função IA está em teste. Se encontrar algum problema, informe a tempo.",
-    "Você está pronto para o duelo?"
+    "Eu sou a mais forte!",
+    "As funções de IA estão em teste. Por favor, envie feedback se encontrar problemas.",
+    "O que é um Sapo Pastel? É gostoso?"
   ],
   "deckerror": [
     "Por que não posso usar meu {0}?"
   ],
   "duelstart": [
-    "Eu vou te congelar!",
-    "O duelo começou!"
+    "Deixe eu congelar você! &angry",
+    "Derrotar humanos não é nada, eu sozinha sou suficiente! &angry"
   ],
   "newturn": [
-    "De qualquer forma, vou mostrar que sou forte!",
-    "É minha vez, compro!"
+    "Apesar de repentino, seja derrotado por mim! &stick_tongue",
+    "Meu turno, comprar! &laugh"
   ],
   "endturn": [
-    "Acabou o turno!",
-    "Eu te disse que era o final do seu turno!"
+    "Eu poupo sua vida! &sneaky",
+    "Congele até morrer sob minha seriedade! &angry"
   ],
   "directattack": [
-    "{0}, Ataque direto!",
-    "Acabe com ele de um só golpe!",
-    "Ataque direto ao oponente!",
-    "É um ataque direto!",
-    "Tipo 9! Explosão divina!",
-    "Talismã de Gelo 「Tempestade de Diamantes」"
+    "{0}, ataque direto! &cool",
+    "Você não resiste a um golpe! &stick_tongue",
+    "Os fracos são batidos! &despise",
+    "Preguiçosa de calcular, só atacar! &cool",
+    "Super ⑨ Golpe Tyrano Divino Marcial! &angry",
+    "Snow Sign「Diamond Blizzard」"
   ],
   "attack": [
-    "¡{0}, Ataca o {1} dele!",
-    "¡{0}, Destrua o {1} dele!!",
-    "¡{0}, Derrote {1}!",
-    "Talismã de Gelo 「Queda do Pingente de Gelo」"
+    "{0}, ataque este {1}! &rage",
+    "{0}, destrua este {1}! &cool",
+    "{0}, derrote {1}! &rage",
+    "Ice Sign「Icicle Fall」&obedient"
   ],
   "ondirectattack": [
-    "¡Puaj! ¿¡Por que você faz isso com uma mulher!?",
-    "{0}.....",
-    "Eu não consigo aguentar tanto!"
+    "Não brinque comigo～. Vou te congelar junto com a carne inglesa!! &rage",
+    "Um simples {0}, o que há de assustador! &stick_tongue",
+    "Tolos não pegam resfriado! &ridiculous"
   ],
   "facedownmonstername": "Monstro",
   "activate": [
-    "Eu gostaria de ativar {0}.",
-    "Ativarei o efeito de {0}.",
-    "{0} Ativado!"
+    "Eu ativo {0}. &sneaky",
+    "Eu uso o efeito de {0}. &stick_tongue",
+    "Meu {0} é o mais forte! &good"
   ],
   "summon": [
-    "Invoco {0}.",
-    "Saia, {0}!",
-    "{0} Eu te invoco!",
-    "Invoco meu monstro {0}!",
-    "Apresente-se, {0}!"
+    "Eu invoco {0}. &cool",
+    "Venha, {0}! &surprised",
+    "Apareça, {0}! &surprised",
+    "Eu invoco o poderoso {0}! &cool",
+    "Eu chamo {0}. &stick_tongue"
   ],
   "setmonster": [
-    "Eu gostaria de colocar este monstro.",
-    "Eu aposto neste monstro!"
+    "Eu coloquei um monstro. &sneaky",
+    "Venha me atacar se não tem medo de morrer! &cool"
   ],
   "chaining": [
-    "Te peguei! {0} Ativado!",
-    "Eu gostaria de ativar {0}.",
-    "{0} Ativado!",
-    "Talismã de Gelo 「Congelamento Perfeito」」"
+    "Olha aqui! Eu ativo {0}! &rage",
+    "Eu uso o poder de {0}. &laugh",
+    "Treme diante do meu {0}! &despise",
+    "Freeze Sign「Perfect Freeze」&surprised"
   ]
 }

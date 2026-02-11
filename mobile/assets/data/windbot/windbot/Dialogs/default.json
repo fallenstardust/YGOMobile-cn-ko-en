@@ -1,74 +1,79 @@
 {
   "welcome": [
-    "Hi, I'm WindBot."
+    "Hello, I am a windbot.",
+    "AI functions are under testing. Please provide feedback promptly if you encounter any issues."
   ],
   "deckerror": [
-    "Sorry, it seems that I have too much {0} in my deck."
+    "Sorry, there seems to be an issue with the number of {0} in my deck."
   ],
   "duelstart": [
-    "It's time to duel!",
-    "Good luck, and have fun!"
+    "The real show is just beginning! &good",
+    "Let duels bring smiles! &laugh"
   ],
   "newturn": [
-    "It's my turn! Draw!",
-    "My turn. Draw!",
-    "I draw!"
+    "It's my turn, draw! &reluctant",
+    "My turn, draw! &laugh",
+    "I drew a card. &stick_tongue"
   ],
   "endturn": [
-    "I end my turn.",
-    "My turn is over.",
-    "It's your turn."
+    "Turn end. &shy",
+    "My turn is over. &stick_tongue",
+    "Your turn. &reluctant"
   ],
   "directattack": [
-    "{0}, direct attack!",
-    "{0}, attack them directly!",
-    "You're defenseless. Attack, {0}!",
-    "{0}, attack their life points!",
-    "{0}, attack their life points directly!",
-    "{0}, unleash your power!",
-    "My {0} will decimate your life points!",
-    "Behold the power of my {0}!",
-    "You can't stop me! {0}, attack!"
+    "{0}, direct attack! &rage",
+    "{0}, direct attack the opponent! &cool",
+    "{0}, there's no defense, attack! &rage",
+    "{0}, attack the opponent's Life Points! &ridiculous",
+    "{0}, direct attack the opponent's Life Points! &cool",
+    "{0}, defeat the opponent with a direct attack! &ridiculous",
+    "{0}, use direct attack to defeat the opponent! &rage",
+    "{0}, direct attack and unleash your power! &laugh",
+    "My {0} will crush your Life Points! &laugh",
+    "Show your power to the opponent, {0}! &cool",
+    "You can't stop me anymore. {0}, attack! &cool"
   ],
   "attack": [
-    "{0}, attack their {1}!",
-    "{0}, destroy their {1}!",
-    "My {0} will annihilate your {1}!",
-    "Your {1} is no match for my {0}!",
-    "{0}, unleash your power on their {1}!"
+    "{0}, attack this {1}! &reluctant",
+    "{0}, destroy this {1}! &rage",
+    "{0}, defeat {1}! &ridiculous",
+    "{0}, charge at that {1}! &laugh",
+    "{0}, unleash your power onto {1}! &rage"
   ],
   "ondirectattack": [
-    "Argh...!",
-    "Just {0}...",
-    "You think that's enough to defeat me?",
-    "It's just a scratch!"
+    "Damn it……&despise",
+    "It's just {0}! &rage",
+    "Do you think this can defeat me? &reluctant"
   ],
-  "facedownmonstername": "monster",
+  "facedownmonstername": "Monster",
   "activate": [
-    "I activate {0}!",
-    "I'll use {0}."
+    "I activate {0}. &ridiculous",
+    "I use the effect of {0}. &cool",
+    "I use the power of {0}. &laugh"
   ],
   "summon": [
-    "I summon {0}!",
-    "Come on, {0}!",
-    "Appear, {0}!",
-    "{0}, show yourself!"
+    "I summon {0}. &cool",
+    "Come forth, {0}! &stick_tongue",
+    "Appear, {0}! &laugh",
+    "I summoned the mighty {0}!",
+    "I call {0} to join the battle! &cool",
+    "I call forth {0}. &shy",
+    "Let me summon {0}. &stick_tongue"
   ],
   "setmonster": [
-    "I set a monster face-down.",
-    "Whatever could this monster be?",
-    "Attack this monster, I dare you!"
+    "I set a monster. &shy",
+    "I set a monster in face-down position. &sneaky"
   ],
   "chaining": [
-    "Not so fast! I activate {0}!",
-    "Before you do that, I'll chain {0}!",
-    "Nice try, but I have {0}!",
-    "Didn't expect {0}, did you?"
+    "Look here! I activate {0}! &ridiculous",
+    "I use the power of {0}. &cool",
+    "Ready! I use {0}! &surprised",
+    "I disagree. Activate {0}! &sneaky",
+    "Looks like you forgot about my {0}! &confused",
+    "Did you consider I have {0}? &reluctant"
   ],
   "surrender": [
-    "I surrender.",
-    "You win this time.",
-    "I can't win this duel.",
-    "Good game."
+    "I surrender. &obedient",
+    "I concede your victory. &good"
   ]
 }

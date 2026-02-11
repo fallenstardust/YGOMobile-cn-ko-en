@@ -1,76 +1,77 @@
 {
   "welcome": [
     "¡¡¡Me encontraste!!!",
-    "Vamos a batirnos en un duelo"
+    "¡Vamos a duelar!"
   ],
   "deckerror": [
-    "Ah, tal vez FallenStardust reparó el CBD nuevamente y {0} desapareció."
+    "Ah, quizás el BA haya roto el CBD de nuevo, haciendo que {0} desaparezca."
   ],
   "duelstart": [
-    "Esto es solo un duelo vs la IA, no estés muy feliz si ganas.",
-    "Muchas gracias al servidor 233 por permitirnos tener juegos para dueliar, no olvides visitarnos.",
-    "Para cursos anti-convencionales, comuníquese con NOVA."
+    "Esto es solo una IA, no te alegrés demasiado si ganas. &despise",
+    "Muchas gracias al Servidor 233 por dejarnos tener un juego para jugar, no olvides visitarlos. &good",
+    "Para la Academia Anti-Meta, contacta con NOVA. &cool"
   ],
   "newturn": [
-    "¡Es mi turno, robo una carta!",
-    "¡Mi turno, robo una carta!",
-    "Saqué una carta."
+    "¡Es mi turno, robar! &reluctant",
+    "¡Mi turno, robar! &stick_tongue",
+    "He robado una carta. &cool"
   ],
   "endturn": [
-    "La ronda ha terminado.",
-    "Mi turno ha terminado.",
-    "¿Se considera esto un desarrollo exitoso...?",
-    "Es tu turno. Tu siguiente frase es... Quiero activar Gray Flow Rei, ¿verdad?"
+    "Turno finalizado. &reluctant",
+    "Mi turno ha terminado. &cool",
+    "¿Esto contó como una combinación exitosa......&obedient",
+    "Tu turno. Tu próxima frase es......¡Voy a activar Ash Blossom, ¿verdad! &reluctant"
   ],
   "directattack": [
-    "{0}, ¡Ataca directo!",
-    "{0}, ¡Ataca al oponente directamente!",
-    "{0}, !Está indefenso, ¡Ataca!",
-    "{0}, ¡Ataca los Puntos de Vida del oponente!",
-    "{0}，¡Ataca directamente los Puntos de Vida del oponente!",
-    "{0}，¡Derrota a tu oponente con ataques directos!",
-    "{0}，¡Usa ataques directos para derrotar a tus oponentes!",
-    "{0}，¡Ataca directamente para liberar tu poder!",
-    "¡Mi {0} aplastará tus Puntos de Vida!",
-    "¡Muestra tu fuerza a tus oponentes, {0}!",
-    "Ya no puedes detenerme. {0}, ¡Atacaaa!"
+    "{0}, ¡ataque directo! &cool",
+    "{0}, ¡ataque directo al oponente! &reluctant",
+    "{0}, ¡no hay defensa, ataca! &stick_tongue",
+    "¡Llamo a {0} a unirse a la batalla! &ridiculous",
+    "{0}, ¡ataca los Puntos de Vida del oponente! &rage",
+    "{0}, ¡ataque directo a los Puntos de Vida del oponente! &laugh",
+    "{0}, ¡derrota al oponente con ataque directo! &rage",
+    "{0}, ¡usa ataque directo para derrotar al oponente! &cool",
+    "{0}, ¡ataque directo y libera tu poder! &stick_tongue",
+    "¡Mi {0} aplastará tus Puntos de Vida! &laugh",
+    "¡Muéstrale tu poder al oponente, {0}! &cool",
+    "Ya no me puedes detener. {0}, ¡ataca! &reluctant"
   ],
   "attack": [
-    "¡{0}, Ataca a su {1}!",
-    "¡{0}, Destruye a su {1}!",
-    "¡{0}, Derrota a {1}!",
-    "¡{0}, Destroza a su {1}!",
-    "{0}, ¡Libera tu poder sobre {1}!"
+    "{0}, ¡ataca este {1}! &reluctant",
+    "{0}, ¡destruye este {1}! &rage",
+    "{0}, ¡derrota a {1}! &cool",
+    "{0}, ¡carga contra ese {1}! &laugh",
+    "{0}, ¡libera tu poder sobre {1}! &cool"
   ],
   "ondirectattack": [
-    "Te odio....",
-    "¡Es solo {0}!",
-    "Efectivamente, todavía estoy demasiado débil..."
+    "Maldición......&sneaky",
+    "¡Solo es {0}! &obedient",
+    "Supongo que aún soy demasiado débil......&sweat"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "Lanzo {0}.",
-    "Utilizo el efecto de {0}.",
-    "Utilizo el poder de {0}."
+    "Activo {0}. &stick_tongue",
+    "Uso el efecto de {0}. &cool",
+    "Uso el poder de {0}. &laugh"
   ],
   "summon": [
-    "¡Es realmente el una bendición que te puedas deleitar con su grandeza! Sal {0}.",
-    "¡Sal, {0}!",
-    "¡Preséntate, {0}!",
-    "¡Convoqué al poderoso {0}!",
-    "¡Llamo a {0} para unirse a la batalla!",
-    "Llamo a {0}.",
-    "Convoco a {0}."
+    "¡Este es el pináculo del high! ¡Ven, {0}. &stick_tongue",
+    "¡Ven, {0}! &stick_tongue",
+    "¡Aparece, {0}! &cool",
+    "¡Invocé al poderoso {0}! &stick_tongue",
+    "¡Llamo a {0} a unirse a la batalla! &ridiculous",
+    "Convierto a {0}. &laugh",
+    "Invoco a {0}. &cool"
   ],
   "setmonster": [
-    "Coloqué un monstruo, ¿quién será?.",
-    "Coloqué un monstruo, ¿a que no te atreves a atacarlo?."
+    "Coloqué un monstruo. &stick_tongue",
+    "Coloqué un monstruo en posición boca abajo. &stick_tongue"
   ],
   "chaining": [
-    "¡Sorpresa! ¡Activo {0}!",
-    "Utilizo el poder de {0}.",
-    "Muy buena táctica... ¡Pero no daré mi brazo a torcer tan facilmente! ¡Activo {0}!",
-    "¡Parece que olvidaste mi {0}!",
-    "¿Has considerado que tengo {0}?"
+    "¡Mira aquí! ¡Activo {0}! &stick_tongue",
+    "Uso el poder de {0}. &ridiculous",
+    "Buena táctica... ¡pero me niego! {0}! &sneaky",
+    "¡Parece que olvidaste mi {0}! &reluctant",
+    "¿Alguna vez pensaste que tuviera {0}? &sneaky"
   ]
 }

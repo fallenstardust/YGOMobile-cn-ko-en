@@ -1,54 +1,54 @@
 {
   "welcome": [
-    "Ah~~ quiero dormir~",
-    "¿Quieres unirte a un gremio?",
-    "Actualmente estamos probando la IA. Si hay algún problema, infórmalo."
+    "Ahh~~ ¡Déjame dormir un poco más~",
+    "¿Quieres unirte a la hermandad?",
+    "Las funciones de IA están en prueba. Por favor, envía feedback inmediatamente si encuentras algún problema."
   ],
   "deckerror": [
-    "{0} no es adecuado para tu Deck actual. ¡cámbialo!"
+    "No puedo usar {0} en mi deck, voy a volver a dormir."
   ],
   "duelstart": [
-    "Tengo sueño… …",
-    "Ay, parece que puedes ver muy bien el otro lado."
+    "Tan somnoliento……",
+    "Vaya, el oponente parece muy fuerte. &stick_tongue"
   ],
   "newturn": [
-    "¡Mi turno, robo!",
-    "¡Reponga el poder mágico!"
+    "¡Mi turno, robar！&stick_tongue",
+    "¡Recarga de Maná！&cool"
   ],
   "endturn": [
-    "¿Y si no quiero trabajar…?",
-    "Hagamos esto, es tu turno."
+    "¿Qué hago si no quiero trabajar……&sweat",
+    "Así es, es tu turno. &sweat"
   ],
   "directattack": [
-    "{0}, ¡Ataque directo!",
-    "Eso es eso y esto es esto. ¡Ataque directo!",
-    "Vamos, tengo que volver a dormir."
+    "{0}, ¡ataque directo！&cool",
+    "¿Eso es todo? ¡Ataque directo！&stick_tongue",
+    "Aléjate, voy a volver a dormir. &sweat"
   ],
   "attack": [
-    "¡{0}! ¡Ataqua a {1}!",
-    "¡{0}! ¡Derrota a {1}!"
+    "{0}, ¡ataque a {1}！&reluctant",
+    "{0}, ¡derrota a {1} en mi lugar！"
   ],
   "ondirectattack": [
-    "Café helado……",
-    "Ahhh...",
-    "{0}, es terrible...",
-    "Estoy cansado……"
+    "Ahh……&shy",
+    "Ahhh……&shy",
+    "{0} es tan aterrador……&shy",
+    "Estoy cansado……&shy"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "{0} ¡Efecto activado!"
+    "¡Efecto de {0} activado！&stick_tongue"
   ],
   "summon": [
-    "{0} ¡Invocado!",
-    "Sal ¡{0}!",
-    "{0}, sal y ayúdame."
+    "¡Invoco a {0}！&cool",
+    "¡Ven, {0}！&stick_tongue",
+    "{0}, ven a ayudarme. &reluctant"
   ],
   "setmonster": [
-    "……"
+    "……&confused"
   ],
   "chaining": [
-    "{0} ¡Activado!",
-    "¡Espera un minuto, voy a activar {0}!",
-    "Si {0} no estuviera allí, casi me habría quedado dormido."
+    "¡Activo {0}！&ridiculous",
+    "Espera, activo {0}. &ridiculous",
+    "Si no fuera por {0}, estaría casi durmiendo. &confused"
   ]
 }

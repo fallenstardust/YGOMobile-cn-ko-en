@@ -1,70 +1,64 @@
 {
   "welcome": [
-    "안녕, 내 알바 아니지만.",
-	"모두 내가 할 줄 안다고 하겠지만, 나는 비둘기야. 구구구구",
-	"당연하겠지만 유희왕 인합니다."
+    "모두 안녕하세요, 새내기입니다",
+    "유희왕 어떻게 하는 거지?",
+    "다행히 나 유희왕 안 해"
   ],
   "deckerror": [
-    "덱에 {0}이(가) 들어가있다.&reluctant"
+    "덱에 {0}이 빠졌어&reluctant"
   ],
   "duelstart": [
-    "구구구구&obedient",
-	"IQ 충전&ridiculous",
-	"유희왕... 게임 방법&ridiculous"
+    "일하기 싫어 어떡하지&ridiculous",
+    "머리가 안 돌아가고 일하기 싫어 어떡하지&ridiculous"
   ],
   "newturn": [
-    "진행 하시죠.&bawl",
-	"이 게임은 너무 어려워&sweat",
-	"So lazy can't move&reluctant"
+    "무서운 신규 카드가 너무 많아&bawl",
+    "이 게임 너무 어려워&sweat",
+    "so lazy cant move&reluctant"
   ],
   "endturn": [
-  "비둘기개 됄거야. 구구구구&obedient",
-    "구구구구&obedient",
-	"IQ 상실, 기억도 상실&cool",
-	"더 이상은 몰라요오오오오오&cool"
+    "어쩔 수 없이 빠지기밖에 없었어&obedient",
+    "이때가 아니고, 언제인지 몰라&cool",
+    "too hot need ice cream&cool"
   ],
   "directattack": [
-    "완전 비둘기네요.&confused",
-	"비둘기같은 녀석&good",
-	"∠(:>」∠)_ 233 서버 조정이 될 때까지 기다려주십시오.&good"
+    "빠질 것 같아&confused",
+    "베테랑 빠짐꾼, 안정적이네&good"
   ],
   "attack": [
-    "비둘기 공격!&cool",
-    "구구구구&obedient",
-	"존나좋군.&sweat"
+    "빠질 것 같지 않은데&cool",
+    "무서워&sweat"
   ],
   "ondirectattack": [
-    "Go!&bawl",
-	"비둘기 Go!&obedient",
-	"구구구구&rage",
-	"이제 한계다.&obedient"
+    "와！&bawl",
+    "그렇게 무서운 거야?&obedient",
+    "아주 빠질 것 같아&rage",
+    "견딜 수 없어&obedient"
   ],
   "facedownmonstername": "비둘기",
   "activate": [
-    "{0} 구구구구?&confused",
-	"{0} 효과 발동&good"
+    "모르겠지만 빠지자&confused",
+    "빠졌어, 시원해&good"
   ],
   "summon": [
-    "{0} 소환&surprised",
-    "알 필요 없어요.&sweat",
-    "알 바 아니야.&sneaky",
-	"{0}이(가) 비둘기같군.&good"
+    "무서워&surprised",
+    "내 문제 아니야&sweat",
+    "그래도 내 문제 아니야&sneaky",
+    "빠졌어, 시원해&good"
   ],
   "setmonster": [
-    "구구구구&surprised",
-	"비둘기가 됄 거야!&stick_tongue",
-	"비둘기같이 세트!&shy"
+    "게으르게 놀고 있어, 업데이트하고 싶지 않아&stick_tongue",
+    "그럼 그냥 빠지고 세트하자&shy"
   ],
   "chaining": [
-    "그거 뭐야?&confused",
-    "하지만 나는 비둘기&ridiculous",
-    "그거 없음&ridiculous",
-	"알 수 없는 비둘기&despise",
-	"구구구구&surprised"
+    "그게 뭐야?&confused",
+    "근데 나 빠졌어&ridiculous",
+    "그런 서비스 없어&despise",
+    "무서워&surprised"
   ],
   "surrender": [
-    "구구구구&obedient",
-    "구구구구&sweat",
-    "구구구구&laugh"
+    "너무 무서워 (도망가&obedient",
+    "이 게임 너무 어려워 (도망가&sweat",
+    "다행히 나 유희왕 안 해 (도망가&laugh"
   ]
 }

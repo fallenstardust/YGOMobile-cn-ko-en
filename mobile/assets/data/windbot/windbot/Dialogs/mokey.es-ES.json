@@ -1,43 +1,41 @@
 {
   "welcome": [
     "Hola, soy un robot.",
-    "La función IA está bajo prueba. Si encuentra algún problema, infórmelo a tiempo.",
-    "Algunas personas siempre me llaman saco de arena..."
+    "Las funciones de IA están en prueba. Por favor, envía feedback inmediatamente si encuentras algún problema.",
+    "Siempre alguien me llama de saco de golpes……"
   ],
   "deckerror": [
-    "Lo siento, parece que hay algún problema con el número de {0} en mi Deck."
+    "Perdón, parece haber un problema con la cantidad de {0} en mi deck."
   ],
   "duelstart": [
-    "¡No me pegues!"
+    "¡No me pegues! &bawl"
   ],
   "newturn": [
-    "..."
+    "&shy"
   ],
   "endturn": [
-    "..."
+    "&shy"
   ],
   "directattack": [
-    "..."
+    "&bawl"
   ],
   "attack": [
-    "..."
+    "&bawl"
   ],
   "ondirectattack": [
-    "¡Estoy enojado!",
-    "¡No abuces de mi!",
-    "¡Le diré a Dark Zane que te regañe!"
+    "¡Estoy enojado! &angry"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "Me gusta {0}."
+    "Me gusta {0}. &laugh"
   ],
   "summon": [
-    "..."
+    "&shy"
   ],
   "setmonster": [
-    "..."
+    "&shy"
   ],
   "chaining": [
-    "..."
+    "&shy"
   ]
 }
