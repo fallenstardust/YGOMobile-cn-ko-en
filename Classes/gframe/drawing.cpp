@@ -845,14 +845,14 @@ void Game::DrawMisc() {
 		DrawShadowText(numFont, dInfo.str_time_left[0], Resize(595, 49, 625, 68), Resize(0, 1, 2, 0), dInfo.time_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_time_left[1], Resize(713, 49, 743, 68), Resize(0, 1, 2, 0), dInfo.time_color[1], 0xff000000, true, false);
 
-		driver->draw2DImage(imageManager.tCover[2], Resize(537, 51, 550, 70), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
-		driver->draw2DImage(imageManager.tCover[3], Resize(745, 51, 758, 70), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[2], Resize(537, 51, 550, 70), irr::core::rect<irr::s32>(0, 0,  177, 254), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[3], Resize(745, 51, 758, 70), irr::core::rect<irr::s32>(0, 0,  177, 254), 0, 0, true);
 
 		DrawShadowText(numFont, dInfo.str_card_count[0], Resize(550, 49, 575, 68), Resize(0, 1, 2, 0), dInfo.card_count_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_card_count[1], Resize(757, 49, 782, 68), Resize(0, 1, 2, 0), dInfo.card_count_color[1], 0xff000000, true, false);
 	} else {
-		driver->draw2DImage(imageManager.tCover[2], Resize(588, 48, 601, 68), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
-		driver->draw2DImage(imageManager.tCover[3], Resize(697, 48, 710, 68), irr::core::rect<irr::s32>(0, 0, CARD_IMG_WIDTH, CARD_IMG_HEIGHT), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[2], Resize(588, 48, 601, 68), irr::core::rect<irr::s32>(0, 0, 177, 254), 0, 0, true);
+		driver->draw2DImage(imageManager.tCover[3], Resize(697, 48, 710, 68), irr::core::rect<irr::s32>(0, 0, 177, 254), 0, 0, true);
 
 		DrawShadowText(numFont, dInfo.str_card_count[0], Resize(600, 51, 625, 70), Resize(0, 1, 2, 0), dInfo.card_count_color[0], 0xff000000, true, false);
 		DrawShadowText(numFont, dInfo.str_card_count[1], Resize(710, 51, 735, 70), Resize(0, 1, 2, 0), dInfo.card_count_color[1], 0xff000000, true, false);
@@ -1185,7 +1185,7 @@ void Game::DrawSpec() {
     // 如果需要展示卡片，则进行相关绘图操作
     if(showcard) {
         // 获取当前要展示的卡片纹理
-        irr::video::ITexture* showimg = imageManager.GetTexture(showcardcode);
+        irr::video::ITexture* showimg = imageManager.GetTexture(showcardcode, true);
         if(showimg == NULL)
             return;
 
@@ -1380,7 +1380,7 @@ void Game::DrawSpec() {
     int x, y, maxwidth;
     int offsetX = 0, chatRectY = 0, myChatRectY = 0, opChatRectY = 0;
     irr::core::recti rectloc, msgloc, shadowloc;
-    for(int i = 0; i < 8; ++i) {
+    for(int i = 7; i >= 0; --i) {
         if(chatTiming[i]) {
             chatTiming[i]--;
             if(!is_building) {
@@ -1392,25 +1392,27 @@ void Game::DrawSpec() {
             if(!dInfo.isStarted) {
                 maxwidth = 705 * xScale;
                 x = wChat->getRelativePosition().UpperLeftCorner.X;
-                y = (GAME_HEIGHT - 35) * mainGame->yScale;
+                y = 10 * mainGame->yScale;
             } else if(is_building) {
                 maxwidth = 205 * xScale;
                 x = 810 * xScale;
-                y = (GAME_HEIGHT - 35) * mainGame->yScale;
+                y = 10 * mainGame->yScale;
             } else {
-                if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
-                if (chatType[i] == 0 || chatType[i] == 2) {
-                    maxwidth = 230 * xScale;
-                    x = 390 * xScale;
-                    y = 80 * yScale;
-                } else if (chatType[i] == 1 || chatType[i] == 3) {
-                    maxwidth = 300 * xScale;
-                    x = 700 * xScale;
-                    y = 80 * yScale;
+                if (chatType[i] < 4) {
+                    if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
+                    if (chatType[i] == 0 || chatType[i] == 2) {
+                        maxwidth = 230 * xScale;
+                        x = 390 * xScale;
+                        y = 80 * yScale;
+                    } else if (chatType[i] == 1 || chatType[i] == 3) {
+                        maxwidth = 310 * xScale;
+                        x = 700 * xScale;
+                        y = 80 * yScale;
+                    }
                 } else {
                     maxwidth = 705 * xScale;
                     x = wChat->getRelativePosition().LowerRightCorner.X;
-                    y = 90 * mainGame->yScale;
+                    y = 10 * mainGame->yScale;
                 }
             }
 
@@ -1419,8 +1421,8 @@ void Game::DrawSpec() {
             int h = icFont->getDimension(msg).Height + 2;
 
             if(!dInfo.isStarted || is_building) {
-                rectloc = irr::core::recti(x, y - chatRectY - h, x + 2 + w, y - chatRectY);
-                msgloc = irr::core::recti(x, y - chatRectY - h, x - 4, y - chatRectY);
+                rectloc = irr::core::recti(x, y + chatRectY, x + 2 + w, y + chatRectY + h);
+                msgloc = irr::core::recti(x, y + chatRectY, x - 4, y + chatRectY + h);
             } else {
                 if (chatType[i] < 4) {
                     if (chatType[i] == 0 || chatType[i] == 2) {
@@ -1436,16 +1438,16 @@ void Game::DrawSpec() {
                 } else {
                     // 根据 chatTiming[i] 计算偏移量，值越小偏移越大
                     offsetX = (1200 - chatTiming[i]) * 4; // 1200 是addChatMsg设置的初始chatTiming值，可根据需要调整系数
-
                     rectloc = irr::core::recti(x - offsetX, y + chatRectY, x + 2 + w - offsetX, y + chatRectY + h);
                     msgloc = irr::core::recti(x - offsetX, y + chatRectY, x - 4 - offsetX, y + chatRectY + h);
+
                 }
             }
             shadowloc = msgloc + irr::core::vector2di(1, 1);
 
             driver->draw2DRectangle(rectloc, 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
-            icFont->drawUstring(msg, msgloc, 0xff000000, false, false);
-            icFont->drawUstring(msg, shadowloc, chatColor[chatType[i]], false, false);
+            icFont->drawUstring(msg, shadowloc, 0xff000000, false, false);
+            icFont->drawUstring(msg, msgloc, chatColor[chatType[i]], false, false);
 
             chatRectY += h;
         }
@@ -1566,7 +1568,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 		lcode = code;
 
 	// 获取卡片纹理图像
-	irr::video::ITexture* img = imageManager.GetTexture(code);
+	irr::video::ITexture* img = imageManager.GetTextureThumb(code);
 	if(img == nullptr)
 		return; // 防止空指针访问导致崩溃
 
@@ -1590,14 +1592,14 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 	if (lfit != lflist->content.end()) {
 		switch(lfit->second) {
 		case 0:
-			driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(0, 0, 64, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, irr::core::recti(0, 0, 64, 64), 0, 0, true);
 			break;
 		case 1:
-			driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
             DrawBoldText(icFont, L"1", limitloc, 0xffffff00, 0xffffff00, true, true);
             break;
 		case 2:
-			driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, limitloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
             DrawBoldText(icFont, L"2", limitloc, 0xffffff00, 0xffffff00, true, true);
 			break;
 		}
@@ -1608,7 +1610,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
     if(lfcredit != lflist->credits.end()) {
         for(auto& credit_entry : lfcredit->second) {
             auto value = credit_entry.second;
-            driver->draw2DImage(imageManager.tLimit, limitloc, irr::core::recti(0, 64, 64, 128), 0, 0, true);
+            driver->draw2DImage(imageManager.tLim, limitloc, irr::core::recti(0, 64, 64, 128), 0, 0, true);
             if (value > -10 || value < 100) {//数字只两个占位符（-9~99）时用攻守数字正好，否则就用更迷你的字体
                 DrawBoldText(adFont, std::to_wstring(static_cast<int>(value)), limitloc, 0xff00ffff, 0xff00ffff, true, true);
             } else {
@@ -1645,7 +1647,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 		else if(cp->second.ot & AVAIL_TCG)
 			driver->draw2DImage(imageManager.tOT, otloc, irr::core::recti(0, 64, 128, 128), 0, 0, true);
 		else if(!avail)
-			driver->draw2DImage(imageManager.tLimit, otloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
+			driver->draw2DImage(imageManager.tLim, otloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
 	}
 }
 
@@ -1906,10 +1908,14 @@ void Game::DrawDeckBd() {
 		driver->draw2DRectangle(Resize(806, 160, 1020, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(Resize(805, 159, 1020, 630));
 	}
-
-	// 绘制搜索结果列表项
-	for(int i = 0; i < 9 && i + scrFilter->getPos() < (int)deckBuilder.results.size(); ++i) {
+	int max_result = mainGame->gameConf.use_image_load_background_thread ? 9 : 7;
+	for(int i = 0; i < max_result && i + scrFilter->getPos() < (int)deckBuilder.results.size(); ++i) {
 		code_pointer ptr = deckBuilder.results[i + scrFilter->getPos()];
+		if(i >= 7)
+		{
+			imageManager.GetTextureThumb(ptr->second.code);
+			break;
+		}
 		if(deckBuilder.hovered_pos == 4 && deckBuilder.hovered_seq == (int)i)
 			driver->draw2DRectangle(0x80000000, Resize(806, 164 + i * 66, 1019, 230 + i * 66));
 		DrawThumb(ptr, Resize(805, 165 + i * 66),deckBuilder.filterList);

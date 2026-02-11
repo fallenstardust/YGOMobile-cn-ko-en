@@ -764,7 +764,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             YGOUtil.showTextToast(context.getString(R.string.tip_expansions_image));
             return;
         }
-        File imgFile = new File(AppsSettings.get().getCardImagePath(code));
+        File imgFile = new File(AppsSettings.get().getCardExpansionsImagePath(code));
         final File tmp = new File(imgFile.getAbsolutePath() + ".tmp");
         if (tmp.exists()) {
             if (force) {

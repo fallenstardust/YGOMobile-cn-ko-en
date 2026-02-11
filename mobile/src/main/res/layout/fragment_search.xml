@@ -29,35 +29,39 @@
                 android:scrollbars="vertical" />
 
             <LinearLayout
-                android:layout_width="60dp"
-                android:layout_height="100dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
-                android:layout_marginRight="20dp"
-                android:layout_marginBottom="70dp"
-                android:orientation="vertical">
+                android:layout_marginRight="30dp"
+                android:layout_marginBottom="100dp"
+                android:clickable="true"
+                android:focusableInTouchMode="false"
+                android:orientation="vertical"
+                android:padding="10dp">
 
                 <ImageButton
                     android:id="@+id/btn_search"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_gravity="center"
+                    android:layout_marginBottom="10dp"
                     android:background="@drawable/button_cube"
                     android:src="@drawable/search"
                     android:scaleType="fitCenter"
                     android:adjustViewBounds="true"
-                    android:padding="8dp"
-                    app:tint="@color/holo_blue_bright"/>
-
+                    android:padding="10dp"
+                    android:clickable="false" />
                 <TextView
                     android:id="@+id/search_result_count"
-                    android:layout_width="60dp"
-                    android:layout_height="30dp"
-                    android:background="@drawable/radius"
-                    android:gravity="center_horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_radius_bg"
+                    android:clickable="false"
+                    android:gravity="center"
+                    android:textAlignment="center"
                     android:text="0"
-                    android:textSize="12sp"
                     android:textColor="@color/gold"
-                    android:textStyle="bold" />
+                    android:textSize="10sp" />
             </LinearLayout>
 
         </FrameLayout>

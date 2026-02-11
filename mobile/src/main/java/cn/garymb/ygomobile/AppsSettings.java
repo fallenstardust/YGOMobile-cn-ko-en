@@ -428,11 +428,27 @@ public class AppsSettings {
         return new File(getCardImagePath(), code + ".jpg").getAbsolutePath();
     }
 
+    /**
+     * 根据卡密获取扩展卡卡图的路径
+     *
+     * @param code 卡密
+     * @return
+     */
+    public String getCardExpansionsImagePath(int code) {
+        return new File(getExpansionCardImagePath(), code + ".jpg").getAbsolutePath();
+    }
     /***
      * 图片文件夹
      */
     public String getCardImagePath() {
         return new File(getResourcePath(), Constants.CORE_IMAGE_PATH).getAbsolutePath();
+    }
+
+    /***
+     * 扩展图片文件夹
+     */
+    public String getExpansionCardImagePath() {
+        return new File(getResourcePath(), Constants.CORE_EXPANSIONS_IMAGE_PATH).getAbsolutePath();
     }
 
     /***

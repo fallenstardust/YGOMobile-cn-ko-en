@@ -1501,7 +1501,7 @@ void DeckBuilder::FilterCards() {
 	 */
 	struct element_t {
 		std::wstring keyword;                      ///< 搜索关键词
-		std::vector<unsigned int> setcodes;        ///< 对应的系列码列表
+		std::vector<uint32_t> setcodes;        ///< 对应的系列码列表
 		enum class type_t {
 			all,                                   ///< 全字段匹配
 			name,                                  ///< 名称匹配
@@ -1563,9 +1563,8 @@ void DeckBuilder::FilterCards() {
 			if(element_end != std::wstring::npos) {
 				size_t length = element_end - element_start;
 				element.keyword = str.substr(element_start, length);
-			} else {
+			} else
 				element.keyword = str.substr(element_start);
-			}
 
 			// 获取对应系列码
 			element.setcodes = dataManager.GetSetCodes(element.keyword);
