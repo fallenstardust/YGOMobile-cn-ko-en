@@ -68,53 +68,53 @@ bool ImageManager::Initial(const path dir) {
 	tDoubleX = driver->getTexture((dir + path("/textures/extra/tdoublex.png")).c_str());
 	tShut = driver->getTexture((dir + path("/textures/extra/tshut.png")).c_str());
 	tClose = driver->getTexture((dir + path("/textures/extra/tclose.png")).c_str());
-    tTitleBar = driver->getTexture((dir + path("/textures/extra/stitlebar.png")).c_str());
-    tWindow = driver->getTexture((dir + path("/textures/extra/sWindow.png")).c_str());
-    tWindow_V = driver->getTexture((dir + path("/textures/extra/sWindow_V.png")).c_str());
-	tDialog_S = driver->getTexture((dir + path("/textures/extra/sDialog_S.png")).c_str());
-	tDialog_L = driver->getTexture((dir + path("/textures/extra/sDialog_L.png")).c_str());
-	tButton_L = driver->getTexture((dir + path("/textures/extra/sButton_L.png")).c_str());
-	tButton_L_pressed = driver->getTexture((dir + path("/textures/extra/sButton_L_pressed.png")).c_str());
-	tButton_S = driver->getTexture((dir + path("/textures/extra/sButton_S.png")).c_str());
-	tButton_S_pressed = driver->getTexture((dir + path("/textures/extra/sButton_S_pressed.png")).c_str());
-	tButton_C = driver->getTexture((dir + path("/textures/extra/sButton_C.png")).c_str());
-	tButton_C_pressed = driver->getTexture((dir + path("/textures/extra/sButton_C_pressed.png")).c_str());
+    tTitleBar = GetTextureFromFile((dir + path("/textures/extra/stitlebar.png")).c_str(), 451 * mainGame->xScale, 100 * mainGame->yScale);
+    tWindow = GetTextureFromFile((dir + path("/textures/extra/sWindow.png")).c_str(), 580 * mainGame->xScale, 420 * mainGame->yScale);
+    tWindow_V = GetTextureFromFile((dir + path("/textures/extra/sWindow_V.png")).c_str(), 300 * mainGame->xScale, 420 * mainGame->yScale);
+	tDialog_S = GetTextureFromFile((dir + path("/textures/extra/sDialog_S.png")).c_str(), 300 * mainGame->xScale, 500 * mainGame->yScale);
+	tDialog_L = GetTextureFromFile((dir + path("/textures/extra/sDialog_L.png")).c_str(), 600 * mainGame->xScale, 200 * mainGame->yScale);
+	tButton_L = GetTextureFromFile((dir + path("/textures/extra/sButton_L.png")).c_str(), 560 * mainGame->xScale, 80 * mainGame->yScale);
+	tButton_L_pressed = GetTextureFromFile((dir + path("/textures/extra/sButton_L_pressed.png")).c_str(), 560 * mainGame->xScale, 80 * mainGame->yScale);
+	tButton_S = GetTextureFromFile((dir + path("/textures/extra/sButton_S.png")).c_str(), 200 * mainGame->xScale, 80 * mainGame->yScale);
+	tButton_S_pressed = GetTextureFromFile((dir + path("/textures/extra/sButton_S_pressed.png")).c_str(), 200 * mainGame->xScale, 80 * mainGame->yScale);
+	tButton_C = GetTextureFromFile((dir + path("/textures/extra/sButton_C.png")).c_str(), 80 * mainGame->xScale, 80 * mainGame->yScale);
+	tButton_C_pressed = GetTextureFromFile((dir + path("/textures/extra/sButton_C_pressed.png")).c_str(), 80 * mainGame->xScale, 80 * mainGame->yScale);
     // 加载各种表情图片
-    tEmoticons = driver->getTexture(dir + path("/textures/extra/emoticons.png").c_str());
-    tEmoticon = driver->getTexture(dir + path("/textures/extra/temoticon.png").c_str());
+    tEmoticons = GetTextureFromFile((dir + path("/textures/extra/emoticons.png")).c_str(), 320 * mainGame->yScale, 320 * mainGame->yScale);
+    tEmoticon = driver->getTexture((dir + path("/textures/extra/temoticon.png")).c_str());
     if(tEmoticons) {
         // &laugh 在左上角 (0,0) - (80,80)
-        emoticonRects[L"&laugh"] = irr::core::recti(0, 0, 80, 80);
+        emoticonRects[L"&laugh"] = irr::core::recti(0, 0, 80 * mainGame->yScale, 80 * mainGame->yScale);
         // &ridiculous 在第一行第二个 (80,0) - (160,80)
-        emoticonRects[L"&ridiculous"] = irr::core::recti(80, 0, 160, 80);
+        emoticonRects[L"&ridiculous"] = irr::core::recti(80 * mainGame->yScale, 0, 160 * mainGame->yScale, 80 * mainGame->yScale);
         // &stick_tongue 在第一行第三个 (160,0) - (240,80)
-        emoticonRects[L"&stick_tongue"] = irr::core::recti(160, 0, 240, 80);
+        emoticonRects[L"&stick_tongue"] = irr::core::recti(160 * mainGame->yScale, 0, 240 * mainGame->yScale, 80 * mainGame->yScale);
         // &reluctant 在第一行第四个 (240,0) - (320,80)
-        emoticonRects[L"&reluctant"] = irr::core::recti(240, 0, 320, 80);
+        emoticonRects[L"&reluctant"] = irr::core::recti(240 * mainGame->yScale, 0, 320 * mainGame->yScale, 80 * mainGame->yScale);
         // &sweat 在第二行第一个 (0,80) - (80,160)
-        emoticonRects[L"&sweat"] = irr::core::recti(0, 80, 80, 160);
+        emoticonRects[L"&sweat"] = irr::core::recti(0, 80 * mainGame->yScale, 80 * mainGame->yScale, 160 * mainGame->yScale);
         // &confused 在第二行第二个 (80,80) - (160,160)
-        emoticonRects[L"&confused"] = irr::core::recti(80, 80, 160, 160);
+        emoticonRects[L"&confused"] = irr::core::recti(80 * mainGame->yScale, 80 * mainGame->yScale, 160 * mainGame->yScale, 160 * mainGame->yScale);
         // &surprised 在第二行第三个 (160,80) - (240,160)
-        emoticonRects[L"&surprised"] = irr::core::recti(160, 80, 240, 160);
+        emoticonRects[L"&surprised"] = irr::core::recti(160 * mainGame->yScale, 80 * mainGame->yScale, 240 * mainGame->yScale, 160 * mainGame->yScale);
         // &bawl 在第二行第四个 (240,80) - (320,160)
-        emoticonRects[L"&bawl"] = irr::core::recti(240, 80, 320, 160);
+        emoticonRects[L"&bawl"] = irr::core::recti(240 * mainGame->yScale, 80 * mainGame->yScale, 320 * mainGame->yScale, 160 * mainGame->yScale);
         // &angry 在第三行第一个 (0,160) - (80,240)
-        emoticonRects[L"&angry"] = irr::core::recti(0, 160, 80, 240);
+        emoticonRects[L"&angry"] = irr::core::recti(0, 160 * mainGame->yScale, 80 * mainGame->yScale, 240 * mainGame->yScale);
         // &rage 在第三行第二个 (80,160) - (160,240)
-        emoticonRects[L"&rage"] = irr::core::recti(80, 160, 160, 240);
+        emoticonRects[L"&rage"] = irr::core::recti(80 * mainGame->yScale, 160 * mainGame->yScale, 160 * mainGame->yScale, 240 * mainGame->yScale);
         // &sneaky 在第三行第三个 (160,160) - (240,240)
-        emoticonRects[L"&sneaky"] = irr::core::recti(160, 160, 240, 240);
+        emoticonRects[L"&sneaky"] = irr::core::recti(160 * mainGame->yScale, 160 * mainGame->yScale, 240 * mainGame->yScale, 240 * mainGame->yScale);
         // &obedient 在第三行第四个 (240,160) - (320,240)
-        emoticonRects[L"&obedient"] = irr::core::recti(240, 160, 320, 240);
+        emoticonRects[L"&obedient"] = irr::core::recti(240 * mainGame->yScale, 160 * mainGame->yScale, 320 * mainGame->yScale, 240 * mainGame->yScale);
         // &good 在第四行第一个 (0,240) - (80,320)
-        emoticonRects[L"&good"] = irr::core::recti(0, 240, 80, 320);
+        emoticonRects[L"&good"] = irr::core::recti(0, 240 * mainGame->yScale, 80 * mainGame->yScale, 320 * mainGame->yScale);
         // &yeah 在第四行第二个 (80,240) - (160,320)
-        emoticonRects[L"&cool"] = irr::core::recti(80, 240, 160, 320);
+        emoticonRects[L"&cool"] = irr::core::recti(80 * mainGame->yScale, 240 * mainGame->yScale, 160 * mainGame->yScale, 320 * mainGame->yScale);
         // &gotcha 在第四行第三个 (160,240) - (240,320)
-        emoticonRects[L"&despise"] = irr::core::recti(160, 240, 240, 320);
+        emoticonRects[L"&despise"] = irr::core::recti(160 * mainGame->yScale, 240 * mainGame->yScale, 240 * mainGame->yScale, 320 * mainGame->yScale);
         // &love 在第四行第四个 (240,240) - (320,320)
-        emoticonRects[L"&shy"] = irr::core::recti(240, 240, 320, 320);
+        emoticonRects[L"&shy"] = irr::core::recti(240 * mainGame->yScale, 240 * mainGame->yScale, 320 * mainGame->yScale, 320 * mainGame->yScale);
     }
     // 裁剪并创建独立的表情纹理
     for (const auto& pair : emoticonRects) {

@@ -1385,7 +1385,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     for (int i = 0; i < 16; i++) {
         btnEmoticon[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(2 + i % 4 * 44, 2 + i / 4 * 44, 2 + (i % 4 + 1) * 44, 2 + (i / 4 + 1) * 44), wEmoticon, BUTTON_EMOTICON_0 + i);
         btnEmoticon[i]->setImage(imageManager.GetEmoticon(imageManager.emoticonCodes[i]));
-        btnEmoticon[i]->setImageScale(irr::core::vector2df(yScale * 0.5, yScale * 0.5));
+        btnEmoticon[i]->setImageScale(irr::core::vector2df(yScale * 0.3, yScale * 0.3));
     }
     //swap
 	btnSpectatorSwap = env->addButton(Resize_Y(3 + CARD_IMG_WIDTH, 70, 310, 70 + 40), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
