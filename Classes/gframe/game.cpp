@@ -153,14 +153,6 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
     }
 }
 
-bool IsExtension(const char* filename, const char* extension) {
-	auto flen = std::strlen(filename);
-	auto elen = std::strlen(extension);
-	if (!elen || flen < elen)
-		return false;
-	return !mystrncasecmp(filename + (flen - elen), extension, elen);
-}
-
 bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	// 保存应用程序句柄
 	this->appMain = app;
@@ -255,12 +247,14 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	int len = options->getArchiveCount();
 	for(int i=0;i<len;i++){
 		irr::io::path zip_path = zips[i];
-		// 添加文件档案
-		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-		    ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
-	    }else{
-			ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
-		}
+        // 只添加pics和scripts两个zip,其他zip只在expansions下统一被loadexpansions()加载
+        if (zip_path == workingDir + "/pics.zip" || zip_path == workingDir + "/scripts.zip") {
+            if (dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
+                ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
+            } else {
+                ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
+            }
+        }
 	}
 	// 初始化各种游戏状态变量
 	linePatternD3D = 0;
@@ -307,30 +301,21 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	imageManager.ClearTexture();
 	// 初始化图像资源
 	if(!imageManager.Initial(workingDir)) {
-		ErrorLog("Failed to load textures!");
+        ALOGD("cc game: Failed to load textures!");
 		return false;
 	}
-	// 加载数据库文件
-	irr::io::path* cdbs = options->getDBFiles();
-	len = options->getDbCount();
-	for(int i=0;i<len;i++){
-		irr::io::path cdb_path = cdbs[i];
-		wchar_t wpath[1024];
-		// 解码UTF8路径
-		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
-		// 加载数据库
-		if(dataManager.LoadDB(wpath)) {
-		    ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
-	    }else{
-			ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
-		}
+	dataManager.FileSystem = device->getFileSystem();
+	if(!dataManager.LoadDB(L"cards.cdb")) {
+        ALOGD("cc game: Failed to load card database (cards.cdb)!");
+		return false;
 	}
 	// 加载字符串配置文件
-	if(dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
-		ALOGD("cc game: loadStrings expansions/strings.conf");
+	if(!dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
+		ALOGD("cc game: Failed to loadStrings expansions/strings.conf");
+        return false;
 	}
 	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str())) {
-		ErrorLog("Failed to load strings!");
+        ALOGD("cc game: Failed to load strings!");
 		return false;
 	}
     // 加载配置文件
@@ -1832,12 +1817,10 @@ void Game::LoadExpansions() {
 		if(len > 4 && (strcasecmp(dirp->d_name + len - 4, ".zip") == 0 || strcasecmp(dirp->d_name + len - 4, ".ypk") == 0)) {
 			char upath[1024];
 			sprintf(upath, "./expansions/%s", dirp->d_name);
-			ALOGW("扩展卡文件: %s", upath);
 			dataManager.FileSystem->addFileArchive(upath, true, false, EFAT_ZIP);
 		} else if (len > 11 && strcasecmp(dirp->d_name + len - 11, "lflist.conf") == 0) {
 			char upath[1024];
 			sprintf(upath, "./expansions/%s", dirp->d_name);
-			ALOGW("拓展禁卡表文件: %s", upath);
 			deckManager.LoadLFListSingle((const char*)upath);
 		}
 	}

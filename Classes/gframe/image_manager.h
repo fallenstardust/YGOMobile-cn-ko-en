@@ -65,7 +65,7 @@ public:
     std::unordered_map<std::wstring, irr::core::recti> emoticonRects;  // 存储每个表情的位置
     std::unordered_map<std::wstring, irr::video::ITexture*> emoticons;
     irr::video::ITexture* GetEmoticon(const std::wstring& emoticonName);
-    // 在文件顶部添加全局数组
+    // 添加全局数组
     const wchar_t* emoticonCodes[16] = {
             L"&laugh",      // 大笑
             L"&ridiculous", // 滑稽
