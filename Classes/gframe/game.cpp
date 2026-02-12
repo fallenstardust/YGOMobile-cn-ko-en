@@ -312,7 +312,6 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	// 加载字符串配置文件
 	if(!dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
 		ALOGD("cc game: Failed to loadStrings expansions/strings.conf");
-        return false;
 	}
 	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str())) {
         ALOGD("cc game: Failed to load strings!");
@@ -2372,6 +2371,7 @@ void Game::AddDebugMsg(const char* msg) {
 		AddChatMsg(processedMsg.c_str(), 9);
 	}
 	if (enable_log & 0x2) {
+        ALOGE("AddDebugMsg= %s", msg);
 		// 对于错误日志，也可以先处理消息内容
 		wchar_t wbuf[1024];
 		BufferIO::DecodeUTF8(msg, wbuf);
@@ -2614,7 +2614,7 @@ std::wstring Game::AppendCardNames(const std::wstring& msg) {
     std::wstring result = msg;
 
     // 使用正则表达式匹配可能的卡片ID（3-9位数字）
-    std::wregex cardIdPattern(L"\\b(\\d{3,9})\\b");
+    std::wregex cardIdPattern(L"(\\d{3,9})");
     std::wstring::const_iterator start = msg.begin();
     std::wstring::const_iterator end = msg.end();
     std::wsregex_iterator iter(start, end, cardIdPattern);
@@ -2627,8 +2627,8 @@ std::wstring Game::AppendCardNames(const std::wstring& msg) {
         const wchar_t* cardName = dataManager.GetName(cardId);
         if (cardName && wcscmp(cardName, L"") != 0 && wcscmp(cardName, dataManager.unknown_string) != 0) {
             // 替换卡片ID为 [ID:卡片名称] 格式
-            std::wstring replacement = L"[" + cardIdStr + L":" + std::wstring(cardName) + L"]";
-            result = std::regex_replace(result,std::wregex(L"\\b" + cardIdStr + L"\\b"),replacement);
+            std::wstring replacement = L"[" + std::wstring(cardName) + L"]";
+            result = std::regex_replace(result,std::wregex(cardIdStr),replacement);
         }
     }
 
