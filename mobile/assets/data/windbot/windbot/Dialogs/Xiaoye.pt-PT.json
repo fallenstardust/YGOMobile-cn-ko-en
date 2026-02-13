@@ -1,0 +1,60 @@
+{
+  "welcome": [
+    "Ei, me perdi, você também?",
+    "Ah não tenha medo, só estou passando",
+    "Tudo bem, eu também não sou bom com esse deck"
+  ],
+  "deckerror": [
+    "A quantidade de {0} está errada! Não posso ficar sem ela!",
+    "Vamos para o formato ilimitado, meu {0} está banido"
+  ],
+  "duelstart": [
+    "Ah, é só um duelo amigável &laugh",
+    "Né, já vai começar? &surprised",
+    "Seu deck é muito bom, mas eu vou tomar &ridiculous"
+  ],
+  "newturn": [
+    "Comprar! Vamos deusa do baralho, me ajude &shy",
+    "Comprar! O que quer dizer? &obedient",
+    "Comprar! Ah, eu fui enganado pela deusa do baralho! &obedient"
+  ],
+  "endturn": [
+    "Um turno cada, bem justo né &reluctant",
+    "Ah quase esqueci, você também joga Yu-Gi-Oh! &reluctant"
+  ],
+  "directattack": [
+    "{0}, ataque direto! &angry",
+    "Hehe, vou atacar você &stick_tongue",
+    "Eu vou pegar seus Pontos de Vida &ridiculous"
+  ],
+  "attack": [
+    "{0}, vai atacar {1}&cool",
+    "Vai ser perfeito, é só ver &good"
+  ],
+  "ondirectattack": [
+    "Por que está me atacando! Isso é muito mau! &shy",
+    "Não pode me atacar! &angry",
+    "666&sweat",
+    "Eu que deveria pegar você! &bawl",
+    "Não, cara&sneaky",
+    "Né, o que quer dizer! &bawl"
+  ],
+  "facedownmonstername": "Monstro",
+  "activate": [
+    "Agora, eu ativou o efeito de {0}&cool",
+    "Né, meu {0} acendeu, vamos clicar &confused",
+    "Meu {0} acendeu, o que quer dizer? &confused"
+  ],
+  "summon": [
+    "Esse é meu monstro orgulhoso {0}&good",
+    "Tcharan! {0} aparece! &laugh"
+  ],
+  "setmonster": [],
+  "chaining": [
+    "Né, o que é isso, vamos clicar &confused",
+    "O que quer dizer? &confused"
+  ],
+  "custom": [
+    "Esse card claramente veio de outro deck, por que está me olhando? &ridiculous"
+  ]
+}

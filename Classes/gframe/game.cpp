@@ -153,14 +153,6 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
     }
 }
 
-bool IsExtension(const char* filename, const char* extension) {
-	auto flen = std::strlen(filename);
-	auto elen = std::strlen(extension);
-	if (!elen || flen < elen)
-		return false;
-	return !mystrncasecmp(filename + (flen - elen), extension, elen);
-}
-
 bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	// 保存应用程序句柄
 	this->appMain = app;
@@ -255,12 +247,11 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	int len = options->getArchiveCount();
 	for(int i=0;i<len;i++){
 		irr::io::path zip_path = zips[i];
-		// 添加文件档案
-		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-		    ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
-	    }else{
-			ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
-		}
+        if (dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
+            ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
+        } else {
+            ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
+        }
 	}
 	// 初始化各种游戏状态变量
 	linePatternD3D = 0;
@@ -307,30 +298,30 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	imageManager.ClearTexture();
 	// 初始化图像资源
 	if(!imageManager.Initial(workingDir)) {
-		ErrorLog("Failed to load textures!");
+        ALOGD("cc game: Failed to load textures!");
 		return false;
 	}
-	// 加载数据库文件
-	irr::io::path* cdbs = options->getDBFiles();
-	len = options->getDbCount();
-	for(int i=0;i<len;i++){
-		irr::io::path cdb_path = cdbs[i];
-		wchar_t wpath[1024];
-		// 解码UTF8路径
-		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
-		// 加载数据库
-		if(dataManager.LoadDB(wpath)) {
-		    ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
-	    }else{
-			ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
-		}
-	}
+    // 加载数据库文件
+    irr::io::path* cdbs = options->getDBFiles();
+    len = options->getDbCount();
+    for(int i=0;i<len;i++){
+        irr::io::path cdb_path = cdbs[i];
+        wchar_t wpath[1024];
+        // 解码UTF8路径
+        BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
+        // 加载数据库
+        if(dataManager.LoadDB(wpath)) {
+            ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
+        }else{
+            ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
+        }
+    }
 	// 加载字符串配置文件
-	if(dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
-		ALOGD("cc game: loadStrings expansions/strings.conf");
+	if(!dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
+		ALOGD("cc game: Failed to loadStrings expansions/strings.conf");
 	}
 	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str())) {
-		ErrorLog("Failed to load strings!");
+        ALOGD("cc game: Failed to load strings!");
 		return false;
 	}
     // 加载配置文件
@@ -347,7 +338,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 18 * yScale, isAntialias, false);
 	adFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 12 * yScale, isAntialias, false);
 	lpcFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 48 * yScale, isAntialias, true);
-	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 18 * yScale, isAntialias, true);
+	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 16 * yScale, isAntialias, true);
     titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 32 * yScale, isAntialias, true);
 	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
 	miniFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 8 * yScale, isAntialias, true);//最小的文字，用于genesys点数图标
@@ -1829,15 +1820,9 @@ void Game::LoadExpansions() {
 	while((dirp = readdir(dir)) != NULL) {
 		size_t len = strlen(dirp->d_name);
 		// 检查文件名长度是否足够以及后缀是否为 .zip 或 .ypk（忽略大小写）
-		if(len > 4 && (strcasecmp(dirp->d_name + len - 4, ".zip") == 0 || strcasecmp(dirp->d_name + len - 4, ".ypk") == 0)) {
+		if (len > 11 && strcasecmp(dirp->d_name + len - 11, "lflist.conf") == 0) {
 			char upath[1024];
 			sprintf(upath, "./expansions/%s", dirp->d_name);
-			ALOGW("扩展卡文件: %s", upath);
-			dataManager.FileSystem->addFileArchive(upath, true, false, EFAT_ZIP);
-		} else if (len > 11 && strcasecmp(dirp->d_name + len - 11, "lflist.conf") == 0) {
-			char upath[1024];
-			sprintf(upath, "./expansions/%s", dirp->d_name);
-			ALOGW("拓展禁卡表文件: %s", upath);
 			deckManager.LoadLFListSingle((const char*)upath);
 		}
 	}
@@ -2188,7 +2173,7 @@ void Game::ShowCardInfo(int code) {
 
     // 设置名称标签文本及提示工具文本（当文字超出宽度时）
     stName->setText(formatBuffer);
-    if ((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
+    if ((int)textFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
         stName->setToolTipText(formatBuffer);
     else
         stName->setToolTipText(nullptr);
@@ -2229,7 +2214,7 @@ void Game::ShowCardInfo(int code) {
 
         // 判断文本长度是否需要换行偏移
         int offset_info = 0;
-        irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
+        irr::core::dimension2d<unsigned int> dtxt = textFont->getDimension(formatBuffer);
         if (dtxt.Width > (300 * xScale - 13) - 15)
             offset_info = 15;
 
@@ -2389,6 +2374,7 @@ void Game::AddDebugMsg(const char* msg) {
 		AddChatMsg(processedMsg.c_str(), 9);
 	}
 	if (enable_log & 0x2) {
+        ALOGE("AddDebugMsg= %s", msg);
 		// 对于错误日志，也可以先处理消息内容
 		wchar_t wbuf[1024];
 		BufferIO::DecodeUTF8(msg, wbuf);
@@ -2411,7 +2397,7 @@ void Game::ErrorLog(const char* msg) {
 	std::fclose(fp);
 }
 void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
-	SetStaticText(stSysMessage, 370 * xScale, guiFont, text);
+	SetStaticText(stSysMessage, 370 * xScale, textFont, text);
 	wSysMessage->setVisible(true);
 	wSysMessage->getParent()->bringToFront(wSysMessage);
 	//env->setFocus(wSysMessage);
@@ -2631,7 +2617,7 @@ std::wstring Game::AppendCardNames(const std::wstring& msg) {
     std::wstring result = msg;
 
     // 使用正则表达式匹配可能的卡片ID（3-9位数字）
-    std::wregex cardIdPattern(L"\\b(\\d{3,9})\\b");
+    std::wregex cardIdPattern(L"(\\d{3,9})");
     std::wstring::const_iterator start = msg.begin();
     std::wstring::const_iterator end = msg.end();
     std::wsregex_iterator iter(start, end, cardIdPattern);
@@ -2644,8 +2630,8 @@ std::wstring Game::AppendCardNames(const std::wstring& msg) {
         const wchar_t* cardName = dataManager.GetName(cardId);
         if (cardName && wcscmp(cardName, L"") != 0 && wcscmp(cardName, dataManager.unknown_string) != 0) {
             // 替换卡片ID为 [ID:卡片名称] 格式
-            std::wstring replacement = L"[" + cardIdStr + L":" + std::wstring(cardName) + L"]";
-            result = std::regex_replace(result,std::wregex(L"\\b" + cardIdStr + L"\\b"),replacement);
+            std::wstring replacement = L"[" + std::wstring(cardName) + L"]";
+            result = std::regex_replace(result,std::wregex(cardIdStr),replacement);
         }
     }
 

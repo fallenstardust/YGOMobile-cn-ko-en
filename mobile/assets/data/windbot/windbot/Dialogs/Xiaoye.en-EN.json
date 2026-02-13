@@ -1,0 +1,60 @@
+{
+  "welcome": [
+    "Hey, I'm lost, are you too?",
+    "Oh don't be scared, I'm just passing by",
+    "It's okay, I'm not good at this deck either"
+  ],
+  "deckerror": [
+    "The quantity of {0} is wrong! I can't be without it!",
+    "Can we go to an unlimited format? My {0} is banned"
+  ],
+  "duelstart": [
+    "Aw, it's just a friendly duel &laugh",
+    "Huh, is it starting already &surprised",
+    "Your deck is pretty good, but I'll take it &ridiculous"
+  ],
+  "newturn": [
+    "Draw! Come on deck goddess, help me out &shy",
+    "Draw! What do you mean? &obedient",
+    "Draw! Oh, I must have been tricked by the deck goddess! &obedient"
+  ],
+  "endturn": [
+    "One turn each, pretty fair right &reluctant",
+    "Oh I almost forgot, you also play Yu-Gi-Oh! &reluctant"
+  ],
+  "directattack": [
+    "{0}, direct attack! &angry",
+    "Hehe, I'm gonna attack you &stick_tongue",
+    "I'm taking your Life Points &ridiculous"
+  ],
+  "attack": [
+    "{0}, go attack {1}&cool",
+    "It's gonna be great, just watch &good"
+  ],
+  "ondirectattack": [
+    "Why are you attacking me! That's too mean! &shy",
+    "Don't you dare attack me! &angry",
+    "666&sweat",
+    "I'm supposed to be the one taking you! &bawl",
+    "Wait, dude&sneaky",
+    "Huh, what do you mean! &bawl"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "Right now, I activate the effect of {0}&cool",
+    "Huh, my {0} lit up, let's click it &confused",
+    "My {0} lit up, what do you mean? &confused"
+  ],
+  "summon": [
+    "This is my proud monster {0}&good",
+    "Ta-da! {0} appears! &laugh"
+  ],
+  "setmonster": [],
+  "chaining": [
+    "Huh, what's this, let's click it &confused",
+    "What do you mean? &confused"
+  ],
+  "custom": [
+    "This card was clearly put in by another deck, why are you looking at me &ridiculous"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "welcome": [
+    "こんにちは、私はロボットです。",
+    "AI機能はテスト中です。問題が発生した場合は速やかにフィードバックしてください。",
+    "いつも誰かに「揉み袋」って呼ばれる……"
+  ],
+  "deckerror": [
+    "申し訳ありません、デッキの{0}の枚数に不具合があるようです。"
+  ],
+  "duelstart": [
+    "殴らないで！&bawl"
+  ],
+  "newturn": [
+    "&shy"
+  ],
+  "endturn": [
+    "&shy"
+  ],
+  "directattack": [
+    "&bawl"
+  ],
+  "attack": [
+    "&bawl"
+  ],
+  "ondirectattack": [
+    "怒っちゃうよ！&angry"
+  ],
+  "facedownmonstername": "モンスター",
+  "activate": [
+    "{0}が好きです。&laugh"
+  ],
+  "summon": [
+    "&shy"
+  ],
+  "setmonster": [
+    "&shy"
+  ],
+  "chaining": [
+    "&shy"
+  ]
+}

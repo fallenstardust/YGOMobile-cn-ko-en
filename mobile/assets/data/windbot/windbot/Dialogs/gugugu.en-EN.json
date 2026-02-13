@@ -1,64 +1,64 @@
 {
-"welcome": [
-"Hello everyone, I'm a new player",
-"How do you play Yu-Gi-Oh?",
-"Fortunately I don't play Yu-Gi-Oh"
-],
-"deckerror": [
-"{0} in the deck is dead&reluctant"
-],
-"duelstart": [
-"What if I don't want to work&ridiculous",
-"What if I don't want to work because my IQ is low&ridiculous"
-],
-"newturn": [
-"So many terrible new cards&bawl",
-"This game is so hard to play&sweat",
-"so lazy can't move&reluctant"
-],
-"endturn": [
-"I have no choice but to die&obedient",
-"Not now, I don't know when&cool",
-"too hot need ice cream&cool"
-],
-"directattack": [
-"Sounds like a deadbeat&confused",
-"Old deadbeat, steady&good"
-],
-"attack": [
-"Doesn't sound like a deadbeat&cool",
-"Scary&sweat"
-],
-"ondirectattack": [
-"Wow!&bawl",
-"Is it that terrible&obedient",
-"Sounds like a deadbeat&rage",
-"I can't bear it&obedient"
-],
-"facedownmonstername": "Pigeon",
-"activate": [
-"I don't know why I'm passing&confused",
-"I've passed, feels good&good"
-],
-"summon": [
-"Terrible&surprised",
-"It's none of my business&sweat",
-"That is still, It's none of my business&sneaky",
-"I've passed, feels good"
-],
-"setmonster": [
-"I'm slacking off, I don't want to update&stick_tongue",
-"Then I'll pass it&shy"
-],
-"chaining": [
-"What is that&confused",
-"But I passed&ridiculous",
-"No good&despise",
-"Terrible&surprised"
-],
-"surrender": [
-"It's terrible (run away)&obedient",
-"This game is hard to play (run away)&sweat",
-"Fortunately I don't play Yu-Gi-Oh (run away)&laugh"
-]
+  "welcome": [
+    "Hi everyone, I'm new here",
+    "How do you even play Yu-Gi-Oh anyway?",
+    "Good thing I don't play Yu-Gi-Oh"
+  ],
+  "deckerror": [
+    "{0} flaked out of the deck&reluctant"
+  ],
+  "duelstart": [
+    "What to do if I don't feel like working&ridiculous",
+    "What to do if my brain is empty and I don't feel like working&ridiculous"
+  ],
+  "newturn": [
+    "So many scary new cards&bawl",
+    "This game is so hard to play&sweat",
+    "so lazy cant move&reluctant"
+  ],
+  "endturn": [
+    "Made me have to flake out&obedient",
+    "Not at this moment, not sure when&cool",
+    "too hot need ice cream&cool"
+  ],
+  "directattack": [
+    "Sounds like a flake move&confused",
+    "Veteran flaker, solid&good"
+  ],
+  "attack": [
+    "Doesn't sound like a flake move&cool",
+    "Scary&sweat"
+  ],
+  "ondirectattack": [
+    "Whoa!&bawl",
+    "Is it that scary?&obedient",
+    "Sounds super flakey&rage",
+    "Can't take it&obedient"
+  ],
+  "facedownmonstername": "Pigeon",
+  "activate": [
+    "Don't get it but flake anyway&confused",
+    "Flaked out, nice&good"
+  ],
+  "summon": [
+    "Scary&surprised",
+    "Not my problem&sweat",
+    "Still not my problem then&sneaky",
+    "Flaked out, nice&good"
+  ],
+  "setmonster": [
+    "Slacking off, don't wanna update&stick_tongue",
+    "Might as well set and flake&shy"
+  ],
+  "chaining": [
+    "What's that?&confused",
+    "But I flaked out&ridiculous",
+    "No such service&despise",
+    "Scary&surprised"
+  ],
+  "surrender": [
+    "Too scary (dips)&obedient",
+    "This game is so hard (dips)&sweat",
+    "Good thing I don't play Yu-Gi-Oh (dips)&laugh"
+  ]
 }

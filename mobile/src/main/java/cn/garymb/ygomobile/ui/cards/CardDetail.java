@@ -1,11 +1,11 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
-import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.text.SpannableString;
@@ -30,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 
 import com.bm.library.PhotoView;
 import com.feihua.dialogutils.util.DialogUtils;
@@ -42,7 +43,6 @@ import java.util.Set;
 import java.util.Stack;
 
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
@@ -564,13 +564,20 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         type.setText(CardUtils.getAllTypeString(cardInfo, mStringManager).replace("/", "|"));
 
         // 属性
-        if (cardInfo.Attribute == CardAttribute.Dark.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dark.png", 0, 0));
-        if (cardInfo.Attribute == CardAttribute.Light.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "light.png", 0, 0));
-        if (cardInfo.Attribute == CardAttribute.Earth.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "earth.png", 0, 0));
-        if (cardInfo.Attribute == CardAttribute.Wind.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wind.png", 0, 0));
-        if (cardInfo.Attribute == CardAttribute.Water.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "water.png", 0, 0));
-        if (cardInfo.Attribute == CardAttribute.Fire.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fire.png", 0, 0));
-        if (cardInfo.Attribute == CardAttribute.Divine.getId()) icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "divine.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Dark.getId())
+            icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dark.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Light.getId())
+            icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "light.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Earth.getId())
+            icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "earth.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Wind.getId())
+            icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wind.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Water.getId())
+            icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "water.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Fire.getId())
+            icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fire.png", 0, 0));
+        if (cardInfo.Attribute == CardAttribute.Divine.getId())
+            icon_attribute.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "divine.png", 0, 0));
         attrView.setText(mStringManager.getAttributeString(cardInfo.Attribute));
 
         otView.setText(mStringManager.getOtString(cardInfo.Ot, true));
@@ -631,49 +638,82 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 cardDef.setText((cardInfo.Defense < 0 ? "?" : String.valueOf(cardInfo.Defense)));
             }
             // 种族
-            if (cardInfo.Race == CardRace.Warrior.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "warrior.png", 0, 0));
-            if (cardInfo.Race == CardRace.SpellCaster.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "spellcaster.png", 0, 0));
-            if (cardInfo.Race == CardRace.Fairy.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fairy.png", 0, 0));
-            if (cardInfo.Race == CardRace.Fiend.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fiend.png", 0, 0));
-            if (cardInfo.Race == CardRace.Zombie.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "zombie.png", 0, 0));
-            if (cardInfo.Race == CardRace.Machine.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "machine.png", 0, 0));
-            if (cardInfo.Race == CardRace.Aqua.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "aqua.png", 0, 0));
-            if (cardInfo.Race == CardRace.Pyro.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "pyro.png", 0, 0));
-            if (cardInfo.Race == CardRace.Rock.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "rock.png", 0, 0));
-            if (cardInfo.Race == CardRace.WingedBeast.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "winged_beast.png", 0, 0));
-            if (cardInfo.Race == CardRace.Plant.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "plant.png", 0, 0));
-            if (cardInfo.Race == CardRace.Insect.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "insect.png", 0, 0));
-            if (cardInfo.Race == CardRace.Thunder.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "thunder.png", 0, 0));
-            if (cardInfo.Race == CardRace.Dragon.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dragon.png", 0, 0));
-            if (cardInfo.Race == CardRace.Beast.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "beast.png", 0, 0));
-            if (cardInfo.Race == CardRace.BeastWarrior.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "beast_warrior.png", 0, 0));
-            if (cardInfo.Race == CardRace.Dinosaur.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dinosaur.png", 0, 0));
-            if (cardInfo.Race == CardRace.Fish.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fish.png", 0, 0));
-            if (cardInfo.Race == CardRace.SeaSerpent.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "sea_serpent.png", 0, 0));
-            if (cardInfo.Race == CardRace.Reptile.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "reptile.png", 0, 0));
-            if (cardInfo.Race == CardRace.Psychic.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "psychic.png", 0, 0));
-            if (cardInfo.Race == CardRace.DivineBeast.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "divine_beast.png", 0, 0));
-            if (cardInfo.Race == CardRace.CreatorGod.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "creator_god.png", 0, 0));
-            if (cardInfo.Race == CardRace.Wyrm.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wyrm.png", 0, 0));
-            if (cardInfo.Race == CardRace.Cyberse.value()) icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cyberse.png", 0, 0));
+            if (cardInfo.Race == CardRace.Warrior.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "warrior.png", 0, 0));
+            if (cardInfo.Race == CardRace.SpellCaster.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "spellcaster.png", 0, 0));
+            if (cardInfo.Race == CardRace.Fairy.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fairy.png", 0, 0));
+            if (cardInfo.Race == CardRace.Fiend.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fiend.png", 0, 0));
+            if (cardInfo.Race == CardRace.Zombie.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "zombie.png", 0, 0));
+            if (cardInfo.Race == CardRace.Machine.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "machine.png", 0, 0));
+            if (cardInfo.Race == CardRace.Aqua.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "aqua.png", 0, 0));
+            if (cardInfo.Race == CardRace.Pyro.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "pyro.png", 0, 0));
+            if (cardInfo.Race == CardRace.Rock.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "rock.png", 0, 0));
+            if (cardInfo.Race == CardRace.WingedBeast.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "winged_beast.png", 0, 0));
+            if (cardInfo.Race == CardRace.Plant.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "plant.png", 0, 0));
+            if (cardInfo.Race == CardRace.Insect.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "insect.png", 0, 0));
+            if (cardInfo.Race == CardRace.Thunder.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "thunder.png", 0, 0));
+            if (cardInfo.Race == CardRace.Dragon.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dragon.png", 0, 0));
+            if (cardInfo.Race == CardRace.Beast.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "beast.png", 0, 0));
+            if (cardInfo.Race == CardRace.BeastWarrior.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "beast_warrior.png", 0, 0));
+            if (cardInfo.Race == CardRace.Dinosaur.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "dinosaur.png", 0, 0));
+            if (cardInfo.Race == CardRace.Fish.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "fish.png", 0, 0));
+            if (cardInfo.Race == CardRace.SeaSerpent.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "sea_serpent.png", 0, 0));
+            if (cardInfo.Race == CardRace.Reptile.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "reptile.png", 0, 0));
+            if (cardInfo.Race == CardRace.Psychic.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "psychic.png", 0, 0));
+            if (cardInfo.Race == CardRace.DivineBeast.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "divine_beast.png", 0, 0));
+            if (cardInfo.Race == CardRace.CreatorGod.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "creator_god.png", 0, 0));
+            if (cardInfo.Race == CardRace.Wyrm.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wyrm.png", 0, 0));
+            if (cardInfo.Race == CardRace.Cyberse.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cyberse.png", 0, 0));
             race.setText(mStringManager.getRaceString(cardInfo.Race));
             icon.setVisibility(View.GONE);
         } else {
             icon.setVisibility(View.VISIBLE);
             icon_star.setVisibility(View.VISIBLE);
-            if (cardInfo.isType(CardType.Spell)) icon_star.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_spell.png", 0, 0));
-            if (cardInfo.isType(CardType.Trap)) icon_star.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_trap.png", 0, 0));
+            if (cardInfo.isType(CardType.Spell))
+                icon_star.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_spell.png", 0, 0));
+            if (cardInfo.isType(CardType.Trap))
+                icon_star.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_trap.png", 0, 0));
             if (cardInfo.onlyType(CardType.Spell)) {
                 icon.setImageBitmap(null);
             } else if (cardInfo.onlyType(CardType.Trap)) {
                 icon.setImageBitmap(null);
             }
-            if (cardInfo.isType(CardType.QuickPlay)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "quickplay.png", 0, 0));
-            if (cardInfo.isType(CardType.Continuous)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "continuous.png", 0, 0));
-            if (cardInfo.isType(CardType.Equip)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "equip.png", 0, 0));
-            if (cardInfo.isType(CardType.Field)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "field.png", 0, 0));
-            if (cardInfo.isType(CardType.Counter)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "counter.png", 0, 0));
-            if (cardInfo.isType(CardType.Ritual)) icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "ritual.png", 0, 0));
+            if (cardInfo.isType(CardType.QuickPlay))
+                icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "quickplay.png", 0, 0));
+            if (cardInfo.isType(CardType.Continuous))
+                icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "continuous.png", 0, 0));
+            if (cardInfo.isType(CardType.Equip))
+                icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "equip.png", 0, 0));
+            if (cardInfo.isType(CardType.Field))
+                icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "field.png", 0, 0));
+            if (cardInfo.isType(CardType.Counter))
+                icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "counter.png", 0, 0));
+            if (cardInfo.isType(CardType.Ritual))
+                icon.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "ritual.png", 0, 0));
 
             atkdefView.setVisibility(View.GONE);
             icon_race.setVisibility(View.GONE);
@@ -732,16 +772,21 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 btn_share.setOnClickListener((s) -> {
                     ll_btn.startAnimation(AnimationUtils.loadAnimation(context, R.anim.push_out));
                     ll_btn.setVisibility(View.GONE);
-                    String fname = String.valueOf(code);
-                    Intent intent = new Intent(ACTION_SHARE_FILE);
-                    intent.addCategory(Intent.CATEGORY_DEFAULT);
-                    intent.putExtra(IrrlichtBridge.EXTRA_SHARE_TYPE, "jpg");
-                    intent.putExtra(IrrlichtBridge.EXTRA_SHARE_FILE, fname + Constants.IMAGE_URL_EX);
-                    intent.setPackage(context.getPackageName());
+
+                    // 构造分享意图
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.setType("image/jpeg");
+
+                    // 使用 FileProvider 生成安全 URI
+                    Uri imageUri = FileProvider.getUriForFile(context, context.getPackageName() + ".gamefiles",
+                            new File(AppsSettings.get().getCardExpansionsImagePath(code)));// 图片文件路径
+                    intent.putExtra(Intent.EXTRA_STREAM, imageUri);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // 授予读取权限
+
                     try {
-                        context.startActivity(intent);
+                        context.startActivity(Intent.createChooser(intent, context.getString(R.string.screenshoot)));
                     } catch (Throwable e) {
-                        YGOUtil.showTextToast("dev error:not found activity.", Toast.LENGTH_SHORT);
+                        YGOUtil.showTextToast("dev error:" + e, Toast.LENGTH_LONG);
                     }
                 });
 

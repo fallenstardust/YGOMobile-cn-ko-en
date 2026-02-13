@@ -1,41 +1,41 @@
 {
-"welcome": [
-"Hello, I'm a robot.",
-"The AI ​​function is under testing. Please report any problems in time.",
-"People always call me a punching bag..."
-],
-"deckerror": [
-"Sorry, there seems to be a problem with the number of {0} in my deck."
-],
-"duelstart": [
-"Don't hit me!"
-],
-"newturn": [
-""
-],
-"endturn": [
-""
-],
-"directattack": [
-""
-],
-"attack": [
-""
-],
-"ondirectattack": [
-"I'm angry!"
-],
-"facedownmonstername": "Monster",
-"activate": [
-"I like {0}."
-],
-"summon": [
-""
-],
-"setmonster": [
-""
-],
-"chaining": [
-""
-]
+  "welcome": [
+    "Hello, I am a robot.",
+    "AI functions are under testing. Please provide feedback promptly if you encounter any issues.",
+    "People keep calling me a punching bag……"
+  ],
+  "deckerror": [
+    "Sorry, there seems to be an issue with the number of {0} in my deck."
+  ],
+  "duelstart": [
+    "Don't hit me! &bawl"
+  ],
+  "newturn": [
+    "&shy"
+  ],
+  "endturn": [
+    "&shy"
+  ],
+  "directattack": [
+    "&bawl"
+  ],
+  "attack": [
+    "&bawl"
+  ],
+  "ondirectattack": [
+    "I'm angry! &angry"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "I like {0}. &laugh"
+  ],
+  "summon": [
+    "&shy"
+  ],
+  "setmonster": [
+    "&shy"
+  ],
+  "chaining": [
+    "&shy"
+  ]
 }

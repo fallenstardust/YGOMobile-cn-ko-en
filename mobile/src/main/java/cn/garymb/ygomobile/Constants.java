@@ -199,6 +199,7 @@ public interface Constants {
     String ORI_REPLAY = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_REPLAY_PATH;
     String ORI_TEXTURES = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_SKIN_PATH;
     String ORI_PICS = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_IMAGE_PATH;
+    String ORI_EXPANSIONS = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_EXPANSIONS;
 
     long LOG_TIME = 2 * 1000;
     /***

@@ -1,43 +1,43 @@
 {
   "welcome": [
-    "Hola soy el mejor."
+    "Hola, soy demasiado guapo."
   ],
   "deckerror": [
-    "Lo siento, parece que hay algún problema con el número de {0} en mi Deck.&sneaky"
+    "Perdón, parece haber un problema con la cantidad de {0} en mi deck. &sneaky"
   ],
   "duelstart": [
-    "Tengamos un duelo justo (Dragón Escondido en el Bolsillo).&ridiculous"
+    "Vamos a tener un duelo honesto (escondiendo un dragón en el pantalón) &ridiculous"
   ],
   "newturn": [
-    "La siguiente es mi etapa.&cool"
+    "Ahora es mi escenario &cool"
   ],
   "endturn": [
-    "Cada uno tiene objetivos diferentes. Yo me concentro más en la intensidad. Sólo quiero ganar.&ridiculou"
+    "Cada uno tiene objetivos diferentes, me preocupo más por la potencia, solo quiero ganar. &ridiculous"
   ],
   "directattack": [
-    "Estoy aquí para quitarte la vida.&rage"
+    "Voy allá, voy a quitarte la vida &rage"
   ],
   "attack": [
-    "Desaparece, maldito bastardo.&cool"
+    "Desaparece, peón &cool"
   ],
   "ondirectattack": [
-    "Papá, por favor perdóname.&bawl",
-    "Tan temible.&surprised"
+    "Papá, perdóname &bawl",
+    "Tan aterrador &surprised"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "La activo. Aunque el efecto de esta carta no está escrito en ella, se puede usar así.&ridiculous"
+    "El efecto de esta carta, aunque no esté escrito en ella, se puede usar así de todos modos. &ridiculous"
   ],
   "summon": [
-    "Fuerte, invencible.&good",
-    "Invoco a {0}, gana el duelo.&stick_tongue",
-    "{0} es simplemente una carta falsa.&reluctant",
-    "Siempre me gusta {0}.&cool"
+    "Fuerte, invencible &good",
+    "Invocar a {0}, ganancia enorme &stick_tongue",
+    "{0} es básicamente una carta falsa &reluctant",
+    "Siempre voy a amar a {0} &cool"
   ],
   "setmonster": [
-    "Estoy estancado de nuevo.&obedient"
+    "Me quedé sin jugada de nuevo &obedient"
   ],
   "chaining": [
-    "Manco, mírame y te diré qué hacer.&sneaky"
+    "Tonto, mira cómo contesto cada uno de tus movimientos &sneaky"
   ]
 }

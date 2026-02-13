@@ -1,61 +1,61 @@
 {
-"welcome": [
-"Hello, I am a robot. My name is Near, but I am not the real one, just an avatar.",
-"One day, my power will be stronger than the real one! Just wait and see!",
-"The AI ​​function is under testing. Please report any problems in time.",
-],
-"deckerror": [
-"What? You won't let me use my invincible {0}!",
-],
-"duelstart": [
-"No one can defeat me!",
-"I am omnipotent and can use any deck!",
-"I give you my left hand, and you are no match for me.",
-"I am the number one demon fairy in the universe!",
-],
-"newturn": [
-"It's my turn again. Draw a card. I hope you will have another turn.",
-"I drew a card magnificently.",
-],
-"endturn": [
-"You are lucky. I didn't kill you.",
-"I let you. The turn is over. Cherish your next turn.",
-],
-"directattack": [
-"My {0} is so cute. Next, I will let him play with you. Gently grab the opponent. He has no place to defend.",
-"Next, I will use my {0} to give the opponent the cutest blow~",
-"The cute {0} has wronged you. Go and hug the opponent. Don't be too polite~",
-"The opponent doesn't have any defense. It seems that he is moved by my {0}'s cuteness. Next, you go to show your cute figure in front of the opponent~"
-],
-"attack": [
-"Humph, {1} is too ugly. My {0} will destroy him~",
-"Is {1} as cute as my {0}? My {0} disagrees. Go and beat it to death!",
-"{1} is actually cuter than my {0}? This is not okay. I can't stand it. {0}, let's make him disappear from my sight!"
-],
-"ondirectattack": [
-"Damn it, you actually took advantage of someone's misfortune! What kind of hero are you!",
-"It's just a small character like {0}!",
-"Do you think you won just like that?"
-],
-"facedownmonstername": "Monster",
-"activate": [
-"I activated the cute effect of my {0}.",
-"I used the effect of {0} to show my opponent a cute look~",
-"I was so moved by {0}'s cuteness that I used its effect."
-],
-"summon": [
-"I summoned {0}, and meowed at my opponent~",
-"Come out, cute and charming {0}~",
-"I released a cute {0} from my pet house.",
-"{0}: I heard that you like me very much, so I came."
-],
-"setmonster": [
-"I placed a monster. When it turns over, don't be scared by its cute appearance~",
-"I placed a monster. Guess what it is? "
-],
-"chaining": [
-"I waved the magic wand and activated the effect of {0}~",
-"Ah! This time I'm dead! ...Hey, you've been fooled, I'll activate {0}!",
-"You're too rash, didn't you expect that I would activate {0}? "
-]
+  "welcome": [
+    "Hello, I am a robot. My name is Nia, but I am not the original body, just a clone~",
+    "One day, my power will surpass the original body! Just you wait and see!",
+    "AI functions are under testing. Please give feedback promptly if you encounter any issues."
+  ],
+  "deckerror": [
+    "What? I'm not allowed to use my invincible {0}!"
+  ],
+  "duelstart": [
+    "No one can defeat me! &stick_tongue",
+    "I am omnipotent and can use any deck! &cool",
+    "Even if I only use my left hand, you're no match for me. &stick_tongue",
+    "I am the number one fairy immortal in the entire universe! &cool"
+  ],
+  "newturn": [
+    "It's my turn again, draw a card. Hope you get to have another turn. &ridiculous",
+    "I drew a card in a gorgeous way. &stick_tongue"
+  ],
+  "endturn": [
+    "You're lucky I didn't finish you off. &reluctant",
+    "I'll call it a mercy. Turn ends, cherish your next turn. &reluctant"
+  ],
+  "directattack": [
+    "My {0} is so cute~ Next, I'll let it play with you. Gently grab the opponent, there's no defense for them. &sneaky",
+    "Next, my {0} will deliver the cutest attack to the opponent~&cool",
+    "Poor cute {0}, go give the opponent a hug, don't be too polite~&reluctant",
+    "The opponent has no defense at all, looks like they're touched by {0}'s cuteness. Next, go show your cute self to the opponent~&cool"
+  ],
+  "attack": [
+    "Hmph, {1} is so ugly. My {0}, go destroy it~&obedient",
+    "Can {1} be cuter than my {0}? My {0} disagrees, go slap it to death! &stick_tongue",
+    "How dare {1} be cuter than my {0}? That's unacceptable, I can't stand it! {0}, make it disappear from sight! &obedient"
+  ],
+  "ondirectattack": [
+    "Damn it! You took advantage of me! What kind of hero are you! &despise",
+    "It's just a small fry like {0}! &despise",
+    "Do you think you've won just like that? &despise"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "I activate the cute effect of my {0}. &reluctant",
+    "I use {0}'s effect to act cute for the opponent~&stick_tongue",
+    "I'm so touched by {0}'s cuteness that I used its effect in a panic. &surprised"
+  ],
+  "summon": [
+    "I summon {0}, hurry and meow at the opponent~&ridiculous",
+    "Come forth, the cute and charming {0}~&good",
+    "I let a cute {0} out of my pet house. &laugh",
+    "{0}: I heard you like me, so here I am. &stick_tongue"
+  ],
+  "setmonster": [
+    "I set a monster. When it's flipped over, don't be scared by its cute appearance~&reluctant",
+    "I set a monster. Guess what it could be? &reluctant"
+  ],
+  "chaining": [
+    "I wave my magic wand and activate {0}'s effect~&laugh",
+    "Ah! I'm doomed!... Hehe, you fell for it! I activate {0}! &reluctant",
+    "You're being too reckless. Did you not expect me to activate {0}? &reluctant"
+  ]
 }

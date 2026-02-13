@@ -1,61 +1,61 @@
 {
   "welcome": [
-    "Olá, sou um robô, meu nome é Nia, mas não sou o corpo principal, apenas um clone.",
-    "Um dia, meu poder será mais forte que o corpo original! Apenas espere e verá!",
-    "A função de IA está em teste. Se encontrar algum problema, por favor, informe."
+    "Olá, sou um robô. Meu nome é Nia, mas não sou o corpo original, apenas um clone~",
+    "Um dia, meu poder superará o do corpo original! Aguardem e verão!",
+    "As funções de IA estão em teste. Por favor, envie feedback imediatamente se encontrar problemas."
   ],
   "deckerror": [
-    "O quê, você não vai me deixar usar o meu invencível {0}!"
+    "O que? Não me deixam usar meu invencível {0}!"
   ],
   "duelstart": [
-    "Ninguém pode me vencer!",
-    "Sou onipotente e posso usar qualquer Deck!",
-    "Te dou a minha mão esquerda, mas você não é rival para mim.",
-    "Sou o demônio número um do universo!"
+    "Ninguém pode me derrotar! &stick_tongue",
+    "Sou onipotente e sei usar qualquer deck! &cool",
+    "Mesmo usando só a mão esquerda, você não é meu oponente. &stick_tongue",
+    "Eu sou a fada imortal número um de todo o universo! &cool"
   ],
   "newturn": [
-    "É meu turno novamente, eu compro uma carta, espero que você tenha outro turno.",
-    "Tirei uma carta brilhantemente genial."
+    "De novo é meu turno, comprar. Espero que você tenha outro turno. &ridiculous",
+    "Eu comprei uma carta de forma deslumbrante. &stick_tongue"
   ],
   "endturn": [
-    "Você tem sorte de eu não ter te matado.",
-    "Isso é o que eu pedi para você fazer. A rodada terminou. Aproveite sua próxima rodada."
+    "Você tem sorte de não ter sido eliminado por mim. &reluctant",
+    "Foi por piedade minha. Turno finalizado, aproveite seu próximo turno. &reluctant"
   ],
   "directattack": [
-    "Meu {0} é muito fofo. Agora deixarei ele brincar com você. Ataque suavemente o oponente. Não tem como se defender.",
-    "Usarei o meu {0} para dar ao meu oponente o golpe mais fofo.",
-    "Meu adorável {0} te machucou, vai lá e abraça seu oponente, não seja tão educado.",
-    "O oponente não tem defesa. Parece que foi comovido pela ternura do meu {0}. Agora você vai mostrar sua figura fofa diante dele."
+    "Meu {0} é tão fofo~ Agora, deixe-o brincar com você. Agarre suavemente o oponente, ele não tem defesa. &sneaky",
+    "Agora, meu {0} vai dar o golpe mais fofo ao oponente~&cool",
+    "Pobre {0} fofo, vá abraçar o oponente, não seja tímido~&reluctant",
+    "O oponente não tem nenhuma defesa, parece que ficou emocionado com a fofura do meu {0}. Agora, vá mostrar sua fofura para o oponente~&cool"
   ],
   "attack": [
-    "Hmph, {1} é tão feio. Meu {0} deve ir e destruí-lo.",
-    "{1} Isso é tão fofo quanto o meu {0}? Meu {0} não está satisfeito, vai e mate ele com tiros!",
-    "{1} Isso é realmente mais fofo que o meu {0}? Isso não está certo, isso é intolerável para mim, {0}, por favor faça isso desaparecer dos seus olhos!"
+    "Hmph, {1} é tão feio. Meu {0}, vá destruí-lo~&obedient",
+    "Como {1} pode ser mais fofo que meu {0}? Meu {0} não aceita, vá esmagá-lo! &stick_tongue",
+    "Como {1} pode ser mais fofo que meu {0}? Isso não pode ser, eu não suporto! {0}, faça ele sumir da vista! &obedient"
   ],
   "ondirectattack": [
-    "Maldição, você se aproveitou da fraqueza de alguém! Que tipo de herói você é!",
-    "É apenas um pequeno papel como {0}!",
-    "Você acha que pode ganhar assim?"
+    "Droga! Você aproveitou minha fraqueza! Que tipo de herói é esse! &despise",
+    "É só um insignificante como {0}! &despise",
+    "Você acha que ganhou assim? &despise"
   ],
   "facedownmonstername": "Monstro",
   "activate": [
-    "Ativo o efeito fofo do meu {0}.",
-    "Uso o efeito do {0} para fazer meu oponente parecer fofo.",
-    "Fiquei tão comovido pela ternura do {0} que fiquei tão assustado que ativei seu efeito."
+    "Eu ativo o efeito fofo do meu {0}. &reluctant",
+    "Eu uso o efeito de {0} para fazer gracinhas para o oponente~&stick_tongue",
+    "Fiquei tão emocionado com a fofura do {0} que usei seu efeito assustado. &surprised"
   ],
   "summon": [
-    "Invoco {0}, dê um miado para o seu oponente.",
-    "Saia, minha preciosa e encantadora {0}.",
-    "Tirei um fofo {0} da minha casa de animais.",
-    "{0}: Ouvi dizer que você gosta muito de mim, então eu vim."
+    "Eu invoco {0}, corre e mia para o oponente~&ridiculous",
+    "Venha, o fofo e encantador {0}~&good",
+    "Eu soltei um {0} fofo da minha casa de pets. &laugh",
+    "{0}: Ouvi que você gosta de mim, então vim. &stick_tongue"
   ],
   "setmonster": [
-    "Coloquei um monstro. Quando virar, não se assuste com sua aparência fofa.",
-    "Coloquei um monstro, adivinhe quem será?"
+    "Eu coloquei um monstro. Quando ele for virado, não se assuste com sua aparência fofa~&reluctant",
+    "Eu coloquei um monstro. Adivinhe o que pode ser? &reluctant"
   ],
   "chaining": [
-    "Agitei a varinha mágica e ativei o efeito de {0}.",
-    "Ah! Você está morto!... Ei, você foi enganado, ativei {0}!",
-    "Você está se apressando demais. Não esperava que eu ativasse {0}?"
+    "Eu aceno minha varinha mágica e ativo o efeito de {0}~&laugh",
+    "Ah! Estou perdido!... Hehe, caiu na cilada! Eu ativo {0}! &reluctant",
+    "Você está sendo muito imprudente. Não imaginou que eu ativaria {0}? &reluctant"
   ]
 }

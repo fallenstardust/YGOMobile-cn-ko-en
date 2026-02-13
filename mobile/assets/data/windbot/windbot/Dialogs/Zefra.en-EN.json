@@ -1,59 +1,59 @@
 {
-"welcome": [
-"Hello, card player",
-"Hello, welcome to play cards with me"
-],
-"deckerror": [
-"Sorry, my deck needs {0} to play"
-],
-"duelstart": [
-"Hey, I'm going to use my second brother to beat you.",
-"My deck is not bad, just a few banned cards",
-"I can only play simple decks, don't use banned cards to fight me"
-],
-"newturn": [
-"It's my turn, draw a card! (secretly take out from the crotch)",
-"I draw a card"
-],
-"endturn": [
-"I'm done, it's your turn",
-"It's your turn, it's not a multi-threaded duel, is it?"
-],
-"directattack": [
-"{0}, attack the opponent!",
-"{0}, smash it!",
-"{0}, punch it!"
-],
-"attack": [
-"{0}, knock down {1}!",
-"Hey, {0}, attack {1}!"
-],
-"ondirectattack": [
-"Ah, don't hit me, I'll put a banned card for you to play with",
-"Yeah, too strong, can you help me?",
-"It hurts... I want to unplug the power"
-],
-"facedownmonstername": "Monster",
-"activate": [
-"Hey, I activate {0}",
-"Ha ha, I use the power of {0}"
-],
-"summon": [
-"I summon (take out) {0}!",
-"Come out, my little monster {0}!"
-],
-"setmonster": [
-"I place an unknown monster."
-],
-"chaining": [
-"Hey, can I use a banned card?",
-"Huh, I activate {0}!",
-"Sorry, I have {0}",
-"Ha ha, activate the effect of {0}!"
-],
-"custom": [
-"Gua! The main body is going to fight!",
-"I can't play if my hand is stuck!!!",
-"Hey, don't panic, there is still a place to play (￣y▽￣)╭"
-]
+  "welcome": [
+    "Hey there, card duelist!",
+    "Hello, welcome to play cards with me!"
+  ],
+  "deckerror": [
+    "Sorry, my deck needs {0} to play with."
+  ],
+  "duelstart": [
+    "Hehe, I'm gonna beat you with Second Bro. &ridiculous",
+    "My deck isn't bad, I just snuck a few Forbidden Cards in~&stick_tongue",
+    "I only know how to play simple decks, don't use Forbidden Cards against me~&shy"
+  ],
+  "newturn": [
+    "My turn! Draw! (Sneakily pull from my pants) &ridiculous",
+    "I draw one card&cool"
+  ],
+  "endturn": [
+    "I'm done playing, your turn&stick_tongue",
+    "It's your turn now~ Could it be a multi-threaded duel? &confused"
+  ],
+  "directattack": [
+    "{0}, attack the opponent! &reluctant",
+    "{0}, smash it to pieces! &rage",
+    "{0}, punch it with tiny fists!&stick_tongue"
+  ],
+  "attack": [
+    "{0}, take down {1}! &good",
+    "Hehe, {0}, attack {1}! &reluctant"
+  ],
+  "ondirectattack": [
+    "Ah, don't hit me! I'll let you play with my Forbidden Cards~&shy",
+    "Wow, you're so strong! Can you take me under your wing?&obedient",
+    "It hurts... I wanna pull the plug&bawl"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "Hehe, I activate {0}&reluctant",
+    "Giggle, I use the power of {0}&laugh"
+  ],
+  "summon": [
+    "I summon (pull out) {0}!&ridiculous",
+    "Come out, my little monster {0}! &laugh"
+  ],
+  "setmonster": [
+    "I set an unknown monster. &stick_tongue"
+  ],
+  "chaining": [
+    "Hey, mad I can use Forbidden Cards? &ridiculous",
+    "Hmph, I activate {0}! &cool",
+    "Oopsie, I have {0}&reluctant",
+    "Hahaha, activate the effect of {0}! &stick_tongue"
+  ],
+  "custom": [
+    "Quack! The main body marches out! &cool",
+    "凸(艹皿艹 ) Bricked, I quit!!!&bawl",
+    "Hey, no panic, still got a stall board (￣y▽￣)╭&ridiculous"
+  ]
 }

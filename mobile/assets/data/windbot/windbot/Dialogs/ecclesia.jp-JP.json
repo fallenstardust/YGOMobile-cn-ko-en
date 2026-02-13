@@ -1,0 +1,50 @@
+{
+  "welcome": [
+    "ここが大霊峰なの？",
+    "ここはドグマティカ竜国です。",
+    "ここは開かれた大地です。"
+  ],
+  "deckerror": [
+    "{0}は氷水の呪縛にかかっている！"
+  ],
+  "duelstart": [
+    "長い道を歩いたからお腹空いた……&shy",
+    "先にどんな仲間に会えるかな？&confused",
+    "アルブスが一緒なら……&shy"
+  ],
+  "newturn": [
+    "私のターン！&angry"
+  ],
+  "endturn": [
+    "お姉さんは一体どこにいるの……&bawl",
+    "アルブスの乾パンも全部食べちゃった。&shy",
+    "いつご飯食べれるの？&confused"
+  ],
+  "directattack": [
+    "{0}、直接攻撃！&cool",
+    "ご飯だー！&laugh"
+  ],
+  "attack": [
+    "{0}で{1}を攻撃！&stick_tongue"
+  ],
+  "ondirectattack": [
+    "お腹空いた……&shy",
+    "うう……&bawl",
+    "お姉さん……&shy"
+  ],
+  "facedownmonstername": "モンスター",
+  "activate": [
+    "{0}の効果を発動！&stick_tongue"
+  ],
+  "summon": [
+    "{0}召喚！&cool",
+    "出でよ、{0}！&stick_tongue"
+  ],
+  "setmonster": [
+    "……&sneaky"
+  ],
+  "chaining": [
+    "{0}の効果を発動！&laugh",
+    "{0}！&laugh"
+  ]
+}

@@ -7,6 +7,7 @@ import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
 import static cn.garymb.ygomobile.Constants.ID1;
 import static cn.garymb.ygomobile.Constants.ID2;
 import static cn.garymb.ygomobile.Constants.ID3;
+import static cn.garymb.ygomobile.Constants.ORI_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.ORI_PICS;
 import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
 import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
@@ -656,6 +657,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     FileUtils.copyDir(ORI_REPLAY, mSettings.getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, false);
                 if (new File(ORI_PICS).list() != null)
                     FileUtils.copyDir(ORI_PICS, mSettings.getCardImagePath(), false);
+                if (new File(ORI_EXPANSIONS).list() != null)
+                    FileUtils.copyDir(ORI_EXPANSIONS, mSettings.getExpansionsPath().getAbsolutePath(), false);
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e("SettingFragment", "错误" + e);

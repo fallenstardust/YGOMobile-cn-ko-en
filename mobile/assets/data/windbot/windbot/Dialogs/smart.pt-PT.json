@@ -1,43 +1,43 @@
 {
   "welcome": [
-    "Olá, sou o melhor."
+    "Olá, eu sou muito bonito."
   ],
   "deckerror": [
-    "Desculpe, parece que há um problema com o número de {0} no meu Deck.&sneaky"
+    "Desculpe, parece haver um problema com a quantidade de {0} no meu deck. &sneaky"
   ],
   "duelstart": [
-    "Vamos ter um duelo justo (Dragão Escondido no Bolso).&ridiculou"
+    "Vamos ter um duelo honesto (escondendo um dragão na calça) &ridiculous"
   ],
   "newturn": [
-    "Agora é minha fase.&cool"
+    "Agora é o meu palco &cool"
   ],
   "endturn": [
-    "Cada um tem objetivos diferentes. Eu me concentro mais na intensidade. Só quero ganhar.&ridiculous"
+    "Cada um tem objetivos diferentes, eu me preocupo mais com poder, só quero ganhar. &ridiculous"
   ],
   "directattack": [
-    "Estou aqui para tirar sua vida.&rage"
+    "Eu vou lá, vou pegar sua vida &rage"
   ],
   "attack": [
-    "Desapareça, maldito bastardo.&cool"
+    "Desapareça, peão &cool"
   ],
   "ondirectattack": [
-    "Papai, por favor, me perdoe.&baw",
-    "Tão temível.&surprise"
+    "Papai, me perdoa &bawl",
+    "Tão aterrador &surprised"
   ],
   "facedownmonstername": "Monstro",
   "activate": [
-    "Eu ativo. Embora o efeito desta carta não esteja escrito nela, pode ser usado assim.&ridiculous"
+    "O efeito deste card, embora não esteja escrito nele, pode ser usado assim mesmo. &ridiculous"
   ],
   "summon": [
-    "Forte, invencível.&good",
-    "Invoco {0}, ganhe o duelo.&stick_tongue",
-    "{0} é simplesmente uma carta falsa.&reluctant",
-    "Sempre gosto de {0}.&cool"
+    "Forte, invencível &good",
+    "Invocar {0}, lucro enorme &stick_tongue",
+    "{0} é basicamente um card falso &reluctant",
+    "Eu sempre vou amar {0} &cool"
   ],
   "setmonster": [
-    "Estou empacado de novo.&obedient"
+    "Briguei de novo &obedient"
   ],
   "chaining": [
-    "Sem braço, olhe para mim e eu te direi o que fazer.&sneaky"
+    "Tolo, veja eu contra-atacar cada movimento seu &sneaky"
   ]
 }

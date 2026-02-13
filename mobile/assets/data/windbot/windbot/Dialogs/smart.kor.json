@@ -1,43 +1,43 @@
 {
   "welcome": [
-    "안녕. 난 인싸야.&coo"
+    "안녕하세요, 나 너무 잘생겼어."
   ],
   "deckerror": [
-    "{0}이(가) 맞지 않습니다.&sneaky"
+    "미안해, 내 덱에 있는 {0} 개수에 문제가 있는 것 같아. &sneaky"
   ],
   "duelstart": [
-    "듀얼을 시작하지.&ridiculou"
+    "당당한 듀얼을 하자 (바지 속에 용을 숨기고) &ridiculous"
   ],
   "newturn": [
-    "다음은 내 무대다.&cool"
+    "이제부터는 내 무대야&cool"
   ],
   "endturn": [
-    "턴 종료야.&ridiculous"
+    "사람마다 목적은 다르고, 나는 강함을 더 중시해, 난 그냥 이기고 싶어. &ridiculous"
   ],
   "directattack": [
-    "직접 공격!&rage"
+    "나 갈 테니, 너의 목숨을 가져갈 거야&rage"
   ],
   "attack": [
-    "공격!&cool"
+    "사라져, 잡병아&cool"
   ],
   "ondirectattack": [
-    "으윽...!&bawl"
+    "아버지, 살려줘&bawl",
+    "정말 공포스러워&surprised"
   ],
   "facedownmonstername": "몬스터",
   "activate": [
-    "나는 이 카드를 발동하겠어.&ridiculous"
+    "이 카드 효과는 위에 안 적혀 있지만, 그래도 이렇게 쓸 수 있어. &ridiculous"
   ],
   "summon": [
-    "Strong! Infinite!&good",
-    "召唤{0}，赚爆&stick_tongue",
-    "{0}를 소환! Show me the Money!",
-    "{0}이 히든 카드다!&reluctant",
-    "나는 이 카드를 좋아하지! {0}!&cool"
+    "강해, 무적이야&good",
+    "{0} 소환, 대박 벌었어&stick_tongue",
+    "{0} 거의 가짜 카드야&reluctant",
+    "나는 영원히 {0}을 좋아해&cool"
   ],
   "setmonster": [
-    "Set!&obedient"
+    "또 손패 사고야&obedient"
   ],
   "chaining": [
-    "체인하겠어!&sneaky"
+    "어리석다, 내가 너의 모든 수에 대응해 보여줄게&sneaky"
   ]
 }

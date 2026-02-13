@@ -1335,11 +1335,11 @@ void Game::DrawSpec() {
             } else if(showcardp < showcarddif) {
                 DrawShadowText(lpcFont, lstr, ResizePhaseHint(660, 290, 960, 370, pos.Width), Resize(-1, -1, 0, 0), 0xffffffff);
                 if(dInfo.vic_string.size() && (showcardcode == 1 || showcardcode == 2)) {
-                    int w = guiFont->getDimension(dInfo.vic_string).Width;
+                    int w = textFont->getDimension(dInfo.vic_string).Width;
                     if(w < 200)
                         w = 200;
                     driver->draw2DRectangle(0xa0000000, ResizeWin(640 - w / 2, 320, 690 + w / 2, 340));
-                    DrawShadowText(guiFont, dInfo.vic_string, ResizeWin(640 - w / 2, 320, 690 + w / 2, 340), Resize(-2, -1, 0, 0), 0xffffffff, 0xff000000, true, true, 0);
+                    DrawShadowText(textFont, dInfo.vic_string, ResizeWin(640 - w / 2, 340, 690 + w / 2, 360), Resize(-2, -1, 0, 0), 0xffffffff, 0xff000000, true, true, 0);
                 }
             } else if(showcardp < showcarddif + 10) {
                 int alpha = ((showcarddif + 10 - showcardp) * 25) << 24;
@@ -1399,7 +1399,7 @@ void Game::DrawSpec() {
                 y = 10 * mainGame->yScale;
             } else {
                 if (chatType[i] < 4) {
-                    if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
+                    if(i >= 3) continue;//决斗中玩家聊天与其他信息各只显示一行
                     if (chatType[i] == 0 || chatType[i] == 2) {
                         maxwidth = 230 * xScale;
                         x = 390 * xScale;
@@ -1416,9 +1416,9 @@ void Game::DrawSpec() {
                 }
             }
 
-            std::wstring msg = SetStaticText(nullptr, maxwidth, icFont, chatMsg[i].c_str());
-            int w = icFont->getDimension(msg).Width;
-            int h = icFont->getDimension(msg).Height + 2;
+            std::wstring msg = SetStaticText(nullptr, maxwidth, guiFont, chatMsg[i].c_str());
+            int w = guiFont->getDimension(msg).Width;
+            int h = guiFont->getDimension(msg).Height + 2;
 
             if(!dInfo.isStarted || is_building) {
                 rectloc = irr::core::recti(x, y + chatRectY, x + 2 + w, y + chatRectY + h);
@@ -1446,8 +1446,8 @@ void Game::DrawSpec() {
             shadowloc = msgloc + irr::core::vector2di(1, 1);
 
             driver->draw2DRectangle(rectloc, 0xa0000000, 0xa0000000, 0xa0000000, 0xa0000000);
-            icFont->drawUstring(msg, shadowloc, 0xff000000, false, false);
-            icFont->drawUstring(msg, msgloc, chatColor[chatType[i]], false, false);
+            guiFont->drawUstring(msg, shadowloc, 0xff000000, false, false);
+            guiFont->drawUstring(msg, msgloc, chatColor[chatType[i]], false, false);
 
             chatRectY += h;
         }

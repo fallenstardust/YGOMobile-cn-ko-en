@@ -1,0 +1,54 @@
+{
+  "welcome": [
+    "あー～もっと寝かせて～",
+    "ギルドに入りますか？",
+    "AI機能はテスト中です。問題が発生した場合は速やかにフィードバックしてください。"
+  ],
+  "deckerror": [
+    "俺のデッキの{0}は使えない、寝に戻るぞ。"
+  ],
+  "duelstart": [
+    "ねむい……",
+    "あら、相手すごそう。&stick_tongue"
+  ],
+  "newturn": [
+    "俺のターン、ドロー！&stick_tongue",
+    "マナ補充！&cool"
+  ],
+  "endturn": [
+    "仕事したくないどうしよ……&sweat",
+    "まあいいや、お前のターンだ。&sweat"
+  ],
+  "directattack": [
+    "{0}、直接攻撃！&cool",
+    "それで？直接攻撃！&stick_tongue",
+    "どいて、寝に戻るから。&sweat"
+  ],
+  "attack": [
+    "{0}、{1}を攻撃！&reluctant",
+    "{0}、俺の代わりに{1}を倒せ！"
+  ],
+  "ondirectattack": [
+    "ああ……&shy",
+    "あああ……&shy",
+    "{0}すごく怖い……&shy",
+    "疲れた……&shy"
+  ],
+  "facedownmonstername": "モンスター",
+  "activate": [
+    "{0}の効果発動！&stick_tongue"
+  ],
+  "summon": [
+    "{0}を召喚！&cool",
+    "出でよ、{0}！&stick_tongue",
+    "{0}、手伝って。&reluctant"
+  ],
+  "setmonster": [
+    "……&confused"
+  ],
+  "chaining": [
+    "{0}発動！&ridiculous",
+    "ちょっと待て、{0}を発動する。&ridiculous",
+    "{0}がなかったら、もう寝ちゃうとこだった。&confused"
+  ]
+}
