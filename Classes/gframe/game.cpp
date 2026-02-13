@@ -331,7 +331,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 18 * yScale, isAntialias, false);
 	adFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 12 * yScale, isAntialias, false);
 	lpcFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 48 * yScale, isAntialias, true);
-	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 18 * yScale, isAntialias, true);
+	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 16 * yScale, isAntialias, true);
     titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 32 * yScale, isAntialias, true);
 	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
 	miniFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 8 * yScale, isAntialias, true);//最小的文字，用于genesys点数图标
@@ -2170,7 +2170,7 @@ void Game::ShowCardInfo(int code) {
 
     // 设置名称标签文本及提示工具文本（当文字超出宽度时）
     stName->setText(formatBuffer);
-    if ((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
+    if ((int)textFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
         stName->setToolTipText(formatBuffer);
     else
         stName->setToolTipText(nullptr);
@@ -2211,7 +2211,7 @@ void Game::ShowCardInfo(int code) {
 
         // 判断文本长度是否需要换行偏移
         int offset_info = 0;
-        irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
+        irr::core::dimension2d<unsigned int> dtxt = textFont->getDimension(formatBuffer);
         if (dtxt.Width > (300 * xScale - 13) - 15)
             offset_info = 15;
 
@@ -2394,7 +2394,7 @@ void Game::ErrorLog(const char* msg) {
 	std::fclose(fp);
 }
 void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
-	SetStaticText(stSysMessage, 370 * xScale, guiFont, text);
+	SetStaticText(stSysMessage, 370 * xScale, textFont, text);
 	wSysMessage->setVisible(true);
 	wSysMessage->getParent()->bringToFront(wSysMessage);
 	//env->setFocus(wSysMessage);
