@@ -2609,7 +2609,6 @@ void Game::ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe) {
     currentEmoticonCode = emoticonCode;
     isMyEmoticon = isFromMe;
     showingEmoticon = true;
-    DrawEmoticon();
 }
 // 过滤消息中的卡片数字ID
 std::wstring Game::AppendCardNames(const std::wstring& msg) {

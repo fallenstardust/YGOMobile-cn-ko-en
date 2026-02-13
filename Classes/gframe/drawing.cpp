@@ -1338,7 +1338,7 @@ void Game::DrawSpec() {
                     int w = textFont->getDimension(dInfo.vic_string).Width;
                     if(w < 200)
                         w = 200;
-                    driver->draw2DRectangle(0xa0000000, ResizeWin(640 - w / 2, 320, 690 + w / 2, 340));
+                    driver->draw2DRectangle(0xa0000000, ResizeWin(640 - w / 2, 330, 690 + w / 2, 370));
                     DrawShadowText(textFont, dInfo.vic_string, ResizeWin(640 - w / 2, 340, 690 + w / 2, 360), Resize(-2, -1, 0, 0), 0xffffffff, 0xff000000, true, true, 0);
                 }
             } else if(showcardp < showcarddif + 10) {
