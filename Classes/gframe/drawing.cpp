@@ -1399,7 +1399,7 @@ void Game::DrawSpec() {
                 y = 10 * mainGame->yScale;
             } else {
                 if (chatType[i] < 4) {
-                    if(i >= 1) continue;//决斗中玩家聊天与其他信息各只显示一行
+                    if(i >= 3) continue;//决斗中玩家聊天与其他信息各只显示一行
                     if (chatType[i] == 0 || chatType[i] == 2) {
                         maxwidth = 230 * xScale;
                         x = 390 * xScale;
