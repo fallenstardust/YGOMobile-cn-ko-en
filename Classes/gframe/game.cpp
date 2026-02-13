@@ -247,13 +247,10 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	int len = options->getArchiveCount();
 	for(int i=0;i<len;i++){
 		irr::io::path zip_path = zips[i];
-        // 只添加pics和scripts两个zip,其他zip只在expansions下统一被loadexpansions()加载
-        if (zip_path == workingDir + "/pics.zip" || zip_path == workingDir + "/scripts.zip") {
-            if (dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-                ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
-            } else {
-                ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
-            }
+        if (dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
+            ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
+        } else {
+            ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
         }
 	}
 	// 初始化各种游戏状态变量
@@ -304,11 +301,21 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
         ALOGD("cc game: Failed to load textures!");
 		return false;
 	}
-	dataManager.FileSystem = device->getFileSystem();
-	if(!dataManager.LoadDB(L"cards.cdb")) {
-        ALOGD("cc game: Failed to load card database (cards.cdb)!");
-		return false;
-	}
+    // 加载数据库文件
+    irr::io::path* cdbs = options->getDBFiles();
+    len = options->getDbCount();
+    for(int i=0;i<len;i++){
+        irr::io::path cdb_path = cdbs[i];
+        wchar_t wpath[1024];
+        // 解码UTF8路径
+        BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
+        // 加载数据库
+        if(dataManager.LoadDB(wpath)) {
+            ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
+        }else{
+            ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
+        }
+    }
 	// 加载字符串配置文件
 	if(!dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
 		ALOGD("cc game: Failed to loadStrings expansions/strings.conf");
@@ -1813,11 +1820,7 @@ void Game::LoadExpansions() {
 	while((dirp = readdir(dir)) != NULL) {
 		size_t len = strlen(dirp->d_name);
 		// 检查文件名长度是否足够以及后缀是否为 .zip 或 .ypk（忽略大小写）
-		if(len > 4 && (strcasecmp(dirp->d_name + len - 4, ".zip") == 0 || strcasecmp(dirp->d_name + len - 4, ".ypk") == 0)) {
-			char upath[1024];
-			sprintf(upath, "./expansions/%s", dirp->d_name);
-			dataManager.FileSystem->addFileArchive(upath, true, false, EFAT_ZIP);
-		} else if (len > 11 && strcasecmp(dirp->d_name + len - 11, "lflist.conf") == 0) {
+		if (len > 11 && strcasecmp(dirp->d_name + len - 11, "lflist.conf") == 0) {
 			char upath[1024];
 			sprintf(upath, "./expansions/%s", dirp->d_name);
 			deckManager.LoadLFListSingle((const char*)upath);
