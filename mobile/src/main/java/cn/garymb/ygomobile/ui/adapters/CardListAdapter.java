@@ -211,6 +211,8 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                 holder.setImageBitmap(R.id.icon_race, BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wyrm.png", 0, 0));
             if (item.Race == CardRace.Cyberse.value())
                 holder.setImageBitmap(R.id.icon_race, BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cyberse.png", 0, 0));
+            if (item.Race == CardRace.Illusion.value())
+                holder.setImageBitmap(R.id.icon_race, BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "illusion.png", 0, 0));
             holder.setText(R.id.card_race, mStringManager.getRaceString(item.Race));
 
             // 攻击力

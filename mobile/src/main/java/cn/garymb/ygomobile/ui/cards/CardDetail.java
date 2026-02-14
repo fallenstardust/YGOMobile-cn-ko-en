@@ -688,6 +688,8 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "wyrm.png", 0, 0));
             if (cardInfo.Race == CardRace.Cyberse.value())
                 icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cyberse.png", 0, 0));
+            if (cardInfo.Race == CardRace.Illusion.value())
+                icon_race.setImageBitmap(BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "illusion.png", 0, 0));
             race.setText(mStringManager.getRaceString(cardInfo.Race));
             icon.setVisibility(View.GONE);
         } else {

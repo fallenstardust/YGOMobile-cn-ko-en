@@ -29,7 +29,7 @@ public enum CardRace {
     CreatorGod(0x400000, 1042),
     Wyrm(0x800000, 1043),
     Cyberse(0x1000000, 1044),
-    Illusionist(0x2000000, 1045);
+    Illusion(0x2000000, 1045);
     private long value = 0;
     private final int lang_index;
 
