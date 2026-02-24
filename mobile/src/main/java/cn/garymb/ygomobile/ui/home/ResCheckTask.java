@@ -59,6 +59,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private final ResCheckListener mListener;
     private final Handler handler;
     protected int mError = ERROR_NONE;
+    private Exception taskException = null;
     MessageReceiver mReceiver = new MessageReceiver();
     Handler han = new Handler() {
 
@@ -178,6 +179,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     @Override
     protected void onPostExecute(final Integer result) {
         super.onPostExecute(result);
+        if (taskException != null) {
+            Toast.makeText(mContext, "ERROR COPY: " + taskException.getMessage(), Toast.LENGTH_LONG).show();
+        }
         //关闭异常
         if (dialog.isShowing()) {
             try {
@@ -323,7 +327,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
 
             loadData();
         } catch (Exception e) {
-            Toast.makeText(mContext, "ERROR COPY: " + e, Toast.LENGTH_SHORT).show();
+            taskException = e;
             Log.e(TAG, "ERROR COPY", e);
             return ERROR_COPY;
         }
