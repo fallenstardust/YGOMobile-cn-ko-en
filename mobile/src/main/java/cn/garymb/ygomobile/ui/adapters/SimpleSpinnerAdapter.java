@@ -13,6 +13,7 @@ public class SimpleSpinnerAdapter extends BaseAdapterPlus<SimpleSpinnerItem> {
     private int color;
     private int maxLines = 2;
     private boolean singleLine = false;
+    private float textSize = 14f; // 默认字体大小
 
     public SimpleSpinnerAdapter(Context context) {
         super(context);
@@ -30,6 +31,11 @@ public class SimpleSpinnerAdapter extends BaseAdapterPlus<SimpleSpinnerItem> {
     public void setMaxLines(int maxLines) {
         this.maxLines = maxLines;
     }
+    
+    // 添加设置字体大小的方法
+    public void setTextSize(float textSize) {
+        this.textSize = textSize;
+    }
 
     @Override
     protected View createView(int position, ViewGroup parent) {
@@ -37,6 +43,7 @@ public class SimpleSpinnerAdapter extends BaseAdapterPlus<SimpleSpinnerItem> {
         TextView textView = view.findViewById(android.R.id.text1);
         view.setTag(textView);
         textView.setMaxLines(maxLines);
+        textView.setTextSize(textSize); // 设置字体大小
         if (singleLine) {
             textView.setSingleLine();
         }
@@ -47,7 +54,8 @@ public class SimpleSpinnerAdapter extends BaseAdapterPlus<SimpleSpinnerItem> {
     protected void attach(View view, SimpleSpinnerItem item, int position) {
         TextView textView = (TextView) view.getTag();
         textView.setTextColor(color);
-        textView.setMaxLines(2);
+        textView.setMaxLines(maxLines);
+        textView.setTextSize(textSize); // 确保更新时也应用字体大小
         if (item != null) {
             textView.setText(item.toString());
         }
