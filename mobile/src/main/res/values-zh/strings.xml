@@ -328,8 +328,8 @@
     <string name="restore_deck">发现本机有卡组备份记录，是否还原？</string>
     <string name="explain_permission">
         使用本软件此类功能将申请以下必要权限：
-        \n剪贴板权限：读取卡组码、约战码必需
-        \n存储权限：备份、还原卡组，自定义背景、头像、卡背必需</string>
+        \n剪贴板权限：\n用于决斗助手获取卡组码、约战码，可于我的设置中关闭;
+        \n存储权限：\n用于编辑卡组备份/还原卡组，我的设置中自定义背景、头像、卡背图片；</string>
     <string name="guide_menu">功能菜单：\n主要功能如"</string>
     <string name="guide_mycard">萌卡平台：\n提供众多对战服务\n包含排位，观战，聊天与论坛等</string>
     <string name="guide_serverlist">直连服务器列表\n点击一个服务器块即可加入相应的在线游戏</string>
@@ -373,6 +373,10 @@
     <string name="tip_download_failed">保存失败，请检查网络并重试</string>
     <string name="tip_download_OK">已保存至</string>
     <string name="user_privacy_policy">用户隐私政策</string>
+    <string name="agree">同意</string>
+    <string name="reject">拒绝</string>
+    <string name="privacy_policy_accepted">您已同意隐私政策，感谢您的理解与信任</string>
+    <string name="privacy_policy_rejected_exit">您已拒绝隐私政策，希望下次能再给一次机会</string>
     <string name="about_user_privacy_policy">关于本应用使用的权限进行说明</string>
     <string name="open">打开</string>
     <string name="go_to">转到</string>

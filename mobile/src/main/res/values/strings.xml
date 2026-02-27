@@ -425,4 +425,8 @@
     <string name="tips_atkDef">Support: ＞＜ = - (e.g. 1000-2000)</string>
     <string name="sum_atkDef">combined ATK &amp; DEF equal</string>
     <string name="or_atkDef">ATK and/or DEF</string>
+    <string name="agree">Agree</string>
+    <string name="reject">Decline</string>
+    <string name="privacy_policy_accepted">You have agreed to the Privacy Policy. Thank you for your understanding and trust</string>
+    <string name="privacy_policy_rejected_exit">You have declined the Privacy Policy. We hope to have another chance next time.</string>
 </resources>

@@ -413,4 +413,8 @@
     <string name="tips_atkDef">지원：＞ ＜ ＝ - 하이픈 범위（1000-2000）</string>
     <string name="sum_atkDef">공격력 / 수비력의 합계가</string>
     <string name="or_atkDef">공격력이나 수비력이</string>
+    <string name="agree">동의</string>
+    <string name="reject">거절</string>
+    <string name="privacy_policy_accepted">개인정보 처리방침에 동의해 주셨습니다. 이해와 신뢰에 감사드립니다.</string>
+    <string name="privacy_policy_rejected_exit">개인정보 처리방침을 거절하셨습니다. 다음 기회에 다시 한번 부탁드리겠습니다.</string>
 </resources>

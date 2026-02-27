@@ -395,4 +395,8 @@
     <string name="tips_atkDef">対応：＞＜＝・ハイフン範囲（1000-2000）</string>
     <string name="sum_atkDef">攻撃力・守備力の合計が</string>
     <string name="or_atkDef">攻撃力か守備力が</string>
+    <string name="agree">同意</string>
+    <string name="reject">拒否</string>
+    <string name="privacy_policy_accepted">プライバシーポリシーに同意いただきました。ご理解と信頼に感謝いたします。</string>
+    <string name="privacy_policy_rejected_exit">プライバシーポリシーを拒否いただきました。次回、再度チャンスをいただければ幸いです。</string>
 </resources>

@@ -230,4 +230,17 @@ public class SharedPreferenceUtil {
     public static String[] getArray(int id) {
         return App.get().getResources().getStringArray(id);
     }
+    
+    // 隐私政策同意状态管理
+    public static boolean isPrivacyPolicyAgreed() {
+        return getShareRecord().getBoolean("privacy_policy_agreed", false);
+    }
+    
+    public static boolean setPrivacyPolicyAgreed(boolean agreed) {
+        return getShareRecord().edit().putBoolean("privacy_policy_agreed", agreed).commit();
+    }
+    
+    public static boolean shouldShowPrivacyPolicy() {
+        return !isPrivacyPolicyAgreed() && isFristStart();
+    }
 }

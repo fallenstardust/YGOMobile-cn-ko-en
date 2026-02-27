@@ -13,6 +13,8 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -35,6 +37,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class MainActivity extends HomeActivity implements BottomNavigationBar.OnTabSelectedListener {
@@ -89,28 +92,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                     dialog.setLeftButtonText(R.string.user_privacy_policy);
                     dialog.setLeftButtonListener((dlg, i) -> {
                         dialog.dismiss();
-                        final DialogPlus dialogPlus = new DialogPlus(this);
-                        dialogPlus.setTitle(R.string.user_privacy_policy);
-                        //根据系统语言复制特定资料文件
-                        String language = getContext().getResources().getConfiguration().locale.getLanguage();
-                        String fileaddr = "";
-                        if (!language.isEmpty()) {
-                            if (language.equals(AppsSettings.languageEnum.Chinese.name)) {
-                                fileaddr = "file:///android_asset/user_Privacy_Policy_CN.html";
-                            } else if (language.equals(AppsSettings.languageEnum.Korean.name)) {
-                                fileaddr = "file:///android_asset/user_Privacy_Policy_KO.html";
-                            } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
-                                fileaddr = "file:///android_asset/user_Privacy_Policy_ES.html";
-                            } else if (language.equals(AppsSettings.languageEnum.Japanese)) {
-                                fileaddr = "file:///android_asset/user_Privacy_Policy_JP.html";
-                            } else if (language.equals(AppsSettings.languageEnum.Portuguese)) {
-                                fileaddr = "file:///android_asset/user_Privacy_Policy_PT.html";
-                            } else {
-                                fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
-                            }
-                        }
-                        dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
-                        dialogPlus.show();
+                        showPrivacyPolicyDialogWithCallback(null);
                     });
                     dialog.setRightButtonText(R.string.OK);
                     dialog.setRightButtonListener((dlg, i) -> {
@@ -135,6 +117,9 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                                 dialogplus.dismiss();
                             });
                             dialogplus.show();
+                        }
+                        if (!SharedPreferenceUtil.isPrivacyPolicyAgreed()) {
+                            showPrivacyPolicyDialogWithCallback(null);
                         }
                     });
                     dialog.setCancelable(false);

@@ -162,7 +162,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         try {
             ServerUtil.refreshServer(activity);
         } catch (IOException e) {
-            Log.e(TAG,e+"");
+            Log.e(TAG, e + "");
         }
         //showNewbieGuide("homePage");
         return layoutView;
@@ -573,7 +573,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
 
     @Override
     public void onSaveDeck(Uri uri, List<Integer> mainList, List<Integer> exList, List<Integer> sideList, boolean isCompleteDeck, String exception, int id) {
-        activity.startPermissionsActivity();
         saveDeck(uri, mainList, exList, sideList, isCompleteDeck, exception, id != DefWebViewClient.CHECK_ID_WEB_VIEW_NEW_ACTIVITY);
     }
 
@@ -881,7 +880,6 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                 break;
         }
     }
-
 
     /*//https://www.jianshu.com/p/99649af3b191
     public void showNewbieGuide(String scene) {

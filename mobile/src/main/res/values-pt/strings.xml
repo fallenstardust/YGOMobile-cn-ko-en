@@ -385,5 +385,9 @@
     <string name="tips_atkDef">Suporta: ＞＜ = - e Intervalo com Hífen (1000-2000)</string>
     <string name="sum_atkDef">cujo ATK &amp; DEF combinados seja igual a</string>
     <string name="or_atkDef">ATK e/ou DEF</string>
+    <string name="agree">Concordo</string>
+    <string name="reject">Recuso</string>
+    <string name="privacy_policy_accepted">Você concordou com a Política de Privacidade. Agradecemos sua compreensão e confiança.</string>
+    <string name="privacy_policy_rejected_exit">Você recusou a Política de Privacidade. Esperamos ter outra oportunidade da próxima vez.</string>
 </resources>
 

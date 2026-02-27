@@ -24,7 +24,6 @@ import static cn.garymb.ygomobile.Constants.PREF_IMAGE_QUALITY;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_JOIN_QQ;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
-import static cn.garymb.ygomobile.Constants.PREF_KEY_WORDS_SPLIT;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
@@ -41,9 +40,6 @@ import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
 import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
 import static cn.garymb.ygomobile.Constants.URL_BILIBILI_DYNAMIC;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
-import static cn.garymb.ygomobile.ui.home.HomeActivity.Cache_pre_release_code;
-import static cn.garymb.ygomobile.ui.home.HomeActivity.pre_code_list;
-import static cn.garymb.ygomobile.ui.home.HomeActivity.released_code_list;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.annotation.SuppressLint;
@@ -67,7 +63,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.ourygo.lib.duelassistant.service.DuelAssistantService;
+
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -86,6 +86,7 @@ import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -107,8 +108,10 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public static String Version;
     public static String Cache_link;
     private AppsSettings mSettings;
+    private HomeActivity activity;
     private boolean isInit = true;
     private int FailedCount;
+    private PrivacyPolicyCallback privacyPolicyCallback;
 
     public SettingFragment() {
 
@@ -123,7 +126,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
-
+        activity = (HomeActivity) getContext();
         mSettings = AppsSettings.get();
 
         addPreferencesFromResource(R.xml.preference_game);
@@ -187,7 +190,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 try {
                     size = Integer.parseInt(String.valueOf(value));
                 } catch (Exception e) {
-
                 }
             }
             if (preference instanceof CheckBoxPreference) {
@@ -202,11 +204,38 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 }
                 //开关决斗助手
                 if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
-//                    if (checkBoxPreference.isChecked()) {
-//                        getActivity().startService(new Intent(getActivity(), DuelAssistantService.class));
-//                    } else {
-//                        getActivity().stopService(new Intent(getActivity(), DuelAssistantService.class));
-//                    }
+                    if (checkBoxPreference.isChecked()) {
+                        if (!SharedPreferenceUtil.isPrivacyPolicyAgreed()) {
+                            // 设置回调来处理隐私政策结果
+                            privacyPolicyCallback = new PrivacyPolicyCallback() {
+                                @Override
+                                public void onPrivacyPolicyResult(boolean agreed) {
+                                    if (agreed) {
+                                        // 用户同意隐私政策，自动勾选并启动服务
+                                        AppsSettings.get().setServiceDuelAssistant(true);
+                                        // 查找并勾选checkbox
+                                        Preference pref = findPreference(PREF_START_SERVICEDUELASSISTANT);
+                                        if (pref instanceof CheckBoxPreference) {
+                                            ((CheckBoxPreference) pref).setChecked(true);
+                                        }
+                                        getContext().startService(new Intent(getContext(), DuelAssistantService.class));
+                                    } else {
+                                        // 用户拒绝隐私政策，统一处理拒绝操作
+                                        handlePrivacyPolicyRejected();
+                                    }
+                                    privacyPolicyCallback = null; // 清除回调引用
+                                }
+                            };
+                            activity.showPrivacyPolicyDialogWithCallback(privacyPolicyCallback);
+                        } else {
+                            // 已经同意隐私政策，直接启动服务
+                            getContext().startService(new Intent(getContext(), DuelAssistantService.class));
+                        }
+                    } else {
+                        // 取消勾选，停止服务
+                        getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
+                        AppsSettings.get().setServiceDuelAssistant(false);
+                    }
                 }
                 return true;
             }
@@ -279,26 +308,28 @@ public class SettingFragment extends PreferenceFragmentPlus {
                     .show();
         }
         if (PREF_USER_PRIVACY_POLICY.equals(key)) {
-            DialogPlus dialogPlus = new DialogPlus(getContext())
-                    .setTitleText(getString(R.string.user_privacy_policy));
-            //根据系统语言复制特定资料文件
-            String language = getContext().getResources().getConfiguration().locale.getLanguage();
-            String fileaddr = "";
-            if (!language.isEmpty()) {
-                if (language.equals(AppsSettings.languageEnum.Chinese.name)) {
-                    fileaddr = "file:///android_asset/user_Privacy_Policy_CN.html";
-                } else if (language.equals(AppsSettings.languageEnum.Korean.name)) {
-                    fileaddr = "file:///android_asset/user_Privacy_Policy_KO.html";
-                } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
-                    fileaddr = "file:///android_asset/user_Privacy_Policy_ES.html";
-                } else if (language.equals(AppsSettings.languageEnum.Japanese)) {
-                    fileaddr = "file:///android_asset/user_Privacy_Policy_JP.html";
-                } else {
-                    fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
+            // 为隐私政策条目点击也设置回调处理
+            PrivacyPolicyCallback policyCallback = new PrivacyPolicyCallback() {
+                @Override
+                public void onPrivacyPolicyResult(boolean agreed) {
+                    if (agreed) {
+                        // 用户同意隐私政策时，自动勾选服务决斗助手
+                        Preference pref = findPreference(PREF_START_SERVICEDUELASSISTANT);
+                        if (pref instanceof CheckBoxPreference) {
+                            CheckBoxPreference checkBoxPref = (CheckBoxPreference) pref;
+                            checkBoxPref.setChecked(true);
+                            // 更新设置
+                            AppsSettings.get().setServiceDuelAssistant(true);
+                            // 启动服务
+                            getContext().startService(new Intent(getContext(), DuelAssistantService.class));
+                        }
+                    } else {
+                        // 用户拒绝隐私政策时的特殊处理
+                        handlePrivacyPolicyRejected();
+                    }
                 }
-            }
-            dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
-            dialogPlus.show();
+            };
+            activity.showPrivacyPolicyDialogWithCallback(policyCallback);
         }
         if (PREF_RESET_GAME_RES.equals(key)) {
             updateImages();
@@ -453,12 +484,13 @@ public class SettingFragment extends PreferenceFragmentPlus {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_SETTING_GET_VERSION_OK:
-                    if (msg.obj.toString().contains(ID1) && msg.obj.toString().contains(ID2) && msg.obj.toString().contains(ID3)) {
-                        Version = msg.obj.toString().substring(msg.obj.toString().indexOf(ID1) + ID1.length(), msg.obj.toString().indexOf(";"));//截取版本号
-                        Cache_link = msg.obj.toString().substring(msg.obj.toString().indexOf(ID2) + ID2.length(), msg.obj.toString().indexOf("$"));//截取下载地址
-                        Cache_pre_release_code = msg.obj.toString().substring(msg.obj.toString().indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
-                        if (!TextUtils.isEmpty(Cache_pre_release_code)) {
-                            arrangeCodeList(Cache_pre_release_code);//转换成两个数组
+                    String message = msg.obj.toString();
+                    if (message.contains(ID1) && message.contains(ID2) && message.contains(ID3)) {
+                        Version = message.substring(message.indexOf(ID1) + ID1.length(), message.indexOf(";"));//截取版本号
+                        Cache_link = message.substring(message.indexOf(ID2) + ID2.length(), message.indexOf("$"));//截取下载地址
+                        activity.Cache_pre_release_code = message.substring(message.indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
+                        if (!TextUtils.isEmpty(activity.Cache_pre_release_code)) {
+                            arrangeCodeList(activity.Cache_pre_release_code);//转换成两个数组
                         }
                         if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
                             DialogPlus dialog = new DialogPlus(getContext());
@@ -709,8 +741,8 @@ public class SettingFragment extends PreferenceFragmentPlus {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] words = line.trim().split("[ ]+");
-                pre_code_list.add(Integer.valueOf(words[0]));
-                released_code_list.add(Integer.valueOf(words[1]));
+                activity.pre_code_list.add(Integer.valueOf(words[0]));
+                activity.released_code_list.add(Integer.valueOf(words[1]));
 
             }
         } catch (Exception e) {
@@ -774,5 +806,45 @@ public class SettingFragment extends PreferenceFragmentPlus {
         dialog.show();
     }
 
+    // 添加隐私政策回调接口
+    public interface PrivacyPolicyCallback {
+        void onPrivacyPolicyResult(boolean agreed);
+    }
+
+    /**
+     * 统一处理隐私政策拒绝的操作
+     * 取消PREF_START_SERVICEDUELASSISTANT的勾选并停止相关服务
+     */
+    private void handlePrivacyPolicyRejected() {
+        // 查找并取消服务决斗助手的checkbox勾选
+        Preference preference = findPreference(PREF_START_SERVICEDUELASSISTANT);
+        if (preference instanceof CheckBoxPreference) {
+            CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
+            checkBoxPreference.setChecked(false);
+            // 更新共享偏好设置
+            AppsSettings.get().setServiceDuelAssistant(false);
+            // 停止服务
+            getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
+        }
+    }
+    // 添加事件监听类
+    public static class PrivacyPolicyAgreedEvent {
+        public boolean agreed;
+        public PrivacyPolicyAgreedEvent(boolean agreed) {
+            this.agreed = agreed;
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onPrivacyPolicyAgreed(PrivacyPolicyAgreedEvent event) {
+        if (event.agreed) {
+            // 更新checkbox的显示状态
+            Preference pref = findPreference(PREF_START_SERVICEDUELASSISTANT);
+            if (pref instanceof CheckBoxPreference) {
+                CheckBoxPreference checkBoxPref = (CheckBoxPreference) pref;
+                checkBoxPref.setChecked(true);
+            }
+        }
+    }
 }
 

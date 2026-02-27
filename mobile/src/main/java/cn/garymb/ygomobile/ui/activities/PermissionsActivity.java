@@ -41,10 +41,24 @@ public class PermissionsActivity extends AppCompatActivity {
     private boolean isRequireCheck; // 是否需要系统权限检测
 
     // 启动当前权限页面的公开接口
+    /**
+     * 启动权限请求页面并等待结果
+     *
+     * @param activity 当前Activity上下文
+     * @param requestCode 请求码，用于在onActivityResult中识别返回结果
+     * @param permissions 需要检查的权限数组
+     * @return 如果需要请求权限则返回true，否则返回false
+     */
     public static boolean startActivityForResult(Activity activity, int requestCode, String... permissions) {
+        // 检查权限参数是否有效
         if (permissions == null || permissions.length == 0) return false;
+
+        // 获取权限检查器实例
         PermissionsChecker checker = PermissionsChecker.getPermissionsChecker(activity);
+
+        // 检查是否缺少指定权限
         if (checker.lacksPermissions(permissions)) {
+            // 创建权限请求Intent
             Intent intent = new Intent(activity, PermissionsActivity.class);
             intent.putExtra(EXTRA_PERMISSIONS, permissions);
             ActivityCompat.startActivityForResult(activity, intent, requestCode, null);
