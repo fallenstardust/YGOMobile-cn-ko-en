@@ -22,6 +22,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
+import com.ourygo.lib.duelassistant.service.DuelAssistantService;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 
@@ -35,6 +38,7 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.cards.CardFavorites;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.ui.settings.SettingFragment;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.NetUtils;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
@@ -104,6 +108,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
                             }
                         }
                     });
+                    //dialog关闭时执行的一些操作
                     dialog.setOnDismissListener(dialogInterface -> {
                         DialogPlus dialogplus = new DialogPlus(this);
                         File oldypk = new File(AppsSettings.get().getExpansionsPath(), officialExCardPackageName + Constants.YPK_FILE_EX);

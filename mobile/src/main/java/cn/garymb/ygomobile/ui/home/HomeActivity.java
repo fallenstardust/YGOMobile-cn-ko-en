@@ -498,42 +498,14 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             }
         });
     }
-    
+
+
     // 带回调的隐私政策对话框方法
     public void showPrivacyPolicyDialogWithCallback(SettingFragment.PrivacyPolicyCallback callback) {
         DialogPlus dialogPlus = new DialogPlus(getContext())
                 .setTitleText(getString(R.string.user_privacy_policy))
                 .setLeftButtonText(R.string.agree)  // 同意按钮
                 .setRightButtonText(R.string.reject) // 拒绝按钮
-                .setLeftButtonListener((dlg, i) -> {
-                    // 用户同意隐私政策
-                    SharedPreferenceUtil.setPrivacyPolicyAgreed(true);
-                    SharedPreferenceUtil.setFirstStart(false);
-
-                    // 自动勾选服务决斗助手选项
-                    AppsSettings.get().setServiceDuelAssistant(true);
-                    // 启动决斗助手服务
-                    Intent serviceIntent = new Intent(getContext(), DuelAssistantService.class);
-                    getContext().startService(serviceIntent);
-
-                    // 通知设置Fragment更新UI
-                    if (fragment_settings != null && fragment_settings.isAdded()) {
-                        // 通过EventBus或其他方式通知Fragment更新checkbox状态
-                        EventBus.getDefault().post(new SettingFragment.PrivacyPolicyAgreedEvent(true));
-                    }
-
-                    if (callback != null) {
-                        callback.onPrivacyPolicyResult(true);
-                    }
-                    dlg.dismiss();
-                })
-                .setRightButtonListener((dlg, i) -> {
-                    // 用户拒绝隐私政策
-                    if (callback != null) {
-                        callback.onPrivacyPolicyResult(false);
-                    }
-                    dlg.dismiss();
-                })
                 .setOnCloseLinster(null); // 禁止通过关闭按钮退出
 
         // 根据系统语言加载特定的隐私政策文件
@@ -554,7 +526,42 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                 fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
             }
         }
+
+        // 加载URL，这样会初始化WebView并设置默认的按钮监听器
         dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
+
+        // 在loadUrl之后按钮监听器，覆盖默认的监听器，才能实现自定义的监听方法
+        dialogPlus.setLeftButtonListener((dlg, i) -> {
+            // 用户同意隐私政策
+            SharedPreferenceUtil.setPrivacyPolicyAgreed(true);
+            SharedPreferenceUtil.setFirstStart(false);
+
+            AppsSettings.get().setServiceDuelAssistant(true);
+
+            // 启动决斗助手服务
+            Intent serviceIntent = new Intent(getContext(), DuelAssistantService.class);
+            getContext().startService(serviceIntent);
+
+            // 通知设置Fragment更新UI
+            if (fragment_settings != null && fragment_settings.isAdded()) {
+                // 通过EventBus或其他方式通知Fragment更新checkbox状态
+                EventBus.getDefault().post(new SettingFragment.PrivacyPolicyAgreedEvent(true));
+            }
+
+            if (callback != null) {
+                callback.onPrivacyPolicyResult(true);
+            }
+            dlg.dismiss();
+        });
+
+        dialogPlus.setRightButtonListener((dlg, i) -> {
+            // 用户拒绝隐私政策
+            if (callback != null) {
+                callback.onPrivacyPolicyResult(false);
+            }
+            dlg.dismiss();
+        });
+
         dialogPlus.show();
     }
 
