@@ -455,6 +455,7 @@ public class CardSearcher implements View.OnClickListener {
 
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
+        adapter.setTextSize(14);
         adapter.set(items);
         spinner.setAdapter(adapter);
     }
@@ -472,6 +473,7 @@ public class CardSearcher implements View.OnClickListener {
 
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         adapter.setColor(Color.WHITE);
+        adapter.setTextSize(14);
         adapter.set(items);
         spinner.setAdapter(adapter);
     }
@@ -511,6 +513,7 @@ public class CardSearcher implements View.OnClickListener {
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         // 设置文字颜色为白色
         adapter.setColor(Color.WHITE);
+        adapter.setTextSize(12);
         // 设置适配器的数据源
         adapter.set(items);
         // 将适配器设置给Spinner
@@ -583,6 +586,7 @@ public class CardSearcher implements View.OnClickListener {
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(mContext);
         // 设置文字颜色为白色
         adapter.setColor(Color.WHITE);
+        adapter.setTextSize(11);
         // 设置适配器的数据源
         adapter.set(items);
         // 将适配器设置给Spinner

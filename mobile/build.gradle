@@ -24,7 +24,7 @@ android {
     }
     productFlavors {
         cn {
-            resValue 'string', 'app_name', 'YGOMobile'
+            resValue 'string', 'app_name', 'YGOMobile APP'
             applicationIdSuffix ".CN"
         }
     }

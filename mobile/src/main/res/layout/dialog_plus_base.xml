@@ -69,8 +69,7 @@
                 android:layout_marginLeft="10dp"
                 android:gravity="left|center_vertical"
                 android:minLines="1"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                android:textColor="@color/holo_blue_bright"
+                android:textColor="@color/white"
                 android:visibility="gone"
                 tools:text="hello"
                 tools:visibility="visible" />

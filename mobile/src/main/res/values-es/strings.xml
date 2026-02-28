@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
-    <!--string name="app_name">YGOMobile</string-->
     <string name="action_settings">Configuración</string>
     <string name="action_game">Solitario</string>
     <string name="action_about">Acerca de</string>
@@ -395,6 +394,10 @@
     <string name="tips_atkDef"> Admite: ＞＜ = - y Rango con Guión (1000-2000)</string>
     <string name="sum_atkDef">"ATK + DEF iguales a"</string>
     <string name="or_atkDef">ATK y/o DEF</string>
+    <string name="agree">Acepto</string>
+    <string name="reject">Rechazo</string>
+    <string name="privacy_policy_accepted">Has aceptado la Política de Privacidad. Gracias por tu comprensión y confianza.</string>
+    <string name="privacy_policy_rejected_exit">Has rechazado la Política de Privacidad. Esperamos tener otra oportunidad la próxima vez.</string>
 </resources>
 
 

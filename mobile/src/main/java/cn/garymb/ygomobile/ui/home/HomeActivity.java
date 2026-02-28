@@ -9,6 +9,7 @@ import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,8 +29,11 @@ import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.ashokvarma.bottomnavigation.ShapeBadgeItem;
 import com.ashokvarma.bottomnavigation.TextBadgeItem;
+import com.ourygo.lib.duelassistant.service.DuelAssistantService;
 import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.sdk.QbSdk;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -53,6 +57,7 @@ import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
+import cn.garymb.ygomobile.ui.settings.SharedPreferencesPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -484,7 +489,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
             @Override
             public void onDownloadFailed(Exception e) {
-                Log.w(TAG, "download image error:" + e.getMessage());
+                Log.w(TAG, "download genesys lflist error:" + e.getMessage());
 
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_GENESYS_LFLIST_FAILED;
@@ -492,6 +497,72 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
                 handlerHome.sendMessage(message);
             }
         });
+    }
+
+
+    // 带回调的隐私政策对话框方法
+    public void showPrivacyPolicyDialogWithCallback(SettingFragment.PrivacyPolicyCallback callback) {
+        DialogPlus dialogPlus = new DialogPlus(getContext())
+                .setTitleText(getString(R.string.user_privacy_policy))
+                .setLeftButtonText(R.string.agree)  // 同意按钮
+                .setRightButtonText(R.string.reject) // 拒绝按钮
+                .setOnCloseLinster(null); // 禁止通过关闭按钮退出
+
+        // 根据系统语言加载特定的隐私政策文件
+        String language = getContext().getResources().getConfiguration().locale.getLanguage();
+        String fileaddr = "";
+        if (!language.isEmpty()) {
+            if (language.equals(AppsSettings.languageEnum.Chinese.name)) {
+                fileaddr = "file:///android_asset/user_Privacy_Policy_CN.html";
+            } else if (language.equals(AppsSettings.languageEnum.Korean.name)) {
+                fileaddr = "file:///android_asset/user_Privacy_Policy_KO.html";
+            } else if (language.equals(AppsSettings.languageEnum.Spanish.name)) {
+                fileaddr = "file:///android_asset/user_Privacy_Policy_ES.html";
+            } else if (language.equals(AppsSettings.languageEnum.Japanese.name)) {
+                fileaddr = "file:///android_asset/user_Privacy_Policy_JP.html";
+            } else if (language.equals(AppsSettings.languageEnum.Portuguese.name)) {
+                fileaddr = "file:///android_asset/user_Privacy_Policy_PT.html";
+            } else {
+                fileaddr = "file:///android_asset/user_Privacy_Policy_EN.html";
+            }
+        }
+
+        // 加载URL，这样会初始化WebView并设置默认的按钮监听器
+        dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
+
+        // 在loadUrl之后按钮监听器，覆盖默认的监听器，才能实现自定义的监听方法
+        dialogPlus.setLeftButtonListener((dlg, i) -> {
+            // 用户同意隐私政策
+            SharedPreferenceUtil.setPrivacyPolicyAgreed(true);
+            SharedPreferenceUtil.setFirstStart(false);
+
+            AppsSettings.get().setServiceDuelAssistant(true);
+
+            // 启动决斗助手服务
+            Intent serviceIntent = new Intent(getContext(), DuelAssistantService.class);
+            getContext().startService(serviceIntent);
+
+            // 通知设置Fragment更新UI
+            if (fragment_settings != null && fragment_settings.isAdded()) {
+                // 通过EventBus或其他方式通知Fragment更新checkbox状态
+                EventBus.getDefault().post(new SettingFragment.PrivacyPolicyAgreedEvent(true));
+            }
+
+            if (callback != null) {
+                callback.onPrivacyPolicyResult(true);
+            }
+            dlg.dismiss();
+        });
+
+        dialogPlus.setRightButtonListener((dlg, i) -> {
+            // 用户拒绝隐私政策
+            if (callback != null) {
+                callback.onPrivacyPolicyResult(false);
+            }
+            dlg.dismiss();
+        });
+
+        dialogPlus.show();
     }
 
 }
