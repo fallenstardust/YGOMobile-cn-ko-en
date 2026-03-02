@@ -112,11 +112,11 @@
     <string name="search_open">Filtrar</string>
     <string name="search_close">Cerrar</string>
     <string name="reset">Reiniciar</string>
-    <string name="hit_keyword1">Palabra clave</string>
+    <string name="hit_keyword1">Palabra Clave</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
-    <string name="label_race">Raza:</string>
-    <string name="label_ot">Exclusivas:</string>
+    <string name="label_race">Raza</string>
+    <string name="label_ot">Exclusivas</string>
     <string name="label_ot_OCG">OCG</string>
     <string name="label_ot_TCG">TCG</string>
     <string name="label_ot_SC_OCG">Chino.S</string>
@@ -124,14 +124,14 @@
     <string name="label_ot_No_Exclusive">No exclusivas</string>
     <string name="label_ot_All">Todo</string>
     <string name="label_limit">Límite</string>
-    <string name="label_limitlist">Banlist:</string>
-    <string name="label_type">Tipo de carta:</string>
-    <string name="label_set">Arquetipo:</string>
+    <string name="label_limitlist">Banlist</string>
+    <string name="label_type">Tipo de Carta</string>
+    <string name="label_set">Arquetipo</string>
     <string name="label_set_No_Setcode">" #Sin Card Set incluido"</string>
-    <string name="label_level">Nvl/Rng/Lnk:</string>
-    <string name="label_attr">Atributo:</string>
+    <string name="label_level">Nvl/Rng/Lnk</string>
+    <string name="label_attr">Atributo</string>
     <string name="label_category">Categoría</string>
-    <string name="linkmarker">F.Enlace:</string>>
+    <string name="linkmarker">F.Enlace</string>>
     <string name="searching">Cargando</string>
     <string name="card_faq">Ver reglas</string>
     <string name="card_related">Relacionadas</string>
@@ -183,7 +183,7 @@
     <string name="quick_join">Unirse a la sala</string>
     <string name="join_game">Entrar al juego</string>
     <string name="settings_game_sensor_refresh">Agitar para refrescar</string>
-    <string name="label_pendulum">Escala de péndulo:</string>
+    <string name="label_pendulum">Escala de Péndulo</string>
     <string name="all">Todas las cartas</string>
     <string name="donation">Apóyanos</string>
     <string name="refresh">Actualizar</string>
@@ -349,7 +349,7 @@
     <string name="login_succeed">Sesión iniciada</string>
     <string name="reChatJoining">Conexión perdida, reconectando…</string>
     <string name="settings_data_language">Elegir idioma</string>
-    <string name="settings_key_words_split">Búsqueda múltiple (separar con espacios)</string>
+    <string name="settings_key_words_split">*Separar con espacios para BM</string>
     <string name="settings_data_language_about">Cambia el idioma de la interfaz y descripciones de cartas</string>
     <string name="tip_card_info_diff">Esta carta no está registrada. Actualiza la aplicación o verifica el paquete de expansión.</string>
     <string name="tip_deckInfo_isNot_completeDeck">Error al analizar el deck, se convertirán las cartas disponibles</string>
@@ -387,18 +387,20 @@
     <string name="credit_limit">Límite de puntos</string>
     <string name="switch_genesys_mode">GENESYS</string>
     <string name="switch_banlist_mode">Clásico</string>
-    <string name="label_spelltrap_type">Mágica/Trampa:</string>
-    <string name="label_monsterType">Tipo de Monstruo:</string>
-    <string name="label_excludeType">Tipo de Excluido:</string>
-    <string name="select_setcode">Adicionar Arquétipo de Pesquisa</string>
-    <string name="tips_atkDef"> Admite: ＞＜ = - y Rango con Guion (1000-2000)</string>
-    <string name="sum_atkDef">" ATK &amp; DEF combinados sean igual a"</string>
+    <string name="label_spelltrap_type">Mágica/Trampa</string>
+    <string name="label_monsterType">Tipo de Monstruo</string>
+    <string name="label_excludeType">Tipo de Excluido</string>
+    <string name="select_setcode">Adicionar Arquetipo de Búsqueda</string>
+    <string name="tips_atkDef"> Admite: ＞＜ = - y Rango con Guión (1000-2000)</string>
+    <string name="sum_atkDef">"ATK + DEF iguales a"</string>
     <string name="or_atkDef">ATK y/o DEF</string>
     <string name="agree">Acepto</string>
     <string name="reject">Rechazo</string>
     <string name="privacy_policy_accepted">Has aceptado la Política de Privacidad. Gracias por tu comprensión y confianza.</string>
     <string name="privacy_policy_rejected_exit">Has rechazado la Política de Privacidad. Esperamos tener otra oportunidad la próxima vez.</string>
 </resources>
+
+
 
 
 
