@@ -452,7 +452,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         String userUniqueId = SharedPreferenceUtil.getUserUniqueId();
         String playerName = serverInfo.getPlayerName();
         if (userUniqueId != null && !userUniqueId.isEmpty()) {
-            playerName = playerName + "$" + userUniqueId;
+            playerName = playerName.contains("$") ? playerName : playerName + "$" + userUniqueId;
         }
         options.mUserName = playerName;
         options.mPort = serverInfo.getPort();
