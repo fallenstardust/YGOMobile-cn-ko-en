@@ -123,6 +123,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         initBottomNavigationBar();
         onNewIntent(getIntent());
         ServerUtil.initExCardState();//检查扩展卡版本
+        // 初始化用户唯一码
+        SharedPreferenceUtil.initUserUniqueId();
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {//TODO 需要适配Api35
             SharedPreferenceUtil.setImmersiveMode(true);
         }
