@@ -462,25 +462,21 @@ public class DeckSquareApiUtil {
 
                 // 匹配到同名同类型卡组：根据更新时间决定同步策略
                 if (localDeckName.equals(onLineDeckName) && localDeck.getDeckType().equals(onlineDeck.getDeckType())) {
-                    // 获取原始时间戳（Unix 时间戳，单位毫秒）
-                    long onlineUpdateTime = onlineDeck.getDeckUpdateDate() - 28800000;// 服务器下发时间戳减去8小时才是unix时间
-                    long localUpdateTime = localDeck.getUpdateTimestamp();
-                    
                     // 时区校准：将两个时间戳都转换为系统默认时区的 Date 对象进行比较
                     // 这样可以确保在同一个时区下比较时间的先后
-                    java.util.Date onlineDate = new java.util.Date(onlineUpdateTime);
-                    java.util.Date localDate = new java.util.Date(localUpdateTime);
+                    java.util.Date onlineDate = new java.util.Date(onlineDeck.getDeckUpdateDate() - 28800000);
+                    java.util.Date localDate = new java.util.Date(localDeck.getUpdateTimestamp());
                     
                     if (onlineDate.after(localDate)) {
                         // 在线卡组更新，需要下载到本地覆盖
-                        LogUtil.d(TAG, localDeckName+ ": 在线卡组较新，准备下载覆盖本地。服务器时间：" + onlineDate + ", 本地时间：" + localDate + ", 时间差：" + (onlineUpdateTime - localUpdateTime) + "ms");
+                        LogUtil.d(TAG, localDeckName+ ": 在线卡组较新，准备下载覆盖本地。服务器时间：" + onlineDate + ", 本地时间：" + localDate);
                         downloadDecks.add(onlineDeck);
                         localIterator.remove();
                         onlineIterator.remove();
                         break;
                     } else if (localDate.after(onlineDate)) {
                         // 本地卡组更新，需要上传覆盖在线
-                        LogUtil.d(TAG, localDeckName+ ": 本地卡组较新，准备上传覆盖在线。本地时间：" + localDate + ", 服务器时间：" + onlineDate + ", 时间差：" + (localUpdateTime - onlineUpdateTime) + "ms");
+                        LogUtil.d(TAG, localDeckName+ ": 本地卡组较新，准备上传覆盖在线。本地时间：" + localDate + ", 服务器时间：" + onlineDate);
                         localDeck.setDeckId(onlineDeck.getDeckId());
                         syncUploadDecks.add(localDeck);
                         localIterator.remove();

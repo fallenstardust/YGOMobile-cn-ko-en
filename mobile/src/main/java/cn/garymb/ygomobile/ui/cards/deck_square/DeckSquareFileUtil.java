@@ -145,6 +145,8 @@ public class DeckSquareFileUtil {
      * 确保文本中的换行标记能真实换行显示
      */
     private static void processYdkLineBreaks(File ydkFile) {
+        long originalLastModified = ydkFile.lastModified();//记录原始修改时间，修改后要覆盖回去
+
         FileInputStream fis = null;
         FileOutputStream fos = null;
         try {
@@ -170,6 +172,8 @@ public class DeckSquareFileUtil {
         } finally {
             IOUtils.close(fis);
             IOUtils.close(fos);
+            // 覆盖文件修改时间为一开始的时间
+            ydkFile.setLastModified(originalLastModified);
         }
     }
 
