@@ -14,6 +14,7 @@ event* NetServer::broadcast_ev = 0;
 evconnlistener* NetServer::listener = 0;
 DuelMode* NetServer::duel_mode = 0;
 unsigned char NetServer::net_server_write[SIZE_NETWORK_BUFFER];
+unsigned char NetServer::net_server_read[SIZE_NETWORK_BUFFER];
 size_t NetServer::last_sent = 0;
 
 /**
@@ -255,9 +256,6 @@ void NetServer::ServerEchoRead(bufferevent *bev, void *ctx) {
 	int len = evbuffer_get_length(input);
 	if (len < 2)
 		return;
-
-	// 分配临时缓冲区用于存储读取的数据
-	unsigned char* net_server_read = new unsigned char[SIZE_NETWORK_BUFFER];
 	uint16_t packet_len = 0;
 
 	// 循环处理输入缓冲区中的完整数据包
@@ -275,9 +273,6 @@ void NetServer::ServerEchoRead(bufferevent *bev, void *ctx) {
 		// 更新剩余数据长度
 		len -= packet_len + 2;
 	}
-
-	// 释放临时缓冲区内存
-	delete[] net_server_read;
 }
 /**
  * @brief 服务器回显事件处理函数
