@@ -280,7 +280,7 @@ public class DeckSquareApiUtil {
                 saveFileToPath(item.getDeckPath(), deckContent, item.getUpdateTimestamp());// 用于将新申请的deckid写入对应的本地卡组中，方便同步时进行比较
             }
             data.setDeckYdk(deckContent);
-            LogUtil.w(TAG, "*要上传的* 本地卡组:" + data.getDeckType() + "、" + data.getDeckName() + "++id： " + data.getDeckId() + "    " + data.isDelete());
+            LogUtil.w(TAG, "*要上传的* 本地卡组:" + data.getDeckType() + "、" + data.getDeckName() + "++id： " + data.getDeckId() + " 是否删除？： " + data.isDelete());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
@@ -442,6 +442,7 @@ public class DeckSquareApiUtil {
 
         // 遍历本地卡组与云备份卡组，过滤差异项（使用迭代器避免ConcurrentModificationException）
         List<MyDeckItem> syncUploadDecks = new ArrayList<>();
+        List<MyOnlineDeckDetail> downloadDecks = new ArrayList<>();
 
         // 1. 使用本地卡组的迭代器遍历（支持安全删除）
         Iterator<MyDeckItem> localIterator = localDecks.iterator();
@@ -452,43 +453,67 @@ public class DeckSquareApiUtil {
             localDeck.setDeckName(localDeckName);
             localDeck.setDeckCoverCard1(DeckUtil.getFirstCardCode(localDeck.getDeckPath()));
             localDeck.setDelete(false);
-            LogUtil.d(TAG, "本地卡组名称：" + localDeck.getDeckType() + "-" + localDeck.getDeckName() + "  ID：" + localDeck.getDeckId());
+
             // 2. 使用在线卡组的迭代器遍历（支持安全删除）
             Iterator<MyOnlineDeckDetail> onlineIterator = onlineDecks.iterator();
             while (onlineIterator.hasNext()) {
                 MyOnlineDeckDetail onlineDeck = onlineIterator.next();
                 String onLineDeckName = onlineDeck.getDeckName().replace(Constants.YDK_FILE_EX, "");
-                LogUtil.e(TAG, "在线备份名称：" + onlineDeck.getDeckType() + "/" + onLineDeckName + "  在线卡组ID：" + onlineDeck.getDeckId());
-                // 匹配到同名卡组：加入同步上传列表，并从原始集合中删除（避免重复处理）
-                if (localDeckName.equals(onLineDeckName)) {// && localDeck.getDeckType().equals(onlineDeck.getDeckType())
-                    localDeck.setDeckId(onlineDeck.getDeckId());
-                    syncUploadDecks.add(localDeck);
-                    localIterator.remove(); // 安全删除本地卡组（迭代器方法）
-                    onlineIterator.remove(); // 安全删除在线卡组（迭代器方法）
-                    break; // 匹配后跳出内部循环
+
+                // 匹配到同名同类型卡组：根据更新时间决定同步策略
+                if (localDeckName.equals(onLineDeckName) && localDeck.getDeckType().equals(onlineDeck.getDeckType())) {
+                    // 获取原始时间戳（Unix 时间戳，单位毫秒）
+                    long onlineUpdateTime = onlineDeck.getDeckUpdateDate() - 28800000;// 服务器下发时间戳减去8小时才是unix时间
+                    long localUpdateTime = localDeck.getUpdateTimestamp();
+                    
+                    // 时区校准：将两个时间戳都转换为系统默认时区的 Date 对象进行比较
+                    // 这样可以确保在同一个时区下比较时间的先后
+                    java.util.Date onlineDate = new java.util.Date(onlineUpdateTime);
+                    java.util.Date localDate = new java.util.Date(localUpdateTime);
+                    
+                    if (onlineDate.after(localDate)) {
+                        // 在线卡组更新，需要下载到本地覆盖
+                        LogUtil.d(TAG, localDeckName+ ": 在线卡组较新，准备下载覆盖本地。服务器时间：" + onlineDate + ", 本地时间：" + localDate + ", 时间差：" + (onlineUpdateTime - localUpdateTime) + "ms");
+                        downloadDecks.add(onlineDeck);
+                        localIterator.remove();
+                        onlineIterator.remove();
+                        break;
+                    } else if (localDate.after(onlineDate)) {
+                        // 本地卡组更新，需要上传覆盖在线
+                        LogUtil.d(TAG, localDeckName+ ": 本地卡组较新，准备上传覆盖在线。本地时间：" + localDate + ", 服务器时间：" + onlineDate + ", 时间差：" + (localUpdateTime - onlineUpdateTime) + "ms");
+                        localDeck.setDeckId(onlineDeck.getDeckId());
+                        syncUploadDecks.add(localDeck);
+                        localIterator.remove();
+                        onlineIterator.remove();
+                        break;
+                    } else {
+                        // 时间相同，无需同步
+                        LogUtil.d(TAG, localDeckName+ ": 卡组和在线版本一致，无需同步");
+                        localIterator.remove();
+                        onlineIterator.remove();
+                        break;
+                    }
                 }
             }
             // 若未匹配到在线卡组，该本地卡组会保留在localDecks中（后续作为新卡组上传）
         }
 
-        // 上传本地卡组覆盖在线卡组
-        LogUtil.w(TAG, "+同步的 本地卡组: " + syncUploadDecks.size());
         if (!syncUploadDecks.isEmpty()) {
             PushMultiResponse result = UploadMyDecks(syncUploadDecks, loginToken);
-            LogUtil.w(TAG, "本地已有卡组 上传结果数：" + result.getData());
         }
         // 剩余的本地卡组都是新增卡组（本地独有，需要上传）
-        LogUtil.w(TAG, "+上传新增的 本地卡组: " + localDecks.size());
         if (!localDecks.isEmpty()) {
             PushMultiResponse result = requestIdAndPushNewDecks(localDecks, loginToken);
-            LogUtil.w(TAG, "本地新增卡组 上传结果数：" + result.getData());
         }
 
         // 剩余的在线卡组都是云端独有，需要下载
-        LogUtil.i(TAG, "剩余onlineDecks：" + onlineDecks);
         for (MyOnlineDeckDetail onlineDeck : onlineDecks) {
-            LogUtil.d(TAG, "synchronizeDecks +要下载的 云备份卡组: \n卡组分类：" + onlineDeck.getDeckType() + "\n卡组名：" + onlineDeck.getDeckName() + "\n卡组id：" + onlineDeck.getDeckId());
-            // 确保文件名包含.ydk扩展名
+            downloadDecks.add(onlineDeck);
+        }
+
+        // 下载所有需要更新的卡组
+        for (MyOnlineDeckDetail onlineDeck : downloadDecks) {
+            // 确保文件名包含.ydk 扩展名
             String fileName = onlineDeck.getDeckName();
             if (!fileName.toLowerCase().endsWith(Constants.YDK_FILE_EX)) {
                 fileName += Constants.YDK_FILE_EX;
