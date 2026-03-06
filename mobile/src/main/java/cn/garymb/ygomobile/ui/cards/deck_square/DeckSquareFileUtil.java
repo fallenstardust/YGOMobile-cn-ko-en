@@ -209,7 +209,6 @@ public class DeckSquareFileUtil {
         List<MyDeckItem> result = new ArrayList<>();
         File[] files = getAllYdk();
         for (File file : files) {
-            String deckId = getDeckId(file);
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(file.getName());
             //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
@@ -220,11 +219,10 @@ public class DeckSquareFileUtil {
             }
             item.setUpdateTimestamp(file.lastModified());
             item.setDeckPath(file.getPath());
+
+            String deckId = getDeckId(file);
             if (deckId != null) {
                 item.setDeckId(deckId);
-                item.setIdUploaded(2);
-            } else {
-                item.setIdUploaded(0);
             }
             result.add(item);
         }
