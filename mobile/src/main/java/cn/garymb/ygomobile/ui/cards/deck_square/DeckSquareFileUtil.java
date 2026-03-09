@@ -43,6 +43,7 @@ public class DeckSquareFileUtil {
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(detail.getDeckName());
             item.setDeckType(detail.getDeckType());
+            item.setDeckPath(AppsSettings.get().getDeckDir() + (detail.getDeckType().isEmpty() ? "" : detail.getDeckType()) + "/" + detail.getDeckName() + Constants.YDK_FILE_EX);
             item.setDeckId(detail.getDeckId());
             item.setUserId(detail.getUserId());
             item.setDeckCoverCard1(detail.getDeckCoverCard1());
@@ -311,12 +312,7 @@ public class DeckSquareFileUtil {
             fos.flush();
 
             // 设置指定的最后修改时间
-            boolean timeSet = file.setLastModified(modificationTime);
-            if (!timeSet) {
-                LogUtil.w(TAG, "设置文件修改时间失败: " + file.getPath());
-            } else {
-                LogUtil.d(TAG, "设置文件修改时间成功: " + file.getPath());
-            }
+            file.setLastModified(modificationTime);
         } catch (Exception e) {
             LogUtil.e(TAG, "保存文件失败", e);
             return false;
