@@ -311,18 +311,24 @@ public class CardSearchInfo implements ICardFilter {
 
     public boolean chkAtkDef(int ct, String search) {
         switch (search.charAt(0)) {
+            case '＞':
             case '>':
                 if (search.length() > 1 && search.charAt(1) == '=') {
                     return ct >= (TextUtils.isDigitsOnly(search.substring(2)) ? i(search.substring(2)) : -2);
                 } else {
                     return ct > (TextUtils.isDigitsOnly(search.substring(1)) ? i(search.substring(1)) : -2);
                 }
+            case '＜':
             case '<':
                 if (search.length() > 1 && search.charAt(1) == '=') {
                     return ct <= (TextUtils.isDigitsOnly(search.substring(2)) ? i(search.substring(2)) : -2);
                 } else {
                     return ct < (TextUtils.isDigitsOnly(search.substring(1)) ? i(search.substring(1)) : -2);
                 }
+            case '≥':
+                return ct >= (TextUtils.isDigitsOnly(search.substring(1)) ? i(search.substring(1)) : -2);
+            case '≤':
+                return ct <= (TextUtils.isDigitsOnly(search.substring(1)) ? i(search.substring(1)) : -2);
             case '=':
                 return ct == (TextUtils.isDigitsOnly(search.substring(1)) ? i(search.substring(1)) : -2);
             default:
