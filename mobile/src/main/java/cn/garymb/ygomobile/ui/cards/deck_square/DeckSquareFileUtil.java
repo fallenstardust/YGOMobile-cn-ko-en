@@ -43,7 +43,8 @@ public class DeckSquareFileUtil {
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(detail.getDeckName());
             item.setDeckType(detail.getDeckType());
-            item.setDeckPath(AppsSettings.get().getDeckDir() + (detail.getDeckType().isEmpty() ? "" : detail.getDeckType()) + "/" + detail.getDeckName() + Constants.YDK_FILE_EX);
+            // 从在线卡组转本地卡组没有卡组路径，需要根据同分类同名拼接一个
+            item.setDeckPath(AppsSettings.get().getDeckDir()+ "/" + (detail.getDeckType().isEmpty() ? "" : detail.getDeckType() + "/") + detail.getDeckName() + Constants.YDK_FILE_EX);
             item.setDeckId(detail.getDeckId());
             item.setUserId(detail.getUserId());
             item.setDeckCoverCard1(detail.getDeckCoverCard1());

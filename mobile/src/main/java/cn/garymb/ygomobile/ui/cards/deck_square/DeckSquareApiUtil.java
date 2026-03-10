@@ -266,7 +266,6 @@ public class DeckSquareApiUtil {
         /* 构造 json */
         List<PushMultiDeck.DeckData> dataList = new ArrayList<>();
         for (MyDeckItem item : deckItems) {
-            LogUtil.i(TAG, "item:" + item.getDeckType() + "," + item.getDeckName() + " 是否删除？: " + item.isDelete() + "  路径：" + item.getDeckPath());
             PushMultiDeck.DeckData data = new PushMultiDeck.DeckData();
             data.setDeckId(item.getDeckId());
             data.setDeckName(item.getDeckName());
@@ -280,19 +279,18 @@ public class DeckSquareApiUtil {
                 data.setDelete(item.isDelete() != null ? item.isDelete() : false);
                 
             } else {
-                File deckFile = new File(item.getDeckPath());
-                if (deckFile.exists()) {
+                if (new File(item.getDeckPath()).exists()) {
                     // 文件存在时才读取并更新 deckId
                     deckContent = DeckSquareFileUtil.setDeckId(item.getDeckPath(), loginToken.getUserId(), item.getDeckId());
                     saveFileToPath(item.getDeckPath(), deckContent, item.getUpdateTimestamp());// 用于将新申请的 deckid 写入对应的本地卡组中，方便同步时进行比较
                 } else {
                     // 文件不存在，标记为删除
-                    LogUtil.e(TAG, "卡组文件不存在，视为删除操作：" + item.getDeckPath());
+                    LogUtil.e(TAG + ":UploadMyDecks", "卡组文件不存在，视为删除操作：" + item.getDeckPath());
                     data.setDelete(true);
                 }
             }
             data.setDeckYdk(deckContent);
-            LogUtil.w(TAG, "*要上传的* 本地卡组:" + data.getDeckType() + "," + data.getDeckName() + "++id: " + data.getDeckId() + " 是否删除？: " + data.isDelete());
+            LogUtil.w(TAG + ":UploadMyDecks", "*要上传的* 本地卡组:" + data.getDeckType() + "," + data.getDeckName() + "++id: " + data.getDeckId() + " 是否删除？: " + data.isDelete());
             dataList.add(data);
         }
         return pushMultiDecks(dataList, loginToken);
