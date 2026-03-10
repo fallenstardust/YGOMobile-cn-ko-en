@@ -1391,7 +1391,7 @@ void Game::DrawSpec() {
             }
             if(!dInfo.isStarted) {
                 maxwidth = 705 * xScale;
-                x = wChat->getRelativePosition().UpperLeftCorner.X;
+                x = wHostPrepare->getRelativePosition().UpperLeftCorner.X;
                 y = 10 * mainGame->yScale;
             } else if(is_building) {
                 maxwidth = 205 * xScale;
