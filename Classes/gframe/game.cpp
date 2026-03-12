@@ -306,11 +306,8 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     len = options->getDbCount();
     for(int i=0;i<len;i++){
         irr::io::path cdb_path = cdbs[i];
-        wchar_t wpath[1024];
-        // 解码UTF8路径
-        BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
         // 加载数据库
-        if(dataManager.LoadDB(wpath)) {
+        if(dataManager.LoadDB(cdb_path.c_str())) {
             ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
         }else{
             ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
@@ -1808,57 +1805,43 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cW
  *
  */
 void Game::LoadExpansions() {
-	// TODO: get isUseExtraCards
-
-	// 打开 expansions 目录以查找扩展包文件
-	DIR * dir;
-	struct dirent * dirp;
-	if((dir = opendir("./expansions/")) == NULL)
-		return;
-
-	// 遍历目录中的所有文件，筛选出 .zip 和 .ypk 文件并加入文件系统
-	while((dirp = readdir(dir)) != NULL) {
-		size_t len = strlen(dirp->d_name);
-		// 检查文件名长度是否足够以及后缀是否为 .zip 或 .ypk（忽略大小写）
-		if (len > 11 && strcasecmp(dirp->d_name + len - 11, "lflist.conf") == 0) {
-			char upath[1024];
-			sprintf(upath, "./expansions/%s", dirp->d_name);
-			deckManager.LoadLFListSingle((const char*)upath);
+	FileSystem::TraversalDir("./expansions", [](const char* name, bool isdir) {
+		if (isdir)
+			return;
+		char fpath[1024];
+		mysnprintf(fpath, "./expansions/%s", name);
+		if (IsExtension(name, ".cdb")) {
+			dataManager.LoadDB(fpath);
+			return;
 		}
-	}
-	closedir(dir);
-
-	// 遍历已加载的所有文件档案，处理其中的内容
+		if (IsExtension(name, ".conf")) {
+			if (std::strstr(name, "lflist") != nullptr) {
+				deckManager.LoadLFListSingle(fpath);
+			} else {
+				dataManager.LoadStrings(fpath);
+			}
+			return;
+		}
+	});
+	// 遍历所有已加载的文件档案（包括 zip 等压缩档案）
 	for(irr::u32 i = 0; i < dataManager.FileSystem->getFileArchiveCount(); ++i) {
 		auto archive = dataManager.FileSystem->getFileArchive(i)->getFileList();
 
 		// 遍历当前档案中的每一个文件
 		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
-			wchar_t fname[1024];
-			const char* uname = archive->getFullFileName(j).c_str();
-			BufferIO::DecodeUTF8(uname, fname);
-
-			// 如果是数据库文件 (.cdb)，则加载至数据管理器
-			if (IsExtension(fname, L".cdb")) {
-				dataManager.LoadDB(fname);
+			const char* name = archive->getFullFileName(j).c_str();
+			if (IsExtension(name, ".cdb")) {
+				dataManager.LoadDB(name);
 				continue;
 			}
-
-			// 如果是配置文件 (.conf)，根据文件名决定加载方式
-			if (IsExtension(fname, L".conf")) {
-                auto reader = dataManager.FileSystem->createAndOpenFile(uname);
-                // 若文件名为 lflist 类型，则加载限卡表；否则加载字符串资源
-                if (std::wcsstr(fname, L"lflist") != nullptr) {
-                    ALOGD("uname=%s",uname);
-                    deckManager.LoadLFListSingle(reader);
-                } else {
-                    dataManager.LoadStrings(reader);
-                }
+			if (IsExtension(name, ".conf")) {
+				auto reader = dataManager.FileSystem->createAndOpenFile(name);
+				dataManager.LoadStrings(reader);
 				continue;
 			}
-
-			// 如果路径前缀为 pack/ 并且是 ydk 卡组文件，则记录在扩展包列表中
-			if (!mywcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
+			if (!mystrncasecmp(name, "pack/", 5) && IsExtension(name, ".ydk")) {
+				wchar_t fname[1024];
+				BufferIO::DecodeUTF8(name, fname);
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
 			}

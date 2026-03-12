@@ -132,9 +132,7 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 
 	return true;
 }
-bool DataManager::LoadDB(const wchar_t* wfile) {
-	char file[256];
-	BufferIO::EncodeUTF8(wfile, file);
+bool DataManager::LoadDB(const char* file) {
 	auto reader = FileSystem->createAndOpenFile(file);
 	if(reader == nullptr)
 		return false;
