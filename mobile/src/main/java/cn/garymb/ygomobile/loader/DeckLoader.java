@@ -72,7 +72,7 @@ public class DeckLoader {
                         type = DeckItemType.ExtraCard;
                     } else if (line.startsWith("###")) {
                         line = line.trim().substring(3);
-                        if (!line.isEmpty())
+                        if (!line.isEmpty() && TextUtils.isDigitsOnly(line))
                             deck.setUserId(Integer.parseInt(line));
                     } else if (line.startsWith("##")) {
                         line = line.trim().substring(2);
