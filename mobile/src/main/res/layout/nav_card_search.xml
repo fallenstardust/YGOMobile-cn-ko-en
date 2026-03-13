@@ -64,32 +64,32 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/label_width_small"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_limit_list"
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1" />
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_genesys_limit_list"
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:visibility="gone" />
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_limit"
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1" />
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/sp_genesys_limit"
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:visibility="gone" />
                 </LinearLayout>
@@ -445,7 +445,7 @@
                     android:id="@+id/ll_cardType"
                     android:layout_width="match_parent"
                     android:layout_height="30dp"
-                    android:background="@drawable/selected_dark"
+                    android:background="@drawable/selected_light"
                     android:orientation="horizontal">
 
                     <ImageView

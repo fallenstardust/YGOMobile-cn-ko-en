@@ -21,6 +21,7 @@ public class SharedPreferenceUtil {
     public static final int DECK_EDIT_TYPE_DECK_MANAGEMENT = 1;
     public static final int DECK_EDIT_TYPE_OURYGO_EZ = 2;
 
+    private static final String USER_UNIQUE_ID_KEY = "user_unique_id";
 
     //获取存放路径的share
     public static SharedPreferences getSharePath() {
@@ -240,7 +241,50 @@ public class SharedPreferenceUtil {
         return getShareRecord().edit().putBoolean("privacy_policy_agreed", agreed).commit();
     }
     
-    public static boolean shouldShowPrivacyPolicy() {
-        return !isPrivacyPolicyAgreed() && isFristStart();
+    // 用户唯一码相关方法
+    /**
+     * 生成用户唯一码
+     * @return 用户唯一码字符串
+     */
+    public static String generateUserUniqueId() {
+        // 生成5位随机文本（字母和数字组合）
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder();
+        java.util.Random random = new java.util.Random();
+        for (int i = 0; i < 5; i++) {
+            int index = random.nextInt(chars.length());
+            sb.append(chars.charAt(index));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 保存用户唯一码
+     * @param uniqueId 用户唯一码
+     * @return 是否保存成功
+     */
+    public static boolean saveUserUniqueId(String uniqueId) {
+        return getShareRecord().edit().putString(USER_UNIQUE_ID_KEY, uniqueId).commit();
+    }
+    
+    /**
+     * 获取用户唯一码
+     * @return 用户唯一码，如果不存在则返回null
+     */
+    public static String getUserUniqueId() {
+        return getShareRecord().getString(USER_UNIQUE_ID_KEY, null);
+    }
+    
+    /**
+     * 初始化用户唯一码（如果不存在的话）
+     * @return 用户唯一码
+     */
+    public static String initUserUniqueId() {
+        String uniqueId = getUserUniqueId();
+        if (uniqueId == null) {
+            uniqueId = generateUserUniqueId();
+            saveUserUniqueId(uniqueId);
+        }
+        return uniqueId;
     }
 }

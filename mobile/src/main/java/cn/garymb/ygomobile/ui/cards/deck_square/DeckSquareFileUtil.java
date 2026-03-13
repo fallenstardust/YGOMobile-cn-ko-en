@@ -43,6 +43,8 @@ public class DeckSquareFileUtil {
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(detail.getDeckName());
             item.setDeckType(detail.getDeckType());
+            // 从在线卡组转本地卡组没有卡组路径，需要根据同分类同名拼接一个
+            item.setDeckPath(AppsSettings.get().getDeckDir()+ "/" + (detail.getDeckType().isEmpty() ? "" : detail.getDeckType() + "/") + detail.getDeckName() + Constants.YDK_FILE_EX);
             item.setDeckId(detail.getDeckId());
             item.setUserId(detail.getUserId());
             item.setDeckCoverCard1(detail.getDeckCoverCard1());
@@ -145,6 +147,8 @@ public class DeckSquareFileUtil {
      * 确保文本中的换行标记能真实换行显示
      */
     private static void processYdkLineBreaks(File ydkFile) {
+        long originalLastModified = ydkFile.lastModified();//记录原始修改时间，修改后要覆盖回去
+
         FileInputStream fis = null;
         FileOutputStream fos = null;
         try {
@@ -170,6 +174,8 @@ public class DeckSquareFileUtil {
         } finally {
             IOUtils.close(fis);
             IOUtils.close(fos);
+            // 覆盖文件修改时间为一开始的时间
+            ydkFile.setLastModified(originalLastModified);
         }
     }
 
@@ -205,7 +211,6 @@ public class DeckSquareFileUtil {
         List<MyDeckItem> result = new ArrayList<>();
         File[] files = getAllYdk();
         for (File file : files) {
-            String deckId = getDeckId(file);
             MyDeckItem item = new MyDeckItem();
             item.setDeckName(file.getName());
             //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
@@ -216,11 +221,10 @@ public class DeckSquareFileUtil {
             }
             item.setUpdateTimestamp(file.lastModified());
             item.setDeckPath(file.getPath());
+
+            String deckId = getDeckId(file);
             if (deckId != null) {
                 item.setDeckId(deckId);
-                item.setIdUploaded(2);
-            } else {
-                item.setIdUploaded(0);
             }
             result.add(item);
         }
@@ -309,12 +313,7 @@ public class DeckSquareFileUtil {
             fos.flush();
 
             // 设置指定的最后修改时间
-            boolean timeSet = file.setLastModified(modificationTime);
-            if (!timeSet) {
-                LogUtil.w(TAG, "设置文件修改时间失败: " + file.getPath());
-            } else {
-                LogUtil.d(TAG, "设置文件修改时间成功: " + file.getPath());
-            }
+            file.setLastModified(modificationTime);
         } catch (Exception e) {
             LogUtil.e(TAG, "保存文件失败", e);
             return false;

@@ -80,6 +80,7 @@ import cn.garymb.ygomobile.ui.widget.ShimmerTextView;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.hutool.core.util.ArrayUtil;
 import ocgcore.CardManager;
@@ -447,7 +448,13 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         showTipsToast();
         YGOGameOptions options = new YGOGameOptions();
         options.mServerAddr = serverInfo.getServerAddr();
-        options.mUserName = serverInfo.getPlayerName();
+        // 获取用户唯一码并在用户名后面添加$和唯一码
+        String userUniqueId = SharedPreferenceUtil.getUserUniqueId();
+        String playerName = serverInfo.getPlayerName();
+        if (userUniqueId != null && !userUniqueId.isEmpty()) {
+            playerName = playerName.contains("$") ? playerName : playerName + "$" + userUniqueId;
+        }
+        options.mUserName = playerName;
         options.mPort = serverInfo.getPort();
         options.mRoomName = name;
         YGOStarter.startGame(getActivity(), options);

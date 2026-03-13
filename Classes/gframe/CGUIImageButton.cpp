@@ -208,7 +208,7 @@ CGUIImageButton::CGUIImageButton(IGUIEnvironment* environment, IGUIElement* pare
  */
 CGUIImageButton* CGUIImageButton::addImageButton(IGUIEnvironment *env, const core::rect<s32>& rectangle, IGUIElement* parent, s32 id) {
 	// 创建新的图像按钮实例
-	CGUIImageButton* button = new CGUIImageButton(env, parent ? parent : 0, id, rectangle);
+	CGUIImageButton* button = new CGUIImageButton(env, parent, id, rectangle);
 	// 释放引用计数，避免内存泄漏
 	button->drop();
 	return button;

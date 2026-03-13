@@ -77,8 +77,7 @@ int main(int argc, char* argv[]) {
 		if (arg[0] == '-' && arg[1] == 'e') {
 			wchar_t fname[1024];
 			char* tmp = sub_string(arg, 2);
-			BufferIO::DecodeUTF8(tmp, fname);
-			ygo::dataManager.LoadDB(fname);
+			ygo::dataManager.LoadDB(tmp);
 			delete tmp;
 		} else if(!strcmp(arg, "-k")) { // Keep on return
 			exit_on_return = false;

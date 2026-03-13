@@ -21,11 +21,11 @@
 #include <functional>
 #include "sound_manager.h"
 
-constexpr int DEFAULT_DUEL_RULE = 5;
+namespace ygo {
+
+constexpr int DEFAULT_DUEL_RULE = CURRENT_RULE;
 constexpr int CONFIG_LINE_SIZE = 1024;
 constexpr int TEXT_LINE_SIZE = 256;
-
-namespace ygo {
 
 template<size_t N>
 bool IsExtension(const wchar_t* filename, const wchar_t(&extension)[N]) {
@@ -180,11 +180,9 @@ struct FadingUnit {
 class Game :irr::IProcessEventReceiver{
 
 public:
-#ifdef _IRR_ANDROID_PLATFORM_
 	void stopBGM();
 	void playBGM();
 	bool Initialize(ANDROID_APP app, irr::android::InitOptions *options);
-#endif
 	void MainLoop();
 	void RefreshTimeDisplay();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
