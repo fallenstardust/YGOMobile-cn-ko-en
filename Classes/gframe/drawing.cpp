@@ -1562,10 +1562,8 @@ void Game::WaitFrameSignal(int frame) {
  */
 void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lflist, bool drag) {
 	// 获取卡牌卡号和别名卡号，如果有别名则使用别名
-    auto code = cp->first;
-	auto lcode = cp->second.alias;
-	if(lcode == 0)
-		lcode = code;
+	auto code = cp->first;
+	auto lcode = cp->second.get_duel_code();
 
 	// 获取卡片纹理图像
 	irr::video::ITexture* img = imageManager.GetTextureThumb(code);

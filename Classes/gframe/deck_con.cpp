@@ -1747,12 +1747,12 @@ void DeckBuilder::FilterCards() {
 				match = CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str());
 			} else if (elements_iterator->type == element_t::type_t::setcode) {
 				match = data.is_setcodes(elements_iterator->setcodes);
-			} else if (trycode && (data.code == trycode || data.alias == trycode && is_alternative(data.code, data.alias))) {
+			} else if (trycode && data.get_original_code() == trycode) {
 				match = true;
 			} else {
 				match = CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str())
-						|| strings.text.find(elements_iterator->keyword) != std::wstring::npos
-						|| data.is_setcodes(elements_iterator->setcodes);
+					|| strings.text.find(elements_iterator->keyword) != std::wstring::npos
+					|| data.is_setcodes(elements_iterator->setcodes);
 			}
 
 			// 若为排除项则反转匹配结果
@@ -2041,7 +2041,7 @@ void DeckBuilder::pop_side(int seq) {
  */
 bool DeckBuilder::check_limit(code_pointer pointer) {
 	// 获取实际用于限制检查的卡片编码：如果存在别名则使用别名，否则使用原ID
-	auto limitcode = pointer->second.alias ? pointer->second.alias : pointer->first;
+	auto limitcode = pointer->second.get_duel_code();
 
 	// 默认每张卡最多允许3张
 	int limit = 3;
@@ -2093,7 +2093,7 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 	// Lambda 函数：处理单张卡的计数和点数检查
 	auto handle_card = [&](ygo::code_pointer& card) {
 		// 如果是目标卡，则减少其剩余可放数量
-		if (card->first == limitcode || card->second.alias == limitcode) {
+		if (card->second.get_duel_code() == limitcode) {
 			limit--;
 			if(limit <= 0)
 				return false; // 已达最大数量限制
