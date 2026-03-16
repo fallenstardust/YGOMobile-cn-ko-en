@@ -278,7 +278,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 			return (gameruleDeckError << 28) | cit->first;
 		if (cit->second.type & (TYPES_EXTRA_DECK | TYPE_TOKEN))
 			return (DECKERROR_MAINCOUNT << 28);
-		int code = cit->second.alias ? cit->second.alias : cit->first;
+		auto code = cit->second.get_duel_code();
 		ccount[code]++;
 		int dc = ccount[code];
 		if(dc > 3)
@@ -296,7 +296,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 			return (gameruleDeckError << 28) | cit->first;
 		if (!(cit->second.type & TYPES_EXTRA_DECK) || cit->second.type & TYPE_TOKEN)
 			return (DECKERROR_EXTRACOUNT << 28);
-		int code = cit->second.alias ? cit->second.alias : cit->first;
+		auto code = cit->second.get_duel_code();
 		ccount[code]++;
 		int dc = ccount[code];
 		if(dc > 3)
@@ -314,7 +314,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 			return (gameruleDeckError << 28) | cit->first;
 		if (cit->second.type & TYPE_TOKEN)
 			return (DECKERROR_SIDECOUNT << 28);
-		int code = cit->second.alias ? cit->second.alias : cit->first;
+		auto code = cit->second.get_duel_code();
 		ccount[code]++;
 		int dc = ccount[code];
 		if(dc > 3)
@@ -378,38 +378,36 @@ uint32_t DeckManager::LoadDeckFromStream(Deck& deck, std::istringstream& deckStr
     // 清空之前的注释
     deckComments.clear();
 
-    int ct = 0;
-    int mainc = 0, sidec = 0;
-    uint32_t cardlist[PACK_MAX_SIZE]{};
-    bool is_side = false;
-    std::string linebuf;
-
-    while (std::getline(deckStream, linebuf, '\n') && ct < PACK_MAX_SIZE) {
-        // 缓存以##或###开头的注释行
-        if (linebuf.length() >= 2 && linebuf[0] == '#' && linebuf[1] == '#') {
-            wchar_t wline[256];
-            BufferIO::DecodeUTF8(linebuf.c_str(), wline);
-            deckComments.push_back(wline);
-            continue;
-        }
-
-        if (linebuf[0] == '!') {
-            is_side = true;
-            continue;
-        }
-        if (linebuf[0] < '0' || linebuf[0] > '9')
-            continue;
-        errno = 0;
-        auto code = std::strtoul(linebuf.c_str(), nullptr, 10);
-        if (errno || code > UINT32_MAX)
-            continue;
-        cardlist[ct++] = code;
-        if (is_side)
-            ++sidec;
-        else
-            ++mainc;
-    }
-    return LoadDeck(deck, cardlist, mainc, sidec, is_packlist);
+	int ct = 0;
+	int mainc = 0, sidec = 0;
+	uint32_t cardlist[PACK_MAX_SIZE]{};
+	bool is_side = false;
+	std::string linebuf;
+	while (std::getline(deckStream, linebuf, '\n') && ct < PACK_MAX_SIZE) {
+		// 缓存以##或###开头的注释行
+		if (linebuf.length() >= 2 && linebuf[0] == '#' && linebuf[1] == '#') {
+			wchar_t wline[256];
+			BufferIO::DecodeUTF8(linebuf.c_str(), wline);
+			deckComments.push_back(wline);
+			continue;
+		}
+		if (linebuf[0] == '!') {
+			is_side = true;
+			continue;
+		}
+		if (linebuf[0] < '0' || linebuf[0] > '9')
+			continue;
+		errno = 0;
+		auto code = std::strtoul(linebuf.c_str(), nullptr, 10);
+		if (errno || code > UINT32_MAX)
+			continue;
+		cardlist[ct++] = code;
+		if (is_side)
+			++sidec;
+		else
+			++mainc;
+	}
+	return LoadDeck(deck, cardlist, mainc, sidec, is_packlist);
 }
 bool DeckManager::LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec) {
 	std::unordered_map<uint32_t, int> pcount;
@@ -558,15 +556,15 @@ void DeckManager::SaveDeck(const Deck& deck, std::stringstream& deckStream) {
 	for(size_t i = 0; i < deck.side.size(); ++i)
 		deckStream << deck.side[i]->first << std::endl;
 
-    // 将缓存的注释写入文件末尾
-    if (!deckComments.empty()) {
-        deckStream << "\r\n";  // 添加换行符隔断
-        for (const auto& comment : deckComments) {
-            char utf8line[512];
-            BufferIO::EncodeUTF8(comment.c_str(), utf8line);
-            deckStream << utf8line << std::endl;
-        }
-    }
+	// 将缓存的注释写入文件末尾
+	if (!deckComments.empty()) {
+		deckStream << "\r\n";  // 添加换行符隔断
+		for (const auto& comment : deckComments) {
+			char utf8line[512];
+			BufferIO::EncodeUTF8(comment.c_str(), utf8line);
+			deckStream << utf8line << std::endl;
+		}
+	}
 }
 
 /**

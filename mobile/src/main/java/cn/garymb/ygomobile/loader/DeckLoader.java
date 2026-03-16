@@ -76,7 +76,7 @@ public class DeckLoader {
                             deck.setUserId(Integer.parseInt(line));
                     } else if (line.startsWith("##")) {
                         line = line.trim().substring(2);
-                        if (line.length() > 0)
+                        if (!line.isEmpty())
                             deck.setDeckId(line);
                     } else {
                         type = DeckItemType.Pack;
@@ -84,7 +84,7 @@ public class DeckLoader {
                     continue;
                 }
                 line = line.trim();
-                if (line.length() == 0 || !TextUtils.isDigitsOnly(line)) {
+                if (line.isEmpty() || !TextUtils.isDigitsOnly(line)) {
                     if (Constants.DEBUG)
                         Log.w("kk", "read not number " + line);
                     continue;
@@ -92,7 +92,7 @@ public class DeckLoader {
                 if (line.equals("0") || line.length() > 9) {//密码为0或者长度大于9位直接过滤
                     continue;
                 }
-                Integer id = Integer.parseInt(line);
+                int id = Integer.parseInt(line);
                 if (type == DeckItemType.MainCard && deck.getMainCount() < Constants.DECK_MAIN_MAX) {
                     Integer i = mIds.get(id);
                     if (i == null) {
