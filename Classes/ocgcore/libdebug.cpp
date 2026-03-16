@@ -128,10 +128,11 @@ int32_t scriptlib::debug_pre_add_counter(lua_State *L) {
 	check_param_count(L, 2);
 	check_param(L, PARAM_TYPE_CARD, 1);
 	card* pcard = *(card**) lua_touserdata(L, 1);
-	uint32_t countertype = (uint32_t)lua_tointeger(L, 2);
-	uint16_t count = (uint16_t)lua_tointeger(L, 3);
-	uint16_t cttype = countertype;
-	auto pr = pcard->counters.emplace(cttype, 0);
+	uint16_t countertype = (uint16_t)lua_tointeger(L, 2);
+	uint16_t count = 1;
+	if(lua_gettop(L) >= 3)
+		count = (uint16_t)lua_tointeger(L, 3);
+	auto pr = pcard->counters.emplace(countertype, 0);
 	auto cmit = pr.first;
 	cmit->second += count;
 	return 0;
@@ -170,9 +171,10 @@ int32_t scriptlib::debug_set_ai_name(lua_State *L) {
 	duel* pduel = interpreter::get_duel_info(L);
 	pduel->write_buffer8(MSG_AI_NAME);
 	const char* pstr = lua_tostring(L, 1);
-	int len = (int)std::strlen(pstr);
-	if(len > SIZE_AI_NAME -1)
-		len = SIZE_AI_NAME - 1;
+	size_t length = std::strlen(pstr);
+	if(length > SIZE_AI_NAME - 1)
+		length = SIZE_AI_NAME - 1;
+	uint16_t len = (uint16_t)length;
 	pduel->write_buffer16(len);
 	pduel->write_buffer(pstr, len);
 	pduel->write_buffer8(0);
@@ -186,9 +188,10 @@ int32_t scriptlib::debug_show_hint(lua_State *L) {
 	lua_pcall(L, 1, 1, 0);
 	pduel->write_buffer8(MSG_SHOW_HINT);
 	const char* pstr = lua_tostring(L, -1);
-	int len = (int)std::strlen(pstr);
-	if (len > SIZE_HINT_MSG - 1)
-		len = SIZE_HINT_MSG - 1;
+	size_t length = std::strlen(pstr);
+	if (length > SIZE_HINT_MSG - 1)
+		length = SIZE_HINT_MSG - 1;
+	uint16_t len = (uint16_t)length;
 	pduel->write_buffer16(len);
 	pduel->write_buffer(pstr, len);
 	pduel->write_buffer8(0);

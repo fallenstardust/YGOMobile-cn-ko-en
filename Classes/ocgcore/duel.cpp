@@ -35,12 +35,18 @@ duel::~duel() {
 	delete lua;
 }
 void duel::clear() {
-	for(auto& pcard : cards)
+	for(auto& pcard : cards) {
+		lua->unregister_card(pcard);
 		delete pcard;
-	for(auto& pgroup : groups)
+	}
+	for(auto& pgroup : groups) {
+		lua->unregister_group(pgroup);
 		delete pgroup;
-	for(auto& peffect : effects)
+	}
+	for(auto& peffect : effects) {
+		lua->unregister_effect(peffect);
 		delete peffect;
+	}
 	delete game_field;
 	cards.clear();
 	groups.clear();
@@ -86,6 +92,7 @@ effect* duel::new_effect() {
 	return peffect;
 }
 void duel::delete_card(card* pcard) {
+	lua->unregister_card(pcard);
 	cards.erase(pcard);
 	delete pcard;
 }
@@ -121,7 +128,7 @@ void duel::restore_assumes() {
 		pcard->assume_type = 0;
 	assumes.clear();
 }
-void duel::write_buffer(const void* data, int size) {
+void duel::write_buffer(const void* data, size_t size) {
 	vector_write_block(message_buffer, data, size);
 }
 void duel::write_buffer32(uint32_t value) {
@@ -136,7 +143,7 @@ void duel::write_buffer8(uint8_t value) {
 void duel::clear_buffer() {
 	message_buffer.clear();
 }
-void duel::set_responsei(uint32_t resp) {
+void duel::set_responsei(int32_t resp) {
 	game_field->returns.ivalue[0] = resp;
 }
 void duel::set_responseb(byte* resp) {
