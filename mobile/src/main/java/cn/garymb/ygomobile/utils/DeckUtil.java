@@ -187,7 +187,7 @@ public class DeckUtil {
             if (file.isFile()) {
                 ZipFile zipFile = null;
                 try {
-                    zipFile = new ZipFile(file.getAbsoluteFile());
+                    zipFile = new ZipFile(file.getAbsoluteFile(), StandardCharsets.UTF_8);
                     Enumeration<?> entries = zipFile.entries();
                     while (entries.hasMoreElements()) {
                         ZipEntry entry = (ZipEntry) entries.nextElement();

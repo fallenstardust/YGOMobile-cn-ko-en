@@ -568,15 +568,18 @@ public class AppsSettings {
           by Environment.isExternalStorageEmulated(File)),
           it's contents are backed by a private user data partition, which means there is little benefit
            to storing data here instead of the private directories returned by getFilesDir(), etc.
-           可以用Environment.isExternalStorageEmulated()验证，nova10实测返回值为true
-        To put it simply, the Android storage/emulated/0 folder is the full name of the root
-        directory that you access all your files from in the file explorer on your Android device.
-        However, as its name suggets, this folder is emulated storage, which means that it is merely
-         a link to the actual internal storage of your device's operating system. This is done for security reasons.
-         */
+           可以用 Environment.isExternalStorageEmulated() 验证，nova10 实测返回值为 true
+        To put it simply, the Android storage/emulated/0 folder is the full name of the root directory that you access all your files from in the file explorer on your Android device.
+        However, as its name suggets, this folder is emulated storage, which means that it is merely a link to the actual internal storage of your device's operating system. This is done for security reasons.
+        */
 
         defPath = new File(String.valueOf(context.getExternalFilesDir(Constants.PREF_DEF_GAME_DIR))).getAbsolutePath();
-        return mSharedPreferences.getString(Constants.PREF_GAME_PATH, defPath);
+        try {
+            return mSharedPreferences.getString(Constants.PREF_GAME_PATH, defPath);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to get resource path from SharedPreferences, using default path", e);
+            return defPath;
+        }
     }
 
     public void setResourcePath(String path) {

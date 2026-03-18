@@ -206,7 +206,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
         }).fail((e) -> {
             LogUtil.e(TAG, "Sync decks failed: " + e);
         }).done((result) -> {
-            YGOUtil.showTextToast(R.string.done);
+
         });
     }
 }

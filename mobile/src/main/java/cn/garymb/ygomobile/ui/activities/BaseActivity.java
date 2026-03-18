@@ -111,11 +111,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public Resources getResources() {
-        Resources res = super.getResources();
-        Configuration config = new Configuration();
-        config.setToDefaults();
-        res.updateConfiguration(config, res.getDisplayMetrics());
-        return res;
+        return super.getResources();
     }
 
     public Activity getActivity() {
