@@ -97,9 +97,10 @@ import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckManageDialog;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
-import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DownloadDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
@@ -1320,7 +1321,31 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                                 TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
                             YGOUtil.showTextToast(R.string.donot_edit_Deck);
                         } else {
-                            save(mDeckAdapater.getYdkFile()); // 保存卡组文件
+                            save(mDeckAdapater.getYdkFile(), false); // 保存卡组文件
+                            if (SharedPreferenceUtil.getServerToken() != null) {
+                                LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(), SharedPreferenceUtil.getServerToken());
+                                VUiKit.defer().when(() -> {
+                                    try {
+                                        // 构建当前卡组的 MyDeckItem 对象
+                                        List<MyDeckItem> deckItemList = new ArrayList<>();
+                                        MyDeckItem currentItem = DeckUtil.getMyDeckItem(mDeckAdapater.getYdkFile());
+                                        deckItemList.add(currentItem);
+                                        // 上传卡组
+                                        DeckSquareApiUtil.UploadMyDecks(deckItemList, loginToken);
+
+                                    } catch (IOException e) {
+                                        // 发生 IO 异常时返回异常对象
+                                        return e;
+                                    }
+                                    // 正常执行完成后返回 0 表示成功
+                                    return 0;
+                                }).fail((e) -> {
+                                    LogUtil.e(TAG, "Upload deck failed: " + e);
+                                }).done((result) -> {
+
+                                });
+
+                            }
                         }
                     }
                 }
@@ -1810,7 +1835,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     String fileFullName = deckData.getDeckName() + YDK_FILE_EX;
                     File dir = new File(getActivity().getApplicationInfo().dataDir, "cache");
                     //将卡组存到cache缓存目录中
-                    boolean result = DeckSquareFileUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), deckData.getDeckUpdateDate());
+                    boolean result = DeckUtil.saveFileToPath(dir.getPath(), fileFullName, deckData.getDeckYdk(), deckData.getDeckUpdateDate());
                     if (result) {//存储成功，使用预加载功能
                         LogUtil.i(TAG, "square deck detail done");
                         preLoadFile(dir.getPath() + "/" + fileFullName);

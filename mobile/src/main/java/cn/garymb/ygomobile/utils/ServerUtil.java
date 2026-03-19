@@ -206,7 +206,7 @@ public class ServerUtil {
         File xmlFile = new File(context.getFilesDir(), Constants.SERVER_FILE);//读取文件路径下的server_list.xml
         ServerList fileList = xmlFile.exists() ? ServerListManager.readList(new FileInputStream(xmlFile)) : null;
 
-        if (fileList == null) {
+        if (fileList == null || assetList == null) {
             return;
         }
         for (int i = 0; i < assetList.getServerInfoList().size(); i++) {
