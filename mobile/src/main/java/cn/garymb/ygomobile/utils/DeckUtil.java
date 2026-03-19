@@ -38,7 +38,7 @@ import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
-import cn.garymb.ygomobile.ui.cards.deck_square.bo.MyDeckItem;
+import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
 import cn.hutool.core.util.ArrayUtil;
 
 public class DeckUtil {

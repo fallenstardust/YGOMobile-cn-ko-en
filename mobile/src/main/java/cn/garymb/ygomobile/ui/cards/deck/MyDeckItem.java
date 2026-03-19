@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.cards.deck_square.bo;
+package cn.garymb.ygomobile.ui.cards.deck;
 
 public class MyDeckItem {
     private int userId;
