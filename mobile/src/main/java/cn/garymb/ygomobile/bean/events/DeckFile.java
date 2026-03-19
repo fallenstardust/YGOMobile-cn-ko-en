@@ -4,7 +4,6 @@ import java.io.File;
 
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.TextSelect;
-import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil;
 import cn.garymb.ygomobile.utils.DeckUtil;
 
 public class DeckFile extends TextSelect {
@@ -43,7 +42,7 @@ public class DeckFile extends TextSelect {
 
     public DeckFile(File file) {
         this.onServer = DeckType.ServerType.LOCAL;
-        this.deckId = DeckSquareFileUtil.getDeckId(file);
+        this.deckId = DeckUtil.getDeckId(file);
 
         path = file;
         fileFullName = file.getName();

@@ -1,7 +1,5 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
-import static cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareFileUtil.convertToGMTDate;
-
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -31,6 +29,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushMultiResponse;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -223,7 +222,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
         // 处理卡组名称高亮
         helper.setText(R.id.my_deck_name, getHighlightedText(item.getDeckName(), currentKeyword));
 
-        helper.setText(R.id.deck_update_date, convertToGMTDate(item.getDeckUpdateDate()));
+        helper.setText(R.id.deck_update_date, DeckUtil.convertToGMTDate(item.getDeckUpdateDate()));
 
         if (item.isPublic()) {
             change_show_or_hide.setText(R.string.in_public);
