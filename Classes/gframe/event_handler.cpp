@@ -1856,8 +1856,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			    //break;
 			if (mainGame->wQuery->isVisible() || mainGame->wANAttribute->isVisible()
 				|| mainGame->wANCard->isVisible() || mainGame->wANNumber->isVisible()
-				|| mainGame->wCardSelect->isVisible()|| mainGame->wCardDisplay->isVisible()
-				||mainGame->wOptions->isVisible()){
+				|| mainGame->wCardSelect->isVisible()||mainGame->wOptions->isVisible()){
                 display_cards.clear();
                 int loc_id = 0;
                 switch(hovered_location) {
