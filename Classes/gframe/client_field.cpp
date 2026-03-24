@@ -592,9 +592,20 @@ void ClientField::ShowChainCard() {
 	else mainGame->btnSelectOK->setVisible(false);
 	mainGame->PopupElement(mainGame->wCardSelect);
 }
+
+/**
+ * @brief 显示位置卡片界面，用于展示多个卡片的详细信息
+ *
+ * 该函数负责在界面上显示一组待展示的卡片（display_cards）。根据卡片数量自动调整布局：
+ * - 当卡片数量不超过 5 张时，居中显示所有卡片
+ * - 当卡片数量超过 5 张时，显示前 5 张并启用滚动条
+ * 为每张卡片设置图像、位置文本、背景颜色等属性，并根据卡片所在位置和所有者设置不同的视觉效果
+ */
 void ClientField::ShowLocationCard() {
 	int startpos;
 	int ct;
+
+	// 根据卡片数量计算起始位置和显示数量
 	if(display_cards.size() <= 5) {
 		startpos = 30 + 125 * (5 - display_cards.size()) / 2;
 		ct = display_cards.size();
@@ -602,22 +613,34 @@ void ClientField::ShowLocationCard() {
 		startpos = 30;
 		ct = 5;
 	}
+
+	// 遍历需要显示的卡片，设置每张卡片的图像、位置和样式
 	for(int i = 0; i < ct; ++i) {
 		mainGame->stDisplayPos[i]->enableOverrideColor(false);
+
+		// 加载卡片图像：如果有卡片代码则加载对应图像，否则显示覆盖封面
 		if(display_cards[i]->code)
 			mainGame->imageLoading.insert(std::make_pair(mainGame->btnCardDisplay[i], display_cards[i]->code));
 		else
 			mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i]->controler + 2]);
+
+		// 设置卡片按钮的位置和状态
 		mainGame->btnCardDisplay[i]->setRelativePosition(mainGame->Resize_Y(startpos + 125 * i, 65, startpos + 120 + 125 * i, 65 + 170));
 		mainGame->btnCardDisplay[i]->setPressed(false);
 		mainGame->btnCardDisplay[i]->setVisible(true);
+
 		wchar_t formatBuffer[2048];
+
+		// 格式化位置文本：超量素材显示特殊格式，其他显示标准格式
 		if (display_cards[i]->location == LOCATION_OVERLAY)
 			myswprintf(formatBuffer, L"%ls[%d](%d)",
 				dataManager.FormatLocation(display_cards[i]->overlayTarget), display_cards[i]->overlayTarget->sequence + 1, display_cards[i]->sequence + 1);
 		else
 			myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(display_cards[i]), display_cards[i]->sequence + 1);
+
 		mainGame->stDisplayPos[i]->setText(formatBuffer);
+
+		// 根据卡片位置和属性设置覆盖颜色和背景颜色
 		if(display_cards[i]->location == LOCATION_OVERLAY) {
 			if(display_cards[i]->owner != display_cards[i]->overlayTarget->controler)
 				mainGame->stDisplayPos[i]->setOverrideColor(0xff000099);
@@ -638,9 +661,12 @@ void ClientField::ShowLocationCard() {
 			else 
 				mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
 		}
+
 		mainGame->stDisplayPos[i]->setVisible(true);
 		mainGame->stDisplayPos[i]->setRelativePosition(mainGame->Resize_Y(startpos + 125 * i, 40, startpos + 120 + 125 * i, 40 + 20));
 	}
+
+	// 根据卡片总数设置滚动条可见性和范围
 	if(display_cards.size() <= 5) {
 		for(int i = display_cards.size(); i < 5; ++i) {
 			mainGame->btnCardDisplay[i]->setVisible(false);
@@ -654,6 +680,8 @@ void ClientField::ShowLocationCard() {
 		mainGame->scrDisplayList->setMax((display_cards.size() - 5) * 10 + 9);
 		mainGame->scrDisplayList->setPos(0);
 	}
+
+	// 显示确认按钮并弹出卡片显示窗口
 	mainGame->btnDisplayOK->setVisible(true);
 	mainGame->PopupElement(mainGame->wCardDisplay);
 }
