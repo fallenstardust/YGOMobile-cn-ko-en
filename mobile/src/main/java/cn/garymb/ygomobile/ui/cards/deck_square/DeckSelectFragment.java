@@ -40,11 +40,16 @@ import cn.garymb.ygomobile.lite.databinding.FragmentDeckSelectBinding;
 import cn.garymb.ygomobile.ui.adapters.DeckListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.TextSelectAdapter;
+import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
+import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.recyclerview.DeckTypeTouchHelperCallback;
@@ -54,7 +59,7 @@ public class DeckSelectFragment extends Fragment {
 
     private FragmentDeckSelectBinding binding;
 
-    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
+    private static final String TAG = "DeckSelectFragment";
 
     private TextSelectAdapter<DeckType> typeAdp;//卡组dialog中，左列的adapter
     private DeckListAdapter<DeckFile> deckAdp;//卡组dialog中，右列的adapter
@@ -291,9 +296,15 @@ public class DeckSelectFragment extends Fragment {
                 DeckType toType = otherType.get(position);
                 IOUtils.createFolder(new File(toType.getPath()));
                 List<DeckFile> deckFileList = deckAdp.getSelectList();
+
+                // 新路径的卡组列表用于上传
+                List<File> movedFiles = new ArrayList<>();
+
                 for (DeckFile deckFile : deckFileList) {
                     try {
-                        FileUtils.moveFile(deckFile.getPath(), new File(toType.getPath(), deckFile.getFileName()).getPath());
+                        String newPath = new File(toType.getPath(), deckFile.getFileName()).getPath();
+                        FileUtils.moveFile(deckFile.getPath(), newPath);
+                        movedFiles.add(new File(newPath));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -301,6 +312,33 @@ public class DeckSelectFragment extends Fragment {
                 }
                 YGOUtil.showTextToast(getContext().getString(R.string.done));
                 onDeckMenuListener.onDeckMove(deckAdp.getSelectList(), toType);
+                List<MyDeckItem> deckItemList = new ArrayList<>();
+
+                // 使用移动后的新路径构建 MyDeckItem
+                for (File movedFile : movedFiles) {
+                    if (movedFile.exists()) {
+                        MyDeckItem item = DeckUtil.getMyDeckItem(movedFile);
+                        item.setDeckType(toType.getName());
+                        deckItemList.add(item);
+                    }
+                }
+                VUiKit.defer().when(() -> {
+                    try {
+                        String token = SharedPreferenceUtil.getServerToken();
+                        Integer userId = SharedPreferenceUtil.getServerUserId();
+
+                        if (token != null && !token.isEmpty() && userId != -1) {
+                            LoginToken loginToken = new LoginToken(userId, token);
+
+                            if (!deckItemList.isEmpty()) {
+                                DeckSquareApiUtil.UploadMyDecks(deckItemList, loginToken);
+                            }
+                        }
+                    } catch (Exception e) {
+                        LogUtil.e(TAG, "Upload deck category update failed", e);
+                    }
+                });
+
                 clearDeckSelect();
                 dialog.dismiss();
             });

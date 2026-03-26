@@ -1773,7 +1773,7 @@ void DeckBuilder::FilterCards() {
 	}
 
 	// 更新结果数量显示
-	myswprintf(result_string, L"%d", results.size());
+	myswprintf(result_string, L"%zu", results.size());
 
 	// 控制滚动条可见性及位置设置
 	if(results.size() > 7) {
