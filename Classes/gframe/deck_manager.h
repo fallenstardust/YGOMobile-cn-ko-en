@@ -41,7 +41,6 @@ public:
 	static constexpr int MAX_YDK_SIZE = 0x10000;
 
 	void LoadLFListSingle(const char* path);
-	void LoadLFListSingle(irr::io::IReadFile* reader);
 	void LoadLFList(irr::android::InitOptions *options);
 	const wchar_t* GetLFListName(unsigned int lfhash);
 	const LFList* GetLFList(unsigned int lfhash);
@@ -65,7 +64,7 @@ public:
 	static bool DeleteCategory(const wchar_t* name);
 	static bool SaveDeckArray(const DeckArray& deck, const wchar_t* name);
 	
-	int TypeCount(std::vector<code_pointer> list, unsigned int ctype);
+	int TypeCount(std::vector<const CardDataC*> list, unsigned int ctype);
 private:
     static std::vector<std::wstring> deckComments;  // 存储以##和###开头的注释行
 };

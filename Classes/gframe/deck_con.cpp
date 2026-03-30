@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include "config.h"
 #include "deck_con.h"
@@ -163,6 +164,7 @@ void DeckBuilder::Terminate() {
 	mainGame->device->setEventReceiver(&mainGame->menuHandler);
 	mainGame->wACMessage->setVisible(false);
 	mainGame->ClearTextures();
+	mainGame->showingcode = 0;
 	mainGame->scrFilter->setVisible(false);
 	mainGame->scrPackCards->setVisible(false);
 	mainGame->scrPackCards->setPos(0);
@@ -1160,9 +1162,14 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			dragx = event.MouseInput.X;
 			dragy = event.MouseInput.Y;
-			draging_pointer = _datas.find(hovered_code);
-			if (draging_pointer == _datas.end())
+			auto dit = _datas.find(hovered_code);
+			if (dit == _datas.end()) {
+				draging_pointer = nullptr;
+				is_starting_dragging = false;
+				is_draging = false;
 				break;
+			}
+			draging_pointer = &dit->second;
 			if(hovered_pos == 4) {
 				if(!check_limit(draging_pointer))
 					break;
@@ -1217,15 +1224,16 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				auto pointer = _datas.find(hovered_code);
 				if (pointer == _datas.end())
 					break;
+				auto cd = &pointer->second;
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
 				if(hovered_pos == 1) {
-					if(push_side(pointer))
+					if(push_side(cd))
 						pop_main(hovered_seq);
 				} else if(hovered_pos == 2) {
-					if(push_side(pointer))
+					if(push_side(cd))
 						pop_extra(hovered_seq);
 				} else {
-					if(push_extra(pointer) || push_main(pointer))
+					if(push_extra(cd) || push_main(cd))
 						pop_side(hovered_seq);
 				}
 				break;
@@ -1248,10 +1256,11 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					auto pointer = _datas.find(hovered_code);
 					if (pointer == _datas.end())
 						break;
-					if(!check_limit(pointer))
+					auto cd = &pointer->second;
+					if(!check_limit(cd))
 						break;
-					if(!push_extra(pointer) && !push_main(pointer))
-						push_side(pointer);
+					if(!push_extra(cd) && !push_main(cd))
+						push_side(cd);
 				}
 			} else {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_PICK);
@@ -1265,8 +1274,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				} else {
 					push_side(draging_pointer);
 				}
-				is_draging = false;
 			}
+			is_draging = false;
 			break;
 		}
 		case irr::EMIE_MMOUSE_LEFT_UP: {
@@ -1283,21 +1292,22 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			auto pointer = _datas.find(hovered_code);
 			if (pointer == _datas.end())
 				break;
-			if(!check_limit(pointer))
+			auto cd = &pointer->second;
+			if(!check_limit(cd))
 				break;
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_PICK);
 			if (hovered_pos == 1) {
-				if(!push_main(pointer))
-					push_side(pointer);
+				if(!push_main(cd))
+					push_side(cd);
 			} else if (hovered_pos == 2) {
-				if(!push_extra(pointer))
-					push_side(pointer);
+				if(!push_extra(cd))
+					push_side(cd);
 			} else if (hovered_pos == 3) {
-				if(!push_side(pointer) && !push_extra(pointer))
-					push_main(pointer);
+				if(!push_side(cd) && !push_extra(cd))
+					push_main(cd);
 			} else {
-				if(!push_extra(pointer) && !push_main(pointer))
-					push_side(pointer);
+				if(!push_extra(cd) && !push_main(cd))
+					push_side(cd);
 			}
 			break;
 		}
@@ -1380,7 +1390,7 @@ void DeckBuilder::GetHoveredCard() {
 					hovered_seq = -1;
 					hovered_code = 0;
 				} else {
-					hovered_code = deckManager.current_deck.main[hovered_seq]->first;
+					hovered_code = deckManager.current_deck.main[hovered_seq]->code;
 				}
 			}
 		} else if(y >= 164 * mainGame->yScale && y <= 435 * mainGame->yScale) {
@@ -1397,7 +1407,7 @@ void DeckBuilder::GetHoveredCard() {
 				hovered_seq = -1;
 				hovered_code = 0;
 			} else {
-				hovered_code = deckManager.current_deck.main[hovered_seq]->first;
+				hovered_code = deckManager.current_deck.main[hovered_seq]->code;
 			}
 		} else if(y >= 466 * mainGame->yScale && y <= 530 * mainGame->yScale) {
 			int lx = deckManager.current_deck.extra.size();
@@ -1412,7 +1422,7 @@ void DeckBuilder::GetHoveredCard() {
 				hovered_seq = -1;
 				hovered_code = 0;
 			} else {
-				hovered_code = deckManager.current_deck.extra[hovered_seq]->first;
+				hovered_code = deckManager.current_deck.extra[hovered_seq]->code;
 				if(x >= 772 * mainGame->xScale)
 					is_lastcard = 1;
 			}
@@ -1429,7 +1439,7 @@ void DeckBuilder::GetHoveredCard() {
 				hovered_seq = -1;
 				hovered_code = 0;
 			} else {
-				hovered_code = deckManager.current_deck.side[hovered_seq]->first;
+				hovered_code = deckManager.current_deck.side[hovered_seq]->code;
 				if(x >= 772 * mainGame->xScale)
 					is_lastcard = 1;
 			}
@@ -1442,7 +1452,7 @@ void DeckBuilder::GetHoveredCard() {
 			hovered_seq = -1;
 			hovered_code = 0;
 		} else {
-			hovered_code = results[current_pos]->first;
+			hovered_code = results[current_pos]->code;
 		}
 	}
 	if(is_draging) {
@@ -1599,11 +1609,9 @@ void DeckBuilder::FilterCards() {
 	// 获取卡牌数据库中的数据表与字符串表
 	auto& _datas = dataManager.GetDataTable();
 	auto& _strings = dataManager.GetStringTable();
-
-	// 遍历每一张卡牌进行筛选
-	for (code_pointer ptr = _datas.begin(); ptr != _datas.end(); ++ptr) {
-		auto& code = ptr->first;
-		auto& data = ptr->second;
+	for (auto& kv : _datas) {
+		auto code = kv.first;
+		auto& data = kv.second;
 		auto strpointer = _strings.find(code);
 		if (strpointer == _strings.end())
 			continue;
@@ -1626,47 +1634,35 @@ void DeckBuilder::FilterCards() {
 
 			// 攻击力筛选
 			if(filter_atktype) {
-				if((filter_atktype == 1 && data.attack != filter_atk) ||
-				   (filter_atktype == 2 && data.attack < filter_atk) ||
-				   (filter_atktype == 3 && data.attack <= filter_atk) ||
-				   (filter_atktype == 4 && (data.attack > filter_atk || data.attack < 0)) ||
-				   (filter_atktype == 5 && (data.attack >= filter_atk || data.attack < 0)) ||
-				   (filter_atktype == 6 && data.attack != -2))
+				if((filter_atktype == 1 && data.attack != filter_atk) || (filter_atktype == 2 && data.attack < filter_atk)
+				        || (filter_atktype == 3 && data.attack <= filter_atk) || (filter_atktype == 4 && (data.attack > filter_atk || data.attack < 0))
+				        || (filter_atktype == 5 && (data.attack >= filter_atk || data.attack < 0)) || (filter_atktype == 6 && data.attack != -2))
 					continue;
 			}
 
 			// 守备力筛选
 			if(filter_deftype) {
-				if((filter_deftype == 1 && data.defense != filter_def) ||
-				   (filter_deftype == 2 && data.defense < filter_def) ||
-				   (filter_deftype == 3 && data.defense <= filter_def) ||
-				   (filter_deftype == 4 && (data.defense > filter_def || data.defense < 0)) ||
-				   (filter_deftype == 5 && (data.defense >= filter_def || data.defense < 0)) ||
-				   (filter_deftype == 6 && data.defense != -2) ||
-				   (data.type & TYPE_LINK))
+				if((filter_deftype == 1 && data.defense != filter_def) || (filter_deftype == 2 && data.defense < filter_def)
+				        || (filter_deftype == 3 && data.defense <= filter_def) || (filter_deftype == 4 && (data.defense > filter_def || data.defense < 0))
+				        || (filter_deftype == 5 && (data.defense >= filter_def || data.defense < 0)) || (filter_deftype == 6 && data.defense != -2)
+				        || (data.type & TYPE_LINK))
 					continue;
 			}
 
 			// 等级/阶级筛选
 			if(filter_lvtype) {
-				if((filter_lvtype == 1 && data.level != filter_lv) ||
-				   (filter_lvtype == 2 && data.level < filter_lv) ||
-				   (filter_lvtype == 3 && data.level <= filter_lv) ||
-				   (filter_lvtype == 4 && data.level > filter_lv) ||
-				   (filter_lvtype == 5 && data.level >= filter_lv) ||
-				   filter_lvtype == 6)
+				if((filter_lvtype == 1 && data.level != filter_lv) || (filter_lvtype == 2 && data.level < filter_lv)
+				        || (filter_lvtype == 3 && data.level <= filter_lv) || (filter_lvtype == 4 && data.level > filter_lv)
+				        || (filter_lvtype == 5 && data.level >= filter_lv) || filter_lvtype == 6)
 					continue;
 			}
 
 			// 灵摆刻度筛选
 			if(filter_scltype) {
-				if((filter_scltype == 1 && data.lscale != filter_scl) ||
-				   (filter_scltype == 2 && data.lscale < filter_scl) ||
-				   (filter_scltype == 3 && data.lscale <= filter_scl) ||
-				   (filter_scltype == 4 && (data.lscale > filter_scl)) ||
-				   (filter_scltype == 5 && (data.lscale >= filter_scl)) ||
-				   filter_scltype == 6 ||
-				   !(data.type & TYPE_PENDULUM))
+				if((filter_scltype == 1 && data.lscale != filter_scl) || (filter_scltype == 2 && data.lscale < filter_scl)
+				        || (filter_scltype == 3 && data.lscale <= filter_scl) || (filter_scltype == 4 && (data.lscale > filter_scl))
+				        || (filter_scltype == 5 && (data.lscale >= filter_scl)) || filter_scltype == 6
+				        || !(data.type & TYPE_PENDULUM))
 					continue;
 			}
 			break;
@@ -1700,14 +1696,14 @@ void DeckBuilder::FilterCards() {
             // 检查当前卡片是否符合指定的禁限状态
             if(filter_lm <= 4) {
                 // 普通禁限卡检查
-                if(filter_lm <= 3 && (!filterList->content.count(ptr->first) || filterList->content.at(ptr->first) != filter_lm - 1))
+                if(filter_lm <= 3 && (!filterList->content.count(kv.first) || filterList->content.at(kv.first) != filter_lm - 1))
                     continue;
                 // genesys点数检查 (filter_lm == 4 对应点数限制)
                 else if(filter_lm == 4) {
                     // 检查该卡片是否在genesys禁卡表中有点数限制
-                    auto credit_it = filterList->credits.find(ptr->first);
+                    auto credit_it = filterList->credits.find(kv.first);
                     // 同时检查卡片的alias是否在genesys禁卡表中有点数限制
-                    auto alias_credit_it = (ptr->second.alias != 0) ? filterList->credits.find(ptr->second.alias) : filterList->credits.end();
+                    auto alias_credit_it = (kv.second.alias != 0) ? filterList->credits.find(kv.second.alias) : filterList->credits.end();
 
                     // 如果卡片本身和alias都不在genesys列表中，则不符合筛选条件
                     if(credit_it == filterList->credits.end() && alias_credit_it == filterList->credits.end())
@@ -1767,7 +1763,7 @@ void DeckBuilder::FilterCards() {
 
 		// 符合所有条件则加入结果集
 		if(is_target)
-			results.push_back(ptr);
+			results.push_back(&data);
 		else
 			continue;
 	}
@@ -1831,7 +1827,7 @@ void DeckBuilder::SortList() {
 	auto left = results.begin();
 	const wchar_t* pstr = mainGame->ebCardName->getText();
 	for(auto it = results.begin(); it != results.end(); ++it) {
-		if(std::wcscmp(pstr, dataManager.GetName((*it)->first)) == 0) {
+		if(std::wcscmp(pstr, dataManager.GetName((*it)->code)) == 0) {
 			std::iter_swap(left, it);
 			++left;
 		}
@@ -1969,8 +1965,8 @@ bool DeckBuilder::CardNameContains(const wchar_t* haystack, const wchar_t* needl
 	}
 	return false;
 }
-bool DeckBuilder::push_main(code_pointer pointer, int seq) {
-	if(pointer->second.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
+bool DeckBuilder::push_main(const CardDataC* pointer, int seq) {
+	if(pointer->type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
 		return false;
 	auto& container = deckManager.current_deck.main;
 	int maxc = mainGame->is_siding ? DECK_MAX_SIZE + 5 : DECK_MAX_SIZE;
@@ -1984,8 +1980,8 @@ bool DeckBuilder::push_main(code_pointer pointer, int seq) {
 	GetHoveredCard();
 	return true;
 }
-bool DeckBuilder::push_extra(code_pointer pointer, int seq) {
-	if(!(pointer->second.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)))
+bool DeckBuilder::push_extra(const CardDataC* pointer, int seq) {
+	if(!(pointer->type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)))
 		return false;
 	auto& container = deckManager.current_deck.extra;
 	int maxc = mainGame->is_siding ? EXTRA_MAX_SIZE + 5 : EXTRA_MAX_SIZE;
@@ -1999,7 +1995,7 @@ bool DeckBuilder::push_extra(code_pointer pointer, int seq) {
 	GetHoveredCard();
 	return true;
 }
-bool DeckBuilder::push_side(code_pointer pointer, int seq) {
+bool DeckBuilder::push_side(const CardDataC* pointer, int seq) {
 	auto& container = deckManager.current_deck.side;
 	int maxc = mainGame->is_siding ? SIDE_MAX_SIZE + 5 : SIDE_MAX_SIZE;
 	if((int)container.size() >= maxc)
@@ -2039,9 +2035,9 @@ void DeckBuilder::pop_side(int seq) {
  * @param pointer 指向卡片信息的指针，包含卡片ID及别名等数据。
  * @return 如果该卡片可以合法地加入卡组（未超出数量限制、信用点足够），则返回 true；否则返回 false。
  */
-bool DeckBuilder::check_limit(code_pointer pointer) {
+bool DeckBuilder::check_limit(const CardDataC* pointer) {
 	// 获取实际用于限制检查的卡片编码：如果存在别名则使用别名，否则使用原ID
-	auto limitcode = pointer->second.get_duel_code();
+	auto limitcode = pointer->get_duel_code();
 
 	// 默认每张卡最多允许3张
 	int limit = 3;
@@ -2110,24 +2106,24 @@ bool DeckBuilder::check_limit(code_pointer pointer) {
 
 	// 遍历主卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.main) {
-		if(!handle_card(card))
+		if(!handle_card((code_pointer &) card))
 			return false;
 	}
 
 	// 遍历额外卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.extra) {
-		if(!handle_card(card))
+		if(!handle_card((code_pointer &) card))
 			return false;
 	}
 
 	// 遍历副卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.side) {
-		if(!handle_card(card))
+		if(!handle_card((code_pointer &) card))
 			return false;
 	}
 
 	// 最后尝试为当前要插入的卡扣除一次信用点数
-	return spend_credit(pointer->first);
+	return spend_credit(pointer->code);
 }
 
 }
