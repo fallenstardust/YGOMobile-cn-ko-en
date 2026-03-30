@@ -133,9 +133,9 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_GAME_PATH, mSettings.getResourcePath());
 //        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
         bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getContext()) + "(" + SystemUtils.getVersion(getContext()) + ")");
-        bind(PREF_CHECK_UPDATE, getString(R.string.settings_about_author_pref) + " : " + getString(R.string.settings_author));
-        bind(PREF_RESET_GAME_RES, getString(R.string.guide_reset));
-        bind(PREF_JOIN_QQ, getString(R.string.about_Join_QQ));
+        bind(PREF_CHECK_UPDATE, R.string.settings_about_author_pref + " : " + R.string.settings_author);
+        bind(PREF_RESET_GAME_RES, R.string.guide_reset);
+        bind(PREF_JOIN_QQ, R.string.about_Join_QQ);
         bind(PREF_START_SERVICEDUELASSISTANT, mSettings.isServiceDuelAssistant());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
@@ -146,7 +146,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_IMAGE_QUALITY, mSettings.getCardQuality());
         bind(PREF_GAME_FONT, mSettings.getFontPath());
         bind(PREF_READ_EX, mSettings.isReadExpansions());
-        bind(PREF_DEL_EX, getString(R.string.about_delete_ex));
+        bind(PREF_DEL_EX, R.string.about_delete_ex);
         bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
         bind(PREF_DATA_LANGUAGE, mSettings.getDataLanguage());
