@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <stack>
 #include "client_field.h"
 #include "client_card.h"
@@ -54,7 +55,6 @@ ClientField::~ClientField() {
 			delete card;
 		}
 		remove[i].clear();
-
 		for (auto& card : extra[i]) {
 			delete card;
 		}

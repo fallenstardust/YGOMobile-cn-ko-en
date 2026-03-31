@@ -507,8 +507,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public void showPrivacyPolicyDialogWithCallback(SettingFragment.PrivacyPolicyCallback callback) {
         DialogPlus dialogPlus = new DialogPlus(getContext())
                 .setTitleText(getString(R.string.user_privacy_policy))
-                .setLeftButtonText(R.string.agree)  // 同意按钮
-                .setRightButtonText(R.string.reject) // 拒绝按钮
+                .setLeftButtonText(R.string.reject)  // 拒绝按钮
+                .setRightButtonText(R.string.agree) // 同意按钮
                 .setOnCloseLinster(null); // 禁止通过关闭按钮退出
 
         // 根据系统语言加载特定的隐私政策文件
@@ -534,7 +534,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         dialogPlus.loadUrl(fileaddr, Color.TRANSPARENT);
 
         // 在loadUrl之后按钮监听器，覆盖默认的监听器，才能实现自定义的监听方法
-        dialogPlus.setLeftButtonListener((dlg, i) -> {
+        dialogPlus.setRightButtonListener((dlg, i) -> {
             // 用户同意隐私政策
             SharedPreferenceUtil.setPrivacyPolicyAgreed(true);
             SharedPreferenceUtil.setFirstStart(false);
@@ -557,7 +557,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             dlg.dismiss();
         });
 
-        dialogPlus.setRightButtonListener((dlg, i) -> {
+        dialogPlus.setLeftButtonListener((dlg, i) -> {
             // 用户拒绝隐私政策
             if (callback != null) {
                 callback.onPrivacyPolicyResult(false);

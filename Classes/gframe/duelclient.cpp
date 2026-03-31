@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <thread>
 #include "config.h"
 #include "duelclient.h"
 #include "client_card.h"
@@ -8,7 +10,6 @@
 #include "game.h"
 #include "deck_manager.h"
 #include "replay.h"
-#include <thread>
 #include <array>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/android_tools.h>
@@ -153,7 +154,9 @@ void DuelClient::StopClient(bool is_exiting) {
 
 	// 设置关闭标志
 	is_closing = is_exiting;
+	if(!is_closing) {
 
+	}
 	// 中断客户端事件循环
 	event_base_loopbreak(client_base);
 }
@@ -4541,11 +4544,11 @@ void DuelClient::SendUpdateDeck(const Deck& deck) {
 	BufferIO::VectorWrite<int32_t>(deckbuf, static_cast<int32_t>(deck.main.size() + deck.extra.size()));
 	BufferIO::VectorWrite<int32_t>(deckbuf, static_cast<int32_t>(deck.side.size()));
 	for (const auto& card: deck.main)
-		BufferIO::VectorWrite<uint32_t>(deckbuf, card->first);
+		BufferIO::VectorWrite<uint32_t>(deckbuf, card->code);
 	for (const auto& card: deck.extra)
-		BufferIO::VectorWrite<uint32_t>(deckbuf, card->first);
+		BufferIO::VectorWrite<uint32_t>(deckbuf, card->code);
 	for (const auto& card: deck.side)
-		BufferIO::VectorWrite<uint32_t>(deckbuf, card->first);
+		BufferIO::VectorWrite<uint32_t>(deckbuf, card->code);
 	SendBufferToServer(CTOS_UPDATE_DECK, deckbuf.data(), deckbuf.size());
 }
 /**
@@ -4705,9 +4708,7 @@ void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 		event_base_loopbreak((event_base*)arg);
 		if(!is_closing)
 			mainGame->btnLanRefresh->setEnabled(true);
-	}
-	// 处理可读事件：接收并解析广播数据包
-	else if(events & EV_READ) {
+	} else if(events & EV_READ) {// 处理可读事件：接收并解析广播数据包
 		sockaddr_in bc_addr;
 		socklen_t sz = sizeof(sockaddr_in);
 		char buf[256];
@@ -4747,8 +4748,7 @@ void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 			        && !pHP->host.no_check_deck && !pHP->host.no_shuffle_deck
 			        && pHP->host.duel_rule == DEFAULT_DUEL_RULE)
 				hoststr.append(dataManager.GetSysString(1247)); // 默认规则
-			else
-				hoststr.append(dataManager.GetSysString(1248)); // 自定义规则
+			else hoststr.append(dataManager.GetSysString(1248)); // 自定义规则
 
 			hoststr.append(L"]");
 

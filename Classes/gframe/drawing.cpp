@@ -7,6 +7,55 @@
 
 namespace ygo {
 
+void Game::Draw2DImageQuad(irr::video::IVideoDriver* driver, irr::video::ITexture* texture,
+						   const irr::core::recti& sourceRect, const irr::core::vector2di corners[4],
+						   bool useAlphaChannel, irr::video::SColor color) {
+	if (!texture)
+		return;
+
+	irr::video::SMaterial material;
+	irr::core::matrix4 oldProjMat = driver->getTransform(irr::video::ETS_PROJECTION);
+	driver->setTransform(irr::video::ETS_PROJECTION, irr::core::matrix4());
+	irr::core::matrix4 oldViewMat = driver->getTransform(irr::video::ETS_VIEW);
+	driver->setTransform(irr::video::ETS_VIEW, irr::core::matrix4());
+	irr::core::matrix4 oldWorldMat = driver->getTransform(irr::video::ETS_WORLD);
+	driver->setTransform(irr::video::ETS_WORLD, irr::core::matrix4());
+
+	irr::core::vector2df uvCorner[4];
+	uvCorner[0] = irr::core::vector2df((irr::f32)sourceRect.UpperLeftCorner.X, (irr::f32)sourceRect.UpperLeftCorner.Y);
+	uvCorner[1] = irr::core::vector2df((irr::f32)sourceRect.LowerRightCorner.X, (irr::f32)sourceRect.UpperLeftCorner.Y);
+	uvCorner[2] = irr::core::vector2df((irr::f32)sourceRect.UpperLeftCorner.X, (irr::f32)sourceRect.LowerRightCorner.Y);
+	uvCorner[3] = irr::core::vector2df((irr::f32)sourceRect.LowerRightCorner.X, (irr::f32)sourceRect.LowerRightCorner.Y);
+	const irr::f32 invW = 1.0f / (irr::f32)texture->getOriginalSize().Width;
+	const irr::f32 invH = 1.0f / (irr::f32)texture->getOriginalSize().Height;
+	for (int x = 0; x < 4; x++)
+		uvCorner[x] = irr::core::vector2df(uvCorner[x].X * invW, uvCorner[x].Y * invH);
+
+	irr::video::S3DVertex vertices[4];
+	static const irr::u16 indices[6] = { 0, 1, 2, 3, 2, 1 };
+	const irr::f32 screenWidth = (irr::f32)driver->getScreenSize().Width;
+	const irr::f32 screenHeight = (irr::f32)driver->getScreenSize().Height;
+	for (int x = 0; x < 4; x++)
+	{
+		vertices[x].Pos = irr::core::vector3df(
+			((corners[x].X / screenWidth) - 0.5f) * 2.0f,
+			((corners[x].Y / screenHeight) - 0.5f) * -2.0f, 1.0f);
+		vertices[x].TCoords = uvCorner[x];
+		vertices[x].Color = color;
+	}
+
+	material.Lighting = false;
+	material.ZWriteEnable = false;
+	material.TextureLayer[0].Texture = texture;
+	material.MaterialType = useAlphaChannel ?
+		irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL : irr::video::EMT_SOLID;
+	driver->setMaterial(material);
+	driver->drawIndexedTriangleList(&vertices[0], 4, &indices[0], 2);
+
+	driver->setTransform(irr::video::ETS_PROJECTION, oldProjMat);
+	driver->setTransform(irr::video::ETS_VIEW, oldViewMat);
+	driver->setTransform(irr::video::ETS_WORLD, oldWorldMat);
+}
 /**
  * @brief 设置一个由四个顶点组成的矩形3D顶点数据
  *
@@ -69,22 +118,23 @@ void Game::SetCardS3DVertex() {
  * @param width 线宽，实际使用的线宽为width+2
  * @param cv 未使用参数（可能为保留参数或历史遗留）
  */
-void Game::DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv) {
-		glLineWidth(width+2);
+void Game::DrawSelectionLine(irr::video::S3DVertex* vec, bool stipple, irr::video::SColor color) {
+		glLineWidth(4);
 		driver->setMaterial(matManager.mOutLine);
-
-        // 条纹动画模式：通过分段绘制线段模拟移动的条纹效果
-		if(strip) {
-			if(linePatternD3D < 15) {
-				driver->draw3DLine(vec[0].Pos, vec[0].Pos + (vec[1].Pos - vec[0].Pos) * (linePatternD3D + 1) / 15.0);
-				driver->draw3DLine(vec[1].Pos, vec[1].Pos + (vec[3].Pos - vec[1].Pos) * (linePatternD3D + 1) / 15.0);
-				driver->draw3DLine(vec[3].Pos, vec[3].Pos + (vec[2].Pos - vec[3].Pos) * (linePatternD3D + 1) / 15.0);
-				driver->draw3DLine(vec[2].Pos, vec[2].Pos + (vec[0].Pos - vec[2].Pos) * (linePatternD3D + 1) / 15.0);
+		// 条纹动画模式：通过分段绘制线段模拟移动的条纹效果
+		if(stipple) {
+			if(linePattern < 15) {
+				float progress = (linePattern + 1) / 15.0f;
+				driver->draw3DLine(vec[0].Pos, vec[0].Pos + (vec[1].Pos - vec[0].Pos) * progress);
+				driver->draw3DLine(vec[1].Pos, vec[1].Pos + (vec[3].Pos - vec[1].Pos) * progress);
+				driver->draw3DLine(vec[3].Pos, vec[3].Pos + (vec[2].Pos - vec[3].Pos) * progress);
+				driver->draw3DLine(vec[2].Pos, vec[2].Pos + (vec[0].Pos - vec[2].Pos) * progress);
 			} else {
-				driver->draw3DLine(vec[0].Pos + (vec[1].Pos - vec[0].Pos) * (linePatternD3D - 14) / 15.0, vec[1].Pos);
-				driver->draw3DLine(vec[1].Pos + (vec[3].Pos - vec[1].Pos) * (linePatternD3D - 14) / 15.0, vec[3].Pos);
-				driver->draw3DLine(vec[3].Pos + (vec[2].Pos - vec[3].Pos) * (linePatternD3D - 14) / 15.0, vec[2].Pos);
-				driver->draw3DLine(vec[2].Pos + (vec[0].Pos - vec[2].Pos) * (linePatternD3D - 14) / 15.0, vec[0].Pos);
+				float progress = (linePattern - 14) / 15.0f;
+				driver->draw3DLine(vec[0].Pos + (vec[1].Pos - vec[0].Pos) * progress, vec[1].Pos);
+				driver->draw3DLine(vec[1].Pos + (vec[3].Pos - vec[1].Pos) * progress, vec[3].Pos);
+				driver->draw3DLine(vec[3].Pos + (vec[2].Pos - vec[3].Pos) * progress, vec[2].Pos);
+				driver->draw3DLine(vec[2].Pos + (vec[0].Pos - vec[2].Pos) * progress, vec[0].Pos);
 			}
 		} else {
             // 普通模式：直接连接四个顶点形成完整的矩形框
@@ -95,39 +145,31 @@ void Game::DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, 
 		}
 
 }
-/**
- * @brief 绘制指定GUI元素的选择框线（常用于高亮选中项）
- *
- * 此函数根据linePatternD3D的值动态绘制一个围绕指定GUI元素的边框。
- * 边框由四条短线段组成，并且会随着linePatternD3D的变化呈现出动画效果。
- *
- * @param element 指向要绘制选择线的GUI元素
- * @param width   线条宽度（影响绘制矩形的粗细）
- * @param color   线条颜色（使用irr::video::SColor类型表示）
- */
 void Game::DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color) {
 	// 获取元素在屏幕上的绝对位置
 	irr::core::recti pos = element->getAbsolutePosition();
-	float x1 = pos.UpperLeftCorner.X;
-	float x2 = pos.LowerRightCorner.X;
-	float y1 = pos.UpperLeftCorner.Y;
-	float y2 = pos.LowerRightCorner.Y;
-	float w = pos.getWidth();
-	float h = pos.getHeight();
-
-	// 根据linePatternD3D的值分两阶段绘制四条边的线段
-	if(linePatternD3D < 15) {
-		// 第一阶段：从0到14，逐步增长线段长度
-		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width, y1 - 1 - width, x1 + (w * (linePatternD3D + 1) / 15.0) + 1 + width, y1 - 1));
-		driver->draw2DRectangle(color, irr::core::recti(x2 - (w * (linePatternD3D + 1) / 15.0) - 1 - width, y2 + 1, x2 + 1 + width, y2 + 1 + width));
-		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width, y1 - 1 - width, x1 - 1, y2 - (h * (linePatternD3D + 1) / 15.0) + 1 + width));
-		driver->draw2DRectangle(color, irr::core::recti(x2 + 1, y1 + (h * (linePatternD3D + 1) / 15.0) - 1 - width, x2 + 1 + width, y2 + 1 + width));
+	irr::s32 x1 = pos.UpperLeftCorner.X;
+	irr::s32 x2 = pos.LowerRightCorner.X;
+	irr::s32 y1 = pos.UpperLeftCorner.Y;
+	irr::s32 y2 = pos.LowerRightCorner.Y;
+	irr::s32 w = pos.getWidth();
+	irr::s32 h = pos.getHeight();
+	if(linePattern < 15) {
+		float progress = (linePattern + 1) / 15.0f;
+		irr::s32 wp = w * progress;
+		irr::s32 hp = h * progress;
+		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width, y1 - 1 - width, x1 + wp + 1 + width, y1 - 1));
+		driver->draw2DRectangle(color, irr::core::recti(x2 - wp - 1 - width, y2 + 1, x2 + 1 + width, y2 + 1 + width));
+		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width, y1 - 1 - width, x1 - 1, y2 - hp + 1 + width));
+		driver->draw2DRectangle(color, irr::core::recti(x2 + 1, y1 + hp - 1 - width, x2 + 1 + width, y2 + 1 + width));
 	} else {
-		// 第二阶段：从15到29，逐步缩短剩余未绘制部分
-		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width + (w * (linePatternD3D - 14) / 15.0), y1 - 1 - width, x2 + 1 + width, y1 - 1));
-		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width, y2 + 1, x2 - (w * (linePatternD3D - 14) / 15.0) + 1 + width, y2 + 1 + width));
-		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width, y2 - (h * (linePatternD3D - 14) / 15.0) - 1 - width, x1 - 1, y2 + 1 + width));
-		driver->draw2DRectangle(color, irr::core::recti(x2 + 1, y1 - 1 - width, x2 + 1 + width, y1 + (h * (linePatternD3D - 14) / 15.0) + 1 + width));
+		float progress = (linePattern - 14) / 15.0f;
+		irr::s32 wp = w * progress;
+		irr::s32 hp = h * progress;
+		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width + wp, y1 - 1 - width, x2 + 1 + width, y1 - 1));
+		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width, y2 + 1, x2 - wp + 1 + width, y2 + 1 + width));
+		driver->draw2DRectangle(color, irr::core::recti(x1 - 1 - width, y2 - hp - 1 - width, x1 - 1, y2 + 1 + width));
+		driver->draw2DRectangle(color, irr::core::recti(x2 + 1, y1 - 1 - width, x2 + 1 + width, y1 + hp + 1 + width));
 	}
 }
 
@@ -140,7 +182,7 @@ void Game::DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::vid
 void Game::DrawBackGround() {
 	static int selFieldAlpha = 255;          ///< 当前选择区域透明度
 	static int selFieldDAlpha = -10;         ///< 透明度变化步长
-
+	//draw field spell card
 	// 设置世界变换矩阵为单位矩阵（默认状态）
 	driver->setTransform(irr::video::ETS_WORLD, irr::core::IdentityMatrix);
 
@@ -191,40 +233,28 @@ void Game::DrawBackGround() {
 	matManager.mTexture.setTexture(0, drawField ? imageManager.tFieldTransparent[rule] : imageManager.tField[rule]);
 	driver->setMaterial(matManager.mTexture);
 	driver->drawVertexPrimitiveList(matManager.vField, 4, matManager.iRectangle, 2);
-
-	// 设置材质用于后续线条绘制
 	driver->setMaterial(matManager.mBackLine);
-
-	// 处理用户可以选择的位置高亮显示逻辑
+	//select field
 	if(dInfo.curMsg == MSG_SELECT_PLACE || dInfo.curMsg == MSG_SELECT_DISFIELD || dInfo.curMsg == MSG_HINT) {
-		float cv[4] = {0.0f, 0.0f, 1.0f, 1.0f};   // 颜色向量
-		unsigned int filter = 0x1;                // 过滤器掩码
-
-		// 遍历我方怪兽区
+		unsigned int filter = 0x1;
 		for (int i = 0; i < 7; ++i, filter <<= 1) {
 			if (dField.selectable_field & filter)
-				DrawSelectionLine(matManager.vFieldMzone[0][i], !(dField.selected_field & filter), 2, cv);
+				DrawSelectionLine(matManager.vFieldMzone[0][i], !(dField.selected_field & filter), 0xff0000ff);
 		}
-
-		// 遍历我方魔法陷阱区
 		filter = 0x100;
 		for (int i = 0; i < 8; ++i, filter <<= 1) {
 			if (dField.selectable_field & filter)
-				DrawSelectionLine(matManager.vFieldSzone[0][i][rule], !(dField.selected_field & filter), 2, cv);
+				DrawSelectionLine(matManager.vFieldSzone[0][i][rule], !(dField.selected_field & filter), 0xff0000ff);
 		}
-
-		// 遍历对方怪兽区
 		filter = 0x10000;
 		for (int i = 0; i < 7; ++i, filter <<= 1) {
 			if (dField.selectable_field & filter)
-				DrawSelectionLine(matManager.vFieldMzone[1][i], !(dField.selected_field & filter), 2, cv);
+				DrawSelectionLine(matManager.vFieldMzone[1][i], !(dField.selected_field & filter), 0xff0000ff);
 		}
-
-		// 遍历对方魔法陷阱区
 		filter = 0x1000000;
 		for (int i = 0; i < 8; ++i, filter <<= 1) {
 			if (dField.selectable_field & filter)
-				DrawSelectionLine(matManager.vFieldSzone[1][i][rule], !(dField.selected_field & filter), 2, cv);
+				DrawSelectionLine(matManager.vFieldSzone[1][i][rule], !(dField.selected_field & filter), 0xff0000ff);
 		}
 	}
 
@@ -468,20 +498,18 @@ void Game::DrawCard(ClientCard* pcard) {
 
 	// 绘制可选中卡片的轮廓线
 	if(pcard->is_selectable && (pcard->location & 0xe)) {
-		float cv[4] = {1.0f, 1.0f, 0.0f, 1.0f};
 		if((pcard->location == LOCATION_HAND && pcard->code) || ((pcard->location & 0xc) && (pcard->position & POS_FACEUP)))
-			DrawSelectionLine(matManager.vCardOutline, !pcard->is_selected, 2, cv);
+			DrawSelectionLine(matManager.vCardOutline, !pcard->is_selected, 0xffffff00);
 		else
-			DrawSelectionLine(matManager.vCardOutliner, !pcard->is_selected, 2, cv);
+			DrawSelectionLine(matManager.vCardOutliner, !pcard->is_selected, 0xffffff00);
 	}
 
 	// 绘制高亮卡片的轮廓线
 	if(pcard->is_highlighting) {
-		float cv[4] = {0.0f, 1.0f, 1.0f, 1.0f};
 		if((pcard->location == LOCATION_HAND && pcard->code) || ((pcard->location & 0xc) && (pcard->position & POS_FACEUP)))
-			DrawSelectionLine(matManager.vCardOutline, true, 2, cv);
+			DrawSelectionLine(matManager.vCardOutline, true, 0xff00ffff);
 		else
-			DrawSelectionLine(matManager.vCardOutliner, true, 2, cv);
+			DrawSelectionLine(matManager.vCardOutliner, true, 0xff00ffff);
 	}
 
 	// 设置新的变换矩阵图层以绘制附加符号或标记
@@ -709,7 +737,7 @@ void Game::DrawMisc() {
 	}
 
 	// 绘制连锁旋转图标与连锁序号数字
-	if(dField.chains.size() > 1 || mainGame->gameConf.draw_single_chain) {
+	if(dField.chains.size() > 1 || gameConf.draw_single_chain) {
 		for(size_t i = 0; i < dField.chains.size(); ++i) {
 			if(dField.chains[i].solved)
 				break;
@@ -1092,28 +1120,12 @@ void Game::DrawGUI() {
 					fu.fadingFrame--;
 					if(!fu.fadingFrame) {
 						fu.guiFading->setRelativePosition(fu.fadingSize);
-						// 根据不同窗口恢复按钮图片显示状态
-						if(fu.guiFading == wPosSelect) {
-							btnPSAU->setDrawImage(true);
-							btnPSAD->setDrawImage(true);
-							btnPSDU->setDrawImage(true);
-							btnPSDD->setDrawImage(true);
-						}
-						if(fu.guiFading == wCardSelect) {
-							for(int i = 0; i < 5; ++i)
-								btnCardSelect[i]->setDrawImage(true);
-						}
-						if(fu.guiFading == wCardDisplay) {
-							for(int i = 0; i < 5; ++i)
-								btnCardDisplay[i]->setDrawImage(true);
-						}
+						SetImageButtonDrawing(fu.guiFading, true);
 						env->setFocus(fu.guiFading);
 					} else
 						fu.guiFading->setRelativePosition(irr::core::recti(fu.fadingUL, fu.fadingLR));
 				}
-			}
-			// 淡出逻辑
-			else {
+			} else {
 				if(fu.fadingFrame > 5) {
 					fu.fadingUL.Y += fu.fadingDiff.Y;
 					fu.fadingLR.Y -= fu.fadingDiff.Y;
@@ -1126,21 +1138,7 @@ void Game::DrawGUI() {
 					if(!fu.fadingFrame) {
 						fu.guiFading->setVisible(false);
 						fu.guiFading->setRelativePosition(fu.fadingSize);
-						// 根据不同窗口恢复按钮图片显示状态
-						if(fu.guiFading == wPosSelect) {
-							btnPSAU->setDrawImage(true);
-							btnPSAD->setDrawImage(true);
-							btnPSDU->setDrawImage(true);
-							btnPSDD->setDrawImage(true);
-						}
-						if(fu.guiFading == wCardSelect) {
-							for(int i = 0; i < 5; ++i)
-								btnCardSelect[i]->setDrawImage(true);
-						}
-						if(fu.guiFading == wCardDisplay) {
-							for(int i = 0; i < 5; ++i)
-								btnCardDisplay[i]->setDrawImage(true);
-						}
+						SetImageButtonDrawing(fu.guiFading, false);
 					} else
 						fu.guiFading->setRelativePosition(irr::core::recti(fu.fadingUL, fu.fadingLR));
 				}
@@ -1150,15 +1148,11 @@ void Game::DrawGUI() {
 					fu.signalAction = false;
 				}
 			}
-		}
-		// 自动淡出计时器处理
-		else if(fu.autoFadeoutFrame) {
+		} else if(fu.autoFadeoutFrame) {
 			fu.autoFadeoutFrame--;
 			if(!fu.autoFadeoutFrame)
 				HideElement(fu.guiFading);
-		}
-		// 动画完全结束后从列表移除该单元
-		else
+		} else
 			fadingList.erase(fthis);
 	}
 
@@ -1223,10 +1217,11 @@ void Game::DrawSpec() {
             break;
         }
         case 4: { // 卡片淡入效果：透明度逐步增加到不透明//
-            matManager.c2d[0] = (showcarddif << 24) | 0xffffff;
-            matManager.c2d[1] = (showcarddif << 24) | 0xffffff;
-            matManager.c2d[2] = (showcarddif << 24) | 0xffffff;
-            matManager.c2d[3] = (showcarddif << 24) | 0xffffff;
+			irr::u32 acolor = ((irr::u32)showcarddif << 24) | 0xffffff;
+			matManager.c2d[0] = acolor;
+			matManager.c2d[1] = acolor;
+			matManager.c2d[2] = acolor;
+			matManager.c2d[3] = acolor;
             driver->draw2DImage(showimg, irr::core::recti(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale, 154 * yScale, 660 * xScale + (CARD_IMG_WIDTH / 2) * yScale, 404 * yScale),
                                 irr::core::recti(0, 0, orisize.Width, orisize.Height), 0, matManager.c2d, true);
             if(showcarddif < 255)
@@ -1234,10 +1229,11 @@ void Game::DrawSpec() {
             break;
         }
         case 5: { // 特殊召唤效果：卡片从小变大同时淡入
-            matManager.c2d[0] = (showcarddif << 25) | 0xffffff;
-            matManager.c2d[1] = (showcarddif << 25) | 0xffffff;
-            matManager.c2d[2] = (showcarddif << 25) | 0xffffff;
-            matManager.c2d[3] = (showcarddif << 25) | 0xffffff;
+			irr::u32 acolor = ((irr::u32)showcarddif << 25) | 0xffffff;
+			matManager.c2d[0] = acolor;
+			matManager.c2d[1] = acolor;
+			matManager.c2d[2] = acolor;
+			matManager.c2d[3] = acolor;
             driver->draw2DImage(showimg, irr::core::recti(660 * xScale - showcarddif * 0.69685f * yScale, (277 - showcarddif) * yScale, 660 * xScale + showcarddif * 0.69685f * yScale, (277 + showcarddif) * yScale),
                                 irr::core::recti(0, 0, orisize.Width, orisize.Height), 0, matManager.c2d, true);
             if(showcarddif < 127)
@@ -1259,7 +1255,7 @@ void Game::DrawSpec() {
             corner[1] = irr::core::vector2d<irr::s32>(660 * xScale + (CARD_IMG_WIDTH / 2) * yScale + (CARD_IMG_HEIGHT * mainGame->yScale - y) * 0.3f , 404 * mainGame->yScale - y);
             corner[2] = irr::core::vector2d<irr::s32>(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale, 404 * mainGame->yScale);
             corner[3] = irr::core::vector2d<irr::s32>(660 * xScale + (CARD_IMG_WIDTH / 2) * yScale, 404 * mainGame->yScale);
-            irr::gui::Draw2DImageQuad(driver, showimg, irr::core::rect<irr::s32>(0, 0, orisize.Width, orisize.Height), corner);
+            Draw2DImageQuad(driver, showimg, irr::core::rect<irr::s32>(0, 0, orisize.Width, orisize.Height), corner);
             showcardp++;
             showcarddif += 9;
             if(showcarddif >= 90)
@@ -1330,7 +1326,7 @@ void Game::DrawSpec() {
             }
             auto pos = lpcFont->getDimension(lstr);
             if(showcardp < 10) {
-                int alpha = (showcardp * 25) << 24;
+				irr::u32 alpha = (irr::u32)(showcardp * 25) << 24;
                 DrawShadowText(lpcFont, lstr, ResizePhaseHint(660 - (9 - showcardp) * 40, 290, 960, 370, pos.Width), Resize(-1, -1, 0, 0), alpha | 0xffffff, alpha);
             } else if(showcardp < showcarddif) {
                 DrawShadowText(lpcFont, lstr, ResizePhaseHint(660, 290, 960, 370, pos.Width), Resize(-1, -1, 0, 0), 0xffffffff);
@@ -1342,7 +1338,7 @@ void Game::DrawSpec() {
                     DrawShadowText(textFont, dInfo.vic_string, ResizeWin(640 - w / 2, 340, 690 + w / 2, 360), Resize(-2, -1, 0, 0), 0xffffffff, 0xff000000, true, true, 0);
                 }
             } else if(showcardp < showcarddif + 10) {
-                int alpha = ((showcarddif + 10 - showcardp) * 25) << 24;
+				irr::u32 alpha = (irr::u32)((showcarddif + 10 - showcardp) * 25) << 24;
                 DrawShadowText(lpcFont, lstr, ResizePhaseHint(660 + (showcardp - showcarddif) * 40, 290, 960, 370, pos.Width), Resize(-1, -1, 0, 0), alpha | 0xffffff, alpha);
             }
             showcardp++;
@@ -1449,15 +1445,14 @@ void Game::DrawSpec() {
             guiFont->drawUstring(msg, shadowloc, 0xff000000, false, false);
             guiFont->drawUstring(msg, msgloc, chatColor[chatType[i]], false, false);
 
-            chatRectY += h;
-        }
-    }
+			chatRectY += h;
+		}
+	}
 }
-
 void Game::DrawBackImage(irr::video::ITexture* texture) {
 	if(!texture)
 		return;
-	driver->draw2DImage(texture, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, texture->getOriginalSize().Width, texture->getOriginalSize().Height));
+	driver->draw2DImage(texture, Resize(0, 0, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT), irr::core::recti(0, 0, texture->getOriginalSize().Width, texture->getOriginalSize().Height));
 }
 void Game::ShowElement(irr::gui::IGUIElement * win, int autoframe) {
 	FadingUnit fu;
@@ -1477,20 +1472,7 @@ void Game::ShowElement(irr::gui::IGUIElement * win, int autoframe) {
 	fu.fadingFrame = 10;
 	fu.autoFadeoutFrame = autoframe;
 	fu.signalAction = 0;
-	if(win == wPosSelect) {
-		btnPSAU->setDrawImage(false);
-		btnPSAD->setDrawImage(false);
-		btnPSDU->setDrawImage(false);
-		btnPSDD->setDrawImage(false);
-	}
-	if(win == wCardSelect) {
-		for(int i = 0; i < 5; ++i)
-			btnCardSelect[i]->setDrawImage(false);
-	}
-	if(win == wCardDisplay) {
-		for(int i = 0; i < 5; ++i)
-			btnCardDisplay[i]->setDrawImage(false);
-	}
+	SetImageButtonDrawing(win, false);
 	win->setRelativePosition(irr::core::recti(center.X, center.Y, 0, 0));
 	win->setVisible(true);
 	fadingList.push_back(fu);
@@ -1512,22 +1494,13 @@ void Game::HideElement(irr::gui::IGUIElement * win, bool set_action) {
 	fu.fadingFrame = 10;
 	fu.autoFadeoutFrame = 0;
 	fu.signalAction = set_action;
-	if(win == wPosSelect) {
-		btnPSAU->setDrawImage(false);
-		btnPSAD->setDrawImage(false);
-		btnPSDU->setDrawImage(false);
-		btnPSDD->setDrawImage(false);
-	}
+	SetImageButtonDrawing(win, false);
 	if(win == wCardSelect) {
-		for(int i = 0; i < 5; ++i)
-			btnCardSelect[i]->setDrawImage(false);
 		stCardListTip->setVisible(false);
 		for(auto& pcard : dField.selectable_cards)
 			dField.SetShowMark(pcard, false);
 	}
 	if(win == wCardDisplay) {
-		for(int i = 0; i < 5; ++i)
-			btnCardDisplay[i]->setDrawImage(false);
 		stCardListTip->setVisible(false);
 		for(auto& pcard : dField.display_cards)
 			dField.SetShowMark(pcard, false);
@@ -1543,6 +1516,22 @@ void Game::PopupElement(irr::gui::IGUIElement * element, int hideframe) {
 	if(!hideframe)
 		ShowElement(element);
 	else ShowElement(element, hideframe);
+}
+void Game::SetImageButtonDrawing(irr::gui::IGUIElement* element, bool draw) {
+	if(element == wPosSelect) {
+		btnPSAU->setDrawImage(draw);
+		btnPSAD->setDrawImage(draw);
+		btnPSDU->setDrawImage(draw);
+		btnPSDD->setDrawImage(draw);
+	}
+	if(element == wCardSelect) {
+		for(int i = 0; i < 5; ++i)
+			btnCardSelect[i]->setDrawImage(draw);
+	}
+	if(element == wCardDisplay) {
+		for(int i = 0; i < 5; ++i)
+			btnCardDisplay[i]->setDrawImage(draw);
+	}
 }
 void Game::WaitFrameSignal(int frame) {
 	frameSignal.Reset();
@@ -1560,10 +1549,11 @@ void Game::WaitFrameSignal(int frame) {
  * @param lflist 当前使用的限制列表（例如OCG/TCG禁限卡表）。
  * @param drag 是否处于拖拽状态，影响图像绘制区域大小。
  */
-void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lflist, bool drag) {
-	// 获取卡牌卡号和别名卡号，如果有别名则使用别名
-	auto code = cp->first;
-	auto lcode = cp->second.get_duel_code();
+void Game::DrawThumb(const CardDataC* cp, irr::core::vector2di pos, const LFList* lflist, bool drag) {
+	if(!cp)
+		return;
+	auto code = cp->code;
+	auto lcode = cp->get_duel_code();
 
 	// 获取卡片纹理图像
 	irr::video::ITexture* img = imageManager.GetTextureThumb(code);
@@ -1604,7 +1594,7 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 	}
 
     // 获取卡片点数，并不能简单判断是否有alias，而是要判断是否是异画还是规则上同名的不同卡，TODO 暂定最大差异值是20，因为目前单张卡异画数量还未到这个值，未来很大可能会出现更多，需要即时调整
-	auto lfcredit = lflist->credits.find(cp->second.alias && abs(static_cast<int>(cp->second.alias) - static_cast<int>(cp->first)) <= 20 ? cp->second.alias : cp->first);
+	auto lfcredit = lflist->credits.find(cp->alias && abs(static_cast<int>(cp->alias) - static_cast<int>(cp->code)) <= 20 ? cp->alias : cp->code);
     if(lfcredit != lflist->credits.end()) {
         for(auto& credit_entry : lfcredit->second) {
             auto value = credit_entry.second;
@@ -1620,29 +1610,29 @@ void Game::DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lf
 	bool showAvail = false;
 	bool showNotAvail = false;
 	int filter_lm = cbLimit->getSelected();
-	bool avail = !((filter_lm == 5 && !(cp->second.ot & AVAIL_OCG)
-				|| (filter_lm == 6 && !(cp->second.ot & AVAIL_TCG))
-				|| (filter_lm == 7 && !(cp->second.ot & AVAIL_SC))
-				|| (filter_lm == 8 && !(cp->second.ot & AVAIL_CUSTOM))
-				|| (filter_lm == 9 && (cp->second.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG)));
+	bool avail = !((filter_lm == 5 && !(cp->ot & AVAIL_OCG)
+				|| (filter_lm == 6 && !(cp->ot & AVAIL_TCG))
+				|| (filter_lm == 7 && !(cp->ot & AVAIL_SC))
+				|| (filter_lm == 8 && !(cp->ot & AVAIL_CUSTOM))
+				|| (filter_lm == 9 && (cp->ot & AVAIL_OCGTCG) != AVAIL_OCGTCG)));
 
 	if(filter_lm >= 5) {
 		showAvail = avail;
 		showNotAvail = !avail;
-	} else if(!(cp->second.ot & gameConf.defaultOT)) {
+	} else if(!(cp->ot & gameConf.defaultOT)) {
 		showNotAvail = true;
 	}
 
 	// 根据可用性状态绘制对应图标
 	if(showAvail) {
-		if((cp->second.ot & AVAIL_OCG) && !(cp->second.ot & AVAIL_TCG))
+		if((cp->ot & AVAIL_OCG) && !(cp->ot & AVAIL_TCG))
 			driver->draw2DImage(imageManager.tOT, otloc, irr::core::recti(0, 128, 128, 192), 0, 0, true);
-		else if((cp->second.ot & AVAIL_TCG) && !(cp->second.ot & AVAIL_OCG))
+		else if((cp->ot & AVAIL_TCG) && !(cp->ot & AVAIL_OCG))
 			driver->draw2DImage(imageManager.tOT, otloc, irr::core::recti(0, 192, 128, 256), 0, 0, true);
 	} else if(showNotAvail) {
-		if(cp->second.ot & AVAIL_OCG)
+		if(cp->ot & AVAIL_OCG)
 			driver->draw2DImage(imageManager.tOT, otloc, irr::core::recti(0, 0, 128, 64), 0, 0, true);
-		else if(cp->second.ot & AVAIL_TCG)
+		else if(cp->ot & AVAIL_TCG)
 			driver->draw2DImage(imageManager.tOT, otloc, irr::core::recti(0, 64, 128, 128), 0, 0, true);
 		else if(!avail)
 			driver->draw2DImage(imageManager.tLim, otloc, irr::core::recti(64, 0, 128, 64), 0, 0, true);
@@ -1700,11 +1690,11 @@ void Game::DrawDeckBd() {
         //遍历genesys禁卡表的卡片点数表，统计当前卡组点数合计值
         int totalCredits = 0;
         for (auto& card : deckManager.current_deck.main) {
-            auto code = (card->second.alias != 0 &&
-                         abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) > 0 &&
-                         abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) <= 20)
-                        ? card->second.alias
-                        : card->first;		            auto credit_it = deckBuilder.filterList->credits.find(code);
+            auto code = (card->alias != 0 &&
+                         abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) > 0 &&
+                         abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) <= 20)
+                        ? card->alias
+                        : card->code;		            auto credit_it = deckBuilder.filterList->credits.find(code);
             if (credit_it != deckBuilder.filterList->credits.end()) {
                 for (auto& credit_entry : credit_it->second) {
                     if (credit_entry.first == L"genesys") {
@@ -1717,11 +1707,11 @@ void Game::DrawDeckBd() {
 
         // 统计额外卡组中的点数
         for (auto& card : deckManager.current_deck.extra) {
-            auto code = (card->second.alias != 0 &&
-                         abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) > 0 &&
-                         abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) <= 20)
-                        ? card->second.alias
-                        : card->first;		            auto credit_it = deckBuilder.filterList->credits.find(code);
+            auto code = (card->alias != 0 &&
+                         abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) > 0 &&
+                         abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) <= 20)
+                        ? card->alias
+                        : card->code;		            auto credit_it = deckBuilder.filterList->credits.find(code);
             if (credit_it != deckBuilder.filterList->credits.end()) {
                 for (auto& credit_entry : credit_it->second) {
                     if (credit_entry.first == L"genesys") {
@@ -1733,11 +1723,11 @@ void Game::DrawDeckBd() {
         }
         // 统计副卡组的点数
         for (auto& card : deckManager.current_deck.side) {
-            auto code = (card->second.alias != 0 &&
-                              abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) > 0 &&
-                              abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) <= 20)
-                             ? card->second.alias
-                             : card->first;
+            auto code = (card->alias != 0 &&
+                              abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) > 0 &&
+                              abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) <= 20)
+                             ? card->alias
+                             : card->code;
             auto credit_it = deckBuilder.filterList->credits.find(code);
             if (credit_it != deckBuilder.filterList->credits.end()) {
                 for (auto& credit_entry : credit_it->second) {
@@ -1781,7 +1771,7 @@ void Game::DrawDeckBd() {
 			lx = 11;             // 每行显示11列
 		if(mainsize > 11 * 7)    // 如果卡片数量超过77张（11列×7行）
 			lx = 12;             // 每行显示12列
-		dx = (mainGame->scrPackCards->isVisible() ? 414.0f : 436.0f) / (lx - 1);  // 根据滚动条是否可见计算水平间距
+		dx = (scrPackCards->isVisible() ? 414.0f : 436.0f) / (lx - 1);  // 根据滚动条是否可见计算水平间距
 		if(mainsize > 60)        // 如果卡片数量超过60张
 			dy = 66;             // 减小垂直间距为66像素，以容纳更多行
 	} else {                     // 普通卡组显示模式且卡片数量超过40张
@@ -1906,64 +1896,61 @@ void Game::DrawDeckBd() {
 		driver->draw2DRectangle(Resize(806, 160, 1020, 630), 0x400000ff, 0x400000ff, 0x40000000, 0x40000000);
 		driver->draw2DRectangleOutline(Resize(805, 159, 1020, 630));
 	}
-	int max_result = mainGame->gameConf.use_image_load_background_thread ? 9 : 7;
+	int max_result = gameConf.use_image_load_background_thread ? 9 : 7;
 	for(int i = 0; i < max_result && i + scrFilter->getPos() < (int)deckBuilder.results.size(); ++i) {
-		code_pointer ptr = deckBuilder.results[i + scrFilter->getPos()];
-		if(i >= 7)
-		{
-			imageManager.GetTextureThumb(ptr->second.code);
+		auto ptr = deckBuilder.results[i + scrFilter->getPos()];
+		if(i >= 7) {
+			imageManager.GetTextureThumb(ptr->code);
 			break;
 		}
 		if(deckBuilder.hovered_pos == 4 && deckBuilder.hovered_seq == (int)i)
 			driver->draw2DRectangle(0x80000000, Resize(806, 164 + i * 66, 1019, 230 + i * 66));
 		DrawThumb(ptr, Resize(805, 165 + i * 66),deckBuilder.filterList);
 		const wchar_t* availBuffer = L"";
-		if ((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_OCG)
+		if ((ptr->ot & AVAIL_OCGTCG) == AVAIL_OCG)
 			availBuffer = L" [OCG]";
-		else if ((ptr->second.ot & AVAIL_OCGTCG) == AVAIL_TCG)
+		else if ((ptr->ot & AVAIL_OCGTCG) == AVAIL_TCG)
 			availBuffer = L" [TCG]";
-		else if ((ptr->second.ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
+		else if ((ptr->ot & AVAIL_CUSTOM) == AVAIL_CUSTOM)
 			availBuffer = L" [Custom]";
 
 		// 根据卡片类型分别处理显示逻辑
-		if(ptr->second.type & TYPE_MONSTER) {
-			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
+		if(ptr->type & TYPE_MONSTER) {
+			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->code));
             DrawShadowText(guiFont, textBuffer, Resize(850, 165 + i * 66, 1000, 185 + i * 66), Resize(1, 1, 0, 0));
 			const wchar_t* form = L"\u2605";
 			wchar_t adBuffer[32]{};
 			wchar_t scaleBuffer[16]{};
-			if(!(ptr->second.type & TYPE_LINK)) {
-				if(ptr->second.type & TYPE_XYZ)
+			if(!(ptr->type & TYPE_LINK)) {
+				if(ptr->type & TYPE_XYZ)
 					form = L"\u2606";
-				if(ptr->second.attack < 0 && ptr->second.defense < 0)
+				if(ptr->attack < 0 && ptr->defense < 0)
 					myswprintf(adBuffer, L"?/?");
-				else if(ptr->second.attack < 0)
-					myswprintf(adBuffer, L"?/%d", ptr->second.defense);
-				else if(ptr->second.defense < 0)
-					myswprintf(adBuffer, L"%d/?", ptr->second.attack);
+				else if(ptr->attack < 0)
+					myswprintf(adBuffer, L"?/%d", ptr->defense);
+				else if(ptr->defense < 0)
+					myswprintf(adBuffer, L"%d/?", ptr->attack);
 				else
-					myswprintf(adBuffer, L"%d/%d", ptr->second.attack, ptr->second.defense);
+					myswprintf(adBuffer, L"%d/%d", ptr->attack, ptr->defense);
 			} else {
 				form = L"LINK-";
-				if(ptr->second.attack < 0)
+				if(ptr->attack < 0)
 					myswprintf(adBuffer, L"?/-");
 				else
-					myswprintf(adBuffer, L"%d/-", ptr->second.attack);
+					myswprintf(adBuffer, L"%d/-", ptr->attack);
 			}
-			const auto& attribute = dataManager.FormatAttribute(ptr->second.attribute);
-			const auto& race = dataManager.FormatRace(ptr->second.race);
-			myswprintf(textBuffer, L"%ls/%ls %ls%d", attribute.c_str(), race.c_str(), form, ptr->second.level);
+			myswprintf(textBuffer, L"%ls/%ls %ls%d", dataManager.FormatAttribute(ptr->attribute).c_str(), dataManager.FormatRace(ptr->race).c_str(),
+				form, ptr->level);
             DrawShadowText(guiFont, textBuffer, Resize(850, 186 + i * 66, 1000, 207 + i * 66), Resize(1, 1, 0, 0));
-			if(ptr->second.type & TYPE_PENDULUM) {
-				myswprintf(scaleBuffer, L" %d/%d", ptr->second.lscale, ptr->second.rscale);
+			if(ptr->type & TYPE_PENDULUM) {
+				myswprintf(scaleBuffer, L" %d/%d", ptr->lscale, ptr->rscale);
 			}
 			myswprintf(textBuffer, L"%ls%ls%ls", adBuffer, scaleBuffer, availBuffer);
             DrawShadowText(guiFont, textBuffer, Resize(850, 209 + i * 66, 1000, 230 + i * 66), Resize(1, 1, 0, 0));
 		} else {
-			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->first));
+			myswprintf(textBuffer, L"%ls", dataManager.GetName(ptr->code));
             DrawShadowText(guiFont, textBuffer, Resize(850, 164 + i * 66, 1000, 185 + i * 66), Resize(1, 1, 0, 0));
-			const auto& type = dataManager.FormatType(ptr->second.type);
-			myswprintf(textBuffer, L"%ls", type.c_str());
+			myswprintf(textBuffer, L"%ls", dataManager.FormatType(ptr->type).c_str());
             DrawShadowText(guiFont, textBuffer, Resize(850, 186 + i * 66, 1000, 207 + i * 66), Resize(1, 1, 0, 0));
 			myswprintf(textBuffer, L"%ls", availBuffer);
             DrawShadowText(textFont, textBuffer, Resize(850, 209 + i * 66, 1000, 230 + i * 66), Resize(1, 1 , 0, 0));
@@ -1972,7 +1959,7 @@ void Game::DrawDeckBd() {
 
 	// 如果正在拖拽卡片，则绘制拖拽中的卡片缩略图
 	if(deckBuilder.is_draging) {
-		DrawThumb(deckBuilder.draging_pointer, irr::core::vector2di(deckBuilder.dragx - CARD_THUMB_WIDTH / 2 * mainGame->xScale, deckBuilder.dragy - CARD_THUMB_HEIGHT / 2 * mainGame->yScale), deckBuilder.filterList, true);
+		DrawThumb(deckBuilder.draging_pointer, irr::core::vector2di(deckBuilder.dragx - CARD_THUMB_WIDTH / 2 * xScale, deckBuilder.dragy - CARD_THUMB_HEIGHT / 2 * yScale), deckBuilder.filterList, true);
 	}
 }
 /**

@@ -254,8 +254,6 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
         }
 	}
 	// 初始化各种游戏状态变量
-	linePatternD3D = 0;
-	linePatternGL = 0x0f0f;
 	waitFrame = 0;
 	signalFrame = 0;
 	showcard = 0;
@@ -1354,7 +1352,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     imgChat = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 300, 45, 300 + 45), wPallet, BUTTON_CHATTING);
     imgChat->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
     imgChat->setImage(gameConf.chkIgnore1 ? imageManager.tShut : imageManager.tTalk);
-	wChat = env->addWindow(Resize(305, 605, 1020, 640), false, L"");
+	wChat = env->addWindow(Resize(305, 605, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT), false, L"");
 	wChat->getCloseButton()->setVisible(false);
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
@@ -1606,8 +1604,8 @@ void Game::MainLoop() {
 
 	// 主循环开始：持续运行直到窗口关闭
 	while(device->run()) {
-		linePatternD3D = (linePatternD3D + 1) % 30;     // 更新线条图案索引（Direct3D风格）
-		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15); // 更新线条图案掩码（OpenGL风格）
+		linePattern = (linePattern + 1) % 30;
+		stippleMask = (stippleMask << 1) | (stippleMask >> 15);
 
 		atkframe += 0.1f;                               // 增加动画帧计数
 		atkdy = (float)sin(atkframe);                   // 计算攻击动作偏移量
@@ -2461,7 +2459,7 @@ int Game::ChatLocalPlayer(int player) {
 	if(dInfo.isStarted || is_siding) {
 		if(dInfo.isInDuel)
 			// when in duel
-			player = mainGame->dInfo.isFirst ? player : OppositePlayer(player);
+			player = dInfo.isFirst ? player : OppositePlayer(player);
 		else {
 			// when changing side or waiting tp result
 			auto selftype_boundary = dInfo.isTag ? 2 : 1;
@@ -2490,8 +2488,8 @@ const wchar_t* Game::LocalName(int local_player) {
 void Game::ResizeChatInputWindow() {
 	irr::s32 x = 305;
 	if(is_building) x = 802;
-	wChat->setRelativePosition(Resize(x, GAME_HEIGHT - 35, GAME_WIDTH - 4, GAME_HEIGHT));
-	ebChatInput->setRelativePosition(irr::core::recti(3 * xScale, 2 * yScale, (GAME_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * yScale));
+	wChat->setRelativePosition(Resize(x, GAME_WINDOW_HEIGHT - 35, GAME_WINDOW_WIDTH - 4, GAME_WINDOW_HEIGHT));
+	ebChatInput->setRelativePosition(irr::core::recti(3 * xScale, 2 * yScale, (GAME_WINDOW_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * yScale));
 }
 irr::core::recti Game::Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
 	x = x * xScale;

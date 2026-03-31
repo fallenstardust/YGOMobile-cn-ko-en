@@ -89,46 +89,16 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
             enableStart = error >= 0;
             if (isNew) {
                 if (!getGameUriManager().doIntent(getIntent())) {
-                    final DialogPlus dialog = new DialogPlus(this);
-                    dialog.showTitleBar();
-                    dialog.setTitle(getString(R.string.settings_about_change_log));
-                    dialog.loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT);
-                    dialog.setLeftButtonText(R.string.user_privacy_policy);
-                    dialog.setLeftButtonListener((dlg, i) -> {
-                        dialog.dismiss();
-                        showPrivacyPolicyDialogWithCallback(null);
-                    });
-                    dialog.setRightButtonText(R.string.OK);
-                    dialog.setRightButtonListener((dlg, i) -> {
-                        dlg.dismiss();
-                        //mImageUpdater
-                        if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
-                            if (!mImageUpdater.isRunning()) {
-                                mImageUpdater.start();
-                            }
-                        }
-                    });
-                    //dialog关闭时执行的一些操作
-                    dialog.setOnDismissListener(dialogInterface -> {
-                        DialogPlus dialogplus = new DialogPlus(this);
-                        File oldypk = new File(AppsSettings.get().getExpansionsPath(), officialExCardPackageName + Constants.YPK_FILE_EX);
-                        if (oldypk.exists()) {
-                            FileUtils.deleteFile(oldypk);
-                            dialogplus.setMessage(R.string.tip_ypk_is_deleted);
-                            dialogplus.setLeftButtonText(R.string.ok);
-                            dialogplus.setLeftButtonListener((d, i) -> {
-                                Intent exCardIntent = new Intent(this, ExCardActivity.class);
-                                startActivity(exCardIntent);
-                                dialogplus.dismiss();
-                            });
-                            dialogplus.show();
-                        }
-                        if (!SharedPreferenceUtil.isPrivacyPolicyAgreed()) {
-                            showPrivacyPolicyDialogWithCallback(null);
-                        }
-                    });
-                    dialog.setCancelable(false);
-                    dialog.show();
+                    //首先检查隐私政策是否同意，如果未同意则先显示隐私政策对话框
+                    if (!SharedPreferenceUtil.isPrivacyPolicyAgreed()) {
+                        showPrivacyPolicyDialogWithCallback(agreed -> {
+                            //用户点击同意或拒绝后，显示更新日志对话框
+                            showUpdateLogDialog();
+                        });
+                    } else {
+                        //已同意隐私政策，直接显示更新日志
+                        showUpdateLogDialog();
+                    }
                 }
             } else {
 //                if (AppsSettings.get().isServiceDuelAssistant() && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
@@ -223,5 +193,43 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
     @Override
     public void onTabReselected(int position) {
 
+    }
+
+    /**
+     * 显示更新日志对话框
+     */
+    private void showUpdateLogDialog() {
+        final DialogPlus dialog = new DialogPlus(this);
+        dialog.showTitleBar();
+        dialog.setTitle(getString(R.string.settings_about_change_log));
+        dialog.loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT);
+        dialog.setLeftButtonText(R.string.OK);
+        dialog.setLeftButtonListener((dlg, i) -> {
+            dlg.dismiss();
+            //mImageUpdater
+            if (NETWORK_IMAGE && NetUtils.isConnected(getContext())) {
+                if (!mImageUpdater.isRunning()) {
+                    mImageUpdater.start();
+                }
+            }
+        });
+        //dialog 关闭时执行的一些操作
+        dialog.setOnDismissListener(dialogInterface -> {
+            DialogPlus dialogplus = new DialogPlus(this);
+            File oldypk = new File(AppsSettings.get().getExpansionsPath(), officialExCardPackageName + Constants.YPK_FILE_EX);
+            if (oldypk.exists()) {
+                FileUtils.deleteFile(oldypk);
+                dialogplus.setMessage(R.string.tip_ypk_is_deleted);
+                dialogplus.setLeftButtonText(R.string.ok);
+                dialogplus.setLeftButtonListener((d, i) -> {
+                    Intent exCardIntent = new Intent(this, ExCardActivity.class);
+                    startActivity(exCardIntent);
+                    dialogplus.dismiss();
+                });
+                dialogplus.show();
+            }
+        });
+        dialog.setCancelable(false);
+        dialog.show();
     }
 }

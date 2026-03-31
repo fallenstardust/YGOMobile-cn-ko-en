@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "event_handler.h"
 #include "client_field.h"
 #include "network.h"
@@ -1860,7 +1861,8 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			}
 			if (mainGame->wQuery->isVisible() || mainGame->wANAttribute->isVisible()
 				|| mainGame->wANCard->isVisible() || mainGame->wANNumber->isVisible()
-				|| mainGame->wCardSelect->isVisible()||mainGame->wOptions->isVisible()){
+				|| mainGame->wCardSelect->isVisible()|| mainGame->wCardDisplay->isVisible()
+				|| mainGame->wOptions->isVisible()){
                 display_cards.clear();
                 int loc_id = 0;
                 switch(hovered_location) {
@@ -2601,8 +2603,8 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_sequence = hc - 1 - (x - ofRect.UpperLeftCorner.X) * (hc - 1) / (int)((cardSize + cardSpace) * 5 * mainGame->xScale);
 		}
 	} else {
-		double screenx = x / (GAME_WIDTH * mainGame->xScale) * 1.35  - 0.90;
-		double screeny = y / (GAME_HEIGHT * mainGame->yScale) * 0.84 - 0.42;
+		double screenx = x / (static_cast<double>(GAME_WINDOW_WIDTH) * mainGame->xScale) * 1.35  - 0.90;
+		double screeny = y / (static_cast<double>(GAME_WINDOW_HEIGHT) * mainGame->yScale) * 0.84 - 0.42;
 		double angle = 0.798056 - atan(screeny);	//0.798056 = arctan(8.0/7.8)
 		double vlen = sqrt(1.0 + screeny * screeny);
 		double boardx = 4.2 + 7.8 * screenx / vlen / cos(angle);
