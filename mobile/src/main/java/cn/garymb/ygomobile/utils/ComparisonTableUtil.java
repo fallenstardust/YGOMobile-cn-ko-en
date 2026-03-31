@@ -1201,6 +1201,7 @@ public interface ComparisonTableUtil {
             100257004,
             100257005,
             100257006,
+            100257007,
             100257008,
             100257009,
             100257010,
@@ -1213,7 +1214,6 @@ public interface ComparisonTableUtil {
             100257017,
             100257018,
             100257019,
-            100257019,
             100257020,
             100257021,
             100257022,
@@ -1222,7 +1222,7 @@ public interface ComparisonTableUtil {
             100257025,
             100257026,
             100257027,
-            100257028
+            100257028,
     };
 
     int[] newIDsArray = {
