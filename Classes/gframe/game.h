@@ -94,9 +94,6 @@ struct Config {
 	int chkIgnore2{ 0 };
 	int use_lflist{ 1 };
 	int default_lflist{ 0 };
-	int enable_genesys_mode{ 0 };
-    int use_genesys_lflist{ 0 };
-	int default_genesys_lflist{ 0 };
 	int default_rule{ DEFAULT_DUEL_RULE };
 	int hide_setname{ 0 };
 	int hide_hint_button{ 0 };
@@ -113,6 +110,9 @@ struct Config {
 	int draw_single_chain{ 0 };
 	int hide_player_name{ 0 };
 	int prefer_expansion_script{ 1 };
+	int enable_genesys_mode{ 0 };
+    int use_genesys_lflist{ 0 };
+	int default_genesys_lflist{ 0 };
 	//sound
 	bool enable_sound{ true };
 	bool enable_music{ true };
@@ -186,11 +186,8 @@ struct FadingUnit {
 class Game:irr::IProcessEventReceiver{
 
 public:
-	void stopBGM();
-	void playBGM();
 	bool Initialize(ANDROID_APP app, irr::android::InitOptions *options);
 	void MainLoop();
-	void RefreshTimeDisplay();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
@@ -201,13 +198,11 @@ public:
 	void RefreshReplay();
 	void RefreshSingleplay();
 	void RefreshBot();
-	void SetCardS3DVertex();
 	void Draw2DImageQuad(irr::video::IVideoDriver* driver, irr::video::ITexture* texture, const irr::core::recti& sourceRect,
 						 const irr::core::vector2di corner[4], bool useAlphaChannel = true, irr::video::SColor color = 0xffffffff);
 	void DrawSelectionLine(irr::video::S3DVertex* vec, bool stipple, irr::video::SColor color);
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
-	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
 	void DrawLinkedZones(ClientCard* pcard, ClientCard* fcard = 0);
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
@@ -233,16 +228,27 @@ public:
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
-	void addMessageBox(const wchar_t* caption, const wchar_t* text);
-	void initUtils(){}
 	void ClearTextures();
 	void CloseGameButtons();
 	void CloseGameWindow();
 	void CloseDuelWindow();
+	void stopBGM();
+	void playBGM();
+	void RefreshTimeDisplay();
+	void SetCardS3DVertex();
+	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
+	void addMessageBox(const wchar_t* caption, const wchar_t* text);
+	void initUtils(){}
 	void OnGameClose();
 	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image);
 	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
-
+	// 表情显示方法
+    void ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe);
+    void DrawEmoticon();
+    void DrawBubbleHeptagonBorder(const irr::core::recti& rect, irr::video::SColor color, int borderWidth) const;
+    virtual std::wstring OnReceiveChatMessage(const std::wstring& msg, bool isFromMe);
+    virtual std::wstring AppendCardNames(const std::wstring& msg);
+	
 	int LocalPlayer(int player) const;
 	int OppositePlayer(int player);
 	int ChatLocalPlayer(int player);
@@ -258,13 +264,6 @@ public:
 		text.trim();
 		editbox->setText(text.c_str());
 	}
-    // 表情显示方法
-    void ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe);
-    void DrawEmoticon();
-    void DrawBubbleHeptagonBorder(const irr::core::recti& rect, irr::video::SColor color, int borderWidth) const;
-    virtual std::wstring OnReceiveChatMessage(const std::wstring& msg, bool isFromMe);
-
-    virtual std::wstring AppendCardNames(const std::wstring& msg);
 	void ResizeChatInputWindow();
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);
@@ -402,16 +401,18 @@ public:
 	irr::gui::IGUICheckBox* chkAutoSaveReplay{};
 	irr::gui::IGUICheckBox* chkDrawSingleChain{};
 	irr::gui::IGUICheckBox* chkHidePlayerName{};
-	irr::gui::IGUIElement* elmTabSystemLast;
+	irr::gui::IGUIElement* elmTabSystemLast{};
 	irr::gui::IGUIScrollBar* scrTabSystem{};
-	irr::gui::IGUICheckBox* chkDrawFieldSpell;
+	
 	irr::gui::IGUICheckBox* chkIgnoreDeckChanges{};
 	irr::gui::IGUICheckBox* chkAutoSearch{};
 	irr::gui::IGUICheckBox* chkMultiKeywords{};
 	irr::gui::IGUICheckBox* chkPreferExpansionScript{};
-	irr::gui::IGUICheckBox* chkEnableGenesysMode;
+	
 	irr::gui::IGUICheckBox* chkLFlist{};
 	irr::gui::IGUIComboBox* cbLFlist{};
+	irr::gui::IGUICheckBox* chkDrawFieldSpell;
+	irr::gui::IGUICheckBox* chkEnableGenesysMode;
     irr::gui::IGUICheckBox* chkGenesysLFlist;
 	irr::gui::IGUIComboBox* cbGenesysLFlist;
 	//sound
@@ -421,7 +422,7 @@ public:
 	irr::gui::IGUIScrollBar* scrMusicVolume{};
 	irr::gui::IGUICheckBox* chkMusicMode{};
 	//main menu
-	irr::gui::IGUIWindow* wMainMenu;
+	irr::gui::IGUIWindow* wMainMenu{};
 	irr::gui::CGUIImageButton* btnLanMode;
 	irr::gui::IGUIStaticText* textLanMode;
 	irr::gui::CGUIImageButton* btnSingleMode;
