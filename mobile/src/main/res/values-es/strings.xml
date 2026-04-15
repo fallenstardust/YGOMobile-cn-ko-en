@@ -81,7 +81,7 @@
         <item>Baja</item>
         <item>Alta</item>
     </string-array>
-	<string-array name="screen_top_bottom_desc" translatable="false">
+    <string-array name="screen_top_bottom_desc" translatable="false">
         <item>Deshabilitado</item>
         <item>5</item>
         <item>8</item>
@@ -398,6 +398,13 @@
     <string name="reject">Rechazo</string>
     <string name="privacy_policy_accepted">Has aceptado la Política de Privacidad. Gracias por tu comprensión y confianza.</string>
     <string name="privacy_policy_rejected_exit">Has rechazado la Política de Privacidad. Esperamos tener otra oportunidad la próxima vez.</string>
+    <string name="fun_record">Récord Casual</string>
+    <string name="fun_rank">Ranking Casual</string>
+    <string name="match_record">Récord Competitivo</string>
+    <string name="match_rank">Ranking Competitivo</string>
+    <string name="win_num">Victorias</string>
+    <string name="lose_num">Derrotas</string>
+    <string name="draw_num">Empates</string>
 </resources>
 
 

@@ -35,4 +35,9 @@
 
     <color name="search_text_color">#ff8800</color>
     <color name="search_list_item_color">#b8be35</color>
+    <color name="blackLight">#7C7C7C</color>
+    <color name="blackLight2">#AA202020</color>
+    <color name="grayLight">#E1E1E1</color>
+    <color name="grayDark">#A7A7A7</color>
+    <color name="grayDark2">#8E8E8E</color>
 </resources>

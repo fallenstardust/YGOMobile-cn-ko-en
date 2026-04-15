@@ -121,7 +121,6 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
         });
         btn_hide.setOnClickListener(p1 -> {
             getParentFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
-            homeActivity.fragment_mycard.mWebViewPlus.setVisibility(View.VISIBLE);
             homeActivity.fragment_mycard.rl_chat.setVisibility(View.VISIBLE);
         });
     }
@@ -129,7 +128,6 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        su.disClass();
 //        UserManagement.setUserName(null);
 //        UserManagement.setUserPassword(null);
     }

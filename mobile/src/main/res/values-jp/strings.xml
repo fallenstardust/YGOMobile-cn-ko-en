@@ -399,4 +399,11 @@
     <string name="reject">拒否</string>
     <string name="privacy_policy_accepted">プライバシーポリシーに同意いただきました。ご理解と信頼に感謝いたします。</string>
     <string name="privacy_policy_rejected_exit">プライバシーポリシーを拒否いただきました。次回、再度チャンスをいただければ幸いです。</string>
+    <string name="fun_record">娯楽戦績</string>
+    <string name="fun_rank">娯楽ランキング</string>
+    <string name="match_record">公式戦績</string>
+    <string name="match_rank">公式ランキング</string>
+    <string name="win_num">勝利</string>
+    <string name="lose_num">敗北</string>
+    <string name="draw_num">引き分け</string>
 </resources>

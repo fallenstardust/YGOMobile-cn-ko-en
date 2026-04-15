@@ -107,7 +107,7 @@
         <item>15</item>
     </string-array>
     <!-- settings -->
-	
+
     <string name="server_list">듀얼 서버</string>
     <string name="server_name">이름:</string>
     <string name="server_desc">비고:</string>
@@ -175,7 +175,7 @@
     <string name="add_card_tip_ok">카드 추가 성공</string>
     <string name="add_card_tip_fail">카드 추가 실패</string>
     <string name="tip_card_max" formatted="false">카드 최대 수:%d</string>
-    
+
     <string name="file_exist">파일은 이미 존재합니다</string>
     <string name="share_deck">덱 공유</string>
     <string name="no_share_app">공유할 앱이 없습니다.</string>
@@ -417,4 +417,11 @@
     <string name="reject">거절</string>
     <string name="privacy_policy_accepted">개인정보 처리방침에 동의해 주셨습니다. 이해와 신뢰에 감사드립니다.</string>
     <string name="privacy_policy_rejected_exit">개인정보 처리방침을 거절하셨습니다. 다음 기회에 다시 한번 부탁드리겠습니다.</string>
+    <string name="fun_record">오락 전적</string>
+    <string name="fun_rank">오락 순위</string>
+    <string name="match_record">경쟁 전적</string>
+    <string name="match_rank">경쟁 순위</string>
+    <string name="win_num">승리</string>
+    <string name="lose_num">패배</string>
+    <string name="draw_num">무승부</string>
 </resources>

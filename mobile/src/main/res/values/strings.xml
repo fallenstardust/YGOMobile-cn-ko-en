@@ -429,4 +429,11 @@
     <string name="reject">Decline</string>
     <string name="privacy_policy_accepted">You have agreed to the Privacy Policy. Thank you for your understanding and trust</string>
     <string name="privacy_policy_rejected_exit">You have declined the Privacy Policy. We hope to have another chance next time.</string>
+    <string name="fun_record">Casual Record</string>
+    <string name="fun_rank">Casual Rank</string>
+    <string name="match_record">Ranked Record</string>
+    <string name="match_rank">Ranked Rank</string>
+    <string name="win_num">Wins</string>
+    <string name="lose_num">Losses</string>
+    <string name="draw_num">Draws</string>
 </resources>

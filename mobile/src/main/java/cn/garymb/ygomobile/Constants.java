@@ -271,6 +271,8 @@ public interface Constants {
     String TAG = "ygo-java";
 
     String DEF_ENCODING = "utf-8";
+    String QUERY_VERSION = "v";
+    String QUERY_YGO_TYPE="ygotype";
 
 
 
