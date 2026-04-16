@@ -405,8 +405,10 @@
     <string name="or_atkDef">ATK或DEF</string>
     <string name="fun_record">娱乐战绩</string>
     <string name="fun_rank">娱乐排名</string>
+    <string name="fun_start">娱乐匹配</string>
     <string name="match_record">竞技战绩</string>
     <string name="match_rank">竞技排名</string>
+    <string name="match_start">竞技匹配</string>
     <string name="win_num">胜场</string>
     <string name="lose_num">负场</string>
     <string name="draw_num">平局</string>

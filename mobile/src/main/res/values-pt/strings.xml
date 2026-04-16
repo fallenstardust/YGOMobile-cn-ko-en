@@ -396,5 +396,7 @@
     <string name="win_num">Vitórias</string>
     <string name="lose_num">Derrotas</string>
     <string name="draw_num">Empates</string>
+    <string name="fun_start">Partida Casual</string>
+    <string name="match_start">Partida Competitiva</string>
 </resources>
 

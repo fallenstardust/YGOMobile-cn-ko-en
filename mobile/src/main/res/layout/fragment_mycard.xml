@@ -215,29 +215,30 @@
                             android:id="@+id/rank_and_match_container"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/list_item_bg"
+                            android:background="@drawable/dialogshort"
                             android:orientation="vertical"
                             android:padding="10dp">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:background="@drawable/selected_dark"
                                 android:layout_marginBottom="10dp"
+                                android:background="@drawable/veil2"
+                                android:gravity="center_horizontal"
                                 android:orientation="horizontal">
 
                                 <ImageView
                                     android:id="@+id/iv_refresh"
-                                    android:layout_width="30dp"
-                                    android:layout_height="30dp"
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
                                     android:contentDescription="刷新战绩"
                                     android:src="@drawable/ic_refresh"
                                     android:visibility="visible" />
 
                                 <ProgressBar
                                     android:id="@+id/pb_loading"
-                                    android:layout_width="30dp"
-                                    android:layout_height="30dp"
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
                                     android:visibility="gone" />
 
                                 <TextView
@@ -247,324 +248,346 @@
                                     android:layout_gravity="center"
                                     android:text="匹配对战"
                                     android:textColor="@color/holo_green_bright"
-                                    android:textSize="16sp"
+                                    android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
 
-
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:gravity="center"
                                 android:orientation="horizontal">
 
-                                <RelativeLayout
-                                    android:id="@+id/layout_fun_rank"
+                                <LinearLayout
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:background="@drawable/selected_dark"
-                                    android:gravity="center_horizontal"
                                     android:layout_weight="1"
-                                    android:paddingTop="5dp"
-                                    android:paddingRight="10dp"
-                                    android:paddingBottom="5dp">
+                                    android:orientation="vertical">
 
-                                    <com.king.view.circleprogressview.CircleProgressView
-                                        android:id="@+id/fun_cpv_rank"
-                                        android:layout_width="50dp"
-                                        android:layout_height="50dp"
-                                        android:layout_centerVertical="true"
-                                        app:cpvLabelTextColor="@color/white"
-                                        app:cpvLabelTextSize="9sp"
-                                        app:cpvNormalColor="@color/klein_blue"
-                                        app:cpvProgressColor="@color/colorAccent"
-                                        app:cpvShowTick="false"
-                                        app:cpvStrokeWidth="5dp" />
-
-                                    <LinearLayout
-                                        android:layout_width="wrap_content"
+                                    <RelativeLayout
+                                        android:id="@+id/layout_fun_rank"
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_centerVertical="true"
-                                        android:layout_toRightOf="@id/fun_cpv_rank"
-                                        android:orientation="vertical">
+                                        android:layout_weight="1"
+                                        android:gravity="center_horizontal"
+                                        android:paddingTop="5dp"
+                                        android:paddingRight="10dp"
+                                        android:paddingBottom="5dp">
+
+                                        <com.king.view.circleprogressview.CircleProgressView
+                                            android:id="@+id/fun_cpv_rank"
+                                            android:layout_width="50dp"
+                                            android:layout_height="50dp"
+                                            android:layout_centerVertical="true"
+                                            app:cpvLabelTextColor="@color/white"
+                                            app:cpvLabelTextSize="9sp"
+                                            app:cpvNormalColor="@color/klein_blue"
+                                            app:cpvProgressColor="@color/colorAccent"
+                                            app:cpvShowTick="false"
+                                            app:cpvStrokeWidth="5dp" />
 
                                         <LinearLayout
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
-                                            android:layout_marginBottom="6dp"
-                                            android:gravity="center_vertical"
-                                            android:orientation="horizontal">
+                                            android:layout_centerVertical="true"
+                                            android:layout_toRightOf="@id/fun_cpv_rank"
+                                            android:orientation="vertical">
 
-                                            <ImageView
-                                                android:layout_width="14dp"
-                                                android:layout_height="14dp"
-                                                android:src="@drawable/ic_rank" />
-
-                                            <TextView
-                                                android:id="@+id/fun_tv_rank"
+                                            <LinearLayout
                                                 android:layout_width="wrap_content"
                                                 android:layout_height="wrap_content"
-                                                android:layout_marginLeft="4dp"
-                                                android:text="- - - - -"
-                                                android:textColor="@color/white"
-                                                android:textSize="13sp"
-                                                android:textStyle="bold" />
+                                                android:layout_marginBottom="6dp"
+                                                android:gravity="center_vertical"
+                                                android:orientation="horizontal">
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_rank" />
+
+                                                <TextView
+                                                    android:id="@+id/fun_tv_rank"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginLeft="4dp"
+                                                    android:text="- - - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="13sp"
+                                                    android:textStyle="bold" />
+                                            </LinearLayout>
+
+                                            <LinearLayout
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:gravity="center_vertical"
+                                                android:orientation="horizontal">
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_win" />
+
+                                                <TextView
+                                                    android:id="@+id/fun_tv_win"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginRight="4dp"
+                                                    android:text="- - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_fail" />
+
+                                                <TextView
+                                                    android:id="@+id/fun_tv_lose"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginRight="4dp"
+                                                    android:text="- - - - "
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_user" />
+
+                                                <TextView
+                                                    android:id="@+id/fun_tv_draw"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginRight="4dp"
+                                                    android:text="- - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+                                            </LinearLayout>
+
+                                            <LinearLayout
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:gravity="center_vertical"
+                                                android:orientation="horizontal"
+                                                android:visibility="gone">
+
+                                                <TextView
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:text="总"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+
+                                                <TextView
+                                                    android:id="@+id/fun_tv_all"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginLeft="2dp"
+                                                    android:text="- - - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp"
+                                                    android:textStyle="bold" />
+                                            </LinearLayout>
                                         </LinearLayout>
+                                    </RelativeLayout>
 
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:gravity="center_vertical"
-                                            android:orientation="horizontal">
+                                    <Button
+                                        android:id="@+id/btn_entertain"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="0dp"
+                                        android:layout_margin="5dp"
+                                        android:layout_weight="1"
+                                        android:background="@drawable/selected_light"
+                                        android:text="@string/fun_start"
+                                        android:textColor="@color/white" />
+                                </LinearLayout>
 
-                                            <ImageView
-                                                android:layout_width="14dp"
-                                                android:layout_height="14dp"
-                                                android:src="@drawable/ic_win" />
-
-                                            <TextView
-                                                android:id="@+id/fun_tv_win"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:layout_marginRight="4dp"
-                                                android:text="- - - -"
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp" />
-
-                                            <ImageView
-                                                android:layout_width="14dp"
-                                                android:layout_height="14dp"
-                                                android:src="@drawable/ic_fail" />
-
-                                            <TextView
-                                                android:id="@+id/fun_tv_lose"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:layout_marginRight="4dp"
-                                                android:text="- - - - "
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp" />
-                                            <ImageView
-                                                android:layout_width="14dp"
-                                                android:layout_height="14dp"
-                                                android:src="@drawable/ic_user" />
-
-                                            <TextView
-                                                android:id="@+id/fun_tv_draw"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:layout_marginRight="4dp"
-                                                android:text="- - - -"
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp" />
-                                        </LinearLayout>
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:gravity="center_vertical"
-                                            android:orientation="horizontal">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="总"
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp" />
-
-                                            <TextView
-                                                android:id="@+id/fun_tv_all"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:layout_marginLeft="2dp"
-                                                android:text="- - - - -"
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp"
-                                                android:textStyle="bold" />
-                                        </LinearLayout>
-                                    </LinearLayout>
-                                </RelativeLayout>
-
-                                <RelativeLayout
-                                    android:id="@+id/layout_match_rank"
+                                <LinearLayout
+                                    android:id="@+id/ll_match"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:background="@drawable/selected_dark"
-                                    android:gravity="center_horizontal"
                                     android:layout_weight="1"
-                                    android:paddingTop="5dp"
-                                    android:paddingRight="10dp"
-                                    android:paddingBottom="5dp">
+                                    android:orientation="vertical">
 
-                                    <com.king.view.circleprogressview.CircleProgressView
-                                        android:id="@+id/match_cpv_rank"
-                                        android:layout_width="50dp"
-                                        android:layout_height="50dp"
-                                        android:layout_centerVertical="true"
-                                        app:cpvLabelTextColor="@color/white"
-                                        app:cpvLabelTextSize="10sp"
-                                        app:cpvNormalColor="@color/klein_blue"
-                                        app:cpvProgressColor="@color/colorAccent"
-                                        app:cpvShowTick="false"
-                                        app:cpvStrokeWidth="5dp" />
-
-                                    <LinearLayout
-                                        android:layout_width="wrap_content"
+                                    <RelativeLayout
+                                        android:id="@+id/layout_match_rank"
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_centerVertical="true"
-                                        android:layout_toRightOf="@id/match_cpv_rank"
-                                        android:orientation="vertical">
+                                        android:layout_weight="1"
+                                        android:gravity="center_horizontal"
+                                        android:paddingTop="5dp"
+                                        android:paddingRight="10dp"
+                                        android:paddingBottom="5dp">
+
+                                        <com.king.view.circleprogressview.CircleProgressView
+                                            android:id="@+id/match_cpv_rank"
+                                            android:layout_width="50dp"
+                                            android:layout_height="50dp"
+                                            android:layout_centerVertical="true"
+                                            app:cpvLabelTextColor="@color/white"
+                                            app:cpvLabelTextSize="10sp"
+                                            app:cpvNormalColor="@color/klein_blue"
+                                            app:cpvProgressColor="@color/colorAccent"
+                                            app:cpvShowTick="false"
+                                            app:cpvStrokeWidth="5dp" />
 
                                         <LinearLayout
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
-                                            android:layout_marginBottom="6dp"
-                                            android:gravity="center_vertical"
-                                            android:orientation="horizontal">
+                                            android:layout_centerVertical="true"
+                                            android:layout_toRightOf="@id/match_cpv_rank"
+                                            android:orientation="vertical">
 
-                                            <ImageView
-                                                android:layout_width="14dp"
-                                                android:layout_height="14dp"
-                                                android:src="@drawable/ic_rank" />
-
-                                            <TextView
-                                                android:id="@+id/match_tv_rank"
+                                            <LinearLayout
                                                 android:layout_width="wrap_content"
                                                 android:layout_height="wrap_content"
-                                                android:layout_marginLeft="4dp"
-                                                android:textColor="@color/white"
-                                                android:text="- - - - -"
-                                                android:textSize="13sp"
-                                                android:textStyle="bold" />
+                                                android:layout_marginBottom="6dp"
+                                                android:gravity="center_vertical"
+                                                android:orientation="horizontal">
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_rank" />
+
+                                                <TextView
+                                                    android:id="@+id/match_tv_rank"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginLeft="4dp"
+                                                    android:text="- - - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="13sp"
+                                                    android:textStyle="bold" />
+                                            </LinearLayout>
+
+                                            <LinearLayout
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:gravity="center_vertical"
+                                                android:orientation="horizontal">
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_win" />
+
+                                                <TextView
+                                                    android:id="@+id/match_tv_win"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginRight="4dp"
+                                                    android:text="- - - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_fail" />
+
+                                                <TextView
+                                                    android:id="@+id/match_tv_lose"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginRight="4dp"
+                                                    android:text="- - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_user" />
+
+                                                <TextView
+                                                    android:id="@+id/match_tv_draw"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginLeft="4dp"
+                                                    android:text="- - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+                                            </LinearLayout>
+
+                                            <LinearLayout
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:gravity="center_vertical"
+                                                android:orientation="horizontal"
+                                                android:visibility="gone">
+
+                                                <TextView
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:text="总"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+
+                                                <TextView
+                                                    android:id="@+id/match_tv_all"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginLeft="2dp"
+                                                    android:text="- - - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp"
+                                                    android:textStyle="bold" />
+                                            </LinearLayout>
+
                                         </LinearLayout>
+                                    </RelativeLayout>
 
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:gravity="center_vertical"
-                                            android:orientation="horizontal">
-
-                                            <ImageView
-                                                android:layout_width="14dp"
-                                                android:layout_height="14dp"
-                                                android:src="@drawable/ic_win" />
-
-                                            <TextView
-                                                android:id="@+id/match_tv_win"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:layout_marginRight="4dp"
-                                                android:text="- - - - -"
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp" />
-
-                                            <ImageView
-                                                android:layout_width="14dp"
-                                                android:layout_height="14dp"
-                                                android:src="@drawable/ic_fail" />
-
-                                            <TextView
-                                                android:id="@+id/match_tv_lose"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:layout_marginRight="4dp"
-                                                android:text="- - - -"
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp" />
-
-                                            <ImageView
-                                                android:layout_width="14dp"
-                                                android:layout_height="14dp"
-                                                android:src="@drawable/ic_user" />
-
-                                            <TextView
-                                                android:id="@+id/match_tv_draw"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:layout_marginLeft="4dp"
-                                                android:text="- - - -"
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp" />
-                                        </LinearLayout>
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:gravity="center_vertical"
-                                            android:orientation="horizontal">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="总"
-                                                android:textColor="@color/white"
-                                                android:textSize="9sp" />
-
-                                            <TextView
-                                                android:id="@+id/match_tv_all"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:layout_marginLeft="2dp"
-                                                android:textColor="@color/white"
-                                                android:text="- - - - -"
-                                                android:textSize="9sp"
-                                                android:textStyle="bold" />
-                                        </LinearLayout>
-
-                                    </LinearLayout>
-                                </RelativeLayout>
+                                    <Button
+                                        android:id="@+id/btn_athletic"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="0dp"
+                                        android:layout_margin="5dp"
+                                        android:layout_weight="1"
+                                        android:background="@drawable/selected_light"
+                                        android:text="@string/match_start"
+                                        android:textColor="@color/white" />
+                                </LinearLayout>
                             </LinearLayout>
 
-                            <LinearLayout
+                            <androidx.coordinatorlayout.widget.CoordinatorLayout
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="15dp"
-                                android:gravity="center"
-                                android:orientation="horizontal">
+                                android:layout_height="match_parent"
+                                android:orientation="vertical">
 
                                 <LinearLayout
-                                    android:id="@+id/ll_entertain"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:background="@drawable/selected_light"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:gravity="center"
-                                    android:orientation="vertical"
-                                    android:padding="10dp">
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:background="@color/transparent"
+                                    android:orientation="vertical">
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="@string/fun_rank"
-                                        android:textColor="@color/holo_green_bright"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
+                                    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                                        android:id="@+id/srl_update"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent">
+
+                                        <cn.garymb.ygomobile.ui.widget.GridRecyclerView
+                                            android:id="@+id/rv_list"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:descendantFocusability="blocksDescendants" />
+
+                                    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
                                 </LinearLayout>
 
-                                <LinearLayout
-                                    android:id="@+id/ll_athletic"
-                                    android:layout_width="0dp"
+                                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                    android:id="@+id/fab_add"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginLeft="10dp"
-                                    android:layout_weight="1"
-                                    android:background="@drawable/selected_light"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:gravity="center"
-                                    android:orientation="vertical"
-                                    android:padding="10dp">
+                                    android:layout_margin="16dp"
+                                    android:src="@drawable/ic_add_white"
+                                    android:visibility="gone"
+                                    app:layout_anchor="@id/srl_update"
+                                    app:layout_anchorGravity="bottom|end" />
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="竞技匹配"
-                                        android:textColor="@color/holo_orange_bright"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-                            </LinearLayout>
+                            </androidx.coordinatorlayout.widget.CoordinatorLayout>
                         </LinearLayout>
                     </LinearLayout>
                 </ScrollView>

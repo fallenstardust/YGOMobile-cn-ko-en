@@ -405,6 +405,7 @@
     <string name="win_num">Victorias</string>
     <string name="lose_num">Derrotas</string>
     <string name="draw_num">Empates</string>
+    <string name="fun_start">Partida Casual</string>
 </resources>
 
 

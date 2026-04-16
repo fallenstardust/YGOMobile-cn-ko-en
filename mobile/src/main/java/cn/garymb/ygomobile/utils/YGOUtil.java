@@ -262,6 +262,33 @@ public class YGOUtil {
         }
         YGOStarter.startGame(activity, options, String.valueOf(request));
     }
+
+    public static void joinGame(Activity activity, ServerInfo serverInfo, String password) {
+        joinGame(activity, serverInfo, password, 0);
+    }
+
+    public static String getWatchDuelPassword(String password, int userId) {
+        byte[] bytes = new byte[6];
+        bytes[1] = (byte) (3 << 4);
+        int checksum = 0;
+        for (int i = 1; i < bytes.length; i++) {
+            checksum -= bytes[i];
+        }
+        bytes[0] = (byte) (checksum & 0xff);
+        int secret = userId % 65535 + 1;
+        int i = 0;
+        while (i < bytes.length) {
+            int x = 0;
+            x = x | (bytes[i] & 0xff);
+            x = x | ((bytes[i + 1] & 0xff) << 8);
+            x = x ^ secret;
+            bytes[i] = (byte) (x & 0xff);
+            bytes[i + 1] = (byte) ((x >> 8) & 0xff);
+            i += 2;
+        }
+        String messageString = Base64.encodeToString(bytes, Base64.NO_WRAP);
+        return messageString + password;
+    }
 }
 
 

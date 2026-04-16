@@ -436,4 +436,6 @@
     <string name="win_num">Wins</string>
     <string name="lose_num">Losses</string>
     <string name="draw_num">Draws</string>
+    <string name="fun_start">Casual Match</string>
+    <string name="match_start">Ranked Match</string>
 </resources>

@@ -23,28 +23,39 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.feihua.dialogutils.util.DialogUtils;
 import com.king.view.circleprogressview.CircleProgressView;
 import com.ourygo.lib.duelassistant.util.Util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.adapter.DuelRoomBQAdapter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
+import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
+import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
 import cn.garymb.ygomobile.ui.mycard.bean.McDuelInfo;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
+import cn.garymb.ygomobile.ui.mycard.watchDuel.WatchDuelManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -55,7 +66,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 
-public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener {
+public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener, OnDuelRoomListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
     private static final int TYPE_MC_LOGIN = 0;
     private static final int TYPE_MC_LOGIN_FAILED = -1;
@@ -84,7 +95,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private TextView tv_message, tv_match_title;
     private ProgressBar pb_chat_loading, pb_loading;
     private ImageView iv_refresh;
-    private LinearLayout ll_athletic, ll_entertain;
+    private Button btn_athletic, btn_entertain;
     private ServiceManagement serviceManagement;
     private ChatMessage currentMessage;
     private DialogUtils dialogUtils;
@@ -93,6 +104,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private TextView funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll;
     private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll;
     private McDuelInfo currentMcDuelInfo;
+
+    private SwipeRefreshLayout srl_update;
+    private RecyclerView rv_list;
+
+    private WatchDuelManagement duelManagement;
+    private DuelRoomBQAdapter duelRoomBQAdapter;
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -104,8 +121,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 case TYPE_MC_LOGIN:
                     McUser mcUser = (McUser) msg.obj;
                     if (!TextUtils.isEmpty(mcUser.getAvatar_url())) {
-                       GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(mHeadView);//刷新头像图片
-                     }
+                        GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(mHeadView);//刷新头像图片
+                    }
                     mNameView.setText(mcUser.getUsername());//刷新用户名
                     mStatusView.setText(mcUser.getEmail());//刷新账号信息
                     serviceManagement.start();
@@ -232,6 +249,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         initRankViews(view);
         initMatchViews(view);
+        initWatchDuelView(view);
 
         btn_login.setOnClickListener(v -> attemptLogin());
         btn_register.setOnClickListener(v -> {
@@ -270,9 +288,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
                 UserManagement.getDx().setMcUser(mMcUser);
 
-                GlideCompat.with(getActivity())
-                    .load(ChatMessage.getAvatarUrl(userName))
-                    .into(mHeadView);
+                GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(userName)).into(mHeadView);
 
                 queryDuelInfo();
 
@@ -382,16 +398,108 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         pb_loading = view.findViewById(R.id.pb_loading);
         iv_refresh = view.findViewById(R.id.iv_refresh);
         tv_match_title = view.findViewById(R.id.tv_match_title);
-        ll_athletic = view.findViewById(R.id.ll_athletic);
-        ll_entertain = view.findViewById(R.id.ll_entertain);
+        btn_athletic = view.findViewById(R.id.btn_athletic);
+        btn_entertain = view.findViewById(R.id.btn_entertain);
 
         dialogUtils = DialogUtils.getInstance(getActivity());
 
-        ll_athletic.setOnClickListener(this);
-        ll_entertain.setOnClickListener(this);
+        btn_athletic.setOnClickListener(this);
+        btn_entertain.setOnClickListener(this);
         iv_refresh.setOnClickListener(v -> {
             queryDuelInfo();
         });
+    }
+
+    private void initWatchDuelView(View view) {
+        srl_update = view.findViewById(R.id.srl_update);
+        rv_list = view.findViewById(R.id.rv_list);
+
+        rv_list.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        duelRoomBQAdapter = new DuelRoomBQAdapter(requireContext(), new ArrayList<DuelRoom>());
+        rv_list.setAdapter(duelRoomBQAdapter);
+
+        duelManagement = WatchDuelManagement.getInstance();
+        duelManagement.addListener(this);
+
+        duelRoomBQAdapter.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
+                DuelRoom duelRoom = duelRoomBQAdapter.getItem(position);
+
+                if (mMcUser == null || !isUserLoggedIn()) {
+                    YGOUtil.showTextToast(R.string.login_mycard);
+                    return;
+                }
+
+                Log.e("WatchActivity", "密码" + duelRoom.getId());
+                Log.e("WatchActivity", "用户id" + mMcUser.getExternal_id());
+
+                String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id());
+
+                ServerInfo serverInfo = new ServerInfo();
+
+                switch (duelRoom.getArenaType()) {
+                    case DuelRoom.TYPE_ARENA_MATCH:
+                        serverInfo.setServerAddr(MyCard.HOST_MC_MATCH);
+                        serverInfo.setPort(MyCard.PORT_MC_MATCH);
+                        break;
+
+                    case DuelRoom.TYPE_ARENA_FUN:
+                    case DuelRoom.TYPE_ARENA_AI:
+                    case DuelRoom.TYPE_ARENA_FUN_MATCH:
+                    case DuelRoom.TYPE_ARENA_FUN_SINGLE:
+                    case DuelRoom.TYPE_ARENA_FUN_TAG:
+                        serverInfo.setServerAddr(MyCard.HOST_MC_OTHER);
+                        serverInfo.setPort(MyCard.PORT_MC_OTHER);
+                        break;
+
+                    default:
+                        YGOUtil.show("未知房间，请更新软件后进入");
+                        return;
+                }
+
+                serverInfo.setPlayerName(mMcUser.getUsername());
+                YGOUtil.joinGame(getActivity(), serverInfo, password);
+            }
+        });
+
+        onRefresh();
+    }
+
+    private void onRefresh() {
+        if (srl_update != null) {
+            srl_update.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
+            srl_update.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    refreshData();
+                }
+            });
+            srl_update.setRefreshing(true);
+        }
+
+        refreshData();
+    }
+
+    private void refreshData() {
+        if (duelManagement != null) {
+            duelManagement.start();
+        }
+    }
+
+    private void updateTitle() {
+        if (getActivity() != null && duelRoomBQAdapter != null) {
+            int size = duelRoomBQAdapter.getData().size();
+            String title = "观战（" + size + "）";
+
+            if (getActivity() instanceof androidx.appcompat.app.AppCompatActivity) {
+                androidx.appcompat.app.AppCompatActivity appCompatActivity = (androidx.appcompat.app.AppCompatActivity) getActivity();
+                if (appCompatActivity.getSupportActionBar() != null) {
+                    appCompatActivity.getSupportActionBar().setTitle(title);
+                }
+            }
+        }
     }
 
     private void queryDuelInfo() {
@@ -438,10 +546,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         funCpvRank.showAnimation(pro, 600);
         funCpvRank.setProgress(pro);
         funCpvRank.setLabelText(String.format("%.1f%%", winRatio));
-        
+
         Integer exp = mcDuelInfo.getExp();
         Integer dp = mcDuelInfo.getDp();
-        
+
         if (funTvLose != null) {
             funTvLose.setText(mcDuelInfo.getFunLose() != null ? mcDuelInfo.getFunLose().toString() : "0");
         }
@@ -478,9 +586,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         matchCpvRank.showAnimation(pro, 600);
         matchCpvRank.setProgress(pro);
         matchCpvRank.setLabelText(String.format("%.1f%%", winRatio));
-        
+
         Integer exp = mcDuelInfo.getExp();
-        
+
         if (matchTvLose != null) {
             matchTvLose.setText(mcDuelInfo.getMatchLose() != null ? mcDuelInfo.getMatchLose().toString() : "0");
         }
@@ -552,8 +660,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         boolean hasUsername = !TextUtils.isEmpty(username);
         boolean hasExternalId = externalId != 0;
 
-        Log.d("MCFragment", "登录状态检查 - username: " + username + ", external_id: " + externalId +
-              ", hasUsername: " + hasUsername + ", hasExternalId: " + hasExternalId);
+        Log.d("MCFragment", "登录状态检查 - username: " + username + ", external_id: " + externalId + ", hasUsername: " + hasUsername + ", hasExternalId: " + hasExternalId);
 
         return hasUsername && hasExternalId;
     }
@@ -660,10 +767,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     }
                 }
                 break;
-            case R.id.ll_athletic:
+            case R.id.btn_athletic:
                 matchAthletic();
                 break;
-            case R.id.ll_entertain:
+            case R.id.btn_entertain:
                 matchEntertain();
                 break;
         }
@@ -711,9 +818,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             return;
         }
 
-        Log.d("MCFragment", "登录成功 - username: " + mcUser.getUsername() +
-              ", external_id: " + mcUser.getExternal_id() +
-              ", token: " + (mcUser.getToken() != null ? "已设置" : "null"));
+        Log.d("MCFragment", "登录成功 - username: " + mcUser.getUsername() + ", external_id: " + mcUser.getExternal_id() + ", token: " + (mcUser.getToken() != null ? "已设置" : "null"));
 
         mMcUser = mcUser;
         serviceManagement.disSerVice();
@@ -781,13 +886,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (TextUtils.isEmpty(exception)) {
             if (currentMessage == null) {
                 List<ChatMessage> data = serviceManagement.getData();
-                if (data != null && data.size() > 0)
-                    currentMessage = data.get(data.size() - 1);
+                if (data != null && data.size() > 0) currentMessage = data.get(data.size() - 1);
             }
-            if (currentMessage == null)
-                tv_message.setText(R.string.loading);
-            else
-                tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
+            if (currentMessage == null) tv_message.setText(R.string.loading);
+            else tv_message.setText(currentMessage.getName() + "：" + currentMessage.getMessage());
         } else {
             Log.e("MyCardFragment", "登录失败" + exception);
             tv_message.setText(R.string.logining_failed);
@@ -823,6 +925,34 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     }
 
     @Override
+    public void onInit(List<DuelRoom> duelRoomList) {
+        if (srl_update != null) {
+            srl_update.setRefreshing(false);
+            srl_update.setEnabled(false);
+        }
+
+        duelRoomBQAdapter.addData(duelRoomList);
+        updateTitle();
+    }
+
+    @Override
+    public void onCreate(List<DuelRoom> duelRoomList) {
+        duelRoomBQAdapter.addData(duelRoomList);
+        updateTitle();
+    }
+
+    @Override
+    public void onUpdate(List<DuelRoom> duelRoomList) {
+
+    }
+
+    @Override
+    public void onDelete(List<DuelRoom> duelRoomList) {
+        duelRoomBQAdapter.remove(duelRoomList);
+        updateTitle();
+    }
+
+    @Override
     public boolean isListenerEffective() {
         return Util.isContextExisted(getActivity());
     }
@@ -830,8 +960,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void addChatMessage(ChatMessage message) {
         currentMessage = message;
-        if (message != null)
-            tv_message.setText(message.getName() + "：" + message.getMessage());
+        if (message != null) tv_message.setText(message.getName() + "：" + message.getMessage());
     }
 
     @Override

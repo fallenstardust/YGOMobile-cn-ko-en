@@ -63,11 +63,16 @@ public class MyCard {
 
     public static final String MYCARD_NEWS_URL = "https://sapi.moecube.com:444/apps.json";
     public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
+    public static final String  URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
+    public static final String  URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
     public static final String URL_MC_MATCH = "https://api.moecube.com/ygopro/match";
     public static final String MYCARD_POST_URL = "https://ygobbs2.com/t/";
     public static final String ARG_ID = "id";
     public static final String ARG_TITLE = "title";
-
+    public static final String HOST_MC_MATCH = "tiramisu.moecube.com";
+    public static final String HOST_MC_OTHER = "tiramisu.moecube.com";
+    public static final int PORT_MC_MATCH = 8911;
+    public static final int PORT_MC_OTHER = 7911;
     public static final String URI_ROOM_HOST = "room.ourygo.top";
     public static final String ARG_MC_NAME = "name";
     public static final String ARG_USERNAME = "username";

@@ -424,4 +424,6 @@
     <string name="win_num">승리</string>
     <string name="lose_num">패배</string>
     <string name="draw_num">무승부</string>
+    <string name="fun_start">오락 매칭</string>
+    <string name="match_start">랭크 매칭Partida Competitiva</string>
 </resources>
