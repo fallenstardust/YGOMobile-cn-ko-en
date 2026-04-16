@@ -551,6 +551,7 @@
                                 </LinearLayout>
                             </LinearLayout>
 
+                            <!--观战布局-->
                             <androidx.coordinatorlayout.widget.CoordinatorLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
@@ -572,9 +573,7 @@
                                             android:layout_width="match_parent"
                                             android:layout_height="match_parent"
                                             android:descendantFocusability="blocksDescendants" />
-
                                     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
                                 </LinearLayout>
 
                                 <com.google.android.material.floatingactionbutton.FloatingActionButton

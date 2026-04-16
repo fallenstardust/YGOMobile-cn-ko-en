@@ -251,7 +251,7 @@ public class YGOUtil {
     }
 
     //加入游戏
-    public static void joinGame(Activity activity, ServerInfo serverInfo, String password, int request) {
+    public static void joinGame(Activity activity, ServerInfo serverInfo, String password) {
         YGOGameOptions options = null;
         if (serverInfo != null) {
             options = new YGOGameOptions();
@@ -260,11 +260,7 @@ public class YGOUtil {
             options.mPort = serverInfo.getPort();
             options.mRoomName = password;
         }
-        YGOStarter.startGame(activity, options, String.valueOf(request));
-    }
-
-    public static void joinGame(Activity activity, ServerInfo serverInfo, String password) {
-        joinGame(activity, serverInfo, password, 0);
+        YGOStarter.startGame(activity, options);
     }
 
     public static String getWatchDuelPassword(String password, int userId) {

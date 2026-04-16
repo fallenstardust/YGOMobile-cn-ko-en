@@ -75,23 +75,23 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) baseViewHolder.getView(R.id.ll_item).getLayoutParams();
         switch (getGroupType(baseViewHolder.getAdapterPosition() - getHeaderLayoutCount())) {
             case ITEM_TYPE_SAME:
-                baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.click_background);
+                baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.list_item_bg);
                 baseViewHolder.setGone(R.id.tv_title, true);
                 baseViewHolder.setGone(R.id.line, true);
                 lp.setMargins(0, 0, 0, 0);
                 break;
             case ITEM_TYPE_DIFFERENT:
-                baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.selected_light);
+                baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.list_item_bg);
                 String typeName;
                 switch (duelRoom.getArenaType()) {
                     case DuelRoom.TYPE_ARENA_MATCH:
-                        typeName = "竞技匹配";
+                        typeName = YGOUtil.s(R.string.match_start);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN:
-                        typeName = "娱乐匹配";
+                        typeName = YGOUtil.s(R.string.fun_start);
                         break;
                     case DuelRoom.TYPE_ARENA_AI:
-                        typeName = "人机模式";
+                        typeName = YGOUtil.s(R.string.bot_mode);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN_SINGLE:
                         typeName = "单局模式";
@@ -118,26 +118,26 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
                 lp.setMargins(0, topMargin, 0, 0);
                 break;
             case ITEM_TYPE_END:
-                baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.selected_light);
+                baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.list_item_bg);
                 baseViewHolder.setGone(R.id.tv_title, true);
                 baseViewHolder.setGone(R.id.line, true);
 
                 lp.setMargins(0, 0, 0, YGOUtil.dp2px(10));
                 break;
             case ITEM_ONE:
-                baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.click_background_radius);
+                baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.list_item_bg);
                 baseViewHolder.setGone(R.id.line, true);
 
                 String typeName1;
                 switch (duelRoom.getArenaType()) {
                     case DuelRoom.TYPE_ARENA_MATCH:
-                        typeName1 = "竞技匹配";
+                        typeName1 = YGOUtil.s(R.string.match_start);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN:
-                        typeName1 = "娱乐匹配";
+                        typeName1 = YGOUtil.s(R.string.fun_start);
                         break;
                     case DuelRoom.TYPE_ARENA_AI:
-                        typeName1 = "人机模式";
+                        typeName1 = YGOUtil.s(R.string.bot_mode);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN_SINGLE:
                         typeName1 = "单局模式";

@@ -152,7 +152,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     updateFunRank(currentMcDuelInfo);
                     updateMatchRank(currentMcDuelInfo);
                     if (currentMcDuelInfo != null) {
-                        tv_match_title.setText("竞技匹配（D.P：" + currentMcDuelInfo.getDp() + ")");
+                        tv_match_title.setText("萌卡匹配（D.P：" + currentMcDuelInfo.getDp() + ")");
                     }
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
@@ -164,6 +164,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     YGOUtil.show("战绩加载失败: " + msg.obj.toString());
                     break;
                 case MC_MATCH_ATHLETIC_OK:
+                case MC_MATCH_ENTERTAIN_OK:
                     if (dialogUtils != null) {
                         dialogUtils.dis();
                     }
@@ -172,25 +173,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         YGOUtil.show("未匹配到对手");
                         break;
                     }
-                    YGOUtil.joinGame(getActivity(), ygoServer, ygoServer.getPassword(), REQUEST_MATCH_ATHLETIC);
+                    YGOUtil.joinGame(getActivity(), ygoServer, ygoServer.getPassword());
                     break;
                 case MC_MATCH_ATHLETIC_EXCEPTION:
-                    if (dialogUtils != null) {
-                        dialogUtils.dis();
-                    }
-                    YGOUtil.show("匹配失败: " + msg.obj.toString());
-                    break;
-                case MC_MATCH_ENTERTAIN_OK:
-                    if (dialogUtils != null) {
-                        dialogUtils.dis();
-                    }
-                    YGOServer ygoServer1 = (YGOServer) msg.obj;
-                    if (ygoServer1 == null) {
-                        YGOUtil.show("未匹配到对手");
-                        break;
-                    }
-                    YGOUtil.joinGame(getActivity(), ygoServer1, ygoServer1.getPassword(), REQUEST_MATCH_ENTERTAIN);
-                    break;
                 case MC_MATCH_ENTERTAIN_EXCEPTION:
                     if (dialogUtils != null) {
                         dialogUtils.dis();
@@ -432,8 +417,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     return;
                 }
 
-                Log.e("WatchActivity", "密码" + duelRoom.getId());
-                Log.e("WatchActivity", "用户id" + mMcUser.getExternal_id());
+                Log.e("WatchDuel mycardfragment", "密码" + duelRoom.getId());
+                Log.e("WatchDuel mycardfragment", "用户id" + mMcUser.getExternal_id());
 
                 String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id());
 
