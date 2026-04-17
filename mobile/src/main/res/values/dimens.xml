@@ -112,5 +112,21 @@
     <dimen name="dp_10">10dp</dimen>
     <dimen name="dp_40">40dp</dimen>
 
+    <dimen name="tab_normal_text_size_m">12sp</dimen>
+    <dimen name="tab_select_text_size_m">20sp</dimen>
 
+    <dimen name="tab_normal_text_size_l">14sp</dimen>
+    <dimen name="tab_select_text_size_l">24sp</dimen>
+    <dimen name="mycard_rank_cpv_size">160dp</dimen>
+    <dimen name="mycard_rank_cpv_text_size">28sp</dimen>
+    <dimen name="mycard_rank_cpv_text_s_size">12sp</dimen>
+    <dimen name="mycard_rank_cpv_text_s_top_margin">57dp</dimen>
+    <dimen name="mycard_rank_cpv_width">16dp</dimen>
+    <dimen name="mycard_rank_icon_size">22dp</dimen>
+    <dimen name="mycard_rank_text_s_size">15sp</dimen>
+    <dimen name="mycard_win_icon_size">18dp</dimen>
+    <dimen name="mycard_lose_icon_size">18dp</dimen>
+    <dimen name="mycard_rank_text_size">16sp</dimen>
+    <dimen name="mycard_win_text_size">16sp</dimen>
+    <dimen name="mycard_lose_text_size">16sp</dimen>
 </resources>

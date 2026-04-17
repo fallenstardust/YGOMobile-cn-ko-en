@@ -9,8 +9,8 @@ android {
         minSdkVersion 25
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 312013005
-        versionName "3.13.3"
+        versionCode 312013006
+        versionName "3.13.3fix1"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "21.3.6528147"
@@ -144,4 +144,6 @@ dependencies {
     // jsoup HTML parser library @ https://jsoup.org/
     implementation 'org.jsoup:jsoup:1.15.3'
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
+    // WebSocket 客户端库
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
 }

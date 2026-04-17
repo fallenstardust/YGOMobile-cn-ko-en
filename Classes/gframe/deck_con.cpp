@@ -2052,7 +2052,7 @@ bool DeckBuilder::check_limit(const CardDataC* pointer) {
 
 	// Lambda 函数：尝试消费某张卡所需的信用点数，若超限则返回false
 	auto spend_credit = [&](uint32_t code) {
-        ALOGD("handle_card, code=%d", code);
+        ALOGD("spend_credit, code=%d", code);
 		// 查找该卡所需信用点配置
 		auto code_credit_it = filterList->credits.find(code);
 		if(code_credit_it == filterList->credits.end())
@@ -2087,38 +2087,38 @@ bool DeckBuilder::check_limit(const CardDataC* pointer) {
 	};
 
 	// Lambda 函数：处理单张卡的计数和点数检查
-	auto handle_card = [&](ygo::code_pointer& card) {
+	auto handle_card = [&](const CardDataC* card) {
 		// 如果是目标卡，则减少其剩余可放数量
-		if (card->second.get_duel_code() == limitcode) {
+		if (card->get_duel_code() == limitcode) {
 			limit--;
 			if(limit <= 0)
 				return false; // 已达最大数量限制
 		}
 
 		// 获取真实卡号并尝试扣减信用点
-        auto code = (card->second.alias != 0 &&
-                     abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) > 0 &&
-                     abs(static_cast<int>(card->first) - static_cast<int>(card->second.alias)) <= 20)
-                    ? card->second.alias
-                    : card->first;
+        auto code = (card->alias != 0 &&
+                     abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) > 0 &&
+                     abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) <= 20)
+                    ? card->alias
+                    : card->code;
         return spend_credit(code);
 	};
 
 	// 遍历主卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.main) {
-		if(!handle_card((code_pointer &) card))
+		if(!handle_card(card))
 			return false;
 	}
 
 	// 遍历额外卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.extra) {
-		if(!handle_card((code_pointer &) card))
+		if(!handle_card(card))
 			return false;
 	}
 
 	// 遍历副卡组中的所有卡片进行检查
 	for (auto& card : deckManager.current_deck.side) {
-		if(!handle_card((code_pointer &) card))
+		if(!handle_card(card))
 			return false;
 	}
 

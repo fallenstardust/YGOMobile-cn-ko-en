@@ -14,8 +14,6 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.tencent.smtt.sdk.WebView;
 
 import org.json.JSONArray;
@@ -26,30 +24,37 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.bean.OYHeader;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
+import cn.garymb.ygomobile.ui.mycard.base.OnUserDuelInfoQueryListener;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
+import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
+import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
 public class MyCard {
 
-    private static final String mHomeUrl = "https://mycard.world/mobile/";
+    public static final String mHomeUrl = "https://mycard.world/mobile/";
     private static final String mArenaUrl = "https://mycard.world/ygopro/arena/";
     public static final String mCommunityReportUrl = "https://ygobbs2.com/t/bug%E5%8F%8D%E9%A6%88/";
     private static final String mCommunityUrl = "https://ygobbs2.com/login";
@@ -58,46 +63,45 @@ public class MyCard {
     public static final String MC_MAIN_URL = "https://mycard.world/mobile/ygopro/lobby";
 
     public static final String MYCARD_NEWS_URL = "https://sapi.moecube.com:444/apps.json";
+    public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
+    public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
+    public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
+    public static final String URL_MC_MATCH = "https://api.moecube.com/ygopro/match";
     public static final String MYCARD_POST_URL = "https://ygobbs2.com/t/";
     public static final String ARG_ID = "id";
     public static final String ARG_TITLE = "title";
-
-
+    public static final String HOST_MC_MATCH = "tiramisu.moecube.com";
+    public static final String HOST_MC_OTHER = "tiramisu.moecube.com";
+    public static final int PORT_MC_MATCH = 8911;
+    public static final int PORT_MC_OTHER = 7911;
+    public static final String URI_ROOM_HOST = "room.ourygo.top";
     public static final String ARG_MC_NAME = "name";
+    public static final String ARG_USERNAME = "username";
     public static final String ARG_YGOPRO = "ygopro";
     public static final String ARG_ZH_CN = "zh-CN";
     public static final String ARG_IMAGE = "image";
     public static final String ARG_UPDATE_AT = "updated_at";
     public static final String ARG_URL = "url";
     public static final String ARG_NEWS = "news";
+    public static final String ARG_EVENT = "event";
+    public static final String ARG_DATA = "data";
+    public static final String ARG_ADDRESS = "address";
+    public static final String ARG_PORT = "port";
+    public static final String ARG_MC_PASSWORD = "password";
+    public static final String ARG_ARENA = "arena";
+    public static final String ARG_LOCALE = "locale";
+    public static final String ARG_ATHLETIC = "athletic";
+    public static final String ARG_ENTERTAIN = "entertain";
+    public static int U16_SECRET = 0;
     public static final String URL_MC_SIGN_UP = "https://accounts.moecube.com/signup";
     public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
+    public static final String URL_MC_AUTH_USER = "https://sapi.moecube.com:444/accounts/authUser";
+    public static final int MATCH_TYPE_ATHLETIC = 0;
+    public static final int MATCH_TYPE_ENTERTAIN = 1;
+
     private final DefWebViewClient mDefWebViewClient = new DefWebViewClient() {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-//                if (url.startsWith(return_sso_url)) {
-//
-//
-//                    String sso = Uri.parse(url).getQueryParameter("sso");
-//                    String data = new String(Base64.decode(Uri.parse(url).getQueryParameter("sso"), Base64.NO_WRAP), UTF_8);
-//                    Uri info = new Uri.Builder().encodedQuery(data).build();
-//                    mUser.external_id = Integer.parseInt(info.getQueryParameter("external_id"));
-//                    mUser.username = info.getQueryParameter("username");
-//                    mUser.name = info.getQueryParameter("name");
-//                    mUser.email = info.getQueryParameter("email");
-//                    mUser.avatar_url = info.getQueryParameter("avatar_url");
-//                    mUser.admin = info.getBooleanQueryParameter("admin", false);
-//                    mUser.moderator = info.getBooleanQueryParameter("moderator", false);
-//                    lastModified.edit().putString("user_external_id", mUser.external_id + "").apply();
-//                    lastModified.edit().putString("user_name", mUser.username).apply();
-//                    //UserManagement.setUserName(mUser.username);
-//                    //UserManagement.setUserPassword(mUser.external_id+"");
-//                    mUser.login = true;
-//                    if (getMyCardListener() != null) {
-//                        getMyCardListener().onLogin(mUser.name, mUser.avatar_url, null);
-//                    }
-//                    return false;
-//                }
             return super.shouldOverrideUrlLoading(view, url);
         }
     };
@@ -110,12 +114,161 @@ public class MyCard {
         lastModified = context.getSharedPreferences("lastModified", Context.MODE_PRIVATE);
     }
 
-    public static String getMCLogoutUrl(){
-        String home="return_sso_url="+Uri.encode(mHomeUrl);
-        String base64=Base64.encodeToString(home.getBytes(), Base64.NO_WRAP);
+    public static void findUserDuelInfo(String userName, OnUserDuelInfoQueryListener onUserDuelInfoQueryListener) {
+        Map<String, Object> map = new HashMap<>();
+        map.put(ARG_USERNAME, userName);
+
+        OkhttpUtil.get(MYCARD_USER_DUEL_URL, map, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                onUserDuelInfoQueryListener.onUserDuelInfoQuery(null, e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String json = response.body().string();
+                onUserDuelInfoQueryListener.onUserDuelInfoQuery(
+                        JsonUtil.getUserDuelInfo(json),
+                        null
+                );
+            }
+        });
+    }
+
+    public static void cancelMatch() {
+        OkhttpUtil.cancelTag(ARG_ARENA);
+    }
+
+    public static void startMatch(McUser mcUser, int matchType, OnMcMatchListener onMcMatchListener) {
+        if (TextUtils.isEmpty(mcUser.getUsername()) || mcUser.getExternal_id() == 0) {
+            onMcMatchListener.onMcMatch(null, null, "用户信息为空，请退出重新登录");
+            return;
+        }
+
+        Uri.Builder uriBuilder = Uri.parse(URL_MC_MATCH).buildUpon();
+        uriBuilder.appendQueryParameter(ARG_LOCALE, ARG_ZH_CN);
+
+        switch (matchType) {
+            case MATCH_TYPE_ATHLETIC:
+                uriBuilder.appendQueryParameter(ARG_ARENA, ARG_ATHLETIC);
+                break;
+            case MATCH_TYPE_ENTERTAIN:
+                uriBuilder.appendQueryParameter(ARG_ARENA, ARG_ENTERTAIN);
+                break;
+            default:
+                onMcMatchListener.onMcMatch(null, null, "未知匹配类型");
+                return;
+        }
+
+        VUiKit.defer().when(() -> {
+            String token = SharedPreferenceUtil.getServerToken();
+            if (TextUtils.isEmpty(token)) {
+                throw new Exception("token not found");
+            }
+
+            int u16SecretStr = MyCard.getUserU16Secret(token);
+            if (u16SecretStr == 0) {
+                throw new Exception("获取u16Secret失败");
+            }
+
+            return u16SecretStr;
+        }).fail((e) -> {
+            Log.e("MyCard", "获取u16Secret失败: " + e);
+        }).done((u16Secret) -> {
+            U16_SECRET = u16Secret;
+        });
+
+        String authHeader = "Basic " + YGOUtil.message2Base64(mcUser.getUsername() + ":" + U16_SECRET);
+        Log.i("MyCard", "U16_SECRET: " + U16_SECRET);
+        OYHeader oyHeader = new OYHeader(OYHeader.HEADER_POSITION_AUTHORIZATION, authHeader);
+
+        OkhttpUtil.post(uriBuilder.toString(), null, oyHeader, ARG_ARENA, 30, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("MyCard", e.getMessage() + "失败 " + e);
+                try {
+                    FileLogUtil.write("失败 " + e);
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+
+                String message = e.getMessage();
+                if (!TextUtils.isEmpty(message) && message.equals("Canceled")) {
+                    return;
+                }
+                if (!TextUtils.isEmpty(message) && message.equals("timeout")) {
+                    cancelMatch();
+                    onMcMatchListener.onMcMatch(null, null, null);
+                    return;
+                }
+                onMcMatchListener.onMcMatch(null, null, e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String body = response.body().string();
+                Log.e("MyCard", "匹配成功" + body);
+
+                if (TextUtils.isEmpty(body)) {
+                    onMcMatchListener.onMcMatch(null, null, "匹配失败");
+                    return;
+                }
+
+                try {
+                    YGOServer ygoServer = JsonUtil.getMatchYGOServer(body);
+                    if (ygoServer != null) {
+                        ygoServer.setPlayerName(mcUser.getUsername());
+                        onMcMatchListener.onMcMatch(ygoServer, ygoServer.getPassword(), null);
+                    } else {
+                        onMcMatchListener.onMcMatch(null, null, "匹配失败");
+                    }
+                } catch (JSONException e) {
+                    onMcMatchListener.onMcMatch(null, null, "" + e);
+                }
+
+                Log.e("MyCard", "内容 " + body);
+                try {
+                    FileLogUtil.write("内容 " + body);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public static int getUserU16Secret(String token) throws IOException {
+        if (token == null || token.isEmpty()) {
+            throw new IOException("token not found");
+        }
+
+        String url = "https://sapi.moecube.com:444/accounts/authUser";
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + token);
+
+        Response response = OkhttpUtil.synchronousGet(url, null, headers);
+        String responseBody = response.body().string();
+
+        if (!response.isSuccessful()) {
+            throw new IOException("获取用户密钥失败: " + responseBody);
+        }
+
+        Gson gson = new Gson();
+        U16SecretResponse secretResponse = gson.fromJson(responseBody, U16SecretResponse.class);
+
+        if (secretResponse == null || secretResponse.u16Secret == 0) {
+            throw new IOException("获取用户密钥失败: 返回数据无效");
+        }
+
+        return secretResponse.u16Secret;
+    }
+
+    public static String getMCLogoutUrl() {
+        String home = "return_sso_url=" + Uri.encode(mHomeUrl);
+        String base64 = Base64.encodeToString(home.getBytes(), Base64.NO_WRAP);
         Uri.Builder uri = Uri.parse(URL_MC_LOGOUT)
                 .buildUpon();
-        uri.appendQueryParameter("sso",base64);
+        uri.appendQueryParameter("sso", base64);
         return uri.build().toString();
     }
 
@@ -190,7 +343,7 @@ public class MyCard {
     }
 
     public interface MyCardListener {
-        void onLogin(McUser mcUser,String exception);
+        void onLogin(McUser mcUser, String exception);
 
         void onUpdate(String name, String icon, String statu);
 
@@ -336,7 +489,7 @@ public class MyCard {
         }
 
         @JavascriptInterface
-        public void loginUser(String userInfo,String exception){
+        public void loginUser(String userInfo, String exception) {
             McUser mcUser = null;
             if (TextUtils.isEmpty(exception)) {
                 mcUser = new Gson().fromJson(userInfo, McUser.class);
@@ -346,15 +499,15 @@ public class MyCard {
                 SharedPreferenceUtil.setServerUserId(mcUser.getExternal_id());
                 SharedPreferenceUtil.setMyCardUserName(mcUser.getUsername());
             }
-            if (mListener!=null)
-                mListener.onLogin(mcUser,exception);
+            if (mListener != null)
+                mListener.onLogin(mcUser, exception);
         }
 
         @JavascriptInterface
         public void updateUser(String name, String headurl, String status) {
-            McUser mcUser=UserManagement.getDx().getMcUser();
-            if (mcUser==null)
-                mcUser=new McUser();
+            McUser mcUser = UserManagement.getDx().getMcUser();
+            if (mcUser == null)
+                mcUser = new McUser();
             mcUser.setUsername(name);
             mcUser.setAvatar_url(headurl);
             mcUser.setEmail(status);
@@ -365,9 +518,9 @@ public class MyCard {
         }
 
         @JavascriptInterface
-        public void logoutUser(String message){
+        public void logoutUser(String message) {
             UserManagement.getDx().logout();
-            if (mListener!=null) {
+            if (mListener != null) {
                 mListener.onLogout(message);
             }
         }
@@ -431,5 +584,9 @@ public class MyCard {
 
     public static String getCachePath() {
         return App.get().getExternalFilesDir("cache").getAbsolutePath();
+    }
+
+    public static class U16SecretResponse {
+        public int u16Secret;
     }
 }

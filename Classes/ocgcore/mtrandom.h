@@ -8,6 +8,7 @@
 #ifndef MTRANDOM_H_
 #define MTRANDOM_H_
 
+#include <cstdint>
 #include <random>
 #include <vector>
 #include <utility>
@@ -16,22 +17,21 @@ class mtrandom {
 public:
 	const unsigned int rand_max{ std::mt19937::max() };
 
-	mtrandom() :
-		rng() {}
-	mtrandom(uint32_t seq[], size_t len) {
-		std::seed_seq q(seq, seq + len);
-		rng.seed(q);
-	}
-	explicit mtrandom(uint_fast32_t value) :
-		rng(value) {}
-	mtrandom(std::seed_seq& q) :
-		rng(q) {}
+	mtrandom() = default;
+	explicit mtrandom(uint_fast32_t value)
+		: rng(value) {}
+	explicit mtrandom(std::seed_seq& q)
+		: rng(q) {}
+	explicit mtrandom(std::seed_seq&& q)
+		: rng(q) {}
+	mtrandom(const uint32_t seq[], size_t len)
+		: mtrandom(std::seed_seq(seq, seq + len)) {}
 	
 	mtrandom(const mtrandom& other) = delete;
 	void operator=(const mtrandom& other) = delete;
 
 	// mersenne_twister_engine
-	void seed(uint32_t seq[], size_t len) {
+	void seed(const uint32_t seq[], size_t len) {
 		std::seed_seq q(seq, seq + len);
 		rng.seed(q);
 	}
@@ -98,18 +98,17 @@ public:
 		void shuffle_vector(std::vector<T>& v, int first, int last, int version) {
 			if ((size_t)last > v.size())
 				last = (int)v.size();
-
-			// 根据版本选择对应的随机数生成器
-			auto distribution = &mtrandom::get_random_integer_v2;
-			if (version == 1)
-				distribution = &mtrandom::get_random_integer_v1;
-
-			// 执行Fisher-Yates洗牌算法
+		auto shuffle = [&](auto&& distribution) {
 			for (int i = first; i < last - 1; ++i) {
-				int r = (this->*distribution)(i, last - 1);
+				int r = distribution(i, last - 1);
 				std::swap(v[i], v[r]);
 			}
-		}
+		};
+		if (version == 1)
+			shuffle([this](int l, int h) { return get_random_integer_v1(l, h); });
+		else
+			shuffle([this](int l, int h) { return get_random_integer_v2(l, h); });
+	}
 
     /**
     * @brief 对向量进行洗牌操作

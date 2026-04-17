@@ -3,11 +3,13 @@ package cn.garymb.ygomobile.utils;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import cn.garymb.ygomobile.bean.OYHeader;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.ConnectionPool;
@@ -15,10 +17,12 @@ import okhttp3.FormBody;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.Util;
 
 public class OkhttpUtil {
 
@@ -129,6 +133,83 @@ public class OkhttpUtil {
         client.newCall(request.build()).enqueue(callback);
     }
 
+    public static void post(String address, Map<String, Object> map, OYHeader oyHeader, String tag, int timeout, Callback callback) {
+        post(address, map, null, oyHeader, tag, timeout, callback);
+    }
+
+    public static void post(String address, Map<String, Object> map, String cookie, OYHeader oyHeader, String tag, int timeout, Callback callback) {
+        OkHttpClient okHttpClient = client;
+        if (timeout != 0) {
+            okHttpClient = client.newBuilder()
+                    .connectTimeout(timeout, TimeUnit.SECONDS)
+                    .readTimeout(timeout, TimeUnit.SECONDS)
+                    .build();
+        }
+
+        MultipartBody.Builder builder = new MultipartBody.Builder();
+        if (map != null) {
+            builder.setType(MultipartBody.FORM);
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+
+                if (value instanceof List) {
+                    List<?> list = (List<?>) value;
+                    for (Object item : list) {
+                        if (item instanceof File) {
+                            File file = (File) item;
+                            builder.addFormDataPart(key, file.getName(),
+                                    RequestBody.create(MediaType.parse("multipart/form-data"), file));
+                        } else {
+                            builder.addFormDataPart(key, item != null ? item.toString() : "");
+                        }
+                    }
+                } else if (value instanceof File) {
+                    File file = (File) value;
+                    builder.addFormDataPart(key, file.getName(),
+                            RequestBody.create(MediaType.parse("multipart/form-data"), file));
+                } else if (value.getClass().isArray()) {
+                    Object[] array = (Object[]) value;
+                    for (Object item : array) {
+                        if (item instanceof File) {
+                            File file = (File) item;
+                            builder.addFormDataPart(key, file.getName(),
+                                    RequestBody.create(MediaType.parse("multipart/form-data"), file));
+                        } else {
+                            Log.e("OkHttpUtil", key + "添加数组" + item);
+                            builder.addFormDataPart(key, item != null ? item.toString() : "");
+                        }
+                    }
+                } else {
+                    builder.addFormDataPart(key, value != null ? value.toString() : "");
+                }
+            }
+        }
+
+        Request.Builder request = new Request.Builder()
+                .url(address);
+
+        if (oyHeader != null) {
+            request.header(oyHeader.getName(), oyHeader.getValue());
+        }
+
+        if (!TextUtils.isEmpty(tag)) {
+            request.tag(tag);
+        }
+
+        if (map != null) {
+            request.post(builder.build());
+        } else {
+            request.post(Util.EMPTY_REQUEST);
+        }
+
+        if (!TextUtils.isEmpty(cookie)) {
+            request.addHeader("cookie", cookie);
+        }
+
+        okHttpClient.newCall(request.build()).enqueue(callback);
+    }
+
     public static void cancelTag(Object tag) {
         for (Call call : client.dispatcher().queuedCalls()) {
             if (tag.equals(call.request().tag())) {
@@ -171,8 +252,8 @@ public class OkhttpUtil {
     }
 
     /**
-     * 将byte[]类型的十六进制数据（不进行解码）转为字符串格式。如，byte[]中存储的值为0xab78，则转换后的字符串的内容为“ab78”，
-     * byte[]中存储的值为0xb78，则转换后的字符串的内容为“0b78”
+     * 将byte[]类型的十六进制数据（不进行解码）转为字符串格式。如，byte[]中存储的值为0xab78，则转换后的字符串的内容为"ab78"，
+     * byte[]中存储的值为0xb78，则转换后的字符串的内容为"0b78"
      * 可用于将byte中的数据不做改变地打印到log中。
      *
      * @param buf

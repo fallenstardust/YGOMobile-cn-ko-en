@@ -26,18 +26,18 @@
     <string name="bg">Fundo do Duelo</string>
     <string name="bg_menu">Fundo do Menu</string>
     <string name="bg_deck">Fundo do Deck</string>
-	<string name="action_add_server">Adicionar servidor</string>
-	<string name="action_download_expansions">Baixar \nExpansões</string>
+    <string name="action_add_server">Adicionar servidor</string>
+    <string name="action_download_expansions">Baixar \nExpansões</string>
     <string name="no_find_file_selectotr">Selecionador de arquivos não encontrado</string>
-	<string name="no_find_image_selector">Selecionador de imagens não encontrado</string>
+    <string name="no_find_image_selector">Selecionador de imagens não encontrado</string>
     <string name="no_find_image_cutor">Ferramenta de recorte não encontrada</string>
     <string name="help">Ajuda</string>
     <string name="settings">Configuração</string>
     <string name="quit">Sair</string>
     <string name="quit_tip">Deseja sair do aplicativo?</string>
-	<string name="back_tip">Pressione a tecla \'Voltar\' novamente para sair do jogo.</string>
-	<string name="string_help_text">O aplicativo atual não possui as permissões necessárias.\nToque em Configuração -> Permissões -> Habilite as permissões necessárias.</string>
-	<string name="fetch_ex_card">Obtendo cartas pré-lançamento da web, por favor, aguarde...</string>
+    <string name="back_tip">Pressione a tecla \'Voltar\' novamente para sair do jogo.</string>
+    <string name="string_help_text">O aplicativo atual não possui as permissões necessárias.\nToque em Configuração -> Permissões -> Habilite as permissões necessárias.</string>
+    <string name="fetch_ex_card">Obtendo cartas pré-lançamento da web, por favor, aguarde...</string>
     <string name="ex_card_list_title">Lista de Cartas Pré-Lançamento</string>
     <string name="ex_card_log_title">Registro de atualização</string>
     <string name="ex_card_report_title">Reporte</string>
@@ -61,7 +61,7 @@
     <string name="settings_game_res_path">HostIP</string>
     <string name="settings_game_core_version">Versão do núcleo do jogo</string>
     <string name="settings_category_diy">Personalizar</string>
-	<string name="settings_game">Opções do Jogo</string>
+    <string name="settings_game">Opções do Jogo</string>
     <string name="settings_game_diy_cover">Fundo do Jogo</string>
     <string name="settings_game_diy_card_back">Capa da Carta</string>
     <string name="settings_game_diy_card_db">Usar banco de dados personalizado</string>
@@ -100,20 +100,20 @@
     <string name="deck_manager">Deck</string>
     <string name="category_manager">Gerenciar categorias</string>
     <string name="search">Buscar</string>
-	<string name="find_in_page">Buscar:</string>
+    <string name="find_in_page">Buscar:</string>
     <string name="search_open">Filtrar</string>
     <string name="search_close">Fechar</string>
-	<string name="reset">Reiniciar</string>
+    <string name="reset">Reiniciar</string>
     <string name="hit_keyword1">palavras-chave (separadas por ESPAÇO)</string>
     <string name="hit_atk">ATK</string>
     <string name="hit_def">DEF</string>
     <string name="label_race">Raça:</string>
     <string name="label_ot">Regra:</string>
-	<string name="label_ot_OCG">OCG</string>
-	<string name="label_ot_TCG">TCG</string>
-	<string name="label_ot_SC_OCG">Chino.S OCG</string>
-	<string name="label_ot_CUSTOM">Personalizado</string>
-	<string name="label_ot_No_Exclusive">Não exclusivo</string>
+    <string name="label_ot_OCG">OCG</string>
+    <string name="label_ot_TCG">TCG</string>
+    <string name="label_ot_SC_OCG">Chino.S OCG</string>
+    <string name="label_ot_CUSTOM">Personalizado</string>
+    <string name="label_ot_No_Exclusive">Não exclusivo</string>
     <string name="label_ot_All">Todo</string>
     <string name="label_limit">Tipo de Limite</string>
     <string name="label_limitlist">Banlist:</string>
@@ -121,26 +121,26 @@
     <string name="label_set">Arquétipo:</string>
     <string name="label_level">Nvl/Rng/Lnk:</string>
     <string name="label_attr">Atributo:</string>
-	<string name="label_category">Categoria</string>
+    <string name="label_category">Categoria</string>
     <string name="linkmarker">F.Enlace:</string>
     <string name="searching">Buscar</string>
     <string name="card_faq">FAQ</string>
     <string name="no_webbrowser">Nenhum navegador da web instalado</string>
     <string name="load_game">Carregando jogo</string>
-	<string name="last_path">Diretório anterior</string>
+    <string name="last_path">Diretório anterior</string>
     <string name="create_folder">Nova pasta</string>
     <string name="intpu_name">Inserir nome do deck</string>
-	<string name="the_name_is_folder">O nome da pasta</string>
+    <string name="the_name_is_folder">O nome da pasta</string>
     <string name="tab_search">Buscar</string>
     <string name="tab_result">Resultado</string>
     <string name="tab_manager">Deck</string>
-	<string name="deck_main" formatted="false">Main:%d  Monstro:%d Magia:%d Armadilha:%d</string>
+    <string name="deck_main" formatted="false">Main:%d  Monstro:%d Magia:%d Armadilha:%d</string>
     <string name="deck_extra" formatted="false">Extra:%d  Fusão:%d Sincro:%d Xyz:%d Link:%d</string>
     <string name="deck_side" formatted="false">Side:%d  Monstro:%d Magia:%d Armadilha:%d</string>
     <string name="card_result">Lista de Cartas</string>
     <string name="unsort">Desorganizar deck</string>
     <string name="sort">Organizar deck</string>
-	<string name="card_add_main">+Main Deck</string>
+    <string name="card_add_main">+Main Deck</string>
     <string name="card_add_side">+Side Deck</string>
     <string name="new_deck">Novo</string>
     <string name="move_deck">Mover deck</string>
@@ -152,7 +152,7 @@
     <string name="deck_list">Deck</string>
     <string name="loading">Carregando...</string>
     <string name="loading_failed">Carga falha</string>
-	<string name="tip">Informação</string>
+    <string name="tip">Informação</string>
     <string name="question">Pergunta</string>
     <string name="question_delete_deck">Deseja remover este deck?</string>
     <string name="noname">Sem nome</string>
@@ -164,7 +164,7 @@
     <string name="tip_card_max" formatted="false">Número máximo de cartas permitidas: %d</string>
     <string name="file_exist">O arquivo já existe</string>
     <string name="share_deck">Compartilhar deck</string>
-	<string name="code_share">Compartilhar código</string>
+    <string name="code_share">Compartilhar código</string>
     <string name="screenshoot">Compartilhar captura de tela</string>
     <string name="ydk_share">Compartilhar arquivo ydk</string>
     <string name="no_share_app">Nenhum aplicativo para compartilhar foi encontrado</string>
@@ -175,7 +175,7 @@
     <string name="settings_game_sensor_refresh">Sensor de Atualização do Jogo</string>
     <string name="label_pendulum">Escala Pêndulo:</string>
     <string name="all">Todo</string>
-	<string name="donation">Doação</string>
+    <string name="donation">Doação</string>
     <string name="refresh">Atualizar</string>
     <string name="select_deck">Escolher deck</string>
     <string name="quit_deck_tip">O deck ainda não foi salvo, você deseja sair do aplicativo?</string>
@@ -188,7 +188,7 @@
     <string name="clear_deck">Limpar deck</string>
     <string name="question_clear_deck">Limpar este deck?</string>
     <string name="delete_server_info">Excluir a informação deste servidor?</string>
-	<string name="exit_edit_mode">Sair do Modo de Edição</string>
+    <string name="exit_edit_mode">Sair do Modo de Edição</string>
     <string name="logo_text">10º Aniversário do YGOMobile! Muito obrigado pelo seu apoio contínuo até hoje!</string>
     <string name="start_game_error">Não foi possível entrar no jogo</string>
     <string name="set_font_size">Tamanho da fonte no jogo</string>
@@ -210,14 +210,14 @@
     <string name="mc_chat">Sala de chat</string>
     <string name="noting_to_send">O conteúdo a enviar não pode estar vazio</string>
     <string name="sending_failed">Falha ao enviar</string>
-	<string name="login_mycard">Iniciar sessão</string>
+    <string name="login_mycard">Iniciar sessão</string>
     <string name="logout_mycard">Deseja sair do MyCard?</string>
     <string name="logining_in">Iniciando sessão...</string>
     <string name="logining_failed">Erro ao iniciar sessão, tente novamente</string>
     <string name="failed_reason">O início de sessão falhou devido a: </string>
     <string name="notice_verify_email">Somente a conta de e-mail verificada pode fazer login na sala de bate-papo</string>
     <string name="send">Enviar</string>
-	<string name="mc_home">Início</string>
+    <string name="mc_home">Início</string>
     <string name="bbs">Comunidade</string>
     <string name="McNews">Notícias</string>
     <string name="settings_pref_settings_only_game">Inicie o jogo diretamente</string>
@@ -252,7 +252,7 @@
     <string name="avatarSelect">Toque no avatar para alterar a imagem</string>
     <string name="ClickLinkArrows">Toque nas setas</string>
     <string name="tip_no_permission" formatted="false">A permissão %s foi negada.</string>
-	<string name="Already_Lastest">Nenhuma nova versão encontrada. Por que não verificar as atualizações do autor? Talvez haja notícias importantes</string>
+    <string name="Already_Lastest">Nenhuma nova versão encontrada. Por que não verificar as atualizações do autor? Talvez haja notícias importantes</string>
     <string name="about_immersive_mode">O teclado virtual será ocultado</string>
     <string name="Download">Baixar</string>
     <string name="Downloading">Baixando, por favor espere...</string>
@@ -262,7 +262,7 @@
     <string name="Checking_Update">Buscando atualizações, por favor espere...</string>
     <string name="Found_Update">Uma nova atualização foi encontrada, você deseja baixá-la?</string>
     <string name="Checking_Update_Failed">Erro ao verificar a atualização</string>
-	<string name="Download_Precard_Failed">Falha ao baixar as cartas pré-lançamento</string>
+    <string name="Download_Precard_Failed">Falha ao baixar as cartas pré-lançamento</string>
     <string name="Pre_Server_Name">Servidor Super-pre Mycard</string>
     <string name="Ask_to_Change_Other_Way">Não foi possível conectar ao servidor principal, tentando um servidor alternativo...</string>
     <string name="DuelAssistant">O Assistente de Duelo está ativado</string>
@@ -389,5 +389,16 @@
     <string name="reject">Recuso</string>
     <string name="privacy_policy_accepted">Você concordou com a Política de Privacidade. Agradecemos sua compreensão e confiança.</string>
     <string name="privacy_policy_rejected_exit">Você recusou a Política de Privacidade. Esperamos ter outra oportunidade da próxima vez.</string>
+    <string name="fun_record">Histórico Casual</string>
+    <string name="fun_rank">Ranking Casual</string>
+    <string name="match_record">Histórico Competitivo</string>
+    <string name="match_rank">Ranking Competitivo</string>
+    <string name="win_num">Vitórias</string>
+    <string name="lose_num">Derrotas</string>
+    <string name="draw_num">Empates</string>
+    <string name="fun_start">Partida Casual</string>
+    <string name="match_start">Partida Competitiva</string>
+    <string name="watch_duel">Ver Duelo</string>
+    <string name="waiting_message">Aguardando partida, por favor aguarde...</string>
 </resources>
 

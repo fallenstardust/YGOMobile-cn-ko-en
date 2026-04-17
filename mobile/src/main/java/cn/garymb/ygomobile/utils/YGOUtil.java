@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.utils;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -8,11 +7,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -24,16 +21,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ourygo.lib.duelassistant.util.PermissionUtil;
 import com.ourygo.lib.duelassistant.util.Util;
 
-import org.jdeferred.android.AndroidDeferredManager;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
-
+import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.App;
+import cn.garymb.ygomobile.YGOStarter;
+import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -68,7 +59,7 @@ public class YGOUtil {
 
     public static void showTextToast(int gravity, String message, int duration) {
         mToast = Toast.makeText(App.get(), message, duration);
-        mToast.setGravity(gravity,0, 0);
+        mToast.setGravity(gravity, 0, 0);
         mToast.setText(message);
         mToast.show();
     }
@@ -144,7 +135,7 @@ public class YGOUtil {
         cmb.setPrimaryClip(ClipData.newPlainText(null, message));//复制命令
     }
 
-    public static boolean isVisBottom(RecyclerView recyclerView){
+    public static boolean isVisBottom(RecyclerView recyclerView) {
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         //屏幕中最后一个可见子项的position
         int lastVisibleItemPosition = layoutManager.findLastCompletelyVisibleItemPosition();
@@ -228,7 +219,7 @@ public class YGOUtil {
      * dp转px
      */
     public static int dp2px(float dp) {
-        if(dp == 0){
+        if (dp == 0) {
             return 0;
         }
         float density = App.get().getResources().getDisplayMetrics().density;
@@ -242,27 +233,57 @@ public class YGOUtil {
         return dp;
     }
 
-    /**
-     * 将时间戳转换为 ISO 8601 格式的时间字符串
-     */
-    @SuppressLint("SimpleDateFormat")
-    public static String convertMillisToIsoString(long timeMillis) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return sdf.format(new Date(timeMillis));
+    public static int px2sp(float pxValue) {
+        float fontScale = App.get().getResources().getDisplayMetrics().scaledDensity;
+        return (int) (pxValue / fontScale + 0.5f);
     }
 
-    // 方法1：使用SimpleDateFormat解析ISO 8601格式
-    public static long parseIsoDateToTimestamp(String isoDateString) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-            Date date = sdf.parse(isoDateString);
-            return date.getTime();
-        } catch (ParseException e) {
-            LogUtil.e("parseIsoDateToTimestamp","解析失败: ", e);
-            return 0; // 解析失败返回0
+    public static int px(int dimen) {
+        return App.get().getResources().getDimensionPixelOffset(dimen);
+    }
+
+    public static int sp(int dimen) {
+        return px2sp((float) px(dimen));
+    }
+
+    public static String message2Base64(String message) {
+        return Base64.encodeToString(message.getBytes(), Base64.NO_WRAP);
+    }
+
+    //加入游戏
+    public static void joinGame(Activity activity, ServerInfo serverInfo, String password) {
+        YGOGameOptions options = null;
+        if (serverInfo != null) {
+            options = new YGOGameOptions();
+            options.mServerAddr = serverInfo.getServerAddr();
+            options.mUserName = serverInfo.getPlayerName();
+            options.mPort = serverInfo.getPort();
+            options.mRoomName = password;
         }
+        YGOStarter.startGame(activity, options);
+    }
+
+    public static String getWatchDuelPassword(String password, int userId) {
+        byte[] bytes = new byte[6];
+        bytes[1] = (byte) (3 << 4);
+        int checksum = 0;
+        for (int i = 1; i < bytes.length; i++) {
+            checksum -= bytes[i];
+        }
+        bytes[0] = (byte) (checksum & 0xff);
+        int secret = userId % 65535 + 1;
+        int i = 0;
+        while (i < bytes.length) {
+            int x = 0;
+            x = x | (bytes[i] & 0xff);
+            x = x | ((bytes[i + 1] & 0xff) << 8);
+            x = x ^ secret;
+            bytes[i] = (byte) (x & 0xff);
+            bytes[i + 1] = (byte) ((x >> 8) & 0xff);
+            i += 2;
+        }
+        String messageString = Base64.encodeToString(bytes, Base64.NO_WRAP);
+        return messageString + password;
     }
 }
 

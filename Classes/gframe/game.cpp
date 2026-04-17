@@ -206,7 +206,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	isPSEnabled = options->isPendulumScaleEnabled();
 
 	// 获取文件系统并设置给数据管理器
-	dataManager.FileSystem = device->getFileSystem();
+	dataManager.IrrFileSystem = device->getFileSystem();
     // 设置应用命令回调函数
     ((irr::CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
 
@@ -222,7 +222,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     irr::io::path workingDir = options->getWorkDir();
     ALOGD("cc game: workingDir= %s", workingDir.c_str());
 	// 更改工作目录
-	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
+	dataManager.IrrFileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
 	 This example copies the media in the Android.mk makefile. */
@@ -233,9 +233,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	// So we have to add all sub-directories in assets manually. Otherwise we could still open the files,
 	// but existFile checks will fail (which are for example needed by getFont).
 	// 遍历文件档案，为Android资产文件系统添加目录列表
-	for ( irr::u32 i=0; i < dataManager.FileSystem->getFileArchiveCount(); ++i )
+	for ( irr::u32 i=0; i < dataManager.IrrFileSystem->getFileArchiveCount(); ++i )
 	{
-		IFileArchive* archive = dataManager.FileSystem->getFileArchive(i);
+		IFileArchive* archive = dataManager.IrrFileSystem->getFileArchive(i);
 		if ( archive->getType() == EFAT_ANDROID_ASSET )
 		{
 			archive->addDirectoryToFileList(mediaPath);
@@ -247,7 +247,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	int len = options->getArchiveCount();
 	for(int i=0;i<len;i++){
 		irr::io::path zip_path = zips[i];
-        if (dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
+        if (dataManager.IrrFileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
             ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
         } else {
             ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
@@ -1809,7 +1809,13 @@ void Game::LoadExpansions() {
 		char fpath[1024];
 		mysnprintf(fpath, "./expansions/%s", name);
 		if (IsExtension(name, ".cdb")) {
-			dataManager.LoadDB(fpath);
+			if (!dataManager.LoadDB(fpath)) {
+				std::string errmsg = "Warning: Failed to load DB file on disk (";
+				errmsg.append(fpath);
+				errmsg.append(")! ");
+				errmsg.append(dataManager.errmsg);
+				mainGame->ErrorLog(errmsg.c_str());
+			}
 			return;
 		}
 		if (IsExtension(name, ".conf")) {
@@ -1822,24 +1828,38 @@ void Game::LoadExpansions() {
 		}
 	});
 	// 遍历所有已加载的文件档案（包括 zip 等压缩档案）
-	for(irr::u32 i = 0; i < dataManager.FileSystem->getFileArchiveCount(); ++i) {
-		auto archive = dataManager.FileSystem->getFileArchive(i)->getFileList();
+	for(irr::u32 i = 0; i < dataManager.IrrFileSystem->getFileArchiveCount(); ++i) {
+		auto archive = dataManager.IrrFileSystem->getFileArchive(i)->getFileList();
 
 		// 遍历当前档案中的每一个文件
 		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
 			const char* name = archive->getFullFileName(j).c_str();
 			if (IsExtension(name, ".cdb")) {
-				dataManager.LoadDB(name);
+				if (!dataManager.LoadDB(name)) {
+					std::string errmsg = "Warning: Failed to load DB file in expansion archive (";
+					errmsg.append(name);
+					errmsg.append(")! ");
+					errmsg.append(dataManager.errmsg);
+					mainGame->ErrorLog(errmsg.c_str());
+				}
 				continue;
 			}
 			if (IsExtension(name, ".conf")) {
-				auto reader = dataManager.FileSystem->createAndOpenFile(name);
+				auto reader = dataManager.IrrFileSystem->createAndOpenFile(name);
 				dataManager.LoadStrings(reader);
 				continue;
 			}
 			if (!mystrncasecmp(name, "pack/", 5) && IsExtension(name, ".ydk")) {
 				wchar_t fname[1024];
-				BufferIO::DecodeUTF8(name, fname);
+				int len = BufferIO::DecodeUTF8(name, fname);
+				// TODO: zip file may contain non-UTF8 file name. DecodeUTF8 can't parse it and returns 0.
+				if (!len) {
+					std::string errmsg = "Warning: Failed to decode deck file name in expansion archive (";
+					errmsg.append(name);
+					errmsg.append(")! Please make sure the file name is UTF-8 encoded in the archive.");
+					mainGame->ErrorLog(errmsg.c_str());
+					continue;
+				}
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
 			}

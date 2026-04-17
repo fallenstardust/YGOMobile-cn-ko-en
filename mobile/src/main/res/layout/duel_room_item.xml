@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="20dp"
+    android:layout_marginRight="20dp"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/selected_light"
+        android:gravity="center_horizontal"
+        android:text="@string/match_start"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/ll_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_title"
+        android:layout_marginVertical="10dp"
+        android:background="@drawable/list_item_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_name1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_title"
+            android:layout_marginLeft="10dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:lines="1"
+            android:maxEms="8"
+            android:text="userName"
+            android:textColor="@color/brightgreen"
+            android:textSize="13sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_title"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="Vs"
+            android:textColor="@color/colorAccent"
+            android:textSize="13sp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_name2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/tv_name1"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="right"
+            android:lines="1"
+            android:maxEms="8"
+            android:text="userName"
+            android:textColor="@color/brightgreen"
+            android:textSize="13sp" />
+
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_guide_right"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="15dp"
+            android:src="@drawable/ic_guide_right"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/line"
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_alignBottom="@id/ll_item"
+        android:layout_marginLeft="51dp"
+        android:background="@color/grayLight" />
+
+</RelativeLayout>
+

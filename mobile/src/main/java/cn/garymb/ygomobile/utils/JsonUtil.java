@@ -2,6 +2,8 @@ package cn.garymb.ygomobile.utils;
 
 import android.text.TextUtils;
 
+import com.google.gson.Gson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,6 +13,9 @@ import java.util.List;
 
 import cn.garymb.ygomobile.ui.mycard.McNews;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
+import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
+import cn.garymb.ygomobile.ui.mycard.bean.McDuelInfo;
+import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 
 public class JsonUtil {
 
@@ -40,7 +45,7 @@ public class JsonUtil {
         }
         return mcNewsList;
     }
-/*
+
     public static McDuelInfo getUserDuelInfo(String json) {
         return new Gson().fromJson(json, McDuelInfo.class);
     }
@@ -54,19 +59,19 @@ public class JsonUtil {
         JSONObject jsonObject = new JSONObject(json);
         List<DuelRoom> duelRoomList = new ArrayList<>();
 
-        switch (getDuelRoomEvent(json)){
+        switch (getDuelRoomEvent(json)) {
             case DuelRoom.EVENT_INIT:
             case DuelRoom.EVENT_CREATE:
-                JSONArray jsonArray=jsonObject.getJSONArray(MyCard.ARG_DATA);
+                JSONArray jsonArray = jsonObject.getJSONArray(MyCard.ARG_DATA);
                 for (int i = 0; i < jsonArray.length(); i++) {
-                    DuelRoom duelRoom=new Gson().fromJson(jsonArray.getJSONObject(i).toString(), DuelRoom.class);
+                    DuelRoom duelRoom = new Gson().fromJson(jsonArray.getJSONObject(i).toString(), DuelRoom.class);
                     duelRoom.setArena(duelRoom.getArena());
-                    duelRoom.setArenaType(duelRoom.getArena(),duelRoom.getId(),duelRoom.getOptions());
+                    duelRoom.setArenaType(duelRoom.getArena(), duelRoom.getId(), duelRoom.getOptions());
                     duelRoomList.add(duelRoom);
                 }
                 break;
             case DuelRoom.EVENT_DELETE:
-                DuelRoom duelRoom=new DuelRoom();
+                DuelRoom duelRoom = new DuelRoom();
                 duelRoom.setId(jsonObject.getString(MyCard.ARG_DATA));
                 duelRoom.setTitle(jsonObject.getString(MyCard.ARG_DATA));
                 duelRoomList.add(duelRoom);
@@ -77,11 +82,11 @@ public class JsonUtil {
     }
 
     public static YGOServer getMatchYGOServer(String body) throws JSONException {
-        JSONObject jsonObject=new JSONObject(body);
-        YGOServer ygoServer=new YGOServer();
+        JSONObject jsonObject = new JSONObject(body);
+        YGOServer ygoServer = new YGOServer();
         ygoServer.setServerAddr(jsonObject.getString(MyCard.ARG_ADDRESS));
         ygoServer.setPort(jsonObject.getInt(MyCard.ARG_PORT));
         ygoServer.setPassword(jsonObject.getString(MyCard.ARG_MC_PASSWORD));
         return ygoServer;
-    }*/
+    }
 }

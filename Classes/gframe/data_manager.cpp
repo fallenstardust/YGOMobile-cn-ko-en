@@ -153,7 +153,7 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 	return true;
 }
 bool DataManager::LoadDB(const char* file) {
-	auto reader = FileSystem->createAndOpenFile(file);
+	auto reader = IrrFileSystem->createAndOpenFile(file);
 	if (reader == nullptr) {
 		mysnprintf(errmsg, "File does not exist or failed to unzip: %s", file);
 		return false;
@@ -505,7 +505,7 @@ unsigned char* DataManager::ScriptReaderEx(const char* script_path, int* slen) {
 	return nullptr;
 }
 unsigned char* DataManager::ReadScriptFromIrrFS(const char* script_name, int* slen) {
-	auto reader = dataManager.FileSystem->createAndOpenFile(script_name);
+	auto reader = dataManager.IrrFileSystem->createAndOpenFile(script_name);
 	if (!reader)
 		return nullptr;
 	int size = reader->read(scriptBuffer, sizeof scriptBuffer);
