@@ -41,6 +41,7 @@ import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
@@ -63,8 +64,8 @@ public class MyCard {
 
     public static final String MYCARD_NEWS_URL = "https://sapi.moecube.com:444/apps.json";
     public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
-    public static final String  URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
-    public static final String  URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
+    public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
+    public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
     public static final String URL_MC_MATCH = "https://api.moecube.com/ygopro/match";
     public static final String MYCARD_POST_URL = "https://ygobbs2.com/t/";
     public static final String ARG_ID = "id";
@@ -91,8 +92,10 @@ public class MyCard {
     public static final String ARG_LOCALE = "locale";
     public static final String ARG_ATHLETIC = "athletic";
     public static final String ARG_ENTERTAIN = "entertain";
+    public static int U16_SECRET = 0;
     public static final String URL_MC_SIGN_UP = "https://accounts.moecube.com/signup";
     public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
+    public static final String URL_MC_AUTH_USER = "https://sapi.moecube.com:444/accounts/authUser";
     public static final int MATCH_TYPE_ATHLETIC = 0;
     public static final int MATCH_TYPE_ENTERTAIN = 1;
 
@@ -157,7 +160,26 @@ public class MyCard {
                 return;
         }
 
-        String authHeader = "Basic " + YGOUtil.message2Base64(mcUser.getUsername() + ":" + mcUser.getExternal_id());
+        VUiKit.defer().when(() -> {
+            String token = SharedPreferenceUtil.getServerToken();
+            if (TextUtils.isEmpty(token)) {
+                throw new Exception("token not found");
+            }
+
+            int u16SecretStr = MyCard.getUserU16Secret(token);
+            if (u16SecretStr == 0) {
+                throw new Exception("获取u16Secret失败");
+            }
+
+            return u16SecretStr;
+        }).fail((e) -> {
+            Log.e("MyCard", "获取u16Secret失败: " + e);
+        }).done((u16Secret) -> {
+            U16_SECRET = u16Secret;
+        });
+
+        String authHeader = "Basic " + YGOUtil.message2Base64(mcUser.getUsername() + ":" + U16_SECRET);
+        Log.i("MyCard", "U16_SECRET: " + U16_SECRET);
         OYHeader oyHeader = new OYHeader(OYHeader.HEADER_POSITION_AUTHORIZATION, authHeader);
 
         OkhttpUtil.post(uriBuilder.toString(), null, oyHeader, ARG_ARENA, 30, new Callback() {
@@ -212,6 +234,33 @@ public class MyCard {
                 }
             }
         });
+    }
+
+    public static int getUserU16Secret(String token) throws IOException {
+        if (token == null || token.isEmpty()) {
+            throw new IOException("token not found");
+        }
+
+        String url = "https://sapi.moecube.com:444/accounts/authUser";
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + token);
+
+        Response response = OkhttpUtil.synchronousGet(url, null, headers);
+        String responseBody = response.body().string();
+
+        if (!response.isSuccessful()) {
+            throw new IOException("获取用户密钥失败: " + responseBody);
+        }
+
+        Gson gson = new Gson();
+        U16SecretResponse secretResponse = gson.fromJson(responseBody, U16SecretResponse.class);
+
+        if (secretResponse == null || secretResponse.u16Secret == 0) {
+            throw new IOException("获取用户密钥失败: 返回数据无效");
+        }
+
+        return secretResponse.u16Secret;
     }
 
     public static String getMCLogoutUrl() {
@@ -535,5 +584,9 @@ public class MyCard {
 
     public static String getCachePath() {
         return App.get().getExternalFilesDir("cache").getAbsolutePath();
+    }
+
+    public static class U16SecretResponse {
+        public int u16Secret;
     }
 }
