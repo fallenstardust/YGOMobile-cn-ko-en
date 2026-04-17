@@ -438,4 +438,5 @@
     <string name="draw_num">Draws</string>
     <string name="fun_start">Casual Match</string>
     <string name="match_start">Ranked Match</string>
+    <string name="watch_duel">Spectate</string>
 </resources>

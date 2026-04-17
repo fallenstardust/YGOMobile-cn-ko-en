@@ -426,4 +426,5 @@
     <string name="draw_num">무승부</string>
     <string name="fun_start">오락 매칭</string>
     <string name="match_start">랭크 매칭Partida Competitiva</string>
+    <string name="watch_duel">관전</string>
 </resources>

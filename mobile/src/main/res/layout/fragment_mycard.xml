@@ -551,43 +551,55 @@
                                 </LinearLayout>
                             </LinearLayout>
 
-                            <!--观战布局-->
-                            <androidx.coordinatorlayout.widget.CoordinatorLayout
+                            </LinearLayout>
+                        <!--观战布局-->
+                        <androidx.coordinatorlayout.widget.CoordinatorLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
+                                android:background="@drawable/dialogshort"
                                 android:orientation="vertical">
 
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:background="@color/transparent"
-                                    android:orientation="vertical">
-
-                                    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-                                        android:id="@+id/srl_update"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent">
-
-                                        <cn.garymb.ygomobile.ui.widget.GridRecyclerView
-                                            android:id="@+id/rv_list"
-                                            android:layout_width="match_parent"
-                                            android:layout_height="match_parent"
-                                            android:descendantFocusability="blocksDescendants" />
-                                    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-                                </LinearLayout>
-
-                                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                                    android:id="@+id/fab_add"
+                                <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_margin="16dp"
-                                    android:src="@drawable/ic_add_white"
-                                    android:visibility="gone"
-                                    app:layout_anchor="@id/srl_update"
-                                    app:layout_anchorGravity="bottom|end" />
+                                    android:layout_gravity="center"
+                                    android:gravity="center"
+                                    android:text="@string/watch_duel"
+                                    android:background="@drawable/veil2"
+                                    android:textColor="@color/white"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
 
-                            </androidx.coordinatorlayout.widget.CoordinatorLayout>
-                        </LinearLayout>
+                                <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                                    android:id="@+id/srl_update"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent">
+
+                                    <cn.garymb.ygomobile.ui.widget.GridRecyclerView
+                                        android:id="@+id/rv_list"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:descendantFocusability="blocksDescendants" />
+                                </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+                            </LinearLayout>
+
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/fab_add"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="16dp"
+                                android:src="@drawable/ic_add_white"
+                                android:visibility="gone"
+                                app:layout_anchor="@id/srl_update"
+                                app:layout_anchorGravity="bottom|end" />
+
+                        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
                     </LinearLayout>
                 </ScrollView>
 

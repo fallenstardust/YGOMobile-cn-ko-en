@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:background="@drawable/veil2"
+        android:background="@drawable/selected_light"
         android:gravity="center_horizontal"
         android:text="@string/match_start"
         android:textColor="@color/white"

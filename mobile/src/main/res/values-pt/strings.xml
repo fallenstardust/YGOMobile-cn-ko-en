@@ -398,5 +398,6 @@
     <string name="draw_num">Empates</string>
     <string name="fun_start">Partida Casual</string>
     <string name="match_start">Partida Competitiva</string>
+    <string name="watch_duel">Ver Duelo</string>
 </resources>
 

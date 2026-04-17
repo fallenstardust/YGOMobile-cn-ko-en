@@ -412,4 +412,5 @@
     <string name="win_num">胜场</string>
     <string name="lose_num">负场</string>
     <string name="draw_num">平局</string>
+    <string name="watch_duel">观战</string>
 </resources>
