@@ -166,9 +166,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     break;
                 case MC_MATCH_ATHLETIC_OK:
                 case MC_MATCH_ENTERTAIN_OK:
-                    if (dialogUtils != null) {
-                        dialogUtils.dis();
-                    }
                     YGOServer ygoServer = (YGOServer) msg.obj;
                     if (ygoServer == null) {
                         YGOUtil.show("未匹配到对手");
@@ -178,9 +175,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     break;
                 case MC_MATCH_ATHLETIC_EXCEPTION:
                 case MC_MATCH_ENTERTAIN_EXCEPTION:
-                    if (dialogUtils != null) {
-                        dialogUtils.dis();
-                    }
                     YGOUtil.show("匹配失败: " + msg.obj.toString());
                     break;
 
@@ -599,6 +593,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         }
         DialogPlus dlg = new DialogPlus(getActivity());
         dlg.setTitle(R.string.match_start);
+        dlg.setCancelable(false);
         dlg.showProgressBar();
         dlg.setMessage(R.string.waiting_message);
         dlg.setLeftButtonText(R.string.cancel);
@@ -625,6 +620,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         DialogPlus dlg = new DialogPlus(getActivity());
         dlg.setTitle(R.string.fun_start);
+        dlg.setCancelable(false);
         dlg.showProgressBar();
         dlg.setMessage(R.string.waiting_message);
         dlg.setLeftButtonText(R.string.cancel);
