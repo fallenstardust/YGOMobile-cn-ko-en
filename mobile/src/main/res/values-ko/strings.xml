@@ -427,4 +427,5 @@
     <string name="fun_start">오락 매칭</string>
     <string name="match_start">랭크 매칭Partida Competitiva</string>
     <string name="watch_duel">관전</string>
+    <string name="waiting_message">매칭 대기 중입니다. 잠시 기다려 주세요...</string>
 </resources>

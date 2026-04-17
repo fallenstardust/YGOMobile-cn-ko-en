@@ -413,4 +413,5 @@
     <string name="lose_num">负场</string>
     <string name="draw_num">平局</string>
     <string name="watch_duel">观战</string>
+    <string name="waiting_message">等待匹配中，请稍后...</string>
 </resources>

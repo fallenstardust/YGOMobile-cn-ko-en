@@ -409,4 +409,5 @@
     <string name="fun_start">娯楽マッチ</string>
     <string name="match_start">ランクマッチ</string>
     <string name="watch_duel">観戦</string>
+    <string name="waiting_message">マッチング中、しばらくお待ちください...</string>
 </resources>

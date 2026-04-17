@@ -58,6 +58,7 @@ import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.watchDuel.WatchDuelManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.HandlerUtil;
@@ -596,17 +597,21 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             YGOUtil.showTextToast(R.string.login_mycard);
             return;
         }
-
-        Button button = dialogUtils.dialogj(null, "竞技匹配中，请稍等");
-        button.setText("取消匹配");
-        button.setOnClickListener(v -> {
+        DialogPlus dlg = new DialogPlus(getActivity());
+        dlg.setTitle(R.string.match_start);
+        dlg.showProgressBar();
+        dlg.setMessage(R.string.waiting_message);
+        dlg.setLeftButtonText(R.string.cancel);
+        dlg.setLeftButtonListener((d, s) -> {
             MyCard.cancelMatch();
-            dialogUtils.dis();
+            dlg.dismiss();
         });
+        dlg.show();
 
         MyCard.startMatch(mMcUser, MyCard.MATCH_TYPE_ATHLETIC, new OnMcMatchListener() {
             @Override
             public void onMcMatch(YGOServer ygoServer, String password, String exception) {
+                dlg.dismiss();
                 HandlerUtil.sendMessage(handler, exception, MC_MATCH_ATHLETIC_OK, ygoServer, MC_MATCH_ATHLETIC_EXCEPTION);
             }
         });
@@ -618,16 +623,21 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             return;
         }
 
-        Button button = dialogUtils.dialogj(null, "娱乐匹配中，请稍等");
-        button.setText("取消匹配");
-        button.setOnClickListener(v -> {
+        DialogPlus dlg = new DialogPlus(getActivity());
+        dlg.setTitle(R.string.fun_start);
+        dlg.showProgressBar();
+        dlg.setMessage(R.string.waiting_message);
+        dlg.setLeftButtonText(R.string.cancel);
+        dlg.setLeftButtonListener((d, s) -> {
             MyCard.cancelMatch();
-            dialogUtils.dis();
+            dlg.dismiss();
         });
+        dlg.show();
 
         MyCard.startMatch(mMcUser, MyCard.MATCH_TYPE_ENTERTAIN, new OnMcMatchListener() {
             @Override
             public void onMcMatch(YGOServer ygoServer, String password, String exception) {
+                dlg.dismiss();
                 HandlerUtil.sendMessage(handler, exception, MC_MATCH_ENTERTAIN_OK, ygoServer, MC_MATCH_ENTERTAIN_EXCEPTION);
             }
         });
