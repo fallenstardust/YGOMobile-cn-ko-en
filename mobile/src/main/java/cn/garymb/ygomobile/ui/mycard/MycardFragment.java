@@ -413,35 +413,69 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     return;
                 }
 
-                Log.e("WatchDuel mycardfragment", "密码" + duelRoom.getId());
-                Log.e("WatchDuel mycardfragment", "用户id" + mMcUser.getExternal_id());
+                new Thread(() -> {
+                    try {
+                        String token = SharedPreferenceUtil.getServerToken();
+                        if (TextUtils.isEmpty(token)) {
+                            throw new Exception("token not found");
+                        }
 
-                String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id());
+                        int u16SecretStr = MyCard.getUserU16Secret(token);
+                        if (u16SecretStr == 0) {
+                            throw new Exception("获取u16Secret失败");
+                        }
 
-                ServerInfo serverInfo = new ServerInfo();
+                        Log.e("WatchDuel", "u16SecretStr: " + u16SecretStr);
+                        
+                        String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id(), u16SecretStr);
+                        Log.e("WatchDuel password", "password: " + password);
 
-                switch (duelRoom.getArenaType()) {
-                    case DuelRoom.TYPE_ARENA_MATCH:
-                        serverInfo.setServerAddr(MyCard.HOST_MC_MATCH);
-                        serverInfo.setPort(MyCard.PORT_MC_MATCH);
-                        break;
+                        ServerInfo serverInfo = new ServerInfo();
+                        boolean isArenaTypeValid = true;
 
-                    case DuelRoom.TYPE_ARENA_FUN:
-                    case DuelRoom.TYPE_ARENA_AI:
-                    case DuelRoom.TYPE_ARENA_FUN_MATCH:
-                    case DuelRoom.TYPE_ARENA_FUN_SINGLE:
-                    case DuelRoom.TYPE_ARENA_FUN_TAG:
-                        serverInfo.setServerAddr(MyCard.HOST_MC_OTHER);
-                        serverInfo.setPort(MyCard.PORT_MC_OTHER);
-                        break;
+                        switch (duelRoom.getArenaType()) {
+                            case DuelRoom.TYPE_ARENA_MATCH:
+                                serverInfo.setServerAddr(MyCard.HOST_MC_MATCH);
+                                serverInfo.setPort(MyCard.PORT_MC_MATCH);
+                                break;
+                            case DuelRoom.TYPE_ARENA_FUN:
+                            case DuelRoom.TYPE_ARENA_AI:
+                            case DuelRoom.TYPE_ARENA_FUN_MATCH:
+                            case DuelRoom.TYPE_ARENA_FUN_SINGLE:
+                            case DuelRoom.TYPE_ARENA_FUN_TAG:
+                                serverInfo.setServerAddr(MyCard.HOST_MC_OTHER);
+                                serverInfo.setPort(MyCard.PORT_MC_OTHER);
+                                break;
+                            default:
+                                isArenaTypeValid = false;
+                                break;
+                        }
 
-                    default:
-                        YGOUtil.show("未知房间，请更新软件后进入");
-                        return;
-                }
+                        final boolean finalValid = isArenaTypeValid;
+                        Activity activity = getActivity();
+                        
+                        if (activity != null) {
+                            activity.runOnUiThread(() -> {
+                                if (!finalValid) {
+                                    YGOUtil.show("未知房间，请更新软件后进入");
+                                    return;
+                                }
 
-                serverInfo.setPlayerName(mMcUser.getUsername());
-                YGOUtil.joinGame(getActivity(), serverInfo, password);
+                                serverInfo.setPlayerName(mMcUser.getUsername());
+                                YGOUtil.joinGame(activity, serverInfo, password);
+                            });
+                        }
+
+                    } catch (Exception e) {
+                        Log.e("MyCard", "获取u16Secret失败: " + e);
+                        Activity activity = getActivity();
+                        if (activity != null) {
+                            activity.runOnUiThread(() -> {
+                                YGOUtil.show("进入失败: " + e.getMessage());
+                            });
+                        }
+                    }
+                }).start();
             }
         });
 
