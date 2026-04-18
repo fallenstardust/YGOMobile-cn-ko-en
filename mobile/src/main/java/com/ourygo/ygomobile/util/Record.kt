@@ -39,6 +39,7 @@ object Record {
     const val URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started"
     const val URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started"
     const val URL_MC_MATCH = "https://api.moecube.com/ygopro/match"
+    const val URL_MC_AUTH_USER: String = "https://sapi.moecube.com:444/accounts/authUser"
     const val ARG_EVENT = "event"
     const val ARG_DATA = "data"
     const val HOST_MC_MATCH = "tiramisu.moecube.com"

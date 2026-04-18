@@ -161,6 +161,7 @@ object OkhttpUtil {
         address: String,
         map: Map<String?, Any>? = null,
         cookie: String? = null,
+        headerMap: Map<String, String>? = null,
         callback: Callback
     ) {
         val client = OkHttpClient()
@@ -175,6 +176,11 @@ object OkhttpUtil {
         Log.e("OkhttpUtil", "为" + httpBuilder.build().toString())
         if (!TextUtils.isEmpty(cookie)) {
             request.addHeader("cookie", cookie.toString())
+        }
+        headerMap?.let {
+            for ((key, value) in it) {
+                request.addHeader(key, value)
+            }
         }
         client.newCall(request.build()).enqueue(callback)
     }

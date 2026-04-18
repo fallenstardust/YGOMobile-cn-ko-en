@@ -31,7 +31,7 @@ class McUserManagement private constructor() {
     fun login(mUser: McUser, isUpdate: Boolean) {
         var isUpdate = isUpdate
         if (isUpdate && user != null) {
-            if (!TextUtils.isEmpty(mUser.name)) user!!.name = mUser.name
+            if (!TextUtils.isEmpty(mUser.token)) user!!.token = mUser.token
             if (mUser.external_id > 0) {
                 Log.e("McUserManagement", "重设" + mUser.external_id)
                 user!!.external_id = mUser.external_id

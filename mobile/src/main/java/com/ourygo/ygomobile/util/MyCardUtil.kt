@@ -5,6 +5,7 @@ import android.text.TextUtils
 import android.util.Log
 import cn.garymb.ygomobile.ui.mycard.bean.McUser
 import cn.garymb.ygomobile.utils.FileLogUtil
+import com.google.gson.Gson
 import com.ourygo.ygomobile.base.listener.OnMcMatchListener
 import com.ourygo.ygomobile.base.listener.OnMyCardNewsQueryListener
 import com.ourygo.ygomobile.base.listener.OnUserDuelInfoQueryListener
@@ -82,7 +83,7 @@ object MyCardUtil {
 
     @JvmStatic
     fun startMatch(mcUser: McUser, matchType: Int, onMcMatchListener: OnMcMatchListener) {
-        if (TextUtils.isEmpty(mcUser.username) || mcUser.external_id == 0) {
+        if (TextUtils.isEmpty(mcUser.username) || mcUser.token.isNullOrBlank()) {
             onMcMatchListener.onMcMatch(null, null, "用户信息为空，请退出重新登录")
             return
         }
@@ -96,45 +97,83 @@ object MyCardUtil {
                 return
             }
         }
-        val oyHeader = OYHeader(
-            OYHeader.HEADER_POSITION_AUTHORIZATION,
-            "Basic " + OYUtil.message2Base64(mcUser.username + ":" + mcUser.external_id)
+        getU16Secret(mcUser) { u16Secret ->
+            if (u16Secret == McUser.U16SecretResponse.SECRET_INVALID) {
+                onMcMatchListener.onMcMatch(null, null, "用户信息已过期，请退出重新登录")
+                return@getU16Secret
+            }
+            val oyHeader = OYHeader(
+                OYHeader.HEADER_POSITION_AUTHORIZATION,
+                "Basic " + OYUtil.message2Base64(mcUser.username + ":" + u16Secret)
+            )
+            OkhttpUtil.post(
+                uri.toString(),
+                null,
+                oyHeader,
+                Record.ARG_ARENA,
+                30,
+                object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        Log.e("MyCardUtil", e.message + "失败 " + e)
+                        try {
+                            FileLogUtil.write("失败 $e")
+                        } catch (ioException: IOException) {
+                            ioException.printStackTrace()
+                        }
+                        val message = e.message
+                        if (!TextUtils.isEmpty(message) && message == "Canceled") return
+                        if (!TextUtils.isEmpty(message) && message == "timeout") {
+                            cancelMatch()
+                            onMcMatchListener.onMcMatch(null, null, null)
+                            return
+                        }
+                        onMcMatchListener.onMcMatch(null, null, e.toString())
+                    }
+
+                    @Throws(IOException::class)
+                    override fun onResponse(call: Call, response: Response) {
+                        val body = response.body()!!.string()
+                        Log.e("MyCardUtil", "匹配成功$body")
+                        if (TextUtils.isEmpty(body)) {
+                            onMcMatchListener.onMcMatch(null, null, "匹配失败")
+                            return
+                        }
+                        try {
+                            val ygoServer = JsonUtil.getMatchYGOServer(body)
+                            ygoServer!!.playerName = mcUser.username
+                            onMcMatchListener.onMcMatch(ygoServer, ygoServer.password, null)
+                        } catch (e: JSONException) {
+                            onMcMatchListener.onMcMatch(null, null, "" + e)
+                        }
+                        Log.e("MyCardUtil", "内容 $body")
+                        FileLogUtil.write("内容 $body")
+                    }
+                })
+        }
+    }
+
+    fun getU16Secret(mcUser: McUser, callback: (Int) -> Unit) {
+        val token: String? = mcUser.token
+        if (token.isNullOrBlank()) {
+            Log.e("MyCardUtil", "获取U16密钥失败 token为空")
+            return
+        }
+        val headers: Map<String, String> = mapOf(
+            "Authorization" to "Bearer $token"
         )
-        OkhttpUtil.post(uri.toString(), null, oyHeader, Record.ARG_ARENA, 30, object : Callback {
+
+        OkhttpUtil.get(Record.URL_MC_AUTH_USER, headerMap = headers, callback = object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e("MyCardUtil", e.message + "失败 " + e)
-                try {
-                    FileLogUtil.write("失败 $e")
-                } catch (ioException: IOException) {
-                    ioException.printStackTrace()
-                }
-                val message = e.message
-                if (!TextUtils.isEmpty(message) && message == "Canceled") return
-                if (!TextUtils.isEmpty(message) && message == "timeout") {
-                    cancelMatch()
-                    onMcMatchListener.onMcMatch(null, null, null)
-                    return
-                }
-                onMcMatchListener.onMcMatch(null, null, e.toString())
+                callback(McUser.U16SecretResponse.SECRET_INVALID)
+                Log.e("MyCardUtil", "获取U16密钥失败 $e")
             }
 
             @Throws(IOException::class)
             override fun onResponse(call: Call, response: Response) {
                 val body = response.body()!!.string()
-                Log.e("MyCardUtil", "匹配成功$body")
-                if (TextUtils.isEmpty(body)) {
-                    onMcMatchListener.onMcMatch(null, null, "匹配失败")
-                    return
-                }
-                try {
-                    val ygoServer = JsonUtil.getMatchYGOServer(body)
-                    ygoServer!!.playerName = mcUser.username
-                    onMcMatchListener.onMcMatch(ygoServer, ygoServer.password, null)
-                } catch (e: JSONException) {
-                    onMcMatchListener.onMcMatch(null, null, "" + e)
-                }
-                Log.e("MyCardUtil", "内容 $body")
-                FileLogUtil.write("内容 $body")
+                Log.d("MyCardUtil", "获取U16密钥成功 $body")
+                val u16Secret = Gson().fromJson(body, McUser.U16SecretResponse::class.java)
+                callback(u16Secret.u16Secret)
             }
         })
     }

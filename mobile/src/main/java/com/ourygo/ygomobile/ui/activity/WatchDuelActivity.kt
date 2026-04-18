@@ -5,10 +5,12 @@ import android.util.Log
 import android.view.View
 import cn.garymb.ygomobile.bean.ServerInfo
 import com.chad.library.adapter.base.BaseQuickAdapter
+import com.feihua.dialogutils.util.DialogUtils
 import com.ourygo.ygomobile.adapter.DuelRoomBQAdapter
 import com.ourygo.ygomobile.base.listener.OnDuelRoomListener
 import com.ourygo.ygomobile.bean.DuelRoom
 import com.ourygo.ygomobile.util.McUserManagement
+import com.ourygo.ygomobile.util.MyCardUtil
 import com.ourygo.ygomobile.util.OYUtil
 import com.ourygo.ygomobile.util.Record
 import com.ourygo.ygomobile.util.WatchDuelManagement
@@ -25,6 +27,9 @@ class WatchDuelActivity : ListAndUpdateActivity(), OnDuelRoomListener {
     private val duelRoomBQAdapter by lazy {
         DuelRoomBQAdapter(this, ArrayList())
     }
+    private val dialogUtil by lazy {
+        DialogUtils.getInstance(this)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,11 +42,6 @@ class WatchDuelActivity : ListAndUpdateActivity(), OnDuelRoomListener {
         duelRoomBQAdapter.setOnItemClickListener { _: BaseQuickAdapter<*, *>?, _: View?, position: Int ->
             val duelRoom = duelRoomBQAdapter.getItem(position)
             Log.e("WatchActivity", "密码" + duelRoom.id)
-            Log.e("WatchActivity", "用户id" + McUserManagement.instance.user!!.external_id)
-            val password = OYUtil.getWatchDuelPassword(
-                duelRoom.id,
-                McUserManagement.instance.user!!.external_id
-            )
             val serverInfo = ServerInfo()
             when (duelRoom.arenaType) {
                 DuelRoom.TYPE_ARENA_MATCH -> {
@@ -60,7 +60,18 @@ class WatchDuelActivity : ListAndUpdateActivity(), OnDuelRoomListener {
                 }
             }
             serverInfo.playerName = McUserManagement.instance.user!!.username
-            joinGame(this@WatchDuelActivity, serverInfo, password)
+            dialogUtil.dialogj1(null, "加入房间中，请稍等")
+            MyCardUtil.getU16Secret(McUserManagement.instance.user!!) { u16Secret ->
+                runOnUiThread {
+                    dialogUtil.dis()
+                    if (u16Secret == -1) {
+                        OYUtil.snackWarning(rv_list, "加入房间失败，请尝试重新登陆")
+                        return@runOnUiThread
+                    }
+                    val password = OYUtil.getWatchDuelPassword(duelRoom.id, u16Secret)
+                    joinGame(this@WatchDuelActivity, serverInfo, password)
+                }
+            }
         }
         initToolbar("观战")
         onRefresh()

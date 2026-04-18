@@ -7,9 +7,9 @@ import org.litepal.crud.LitePalSupport;
  */
 public class McUser extends LitePalSupport {
     private int id;
-   private int external_id;
+    private int external_id;
     private String username;
-    private String name;
+    private String token;
     private String email;
     private String avatar_url;
     private boolean admin;
@@ -56,17 +56,12 @@ public class McUser extends LitePalSupport {
         this.username = username;
     }
 
-    /**
-     * 不要用这个，用getUserName
-     * @return
-     */
-    @Deprecated
-    public String getName() {
-        return name;
+    public String getToken() {
+        return token;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public String getEmail() {
@@ -108,5 +103,18 @@ public class McUser extends LitePalSupport {
 
     public void setLogin(boolean login) {
         this.login = login;
+    }
+
+    public static class U16SecretResponse {
+        public static final int SECRET_INVALID = 0;
+        private int u16Secret;
+
+        public int getU16Secret() {
+            return u16Secret;
+        }
+
+        public void setU16Secret(int u16Secret) {
+            this.u16Secret = u16Secret;
+        }
     }
 }
