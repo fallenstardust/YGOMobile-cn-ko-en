@@ -249,7 +249,7 @@ public:
 	}
 	void ResizeChatInputWindow();
 	void ResizePosSelectButtons();
-	void ResizeCardSelectButtons(irr::gui::IGUIWindow* window, irr::gui::IGUIStaticText** labels, irr::gui::IGUIButton** images,
+	void ResizeCardSelectButtons(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgWindow, irr::gui::IGUIStaticText** labels, irr::gui::IGUIButton** images,
 		irr::gui::IGUIScrollBar* scrollbar, irr::gui::IGUIButton* buttonOK, const std::vector<ClientCard*>& cards);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);

@@ -715,7 +715,6 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	posY += 40;
 	chkIgnore2 = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1291));
 	chkIgnore2->setChecked(gameConf.chkIgnore2 != 0);
-
 	posY += 40;
 	chkIgnoreDeckChanges = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1357));
 	chkIgnoreDeckChanges->setChecked(gameConf.chkIgnoreDeckChanges != 0);
@@ -2509,6 +2508,7 @@ void Game::ResizePosSelectButtons() {
 	bgPosSelect->setRelativePosition(irr::core::recti(0, 0, windowWidth, windowHeight));
 }
 void Game::ResizeCardSelectButtons(irr::gui::IGUIWindow* window,
+                                   irr::gui::IGUIImage* bgWindow,
 								   irr::gui::IGUIStaticText** labels,
 								   irr::gui::IGUIButton** images,
 								   irr::gui::IGUIScrollBar* scrollbar,
@@ -2524,7 +2524,7 @@ void Game::ResizeCardSelectButtons(irr::gui::IGUIWindow* window,
 		startpos = 30 * xScale + stride * (5 - (int)cards.size()) / 2;
 		ct = cards.size();
 	}
-	irr::s32 top = 19 + 11 * yScale;
+	irr::s32 top = 20 + 30 * yScale;
 	irr::s32 labelHeight = 20 * yScale;
 	irr::s32 minTextHeight = gameConf.textfontsize * 1.4f + 0.5f;
 	if (labelHeight < minTextHeight) labelHeight = minTextHeight;
@@ -2535,16 +2535,17 @@ void Game::ResizeCardSelectButtons(irr::gui::IGUIWindow* window,
 	}
 	irr::s32 barTop = btnTop + btnHeight + gap;
 	irr::s32 barWidth = stride * ct - gap;
-	irr::s32 barHeight = 20 * yScale;
-	if (barHeight > 25) barHeight = 25;
+	irr::s32 barHeight = 40 * yScale;
+	if (barHeight > 45) barHeight = 40 * yScale;
 	scrollbar->setRelativePosition(irr::core::recti(startpos, barTop, startpos + barWidth, barTop + barHeight));
-	irr::s32 btnOKWidth = 80 * xScale;
-	irr::s32 btnOKHeight = 25 * yScale;
+	irr::s32 btnOKWidth = 110 * xScale;
+	irr::s32 btnOKHeight = 50 * yScale;
 	if (btnOKHeight < minTextHeight) btnOKHeight = minTextHeight;
 	buttonOK->setRelativePosition(irr::core::recti(startpos + barWidth / 2 - btnOKWidth / 2, barTop + barHeight + gap * 2, startpos + barWidth / 2 + btnOKWidth / 2, barTop + barHeight + gap * 2 + btnOKHeight));
 	irr::s32 windowWidth = 30 * xScale * 2 + stride * 5 - gap;
 	irr::s32 windowHeight = top + labelHeight + btnHeight + barHeight + btnOKHeight + gap * 6;
-	window->setRelativePosition(irr::core::recti(663 * xScale - windowWidth / 2, 263 * yScale - windowHeight / 2, 663 * xScale + windowWidth / 2, 263 * yScale + windowHeight / 2));
+	window->setRelativePosition(irr::core::recti(660 * xScale - windowWidth / 2, 260 * yScale - windowHeight / 2, 660 * xScale + windowWidth / 2, 260 * yScale + windowHeight / 2));
+	bgWindow->setRelativePosition(irr::core::recti(0, 0, windowWidth, windowHeight));
 }
 irr::core::recti Game::Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
 	x = x * xScale;
@@ -2660,6 +2661,7 @@ void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUII
 	*pWindowBackground = env->addImage(irr::core::rect<irr::s32>(0, 0, pos.getWidth(), pos.getHeight()), window, -1, 0, true);
 	irr::gui::IGUIImage* bgwindow = *pWindowBackground;
 	bgwindow->setImage(image);
+    bgwindow->setUseAlphaChannel(true);
 	bgwindow->setScaleImage(true);
 }
 void Game::ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font) {

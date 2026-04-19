@@ -533,7 +533,7 @@ void ClientField::ShowSelectCard(bool buttonok, bool is_continuous) {
 		mainGame->scrCardList->setPos(0);
 	}
 	mainGame->btnSelectOK->setVisible(buttonok);
-	mainGame->ResizeCardSelectButtons(mainGame->wCardSelect, mainGame->stCardPos, mainGame->btnCardSelect, mainGame->scrCardList, mainGame->btnSelectOK, selectable_cards);
+	mainGame->ResizeCardSelectButtons(mainGame->wCardSelect, mainGame->bgCardSelect, mainGame->stCardPos, mainGame->btnCardSelect, mainGame->scrCardList, mainGame->btnSelectOK, selectable_cards);
 	mainGame->PopupElement(mainGame->wCardSelect);
 }
 void ClientField::ShowChainCard() {
@@ -581,7 +581,7 @@ void ClientField::ShowChainCard() {
 		mainGame->scrCardList->setPos(0);
 	}
 	mainGame->btnSelectOK->setVisible(!chain_forced);
-	mainGame->ResizeCardSelectButtons(mainGame->wCardSelect, mainGame->stCardPos, mainGame->btnCardSelect, mainGame->scrCardList, mainGame->btnSelectOK, selectable_cards);
+	mainGame->ResizeCardSelectButtons(mainGame->wCardSelect, mainGame->bgCardSelect, mainGame->stCardPos, mainGame->btnCardSelect, mainGame->scrCardList, mainGame->btnSelectOK, selectable_cards);
 	mainGame->PopupElement(mainGame->wCardSelect);
 }
 
@@ -667,7 +667,7 @@ void ClientField::ShowLocationCard() {
 
 	// 显示确认按钮并弹出卡片显示窗口
 	mainGame->btnDisplayOK->setVisible(true);
-	mainGame->ResizeCardSelectButtons(mainGame->wCardDisplay, mainGame->stDisplayPos, mainGame->btnCardDisplay, mainGame->scrDisplayList, mainGame->btnDisplayOK, display_cards);
+	mainGame->ResizeCardSelectButtons(mainGame->wCardDisplay, mainGame->bgCardDisplay, mainGame->stDisplayPos, mainGame->btnCardDisplay, mainGame->scrDisplayList, mainGame->btnDisplayOK, display_cards);
 	mainGame->PopupElement(mainGame->wCardDisplay);
 }
 void ClientField::ShowSelectOption(int select_hint) {
