@@ -1043,7 +1043,7 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #define GUI_INFO_FPS 1000
-#define LOG_TAG "ygo-jni"
+#define LOG_TAG "ygopro-gframe"
 #define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG ,__VA_ARGS__)
 #define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG ,__VA_ARGS__)
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG ,__VA_ARGS__)
