@@ -8,12 +8,11 @@ namespace ygo {
 ImageManager imageManager;
 
 bool ImageManager::Initial(const path dir) {
-	tCover[0] = nullptr;
-	tCover[1] = nullptr;
-	tCover[2] = GetTextureFromFile((dir + path("/textures/cover.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
-	tCover[3] = GetTextureFromFile((dir + path("/textures/cover2.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
-	if(!tCover[3])
-		tCover[3] = tCover[2];
+	for(int i = 0; i < 2; ++i) {
+		tCover[i] = nullptr;
+		tButtonFacedown[i] = nullptr;
+		tButtonFacedownDefense[i] = nullptr;
+	}
 	tUnknown = nullptr;
 	tUnknownFit = nullptr;
 	tUnknownThumb = nullptr;
@@ -159,6 +158,7 @@ bool ImageManager::Initial(const path dir) {
 void ImageManager::SetDevice(irr::IrrlichtDevice* dev) {
 	device = dev;
 	driver = dev->getVideoDriver();
+	irrFileSystem = dev->getFileSystem();
 }
 void ImageManager::ClearTexture() {
 	for(auto tit = tMap[0].begin(); tit != tMap[0].end(); ++tit) {
@@ -177,6 +177,14 @@ void ImageManager::ClearTexture() {
 		if(tit->second)
 			driver->removeTexture(tit->second);
 	}
+	for(auto tit = tButton.begin(); tit != tButton.end(); ++tit) {
+		if(tit->second)
+			driver->removeTexture(tit->second);
+	}
+	for(auto tit = tButtonDefense.begin(); tit != tButtonDefense.end(); ++tit) {
+		if(tit->second)
+			driver->removeTexture(tit->second);
+	}
 	if(tBigPicture != nullptr) {
 		driver->removeTexture(tBigPicture);
 		tBigPicture = nullptr;
@@ -185,6 +193,8 @@ void ImageManager::ClearTexture() {
 	tMap[1].clear();
 	tThumb.clear();
 	tFields.clear();
+	tButton.clear();
+	tButtonDefense.clear();
 	tThumbLoadingMutex.lock();
 	tThumbLoading.clear();
 	while(!tThumbLoadingCodes.empty())
@@ -203,18 +213,30 @@ void ImageManager::ResizeTexture(const path dir) {
 	irr::s32 imgHeightFit = CARD_IMG_HEIGHT * mul;
 	irr::s32 bgWidth = GAME_WINDOW_WIDTH * mainGame->xScale;
 	irr::s32 bgHeight = GAME_WINDOW_HEIGHT * mainGame->yScale;
+	float btnScale = 0.5f * mainGame->yScale;
+	irr::s32 btnImgWidth = CARD_IMG_WIDTH * btnScale;
+	irr::s32 btnImgHeight = CARD_IMG_HEIGHT * btnScale;
+	const char* coverFiles[2] = { (dir + path("/textures/cover.jpg")).c_str(), (dir + path("/textures/cover2.jpg")).c_str() };
 	driver->removeTexture(tCover[0]);
 	if(tCover[1] != tCover[0])
 		driver->removeTexture(tCover[1]);
-	tCover[0] = GetTextureFromFile((dir + path("/textures/cover.jpg")).c_str(), imgWidth, imgHeight);
-	tCover[1] = GetTextureFromFile((dir + path("/textures/cover2.jpg")).c_str(), imgWidth, imgHeight);
+	tCover[0] = GetTextureFromFile(coverFiles[0], imgWidth, imgHeight);
+	tCover[1] = GetTextureFromFile(coverFiles[1], imgWidth, imgHeight);
 	if(!tCover[1])
 		tCover[1] = tCover[0];
 	driver->removeTexture(tUnknown);
 	driver->removeTexture(tUnknownFit);
 	driver->removeTexture(tUnknownThumb);
 	driver->removeTexture(tLoading);
-	tLoading = GetTextureFromFile((dir + path("/textures/cover.jpg")).c_str(), imgWidthThumb, imgHeightThumb);
+	tLoading = GetTextureFromFile(coverFiles[0], imgWidthThumb, imgHeightThumb);
+	if(!tLoading && mainGame->gameConf.use_image_load_background_thread) {
+		// If the cover image is missing, create a blank texture instead.
+		// tLoading is used as a sentinel value when loading thumbnails, so it must not be null.
+		irr::video::IImage* blankImg = driver->createImage(irr::video::ECF_A8R8G8B8, irr::core::dimension2d<irr::u32>(imgWidthThumb, imgHeightThumb));
+		blankImg->fill(0);
+		tLoading = driver->addTexture("textures/loading", blankImg);
+		blankImg->drop();
+	}
 	tUnknown = GetTextureFromFile((dir + path("/textures/unknown.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
 	tUnknownFit = GetTextureFromFile((dir + path("/textures/unknown.jpg")).c_str(), imgWidthFit, imgHeightFit);
 	tUnknownThumb = GetTextureFromFile((dir + path("/textures/unknown.jpg")).c_str(), imgWidthThumb, imgHeightThumb);
@@ -230,6 +252,34 @@ void ImageManager::ResizeTexture(const path dir) {
 	tBackGround_deck = GetTextureFromFile((dir + path("/textures/bg_deck.jpg")).c_str(), bgWidth, bgHeight);
 	if(!tBackGround_deck)
 		tBackGround_deck = tBackGround;
+	driver->removeTexture(tButtonFacedown[0]);
+	if(tButtonFacedown[1] != tButtonFacedown[0])
+		driver->removeTexture(tButtonFacedown[1]);
+	driver->removeTexture(tButtonFacedownDefense[0]);
+	if(tButtonFacedownDefense[1] != tButtonFacedownDefense[0])
+		driver->removeTexture(tButtonFacedownDefense[1]);
+	for(int i = 0; i < 2; ++i) {
+		irr::video::IImage* coverImg = driver->createImageFromFile(coverFiles[i]);
+		if(coverImg) {
+			irr::video::IImage* coverResized = driver->createImage(coverImg->getColorFormat(), irr::core::dimension2d<irr::u32>(btnImgWidth, btnImgHeight));
+			ImageUtility::Resize(coverImg, coverResized, mainGame->gameConf.use_image_scale_multi_thread);
+			coverImg->drop();
+			char name[256];
+			mysnprintf(name, "btn_facedown/%d", i);
+			tButtonFacedown[i] = driver->addTexture(name, coverResized);
+			irr::video::IImage* coverRotated = ImageUtility::RotateImageCCW90(driver, coverResized);
+			coverResized->drop();
+			mysnprintf(name, "btn_facedown_defense/%d", i);
+			tButtonFacedownDefense[i] = driver->addTexture(name, coverRotated);
+			coverRotated->drop();
+		} else if(i == 0) {
+			tButtonFacedown[i] = nullptr;
+			tButtonFacedownDefense[i] = nullptr;
+		} else if(i == 1) {
+			tButtonFacedown[i] = tButtonFacedown[0];
+			tButtonFacedownDefense[i] = tButtonFacedownDefense[0];
+		}
+	}
 }
 /**
  * Convert image to texture, resizing if needed.
@@ -353,10 +403,10 @@ int ImageManager::LoadThumbThread() {
 		int code = imageManager.tThumbLoadingCodes.front();
 		imageManager.tThumbLoadingCodes.pop();
 		imageManager.tThumbLoadingMutex.unlock();
+		const int width = CARD_THUMB_WIDTH * mainGame->xScale;
+		const int height = CARD_THUMB_HEIGHT * mainGame->yScale;
 		irr::video::IImage* img = imageManager.GetImage(code);
 		if(img != nullptr) {
-			int width = CARD_THUMB_WIDTH * mainGame->xScale;
-			int height = CARD_THUMB_HEIGHT * mainGame->yScale;
 			if(img->getDimension() == irr::core::dimension2d<irr::u32>(width, height)) {
 				imageManager.tThumbLoadingMutex.lock();
 				if(imageManager.tThumbLoadingThreadRunning)
@@ -400,13 +450,14 @@ irr::video::ITexture* ImageManager::GetTextureThumb(int code) {
 		return (texture == nullptr) ? tUnknownThumb : texture;
 	}
 	if(tit == tThumb.end() || tit->second == tLoading) {
+		// textures must be added in the main thread which handle OpenGL context
 		imageManager.tThumbLoadingMutex.lock();
 		auto lit = tThumbLoading.find(code);
 		if(lit != tThumbLoading.end()) {
 			if(lit->second != nullptr) {
 				char textureName[256];
 				mysnprintf(textureName, "pics/%d/thumbnail", code);
-				irr::video::ITexture* texture = driver->addTexture(textureName, lit->second); // textures must be added in the main thread due to OpenGL
+				irr::video::ITexture* texture = driver->addTexture(textureName, lit->second);
 				lit->second->drop();
 				tThumb[code] = texture;
 			} else {
@@ -474,6 +525,47 @@ irr::video::ITexture* ImageManager::GetTextureField(int code) {
 		return tit->second;
 	else
 		return nullptr;
+}
+/**
+ * Load managed duel button (select card, atk/def position) texture.
+ * @return Texture pointer. Should NOT be removed nor dropped.
+ */
+irr::video::ITexture* ImageManager::GetTextureButton(int code, bool defense) {
+	if(code == 0)
+		return nullptr;
+	auto& cache = defense ? tButtonDefense : tButton;
+	auto tit = cache.find(code);
+	if(tit != cache.end())
+		return tit->second;
+	float btnScale = 0.5f * mainGame->yScale;
+	irr::s32 width = (irr::s32)(CARD_IMG_WIDTH * btnScale);
+	irr::s32 height = (irr::s32)(CARD_IMG_HEIGHT * btnScale);
+	irr::video::IImage* img = GetImage(code);
+	if(!img) {
+		cache[code] = nullptr;
+		return nullptr;
+	}
+	irr::video::IImage* resized = driver->createImage(img->getColorFormat(), irr::core::dimension2d<irr::u32>(width, height));
+	ImageUtility::Resize(img, resized, mainGame->gameConf.use_image_scale_multi_thread);
+	img->drop();
+	irr::video::ITexture* texture = nullptr;
+	if(defense) {
+		irr::video::IImage* rotated = ImageUtility::RotateImageCCW90(driver, resized);
+		resized->drop();
+		if(rotated) {
+			char name[256];
+			mysnprintf(name, "pics/%d/btn_defense", code);
+			texture = driver->addTexture(name, rotated);
+			rotated->drop();
+		}
+	} else {
+		char name[256];
+		mysnprintf(name, "pics/%d/btn", code);
+		texture = driver->addTexture(name, resized);
+		resized->drop();
+	}
+	cache[code] = texture;
+	return texture;
 }
 // 添加获取表情图的函数
 irr::video::ITexture* ImageManager::GetEmoticon(const std::wstring& emoticonName) {

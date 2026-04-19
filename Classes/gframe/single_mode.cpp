@@ -166,7 +166,7 @@ int SingleMode::SinglePlayThread() {
 		mainGame->device->setEventReceiver(&mainGame->menuHandler);
 		mainGame->gMutex.unlock();
 		mainGame->SaveConfig();
-		if(exit_on_return)
+		if(mainGame->exit_on_return)
 			mainGame->OnGameClose();
 	}
 	return 0;
@@ -832,8 +832,6 @@ void SingleMode::SinglePlayReload() {
 	ReloadLocation(1, LOCATION_REMOVED, flag, queryBuffer);
 }
 uint32_t SingleMode::MessageHandler(intptr_t fduel, uint32_t type) {
-	if(!enable_log)
-		return 0;
 	char msgbuf[1024];
 	get_log_message(fduel, msgbuf);
 	mainGame->AddDebugMsg(msgbuf);

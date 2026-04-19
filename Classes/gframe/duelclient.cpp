@@ -123,9 +123,9 @@ void DuelClient::ConnectTimeout(evutil_socket_t fd, short events, void* arg) {
 		mainGame->gMutex.lock();
 
 		// 根据机器人模式决定显示单人游戏窗口还是局域网窗口
-		if(bot_mode && !mainGame->wSinglePlay->isVisible())
+		if(mainGame->bot_mode && !mainGame->wSinglePlay->isVisible())
 			mainGame->ShowElement(mainGame->wSinglePlay);
-		else if(!bot_mode && !mainGame->wLanWindow->isVisible())
+		else if(!mainGame->bot_mode && !mainGame->wLanWindow->isVisible())
 			mainGame->ShowElement(mainGame->wLanWindow);
 
 		// 播放连接失败的提示音效
@@ -242,7 +242,7 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 		// 根据是否创建游戏分别构造并发送对应的数据包
 		if (create_game) {
 			CTOS_CreateGame cscg;
-			if (bot_mode) {
+			if (mainGame->bot_mode) {
 				// 设置机器人模式下的默认配置
 				BufferIO::CopyCharArray(L"Bot Game", cscg.name);
 				BufferIO::CopyCharArray(L"", cscg.pass);
@@ -298,9 +298,9 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 				mainGame->btnStartBot->setEnabled(true);
 				mainGame->btnBotCancel->setEnabled(true);
 				mainGame->gMutex.lock();
-				if (bot_mode && !mainGame->wSinglePlay->isVisible())
+				if (mainGame->bot_mode && !mainGame->wSinglePlay->isVisible())
 					mainGame->ShowElement(mainGame->wSinglePlay);
-				else if (!bot_mode && !mainGame->wLanWindow->isVisible())
+				else if (!mainGame->bot_mode && !mainGame->wLanWindow->isVisible())
 					mainGame->ShowElement(mainGame->wLanWindow);
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
 				mainGame->addMessageBox(L"", dataManager.GetSysString(1400));
@@ -316,7 +316,7 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 					mainGame->btnBotCancel->setEnabled(true);
 					mainGame->gMutex.lock();
 					mainGame->HideElement(mainGame->wHostPrepare);
-					if (bot_mode)
+					if (mainGame->bot_mode)
 						mainGame->ShowElement(mainGame->wSinglePlay);
 					else
 						mainGame->ShowElement(mainGame->wLanWindow);
@@ -353,7 +353,7 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 					mainGame->is_building = false;
 					mainGame->ResizeChatInputWindow();
 					mainGame->device->setEventReceiver(&mainGame->menuHandler);
-					if (bot_mode)
+					if (mainGame->bot_mode)
 						mainGame->ShowElement(mainGame->wSinglePlay);
 					else
 						mainGame->ShowElement(mainGame->wLanWindow);
@@ -991,14 +991,14 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, int len) {
 		mainGame->stTip->setVisible(false);
 		mainGame->ResizeChatInputWindow();
 		mainGame->device->setEventReceiver(&mainGame->menuHandler);
-		if(bot_mode)
+		if(mainGame->bot_mode)
 			mainGame->ShowElement(mainGame->wSinglePlay);
 		else
 			mainGame->ShowElement(mainGame->wLanWindow);
 		mainGame->gMutex.unlock();
 		mainGame->SaveConfig();
 		event_base_loopbreak(client_base);
-		if(exit_on_return)
+		if(mainGame->exit_on_return)
 			mainGame->OnGameClose();
 		break;
 	}
@@ -1394,13 +1394,13 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 			mainGame->btnBotCancel->setEnabled(true);
 			mainGame->stTip->setVisible(false);
 			mainGame->device->setEventReceiver(&mainGame->menuHandler);
-			if(bot_mode)
+			if(mainGame->bot_mode)
 				mainGame->ShowElement(mainGame->wSinglePlay);
 			else
 				mainGame->ShowElement(mainGame->wLanWindow);
 			mainGame->gMutex.unlock();
 			event_base_loopbreak(client_base);
-			if(exit_on_return)
+			if(mainGame->exit_on_return)
 				mainGame->OnGameClose();
 		}
 		return false;
@@ -2249,42 +2249,22 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 			SetResponseI(positions);
 			return true;
 		}
-		int count = 0, filter = 0x1, startpos = 30;
-		while(filter != 0x10) {
-			if(positions & filter) count++;
-			filter <<= 1;
-		}
+		mainGame->gMutex.lock();
 		if(positions & 0x1) {
-			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSAU, code));
-			mainGame->btnPSAU->setRelativePosition(mainGame->Resize_Y(startpos, 30, startpos + 168, 30 + 168));
+			mainGame->btnImagePending[mainGame->btnPSAU] = std::make_pair((int)code, false);
 			mainGame->btnPSAU->setVisible(true);
-			startpos += 178;
 		} else mainGame->btnPSAU->setVisible(false);
 		if(positions & 0x2) {
-			mainGame->btnPSAD->setRelativePosition(mainGame->Resize_Y(startpos, 30, startpos + 168, 30 + 168));
 			mainGame->btnPSAD->setVisible(true);
-			startpos += 178;
 		} else mainGame->btnPSAD->setVisible(false);
 		if(positions & 0x4) {
-			mainGame->imageLoading.insert(std::make_pair(mainGame->btnPSDU, code));
-			mainGame->btnPSDU->setRelativePosition(mainGame->Resize_Y(startpos, 30, startpos + 168, 30 + 168));
+			mainGame->btnImagePending[mainGame->btnPSDU] = std::make_pair((int)code, true);
 			mainGame->btnPSDU->setVisible(true);
-			startpos += 178;
 		} else mainGame->btnPSDU->setVisible(false);
 		if(positions & 0x8) {
-			mainGame->btnPSDD->setRelativePosition(mainGame->Resize_Y(startpos, 30, startpos + 168, 30 + 168));
 			mainGame->btnPSDD->setVisible(true);
-			startpos += 178;
 		} else mainGame->btnPSDD->setVisible(false);
-		irr::core::recti pos = mainGame->wPosSelect->getRelativePosition();
-		irr::s32 oldcenter = pos.getCenter().X;
-		pos.LowerRightCorner.X = pos.UpperLeftCorner.X + (count * 178 + 50) * mainGame->yScale;
-		irr::s32 newwidth = pos.getWidth();
-		pos.UpperLeftCorner.X = oldcenter - newwidth / 2;
-		pos.LowerRightCorner.X = oldcenter + newwidth / 2;
-		mainGame->wPosSelect->setRelativePosition(pos);
-		mainGame->bgPosSelect->setRelativePosition(irr::core::rect<irr::s32>(0, 0, pos.getWidth(), pos.getHeight()));
-		mainGame->gMutex.lock();
+		mainGame->ResizePosSelectButtons();
 		mainGame->PopupElement(mainGame->wPosSelect);
 		mainGame->gMutex.unlock();
 		return false;
@@ -2402,7 +2382,10 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		std::sort(mainGame->dField.selectsum_all.begin(), mainGame->dField.selectsum_all.end(), ClientCard::client_card_sort);
 		mainGame->dField.select_hint = select_hint;
 		select_hint = 0;
-		return mainGame->dField.ShowSelectSum(mainGame->dField.select_panalmode);
+		mainGame->gMutex.lock();
+		bool result = mainGame->dField.ShowSelectSum(mainGame->dField.select_panalmode);
+		mainGame->gMutex.unlock();
+		return result;
 	}
 	case MSG_SORT_CARD: {
 		/*int player = */BufferIO::Read<uint8_t>(pbuf);
@@ -2424,10 +2407,12 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 			mainGame->dField.selectable_cards.push_back(pcard);
 			mainGame->dField.sort_list.push_back(0);
 		}
+		mainGame->gMutex.lock();
 		mainGame->stCardSelect->setText(dataManager.GetSysString(205));
 		mainGame->dField.select_min = 0;
 		mainGame->dField.select_max = count;
 		mainGame->dField.ShowSelectCard();
+		mainGame->gMutex.unlock();
 		return false;
 	}
 	case MSG_CONFIRM_DECKTOP: {
@@ -4643,26 +4628,7 @@ void DuelClient::BeginRefreshHost() {
 	}
 	sendto(sSend, (const char*) &hReq, sizeof(HostRequest), 0, (sockaddr*) &sockTo, sizeof(sockaddr));
 	closesocket(sSend);
-#else
-	// 其他平台遍历多个本地地址发送广播请求
-	for(int i = 0; i < 8; ++i) {
-		if(host->h_addr_list[i] == 0)
-			break;
-		unsigned int local_addr = 0;
-		std::memcpy(&local_addr, host->h_addr_list[i], sizeof local_addr);
-		local.sin_addr.s_addr = local_addr;
-		SOCKET sSend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-		if(sSend == INVALID_SOCKET)
-			break;
-		int opt = TRUE;
-		setsockopt(sSend, SOL_SOCKET, SO_BROADCAST, (const char*)&opt, sizeof opt);
-		if(bind(sSend, (sockaddr*)&local, sizeof(sockaddr)) == SOCKET_ERROR) {
-			closesocket(sSend);
-			break;
-		}
-		sendto(sSend, (const char*)&hReq, sizeof(HostRequest), 0, (sockaddr*)&sockTo, sizeof(sockaddr));
-		closesocket(sSend);
-	}
+
 #endif
 }
 

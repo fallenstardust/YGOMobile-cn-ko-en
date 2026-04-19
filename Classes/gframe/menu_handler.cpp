@@ -135,7 +135,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_JOIN_HOST: {
 				mainGame->HideElement(mainGame->wDeckManage);
-				bot_mode = false;
+                mainGame->bot_mode = false;
 				mainGame->TrimText(mainGame->ebJoinHost);
 				mainGame->TrimText(mainGame->ebJoinPort);
 				char ip[20];
@@ -185,7 +185,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->HideElement(mainGame->wDeckManage);
 				mainGame->HideElement(mainGame->wLanWindow);
 				mainGame->ShowElement(mainGame->wMainMenu);
-				if(exit_on_return)
+				if(mainGame->exit_on_return)
 					mainGame->OnGameClose();
 				break;
 			}
@@ -201,7 +201,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_HOST_CONFIRM: {
-				bot_mode = false;
+                mainGame->bot_mode = false;
 				BufferIO::CopyWideString(mainGame->ebServerName->getText(), mainGame->gameConf.gamename);
 				if(!NetServer::StartServer(mainGame->gameConf.serverport)) {
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
@@ -290,13 +290,13 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->btnBotCancel->setEnabled(true);
 				mainGame->HideElement(mainGame->wDeckManage);
 				mainGame->HideElement(mainGame->wHostPrepare);
-				if(bot_mode)
+				if(mainGame->bot_mode)
 					mainGame->ShowElement(mainGame->wSinglePlay);
 				else
 					mainGame->ShowElement(mainGame->wLanWindow);
 				mainGame->wChat->setVisible(false);
 				mainGame->SaveConfig();
-				if(exit_on_return)
+				if(mainGame->exit_on_return)
 					mainGame->OnGameClose();
 				break;
 			}
@@ -431,7 +431,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				int sel = mainGame->lstBotList->getSelected();
 				if(sel == -1)
 					break;
-				bot_mode = true;
+                mainGame->bot_mode = true;
 #ifdef _IRR_ANDROID_PLATFORM_
 				char args[512];
 				wchar_t warg1[512];

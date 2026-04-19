@@ -2,12 +2,6 @@
 #define GAME_H
 
 #include "config.h"
-#ifdef _IRR_ANDROID_PLATFORM_
-#include <GLES/gl.h>
-#include <GLES/glext.h>
-#include <GLES/glplatform.h>
-#endif
-#include "CGUIImageButton.h"
 #include "CGUITTFont.h"
 #include "mysignal.h"
 #include "client_field.h"
@@ -51,23 +45,12 @@ bool IsExtension(const char* filename, const char(&extension)[N]) {
 	return !mystrncasecmp(filename + (flen - elen), extension, elen);
 }
 
-#ifdef _IRR_ANDROID_PLATFORM_
-#define LOG_TAG "ygo-jni"
-#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG ,__VA_ARGS__)
-#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG ,__VA_ARGS__)
-#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG ,__VA_ARGS__)
-#define ALOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG ,__VA_ARGS__)
-#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG ,__VA_ARGS__)
-#endif
 struct Config {
 	bool use_d3d{ false };
-	bool use_image_scale_multi_thread{ true };
-#ifdef _OPENMP
+	bool use_image_scale_multi_thread{ false };
 	bool use_image_load_background_thread{ false };
-#else
-	bool use_image_load_background_thread{ true };
-#endif
 	unsigned short antialias{ 1 };
+	unsigned int enable_log{ 0x3 };
 	unsigned short serverport{ 7911 };
 	unsigned char textfontsize{ 18 };
 	wchar_t lasthost[100]{};
@@ -209,26 +192,26 @@ public:
 	void DrawCard(ClientCard* pcard);
 	void DrawMisc();
 	void DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2);
-	void DrawGUI();
+	void DrawGUI(); // called from MainLoop with gMutex held
 	void DrawSpec();
 	void DrawBackImage(irr::video::ITexture* texture);
-	void ShowElement(irr::gui::IGUIElement* element, int autoframe = 0);
-	void HideElement(irr::gui::IGUIElement* element, bool set_action = false);
-	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0);
+	void ShowElement(irr::gui::IGUIElement* element, int autoframe = 0); // caller must hold gMutex
+	void HideElement(irr::gui::IGUIElement* element, bool set_action = false); // caller must hold gMutex
+	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0); // caller must hold gMutex
 	void SetImageButtonDrawing(irr::gui::IGUIElement* element, bool draw = true);
 	void WaitFrameSignal(int frame);
 	void DrawThumb(const CardDataC* cp, irr::core::vector2di pos, const LFList* lflist, bool drag = false);
 	void DrawDeckBd();
 	void LoadConfig();
 	void SaveConfig();
-	void ShowCardInfo(int code);
+	void ShowCardInfo(int code, bool resize = false);
 	void ClearCardInfo(int player = 0);
 	void AddLog(const wchar_t* msg, int param = 0);
 	void AddChatMsg(const wchar_t* msg, int player, bool play_sound = false);
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
-	void ClearTextures();
+	void ClearTextures(); // caller must hold gMutex
 	void CloseGameButtons();
 	void CloseGameWindow();
 	void CloseDuelWindow();
@@ -265,12 +248,21 @@ public:
 		editbox->setText(text.c_str());
 	}
 	void ResizeChatInputWindow();
+	void ResizePosSelectButtons();
+	void ResizeCardSelectButtons(irr::gui::IGUIWindow* window, irr::gui::IGUIStaticText** labels, irr::gui::IGUIButton** images,
+		irr::gui::IGUIScrollBar* scrollbar, irr::gui::IGUIButton* buttonOK, const std::vector<ClientCard*>& cards);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);
 	irr::core::vector2di Resize(irr::s32 x, irr::s32 y);
 	irr::core::vector2di ResizeReverse(irr::s32 x, irr::s32 y);
 	irr::core::recti ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 width);
 	irr::core::recti ResizeWin(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::recti ResizeCardImgWin(irr::s32 x, irr::s32 y, irr::s32 mx, irr::s32 my);
+	irr::core::recti ResizeCardHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::vector2di ResizeCardHint(irr::s32 x, irr::s32 y);
+	irr::core::recti ResizeCardMid(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 midx, irr::s32 midy);
+	irr::core::vector2di ResizeCardMid(irr::s32 x, irr::s32 y, irr::s32 midx, irr::s32 midy);
+	irr::core::recti ResizeFit(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::recti Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::recti Resize_X_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::vector2di Resize_Y(irr::s32 x, irr::s32 y);
@@ -330,6 +322,8 @@ public:
 
 	bool is_building{};
 	bool is_siding{};
+	bool exit_on_return{ false };
+	bool bot_mode{ false };
 
 	irr::core::dimension2d<irr::u32> window_size;
 	float xScale{ 1.0f };
@@ -353,31 +347,38 @@ public:
 	irr::gui::CGUITTFont* titleFont{};
 	irr::gui::CGUITTFont* miniFont{};
 	irr::gui::CGUITTFont* icFont{};
-	std::unordered_map<irr::gui::CGUIImageButton*, int> imageLoading;
+	// textures must be added in the main thread which handle OpenGL context,
+	// {card_code, rotated} written in network thread, loaded in main thread's DrawGUI
+	std::unordered_map<irr::gui::IGUIButton*, std::pair<int, bool>> btnImagePending;
+	// persistent tracking for image refresh on resize:
+	// {card_code, rotated} for buttons showing a card image from GetTextureButton
+	std::unordered_map<irr::gui::IGUIButton*, std::pair<int, bool>> btnCardImgInfo;
+	// {cover_idx, rotated} for buttons showing a facedown card (cover) image
+	std::unordered_map<irr::gui::IGUIButton*, std::pair<int, bool>> btnFacedownImgInfo;
 	//card image
 	irr::gui::IGUIStaticText* wCardImg{};
 	irr::gui::IGUIImage* imgCard{};
 	//imageButtons pallet
 	irr::gui::IGUIWindow* wPallet;
 	//Logs
-	irr::gui::CGUIImageButton* imgLog;
+	irr::gui::IGUIButton* imgLog;
 	irr::gui::IGUIWindow* wLogs;
 	irr::gui::IGUIImage* bgLogs;
 	irr::gui::IGUIListBox* lstLog;
 	irr::gui::IGUIButton* btnClearLog;//
 	irr::gui::IGUIButton* btnCloseLog;//
 	//imageButton BGM
-	irr::gui::CGUIImageButton* imgVol;
+	irr::gui::IGUIButton* imgVol;
     //imageButton Quick Animation
-    irr::gui::CGUIImageButton* imgQuickAnimation;
+    irr::gui::IGUIButton* imgQuickAnimation;
 	//imageButton Chatting
-    irr::gui::CGUIImageButton* imgChat;
-    irr::gui::CGUIImageButton* imgEmoticon;
+    irr::gui::IGUIButton* imgChat;
+    irr::gui::IGUIButton* imgEmoticon;
 	//Settings
-	irr::gui::CGUIImageButton* imgSettings;
+	irr::gui::IGUIButton* imgSettings;
 	irr::gui::IGUIWindow* wSettings;
 	irr::gui::IGUIImage* bgSettings;
-	irr::gui::CGUIImageButton* btnCloseSettings;//
+	irr::gui::IGUIButton* btnCloseSettings;//
 	//hint text
 	irr::gui::IGUIStaticText* stHintMsg{};
 	irr::gui::IGUIStaticText* stTip{};
@@ -423,19 +424,13 @@ public:
 	irr::gui::IGUICheckBox* chkMusicMode{};
 	//main menu
 	irr::gui::IGUIWindow* wMainMenu{};
-	irr::gui::CGUIImageButton* btnLanMode;
-	irr::gui::IGUIStaticText* textLanMode;
-	irr::gui::CGUIImageButton* btnSingleMode;
-	irr::gui::IGUIStaticText* textSingleMode;
-	irr::gui::CGUIImageButton* btnReplayMode;
-	irr::gui::IGUIStaticText* textReplayMode;
-	irr::gui::IGUIButton* btnTestMode;
-	irr::gui::CGUIImageButton* btnDeckEdit;
-	irr::gui::IGUIStaticText* textDeckEdit;
-	irr::gui::CGUIImageButton* btnSettings;
-	irr::gui::IGUIStaticText* textSettings;
-	irr::gui::CGUIImageButton* btnModeExit;
-	irr::gui::IGUIStaticText* textModeExit;
+	irr::gui::IGUIButton* btnLanMode{};
+	irr::gui::IGUIButton* btnSingleMode{};
+	irr::gui::IGUIButton* btnReplayMode{};
+	irr::gui::IGUIButton* btnTestMode{};
+	irr::gui::IGUIButton* btnDeckEdit{};
+	irr::gui::IGUIButton* btnSettings;
+	irr::gui::IGUIButton* btnModeExit{};
 	//lan
 	irr::gui::IGUIWindow* wLanWindow{};
 	irr::gui::IGUIImage* bgLanWindow;
@@ -473,7 +468,7 @@ public:
 	irr::gui::IGUIButton* btnHostPrepOB{};
 	irr::gui::IGUIStaticText* stHostPrepDuelist[4]{};
 	irr::gui::IGUICheckBox* chkHostPrepReady[4]{};
-	irr::gui::CGUIImageButton* btnHostPrepKick[4];
+	irr::gui::IGUIButton* btnHostPrepKick[4]{};
 	irr::gui::IGUIComboBox* cbCategorySelect{};
 	irr::gui::IGUIComboBox* cbDeckSelect{};
 	irr::gui::IGUIStaticText* stHostPrepRule{};
@@ -517,7 +512,7 @@ public:
 	irr::gui::IGUIButton* btnSinglePlayCancel{};
 	//hand
 	irr::gui::IGUIWindow* wHand{};
-	irr::gui::CGUIImageButton* btnHand[3];
+	irr::gui::IGUIButton* btnHand[3]{};
 	//
 	irr::gui::IGUIWindow* wFTSelect{};
 	irr::gui::IGUIImage* bgFTSelect;
@@ -560,15 +555,15 @@ public:
 	//pos selection
 	irr::gui::IGUIWindow* wPosSelect{};
 	irr::gui::IGUIImage* bgPosSelect;
-	irr::gui::CGUIImageButton* btnPSAU{};
-	irr::gui::CGUIImageButton* btnPSAD{};
-	irr::gui::CGUIImageButton* btnPSDU{};
-	irr::gui::CGUIImageButton* btnPSDD{};
+	irr::gui::IGUIButton* btnPSAU{};
+	irr::gui::IGUIButton* btnPSAD{};
+	irr::gui::IGUIButton* btnPSDU{};
+	irr::gui::IGUIButton* btnPSDD{};
 	//card selection
 	irr::gui::IGUIWindow* wCardSelect{};
 	irr::gui::IGUIImage* bgCardSelect;
 	irr::gui::IGUIStaticText* stCardSelect;
-	irr::gui::CGUIImageButton* btnCardSelect[5]{};
+	irr::gui::IGUIButton* btnCardSelect[5]{};
 	irr::gui::IGUIStaticText *stCardPos[5]{};
 	irr::gui::IGUIScrollBar *scrCardList{};
 	irr::gui::IGUIButton* btnSelectOK{};
@@ -576,7 +571,7 @@ public:
 	irr::gui::IGUIWindow* wCardDisplay{};
 	irr::gui::IGUIImage* bgCardDisplay;
 	irr::gui::IGUIStaticText* stCardDisplay;
-	irr::gui::CGUIImageButton* btnCardDisplay[5]{};
+	irr::gui::IGUIButton* btnCardDisplay[5]{};
 	irr::gui::IGUIStaticText *stDisplayPos[5]{};
 	irr::gui::IGUIScrollBar *scrDisplayList{};
 	irr::gui::IGUIButton* btnDisplayOK{};
@@ -624,7 +619,7 @@ public:
 	irr::gui::IGUICheckBox* chkIgnore1{};
 	irr::gui::IGUICheckBox* chkIgnore2{};
     irr::gui::IGUIWindow* wEmoticon;
-    irr::gui::CGUIImageButton* btnEmoticon[16];
+    irr::gui::IGUIButton* btnEmoticon[16];
 	//phase button
 	irr::gui::IGUIStaticText* wPhase{};
 	irr::gui::IGUIButton* btnPhaseStatus{};
@@ -1048,5 +1043,11 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 
 #ifdef _IRR_ANDROID_PLATFORM_
 #define GUI_INFO_FPS 1000
+#define LOG_TAG "ygo-jni"
+#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG ,__VA_ARGS__)
+#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG ,__VA_ARGS__)
+#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG ,__VA_ARGS__)
+#define ALOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG ,__VA_ARGS__)
+#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG ,__VA_ARGS__)
 #endif
 #endif // GAME_H

@@ -187,7 +187,7 @@ void DeckBuilder::Terminate() {
     }
     setLastLimit();
     mainGame->SaveConfig();
-	if(exit_on_return)
+	if(mainGame->exit_on_return)
 		mainGame->OnGameClose();
 }
 
@@ -1740,13 +1740,13 @@ void DeckBuilder::FilterCards() {
 
 			// 根据不同匹配类型执行不同的比较操作
 			if (elements_iterator->type == element_t::type_t::name) {
-				match = CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str());
+				match = DataManager::CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str());
 			} else if (elements_iterator->type == element_t::type_t::setcode) {
 				match = data.is_setcodes(elements_iterator->setcodes);
 			} else if (trycode && data.get_original_code() == trycode) {
 				match = true;
 			} else {
-				match = CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str())
+				match = DataManager::CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str())
 					|| strings.text.find(elements_iterator->keyword) != std::wstring::npos
 					|| data.is_setcodes(elements_iterator->setcodes);
 			}
@@ -1920,51 +1920,7 @@ void DeckBuilder::ShowDeckManage() {
 	mainGame->lstDecks->setSelected(prev_deck);
 	mainGame->PopupElement(mainGame->wDeckManage);
 }
-static inline wchar_t NormalizeChar(wchar_t c) {
-	/*
-	// Convert all symbols and punctuations to space.
-	if (c != 0 && c < 128 && !isalnum(c)) {
-		return ' ';
-	}
-	*/
-	// Convert latin chararacters to uppercase to ignore case.
-	if (c < 128 && isalpha(c)) {
-		return toupper(c);
-	}
-	// Remove some accentued characters that are not supported by the editbox.
-	if (c >= 232 && c <= 235) {
-		return 'E';
-	}
-	if (c >= 238 && c <= 239) {
-		return 'I';
-	}
-	return c;
-}
-bool DeckBuilder::CardNameContains(const wchar_t* haystack, const wchar_t* needle) {
-	if(!needle[0]) {
-		return true;
-	}
-	if(!haystack) {
-		return false;
-	}
-	int i = 0;
-	int j = 0;
-	while(haystack[i]) {
-		wchar_t ca = NormalizeChar(haystack[i]);
-		wchar_t cb = NormalizeChar(needle[j]);
-		if(ca == cb) {
-			j++;
-			if(!needle[j]) {
-				return true;
-			}
-		} else {
-			i -= j;
-			j = 0;
-		}
-		i++;
-	}
-	return false;
-}
+
 bool DeckBuilder::push_main(const CardDataC* pointer, int seq) {
 	if(pointer->type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
 		return false;
