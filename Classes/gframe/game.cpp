@@ -361,32 +361,26 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wMainMenu->setDrawBackground(false);
     //button Lan Mode
 	btnLanMode = env->addButton(Resize(15, 30, 350, 106), wMainMenu, BUTTON_LAN_MODE, dataManager.GetSysString(1200)/*本地联机*/);
-	btnLanMode->setDrawBorder(false);
-	btnLanMode->setImage(imageManager.tTitleBar);
+        ChangeToIGUIImageButton(btnLanMode, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //version code
 	wchar_t strbuf[256];
 	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
 	env->addStaticText(strbuf, Resize(55, 2, 280, 35), false, false, btnLanMode);
     //button Single Mode
 	btnSingleMode = env->addButton(Resize(15, 110, 350, 186), wMainMenu, BUTTON_SINGLE_MODE, dataManager.GetSysString(1201)/*单人游戏*/);
-	btnSingleMode->setDrawBorder(false);
-    btnSingleMode->setImage(imageManager.tTitleBar);
+        ChangeToIGUIImageButton(btnSingleMode, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //button Replay Mode
 	btnReplayMode = env->addButton(Resize(15, 190, 350, 266), wMainMenu, BUTTON_REPLAY_MODE, dataManager.GetSysString(1202)/*观看录像*/);
-    btnReplayMode->setDrawBorder(false);
-    btnReplayMode->setImage(imageManager.tTitleBar);
+        ChangeToIGUIImageButton(btnReplayMode, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //button Deck Edit
 	btnDeckEdit = env->addButton(Resize(15, 270, 350, 346), wMainMenu, BUTTON_DECK_EDIT, dataManager.GetSysString(1204)/*编辑卡组*/);
-    btnDeckEdit->setDrawBorder(false);
-    btnDeckEdit->setImage(imageManager.tTitleBar);
+        ChangeToIGUIImageButton(btnDeckEdit, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //button Settings
     btnSettings = env->addButton(Resize(15, 350, 350, 426), wMainMenu, BUTTON_SETTINGS, dataManager.GetSysString(1273)/*系统设定*/);
-	btnSettings->setDrawBorder(false);
-	btnSettings->setImage(imageManager.tTitleBar);
+        ChangeToIGUIImageButton(btnSettings, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //button Exit
     btnModeExit = env->addButton(Resize(15, 430, 350, 506), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210)/*退出*/);
-	btnModeExit->setDrawBorder(false);
-	btnModeExit->setImage(imageManager.tTitleBar);
+        ChangeToIGUIImageButton(btnModeExit, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
 
     //---------------------game windows---------------------
     //lan mode
@@ -524,6 +518,8 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", Resize(60, 80 + i * 45, 260, 120 + i * 45), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 		btnHostPrepKick[i] = env->addButton(Resize(10, 80 + i * 45, 50, 120 + i * 45), wHostPrepare, BUTTON_HP_KICK);
+        btnHostPrepKick[i]->setDrawBorder(false);
+        btnHostPrepKick[i]->setUseAlphaChannel(true);
         btnHostPrepKick[i]->setImage(imageManager.tClose);
 		chkHostPrepReady[i] = env->addCheckBox(false, Resize(270, 80 + i * 45, 310, 120 + i * 45), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
@@ -532,6 +528,8 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", Resize(60, 135 + i * 45, 260, 175 + i * 45), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
         btnHostPrepKick[i] = env->addButton(Resize(10, 135 + i * 45, 50, 175 + i * 45), wHostPrepare, BUTTON_HP_KICK);
+        btnHostPrepKick[i]->setDrawBorder(false);
+        btnHostPrepKick[i]->setUseAlphaChannel(true);
         btnHostPrepKick[i]->setImage(imageManager.tClose);
 		chkHostPrepReady[i] = env->addCheckBox(false, Resize(270, 135 + i * 45, 310, 175 + i * 45), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
@@ -612,7 +610,8 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     wPallet->setVisible(false);
     //Logs
     imgLog = env->addButton(Resize_Y(0, 55, 45, 100), wPallet, BUTTON_SHOW_LOG);
-	imgLog->setImage(imageManager.tLogs);
+    imgLog->setUseAlphaChannel(true);
+    imgLog->setImage(imageManager.tLogs);
 	imgLog->setIsPushButton(true);
 	wLogs = env->addWindow(Resize(720, 1, 1020, 501), false, dataManager.GetSysString(1271));
     wLogs->getCloseButton()->setVisible(false);
@@ -626,20 +625,15 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		ChangeToIGUIImageButton(btnCloseLog, imageManager.tButton_S, imageManager.tButton_S_pressed);
     //vol play/mute
 	imgVol = env->addButton(Resize_Y(0, 110, 45, 155), wPallet, BUTTON_BGM);
-	if (gameConf.enable_music) {
-		imgVol->setImage(imageManager.tPlay);
-	} else {
-		imgVol->setImage(imageManager.tMute);
-	}
+    imgVol->setUseAlphaChannel(true);
+	imgVol->setImage(gameConf.enable_music ? imageManager.tPlay : imageManager.tMute);
     //shift quick animation
     imgQuickAnimation = env->addButton(Resize_Y(0, 165, 45, 210), wPallet, BUTTON_QUICK_ANIMIATION);
-    if (gameConf.quick_animation) {
-        imgQuickAnimation->setImage(imageManager.tDoubleX);
-    } else {
-        imgQuickAnimation->setImage(imageManager.tOneX);
-    }
+    imgQuickAnimation->setUseAlphaChannel(true);
+    imgQuickAnimation->setImage(gameConf.quick_animation ? imageManager.tDoubleX : imageManager.tOneX);
     //Settings
 	imgSettings = env->addButton(Resize_Y(0, 0, 45, 45), wPallet, BUTTON_SETTINGS);
+    imgSettings->setUseAlphaChannel(true);
 	imgSettings->setImage(imageManager.tSettings);
 	imgSettings->setIsPushButton(true);
     wSettings = env->addWindow(Resize(220, 80, 800, 540), false, dataManager.GetSysString(1273));
@@ -750,8 +744,10 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     scrMusicVolume->setLargeStep(1);
     scrMusicVolume->setSmallStep(1);
     elmTabSystemLast = chkEnableMusic;
-	btnCloseSettings =env->addButton(Resize(500, 30, 550, 80), wSettings, BUTTON_CLOSE_SETTINGS);
+	btnCloseSettings =env->addButton(Resize_X_Y(500, 30, 550, 80), wSettings, BUTTON_CLOSE_SETTINGS);
 	btnCloseSettings->setDrawBorder(false);
+	btnCloseSettings->setUseAlphaChannel(true);
+    btnCloseSettings->setScaleImage(true);
     btnCloseSettings->setImage(imageManager.tClose);
     //
 	wHand = env->addWindow(Resize(500, 450, 825, 605), false, L"");
@@ -762,6 +758,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	for(int i = 0; i < 3; ++i) {
 		btnHand[i] = env->addButton(Resize(10 + 105 * i, 10, 105 + 105 * i, 144), wHand, BUTTON_HAND1 + i);
 		btnHand[i]->setImage(imageManager.tHand[i]);
+        btnHand[i]->setScaleImage(true);
 	}
 
 	//first or second to go
@@ -1309,6 +1306,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
         ChangeToIGUIImageButton(btnReplayExit, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//chat
     imgChat = env->addButton(Resize_Y(0, 300, 45, 300 + 45), wPallet, BUTTON_CHATTING);
+    imgChat->setUseAlphaChannel(true);
     imgChat->setImage(gameConf.chkIgnore1 ? imageManager.tShut : imageManager.tTalk);
 	wChat = env->addWindow(Resize(305, 605, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT), false, L"");
 	wChat->getCloseButton()->setVisible(false);
@@ -1318,6 +1316,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	ebChatInput = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(3, 2, 710, 28), wChat, EDITBOX_CHAT);
 	// chat Emoticon
     imgEmoticon = env->addButton(Resize_Y(0, 250, 45, 250 + 45), wPallet, BUTTON_EMOTICON);
+    imgEmoticon->setUseAlphaChannel(true);
     imgEmoticon->setImage(imageManager.tEmoticon);
     wEmoticon = env->addWindow(Resize_Y(300 - 44 * 4, 595 - 44 * 4, 305, 600), false, L"");
     wEmoticon->getCloseButton()->setVisible(false);
@@ -1328,6 +1327,8 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     // 创建4x4宫格表情按钮
     for (int i = 0; i < 16; i++) {
         btnEmoticon[i] = env->addButton(Resize_Y(2 + i % 4 * 44, 2 + i / 4 * 44, 2 + (i % 4 + 1) * 44, 2 + (i / 4 + 1) * 44), wEmoticon, BUTTON_EMOTICON_0 + i);
+        btnEmoticon[i]->setUseAlphaChannel(true);
+        btnEmoticon[i]->setScaleImage(true);
         btnEmoticon[i]->setImage(imageManager.GetEmoticon(imageManager.emoticonCodes[i]));
     }
     //swap
