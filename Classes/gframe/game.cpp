@@ -2487,7 +2487,7 @@ void Game::ResizePosSelectButtons() {
 	totalWidth += (visCount - 1) * gap;
 	irr::s32 posY = 19 + 16 * yScale;
 	irr::s32 windowWidth = 30 * xScale * 2 + stride * 3 - gap;
-	irr::s32 windowHeight = posY + 155 * yScale;
+	irr::s32 windowHeight = posY + 180 * yScale;
 	irr::s32 posX = (windowWidth - totalWidth) / 2;
 	if(btnPSAU->isVisible()) {
 		btnPSAU->setRelativePosition(irr::core::recti(posX, posY, posX + btnPosWidth, posY + btnPosWidth));
@@ -2505,7 +2505,8 @@ void Game::ResizePosSelectButtons() {
 		btnPSDD->setRelativePosition(irr::core::recti(posX, posY, posX + btnPosWidth, posY + btnPosWidth));
 		posX += btnPosWidth + gap;
 	}
-	wPosSelect->setRelativePosition(irr::core::recti(663 * xScale - windowWidth / 2, 303 * yScale - windowHeight / 2, 663 * xScale + windowWidth / 2, 303 * yScale + windowHeight / 2));
+	wPosSelect->setRelativePosition(irr::core::recti(660 * xScale - windowWidth / 2, 300 * yScale - windowHeight / 2, 660 * xScale + windowWidth / 2, 300 * yScale + windowHeight / 2));
+	bgPosSelect->setRelativePosition(irr::core::recti(0, 0, windowWidth, windowHeight));
 }
 void Game::ResizeCardSelectButtons(irr::gui::IGUIWindow* window,
 								   irr::gui::IGUIStaticText** labels,
