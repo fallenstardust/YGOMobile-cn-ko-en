@@ -33,6 +33,7 @@ public class DeckWinRateFragment extends BaseFragemnt {
     private LinearLayout llPieChartContainer;
     private LinearLayout llPieCharts;
     private TextView tvTotalMatches;
+    private View btnBack;
 
     @Nullable
     @Override
@@ -52,6 +53,11 @@ public class DeckWinRateFragment extends BaseFragemnt {
         llPieChartContainer = view.findViewById(R.id.ll_pie_chart_container);
         llPieCharts = view.findViewById(R.id.ll_pie_charts);
         tvTotalMatches = view.findViewById(R.id.tv_total_matches);
+        btnBack = view.findViewById(R.id.btn_back);
+
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> goBack());
+        }
 
         srlRefresh.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
         srlRefresh.setOnRefreshListener(() -> loadData());
@@ -208,6 +214,13 @@ public class DeckWinRateFragment extends BaseFragemnt {
 
     @Override
     public boolean onBackPressed() {
+        goBack();
         return true;
+    }
+
+    private void goBack() {
+        if (getActivity() != null) {
+            getActivity().getSupportFragmentManager().popBackStack();
+        }
     }
 }

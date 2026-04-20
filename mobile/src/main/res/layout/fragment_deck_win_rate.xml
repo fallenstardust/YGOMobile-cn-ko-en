@@ -17,6 +17,17 @@
             android:background="@drawable/dialogshort"
             android:elevation="4dp">
 
+            <ImageView
+                android:id="@+id/btn_back"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="8dp"
+                android:padding="6dp"
+                android:src="@drawable/baseline_arrow_left_24"
+                android:contentDescription="返回"
+                android:background="@drawable/ic_radius_bg" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
