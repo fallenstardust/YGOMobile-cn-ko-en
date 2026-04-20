@@ -71,6 +71,19 @@
             android:gravity="center"
             android:text="@string/back_to_mycard_home"
             android:visibility="gone" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/btn_deck_win_rate"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center_vertical|start"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/ic_about"
+            android:contentDescription="卡组胜率"
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:visibility="visible" />
     </FrameLayout>
 
     <FrameLayout

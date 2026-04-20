@@ -440,4 +440,5 @@
     <string name="match_start">Ranked Match</string>
     <string name="watch_duel">Spectate</string>
     <string name="waiting_message">Waiting for match, please wait...</string>
+    <string name="deck_win_rate">Deck Win Rate</string>
 </resources>

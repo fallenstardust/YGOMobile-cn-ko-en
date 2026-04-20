@@ -91,6 +91,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private ImageView mHeadView, img_logout;
     private TextView mNameView, mStatusView;
     private TextView tv_back_mc;
+    private ImageView btnDeckWinRate;
     private MyCard mMyCard;
     private McUser mMcUser;
     public RelativeLayout rl_chat;
@@ -210,6 +211,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         tv_back_mc = view.findViewById(R.id.tv_back_mc);
         tv_back_mc.setOnClickListener(this);
+
+        btnDeckWinRate = view.findViewById(R.id.btn_deck_win_rate);
+        if (btnDeckWinRate != null) {
+            btnDeckWinRate.setOnClickListener(this);
+        }
 
         ll_head_login = view.findViewById(R.id.ll_head_login);
         ll_head_login.setOnClickListener(this);
@@ -758,6 +764,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.btn_deck_win_rate:
+                openDeckWinRateFragment();
+                break;
             case R.id.img_logout:
                 performLogout();
                 break;
@@ -800,6 +809,18 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 matchEntertain();
                 break;
         }
+    }
+
+    private void openDeckWinRateFragment() {
+        if (homeActivity == null) {
+            return;
+        }
+        
+        DeckWinRateFragment deckWinRateFragment = new DeckWinRateFragment();
+        homeActivity.getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_content, deckWinRateFragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private void performLogout() {

@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.mycard;
 
+import static cn.garymb.ygomobile.ui.mycard.MyCard.URL_DECK_TYPE_ANALYTICS;
+
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -11,10 +13,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-import android.util.Log;
 public class MyCardPieChart extends ArrayList<MyCardPieChart.Item> {
-
-    public static final String URL_DECK_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/deck/type";
     public static final String TYPE_DAY = "day";
     public static final String SOURCE_MYCARD_ATHLETIC = "mycard-athletic";
 
