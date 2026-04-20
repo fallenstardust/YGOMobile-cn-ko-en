@@ -160,80 +160,75 @@ public class MyCard {
                 return;
         }
 
-        VUiKit.defer().when(() -> {
-            String token = SharedPreferenceUtil.getServerToken();
-            if (TextUtils.isEmpty(token)) {
-                throw new Exception("token not found");
-            }
-
-            int u16SecretStr = MyCard.getUserU16Secret(token);
-            if (u16SecretStr == 0) {
-                throw new Exception("获取u16Secret失败");
-            }
-
-            return u16SecretStr;
-        }).fail((e) -> {
-            Log.e("MyCard", "获取u16Secret失败: " + e);
-        }).done((u16Secret) -> {
-            U16_SECRET = u16Secret;
-        });
-
-        String authHeader = "Basic " + YGOUtil.message2Base64(mcUser.getUsername() + ":" + U16_SECRET);
-        Log.i("MyCard", "U16_SECRET: " + U16_SECRET);
-        OYHeader oyHeader = new OYHeader(OYHeader.HEADER_POSITION_AUTHORIZATION, authHeader);
-
-        OkhttpUtil.post(uriBuilder.toString(), null, oyHeader, ARG_ARENA, 30, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e("MyCard", e.getMessage() + "失败 " + e);
-                try {
-                    FileLogUtil.write("失败 " + e);
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
+        new Thread(() -> {
+            try {
+                String token = SharedPreferenceUtil.getServerToken();
+                if (TextUtils.isEmpty(token)) {
+                    throw new Exception("token not found");
                 }
 
-                String message = e.getMessage();
-                if (!TextUtils.isEmpty(message) && message.equals("Canceled")) {
-                    return;
-                }
-                if (!TextUtils.isEmpty(message) && message.equals("timeout")) {
-                    cancelMatch();
-                    onMcMatchListener.onMcMatch(null, null, null);
-                    return;
-                }
-                onMcMatchListener.onMcMatch(null, null, e.toString());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String body = response.body().string();
-                Log.e("MyCard", "匹配成功" + body);
-
-                if (TextUtils.isEmpty(body)) {
-                    onMcMatchListener.onMcMatch(null, null, "匹配失败");
-                    return;
+                int u16SecretStr = MyCard.getUserU16Secret(token);
+                if (u16SecretStr == 0) {
+                    throw new Exception("获取u16Secret失败");
                 }
 
-                try {
-                    YGOServer ygoServer = JsonUtil.getMatchYGOServer(body);
-                    if (ygoServer != null) {
-                        ygoServer.setPlayerName(mcUser.getUsername());
-                        onMcMatchListener.onMcMatch(ygoServer, ygoServer.getPassword(), null);
-                    } else {
-                        onMcMatchListener.onMcMatch(null, null, "匹配失败");
+                U16_SECRET = u16SecretStr;
+                String authHeader = "Basic " + YGOUtil.message2Base64(mcUser.getUsername() + ":" + U16_SECRET);
+                Log.i("MyCard", "U16_SECRET: " + U16_SECRET);
+                OYHeader oyHeader = new OYHeader(OYHeader.HEADER_POSITION_AUTHORIZATION, authHeader);
+
+                OkhttpUtil.post(uriBuilder.toString(), null, oyHeader, ARG_ARENA, 30, new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        Log.e("MyCard", e.getMessage() + "失败 " + e);
+                        try {
+                            FileLogUtil.write("失败 " + e);
+                        } catch (IOException ioException) {
+                            ioException.printStackTrace();
+                        }
+
+                        String message = e.getMessage();
+                        if (!TextUtils.isEmpty(message) && message.equals("Canceled")) {
+                            return;
+                        }
+                        if (!TextUtils.isEmpty(message) && message.equals("timeout")) {
+                            cancelMatch();
+                            onMcMatchListener.onMcMatch(null, null, null);
+                            return;
+                        }
+                        onMcMatchListener.onMcMatch(null, null, e.toString());
                     }
-                } catch (JSONException e) {
-                    onMcMatchListener.onMcMatch(null, null, "" + e);
-                }
 
-                Log.e("MyCard", "内容 " + body);
-                try {
-                    FileLogUtil.write("内容 " + body);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        String body = response.body().string();
+                        Log.e("MyCard", "匹配成功" + body);
+
+                        if (TextUtils.isEmpty(body)) {
+                            onMcMatchListener.onMcMatch(null, null, "匹配失败");
+                            return;
+                        }
+
+                        try {
+                            YGOServer ygoServer = JsonUtil.getMatchYGOServer(body);
+                            if (ygoServer != null) {
+                                ygoServer.setPlayerName(mcUser.getUsername());
+                                onMcMatchListener.onMcMatch(ygoServer, ygoServer.getPassword(), null);
+                            } else {
+                                onMcMatchListener.onMcMatch(null, null, "匹配失败");
+                            }
+                        } catch (JSONException e) {
+                            onMcMatchListener.onMcMatch(null, null, "" + e);
+                        }
+
+                        Log.e("MyCard", "内容 " + body);
+                        FileLogUtil.write("内容 " + body);
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("MyCard", "匹配失败: " + e);
             }
-        });
+        }).start();
     }
 
     public static int getUserU16Secret(String token) throws IOException {
@@ -254,13 +249,13 @@ public class MyCard {
         }
 
         Gson gson = new Gson();
-        U16SecretResponse secretResponse = gson.fromJson(responseBody, U16SecretResponse.class);
+        McUser.U16SecretResponse secretResponse = gson.fromJson(responseBody, McUser.U16SecretResponse.class);
 
-        if (secretResponse == null || secretResponse.u16Secret == 0) {
+        if (secretResponse == null || secretResponse.getU16Secret() == 0) {
             throw new IOException("获取用户密钥失败: 返回数据无效");
         }
 
-        return secretResponse.u16Secret;
+        return secretResponse.getU16Secret();
     }
 
     public static String getMCLogoutUrl() {
@@ -584,9 +579,5 @@ public class MyCard {
 
     public static String getCachePath() {
         return App.get().getExternalFilesDir("cache").getAbsolutePath();
-    }
-
-    public static class U16SecretResponse {
-        public int u16Secret;
     }
 }
