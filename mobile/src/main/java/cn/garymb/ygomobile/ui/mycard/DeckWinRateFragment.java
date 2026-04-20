@@ -89,7 +89,14 @@ public class DeckWinRateFragment extends BaseFragemnt {
                     }
 
                     if (pieChart != null && !pieChart.isEmpty()) {
-                        adapter.setNewData(pieChart);
+                        List<MyCardPieChart.Item> sortedList = new java.util.ArrayList<>(pieChart);
+                        sortedList.sort((item1, item2) -> {
+                            int matches1 = getDeckTotalMatches(item1);
+                            int matches2 = getDeckTotalMatches(item2);
+                            return Integer.compare(matches2, matches1);
+                        });
+                        
+                        adapter.setNewData(sortedList);
                         tvEmpty.setVisibility(View.GONE);
                         updatePieChart(pieChart);
                     } else {
@@ -124,6 +131,13 @@ public class DeckWinRateFragment extends BaseFragemnt {
             return;
         }
 
+        List<MyCardPieChart.Item> sortedForPie = new java.util.ArrayList<>(pieChart);
+        sortedForPie.sort((item1, item2) -> {
+            int total1 = getDeckTotalMatches(item1);
+            int total2 = getDeckTotalMatches(item2);
+            return Integer.compare(total2, total1);
+        });
+
         int colorIndex = 0;
         int[] colors = {
             R.color.holo_green_bright,
@@ -134,7 +148,7 @@ public class DeckWinRateFragment extends BaseFragemnt {
             R.color.grayDark2
         };
 
-        for (MyCardPieChart.Item item : pieChart) {
+        for (MyCardPieChart.Item item : sortedForPie) {
             MyCardPieChart.Matchup matchup = item.getMatchup();
             if (matchup == null) continue;
 
@@ -169,6 +183,30 @@ public class DeckWinRateFragment extends BaseFragemnt {
 
         tvTotalMatches.setText("总场次: " + totalMatches);
         llPieChartContainer.setVisibility(View.VISIBLE);
+    }
+
+    private int getDeckTotalMatches(MyCardPieChart.Item item) {
+        MyCardPieChart.Matchup matchup = item.getMatchup();
+        if (matchup == null) return 0;
+        
+        int firstTotal = calculateTotal(matchup.getFirst());
+        int secondTotal = calculateTotal(matchup.getSecond());
+        return firstTotal + secondTotal;
+    }
+
+    private float getDeckWinRate(MyCardPieChart.Item item) {
+        MyCardPieChart.Matchup matchup = item.getMatchup();
+        if (matchup == null) return 0;
+        
+        int totalWin = (matchup.getFirst() != null ? parseInt(matchup.getFirst().getWin()) : 0) 
+                     + (matchup.getSecond() != null ? parseInt(matchup.getSecond().getWin()) : 0);
+        int totalDraw = (matchup.getFirst() != null ? parseInt(matchup.getFirst().getDraw()) : 0) 
+                      + (matchup.getSecond() != null ? parseInt(matchup.getSecond().getDraw()) : 0);
+        int totalLose = (matchup.getFirst() != null ? parseInt(matchup.getFirst().getLose()) : 0) 
+                      + (matchup.getSecond() != null ? parseInt(matchup.getSecond().getLose()) : 0);
+        int totalMatches = totalWin + totalDraw + totalLose;
+        
+        return totalMatches > 0 ? (float) totalWin / totalMatches * 100 : 0;
     }
 
     private int calculateTotal(MyCardPieChart.First first) {
