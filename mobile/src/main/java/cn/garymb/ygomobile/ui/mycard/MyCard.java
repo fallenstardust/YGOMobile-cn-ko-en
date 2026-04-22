@@ -572,7 +572,7 @@ public class MyCard {
 
     public static String getImagePath(Context context) {
 //        return context.getExternalFilesDir("image").getAbsolutePath();
-        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(), "YGOMobile OY").getAbsolutePath();
+        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(), "YGOMobile").getAbsolutePath();
     }
 
     public static String getImageCachePath() {

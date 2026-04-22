@@ -10,10 +10,75 @@
     <FrameLayout
         android:id="@+id/fl_head"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="wrap_content"
         android:background="@drawable/dialogshort"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginHorizontal="10dp"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/btn_deck_win_rate"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="left"
+                    android:background="@drawable/button_cube"
+                    android:contentDescription="卡组胜率"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_recommendation_order"
+                    android:visibility="visible" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center_horizontal"
+                    android:text="卡组胜率"
+                    android:textColor="@color/holo_green_bright"
+                    android:textSize="8sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/btn_mycard_bbs"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="left"
+                    android:background="@drawable/button_cube"
+                    android:contentDescription="萌卡论坛"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_forum"
+                    android:visibility="visible" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center_horizontal"
+                    android:text="萌卡论坛"
+                    android:textColor="@color/holo_green_bright"
+                    android:textSize="8sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/ll_head_login"
@@ -23,43 +88,51 @@
             android:layout_weight="1"
             android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/img_head"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginLeft="@dimen/dp_10"
-                android:src="@drawable/avatar" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_name"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
-                android:text=""
-                android:textColor="@color/holo_green_bright"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:layout_marginHorizontal="10dp"
+                android:orientation="vertical">
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tv_dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/tv_name"
-                android:layout_marginTop="5dp"
-                android:ellipsize="end"
-                android:lines="1"
-                android:text=""
-                android:textColor="@color/holo_orange_bright"
-                android:textSize="10sp"
-                android:visibility="gone" />
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/img_head"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/avatar" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="5dp"
+                    android:text=""
+                    android:textColor="@color/holo_green_bright"
+                    android:textSize="8sp"
+                    android:textStyle="bold" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_name"
+                    android:layout_marginTop="5dp"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:text=""
+                    android:textColor="@color/holo_orange_bright"
+                    android:textSize="10sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/img_logout"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:src="@drawable/baseline_login_24" />
+
+
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
@@ -72,18 +145,6 @@
             android:text="@string/back_to_mycard_home"
             android:visibility="gone" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/btn_deck_win_rate"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="center_vertical|start"
-            android:layout_marginStart="10dp"
-            android:src="@drawable/ic_about"
-            android:contentDescription="卡组胜率"
-            android:padding="4dp"
-            android:scaleType="fitCenter"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:visibility="visible" />
     </FrameLayout>
 
     <FrameLayout
@@ -289,11 +350,11 @@
 
                                         <com.king.view.circleprogressview.CircleProgressView
                                             android:id="@+id/fun_cpv_rank"
-                                            android:layout_width="50dp"
-                                            android:layout_height="50dp"
+                                            android:layout_width="60dp"
+                                            android:layout_height="40dp"
                                             android:layout_centerVertical="true"
                                             app:cpvLabelTextColor="@color/white"
-                                            app:cpvLabelTextSize="9sp"
+                                            app:cpvLabelTextSize="12sp"
                                             app:cpvNormalColor="@color/klein_blue"
                                             app:cpvProgressColor="@color/colorAccent"
                                             app:cpvShowTick="false"
@@ -338,7 +399,7 @@
                                                 <ImageView
                                                     android:layout_width="14dp"
                                                     android:layout_height="14dp"
-                                                    android:src="@drawable/ic_win" />
+                                                    android:src="@drawable/ic_right" />
 
                                                 <TextView
                                                     android:id="@+id/fun_tv_win"
@@ -352,7 +413,7 @@
                                                 <ImageView
                                                     android:layout_width="14dp"
                                                     android:layout_height="14dp"
-                                                    android:src="@drawable/ic_fail" />
+                                                    android:src="@drawable/ic_failed" />
 
                                                 <TextView
                                                     android:id="@+id/fun_tv_lose"
@@ -366,7 +427,7 @@
                                                 <ImageView
                                                     android:layout_width="14dp"
                                                     android:layout_height="14dp"
-                                                    android:src="@drawable/ic_user" />
+                                                    android:src="@drawable/ic_draw" />
 
                                                 <TextView
                                                     android:id="@+id/fun_tv_draw"
@@ -411,9 +472,10 @@
                                         android:layout_height="0dp"
                                         android:layout_margin="5dp"
                                         android:layout_weight="1"
-                                        android:background="@drawable/selected_light"
+                                        android:background="@drawable/button2_bg"
                                         android:text="@string/fun_start"
-                                        android:textColor="@color/white" />
+                                        android:textColor="@color/white"
+                                        android:textSize="10sp" />
                                 </LinearLayout>
 
                                 <LinearLayout
@@ -435,11 +497,11 @@
 
                                         <com.king.view.circleprogressview.CircleProgressView
                                             android:id="@+id/match_cpv_rank"
-                                            android:layout_width="50dp"
-                                            android:layout_height="50dp"
+                                            android:layout_width="60dp"
+                                            android:layout_height="40dp"
                                             android:layout_centerVertical="true"
                                             app:cpvLabelTextColor="@color/white"
-                                            app:cpvLabelTextSize="10sp"
+                                            app:cpvLabelTextSize="12sp"
                                             app:cpvNormalColor="@color/klein_blue"
                                             app:cpvProgressColor="@color/colorAccent"
                                             app:cpvShowTick="false"
@@ -484,7 +546,7 @@
                                                 <ImageView
                                                     android:layout_width="14dp"
                                                     android:layout_height="14dp"
-                                                    android:src="@drawable/ic_win" />
+                                                    android:src="@drawable/ic_right" />
 
                                                 <TextView
                                                     android:id="@+id/match_tv_win"
@@ -498,7 +560,7 @@
                                                 <ImageView
                                                     android:layout_width="14dp"
                                                     android:layout_height="14dp"
-                                                    android:src="@drawable/ic_fail" />
+                                                    android:src="@drawable/ic_failed" />
 
                                                 <TextView
                                                     android:id="@+id/match_tv_lose"
@@ -512,7 +574,7 @@
                                                 <ImageView
                                                     android:layout_width="14dp"
                                                     android:layout_height="14dp"
-                                                    android:src="@drawable/ic_user" />
+                                                    android:src="@drawable/ic_draw" />
 
                                                 <TextView
                                                     android:id="@+id/match_tv_draw"
@@ -558,13 +620,14 @@
                                         android:layout_height="0dp"
                                         android:layout_margin="5dp"
                                         android:layout_weight="1"
-                                        android:background="@drawable/selected_light"
+                                        android:background="@drawable/button2_bg"
                                         android:text="@string/match_start"
-                                        android:textColor="@color/white" />
+                                        android:textColor="@color/white"
+                                        android:textSize="10sp" />
                                 </LinearLayout>
                             </LinearLayout>
 
-                            </LinearLayout>
+                        </LinearLayout>
                         <!--观战布局-->
                         <androidx.coordinatorlayout.widget.CoordinatorLayout
                             android:layout_width="match_parent"
@@ -581,9 +644,9 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
+                                    android:background="@drawable/veil2"
                                     android:gravity="center"
                                     android:text="@string/watch_duel"
-                                    android:background="@drawable/veil2"
                                     android:textColor="@color/white"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
@@ -598,6 +661,11 @@
                                         android:layout_width="match_parent"
                                         android:layout_height="match_parent"
                                         android:descendantFocusability="blocksDescendants" />
+
+                                    <androidx.fragment.app.FragmentContainerView
+                                        android:id="@+id/fragment_content"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent" />
                                 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
                             </LinearLayout>
 
@@ -660,9 +728,5 @@
             </LinearLayout>
         </androidx.appcompat.widget.LinearLayoutCompat>
 
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/fragment_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
     </FrameLayout>
 </androidx.appcompat.widget.LinearLayoutCompat>

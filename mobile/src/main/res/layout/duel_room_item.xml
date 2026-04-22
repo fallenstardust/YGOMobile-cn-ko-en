@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:background="@drawable/selected_light"
+        android:background="@drawable/veil2"
         android:gravity="center_horizontal"
         android:text="@string/match_start"
         android:textColor="@color/white"
@@ -43,7 +43,7 @@
             android:maxEms="8"
             android:text="userName"
             android:textColor="@color/brightgreen"
-            android:textSize="13sp" />
+            android:textSize="12sp" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:layout_width="wrap_content"
@@ -69,7 +69,7 @@
             android:maxEms="8"
             android:text="userName"
             android:textColor="@color/brightgreen"
-            android:textSize="13sp" />
+            android:textSize="12sp" />
 
 
         <androidx.appcompat.widget.AppCompatImageView
