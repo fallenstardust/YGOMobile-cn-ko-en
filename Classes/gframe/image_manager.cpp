@@ -216,7 +216,9 @@ void ImageManager::ResizeTexture(const path dir) {
 	float btnScale = 0.5f * mainGame->yScale;
 	irr::s32 btnImgWidth = CARD_IMG_WIDTH * btnScale;
 	irr::s32 btnImgHeight = CARD_IMG_HEIGHT * btnScale;
-	const char* coverFiles[2] = { (dir + path("/textures/cover.jpg")).c_str(), (dir + path("/textures/cover2.jpg")).c_str() };
+	path coverPath1 = dir + path("/textures/cover.jpg");
+	path coverPath2 = dir + path("/textures/cover2.jpg");
+	const char* coverFiles[2] = { coverPath1.c_str(), coverPath2.c_str() };
 	driver->removeTexture(tCover[0]);
 	if(tCover[1] != tCover[0])
 		driver->removeTexture(tCover[1]);
@@ -234,7 +236,7 @@ void ImageManager::ResizeTexture(const path dir) {
 		// tLoading is used as a sentinel value when loading thumbnails, so it must not be null.
 		irr::video::IImage* blankImg = driver->createImage(irr::video::ECF_A8R8G8B8, irr::core::dimension2d<irr::u32>(imgWidthThumb, imgHeightThumb));
 		blankImg->fill(0);
-		tLoading = driver->addTexture("textures/loading", blankImg);
+		tLoading = driver->addTexture((dir + path("/textures/loading")).c_str(), blankImg);
 		blankImg->drop();
 	}
 	tUnknown = GetTextureFromFile((dir + path("/textures/unknown.jpg")).c_str(), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
