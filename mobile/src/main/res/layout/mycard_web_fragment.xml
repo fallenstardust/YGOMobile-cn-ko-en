@@ -4,15 +4,60 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- 顶部标题栏 -->
+    <LinearLayout
+        android:id="@+id/ll_title_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/dialogshort"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <!-- 返回按钮 -->
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/button2_bg"
+            android:contentDescription="返回"
+            android:padding="8dp"
+            android:src="@drawable/baseline_arrow_left_24" />
+
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- 占位，保持标题居中 -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+
+    </LinearLayout>
+
+    <!-- WebView -->
     <cn.garymb.ygomobile.ui.mycard.MyCardWebView
         android:id="@+id/wv_web"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_below="@id/ll_title_bar" />
+
+    <!-- 进度条 -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="@style/StyleProgressBarMini"
         android:layout_width="match_parent"
         android:layout_height="5px"
-        />
+        android:layout_below="@id/ll_title_bar" />
 
 </RelativeLayout>

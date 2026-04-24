@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.mycard;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -34,6 +35,7 @@ import com.king.view.circleprogressview.CircleProgressView;
 import com.ourygo.lib.duelassistant.util.Util;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +45,7 @@ import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.adapter.DuelRoomBQAdapter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.ServerInfo;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
@@ -50,12 +53,14 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
+import cn.garymb.ygomobile.ui.mycard.base.OnMcUserListener;
 import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
 import cn.garymb.ygomobile.ui.mycard.bean.McDuelInfo;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
+import cn.garymb.ygomobile.ui.mycard.watchDuel.McUserManagement;
 import cn.garymb.ygomobile.ui.mycard.watchDuel.WatchDuelManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
@@ -82,7 +87,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int REQUEST_MATCH_ENTERTAIN = 15;
 
     private HomeActivity homeActivity;
-    long exitLasttime = 0;
     private LinearLayout ll_head_login, ll_dialog_login, ll_main_ui;
     private EditText et_username, et_password;
     private TextView tv_account_warning, tv_pwd_warning;
@@ -97,7 +101,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public RelativeLayout rl_chat;
     private TextView tv_message, tv_match_title;
     private ProgressBar pb_chat_loading, pb_loading;
-    private ImageView iv_refresh;
+    private ImageView iv_refresh, btn_mycard_bbs;
     private Button btn_athletic, btn_entertain;
     private ServiceManagement serviceManagement;
     private ChatMessage currentMessage;
@@ -216,6 +220,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (btnDeckWinRate != null) {
             btnDeckWinRate.setOnClickListener(this);
         }
+
+        btn_mycard_bbs = view.findViewById(R.id.btn_mycard_bbs);
+        btn_mycard_bbs.setOnClickListener(this);
 
         ll_head_login = view.findViewById(R.id.ll_head_login);
         ll_head_login.setOnClickListener(this);
@@ -432,7 +439,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         }
 
                         Log.e("WatchDuel", "u16SecretStr: " + u16SecretStr);
-                        
+
                         String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id(), u16SecretStr);
                         Log.e("WatchDuel password", "password: " + password);
 
@@ -459,7 +466,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
                         final boolean finalValid = isArenaTypeValid;
                         Activity activity = getActivity();
-                        
+
                         if (activity != null) {
                             activity.runOnUiThread(() -> {
                                 if (!finalValid) {
@@ -808,14 +815,35 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             case R.id.btn_entertain:
                 matchEntertain();
                 break;
+            case R.id.btn_mycard_bbs:
+                openBBSWithWebView();
+                break;
         }
+    }
+
+    private void openBBSWithWebView() {
+        if (!isUserLoggedIn()) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+        
+        MyCardWebFragment bbsFragment = MyCardWebFragment.newInstance(
+                mMyCard.getBBSUrl(),
+                "萌卡论坛",
+                true
+        );
+        
+        homeActivity.getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_content, bbsFragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private void openDeckWinRateFragment() {
         if (homeActivity == null) {
             return;
         }
-        
+
         DeckWinRateFragment deckWinRateFragment = new DeckWinRateFragment();
         homeActivity.getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_content, deckWinRateFragment)
