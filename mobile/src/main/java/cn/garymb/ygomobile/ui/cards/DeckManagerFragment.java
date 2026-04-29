@@ -147,7 +147,6 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private HomeActivity activity;
     private String mDeckId;
     private LinearLayout ll_click_like;
-    private TextView tv_add_1;
     //region ui onCreate/onDestroy
     private RecyclerView mRecyclerView;
     private BaseActivity mContext;
@@ -158,19 +157,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private boolean isPackMode;
     private File mPreLoadFile;//预加载卡组，用于外部打开ydk文件或通过卡组广场预览卡组时，值为file。当未通过预加载打开ydk（打开卡组时），值为null
     private DeckItemTouchHelper mDeckItemTouchHelper;
-    private TextView tv_deck;
-    private TextView tv_result_count;
+    private TextView tv_add_1, tv_deck, tv_credit_limit, tv_credit_remain, tv_result_count, tv_credit_count;
     private LinearLayout ll_genesys_scoreboard;
-    private TextView tv_credit_count;
-    private TextView tv_credit_limit;
-    private TextView tv_credit_remain;
     private AppCompatSpinner mCardSearchLimitSpinner;
     private CardDetail mCardDetail;
-    private DialogPlus mDialog;
-    private DialogPlus builderShareLoading;
-
-    private ImageButton btnUndo;
-    private ImageButton btnRedo;
+    private DialogPlus mDialog, builderShareLoading;
+    private ImageButton btnUndo, btnRedo;
+    private String currentCardSearchMessage = "";
 
 
     private View layoutView;
@@ -918,8 +911,13 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
-        //super.onSearchResult(cardInfos, isHide);
         tv_result_count.setText(String.valueOf(cardInfos.size()));
+        String keyword = mCardSearcher.getCurrentKeyword();
+        if (keyword != null && !keyword.isEmpty()) {
+            currentCardSearchMessage = keyword;
+        }
+
+        mCardListAdapter.setSearchKeyword(currentCardSearchMessage);
         mCardListAdapter.set(cardInfos);
         mCardListAdapter.notifyDataSetChanged();
         if (!cardInfos.isEmpty()) {
@@ -1063,12 +1061,14 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 mDialog.show();
             }
 
+            mCardDetail.setCurrentSearchKeyword(currentCardSearchMessage);
             // 绑定卡片数据到详情视图
             mCardDetail.bind(cardInfo, pos, provider);
         }
     }
 
     private void showSearchKeyWord(String keyword) {//使用此方法，可以适用关键词查询逻辑，让完全符合关键词的卡名置顶显示，并同时搜索字段和效果文本
+        currentCardSearchMessage = keyword;
         CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).cardTypes(new ArrayList<>()).build();//构建CardSearchInfo时type不能为null
         mCardLoader.search(searchInfo);
     }

@@ -1879,6 +1879,9 @@ public class CardSearcher implements View.OnClickListener {
         search();
     }
 
+    public String getCurrentKeyword() {
+        return text(keyWord);
+    }
     private void search() {
         if (mICardSearcher != null) {
             int limitType = genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner);

@@ -12,6 +12,7 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
@@ -78,37 +79,14 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private final CardManager cardManager;
     private final PackManager packManager;
     private final CardLoader cardLoader;
-    private final ImageView cardImage;
-    private final TextView name;
-    private final LinearLayout btn_related;
-    private final TextView desc;
-    private final TextView type;
-    private final ImageView icon_star;
-    private final TextView level;
-    private final ImageView icon;
-    private final ImageView icon_attribute;
-    private final TextView attrView;
-    private final ImageView icon_race;
-    private final TextView race;
-    private final TextView cardAtk;
-    private final TextView cardDef;
-    private final LinearLayout ll_pack;
+    private final ImageView cardImage, icon, icon_star, icon_attribute, icon_race;
+    private final TextView name, desc, type, level, attrView, race, cardAtk, cardDef, setName, otView, detailCardScale, cardCode;
+    private TextView tv_loading;
+    private final LinearLayout btn_related, ll_pack, faq, addMain, addSide;
     private final ShimmerTextView packName;
-    private final TextView setName;
-    private final TextView otView;
-
-    private final View monsterLayout;
     private final ImageButton close;
-    private final LinearLayout faq;
-    private final LinearLayout addMain;
-    private final LinearLayout addSide;
-    private final View linkArrow;
-    private final View layoutDetailPScale;
-    private final TextView detailCardScale;
-    private final TextView cardCode;
-    private final View lbSetCode;
+    private final View linkArrow, layoutDetailPScale, monsterLayout, lbSetCode, mImageFav, atkdefView;
     private final ImageLoader imageLoader;
-    private final View mImageFav, atkdefView;
 
     private final StringManager mStringManager;
     private final BaseActivity mContext;
@@ -118,12 +96,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private OnDeckManagerCardClickListener mListener;
     private DialogUtils dialog;
     private PhotoView photoView;
-    private LinearLayout ll_bar;
+    private LinearLayout ll_bar, ll_btn;
     private ProgressBar pb_loading;
-    private TextView tv_loading;
-    private LinearLayout ll_btn;
-    private Button btn_redownload;
-    private Button btn_share;
+    private Button btn_redownload, btn_share;
     private boolean isDownloadCardImage = true;
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -160,6 +135,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private Shimmer shimmer;
     private boolean mShowAdd = false;
     private OnFavoriteChangedListener mOnFavoriteChangedListener;
+    private String mCurrentSearchKeyword = null;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(context.getLayoutInflater().inflate(R.layout.dialog_cardinfo, null));
@@ -325,6 +301,10 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         }
     }
 
+    public void setCurrentSearchKeyword(String keyword) {
+        mCurrentSearchKeyword = keyword;
+    }
+
     public int getCurPosition() {
         return curPosition;
     }
@@ -424,6 +404,144 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
                 ds.setUnderlineText(true);
             }
         }, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    private SpannableString highlightKeywordBackground(String text, String keyword) {
+        SpannableString spannableString = new SpannableString(text);
+        if (text == null || keyword == null || keyword.isEmpty()) {
+            return spannableString;
+        }
+
+        int startIndex = 0;
+        while (startIndex < text.length()) {
+            int index = text.indexOf(keyword, startIndex);
+            if (index == -1) {
+                break;
+            }
+
+            int endIndex = index + keyword.length();
+            BackgroundColorSpan bgSpan = new BackgroundColorSpan(YGOUtil.c(R.color.item_bg));
+            spannableString.setSpan(bgSpan, index, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            startIndex = endIndex;
+        }
+
+        return spannableString;
+    }
+
+    /**
+     * 同时应用搜索关键词背景高亮和引用文本可点击高亮
+     * 先处理引用文本的可点击高亮，再叠加搜索关键词的背景高亮
+     *
+     * @param text          原始文本
+     * @param searchKeyword 搜索关键词
+     * @return 包含两种高亮效果的SpannableString
+     */
+    private SpannableString applyBothHighlights(String text, String searchKeyword) {
+        SpannableString spannableString = new SpannableString(text);
+        spanStringList.clear();
+
+        QuoteType currentQuoteType = QuoteType.NONE;
+        Stack<Integer> stack = new Stack<>();
+        int start = -1;
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            switch (currentQuoteType) {
+                case NONE:
+                    if (c == '「') {
+                        currentQuoteType = QuoteType.ANGLE_QUOTE;
+                        start = i + 1;
+                        stack.push(i);
+                    } else if (c == '"') {
+                        currentQuoteType = QuoteType.DOUBLE_QUOTE;
+                        start = i + 1;
+                        stack.push(i);
+                    }
+                    break;
+
+                case ANGLE_QUOTE:
+                    if (c == '「') {
+                        stack.push(i);
+                    } else if (c == '」' && !stack.isEmpty()) {
+                        stack.pop();
+                        if (stack.isEmpty()) {
+                            String quotedText = text.substring(start, i).trim();
+                            if (!isAlreadyHighlighted(spannableString, start, i)) {
+                                applySpanForCombined(spannableString, start, i, queryable(quotedText) ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            }
+                            spanStringList.add(quotedText);
+                            currentQuoteType = QuoteType.NONE;
+                        }
+                    }
+                    break;
+
+                case DOUBLE_QUOTE:
+                    if (c == '"' && !stack.isEmpty()) {
+                        stack.pop();
+                        if (stack.isEmpty()) {
+                            String quotedText = text.substring(start, i).trim();
+                            if (!isAlreadyHighlighted(spannableString, start, i)) {
+                                applySpanForCombined(spannableString, start, i, queryable(quotedText) ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            }
+                            spanStringList.add(quotedText);
+                            currentQuoteType = QuoteType.NONE;
+                        } else {
+                            stack.push(i);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        if (searchKeyword != null && !searchKeyword.isEmpty()) {
+            SpannableString keywordHighlighted = highlightKeywordBackground(text, searchKeyword);
+            BackgroundColorSpan[] spans = keywordHighlighted.getSpans(0, text.length(), BackgroundColorSpan.class);
+            for (BackgroundColorSpan span : spans) {
+                int spanStart = keywordHighlighted.getSpanStart(span);
+                int spanEnd = keywordHighlighted.getSpanEnd(span);
+                spannableString.setSpan(new BackgroundColorSpan(YGOUtil.c(R.color.item_bg)), spanStart, spanEnd, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+
+        desc.setText(spannableString);
+        desc.setMovementMethod(LinkMovementMethod.getInstance());
+
+        return spannableString;
+    }
+
+    /**
+     * 为合并高亮应用颜色和点击事件
+     *
+     * @param spannableString 要应用的SpannableString
+     * @param start           起始位置
+     * @param end             结束位置
+     * @param color           文字颜色
+     */
+    private void applySpanForCombined(SpannableString spannableString, int start, int end, int color) {
+        spannableString.setSpan(new ForegroundColorSpan(color), start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                if (color != Color.WHITE) {
+                    String clickedText = ((TextView) widget).getText().subSequence(start, end).toString();
+                    mListener.onSearchKeyWord(clickedText);
+                } else {
+                    YGOUtil.showTextToast(context.getString(R.string.searchresult) + context.getString(R.string.already_end));
+                }
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                ds.setUnderlineText(true);
+            }
+        }, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    private boolean isAlreadyHighlighted(SpannableString spannableString, int start, int end) {
+        ForegroundColorSpan[] spans = spannableString.getSpans(start, end, ForegroundColorSpan.class);
+        return spans.length > 0;
     }
 
     private List<Card> queryList(String keyword) {
@@ -538,8 +656,16 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             showCardImageDetail(cardInfo.Code);
         });
         packName.setText(packManager.findPackNameById((cardInfo.getCode())));
-        name.setText(cardInfo.Name);
-        setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
+
+        if (mCurrentSearchKeyword != null && !mCurrentSearchKeyword.isEmpty()) {
+            name.setText(highlightKeywordBackground(cardInfo.Name, mCurrentSearchKeyword));
+            String descText = cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc;
+            desc.setText(applyBothHighlights(descText, mCurrentSearchKeyword));
+        } else {
+            name.setText(cardInfo.Name);
+            setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
+        }
+
         btn_related.setVisibility(relatable(cardInfo) ? View.VISIBLE : View.INVISIBLE);
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {

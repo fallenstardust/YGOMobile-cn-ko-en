@@ -3,6 +3,8 @@ package cn.garymb.ygomobile.ui.adapters;
 import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
 
 import android.content.Context;
+import android.text.SpannableString;
+import android.text.style.BackgroundColorSpan;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -39,11 +41,20 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     private boolean mItemBg;
     private final ImageLoader imageLoader;
     private boolean mEnableSwipe = false;
+    private String mSearchKeyword = null;
 
     public CardListAdapter(Context context, ImageLoader imageLoader) {
         super(context, R.layout.item_search_card);
         this.imageLoader = imageLoader;
         mStringManager = DataManager.get().getStringManager();
+    }
+
+    public void setSearchKeyword(String keyword) {
+        mSearchKeyword = keyword;
+    }
+
+    public String getSearchKeyword() {
+        return mSearchKeyword;
     }
 
     @Override
@@ -123,7 +134,14 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     protected void convert(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, Card item) {
         int position = holder.getBindingAdapterPosition() - getHeaderLayoutCount();
         imageLoader.bindImage(holder.getView(R.id.card_image), item, ImageLoader.Type.small);
-        holder.setText(R.id.card_name, item.Name);
+
+        if (mSearchKeyword != null && !mSearchKeyword.isEmpty()) {
+            SpannableString highlightedName = highlightKeyword(item.Name, mSearchKeyword);
+            holder.setText(R.id.card_name, highlightedName);
+        } else {
+            holder.setText(R.id.card_name, item.Name);
+        }
+
         if (item.isType(CardType.Monster)) {
             holder.setGone(R.id.layout_atk, false);
             holder.setGone(R.id.layout_def, false);
@@ -241,8 +259,10 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
         } else {
             holder.setGone(R.id.card_star, false);
-            if (item.isType(CardType.Spell)) holder.setImageBitmap(R.id.card_star, BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_spell.png", 0, 0));
-            if (item.isType(CardType.Trap)) holder.setImageBitmap(R.id.card_star, BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_trap.png", 0, 0));
+            if (item.isType(CardType.Spell))
+                holder.setImageBitmap(R.id.card_star, BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_spell.png", 0, 0));
+            if (item.isType(CardType.Trap))
+                holder.setImageBitmap(R.id.card_star, BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_trap.png", 0, 0));
 
             if (item.onlyType(CardType.Spell)) {
                 //holder.setImageBitmap(R.id.card_star, BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "cardType_spell.png", 0, 0));
@@ -326,6 +346,37 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         if (mItemBg) {
             holder.setBackgroundResource(R.id.swipe_layout, R.drawable.list_item_bg);
         }
+    }
+
+    /**
+     * 高亮显示文本中的关键词
+     * 在文本中查找所有匹配的关键词，并为其添加蓝色背景高亮效果
+     *
+     * @param text 需要处理的原始文本
+     * @param keyword 需要高亮的关键词
+     * @return 包含高亮效果的SpannableString对象，如果文本或关键词为空则返回未处理的SpannableString
+     */
+    private SpannableString highlightKeyword(String text, String keyword) {
+        SpannableString spannableString = new SpannableString(text);
+        if (text == null || keyword == null || keyword.isEmpty()) {
+            return spannableString;
+        }
+        
+        int startIndex = 0;
+        while (startIndex < text.length()) {
+            int index = text.indexOf(keyword, startIndex);
+            if (index == -1) {
+                break;
+            }
+            
+            int endIndex = index + keyword.length();
+            BackgroundColorSpan bgSpan = new BackgroundColorSpan(YGOUtil.c(R.color.item_bg));
+            spannableString.setSpan(bgSpan, index, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+            
+            startIndex = endIndex;
+        }
+        
+        return spannableString;
     }
 }
 
