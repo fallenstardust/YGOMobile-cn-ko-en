@@ -351,9 +351,10 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     /**
      * 高亮显示文本中的关键词
      * 在文本中查找所有匹配的关键词，并为其添加蓝色背景高亮效果
+     * 支持空格分隔的多个关键词
      *
      * @param text 需要处理的原始文本
-     * @param keyword 需要高亮的关键词
+     * @param keyword 需要高亮的关键词（可以是空格分隔的多个关键词）
      * @return 包含高亮效果的SpannableString对象，如果文本或关键词为空则返回未处理的SpannableString
      */
     private SpannableString highlightKeyword(String text, String keyword) {
@@ -362,18 +363,28 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             return spannableString;
         }
         
-        int startIndex = 0;
-        while (startIndex < text.length()) {
-            int index = text.indexOf(keyword, startIndex);
-            if (index == -1) {
-                break;
+        // 按空格分割关键词
+        String[] keywords = keyword.trim().split("\\s+");
+        
+        // 对每个关键词进行高亮处理
+        for (String singleKeyword : keywords) {
+            if (singleKeyword.isEmpty()) {
+                continue;
             }
             
-            int endIndex = index + keyword.length();
-            BackgroundColorSpan bgSpan = new BackgroundColorSpan(YGOUtil.c(R.color.item_bg));
-            spannableString.setSpan(bgSpan, index, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-            
-            startIndex = endIndex;
+            int startIndex = 0;
+            while (startIndex < text.length()) {
+                int index = text.indexOf(singleKeyword, startIndex);
+                if (index == -1) {
+                    break;
+                }
+                
+                int endIndex = index + singleKeyword.length();
+                BackgroundColorSpan bgSpan = new BackgroundColorSpan(YGOUtil.c(R.color.item_bg));
+                spannableString.setSpan(bgSpan, index, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+                
+                startIndex = endIndex;
+            }
         }
         
         return spannableString;

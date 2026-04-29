@@ -412,18 +412,28 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             return spannableString;
         }
 
-        int startIndex = 0;
-        while (startIndex < text.length()) {
-            int index = text.indexOf(keyword, startIndex);
-            if (index == -1) {
-                break;
+        // 按空格分割关键词
+        String[] keywords = keyword.trim().split("\\s+");
+        
+        // 对每个关键词进行高亮处理
+        for (String singleKeyword : keywords) {
+            if (singleKeyword.isEmpty()) {
+                continue;
             }
+            
+            int startIndex = 0;
+            while (startIndex < text.length()) {
+                int index = text.indexOf(singleKeyword, startIndex);
+                if (index == -1) {
+                    break;
+                }
 
-            int endIndex = index + keyword.length();
-            BackgroundColorSpan bgSpan = new BackgroundColorSpan(YGOUtil.c(R.color.item_bg));
-            spannableString.setSpan(bgSpan, index, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+                int endIndex = index + singleKeyword.length();
+                BackgroundColorSpan bgSpan = new BackgroundColorSpan(YGOUtil.c(R.color.item_bg));
+                spannableString.setSpan(bgSpan, index, endIndex, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-            startIndex = endIndex;
+                startIndex = endIndex;
+            }
         }
 
         return spannableString;
