@@ -61,57 +61,7 @@ void Game::Draw2DImageQuad(irr::video::IVideoDriver* driver, irr::video::ITextur
 	driver->setTransform(irr::video::ETS_VIEW, oldViewMat);
 	driver->setTransform(irr::video::ETS_WORLD, oldWorldMat);
 }
-/**
- * @brief 设置一个由四个顶点组成的矩形3D顶点数据
- *
- * 该函数用于快速设置一个矩形平面的四个顶点数据，通常用于创建二维界面元素或简单几何体。
- * 四个顶点按照左上、右上、左下、右下的顺序设置，形成两个三角形组成的矩形。
- * 所有顶点使用相同的法线和颜色属性。
- *
- * @param v 指向包含至少4个S3DVertex元素的数组指针，用于存储顶点数据
- * @param x1 矩形左边界X坐标
- * @param y1 矩形上边界Y坐标
- * @param x2 矩形右边界X坐标
- * @param y2 矩形下边界Y坐标
- * @param z 所有顶点的Z坐标（深度）
- * @param nz 法线向量的Z分量（法线方向为(0, 0, nz)）
- * @param tu1 左侧纹理U坐标
- * @param tv1 上侧纹理V坐标
- * @param tu2 右侧纹理U坐标
- * @param tv2 下侧纹理V坐标
- */
-inline void SetS3DVertex(irr::video::S3DVertex* v, irr::f32 x1, irr::f32 y1, irr::f32 x2, irr::f32 y2, irr::f32 z, irr::f32 nz,irr::f32 tu1, irr::f32 tv1, irr::f32 tu2, irr::f32 tv2) {
-	// 设置矩形的四个顶点：左上、右上、左下、右下
-	v[0] = irr::video::S3DVertex(x1, y1, z, 0, 0, nz, irr::video::SColor(255, 255, 255, 255), tu1, tv1);
-	v[1] = irr::video::S3DVertex(x2, y1, z, 0, 0, nz, irr::video::SColor(255, 255, 255, 255), tu2, tv1);
-	v[2] = irr::video::S3DVertex(x1, y2, z, 0, 0, nz, irr::video::SColor(255, 255, 255, 255), tu1, tv2);
-	v[3] = irr::video::S3DVertex(x2, y2, z, 0, 0, nz, irr::video::SColor(255, 255, 255, 255), tu2, tv2);
-}
-/**
- * @brief 设置卡片的3D顶点坐标
- *
- * 该函数用于计算并设置游戏卡片各个面的3D顶点坐标，包括正面、背面、轮廓线等。
- * 根据屏幕的缩放比例计算默认缩放值，然后为卡片的不同部分设置相应的顶点坐标。
- *
- * @note 该函数无参数且无返回值
- */
-void Game::SetCardS3DVertex() {
-    // 计算卡片的默认缩放比例，基于x轴和y轴缩放差异
-    irr::f32 defalutScale = (mainGame->xScale - mainGame->yScale) / 9.5f;
-    ALOGD("cc drawing defalutScale = %f",defalutScale);
 
-    // 设置卡片正面的顶点坐标
-    SetS3DVertex(matManager.vCardFront, -0.35f + defalutScale, -0.5f, 0.35f - defalutScale, 0.5f, 0, 1, 0, 0, 1, 1);
-
-    // 设置卡片外轮廓的顶点坐标
-    SetS3DVertex(matManager.vCardOutline, -0.375f + defalutScale, -0.54f, 0.37f - defalutScale, 0.54f, 0, 1, 0, 0, 1, 1);
-
-    // 设置卡片反向外轮廓的顶点坐标
-    SetS3DVertex(matManager.vCardOutliner, 0.37f - defalutScale, -0.54f, -0.375f + defalutScale, 0.54f, 0, 1, 0, 0, 1, 1);
-
-    // 设置卡片背面的顶点坐标
-    SetS3DVertex(matManager.vCardBack, 0.35f - defalutScale, -0.5f, -0.35f + defalutScale, 0.5f, 0, -1, 0, 0, 1, 1);
-}
 /**
  * @brief 绘制选择框的线框效果
  *
@@ -2036,6 +1986,57 @@ void Game::DrawBubbleHeptagonBorder(const irr::core::recti& rect, irr::video::SC
         int nextIndex = (i + 1) % 7;
         driver->draw2DLine(vertices[i], vertices[nextIndex], color);
     }
+}
+/**
+ * @brief 设置一个由四个顶点组成的矩形3D顶点数据
+ *
+ * 该函数用于快速设置一个矩形平面的四个顶点数据，通常用于创建二维界面元素或简单几何体。
+ * 四个顶点按照左上、右上、左下、右下的顺序设置，形成两个三角形组成的矩形。
+ * 所有顶点使用相同的法线和颜色属性。
+ *
+ * @param v 指向包含至少4个S3DVertex元素的数组指针，用于存储顶点数据
+ * @param x1 矩形左边界X坐标
+ * @param y1 矩形上边界Y坐标
+ * @param x2 矩形右边界X坐标
+ * @param y2 矩形下边界Y坐标
+ * @param z 所有顶点的Z坐标（深度）
+ * @param nz 法线向量的Z分量（法线方向为(0, 0, nz)）
+ * @param tu1 左侧纹理U坐标
+ * @param tv1 上侧纹理V坐标
+ * @param tu2 右侧纹理U坐标
+ * @param tv2 下侧纹理V坐标
+ */
+inline void SetS3DVertex(irr::video::S3DVertex* v, irr::f32 x1, irr::f32 y1, irr::f32 x2, irr::f32 y2, irr::f32 z, irr::f32 nz,irr::f32 tu1, irr::f32 tv1, irr::f32 tu2, irr::f32 tv2) {
+	// 设置矩形的四个顶点：左上、右上、左下、右下
+	v[0] = irr::video::S3DVertex(x1, y1, z, 0, 0, nz, irr::video::SColor(255, 255, 255, 255), tu1, tv1);
+	v[1] = irr::video::S3DVertex(x2, y1, z, 0, 0, nz, irr::video::SColor(255, 255, 255, 255), tu2, tv1);
+	v[2] = irr::video::S3DVertex(x1, y2, z, 0, 0, nz, irr::video::SColor(255, 255, 255, 255), tu1, tv2);
+	v[3] = irr::video::S3DVertex(x2, y2, z, 0, 0, nz, irr::video::SColor(255, 255, 255, 255), tu2, tv2);
+}
+/**
+ * @brief 设置卡片的3D顶点坐标
+ *
+ * 该函数用于计算并设置游戏卡片各个面的3D顶点坐标，包括正面、背面、轮廓线等。
+ * 根据屏幕的缩放比例计算默认缩放值，然后为卡片的不同部分设置相应的顶点坐标。
+ *
+ * @note 该函数无参数且无返回值
+ */
+void Game::SetCardS3DVertex() {
+    // 计算卡片的默认缩放比例，基于x轴和y轴缩放差异
+    irr::f32 defalutScale = (mainGame->xScale - mainGame->yScale) / 9.5f;
+    ALOGD("cc drawing defalutScale = %f",defalutScale);
+
+    // 设置卡片正面的顶点坐标
+    SetS3DVertex(matManager.vCardFront, -0.35f + defalutScale, -0.5f, 0.35f - defalutScale, 0.5f, 0, 1, 0, 0, 1, 1);
+
+    // 设置卡片外轮廓的顶点坐标
+    SetS3DVertex(matManager.vCardOutline, -0.375f + defalutScale, -0.54f, 0.37f - defalutScale, 0.54f, 0, 1, 0, 0, 1, 1);
+
+    // 设置卡片反向外轮廓的顶点坐标
+    SetS3DVertex(matManager.vCardOutliner, 0.37f - defalutScale, -0.54f, -0.375f + defalutScale, 0.54f, 0, 1, 0, 0, 1, 1);
+
+    // 设置卡片背面的顶点坐标
+    SetS3DVertex(matManager.vCardBack, 0.35f - defalutScale, -0.5f, -0.35f + defalutScale, 0.5f, 0, -1, 0, 0, 1, 1);
 }
 
 }

@@ -42,6 +42,7 @@ int DuelClient::match_kill = 0;
 std::vector<HostPacket> DuelClient::hosts;
 std::set<std::pair<unsigned int, unsigned short>> DuelClient::remotes;
 event* DuelClient::resp_event = 0;
+const std::set<int> DuelClient::select_effectyn_id{ 95, 96, 97, 218, 219, 220 };
 
 /**
  * @brief 启动客户端连接到指定的服务器
@@ -1261,7 +1262,7 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 	// 定义一个指针，用于遍历消息数据
 	unsigned char* pbuf = msg;
 	// 定义一个宽字符缓冲区，用于存储文本信息
-	wchar_t textBuffer[256];
+	wchar_t textBuffer[256]{};
 	// 从消息数据中读取当前消息类型，并存储到游戏信息结构中
 	mainGame->dInfo.curMsg = BufferIO::Read<uint8_t>(pbuf);
 	// 如果当前消息不是重试消息，则将当前消息保存为最后成功处理的消息
@@ -1858,10 +1859,10 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 			wchar_t ynbuf[256];
 			myswprintf(ynbuf, dataManager.GetSysString(221), dataManager.FormatLocation(l, s), dataManager.GetName(code));
 			myswprintf(textBuffer, L"%ls\n%ls\n%ls", event_string, ynbuf, dataManager.GetSysString(223));
-		} else if(desc <= MAX_STRING_ID) {
+		} else if(select_effectyn_id.count(desc)) {
 			myswprintf(textBuffer, dataManager.GetSysString(desc), dataManager.GetName(code));
 		} else {
-			myswprintf(textBuffer, dataManager.GetDesc(desc), dataManager.GetName(code));
+			myswprintf(textBuffer, L"%ls", dataManager.GetDesc(desc));
 		}
 		mainGame->gMutex.lock();
 		mainGame->SetStaticText(mainGame->stQMessage, 350 * mainGame->xScale, mainGame->guiFont, textBuffer);
@@ -2168,14 +2169,14 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, int len) {
 		unsigned char respbuf[SIZE_RETURN_VALUE];
 		int pzone = 0;
 		if (mainGame->dInfo.curMsg == MSG_SELECT_PLACE) {
-			if (select_hint) {
+			if (select_hint)
 				myswprintf(textBuffer, dataManager.GetSysString(569), dataManager.GetName(select_hint));
-			} else
+			else
 				myswprintf(textBuffer, dataManager.GetSysString(560));
 		} else {
-			if (select_hint) {
-				myswprintf(textBuffer, dataManager.GetDesc(select_hint));
-			} else
+			if (select_hint)
+				myswprintf(textBuffer, L"%ls", dataManager.GetDesc(select_hint));
+			else
 				myswprintf(textBuffer, dataManager.GetSysString(570));
 		}
 		select_hint = 0;
