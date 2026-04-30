@@ -1701,6 +1701,25 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     //新建卡组保留卡片不保留卡组id
                     save(ydk, true);
                     loadDeckFromFile(ydk);
+                    //为新建卡组请求云端deckid并上传
+                    if (SharedPreferenceUtil.getServerToken() != null) {
+                        LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(), SharedPreferenceUtil.getServerToken());
+                        VUiKit.defer().when(() -> {
+                            try {
+                                List<MyDeckItem> deckItemList = new ArrayList<>();
+                                MyDeckItem newItem = DeckUtil.getMyDeckItem(ydk);
+                                deckItemList.add(newItem);
+                                DeckSquareApiUtil.requestIdAndPushNewDecks(deckItemList, loginToken);
+                            } catch (IOException e) {
+                                return e;
+                            }
+                            return 0;
+                        }).fail((e) -> {
+                            LogUtil.e(TAG, "Upload new deck failed: " + e);
+                        }).done((result) -> {
+                            LogUtil.d(TAG, "New deck uploaded successfully");
+                        });
+                    }
                 }
             } else {
                 dlg.dismiss();
