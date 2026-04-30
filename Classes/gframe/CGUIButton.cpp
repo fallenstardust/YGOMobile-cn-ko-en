@@ -278,21 +278,24 @@ void CGUIButton::draw()
 		if (DrawBorder)
 			skin->draw3DButtonPanePressed(this, AbsoluteRect, &AbsoluteClippingRect);
 
-		if (PressedImage)
+		video::ITexture* imgToDraw = PressedImage ? PressedImage : Image;
+		core::rect<s32> rectToDraw = PressedImage ? PressedImageRect : ImageRect;
+
+		if (imgToDraw)
 		{
 			core::position2d<s32> pos = spritePos;
-			pos.X -= PressedImageRect.getWidth() / 2;
-			pos.Y -= PressedImageRect.getHeight() / 2;
+			pos.X -= rectToDraw.getWidth() / 2;
+			pos.Y -= rectToDraw.getHeight() / 2;
 
-			if (Image == PressedImage && PressedImageRect == ImageRect)
+			if (!PressedImage)
 			{
 				pos.X += skin->getSize(EGDS_BUTTON_PRESSED_IMAGE_OFFSET_X);
 				pos.Y += skin->getSize(EGDS_BUTTON_PRESSED_IMAGE_OFFSET_Y);
 			}
-			driver->draw2DImage(PressedImage,
+			driver->draw2DImage(imgToDraw,
 					ScaleImage? AbsoluteRect :
-						core::recti(pos, PressedImageRect.getSize()),
-					PressedImageRect, &AbsoluteClippingRect,
+						core::recti(pos, rectToDraw.getSize()),
+					rectToDraw, &AbsoluteClippingRect,
 					0, UseAlphaChannel);
 		}
 	}
@@ -420,9 +423,6 @@ void CGUIButton::setImage(video::ITexture* image)
 	Image = image;
 	if (image)
 		ImageRect = core::rect<s32>(core::position2d<s32>(0,0), image->getOriginalSize());
-
-	if (!PressedImage)
-		setPressedImage(Image);
 }
 
 
