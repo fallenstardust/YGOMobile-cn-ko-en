@@ -73,7 +73,7 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
     @Override
     protected void convert(@NonNull BaseViewHolder baseViewHolder, DuelRoom duelRoom) {
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) baseViewHolder.getView(R.id.ll_item).getLayoutParams();
-        switch (getGroupType(baseViewHolder.getAdapterPosition() - getHeaderLayoutCount())) {
+        switch (getGroupType(baseViewHolder.getLayoutPosition() - getHeaderLayoutCount())) {
             case ITEM_TYPE_SAME:
                 baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.list_item_bg);
                 baseViewHolder.setGone(R.id.tv_title, true);

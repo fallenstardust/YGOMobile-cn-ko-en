@@ -151,7 +151,7 @@ public class WatchDuelManagement {
     public void start() {
         if (isStart) return;
         isStart = true;
-        if (mcWatchDuelSocketClientList.size() != 0) return;
+        if (!mcWatchDuelSocketClientList.isEmpty()) return;
 
         // 初始化WebSocket
         initSocketClient();

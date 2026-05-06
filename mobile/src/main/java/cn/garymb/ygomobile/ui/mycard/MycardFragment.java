@@ -702,6 +702,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void onResume() {
         YGOStarter.onResumed(getActivity());
         super.onResume();
+        
+        if (getActivity() != null && isHidden()) {
+            getActivity().getSupportFragmentManager().beginTransaction()
+                    .show(this)
+                    .commitAllowingStateLoss();
+        }
     }
 
     @Override
@@ -753,8 +759,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (homeActivity.fragment_mycard_chatting_room.isVisible()) {
             getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
             rl_chat.setVisibility(View.VISIBLE);
+            return true;
         }
-        return true;
+        
+        return false;
     }
 
     /**
@@ -823,12 +831,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         MyCardWebFragment bbsFragment = MyCardWebFragment.newInstance(
                 mMyCard.getBBSUrl(),
-                "萌卡论坛",
-                true
+                "萌卡论坛"
         );
 
         homeActivity.getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragment_content, bbsFragment)
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, 
+                                   android.R.anim.fade_in, android.R.anim.fade_out)
+                .hide(this)
+                .add(R.id.fragment_content, bbsFragment)
                 .addToBackStack(null)
                 .commit();
     }
@@ -840,7 +850,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         DeckWinRateFragment deckWinRateFragment = new DeckWinRateFragment();
         homeActivity.getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragment_content, deckWinRateFragment)
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                   android.R.anim.fade_in, android.R.anim.fade_out)
+                .hide(this)
+                .add(R.id.fragment_content, deckWinRateFragment)
                 .addToBackStack(null)
                 .commit();
     }

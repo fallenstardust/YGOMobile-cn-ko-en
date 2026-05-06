@@ -11,7 +11,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.JavascriptInterface;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,46 +31,39 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
-import cn.garymb.ygomobile.ui.mycard.bean.McUser;
-import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
  * 通用Web页面Fragment，用于显示MyCard相关的网页内容
- * 支持自动登录、进度条显示、文件下载等功能
+ * 支持进度条显示、文件下载等功能
  */
 public class MyCardWebFragment extends BaseFragemnt {
 
     private static final String TAG = "MyCardWebFragment";
     private static final String ARG_URL = "url";
     private static final String ARG_TITLE = "title";
-    private static final String ARG_AUTO_LOGIN = "auto_login";
 
     private MyCardWebView mWebView;
     private ProgressBar mProgressBar;
     private ImageView mBackButton;
     private TextView mTitleText;
     private MyCard mMyCard;
-    private McUser mMcUser;
     private HomeActivity homeActivity;
 
     private String mUrl;
     private String mTitle;
-    private boolean mAutoLogin;
 
     /**
      * 创建MyCardWebFragment实例
      * @param url 要加载的URL
      * @param title 页面标题
-     * @param autoLogin 是否需要自动登录
      * @return MyCardWebFragment实例
      */
-    public static MyCardWebFragment newInstance(String url, String title, boolean autoLogin) {
+    public static MyCardWebFragment newInstance(String url, String title) {
         MyCardWebFragment fragment = new MyCardWebFragment();
         Bundle args = new Bundle();
         args.putString(ARG_URL, url);
         args.putString(ARG_TITLE, title);
-        args.putBoolean(ARG_AUTO_LOGIN, autoLogin);
         fragment.setArguments(args);
         return fragment;
     }
@@ -82,7 +74,6 @@ public class MyCardWebFragment extends BaseFragemnt {
         if (getArguments() != null) {
             mUrl = getArguments().getString(ARG_URL);
             mTitle = getArguments().getString(ARG_TITLE);
-            mAutoLogin = getArguments().getBoolean(ARG_AUTO_LOGIN, false);
         }
     }
 
@@ -122,9 +113,6 @@ public class MyCardWebFragment extends BaseFragemnt {
             });
         }
 
-        // 获取当前登录用户信息
-        mMcUser = UserManagement.getDx().getMcUser();
-
         if (TextUtils.isEmpty(mUrl)) {
             YGOUtil.showTextToast("URL不能为空");
             if (homeActivity != null) {
@@ -139,7 +127,7 @@ public class MyCardWebFragment extends BaseFragemnt {
         // 加载页面
         mWebView.loadUrl(mUrl);
 
-        Log.d(TAG, "加载URL: " + mUrl + ", 自动登录: " + mAutoLogin);
+        Log.d(TAG, "加载URL: " + mUrl);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -161,11 +149,6 @@ public class MyCardWebFragment extends BaseFragemnt {
                 BuildConfig.VERSION_CODE
         ));
 
-        // 添加自动登录的JavaScript接口
-        if (mAutoLogin && mMcUser != null) {
-            mWebView.addJavascriptInterface(new AutoLoginJS(), "autoLogin");
-        }
-
         // 设置WebViewClient
         mWebView.setWebViewClient(mMyCard.getWebViewClient());
 
@@ -182,10 +165,6 @@ public class MyCardWebFragment extends BaseFragemnt {
                 if (mProgressBar != null) {
                     if (newProgress == 100) {
                         mProgressBar.setVisibility(View.GONE);
-                        // 页面加载完成，如果需要自动登录则执行
-                        if (mAutoLogin) {
-                            performAutoLogin();
-                        }
                     } else {
                         if (View.GONE == mProgressBar.getVisibility()) {
                             mProgressBar.setVisibility(View.VISIBLE);
@@ -343,129 +322,6 @@ public class MyCardWebFragment extends BaseFragemnt {
             return "扩展包文件已开始下载: " + fileName;
         } else {
             return "文件已开始下载: " + fileName;
-        }
-    }
-
-    /**
-     * 执行自动登录
-     */
-    private void performAutoLogin() {
-        if (mMcUser == null || TextUtils.isEmpty(mMcUser.getUsername())) {
-            Log.w(TAG, "用户信息为空，无法自动登录");
-            return;
-        }
-
-        String username = mMcUser.getUsername();
-        String password = mMcUser.getPassword();
-
-        Log.d(TAG, "尝试自动登录 - 用户名: " + username);
-
-        // 构建自动登录的JavaScript代码
-        String jsCode = buildAutoLoginScript(username, password);
-
-        // 延迟执行，确保页面完全加载
-        mWebView.postDelayed(() -> {
-            mWebView.loadUrl(jsCode);
-            Log.d(TAG, "已执行自动登录脚本");
-        }, 1500);
-    }
-
-    /**
-     * 构建自动登录的JavaScript脚本
-     */
-    private String buildAutoLoginScript(String username, String password) {
-        return "javascript:(function() {" +
-                "  try {" +
-                "    var usernameInput = document.querySelector('input[name=username]') || " +
-                "                       document.querySelector('input[name=login]') || " +
-                "                       document.querySelector('input[type=text][name*=user]') || " +
-                "                       document.querySelector('#login-username') || " +
-                "                       document.querySelector('#user_login');" +
-                "    var passwordInput = document.querySelector('input[name=password]') || " +
-                "                       document.querySelector('input[type=password][name*=pass]') || " +
-                "                       document.querySelector('#login-password') || " +
-                "                       document.querySelector('#user_pass');" +
-                "    var loginButton = document.querySelector('button[type=submit]') || " +
-                "                      document.querySelector('input[type=submit]') || " +
-                "                      document.querySelector('.btn-login') || " +
-                "                      document.querySelector('button.login-button') || " +
-                "                      document.querySelector('.wp-login-form button');" +
-                "    " +
-                "    if (usernameInput && passwordInput) {" +
-                "      usernameInput.value = '" + escapeJs(username) + "';" +
-                "      passwordInput.value = '" + escapeJs(password) + "';" +
-                "      " +
-                "      if (loginButton) {" +
-                "        setTimeout(function() { loginButton.click(); }, 500);" +
-                "      } else {" +
-                "        var form = document.querySelector('form');" +
-                "        if (form) {" +
-                "          setTimeout(function() { form.submit(); }, 500);" +
-                "        }" +
-                "      }" +
-                "      " +
-                "      if (window.autoLogin) {" +
-                "        window.autoLogin.onLoginSuccess();" +
-                "      }" +
-                "    } else {" +
-                "      if (window.autoLogin) {" +
-                "        window.autoLogin.onLoginFailed('未找到登录表单');" +
-                "      }" +
-                "    }" +
-                "  } catch(e) {" +
-                "    console.error('Auto login error:', e);" +
-                "    if (window.autoLogin) {" +
-                "      window.autoLogin.onLoginFailed(e.message);" +
-                "    }" +
-                "  }" +
-                "})()";
-    }
-
-    /**
-     * 转义JavaScript字符串中的特殊字符
-     */
-    private String escapeJs(String str) {
-        if (str == null) return "";
-        return str.replace("\\", "\\\\")
-                .replace("'", "\\'")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r");
-    }
-
-    /**
-     * JavaScript接口类，用于与网页交互
-     */
-    private class AutoLoginJS {
-
-        @JavascriptInterface
-        public void onLoginSuccess() {
-            Log.d(TAG, "自动登录成功");
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(() -> {
-                    YGOUtil.showTextToast("登录成功");
-                });
-            }
-        }
-
-        @JavascriptInterface
-        public void onLoginFailed(String message) {
-            Log.e(TAG, "自动登录失败: " + message);
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(() -> {
-                    YGOUtil.showTextToast("自动登录失败: " + message);
-                });
-            }
-        }
-
-        @JavascriptInterface
-        public String getUsername() {
-            return mMcUser != null ? mMcUser.getUsername() : "";
-        }
-
-        @JavascriptInterface
-        public String getPassword() {
-            return mMcUser != null ? mMcUser.getPassword() : "";
         }
     }
 

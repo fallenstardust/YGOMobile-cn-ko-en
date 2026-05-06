@@ -406,7 +406,7 @@
                                                     android:layout_width="wrap_content"
                                                     android:layout_height="wrap_content"
                                                     android:layout_marginRight="4dp"
-                                                    android:text="- - - -"
+                                                    android:text="----"
                                                     android:textColor="@color/white"
                                                     android:textSize="9sp" />
 
@@ -420,7 +420,7 @@
                                                     android:layout_width="wrap_content"
                                                     android:layout_height="wrap_content"
                                                     android:layout_marginRight="4dp"
-                                                    android:text="- - - - "
+                                                    android:text="----"
                                                     android:textColor="@color/white"
                                                     android:textSize="9sp" />
 
@@ -434,7 +434,7 @@
                                                     android:layout_width="wrap_content"
                                                     android:layout_height="wrap_content"
                                                     android:layout_marginRight="4dp"
-                                                    android:text="- - - -"
+                                                    android:text="----"
                                                     android:textColor="@color/white"
                                                     android:textSize="9sp" />
                                             </LinearLayout>
@@ -477,6 +477,13 @@
                                         android:textColor="@color/white"
                                         android:textSize="10sp" />
                                 </LinearLayout>
+
+                                <View
+                                    android:layout_width="1dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_marginTop="10dp"
+                                    android:layout_marginBottom="10dp"
+                                    android:background="@color/klein_blue" />
 
                                 <LinearLayout
                                     android:id="@+id/ll_match"
@@ -553,7 +560,7 @@
                                                     android:layout_width="wrap_content"
                                                     android:layout_height="wrap_content"
                                                     android:layout_marginRight="4dp"
-                                                    android:text="- - - - -"
+                                                    android:text="----"
                                                     android:textColor="@color/white"
                                                     android:textSize="9sp" />
 
@@ -567,7 +574,7 @@
                                                     android:layout_width="wrap_content"
                                                     android:layout_height="wrap_content"
                                                     android:layout_marginRight="4dp"
-                                                    android:text="- - - -"
+                                                    android:text="----"
                                                     android:textColor="@color/white"
                                                     android:textSize="9sp" />
 
@@ -581,7 +588,7 @@
                                                     android:layout_width="wrap_content"
                                                     android:layout_height="wrap_content"
                                                     android:layout_marginLeft="4dp"
-                                                    android:text="- - - -"
+                                                    android:text="----"
                                                     android:textColor="@color/white"
                                                     android:textSize="9sp" />
                                             </LinearLayout>
