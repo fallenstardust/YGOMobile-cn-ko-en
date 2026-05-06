@@ -79,7 +79,7 @@ public class MyCardWebFragment extends BaseFragemnt {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         homeActivity = (HomeActivity) getActivity();
-        View view = inflater.inflate(R.layout.mycard_web_fragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_mycard_web, container, false);
         initView(view);
         return view;
     }
@@ -88,26 +88,11 @@ public class MyCardWebFragment extends BaseFragemnt {
         mMyCard = new MyCard(getActivity());
         mWebView = view.findViewById(R.id.wv_web);
         mProgressBar = view.findViewById(R.id.progressBar);
-        mBackButton = view.findViewById(R.id.btn_back);
         mTitleText = view.findViewById(R.id.tv_title);
 
         // 设置标题
         if (!TextUtils.isEmpty(mTitle) && mTitleText != null) {
             mTitleText.setText(mTitle);
-        }
-
-        // 设置返回按钮点击事件
-        if (mBackButton != null) {
-            mBackButton.setOnClickListener(v -> {
-                if (mWebView != null && mWebView.canGoBack()) {
-                    mWebView.goBack();
-                } else {
-                    // 如果不能返回，则关闭当前Fragment
-                    if (homeActivity != null) {
-                        homeActivity.onBackPressed();
-                    }
-                }
-            });
         }
 
         if (TextUtils.isEmpty(mUrl)) {

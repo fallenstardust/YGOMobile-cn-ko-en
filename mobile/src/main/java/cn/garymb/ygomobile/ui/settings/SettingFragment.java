@@ -51,9 +51,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -62,6 +59,11 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
 
 import com.ourygo.lib.duelassistant.service.DuelAssistantService;
 
@@ -123,13 +125,17 @@ public class SettingFragment extends PreferenceFragmentPlus {
     }
 
     @Override
+    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        setPreferencesFromResource(R.xml.preference_game, rootKey);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
         activity = (HomeActivity) getContext();
         mSettings = AppsSettings.get();
 
-        addPreferencesFromResource(R.xml.preference_game);
         bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getContext()) + "(" + SystemUtils.getVersion(getContext()) + ")");
         bind(PREF_CHECK_UPDATE, YGOUtil.s(R.string.settings_about_author_pref) + " : " + YGOUtil.s(R.string.settings_author));
         bind(PREF_RESET_GAME_RES, YGOUtil.s(R.string.guide_reset));
@@ -163,7 +169,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
     }
 
     @Override
-    public boolean onPreferenceChange(Preference preference, Object value) {
+    public boolean onPreferenceChange(@NonNull Preference preference, Object value) {
         super.onPreferenceChange(preference, value);
         if (!isInit) {
             /*if (PREF_GAME_VERSION.equals(preference.getKey())) {

@@ -2,23 +2,25 @@ package cn.garymb.ygomobile.ui.settings;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceFragment;
-import android.preference.RingtonePreference;
 import android.text.TextUtils;
 import android.view.MenuItem;
 
-abstract class BasePreferenceFragment extends PreferenceFragment implements Preference.OnPreferenceClickListener
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+
+abstract class BasePreferenceFragment extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener
         , Preference.OnPreferenceChangeListener {
 
     public BasePreferenceFragment() {
         super();
+    }
+
+    @Override
+    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        // 子类需要实现此方法来加载偏好设置
     }
 
     @Override
@@ -44,29 +46,6 @@ abstract class BasePreferenceFragment extends PreferenceFragment implements Pref
                         : null;
                 preference.setSummary(desc);
             }
-            // Set the summary to reflect the new value.
-        } else if (preference instanceof RingtonePreference) {
-            // For ringtone preferences, look up the correct display value
-            // using RingtoneManager.
-            if (TextUtils.isEmpty(stringValue)) {
-                // Empty values correspond to 'silent' (no ringtone).
-                preference.setSummary(null);
-
-            } else {
-                Ringtone ringtone = RingtoneManager.getRingtone(
-                        preference.getContext(), Uri.parse(stringValue));
-
-                if (ringtone == null) {
-                    // Clear the summary if there was a lookup error.
-                    preference.setSummary(null);
-                } else {
-                    // Set the summary to reflect the new ringtone display
-                    // name.
-                    String name = ringtone.getTitle(preference.getContext());
-                    preference.setSummary(name);
-                }
-            }
-
         } else if (preference instanceof CheckBoxPreference) {
             CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
             checkBoxPreference.setChecked((Boolean) value);

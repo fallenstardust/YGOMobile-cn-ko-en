@@ -730,7 +730,17 @@
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/fragment_content"
+            android:id="@+id/fragment_chat_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragment_deck_win_rate_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragment_web_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
     </FrameLayout>

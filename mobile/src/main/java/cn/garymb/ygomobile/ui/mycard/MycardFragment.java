@@ -111,6 +111,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     private WatchDuelManagement duelManagement;
     private DuelRoomBQAdapter duelRoomBQAdapter;
+    
+    private View mainContentView;
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -197,6 +199,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         YGOStarter.onCreated(getActivity());
         mMyCard = new MyCard(getActivity());
 
+        mainContentView = view.findViewById(R.id.ll_main_ui);
         ll_dialog_login = view.findViewById(R.id.ll_dialog_login);
         ll_main_ui = view.findViewById(R.id.ll_main_ui);
         et_username = view.findViewById(R.id.et_username);
@@ -708,6 +711,29 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     .show(this)
                     .commitAllowingStateLoss();
         }
+        
+        if (mainContentView != null && !hasVisibleChildFragment()) {
+            mainContentView.setVisibility(View.VISIBLE);
+        }
+    }
+    
+    private boolean hasVisibleChildFragment() {
+        if (homeActivity.fragment_mycard_chatting_room != null && 
+            homeActivity.fragment_mycard_chatting_room.isAdded() && 
+            homeActivity.fragment_mycard_chatting_room.isVisible()) {
+            return true;
+        }
+        if (homeActivity.fragment_deck_win_rate != null && 
+            homeActivity.fragment_deck_win_rate.isAdded() && 
+            homeActivity.fragment_deck_win_rate.isVisible()) {
+            return true;
+        }
+        if (homeActivity.fragment_mycard_web != null && 
+            homeActivity.fragment_mycard_web.isAdded() && 
+            homeActivity.fragment_mycard_web.isVisible()) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -756,9 +782,43 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public boolean onBackPressed() {
-        if (homeActivity.fragment_mycard_chatting_room.isVisible()) {
-            getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+        if (homeActivity.fragment_mycard_chatting_room != null && 
+            homeActivity.fragment_mycard_chatting_room.isAdded() && 
+            homeActivity.fragment_mycard_chatting_room.isVisible()) {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .hide(homeActivity.fragment_mycard_chatting_room)
+                    .commit();
             rl_chat.setVisibility(View.VISIBLE);
+            return true;
+        }
+        
+        if (homeActivity.fragment_deck_win_rate != null && 
+            homeActivity.fragment_deck_win_rate.isAdded() && 
+            homeActivity.fragment_deck_win_rate.isVisible()) {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .hide(homeActivity.fragment_deck_win_rate)
+                    .commit();
+            if (mainContentView != null) {
+                mainContentView.setVisibility(View.VISIBLE);
+            }
+            return true;
+        }
+        
+        if (homeActivity.fragment_mycard_web != null && 
+            homeActivity.fragment_mycard_web.isAdded() && 
+            homeActivity.fragment_mycard_web.isVisible()) {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .hide(homeActivity.fragment_mycard_web)
+                    .commit();
+            if (mainContentView != null) {
+                mainContentView.setVisibility(View.VISIBLE);
+            }
             return true;
         }
         
@@ -780,9 +840,41 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 performLogout();
                 break;
             case R.id.ll_head_login:
-                if (homeActivity.fragment_mycard_chatting_room.isVisible()) {
-                    getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+                if (homeActivity.fragment_mycard_chatting_room != null && 
+                    homeActivity.fragment_mycard_chatting_room.isAdded() && 
+                    homeActivity.fragment_mycard_chatting_room.isVisible()) {
+                    getChildFragmentManager().beginTransaction()
+                            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                    android.R.anim.fade_in, android.R.anim.fade_out)
+                            .hide(homeActivity.fragment_mycard_chatting_room)
+                            .commit();
                     rl_chat.setVisibility(View.VISIBLE);
+                }
+                
+                if (homeActivity.fragment_deck_win_rate != null && 
+                    homeActivity.fragment_deck_win_rate.isAdded() && 
+                    homeActivity.fragment_deck_win_rate.isVisible()) {
+                    getChildFragmentManager().beginTransaction()
+                            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                    android.R.anim.fade_in, android.R.anim.fade_out)
+                            .hide(homeActivity.fragment_deck_win_rate)
+                            .commit();
+                    if (mainContentView != null) {
+                        mainContentView.setVisibility(View.VISIBLE);
+                    }
+                }
+                
+                if (homeActivity.fragment_mycard_web != null && 
+                    homeActivity.fragment_mycard_web.isAdded() && 
+                    homeActivity.fragment_mycard_web.isVisible()) {
+                    getChildFragmentManager().beginTransaction()
+                            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                    android.R.anim.fade_in, android.R.anim.fade_out)
+                            .hide(homeActivity.fragment_mycard_web)
+                            .commit();
+                    if (mainContentView != null) {
+                        mainContentView.setVisibility(View.VISIBLE);
+                    }
                 }
                 break;
             case R.id.tv_back_mc:
@@ -791,15 +883,24 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             case R.id.rl_chat:
                 if (serviceManagement.isConnected()) {
                     if (!homeActivity.fragment_mycard_chatting_room.isAdded()) {
-                        getChildFragmentManager().beginTransaction().add(R.id.fragment_content, homeActivity.fragment_mycard_chatting_room).commit();
+                        getChildFragmentManager().beginTransaction()
+                                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                        android.R.anim.fade_in, android.R.anim.fade_out)
+                                .add(R.id.fragment_chat_content, homeActivity.fragment_mycard_chatting_room).commit();
                         rl_chat.setVisibility(View.INVISIBLE);
                     } else {
                         if (homeActivity.fragment_mycard_chatting_room.isHidden()) {
-                            getChildFragmentManager().beginTransaction().show(homeActivity.fragment_mycard_chatting_room).commit();
-                            rl_chat.setVisibility(View.INVISIBLE);
-                        } else {
-                            getChildFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+                            getChildFragmentManager().beginTransaction()
+                                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                            android.R.anim.fade_in, android.R.anim.fade_out)
+                                    .show(homeActivity.fragment_mycard_chatting_room).commit();
                             rl_chat.setVisibility(View.VISIBLE);
+                        } else {
+                            getChildFragmentManager().beginTransaction()
+                                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                            android.R.anim.fade_in, android.R.anim.fade_out)
+                                    .hide(homeActivity.fragment_mycard_chatting_room).commit();
+                            rl_chat.setVisibility(View.INVISIBLE);
                         }
 
                     }
@@ -829,18 +930,30 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             return;
         }
 
-        MyCardWebFragment bbsFragment = MyCardWebFragment.newInstance(
-                mMyCard.getBBSUrl(),
-                YGOUtil.s(R.string.mycard_bbs)
-        );
+        if (homeActivity.fragment_mycard_web == null) {
+            homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
+                    mMyCard.getBBSUrl(),
+                    YGOUtil.s(R.string.mycard_bbs)
+            );
+        }
 
-        homeActivity.getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, 
-                                   android.R.anim.fade_in, android.R.anim.fade_out)
-                .hide(this)
-                .add(R.id.fragment_content, bbsFragment)
-                .addToBackStack(null)
-                .commit();
+        if (mainContentView != null) {
+            mainContentView.setVisibility(View.GONE);
+        }
+
+        if (!homeActivity.fragment_mycard_web.isAdded()) {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
+                    .commit();
+        } else {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .show(homeActivity.fragment_mycard_web)
+                    .commit();
+        }
     }
 
     private void openDeckWinRateFragment() {
@@ -848,14 +961,27 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             return;
         }
 
-        DeckWinRateFragment deckWinRateFragment = new DeckWinRateFragment();
-        homeActivity.getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                   android.R.anim.fade_in, android.R.anim.fade_out)
-                .hide(this)
-                .add(R.id.fragment_content, deckWinRateFragment)
-                .addToBackStack(null)
-                .commit();
+        if (homeActivity.fragment_deck_win_rate == null) {
+            homeActivity.fragment_deck_win_rate = new DeckWinRateFragment();
+        }
+
+        if (mainContentView != null) {
+            mainContentView.setVisibility(View.GONE);
+        }
+
+        if (!homeActivity.fragment_deck_win_rate.isAdded()) {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .add(R.id.fragment_deck_win_rate_content, homeActivity.fragment_deck_win_rate)
+                    .commit();
+        } else {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .show(homeActivity.fragment_deck_win_rate)
+                    .commit();
+        }
     }
 
     private void performLogout() {
