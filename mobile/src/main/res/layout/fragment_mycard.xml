@@ -480,9 +480,8 @@
 
                                 <View
                                     android:layout_width="1dp"
-                                    android:layout_height="match_parent"
-                                    android:layout_marginTop="10dp"
-                                    android:layout_marginBottom="10dp"
+                                    android:layout_height="60dp"
+                                    android:layout_gravity="top"
                                     android:background="@color/klein_blue" />
 
                                 <LinearLayout
@@ -654,7 +653,7 @@
                                     android:background="@drawable/veil2"
                                     android:gravity="center"
                                     android:text="@string/watch_duel"
-                                    android:textColor="@color/white"
+                                    android:textColor="@color/holo_green_bright"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
 

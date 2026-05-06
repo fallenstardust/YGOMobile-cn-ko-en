@@ -1,11 +1,7 @@
 package cn.garymb.ygomobile.ui.mycard;
 
 import android.annotation.SuppressLint;
-import android.app.DownloadManager;
-import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,6 +27,7 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
@@ -152,7 +149,7 @@ public class MyCardWebFragment extends BaseFragemnt {
         // 设置WebViewClient
         mWebView.setWebViewClient(mMyCard.getWebViewClient());
 
-        // 设置文件下载监听 - 使用系统DownloadManager
+        // 设置文件下载监听 - 使用DownloadUtil
         mWebView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
             Log.d(TAG, "检测到下载: " + url);
             handleFileDownload(url, contentDisposition, mimetype);
@@ -187,7 +184,7 @@ public class MyCardWebFragment extends BaseFragemnt {
     }
 
     /**
-     * 处理文件下载 - 使用系统DownloadManager
+     * 处理文件下载 - 使用DownloadUtil
      * @param url 下载链接
      * @param contentDisposition Content-Disposition头
      * @param mimetype MIME类型
@@ -202,41 +199,56 @@ public class MyCardWebFragment extends BaseFragemnt {
         // 根据扩展名确定保存路径
         String saveDir = getSaveDirectoryPath(extension);
         
-        // 创建DownloadManager请求
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        
-        // 设置下载参数
-        request.setTitle(fileName);
-        request.setDescription("正在下载: " + fileName);
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        request.setAllowedOverRoaming(false);
-        request.setMimeType(mimetype);
-        
-        // 设置保存路径
-        request.setDestinationInExternalPublicDir(saveDir, fileName);
-        
-        // 允许媒体扫描
-        request.allowScanningByMediaScanner();
-        
-        // 获取DownloadManager服务
-        DownloadManager downloadManager = (DownloadManager) getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
-        
-        if (downloadManager != null) {
-            try {
-                // 开始下载
-                long downloadId = downloadManager.enqueue(request);
-                Log.d(TAG, "下载任务已创建, ID: " + downloadId);
+        // 显示开始下载的提示
+        String message = getSaveMessage(extension, fileName);
+        YGOUtil.showTextToast(message);
+
+        // 使用DownloadUtil进行下载
+        DownloadUtil.get().download(url, saveDir, fileName, new DownloadUtil.OnDownloadListener() {
+            @Override
+            public void onDownloadSuccess(File file) {
+                Log.d(TAG, "下载成功: " + file.getAbsolutePath());
                 
-                // 显示提示信息
-                String message = getSaveMessage(extension, fileName);
-                YGOUtil.showTextToast(message);
-            } catch (Exception e) {
-                Log.e(TAG, "启动下载失败", e);
-                YGOUtil.showTextToast("下载失败: " + e.getMessage());
+                // 根据文件类型显示不同的成功提示
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        String successMsg = getSuccessMessage(extension, fileName);
+                        YGOUtil.showTextToast(successMsg);
+                    });
+                }
             }
+
+            @Override
+            public void onDownloading(int progress) {
+                // 可以在这里更新进度条或其他UI
+                Log.d(TAG, "下载进度: " + progress + "%");
+            }
+
+            @Override
+            public void onDownloadFailed(Exception e) {
+                Log.e(TAG, "下载失败: " + e.getMessage());
+                
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        YGOUtil.showTextToast("下载失败: " + e.getMessage());
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * 获取下载成功的提示信息
+     */
+    private String getSuccessMessage(String extension, String fileName) {
+        if (Constants.YDK_FILE_EX.equalsIgnoreCase(extension)) {
+            return "卡组文件下载成功: " + fileName;
+        } else if (Constants.YRP_FILE_EX.equalsIgnoreCase(extension)) {
+            return "录像文件下载成功: " + fileName;
+        } else if (Constants.YPK_FILE_EX.equalsIgnoreCase(extension)) {
+            return "扩展包文件下载成功: " + fileName;
         } else {
-            Log.e(TAG, "DownloadManager服务不可用");
-            YGOUtil.showTextToast("下载服务不可用");
+            return "文件下载成功: " + fileName;
         }
     }
 
@@ -247,11 +259,24 @@ public class MyCardWebFragment extends BaseFragemnt {
         String fileName = null;
 
         // 优先从Content-Disposition中提取
-        if (!TextUtils.isEmpty(contentDisposition) && contentDisposition.contains("filename=")) {
-            int index = contentDisposition.indexOf("filename=");
-            fileName = contentDisposition.substring(index + 9).trim();
-            // 去除引号
-            fileName = fileName.replace("\"", "").replace("'", "");
+        if (!TextUtils.isEmpty(contentDisposition)) {
+            // 先尝试提取 filename*=UTF-8 编码的文件名（支持中文）
+            if (contentDisposition.contains("filename*=")) {
+                fileName = extractUtf8FileName(contentDisposition);
+            }
+            
+            // 如果没有找到 UTF-8 编码的文件名，再尝试普通的 filename
+            if (TextUtils.isEmpty(fileName) && contentDisposition.contains("filename=")) {
+                int index = contentDisposition.indexOf("filename=");
+                fileName = contentDisposition.substring(index + 9).trim();
+                // 去除引号
+                fileName = fileName.replace("\"", "").replace("'", "");
+                // 如果有分号，只取分号前面的部分
+                int semicolonIndex = fileName.indexOf(';');
+                if (semicolonIndex != -1) {
+                    fileName = fileName.substring(0, semicolonIndex).trim();
+                }
+            }
         }
 
         // 如果Content-Disposition中没有，从URL中提取
@@ -264,6 +289,11 @@ public class MyCardWebFragment extends BaseFragemnt {
                 if (questionMark != -1) {
                     fileName = fileName.substring(0, questionMark);
                 }
+                // 去除URL锚点
+                int hashMark = fileName.indexOf('#');
+                if (hashMark != -1) {
+                    fileName = fileName.substring(0, hashMark);
+                }
             }
         }
 
@@ -273,6 +303,62 @@ public class MyCardWebFragment extends BaseFragemnt {
         }
 
         return fileName;
+    }
+
+    /**
+     * 从Content-Disposition中提取UTF-8编码的文件名
+     * 格式: filename*=UTF-8''encoded_text
+     */
+    private String extractUtf8FileName(String contentDisposition) {
+        try {
+            int startIndex = contentDisposition.indexOf("filename*=");
+            if (startIndex == -1) {
+                return null;
+            }
+            
+            // 获取 filename*= 后面的内容
+            String value = contentDisposition.substring(startIndex + 10).trim();
+            
+            // 检查是否是 UTF-8 编码格式: UTF-8''encoded_text
+            if (value.toUpperCase().startsWith("UTF-8")) {
+                // 找到两个单引号的位置
+                int firstQuote = value.indexOf('\'');
+                if (firstQuote != -1) {
+                    int secondQuote = value.indexOf('\'', firstQuote + 1);
+                    if (secondQuote != -1) {
+                        // 提取编码后的文本部分
+                        String encodedText = value.substring(secondQuote + 1);
+                        
+                        // 去除可能的分号和后续内容
+                        int semicolonIndex = encodedText.indexOf(';');
+                        if (semicolonIndex != -1) {
+                            encodedText = encodedText.substring(0, semicolonIndex);
+                        }
+                        
+                        // 去除首尾空格和引号
+                        encodedText = encodedText.trim();
+                        if (encodedText.startsWith("\"") && encodedText.endsWith("\"")) {
+                            encodedText = encodedText.substring(1, encodedText.length() - 1);
+                        }
+                        
+                        // URL解码，将 %XX 形式的编码转换为中文字符
+                        return java.net.URLDecoder.decode(encodedText, "UTF-8");
+                    }
+                }
+            } else {
+                // 如果不是 UTF-8 格式，直接返回去掉引号的内容
+                value = value.replace("\"", "").replace("'", "");
+                int semicolonIndex = value.indexOf(';');
+                if (semicolonIndex != -1) {
+                    value = value.substring(0, semicolonIndex).trim();
+                }
+                return value;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "解析UTF-8文件名失败: " + e.getMessage());
+        }
+        
+        return null;
     }
 
     /**
@@ -291,7 +377,7 @@ public class MyCardWebFragment extends BaseFragemnt {
 
     /**
      * 根据文件扩展名获取保存目录路径
-     * @return 相对于外部存储公共目录的路径
+     * @return 保存目录的绝对路径
      */
     private String getSaveDirectoryPath(String extension) {
         // 根据扩展名选择不同的保存目录
@@ -306,7 +392,7 @@ public class MyCardWebFragment extends BaseFragemnt {
             return AppsSettings.get().getExpansionsPath().getAbsolutePath();
         } else {
             // 其他文件保存到系统Download文件夹
-            return Environment.DIRECTORY_DOWNLOADS;
+            return AppsSettings.get().getResourcePath() + File.separator + "Downloads";
         }
     }
 
@@ -315,13 +401,13 @@ public class MyCardWebFragment extends BaseFragemnt {
      */
     private String getSaveMessage(String extension, String fileName) {
         if (Constants.YDK_FILE_EX.equalsIgnoreCase(extension)) {
-            return "卡组文件已开始下载: " + fileName;
+            return "卡组文件开始下载: " + fileName;
         } else if (Constants.YRP_FILE_EX.equalsIgnoreCase(extension)) {
-            return "录像文件已开始下载: " + fileName;
+            return "录像文件开始下载: " + fileName;
         } else if (Constants.YPK_FILE_EX.equalsIgnoreCase(extension)) {
-            return "扩展包文件已开始下载: " + fileName;
+            return "扩展包文件开始下载: " + fileName;
         } else {
-            return "文件已开始下载: " + fileName;
+            return "文件开始下载: " + fileName;
         }
     }
 

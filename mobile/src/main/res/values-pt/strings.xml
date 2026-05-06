@@ -400,5 +400,6 @@
     <string name="match_start">Partida Competitiva</string>
     <string name="watch_duel">Ver Duelo</string>
     <string name="waiting_message">Aguardando partida, por favor aguarde...</string>
+    <string name="mycard_bbs">Fórum MyCard</string>
 </resources>
 

@@ -831,7 +831,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         MyCardWebFragment bbsFragment = MyCardWebFragment.newInstance(
                 mMyCard.getBBSUrl(),
-                "萌卡论坛"
+                YGOUtil.s(R.string.mycard_bbs)
         );
 
         homeActivity.getSupportFragmentManager().beginTransaction()
