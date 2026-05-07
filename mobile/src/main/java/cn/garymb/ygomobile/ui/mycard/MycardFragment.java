@@ -706,12 +706,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         YGOStarter.onResumed(getActivity());
         super.onResume();
         
-        if (getActivity() != null && isHidden()) {
-            getActivity().getSupportFragmentManager().beginTransaction()
-                    .show(this)
-                    .commitAllowingStateLoss();
-        }
-        
         if (mainContentView != null && !hasVisibleChildFragment()) {
             mainContentView.setVisibility(View.VISIBLE);
         }

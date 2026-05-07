@@ -84,7 +84,7 @@ abstract class BasePreferenceFragment extends PreferenceFragmentCompat implement
             } else {
                 value = mSharedPreferences.getString(key, "" + defValue);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             return defValue;
         }
         return value;

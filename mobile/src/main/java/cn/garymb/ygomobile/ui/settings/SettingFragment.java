@@ -829,9 +829,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
             getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
         }
     }
+
     // 添加事件监听类
     public static class PrivacyPolicyAgreedEvent {
         public boolean agreed;
+
         public PrivacyPolicyAgreedEvent(boolean agreed) {
             this.agreed = agreed;
         }
