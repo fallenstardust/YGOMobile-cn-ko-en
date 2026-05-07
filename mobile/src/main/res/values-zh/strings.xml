@@ -414,5 +414,6 @@
     <string name="draw_num">平局</string>
     <string name="watch_duel">观战</string>
     <string name="waiting_message">等待匹配中，请稍后...</string>
+    <string name="deck_win_rate">卡组胜率</string>
     <string name="mycard_bbs">萌卡论坛</string>
 </resources>

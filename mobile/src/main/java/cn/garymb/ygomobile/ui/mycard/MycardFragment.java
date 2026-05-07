@@ -83,35 +83,24 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private HomeActivity homeActivity;
     private LinearLayout ll_head_login, ll_dialog_login, ll_main_ui;
     private EditText et_username, et_password;
-    private TextView tv_account_warning, tv_pwd_warning;
-    private Button btn_login, btn_register;
+    private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_match_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs, tv_deck_win_rate;
+    private Button btn_login, btn_register, btn_athletic, btn_entertain;
     private ProgressBar progressBar_login;
-    private ImageView mHeadView, img_logout;
-    private TextView mNameView, mStatusView;
-    private TextView tv_back_mc;
-    private ImageView btnDeckWinRate;
+    private ImageView mHeadView, img_logout, btnDeckWinRate, iv_refresh, btn_mycard_bbs;
     private MyCard mMyCard;
     private McUser mMcUser;
     public RelativeLayout rl_chat;
-    private TextView tv_message, tv_match_title;
     private ProgressBar pb_chat_loading, pb_loading;
-    private ImageView iv_refresh, btn_mycard_bbs;
-    private Button btn_athletic, btn_entertain;
     private ServiceManagement serviceManagement;
     private ChatMessage currentMessage;
     private DialogUtils dialogUtils;
 
     private CircleProgressView funCpvRank, matchCpvRank;
-    private TextView funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll;
-    private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll;
     private McDuelInfo currentMcDuelInfo;
-
     private SwipeRefreshLayout srl_update;
     private RecyclerView rv_list;
-
     private WatchDuelManagement duelManagement;
     private DuelRoomBQAdapter duelRoomBQAdapter;
-    
     private View mainContentView;
 
     @SuppressLint("HandlerLeak")
@@ -210,14 +199,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         btn_register = view.findViewById(R.id.btn_register);
         progressBar_login = view.findViewById(R.id.progressBar_login);
 
-        tv_back_mc = view.findViewById(R.id.tv_back_mc);
-        tv_back_mc.setOnClickListener(this);
-
+        tv_deck_win_rate = view.findViewById(R.id.tv_deck_win_rate);
         btnDeckWinRate = view.findViewById(R.id.btn_deck_win_rate);
-        if (btnDeckWinRate != null) {
-            btnDeckWinRate.setOnClickListener(this);
-        }
+        btnDeckWinRate.setOnClickListener(this);
 
+        tv_mycard_bbs = view.findViewById(R.id.tv_mycard_bbs);
         btn_mycard_bbs = view.findViewById(R.id.btn_mycard_bbs);
         btn_mycard_bbs.setOnClickListener(this);
 
@@ -705,26 +691,26 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void onResume() {
         YGOStarter.onResumed(getActivity());
         super.onResume();
-        
+
         if (mainContentView != null && !hasVisibleChildFragment()) {
             mainContentView.setVisibility(View.VISIBLE);
         }
     }
-    
+
     private boolean hasVisibleChildFragment() {
-        if (homeActivity.fragment_mycard_chatting_room != null && 
-            homeActivity.fragment_mycard_chatting_room.isAdded() && 
-            homeActivity.fragment_mycard_chatting_room.isVisible()) {
+        if (homeActivity.fragment_mycard_chatting_room != null &&
+                homeActivity.fragment_mycard_chatting_room.isAdded() &&
+                homeActivity.fragment_mycard_chatting_room.isVisible()) {
             return true;
         }
-        if (homeActivity.fragment_deck_win_rate != null && 
-            homeActivity.fragment_deck_win_rate.isAdded() && 
-            homeActivity.fragment_deck_win_rate.isVisible()) {
+        if (homeActivity.fragment_deck_win_rate != null &&
+                homeActivity.fragment_deck_win_rate.isAdded() &&
+                homeActivity.fragment_deck_win_rate.isVisible()) {
             return true;
         }
-        if (homeActivity.fragment_mycard_web != null && 
-            homeActivity.fragment_mycard_web.isAdded() && 
-            homeActivity.fragment_mycard_web.isVisible()) {
+        if (homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible()) {
             return true;
         }
         return false;
@@ -799,6 +785,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             if (mainContentView != null) {
                 mainContentView.setVisibility(View.VISIBLE);
             }
+            // 恢复所有按钮状态
+            updateToolBarButtonState(null);
             return true;
         }
         
@@ -814,6 +802,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             if (mainContentView != null) {
                 mainContentView.setVisibility(View.VISIBLE);
             }
+            // 恢复所有按钮状态
+            updateToolBarButtonState(null);
             return true;
         }
         
@@ -828,16 +818,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.btn_deck_win_rate:
-                openDeckWinRateFragment();
-                break;
             case R.id.img_logout:
                 performLogout();
                 break;
             case R.id.ll_head_login:
-                if (homeActivity.fragment_mycard_chatting_room != null && 
-                    homeActivity.fragment_mycard_chatting_room.isAdded() && 
-                    homeActivity.fragment_mycard_chatting_room.isVisible()) {
+                if (homeActivity.fragment_mycard_chatting_room != null &&
+                        homeActivity.fragment_mycard_chatting_room.isAdded() &&
+                        homeActivity.fragment_mycard_chatting_room.isVisible()) {
                     getChildFragmentManager().beginTransaction()
                             .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                     android.R.anim.fade_in, android.R.anim.fade_out)
@@ -845,10 +832,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                             .commit();
                     rl_chat.setVisibility(View.VISIBLE);
                 }
-                
-                if (homeActivity.fragment_deck_win_rate != null && 
-                    homeActivity.fragment_deck_win_rate.isAdded() && 
-                    homeActivity.fragment_deck_win_rate.isVisible()) {
+
+                if (homeActivity.fragment_deck_win_rate != null &&
+                        homeActivity.fragment_deck_win_rate.isAdded() &&
+                        homeActivity.fragment_deck_win_rate.isVisible()) {
                     getChildFragmentManager().beginTransaction()
                             .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                     android.R.anim.fade_in, android.R.anim.fade_out)
@@ -858,10 +845,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         mainContentView.setVisibility(View.VISIBLE);
                     }
                 }
-                
-                if (homeActivity.fragment_mycard_web != null && 
-                    homeActivity.fragment_mycard_web.isAdded() && 
-                    homeActivity.fragment_mycard_web.isVisible()) {
+
+                if (homeActivity.fragment_mycard_web != null &&
+                        homeActivity.fragment_mycard_web.isAdded() &&
+                        homeActivity.fragment_mycard_web.isVisible()) {
                     getChildFragmentManager().beginTransaction()
                             .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                     android.R.anim.fade_in, android.R.anim.fade_out)
@@ -872,9 +859,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         mainContentView.setVisibility(View.VISIBLE);
                     }
                 }
-                break;
-            case R.id.tv_back_mc:
-                onHome();
                 break;
             case R.id.rl_chat:
                 if (serviceManagement.isConnected()) {
@@ -915,61 +899,199 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 matchEntertain();
                 break;
             case R.id.btn_mycard_bbs:
-                openBBSWithWebView();
+                switchBBSWithWebView();
+                break;
+            case R.id.btn_deck_win_rate:
+                switchDeckWinRateFragment();
                 break;
         }
     }
 
-    private void openBBSWithWebView() {
+    private void switchBBSWithWebView() {
         if (!isUserLoggedIn()) {
             YGOUtil.showTextToast(R.string.login_mycard);
             return;
         }
 
-        String bbsUrl = mMyCard.getBBSUrl();
+        // 判断 MyCardWebFragment 是否已经显示
+        boolean isShowing = homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible();
 
-        // 每次都创建新的实例，避免 arguments 丢失的问题
-        homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
-                bbsUrl,
-                YGOUtil.s(R.string.mycard_bbs)
-        );
+        if (isShowing) {
+            // 如果正在显示，则移除它
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .remove(homeActivity.fragment_mycard_web)
+                    .commit();
+            homeActivity.fragment_mycard_web = null;
+            
+            if (mainContentView != null) {
+                mainContentView.setVisibility(View.VISIBLE);
+            }
+            
+            // 恢复所有按钮状态
+            updateToolBarButtonState(null);
+            Log.d("MycardFragment", "隐藏 MyCardWebFragment");
+        } else {
+            // 如果未显示，则打开它
+            
+            // 如果 DeckWinRateFragment 正在显示，先隐藏它
+            if (homeActivity.fragment_deck_win_rate != null &&
+                    homeActivity.fragment_deck_win_rate.isAdded() &&
+                    homeActivity.fragment_deck_win_rate.isVisible()) {
+                getChildFragmentManager().beginTransaction()
+                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                android.R.anim.fade_in, android.R.anim.fade_out)
+                        .hide(homeActivity.fragment_deck_win_rate)
+                        .commit();
+                Log.d("MycardFragment", "隐藏 DeckWinRateFragment");
+            }
 
-        if (mainContentView != null) {
-            mainContentView.setVisibility(View.GONE);
+            String bbsUrl = mMyCard.getBBSUrl();
+
+            // 每次都创建新的实例，避免 arguments 丢失的问题
+            homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
+                    bbsUrl,
+                    YGOUtil.s(R.string.mycard_bbs)
+            );
+
+            if (mainContentView != null) {
+                mainContentView.setVisibility(View.GONE);
+            }
+
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
+                    .commit();
+
+            // 更新按钮状态，将萌卡论坛按钮设置为激活状态
+            updateToolBarButtonState(btn_mycard_bbs);
+            Log.d("MycardFragment", "显示 MyCardWebFragment");
         }
-
-        getChildFragmentManager().beginTransaction()
-                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                        android.R.anim.fade_in, android.R.anim.fade_out)
-                .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
-                .commit();
     }
 
-    private void openDeckWinRateFragment() {
+    private void switchDeckWinRateFragment() {
         if (homeActivity == null) {
             return;
         }
 
-        if (homeActivity.fragment_deck_win_rate == null) {
-            homeActivity.fragment_deck_win_rate = new DeckWinRateFragment();
-        }
+        // 判断 DeckWinRateFragment 是否已经显示
+        boolean isShowing = homeActivity.fragment_deck_win_rate != null &&
+                homeActivity.fragment_deck_win_rate.isAdded() &&
+                homeActivity.fragment_deck_win_rate.isVisible();
 
-        if (mainContentView != null) {
-            mainContentView.setVisibility(View.GONE);
-        }
-
-        if (!homeActivity.fragment_deck_win_rate.isAdded()) {
+        if (isShowing) {
+            // 如果正在显示，则隐藏它
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                             android.R.anim.fade_in, android.R.anim.fade_out)
-                    .add(R.id.fragment_deck_win_rate_content, homeActivity.fragment_deck_win_rate)
+                    .hide(homeActivity.fragment_deck_win_rate)
                     .commit();
+            
+            if (mainContentView != null) {
+                mainContentView.setVisibility(View.VISIBLE);
+            }
+            
+            // 恢复所有按钮状态
+            updateToolBarButtonState(null);
+            Log.d("MycardFragment", "隐藏 DeckWinRateFragment");
         } else {
-            getChildFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
-                    .show(homeActivity.fragment_deck_win_rate)
-                    .commit();
+            // 如果未显示，则打开它
+            
+            // 如果 MyCardWebFragment 正在显示，先隐藏它
+            if (homeActivity.fragment_mycard_web != null &&
+                    homeActivity.fragment_mycard_web.isAdded() &&
+                    homeActivity.fragment_mycard_web.isVisible()) {
+                getChildFragmentManager().beginTransaction()
+                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                android.R.anim.fade_in, android.R.anim.fade_out)
+                        .hide(homeActivity.fragment_mycard_web)
+                        .commit();
+                Log.d("MycardFragment", "隐藏 MyCardWebFragment");
+            }
+
+            if (homeActivity.fragment_deck_win_rate == null) {
+                homeActivity.fragment_deck_win_rate = new DeckWinRateFragment();
+            }
+
+            if (mainContentView != null) {
+                mainContentView.setVisibility(View.GONE);
+            }
+
+            if (!homeActivity.fragment_deck_win_rate.isAdded()) {
+                getChildFragmentManager().beginTransaction()
+                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                android.R.anim.fade_in, android.R.anim.fade_out)
+                        .add(R.id.fragment_deck_win_rate_content, homeActivity.fragment_deck_win_rate)
+                        .commit();
+            } else {
+                getChildFragmentManager().beginTransaction()
+                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                android.R.anim.fade_in, android.R.anim.fade_out)
+                        .show(homeActivity.fragment_deck_win_rate)
+                        .commit();
+            }
+
+            // 更新按钮状态，将卡组胜率按钮设置为激活状态
+            updateToolBarButtonState(btnDeckWinRate);
+            Log.d("MycardFragment", "显示 DeckWinRateFragment");
+        }
+    }
+
+    /**
+     * 更新卡组胜率按钮的状态
+     *
+     * @param isOpen true表示已打开，显示关闭图标；false表示未打开，显示卡组胜率图标
+     */
+    private void updateDeckWinRateButtonState(boolean isOpen) {
+        if (btnDeckWinRate != null) {
+            if (isOpen) {
+                // 设置为关闭图标
+                btnDeckWinRate.setImageResource(R.drawable.ic_close_black_24dp);
+                tv_deck_win_rate.setText(R.string.search_close);
+            } else {
+                // 恢复为卡组胜率图标
+                btnDeckWinRate.setImageResource(R.drawable.ic_recommendation_order); // 使用原来的图标
+                tv_deck_win_rate.setText(R.string.deck_win_rate);
+            }
+        }
+    }
+
+    /**
+     * 更新顶部工具栏按钮状态
+     * 当打开某个按钮对应的页面时，该按钮显示为关闭状态，其他按钮恢复为原始状态
+     * @param activeButton 当前激活的按钮View，传null表示所有按钮都恢复为原始状态
+     */
+    private void updateToolBarButtonState(View activeButton) {
+        // 定义按钮配置数组：每个元素包含 {按钮ImageView, 文字TextView, 原始图标资源ID, 原始文字资源ID}
+        Object[][] buttonConfigs = {
+            {btnDeckWinRate, tv_deck_win_rate, R.drawable.ic_recommendation_order, R.string.deck_win_rate},
+            {btn_mycard_bbs, tv_mycard_bbs, R.drawable.ic_forum, R.string.mycard_bbs}
+        };
+
+        // 遍历所有按钮，根据是否为激活按钮来设置状态
+        for (Object[] config : buttonConfigs) {
+            ImageView button = (ImageView) config[0];
+            TextView textView = (TextView) config[1];
+            int originalIconResId = (int) config[2];
+            int originalTextResId = (int) config[3];
+
+            if (button == null || textView == null) {
+                continue;
+            }
+
+            if (button == activeButton) {
+                // 当前激活的按钮，显示为关闭状态
+                button.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+                textView.setText(R.string.search_close);
+            } else {
+                // 其他按钮，恢复为原始状态
+                button.setImageResource(originalIconResId);
+                textView.setText(originalTextResId);
+            }
         }
     }
 
@@ -1072,9 +1194,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public void onHome() {
-        if (!isUserLoggedIn()) {
-
-        }
     }
 
     @Override

@@ -406,8 +406,10 @@
     <string name="lose_num">Derrotas</string>
     <string name="draw_num">Empates</string>
     <string name="fun_start">Partida Casual</string>
+    <string name="match_start">Partida Competitiva</string>
     <string name="watch_duel">Assistir Duelo</string>
     <string name="waiting_message">Buscando partida, espere por favor...</string>
+    <string name="deck_win_rate">Tasa de Victoria</string>
     <string name="mycard_bbs">Foro MyCard</string>
 </resources>
 

@@ -33,18 +33,18 @@
                     android:layout_height="40dp"
                     android:layout_gravity="left"
                     android:background="@drawable/button_cube"
-                    android:contentDescription="卡组胜率"
                     android:padding="8dp"
                     android:src="@drawable/ic_recommendation_order"
                     android:visibility="visible" />
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_deck_win_rate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="5dp"
                     android:gravity="center_horizontal"
-                    android:text="卡组胜率"
+                    android:text="@string/deck_win_rate"
                     android:textColor="@color/holo_green_bright"
                     android:textSize="8sp"
                     android:textStyle="bold" />
@@ -62,18 +62,18 @@
                     android:layout_height="40dp"
                     android:layout_gravity="left"
                     android:background="@drawable/button_cube"
-                    android:contentDescription="萌卡论坛"
                     android:padding="8dp"
                     android:src="@drawable/ic_forum"
                     android:visibility="visible" />
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_mycard_bbs"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="5dp"
                     android:gravity="center_horizontal"
-                    android:text="萌卡论坛"
+                    android:text="@string/mycard_bbs"
                     android:textColor="@color/holo_green_bright"
                     android:textSize="8sp"
                     android:textStyle="bold" />
@@ -132,18 +132,7 @@
                 android:layout_height="match_parent"
                 android:src="@drawable/baseline_login_24" />
 
-
         </LinearLayout>
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/tv_back_mc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:background="@drawable/button_bg"
-            android:gravity="center"
-            android:text="@string/back_to_mycard_home"
-            android:visibility="gone" />
 
     </FrameLayout>
 

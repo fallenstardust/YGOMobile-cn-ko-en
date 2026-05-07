@@ -410,5 +410,6 @@
     <string name="match_start">ランクマッチ</string>
     <string name="watch_duel">観戦</string>
     <string name="waiting_message">マッチング中、しばらくお待ちください...</string>
+    <string name="deck_win_rate">デッキ勝率</string>
     <string name="mycard_bbs">萌カードフォーラム</string>
 </resources>
