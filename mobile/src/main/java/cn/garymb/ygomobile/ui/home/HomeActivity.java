@@ -191,8 +191,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                        android.R.anim.fade_in, android.R.anim.fade_out)
+                .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                        R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                 .add(R.id.fragment_content, fragment_home).commit();
         getSupportActionBar().hide();
     }
@@ -282,20 +282,20 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public void switchSettingFragment() {
         bottomNavigationBar.setFirstSelectedPosition(4).initialise();
         getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                        android.R.anim.fade_in, android.R.anim.fade_out)
+                .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                        R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                 .hide(mFragment).commit();
         if (fragment_settings.isAdded()) {
             if (fragment_settings.isHidden()) {
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
+                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                         .show(fragment_settings).commit();
             }
         } else {
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                     .add(R.id.fragment_content, fragment_settings).commit();
         }
 
@@ -305,52 +305,45 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public void switchFragment(Fragment fragment, int page, boolean replace) {
         if (fragment_settings != null && fragment_settings.isAdded() && !fragment_settings.isHidden())
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                     .hide(fragment_settings).commit();
-        //用于intent到指定fragment时底部图标也跟着设置为选中状态
         bottomNavigationBar.setFirstSelectedPosition(page).initialise();
         if (mFragment.isHidden())
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                     .show(mFragment).commit();
-        //判断当前显示的Fragment是不是切换的Fragment
         if (mFragment != fragment) {
-            //判断切换的Fragment是否已经添加过
             if (!fragment.isAdded()) {
-                //如果没有，则先把当前的Fragment隐藏，把切换的Fragment添加上
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
+                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                         .hide(mFragment)
                         .add(R.id.fragment_content, fragment).commit();
             } else {
-                //如果已经添加过，则先把当前的Fragment隐藏，把切换的Fragment显示出来
                 if (replace) {
-                    //需要重新加载onCreateView需要detach再attach，而不是replace
                     getSupportFragmentManager().beginTransaction()
-                            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                    android.R.anim.fade_in, android.R.anim.fade_out)
+                            .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                                    R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                             .hide(mFragment).detach(fragment).attach(fragment)
-                            .show(fragment)//重启该fragment后需要重新show
+                            .show(fragment)
                             .commit();
                 } else {
                     getSupportFragmentManager().beginTransaction()
-                            .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                    android.R.anim.fade_in, android.R.anim.fade_out)
+                            .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                                    R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                             .hide(mFragment).show(fragment).commit();
                 }
             }
             mFragment = fragment;
         } else {
             if (replace) {
-                //需要重新加载onCreateView需要detach再attach，而不是replace
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
+                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
+                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
                         .hide(mFragment).detach(fragment).attach(fragment)
-                        .show(fragment)//重启该fragment后需要重新show
+                        .show(fragment)
                         .commit();
             }
         }
