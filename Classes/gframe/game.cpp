@@ -1976,7 +1976,7 @@ void Game::RefreshBot() {
 }
 void Game::LoadConfig() {
 	wchar_t wstr[256];
-	gameConf.antialias = 1;
+	gameConf.antialias = 2;
 	gameConf.serverport = 7911;
 	gameConf.textfontsize = irr::android::getIntSetting(appMain, "textfontsize", 18);;
 	gameConf.nickname[0] = 0;

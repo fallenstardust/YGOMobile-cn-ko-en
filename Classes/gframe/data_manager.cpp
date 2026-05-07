@@ -223,6 +223,9 @@ bool DataManager::LoadStrings(irr::io::IReadFile* reader) {
 			linebuf.clear();
 		}
 	}
+	if (!linebuf.empty()) {
+		ReadStringConfLine(linebuf.data());
+	}
 	reader->drop();
 	return true;
 }

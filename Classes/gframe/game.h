@@ -49,14 +49,14 @@ struct Config {
 	bool use_d3d{ false };
 	bool use_image_scale_multi_thread{ false };
 	bool use_image_load_background_thread{ false };
-	unsigned short antialias{ 1 };
+	unsigned short antialias{ 2 };
 	unsigned int enable_log{ 0x3 };
 	unsigned short serverport{ 7911 };
 	unsigned char textfontsize{ 18 };
 	wchar_t lasthost[100]{};
 	wchar_t lastport[10]{};
-	wchar_t nickname[20]{};
-	wchar_t gamename[20]{};
+	wchar_t nickname[20]{ L"YGOMobile_User" };
+	wchar_t gamename[20]{ L"YGOMobile_Game" };
 	wchar_t roompass[20]{};
 	//path
     wchar_t last_limit_list_name[256]{};

@@ -5,17 +5,22 @@
 #include "deck_manager.h"
 #include "game.h"
 #include <thread>
+#include <unordered_map>
 
 namespace ygo {
-std::unordered_map<bufferevent*, DuelPlayer> NetServer::users;
-unsigned short NetServer::server_port = 0;
-event_base* NetServer::net_evbase = 0;
-event* NetServer::broadcast_ev = 0;
-evconnlistener* NetServer::listener = 0;
-DuelMode* NetServer::duel_mode = 0;
-unsigned char NetServer::net_server_write[SIZE_NETWORK_BUFFER];
-unsigned char NetServer::net_server_read[SIZE_NETWORK_BUFFER];
-size_t NetServer::last_sent = 0;
+
+namespace{
+	std::unordered_map<bufferevent*, DuelPlayer> users{};
+	unsigned short server_port{};
+	event_base* net_evbase{};
+	event* broadcast_ev {};
+	evconnlistener* listener{};
+	DuelMode* duel_mode{};
+	unsigned char net_server_read[SIZE_NETWORK_BUFFER]{};
+}
+
+unsigned char NetServer::net_server_write[SIZE_NETWORK_BUFFER]{};
+size_t NetServer::last_sent{};
 
 /**
  * @brief 启动网络服务器
@@ -48,7 +53,7 @@ bool NetServer::StartServer(unsigned short port) {
 	if(!listener) {
 		// 监听器创建失败，清理资源并返回false
 		event_base_free(net_evbase);
-		net_evbase = 0;
+		net_evbase = nullptr;
 		return false;
 	}
 
@@ -147,7 +152,7 @@ void NetServer::StopBroadcast() {
 
 	// 释放广播事件对象并置空指针
 	event_free(broadcast_ev);
-	broadcast_ev = 0;
+	broadcast_ev = nullptr;
 }
 /**
  * @brief 停止服务器监听功能
@@ -319,7 +324,7 @@ int NetServer::ServerThread() {
 
 	// 释放监听器资源
 	evconnlistener_free(listener);
-	listener = 0;
+	listener = nullptr;
 
 	// 关闭并释放广播事件资源
 	if(broadcast_ev) {
@@ -327,7 +332,7 @@ int NetServer::ServerThread() {
 		event_get_assignment(broadcast_ev, 0, &fd, 0, 0, 0);
 		evutil_closesocket(fd);
 		event_free(broadcast_ev);
-		broadcast_ev = 0;
+		broadcast_ev = nullptr;
 	}
 
 	// 清理决斗模式相关资源
@@ -335,11 +340,11 @@ int NetServer::ServerThread() {
 		event_free(duel_mode->etimer);
 		delete duel_mode;
 	}
-	duel_mode = 0;
+	duel_mode = nullptr;
 
 	// 释放事件基础结构
 	event_base_free(net_evbase);
-	net_evbase = 0;
+	net_evbase = nullptr;
 
 	return 0;
 }
