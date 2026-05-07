@@ -808,8 +808,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                             android.R.anim.fade_in, android.R.anim.fade_out)
-                    .hide(homeActivity.fragment_mycard_web)
+                    .remove(homeActivity.fragment_mycard_web)
                     .commit();
+            homeActivity.fragment_mycard_web = null;
             if (mainContentView != null) {
                 mainContentView.setVisibility(View.VISIBLE);
             }
@@ -864,8 +865,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     getChildFragmentManager().beginTransaction()
                             .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                     android.R.anim.fade_in, android.R.anim.fade_out)
-                            .hide(homeActivity.fragment_mycard_web)
+                            .remove(homeActivity.fragment_mycard_web)
                             .commit();
+                    homeActivity.fragment_mycard_web = null;
                     if (mainContentView != null) {
                         mainContentView.setVisibility(View.VISIBLE);
                     }
@@ -924,30 +926,23 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             return;
         }
 
-        if (homeActivity.fragment_mycard_web == null) {
-            homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
-                    mMyCard.getBBSUrl(),
-                    YGOUtil.s(R.string.mycard_bbs)
-            );
-        }
+        String bbsUrl = mMyCard.getBBSUrl();
+
+        // 每次都创建新的实例，避免 arguments 丢失的问题
+        homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
+                bbsUrl,
+                YGOUtil.s(R.string.mycard_bbs)
+        );
 
         if (mainContentView != null) {
             mainContentView.setVisibility(View.GONE);
         }
 
-        if (!homeActivity.fragment_mycard_web.isAdded()) {
-            getChildFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
-                    .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
-                    .commit();
-        } else {
-            getChildFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
-                    .show(homeActivity.fragment_mycard_web)
-                    .commit();
-        }
+        getChildFragmentManager().beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                        android.R.anim.fade_in, android.R.anim.fade_out)
+                .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
+                .commit();
     }
 
     private void openDeckWinRateFragment() {

@@ -42,13 +42,10 @@ public class MyCardWebFragment extends BaseFragemnt {
 
     private MyCardWebView mWebView;
     private ProgressBar mProgressBar;
-    private ImageView mBackButton;
-    private TextView mTitleText;
     private MyCard mMyCard;
     private HomeActivity homeActivity;
 
     private String mUrl;
-    private String mTitle;
 
     /**
      * 创建MyCardWebFragment实例
@@ -68,10 +65,7 @@ public class MyCardWebFragment extends BaseFragemnt {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mUrl = getArguments().getString(ARG_URL);
-            mTitle = getArguments().getString(ARG_TITLE);
-        }
+        if (getArguments() != null) mUrl = getArguments().getString(ARG_URL);
     }
 
     @Nullable
@@ -88,12 +82,6 @@ public class MyCardWebFragment extends BaseFragemnt {
         mMyCard = new MyCard(getActivity());
         mWebView = view.findViewById(R.id.wv_web);
         mProgressBar = view.findViewById(R.id.progressBar);
-        mTitleText = view.findViewById(R.id.tv_title);
-
-        // 设置标题
-        if (!TextUtils.isEmpty(mTitle) && mTitleText != null) {
-            mTitleText.setText(mTitle);
-        }
 
         if (TextUtils.isEmpty(mUrl)) {
             YGOUtil.showTextToast("URL不能为空");
@@ -102,11 +90,7 @@ public class MyCardWebFragment extends BaseFragemnt {
             }
             return;
         }
-
-        // 配置WebView
         setupWebView();
-
-        // 加载页面
         mWebView.loadUrl(mUrl);
 
         Log.d(TAG, "加载URL: " + mUrl);
@@ -159,10 +143,6 @@ public class MyCardWebFragment extends BaseFragemnt {
 
             @Override
             public void onReceivedTitle(WebView view, String title) {
-                // 更新标题栏
-                if (!TextUtils.isEmpty(title) && mTitleText != null) {
-                    mTitleText.setText(title);
-                }
                 super.onReceivedTitle(view, title);
             }
         });
