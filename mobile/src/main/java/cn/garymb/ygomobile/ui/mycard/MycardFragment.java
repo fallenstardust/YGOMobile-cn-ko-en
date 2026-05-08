@@ -46,6 +46,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.widget.DeckPieChartView;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
@@ -101,6 +102,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private RecyclerView rv_list;
     private WatchDuelManagement duelManagement;
     private DuelRoomBQAdapter duelRoomBQAdapter;
+    private DeckPieChartView pieChartView;
+    private TextView tvEmpty;
     private View mainContentView;
 
     @SuppressLint("HandlerLeak")
@@ -227,6 +230,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         initRankViews(view);
         initMatchViews(view);
         initWatchDuelView(view);
+        initPieChartViews(view);
 
         btn_login.setOnClickListener(v -> attemptLogin());
         btn_register.setOnClickListener(v -> {
@@ -271,7 +275,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
                 serviceManagement.start();
             } else {
-                Log.w("MCFragment", "用户信息不完整，清除token");
                 SharedPreferenceUtil.deleteServerToken();
                 ll_dialog_login.setVisibility(View.VISIBLE);
                 ll_main_ui.setVisibility(View.GONE);
@@ -515,13 +518,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     private void queryDuelInfo() {
         if (mMcUser == null) {
-            Log.w("MCFragment", "queryDuelInfo: mMcUser 为 null，无法查询战绩");
             return;
         }
 
         String username = mMcUser.getUsername();
         if (TextUtils.isEmpty(username)) {
-            Log.w("MCFragment", "queryDuelInfo: username 为空，无法查询战绩");
             return;
         }
 
@@ -669,10 +670,98 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
         });
     }
+    private void initPieChartViews(View view) {
+        pieChartView = view.findViewById(R.id.pie_chart_view);
+        tvEmpty = view.findViewById(R.id.tv_empty);
+
+        loadDeckWinRateData();
+    }
+
+    private void loadDeckWinRateData() {
+        MyCardPieChart.getDayAthleticDeckTypeAnalytics(new MyCardPieChart.OnMyCardPieChartListener() {
+            @Override
+            public void onMyCardPieChartQuery(MyCardPieChart pieChart, String exception) {
+                if (getActivity() == null) {
+                    return;
+                }
+
+                getActivity().runOnUiThread(() -> {
+                    if (exception != null) {
+                        YGOUtil.show("加载卡组数据失败: " + exception);
+                        tvEmpty.setVisibility(View.VISIBLE);
+                        return;
+                    }
+
+                    if (pieChart != null && !pieChart.isEmpty()) {
+                        updatePieChart(pieChart);
+                    } else {
+                        tvEmpty.setVisibility(View.VISIBLE);
+                        pieChartView.clearData();
+                    }
+                });
+            }
+        });
+    }
+
+    private void updatePieChart(MyCardPieChart pieChart) {
+        if (pieChart == null || pieChart.isEmpty()) {
+            tvEmpty.setVisibility(View.VISIBLE);
+            pieChartView.clearData();
+            return;
+        }
+
+        int totalMatches = 0;
+        List<DeckPieChartView.DeckData> deckDataList = new ArrayList<>();
+
+        for (MyCardPieChart.Item item : pieChart) {
+            MyCardPieChart.Matchup matchup = item.getMatchup();
+            if (matchup == null) continue;
+
+            int firstTotal = calculateTotal(matchup.getFirst());
+            int secondTotal = calculateTotal(matchup.getSecond());
+            int deckTotal = firstTotal + secondTotal;
+
+            if (deckTotal > 0) {
+                deckDataList.add(new DeckPieChartView.DeckData(item.getName(), deckTotal));
+                totalMatches += deckTotal;
+            }
+        }
+
+        if (totalMatches == 0) {
+            tvEmpty.setVisibility(View.VISIBLE);
+            pieChartView.clearData();
+            return;
+        }
+
+        deckDataList.sort((d1, d2) -> Integer.compare(d2.count, d1.count));
+
+        pieChartView.setData(deckDataList, totalMatches);
+        tvEmpty.setVisibility(View.GONE);
+    }
+
+    private int calculateTotal(MyCardPieChart.First first) {
+        if (first == null) return 0;
+        return parseInt(first.getWin()) + parseInt(first.getDraw()) + parseInt(first.getLose());
+    }
+
+    private int calculateTotal(MyCardPieChart.Second second) {
+        if (second == null) return 0;
+        return parseInt(second.getWin()) + parseInt(second.getDraw()) + parseInt(second.getLose());
+    }
+
+    private int parseInt(String value) {
+        if (value == null || value.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
 
     private boolean isUserLoggedIn() {
         if (mMcUser == null) {
-            Log.d("MCFragment", "用户未登录: mMcUser 为 null");
             return false;
         }
 
@@ -933,7 +1022,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             
             // 恢复所有按钮状态
             updateToolBarButtonState(null);
-            Log.d("MycardFragment", "隐藏 MyCardWebFragment");
         } else {
             // 如果未显示，则打开它
             
@@ -946,7 +1034,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                                 android.R.anim.fade_in, android.R.anim.fade_out)
                         .hide(homeActivity.fragment_deck_win_rate)
                         .commit();
-                Log.d("MycardFragment", "隐藏 DeckWinRateFragment");
             }
 
             String bbsUrl = mMyCard.getBBSUrl();
@@ -969,7 +1056,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
             // 更新按钮状态，将萌卡论坛按钮设置为激活状态
             updateToolBarButtonState(btn_mycard_bbs);
-            Log.d("MycardFragment", "显示 MyCardWebFragment");
         }
     }
 
@@ -997,7 +1083,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             
             // 恢复所有按钮状态
             updateToolBarButtonState(null);
-            Log.d("MycardFragment", "隐藏 DeckWinRateFragment");
         } else {
             // 如果未显示，则打开它
             
