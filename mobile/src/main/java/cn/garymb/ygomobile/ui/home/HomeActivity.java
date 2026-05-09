@@ -45,7 +45,6 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
@@ -59,9 +58,7 @@ import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
-import cn.garymb.ygomobile.ui.settings.SharedPreferencesPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
-import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ScreenUtil;

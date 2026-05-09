@@ -46,6 +46,8 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.mycard.adapter.McNewsAdapter;
+import cn.garymb.ygomobile.ui.mycard.bean.McNews;
 import cn.garymb.ygomobile.ui.widget.DeckPieChartView;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
@@ -80,14 +82,16 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int MC_MATCH_ENTERTAIN_EXCEPTION = 13;
     private static final int REQUEST_MATCH_ATHLETIC = 14;
     private static final int REQUEST_MATCH_ENTERTAIN = 15;
+    private static final int TYPE_MC_NEWS_QUERY_OK = 16;
+    private static final int TYPE_MC_NEWS_QUERY_EXCEPTION = 17;
 
     private HomeActivity homeActivity;
     private LinearLayout ll_head_login, ll_dialog_login, ll_main_ui;
     private EditText et_username, et_password;
-    private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_match_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs, tv_deck_win_rate;
+    private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_match_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs;
     private Button btn_login, btn_register, btn_athletic, btn_entertain;
     private ProgressBar progressBar_login;
-    private ImageView mHeadView, img_logout, btnDeckWinRate, iv_refresh, btn_mycard_bbs;
+    private ImageView mHeadView, img_logout, iv_refresh, btn_mycard_bbs;
     private MyCard mMyCard;
     private McUser mMcUser;
     public RelativeLayout rl_chat;
@@ -105,6 +109,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private DeckPieChartView pieChartView;
     private TextView tvEmpty;
     private View mainContentView;
+    private SwipeRefreshLayout srl_mcNews;
+    private RecyclerView rv_mcNews_list;
+    private McNewsAdapter mcNewsAdapter;
+    private List<McNews> mcNewsList = new ArrayList<>();
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -171,7 +179,20 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 case MC_MATCH_ENTERTAIN_EXCEPTION:
                     YGOUtil.show("匹配失败: " + msg.obj.toString());
                     break;
-
+                case TYPE_MC_NEWS_QUERY_OK:
+                    mcNewsList = (List<McNews>) msg.obj;
+                    if (srl_mcNews != null) {
+                        srl_mcNews.setRefreshing(false);
+                    }
+                    updateMcNewsList(mcNewsList);
+                    break;
+                case TYPE_MC_NEWS_QUERY_EXCEPTION:
+                    Log.e("MCFragment", "查询新闻失败: " + msg.obj);
+                    if (srl_mcNews != null) {
+                        srl_mcNews.setRefreshing(false);
+                    }
+                    YGOUtil.show("资讯加载失败: " + msg.obj.toString());
+                    break;
             }
         }
     };
@@ -202,10 +223,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         btn_register = view.findViewById(R.id.btn_register);
         progressBar_login = view.findViewById(R.id.progressBar_login);
 
-        tv_deck_win_rate = view.findViewById(R.id.tv_deck_win_rate);
-        btnDeckWinRate = view.findViewById(R.id.btn_deck_win_rate);
-        btnDeckWinRate.setOnClickListener(this);
-
         tv_mycard_bbs = view.findViewById(R.id.tv_mycard_bbs);
         btn_mycard_bbs = view.findViewById(R.id.btn_mycard_bbs);
         btn_mycard_bbs.setOnClickListener(this);
@@ -231,6 +248,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         initMatchViews(view);
         initWatchDuelView(view);
         initPieChartViews(view);
+        initMcNewsView(view);
 
         btn_login.setOnClickListener(v -> attemptLogin());
         btn_register.setOnClickListener(v -> {
@@ -674,6 +692,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         pieChartView = view.findViewById(R.id.pie_chart_view);
         tvEmpty = view.findViewById(R.id.tv_empty);
 
+        pieChartView.setOnPieChartClickListener(() -> {
+            switchDeckWinRateFragment();
+        });
         loadDeckWinRateData();
     }
 
@@ -990,9 +1011,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             case R.id.btn_mycard_bbs:
                 switchBBSWithWebView();
                 break;
-            case R.id.btn_deck_win_rate:
-                switchDeckWinRateFragment();
-                break;
         }
     }
 
@@ -1119,29 +1137,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         .show(homeActivity.fragment_deck_win_rate)
                         .commit();
             }
-
-            // 更新按钮状态，将卡组胜率按钮设置为激活状态
-            updateToolBarButtonState(btnDeckWinRate);
-            Log.d("MycardFragment", "显示 DeckWinRateFragment");
-        }
-    }
-
-    /**
-     * 更新卡组胜率按钮的状态
-     *
-     * @param isOpen true表示已打开，显示关闭图标；false表示未打开，显示卡组胜率图标
-     */
-    private void updateDeckWinRateButtonState(boolean isOpen) {
-        if (btnDeckWinRate != null) {
-            if (isOpen) {
-                // 设置为关闭图标
-                btnDeckWinRate.setImageResource(R.drawable.ic_close_black_24dp);
-                tv_deck_win_rate.setText(R.string.search_close);
-            } else {
-                // 恢复为卡组胜率图标
-                btnDeckWinRate.setImageResource(R.drawable.ic_recommendation_order); // 使用原来的图标
-                tv_deck_win_rate.setText(R.string.deck_win_rate);
-            }
         }
     }
 
@@ -1153,7 +1148,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private void updateToolBarButtonState(View activeButton) {
         // 定义按钮配置数组：每个元素包含 {按钮ImageView, 文字TextView, 原始图标资源ID, 原始文字资源ID}
         Object[][] buttonConfigs = {
-            {btnDeckWinRate, tv_deck_win_rate, R.drawable.ic_recommendation_order, R.string.deck_win_rate},
             {btn_mycard_bbs, tv_mycard_bbs, R.drawable.ic_forum, R.string.mycard_bbs}
         };
 
@@ -1178,6 +1172,107 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 textView.setText(originalTextResId);
             }
         }
+    }
+    private void initMcNewsView(View view) {
+        srl_mcNews = view.findViewById(R.id.srl_mcNews);
+        rv_mcNews_list = view.findViewById(R.id.rv_mcNews_list);
+
+        rv_mcNews_list.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        mcNewsAdapter = new McNewsAdapter(news -> {
+            if (news.getNews_url() != null && !news.getNews_url().isEmpty()) {
+                openNewsInWebView(news);
+            }
+        });
+        rv_mcNews_list.setAdapter(mcNewsAdapter);
+
+        srl_mcNews.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
+        srl_mcNews.setOnRefreshListener(() -> {
+            loadMcNews();
+        });
+
+        loadMcNews();
+    }
+
+    private void loadMcNews() {
+        if (srl_mcNews != null && !srl_mcNews.isRefreshing()) {
+            srl_mcNews.setRefreshing(true);
+        }
+
+        MyCard.findMyCardNews((myCardNewsList, exception) -> {
+            Message message = new Message();
+            if (exception == null || TextUtils.isEmpty(exception)) {
+                if (myCardNewsList != null && myCardNewsList.size() > 5) {
+                    myCardNewsList = myCardNewsList.subList(0, 5);
+                }
+                message.what = TYPE_MC_NEWS_QUERY_OK;
+                message.obj = myCardNewsList;
+            } else {
+                Log.e("MCFragment", "查询新闻失败: " + exception);
+                message.what = TYPE_MC_NEWS_QUERY_EXCEPTION;
+                message.obj = exception;
+            }
+            handler.sendMessage(message);
+        });
+    }
+
+    private void updateMcNewsList(List<McNews> newsList) {
+        if (mcNewsAdapter != null) {
+            mcNewsAdapter.setList(newsList != null ? newsList : new ArrayList<>());
+        }
+    }
+
+    private void openNewsInWebView(McNews news) {
+        if (homeActivity == null) {
+            return;
+        }
+
+        boolean isShowing = homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible();
+
+        if (isShowing) {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .remove(homeActivity.fragment_mycard_web)
+                    .commit();
+            homeActivity.fragment_mycard_web = null;
+
+            if (mainContentView != null) {
+                mainContentView.setVisibility(View.VISIBLE);
+            }
+
+            updateToolBarButtonState(null);
+        }
+
+        if (homeActivity.fragment_deck_win_rate != null &&
+                homeActivity.fragment_deck_win_rate.isAdded() &&
+                homeActivity.fragment_deck_win_rate.isVisible()) {
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .hide(homeActivity.fragment_deck_win_rate)
+                    .commit();
+        }
+
+        String title = news.getTitle() != null ? news.getTitle() : "萌卡资讯";
+        homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
+                news.getNews_url(),
+                title
+        );
+
+        if (mainContentView != null) {
+            mainContentView.setVisibility(View.GONE);
+        }
+
+        getChildFragmentManager().beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                        android.R.anim.fade_in, android.R.anim.fade_out)
+                .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
+                .commit();
+
+        updateToolBarButtonState(btn_mycard_bbs);
     }
 
     private void performLogout() {

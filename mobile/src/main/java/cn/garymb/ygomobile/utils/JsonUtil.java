@@ -11,7 +11,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.garymb.ygomobile.ui.mycard.McNews;
+import cn.garymb.ygomobile.ui.mycard.bean.McNews;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
 import cn.garymb.ygomobile.ui.mycard.bean.McDuelInfo;

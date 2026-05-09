@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.Nullable;
@@ -26,12 +27,22 @@ public class DeckPieChartView extends View {
     private float centerY;
     private float radius;
 
+    private OnPieChartClickListener mListener;
+
     private static final float MIN_PERCENTAGE = 1.0f;
     private static final int[] COLORS = {
             0xFF4CAF50, 0xFF2196F3, 0xFFFF9800, 0xFFE91E63,
             0xFFFFEB3B, 0xFF9C27B0, 0xFF00BCD4, 0xFFFF5722,
             0xFF795548, 0xFF607D8B, 0xFF8BC34A, 0xFFCDDC39
     };
+
+    public interface OnPieChartClickListener {
+        void onPieChartClick();
+    }
+
+    public void setOnPieChartClickListener(OnPieChartClickListener listener) {
+        this.mListener = listener;
+    }
 
     public DeckPieChartView(Context context) {
         this(context, null);
@@ -63,7 +74,7 @@ public class DeckPieChartView extends View {
         linePaint.setStyle(Paint.Style.STROKE);
 
         centerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        centerPaint.setColor(Color.parseColor("#1a000000"));
+        centerPaint.setColor(Color.parseColor("#00000000"));
         centerPaint.setStyle(Paint.Style.FILL);
 
         pieRect = new RectF();
@@ -151,6 +162,26 @@ public class DeckPieChartView extends View {
 
         drawPieSlices(canvas);
         drawLabels(canvas);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+            if (mListener != null && !pieSlices.isEmpty()) {
+                float x = event.getX();
+                float y = event.getY();
+
+                float dx = x - centerX;
+                float dy = y - centerY;
+                float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= radius && distance >= radius * 0.4f) {
+                    mListener.onPieChartClick();
+                    return true;
+                }
+            }
+        }
+        return super.onTouchEvent(event);
     }
 
     private void drawPieSlices(Canvas canvas) {
