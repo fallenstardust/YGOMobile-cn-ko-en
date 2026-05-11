@@ -86,10 +86,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int TYPE_MC_NEWS_QUERY_EXCEPTION = 17;
 
     private HomeActivity homeActivity;
-    private LinearLayout ll_head_login, ll_dialog_login, ll_main_ui;
+    private LinearLayout ll_athletic, ll_entertain, ll_head_login, ll_dialog_login, ll_main_ui;
     private EditText et_username, et_password;
-    private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_match_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs;
-    private Button btn_login, btn_register, btn_athletic, btn_entertain;
+    private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_dp_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs;
+    private Button btn_login, btn_register;
     private ProgressBar progressBar_login;
     private ImageView mHeadView, img_logout, iv_refresh, btn_mycard_bbs;
     private MyCard mMyCard;
@@ -155,7 +155,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     updateFunRank(currentMcDuelInfo);
                     updateMatchRank(currentMcDuelInfo);
                     if (currentMcDuelInfo != null) {
-                        tv_match_title.setText("萌卡匹配（D.P：" + currentMcDuelInfo.getDp() + ")");
+                        tv_dp_title.setText("D.P：" + currentMcDuelInfo.getDp());
                     }
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
@@ -395,14 +395,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private void initMatchViews(View view) {
         pb_loading = view.findViewById(R.id.pb_loading);
         iv_refresh = view.findViewById(R.id.iv_refresh);
-        tv_match_title = view.findViewById(R.id.tv_match_title);
-        btn_athletic = view.findViewById(R.id.btn_athletic);
-        btn_entertain = view.findViewById(R.id.btn_entertain);
+        tv_dp_title = view.findViewById(R.id.tv_dp_title);
+        ll_athletic = view.findViewById(R.id.ll_athletic);
+        ll_entertain = view.findViewById(R.id.ll_entertain);
 
         dialogUtils = DialogUtils.getInstance(getActivity());
 
-        btn_athletic.setOnClickListener(this);
-        btn_entertain.setOnClickListener(this);
+        ll_athletic.setOnClickListener(this);
+        ll_entertain.setOnClickListener(this);
         iv_refresh.setOnClickListener(v -> {
             queryDuelInfo();
         });
@@ -1002,10 +1002,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     }
                 }
                 break;
-            case R.id.btn_athletic:
+            case R.id.ll_athletic:
                 matchAthletic();
                 break;
-            case R.id.btn_entertain:
+            case R.id.ll_entertain:
                 matchEntertain();
                 break;
             case R.id.btn_mycard_bbs:
@@ -1284,7 +1284,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         currentMcDuelInfo = null;
         updateFunRank(null);
         updateMatchRank(null);
-        tv_match_title.setText("匹配对战");
+        tv_dp_title.setText("");
 
         pb_loading.setVisibility(View.GONE);
         iv_refresh.setVisibility(View.VISIBLE);
