@@ -430,4 +430,5 @@
     <string name="waiting_message">매칭 대기 중입니다. 잠시 기다려 주세요...</string>
     <string name="deck_win_rate">덱 승률</string>
     <string name="mycard_bbs">몽카드 포럼</string>
+    <string name="tips_click_to_arena">원그래프 클릭 시 상세보기</string>
 </resources>

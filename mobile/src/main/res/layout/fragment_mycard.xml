@@ -550,7 +550,7 @@
                                     android:layout_marginBottom="8dp"
                                     android:background="@drawable/veil2"
                                     android:gravity="center"
-                                    android:text="使用率"
+                                    android:text="@string/arena"
                                     android:textColor="@color/holo_green_bright"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
@@ -575,6 +575,15 @@
                                         android:textSize="10sp"
                                         android:visibility="gone" />
                                 </FrameLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:layout_marginBottom="5dp"
+                                    android:gravity="center"
+                                    android:text="@string/tips_click_to_arena"
+                                    android:textSize="8sp" />
                             </LinearLayout>
                         </LinearLayout>
 
@@ -630,11 +639,9 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
-                                    android:layout_marginTop="8dp"
-                                    android:layout_marginBottom="8dp"
                                     android:background="@drawable/veil2"
                                     android:gravity="center"
-                                    android:text="萌卡资讯"
+                                    android:text="@string/McNews"
                                     android:textColor="@color/holo_green_bright"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />

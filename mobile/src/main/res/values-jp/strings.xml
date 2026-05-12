@@ -412,4 +412,5 @@
     <string name="waiting_message">マッチング中、しばらくお待ちください...</string>
     <string name="deck_win_rate">デッキ勝率</string>
     <string name="mycard_bbs">萌カードフォーラム</string>
+    <string name="tips_click_to_arena">円グラフをタップで詳細表示</string>
 </resources>

@@ -34,7 +34,7 @@ public class McNewsAdapter extends BaseQuickAdapter<McNews, BaseViewHolder> {
         ImageView ivNewsImage = helper.getView(R.id.iv_news_image);
         TextView tvTitle = helper.getView(R.id.tv_news_title);
 
-        String displayText = "• " + (item.getTitle() != null ? item.getTitle() : item.getMessage());
+        String displayText = "[" + item.getCreate_time() + "] " + (item.getTitle() != null ? item.getTitle() : item.getMessage());
         tvTitle.setText(displayText);
 
         String imageUrl = item.getImage_url();

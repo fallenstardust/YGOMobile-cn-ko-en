@@ -441,4 +441,5 @@
     <string name="waiting_message">Waiting for match, please wait...</string>
     <string name="deck_win_rate">Deck Win Rate</string>
     <string name="mycard_bbs">MyCard BBS</string>
+    <string name="tips_click_to_arena">Click pie chart for details</string>
 </resources>

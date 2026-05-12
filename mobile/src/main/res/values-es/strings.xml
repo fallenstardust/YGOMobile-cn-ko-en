@@ -411,6 +411,7 @@
     <string name="waiting_message">Buscando partida, espere por favor...</string>
     <string name="deck_win_rate">Tasa de Victoria</string>
     <string name="mycard_bbs">Foro MyCard</string>
+    <string name="tips_click_to_arena">Pulsa el gráfico para detalles</string>
 </resources>
 
 

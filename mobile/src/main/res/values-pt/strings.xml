@@ -402,5 +402,6 @@
     <string name="waiting_message">Aguardando partida, por favor aguarde...</string>
     <string name="deck_win_rate">Taxa de Vitória</string>
     <string name="mycard_bbs">Fórum MyCard</string>
+    <string name="tips_click_to_arena">Clique no gráfico para detalhes</string>
 </resources>
 

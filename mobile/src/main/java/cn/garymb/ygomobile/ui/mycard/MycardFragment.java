@@ -692,9 +692,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         pieChartView = view.findViewById(R.id.pie_chart_view);
         tvEmpty = view.findViewById(R.id.tv_empty);
 
-        pieChartView.setOnPieChartClickListener(() -> {
-            switchDeckWinRateFragment();
-        });
+        pieChartView.setOnClickListener(v -> {switchDeckWinRateFragment();});
         loadDeckWinRateData();
     }
 
@@ -1256,7 +1254,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     .commit();
         }
 
-        String title = news.getTitle() != null ? news.getTitle() : "萌卡资讯";
+        String title = news.getTitle() != null ? news.getTitle() : YGOUtil.s(R.string.McNews);
         homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
                 news.getNews_url(),
                 title
