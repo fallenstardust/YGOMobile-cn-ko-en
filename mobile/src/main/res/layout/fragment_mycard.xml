@@ -20,36 +20,30 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="right"
+            android:background="@drawable/list_item_bg"
             android:layout_weight="1"
             android:orientation="horizontal">
-
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/img_head"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center"
-                android:src="@drawable/avatar" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:orientation="vertical">
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/tv_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
+                    android:layout_gravity="center|right"
                     android:text="username"
                     android:textColor="@color/holo_green_bright"
-                    android:textSize="16sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center|right"
                     android:orientation="horizontal">
 
                     <ProgressBar
@@ -70,13 +64,20 @@
                         android:id="@+id/tv_dp_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
+
                         android:text="DP:"
-                        android:textColor="@color/holo_green_bright"
+                        android:textColor="@color/holo_blue_bright"
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/img_head"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:src="@drawable/avatar" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/img_logout"
@@ -90,14 +91,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="left"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btn_mycard_bbs"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_gravity="left"
+                android:layout_gravity="left|center"
                 android:background="@drawable/button_cube"
                 android:padding="8dp"
                 android:src="@drawable/ic_forum"
@@ -109,7 +110,6 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="5dp"
-                android:gravity="center_horizontal"
                 android:text="@string/mycard_bbs"
                 android:textColor="@color/holo_green_bright"
                 android:textSize="8sp"
