@@ -2,7 +2,6 @@
 #include "netserver.h"
 #include "single_duel.h"
 #include "tag_duel.h"
-#include "deck_manager.h"
 #include "game.h"
 #include <thread>
 #include <unordered_map>
@@ -258,7 +257,7 @@ void NetServer::ServerAcceptError(evconnlistener* listener, void* ctx) {
 void NetServer::ServerEchoRead(bufferevent *bev, void *ctx) {
 	// 获取输入缓冲区并检查是否有足够数据
 	evbuffer* input = bufferevent_get_input(bev);
-	int len = evbuffer_get_length(input);
+	size_t len = evbuffer_get_length(input);
 	if (len < 2)
 		return;
 	uint16_t packet_len = 0;
@@ -381,7 +380,7 @@ void NetServer::DisconnectPlayer(DuelPlayer* dp) {
  * @param data 包含原始数据包内容的缓冲区指针
  * @param len 数据包长度（字节）
  */
-void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
+void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, size_t len) {
 	auto pdata = data;
 	unsigned char pktType = BufferIO::Read<uint8_t>(pdata);
 
@@ -394,7 +393,7 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 		// 响应消息必须在游戏已经开始的情况下才能被接受
 		if(!dp->game || !duel_mode->pduel)
 			return;
-		if (len < 1 + (int)sizeof(unsigned char))
+		if (len < 1 + sizeof(unsigned char))
 			return;
 		duel_mode->GetResponse(dp, pdata, len - 1);
 		break;
@@ -423,9 +422,7 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 		// 更新卡组请求仅在房间阶段有效
 		if(!dp->game)
 			return;
-		if (len < 1 + (int)sizeof(int32_t) + (int)sizeof(int32_t))
-			return;
-		if (len > 1 + (int)sizeof(CTOS_DeckData))
+		if (len < 1 + sizeof(uint32_t) * 2)
 			return;
 		duel_mode->UpdateDeck(dp, pdata, len - 1);
 		break;
@@ -434,7 +431,7 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 		// 手牌结果通知只在房间中有效
 		if(!dp->game)
 			return;
-		if (len < 1 + (int)sizeof(CTOS_HandResult))
+		if (len < 1 + sizeof(CTOS_HandResult))
 			return;
 		CTOS_HandResult packet;
 		std::memcpy(&packet, pdata, sizeof packet);
@@ -446,7 +443,7 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 		// 先攻选择结果通知只在房间中有效
 		if(!dp->game)
 			return;
-		if (len < 1 + (int)sizeof(CTOS_TPResult))
+		if (len < 1 + sizeof(CTOS_TPResult))
 			return;
 		CTOS_TPResult packet;
 		std::memcpy(&packet, pdata, sizeof packet);
@@ -456,7 +453,7 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 	}
 	case CTOS_PLAYER_INFO: {
 		// 设置玩家基本信息（如昵称），无需处于特定游戏状态
-		if (len < 1 + (int)sizeof(CTOS_PlayerInfo))
+		if (len < 1 + sizeof(CTOS_PlayerInfo))
 			return;
 		CTOS_PlayerInfo packet;
 		std::memcpy(&packet, pdata, sizeof packet);
@@ -478,7 +475,7 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 		// 创建新游戏房间，需确保当前没有正在进行的游戏
 		if(dp->game || duel_mode)
 			return;
-		if (len < 1 + (int)sizeof(CTOS_CreateGame))
+		if (len < 1 + sizeof(CTOS_CreateGame))
 			return;
 		CTOS_CreateGame packet;
 		std::memcpy(&packet, pdata, sizeof packet);
@@ -559,7 +556,7 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 		// 加入已有房间，必须存在一个正在等待中的房间
 		if (!duel_mode)
 			return;
-		if (len < 1 + (int)sizeof(CTOS_JoinGame))
+		if (len < 1 + sizeof(CTOS_JoinGame))
 			return;
 		duel_mode->JoinGame(dp, pdata, false);
 		break;
@@ -604,7 +601,7 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, int len) {
 		// 房主踢出某个位置上的玩家
 		if (!duel_mode || duel_mode->pduel)
 			return;
-		if (len < 1 + (int)sizeof(CTOS_Kick))
+		if (len < 1 + sizeof(CTOS_Kick))
 			return;
 		CTOS_Kick packet;
 		std::memcpy(&packet, pdata, sizeof packet);

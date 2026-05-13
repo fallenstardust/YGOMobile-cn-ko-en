@@ -7,6 +7,12 @@
 #include "deck.h"
 #include "config.h"
 
+namespace irr {
+	namespace io {
+		class IReadFile;
+	}
+}
+
 namespace ygo {
 
 constexpr int DECK_MAX_SIZE = 60;
@@ -49,9 +55,9 @@ public:
 	bool LoadCurrentDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	bool LoadCurrentDeck(std::istringstream& deckStream, bool is_packlist = false);
 
-	static uint32_t LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec, bool is_packlist = false);
+	static uint32_t LoadDeck(Deck& deck, uint32_t dbuf[], uint32_t mainc, uint32_t sidec, bool is_packlist = false);
 	static uint32_t LoadDeckFromStream(Deck& deck, std::istringstream& deckStream, bool is_packlist = false);
-	static bool LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec);
+	static bool LoadSide(Deck& deck, uint32_t dbuf[], uint32_t mainc, uint32_t sidec);
 	static void GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, bool showPack);//
 	static void GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	static FILE* OpenDeckFile(const wchar_t* file, const char* mode);
