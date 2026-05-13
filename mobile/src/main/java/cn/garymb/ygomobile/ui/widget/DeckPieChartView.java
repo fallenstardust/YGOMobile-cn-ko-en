@@ -1,18 +1,27 @@
 package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DeckPieChartView extends View {
 
@@ -21,6 +30,7 @@ public class DeckPieChartView extends View {
     private Paint textPaint;
     private Paint linePaint;
     private Paint centerPaint;
+    private Paint imagePaint;
 
     private RectF pieRect;
     private float centerX;
@@ -28,6 +38,8 @@ public class DeckPieChartView extends View {
     private float radius;
 
     private OnPieChartClickListener mListener;
+
+    private Map<String, Bitmap> imageCache;
 
     private static final float MIN_PERCENTAGE = 1.0f;
     private static final int[] COLORS = {
@@ -59,6 +71,7 @@ public class DeckPieChartView extends View {
 
     private void init() {
         pieSlices = new ArrayList<>();
+        imageCache = new HashMap<>();
 
         slicePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         slicePaint.setStyle(Paint.Style.FILL);
@@ -76,6 +89,10 @@ public class DeckPieChartView extends View {
         centerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         centerPaint.setColor(Color.parseColor("#00000000"));
         centerPaint.setStyle(Paint.Style.FILL);
+
+        imagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        imagePaint.setFilterBitmap(true);
+        imagePaint.setDither(true);
 
         pieRect = new RectF();
     }
@@ -136,6 +153,90 @@ public class DeckPieChartView extends View {
         invalidate();
     }
 
+    public void setImageForSlice(String sliceName, Bitmap bitmap) {
+        if (sliceName != null && bitmap != null) {
+            imageCache.put(sliceName, bitmap);
+            invalidate();
+        }
+    }
+
+    public void setImageForSliceFromResource(String sliceName, int resourceId) {
+        if (sliceName == null) return;
+        
+        Glide.with(getContext())
+                .asBitmap()
+                .load(resourceId)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                        imageCache.put(sliceName, resource);
+                        invalidate();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+                });
+    }
+
+    public void setImageForSliceFromFile(String sliceName, String filePath) {
+        if (sliceName == null || filePath == null) return;
+        
+        Glide.with(getContext())
+                .asBitmap()
+                .load(filePath)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                        imageCache.put(sliceName, resource);
+                        invalidate();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+                });
+    }
+
+    public void setImageForSliceFromUrl(String sliceName, String url) {
+        if (sliceName == null || url == null) return;
+        
+        Glide.with(getContext())
+                .asBitmap()
+                .load(url)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                        imageCache.put(sliceName, resource);
+                        invalidate();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+                });
+    }
+
+    public void removeImageForSlice(String sliceName) {
+        if (sliceName != null) {
+            Bitmap bitmap = imageCache.remove(sliceName);
+            if (bitmap != null && !bitmap.isRecycled()) {
+                bitmap.recycle();
+            }
+            invalidate();
+        }
+    }
+
+    public void clearAllImages() {
+        for (Bitmap bitmap : imageCache.values()) {
+            if (bitmap != null && !bitmap.isRecycled()) {
+                bitmap.recycle();
+            }
+        }
+        imageCache.clear();
+        invalidate();
+    }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
@@ -162,6 +263,7 @@ public class DeckPieChartView extends View {
 
         drawPieSlices(canvas);
         drawLabels(canvas);
+        drawImages(canvas);
     }
 
     @Override
@@ -230,8 +332,44 @@ public class DeckPieChartView extends View {
         }
     }
 
+    private void drawImages(Canvas canvas) {
+        for (PieSlice slice : pieSlices) {
+            Bitmap bitmap = imageCache.get(slice.name);
+            if (bitmap == null || bitmap.isRecycled()) {
+                continue;
+            }
+
+            float midAngle = slice.startAngle + slice.sweepAngle / 2;
+            double radian = Math.toRadians(midAngle);
+
+            float imageRadius = radius * 0.65f;
+            float imageX = centerX + (float) (Math.cos(radian) * imageRadius);
+            float imageY = centerY + (float) (Math.sin(radian) * imageRadius);
+
+            Path clipPath = new Path();
+            float clipRadius = radius * 0.12f;
+            clipPath.addCircle(imageX, imageY, clipRadius, Path.Direction.CW);
+            
+            canvas.save();
+            canvas.clipPath(clipPath);
+
+            float bitmapWidth = bitmap.getWidth();
+            float bitmapHeight = bitmap.getHeight();
+            float scale = Math.min(clipRadius * 2 / bitmapWidth, clipRadius * 2 / bitmapHeight);
+            float scaledWidth = bitmapWidth * scale;
+            float scaledHeight = bitmapHeight * scale;
+
+            float left = imageX - scaledWidth / 2;
+            float top = imageY - scaledHeight / 2;
+
+            canvas.drawBitmap(bitmap, left, top, imagePaint);
+            canvas.restore();
+        }
+    }
+
     public void clearData() {
         pieSlices.clear();
+        clearAllImages();
         invalidate();
     }
 
