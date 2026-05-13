@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="2dp"
@@ -9,13 +7,13 @@
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tv_title"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/veil2"
-        android:gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:padding="5dp"
+        android:background="@drawable/selected_light"
+        android:layout_gravity="center"
         android:text="@string/match_start"
-        android:textColor="@color/white"
         android:textSize="10sp"
         android:textStyle="bold" />
 
@@ -89,5 +87,5 @@
         android:layout_marginLeft="39dp"
         android:background="@color/grayLight" />
 
-</RelativeLayout>
+</LinearLayout>
 

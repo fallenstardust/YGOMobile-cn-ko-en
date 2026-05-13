@@ -412,6 +412,10 @@
     <string name="deck_win_rate">Tasa de Victoria</string>
     <string name="mycard_bbs">Foro MyCard</string>
     <string name="tips_click_to_arena">Pulsa el gráfico para detalles</string>
+    <string name="single_duel">Modo Single</string>
+    <string name="match_duel">Modo Match</string>
+    <string name="tag_duel">Modo Tag</string>
+    <string name="unknown_room">Modo Unknown</string>
 </resources>
 
 

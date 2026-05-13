@@ -403,5 +403,9 @@
     <string name="deck_win_rate">Taxa de Vitória</string>
     <string name="mycard_bbs">Fórum MyCard</string>
     <string name="tips_click_to_arena">Clique no gráfico para detalhes</string>
+    <string name="single_duel">Modo Single</string>
+    <string name="match_duel">Modo Match</string>
+    <string name="tag_duel">Modo Tag</string>
+    <string name="unknown_room">Modo Unknown</string>
 </resources>
 

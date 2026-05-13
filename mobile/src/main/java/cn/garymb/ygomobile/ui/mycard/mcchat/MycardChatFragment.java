@@ -120,7 +120,10 @@ public class MycardChatFragment extends BaseFragemnt implements ChatListener {
             }
         });
         btn_hide.setOnClickListener(p1 -> {
-            getParentFragmentManager().beginTransaction().hide(homeActivity.fragment_mycard_chatting_room).commit();
+            getParentFragmentManager().beginTransaction()
+                    .setCustomAnimations(R.anim.in_from_bottom, R.anim.out_to_top,
+                            R.anim.in_from_bottom, R.anim.out_to_top)
+                    .hide(homeActivity.fragment_mycard_chatting_room).commit();
             homeActivity.fragment_mycard.rl_chat.setVisibility(View.VISIBLE);
         });
     }

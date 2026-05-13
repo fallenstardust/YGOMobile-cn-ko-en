@@ -417,4 +417,8 @@
     <string name="deck_win_rate">卡组胜率</string>
     <string name="mycard_bbs">萌卡论坛</string>
     <string name="tips_click_to_arena">点击饼图查看详情</string>
+    <string name="single_duel">单局模式</string>
+    <string name="match_duel">比赛模式</string>
+    <string name="tag_duel">双打模式</string>
+    <string name="unknown_room">未知房间</string>
 </resources>

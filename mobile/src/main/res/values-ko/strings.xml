@@ -431,4 +431,8 @@
     <string name="deck_win_rate">덱 승률</string>
     <string name="mycard_bbs">몽카드 포럼</string>
     <string name="tips_click_to_arena">원그래프 클릭 시 상세보기</string>
+    <string name="single_duel">싱글 모드</string>
+    <string name="match_duel">매치 모드</string>
+    <string name="tag_duel">태그 모드</string>
+    <string name="unknown_room">알 수 없는 모드</string>
 </resources>

@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.adapter;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
@@ -31,7 +32,7 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
     private static final int ITEM_ONE = 4;
 
     public DuelRoomBQAdapter(Context context, List<DuelRoom> data) {
-        super(R.layout.duel_room_item, data);
+        super(R.layout.item_duel_room, data);
         this.context = context;
     }
 
@@ -72,7 +73,7 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
 
     @Override
     protected void convert(@NonNull BaseViewHolder baseViewHolder, DuelRoom duelRoom) {
-        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) baseViewHolder.getView(R.id.ll_item).getLayoutParams();
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) baseViewHolder.getView(R.id.ll_item).getLayoutParams();
         switch (getGroupType(baseViewHolder.getLayoutPosition() - getHeaderLayoutCount())) {
             case ITEM_TYPE_SAME:
                 baseViewHolder.setBackgroundResource(R.id.ll_item, R.drawable.list_item_bg);
@@ -94,17 +95,20 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
                         typeName = YGOUtil.s(R.string.bot_mode);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN_SINGLE:
-                        typeName = "单局模式";
+                        typeName = YGOUtil.s(R.string.single_duel);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN_MATCH:
-                        typeName = "比赛模式";
+                        typeName = YGOUtil.s(R.string.match_duel);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN_TAG:
-                        typeName = "双打模式";
+                        typeName = YGOUtil.s(R.string.tag_duel);
                         break;
                     default:
-                        typeName = "未知房间";
+                        typeName = YGOUtil.s(R.string.unknown_room);
                 }
+                int typeCount = getTypeCount(duelRoom.getArenaType());
+                typeName = typeName + " [" + typeCount + "]";
+                
                 int topMargin;
                 if (TextUtils.isEmpty(typeName)) {
                     baseViewHolder.setGone(R.id.tv_title, true);
@@ -140,17 +144,20 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
                         typeName1 = YGOUtil.s(R.string.bot_mode);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN_SINGLE:
-                        typeName1 = "单局模式";
+                        typeName1 = YGOUtil.s(R.string.single_duel);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN_MATCH:
-                        typeName1 = "比赛模式";
+                        typeName1 = YGOUtil.s(R.string.match_duel);
                         break;
                     case DuelRoom.TYPE_ARENA_FUN_TAG:
-                        typeName1 = "双打模式";
+                        typeName1 = YGOUtil.s(R.string.tag_duel);
                         break;
                     default:
-                        typeName1 = "未知房间";
+                        typeName1 = YGOUtil.s(R.string.unknown_room);
                 }
+                int typeCount1 = getTypeCount(duelRoom.getArenaType());
+                typeName1 = typeName1 + " (" + typeCount1 + ")";
+                
                 int topMargin1;
                 if (TextUtils.isEmpty(typeName1)) {
                     baseViewHolder.setGone(R.id.tv_title, true);
@@ -173,6 +180,16 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
 
         baseViewHolder.setText(R.id.tv_name1, duelRoom.getUsers().get(0).getUsername());
         baseViewHolder.setText(R.id.tv_name2, duelRoom.getUsers().get(1).getUsername());
+    }
+
+    private int getTypeCount(int arenaType) {
+        int count = 0;
+        for (DuelRoom room : getData()) {
+            if (room.getArenaType() == arenaType) {
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override

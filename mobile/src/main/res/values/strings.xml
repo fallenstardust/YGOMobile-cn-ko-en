@@ -442,4 +442,8 @@
     <string name="deck_win_rate">Deck Win Rate</string>
     <string name="mycard_bbs">MyCard BBS</string>
     <string name="tips_click_to_arena">Click pie chart for details</string>
+    <string name="single_duel">Single Duel</string>
+    <string name="match_duel">Match Duel</string>
+    <string name="tag_duel">Tag Duel</string>
+    <string name="unknown_room">Unknown Mode</string>
 </resources>

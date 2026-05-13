@@ -413,4 +413,8 @@
     <string name="deck_win_rate">デッキ勝率</string>
     <string name="mycard_bbs">萌カードフォーラム</string>
     <string name="tips_click_to_arena">円グラフをタップで詳細表示</string>
+    <string name="single_duel">シングルモード</string>
+    <string name="match_duel">マッチモード</string>
+    <string name="tag_duel">タグモード</string>
+    <string name="unknown_room">不明モード</string>
 </resources>
