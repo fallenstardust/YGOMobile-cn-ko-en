@@ -223,7 +223,7 @@ public class DeckPieChartView extends View {
         if (matchedCard != null) {
             long cardCode = matchedCard.Code;
             Bitmap bitmap = loadBitmapFromZips(cardCode);
-            
+
             if (bitmap != null) {
                 imageCache.put(sliceName, bitmap);
                 postInvalidate();
@@ -236,48 +236,42 @@ public class DeckPieChartView extends View {
     }
 
     private Bitmap loadBitmapFromZips(long cardCode) {
-        String resourcePath = AppsSettings.get().getResourcePath();
-        File resourceDir = new File(resourcePath);
-        
-        if (!resourceDir.exists() || !resourceDir.isDirectory()) {
-            Log.w("DeckPieChartView", "资源目录不存在: " + resourcePath);
-            return null;
-        }
-        
-        File[] files = resourceDir.listFiles();
-        if (files == null || files.length == 0) {
-            Log.w("DeckPieChartView", "资源目录为空: " + resourcePath);
-            return null;
-        }
-        
+        File[] files = new File(AppsSettings.get().getResourcePath()).listFiles();
+
         for (String ext : Constants.IMAGE_EX) {
             String targetFileName = cardCode + ext;
-            Log.d("DeckPieChartView", "查找文件: " + targetFileName);
-            
+
             for (File file : files) {
                 if (!file.isFile() || !file.getName().toLowerCase().endsWith(".zip")) {
                     continue;
                 }
-                
+
                 ZipFile zipFile = null;
                 try {
                     zipFile = new ZipFile(file);
                     ZipEntry entry = zipFile.getEntry("pics/" + targetFileName);
-                    
+
                     if (entry == null) {
                         entry = zipFile.getEntry(targetFileName);
                     }
-                    
+
                     if (entry != null) {
-                        Log.d("DeckPieChartView", "在 " + file.getName() + " 中找到: " + entry.getName());
-                        
                         InputStream inputStream = zipFile.getInputStream(entry);
-                        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                        Bitmap originalBitmap = BitmapFactory.decodeStream(inputStream);
                         inputStream.close();
-                        
-                        if (bitmap != null) {
-                            Log.d("DeckPieChartView", "成功解码bitmap: " + bitmap.getWidth() + "x" + bitmap.getHeight());
-                            return bitmap;
+
+                        if (originalBitmap != null) {
+                            Bitmap croppedBitmap = cropBitmap(originalBitmap);
+
+                            if (!originalBitmap.isRecycled()) {
+                                originalBitmap.recycle();
+                            }
+
+                            if (croppedBitmap != null) {
+                                return croppedBitmap;
+                            } else {
+                                return originalBitmap;
+                            }
                         }
                     }
                 } catch (Exception e) {
@@ -286,16 +280,28 @@ public class DeckPieChartView extends View {
                     if (zipFile != null) {
                         try {
                             zipFile.close();
-                        } catch (Exception e) {
-                            // Ignore
-                        }
+                        } catch (Exception e) {}
                     }
                 }
             }
         }
-        
+
         return null;
     }
+
+    private Bitmap cropBitmap(Bitmap original) {
+        if (original == null) {
+            return null;
+        }
+
+        int left = 22;
+        int top = 47;
+        int right = 155;
+        int bottom = 156;
+
+        return Bitmap.createBitmap(original, left, top, right - left, bottom - top);
+    }
+
 
     public void clearAllImages() {
         for (Bitmap bitmap : imageCache.values()) {
@@ -382,24 +388,32 @@ public class DeckPieChartView extends View {
         float bitmapWidth = bitmap.getWidth();
         float bitmapHeight = bitmap.getHeight();
 
-        float scale = Math.max(radius * 2 / bitmapWidth, radius * 2 / bitmapHeight);
-        float scaledWidth = bitmapWidth * scale;
-        float scaledHeight = bitmapHeight * scale;
-
         float midAngle = slice.startAngle + slice.sweepAngle / 2;
         double radian = Math.toRadians(midAngle);
 
         float imageCenterX = centerX + (float) (Math.cos(radian) * radius * 0.3f);
         float imageCenterY = centerY + (float) (Math.sin(radian) * radius * 0.3f);
 
-        float left = imageCenterX - scaledWidth / 2;
-        float top = imageCenterY - scaledHeight / 2;
+        float targetSize = radius * 2;
 
-        canvas.drawBitmap(bitmap, left, top, imagePaint);
+        float scale = 1.0f;
+        if (bitmapWidth < targetSize || bitmapHeight < targetSize) {
+            float scaleX = targetSize / bitmapWidth;
+            float scaleY = targetSize / bitmapHeight;
+            scale = Math.max(scaleX, scaleY);
+        }
+
+        float scaledWidth = bitmapWidth * scale;
+        float scaledHeight = bitmapHeight * scale;
+
+        float left = imageCenterX - scaledWidth / 3.0f;
+        float top = imageCenterY - scaledHeight / 3.5f;
+
+        RectF destRect = new RectF(left, top, left + scaledWidth, top + scaledHeight);
+        canvas.drawBitmap(bitmap, null, destRect, imagePaint);
 
         canvas.restore();
 
-        // 绘制扇形边缘线
         Paint edgePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         edgePaint.setColor(Color.WHITE);
         edgePaint.setStyle(Paint.Style.STROKE);
