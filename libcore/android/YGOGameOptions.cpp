@@ -19,7 +19,7 @@ YGOGameOptions::YGOGameOptions(void* data): m_pipAddr(NULL), m_puserName(NULL), 
 	char log[128];
 	unsigned char * rawdata = (unsigned char*)data;
 	int tmplength = ::BufferIO::ReadInt32(rawdata);
-	if (tmplength != 0) {
+	if (tmplength > 0 && tmplength <= 4096) {
 		m_pipAddr = new char[tmplength + 1];
 		memset(m_pipAddr, 0, tmplength + 1);
 		memcpy(m_pipAddr, rawdata, tmplength);
@@ -28,7 +28,7 @@ YGOGameOptions::YGOGameOptions(void* data): m_pipAddr(NULL), m_puserName(NULL), 
 
 	//read user name
 	tmplength = ::BufferIO::ReadInt32(rawdata);
-	if (tmplength != 0) {
+	if (tmplength > 0 && tmplength <= 4096) {
 		m_puserName = new char[tmplength + 1];
 		memset(m_puserName, 0, tmplength + 1);
 		memcpy(m_puserName, rawdata, tmplength);
@@ -37,7 +37,7 @@ YGOGameOptions::YGOGameOptions(void* data): m_pipAddr(NULL), m_puserName(NULL), 
 
 	//read room name
 	tmplength = ::BufferIO::ReadInt32(rawdata);
-	if (tmplength != 0) {
+	if (tmplength > 0 && tmplength <= 4096) {
 		m_proomName = new char[tmplength + 1];
 		memset(m_proomName, 0, tmplength + 1);
 		memcpy(m_proomName, rawdata, tmplength);
@@ -46,14 +46,14 @@ YGOGameOptions::YGOGameOptions(void* data): m_pipAddr(NULL), m_puserName(NULL), 
 
 	//read room password
 	tmplength = ::BufferIO::ReadInt32(rawdata);
-	if (tmplength != 0) {
+	if (tmplength > 0 && tmplength <= 4096) {
 		m_proomPasswd = new char[tmplength];
 		memcpy(m_proomPasswd, rawdata, tmplength);
 		rawdata += tmplength;
 	}
 	//read host info
 	tmplength = ::BufferIO::ReadInt32(rawdata);
-	if (tmplength != 0) {
+	if (tmplength > 0 && tmplength <= 4096) {
 		m_phostInfo = new char[tmplength + 1];
 		memset(m_phostInfo, 0, tmplength + 1);
 		memcpy(m_phostInfo, rawdata, tmplength);
