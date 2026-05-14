@@ -29,6 +29,7 @@ import java.util.Map;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
+import ocgcore.enums.CardType;
 
 public class DeckPieChartView extends View {
     private ImageLoader imageLoader;
@@ -167,54 +168,57 @@ public class DeckPieChartView extends View {
         if (sliceName == null || "others".equals(sliceName)) {
             return;
         }
+        SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
+        Card matchedCard = null;
+        int matchPriority = 0;
 
-        try {
-            SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
+        for (int i = 0; i < allCards.size(); i++) {
+            Card card = allCards.valueAt(i);
+            if (card != null && card.Name != null) {
+                boolean isMonster = card.isType(CardType.Monster);
+                boolean startsWith = card.Name.startsWith(sliceName);
+                boolean contains = card.Name.contains(sliceName);
 
-            Card matchedCard = null;
-            for (int i = 0; i < allCards.size(); i++) {
-                Card card = allCards.valueAt(i);
-                if (card != null && card.Name != null) {
-                    if(card.Name.startsWith(sliceName)) {
-                        matchedCard = card;
+                int currentPriority = 0;
+
+                if (startsWith && isMonster) {
+                    currentPriority = 4;
+                } else if (startsWith) {
+                    currentPriority = 3;
+                } else if (contains && isMonster) {
+                    currentPriority = 2;
+                } else if (contains) {
+                    currentPriority = 1;
+                }
+
+                if (currentPriority > matchPriority) {
+                    matchedCard = card;
+                    matchPriority = currentPriority;
+                    if (matchPriority == 4) {
                         break;
                     }
                 }
             }
+        }
 
-            if (matchedCard != null) {
-                ImageView tempImageView = new ImageView(getContext());
-                tempImageView.setLayoutParams(new LayoutParams(1, 1));
+        if (matchedCard != null) {
+            ImageView tempImageView = new ImageView(getContext());
+            tempImageView.setLayoutParams(new LayoutParams(1, 1));
 
-                imageLoader.bindImage(tempImageView, matchedCard, ImageLoader.Type.small);
+            imageLoader.bindImage(tempImageView, matchedCard, ImageLoader.Type.small);
 
-                Log.d("DeckPieChartView", "已调用bindImage, 等待加载完成: " + sliceName + " " + matchedCard.Name);
+            Log.d("DeckPieChartView", "已调用: " + sliceName + " " + matchedCard.Name);
 
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.postDelayed(() -> {
-                    Drawable drawable = tempImageView.getDrawable();
-                    if (drawable != null) {
-                        Bitmap bitmap = drawableToBitmap(drawable);
-                        if (bitmap != null) {
-                            imageCache.put(sliceName, bitmap);
-                            invalidate();
-                        }
-                    } else {
-                        handler.postDelayed(() -> {
-                            Drawable d = tempImageView.getDrawable();
-                            if (d != null) {
-                                Bitmap bitmap = drawableToBitmap(d);
-                                if (bitmap != null) {
-                                    imageCache.put(sliceName, bitmap);
-                                    invalidate();
-                                }
-                            }
-                        }, 10);
-                    }
-                }, 10);
+            Drawable drawable = tempImageView.getDrawable();
+            if (drawable != null) {
+                Bitmap bitmap = drawableToBitmap(drawable);
+                if (bitmap != null) {
+                    imageCache.put(sliceName, bitmap);
+                    invalidate();
+                }
             }
-        } catch (Exception e) {
-            Log.e("DeckPieChartView", "加载图片错误: ", e);
+        } else {
+            Log.w("DeckPieChartView", "未找到匹配的卡片: " + sliceName);
         }
     }
 
@@ -346,10 +350,18 @@ public class DeckPieChartView extends View {
 
         canvas.restore();
 
-        slicePaint.setColor(slice.color);
-        slicePaint.setAlpha(60);
-        canvas.drawArc(pieRect, slice.startAngle, slice.sweepAngle, true, slicePaint);
-        slicePaint.setAlpha(255);
+        // 绘制扇形边缘线
+        Paint edgePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        edgePaint.setColor(Color.WHITE);
+        edgePaint.setStyle(Paint.Style.STROKE);
+        edgePaint.setStrokeWidth(1);
+
+        Path edgePath = new Path();
+        edgePath.moveTo(centerX, centerY);
+        edgePath.arcTo(pieRect, slice.startAngle, slice.sweepAngle);
+        edgePath.close();
+
+        canvas.drawPath(edgePath, edgePaint);
     }
 
     private void drawLabels(Canvas canvas) {
@@ -357,8 +369,8 @@ public class DeckPieChartView extends View {
             float midAngle = slice.startAngle + slice.sweepAngle / 2;
             double radian = Math.toRadians(midAngle);
 
-            float innerX = centerX + (float) (Math.cos(radian) * radius * 0.5f);
-            float innerY = centerY + (float) (Math.sin(radian) * radius * 0.5f);
+            float innerX = centerX + (float) (Math.cos(radian) * radius);
+            float innerY = centerY + (float) (Math.sin(radian) * radius);
 
             float outerX = centerX + (float) (Math.cos(radian) * radius * 1.15f);
             float outerY = centerY + (float) (Math.sin(radian) * radius * 1.15f);
