@@ -9,6 +9,8 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -18,10 +20,15 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import cn.garymb.ygomobile.loader.ImageLoader;
+import ocgcore.DataManager;
+import ocgcore.data.Card;
 
 public class DeckPieChartView extends View {
 
@@ -144,6 +151,8 @@ public class DeckPieChartView extends View {
                 slice.sweepAngle = sweepAngle;
                 slice.color = COLORS[colorIndex % COLORS.length];
 
+                loadCardImageForSlice(slice.name);
+
                 pieSlices.add(slice);
                 currentAngle += sweepAngle;
                 colorIndex++;
@@ -153,77 +162,54 @@ public class DeckPieChartView extends View {
         invalidate();
     }
 
-    public void setImageForSlice(String sliceName, Bitmap bitmap) {
-        if (sliceName != null && bitmap != null) {
-            imageCache.put(sliceName, bitmap);
-            invalidate();
+    private void loadCardImageForSlice(String sliceName) {
+        if (sliceName == null || "others".equals(sliceName)) {
+            return;
         }
-    }
 
-    public void setImageForSliceFromResource(String sliceName, int resourceId) {
-        if (sliceName == null) return;
-        
-        Glide.with(getContext())
-                .asBitmap()
-                .load(resourceId)
-                .into(new CustomTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
-                        imageCache.put(sliceName, resource);
-                        invalidate();
-                    }
+        try {
+            SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
 
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                    }
-                });
-    }
-
-    public void setImageForSliceFromFile(String sliceName, String filePath) {
-        if (sliceName == null || filePath == null) return;
-        
-        Glide.with(getContext())
-                .asBitmap()
-                .load(filePath)
-                .into(new CustomTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
-                        imageCache.put(sliceName, resource);
-                        invalidate();
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                    }
-                });
-    }
-
-    public void setImageForSliceFromUrl(String sliceName, String url) {
-        if (sliceName == null || url == null) return;
-        
-        Glide.with(getContext())
-                .asBitmap()
-                .load(url)
-                .into(new CustomTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
-                        imageCache.put(sliceName, resource);
-                        invalidate();
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                    }
-                });
-    }
-
-    public void removeImageForSlice(String sliceName) {
-        if (sliceName != null) {
-            Bitmap bitmap = imageCache.remove(sliceName);
-            if (bitmap != null && !bitmap.isRecycled()) {
-                bitmap.recycle();
+            Card matchedCard = null;
+            for (int i = 0; i < allCards.size(); i++) {
+                Card card = allCards.valueAt(i);
+                if (card != null && card.Name != null && card.Name.contains(sliceName)) {
+                    matchedCard = card;
+                    break;
+                }
             }
-            invalidate();
+
+            if (matchedCard != null) {
+                final int cardCode = matchedCard.getCode();
+                android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+                new Thread(() -> {
+
+                    ImageLoader imageLoader = new ImageLoader();
+                    File imageFile = imageLoader.getImageFile(cardCode);
+
+                    if (imageFile != null && imageFile.exists()) {
+                        Log.d("DeckPieChartView", "找到图片文件: " + imageFile.getAbsolutePath());
+                        handler.post(() -> {
+                            Glide.with(getContext())
+                                    .asBitmap()
+                                    .load(imageFile)
+                                    .into(new CustomTarget<Bitmap>() {
+                                        @Override
+                                        public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                                            imageCache.put(sliceName, resource);
+                                            invalidate();
+                                        }
+
+                                        @Override
+                                        public void onLoadCleared(@Nullable Drawable placeholder) {
+                                        }
+                                    });
+                        });
+                    }
+                }).start();
+            }
+        } catch (Exception e) {
+            Log.e("DeckPieChartView", "加载图片错误: ", e);
         }
     }
 
@@ -327,8 +313,34 @@ public class DeckPieChartView extends View {
             float endX = outerX + (outerX > centerX ? 30 : -30);
             canvas.drawLine(outerX, outerY, endX, outerY, linePaint);
 
+            Bitmap bitmap = imageCache.get(slice.name);
+            float imageOffset = 0;
+            if (bitmap != null && !bitmap.isRecycled()) {
+                float imageSize = 40;
+                float imageLeft = textX + (textPaint.getTextAlign() == Paint.Align.LEFT ? -imageSize - 5 : 5);
+                float imageTop = textY - imageSize / 2;
+
+                Path clipPath = new Path();
+                clipPath.addRect(imageLeft, imageTop, imageLeft + imageSize, imageTop + imageSize, Path.Direction.CW);
+
+                canvas.save();
+                canvas.clipPath(clipPath);
+
+                float scale = Math.max(imageSize / bitmap.getWidth(), imageSize / bitmap.getHeight());
+                float scaledWidth = bitmap.getWidth() * scale;
+                float scaledHeight = bitmap.getHeight() * scale;
+                float drawLeft = imageLeft + (imageSize - scaledWidth) / 2;
+                float drawTop = imageTop + (imageSize - scaledHeight) / 2;
+
+                canvas.drawBitmap(bitmap, drawLeft, drawTop, imagePaint);
+                canvas.restore();
+
+                imageOffset = imageSize + 8;
+            }
+
             String labelText = String.format("%s %.1f%%", slice.name, slice.percentage);
-            canvas.drawText(labelText, textX, textY, textPaint);
+            float finalTextX = textX + (textPaint.getTextAlign() == Paint.Align.LEFT ? imageOffset : -imageOffset);
+            canvas.drawText(labelText, finalTextX, textY, textPaint);
         }
     }
 
@@ -349,7 +361,7 @@ public class DeckPieChartView extends View {
             Path clipPath = new Path();
             float clipRadius = radius * 0.12f;
             clipPath.addCircle(imageX, imageY, clipRadius, Path.Direction.CW);
-            
+
             canvas.save();
             canvas.clipPath(clipPath);
 
