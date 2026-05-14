@@ -62,9 +62,20 @@ public class JsonUtil {
         switch (getDuelRoomEvent(json)) {
             case DuelRoom.EVENT_INIT:
             case DuelRoom.EVENT_CREATE:
-                JSONArray jsonArray = jsonObject.getJSONArray(MyCard.ARG_DATA);
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    DuelRoom duelRoom = new Gson().fromJson(jsonArray.getJSONObject(i).toString(), DuelRoom.class);
+                Object data = jsonObject.get(MyCard.ARG_DATA);
+                if (data instanceof JSONArray) {
+                    // 处理数组情况
+                    JSONArray jsonArray = (JSONArray) data;
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        DuelRoom duelRoom = new Gson().fromJson(jsonArray.getJSONObject(i).toString(), DuelRoom.class);
+                        duelRoom.setArena(duelRoom.getArena());
+                        duelRoom.setArenaType(duelRoom.getArena(), duelRoom.getId(), duelRoom.getOptions());
+                        duelRoomList.add(duelRoom);
+                    }
+                } else if (data instanceof JSONObject) {
+                    // 处理单个对象情况
+                    JSONObject roomJson = (JSONObject) data;
+                    DuelRoom duelRoom = new Gson().fromJson(roomJson.toString(), DuelRoom.class);
                     duelRoom.setArena(duelRoom.getArena());
                     duelRoom.setArenaType(duelRoom.getArena(), duelRoom.getId(), duelRoom.getOptions());
                     duelRoomList.add(duelRoom);
