@@ -8,19 +8,19 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
-
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +31,7 @@ import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 public class DeckPieChartView extends View {
-
+    private ImageLoader imageLoader;
     private List<PieSlice> pieSlices;
     private Paint slicePaint;
     private Paint textPaint;
@@ -77,6 +77,7 @@ public class DeckPieChartView extends View {
     }
 
     private void init() {
+        imageLoader = new ImageLoader();
         pieSlices = new ArrayList<>();
         imageCache = new HashMap<>();
 
@@ -173,43 +174,73 @@ public class DeckPieChartView extends View {
             Card matchedCard = null;
             for (int i = 0; i < allCards.size(); i++) {
                 Card card = allCards.valueAt(i);
-                if (card != null && card.Name != null && card.Name.contains(sliceName)) {
-                    matchedCard = card;
-                    break;
+                if (card != null && card.Name != null) {
+                    if(card.Name.startsWith(sliceName)) {
+                        matchedCard = card;
+                        break;
+                    }
                 }
             }
 
             if (matchedCard != null) {
-                final int cardCode = matchedCard.getCode();
-                android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
-                new Thread(() -> {
+                ImageView tempImageView = new ImageView(getContext());
+                tempImageView.setLayoutParams(new LayoutParams(1, 1));
 
-                    ImageLoader imageLoader = new ImageLoader();
-                    File imageFile = imageLoader.getImageFile(cardCode);
+                imageLoader.bindImage(tempImageView, matchedCard, ImageLoader.Type.small);
 
-                    if (imageFile != null && imageFile.exists()) {
-                        Log.d("DeckPieChartView", "找到图片文件: " + imageFile.getAbsolutePath());
-                        handler.post(() -> {
-                            Glide.with(getContext())
-                                    .asBitmap()
-                                    .load(imageFile)
-                                    .into(new CustomTarget<Bitmap>() {
-                                        @Override
-                                        public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
-                                            imageCache.put(sliceName, resource);
-                                            invalidate();
-                                        }
+                Log.d("DeckPieChartView", "已调用bindImage, 等待加载完成: " + sliceName + " " + matchedCard.Name);
 
-                                        @Override
-                                        public void onLoadCleared(@Nullable Drawable placeholder) {
-                                        }
-                                    });
-                        });
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.postDelayed(() -> {
+                    Drawable drawable = tempImageView.getDrawable();
+                    if (drawable != null) {
+                        Bitmap bitmap = drawableToBitmap(drawable);
+                        if (bitmap != null) {
+                            imageCache.put(sliceName, bitmap);
+                            invalidate();
+                        }
+                    } else {
+                        handler.postDelayed(() -> {
+                            Drawable d = tempImageView.getDrawable();
+                            if (d != null) {
+                                Bitmap bitmap = drawableToBitmap(d);
+                                if (bitmap != null) {
+                                    imageCache.put(sliceName, bitmap);
+                                    invalidate();
+                                }
+                            }
+                        }, 10);
                     }
-                }).start();
+                }, 10);
             }
         } catch (Exception e) {
             Log.e("DeckPieChartView", "加载图片错误: ", e);
+        }
+    }
+
+    private Bitmap drawableToBitmap(Drawable drawable) {
+        if (drawable == null) {
+            return null;
+        }
+
+        try {
+            int width = drawable.getIntrinsicWidth();
+            int height = drawable.getIntrinsicHeight();
+
+            if (width <= 0 || height <= 0) {
+                width = 177;
+                height = 254;
+            }
+
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            drawable.draw(canvas);
+
+            return bitmap;
+        } catch (Exception e) {
+            Log.e("DeckPieChartView", "drawableToBitmap失败: ", e);
+            return null;
         }
     }
 
@@ -240,7 +271,7 @@ public class DeckPieChartView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
 
         if (pieSlices.isEmpty()) {
@@ -249,7 +280,6 @@ public class DeckPieChartView extends View {
 
         drawPieSlices(canvas);
         drawLabels(canvas);
-        drawImages(canvas);
     }
 
     @Override
@@ -274,11 +304,52 @@ public class DeckPieChartView extends View {
 
     private void drawPieSlices(Canvas canvas) {
         for (PieSlice slice : pieSlices) {
-            slicePaint.setColor(slice.color);
-            canvas.drawArc(pieRect, slice.startAngle, slice.sweepAngle, true, slicePaint);
+            Bitmap bitmap = imageCache.get(slice.name);
+
+            if (bitmap != null && !bitmap.isRecycled()) {
+                drawImageSlice(canvas, slice, bitmap);
+            } else {
+                slicePaint.setColor(slice.color);
+                canvas.drawArc(pieRect, slice.startAngle, slice.sweepAngle, true, slicePaint);
+            }
         }
 
         canvas.drawCircle(centerX, centerY, radius * 0.4f, centerPaint);
+    }
+
+    private void drawImageSlice(Canvas canvas, PieSlice slice, Bitmap bitmap) {
+        Path slicePath = new Path();
+        slicePath.moveTo(centerX, centerY);
+        slicePath.arcTo(pieRect, slice.startAngle, slice.sweepAngle);
+        slicePath.close();
+
+        canvas.save();
+        canvas.clipPath(slicePath);
+
+        float bitmapWidth = bitmap.getWidth();
+        float bitmapHeight = bitmap.getHeight();
+
+        float scale = Math.max(radius * 2 / bitmapWidth, radius * 2 / bitmapHeight);
+        float scaledWidth = bitmapWidth * scale;
+        float scaledHeight = bitmapHeight * scale;
+
+        float midAngle = slice.startAngle + slice.sweepAngle / 2;
+        double radian = Math.toRadians(midAngle);
+
+        float imageCenterX = centerX + (float) (Math.cos(radian) * radius * 0.3f);
+        float imageCenterY = centerY + (float) (Math.sin(radian) * radius * 0.3f);
+
+        float left = imageCenterX - scaledWidth / 2;
+        float top = imageCenterY - scaledHeight / 2;
+
+        canvas.drawBitmap(bitmap, left, top, imagePaint);
+
+        canvas.restore();
+
+        slicePaint.setColor(slice.color);
+        slicePaint.setAlpha(60);
+        canvas.drawArc(pieRect, slice.startAngle, slice.sweepAngle, true, slicePaint);
+        slicePaint.setAlpha(255);
     }
 
     private void drawLabels(Canvas canvas) {
@@ -313,69 +384,8 @@ public class DeckPieChartView extends View {
             float endX = outerX + (outerX > centerX ? 30 : -30);
             canvas.drawLine(outerX, outerY, endX, outerY, linePaint);
 
-            Bitmap bitmap = imageCache.get(slice.name);
-            float imageOffset = 0;
-            if (bitmap != null && !bitmap.isRecycled()) {
-                float imageSize = 40;
-                float imageLeft = textX + (textPaint.getTextAlign() == Paint.Align.LEFT ? -imageSize - 5 : 5);
-                float imageTop = textY - imageSize / 2;
-
-                Path clipPath = new Path();
-                clipPath.addRect(imageLeft, imageTop, imageLeft + imageSize, imageTop + imageSize, Path.Direction.CW);
-
-                canvas.save();
-                canvas.clipPath(clipPath);
-
-                float scale = Math.max(imageSize / bitmap.getWidth(), imageSize / bitmap.getHeight());
-                float scaledWidth = bitmap.getWidth() * scale;
-                float scaledHeight = bitmap.getHeight() * scale;
-                float drawLeft = imageLeft + (imageSize - scaledWidth) / 2;
-                float drawTop = imageTop + (imageSize - scaledHeight) / 2;
-
-                canvas.drawBitmap(bitmap, drawLeft, drawTop, imagePaint);
-                canvas.restore();
-
-                imageOffset = imageSize + 8;
-            }
-
             String labelText = String.format("%s %.1f%%", slice.name, slice.percentage);
-            float finalTextX = textX + (textPaint.getTextAlign() == Paint.Align.LEFT ? imageOffset : -imageOffset);
-            canvas.drawText(labelText, finalTextX, textY, textPaint);
-        }
-    }
-
-    private void drawImages(Canvas canvas) {
-        for (PieSlice slice : pieSlices) {
-            Bitmap bitmap = imageCache.get(slice.name);
-            if (bitmap == null || bitmap.isRecycled()) {
-                continue;
-            }
-
-            float midAngle = slice.startAngle + slice.sweepAngle / 2;
-            double radian = Math.toRadians(midAngle);
-
-            float imageRadius = radius * 0.65f;
-            float imageX = centerX + (float) (Math.cos(radian) * imageRadius);
-            float imageY = centerY + (float) (Math.sin(radian) * imageRadius);
-
-            Path clipPath = new Path();
-            float clipRadius = radius * 0.12f;
-            clipPath.addCircle(imageX, imageY, clipRadius, Path.Direction.CW);
-
-            canvas.save();
-            canvas.clipPath(clipPath);
-
-            float bitmapWidth = bitmap.getWidth();
-            float bitmapHeight = bitmap.getHeight();
-            float scale = Math.min(clipRadius * 2 / bitmapWidth, clipRadius * 2 / bitmapHeight);
-            float scaledWidth = bitmapWidth * scale;
-            float scaledHeight = bitmapHeight * scale;
-
-            float left = imageX - scaledWidth / 2;
-            float top = imageY - scaledHeight / 2;
-
-            canvas.drawBitmap(bitmap, left, top, imagePaint);
-            canvas.restore();
+            canvas.drawText(labelText, textX, textY, textPaint);
         }
     }
 
