@@ -165,37 +165,49 @@ public class DeckPieChartView extends View {
     }
 
     private void loadCardImageForSlice(String sliceName) {
-        if (sliceName == null || "others".equals(sliceName)) {
+        if (sliceName == null) {
             return;
         }
-        SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
+
+        int fixedCardId = 0;
+        if ("others".equals(sliceName)) {
+            fixedCardId = 13803864;
+        } else if ("迷之卡组".equals(sliceName)) {
+            fixedCardId = 27288416;
+        }
+
         Card matchedCard = null;
-        int matchPriority = 0;
+        if (fixedCardId != 0) {
+            matchedCard = DataManager.get().getCardManager().getCard(fixedCardId);
+        } else {
+            SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
+            int matchPriority = 0;
 
-        for (int i = 0; i < allCards.size(); i++) {
-            Card card = allCards.valueAt(i);
-            if (card != null && card.Name != null) {
-                boolean isMonster = card.isType(CardType.Monster);
-                boolean startsWith = card.Name.startsWith(sliceName);
-                boolean contains = card.Name.contains(sliceName);
+            for (int i = 0; i < allCards.size(); i++) {
+                Card card = allCards.valueAt(i);
+                if (card != null && card.Name != null) {
+                    boolean isMonster = card.isType(CardType.Monster);
+                    boolean startsWith = card.Name.startsWith(sliceName);
+                    boolean contains = card.Name.contains(sliceName);
 
-                int currentPriority = 0;
+                    int currentPriority = 0;
 
-                if (startsWith && isMonster) {
-                    currentPriority = 4;
-                } else if (startsWith) {
-                    currentPriority = 3;
-                } else if (contains && isMonster) {
-                    currentPriority = 2;
-                } else if (contains) {
-                    currentPriority = 1;
-                }
+                    if (startsWith && isMonster) {
+                        currentPriority = 4;
+                    } else if (startsWith) {
+                        currentPriority = 3;
+                    } else if (contains && isMonster) {
+                        currentPriority = 2;
+                    } else if (contains) {
+                        currentPriority = 1;
+                    }
 
-                if (currentPriority > matchPriority) {
-                    matchedCard = card;
-                    matchPriority = currentPriority;
-                    if (matchPriority == 4) {
-                        break;
+                    if (currentPriority > matchPriority) {
+                        matchedCard = card;
+                        matchPriority = currentPriority;
+                        if (matchPriority == 4) {
+                            break;
+                        }
                     }
                 }
             }
