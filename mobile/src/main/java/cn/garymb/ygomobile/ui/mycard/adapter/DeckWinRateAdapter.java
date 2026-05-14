@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.mycard.adapter;
 
-import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -9,7 +8,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.mycard.MyCardPieChart;
+import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
 
 public class DeckWinRateAdapter extends BaseQuickAdapter<MyCardPieChart.Item, BaseViewHolder> {
 

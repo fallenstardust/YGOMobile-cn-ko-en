@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +22,7 @@ import java.util.List;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.adapter.DeckWinRateAdapter;
+import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class DeckWinRateFragment extends BaseFragemnt {

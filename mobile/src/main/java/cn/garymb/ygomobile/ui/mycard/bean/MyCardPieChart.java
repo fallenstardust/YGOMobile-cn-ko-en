@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.mycard;
+package cn.garymb.ygomobile.ui.mycard.bean;
 
 import static cn.garymb.ygomobile.ui.mycard.MyCard.URL_DECK_TYPE_ANALYTICS;
 
@@ -43,7 +43,7 @@ public class MyCardPieChart extends ArrayList<MyCardPieChart.Item> {
 
                 String json = response.body().string();
                 MyCardPieChart result = new Gson().fromJson(json, MyCardPieChart.class);
-                
+
                 //这是一个打印测试
                 /*
                 if (result != null) {
@@ -77,7 +77,7 @@ public class MyCardPieChart extends ArrayList<MyCardPieChart.Item> {
                     }
                 }
                 */
-                
+
                 listener.onMyCardPieChartQuery(result, null);
             }
         });

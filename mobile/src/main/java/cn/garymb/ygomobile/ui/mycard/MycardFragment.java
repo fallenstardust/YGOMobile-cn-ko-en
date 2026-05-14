@@ -48,6 +48,7 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.adapter.McNewsAdapter;
 import cn.garymb.ygomobile.ui.mycard.bean.McNews;
+import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
 import cn.garymb.ygomobile.ui.widget.DeckPieChartView;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
@@ -941,13 +942,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                                     .setCustomAnimations(R.anim.in_from_bottom, R.anim.out_to_top,
                                             R.anim.in_from_bottom, R.anim.out_to_top)
                                     .show(homeActivity.fragment_mycard_chatting_room).commit();
-                            rl_chat.setVisibility(View.VISIBLE);
+                            rl_chat.setVisibility(View.INVISIBLE);
                         } else {
                             getChildFragmentManager().beginTransaction()
                                     .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                             android.R.anim.fade_in, android.R.anim.fade_out)
                                     .hide(homeActivity.fragment_mycard_chatting_room).commit();
-                            rl_chat.setVisibility(View.INVISIBLE);
+                            rl_chat.setVisibility(View.VISIBLE);
                         }
 
                     }

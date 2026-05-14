@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -21,11 +22,17 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -214,50 +221,80 @@ public class DeckPieChartView extends View {
         }
 
         if (matchedCard != null) {
-            ImageView tempImageView = new ImageView(getContext());
-            tempImageView.setLayoutParams(new LayoutParams(1, 1));
-
-            imageLoader.bindImage(tempImageView, matchedCard, ImageLoader.Type.small);
-
-            Log.d("DeckPieChartView", "已调用: " + sliceName + " " + matchedCard.Name);
-
-            Drawable drawable = tempImageView.getDrawable();
-            if (drawable != null) {
-                Bitmap bitmap = drawableToBitmap(drawable);
-                if (bitmap != null) {
-                    imageCache.put(sliceName, bitmap);
-                    invalidate();
-                }
+            long cardCode = matchedCard.Code;
+            Bitmap bitmap = loadBitmapFromZips(cardCode);
+            
+            if (bitmap != null) {
+                imageCache.put(sliceName, bitmap);
+                postInvalidate();
+            } else {
+                Log.w("DeckPieChartView", "未找到卡片图片: code=" + cardCode);
             }
         } else {
             Log.w("DeckPieChartView", "未找到匹配的卡片: " + sliceName);
         }
     }
 
-    private Bitmap drawableToBitmap(Drawable drawable) {
-        if (drawable == null) {
+    private Bitmap loadBitmapFromZips(long cardCode) {
+        String resourcePath = AppsSettings.get().getResourcePath();
+        File resourceDir = new File(resourcePath);
+        
+        if (!resourceDir.exists() || !resourceDir.isDirectory()) {
+            Log.w("DeckPieChartView", "资源目录不存在: " + resourcePath);
             return null;
         }
-
-        try {
-            int width = drawable.getIntrinsicWidth();
-            int height = drawable.getIntrinsicHeight();
-
-            if (width <= 0 || height <= 0) {
-                width = 177;
-                height = 254;
+        
+        File[] files = resourceDir.listFiles();
+        if (files == null || files.length == 0) {
+            Log.w("DeckPieChartView", "资源目录为空: " + resourcePath);
+            return null;
+        }
+        
+        for (String ext : Constants.IMAGE_EX) {
+            String targetFileName = cardCode + ext;
+            Log.d("DeckPieChartView", "查找文件: " + targetFileName);
+            
+            for (File file : files) {
+                if (!file.isFile() || !file.getName().toLowerCase().endsWith(".zip")) {
+                    continue;
+                }
+                
+                ZipFile zipFile = null;
+                try {
+                    zipFile = new ZipFile(file);
+                    ZipEntry entry = zipFile.getEntry("pics/" + targetFileName);
+                    
+                    if (entry == null) {
+                        entry = zipFile.getEntry(targetFileName);
+                    }
+                    
+                    if (entry != null) {
+                        Log.d("DeckPieChartView", "在 " + file.getName() + " 中找到: " + entry.getName());
+                        
+                        InputStream inputStream = zipFile.getInputStream(entry);
+                        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                        inputStream.close();
+                        
+                        if (bitmap != null) {
+                            Log.d("DeckPieChartView", "成功解码bitmap: " + bitmap.getWidth() + "x" + bitmap.getHeight());
+                            return bitmap;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.w("DeckPieChartView", "读取zip失败: " + file.getName(), e);
+                } finally {
+                    if (zipFile != null) {
+                        try {
+                            zipFile.close();
+                        } catch (Exception e) {
+                            // Ignore
+                        }
+                    }
+                }
             }
-
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-            drawable.draw(canvas);
-
-            return bitmap;
-        } catch (Exception e) {
-            Log.e("DeckPieChartView", "drawableToBitmap失败: ", e);
-            return null;
         }
+        
+        return null;
     }
 
     public void clearAllImages() {
