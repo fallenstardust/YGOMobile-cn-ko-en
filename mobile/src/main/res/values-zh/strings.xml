@@ -421,4 +421,5 @@
     <string name="match_duel">比赛模式</string>
     <string name="tag_duel">双打模式</string>
     <string name="unknown_room">未知房间</string>
+    <string name="create_custom_room">自定义房间</string>
 </resources>

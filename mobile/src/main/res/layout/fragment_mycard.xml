@@ -44,8 +44,8 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="bottom|right"
                     android:background="@drawable/selected_light"
-                    android:paddingHorizontal="4dp"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
 
                     <ProgressBar
                         android:id="@+id/pb_loading"
@@ -93,16 +93,16 @@
             android:layout_height="wrap_content"
             android:layout_gravity="left"
             android:background="@drawable/list_item_bg"
-            android:padding="5dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="5dp">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btn_mycard_bbs"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="left|center"
-                android:tint="@color/holo_blue_bright"
                 android:src="@drawable/ic_forum"
+                android:tint="@color/holo_blue_bright"
                 android:visibility="visible" />
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -593,23 +593,48 @@
                             android:orientation="horizontal">
 
                             <LinearLayout
-                                android:layout_width="match_parent"
+                                android:layout_width="0dp"
                                 android:layout_height="match_parent"
                                 android:layout_weight="1"
                                 android:background="@drawable/dialogshort"
                                 android:orientation="vertical">
 
-                                <TextView
+                                <com.google.android.material.tabs.TabLayout
+                                    android:id="@+id/tablayout_mycard"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:layout_marginBottom="8dp"
-                                    android:background="@drawable/veil2"
-                                    android:gravity="center"
-                                    android:text="@string/watch_duel"
-                                    android:textColor="@color/holo_green_bright"
-                                    android:textSize="12sp"
-                                    android:textStyle="bold" />
+                                    android:layout_gravity="center_horizontal"
+                                    app:tabTextAppearance="@style/wallet_third_tab_layout" />
+
+                                <LinearLayout
+                                    android:id="@+id/ll_mycard_waiting_rooms"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:visibility="gone"
+                                    android:orientation="vertical">
+
+                                    <Button
+                                        android:id="@+id/btn_create_room"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:background="@drawable/button2_bg"
+                                        android:text="@string/create_custom_room"
+                                        android:textSize="12sp"
+                                        android:visibility="gone" />
+
+                                    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                                        android:id="@+id/srl_waiting"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent">
+
+                                        <cn.garymb.ygomobile.ui.widget.GridRecyclerView
+                                            android:id="@+id/rv_waiting_list"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:descendantFocusability="blocksDescendants" />
+                                    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+                                </LinearLayout>
 
                                 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                                     android:id="@+id/srl_update"
@@ -626,7 +651,7 @@
 
 
                             <LinearLayout
-                                android:layout_width="match_parent"
+                                android:layout_width="0dp"
                                 android:layout_height="match_parent"
                                 android:layout_marginLeft="5dp"
                                 android:layout_weight="1"

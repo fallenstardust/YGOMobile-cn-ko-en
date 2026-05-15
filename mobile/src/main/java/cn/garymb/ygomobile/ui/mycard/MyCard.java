@@ -66,6 +66,7 @@ public class MyCard {
     public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
     public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
     public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
+    public static final String URL_MC_JOIN_DUEL_MATCH = "wss://tiramisu.moecube.com:17923/?filter=waiting";
     public static final String URL_MC_MATCH = "https://api.moecube.com/ygopro/match";
     public static final String MYCARD_POST_URL = "https://ygobbs2.com/t/";
     public static final String ARG_ID = "id";

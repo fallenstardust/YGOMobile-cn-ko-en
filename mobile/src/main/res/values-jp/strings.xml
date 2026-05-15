@@ -417,4 +417,5 @@
     <string name="match_duel">マッチモード</string>
     <string name="tag_duel">タグモード</string>
     <string name="unknown_room">不明モード</string>
+    <string name="create_custom_room">カスタムルーム</string>
 </resources>

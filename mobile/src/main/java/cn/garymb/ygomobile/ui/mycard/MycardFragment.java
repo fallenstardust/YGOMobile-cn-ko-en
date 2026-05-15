@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -30,11 +31,15 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.feihua.dialogutils.util.DialogUtils;
+import com.google.android.material.tabs.TabLayout;
 import com.king.view.circleprogressview.CircleProgressView;
 import com.ourygo.lib.duelassistant.util.Util;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -43,6 +48,7 @@ import cn.garymb.ygomobile.adapter.DuelRoomBQAdapter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
@@ -66,10 +72,13 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.HandlerUtil;
+import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
+import ocgcore.StringManager;
+import okhttp3.Call;
 
 public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener, OnDuelRoomListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
@@ -87,7 +96,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int TYPE_MC_NEWS_QUERY_EXCEPTION = 17;
 
     private HomeActivity homeActivity;
-    private LinearLayout ll_athletic, ll_entertain, ll_dialog_login, ll_main_ui;
+    private LinearLayout ll_athletic, ll_entertain, ll_dialog_login, ll_main_ui, ll_mycard_waiting_rooms;
     private EditText et_username, et_password;
     private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_dp_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs;
     private Button btn_login, btn_register;
@@ -114,6 +123,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private RecyclerView rv_mcNews_list;
     private McNewsAdapter mcNewsAdapter;
     private List<McNews> mcNewsList = new ArrayList<>();
+    private TabLayout tabLayout;
+    private Button btnCreateRoom;
+    private boolean isSpectateTab = true;
+    private RecyclerView rv_waiting_list;
+    private SwipeRefreshLayout srl_waiting;
+    private DuelRoomBQAdapter waitingRoomAdapter;
+    private List<DuelRoom> waitingRoomList = new ArrayList<>();
+
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -246,8 +263,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         initRankViews(view);
         initMatchViews(view);
         initWatchDuelView(view);
+        initWaitingRoomView(view);
         initPieChartViews(view);
         initMcNewsView(view);
+        setupTabLayout(view);
 
         btn_login.setOnClickListener(v -> attemptLogin());
         btn_register.setOnClickListener(v -> {
@@ -1441,4 +1460,73 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             tv_message.setText(R.string.reChatJoining);
         }
     }
+
+    private void initWaitingRoomView(View view) {
+        ll_mycard_waiting_rooms = view.findViewById(R.id.ll_mycard_waiting_rooms);
+        srl_waiting = view.findViewById(R.id.srl_waiting);
+        rv_waiting_list = view.findViewById(R.id.rv_waiting_list);
+
+        rv_waiting_list.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        waitingRoomAdapter = new DuelRoomBQAdapter(requireContext(), new ArrayList<DuelRoom>());
+        rv_waiting_list.setAdapter(waitingRoomAdapter);
+
+        // 设置下拉刷新监听器
+        srl_waiting.setOnRefreshListener(() -> {
+            loadWaitingRooms();
+        });
+
+        // 初始化时加载等待中的房间
+        loadWaitingRooms();
+    }
+
+    private void loadWaitingRooms() {
+        // TODO: 这里添加获取等待中房间的逻辑
+        // 目前暂时模拟一些数据，后续应替换为实际API调用
+        if (srl_waiting != null) {
+            srl_waiting.setRefreshing(true);
+        }
+
+    }
+
+    private void setupTabLayout(View view) {
+        tabLayout = view.findViewById(R.id.tablayout_mycard);
+        btnCreateRoom = view.findViewById(R.id.btn_create_room);
+
+        // 添加两个标签
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.watch_duel));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.quick_join));
+
+        // 设置默认选中的标签
+        tabLayout.selectTab(tabLayout.getTabAt(0));
+        isSpectateTab = true;
+
+        // 设置标签切换监听器
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int position = tab.getPosition();
+                if (position == 0) {
+                    // 萌卡观战标签 - 显示观战列表
+                    isSpectateTab = true;
+                    rv_list.setVisibility(View.VISIBLE);
+                    ll_mycard_waiting_rooms.setVisibility(View.GONE);
+                } else {
+                    // 等待中的房间标签 - 隐藏观战列表
+                    isSpectateTab = false;
+                    rv_list.setVisibility(View.GONE);
+                    ll_mycard_waiting_rooms.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+    }
+
 }

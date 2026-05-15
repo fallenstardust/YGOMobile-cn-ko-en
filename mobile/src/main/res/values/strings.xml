@@ -390,12 +390,9 @@
     <string name="open">Open the deck</string>
     <string name="web_warn_save_deck">Opening the deck will close the webpage you are currently viewing. Do you want to close the webpage and open the deck</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
+
     <string name="down_complete">download complete</string>
-    <string name="upload">upload</string>
+
     <string name="go_to">go to</string>
     <string name="local_deck">my decks</string>
     <string name="in_public">in Public</string>
@@ -446,4 +443,14 @@
     <string name="match_duel">Match Duel</string>
     <string name="tag_duel">Tag Duel</string>
     <string name="unknown_room">Unknown Mode</string>
+    <string name="waiting_rooms">waiting rooms</string>
+    <string name="create_custom_room">Create Room</string>
+    <string name="select_custom_mode">Select Custom Mode</string>
+    <string name="mode_single_duel">Single Duel</string>
+    <string name="mode_tag_duel">Tag Duel</string>
+    <string name="mode_match_duel">Match Duel</string>
+    <string name="creating_room">Creating %s Room...</string>
+    <string name="create_room_failed">Failed to Create Room</string>
+    <string name="no_waiting_rooms">No Waiting Rooms</string>
+
 </resources>

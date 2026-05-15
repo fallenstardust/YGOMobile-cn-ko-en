@@ -34,6 +34,7 @@ import java.util.zip.ZipFile;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.utils.BitmapUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -177,13 +178,31 @@ public class DeckPieChartView extends View {
         }
 
         int fixedCardId = 0;
-        if ("others".equals(sliceName)) {
-            fixedCardId = 13803864;
-        } else if ("迷之卡组".equals(sliceName)) {
+        if ("迷之卡组".equals(sliceName)) {
             fixedCardId = 27288416;
         }
 
         Card matchedCard = null;
+        Bitmap bitmap = null;
+
+        if ("others".equals(sliceName)) {
+            // 对于 "others"，使用指定的封面图片
+            try {
+                String coverPath = Constants.ASSET_COVER + "running_dealer_cover.jpg";
+                bitmap = BitmapUtil.getBitmapFormAssets(getContext(), coverPath, 0, 0);
+                
+                if (bitmap != null) {
+                    imageCache.put(sliceName, cropBitmap(bitmap));
+                    postInvalidate();
+                } else {
+                    Log.w("DeckPieChartView", "未找到 others 封面图片: " + coverPath);
+                }
+            } catch (Exception e) {
+                Log.e("DeckPieChartView", "加载 others 封面图片失败", e);
+            }
+            return;
+        }
+
         if (fixedCardId != 0) {
             matchedCard = DataManager.get().getCardManager().getCard(fixedCardId);
         } else {
@@ -222,7 +241,7 @@ public class DeckPieChartView extends View {
 
         if (matchedCard != null) {
             long cardCode = matchedCard.Code;
-            Bitmap bitmap = loadBitmapFromZips(cardCode);
+            bitmap = loadBitmapFromZips(cardCode);
 
             if (bitmap != null) {
                 imageCache.put(sliceName, bitmap);
@@ -319,7 +338,23 @@ public class DeckPieChartView extends View {
 
         centerX = w / 2f;
         centerY = h / 2f;
-        radius = Math.min(w, h) / 2f - 80;
+        
+        // 根据视图大小动态计算边距和半径
+        float minDimension = Math.min(w, h);
+        float margin;
+        
+        if (minDimension < 300) {
+            // 小尺寸视图，使用较小边距
+            margin = minDimension * 0.15f;
+        } else if (minDimension < 600) {
+            // 中等尺寸视图，使用适中边距
+            margin = minDimension * 0.2f;
+        } else {
+            // 大尺寸视图，使用较大边距但限制最大值
+            margin = Math.min(minDimension * 0.25f, 150);
+        }
+        
+        radius = minDimension / 2f - margin;
 
         float left = centerX - radius;
         float top = centerY - radius;
@@ -352,7 +387,9 @@ public class DeckPieChartView extends View {
                 float dy = y - centerY;
                 float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
-                if (distance <= radius && distance >= radius * 0.4f) {
+                // 动态计算可点击区域，基于当前饼图半径
+                float innerRadius = radius * 0.4f;
+                if (distance <= radius && distance >= innerRadius) {
                     mListener.onPieChartClick();
                     return true;
                 }
@@ -394,7 +431,8 @@ public class DeckPieChartView extends View {
         float imageCenterX = centerX + (float) (Math.cos(radian) * radius * 0.3f);
         float imageCenterY = centerY + (float) (Math.sin(radian) * radius * 0.3f);
 
-        float targetSize = radius * 2;
+        // 动态计算目标大小，基于饼图半径
+        float targetSize = radius * 1.8f; // 调整为半径的1.8倍，适应不同大小的饼图
 
         float scale = 1.0f;
         if (bitmapWidth < targetSize || bitmapHeight < targetSize) {
@@ -435,8 +473,10 @@ public class DeckPieChartView extends View {
             float innerX = centerX + (float) (Math.cos(radian) * radius);
             float innerY = centerY + (float) (Math.sin(radian) * radius);
 
-            float outerX = centerX + (float) (Math.cos(radian) * radius * 1.15f);
-            float outerY = centerY + (float) (Math.sin(radian) * radius * 1.15f);
+            // 动态计算标签线的外部位置，基于饼图半径
+            float labelLineExtension = radius * 0.15f; // 标签线延伸长度为半径的15%
+            float outerX = centerX + (float) (Math.cos(radian) * (radius + labelLineExtension));
+            float outerY = centerY + (float) (Math.sin(radian) * (radius + labelLineExtension));
 
             float textX;
             float textY;

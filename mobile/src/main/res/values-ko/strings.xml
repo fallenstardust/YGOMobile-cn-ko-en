@@ -435,4 +435,5 @@
     <string name="match_duel">매치 모드</string>
     <string name="tag_duel">태그 모드</string>
     <string name="unknown_room">알 수 없는 모드</string>
+    <string name="create_custom_room">커스텀 방</string>
 </resources>

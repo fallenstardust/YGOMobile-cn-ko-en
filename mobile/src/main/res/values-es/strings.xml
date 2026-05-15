@@ -416,6 +416,7 @@
     <string name="match_duel">Modo Match</string>
     <string name="tag_duel">Modo Tag</string>
     <string name="unknown_room">Modo Unknown</string>
+    <string name="create_custom_room">Sala Custom</string>
 </resources>
 
 
