@@ -23,8 +23,6 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.BasicResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DeckMultiIdResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.DownloadDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.GetSquareDeckCondition;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginRequest;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
@@ -39,10 +37,6 @@ import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class DeckSquareApiUtil {
@@ -373,47 +367,6 @@ public class DeckSquareApiUtil {
 
         return result;
 
-
-    }
-
-    public static LoginResponse login(String username, String password) throws IOException {
-        LoginResponse result = null;
-
-        String url = "https://sapi.moecube.com:444/accounts/signin";
-        // Create request body using Gson
-        Gson gson = new Gson();
-        LoginRequest loginRequest = new LoginRequest(username, password);
-
-        String json = gson.toJson(loginRequest);//"{\"id\":1,\"name\":\"John\"}";
-
-        RequestBody body = RequestBody.create(
-                MediaType.parse("application/json"), json);
-
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .build();
-
-        OkHttpClient okHttpClient = new OkHttpClient();
-        Response response = okHttpClient.newCall(request).execute();
-
-        // Read the response body
-        String responseBody = response.body().string();
-        LogUtil.i(TAG, "Login Response body: " + responseBody);
-
-        // Process the response
-        if (response.isSuccessful()) {
-            // Successful response (code 200-299)
-            // Parse the JSON response if needed
-            result = gson.fromJson(responseBody, LoginResponse.class);
-            LogUtil.i(TAG, "Login response: " + result);
-        } else {
-            // Error response
-            LogUtil.e(TAG, "Request failed: " + responseBody);
-        }
-
-
-        return result;
 
     }
 

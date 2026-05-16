@@ -58,8 +58,6 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
-import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.adapter.McNewsAdapter;
 import cn.garymb.ygomobile.ui.mycard.bean.McNews;
@@ -107,8 +105,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     private HomeActivity homeActivity;
     private LinearLayout ll_athletic, ll_entertain, ll_dialog_login, ll_main_ui, ll_mycard_waiting_rooms;
-    private EditText et_username, et_password;
-    private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_dp_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs;
+    private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_dp_title, mNameView, mStatusView, tv_mycard_bbs;
     private Button btn_login, btn_register;
     private ProgressBar progressBar_login;
     private ImageView mHeadView, img_logout, iv_refresh, btn_mycard_bbs;
@@ -244,10 +241,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         mainContentView = view.findViewById(R.id.ll_main_ui);
         ll_dialog_login = view.findViewById(R.id.ll_dialog_login);
         ll_main_ui = view.findViewById(R.id.ll_main_ui);
-        et_username = view.findViewById(R.id.et_username);
-        et_password = view.findViewById(R.id.et_password);
-        tv_account_warning = view.findViewById(R.id.tv_account_warning);
-        tv_pwd_warning = view.findViewById(R.id.tv_pwd_warning);
         btn_login = view.findViewById(R.id.btn_login);
         btn_register = view.findViewById(R.id.btn_register);
         progressBar_login = view.findViewById(R.id.progressBar_login);
@@ -280,8 +273,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         setupTabLayout(view);
 
         btn_login.setOnClickListener(v -> attemptLogin());
-        btn_register.setOnClickListener(v -> {
-        });
+        btn_register.setOnClickListener(v -> MyCardSso.openSignup(getActivity()));
 
         checkLoginState();
 
@@ -330,67 +322,15 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         }
     }
 
+    public void refreshLoginState() {
+        if (ll_dialog_login == null || ll_main_ui == null) {
+            return;
+        }
+        checkLoginState();
+    }
+
     private void attemptLogin() {
-        String username = et_username.getText().toString().trim();
-        String password = et_password.getText().toString().trim();
-
-        if (username.isEmpty()) {
-            tv_account_warning.setVisibility(View.VISIBLE);
-            return;
-        } else {
-            tv_account_warning.setVisibility(View.GONE);
-        }
-
-        if (password.isEmpty()) {
-            tv_pwd_warning.setVisibility(View.VISIBLE);
-            return;
-        } else {
-            tv_pwd_warning.setVisibility(View.GONE);
-        }
-
-        progressBar_login.setVisibility(View.VISIBLE);
-        btn_login.setEnabled(false);
-
-        VUiKit.defer().when(() -> {
-            LoginResponse result = DeckSquareApiUtil.login(username, password);
-            SharedPreferenceUtil.setServerToken(result.token);
-            SharedPreferenceUtil.setServerUserId(result.user.id);
-            SharedPreferenceUtil.setMyCardUserName(result.user.username);
-            return result;
-        }).fail((e) -> {
-            YGOUtil.showTextToast(R.string.logining_failed);
-            progressBar_login.setVisibility(View.GONE);
-            btn_login.setEnabled(true);
-        }).done((result) -> {
-            if (result != null) {
-                ll_dialog_login.setVisibility(View.GONE);
-                ll_main_ui.setVisibility(View.VISIBLE);
-                progressBar_login.setVisibility(View.GONE);
-                btn_login.setEnabled(true);
-
-                String userName = result.user.username;
-                mNameView.setText(userName);
-
-                McUser mcUser = new McUser();
-                mcUser.setUsername(userName);
-                mcUser.setExternal_id(result.user.id);
-                mcUser.setToken(result.token);
-                mcUser.setAvatar_url(ChatMessage.getAvatarUrl(userName));
-
-                mMcUser = mcUser;
-                UserManagement.getDx().setMcUser(mcUser);
-
-                GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(mHeadView);
-
-                YGOUtil.showTextToast(R.string.login_succeed);
-
-                queryDuelInfo();
-            } else {
-                YGOUtil.showTextToast(R.string.logining_failed);
-                progressBar_login.setVisibility(View.GONE);
-                btn_login.setEnabled(true);
-            }
-        });
+        MyCardSso.openLogin(getActivity());
     }
 
     private void initRankViews(View view) {
@@ -834,6 +774,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         YGOStarter.onResumed(getActivity());
         super.onResume();
 
+        if (!TextUtils.isEmpty(SharedPreferenceUtil.getServerToken()) && !isUserLoggedIn()) {
+            checkLoginState();
+        }
         if (mainContentView != null && isUserLoggedIn() && !hasVisibleChildFragment()) {
             mainContentView.setVisibility(View.VISIBLE);
         }
@@ -1297,9 +1240,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         ll_dialog_login.setVisibility(View.VISIBLE);
         ll_main_ui.setVisibility(View.GONE);
-
-        et_username.setText("");
-        et_password.setText("");
 
         YGOUtil.showTextToast(R.string.logout_mycard);
 

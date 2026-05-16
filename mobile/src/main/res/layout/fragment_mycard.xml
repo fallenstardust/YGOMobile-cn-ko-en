@@ -157,54 +157,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:orientation="vertical">
-
-                    <EditText
-                        android:id="@+id/et_username"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/input_user_name"
-                        android:inputType="text"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/grayDark2" />
-
-                    <TextView
-                        android:id="@+id/tv_account_warning"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/account_warning"
-                        android:textColor="@color/red"
-                        android:visibility="gone" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:orientation="vertical">
-
-                    <EditText
-                        android:id="@+id/et_password"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/input_pwd"
-                        android:inputType="textPassword"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/grayDark2" />
-
-                    <TextView
-                        android:id="@+id/tv_pwd_warning"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/pwd_warning"
-                        android:textColor="@color/red"
-                        android:visibility="gone" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:orientation="horizontal"
                     android:weightSum="2">
 

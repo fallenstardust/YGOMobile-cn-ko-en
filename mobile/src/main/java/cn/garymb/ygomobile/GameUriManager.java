@@ -36,6 +36,9 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
+import cn.garymb.ygomobile.ui.mycard.MyCardSso;
+import cn.garymb.ygomobile.ui.mycard.bean.McUser;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -270,6 +273,28 @@ public class GameUriManager {
                 YGOUtil.showTextToast(activity.getString(R.string.restart_app), Toast.LENGTH_LONG);
             }
         } else {
+            if (MyCardSso.isCallbackUri(uri)) {
+                MyCardSso.handleCallback(activity, uri, new MyCardSso.Callback() {
+                    @Override
+                    public void onSuccess(McUser mcUser) {
+                        if (activity instanceof HomeActivity) {
+                            VUiKit.post(() -> {
+                                HomeActivity homeActivity = (HomeActivity) activity;
+                                if (homeActivity.fragment_mycard != null) {
+                                    homeActivity.fragment_mycard.refreshLoginState();
+                                    homeActivity.switchFragment(homeActivity.fragment_mycard, 3, false);
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                    }
+                });
+                activity.setIntent(new Intent());
+                return;
+            }
             String host = uri.getHost();
 //            if (!Constants.URI_HOST.equalsIgnoreCase(host)) {
 //                return;
