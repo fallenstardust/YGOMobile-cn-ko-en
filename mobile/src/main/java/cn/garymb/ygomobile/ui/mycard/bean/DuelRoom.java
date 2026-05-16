@@ -33,6 +33,7 @@ public class DuelRoom {
     private OptionsBean options;
     private String arena;
     private int arenaType;
+    private transient YGOServer server;
 
     public DuelRoom() {
         arenaType = TYPE_ARENA_NO;
@@ -44,6 +45,14 @@ public class DuelRoom {
 
     public void setArenaType(int arenaType) {
         this.arenaType = arenaType;
+    }
+
+    public YGOServer getServer() {
+        return server;
+    }
+
+    public void setServer(YGOServer server) {
+        this.server = server;
     }
 
     public String getId() {
@@ -92,8 +101,10 @@ public class DuelRoom {
             arenaType = TYPE_ARENA_MATCH;
         } else if (!TextUtils.isEmpty(arena) && arena.equals("entertain")) {
             arenaType = TYPE_ARENA_FUN;
-        } else if (password.startsWith("AI#")) {
+        } else if (!TextUtils.isEmpty(password) && password.startsWith("AI#")) {
             arenaType = TYPE_ARENA_AI;
+        } else if (options == null || options.getMode() == null) {
+            arenaType = TYPE_ARENA_NO;
         } else {
             switch (options.getMode()) {
                 case MODE_SINGLE:

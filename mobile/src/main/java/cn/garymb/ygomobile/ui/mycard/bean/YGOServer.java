@@ -5,6 +5,7 @@ import static cn.garymb.ygomobile.Constants.QUERY_YGO_TYPE;
 import android.net.Uri;
 import android.text.TextUtils;
 
+import com.google.gson.annotations.SerializedName;
 import com.ourygo.lib.duelassistant.util.DARecord;
 import com.ourygo.lib.duelassistant.util.UrlUtil;
 
@@ -34,6 +35,13 @@ public class YGOServer extends ServerInfo {
     @XmlElement("opponent_type")
     private int opponentType;
 
+    private String id;
+    @SerializedName("url")
+    private String socketUrl;
+    private Boolean match;
+    private Boolean hidden;
+    private Boolean custom;
+    private Boolean replay;
     private transient String password;
 
     public static YGOServer toYGOServer(String serverName) {
@@ -53,6 +61,54 @@ public class YGOServer extends ServerInfo {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getSocketUrl() {
+        return socketUrl;
+    }
+
+    public void setSocketUrl(String socketUrl) {
+        this.socketUrl = socketUrl;
+    }
+
+    public boolean isMatch() {
+        return Boolean.TRUE.equals(match);
+    }
+
+    public void setMatch(Boolean match) {
+        this.match = match;
+    }
+
+    public boolean isHidden() {
+        return Boolean.TRUE.equals(hidden);
+    }
+
+    public void setHidden(Boolean hidden) {
+        this.hidden = hidden;
+    }
+
+    public boolean isCustom() {
+        return Boolean.TRUE.equals(custom);
+    }
+
+    public void setCustom(Boolean custom) {
+        this.custom = custom;
+    }
+
+    public boolean isReplay() {
+        return Boolean.TRUE.equals(replay);
+    }
+
+    public void setReplay(Boolean replay) {
+        this.replay = replay;
     }
 
     public int getOpponentType() {

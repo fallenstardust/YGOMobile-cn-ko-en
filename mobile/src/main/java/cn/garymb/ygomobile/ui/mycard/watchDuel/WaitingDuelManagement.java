@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard.watchDuel;
 
+import android.text.TextUtils;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -15,6 +16,7 @@ import java.util.List;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
+import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.utils.HandlerUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -35,8 +37,8 @@ public class WaitingDuelManagement {
 
     private ArrayList<OnDuelRoomListener> onDuelRoomListenerList;
     private boolean isStart;
-    private List<String> urlList;
     private ArrayList<McWatchDuelSocketClient> mcWatchDuelSocketClientList;
+    private final ArrayList<DuelRoom> rooms;
     private Handler handler;
     private Runnable heartBeatRunnable;
 
@@ -44,10 +46,8 @@ public class WaitingDuelManagement {
         onDuelRoomListenerList = new ArrayList<>();
         isStart = false;
 
-        urlList = new ArrayList<>();
-        urlList.add(MyCard.URL_MC_JOIN_DUEL_MATCH);
-
         mcWatchDuelSocketClientList = new ArrayList<>();
+        rooms = new ArrayList<>();
 
         initHandler();
         initHeartBeatRunnable();
@@ -72,11 +72,11 @@ public class WaitingDuelManagement {
 
                 switch (msg.what) {
                     case HANDLE_SEND_MESSAGE:
-                        String message = (String) msg.obj;
+                        RoomSocketMessage socketMessage = (RoomSocketMessage) msg.obj;
                         try {
-                            List<DuelRoom> duelRoomList = JsonUtil.getDuelRoomList(message);
-                            String event = JsonUtil.getDuelRoomEvent(message);
-                            onDuelRoomList(event, duelRoomList);
+                            List<DuelRoom> duelRoomList = JsonUtil.getDuelRoomList(socketMessage.message, socketMessage.server);
+                            String event = JsonUtil.getDuelRoomEvent(socketMessage.message);
+                            applyRoomEvent(event, duelRoomList, socketMessage.server);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -146,23 +146,124 @@ public class WaitingDuelManagement {
         }
     }
 
+    private void applyRoomEvent(String event, List<DuelRoom> duelRoomList, YGOServer server) {
+        switch (event) {
+            case DuelRoom.EVENT_INIT:
+                removeRoomsFromServer(server);
+                upsertRooms(duelRoomList);
+                break;
+            case DuelRoom.EVENT_CREATE:
+            case DuelRoom.EVENT_UPDATE:
+                upsertRooms(duelRoomList);
+                break;
+            case DuelRoom.EVENT_DELETE:
+                removeRooms(duelRoomList);
+                break;
+        }
+        onDuelRoomList(DuelRoom.EVENT_INIT, new ArrayList<>(rooms));
+    }
+
+    private void upsertRooms(List<DuelRoom> duelRoomList) {
+        if (duelRoomList == null) {
+            return;
+        }
+        for (DuelRoom room : duelRoomList) {
+            removeRoom(room);
+            rooms.add(room);
+        }
+    }
+
+    private void removeRooms(List<DuelRoom> duelRoomList) {
+        if (duelRoomList == null) {
+            return;
+        }
+        for (DuelRoom room : duelRoomList) {
+            removeRoom(room);
+        }
+    }
+
+    private void removeRoom(DuelRoom room) {
+        for (int i = rooms.size() - 1; i >= 0; i--) {
+            if (isSameRoom(rooms.get(i), room)) {
+                rooms.remove(i);
+            }
+        }
+    }
+
+    private void removeRoomsFromServer(YGOServer server) {
+        for (int i = rooms.size() - 1; i >= 0; i--) {
+            if (isSameServer(rooms.get(i).getServer(), server)) {
+                rooms.remove(i);
+            }
+        }
+    }
+
+    private boolean isSameRoom(DuelRoom left, DuelRoom right) {
+        if (left == null || right == null || TextUtils.isEmpty(left.getId()) || TextUtils.isEmpty(right.getId())) {
+            return false;
+        }
+        return left.getId().equals(right.getId()) && isSameServer(left.getServer(), right.getServer());
+    }
+
+    private boolean isSameServer(YGOServer left, YGOServer right) {
+        if (left == right) {
+            return true;
+        }
+        if (left == null || right == null) {
+            return false;
+        }
+        if (!TextUtils.isEmpty(left.getId()) && !TextUtils.isEmpty(right.getId())) {
+            return left.getId().equals(right.getId());
+        }
+        return TextUtils.equals(left.getServerAddr(), right.getServerAddr()) && left.getPort() == right.getPort();
+    }
+
     public void start() {
         if (isStart) return;
         isStart = true;
-        if (!mcWatchDuelSocketClientList.isEmpty()) return;
+        if (!mcWatchDuelSocketClientList.isEmpty()) {
+            isStart = false;
+            return;
+        }
 
-        initSocketClient();
-        handler.postDelayed(heartBeatRunnable, HEART_BEAT_RATE);
-        isStart = false;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<YGOServer> servers;
+                try {
+                    servers = MyCard.getCustomServers();
+                } catch (Exception e) {
+                    LogUtil.e(TAG, "加载自定义房间服务器失败：" + e.getMessage());
+                    servers = new ArrayList<>();
+                    servers.add(MyCard.getDefaultCustomServer(null));
+                }
+
+                List<YGOServer> finalServers = servers;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!mcWatchDuelSocketClientList.isEmpty()) {
+                            isStart = false;
+                            return;
+                        }
+
+                        initSocketClient(finalServers);
+                        handler.postDelayed(heartBeatRunnable, HEART_BEAT_RATE);
+                        isStart = false;
+                    }
+                });
+            }
+        }).start();
     }
 
-    private void initSocketClient() {
-        for (String urlString : urlList) {
+    private void initSocketClient(List<YGOServer> servers) {
+        for (YGOServer server : servers) {
+            String urlString = getRoomSocketUrl(server);
             McWatchDuelSocketClient client = new McWatchDuelSocketClient(URI.create(urlString)) {
                 @Override
                 public void onMessage(String message) {
                     LogUtil.e(TAG, "WebSocketService收到的消息：" + message);
-                    HandlerUtil.sendMessage(handler, HANDLE_SEND_MESSAGE, message);
+                    HandlerUtil.sendMessage(handler, HANDLE_SEND_MESSAGE, new RoomSocketMessage(message, server));
                 }
 
                 @Override
@@ -192,6 +293,17 @@ public class WaitingDuelManagement {
             connect(client);
             mcWatchDuelSocketClientList.add(client);
         }
+    }
+
+    private String getRoomSocketUrl(YGOServer server) {
+        String socketUrl = server == null ? null : server.getSocketUrl();
+        if (TextUtils.isEmpty(socketUrl)) {
+            socketUrl = MyCard.URL_MC_JOIN_DUEL_MATCH;
+        }
+        if (socketUrl.contains("filter=")) {
+            return socketUrl;
+        }
+        return socketUrl + (socketUrl.contains("?") ? "&" : "?") + "filter=waiting";
     }
 
     private void connect(final McWatchDuelSocketClient client) {
@@ -234,6 +346,8 @@ public class WaitingDuelManagement {
             }
         }
         mcWatchDuelSocketClientList.clear();
+        rooms.clear();
+        isStart = false;
     }
 
     private void reconnectWs(final McWatchDuelSocketClient client) {
@@ -249,5 +363,15 @@ public class WaitingDuelManagement {
                 }
             }
         }).start();
+    }
+
+    private static class RoomSocketMessage {
+        private final String message;
+        private final YGOServer server;
+
+        private RoomSocketMessage(String message, YGOServer server) {
+            this.message = message;
+            this.server = server;
+        }
     }
 }

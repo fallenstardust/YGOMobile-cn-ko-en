@@ -18,6 +18,7 @@
 
         <!-- 返回箭头 (占位，可替换为ImageView) -->
         <TextView
+            android:id="@+id/btn_close_create_room"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="←"
@@ -38,6 +39,7 @@
 
         <!-- 环境标签 -->
         <TextView
+            android:id="@+id/tv_create_room_server"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="环境: MyCard"
@@ -46,12 +48,10 @@
             android:layout_marginRight="16dp"/>
 
         <!-- 下拉箭头 (占位) -->
-        <TextView
+        <Spinner
+            android:id="@+id/spinner_create_room_server"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="▼"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
             android:layout_marginRight="16dp"/>
     </LinearLayout>
 
@@ -66,15 +66,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp"
-            android:spacing="16dp">
+            android:padding="16dp">
 
             <!-- 游戏标题输入项 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -87,6 +85,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp">
                     <EditText
+                        android:id="@+id/et_custom_room_title"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="@drawable/selected_light"
@@ -97,6 +96,7 @@
 
                     <!-- 字符计数 -->
                     <TextView
+                        android:id="@+id/tv_custom_room_title_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="5 / 12"
@@ -113,8 +113,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -124,6 +123,7 @@
                     android:textSize="14sp"/>
 
                 <Spinner
+                    android:id="@+id/spinner_custom_room_rule"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/selected_light"
@@ -134,8 +134,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -145,6 +144,7 @@
                     android:textSize="14sp"/>
 
                 <Spinner
+                    android:id="@+id/spinner_custom_room_mode"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/selected_light"
@@ -155,8 +155,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -166,6 +165,7 @@
                     android:textSize="14sp"/>
 
                 <Spinner
+                    android:id="@+id/spinner_custom_room_duel_rule"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/selected_light"
@@ -176,8 +176,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -187,6 +186,7 @@
                     android:textSize="14sp"/>
 
                 <EditText
+                    android:id="@+id/et_custom_room_start_lp"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/selected_light"
@@ -200,8 +200,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -211,6 +210,7 @@
                     android:textSize="14sp"/>
 
                 <EditText
+                    android:id="@+id/et_custom_room_start_hand"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/selected_light"
@@ -224,8 +224,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -235,6 +234,7 @@
                     android:textSize="14sp"/>
 
                 <EditText
+                    android:id="@+id/et_custom_room_draw_count"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:background="@drawable/selected_light"
@@ -249,10 +249,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:spacing="8dp"
                 android:layout_marginTop="8dp">
 
                 <CheckBox
+                    android:id="@+id/cb_custom_room_private"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="私密房间"
@@ -260,6 +260,7 @@
                     android:textSize="14sp"/>
 
                 <CheckBox
+                    android:id="@+id/cb_custom_room_no_check_deck"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="不检查卡组"
@@ -267,6 +268,7 @@
                     android:textSize="14sp"/>
 
                 <CheckBox
+                    android:id="@+id/cb_custom_room_no_shuffle_deck"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="不洗切卡组"
@@ -274,6 +276,7 @@
                     android:textSize="14sp"/>
 
                 <CheckBox
+                    android:id="@+id/cb_custom_room_auto_death"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="自动加时赛"

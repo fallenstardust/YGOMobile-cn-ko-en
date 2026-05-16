@@ -178,8 +178,20 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
         baseViewHolder.getView(R.id.ll_item).setLayoutParams(lp);
 
 
-        baseViewHolder.setText(R.id.tv_name1, duelRoom.getUsers().get(0).getUsername());
-        baseViewHolder.setText(R.id.tv_name2, duelRoom.getUsers().get(1).getUsername());
+        List<DuelRoom.UserBean> users = duelRoom.getUsers();
+        String leftName = "";
+        String rightName = "";
+        if (users != null && users.size() >= 2) {
+            leftName = users.get(0).getUsername();
+            rightName = users.get(1).getUsername();
+        } else {
+            leftName = !TextUtils.isEmpty(duelRoom.getTitle()) ? duelRoom.getTitle() : duelRoom.getId();
+            if (users != null && users.size() == 1) {
+                rightName = users.get(0).getUsername();
+            }
+        }
+        baseViewHolder.setText(R.id.tv_name1, leftName);
+        baseViewHolder.setText(R.id.tv_name2, rightName);
     }
 
     private int getTypeCount(int arenaType) {
