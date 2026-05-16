@@ -55,6 +55,7 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.adapter.McNewsAdapter;
 import cn.garymb.ygomobile.ui.mycard.bean.McNews;
 import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
+import cn.garymb.ygomobile.ui.mycard.watchDuel.WaitingDuelManagement;
 import cn.garymb.ygomobile.ui.widget.DeckPieChartView;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
@@ -115,6 +116,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private SwipeRefreshLayout srl_update;
     private RecyclerView rv_list;
     private WatchDuelManagement duelManagement;
+    private WaitingDuelManagement waitingDuelManagement;
     private DuelRoomBQAdapter duelRoomBQAdapter;
     private DeckPieChartView pieChartView;
     private TextView tvEmpty;
@@ -845,6 +847,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onDestroy() {
         YGOStarter.onDestroy(getActivity());
+        if (waitingDuelManagement != null) {
+            waitingDuelManagement.closeConnect();
+        }
         super.onDestroy();
     }
 
@@ -1471,22 +1476,131 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         waitingRoomAdapter = new DuelRoomBQAdapter(requireContext(), new ArrayList<DuelRoom>());
         rv_waiting_list.setAdapter(waitingRoomAdapter);
 
-        // 设置下拉刷新监听器
+        waitingDuelManagement = WaitingDuelManagement.getInstance();
+        waitingDuelManagement.addListener(new OnDuelRoomListener() {
+            @Override
+            public void onInit(List<DuelRoom> duelRoomList) {
+                if (srl_waiting != null) {
+                    srl_waiting.setRefreshing(false);
+                }
+                waitingRoomAdapter.getData().clear();
+                if (duelRoomList != null && !duelRoomList.isEmpty()) {
+                    waitingRoomAdapter.addData(duelRoomList);
+                }
+            }
+
+            @Override
+            public void onCreate(List<DuelRoom> duelRoomList) {
+                waitingRoomAdapter.addData(duelRoomList);
+            }
+
+            @Override
+            public void onUpdate(List<DuelRoom> duelRoomList) {
+                waitingRoomAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onDelete(List<DuelRoom> duelRoomList) {
+                waitingRoomAdapter.remove(duelRoomList);
+            }
+
+            @Override
+            public boolean isListenerEffective() {
+                return getActivity() != null && !getActivity().isFinishing();
+            }
+        });
+
+        waitingRoomAdapter.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
+                DuelRoom duelRoom = waitingRoomAdapter.getItem(position);
+
+                if (mMcUser == null || !isUserLoggedIn()) {
+                    YGOUtil.showTextToast(R.string.login_mycard);
+                    return;
+                }
+
+                new Thread(() -> {
+                    try {
+                        String token = SharedPreferenceUtil.getServerToken();
+                        if (TextUtils.isEmpty(token)) {
+                            throw new Exception("token not found");
+                        }
+
+                        int u16SecretStr = MyCard.getUserU16Secret(token);
+                        if (u16SecretStr == 0) {
+                            throw new Exception("获取u16Secret失败");
+                        }
+
+                        Log.e("WaitingDuel", "u16SecretStr: " + u16SecretStr);
+
+                        String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id(), u16SecretStr);
+                        Log.e("WaitingDuel password", "password: " + password);
+
+                        ServerInfo serverInfo = new ServerInfo();
+                        boolean isArenaTypeValid = true;
+
+                        switch (duelRoom.getArenaType()) {
+                            case DuelRoom.TYPE_ARENA_MATCH:
+                                serverInfo.setServerAddr(MyCard.HOST_MC_MATCH);
+                                serverInfo.setPort(MyCard.PORT_MC_MATCH);
+                                break;
+                            case DuelRoom.TYPE_ARENA_FUN:
+                            case DuelRoom.TYPE_ARENA_AI:
+                            case DuelRoom.TYPE_ARENA_FUN_MATCH:
+                            case DuelRoom.TYPE_ARENA_FUN_SINGLE:
+                            case DuelRoom.TYPE_ARENA_FUN_TAG:
+                                serverInfo.setServerAddr(MyCard.HOST_MC_OTHER);
+                                serverInfo.setPort(MyCard.PORT_MC_OTHER);
+                                break;
+                            default:
+                                isArenaTypeValid = false;
+                                break;
+                        }
+
+                        final boolean finalValid = isArenaTypeValid;
+                        Activity activity = getActivity();
+
+                        if (activity != null) {
+                            activity.runOnUiThread(() -> {
+                                if (!finalValid) {
+                                    YGOUtil.show("未知房间，请更新软件后进入");
+                                    return;
+                                }
+
+                                serverInfo.setPlayerName(mMcUser.getUsername());
+                                YGOUtil.joinGame(activity, serverInfo, password);
+                            });
+                        }
+
+                    } catch (Exception e) {
+                        Log.e("MyCard", "获取u16Secret失败: " + e);
+                        Activity activity = getActivity();
+                        if (activity != null) {
+                            activity.runOnUiThread(() -> {
+                                YGOUtil.show("进入失败: " + e.getMessage());
+                            });
+                        }
+                    }
+                }).start();
+            }
+        });
+
         srl_waiting.setOnRefreshListener(() -> {
             loadWaitingRooms();
         });
 
-        // 初始化时加载等待中的房间
         loadWaitingRooms();
     }
 
     private void loadWaitingRooms() {
-        // TODO: 这里添加获取等待中房间的逻辑
-        // 目前暂时模拟一些数据，后续应替换为实际API调用
         if (srl_waiting != null) {
             srl_waiting.setRefreshing(true);
         }
 
+        if (waitingDuelManagement != null) {
+            waitingDuelManagement.start();
+        }
     }
 
     private void setupTabLayout(View view) {

@@ -618,10 +618,9 @@
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
                                         android:layout_gravity="center"
-                                        android:background="@drawable/button2_bg"
+                                        android:background="@drawable/button_bg"
                                         android:text="@string/create_custom_room"
-                                        android:textSize="12sp"
-                                        android:visibility="gone" />
+                                        android:textSize="12sp" />
 
                                     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                                         android:id="@+id/srl_waiting"
