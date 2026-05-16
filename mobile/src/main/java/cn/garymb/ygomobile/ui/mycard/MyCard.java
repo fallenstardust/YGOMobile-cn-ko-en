@@ -37,6 +37,7 @@ import cn.garymb.ygomobile.bean.OYHeader;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnUserDuelInfoQueryListener;
+import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.ui.mycard.bean.McNews;
@@ -75,6 +76,7 @@ public class MyCard {
     public static final String HOST_MC_OTHER = "tiramisu.moecube.com";
     public static final int PORT_MC_MATCH = 8911;
     public static final int PORT_MC_OTHER = 7911;
+    public static final String DEFAULT_CUSTOM_SERVER_ID = "cn";
     public static final String URI_ROOM_HOST = "room.ourygo.top";
     public static final String ARG_MC_NAME = "name";
     public static final String ARG_USERNAME = "username";
@@ -259,6 +261,101 @@ public class MyCard {
         }
 
         return secretResponse.getU16Secret();
+    }
+
+    public static List<YGOServer> getCustomServers() throws IOException, JSONException {
+        Response response = OkhttpUtil.synchronousGet(MYCARD_NEWS_URL, null, null);
+        String responseBody = response.body().string();
+        if (!response.isSuccessful()) {
+            throw new IOException("获取服务器列表失败: " + responseBody);
+        }
+
+        List<YGOServer> allServers = JsonUtil.getYGOServerList(responseBody);
+        List<YGOServer> customServers = new ArrayList<>();
+        for (YGOServer server : allServers) {
+            if (server.isCustom()
+                    && !server.isHidden()
+                    && !TextUtils.isEmpty(server.getSocketUrl())
+                    && !TextUtils.isEmpty(server.getServerAddr())
+                    && server.getPort() > 0) {
+                customServers.add(server);
+            }
+        }
+
+        if (customServers.isEmpty()) {
+            customServers.add(createFallbackCustomServer());
+        }
+        return customServers;
+    }
+
+    public static YGOServer getDefaultCustomServer(List<YGOServer> servers) {
+        if (servers == null || servers.isEmpty()) {
+            return createFallbackCustomServer();
+        }
+        for (YGOServer server : servers) {
+            if (DEFAULT_CUSTOM_SERVER_ID.equals(server.getId())) {
+                return server;
+            }
+        }
+        return servers.get(0);
+    }
+
+    private static YGOServer createFallbackCustomServer() {
+        YGOServer server = new YGOServer();
+        server.setId(DEFAULT_CUSTOM_SERVER_ID);
+        server.setName("简体中文");
+        server.setServerAddr("tiramisu.moenext.com");
+        server.setPort(17911);
+        server.setSocketUrl("wss://tiramisu.moecube.com:17923");
+        server.setCustom(true);
+        server.setReplay(true);
+        return server;
+    }
+
+    public static String createCustomRoomPassword(DuelRoom.OptionsBean options, String title, boolean privateRoom, String hostPassword, int u16Secret) {
+        byte[] optionsBuffer = new byte[6];
+        int duelRule = intValue(options == null ? null : options.getDuel_rule(), 5);
+        int rule = intValue(options == null ? null : options.getRule(), 0);
+        int mode = intValue(options == null ? null : options.getMode(), DuelRoom.MODE_MATCH);
+        int startLp = intValue(options == null ? null : options.getStart_lp(), mode == DuelRoom.MODE_TAG ? 16000 : 8000);
+        int startHand = intValue(options == null ? null : options.getStart_hand(), 5);
+        int drawCount = intValue(options == null ? null : options.getDraw_count(), 1);
+        boolean noCheckDeck = boolValue(options == null ? null : options.getNo_check_deck());
+        boolean noShuffleDeck = boolValue(options == null ? null : options.getNo_shuffle_deck());
+        boolean autoDeath = boolValue(options == null ? null : options.getAuto_death());
+
+        optionsBuffer[1] = (byte) (((privateRoom ? 2 : 1) << 4) | (duelRule << 1) | (autoDeath ? 0x1 : 0));
+        optionsBuffer[2] = (byte) ((rule << 5) | (mode << 3) | (noCheckDeck ? 1 << 1 : 0) | (noShuffleDeck ? 1 : 0));
+        optionsBuffer[3] = (byte) (startLp & 0xff);
+        optionsBuffer[4] = (byte) ((startLp >> 8) & 0xff);
+        optionsBuffer[5] = (byte) ((startHand << 4) | drawCount);
+
+        int checksum = 0;
+        for (int i = 1; i < optionsBuffer.length; i++) {
+            checksum -= optionsBuffer[i] & 0xff;
+        }
+        optionsBuffer[0] = (byte) (checksum & 0xff);
+
+        int secret = (u16Secret % 65535) + 1;
+        for (int i = 0; i < optionsBuffer.length; i += 2) {
+            int value = (optionsBuffer[i] & 0xff) | ((optionsBuffer[i + 1] & 0xff) << 8);
+            value ^= secret;
+            optionsBuffer[i] = (byte) (value & 0xff);
+            optionsBuffer[i + 1] = (byte) ((value >> 8) & 0xff);
+        }
+
+        String suffix = privateRoom
+                ? (hostPassword == null ? "" : hostPassword)
+                : (title == null ? "" : title).replaceFirst("\\s", "\ufeff");
+        return Base64.encodeToString(optionsBuffer, Base64.NO_WRAP) + suffix;
+    }
+
+    private static int intValue(Integer value, int defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    private static boolean boolValue(Boolean value) {
+        return Boolean.TRUE.equals(value);
     }
 
     public static String getMCLogoutUrl() {

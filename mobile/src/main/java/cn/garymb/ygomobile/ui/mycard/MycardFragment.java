@@ -6,19 +6,27 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.Editable;
+import android.text.InputFilter;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -1537,28 +1545,34 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id(), u16SecretStr);
                         Log.e("WaitingDuel password", "password: " + password);
 
-                        ServerInfo serverInfo = new ServerInfo();
+                        ServerInfo serverInfo;
                         boolean isArenaTypeValid = true;
 
-                        switch (duelRoom.getArenaType()) {
-                            case DuelRoom.TYPE_ARENA_MATCH:
-                                serverInfo.setServerAddr(MyCard.HOST_MC_MATCH);
-                                serverInfo.setPort(MyCard.PORT_MC_MATCH);
-                                break;
-                            case DuelRoom.TYPE_ARENA_FUN:
-                            case DuelRoom.TYPE_ARENA_AI:
-                            case DuelRoom.TYPE_ARENA_FUN_MATCH:
-                            case DuelRoom.TYPE_ARENA_FUN_SINGLE:
-                            case DuelRoom.TYPE_ARENA_FUN_TAG:
-                                serverInfo.setServerAddr(MyCard.HOST_MC_OTHER);
-                                serverInfo.setPort(MyCard.PORT_MC_OTHER);
-                                break;
-                            default:
-                                isArenaTypeValid = false;
-                                break;
+                        if (duelRoom.getServer() != null) {
+                            serverInfo = duelRoom.getServer();
+                        } else {
+                            serverInfo = new ServerInfo();
+                            switch (duelRoom.getArenaType()) {
+                                case DuelRoom.TYPE_ARENA_MATCH:
+                                    serverInfo.setServerAddr(MyCard.HOST_MC_MATCH);
+                                    serverInfo.setPort(MyCard.PORT_MC_MATCH);
+                                    break;
+                                case DuelRoom.TYPE_ARENA_FUN:
+                                case DuelRoom.TYPE_ARENA_AI:
+                                case DuelRoom.TYPE_ARENA_FUN_MATCH:
+                                case DuelRoom.TYPE_ARENA_FUN_SINGLE:
+                                case DuelRoom.TYPE_ARENA_FUN_TAG:
+                                    serverInfo.setServerAddr(MyCard.HOST_MC_OTHER);
+                                    serverInfo.setPort(MyCard.PORT_MC_OTHER);
+                                    break;
+                                default:
+                                    isArenaTypeValid = false;
+                                    break;
+                            }
                         }
 
                         final boolean finalValid = isArenaTypeValid;
+                        final ServerInfo finalServerInfo = serverInfo;
                         Activity activity = getActivity();
 
                         if (activity != null) {
@@ -1568,8 +1582,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                                     return;
                                 }
 
-                                serverInfo.setPlayerName(mMcUser.getUsername());
-                                YGOUtil.joinGame(activity, serverInfo, password);
+                                finalServerInfo.setPlayerName(mMcUser.getUsername());
+                                YGOUtil.joinGame(activity, finalServerInfo, password);
                             });
                         }
 
@@ -1603,9 +1617,225 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         }
     }
 
+    private void showCreateRoomDialog() {
+        if (!isUserLoggedIn()) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+
+        btnCreateRoom.setEnabled(false);
+        new Thread(() -> {
+            List<YGOServer> servers;
+            try {
+                servers = MyCard.getCustomServers();
+            } catch (Exception e) {
+                Log.e("MyCard", "加载自定义服务器失败: " + e);
+                servers = new ArrayList<>();
+                servers.add(MyCard.getDefaultCustomServer(null));
+            }
+
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            List<YGOServer> finalServers = servers;
+            activity.runOnUiThread(() -> {
+                btnCreateRoom.setEnabled(true);
+                showCreateRoomDialog(finalServers);
+            });
+        }).start();
+    }
+
+    private void showCreateRoomDialog(List<YGOServer> servers) {
+        DialogPlus dialog = new DialogPlus(requireContext());
+        dialog.setContentView(R.layout.dialog_custom_mode_select);
+
+        TextView closeButton = dialog.findViewById(R.id.btn_close_create_room);
+        TextView serverLabel = dialog.findViewById(R.id.tv_create_room_server);
+        Spinner serverSpinner = dialog.findViewById(R.id.spinner_create_room_server);
+        EditText titleEdit = dialog.findViewById(R.id.et_custom_room_title);
+        TextView titleCount = dialog.findViewById(R.id.tv_custom_room_title_count);
+        Spinner ruleSpinner = dialog.findViewById(R.id.spinner_custom_room_rule);
+        Spinner modeSpinner = dialog.findViewById(R.id.spinner_custom_room_mode);
+        Spinner duelRuleSpinner = dialog.findViewById(R.id.spinner_custom_room_duel_rule);
+        EditText startLpEdit = dialog.findViewById(R.id.et_custom_room_start_lp);
+        EditText startHandEdit = dialog.findViewById(R.id.et_custom_room_start_hand);
+        EditText drawCountEdit = dialog.findViewById(R.id.et_custom_room_draw_count);
+        CheckBox privateBox = dialog.findViewById(R.id.cb_custom_room_private);
+        CheckBox noCheckDeckBox = dialog.findViewById(R.id.cb_custom_room_no_check_deck);
+        CheckBox noShuffleDeckBox = dialog.findViewById(R.id.cb_custom_room_no_shuffle_deck);
+        CheckBox autoDeathBox = dialog.findViewById(R.id.cb_custom_room_auto_death);
+        Button createButton = dialog.findViewById(R.id.create_btn);
+
+        titleEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(12)});
+        titleEdit.setText(mMcUser.getUsername() + "的房间");
+        titleCount.setText(titleEdit.getText().length() + " / 12");
+        titleEdit.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                titleCount.setText(s.length() + " / 12");
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        setSpinnerValues(serverSpinner, getServerNames(servers));
+        setSpinnerValues(ruleSpinner, new String[]{"OCG", "TCG", "简体中文", "自制卡", "专有卡禁止", "所有卡片"});
+        setSpinnerValues(modeSpinner, new String[]{"单局模式", "比赛模式", "TAG"});
+        setSpinnerValues(duelRuleSpinner, new String[]{"大师规则", "大师规则2", "大师规则3", "新大师规则", "大师规则2020"});
+        modeSpinner.setSelection(DuelRoom.MODE_MATCH);
+        duelRuleSpinner.setSelection(4);
+
+        int defaultServerIndex = getDefaultServerIndex(servers);
+        serverSpinner.setSelection(defaultServerIndex);
+        serverLabel.setText("环境: " + servers.get(defaultServerIndex).getName());
+        serverSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                serverLabel.setText("环境: " + servers.get(position).getName());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        modeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                startLpEdit.setText(position == DuelRoom.MODE_TAG ? "16000" : "8000");
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        privateBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                titleEdit.setText(String.valueOf(mMcUser.getExternal_id() ^ 0x54321));
+                titleEdit.setEnabled(false);
+                titleCount.setVisibility(View.GONE);
+            } else {
+                titleEdit.setEnabled(true);
+                titleEdit.setText(mMcUser.getUsername() + "的房间");
+                titleCount.setVisibility(View.VISIBLE);
+            }
+        });
+
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+        createButton.setOnClickListener(v -> {
+            boolean privateRoom = privateBox.isChecked();
+            String title = titleEdit.getText().toString().trim();
+            if (!privateRoom && TextUtils.isEmpty(title)) {
+                YGOUtil.show("请输入房间标题");
+                return;
+            }
+
+            DuelRoom.OptionsBean options = new DuelRoom.OptionsBean();
+            options.setRule(ruleSpinner.getSelectedItemPosition());
+            options.setMode(modeSpinner.getSelectedItemPosition());
+            options.setDuel_rule(duelRuleSpinner.getSelectedItemPosition() + 1);
+            options.setStart_lp(readInt(startLpEdit, 1, 65535, modeSpinner.getSelectedItemPosition() == DuelRoom.MODE_TAG ? 16000 : 8000));
+            options.setStart_hand(readInt(startHandEdit, 0, 16, 5));
+            options.setDraw_count(readInt(drawCountEdit, 0, 16, 1));
+            options.setNo_check_deck(noCheckDeckBox.isChecked());
+            options.setNo_shuffle_deck(noShuffleDeckBox.isChecked());
+            options.setAuto_death(autoDeathBox.isChecked());
+
+            YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
+            createCustomRoom(dialog, createButton, server, options, title, privateRoom);
+        });
+
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        }
+    }
+
+    private void createCustomRoom(DialogPlus dialog, Button createButton, YGOServer server, DuelRoom.OptionsBean options, String title, boolean privateRoom) {
+        createButton.setEnabled(false);
+        new Thread(() -> {
+            try {
+                String token = SharedPreferenceUtil.getServerToken();
+                if (TextUtils.isEmpty(token)) {
+                    throw new IOException("token not found");
+                }
+
+                int u16Secret = MyCard.getUserU16Secret(token);
+                String hostPassword = String.valueOf(mMcUser.getExternal_id() ^ 0x54321);
+                String password = MyCard.createCustomRoomPassword(options, title, privateRoom, hostPassword, u16Secret);
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+
+                activity.runOnUiThread(() -> {
+                    dialog.dismiss();
+                    server.setPlayerName(mMcUser.getUsername());
+                    YGOUtil.joinGame(activity, server, password);
+                    if (privateRoom) {
+                        YGOUtil.show("房间密码是 " + hostPassword);
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("MyCard", "创建自定义房间失败: " + e);
+                Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> {
+                        createButton.setEnabled(true);
+                        YGOUtil.show("创建房间失败: " + e.getMessage());
+                    });
+                }
+            }
+        }).start();
+    }
+
+    private void setSpinnerValues(Spinner spinner, String[] values) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, values);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
+
+    private String[] getServerNames(List<YGOServer> servers) {
+        String[] names = new String[servers.size()];
+        for (int i = 0; i < servers.size(); i++) {
+            names[i] = servers.get(i).getName();
+        }
+        return names;
+    }
+
+    private int getDefaultServerIndex(List<YGOServer> servers) {
+        YGOServer defaultServer = MyCard.getDefaultCustomServer(servers);
+        for (int i = 0; i < servers.size(); i++) {
+            YGOServer server = servers.get(i);
+            if (!TextUtils.isEmpty(server.getId()) && server.getId().equals(defaultServer.getId())) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    private int readInt(EditText editText, int min, int max, int defaultValue) {
+        try {
+            int value = Integer.parseInt(editText.getText().toString().trim());
+            return Math.max(min, Math.min(max, value));
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     private void setupTabLayout(View view) {
         tabLayout = view.findViewById(R.id.tablayout_mycard);
         btnCreateRoom = view.findViewById(R.id.btn_create_room);
+        btnCreateRoom.setOnClickListener(v -> showCreateRoomDialog());
 
         // 添加两个标签
         tabLayout.addTab(tabLayout.newTab().setText(R.string.watch_duel));
