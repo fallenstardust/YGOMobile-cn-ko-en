@@ -134,7 +134,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private McNewsAdapter mcNewsAdapter;
     private List<McNews> mcNewsList = new ArrayList<>();
     private TabLayout tabLayout;
-    private Button btnCreateRoom;
+    private LinearLayout ll_create_room;
     private boolean isSpectateTab = true;
     private RecyclerView rv_waiting_list;
     private SwipeRefreshLayout srl_waiting;
@@ -293,12 +293,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (TextUtils.isEmpty(token)) {
             Log.d("MCFragment", "未登录状态，显示登录界面");
             ll_dialog_login.setVisibility(View.VISIBLE);
-            ll_main_ui.setVisibility(View.GONE);
+            //ll_main_ui.setVisibility(View.GONE);
             mMcUser = new McUser();
         } else {
             Log.d("MCFragment", "已登录状态，显示主界面");
             ll_dialog_login.setVisibility(View.GONE);
-            ll_main_ui.setVisibility(View.VISIBLE);
+            //ll_main_ui.setVisibility(View.VISIBLE);
 
             String userName = SharedPreferenceUtil.getMyCardUserName();
             int userId = SharedPreferenceUtil.getServerUserId();
@@ -855,6 +855,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onDestroy() {
         YGOStarter.onDestroy(getActivity());
+        if (duelManagement != null) {
+            duelManagement.closeConnect();
+        }
         if (waitingDuelManagement != null) {
             waitingDuelManagement.closeConnect();
         }
@@ -1623,7 +1626,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             return;
         }
 
-        btnCreateRoom.setEnabled(false);
+        ll_create_room.setEnabled(false);
         new Thread(() -> {
             List<YGOServer> servers;
             try {
@@ -1640,7 +1643,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
             List<YGOServer> finalServers = servers;
             activity.runOnUiThread(() -> {
-                btnCreateRoom.setEnabled(true);
+                ll_create_room.setEnabled(true);
                 showCreateRoomDialog(finalServers);
             });
         }).start();
@@ -1650,7 +1653,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         DialogPlus dialog = new DialogPlus(requireContext());
         dialog.setContentView(R.layout.dialog_custom_mode_select);
 
-        TextView closeButton = dialog.findViewById(R.id.btn_close_create_room);
         TextView serverLabel = dialog.findViewById(R.id.tv_create_room_server);
         Spinner serverSpinner = dialog.findViewById(R.id.spinner_create_room_server);
         EditText titleEdit = dialog.findViewById(R.id.et_custom_room_title);
@@ -1665,7 +1667,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         CheckBox noCheckDeckBox = dialog.findViewById(R.id.cb_custom_room_no_check_deck);
         CheckBox noShuffleDeckBox = dialog.findViewById(R.id.cb_custom_room_no_shuffle_deck);
         CheckBox autoDeathBox = dialog.findViewById(R.id.cb_custom_room_auto_death);
-        Button createButton = dialog.findViewById(R.id.create_btn);
 
         titleEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(12)});
         titleEdit.setText(mMcUser.getUsername() + "的房间");
@@ -1729,8 +1730,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
         });
 
-        closeButton.setOnClickListener(v -> dialog.dismiss());
-        createButton.setOnClickListener(v -> {
+        dialog.setLeftButtonListener((dlg, s) -> {
             boolean privateRoom = privateBox.isChecked();
             String title = titleEdit.getText().toString().trim();
             if (!privateRoom && TextUtils.isEmpty(title)) {
@@ -1750,18 +1750,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             options.setAuto_death(autoDeathBox.isChecked());
 
             YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
-            createCustomRoom(dialog, createButton, server, options, title, privateRoom);
+            createCustomRoom(dialog, server, options, title, privateRoom);
         });
 
         dialog.show();
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        }
     }
 
-    private void createCustomRoom(DialogPlus dialog, Button createButton, YGOServer server, DuelRoom.OptionsBean options, String title, boolean privateRoom) {
-        createButton.setEnabled(false);
+    private void createCustomRoom(DialogPlus dialog, YGOServer server, DuelRoom.OptionsBean options, String title, boolean privateRoom) {
         new Thread(() -> {
             try {
                 String token = SharedPreferenceUtil.getServerToken();
@@ -1790,7 +1785,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 Activity activity = getActivity();
                 if (activity != null) {
                     activity.runOnUiThread(() -> {
-                        createButton.setEnabled(true);
                         YGOUtil.show("创建房间失败: " + e.getMessage());
                     });
                 }
@@ -1834,8 +1828,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     private void setupTabLayout(View view) {
         tabLayout = view.findViewById(R.id.tablayout_mycard);
-        btnCreateRoom = view.findViewById(R.id.btn_create_room);
-        btnCreateRoom.setOnClickListener(v -> showCreateRoomDialog());
+        ll_create_room = view.findViewById(R.id.ll_create_room);
+        ll_create_room.setOnClickListener(v -> showCreateRoomDialog());
 
         // 添加两个标签
         tabLayout.addTab(tabLayout.newTab().setText(R.string.watch_duel));

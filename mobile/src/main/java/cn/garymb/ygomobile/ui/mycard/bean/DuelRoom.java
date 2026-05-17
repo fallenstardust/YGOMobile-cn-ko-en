@@ -2,6 +2,12 @@ package cn.garymb.ygomobile.ui.mycard.bean;
 
 import android.text.TextUtils;
 
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -126,14 +132,24 @@ public class DuelRoom {
         private Integer rule;
         private Integer mode;
         private Integer duel_rule;
+        
+        @JsonAdapter(BooleanTypeAdapter.class)
         private Boolean no_check_deck;
+        
+        @JsonAdapter(BooleanTypeAdapter.class)
         private Boolean no_shuffle_deck;
+        
         private Integer start_lp;
         private Integer start_hand;
         private Integer draw_count;
         private Integer time_limit;
+        
+        @JsonAdapter(BooleanTypeAdapter.class)
         private Boolean no_watch;
+        
+        @JsonAdapter(BooleanTypeAdapter.class)
         private Boolean auto_death;
+        
         private Integer replay_mode;
 
         public Integer getLflist() {
@@ -238,6 +254,40 @@ public class DuelRoom {
 
         public void setReplay_mode(Integer replay_mode) {
             this.replay_mode = replay_mode;
+        }
+    }
+
+    public static class BooleanTypeAdapter extends TypeAdapter<Boolean> {
+        @Override
+        public void write(JsonWriter out, Boolean value) throws IOException {
+            if (value == null) {
+                out.nullValue();
+            } else {
+                out.value(value);
+            }
+        }
+
+        @Override
+        public Boolean read(JsonReader in) throws IOException {
+            switch (in.peek()) {
+                case BOOLEAN:
+                    return in.nextBoolean();
+                case NUMBER:
+                    return in.nextInt() != 0;
+                case STRING:
+                    String stringValue = in.nextString();
+                    if ("1".equals(stringValue) || "true".equalsIgnoreCase(stringValue)) {
+                        return true;
+                    } else if ("0".equals(stringValue) || "false".equalsIgnoreCase(stringValue)) {
+                        return false;
+                    }
+                    return null;
+                case NULL:
+                    in.nextNull();
+                    return null;
+                default:
+                    return null;
+            }
         }
     }
 

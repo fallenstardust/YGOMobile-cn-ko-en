@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
-
-    <string name="privacy_policy_content">privacy content</string>
     <string name="action_settings">Settings</string>
     <string name="action_game">Single Game</string>
     <string name="action_about">About</string>
@@ -46,9 +44,6 @@
     <string name="back_tip">Press back key again to exit.</string>
     <string name="string_help_text">The current application lacks the necessary permissions. \n
         please click Settings - permissions - open the required permissions.</string>
-
-
-    <string name="fetch_online_deck">Fetching online decks via web</string>
     <string name="fetch_ex_card">Fetching pre-cards via web</string>
     <string name="ex_card_list_title">Card List</string>
     <string name="ex_card_log_title">update log</string>
@@ -298,7 +293,7 @@
     <string name="category_pack">Pack</string>
     <string name="category_windbot_deck">AI Decks</string>
     <string name="category_Uncategorized">Uncategorized</string>
-    <string name="category_my_online_deck">My Online Deck</string>
+
     <string name="please_input_category_name">please input category name</string>
     <string name="invalid_category_name">invalid category name</string>
     <string name="please_select_target_category">please select target category</string>
@@ -372,7 +367,7 @@
     <string name="login_succeed">Chatroom logined</string>
     <string name="reChatJoining">relogining\.\.\.</string>
     <string name="settings_data_language">Language</string>
-    <string name="settings_key_words_split">Multi-keyword search (separated by spaces)</string>
+
     <string name="settings_data_language_about">change language of YGOPro UI and card database </string>
     <string name="find_in_page">find:</string>
     <string name="tip_card_info_diff">Released and Pre-released Cards are different,pls note after patch them</string>
@@ -385,10 +380,15 @@
     <string name="tip_download_OK">Saved to</string>
     <string name="replay_list">Replay List</string>
     <string name="card_related">Related</string>
-    <string name="user_privacy_policy">User Privacy Policy</string>
-    <string name="about_user_privacy_policy">Explanation of the permissions used by YGOMObile</string>
+    <string name="settings_key_words_split">Multi-keyword search (separated by spaces)</string>
     <string name="open">Open the deck</string>
     <string name="web_warn_save_deck">Opening the deck will close the webpage you are currently viewing. Do you want to close the webpage and open the deck</string>
+    <string name="category_my_online_deck">My Online Deck</string>
+    <string name="fetch_online_deck">Fetching online decks via web</string>
+    <string name="privacy_policy_content">privacy content</string>
+    <string name="user_privacy_policy">User Privacy Policy</string>
+    <string name="about_user_privacy_policy">Explanation of the permissions used by YGOMObile</string>
+
     <!-- Strings used for fragments for navigation -->
 
     <string name="down_complete">download complete</string>
@@ -452,5 +452,6 @@
     <string name="creating_room">Creating %s Room...</string>
     <string name="create_room_failed">Failed to Create Room</string>
     <string name="no_waiting_rooms">No Waiting Rooms</string>
+    <string name="title_rank_start">Ranked Match</string>
 
 </resources>

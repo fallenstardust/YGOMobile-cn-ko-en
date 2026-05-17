@@ -372,20 +372,21 @@
     <string name="tip_download_ex">新卡下载！</string>
     <string name="tip_download_failed">保存失败，请检查网络并重试</string>
     <string name="tip_download_OK">已保存至</string>
+    <string name="open">打开</string>
+    <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
+    <string name="category_my_online_deck">我的在线卡组</string>
+    <string name="privacy_policy_content">隐私政策内容</string>
     <string name="user_privacy_policy">用户隐私政策</string>
     <string name="agree">同意</string>
     <string name="reject">拒绝</string>
     <string name="privacy_policy_accepted">您已同意隐私政策，感谢您的理解与信任</string>
     <string name="privacy_policy_rejected_exit">您已拒绝隐私政策，希望下次能再给一次机会</string>
     <string name="about_user_privacy_policy">关于本应用使用的权限进行说明</string>
-    <string name="open">打开</string>
     <string name="go_to">转到</string>
-    <string name="web_warn_save_deck">打开卡组将关闭正在浏览的网页，是否关闭网页并打开卡组</string>
     <string name="local_deck">我的卡组</string>
     <string name="in_public">公开中</string>
     <string name="in_personal_use">自用中</string>
     <string name="down_complete">下载完成</string>
-    <string name="upload">上传</string>
     <string name="input_user_name">输入用户名</string>
     <string name="input_pwd">输入密码</string>
     <string name="register">注册萌卡</string>
@@ -403,6 +404,7 @@
     <string name="tips_atkDef">支持＞、＜、=、-（如：1000-3000）符号范围查询</string>
     <string name="sum_atkDef">ATK·DEF的合计</string>
     <string name="or_atkDef">ATK或DEF</string>
+    <string name="title_rank_start">匹配对战</string>
     <string name="fun_record">娱乐战绩</string>
     <string name="fun_rank">娱乐排名</string>
     <string name="fun_start">娱乐匹配</string>
@@ -421,5 +423,13 @@
     <string name="match_duel">比赛模式</string>
     <string name="tag_duel">双打模式</string>
     <string name="unknown_room">未知房间</string>
+    <string name="waiting_rooms">等待中的房间</string>
     <string name="create_custom_room">自定义房间</string>
+    <string name="select_custom_mode">选择自定义模式</string>
+    <string name="mode_single_duel">单局模式</string>
+    <string name="mode_tag_duel">双打模式</string>
+    <string name="mode_match_duel">比赛模式</string>
+    <string name="creating_room">正在创建%s房间...</string>
+    <string name="create_room_failed">创建房间失败</string>
+    <string name="no_waiting_rooms">没有等待中的房间</string>
 </resources>
