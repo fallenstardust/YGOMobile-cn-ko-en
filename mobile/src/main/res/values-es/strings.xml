@@ -221,7 +221,7 @@
     <string name="noting_to_send">El contenido no puede estar vacío</string>
     <string name="sending_failed">Error al enviar</string>
     <string name="login_mycard">Iniciar sesión en MyCard</string>
-    <string name="logout_mycard">¿Cerrar sesión en MyCard?</string>
+    <string name="logout_mycard">Sesión MyCard cerrada</string>
     <string name="logining_in">Iniciando sesión, espera...</string>
     <string name="logining_failed">Error al iniciar sesión, toca para reintentar</string>
     <string name="failed_reason">Error al iniciar sesión, razón:</string>

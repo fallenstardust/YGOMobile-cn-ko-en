@@ -362,7 +362,7 @@
     <string name="bot_mode">AI 모드</string>
     <string name="personal">개인 설정</string>
     <string name="login_mycard">로그인</string>
-    <string name="logout_mycard">MyCard 로그아웃하겠습니까\?</string>
+    <string name="logout_mycard">MyCard 계정에서 로그아웃했습니다</string>
     <string name="back_to_mycard_home">MyCard 첫 페이지로 돌아가기</string>
     <string name="edit_your_message">메시지를 입력하십시오</string>
     <string name="login_succeed">대화방에 로그인되었습니다</string>

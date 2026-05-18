@@ -1325,10 +1325,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         SharedPreferenceUtil.setMyCardUserName("");
 
         ll_dialog_login.setVisibility(View.VISIBLE);
-        ll_main_ui.setVisibility(View.GONE);
+        //ll_main_ui.setVisibility(View.GONE);
 
-        et_username.setText("");
-        et_password.setText("");
+        //et_username.setText("");
+        //et_password.setText("");
+
+        // 设置默认用户名和头像
+        mNameView.setText(R.string.login_mycard);
+        GlideCompat.with(getActivity()).load(R.drawable.avatar).into(mHeadView);
 
         YGOUtil.showTextToast(R.string.logout_mycard);
 

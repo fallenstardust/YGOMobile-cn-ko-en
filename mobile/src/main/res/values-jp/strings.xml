@@ -215,7 +215,7 @@
     <string name="noting_to_send">メッセージは必須です</string>
     <string name="sending_failed">送る失敗</string>
     <string name="login_mycard">MYCARD登録</string>
-    <string name="logout_mycard">MYCARDをログアウト？</string>
+    <string name="logout_mycard">MyCardアカウントをログアウトしました</string>
     <string name="logining_in">登録中...</string>
     <string name="logining_failed">登録失敗，リトライしてください</string>
     <string name="failed_reason">登録失敗，</string>

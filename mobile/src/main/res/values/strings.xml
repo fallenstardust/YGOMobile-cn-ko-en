@@ -361,7 +361,7 @@
     <string name="bot_mode">Bot game</string>
     <string name="personal">My</string>
     <string name="login_mycard">login</string>
-    <string name="logout_mycard">Logout mycard\?</string>
+    <string name="logout_mycard">Logged out of MyCard</string>
     <string name="back_to_mycard_home">back to homepage</string>
     <string name="edit_your_message">Input your message</string>
     <string name="login_succeed">Chatroom logined</string>

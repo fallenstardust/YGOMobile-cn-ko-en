@@ -34,7 +34,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center|right"
-                    android:text="username"
+                    android:text="@string/login_mycard"
                     android:textColor="@color/holo_green_bright"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -278,6 +278,7 @@
                                     android:textColor="@color/holo_green_bright"
                                     android:textSize="8sp"
                                     android:gravity="center"
+                                    android:textStyle="bold"
                                     android:text="@string/title_rank_start" />
 
 

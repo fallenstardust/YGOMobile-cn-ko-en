@@ -58,7 +58,7 @@ public class MyCard {
     public static final String mHomeUrl = "https://mycard.world/mobile/";
     private static final String mArenaUrl = "https://mycard.world/ygopro/arena/";
     public static final String mCommunityReportUrl = "https://ygobbs2.com/t/bug%E5%8F%8D%E9%A6%88/";
-    private static final String mCommunityUrl = "https://ygobbs2.com/login";
+    private static final String mCommunityUrl = "https://ygobbs2.com/";
     public static final String mCompetitionUrl = "https://event.ygobbs2.com/";
     private static final String HOST_MC = "mycard.world";
     public static final String MC_MAIN_URL = "https://mycard.world/mobile/ygopro/lobby";
