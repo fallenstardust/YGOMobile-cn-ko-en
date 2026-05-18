@@ -458,21 +458,21 @@ public class DeckPieChartView extends View {
         float imageCenterX = centerX + (float) (Math.cos(radian) * radius * 0.3f);
         float imageCenterY = centerY + (float) (Math.sin(radian) * radius * 0.3f);
 
-        // 动态计算目标大小，基于饼图半径
-        float targetSize = radius * 1.8f; // 调整为半径的1.8倍，适应不同大小的饼图
-
-        float scale = 1.0f;
-        if (bitmapWidth < targetSize || bitmapHeight < targetSize) {
-            float scaleX = targetSize / bitmapWidth;
-            float scaleY = targetSize / bitmapHeight;
-            scale = Math.max(scaleX, scaleY);
-        }
+        // 计算缩放比例，使图片能够铺满饼图区域
+        // 使用饼图直径作为目标尺寸
+        float targetSize = radius * 2.0f;
+        
+        // 计算等比缩放比例，确保图片能够完全覆盖目标区域
+        float scaleX = targetSize / bitmapWidth;
+        float scaleY = targetSize / bitmapHeight;
+        float scale = Math.max(scaleX, scaleY);
 
         float scaledWidth = bitmapWidth * scale;
         float scaledHeight = bitmapHeight * scale;
 
-        float left = imageCenterX - scaledWidth / 3.0f;
-        float top = imageCenterY - scaledHeight / 3.5f;
+        // 居中绘制
+        float left = imageCenterX - scaledWidth / 2.0f;
+        float top = imageCenterY - scaledHeight / 2.0f;
 
         RectF destRect = new RectF(left, top, left + scaledWidth, top + scaledHeight);
         canvas.drawBitmap(bitmap, null, destRect, imagePaint);
