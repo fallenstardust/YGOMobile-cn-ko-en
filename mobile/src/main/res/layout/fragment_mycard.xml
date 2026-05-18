@@ -275,6 +275,8 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:background="@drawable/veil2"
+                                    android:textColor="@color/holo_green_bright"
+                                    android:textSize="8sp"
                                     android:gravity="center"
                                     android:text="@string/title_rank_start" />
 
@@ -575,7 +577,7 @@
                                     android:gravity="center"
                                     android:text="@string/arena"
                                     android:textColor="@color/holo_green_bright"
-                                    android:textSize="12sp"
+                                    android:textSize="8sp"
                                     android:textStyle="bold" />
 
                                 <FrameLayout
@@ -705,7 +707,7 @@
                                     android:gravity="center"
                                     android:text="@string/McNews"
                                     android:textColor="@color/holo_green_bright"
-                                    android:textSize="12sp"
+                                    android:textSize="8sp"
                                     android:textStyle="bold" />
 
                                 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
