@@ -57,6 +57,8 @@ public class DeckPieChartView extends View {
 
     private Map<String, Bitmap> imageCache;
 
+    private boolean showCardImages = true; // 默认显示卡图模式
+
     private static final float MIN_PERCENTAGE = 1.0f;
     private static final int[] COLORS = {
             0xFF4CAF50, 0xFF2196F3, 0xFFFF9800, 0xFFE91E63,
@@ -70,6 +72,23 @@ public class DeckPieChartView extends View {
 
     public void setOnPieChartClickListener(OnPieChartClickListener listener) {
         this.mListener = listener;
+    }
+
+    /**
+     * 设置是否显示卡片图片
+     * @param showCardImages true-显示卡图模式，false-纯色模式
+     */
+    public void setShowCardImages(boolean showCardImages) {
+        this.showCardImages = showCardImages;
+        invalidate();
+    }
+
+    /**
+     * 获取当前是否显示卡片图片
+     * @return true-显示卡图模式，false-纯色模式
+     */
+    public boolean isShowCardImages() {
+        return showCardImages;
     }
 
     public DeckPieChartView(Context context) {
@@ -161,7 +180,10 @@ public class DeckPieChartView extends View {
                 slice.sweepAngle = sweepAngle;
                 slice.color = COLORS[colorIndex % COLORS.length];
 
-                loadCardImageForSlice(slice.name);
+                // 仅在显示卡图模式下加载卡片图片
+                if (showCardImages) {
+                    loadCardImageForSlice(slice.name);
+                }
 
                 pieSlices.add(slice);
                 currentAngle += sweepAngle;
@@ -400,14 +422,19 @@ public class DeckPieChartView extends View {
 
     private void drawPieSlices(Canvas canvas) {
         for (PieSlice slice : pieSlices) {
-            Bitmap bitmap = imageCache.get(slice.name);
+            // 根据开关决定是否绘制卡片图片
+            if (showCardImages) {
+                Bitmap bitmap = imageCache.get(slice.name);
 
-            if (bitmap != null && !bitmap.isRecycled()) {
-                drawImageSlice(canvas, slice, bitmap);
-            } else {
-                slicePaint.setColor(slice.color);
-                canvas.drawArc(pieRect, slice.startAngle, slice.sweepAngle, true, slicePaint);
+                if (bitmap != null && !bitmap.isRecycled()) {
+                    drawImageSlice(canvas, slice, bitmap);
+                    continue;
+                }
             }
+            
+            // 纯色模式或图片未加载时，使用纯色填充
+            slicePaint.setColor(slice.color);
+            canvas.drawArc(pieRect, slice.startAngle, slice.sweepAngle, true, slicePaint);
         }
 
         canvas.drawCircle(centerX, centerY, radius * 0.4f, centerPaint);

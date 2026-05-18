@@ -27,6 +27,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -117,7 +118,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private ProgressBar pb_chat_loading, pb_loading;
     private ServiceManagement serviceManagement;
     private ChatMessage currentMessage;
-    private DialogUtils dialogUtils;
+    private Switch swToggleCardImage;
 
     private CircleProgressView funCpvRank, matchCpvRank;
     private McDuelInfo currentMcDuelInfo;
@@ -425,8 +426,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         ll_athletic = view.findViewById(R.id.ll_athletic);
         ll_entertain = view.findViewById(R.id.ll_entertain);
 
-        dialogUtils = DialogUtils.getInstance(getActivity());
-
         ll_athletic.setOnClickListener(this);
         ll_entertain.setOnClickListener(this);
         iv_refresh.setOnClickListener(v -> {
@@ -717,8 +716,19 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private void initPieChartViews(View view) {
         pieChartView = view.findViewById(R.id.pie_chart_view);
         tvEmpty = view.findViewById(R.id.tv_empty);
+        swToggleCardImage = view.findViewById(R.id.sw_toggle_card_image);
 
         pieChartView.setOnClickListener(v -> {switchDeckWinRateFragment();});
+
+        // 设置 Switch 开关的监听器，用于切换卡图显示模式
+        swToggleCardImage.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // isChecked: true-显示卡图模式，false-纯色模式
+            pieChartView.setShowCardImages(isChecked);
+        });
+
+        // 默认设置为开启状态（显示卡图）
+        swToggleCardImage.setChecked(true);
+
         loadDeckWinRateData();
     }
 
