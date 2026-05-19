@@ -453,5 +453,8 @@
     <string name="create_room_failed">Failed to Create Room</string>
     <string name="no_waiting_rooms">No Waiting Rooms</string>
     <string name="title_rank_start">Ranked Match</string>
+    <string name="input_room_name">Input Room Name</string>
+    <string name="server_area">Server Area</string>
+    <string name="allowed_cards">Allowed Cards:</string>
 
 </resources>

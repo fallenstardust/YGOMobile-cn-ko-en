@@ -42,6 +42,7 @@
             android:textSize="8sp" />
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_vs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/tv_title"

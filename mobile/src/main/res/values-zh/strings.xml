@@ -419,17 +419,20 @@
     <string name="deck_win_rate">卡组胜率</string>
     <string name="mycard_bbs">萌卡论坛</string>
     <string name="tips_click_to_arena">点击饼图查看详情</string>
+    <string name="server_area">环境：</string>
+    <string name="allowed_cards">卡片允许：</string>
     <string name="single_duel">单局模式</string>
     <string name="match_duel">比赛模式</string>
     <string name="tag_duel">双打模式</string>
     <string name="unknown_room">未知房间</string>
     <string name="waiting_rooms">等待中的房间</string>
     <string name="create_custom_room">自定义房间</string>
-    <string name="select_custom_mode">选择自定义模式</string>
+    <string name="select_custom_mode">选择自定义模式:</string>
     <string name="mode_single_duel">单局模式</string>
     <string name="mode_tag_duel">双打模式</string>
     <string name="mode_match_duel">比赛模式</string>
     <string name="creating_room">正在创建%s房间...</string>
     <string name="create_room_failed">创建房间失败</string>
     <string name="no_waiting_rooms">没有等待中的房间</string>
+    <string name="input_room_name">输入房间标题</string>
 </resources>

@@ -106,6 +106,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int TYPE_MC_NEWS_QUERY_EXCEPTION = 17;
 
     private HomeActivity homeActivity;
+    private StringManager mStringManager;
     private LinearLayout ll_athletic, ll_entertain, ll_dialog_login, ll_main_ui, ll_mycard_waiting_rooms;
     private EditText et_username, et_password;
     private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_dp_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs;
@@ -239,7 +240,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     public void initView(View view) {
         YGOStarter.onCreated(getActivity());
         mMyCard = new MyCard(getActivity());
-
+        mStringManager = DataManager.get().getStringManager();
         ll_dialog_login = view.findViewById(R.id.ll_dialog_login);
         ll_main_ui = view.findViewById(R.id.ll_main_ui);
         et_username = view.findViewById(R.id.et_username);
@@ -1531,6 +1532,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         rv_waiting_list.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         waitingRoomAdapter = new DuelRoomBQAdapter(requireContext(), new ArrayList<DuelRoom>());
+        waitingRoomAdapter.setHideVsText(true);
         rv_waiting_list.setAdapter(waitingRoomAdapter);
 
         waitingDuelManagement = WaitingDuelManagement.getInstance();
@@ -1698,6 +1700,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private void showCreateRoomDialog(List<YGOServer> servers) {
         DialogPlus dialog = new DialogPlus(requireContext());
         dialog.setContentView(R.layout.dialog_custom_mode_select);
+        dialog.setTitle(R.string.create_custom_room);
 
         TextView serverLabel = dialog.findViewById(R.id.tv_create_room_server);
         Spinner serverSpinner = dialog.findViewById(R.id.spinner_create_room_server);
@@ -1733,9 +1736,26 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         });
 
         setSpinnerValues(serverSpinner, getServerNames(servers));
-        setSpinnerValues(ruleSpinner, new String[]{"OCG", "TCG", "简体中文", "自制卡", "专有卡禁止", "所有卡片"});
-        setSpinnerValues(modeSpinner, new String[]{"单局模式", "比赛模式", "TAG"});
-        setSpinnerValues(duelRuleSpinner, new String[]{"大师规则", "大师规则2", "大师规则3", "新大师规则", "大师规则2020"});
+        setSpinnerValues(ruleSpinner, new String[]{
+                mStringManager.getSystemString(1481, ""),
+                mStringManager.getSystemString(1482, ""),
+                mStringManager.getSystemString(1483, ""),
+                mStringManager.getSystemString(1484, ""),
+                mStringManager.getSystemString(1485, ""),
+                mStringManager.getSystemString(1486, ""),
+        });
+        setSpinnerValues(modeSpinner, new String[]{
+                mStringManager.getSystemString(1244, ""),
+                mStringManager.getSystemString(1245, ""),
+                mStringManager.getSystemString(1246, "")
+        });
+        setSpinnerValues(duelRuleSpinner, new String[]{
+                mStringManager.getSystemString(1260, ""),
+                mStringManager.getSystemString(1261, ""),
+                mStringManager.getSystemString(1262, ""),
+                mStringManager.getSystemString(1263, ""),
+                mStringManager.getSystemString(1264, "")
+        });
         modeSpinner.setSelection(DuelRoom.MODE_MATCH);
         duelRuleSpinner.setSelection(4);
 

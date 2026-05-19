@@ -430,4 +430,7 @@
     <string name="create_room_failed">ルーム作成失敗</string>
     <string name="no_waiting_rooms">待機中の部屋はありません</string>
     <string name="title_rank_start">ランクマッチ</string>
+    <string name="input_room_name">ルーム名を入力</string>
+    <string name="server_area">サーバーエリア</string>
+    <string name="allowed_cards">使用可能カード:</string>
 </resources>

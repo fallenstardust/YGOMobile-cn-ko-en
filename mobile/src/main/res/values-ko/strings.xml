@@ -448,4 +448,7 @@
     <string name="creating_room">%s 방 생성 중...</string>
     <string name="create_room_failed">방 생성 실패</string>
     <string name="no_waiting_rooms">대기 중인 방 없음</string>
+    <string name="input_room_name">방 이름 입력</string>
+    <string name="server_area">서버 구역</string>
+    <string name="allowed_cards">허용 카드:</string>
 </resources>

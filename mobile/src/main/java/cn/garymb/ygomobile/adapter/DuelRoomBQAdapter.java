@@ -25,6 +25,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
  */
 public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder> {
     private Context context;
+    private boolean hideVsText = false;
     private static final int ITEM_TYPE_SAME = 0;
     private static final int ITEM_TYPE_SWITCH = 1;
     private static final int ITEM_TYPE_DIFFERENT = 2;
@@ -34,6 +35,14 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
     public DuelRoomBQAdapter(Context context, List<DuelRoom> data) {
         super(R.layout.item_duel_room, data);
         this.context = context;
+    }
+
+    public void setHideVsText(boolean hideVsText) {
+        this.hideVsText = hideVsText;
+    }
+
+    public boolean isHideVsText() {
+        return hideVsText;
     }
 
     public int getGroupType(int position) {
@@ -192,6 +201,12 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
         }
         baseViewHolder.setText(R.id.tv_name1, leftName);
         baseViewHolder.setText(R.id.tv_name2, rightName);
+        
+        if (hideVsText) {
+            baseViewHolder.setGone(R.id.tv_vs, true);
+        } else {
+            baseViewHolder.setGone(R.id.tv_vs, false);
+        }
     }
 
     private int getTypeCount(int arenaType) {
