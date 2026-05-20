@@ -386,7 +386,7 @@ uint32_t DeckManager::LoadDeckFromStream(Deck& deck, std::istringstream& deckStr
 	uint32_t cardlist[PACK_MAX_SIZE]{};
 	bool is_side = false;
 	std::string linebuf;
-	while (std::getline(deckStream, linebuf, '\n') && ct < PACK_MAX_SIZE) {
+	while (std::getline(deckStream, linebuf) && ct < PACK_MAX_SIZE) {
 		// 缓存以##或###开头的注释行
 		if (linebuf.length() >= 2 && linebuf[0] == '#' && linebuf[1] == '#') {
 			wchar_t wline[256];

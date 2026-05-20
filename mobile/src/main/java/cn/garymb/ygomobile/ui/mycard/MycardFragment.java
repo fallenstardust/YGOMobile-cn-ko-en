@@ -1761,11 +1761,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         int defaultServerIndex = getDefaultServerIndex(servers);
         serverSpinner.setSelection(defaultServerIndex);
-        serverLabel.setText("环境: " + servers.get(defaultServerIndex).getName());
+        serverLabel.setText(YGOUtil.s(R.string.server_area) + " " + servers.get(defaultServerIndex).getName());
         serverSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                serverLabel.setText("环境: " + servers.get(position).getName());
+                serverLabel.setText(YGOUtil.s(R.string.server_area) + " " + servers.get(position).getName());
             }
 
             @Override

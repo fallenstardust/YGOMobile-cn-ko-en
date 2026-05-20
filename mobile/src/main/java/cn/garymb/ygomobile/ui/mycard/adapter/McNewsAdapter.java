@@ -41,11 +41,11 @@ public class McNewsAdapter extends BaseQuickAdapter<McNews, BaseViewHolder> {
         if (!TextUtils.isEmpty(imageUrl)) {
             RequestBuilder<Drawable> resource = GlideCompat.with(ivNewsImage.getContext())
                     .load(imageUrl);
-            resource.placeholder(R.drawable.unknown);
-            resource.error(R.drawable.unknown);
+            resource.placeholder(R.drawable.ic_collections);
+            resource.error(R.drawable.ic_collections);
             resource.into(ivNewsImage);
         } else {
-            ivNewsImage.setImageResource(R.drawable.unknown);
+            ivNewsImage.setImageResource(R.drawable.ic_collections);
         }
 
         helper.itemView.setOnClickListener(v -> {

@@ -76,7 +76,7 @@ public class MyCard {
     public static final String HOST_MC_OTHER = "tiramisu.moecube.com";
     public static final int PORT_MC_MATCH = 8911;
     public static final int PORT_MC_OTHER = 7911;
-    public static final String DEFAULT_CUSTOM_SERVER_ID = "cn";
+    public static final String DEFAULT_CUSTOM_SERVER_ID = "MyCard";// 默认MyCard环境
     public static final String URI_ROOM_HOST = "room.ourygo.top";
     public static final String ARG_MC_NAME = "name";
     public static final String ARG_USERNAME = "username";
@@ -303,10 +303,10 @@ public class MyCard {
     private static YGOServer createFallbackCustomServer() {
         YGOServer server = new YGOServer();
         server.setId(DEFAULT_CUSTOM_SERVER_ID);
-        server.setName("简体中文");
+        server.setName("MyCard");
         server.setServerAddr("tiramisu.moenext.com");
-        server.setPort(17911);
-        server.setSocketUrl("wss://tiramisu.moecube.com:17923");
+        server.setPort(7911);
+        server.setSocketUrl("wss://tiramisu.moecube.com:7923");
         server.setCustom(true);
         server.setReplay(true);
         return server;

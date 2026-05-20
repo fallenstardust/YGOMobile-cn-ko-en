@@ -428,7 +428,7 @@
     <string name="no_waiting_rooms">Sem Salas em Espera</string>
     <string name="title_rank_start">Partida Competitiva</string>
     <string name="input_room_name">Digite o nome da sala</string>
-    <string name="server_area">Área do Servidor</string>
+    <string name="server_area">Área do Servidor:</string>
     <string name="allowed_cards">Cartas Permitidas:</string>
 </resources>
 
