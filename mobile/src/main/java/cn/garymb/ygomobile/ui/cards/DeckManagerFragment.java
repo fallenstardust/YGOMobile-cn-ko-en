@@ -1173,6 +1173,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
     private boolean checkLimit(Card cardInfo) {
         SparseArray<Integer> mCount = mDeckAdapater.getCardCount();
+        Log.w("checkLimit", "mCount=" + mCount);
         LimitList limitList = mDeckAdapater.getLimitList();
         int id = cardInfo.getGameCode();
         Integer count = mCount.get(id);
