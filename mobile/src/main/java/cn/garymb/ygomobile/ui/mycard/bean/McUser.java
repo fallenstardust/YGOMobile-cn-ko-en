@@ -96,4 +96,18 @@ public class McUser implements Serializable {
     public void setModerator(boolean moderator) {
         this.moderator = moderator;
     }
+
+
+    public static class U16SecretResponse {
+        public static final int SECRET_INVALID = 0;
+        private int u16Secret;
+
+        public int getU16Secret() {
+            return u16Secret;
+        }
+
+        public void setU16Secret(int u16Secret) {
+            this.u16Secret = u16Secret;
+        }
+    }
 }

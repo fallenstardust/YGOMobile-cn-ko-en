@@ -237,7 +237,7 @@ public class ImageLoader implements Closeable {
         }
     }
 
-    @Deprecated
+
     public void bindImage(ImageView imageview, long code, @NonNull Type type) {
         bindImage(imageview, code, null, type);
     }

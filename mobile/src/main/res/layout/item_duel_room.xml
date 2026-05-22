@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="20dp"
-    android:layout_marginRight="20dp"
+    android:layout_marginBottom="2dp"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tv_title"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="8dp"
+        android:padding="5dp"
         android:background="@drawable/selected_light"
-        android:gravity="center_horizontal"
+        android:layout_gravity="center"
         android:text="@string/match_start"
-        android:textColor="@color/white"
-        android:textSize="12sp"
+        android:textSize="10sp"
         android:textStyle="bold" />
 
     <LinearLayout
@@ -36,24 +33,24 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_below="@id/tv_title"
-            android:layout_marginLeft="10dp"
+            android:layout_marginLeft="8dp"
             android:layout_weight="1"
             android:ellipsize="end"
             android:lines="1"
             android:maxEms="8"
             android:text="userName"
-            android:textColor="@color/brightgreen"
-            android:textSize="13sp" />
+            android:textSize="8sp" />
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_vs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/tv_title"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
             android:text="Vs"
             android:textColor="@color/colorAccent"
-            android:textSize="13sp" />
+            android:textSize="9sp" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tv_name2"
@@ -61,15 +58,14 @@
             android:layout_height="wrap_content"
             android:layout_alignBottom="@id/tv_name1"
             android:layout_alignParentRight="true"
-            android:layout_marginRight="10dp"
+            android:layout_marginRight="8dp"
             android:layout_weight="1"
             android:ellipsize="end"
             android:gravity="right"
             android:lines="1"
             android:maxEms="8"
             android:text="userName"
-            android:textColor="@color/brightgreen"
-            android:textSize="13sp" />
+            android:textSize="8sp" />
 
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -89,8 +85,8 @@
         android:layout_width="match_parent"
         android:layout_height="0.5dp"
         android:layout_alignBottom="@id/ll_item"
-        android:layout_marginLeft="51dp"
+        android:layout_marginLeft="39dp"
         android:background="@color/grayLight" />
 
-</RelativeLayout>
+</LinearLayout>
 

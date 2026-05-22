@@ -1,4 +1,6 @@
-package cn.garymb.ygomobile.ui.mycard;
+package cn.garymb.ygomobile.ui.mycard.bean;
+
+import static cn.garymb.ygomobile.ui.mycard.MyCard.URL_DECK_TYPE_ANALYTICS;
 
 import com.google.gson.Gson;
 
@@ -11,10 +13,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-import android.util.Log;
 public class MyCardPieChart extends ArrayList<MyCardPieChart.Item> {
-
-    public static final String URL_DECK_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/deck/type";
     public static final String TYPE_DAY = "day";
     public static final String SOURCE_MYCARD_ATHLETIC = "mycard-athletic";
 
@@ -44,7 +43,7 @@ public class MyCardPieChart extends ArrayList<MyCardPieChart.Item> {
 
                 String json = response.body().string();
                 MyCardPieChart result = new Gson().fromJson(json, MyCardPieChart.class);
-                
+
                 //这是一个打印测试
                 /*
                 if (result != null) {
@@ -78,7 +77,7 @@ public class MyCardPieChart extends ArrayList<MyCardPieChart.Item> {
                     }
                 }
                 */
-                
+
                 listener.onMyCardPieChartQuery(result, null);
             }
         });

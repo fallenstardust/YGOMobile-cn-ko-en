@@ -1,8 +1,10 @@
-package cn.garymb.ygomobile.ui.mycard;
+package cn.garymb.ygomobile.ui.mycard.bean;
 
 import com.stx.xhb.androidx.entity.BaseBannerInfo;
 
 import java.io.Serializable;
+
+import cn.garymb.ygomobile.ui.mycard.MyCard;
 
 public class McNews implements BaseBannerInfo, Serializable {
 

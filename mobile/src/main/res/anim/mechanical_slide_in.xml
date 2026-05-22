@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="300"
+    android:interpolator="@android:anim/decelerate_interpolator">
+
+    <!-- 平移效果：从左侧滑入 -->
+    <translate
+        android:fromXDelta="-100%p"
+        android:toXDelta="0"
+        android:duration="250" />
+
+    <!-- 缩放效果：从小变大，模拟机械展开 -->
+    <scale
+        android:fromXScale="0.8"
+        android:toXScale="1.0"
+        android:fromYScale="0.8"
+        android:toYScale="1.0"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:duration="300" />
+
+    <!-- 透明度渐变 -->
+    <alpha
+        android:fromAlpha="0.3"
+        android:toAlpha="1.0"
+        android:duration="200" />
+</set>

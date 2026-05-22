@@ -53,7 +53,6 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/android/android_tools.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIEditBox.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIButton.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIComboBox.cpp \
-				$(LOCAL_PATH)/../Classes/gframe/CGUIImageButton.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUITTFont.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/client_card.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/client_field.cpp \

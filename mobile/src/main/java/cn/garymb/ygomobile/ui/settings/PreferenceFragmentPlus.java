@@ -10,8 +10,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
-import android.preference.Preference;
 import android.widget.Toast;
+
+import androidx.preference.Preference;
 
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.config.ISListConfig;
@@ -81,9 +82,9 @@ public abstract class PreferenceFragmentPlus extends BasePreferenceFragment {
                 .multiSelect(false)
                 // 是否记住上次选中记录, 仅当multiSelect为true的时候配置，默认为true
                 .rememberSelected(false)
-                // “确定”按钮背景色
+                // "确定"按钮背景色
                 .btnBgColor(Color.BLACK)
-                // “确定”按钮文字颜色
+                // "确定"按钮文字颜色
                 .btnTextColor(Color.WHITE)
                 // 使用沉浸式状态栏
                 .statusBarColor(Color.parseColor("#11113d"))

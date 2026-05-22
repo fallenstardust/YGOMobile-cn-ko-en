@@ -62,6 +62,10 @@ template<size_t N, typename... TR>
 inline int mysnprintf(char(&buf)[N], const char* fmt, TR... args) {
 	return std::snprintf(buf, N, fmt, args...);
 }
+template<typename T>
+inline T myclamp(T v, T lo, T hi) {
+	return (v < lo) ? lo : (hi < v) ? hi : v;
+}
 
 inline FILE* mywfopen(const wchar_t* filename, const char* mode) {
 	FILE* fp{};
@@ -78,8 +82,5 @@ using namespace irr::io;
 using namespace irr::os;
 
 constexpr uint16_t PRO_VERSION = 0x1362;
-extern unsigned int enable_log;
-extern bool exit_on_return;
-extern bool bot_mode;
 
 #endif

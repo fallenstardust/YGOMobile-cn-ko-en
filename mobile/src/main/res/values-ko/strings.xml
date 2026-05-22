@@ -79,7 +79,8 @@
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">게임 아바타</string>
     <string name="tip_credit_max">%d 상한선 초과</string>
-    <string name="settings_author" translatable="false">菜菜、暗星\n浙ICP备2023031884号-2A
+    <string name="title_rank_start">랭크 매칭</string>
+    <string name="settings_author" translatable="false">菜菜、암성\n浙ICP备2023031884号-2A
 </string>
     <string name="restart_app">앱을 다시 시작하십시오!</string>
     <string-array name="opengl_version">
@@ -361,7 +362,7 @@
     <string name="bot_mode">AI 모드</string>
     <string name="personal">개인 설정</string>
     <string name="login_mycard">로그인</string>
-    <string name="logout_mycard">MyCard 로그아웃하겠습니까\?</string>
+    <string name="logout_mycard">MyCard 계정에서 로그아웃했습니다</string>
     <string name="back_to_mycard_home">MyCard 첫 페이지로 돌아가기</string>
     <string name="edit_your_message">메시지를 입력하십시오</string>
     <string name="login_succeed">대화방에 로그인되었습니다</string>
@@ -380,10 +381,13 @@
     <string name="tip_download_OK">저장되었습니다</string>
     <string name="replay_list">재생 목록</string>
     <string name="card_related">관련 카드</string>
-    <string name="user_privacy_policy">사용자 개인 정보 보호 정책</string>
-    <string name="about_user_privacy_policy">이 앱에서 사용하는 권한에 대한 설명</string>
     <string name="open">덱 열기</string>
     <string name="web_warn_save_deck">덱을 열면 현재 보고 있는 웹 페이지가 닫힙니다. 웹 페이지를 닫고 덱을 열까요?</string>
+    <string name="category_my_online_deck">내 온라인 덱</string>
+    <string name="fetch_online_deck">웹을 통해 온라인 덱 가져오기</string>
+    <string name="privacy_policy_content">개인정보 처리방침 내용</string>
+    <string name="user_privacy_policy">사용자 개인 정보 보호 정책</string>
+    <string name="about_user_privacy_policy">이 앱에서 사용하는 권한에 대한 설명</string>
     <string name="go_to">이동하다</string>
     <string name="local_deck">로컬 덱</string>
     <string name="in_public">공개 중</string>
@@ -425,7 +429,26 @@
     <string name="lose_num">패배</string>
     <string name="draw_num">무승부</string>
     <string name="fun_start">오락 매칭</string>
-    <string name="match_start">랭크 매칭Partida Competitiva</string>
+    <string name="match_start">랭크 매칭</string>
     <string name="watch_duel">관전</string>
     <string name="waiting_message">매칭 대기 중입니다. 잠시 기다려 주세요...</string>
+    <string name="deck_win_rate">덱 승률</string>
+    <string name="mycard_bbs">몽카드 포럼</string>
+    <string name="tips_click_to_arena">원그래프 클릭 시 상세보기</string>
+    <string name="single_duel">싱글 모드</string>
+    <string name="match_duel">매치 모드</string>
+    <string name="tag_duel">태그 모드</string>
+    <string name="unknown_room">알 수 없는 모드</string>
+    <string name="waiting_rooms">대기 중인 방</string>
+    <string name="create_custom_room">커스텀 방</string>
+    <string name="select_custom_mode">커스텀 모드 선택</string>
+    <string name="mode_single_duel">싱글 듀얼</string>
+    <string name="mode_tag_duel">태그 듀얼</string>
+    <string name="mode_match_duel">매치 듀얼</string>
+    <string name="creating_room">%s 방 생성 중...</string>
+    <string name="create_room_failed">방 생성 실패</string>
+    <string name="no_waiting_rooms">대기 중인 방 없음</string>
+    <string name="input_room_name">방 이름 입력</string>
+    <string name="server_area">서버 구역:</string>
+    <string name="allowed_cards">허용 카드:</string>
 </resources>

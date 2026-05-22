@@ -37,11 +37,12 @@ import cn.garymb.ygomobile.bean.OYHeader;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnUserDuelInfoQueryListener;
+import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
+import cn.garymb.ygomobile.ui.mycard.bean.McNews;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
 import cn.garymb.ygomobile.ui.plus.DefWebViewClient;
-import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileLogUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
@@ -57,7 +58,7 @@ public class MyCard {
     public static final String mHomeUrl = "https://mycard.world/mobile/";
     private static final String mArenaUrl = "https://mycard.world/ygopro/arena/";
     public static final String mCommunityReportUrl = "https://ygobbs2.com/t/bug%E5%8F%8D%E9%A6%88/";
-    private static final String mCommunityUrl = "https://ygobbs2.com/login";
+    private static final String mCommunityUrl = "https://ygobbs2.com/";
     public static final String mCompetitionUrl = "https://event.ygobbs2.com/";
     private static final String HOST_MC = "mycard.world";
     public static final String MC_MAIN_URL = "https://mycard.world/mobile/ygopro/lobby";
@@ -66,6 +67,7 @@ public class MyCard {
     public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
     public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
     public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
+    public static final String URL_MC_JOIN_DUEL_MATCH = "wss://tiramisu.moecube.com:17923/?filter=waiting";
     public static final String URL_MC_MATCH = "https://api.moecube.com/ygopro/match";
     public static final String MYCARD_POST_URL = "https://ygobbs2.com/t/";
     public static final String ARG_ID = "id";
@@ -74,6 +76,7 @@ public class MyCard {
     public static final String HOST_MC_OTHER = "tiramisu.moecube.com";
     public static final int PORT_MC_MATCH = 8911;
     public static final int PORT_MC_OTHER = 7911;
+    public static final String DEFAULT_CUSTOM_SERVER_ID = "MyCard";// 默认MyCard环境
     public static final String URI_ROOM_HOST = "room.ourygo.top";
     public static final String ARG_MC_NAME = "name";
     public static final String ARG_USERNAME = "username";
@@ -95,7 +98,10 @@ public class MyCard {
     public static int U16_SECRET = 0;
     public static final String URL_MC_SIGN_UP = "https://accounts.moecube.com/signup";
     public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
+    public static final String URL_MC_USER_PROFILE = "https://accounts.moecube.com/profiles";
     public static final String URL_MC_AUTH_USER = "https://sapi.moecube.com:444/accounts/authUser";
+    public static final String URL_MC_ATHLETIC_RATE = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type?source=mycard-athletic";
+    public static final String URL_DECK_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/deck/type";
     public static final int MATCH_TYPE_ATHLETIC = 0;
     public static final int MATCH_TYPE_ENTERTAIN = 1;
 
@@ -160,80 +166,75 @@ public class MyCard {
                 return;
         }
 
-        VUiKit.defer().when(() -> {
-            String token = SharedPreferenceUtil.getServerToken();
-            if (TextUtils.isEmpty(token)) {
-                throw new Exception("token not found");
-            }
-
-            int u16SecretStr = MyCard.getUserU16Secret(token);
-            if (u16SecretStr == 0) {
-                throw new Exception("获取u16Secret失败");
-            }
-
-            return u16SecretStr;
-        }).fail((e) -> {
-            Log.e("MyCard", "获取u16Secret失败: " + e);
-        }).done((u16Secret) -> {
-            U16_SECRET = u16Secret;
-        });
-
-        String authHeader = "Basic " + YGOUtil.message2Base64(mcUser.getUsername() + ":" + U16_SECRET);
-        Log.i("MyCard", "U16_SECRET: " + U16_SECRET);
-        OYHeader oyHeader = new OYHeader(OYHeader.HEADER_POSITION_AUTHORIZATION, authHeader);
-
-        OkhttpUtil.post(uriBuilder.toString(), null, oyHeader, ARG_ARENA, 30, new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e("MyCard", e.getMessage() + "失败 " + e);
-                try {
-                    FileLogUtil.write("失败 " + e);
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
+        new Thread(() -> {
+            try {
+                String token = SharedPreferenceUtil.getServerToken();
+                if (TextUtils.isEmpty(token)) {
+                    throw new Exception("token not found");
                 }
 
-                String message = e.getMessage();
-                if (!TextUtils.isEmpty(message) && message.equals("Canceled")) {
-                    return;
-                }
-                if (!TextUtils.isEmpty(message) && message.equals("timeout")) {
-                    cancelMatch();
-                    onMcMatchListener.onMcMatch(null, null, null);
-                    return;
-                }
-                onMcMatchListener.onMcMatch(null, null, e.toString());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String body = response.body().string();
-                Log.e("MyCard", "匹配成功" + body);
-
-                if (TextUtils.isEmpty(body)) {
-                    onMcMatchListener.onMcMatch(null, null, "匹配失败");
-                    return;
+                int u16SecretStr = MyCard.getUserU16Secret(token);
+                if (u16SecretStr == 0) {
+                    throw new Exception("获取u16Secret失败");
                 }
 
-                try {
-                    YGOServer ygoServer = JsonUtil.getMatchYGOServer(body);
-                    if (ygoServer != null) {
-                        ygoServer.setPlayerName(mcUser.getUsername());
-                        onMcMatchListener.onMcMatch(ygoServer, ygoServer.getPassword(), null);
-                    } else {
-                        onMcMatchListener.onMcMatch(null, null, "匹配失败");
+                U16_SECRET = u16SecretStr;
+                String authHeader = "Basic " + YGOUtil.message2Base64(mcUser.getUsername() + ":" + U16_SECRET);
+                Log.i("MyCard", "U16_SECRET: " + U16_SECRET);
+                OYHeader oyHeader = new OYHeader(OYHeader.HEADER_POSITION_AUTHORIZATION, authHeader);
+
+                OkhttpUtil.post(uriBuilder.toString(), null, oyHeader, ARG_ARENA, 30, new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        Log.e("MyCard", e.getMessage() + "失败 " + e);
+                        try {
+                            FileLogUtil.write("失败 " + e);
+                        } catch (IOException ioException) {
+                            ioException.printStackTrace();
+                        }
+
+                        String message = e.getMessage();
+                        if (!TextUtils.isEmpty(message) && message.equals("Canceled")) {
+                            return;
+                        }
+                        if (!TextUtils.isEmpty(message) && message.equals("timeout")) {
+                            cancelMatch();
+                            onMcMatchListener.onMcMatch(null, null, null);
+                            return;
+                        }
+                        onMcMatchListener.onMcMatch(null, null, e.toString());
                     }
-                } catch (JSONException e) {
-                    onMcMatchListener.onMcMatch(null, null, "" + e);
-                }
 
-                Log.e("MyCard", "内容 " + body);
-                try {
-                    FileLogUtil.write("内容 " + body);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        String body = response.body().string();
+                        Log.e("MyCard", "匹配成功" + body);
+
+                        if (TextUtils.isEmpty(body)) {
+                            onMcMatchListener.onMcMatch(null, null, "匹配失败");
+                            return;
+                        }
+
+                        try {
+                            YGOServer ygoServer = JsonUtil.getMatchYGOServer(body);
+                            if (ygoServer != null) {
+                                ygoServer.setPlayerName(mcUser.getUsername());
+                                onMcMatchListener.onMcMatch(ygoServer, ygoServer.getPassword(), null);
+                            } else {
+                                onMcMatchListener.onMcMatch(null, null, "匹配失败");
+                            }
+                        } catch (JSONException e) {
+                            onMcMatchListener.onMcMatch(null, null, "" + e);
+                        }
+
+                        Log.e("MyCard", "内容 " + body);
+                        FileLogUtil.write("内容 " + body);
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("MyCard", "匹配失败: " + e);
             }
-        });
+        }).start();
     }
 
     public static int getUserU16Secret(String token) throws IOException {
@@ -254,13 +255,108 @@ public class MyCard {
         }
 
         Gson gson = new Gson();
-        U16SecretResponse secretResponse = gson.fromJson(responseBody, U16SecretResponse.class);
+        McUser.U16SecretResponse secretResponse = gson.fromJson(responseBody, McUser.U16SecretResponse.class);
 
-        if (secretResponse == null || secretResponse.u16Secret == 0) {
+        if (secretResponse == null || secretResponse.getU16Secret() == 0) {
             throw new IOException("获取用户密钥失败: 返回数据无效");
         }
 
-        return secretResponse.u16Secret;
+        return secretResponse.getU16Secret();
+    }
+
+    public static List<YGOServer> getCustomServers() throws IOException, JSONException {
+        Response response = OkhttpUtil.synchronousGet(MYCARD_NEWS_URL, null, null);
+        String responseBody = response.body().string();
+        if (!response.isSuccessful()) {
+            throw new IOException("获取服务器列表失败: " + responseBody);
+        }
+
+        List<YGOServer> allServers = JsonUtil.getYGOServerList(responseBody);
+        List<YGOServer> customServers = new ArrayList<>();
+        for (YGOServer server : allServers) {
+            if (server.isCustom()
+                    && !server.isHidden()
+                    && !TextUtils.isEmpty(server.getSocketUrl())
+                    && !TextUtils.isEmpty(server.getServerAddr())
+                    && server.getPort() > 0) {
+                customServers.add(server);
+            }
+        }
+
+        if (customServers.isEmpty()) {
+            customServers.add(createFallbackCustomServer());
+        }
+        return customServers;
+    }
+
+    public static YGOServer getDefaultCustomServer(List<YGOServer> servers) {
+        if (servers == null || servers.isEmpty()) {
+            return createFallbackCustomServer();
+        }
+        for (YGOServer server : servers) {
+            if (DEFAULT_CUSTOM_SERVER_ID.equals(server.getId())) {
+                return server;
+            }
+        }
+        return servers.get(0);
+    }
+
+    private static YGOServer createFallbackCustomServer() {
+        YGOServer server = new YGOServer();
+        server.setId(DEFAULT_CUSTOM_SERVER_ID);
+        server.setName("MyCard");
+        server.setServerAddr("tiramisu.moenext.com");
+        server.setPort(7911);
+        server.setSocketUrl("wss://tiramisu.moecube.com:7923");
+        server.setCustom(true);
+        server.setReplay(true);
+        return server;
+    }
+
+    public static String createCustomRoomPassword(DuelRoom.OptionsBean options, String title, boolean privateRoom, String hostPassword, int u16Secret) {
+        byte[] optionsBuffer = new byte[6];
+        int duelRule = intValue(options == null ? null : options.getDuel_rule(), 5);
+        int rule = intValue(options == null ? null : options.getRule(), 0);
+        int mode = intValue(options == null ? null : options.getMode(), DuelRoom.MODE_MATCH);
+        int startLp = intValue(options == null ? null : options.getStart_lp(), mode == DuelRoom.MODE_TAG ? 16000 : 8000);
+        int startHand = intValue(options == null ? null : options.getStart_hand(), 5);
+        int drawCount = intValue(options == null ? null : options.getDraw_count(), 1);
+        boolean noCheckDeck = boolValue(options == null ? null : options.getNo_check_deck());
+        boolean noShuffleDeck = boolValue(options == null ? null : options.getNo_shuffle_deck());
+        boolean autoDeath = boolValue(options == null ? null : options.getAuto_death());
+
+        optionsBuffer[1] = (byte) (((privateRoom ? 2 : 1) << 4) | (duelRule << 1) | (autoDeath ? 0x1 : 0));
+        optionsBuffer[2] = (byte) ((rule << 5) | (mode << 3) | (noCheckDeck ? 1 << 1 : 0) | (noShuffleDeck ? 1 : 0));
+        optionsBuffer[3] = (byte) (startLp & 0xff);
+        optionsBuffer[4] = (byte) ((startLp >> 8) & 0xff);
+        optionsBuffer[5] = (byte) ((startHand << 4) | drawCount);
+
+        int checksum = 0;
+        for (int i = 1; i < optionsBuffer.length; i++) {
+            checksum -= optionsBuffer[i] & 0xff;
+        }
+        optionsBuffer[0] = (byte) (checksum & 0xff);
+
+        int secret = (u16Secret % 65535) + 1;
+        for (int i = 0; i < optionsBuffer.length; i += 2) {
+            int value = (optionsBuffer[i] & 0xff) | ((optionsBuffer[i + 1] & 0xff) << 8);
+            value ^= secret;
+            optionsBuffer[i] = (byte) (value & 0xff);
+            optionsBuffer[i + 1] = (byte) ((value >> 8) & 0xff);
+        }
+
+        String suffix = privateRoom
+                ? (hostPassword == null ? "" : hostPassword)
+                : (title == null ? "" : title).replaceFirst("\\s", "\ufeff");
+        return Base64.encodeToString(optionsBuffer, Base64.NO_WRAP) + suffix;
+    }
+
+    private static int intValue(Integer value, int defaultValue) {
+        return value == null ? defaultValue : value;
+    }
+
+    private static boolean boolValue(Boolean value) {
+        return Boolean.TRUE.equals(value);
     }
 
     public static String getMCLogoutUrl() {
@@ -575,7 +671,7 @@ public class MyCard {
 
     public static String getImagePath(Context context) {
 //        return context.getExternalFilesDir("image").getAbsolutePath();
-        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(), "YGOMobile OY").getAbsolutePath();
+        return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(), "YGOMobile").getAbsolutePath();
     }
 
     public static String getImageCachePath() {
@@ -584,9 +680,5 @@ public class MyCard {
 
     public static String getCachePath() {
         return App.get().getExternalFilesDir("cache").getAbsolutePath();
-    }
-
-    public static class U16SecretResponse {
-        public int u16Secret;
     }
 }

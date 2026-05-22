@@ -9,8 +9,8 @@ android {
         minSdkVersion 25
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 312013006
-        versionName "3.13.3fix1"
+        versionCode 312013008
+        versionName "3.13.4fix1"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "21.3.6528147"
@@ -95,6 +95,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment:2.8.1'
     implementation 'androidx.navigation:navigation-ui:2.8.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.preference:preference:1.2.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
     implementation('com.github.chrisbanes.photoview:library:1.2.4') {
         implementation 'com.github.chrisbanes.photoview:library:1.2.4'

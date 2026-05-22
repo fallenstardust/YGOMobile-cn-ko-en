@@ -51,9 +51,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -62,6 +59,11 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
 
 import com.ourygo.lib.duelassistant.service.DuelAssistantService;
 
@@ -123,19 +125,21 @@ public class SettingFragment extends PreferenceFragmentPlus {
     }
 
     @Override
+    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        setPreferencesFromResource(R.xml.preference_game, rootKey);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
         activity = (HomeActivity) getContext();
         mSettings = AppsSettings.get();
 
-        addPreferencesFromResource(R.xml.preference_game);
-        bind(PREF_GAME_PATH, mSettings.getResourcePath());
-//        bind(PREF_GAME_VERSION, mSettings.getVersionString(mSettings.getGameVersion()));
         bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getContext()) + "(" + SystemUtils.getVersion(getContext()) + ")");
-        bind(PREF_CHECK_UPDATE, R.string.settings_about_author_pref + " : " + R.string.settings_author);
-        bind(PREF_RESET_GAME_RES, R.string.guide_reset);
-        bind(PREF_JOIN_QQ, R.string.about_Join_QQ);
+        bind(PREF_CHECK_UPDATE, YGOUtil.s(R.string.settings_about_author_pref) + " : " + YGOUtil.s(R.string.settings_author));
+        bind(PREF_RESET_GAME_RES, YGOUtil.s(R.string.guide_reset));
+        bind(PREF_JOIN_QQ, YGOUtil.s(R.string.about_Join_QQ));
         bind(PREF_START_SERVICEDUELASSISTANT, mSettings.isServiceDuelAssistant());
         bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
@@ -146,8 +150,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_IMAGE_QUALITY, mSettings.getCardQuality());
         bind(PREF_GAME_FONT, mSettings.getFontPath());
         bind(PREF_READ_EX, mSettings.isReadExpansions());
-        bind(PREF_DEL_EX, R.string.about_delete_ex);
-        bind(PERF_TEST_REPLACE_KERNEL, "需root权限，请在开发者的指导下食用");
+        bind(PREF_DEL_EX, YGOUtil.s(R.string.about_delete_ex));
         bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
         bind(PREF_DATA_LANGUAGE, mSettings.getDataLanguage());
         Preference preference = findPreference(PREF_READ_EX);
@@ -162,12 +165,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_FONT_SIZE, mSettings.getFontSize());
         bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
         bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
-        bind(PREF_USER_PRIVACY_POLICY, getString(R.string.about_user_privacy_policy));
-        isInit = false;
+        bind(PREF_USER_PRIVACY_POLICY, YGOUtil.s(R.string.about_user_privacy_policy));
     }
 
     @Override
-    public boolean onPreferenceChange(Preference preference, Object value) {
+    public boolean onPreferenceChange(@NonNull Preference preference, Object value) {
         super.onPreferenceChange(preference, value);
         if (!isInit) {
             /*if (PREF_GAME_VERSION.equals(preference.getKey())) {
@@ -827,9 +829,11 @@ public class SettingFragment extends PreferenceFragmentPlus {
             getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
         }
     }
+
     // 添加事件监听类
     public static class PrivacyPolicyAgreedEvent {
         public boolean agreed;
+
         public PrivacyPolicyAgreedEvent(boolean agreed) {
             this.agreed = agreed;
         }

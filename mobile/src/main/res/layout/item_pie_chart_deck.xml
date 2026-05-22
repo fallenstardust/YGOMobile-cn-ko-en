@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="4dp">
+
+    <com.king.view.circleprogressview.CircleProgressView
+        android:id="@+id/cpv_deck_percentage"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:cpvLabelTextColor="@color/white"
+        app:cpvLabelTextSize="10sp"
+        app:cpvNormalColor="@color/klein_blue"
+        app:cpvProgressColor="@color/colorAccent"
+        app:cpvShowTick="false"
+        app:cpvStrokeWidth="6dp" />
+
+    <TextView
+        android:id="@+id/tv_deck_name_short"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:textColor="@color/white"
+        android:textSize="10sp" />
+
+    <TextView
+        android:id="@+id/tv_deck_matches"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/grayLight"
+        android:textSize="9sp" />
+</LinearLayout>

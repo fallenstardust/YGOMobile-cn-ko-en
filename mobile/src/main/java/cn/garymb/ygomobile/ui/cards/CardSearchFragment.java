@@ -55,6 +55,7 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 
 public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallBack, CardSearcher.CallBack {
+    private static final String TAG = "CardSearchFragment";
     public static final String SEARCH_MESSAGE = "searchMessage";
     long exitLasttime = 0;
 
@@ -203,7 +204,12 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
-//        Log.d("kk", "find " + (cardInfos == null ? -1 : cardInfos.size()));
+        String keyword = mCardSearcher.getCurrentKeyword();
+        if (keyword != null && !keyword.isEmpty()) {
+            currentCardSearchMessage = keyword;
+        }
+        
+        mCardListAdapter.setSearchKeyword(currentCardSearchMessage);
         mCardListAdapter.set(cardInfos);
         mResult_count.setText(String.valueOf(cardInfos.size()));
         mCardListAdapter.notifyDataSetChanged();
@@ -342,11 +348,13 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             if (!mDialog.isShowing()) {
                 mDialog.show();
             }
+            mCardDetail.setCurrentSearchKeyword(currentCardSearchMessage);
             mCardDetail.bind(cardInfo, position, provider);
         }
     }
 
     private void showSearchKeyWord(String keyword) {//使用此方法，可以适用关键词查询逻辑，让完全符合关键词的卡置顶显示，并同时搜索字段和效果文本
+        currentCardSearchMessage = keyword;
         CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).cardTypes(new ArrayList<>()).build();//构建CardSearchInfo时type不能为null
         mCardLoader.search(searchInfo);
     }

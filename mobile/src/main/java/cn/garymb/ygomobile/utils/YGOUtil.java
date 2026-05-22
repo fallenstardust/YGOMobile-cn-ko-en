@@ -263,7 +263,7 @@ public class YGOUtil {
         YGOStarter.startGame(activity, options);
     }
 
-    public static String getWatchDuelPassword(String password, int userId) {
+    public static String getWatchDuelPassword(String password, int userId, int u16SecretStr) {
         byte[] bytes = new byte[6];
         bytes[1] = (byte) (3 << 4);
         int checksum = 0;
@@ -271,7 +271,7 @@ public class YGOUtil {
             checksum -= bytes[i];
         }
         bytes[0] = (byte) (checksum & 0xff);
-        int secret = userId % 65535 + 1;
+        int secret = u16SecretStr % 65535 + 1;
         int i = 0;
         while (i < bytes.length) {
             int x = 0;

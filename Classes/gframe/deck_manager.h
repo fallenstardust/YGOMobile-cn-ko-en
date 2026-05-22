@@ -7,6 +7,12 @@
 #include "deck.h"
 #include "config.h"
 
+namespace irr {
+	namespace io {
+		class IReadFile;
+	}
+}
+
 namespace ygo {
 
 constexpr int DECK_MAX_SIZE = 60;
@@ -44,14 +50,14 @@ public:
 	void LoadLFList(irr::android::InitOptions *options);
 	const wchar_t* GetLFListName(unsigned int lfhash);
 	const LFList* GetLFList(unsigned int lfhash);
-	unsigned int CheckDeck(const Deck& deck, unsigned int lfhash, int rule);
+	uint32_t CheckDeck(const Deck& deck, unsigned int lfhash, size_t rule);
 	bool LoadCurrentDeck(const wchar_t* file, bool is_packlist = false);
 	bool LoadCurrentDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	bool LoadCurrentDeck(std::istringstream& deckStream, bool is_packlist = false);
 
-	static uint32_t LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec, bool is_packlist = false);
+	static uint32_t LoadDeck(Deck& deck, uint32_t dbuf[], uint32_t mainc, uint32_t sidec, bool is_packlist = false);
 	static uint32_t LoadDeckFromStream(Deck& deck, std::istringstream& deckStream, bool is_packlist = false);
-	static bool LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec);
+	static bool LoadSide(Deck& deck, uint32_t dbuf[], uint32_t mainc, uint32_t sidec);
 	static void GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, bool showPack);//
 	static void GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	static FILE* OpenDeckFile(const wchar_t* file, const char* mode);

@@ -211,7 +211,7 @@
     <string name="noting_to_send">O conteúdo a enviar não pode estar vazio</string>
     <string name="sending_failed">Falha ao enviar</string>
     <string name="login_mycard">Iniciar sessão</string>
-    <string name="logout_mycard">Deseja sair do MyCard?</string>
+    <string name="logout_mycard">Saiu da conta MyCard</string>
     <string name="logining_in">Iniciando sessão...</string>
     <string name="logining_failed">Erro ao iniciar sessão, tente novamente</string>
     <string name="failed_reason">O início de sessão falhou devido a: </string>
@@ -352,6 +352,16 @@
     <string name="tip_ypk_is_deleted">Atualize as cartas pré-lançadas imediatamente</string>
     <string name="tip_superpre_desc">Atualização mais rápida. Baixar expansões</string>
     <string name="tip_download_ex">Há novas cartas, venha jogar!</string>
+    <string name="tip_download_failed">Falha ao salvar!</string>
+    <string name="tip_download_OK">Salvo em</string>
+    <string name="replay_list">Lista de Repetições</string>
+    <string name="card_related">Relacionadas</string>
+    <string name="settings_key_words_split">Pesquisa multi-palavras-chave (separadas por espaços)</string>
+    <string name="open">Abrir o deck</string>
+    <string name="web_warn_save_deck">Abrir o deck fechará a página da web que você está visualizando atualmente. Deseja fechar a página e abrir o deck?</string>
+    <string name="category_my_online_deck">Meus Decks Online</string>
+    <string name="fetch_online_deck">Buscando decks online via web</string>
+    <string name="privacy_policy_content">conteúdo da política de privacidade</string>
     <string name="user_privacy_policy">Política de Privacidade do Usuário</string>
     <string name="about_user_privacy_policy">Explicação das permissões utilizadas pelo YGOMobile</string>
     <string name="go_to">pasar a</string>
@@ -374,7 +384,7 @@
     <string name="pre_view">Prévia</string>
     <string name="label_set_No_Setcode">#Sem Card Set incluso</string>
     <string name="tip_credit_max">Excede o limite de %d</string>
-    <string name="point_cost">Consumo de puntos</string>
+    <string name="point_cost">Consumo de pontos</string>
     <string name="credit_limit">Limite de pontos</string>
     <string name="switch_genesys_mode">Modo de GENESYS</string>
     <string name="switch_banlist_mode">Modo de Restrição</string>
@@ -400,5 +410,25 @@
     <string name="match_start">Partida Competitiva</string>
     <string name="watch_duel">Ver Duelo</string>
     <string name="waiting_message">Aguardando partida, por favor aguarde...</string>
+    <string name="deck_win_rate">Taxa de Vitória</string>
+    <string name="mycard_bbs">Fórum MyCard</string>
+    <string name="tips_click_to_arena">Clique no gráfico para detalhes</string>
+    <string name="single_duel">Modo Single</string>
+    <string name="match_duel">Modo Match</string>
+    <string name="tag_duel">Modo Tag</string>
+    <string name="unknown_room">Modo Unknown</string>
+    <string name="waiting_rooms">salas em espera</string>
+    <string name="create_custom_room">Sala Custom</string>
+    <string name="select_custom_mode">Selecionar Modo Custom</string>
+    <string name="mode_single_duel">Duelo Single</string>
+    <string name="mode_tag_duel">Duelo Tag</string>
+    <string name="mode_match_duel">Duelo Match</string>
+    <string name="creating_room">Criando Sala %s...</string>
+    <string name="create_room_failed">Falha ao Criar Sala</string>
+    <string name="no_waiting_rooms">Sem Salas em Espera</string>
+    <string name="title_rank_start">Partida Competitiva</string>
+    <string name="input_room_name">Digite o nome da sala</string>
+    <string name="server_area">Área do Servidor:</string>
+    <string name="allowed_cards">Cartas Permitidas:</string>
 </resources>
 
