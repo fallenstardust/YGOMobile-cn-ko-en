@@ -78,14 +78,16 @@
                 android:layout_height="45dp"
                 android:layout_gravity="center"
                 android:layout_marginHorizontal="5dp"
-                android:src="@drawable/avatar" />
+                android:src="@drawable/avatar"
+                android:clickable="true"
+                android:focusable="true" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/img_logout"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="right"
-                android:src="@drawable/baseline_arrow_right_24" />
+                android:src="@drawable/baseline_login_24" />
         </LinearLayout>
 
         <LinearLayout
@@ -334,7 +336,7 @@
                                             android:src="@drawable/ic_rank" />
 
                                         <TextView
-                                            android:id="@+id/fun_tv_rank"
+                                            android:id="@+id/match_tv_rank"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_marginHorizontal="4dp"
@@ -473,7 +475,7 @@
                                                     android:src="@drawable/ic_rank" />
 
                                                 <TextView
-                                                    android:id="@+id/match_tv_rank"
+                                                    android:id="@+id/fun_tv_rank"
                                                     android:layout_width="wrap_content"
                                                     android:layout_height="wrap_content"
                                                     android:layout_marginHorizontal="4dp"

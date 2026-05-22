@@ -260,6 +260,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         btn_mycard_bbs.setOnClickListener(this);
 
         mHeadView = view.findViewById(R.id.img_head);
+        mHeadView.setOnClickListener(this);
         img_logout = view.findViewById(R.id.img_logout);
         img_logout.setOnClickListener(this);
         mNameView = view.findViewById(R.id.tv_name);
@@ -965,6 +966,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.img_head:
+                openUserProfile();
+                break;
             case R.id.img_logout:
                 performLogout();
                 break;
@@ -1015,6 +1019,68 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             case R.id.btn_register:
                 switchRegisterWithWebView();
                 break;
+        }
+    }
+
+    /**
+     * 打开用户资料页面
+     */
+    private void openUserProfile() {
+        if (homeActivity == null) {
+            return;
+        }
+
+        // 判断 MyCardWebFragment 是否已经显示
+        boolean isShowing = homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible();
+
+        if (isShowing) {
+            // 如果正在显示，则移除它
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .remove(homeActivity.fragment_mycard_web)
+                    .commit();
+            homeActivity.fragment_mycard_web = null;
+            
+            if (ll_main_ui != null) {
+                ll_main_ui.setVisibility(View.VISIBLE);
+            }
+            
+            // 恢复所有按钮状态
+            updateToolBarButtonState(null);
+        } else {
+            // 如果未显示，则打开用户资料页面
+            // 如果 DeckWinRateFragment 正在显示，先隐藏它
+            if (homeActivity.fragment_deck_win_rate != null &&
+                    homeActivity.fragment_deck_win_rate.isAdded() &&
+                    homeActivity.fragment_deck_win_rate.isVisible()) {
+                getChildFragmentManager().beginTransaction()
+                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                                android.R.anim.fade_in, android.R.anim.fade_out)
+                        .hide(homeActivity.fragment_deck_win_rate)
+                        .commit();
+            }
+
+            // 创建并显示用户资料页面的 Web Fragment
+            homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
+                    MyCard.URL_MC_USER_PROFILE,
+                    "用户资料"
+            );
+
+            if (ll_main_ui != null) {
+                ll_main_ui.setVisibility(View.GONE);
+            }
+
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
+                    .commit();
+
+            // 更新按钮状态，将萌卡论坛按钮设置为激活状态
+            updateToolBarButtonState(btn_mycard_bbs);
         }
     }
 

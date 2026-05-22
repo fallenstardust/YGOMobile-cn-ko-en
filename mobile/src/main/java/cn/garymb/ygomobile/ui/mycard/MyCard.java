@@ -98,6 +98,7 @@ public class MyCard {
     public static int U16_SECRET = 0;
     public static final String URL_MC_SIGN_UP = "https://accounts.moecube.com/signup";
     public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
+    public static final String URL_MC_USER_PROFILE = "https://accounts.moecube.com/profiles";
     public static final String URL_MC_AUTH_USER = "https://sapi.moecube.com:444/accounts/authUser";
     public static final String URL_MC_ATHLETIC_RATE = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type?source=mycard-athletic";
     public static final String URL_DECK_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/deck/type";
