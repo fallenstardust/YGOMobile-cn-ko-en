@@ -11,7 +11,7 @@
         android:toYScale="1.0"
         android:pivotX="50%"
         android:pivotY="50%"
-        android:duration="350" />
+        android:duration="100" />
 
     <!-- 旋转：轻微旋转增加科技感 -->
     <rotate
@@ -19,11 +19,11 @@
         android:toDegrees="0"
         android:pivotX="50%"
         android:pivotY="50%"
-        android:duration="300" />
+        android:duration="100" />
 
     <!-- 透明度渐变 -->
     <alpha
         android:fromAlpha="0.0"
         android:toAlpha="1.0"
-        android:duration="250" />
+        android:duration="100" />
 </set>

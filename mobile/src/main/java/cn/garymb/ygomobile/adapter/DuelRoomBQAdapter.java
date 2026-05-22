@@ -201,31 +201,53 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
         boolean isTag = duelRoom.getArenaType() == DuelRoom.TYPE_ARENA_FUN_TAG;
         if (isTag) {
             // Tag模式: name1和name2在Vs左侧, name3和name4在Vs右侧
-            String name1 = "", name2 = "", name3 = "", name4 = "";
+            String name0 = "", name1 = "", name2 = "", name3 = "";
             if (users != null) {
-                if (users.size() >= 1) name1 = users.get(0).getUsername();
-                if (users.size() >= 2) name2 = users.get(1).getUsername();
-                if (users.size() >= 3) name3 = users.get(2).getUsername();
-                if (users.size() >= 4) name4 = users.get(3).getUsername();
+                for (DuelRoom.UserBean user : users) {
+                    Integer position = user.getPosition();
+                    String username = user.getUsername();
+                    if (position != null && username != null) {
+                        switch (position) {
+                            case 0:
+                                name0 = username;
+                                break;
+                            case 1:
+                                name1 = username;
+                                break;
+                            case 2:
+                                name2 = username;
+                                break;
+                            case 3:
+                                name3 = username;
+                                break;
+                        }
+                    }
+                }
             }
-            baseViewHolder.setText(R.id.tv_name1, name1);
-            baseViewHolder.setText(R.id.tv_name2, name2);
-            baseViewHolder.setText(R.id.tv_name3, name3);
-            baseViewHolder.setText(R.id.tv_name4, name4);
-            baseViewHolder.setGone(R.id.tv_name2, TextUtils.isEmpty(name2));
-            baseViewHolder.setGone(R.id.tv_name4, TextUtils.isEmpty(name4));
+            baseViewHolder.setText(R.id.tv_name1, name0);
+            baseViewHolder.setText(R.id.tv_name2, name1);
+            baseViewHolder.setText(R.id.tv_name3, name2);
+            baseViewHolder.setText(R.id.tv_name4, name3);
+            //
+            baseViewHolder.setGone(R.id.tv_name2, false);
+            baseViewHolder.setGone(R.id.tv_name4, false);
         } else {
             // 其他模式: name1在Vs左侧, name2(即tv_name3)在Vs右侧, 隐藏tv_name2和tv_name4
-            String leftName = "";
-            String rightName = "";
-            if (users != null && users.size() >= 2) {
-                leftName = users.get(0).getUsername();
-                rightName = users.get(1).getUsername();
-            } else {
-                // 没有房间名时才回退显示房间ID
-                leftName = TextUtils.isEmpty(roomTitle) ? duelRoom.getId() : "";
-                if (users != null && users.size() == 1) {
-                    rightName = users.get(0).getUsername();
+            String leftName = "", rightName = "";
+            if (users != null) {
+                for (DuelRoom.UserBean user : users) {
+                    Integer position = user.getPosition();
+                    String username = user.getUsername();
+                    if (position != null && username != null) {
+                        switch (position) {
+                            case 0:
+                                leftName = username;
+                                break;
+                            case 1:
+                                rightName = username;
+                                break;
+                        }
+                    }
                 }
             }
             baseViewHolder.setText(R.id.tv_name1, leftName);
