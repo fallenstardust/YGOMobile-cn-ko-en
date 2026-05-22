@@ -52,6 +52,7 @@ import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.YGOMobileActivity;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.adapter.DuelRoomBQAdapter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
@@ -450,6 +451,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         duelRoomBQAdapter.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
+                // 游戏运行中则直接打开游戏，不加入房间
+
+                if (YGOStarter.isGameRunning(getActivity())) {
+                    YGOStarter.startGame(getActivity(), null);
+                    return;
+                }
+
                 DuelRoom duelRoom = duelRoomBQAdapter.getItem(position);
 
                 if (mMcUser == null || !isUserLoggedIn()) {
@@ -1660,7 +1668,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         rv_waiting_list.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         waitingRoomAdapter = new DuelRoomBQAdapter(requireContext(), new ArrayList<DuelRoom>());
-        waitingRoomAdapter.setHideVsText(true);
+        waitingRoomAdapter.setShowRoomName(true);
         rv_waiting_list.setAdapter(waitingRoomAdapter);
 
         waitingDuelManagement = WaitingDuelManagement.getInstance();
@@ -1700,6 +1708,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         waitingRoomAdapter.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
+                // 游戏运行中则直接打开游戏，不加入房间
+                if (YGOStarter.isGameRunning(getActivity())) {
+                    YGOStarter.startGame(getActivity(), null);
+                    return;
+                }
+
                 DuelRoom duelRoom = waitingRoomAdapter.getItem(position);
 
                 if (mMcUser == null || !isUserLoggedIn()) {

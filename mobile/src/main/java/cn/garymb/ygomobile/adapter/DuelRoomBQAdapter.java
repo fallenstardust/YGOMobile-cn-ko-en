@@ -25,7 +25,9 @@ import cn.garymb.ygomobile.utils.YGOUtil;
  */
 public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder> {
     private Context context;
-    private boolean hideVsText = false;
+    // 是否显示房间名（等待房间显示，观战列表隐藏）
+    private boolean showRoomName = false;
+
     private static final int ITEM_TYPE_SAME = 0;
     private static final int ITEM_TYPE_SWITCH = 1;
     private static final int ITEM_TYPE_DIFFERENT = 2;
@@ -37,13 +39,10 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
         this.context = context;
     }
 
-    public void setHideVsText(boolean hideVsText) {
-        this.hideVsText = hideVsText;
+    public void setShowRoomName(boolean showRoomName) {
+        this.showRoomName = showRoomName;
     }
 
-    public boolean isHideVsText() {
-        return hideVsText;
-    }
 
     public int getGroupType(int position) {
         List<DuelRoom> data = getData();
@@ -188,24 +187,51 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
 
 
         List<DuelRoom.UserBean> users = duelRoom.getUsers();
-        String leftName = "";
-        String rightName = "";
-        if (users != null && users.size() >= 2) {
-            leftName = users.get(0).getUsername();
-            rightName = users.get(1).getUsername();
+        baseViewHolder.setGone(R.id.tv_vs, false);
+
+        // 房间名单独显示，不混入玩家名（仅等待房间列表显示）
+        String roomTitle = duelRoom.getTitle();
+        if (showRoomName && !TextUtils.isEmpty(roomTitle)) {
+            baseViewHolder.setGone(R.id.tv_room_name, false);
+            baseViewHolder.setText(R.id.tv_room_name, roomTitle);
         } else {
-            leftName = !TextUtils.isEmpty(duelRoom.getTitle()) ? duelRoom.getTitle() : duelRoom.getId();
-            if (users != null && users.size() == 1) {
-                rightName = users.get(0).getUsername();
-            }
+            baseViewHolder.setGone(R.id.tv_room_name, true);
         }
-        baseViewHolder.setText(R.id.tv_name1, leftName);
-        baseViewHolder.setText(R.id.tv_name2, rightName);
-        
-        if (hideVsText) {
-            baseViewHolder.setGone(R.id.tv_vs, true);
+
+        boolean isTag = duelRoom.getArenaType() == DuelRoom.TYPE_ARENA_FUN_TAG;
+        if (isTag) {
+            // Tag模式: name1和name2在Vs左侧, name3和name4在Vs右侧
+            String name1 = "", name2 = "", name3 = "", name4 = "";
+            if (users != null) {
+                if (users.size() >= 1) name1 = users.get(0).getUsername();
+                if (users.size() >= 2) name2 = users.get(1).getUsername();
+                if (users.size() >= 3) name3 = users.get(2).getUsername();
+                if (users.size() >= 4) name4 = users.get(3).getUsername();
+            }
+            baseViewHolder.setText(R.id.tv_name1, name1);
+            baseViewHolder.setText(R.id.tv_name2, name2);
+            baseViewHolder.setText(R.id.tv_name3, name3);
+            baseViewHolder.setText(R.id.tv_name4, name4);
+            baseViewHolder.setGone(R.id.tv_name2, TextUtils.isEmpty(name2));
+            baseViewHolder.setGone(R.id.tv_name4, TextUtils.isEmpty(name4));
         } else {
-            baseViewHolder.setGone(R.id.tv_vs, false);
+            // 其他模式: name1在Vs左侧, name2(即tv_name3)在Vs右侧, 隐藏tv_name2和tv_name4
+            String leftName = "";
+            String rightName = "";
+            if (users != null && users.size() >= 2) {
+                leftName = users.get(0).getUsername();
+                rightName = users.get(1).getUsername();
+            } else {
+                // 没有房间名时才回退显示房间ID
+                leftName = TextUtils.isEmpty(roomTitle) ? duelRoom.getId() : "";
+                if (users != null && users.size() == 1) {
+                    rightName = users.get(0).getUsername();
+                }
+            }
+            baseViewHolder.setText(R.id.tv_name1, leftName);
+            baseViewHolder.setText(R.id.tv_name3, rightName);
+            baseViewHolder.setGone(R.id.tv_name2, true); // 隐藏左侧第二个
+            baseViewHolder.setGone(R.id.tv_name4, true); // 隐藏右侧第二个
         }
     }
 
