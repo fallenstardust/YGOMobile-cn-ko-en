@@ -941,21 +941,40 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (homeActivity.fragment_mycard_web != null && 
             homeActivity.fragment_mycard_web.isAdded() && 
             homeActivity.fragment_mycard_web.isVisible()) {
-            getChildFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
-                    .remove(homeActivity.fragment_mycard_web)
-                    .commit();
-            homeActivity.fragment_mycard_web = null;
-            if (ll_main_ui != null) {
-                ll_main_ui.setVisibility(View.VISIBLE);
+            // 优先让WebView返回上一页
+            if (homeActivity.fragment_mycard_web.onBackPressed()) {
+                return true;
             }
-            // 恢复所有按钮状态
-            updateToolBarButtonState(null);
+            // WebView没有上一页可返回，如果是论坛页面则弹出确认对话框
+            Bundle webArgs = homeActivity.fragment_mycard_web.getArguments();
+            String webUrl = webArgs != null ? webArgs.getString("url") : null;
+
+            removeMycardWebFragment();
+
             return true;
         }
         
         return false;
+    }
+
+    /**
+     * 移除 MyCardWebFragment 并恢复主界面
+     */
+    private void removeMycardWebFragment() {
+        if (homeActivity.fragment_mycard_web == null) {
+            return;
+        }
+        getChildFragmentManager().beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                        android.R.anim.fade_in, android.R.anim.fade_out)
+                .remove(homeActivity.fragment_mycard_web)
+                .commit();
+        homeActivity.fragment_mycard_web = null;
+        if (ll_main_ui != null) {
+            ll_main_ui.setVisibility(View.VISIBLE);
+        }
+        // 恢复所有按钮状态
+        updateToolBarButtonState(null);
     }
 
     /**
