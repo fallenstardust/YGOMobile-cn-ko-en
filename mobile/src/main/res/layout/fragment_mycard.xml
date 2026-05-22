@@ -102,7 +102,7 @@
                 android:id="@+id/btn_mycard_bbs"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:layout_gravity="left|center"
+                android:layout_gravity="center"
                 android:src="@drawable/ic_forum"
                 android:tint="@color/holo_blue_bright"
                 android:visibility="visible" />

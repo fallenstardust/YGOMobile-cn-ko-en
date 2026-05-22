@@ -31,7 +31,7 @@ void DeckManager::LoadLFListSingle(const char* path) {
     // 以只读模式打开指定路径的文件
     FILE* fp = myfopen(path, "r");
     // 定义字符缓冲区，用于存储从文件读取的单行内容
-    char linebuf[256]{};
+    char linebuf[1024]{};
     // 定义宽字符缓冲区，用于存储转换后的字符串
     wchar_t strBuffer[256]{};
     // 检查文件是否成功打开

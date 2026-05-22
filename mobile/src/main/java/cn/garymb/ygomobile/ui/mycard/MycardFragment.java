@@ -720,7 +720,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         tvEmpty = view.findViewById(R.id.tv_empty);
         swToggleCardImage = view.findViewById(R.id.sw_toggle_card_image);
 
-        pieChartView.setOnClickListener(v -> {switchDeckWinRateFragment();});
+        pieChartView.setOnClickListener(this);
 
         // 设置 Switch 开关的监听器，用于切换卡图显示模式
         swToggleCardImage.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -1019,6 +1019,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             case R.id.btn_register:
                 switchRegisterWithWebView();
                 break;
+            case R.id.pie_chart_view:
+                switchDuelArenaWithWebView();
+                break;
         }
     }
 
@@ -1164,6 +1167,45 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             // 创建并显示注册页面的 Web Fragment
             homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
                     MyCard.URL_MC_SIGN_UP,
+                    YGOUtil.s(R.string.register)
+            );
+
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
+                    .commit();
+
+            // 更新按钮状态，将萌卡论坛按钮设置为激活（关闭）状态
+            updateToolBarButtonState(btn_mycard_bbs);
+
+        }
+    }
+
+
+    private void switchDuelArenaWithWebView() {
+        // 判断 MyCardWebFragment 是否已经显示
+        boolean isShowing = homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible();
+
+        if (isShowing) {
+            // 如果正在显示，则移除它
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .remove(homeActivity.fragment_mycard_web)
+                    .commit();
+            homeActivity.fragment_mycard_web = null;
+
+            if (ll_dialog_login != null) {
+                ll_dialog_login.setVisibility(View.VISIBLE);
+            }
+        } else {
+            // 如果未显示，则打开注册页面
+            // 创建并显示注册页面的 Web Fragment
+            homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
+                    MyCard.getArenaUrl(),
                     YGOUtil.s(R.string.register)
             );
 

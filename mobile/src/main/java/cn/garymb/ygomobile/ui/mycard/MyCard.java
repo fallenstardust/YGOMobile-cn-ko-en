@@ -102,6 +102,8 @@ public class MyCard {
     public static final String URL_MC_AUTH_USER = "https://sapi.moecube.com:444/accounts/authUser";
     public static final String URL_MC_ATHLETIC_RATE = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type?source=mycard-athletic";
     public static final String URL_DECK_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/deck/type";
+    //每个卡组对其他卡组胜率分析接口
+    public static final String URL_DECK_MATCHUP_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type?source=mycard-athletic";
     public static final int MATCH_TYPE_ATHLETIC = 0;
     public static final int MATCH_TYPE_ENTERTAIN = 1;
 
@@ -403,7 +405,7 @@ public class MyCard {
         return hexString.toString();
     }
 
-    public String getArenaUrl() {
+    public static String getArenaUrl() {
         return mArenaUrl;
     }
 
