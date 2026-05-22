@@ -836,6 +836,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onResume() {
         YGOStarter.onResumed(getActivity());
+        queryDuelInfo();
         super.onResume();
     }
 
