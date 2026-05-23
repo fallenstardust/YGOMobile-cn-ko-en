@@ -6,22 +6,27 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -36,10 +41,16 @@ import com.king.view.circleprogressview.CircleProgressView;
 import com.ourygo.lib.duelassistant.util.Util;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
+import java.util.TimeZone;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -61,6 +72,7 @@ import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
 import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
 import cn.garymb.ygomobile.ui.mycard.bean.McDuelInfo;
+import cn.garymb.ygomobile.ui.mycard.bean.McDuelResult;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
@@ -94,12 +106,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private static final int REQUEST_MATCH_ENTERTAIN = 15;
     private static final int TYPE_MC_NEWS_QUERY_OK = 16;
     private static final int TYPE_MC_NEWS_QUERY_EXCEPTION = 17;
+    private static final long MATCH_RESULT_LOOKBACK_MS = 2 * 60 * 1000;
 
     private HomeActivity homeActivity;
     private LinearLayout ll_athletic, ll_entertain, ll_dialog_login, ll_main_ui, ll_mycard_waiting_rooms;
     private EditText et_username, et_password;
     private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_dp_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs;
-    private Button btn_login, btn_register;
+    private Button btn_login, btn_register, btn_mycard_ai;
     private ProgressBar progressBar_login;
     private ImageView mHeadView, img_logout, iv_refresh, btn_mycard_bbs;
     private MyCard mMyCard;
@@ -130,6 +143,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private SwipeRefreshLayout srl_waiting;
     private DuelRoomBQAdapter waitingRoomAdapter;
     private List<DuelRoom> waitingRoomList = new ArrayList<>();
+    private List<YGOServer> myCardServers = new ArrayList<>();
+    private YGOServer currentWindbotServer;
+    private int pendingMatchType = -1;
+    private long pendingMatchStartedAt = 0;
+    private String lastShownResultEndTime;
 
 
     @SuppressLint("HandlerLeak")
@@ -191,6 +209,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         YGOUtil.show("未匹配到对手");
                         break;
                     }
+                    pendingMatchType = msg.what == MC_MATCH_ATHLETIC_OK ? MyCard.MATCH_TYPE_ATHLETIC : MyCard.MATCH_TYPE_ENTERTAIN;
+                    pendingMatchStartedAt = System.currentTimeMillis();
                     YGOUtil.joinGame(getActivity(), ygoServer, ygoServer.getPassword());
                     break;
                 case MC_MATCH_ATHLETIC_EXCEPTION:
@@ -271,6 +291,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         btn_login.setOnClickListener(v -> attemptLogin());
         btn_register.setOnClickListener(v -> {
         });
+        btnCreateRoom.setVisibility(View.VISIBLE);
+        btnCreateRoom.setOnClickListener(v -> showMyCardCustomGame());
 
         checkLoginState();
 
@@ -341,13 +363,18 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         btn_login.setEnabled(false);
 
         VUiKit.defer().when(() -> {
-            LoginResponse result = DeckSquareApiUtil.login(username, password);
+            LoginResponse result = DeckSquareApiUtil.loginWithDetailedError(username, password);
+            if (result == null || result.token == null || result.user == null) {
+                throw new IOException("Login response is empty or missing token/user.");
+            }
             SharedPreferenceUtil.setServerToken(result.token);
             SharedPreferenceUtil.setServerUserId(result.user.id);
             SharedPreferenceUtil.setMyCardUserName(result.user.username);
             return result;
         }).fail((e) -> {
-            YGOUtil.showTextToast(R.string.logining_failed);
+            String detail = e != null && !TextUtils.isEmpty(e.getMessage()) ? e.getMessage() : String.valueOf(e);
+            Log.e("MCFragment", "MyCard login failed: " + detail, e);
+            YGOUtil.showTextToast(getString(R.string.logining_failed) + ": " + detail, Toast.LENGTH_LONG);
             progressBar_login.setVisibility(View.GONE);
             btn_login.setEnabled(true);
         }).done((result) -> {
@@ -416,11 +443,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         tv_dp_title = view.findViewById(R.id.tv_dp_title);
         ll_athletic = view.findViewById(R.id.ll_athletic);
         ll_entertain = view.findViewById(R.id.ll_entertain);
+        btn_mycard_ai = view.findViewById(R.id.btn_mycard_ai);
 
         dialogUtils = DialogUtils.getInstance(getActivity());
 
         ll_athletic.setOnClickListener(this);
         ll_entertain.setOnClickListener(this);
+        btn_mycard_ai.setOnClickListener(this);
         iv_refresh.setOnClickListener(v -> {
             queryDuelInfo();
         });
@@ -706,6 +735,364 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
         });
     }
+
+    private void showMyCardAiBattle() {
+        if (!isUserLoggedIn()) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+        if (!myCardServers.isEmpty()) {
+            showWindbotServerDialog(getWindbotServers(myCardServers));
+            return;
+        }
+
+        DialogPlus loading = DialogPlus.show(getActivity(), getString(R.string.mycard_ai_battle), getString(R.string.loading), false);
+        MyCard.findMyCardServers((servers, exception) -> {
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            activity.runOnUiThread(() -> {
+                loading.dismiss();
+                if (!TextUtils.isEmpty(exception)) {
+                    YGOUtil.show(getString(R.string.mycard_server_load_failed) + exception);
+                    return;
+                }
+                myCardServers = servers != null ? servers : new ArrayList<>();
+                showWindbotServerDialog(getWindbotServers(myCardServers));
+            });
+        });
+    }
+
+    private List<YGOServer> getWindbotServers(List<YGOServer> servers) {
+        List<YGOServer> result = new ArrayList<>();
+        if (servers == null) {
+            return result;
+        }
+        for (YGOServer server : servers) {
+            if (server == null || server.isHidden()) {
+                continue;
+            }
+            if (server.getWindbot() != null && !server.getWindbot().isEmpty()) {
+                result.add(server);
+            }
+        }
+        return result;
+    }
+
+    private void showWindbotServerDialog(List<YGOServer> windbotServers) {
+        if (windbotServers == null || windbotServers.isEmpty()) {
+            YGOUtil.show(R.string.mycard_ai_empty);
+            return;
+        }
+        String[] names = new String[windbotServers.size()];
+        for (int i = 0; i < windbotServers.size(); i++) {
+            YGOServer server = windbotServers.get(i);
+            names[i] = TextUtils.isEmpty(server.getName()) ? server.getServerAddr() + ":" + server.getPort() : server.getName();
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.mycard_select_environment)
+                .setItems(names, (dialog, which) -> {
+                    currentWindbotServer = windbotServers.get(which);
+                    showWindbotDialog(currentWindbotServer);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void showWindbotDialog(YGOServer server) {
+        if (server == null || server.getWindbot() == null || server.getWindbot().isEmpty()) {
+            YGOUtil.show(R.string.mycard_ai_empty);
+            return;
+        }
+        List<String> windbots = new ArrayList<>();
+        windbots.add(getString(R.string.random));
+        windbots.addAll(server.getWindbot());
+        String[] names = windbots.toArray(new String[0]);
+        String title = getString(R.string.mycard_select_ai);
+        if (!TextUtils.isEmpty(server.getName())) {
+            title += " - " + server.getName();
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(title)
+                .setItems(names, (dialog, which) -> {
+                    String windbotName = which == 0
+                            ? server.getWindbot().get(new Random().nextInt(server.getWindbot().size()))
+                            : windbots.get(which);
+                    joinMyCardWindbot(server, windbotName);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void joinMyCardWindbot(YGOServer server, String windbotName) {
+        if (server == null || TextUtils.isEmpty(windbotName)) {
+            return;
+        }
+        server.setPlayerName(mMcUser.getUsername());
+        YGOUtil.joinGame(getActivity(), server, "AI#" + windbotName);
+    }
+
+    private void showMyCardCustomGame() {
+        if (!isUserLoggedIn()) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+        if (!myCardServers.isEmpty()) {
+            showCustomServerDialog(getCustomServers(myCardServers));
+            return;
+        }
+
+        DialogPlus loading = DialogPlus.show(getActivity(), getString(R.string.create_custom_room), getString(R.string.loading), false);
+        MyCard.findMyCardServers((servers, exception) -> {
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            activity.runOnUiThread(() -> {
+                loading.dismiss();
+                if (!TextUtils.isEmpty(exception)) {
+                    YGOUtil.show(getString(R.string.mycard_server_load_failed) + exception);
+                    return;
+                }
+                myCardServers = servers != null ? servers : new ArrayList<>();
+                showCustomServerDialog(getCustomServers(myCardServers));
+            });
+        });
+    }
+
+    private List<YGOServer> getCustomServers(List<YGOServer> servers) {
+        List<YGOServer> result = new ArrayList<>();
+        if (servers == null) {
+            return result;
+        }
+        for (YGOServer server : servers) {
+            if (server == null || server.isHidden()) {
+                continue;
+            }
+            if (server.isCustom()) {
+                result.add(server);
+            }
+        }
+        return result;
+    }
+
+    private void showCustomServerDialog(List<YGOServer> customServers) {
+        if (customServers == null || customServers.isEmpty()) {
+            YGOUtil.show(R.string.mycard_custom_empty);
+            return;
+        }
+        String[] names = new String[customServers.size()];
+        for (int i = 0; i < customServers.size(); i++) {
+            YGOServer server = customServers.get(i);
+            names[i] = TextUtils.isEmpty(server.getName()) ? server.getServerAddr() + ":" + server.getPort() : server.getName();
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.mycard_select_environment)
+                .setItems(names, (dialog, which) -> showCustomActionDialog(customServers.get(which)))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void showCustomActionDialog(YGOServer server) {
+        String[] actions = {
+                getString(R.string.mycard_create_room),
+                getString(R.string.mycard_join_private_room)
+        };
+        new AlertDialog.Builder(requireContext())
+                .setTitle(TextUtils.isEmpty(server.getName()) ? getString(R.string.create_custom_room) : server.getName())
+                .setItems(actions, (dialog, which) -> {
+                    if (which == 0) {
+                        showCreateRoomDialog(server);
+                    } else {
+                        showJoinPrivateRoomDialog(server);
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void showCreateRoomDialog(YGOServer server) {
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        int padding = YGOUtil.dp2px(12);
+        root.setPadding(padding, padding, padding, 0);
+
+        EditText titleInput = createNumberlessEditText(mMcUser.getUsername() + getString(R.string.mycard_room_suffix));
+        Spinner ruleSpinner = createSpinner(new String[]{"OCG", "TCG", getString(R.string.mycard_rule_simplified), getString(R.string.mycard_rule_custom), getString(R.string.mycard_rule_exclusive_ban), getString(R.string.mycard_rule_all_cards)}, 0);
+        Spinner modeSpinner = createSpinner(new String[]{getString(R.string.mode_single_duel), getString(R.string.mode_match_duel), getString(R.string.mode_tag_duel)}, 1);
+        Spinner duelRuleSpinner = createSpinner(new String[]{"Master Rule", "Master Rule 2", "Master Rule 3", getString(R.string.mycard_rule_new_master), "Master Rule 2020"}, 4);
+        EditText lpInput = createNumberEditText("8000");
+        EditText handInput = createNumberEditText("5");
+        EditText drawInput = createNumberEditText("1");
+        CheckBox privateBox = createCheckBox(R.string.mycard_private_room);
+        CheckBox noCheckBox = createCheckBox(R.string.mycard_no_check_deck);
+        CheckBox noShuffleBox = createCheckBox(R.string.mycard_no_shuffle_deck);
+        CheckBox autoDeathBox = createCheckBox(R.string.mycard_auto_death);
+
+        root.addView(labelAndView(R.string.mycard_room_title, titleInput));
+        root.addView(labelAndView(R.string.mycard_card_rule, ruleSpinner));
+        root.addView(labelAndView(R.string.mycard_duel_mode, modeSpinner));
+        root.addView(labelAndView(R.string.mycard_duel_rule, duelRuleSpinner));
+        root.addView(labelAndView(R.string.mycard_start_lp, lpInput));
+        root.addView(labelAndView(R.string.mycard_start_hand, handInput));
+        root.addView(labelAndView(R.string.mycard_draw_count, drawInput));
+        root.addView(privateBox);
+        root.addView(noCheckBox);
+        root.addView(noShuffleBox);
+        root.addView(autoDeathBox);
+
+        modeSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                lpInput.setText(position == YGOServer.MODE_TAG ? "16000" : "8000");
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.mycard_create_room)
+                .setView(root)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.mycard_create_room, (dialog, which) -> {
+                    boolean isPrivate = privateBox.isChecked();
+                    String suffix = isPrivate
+                            ? String.valueOf(mMcUser.getExternal_id() ^ 0x54321)
+                            : titleInput.getText().toString();
+                    createMyCardRoom(server,
+                            isPrivate,
+                            duelRuleSpinner.getSelectedItemPosition() + 1,
+                            autoDeathBox.isChecked(),
+                            ruleSpinner.getSelectedItemPosition(),
+                            modeSpinner.getSelectedItemPosition(),
+                            noCheckBox.isChecked(),
+                            noShuffleBox.isChecked(),
+                            parseEditInt(lpInput, 8000),
+                            parseEditInt(handInput, 5),
+                            parseEditInt(drawInput, 1),
+                            suffix);
+                })
+                .show();
+    }
+
+    private void showJoinPrivateRoomDialog(YGOServer server) {
+        EditText input = createNumberlessEditText("");
+        input.setHint(R.string.mycard_private_room_password);
+        int padding = YGOUtil.dp2px(20);
+        input.setPadding(padding, 0, padding, 0);
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.mycard_join_private_room)
+                .setView(input)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.quick_join, (dialog, which) -> joinPrivateMyCardRoom(server, input.getText().toString()))
+                .show();
+    }
+
+    private void createMyCardRoom(YGOServer server, boolean isPrivate, int duelRule, boolean autoDeath,
+                                  int rule, int mode, boolean noCheckDeck, boolean noShuffleDeck,
+                                  int startLp, int startHand, int drawCount, String suffix) {
+        fetchU16SecretAndJoin(server, u16Secret -> {
+            String password = YGOUtil.getMyCardCreateRoomPassword(isPrivate, duelRule, autoDeath, rule, mode,
+                    noCheckDeck, noShuffleDeck, startLp, startHand, drawCount, u16Secret, suffix);
+            server.setPlayerName(mMcUser.getUsername());
+            YGOUtil.joinGame(getActivity(), server, password);
+            if (isPrivate) {
+                YGOUtil.copyMessage(requireContext(), suffix);
+                YGOUtil.show(getString(R.string.mycard_private_room_copied) + suffix);
+            }
+        });
+    }
+
+    private void joinPrivateMyCardRoom(YGOServer server, String privatePassword) {
+        if (TextUtils.isEmpty(privatePassword)) {
+            YGOUtil.show(R.string.mycard_private_room_password);
+            return;
+        }
+        fetchU16SecretAndJoin(server, u16Secret -> {
+            String password = YGOUtil.getMyCardJoinPrivatePassword(privatePassword, u16Secret);
+            server.setPlayerName(mMcUser.getUsername());
+            YGOUtil.joinGame(getActivity(), server, password);
+        });
+    }
+
+    private void fetchU16SecretAndJoin(YGOServer server, OnU16SecretReady listener) {
+        new Thread(() -> {
+            try {
+                String token = SharedPreferenceUtil.getServerToken();
+                if (TextUtils.isEmpty(token)) {
+                    throw new Exception("token not found");
+                }
+                int u16Secret = MyCard.getUserU16Secret(token);
+                Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> listener.onReady(u16Secret));
+                }
+            } catch (Exception e) {
+                Log.e("MyCard", "get u16Secret failed: " + e);
+                Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> YGOUtil.show(getString(R.string.create_room_failed) + ": " + e.getMessage()));
+                }
+            }
+        }).start();
+    }
+
+    private View labelAndView(int labelRes, View input) {
+        LinearLayout container = new LinearLayout(requireContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        TextView label = new TextView(requireContext());
+        label.setText(labelRes);
+        container.addView(label);
+        container.addView(input);
+        return container;
+    }
+
+    private EditText createNumberEditText(String value) {
+        EditText input = createNumberlessEditText(value);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        return input;
+    }
+
+    private EditText createNumberlessEditText(String value) {
+        EditText input = new EditText(requireContext());
+        input.setText(value);
+        input.setSingleLine(true);
+        return input;
+    }
+
+    private Spinner createSpinner(String[] values, int selected) {
+        Spinner spinner = new Spinner(requireContext());
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, values);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setSelection(selected);
+        return spinner;
+    }
+
+    private CheckBox createCheckBox(int textRes) {
+        CheckBox checkBox = new CheckBox(requireContext());
+        checkBox.setText(textRes);
+        return checkBox;
+    }
+
+    private int parseEditInt(EditText editText, int fallback) {
+        try {
+            return Integer.parseInt(editText.getText().toString());
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    private interface OnU16SecretReady {
+        void onReady(int u16Secret);
+    }
+
     private void initPieChartViews(View view) {
         pieChartView = view.findViewById(R.id.pie_chart_view);
         tvEmpty = view.findViewById(R.id.tv_empty);
@@ -821,6 +1208,117 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         if (mainContentView != null && isUserLoggedIn() && !hasVisibleChildFragment()) {
             mainContentView.setVisibility(View.VISIBLE);
         }
+        checkPendingMatchResult();
+    }
+
+    private void checkPendingMatchResult() {
+        if (pendingMatchType == -1 || !isUserLoggedIn()) {
+            return;
+        }
+        MyCard.findLatestDuelResult(mMcUser.getUsername(), (result, exception) -> {
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            activity.runOnUiThread(() -> {
+                if (!TextUtils.isEmpty(exception)) {
+                    Log.e("MCFragment", "query latest result failed: " + exception);
+                    return;
+                }
+                if (result == null || TextUtils.isEmpty(result.getEndTime())) {
+                    return;
+                }
+                if (result.getEndTime().equals(lastShownResultEndTime)) {
+                    pendingMatchType = -1;
+                    return;
+                }
+                long endTime = parseMyCardTime(result.getEndTime());
+                if (pendingMatchStartedAt > 0 && endTime > 0 && endTime + MATCH_RESULT_LOOKBACK_MS < pendingMatchStartedAt) {
+                    return;
+                }
+                String expectedType = pendingMatchType == MyCard.MATCH_TYPE_ATHLETIC ? MyCard.ARG_ATHLETIC : MyCard.ARG_ENTERTAIN;
+                if (!TextUtils.isEmpty(result.getType()) && !expectedType.equals(result.getType())) {
+                    return;
+                }
+                lastShownResultEndTime = result.getEndTime();
+                pendingMatchType = -1;
+                pendingMatchStartedAt = 0;
+                showMatchResultDialog(result);
+                queryDuelInfo();
+            });
+        });
+    }
+
+    private long parseMyCardTime(String value) {
+        if (TextUtils.isEmpty(value)) {
+            return 0;
+        }
+        String[] patterns = {
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                "yyyy-MM-dd HH:mm:ss"
+        };
+        for (String pattern : patterns) {
+            try {
+                SimpleDateFormat format = new SimpleDateFormat(pattern, Locale.US);
+                if (pattern.endsWith("'Z'")) {
+                    format.setTimeZone(TimeZone.getTimeZone("UTC"));
+                }
+                Date date = format.parse(value);
+                if (date != null) {
+                    return date.getTime();
+                }
+            } catch (ParseException ignored) {
+            }
+        }
+        return 0;
+    }
+
+    private void showMatchResultDialog(McDuelResult result) {
+        String username = mMcUser != null ? mMcUser.getUsername() : "";
+        String resultText;
+        if (result.isDraw()) {
+            resultText = getString(R.string.mycard_result_draw);
+        } else if (result.isWin(username)) {
+            resultText = getString(R.string.mycard_result_win);
+        } else {
+            resultText = getString(R.string.mycard_result_lose);
+        }
+        StringBuilder message = new StringBuilder();
+        message.append(resultText).append('\n');
+        message.append(getString(R.string.mycard_result_score))
+                .append(result.getUserscorea())
+                .append(" : ")
+                .append(result.getUserscoreb())
+                .append('\n');
+        message.append(getString(R.string.mycard_result_opponent))
+                .append(result.getOpponent(username))
+                .append('\n');
+        int dp = result.getPtFor(username);
+        int dpEx = result.getPtExFor(username);
+        if (result.isFirstWin() && result.isWin(username)) {
+            dp -= 5;
+        }
+        message.append("D.P ")
+                .append(formatSigned(dp - dpEx))
+                .append('\n');
+        if (result.isFirstWin() && result.isWin(username)) {
+            message.append(getString(R.string.mycard_result_first_win))
+                    .append(formatSigned(5))
+                    .append('\n');
+        }
+        message.append("EXP ")
+                .append(formatSigned(result.getExpFor(username) - result.getExpExFor(username)));
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.mycard_match_result)
+                .setMessage(message.toString())
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    private String formatSigned(int value) {
+        return value > 0 ? "+" + value : String.valueOf(value);
     }
 
     private boolean hasVisibleChildFragment() {
@@ -984,6 +1482,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 break;
             case R.id.ll_entertain:
                 matchEntertain();
+                break;
+            case R.id.btn_mycard_ai:
+                showMyCardAiBattle();
                 break;
             case R.id.btn_mycard_bbs:
                 switchBBSWithWebView();

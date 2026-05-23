@@ -285,6 +285,48 @@ public class YGOUtil {
         String messageString = Base64.encodeToString(bytes, Base64.NO_WRAP);
         return messageString + password;
     }
+
+    public static String getMyCardCreateRoomPassword(boolean isPrivate, int duelRule, boolean autoDeath,
+                                                     int rule, int mode, boolean noCheckDeck,
+                                                     boolean noShuffleDeck, int startLp,
+                                                     int startHand, int drawCount,
+                                                     int u16Secret, String titleOrPassword) {
+        byte[] bytes = new byte[6];
+        bytes[1] = (byte) (((isPrivate ? 2 : 1) << 4) | (duelRule << 1) | (autoDeath ? 1 : 0));
+        bytes[2] = (byte) ((rule << 5) | (mode << 3) | (noCheckDeck ? 1 << 1 : 0) | (noShuffleDeck ? 1 : 0));
+        bytes[3] = (byte) (startLp & 0xff);
+        bytes[4] = (byte) ((startLp >> 8) & 0xff);
+        bytes[5] = (byte) ((startHand << 4) | drawCount);
+        String suffix = titleOrPassword == null ? "" : titleOrPassword.replaceFirst("\\s", String.valueOf((char) 0xfeff));
+        return encodeMyCardRoomHeader(bytes, u16Secret) + suffix;
+    }
+
+    public static String getMyCardJoinPrivatePassword(String privatePassword, int u16Secret) {
+        byte[] bytes = new byte[6];
+        bytes[1] = (byte) (5 << 4);
+        String suffix = privatePassword == null ? "" : privatePassword.replaceFirst("\\s", String.valueOf((char) 0xfeff));
+        return encodeMyCardRoomHeader(bytes, u16Secret) + suffix;
+    }
+
+    private static String encodeMyCardRoomHeader(byte[] bytes, int u16Secret) {
+        int checksum = 0;
+        for (int i = 1; i < bytes.length; i++) {
+            checksum -= bytes[i];
+        }
+        bytes[0] = (byte) (checksum & 0xff);
+        int secret = u16Secret % 65535 + 1;
+        int i = 0;
+        while (i < bytes.length) {
+            int x = 0;
+            x = x | (bytes[i] & 0xff);
+            x = x | ((bytes[i + 1] & 0xff) << 8);
+            x = x ^ secret;
+            bytes[i] = (byte) (x & 0xff);
+            bytes[i + 1] = (byte) ((x >> 8) & 0xff);
+            i += 2;
+        }
+        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+    }
 }
 
 

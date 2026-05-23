@@ -8,6 +8,8 @@ import android.text.TextUtils;
 import com.ourygo.lib.duelassistant.util.DARecord;
 import com.ourygo.lib.duelassistant.util.UrlUtil;
 
+import java.util.List;
+
 import net.kk.xml.annotations.XmlElement;
 
 import cn.garymb.ygomobile.Constants;
@@ -35,6 +37,12 @@ public class YGOServer extends ServerInfo {
     private int opponentType;
 
     private transient String password;
+    private transient String id;
+    private transient String url;
+    private transient boolean hidden;
+    private transient boolean custom;
+    private transient boolean replay;
+    private transient List<String> windbot;
 
     public static YGOServer toYGOServer(String serverName) {
         YGOServer ygoServer = new YGOServer();
@@ -53,6 +61,54 @@ public class YGOServer extends ServerInfo {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
+    }
+
+    public boolean isCustom() {
+        return custom;
+    }
+
+    public void setCustom(boolean custom) {
+        this.custom = custom;
+    }
+
+    public boolean isReplay() {
+        return replay;
+    }
+
+    public void setReplay(boolean replay) {
+        this.replay = replay;
+    }
+
+    public List<String> getWindbot() {
+        return windbot;
+    }
+
+    public void setWindbot(List<String> windbot) {
+        this.windbot = windbot;
     }
 
     public int getOpponentType() {

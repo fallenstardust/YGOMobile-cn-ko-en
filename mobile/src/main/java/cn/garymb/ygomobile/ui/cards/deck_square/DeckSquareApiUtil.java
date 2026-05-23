@@ -3,6 +3,8 @@ package cn.garymb.ygomobile.ui.cards.deck_square;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.File;
 import java.io.IOException;
@@ -377,6 +379,14 @@ public class DeckSquareApiUtil {
     }
 
     public static LoginResponse login(String username, String password) throws IOException {
+        return loginInternal(username, password, false);
+    }
+
+    public static LoginResponse loginWithDetailedError(String username, String password) throws IOException {
+        return loginInternal(username, password, true);
+    }
+
+    private static LoginResponse loginInternal(String username, String password, boolean detailedError) throws IOException {
         LoginResponse result = null;
 
         String url = "https://sapi.moecube.com:444/accounts/signin";
@@ -401,20 +411,43 @@ public class DeckSquareApiUtil {
         String responseBody = response.body().string();
         LogUtil.i(TAG, "Login Response body: " + responseBody);
 
-        // Process the response
         if (response.isSuccessful()) {
-            // Successful response (code 200-299)
-            // Parse the JSON response if needed
             result = gson.fromJson(responseBody, LoginResponse.class);
             LogUtil.i(TAG, "Login response: " + result);
+            if (detailedError && (result == null || result.token == null || result.user == null)) {
+                throw new IOException("Login response is missing token/user: " + responseBody);
+            }
         } else {
-            // Error response
             LogUtil.e(TAG, "Request failed: " + responseBody);
+            if (detailedError) {
+                throw new IOException("HTTP " + response.code() + " " + response.message() + ": " + parseLoginError(responseBody));
+            }
+            throw new IOException(responseBody);
         }
 
 
         return result;
 
+    }
+
+    private static String parseLoginError(String responseBody) {
+        if (responseBody == null || responseBody.length() == 0) {
+            return "empty response";
+        }
+        try {
+            JsonObject object = JsonParser.parseString(responseBody).getAsJsonObject();
+            if (object.has("message") && !object.get("message").isJsonNull()) {
+                return object.get("message").getAsString();
+            }
+            if (object.has("error") && !object.get("error").isJsonNull()) {
+                return object.get("error").getAsString();
+            }
+            if (object.has("errors") && !object.get("errors").isJsonNull()) {
+                return object.get("errors").toString();
+            }
+        } catch (Exception ignored) {
+        }
+        return responseBody;
     }
 
     /**

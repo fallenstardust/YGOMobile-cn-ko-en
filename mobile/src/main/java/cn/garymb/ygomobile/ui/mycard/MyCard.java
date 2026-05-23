@@ -37,6 +37,7 @@ import cn.garymb.ygomobile.bean.OYHeader;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnUserDuelInfoQueryListener;
+import cn.garymb.ygomobile.ui.mycard.bean.McDuelResult;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
 import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.ui.mycard.bean.McNews;
@@ -64,6 +65,7 @@ public class MyCard {
 
     public static final String MYCARD_NEWS_URL = "https://sapi.moecube.com:444/apps.json";
     public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
+    public static final String MYCARD_USER_DUEL_HISTORY_URL = "https://sapi.moecube.com:444/ygopro/arena/history";
     public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
     public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
     public static final String URL_MC_JOIN_DUEL_MATCH = "wss://tiramisu.moecube.com:17923/?filter=waiting";
@@ -134,6 +136,57 @@ public class MyCard {
                         JsonUtil.getUserDuelInfo(json),
                         null
                 );
+            }
+        });
+    }
+
+    public static void findMyCardServers(OnMyCardServersQueryListener listener) {
+        OkhttpUtil.get(MYCARD_NEWS_URL, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                listener.onMyCardServersQuery(null, e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String json = response.body().string();
+                if (!response.isSuccessful()) {
+                    listener.onMyCardServersQuery(null, "HTTP " + response.code() + ": " + json);
+                    return;
+                }
+                try {
+                    listener.onMyCardServersQuery(JsonUtil.getMyCardServers(json), null);
+                } catch (Exception e) {
+                    listener.onMyCardServersQuery(null, e.toString());
+                }
+            }
+        });
+    }
+
+    public static void findLatestDuelResult(String userName, OnMcDuelResultQueryListener listener) {
+        Map<String, Object> map = new HashMap<>();
+        map.put(ARG_USERNAME, userName);
+        map.put("type", "0");
+        map.put("page_num", "1");
+
+        OkhttpUtil.get(MYCARD_USER_DUEL_HISTORY_URL, map, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                listener.onMcDuelResultQuery(null, e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String json = response.body().string();
+                if (!response.isSuccessful()) {
+                    listener.onMcDuelResultQuery(null, "HTTP " + response.code() + ": " + json);
+                    return;
+                }
+                try {
+                    listener.onMcDuelResultQuery(JsonUtil.getLatestDuelResult(json), null);
+                } catch (Exception e) {
+                    listener.onMcDuelResultQuery(null, e.toString());
+                }
             }
         });
     }
@@ -292,6 +345,14 @@ public class MyCard {
 
     public interface OnMyCardNewsQueryListener {
         void onMyCardNewsQuery(List<McNews> mcNewsList, String exception);
+    }
+
+    public interface OnMyCardServersQueryListener {
+        void onMyCardServersQuery(List<YGOServer> servers, String exception);
+    }
+
+    public interface OnMcDuelResultQueryListener {
+        void onMcDuelResultQuery(McDuelResult result, String exception);
     }
 
     private static String byteArrayToHexString(byte[] array) {
