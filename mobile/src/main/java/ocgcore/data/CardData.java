@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import ocgcore.DataManager;
+
 public class CardData implements Parcelable {
 
     public CardData() {
@@ -88,9 +90,16 @@ public class CardData implements Parcelable {
 
     /**
      * 规则同名卡，如果有alias则返回alias，否则返回code，判断严格，用于卡组投入最大数量的判断
+     * 出现了规则上视为其他卡的卡片有了异画的情况，此时根据获取的Alias作为Code再查一次是否存在新的Alias
+     * 如果有新的Alias，就将这个异画认为是新的Alias的规则同名卡
      */
     public int getGameCode() {
-        return Alias > 0 ? Alias : Code;
+        int id = Alias > 0 ? Alias : Code;
+        int rule_code = DataManager.get().getCardManager().getCard(id).Alias;
+        if (rule_code > 0) {
+            return rule_code;
+        }
+        return id;
     }
 
     /**

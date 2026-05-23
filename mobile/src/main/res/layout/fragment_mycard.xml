@@ -34,7 +34,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center|right"
-                    android:text="username"
+                    android:text="@string/login_mycard"
                     android:textColor="@color/holo_green_bright"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -78,14 +78,16 @@
                 android:layout_height="45dp"
                 android:layout_gravity="center"
                 android:layout_marginHorizontal="5dp"
-                android:src="@drawable/avatar" />
+                android:src="@drawable/avatar"
+                android:clickable="true"
+                android:focusable="true" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/img_logout"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="right"
-                android:src="@drawable/baseline_arrow_right_24" />
+                android:src="@drawable/baseline_login_24" />
         </LinearLayout>
 
         <LinearLayout
@@ -100,7 +102,7 @@
                 android:id="@+id/btn_mycard_bbs"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:layout_gravity="left|center"
+                android:layout_gravity="center"
                 android:src="@drawable/ic_forum"
                 android:tint="@color/holo_blue_bright"
                 android:visibility="visible" />
@@ -124,116 +126,6 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <LinearLayout
-                android:id="@+id/ll_dialog_login"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_marginEnd="4dp"
-                        android:src="@drawable/mycard" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/login_mycard"
-                        android:textColor="@color/white"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:orientation="vertical">
-
-                    <EditText
-                        android:id="@+id/et_username"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/input_user_name"
-                        android:inputType="text"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/grayDark2" />
-
-                    <TextView
-                        android:id="@+id/tv_account_warning"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/account_warning"
-                        android:textColor="@color/red"
-                        android:visibility="gone" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:orientation="vertical">
-
-                    <EditText
-                        android:id="@+id/et_password"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/input_pwd"
-                        android:inputType="textPassword"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/grayDark2" />
-
-                    <TextView
-                        android:id="@+id/tv_pwd_warning"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/pwd_warning"
-                        android:textColor="@color/red"
-                        android:visibility="gone" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
-
-                    <Button
-                        android:id="@+id/btn_register"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/ic_radius_bg"
-                        android:text="@string/register" />
-
-                    <Button
-                        android:id="@+id/btn_login"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/ic_radius_bg"
-                        android:text="@string/login_mycard" />
-                </LinearLayout>
-
-                <ProgressBar
-                    android:id="@+id/progressBar_login"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:visibility="gone" />
-            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/ll_main_ui"
@@ -241,6 +133,121 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:visibility="visible">
+
+                <LinearLayout
+                    android:id="@+id/ll_dialog_login"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/dialogshort"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginBottom="16dp">
+
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_marginEnd="4dp"
+                            android:src="@drawable/mycard" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/login_mycard"
+                            android:textColor="@color/white"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:orientation="vertical">
+
+                        <EditText
+                            android:id="@+id/et_username"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/selected_light"
+                            android:hint="@string/input_user_name"
+                            android:inputType="text"
+                            android:padding="5dp"
+                            android:textColor="@color/white" />
+
+                        <TextView
+                            android:id="@+id/tv_account_warning"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/account_warning"
+                            android:textColor="@color/red"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:orientation="vertical">
+
+                        <EditText
+                            android:id="@+id/et_password"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/selected_light"
+                            android:hint="@string/input_pwd"
+                            android:inputType="textPassword"
+                            android:padding="5dp"
+                            android:textColor="@color/white" />
+
+                        <TextView
+                            android:id="@+id/tv_pwd_warning"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/pwd_warning"
+                            android:textColor="@color/red"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="2">
+
+                        <Button
+                            android:id="@+id/btn_register"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/list_item_bg"
+                            android:text="@string/register" />
+
+                        <Button
+                            android:id="@+id/btn_login"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/list_item_bg"
+                            android:text="@string/login_mycard" />
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progressBar_login"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:visibility="gone" />
+                </LinearLayout>
 
                 <ScrollView
                     android:layout_width="match_parent"
@@ -272,9 +279,9 @@
                                     android:layout_height="wrap_content"
                                     android:background="@drawable/veil2"
                                     android:gravity="center"
-                                    android:text="匹配对战"
+                                    android:text="@string/title_rank_start"
                                     android:textColor="@color/holo_green_bright"
-                                    android:textSize="12sp"
+                                    android:textSize="8sp"
                                     android:textStyle="bold" />
 
 
@@ -309,6 +316,7 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_gravity="center"
+                                            android:layout_margin="2dp"
                                             android:text="@string/match_start"
                                             android:textColor="@color/gold_light"
                                             android:textSize="12sp"
@@ -328,7 +336,7 @@
                                             android:src="@drawable/ic_rank" />
 
                                         <TextView
-                                            android:id="@+id/fun_tv_rank"
+                                            android:id="@+id/match_tv_rank"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_marginHorizontal="4dp"
@@ -398,7 +406,7 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_marginLeft="2dp"
-                                            android:text="- - - - -"
+                                            android:text="-----"
                                             android:textColor="@color/white"
                                             android:textSize="9sp"
                                             android:textStyle="bold" />
@@ -412,12 +420,14 @@
                                     android:layout_margin="2dp"
                                     android:layout_weight="1"
                                     android:background="@drawable/list_item_bg"
+                                    android:gravity="center"
                                     android:orientation="vertical">
 
                                     <LinearLayout
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
                                         android:layout_marginVertical="4dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <com.king.view.circleprogressview.CircleProgressView
@@ -425,6 +435,7 @@
                                             android:layout_width="60dp"
                                             android:layout_height="40dp"
                                             android:layout_centerVertical="true"
+                                            android:visibility="gone"
                                             app:cpvLabelTextColor="@color/white"
                                             app:cpvLabelTextSize="12sp"
                                             app:cpvNormalColor="@color/klein_blue"
@@ -432,14 +443,47 @@
                                             app:cpvShowTick="false"
                                             app:cpvStrokeWidth="5dp" />
 
-                                        <TextView
-                                            android:layout_width="wrap_content"
+                                        <ImageView
+                                            android:layout_width="60dp"
+                                            android:layout_height="40dp"
+                                            android:src="@drawable/ic_match_entertain" />
+
+                                        <LinearLayout
+                                            android:layout_width="match_parent"
                                             android:layout_height="wrap_content"
-                                            android:layout_gravity="center"
-                                            android:text="@string/fun_start"
-                                            android:textColor="@color/white"
-                                            android:textSize="12sp"
-                                            android:textStyle="bold" />
+
+                                            android:orientation="vertical">
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_margin="2dp"
+                                                android:text="@string/fun_start"
+                                                android:textColor="@color/white"
+                                                android:textSize="12sp"
+                                                android:textStyle="bold" />
+
+                                            <LinearLayout
+                                                android:layout_width="match_parent"
+                                                android:layout_height="wrap_content"
+                                                android:layout_gravity="bottom"
+                                                android:orientation="horizontal">
+
+                                                <ImageView
+                                                    android:layout_width="14dp"
+                                                    android:layout_height="14dp"
+                                                    android:src="@drawable/ic_rank" />
+
+                                                <TextView
+                                                    android:id="@+id/fun_tv_rank"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginHorizontal="4dp"
+                                                    android:text="- - - - -"
+                                                    android:textColor="@color/white"
+                                                    android:textSize="9sp" />
+                                            </LinearLayout>
+                                        </LinearLayout>
                                     </LinearLayout>
 
                                     <LinearLayout
@@ -447,21 +491,8 @@
                                         android:layout_height="wrap_content"
                                         android:layout_gravity="center"
                                         android:gravity="center_vertical"
-                                        android:orientation="horizontal">
-
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:src="@drawable/ic_rank" />
-
-                                        <TextView
-                                            android:id="@+id/match_tv_rank"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginHorizontal="4dp"
-                                            android:text="- - - - -"
-                                            android:textColor="@color/holo_blue_bright"
-                                            android:textSize="9sp" />
+                                        android:orientation="horizontal"
+                                        android:visibility="gone">
 
                                         <ImageView
                                             android:layout_width="14dp"
@@ -561,7 +592,7 @@
                                     android:gravity="center"
                                     android:text="@string/arena"
                                     android:textColor="@color/holo_green_bright"
-                                    android:textSize="12sp"
+                                    android:textSize="8sp"
                                     android:textStyle="bold" />
 
                                 <FrameLayout
@@ -585,14 +616,28 @@
                                         android:visibility="gone" />
                                 </FrameLayout>
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:layout_marginBottom="5dp"
-                                    android:gravity="center"
-                                    android:text="@string/tips_click_to_arena"
-                                    android:textSize="8sp" />
+                                <FrameLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="12dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:gravity="center"
+                                        android:text="@string/tips_click_to_arena"
+                                        android:textSize="6sp" />
+
+                                    <Switch
+                                        android:id="@+id/sw_toggle_card_image"
+                                        style="@style/CustomSwitch"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center|right"
+                                        android:scaleX="0.5"
+                                        android:scaleY="0.5" />
+                                </FrameLayout>
                             </LinearLayout>
                         </LinearLayout>
 
@@ -621,18 +666,32 @@
                                     android:id="@+id/ll_mycard_waiting_rooms"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:visibility="gone"
-                                    android:orientation="vertical">
+                                    android:orientation="vertical"
+                                    android:visibility="gone">
 
-                                    <Button
-                                        android:id="@+id/btn_create_room"
+                                    <LinearLayout
+                                        android:id="@+id/ll_create_room"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_gravity="center"
-                                        android:background="@drawable/button2_bg"
-                                        android:text="@string/create_custom_room"
-                                        android:textSize="12sp"
-                                        android:visibility="gone" />
+                                        android:layout_marginVertical="5dp"
+                                        android:background="@drawable/list_item_bg"
+                                        android:gravity="center"
+                                        android:orientation="horizontal">
+
+                                        <ImageView
+                                            android:layout_width="20dp"
+                                            android:layout_height="20dp"
+                                            android:layout_gravity="center_vertical"
+                                            android:layout_margin="5dp"
+                                            android:src="@drawable/ic_add" />
+
+                                        <TextView
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:text="@string/create_custom_room"
+                                            android:textSize="12sp" />
+                                    </LinearLayout>
 
                                     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                                         android:id="@+id/srl_waiting"
@@ -677,7 +736,7 @@
                                     android:gravity="center"
                                     android:text="@string/McNews"
                                     android:textColor="@color/holo_green_bright"
-                                    android:textSize="12sp"
+                                    android:textSize="8sp"
                                     android:textStyle="bold" />
 
                                 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

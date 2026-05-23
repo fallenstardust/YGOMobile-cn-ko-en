@@ -133,7 +133,7 @@
 
     <string name="last_path">バック</string>
     <string name="create_folder">新規フォルダ作成</string>
-    <string name="intpu_name">输入卡组名</string>
+    <string name="intpu_name">输入卡組名</string>
     <string name="the_name_is_folder">フォルダ名</string>
     <string name="tab_search">検索</string>
     <string name="tab_result">リスト</string>
@@ -196,15 +196,15 @@
     <string name="logo_text">YGOMobile 10 周年記念！これまでのご支援、心より感謝いたします！</string>
     <string name="start_game_error">ゲーム起動失敗</string>
     <string name="set_font_size">フォントサイズ</string>
-    <string name="copy_to_clipbroad">已经复制到粘贴板</string>
+    <string name="copy_to_clipbroad">已经コピー到粘貼板</string>
     <string name="deck_share_head">YGOMobileからデッキ共有しています。</string>
     <string name="deck_share_fail">デッキ共有失敗</string>
-    <string name="choose_game_path">选择游戏目录</string>
+    <string name="choose_game_path">选择游戏ディレクトリ</string>
     <string name="download_home">ネットディスクダウンロード</string>
     <string name="reset_game_res">リソースをリセット</string>
     <string name="downloading_images">後でもう一度試してください</string>
     <string name="download_image_progress" formatted="false">画像をダウンロード中 %d/%d</string>
-    <string name="download_image_error" formatted="false">图片下载失败长按重试</string>
+    <string name="download_image_error" formatted="false">图片ダウンロード失敗長按重試</string>
     <string name="downloading_images_ok">画像ダウンロード完了</string>
     <string name="tip_istunning">ゲーム作動中</string>
     <string name="edit">編集</string>
@@ -215,7 +215,7 @@
     <string name="noting_to_send">メッセージは必須です</string>
     <string name="sending_failed">送る失敗</string>
     <string name="login_mycard">MYCARD登録</string>
-    <string name="logout_mycard">MYCARDをログアウト？</string>
+    <string name="logout_mycard">MyCardアカウントをログアウトしました</string>
     <string name="logining_in">登録中...</string>
     <string name="logining_failed">登録失敗，リトライしてください</string>
     <string name="failed_reason">登録失敗，</string>
@@ -243,8 +243,8 @@
         \nショットカットで最前位のサーバーを入ります</string>
     <string name="join_helper_tip2">\nこの機能を使用するには浮く窓を適応してください
         \nバックグラウンド運行を確認してください</string>
-    <string name="EXPAND_STATUS_BAR">需要开启通知权限\n権限を起動してからデュエル助手を使用する事ができます</string>
-    <string name="SYSTEM_ALERT_WINDOW">需要开启悬浮窗权限\n権限を起動してからデュエル助手を使用する事ができます</string>
+    <string name="EXPAND_STATUS_BAR">需要开启通知権限\n権限を起動してからデュエル助手を使用する事ができます</string>
+    <string name="SYSTEM_ALERT_WINDOW">需要开启悬浮窗権限\n権限を起動してからデュエル助手を使用する事ができます</string>
     <string name="OpenTIP">ショットカットで部屋を入るの説明</string>
     <string name="Open_Alert_Window">浮く窓を適応する</string>
     <string name="Function_Menu">機能メニュー</string>
@@ -257,7 +257,7 @@
     <string name="ClickLinkArrows">クリック矢印を発光する</string>
     <string name="tip_no_permission" formatted="false"> %s 権限はあなたに禁止されています</string>
     <string name="Already_Lastest">新バージョンなし。作者の最新情報を確認？</string>
-    <string name="about_immersive_mode">开启它的同时会自动隐藏虚拟键</string>
+    <string name="about_immersive_mode">开启它的同時に会自動隐藏虚拟键</string>
     <string name="Download">ダウンロード</string>
     <string name="Downloading">ダウンロード中…</string>
     <string name="Update_Found">新バージョン発見</string>
@@ -341,30 +341,33 @@
     <string name="about_delete_ex">非公式データによるエーラは非公式データを削除はおすすめです</string>
     <string name="file_installed">ファイル導入成功</string>
     <string name="settings_screen_padding">窓の預入高さ</string>
-    <string name="tip_load_cdb_error">データロードエー</string>
-    <string name="tip_download_failed">保存失敗</string>
+    <string name="tip_load_cdb_error">データロードエラー</string>
     <string name="replay">リプレイを見る</string>
     <string name="bot_mode">AIモード</string>
-    <string name="personal">自分の</string>
+    <string name="personal">マイページ</string>
     <string name="back_to_mycard_home">MYCARDホームページに戻る</string>
     <string name="edit_your_message">メッセージを入力してください</string>
-    <string name="login_succeed">登録成功</string>
-    <string name="reChatJoining">接続は切断された,最接続中……</string>
+    <string name="login_succeed">ログイン成功</string>
+    <string name="reChatJoining">接続は切断された、再接続中……</string>
     <string name="settings_data_language">言語を変更します</string>
-    <string name="settings_key_words_split">複数キーワード検索（スペースで区切る）</string>
     <string name="settings_data_language_about">YGOPROのUI、説明文やテキストを切り替えます</string>
     <string name="tip_card_info_diff">未確認カードです。ソフトを更新してくださいまたは非公式データを更新してください。</string>
-    <string name="tip_deckInfo_isNot_completeDeck">デッキ解析異常，オフィシャルパスコードに変更してください</string>
-    <string name="tip_ygopro_is_running">YGOPROは既に運行している，新しいデュエル開始できません，ルームパスワードを履歴に書きました、ゲームを終了してからこのルームを履歴から選択して入る事ができます</string>
+    <string name="tip_deckInfo_isNot_completeDeck">デッキ解析異常、オフィシャルパスコードに変更してください</string>
+    <string name="tip_ygopro_is_running">YGOPROは既に運行している、新しいデュエル開始できません、ルームパスワードを履歴に書きました、ゲームを終了してからこのルームを履歴から選択して入る事ができます</string>
     <string name="tip_ypk_is_deleted">正式更新は非公式パスコードを無効にしますので常にパッチをダウンロードしてください</string>
-    <string name="tip_superpre_desc">をアップデートする（新規カードを含める）</string>
+    <string name="tip_superpre_desc">非公式データをアップデートする（新規カードを含める）</string>
     <string name="tip_download_ex">新しいカードがあるよ、遊びに来て！</string>
+    <string name="tip_download_failed">保存失敗</string>
     <string name="tip_download_OK">に保存されました</string>
     <string name="replay_list">リプレイ</string>
-    <string name="user_privacy_policy">ユーザーのプライバシーポリシー</string>
-    <string name="about_user_privacy_policy">このアプリが使用する権限についての説明</string>
+    <string name="settings_key_words_split">複数キーワード検索（スペースで区切る）</string>
     <string name="open">デッキを開く</string>
     <string name="web_warn_save_deck">デッキを開くと、現在閲覧しているウェブページが閉じられます。ウェブページを閉じてデッキを開きますか？</string>
+    <string name="category_my_online_deck">私のオンラインデッキ</string>
+    <string name="fetch_online_deck">ネットからオンラインデッキを取得</string>
+    <string name="privacy_policy_content">プライバシーポリシーの内容</string>
+    <string name="user_privacy_policy">ユーザーのプライバシーポリシー</string>
+    <string name="about_user_privacy_policy">このアプリが使用する権限についての説明</string>
     <string name="go_to">移る</string>
     <string name="local_deck">私のデッキ</string>
     <string name="in_public">公開中</string>
@@ -417,5 +420,17 @@
     <string name="match_duel">マッチモード</string>
     <string name="tag_duel">タグモード</string>
     <string name="unknown_room">不明モード</string>
+    <string name="waiting_rooms">待機中の部屋</string>
     <string name="create_custom_room">カスタムルーム</string>
+    <string name="select_custom_mode">カスタムモードを選択</string>
+    <string name="mode_single_duel">シングルデュエル</string>
+    <string name="mode_tag_duel">タグデュエル</string>
+    <string name="mode_match_duel">マッチデュエル</string>
+    <string name="creating_room">%sルームを作成中...</string>
+    <string name="create_room_failed">ルーム作成失敗</string>
+    <string name="no_waiting_rooms">待機中の部屋はありません</string>
+    <string name="title_rank_start">ランクマッチ</string>
+    <string name="input_room_name">ルーム名を入力</string>
+    <string name="server_area">サーバーエリア:</string>
+    <string name="allowed_cards">使用可能カード:</string>
 </resources>

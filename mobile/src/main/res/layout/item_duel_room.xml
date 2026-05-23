@@ -9,13 +9,15 @@
         android:id="@+id/tv_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:padding="5dp"
-        android:background="@drawable/selected_light"
         android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/selected_light"
+        android:padding="5dp"
         android:text="@string/match_start"
         android:textSize="10sp"
         android:textStyle="bold" />
+
+
 
     <LinearLayout
         android:id="@+id/ll_item"
@@ -25,47 +27,104 @@
         android:layout_marginVertical="10dp"
         android:background="@drawable/list_item_bg"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-
+        <!-- 房间名称，有房间名时单独显示 -->
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_name1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/tv_title"
-            android:layout_marginLeft="8dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:lines="1"
-            android:maxEms="8"
-            android:text="userName"
-            android:textSize="8sp" />
-
-        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_room_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/tv_title"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:text="Vs"
-            android:textColor="@color/colorAccent"
-            android:textSize="9sp" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_name2"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@id/tv_name1"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="8dp"
-            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:layout_margin="2dp"
             android:ellipsize="end"
-            android:gravity="right"
             android:lines="1"
-            android:maxEms="8"
-            android:text="userName"
-            android:textSize="8sp" />
+            android:text="roomName"
+            android:textColor="@color/grayDark2"
+            android:textSize="6sp"
+            android:visibility="gone" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- 左侧玩家名称 -->
+            <LinearLayout
+                android:id="@+id/ll_left"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical|right"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_name1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:maxEms="8"
+                    android:text="userName"
+                    android:textSize="8sp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_name2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:maxEms="8"
+                    android:text="userName"
+                    android:textSize="8sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- Vs 文字 -->
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_vs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:text="Vs"
+                android:textColor="@color/colorAccent"
+                android:textSize="9sp" />
+
+            <!-- 右侧玩家名称 -->
+            <LinearLayout
+                android:id="@+id/ll_right"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="8dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical|left"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_name3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:maxEms="8"
+                    android:text="userName"
+                    android:textSize="8sp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_name4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:lines="1"
+                    android:maxEms="8"
+                    android:text="userName"
+                    android:textSize="8sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+        </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/iv_guide_right"

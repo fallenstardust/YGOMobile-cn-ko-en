@@ -31,7 +31,7 @@ void DeckManager::LoadLFListSingle(const char* path) {
     // 以只读模式打开指定路径的文件
     FILE* fp = myfopen(path, "r");
     // 定义字符缓冲区，用于存储从文件读取的单行内容
-    char linebuf[256]{};
+    char linebuf[1024]{};
     // 定义宽字符缓冲区，用于存储转换后的字符串
     wchar_t strBuffer[256]{};
     // 检查文件是否成功打开
@@ -386,7 +386,7 @@ uint32_t DeckManager::LoadDeckFromStream(Deck& deck, std::istringstream& deckStr
 	uint32_t cardlist[PACK_MAX_SIZE]{};
 	bool is_side = false;
 	std::string linebuf;
-	while (std::getline(deckStream, linebuf, '\n') && ct < PACK_MAX_SIZE) {
+	while (std::getline(deckStream, linebuf) && ct < PACK_MAX_SIZE) {
 		// 缓存以##或###开头的注释行
 		if (linebuf.length() >= 2 && linebuf[0] == '#' && linebuf[1] == '#') {
 			wchar_t wline[256];

@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.mycard.watchDuel;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.text.TextUtils;
 
 import org.java_websocket.enums.ReadyState;
 import org.java_websocket.handshake.ServerHandshake;
@@ -15,6 +16,7 @@ import java.util.List;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
+import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.utils.HandlerUtil;
 import cn.garymb.ygomobile.utils.JsonUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -22,31 +24,29 @@ import cn.garymb.ygomobile.utils.LogUtil;
 /**
  * Create By feihua  On 2021/11/3
  * Converted from Kotlin to Java
+ * Management for waiting duel rooms
  */
-public class WatchDuelManagement {
+public class WaitingDuelManagement {
 
-    private static final String TAG = WatchDuelManagement.class.getSimpleName();
+    private static final String TAG = WaitingDuelManagement.class.getSimpleName();
     private static final int HANDLE_SEND_MESSAGE = 0;
-    private static final int GRAY_SERVICE_ID = 1001;
-    private static final long CLOSE_RECON_TIME = 1000; // 连接断开或者连接错误立即重连
-    private static final long HEART_BEAT_RATE = 10 * 1000; // 每隔10秒进行一次对长连接的心跳检测
+    private static final long CLOSE_RECON_TIME = 1000;
+    private static final long HEART_BEAT_RATE = 10 * 1000;
 
-    private static volatile WatchDuelManagement instance;
+    private static volatile WaitingDuelManagement instance;
 
     private ArrayList<OnDuelRoomListener> onDuelRoomListenerList;
     private boolean isStart;
-    private List<String> urlList;
+    private final ArrayList<DuelRoom> rooms;
     private ArrayList<McWatchDuelSocketClient> mcWatchDuelSocketClientList;
     private Handler handler;
     private Runnable heartBeatRunnable;
 
-    private WatchDuelManagement() {
+    private WaitingDuelManagement() {
         onDuelRoomListenerList = new ArrayList<>();
         isStart = false;
 
-        urlList = new ArrayList<>();
-        urlList.add(MyCard.URL_MC_WATCH_DUEL_MATCH);
-        urlList.add(MyCard.URL_MC_WATCH_DUEL_FUN);
+        rooms = new ArrayList<>();
 
         mcWatchDuelSocketClientList = new ArrayList<>();
 
@@ -54,11 +54,11 @@ public class WatchDuelManagement {
         initHeartBeatRunnable();
     }
 
-    public static WatchDuelManagement getInstance() {
+    public static WaitingDuelManagement getInstance() {
         if (instance == null) {
-            synchronized (WatchDuelManagement.class) {
+            synchronized (WaitingDuelManagement.class) {
                 if (instance == null) {
-                    instance = new WatchDuelManagement();
+                    instance = new WaitingDuelManagement();
                 }
             }
         }
@@ -73,11 +73,11 @@ public class WatchDuelManagement {
 
                 switch (msg.what) {
                     case HANDLE_SEND_MESSAGE:
-                        String message = (String) msg.obj;
+                        RoomSocketMessage socketMessage = (RoomSocketMessage) msg.obj;
                         try {
-                            List<DuelRoom> duelRoomList = JsonUtil.getDuelRoomList(message);
-                            String event = JsonUtil.getDuelRoomEvent(message);
-                            onDuelRoomList(event, duelRoomList);
+                            List<DuelRoom> duelRoomList = JsonUtil.getDuelRoomList(socketMessage.message, socketMessage.server);
+                            String event = JsonUtil.getDuelRoomEvent(socketMessage.message);
+                            applyRoomEvent(event, duelRoomList, socketMessage.server);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -107,7 +107,6 @@ public class WatchDuelManagement {
                     i++;
                 }
 
-                // 每隔一定的时间，对长连接进行一次心跳检测
                 handler.postDelayed(this, HEART_BEAT_RATE);
             }
         };
@@ -148,6 +147,77 @@ public class WatchDuelManagement {
         }
     }
 
+    private void applyRoomEvent(String event, List<DuelRoom> duelRoomList, YGOServer server) {
+        switch (event) {
+            case DuelRoom.EVENT_INIT:
+                removeRoomsFromServer(server);
+                upsertRooms(duelRoomList);
+                break;
+            case DuelRoom.EVENT_CREATE:
+            case DuelRoom.EVENT_UPDATE:
+                upsertRooms(duelRoomList);
+                break;
+            case DuelRoom.EVENT_DELETE:
+                removeRooms(duelRoomList);
+                break;
+        }
+        onDuelRoomList(DuelRoom.EVENT_INIT, new ArrayList<>(rooms));
+    }
+
+    private void upsertRooms(List<DuelRoom> duelRoomList) {
+        if (duelRoomList == null) {
+            return;
+        }
+        for (DuelRoom room : duelRoomList) {
+            removeRoom(room);
+            rooms.add(room);
+        }
+    }
+
+    private void removeRooms(List<DuelRoom> duelRoomList) {
+        if (duelRoomList == null) {
+            return;
+        }
+        for (DuelRoom room : duelRoomList) {
+            removeRoom(room);
+        }
+    }
+
+    private void removeRoom(DuelRoom room) {
+        for (int i = rooms.size() - 1; i >= 0; i--) {
+            if (isSameRoom(rooms.get(i), room)) {
+                rooms.remove(i);
+            }
+        }
+    }
+
+    private void removeRoomsFromServer(YGOServer server) {
+        for (int i = rooms.size() - 1; i >= 0; i--) {
+            if (isSameServer(rooms.get(i).getServer(), server)) {
+                rooms.remove(i);
+            }
+        }
+    }
+
+    private boolean isSameRoom(DuelRoom left, DuelRoom right) {
+        if (left == null || right == null || TextUtils.isEmpty(left.getId()) || TextUtils.isEmpty(right.getId())) {
+            return false;
+        }
+        return left.getId().equals(right.getId()) && isSameServer(left.getServer(), right.getServer());
+    }
+
+    private boolean isSameServer(YGOServer left, YGOServer right) {
+        if (left == right) {
+            return true;
+        }
+        if (left == null || right == null) {
+            return false;
+        }
+        if (!TextUtils.isEmpty(left.getId()) && !TextUtils.isEmpty(right.getId())) {
+            return left.getId().equals(right.getId());
+        }
+        return TextUtils.equals(left.getServerAddr(), right.getServerAddr()) && left.getPort() == right.getPort();
+    }
     public void start() {
         if (isStart) return;
         isStart = true;
@@ -156,46 +226,66 @@ public class WatchDuelManagement {
             return;
         }
 
-        // 初始化WebSocket
-        initSocketClient();
-        handler.postDelayed(heartBeatRunnable, HEART_BEAT_RATE); // 开启心跳检测
-        isStart = false;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<YGOServer> servers;
+                try {
+                    servers = MyCard.getCustomServers();
+                } catch (Exception e) {
+                    LogUtil.e(TAG, "加载自定义房间服务器失败：" + e.getMessage());
+                    servers = new ArrayList<>();
+                    servers.add(MyCard.getDefaultCustomServer(null));
+                }
+
+                List<YGOServer> finalServers = servers;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!mcWatchDuelSocketClientList.isEmpty()) {
+                            isStart = false;
+                            return;
+                        }
+
+                        initSocketClient(finalServers);
+                        handler.postDelayed(heartBeatRunnable, HEART_BEAT_RATE);
+                        isStart = false;
+                    }
+                });
+            }
+        }).start();
     }
 
-    private void initSocketClient() {
-        for (String urlString : urlList) {
+    private void initSocketClient(List<YGOServer> servers) {
+        for (YGOServer server : servers) {
+            String urlString = getRoomSocketUrl(server);
             McWatchDuelSocketClient client = new McWatchDuelSocketClient(URI.create(urlString)) {
                 @Override
                 public void onMessage(String message) {
-                    // message就是接收到的消息
                     LogUtil.e(TAG, "WebSocketService收到的消息：" + message);
-                    HandlerUtil.sendMessage(handler, HANDLE_SEND_MESSAGE, message);
-                }
+                    HandlerUtil.sendMessage(handler, HANDLE_SEND_MESSAGE, new RoomSocketMessage(message, server));                }
 
                 @Override
                 public void onOpen(ServerHandshake handShakeData) {
-                    // 在webSocket连接开启时调用
                     LogUtil.e(TAG, "WebSocket 连接成功");
                 }
 
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
-                    // 在连接断开时调用
                     if (remote) {
                         LogUtil.e(TAG, "onClose() 主动断开连接" + remote + " " + reason);
                         return;
                     }
                     LogUtil.e(TAG, "onClose() 连接断开_reason：" + remote + " " + reason);
                     handler.removeCallbacks(heartBeatRunnable);
-                    handler.postDelayed(heartBeatRunnable, CLOSE_RECON_TIME); // 开启心跳检测
+                    handler.postDelayed(heartBeatRunnable, CLOSE_RECON_TIME);
                 }
 
                 @Override
                 public void onError(Exception ex) {
-                    // 在连接出错时调用
                     LogUtil.e(TAG, "onError() 连接出错：" + ex.getMessage());
                     handler.removeCallbacks(heartBeatRunnable);
-                    handler.postDelayed(heartBeatRunnable, CLOSE_RECON_TIME); // 开启心跳检测
+                    handler.postDelayed(heartBeatRunnable, CLOSE_RECON_TIME);
                 }
             };
 
@@ -204,19 +294,25 @@ public class WatchDuelManagement {
         }
     }
 
-    /**
-     * 连接WebSocket
-     */
+    private String getRoomSocketUrl(YGOServer server) {
+        String socketUrl = server == null ? null : server.getSocketUrl();
+        if (TextUtils.isEmpty(socketUrl)) {
+            socketUrl = MyCard.URL_MC_JOIN_DUEL_MATCH;
+        }
+        if (socketUrl.contains("filter=")) {
+            return socketUrl;
+        }
+        return socketUrl + (socketUrl.contains("?") ? "&" : "?") + "filter=waiting";
+    }
+
     private void connect(final McWatchDuelSocketClient client) {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                // 括号里是client没有初试过，用别的方法判断也可以，反正一定要判断到 client没有初始化过。
                 if (!client.isOpen()) {
-                    LogUtil.e("WatchDuelMan", "状态" + client.getReadyState());
+                    LogUtil.e("WaitingDuelMan", "状态" + client.getReadyState());
                     if (client.getReadyState() == ReadyState.NOT_YET_CONNECTED) {
                         try {
-                            // connectBlocking多出一个等待操作，会先连接再发送，否则未连接发送会报错
                             client.connectBlocking();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -230,9 +326,16 @@ public class WatchDuelManagement {
         }).start();
     }
 
-    /**
-     * 发送消息
-     */
+    private static class RoomSocketMessage {
+        private final String message;
+        private final YGOServer server;
+
+        private RoomSocketMessage(String message, YGOServer server) {
+            this.message = message;
+            this.server = server;
+        }
+    }
+
     public void sendMsg(McWatchDuelSocketClient client, String msg) {
         LogUtil.e(TAG, "发送的消息：" + msg);
         try {
@@ -242,9 +345,6 @@ public class WatchDuelManagement {
         }
     }
 
-    /**
-     * 断开连接
-     */
     public void closeConnect() {
         handler.removeCallbacks(heartBeatRunnable);
         for (McWatchDuelSocketClient client : mcWatchDuelSocketClientList) {
@@ -255,12 +355,8 @@ public class WatchDuelManagement {
             }
         }
         mcWatchDuelSocketClientList.clear();
-        isStart = false;
     }
 
-    /**
-     * 开启重连
-     */
     private void reconnectWs(final McWatchDuelSocketClient client) {
         handler.removeCallbacks(heartBeatRunnable);
         new Thread(new Runnable() {

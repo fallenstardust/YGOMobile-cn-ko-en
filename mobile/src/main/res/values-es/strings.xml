@@ -221,7 +221,7 @@
     <string name="noting_to_send">El contenido no puede estar vacío</string>
     <string name="sending_failed">Error al enviar</string>
     <string name="login_mycard">Iniciar sesión en MyCard</string>
-    <string name="logout_mycard">¿Cerrar sesión en MyCard?</string>
+    <string name="logout_mycard">Sesión MyCard cerrada</string>
     <string name="logining_in">Iniciando sesión, espera...</string>
     <string name="logining_failed">Error al iniciar sesión, toca para reintentar</string>
     <string name="failed_reason">Error al iniciar sesión, razón:</string>
@@ -359,16 +359,17 @@
     <string name="tip_download_ex">¡NEW Pre-Lanzadas!</string>
     <string name="tip_download_failed">Error al guardar, verifica la conexión</string>
     <string name="tip_download_OK">Guardado en</string>
+    <string name="open">Abrir</string>
+    <string name="web_warn_save_deck">Abrir el deck cerrará la página web, ¿Continuar?</string>
+    <string name="category_my_online_deck">Mis Decks Online</string>
+    <string name="privacy_policy_content">contenido de la política de privacidad</string>
     <string name="user_privacy_policy">Política de privacidad</string>
     <string name="about_user_privacy_policy">Explicación de los permisos usados</string>
-    <string name="open">Abrir</string>
     <string name="go_to">Ir a</string>
-    <string name="web_warn_save_deck">Abrir el deck cerrará la página web, ¿Continuar?</string>
     <string name="local_deck">Mis Decks</string>
     <string name="in_public">Público</string>
     <string name="in_personal_use">Privado</string>
     <string name="down_complete">Descarga completada</string>
-    <string name="upload">Subir</string>
     <string name="input_user_name">Nombre de usuario</string>
     <string name="input_pwd">Contraseña</string>
     <string name="register">Registrarse</string>
@@ -416,7 +417,19 @@
     <string name="match_duel">Modo Match</string>
     <string name="tag_duel">Modo Tag</string>
     <string name="unknown_room">Modo Unknown</string>
+    <string name="waiting_rooms">salas en espera</string>
     <string name="create_custom_room">Sala Custom</string>
+    <string name="select_custom_mode">Seleccionar Modo Custom</string>
+    <string name="mode_single_duel">Duelo Single</string>
+    <string name="mode_tag_duel">Duelo Tag</string>
+    <string name="mode_match_duel">Duelo Match</string>
+    <string name="creating_room">Creando Sala %s...</string>
+    <string name="create_room_failed">Error al Crear Sala</string>
+    <string name="no_waiting_rooms">Sin Salas en Espera</string>
+    <string name="title_rank_start">Partida Competitiva</string>
+    <string name="input_room_name">Ingresar nombre de sala</string>
+    <string name="server_area">Área de Servidor:</string>
+    <string name="allowed_cards">Cartas Permitidas:</string>
 </resources>
 
 

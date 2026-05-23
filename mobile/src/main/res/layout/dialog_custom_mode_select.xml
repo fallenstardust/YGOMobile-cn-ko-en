@@ -1,301 +1,315 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
-    <!-- 顶部标题栏 -->
     <LinearLayout
-        android:id="@+id/title_bar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="#1A237E"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        app:layout_constraintTop_toTopOf="parent">
+        android:weightSum="2">
 
-        <!-- 返回箭头 (占位，可替换为ImageView) -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="←"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"/>
-
-        <!-- 主标题 -->
-        <TextView
+        <LinearLayout
+            android:id="@+id/title_bar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="创建房间"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
+            android:gravity="center_vertical"
+            android:orientation="vertical">
 
-        <!-- 环境标签 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="环境: MyCard"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:layout_marginRight="16dp"/>
+            <!-- 环境标签 -->
+            <TextView
+                android:id="@+id/tv_create_room_server"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
+                android:text="@string/server_area"
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="12sp" />
 
-        <!-- 下拉箭头 (占位) -->
-        <TextView
-            android:layout_width="wrap_content"
+            <!-- 下拉箭头 (占位) -->
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/spinner_create_room_server"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:background="@drawable/selected_light"
+                android:padding="5dp"
+                android:text="▼"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 卡片允许下拉项 -->
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="▼"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:layout_marginRight="16dp"/>
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
+                android:text="@string/allowed_cards"
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/spinner_custom_room_rule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:background="@drawable/selected_light"
+                android:padding="5dp"
+                android:paddingLeft="12dp" /> <!-- 默认选中OCG -->
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- 表单滚动容器 (避免内容超出屏幕) -->
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/title_bar"
-        app:layout_constraintBottom_toTopOf="@id/create_btn">
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="5dp"
+        android:orientation="horizontal"
+        android:weightSum="2">
 
+        <!-- 决斗模式下拉项 -->
         <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
+                android:text="@string/select_custom_mode"
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/spinner_custom_room_mode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:background="@drawable/selected_light"
+                android:padding="5dp" /> <!-- 默认选中比赛模式 -->
+        </LinearLayout>
+
+        <!-- 决斗规则下拉项 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
+                android:text="决斗规则："
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/spinner_custom_room_duel_rule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/selected_light"
+                android:padding="5dp" /> <!-- 默认选中大师规则2020 -->
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="5dp"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <!-- 初始LP输入项 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
+                android:text="初始LP:"
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_custom_room_start_lp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/selected_light"
+                android:inputType="number"
+                android:padding="7dp"
+                android:text="8000"
+                android:textSize="14sp" />
+        </LinearLayout>
+        <!-- 初始手牌数输入项 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
+                android:text="初始手牌数:"
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_custom_room_start_hand"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/selected_light"
+                android:inputType="number"
+                android:padding="7dp"
+                android:text="5"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- 每回合抽卡输入项 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="2dp"
+                android:text="每回合抽卡:"
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_custom_room_draw_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/selected_light"
+                android:inputType="number"
+                android:padding="7dp"
+                android:text="1"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="5dp"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <CheckBox
+            android:id="@+id/cb_custom_room_no_check_deck"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_weight="1"
+            android:text="不检查卡组"
+            android:textColor="@color/gold"
+            android:textStyle="bold"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_custom_room_no_shuffle_deck"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1"
+            android:text="不洗切卡组"
+            android:textColor="@color/gold"
+            android:textStyle="bold"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_custom_room_auto_death"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1"
+            android:text="自动加时赛"
+            android:textColor="@color/gold"
+            android:textStyle="bold"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- 游戏标题输入项 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="5dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="2dp"
+            android:text="@string/intput_room_name"
+            android:textColor="@color/gold"
+            android:textStyle="bold"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp">
+
+            <EditText
+                android:id="@+id/et_custom_room_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/input_pwd" />
+
+            <!-- 字符计数 -->
+            <TextView
+                android:id="@+id/tv_custom_room_title_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="10dp"
+                android:text="5 / 12"
+                android:textColor="@color/grayDark2"
+                android:textSize="12sp" />
+        </RelativeLayout>
+
+        <CheckBox
+            android:id="@+id/cb_custom_room_private"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:spacing="16dp">
+            android:layout_weight="1"
+            android:text="私密房间"
+            android:textColor="@color/gold"
+            android:textStyle="bold"
+            android:textSize="12sp" />
+    </LinearLayout>
 
-            <!-- 游戏标题输入项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="游戏标题 *"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp">
-                    <EditText
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/selected_light"
-                        android:hint="请输入房间标题"
-                        android:text="----的房间"
-                        android:paddingLeft="12dp"
-                        android:textSize="14sp"/>
-
-                    <!-- 字符计数 -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="5 / 12"
-                        android:textColor="#666666"
-                        android:textSize="12sp"
-                        android:layout_alignParentRight="true"
-                        android:layout_alignParentBottom="true"
-                        android:layout_marginRight="8dp"
-                        android:layout_marginBottom="4dp"/>
-                </RelativeLayout>
-            </LinearLayout>
-
-            <!-- 卡片允许下拉项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="卡片允许 *"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <Spinner
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/selected_light"
-                    android:paddingLeft="12dp"/> <!-- 默认选中OCG -->
-            </LinearLayout>
-
-            <!-- 决斗模式下拉项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="决斗模式 *"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <Spinner
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/selected_light"
-                    android:paddingLeft="12dp"/> <!-- 默认选中比赛模式 -->
-            </LinearLayout>
-
-            <!-- 决斗规则下拉项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="决斗规则 *"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <Spinner
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/selected_light"
-                    android:paddingLeft="12dp"/> <!-- 默认选中大师规则2020 -->
-            </LinearLayout>
-
-            <!-- 初始LP输入项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="初始LP *"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/selected_light"
-                    android:text="8000"
-                    android:inputType="number"
-                    android:paddingLeft="12dp"
-                    android:textSize="14sp"/>
-            </LinearLayout>
-
-            <!-- 初始手牌数输入项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="初始手牌数 *"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/selected_light"
-                    android:text="5"
-                    android:inputType="number"
-                    android:paddingLeft="12dp"
-                    android:textSize="14sp"/>
-            </LinearLayout>
-
-            <!-- 每回合抽卡输入项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="4dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="每回合抽卡 *"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/selected_light"
-                    android:text="1"
-                    android:inputType="number"
-                    android:paddingLeft="12dp"
-                    android:textSize="14sp"/>
-            </LinearLayout>
-
-            <!-- 复选框组 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:spacing="8dp"
-                android:layout_marginTop="8dp">
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="私密房间"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="不检查卡组"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="不洗切卡组"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="自动加时赛"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-            </LinearLayout>
-
-        </LinearLayout>
-    </ScrollView>
-
-    <!-- 创建游戏按钮 -->
-    <Button
-        android:id="@+id/create_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:text="创建游戏"
-        android:textColor="#FFFFFF"
-        android:background="#1A237E"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="16dp"/>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

@@ -5,6 +5,7 @@ import static cn.garymb.ygomobile.Constants.QUERY_YGO_TYPE;
 import android.net.Uri;
 import android.text.TextUtils;
 
+import com.google.gson.annotations.SerializedName;
 import com.ourygo.lib.duelassistant.util.DARecord;
 import com.ourygo.lib.duelassistant.util.UrlUtil;
 
@@ -37,12 +38,14 @@ public class YGOServer extends ServerInfo {
     private int opponentType;
 
     private transient String password;
-    private transient String id;
-    private transient String url;
-    private transient boolean hidden;
-    private transient boolean custom;
-    private transient boolean replay;
-    private transient List<String> windbot;
+    private String id;
+    @SerializedName("url")
+    private String socketUrl;
+    private Boolean match;
+    private Boolean hidden;
+    private Boolean custom;
+    private Boolean replay;
+    private List<String> windbot;
 
     public static YGOServer toYGOServer(String serverName) {
         YGOServer ygoServer = new YGOServer();
@@ -72,34 +75,50 @@ public class YGOServer extends ServerInfo {
     }
 
     public String getUrl() {
-        return url;
+        return socketUrl;
     }
 
     public void setUrl(String url) {
-        this.url = url;
+        this.socketUrl = url;
+    }
+
+    public String getSocketUrl() {
+        return socketUrl;
+    }
+
+    public void setSocketUrl(String socketUrl) {
+        this.socketUrl = socketUrl;
+    }
+
+    public boolean isMatch() {
+        return Boolean.TRUE.equals(match);
+    }
+
+    public void setMatch(Boolean match) {
+        this.match = match;
     }
 
     public boolean isHidden() {
-        return hidden;
+        return Boolean.TRUE.equals(hidden);
     }
 
-    public void setHidden(boolean hidden) {
+    public void setHidden(Boolean hidden) {
         this.hidden = hidden;
     }
 
     public boolean isCustom() {
-        return custom;
+        return Boolean.TRUE.equals(custom);
     }
 
-    public void setCustom(boolean custom) {
+    public void setCustom(Boolean custom) {
         this.custom = custom;
     }
 
     public boolean isReplay() {
-        return replay;
+        return Boolean.TRUE.equals(replay);
     }
 
-    public void setReplay(boolean replay) {
+    public void setReplay(Boolean replay) {
         this.replay = replay;
     }
 

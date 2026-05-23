@@ -7,7 +7,7 @@
     <translate
         android:fromXDelta="0"
         android:toXDelta="100%p"
-        android:duration="250" />
+        android:duration="100" />
 
     <!-- 缩放效果：从大变小，模拟机械收缩 -->
     <scale
@@ -17,11 +17,11 @@
         android:toYScale="0.8"
         android:pivotX="50%"
         android:pivotY="50%"
-        android:duration="300" />
+        android:duration="100" />
 
     <!-- 透明度渐变 -->
     <alpha
         android:fromAlpha="1.0"
         android:toAlpha="0.3"
-        android:duration="200" />
+        android:duration="100" />
 </set>
