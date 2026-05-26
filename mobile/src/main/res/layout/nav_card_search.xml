@@ -268,8 +268,8 @@
                         android:id="@+id/gl_category"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="7"
-                        android:rowCount="4">
+                        android:columnCount="4"
+                        android:rowCount="8">
 
                         <Button
                             android:id="@+id/btn_category_destroySpellTrap"
@@ -332,11 +332,6 @@
                             android:text="表示形式" />
 
                         <Button
-                            android:id="@+id/btn_category_control"
-                            style="@style/CardFilterBtn"
-                            android:text="控制权" />
-
-                        <Button
                             android:id="@+id/btn_category_changeAtkDef"
                             style="@style/CardFilterBtn"
                             android:text="攻守变化" />
@@ -365,11 +360,6 @@
                             android:id="@+id/btn_category_specialSummon"
                             style="@style/CardFilterBtn"
                             android:text="特殊召唤" />
-
-                        <Button
-                            android:id="@+id/btn_category_token"
-                            style="@style/CardFilterBtn"
-                            android:text="衍生物" />
 
                         <Button
                             android:id="@+id/btn_category_raceRelated"
@@ -402,16 +392,6 @@
                             android:text="效果耐性" />
 
                         <Button
-                            android:id="@+id/btn_category_counter"
-                            style="@style/CardFilterBtn"
-                            android:text="指示物" />
-
-                        <Button
-                            android:id="@+id/btn_category_gamble"
-                            style="@style/CardFilterBtn"
-                            android:text="幸运" />
-
-                        <Button
                             android:id="@+id/btn_category_fusionRelated"
                             style="@style/CardFilterBtn"
                             android:text="融合相关" />
@@ -430,6 +410,25 @@
                             android:id="@+id/btn_category_negateEffect"
                             style="@style/CardFilterBtn"
                             android:text="效果无效" />
+
+                        <Button
+                            android:id="@+id/btn_category_control"
+                            style="@style/CardFilterBtn"
+                            android:text="控制权" />
+                        <Button
+                            android:id="@+id/btn_category_token"
+                            style="@style/CardFilterBtn"
+                            android:text="衍生物" />
+
+                        <Button
+                            android:id="@+id/btn_category_counter"
+                            style="@style/CardFilterBtn"
+                            android:text="指示物" />
+
+                        <Button
+                            android:id="@+id/btn_category_gamble"
+                            style="@style/CardFilterBtn"
+                            android:text="幸运" />
                     </GridLayout>
                 </LinearLayout>
             </LinearLayout>
@@ -660,8 +659,8 @@
                         android:id="@+id/gl_race"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="7"
-                        android:rowCount="5">
+                        android:columnCount="3"
+                        android:rowCount="9">
 
                         <Button
                             android:id="@+id/btn_race_spellcaster"
@@ -860,8 +859,8 @@
                         android:id="@+id/gl_monsterType"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="6"
-                        android:rowCount="3">
+                        android:columnCount="4"
+                        android:rowCount="4">
 
                         <Button
                             android:id="@+id/btn_type_normal"
@@ -877,6 +876,11 @@
                             android:id="@+id/btn_type_ritual"
                             style="@style/CardFilterBtn"
                             android:text="仪式" />
+
+                        <Button
+                            android:id="@+id/btn_type_tuner"
+                            style="@style/CardFilterBtn"
+                            android:text="调整" />
 
                         <Button
                             android:id="@+id/btn_type_fusion"
@@ -899,6 +903,11 @@
                             android:text="连接" />
 
                         <Button
+                            android:id="@+id/btn_type_pendulum"
+                            style="@style/CardFilterBtn"
+                            android:text="灵摆" />
+
+                        <Button
                             android:id="@+id/btn_type_toon"
                             style="@style/CardFilterBtn"
                             android:text="卡通" />
@@ -911,7 +920,7 @@
                         <Button
                             android:id="@+id/btn_type_union"
                             style="@style/CardFilterBtn"
-                            android:text="联合" />
+                            android:text="同盟" />
 
                         <Button
                             android:id="@+id/btn_type_gemini"
@@ -919,19 +928,9 @@
                             android:text="二重" />
 
                         <Button
-                            android:id="@+id/btn_type_tuner"
-                            style="@style/CardFilterBtn"
-                            android:text="调整" />
-
-                        <Button
                             android:id="@+id/btn_type_flip"
                             style="@style/CardFilterBtn"
                             android:text="反转" />
-
-                        <Button
-                            android:id="@+id/btn_type_pendulum"
-                            style="@style/CardFilterBtn"
-                            android:text="灵摆" />
 
                         <Button
                             android:id="@+id/btn_type_specialSummon"
@@ -979,8 +978,8 @@
                             android:id="@+id/gl_excludeType"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:columnCount="6"
-                            android:rowCount="3">
+                            android:columnCount="4"
+                            android:rowCount="4">
 
                             <Button
                                 android:id="@+id/btn_exclude_type_normal"
@@ -996,6 +995,11 @@
                                 android:id="@+id/btn_exclude_type_ritual"
                                 style="@style/CardFilterBtn"
                                 android:text="仪式" />
+
+                            <Button
+                                android:id="@+id/btn_exclude_type_tuner"
+                                style="@style/CardFilterBtn"
+                                android:text="调整" />
 
                             <Button
                                 android:id="@+id/btn_exclude_type_fusion"
@@ -1018,6 +1022,11 @@
                                 android:text="连接" />
 
                             <Button
+                                android:id="@+id/btn_exclude_type_pendulum"
+                                style="@style/CardFilterBtn"
+                                android:text="灵摆" />
+
+                            <Button
                                 android:id="@+id/btn_exclude_type_toon"
                                 style="@style/CardFilterBtn"
                                 android:text="卡通" />
@@ -1038,19 +1047,9 @@
                                 android:text="二重" />
 
                             <Button
-                                android:id="@+id/btn_exclude_type_tuner"
-                                style="@style/CardFilterBtn"
-                                android:text="调整" />
-
-                            <Button
                                 android:id="@+id/btn_exclude_type_flip"
                                 style="@style/CardFilterBtn"
                                 android:text="反转" />
-
-                            <Button
-                                android:id="@+id/btn_exclude_type_pendulum"
-                                style="@style/CardFilterBtn"
-                                android:text="灵摆" />
 
                             <Button
                                 android:id="@+id/btn_exclude_type_specialSummon"
