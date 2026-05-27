@@ -9,13 +9,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
-
-import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.BaseMultiItemQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
@@ -26,7 +26,6 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.ui.cards.deck_square.api_response.PushMultiResponse;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
@@ -34,15 +33,18 @@ import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
-//提供“我的”卡组数据，打开后先从sharePreference查询，没有则从服务器查询，然后缓存到sharePreference
-public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, BaseViewHolder> {
-    private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
-    private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
+public class MyDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListItem, BaseViewHolder> {
+    private static final String TAG = MyDeckListAdapter.class.getSimpleName();
+    private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
     private ImageLoader imageLoader;
+    private String currentKeyword = "";
+    private final LinkedHashMap<String, Boolean> sectionExpandedMap = new LinkedHashMap<>();
 
-    public MyDeckListAdapter(int layoutResId, YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
-        super(layoutResId);
+    public MyDeckListAdapter(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
+        super(null);
+        addItemType(DeckListItem.TYPE_SECTION_HEADER, R.layout.item_deck_type_header);
+        addItemType(DeckListItem.TYPE_DECK_ITEM, R.layout.item_my_deck);
         imageLoader = new ImageLoader();
         this.onDeckMenuListener = onDeckMenuListener;
         this.mDialogListener = mDialogListener;
@@ -53,7 +55,7 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
         if (loginToken == null) {
             return;
         }
-        if (DeckManagerFragment.getOriginalData().isEmpty()){
+        if (DeckManagerFragment.getOriginalData().isEmpty()) {
             final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
             VUiKit.defer().when(() -> {
                 MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
@@ -61,26 +63,20 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
                 else return result.getData();
             }).fail((e) -> {
                 Log.e(TAG, e + "");
-                if (dialog_read_ex.isShowing()) {//关闭异常
+                if (dialog_read_ex.isShowing()) {
                     try {
                         dialog_read_ex.dismiss();
                     } catch (Exception ex) {
-
                     }
                 }
                 LogUtil.i(TAG, "load mycard from server failed:" + e);
             }).done((serverDecks) -> {
-                if (serverDecks != null) {//将服务端的卡组也放到缓存中
-                    DeckManagerFragment.getOriginalData().clear();//虽然判断originalData是空的才会执行到这里，但还是写上保险
-                    DeckManagerFragment.getOriginalData().addAll(serverDecks); // 保存原始数据
+                if (serverDecks != null) {
+                    DeckManagerFragment.getOriginalData().clear();
+                    DeckManagerFragment.getOriginalData().addAll(serverDecks);
                 }
-
                 LogUtil.i(TAG, "load mycard from server done");
-
-                getData().clear();
-                addData(serverDecks);
-                notifyDataSetChanged();
-
+                rebuildGroupedList(DeckManagerFragment.getOriginalData());
                 if (dialog_read_ex.isShowing()) {
                     try {
                         dialog_read_ex.dismiss();
@@ -90,25 +86,17 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
             });
         } else {
             LogUtil.i(TAG, "load originalData done");
-            getData().clear();
-            addData(DeckManagerFragment.getOriginalData());
-            notifyDataSetChanged();
+            rebuildGroupedList(DeckManagerFragment.getOriginalData());
         }
-
-
     }
 
-    // 在适配器中添加成员变量保存当前搜索关键词
-    private String currentKeyword = "";
-
-    // 修改筛选函数，保存当前关键词
     public void filter(String keyword) {
-        currentKeyword = keyword; // 保存关键词
+        currentKeyword = keyword;
         List<MyOnlineDeckDetail> filteredList = new ArrayList<>();
         if (keyword.isEmpty()) {
             filteredList.addAll(DeckManagerFragment.getOriginalData());
         } else {
-            String lowerKeyword = keyword.toLowerCase(); // 转为小写，实现不区分大小写搜索
+            String lowerKeyword = keyword.toLowerCase();
             for (MyOnlineDeckDetail item : DeckManagerFragment.getOriginalData()) {
                 if (item.getDeckName().toLowerCase().contains(lowerKeyword) ||
                         item.getDeckType().toLowerCase().contains(lowerKeyword)) {
@@ -116,41 +104,119 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
                 }
             }
         }
+        rebuildGroupedList(filteredList);
+    }
+
+    private void rebuildGroupedList(List<MyOnlineDeckDetail> deckList) {
+        LinkedHashMap<String, List<MyOnlineDeckDetail>> groupedMap = new LinkedHashMap<>();
+        if (deckList != null) {
+            for (MyOnlineDeckDetail deck : deckList) {
+                String type = deck.getDeckType();
+                if (type == null) type = "";
+                if (!groupedMap.containsKey(type)) {
+                    groupedMap.put(type, new ArrayList<>());
+                }
+                groupedMap.get(type).add(deck);
+            }
+        }
+
+        for (String key : groupedMap.keySet()) {
+            if (!sectionExpandedMap.containsKey(key)) {
+                sectionExpandedMap.put(key, true);
+            }
+        }
+
+        List<DeckListItem> flatList = new ArrayList<>();
+        for (Map.Entry<String, List<MyOnlineDeckDetail>> entry : groupedMap.entrySet()) {
+            String typeName = entry.getKey();
+            List<MyOnlineDeckDetail> decks = entry.getValue();
+            boolean isExpanded = sectionExpandedMap.getOrDefault(typeName, true);
+
+            DeckListItem header = new DeckListItem(typeName, decks.size(), isExpanded);
+            flatList.add(header);
+
+            if (isExpanded) {
+                for (MyOnlineDeckDetail deck : decks) {
+                    flatList.add(new DeckListItem(deck));
+                }
+            }
+        }
+
+        submitList(flatList);
+    }
+
+    private void submitList(List<DeckListItem> newList) {
         getData().clear();
-        addData(filteredList);
+        addData(newList);
         notifyDataSetChanged();
     }
 
-    /**
-     * 将文本中包含关键词的部分高亮显示
-     * @param text 原始文本
-     * @param keyword 关键词
-     * @return 处理后的SpannableString
-     */
+    public void toggleSection(int headerPosition) {
+        DeckListItem header = getData().get(headerPosition);
+        if (header.getItemType() != DeckListItem.TYPE_SECTION_HEADER) return;
+
+        boolean willExpand = !header.isExpanded();
+        header.setExpanded(willExpand);
+        sectionExpandedMap.put(header.getSectionName(), willExpand);
+
+        if (willExpand) {
+            List<MyOnlineDeckDetail> decksInSection = getDecksByType(header.getSectionName());
+            int insertPos = headerPosition + 1;
+            List<DeckListItem> itemsToInsert = new ArrayList<>();
+            for (MyOnlineDeckDetail deck : decksInSection) {
+                itemsToInsert.add(new DeckListItem(deck));
+            }
+            addData(insertPos, itemsToInsert);
+        } else {
+            int removeCount = header.getSectionItemCount();
+            for (int i = 0; i < removeCount; i++) {
+                remove(headerPosition + 1);
+            }
+        }
+        notifyItemChanged(headerPosition);
+    }
+
+    private List<MyOnlineDeckDetail> getDecksByType(String typeName) {
+        List<MyOnlineDeckDetail> result = new ArrayList<>();
+        String keyword = currentKeyword;
+        List<MyOnlineDeckDetail> source;
+        if (keyword != null && !keyword.isEmpty()) {
+            source = new ArrayList<>();
+            String lowerKeyword = keyword.toLowerCase();
+            for (MyOnlineDeckDetail item : DeckManagerFragment.getOriginalData()) {
+                if (item.getDeckName().toLowerCase().contains(lowerKeyword) ||
+                        item.getDeckType().toLowerCase().contains(lowerKeyword)) {
+                    ((List<MyOnlineDeckDetail>) source).add(item);
+                }
+            }
+        } else {
+            source = DeckManagerFragment.getOriginalData();
+        }
+        for (MyOnlineDeckDetail deck : source) {
+            String type = deck.getDeckType();
+            if (type == null) type = "";
+            if (type.equals(typeName)) {
+                result.add(deck);
+            }
+        }
+        return result;
+    }
+
     private SpannableString getHighlightedText(String text, String keyword) {
         if (text == null || keyword.isEmpty()) {
             return new SpannableString(text == null ? "" : text);
         }
-
         SpannableString spannable = new SpannableString(text);
         String lowerText = text.toLowerCase();
         String lowerKeyword = keyword.toLowerCase();
         int index = lowerText.indexOf(lowerKeyword);
-
-        // 循环查找所有匹配的关键词并设置高亮
         while (index >= 0) {
             int start = index;
             int end = index + keyword.length();
-
-            // 设置高亮样式，可以自定义颜色和样式
             spannable.setSpan(new ForegroundColorSpan(YGOUtil.c(R.color.holo_blue_bright)),
-                    start, end,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            );
-            // 查找下一个匹配
+                    start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             index = lowerText.indexOf(lowerKeyword, end);
         }
-
         return spannable;
     }
 
@@ -159,7 +225,6 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
             LoginToken loginToken = DeckSquareApiUtil.getLoginData();
             if (loginToken == null) {
                 return;
-
             }
             List<DeckFile> deleteList = new ArrayList<>();
             DeckFile deleteDeckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
@@ -168,17 +233,14 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
             deleteList.add(deleteDeckFile);
             try {
                 DeckSquareApiUtil.deleteDecks(deleteList);
-            }catch (Throwable e){
+            } catch (Throwable e) {
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
             }
-            remove(item);
+            DeckManagerFragment.getOriginalData().remove(item);
+            rebuildGroupedList(DeckManagerFragment.getOriginalData());
         }
     }
 
-    /**
-     * 注意，更新卡组状态要过很久才生效（实测延迟偶尔达5s）
-     * @param item
-     */
     private void changeDeckPublicState(MyOnlineDeckDetail item) {
         if (item != null) {
             LoginToken loginToken = DeckSquareApiUtil.getLoginData();
@@ -197,16 +259,46 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
     }
 
     @Override
-    protected void convert(BaseViewHolder helper, MyOnlineDeckDetail item) {
+    protected void convert(BaseViewHolder helper, DeckListItem item) {
+        switch (item.getItemType()) {
+            case DeckListItem.TYPE_SECTION_HEADER:
+                convertHeader(helper, item);
+                break;
+            case DeckListItem.TYPE_DECK_ITEM:
+                convertDeckItem(helper, item);
+                break;
+        }
+    }
+
+    private void convertHeader(BaseViewHolder helper, DeckListItem item) {
+        String displayName = item.getSectionName().isEmpty()
+                ? getContext().getString(R.string.category_Uncategorized)
+                : item.getSectionName();
+        helper.setText(R.id.tv_section_name, getHighlightedText(displayName, currentKeyword));
+        helper.setText(R.id.tv_section_count, "(" + item.getSectionItemCount() + ")");
+        ImageView arrow = helper.findView(R.id.iv_arrow);
+        if (arrow != null) {
+            arrow.setImageResource(item.isExpanded() ? R.drawable.baseline_keyboard_arrow_down_24 : R.drawable.baseline_keyboard_arrow_up_24);
+        }
+        helper.itemView.setOnClickListener(v -> {
+            int pos = helper.getBindingAdapterPosition();
+            if (pos >= 0) {
+                toggleSection(pos);
+            }
+        });
+    }
+
+    private void convertDeckItem(BaseViewHolder helper, DeckListItem item) {
+        MyOnlineDeckDetail deckItem = item.getDeckDetail();
         ImageView iv_box = helper.findView(R.id.iv_box);
         ImageView deck_info_image = helper.findView(R.id.deck_info_image);
         ImageView delete_my_online_deck_btn = helper.findView(R.id.delete_my_online_deck_btn);
         LinearLayout ll_switch_show = helper.findView(R.id.ll_switch_show);
         TextView change_show_or_hide = helper.findView(R.id.change_show_or_hide);
         ImageView show_on_deck_square = helper.findView(R.id.show_on_deck_square);
-        long code = item.getDeckCoverCard1();
+        long code = deckItem.getDeckCoverCard1();
 
-        if (item.isDelete()) {
+        if (deckItem.isDelete()) {
             deck_info_image.setColorFilter(YGOUtil.c(R.color.bottom_bg));
             iv_box.setColorFilter(YGOUtil.c(R.color.bottom_bg));
             delete_my_online_deck_btn.setVisibility(View.GONE);
@@ -217,14 +309,13 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
             delete_my_online_deck_btn.setVisibility(View.VISIBLE);
             ll_switch_show.setVisibility(View.VISIBLE);
         }
-        // 处理卡组类型高亮, 需要判断卡组分类的内容
-        helper.setText(R.id.my_online_deck_type, getHighlightedText(item.getDeckType().equals("") ? "" : "-"+item.getDeckType()+"-", currentKeyword));
-        // 处理卡组名称高亮
-        helper.setText(R.id.my_deck_name, getHighlightedText(item.getDeckName(), currentKeyword));
 
-        helper.setText(R.id.deck_update_date, DeckUtil.convertToGMTDate(item.getDeckUpdateDate()));
+        helper.setText(R.id.my_online_deck_type, getHighlightedText(
+                deckItem.getDeckType().equals("") ? "" : "-" + deckItem.getDeckType() + "-", currentKeyword));
+        helper.setText(R.id.my_deck_name, getHighlightedText(deckItem.getDeckName(), currentKeyword));
+        helper.setText(R.id.deck_update_date, DeckUtil.convertToGMTDate(deckItem.getDeckUpdateDate()));
 
-        if (item.isPublic()) {
+        if (deckItem.isPublic()) {
             change_show_or_hide.setText(R.string.in_public);
             show_on_deck_square.setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
             ll_switch_show.setBackgroundResource(R.drawable.button_radius_red);
@@ -238,33 +329,27 @@ public class MyDeckListAdapter extends BaseQuickAdapter<MyOnlineDeckDetail, Base
         } else {
             imageLoader.bindImage(deck_info_image, -1, null, ImageLoader.Type.small);
         }
-        delete_my_online_deck_btn.setOnClickListener(view -> {
-            deleteMyDeckOnLine(item);
-        });
+        delete_my_online_deck_btn.setOnClickListener(view -> deleteMyDeckOnLine(deckItem));
         helper.getView(R.id.ll_switch_show).setOnClickListener(view -> {
-            if (item.isPublic()) {
+            if (deckItem.isPublic()) {
                 change_show_or_hide.setText(R.string.in_personal_use);
                 show_on_deck_square.setBackgroundResource(R.drawable.closed_eyes_24);
                 ll_switch_show.setBackgroundResource(R.drawable.button_radius_n);
-                item.setPublic(false); // 关闭公开状态
+                deckItem.setPublic(false);
             } else {
-                change_show_or_hide.setText( R.string.in_public);
+                change_show_or_hide.setText(R.string.in_public);
                 show_on_deck_square.setBackgroundResource(R.drawable.baseline_remove_red_eye_24);
                 ll_switch_show.setBackgroundResource(R.drawable.button_radius_red);
-                item.setPublic(true); // 开启公开状态
+                deckItem.setPublic(true);
             }
-            LogUtil.i(TAG, "current " + item.toString());
-            changeDeckPublicState(item);
+            LogUtil.i(TAG, "current " + deckItem.toString());
+            changeDeckPublicState(deckItem);
         });
         helper.getView(R.id.ll_download).setOnLongClickListener(view -> {
-            //TODO
-            //点击“我的卡组”中的某个卡组后，弹出dialog，dialog根据卡组的同步情况自动显示对应的下载/上传按钮
-            DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.MY_SQUARE);
+            DeckFile deckFile = new DeckFile(deckItem.getDeckId(), DeckType.ServerType.MY_SQUARE);
             mDialogListener.onDismiss();
             onDeckMenuListener.onDeckSelect(deckFile);
             return true;
         });
-
     }
-
 }

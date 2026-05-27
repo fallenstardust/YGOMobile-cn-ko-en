@@ -57,14 +57,23 @@ public class DeckSquareMyDeckFragment extends Fragment {
             binding.llMainUi.setVisibility(View.VISIBLE);
             binding.llDialogLogin.setVisibility(View.GONE);
             binding.tvMycardUserName.setText(SharedPreferenceUtil.getMyCardUserName());
-            GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);//刷新头像图片
+            GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);
         }
 
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
-        deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck, onDeckMenuListener, mDialogListener);
-        GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 3);
-        binding.listMyDeckInfo.setLayoutManager(linearLayoutManager);
+        deckListAdapter = new MyDeckListAdapter(onDeckMenuListener, mDialogListener);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 3);
+        gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                if (position < deckListAdapter.getData().size()) {
+                    return deckListAdapter.getData().get(position).getItemType() == DeckListItem.TYPE_SECTION_HEADER ? 3 : 1;
+                }
+                return 1;
+            }
+        });
+        binding.listMyDeckInfo.setLayoutManager(gridLayoutManager);
         binding.listMyDeckInfo.setAdapter(deckListAdapter);
         deckListAdapter.loadData();
 
