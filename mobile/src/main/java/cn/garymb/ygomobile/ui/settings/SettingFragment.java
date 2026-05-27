@@ -111,7 +111,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
     public static String Cache_link;
     private AppsSettings mSettings;
     private HomeActivity activity;
-    private boolean isInit = true;
     private int FailedCount;
     private PrivacyPolicyCallback privacyPolicyCallback;
 
@@ -171,7 +170,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
     @Override
     public boolean onPreferenceChange(@NonNull Preference preference, Object value) {
         super.onPreferenceChange(preference, value);
-        if (!isInit) {
             /*if (PREF_GAME_VERSION.equals(preference.getKey())) {
                 int v = mSettings.getVersionValue(value.toString());
                 if (v > 0 && v <= mSettings.getVersionValue("0xF99F")) {
@@ -296,8 +294,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 mSharedPreferences.edit().putString(preference.getKey(), "" + value).apply();
             }
             return rs;
-        }
-        return true;
     }
 
     @Override
