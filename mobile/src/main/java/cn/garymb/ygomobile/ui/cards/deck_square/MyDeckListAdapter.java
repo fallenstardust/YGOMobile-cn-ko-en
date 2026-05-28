@@ -107,7 +107,7 @@ public class MyDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListItem, B
         rebuildGroupedList(filteredList);
     }
 
-    private void rebuildGroupedList(List<MyOnlineDeckDetail> deckList) {
+    public void rebuildGroupedList(List<MyOnlineDeckDetail> deckList) {
         LinkedHashMap<String, List<MyOnlineDeckDetail>> groupedMap = new LinkedHashMap<>();
         if (deckList != null) {
             for (MyOnlineDeckDetail deck : deckList) {
@@ -236,7 +236,7 @@ public class MyDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListItem, B
             } catch (Throwable e) {
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
             }
-            DeckManagerFragment.getOriginalData().remove(item);
+            item.setDelete(true);
             rebuildGroupedList(DeckManagerFragment.getOriginalData());
         }
     }
@@ -299,7 +299,6 @@ public class MyDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListItem, B
         long code = deckItem.getDeckCoverCard1();
 
         if (deckItem.isDelete()) {
-            deck_info_image.setColorFilter(YGOUtil.c(R.color.bottom_bg));
             iv_box.setColorFilter(YGOUtil.c(R.color.bottom_bg));
             delete_my_online_deck_btn.setVisibility(View.GONE);
             ll_switch_show.setVisibility(View.GONE);

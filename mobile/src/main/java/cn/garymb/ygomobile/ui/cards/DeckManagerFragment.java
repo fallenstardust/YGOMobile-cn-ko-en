@@ -81,6 +81,7 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
+import cn.garymb.ygomobile.bean.events.DeckDeleteEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
@@ -1878,6 +1879,27 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         if (deck == null)
             return;
         String currentDeckPath = deck.getAbsolutePath();
+
+        for (DeckFile deckFile : deckFileList) {
+            String deckId = deckFile.getDeckId();
+            for (MyOnlineDeckDetail onlineDeck : originalData) {
+                boolean matched = false;
+                if (deckId != null && !deckId.isEmpty()
+                        && deckId.equals(onlineDeck.getDeckId())) {
+                    matched = true;
+                } else if (deckFile.getName() != null && deckFile.getTypeName() != null
+                        && deckFile.getName().equals(onlineDeck.getDeckName())
+                        && deckFile.getTypeName().equals(onlineDeck.getDeckType())) {
+                    matched = true;
+                }
+                if (matched) {
+                    onlineDeck.setDelete(true);
+                    break;
+                }
+            }
+        }
+        EventBus.getDefault().post(new DeckDeleteEvent());
+
         for (DeckFile deckFile : deckFileList) {
             LogUtil.w(TAG, "要删除的卡组：" + "\n卡组分类: " + deckFile.getTypeName() + "\n卡组名称：" + deckFile.getFileName() + "\n卡组id: " + deckFile.getDeckId());
             if (TextUtils.equals(deckFile.getPath(), currentDeckPath)) {
@@ -1891,12 +1913,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 } else {
                     setCurDeck(new DeckInfo(), false);
                 }
-                // 对于当前卡组，也应该删除在线卡组
                 DeckSquareApiUtil.deleteDecks(List.of(deckFile));
                 return;
             }
         }
-        // 删除在线的同名卡组们
         DeckSquareApiUtil.deleteDecks(deckFileList);
         YGOUtil.showTextToast(R.string.done);
     }

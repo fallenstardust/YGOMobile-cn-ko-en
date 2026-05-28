@@ -17,7 +17,9 @@ import java.io.IOException;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
+import cn.garymb.ygomobile.bean.events.DeckDeleteEvent;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
@@ -30,6 +32,10 @@ import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 //打开页面后，先扫描本地的卡组，读取其是否包含deckId，是的话代表平台上可能有
 //之后读取平台上的卡组，与本地卡组列表做比较。
@@ -58,6 +64,10 @@ public class DeckSquareMyDeckFragment extends Fragment {
             binding.llDialogLogin.setVisibility(View.GONE);
             binding.tvMycardUserName.setText(SharedPreferenceUtil.getMyCardUserName());
             GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);
+        }
+
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
         }
 
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
@@ -133,6 +143,13 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onDeckDeleted(DeckDeleteEvent event) {
+        if (deckListAdapter != null) {
+            deckListAdapter.rebuildGroupedList(DeckManagerFragment.getOriginalData());
+        }
+    }
+
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -141,6 +158,9 @@ public class DeckSquareMyDeckFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
         binding = null;
     }
 

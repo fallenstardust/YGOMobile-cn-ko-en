@@ -565,24 +565,28 @@ public class DeckSquareApiUtil {
                     }
                 }
 
-                // 提前过滤掉 null 元素
                 List<DeckFile> validDeckFiles = deckFileList.stream()
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
 
                 for (DeckFile deleteDeckFile : validDeckFiles) {
+                    String deckId = deleteDeckFile.getDeckId();
                     String name = deleteDeckFile.getName();
                     String typeName = deleteDeckFile.getTypeName();
 
-                    if (name == null || typeName == null) {
-                        LogUtil.w(TAG, "跳过无效卡组文件: name=" + name + ", type=" + typeName);
-                        continue;
-                    }
-
-                    LogUtil.d(TAG, "准备删除卡组：" + typeName + "/" + name);
+                    LogUtil.d(TAG, "准备删除卡组：deckId=" + deckId + ", " + typeName + "/" + name);
 
                     for (MyOnlineDeckDetail onlineDeckDetail : originalData) {
-                        if (name.equals(onlineDeckDetail.getDeckName()) && typeName.equals(onlineDeckDetail.getDeckType())) {
+                        boolean matched = false;
+                        if (deckId != null && !deckId.isEmpty()
+                                && deckId.equals(onlineDeckDetail.getDeckId())) {
+                            matched = true;
+                        } else if (name != null && typeName != null
+                                && name.equals(onlineDeckDetail.getDeckName())
+                                && typeName.equals(onlineDeckDetail.getDeckType())) {
+                            matched = true;
+                        }
+                        if (matched) {
                             onlineDeckDetail.setDelete(true);
                             deleteDeckFile.setDeckId(onlineDeckDetail.getDeckId());
                             break;
