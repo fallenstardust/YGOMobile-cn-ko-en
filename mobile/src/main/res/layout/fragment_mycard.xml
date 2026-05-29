@@ -68,7 +68,7 @@
                         android:layout_height="match_parent"
                         android:gravity="center|right"
                         android:textColor="@color/holo_blue_bright"
-                        android:textSize="12sp" />
+                        android:textSize="8sp" />
                 </LinearLayout>
             </LinearLayout>
 

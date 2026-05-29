@@ -185,7 +185,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     updateFunRank(currentMcDuelInfo);
                     updateMatchRank(currentMcDuelInfo);
                     if (currentMcDuelInfo != null) {
-                        tv_dp_title.setText("D.P：" + currentMcDuelInfo.getDp());
+                        tv_dp_title.setText("D.P: " + currentMcDuelInfo.getDp() + "\nE.X.P: " + currentMcDuelInfo.getExp());
                     }
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
