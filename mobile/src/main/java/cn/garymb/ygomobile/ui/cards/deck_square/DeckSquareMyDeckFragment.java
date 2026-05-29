@@ -43,7 +43,7 @@ import org.greenrobot.eventbus.ThreadMode;
 public class DeckSquareMyDeckFragment extends Fragment {
     private static final String TAG = "DeckSquareMyDeckFragment";
     private FragmentDeckSquareMyDeckBinding binding;
-    private MyDeckListAdapter deckListAdapter;
+    private MyOnlineDeckListAdapter deckListAdapter;
     private String keyWord;
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
@@ -72,7 +72,7 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
-        deckListAdapter = new MyDeckListAdapter(onDeckMenuListener, mDialogListener);
+        deckListAdapter = new MyOnlineDeckListAdapter(onDeckMenuListener, mDialogListener);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 3);
         gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override

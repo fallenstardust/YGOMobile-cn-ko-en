@@ -33,15 +33,15 @@ import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
-public class MyDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListItem, BaseViewHolder> {
-    private static final String TAG = MyDeckListAdapter.class.getSimpleName();
+public class MyOnlineDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListItem, BaseViewHolder> {
+    private static final String TAG = MyOnlineDeckListAdapter.class.getSimpleName();
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
     private ImageLoader imageLoader;
     private String currentKeyword = "";
     private final LinkedHashMap<String, Boolean> sectionExpandedMap = new LinkedHashMap<>();
 
-    public MyDeckListAdapter(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
+    public MyOnlineDeckListAdapter(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
         super(null);
         addItemType(DeckListItem.TYPE_SECTION_HEADER, R.layout.item_deck_type_header);
         addItemType(DeckListItem.TYPE_DECK_ITEM, R.layout.item_my_deck);

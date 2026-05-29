@@ -181,7 +181,29 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     }
                     break;
                 case QUERY_DUEL_INFO_OK:
-                    currentMcDuelInfo = (McDuelInfo) msg.obj;
+                    McDuelInfo newMcDuelInfo = (McDuelInfo) msg.obj;
+                    if (currentMcDuelInfo != null && newMcDuelInfo != null) {
+                        StringBuilder diffMsg = new StringBuilder();
+                        Integer oldDp = currentMcDuelInfo.getDp();
+                        Integer newDp = newMcDuelInfo.getDp();
+                        Integer oldExp = currentMcDuelInfo.getExp();
+                        Integer newExp = newMcDuelInfo.getExp();
+                        if (oldDp != null && newDp != null && !oldDp.equals(newDp)) {
+                            int dpDiff = newDp - oldDp;
+                            diffMsg.append("D.P ").append(dpDiff > 0 ? "+" : "").append(dpDiff);
+                        }
+                        if (oldExp != null && newExp != null && !oldExp.equals(newExp)) {
+                            int expDiff = newExp - oldExp;
+                            if (diffMsg.length() > 0) {
+                                diffMsg.append("  ");
+                            }
+                            diffMsg.append("E.X.P ").append(expDiff > 0 ? "+" : "").append(expDiff);
+                        }
+                        if (diffMsg.length() > 0) {
+                            YGOUtil.showTextToast(Gravity.TOP, diffMsg.toString(), Toast.LENGTH_LONG);
+                        }
+                    }
+                    currentMcDuelInfo = newMcDuelInfo;
                     updateFunRank(currentMcDuelInfo);
                     updateMatchRank(currentMcDuelInfo);
                     if (currentMcDuelInfo != null) {
