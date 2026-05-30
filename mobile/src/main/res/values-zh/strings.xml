@@ -435,4 +435,11 @@
     <string name="create_room_failed">创建房间失败</string>
     <string name="no_waiting_rooms">没有等待中的房间</string>
     <string name="input_room_name">输入房间标题</string>
+    <string name="cancel">取消</string>
+    <string name="random">随机</string>
+    <string name="mycard_ai_battle">萌卡 AI 对战</string>
+    <string name="mycard_select_environment">环境</string>
+    <string name="mycard_select_ai">选择 AI</string>
+    <string name="mycard_ai_empty">没有可用的萌卡 AI。</string>
+    <string name="mycard_server_load_failed">加载萌卡环境失败：</string>
 </resources>
