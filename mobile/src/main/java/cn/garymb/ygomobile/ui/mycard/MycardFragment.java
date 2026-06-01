@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.mycard;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -49,6 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -111,7 +113,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private LinearLayout ll_athletic, ll_entertain, ll_dialog_login, ll_main_ui, ll_mycard_waiting_rooms;
     private EditText et_username, et_password;
     private TextView matchTvRank, matchTvWin, matchTvLose, matchTvDraw, matchTvAll, funTvRank, funTvWin, funTvLose, funTvDraw, funTvAll, tv_message, tv_dp_title, mNameView, mStatusView, tv_account_warning, tv_pwd_warning, tv_mycard_bbs;
-    private Button btn_login, btn_register;
+    private Button btn_login, btn_register, btn_mycard_ai;
     private ProgressBar progressBar_login;
     private ImageView mHeadView, img_logout, iv_refresh, btn_mycard_bbs;
     private MyCard mMyCard;
@@ -450,9 +452,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         tv_dp_title = view.findViewById(R.id.tv_dp_title);
         ll_athletic = view.findViewById(R.id.ll_athletic);
         ll_entertain = view.findViewById(R.id.ll_entertain);
+        btn_mycard_ai = view.findViewById(R.id.btn_mycard_ai);
 
         ll_athletic.setOnClickListener(this);
         ll_entertain.setOnClickListener(this);
+        btn_mycard_ai.setOnClickListener(this);
         iv_refresh.setOnClickListener(v -> {
             queryDuelInfo();
         });
@@ -745,6 +749,95 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
         });
     }
+
+    private void showMyCardAiBattle() {
+        if (!isUserLoggedIn()) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+        if (YGOStarter.isGameRunning(getActivity())) {
+            YGOStarter.startGame(getActivity(), null);
+            return;
+        }
+
+        btn_mycard_ai.setEnabled(false);
+        DialogPlus loading = DialogPlus.show(getActivity(), getString(R.string.mycard_ai_battle), getString(R.string.loading), false);
+        new Thread(() -> {
+            List<YGOServer> servers = new ArrayList<>();
+            String exception = null;
+            try {
+                servers = MyCard.getWindbotServers();
+            } catch (Exception e) {
+                Log.e("MyCard", "load windbot servers failed: " + e);
+                exception = TextUtils.isEmpty(e.getMessage()) ? e.toString() : e.getMessage();
+            }
+
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            List<YGOServer> finalServers = servers;
+            String finalException = exception;
+            activity.runOnUiThread(() -> {
+                loading.dismiss();
+                btn_mycard_ai.setEnabled(true);
+                if (!TextUtils.isEmpty(finalException)) {
+                    YGOUtil.show(getString(R.string.mycard_server_load_failed) + finalException);
+                    return;
+                }
+                showWindbotServerDialog(finalServers);
+            });
+        }).start();
+    }
+
+    private void showWindbotServerDialog(List<YGOServer> servers) {
+        if (servers == null || servers.isEmpty()) {
+            YGOUtil.show(R.string.mycard_ai_empty);
+            return;
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.mycard_select_environment)
+                .setItems(getServerNames(servers), (dialog, which) -> showWindbotDialog(servers.get(which)))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void showWindbotDialog(YGOServer server) {
+        if (server == null || server.getWindbot() == null || server.getWindbot().isEmpty()) {
+            YGOUtil.show(R.string.mycard_ai_empty);
+            return;
+        }
+
+        List<String> windbots = new ArrayList<>();
+        windbots.add(getString(R.string.random));
+        windbots.addAll(server.getWindbot());
+
+        String title = getString(R.string.mycard_select_ai);
+        if (!TextUtils.isEmpty(server.getName())) {
+            title += " - " + server.getName();
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(title)
+                .setItems(windbots.toArray(new String[0]), (dialog, which) -> {
+                    String windbotName = which == 0
+                            ? server.getWindbot().get(new Random().nextInt(server.getWindbot().size()))
+                            : windbots.get(which);
+                    joinMyCardWindbot(server, windbotName);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void joinMyCardWindbot(YGOServer server, String windbotName) {
+        if (server == null || TextUtils.isEmpty(windbotName)) {
+            return;
+        }
+        server.setPlayerName(mMcUser.getUsername());
+        YGOUtil.joinGame(getActivity(), server, "AI#" + windbotName);
+    }
+
     private void initPieChartViews(View view) {
         pieChartView = view.findViewById(R.id.pie_chart_view);
         tvEmpty = view.findViewById(R.id.tv_empty);
@@ -1059,6 +1152,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 break;
             case R.id.ll_entertain:
                 matchEntertain();
+                break;
+            case R.id.btn_mycard_ai:
+                showMyCardAiBattle();
                 break;
             case R.id.btn_mycard_bbs:
                 switchBBSWithWebView();
@@ -2031,9 +2127,19 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private String[] getServerNames(List<YGOServer> servers) {
         String[] names = new String[servers.size()];
         for (int i = 0; i < servers.size(); i++) {
-            names[i] = servers.get(i).getName();
+            names[i] = getServerDisplayName(servers.get(i));
         }
         return names;
+    }
+
+    private String getServerDisplayName(YGOServer server) {
+        if (server == null) {
+            return "";
+        }
+        if (!TextUtils.isEmpty(server.getName())) {
+            return server.getName();
+        }
+        return server.getServerAddr() + ":" + server.getPort();
     }
 
     private int getDefaultServerIndex(List<YGOServer> servers) {
