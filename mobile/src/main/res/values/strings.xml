@@ -452,10 +452,9 @@
     <string name="creating_room">Creating %s Room...</string>
     <string name="create_room_failed">Failed to Create Room</string>
     <string name="no_waiting_rooms">No Waiting Rooms</string>
-    <string name="cancel">Cancel</string>
     <string name="random">Random</string>
     <string name="mycard_ai_battle">MyCard AI Battle</string>
-    <string name="mycard_select_environment">Environment</string>
+    <string name="mycard_select_environment">"Environment: "</string>
     <string name="mycard_select_ai">Select AI</string>
     <string name="mycard_ai_empty">No MyCard AI is available.</string>
     <string name="mycard_server_load_failed">Failed to load MyCard environments: </string>
@@ -463,5 +462,6 @@
     <string name="input_room_name">Input Room Name</string>
     <string name="server_area">Server Area:</string>
     <string name="allowed_cards">Allowed Cards:</string>
+    <string name="s_room">\'s Room</string>
 
 </resources>

@@ -79,9 +79,8 @@
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">게임 아바타</string>
     <string name="tip_credit_max">%d 상한선 초과</string>
+    <string name="mycard_server_load_failed">MyCard 환경 불러오기 실패:</string>
     <string name="title_rank_start">랭크 매칭</string>
-    <string name="settings_author" translatable="false">菜菜、암성\n浙ICP备2023031884号-2A
-</string>
     <string name="restart_app">앱을 다시 시작하십시오!</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
@@ -451,4 +450,9 @@
     <string name="input_room_name">방 이름 입력</string>
     <string name="server_area">서버 구역:</string>
     <string name="allowed_cards">허용 카드:</string>
+    <string name="s_room">의 방</string>
+    <string name="mycard_ai_battle">MyCard AI 배틀</string>
+    <string name="mycard_select_environment">"환경 선택: "</string>
+    <string name="mycard_select_ai">AI 선택</string>
+    <string name="mycard_ai_empty">MyCard AI를 사용할 수 없습니다.</string>
 </resources>

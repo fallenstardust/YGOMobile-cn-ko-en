@@ -1038,7 +1038,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             if (mDialog == null) {
                 mDialog = new DialogPlus(getContext());
                 mDialog.setView(mCardDetail.getView());
-                mDialog.hideButton();
+                mDialog.hideButton(true);
                 mDialog.hideTitleBar();
 
                 // 设置手势监听器，支持左右滑动切换卡片

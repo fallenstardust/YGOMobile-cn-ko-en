@@ -303,7 +303,7 @@
                                         <com.king.view.circleprogressview.CircleProgressView
                                             android:id="@+id/match_cpv_rank"
                                             android:layout_width="60dp"
-                                            android:layout_height="40dp"
+                                            android:layout_height="wrap_content"
                                             android:layout_centerVertical="true"
                                             app:cpvLabelTextColor="@color/white"
                                             app:cpvLabelTextSize="12sp"
@@ -312,79 +312,88 @@
                                             app:cpvShowTick="false"
                                             app:cpvStrokeWidth="5dp" />
 
-                                        <TextView
-                                            android:layout_width="wrap_content"
+                                        <LinearLayout
+                                            android:layout_width="match_parent"
                                             android:layout_height="wrap_content"
-                                            android:layout_gravity="center"
-                                            android:layout_margin="2dp"
-                                            android:text="@string/match_start"
-                                            android:textColor="@color/gold_light"
-                                            android:textSize="12sp"
-                                            android:textStyle="bold" />
-                                    </LinearLayout>
+                                            android:orientation="vertical">
 
-                                    <LinearLayout
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_gravity="center"
-                                        android:gravity="center_vertical"
-                                        android:orientation="horizontal">
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_gravity="left"
+                                                android:layout_margin="2dp"
+                                                android:text="@string/match_start"
+                                                android:textColor="@color/holo_blue_bright"
+                                                android:textSize="12sp"
+                                                android:textStyle="bold" />
 
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:src="@drawable/ic_rank" />
+                                            <LinearLayout
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:layout_gravity="bottom"
+                                                android:layout_margin="2dp"
+                                                android:gravity="center_vertical"
+                                                android:orientation="horizontal">
 
-                                        <TextView
-                                            android:id="@+id/match_tv_rank"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginHorizontal="4dp"
-                                            android:text="- - - - -"
-                                            android:textColor="@color/gold_light"
-                                            android:textSize="9sp" />
+                                                <ImageView
+                                                    android:layout_width="10dp"
+                                                    android:layout_height="10dp"
+                                                    android:src="@drawable/ic_rank" />
 
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:src="@drawable/ic_right" />
+                                                <TextView
+                                                    android:id="@+id/match_tv_rank"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginHorizontal="4dp"
+                                                    android:text="- - - - -"
+                                                    android:textColor="@color/gold_light"
+                                                    android:textSize="7sp" />
 
-                                        <TextView
-                                            android:id="@+id/match_tv_win"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginHorizontal="4dp"
-                                            android:text="----"
-                                            android:textColor="@color/gold_light"
-                                            android:textSize="9sp" />
+                                                <ImageView
+                                                    android:layout_width="10dp"
+                                                    android:layout_height="10dp"
+                                                    android:src="@drawable/ic_right" />
 
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:src="@drawable/ic_failed" />
+                                                <TextView
+                                                    android:id="@+id/match_tv_win"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginHorizontal="4dp"
+                                                    android:text="----"
+                                                    android:textColor="@color/gold_light"
+                                                    android:textSize="7sp" />
 
-                                        <TextView
-                                            android:id="@+id/match_tv_lose"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginHorizontal="4dp"
-                                            android:text="----"
-                                            android:textColor="@color/gold_light"
-                                            android:textSize="9sp" />
+                                                <ImageView
+                                                    android:layout_width="10dp"
+                                                    android:layout_height="10dp"
+                                                    android:src="@drawable/ic_failed" />
 
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:src="@drawable/ic_draw" />
+                                                <TextView
+                                                    android:id="@+id/match_tv_lose"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginHorizontal="4dp"
+                                                    android:text="----"
+                                                    android:textColor="@color/gold_light"
+                                                    android:textSize="7sp" />
 
-                                        <TextView
-                                            android:id="@+id/match_tv_draw"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginHorizontal="4dp"
-                                            android:text="----"
-                                            android:textColor="@color/gold_light"
-                                            android:textSize="9sp" />
+                                                <ImageView
+                                                    android:layout_width="10dp"
+                                                    android:layout_height="10dp"
+                                                    android:src="@drawable/ic_draw" />
+
+                                                <TextView
+                                                    android:id="@+id/match_tv_draw"
+                                                    android:layout_width="wrap_content"
+                                                    android:layout_height="wrap_content"
+                                                    android:layout_marginHorizontal="4dp"
+                                                    android:text="----"
+                                                    android:textColor="@color/gold_light"
+                                                    android:textSize="7sp" />
+                                            </LinearLayout>
+                                        </LinearLayout>
+
+
                                     </LinearLayout>
 
                                     <LinearLayout
@@ -445,7 +454,7 @@
 
                                         <ImageView
                                             android:layout_width="60dp"
-                                            android:layout_height="40dp"
+                                            android:layout_height="wrap_content"
                                             android:src="@drawable/ic_match_entertain" />
 
                                         <LinearLayout
@@ -459,7 +468,7 @@
                                                 android:layout_height="wrap_content"
                                                 android:layout_margin="2dp"
                                                 android:text="@string/fun_start"
-                                                android:textColor="@color/white"
+                                                android:textColor="@color/gold_light"
                                                 android:textSize="12sp"
                                                 android:textStyle="bold" />
 
@@ -467,11 +476,12 @@
                                                 android:layout_width="match_parent"
                                                 android:layout_height="wrap_content"
                                                 android:layout_gravity="bottom"
+                                                android:layout_margin="2dp"
                                                 android:orientation="horizontal">
 
                                                 <ImageView
-                                                    android:layout_width="14dp"
-                                                    android:layout_height="14dp"
+                                                    android:layout_width="10dp"
+                                                    android:layout_height="10dp"
                                                     android:src="@drawable/ic_rank" />
 
                                                 <TextView
@@ -481,7 +491,7 @@
                                                     android:layout_marginHorizontal="4dp"
                                                     android:text="- - - - -"
                                                     android:textColor="@color/white"
-                                                    android:textSize="9sp" />
+                                                    android:textSize="7sp" />
                                             </LinearLayout>
                                         </LinearLayout>
                                     </LinearLayout>
@@ -563,16 +573,31 @@
                                     </LinearLayout>
                                 </LinearLayout>
 
-                                <Button
-                                    android:id="@+id/btn_mycard_ai"
+                                <LinearLayout
+                                    android:id="@+id/ll_create_room"
                                     android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"
                                     android:layout_margin="2dp"
-                                    android:background="@drawable/button2_bg"
-                                    android:minHeight="32dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@string/mycard_ai_battle"
-                                    android:textSize="12sp" />
+                                    android:background="@drawable/list_item_bg"
+                                    android:gravity="center"
+                                    android:orientation="horizontal">
+
+                                    <ImageView
+                                        android:layout_width="60dp"
+                                        android:layout_height="30dp"
+                                        android:layout_gravity="center_vertical"
+                                        android:src="@drawable/ic_add" />
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:text="@string/create_custom_room"
+                                        android:textSize="12sp"
+                                        android:textColor="@color/colorAccent"
+                                        android:textStyle="bold"/>
+                                </LinearLayout>
                             </LinearLayout>
 
                             <LinearLayout
@@ -668,30 +693,6 @@
                                     android:layout_height="wrap_content"
                                     android:orientation="vertical"
                                     android:visibility="gone">
-
-                                    <LinearLayout
-                                        android:id="@+id/ll_create_room"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginVertical="5dp"
-                                        android:background="@drawable/list_item_bg"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <ImageView
-                                            android:layout_width="20dp"
-                                            android:layout_height="20dp"
-                                            android:layout_gravity="center_vertical"
-                                            android:layout_margin="5dp"
-                                            android:src="@drawable/ic_add" />
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:layout_gravity="center"
-                                            android:text="@string/create_custom_room"
-                                            android:textSize="12sp" />
-                                    </LinearLayout>
 
                                     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                                         android:id="@+id/srl_waiting"

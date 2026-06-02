@@ -426,10 +426,16 @@
     <string name="creating_room">Creando Sala %s...</string>
     <string name="create_room_failed">Error al Crear Sala</string>
     <string name="no_waiting_rooms">Sin Salas en Espera</string>
+    <string name="mycard_server_load_failed">Error al cargar entorno MyCard:</string>
     <string name="title_rank_start">Partida Competitiva</string>
     <string name="input_room_name">Ingresar nombre de sala</string>
     <string name="server_area">Área de Servidor:</string>
     <string name="allowed_cards">Cartas Permitidas:</string>
+    <string name="s_room">\'s Room</string>
+    <string name="mycard_ai_battle">Batalla IA MyCard</string>
+    <string name="mycard_select_environment">"Entorno: "</string>
+    <string name="mycard_select_ai">Seleccionar IA</string>
+    <string name="mycard_ai_empty">Sem IA MyCard disponível.</string>
 </resources>
 
 

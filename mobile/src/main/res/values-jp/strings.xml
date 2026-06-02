@@ -429,8 +429,14 @@
     <string name="creating_room">%sルームを作成中...</string>
     <string name="create_room_failed">ルーム作成失敗</string>
     <string name="no_waiting_rooms">待機中の部屋はありません</string>
+    <string name="mycard_server_load_failed">MyCard環境の読み込みに失敗：</string>
     <string name="title_rank_start">ランクマッチ</string>
     <string name="input_room_name">ルーム名を入力</string>
     <string name="server_area">サーバーエリア:</string>
     <string name="allowed_cards">使用可能カード:</string>
+    <string name="s_room">のルーム</string>
+    <string name="mycard_ai_battle">MyCard AIバトル</string>
+    <string name="mycard_select_environment">"環境を選択: "</string>
+    <string name="mycard_select_ai">AIを選択</string>
+    <string name="mycard_ai_empty">MyCard AIは利用できません。</string>
 </resources>

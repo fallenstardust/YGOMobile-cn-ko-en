@@ -79,7 +79,7 @@ public class SearchableListDialog extends DialogPlus implements
             //this.dismiss();
         });
         setContentView(rootView);
-        hideButton();
+        hideButton(true);
     }
 
 
