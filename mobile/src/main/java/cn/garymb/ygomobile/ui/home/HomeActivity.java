@@ -188,8 +188,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
 
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                        R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                        R.anim.push_in, R.anim.push_out)
                 .add(R.id.fragment_content, fragment_home).commit();
         getSupportActionBar().hide();
     }
@@ -279,20 +279,20 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public void switchSettingFragment() {
         bottomNavigationBar.setFirstSelectedPosition(4).initialise();
         getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                        R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                        R.anim.push_in, R.anim.push_out)
                 .hide(mFragment).commit();
         if (fragment_settings.isAdded()) {
             if (fragment_settings.isHidden()) {
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                        .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                R.anim.push_in, R.anim.push_out)
                         .show(fragment_settings).commit();
             }
         } else {
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                    .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                            R.anim.push_in, R.anim.push_out)
                     .add(R.id.fragment_content, fragment_settings).commit();
         }
 
@@ -302,34 +302,34 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public void switchFragment(Fragment fragment, int page, boolean replace) {
         if (fragment_settings != null && fragment_settings.isAdded() && !fragment_settings.isHidden())
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                    .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                            R.anim.push_in, R.anim.push_out)
                     .hide(fragment_settings).commit();
         bottomNavigationBar.setFirstSelectedPosition(page).initialise();
         if (mFragment.isHidden())
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                    .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                            R.anim.push_in, R.anim.push_out)
                     .show(mFragment).commit();
         if (mFragment != fragment) {
             if (!fragment.isAdded()) {
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                        .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                R.anim.push_in, R.anim.push_out)
                         .hide(mFragment)
                         .add(R.id.fragment_content, fragment).commit();
             } else {
                 if (replace) {
                     getSupportFragmentManager().beginTransaction()
-                            .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                    R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                            .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                    R.anim.push_in, R.anim.push_out)
                             .hide(mFragment).detach(fragment).attach(fragment)
                             .show(fragment)
                             .commit();
                 } else {
                     getSupportFragmentManager().beginTransaction()
-                            .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                    R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                            .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                    R.anim.push_in, R.anim.push_out)
                             .hide(mFragment).show(fragment).commit();
                 }
             }
@@ -337,8 +337,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         } else {
             if (replace) {
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                        .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                R.anim.push_in, R.anim.push_out)
                         .hide(mFragment).detach(fragment).attach(fragment)
                         .show(fragment)
                         .commit();
