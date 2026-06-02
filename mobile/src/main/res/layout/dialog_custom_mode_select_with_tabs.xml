@@ -26,8 +26,7 @@
             android:id="@+id/spinner_create_room_server"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/selected_light"
-            android:padding="8dp" />
+            android:background="@drawable/selected_light" />
     </LinearLayout>
 
     <!-- Tab 切换按钮 -->
@@ -86,7 +85,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@drawable/selected_light"
-                            android:padding="5dp"
                             android:paddingLeft="12dp" />
                     </LinearLayout>
 
@@ -111,8 +109,7 @@
                             android:id="@+id/spinner_custom_room_mode"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/selected_light"
-                            android:padding="5dp" />
+                            android:background="@drawable/selected_light" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -136,8 +133,7 @@
                         android:id="@+id/spinner_custom_room_duel_rule"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/selected_light"
-                        android:padding="5dp" />
+                        android:background="@drawable/selected_light" />
                 </LinearLayout>
 
                 <!-- LP、手牌、抽卡设置 -->

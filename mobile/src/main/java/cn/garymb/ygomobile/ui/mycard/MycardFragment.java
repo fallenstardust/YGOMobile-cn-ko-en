@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -55,6 +56,8 @@ import cn.garymb.ygomobile.adapter.DuelRoomBQAdapter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
@@ -1950,29 +1953,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
         });
 
-        setSpinnerValues(serverSpinner, getServerNames(servers));
-        setSpinnerValues(ruleSpinner, new String[]{
-                mStringManager.getSystemString(1481, ""),
-                mStringManager.getSystemString(1482, ""),
-                mStringManager.getSystemString(1483, ""),
-                mStringManager.getSystemString(1484, ""),
-                mStringManager.getSystemString(1485, ""),
-                mStringManager.getSystemString(1486, ""),
-        });
-        setSpinnerValues(modeSpinner, new String[]{
-                mStringManager.getSystemString(1244, ""),
-                mStringManager.getSystemString(1245, ""),
-                mStringManager.getSystemString(1246, "")
-        });
-        setSpinnerValues(duelRuleSpinner, new String[]{
-                mStringManager.getSystemString(1260, ""),
-                mStringManager.getSystemString(1261, ""),
-                mStringManager.getSystemString(1262, ""),
-                mStringManager.getSystemString(1263, ""),
-                mStringManager.getSystemString(1264, "")
-        });
-        modeSpinner.setSelection(DuelRoom.MODE_MATCH);
-        duelRuleSpinner.setSelection(4);
+        setupServerSpinner(serverSpinner, servers);
+        setupRuleSpinner(ruleSpinner);
+        setupModeSpinner(modeSpinner);
+        setupDuelRuleSpinner(duelRuleSpinner);
 
         int defaultServerIndex = getDefaultServerIndex(servers);
         serverSpinner.setSelection(defaultServerIndex);
@@ -1982,8 +1966,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         ArrayAdapter<String> aiAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, currentAiList);
         lvAiList.setAdapter(aiAdapter);
 
-        tabLayout.addTab(tabLayout.newTab().setText(R.string.settings_game));
-        tabLayout.addTab(tabLayout.newTab().setText(R.string.mycard_ai_battle));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.settings_game).setIcon(R.drawable.setting));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.mycard_ai_battle).setIcon(R.drawable.bot));
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -2132,9 +2116,72 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         }).start();
     }
 
-    private void setSpinnerValues(Spinner spinner, String[] values) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, values);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    private void setupServerSpinner(Spinner spinner, List<YGOServer> servers) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        for (int i = 0; i < servers.size(); i++) {
+            YGOServer server = servers.get(i);
+            String displayName = getServerDisplayName(server);
+            items.add(new SimpleSpinnerItem(i, displayName));
+        }
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
+        adapter.setColor(Color.WHITE);
+        adapter.setTextSize(12);
+        adapter.set(items);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
+        spinner.setAdapter(adapter);
+    }
+
+    private void setupRuleSpinner(Spinner spinner) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        int[] ruleIds = {1481, 1482, 1483, 1484, 1485, 1486};
+
+        for (int i = 0; i < ruleIds.length; i++) {
+            String text = mStringManager.getSystemString(ruleIds[i], "");
+            items.add(new SimpleSpinnerItem(i, text));
+        }
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
+        adapter.setColor(Color.WHITE);
+        adapter.setTextSize(12);
+        adapter.set(items);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
+        spinner.setAdapter(adapter);
+    }
+
+    private void setupModeSpinner(Spinner spinner) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        int[] modeIds = {1244, 1245, 1246};
+
+        for (int i = 0; i < modeIds.length; i++) {
+            String text = mStringManager.getSystemString(modeIds[i], "");
+            items.add(new SimpleSpinnerItem(i, text));
+        }
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
+        adapter.setColor(Color.WHITE);
+        adapter.setTextSize(12);
+        adapter.set(items);
+        spinner.setSelection(DuelRoom.MODE_MATCH);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
+        spinner.setAdapter(adapter);
+    }
+
+    private void setupDuelRuleSpinner(Spinner spinner) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        int[] duelRuleIds = {1260, 1261, 1262, 1263, 1264};
+
+        for (int i = 0; i < duelRuleIds.length; i++) {
+            String text = mStringManager.getSystemString(duelRuleIds[i], "");
+            items.add(new SimpleSpinnerItem(i, text));
+        }
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
+        adapter.setColor(Color.WHITE);
+        adapter.setTextSize(12);
+        adapter.set(items);
+        spinner.setSelection(4);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
         spinner.setAdapter(adapter);
     }
 
