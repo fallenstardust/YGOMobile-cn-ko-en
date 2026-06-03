@@ -596,7 +596,23 @@ bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
 	return true;
 }
 bool DeckManager::DeleteDeck(const wchar_t* file) {
-	return FileSystem::RemoveFile(file);
+	bool result = FileSystem::RemoveFile(file);
+
+	// 如果本地文件删除成功，同步删除在线卡组
+	if (result && file != nullptr) {
+		// 将宽字符路径转换为 UTF-8
+		char utf8_path[512];
+		BufferIO::EncodeUTF8(file, utf8_path);
+
+		// 调用 Android JNI 方法同步在线删除状态
+#ifdef __ANDROID__
+		if (mainGame != nullptr && mainGame->appMain != nullptr) {
+			irr::android::deleteDeckSync(mainGame->appMain, utf8_path);
+		}
+#endif
+	}
+
+	return result;
 }
 bool DeckManager::CreateCategory(const wchar_t* name) {
 	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))

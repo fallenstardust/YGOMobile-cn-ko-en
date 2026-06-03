@@ -150,6 +150,13 @@ public class App extends GameApplication {
         getBaseContext().sendBroadcast(intent);
     }
 
+    public void deleteDeckSync(String deckPath) {
+        cn.garymb.ygomobile.bean.events.DeckFile deckFile = new cn.garymb.ygomobile.bean.events.DeckFile(new java.io.File(deckPath));
+        java.util.List<cn.garymb.ygomobile.bean.events.DeckFile> deckFileList = new java.util.ArrayList<>();
+        deckFileList.add(deckFile);
+        cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil.deleteDecks(deckFileList);
+    }
+
     private void initImgsel() {
         // 自定义图片加载器
         ISNav.getInstance().init(new ImageLoader() {
