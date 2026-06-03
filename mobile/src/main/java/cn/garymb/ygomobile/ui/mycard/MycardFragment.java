@@ -1921,7 +1921,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         ListView lvAiList = dialog.findViewById(R.id.lv_ai_list);
         TextView tvAiEmpty = dialog.findViewById(R.id.tv_ai_empty);
 
-
         EditText titleEdit = dialog.findViewById(R.id.et_custom_room_title);
         TextView titleCount = dialog.findViewById(R.id.tv_custom_room_title_count);
         Spinner ruleSpinner = dialog.findViewById(R.id.spinner_custom_room_rule);
@@ -1931,9 +1930,22 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         EditText startHandEdit = dialog.findViewById(R.id.et_custom_room_start_hand);
         EditText drawCountEdit = dialog.findViewById(R.id.et_custom_room_draw_count);
         CheckBox privateBox = dialog.findViewById(R.id.cb_custom_room_private);
+
+        CheckBox autoDeathBox = dialog.findViewById(R.id.cb_custom_room_auto_death);
         CheckBox noCheckDeckBox = dialog.findViewById(R.id.cb_custom_room_no_check_deck);
         CheckBox noShuffleDeckBox = dialog.findViewById(R.id.cb_custom_room_no_shuffle_deck);
-        CheckBox autoDeathBox = dialog.findViewById(R.id.cb_custom_room_auto_death);
+        noCheckDeckBox.setText(mStringManager.getSystemString(1229, ""));
+        noShuffleDeckBox.setText(mStringManager.getSystemString(1230, ""));
+
+        TextView tv_custom_room_start_LP = dialog.findViewById(R.id.tv_custom_room_start_LP);
+        TextView tv_custom_room_start_hand = dialog.findViewById(R.id.tv_custom_room_start_hand);
+        TextView tv_custom_room_draw_count = dialog.findViewById(R.id.tv_custom_room_draw_count);
+        TextView tv_custom_room_rule = dialog.findViewById(R.id.tv_custom_room_rule);
+        tv_custom_room_start_LP.setText(mStringManager.getSystemString(1231, ""));
+        tv_custom_room_start_hand.setText(mStringManager.getSystemString(1232, ""));
+        tv_custom_room_draw_count.setText(mStringManager.getSystemString(1233, ""));
+        tv_custom_room_rule.setText(mStringManager.getSystemString(1236, ""));
+
 
         titleEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(12)});
         titleEdit.setText(mMcUser.getUsername() + YGOUtil.s(R.string.s_room));
@@ -2126,7 +2138,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
         adapter.setColor(Color.WHITE);
-        adapter.setTextSize(12);
         adapter.set(items);
         spinner.setPopupBackgroundResource(R.color.colorNavy);
         spinner.setAdapter(adapter);
@@ -2143,7 +2154,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
         adapter.setColor(Color.WHITE);
-        adapter.setTextSize(12);
         adapter.set(items);
         spinner.setPopupBackgroundResource(R.color.colorNavy);
         spinner.setAdapter(adapter);
@@ -2160,7 +2170,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
         adapter.setColor(Color.WHITE);
-        adapter.setTextSize(12);
         adapter.set(items);
         spinner.setSelection(DuelRoom.MODE_MATCH);
         spinner.setPopupBackgroundResource(R.color.colorNavy);
@@ -2178,11 +2187,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
         adapter.setColor(Color.WHITE);
-        adapter.setTextSize(12);
         adapter.set(items);
-        spinner.setSelection(4);
         spinner.setPopupBackgroundResource(R.color.colorNavy);
         spinner.setAdapter(adapter);
+        spinner.setSelection(4);
     }
 
     private String[] getServerNames(List<YGOServer> servers) {

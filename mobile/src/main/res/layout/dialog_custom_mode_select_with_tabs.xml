@@ -10,23 +10,37 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:layout_margin="8dp"
+        android:background="@drawable/list_item_n">
 
-        <TextView
-            android:id="@+id/tv_create_room_server"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:text="@string/server_area"
-            android:textColor="@color/gold"
-            android:textStyle="bold"
-            android:textSize="14sp" />
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="2dp"
+                android:src="@drawable/mycard"
+                app:tint="@color/gold" />
+
+            <TextView
+                android:id="@+id/tv_create_room_server"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/server_area"
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatSpinner
             android:id="@+id/spinner_create_room_server"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/selected_light" />
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
     <!-- Tab 切换按钮 -->
@@ -34,7 +48,6 @@
         android:id="@+id/tl_room_n_bot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/button_radius_black_transparents"
         android:layout_gravity="center_horizontal"
         app:tabTextAppearance="@style/wallet_third_tab_layout" />
 
@@ -69,22 +82,36 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:background="@drawable/list_item_n"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <LinearLayout
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginVertical="2dp"
-                            android:text="@string/allowed_cards"
-                            android:textColor="@color/gold"
-                            android:textStyle="bold"
-                            android:textSize="12sp" />
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:layout_marginHorizontal="2dp"
+                                android:src="@drawable/ic_right"
+                                app:tint="@color/gold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginVertical="2dp"
+                                android:text="@string/allowed_cards"
+                                android:textColor="@color/gold"
+                                android:textStyle="bold"
+                                android:textSize="12sp" />
+                        </LinearLayout>
 
                         <androidx.appcompat.widget.AppCompatSpinner
                             android:id="@+id/spinner_custom_room_rule"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/selected_light"
                             android:paddingLeft="12dp" />
                     </LinearLayout>
 
@@ -94,7 +121,21 @@
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="5dp"
                         android:layout_weight="1"
+                        android:background="@drawable/list_item_n"
                         android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:layout_marginHorizontal="2dp"
+                                android:src="@drawable/ic_match_athletic"
+                                app:tint="@color/gold" />
 
                         <TextView
                             android:layout_width="match_parent"
@@ -104,12 +145,12 @@
                             android:textColor="@color/gold"
                             android:textStyle="bold"
                             android:textSize="12sp" />
+                        </LinearLayout>
 
                         <androidx.appcompat.widget.AppCompatSpinner
                             android:id="@+id/spinner_custom_room_mode"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/selected_light" />
+                            android:layout_height="wrap_content" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -117,10 +158,25 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/list_item_n"
                     android:layout_marginVertical="5dp"
                     android:orientation="vertical">
 
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:layout_marginHorizontal="2dp"
+                            android:src="@drawable/ic_create_new_folder"
+                            app:tint="@color/gold" />
+
                     <TextView
+                        android:id="@+id/tv_custom_room_rule"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginVertical="2dp"
@@ -128,12 +184,12 @@
                         android:textColor="@color/gold"
                         android:textStyle="bold"
                         android:textSize="12sp" />
+                    </LinearLayout>
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/spinner_custom_room_duel_rule"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/selected_light" />
+                        android:layout_height="wrap_content"/>
                 </LinearLayout>
 
                 <!-- LP、手牌、抽卡设置 -->
@@ -151,7 +207,21 @@
                         android:layout_weight="1"
                         android:orientation="vertical">
 
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:layout_marginHorizontal="2dp"
+                                android:src="@drawable/ic_baseline_favorite_border_24"
+                                app:tint="@color/gold" />
+
                         <TextView
+                            android:id="@+id/tv_custom_room_start_LP"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="2dp"
@@ -159,12 +229,12 @@
                             android:textColor="@color/gold"
                             android:textStyle="bold"
                             android:textSize="12sp" />
+                        </LinearLayout>
 
                         <EditText
                             android:id="@+id/et_custom_room_start_lp"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/selected_light"
                             android:inputType="number"
                             android:padding="7dp"
                             android:text="8000"
@@ -178,7 +248,21 @@
                         android:layout_weight="1"
                         android:orientation="vertical">
 
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:layout_marginHorizontal="2dp"
+                                android:src="@drawable/ic_related"
+                                app:tint="@color/gold" />
+
                         <TextView
+                            android:id="@+id/tv_custom_room_start_hand"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="2dp"
@@ -186,12 +270,12 @@
                             android:textColor="@color/gold"
                             android:textStyle="bold"
                             android:textSize="12sp" />
+                        </LinearLayout>
 
                         <EditText
                             android:id="@+id/et_custom_room_start_hand"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/selected_light"
                             android:inputType="number"
                             android:padding="7dp"
                             android:text="5"
@@ -204,7 +288,21 @@
                         android:layout_weight="1"
                         android:orientation="vertical">
 
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:layout_marginHorizontal="2dp"
+                                android:src="@drawable/tutorial"
+                                app:tint="@color/gold" />
+
                         <TextView
+                            android:id="@+id/tv_custom_room_draw_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="2dp"
@@ -212,12 +310,12 @@
                             android:textColor="@color/gold"
                             android:textStyle="bold"
                             android:textSize="12sp" />
+                        </LinearLayout>
 
                         <EditText
                             android:id="@+id/et_custom_room_draw_count"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/selected_light"
                             android:inputType="number"
                             android:padding="7dp"
                             android:text="1"
