@@ -19,7 +19,7 @@
         <keep>true</keep>
     </server>
     <server>
-        <player-name>Knight of Hanoi</player-name>
+        <player-name>Cavaleiro of Hanoi</player-name>
         <name>Servidor oficial do formato GENESYS</name>
         <desc>Construa decks com restrições de acordo com a Tabela de Pontos GENESYS.</desc>
         <ip>e.ygo.pro</ip>
