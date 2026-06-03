@@ -13,8 +13,13 @@ import com.tencent.smtt.sdk.QbSdk;
 import com.yuyh.library.imgsel.ISNav;
 import com.yuyh.library.imgsel.common.ImageLoader;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
+import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.ProcessUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
@@ -151,10 +156,38 @@ public class App extends GameApplication {
     }
 
     public void deleteDeckSync(String deckPath) {
-        cn.garymb.ygomobile.bean.events.DeckFile deckFile = new cn.garymb.ygomobile.bean.events.DeckFile(new java.io.File(deckPath));
-        java.util.List<cn.garymb.ygomobile.bean.events.DeckFile> deckFileList = new java.util.ArrayList<>();
+        DeckFile deckFile = new DeckFile(new File(deckPath));
+        List<DeckFile> deckFileList = new ArrayList<>();
         deckFileList.add(deckFile);
-        cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil.deleteDecks(deckFileList);
+        DeckSquareApiUtil.deleteDecks(deckFileList);
+    }
+
+    public void deleteCategoryDecksSync(String categoryName) {
+        if (categoryName == null || categoryName.isEmpty()) {
+            return;
+        }
+        
+        // 获取该分类下的所有卡组文件
+        File categoryDir = new File(AppsSettings.get().getDeckDir(), categoryName);
+        if (!categoryDir.exists() || !categoryDir.isDirectory()) {
+            return;
+        }
+        
+        File[] ydkFiles = categoryDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".ydk"));
+        if (ydkFiles == null || ydkFiles.length == 0) {
+            return;
+        }
+        
+        // 创建 DeckFile 列表
+        List<DeckFile> deckFileList = new ArrayList<>();
+        for (File file : ydkFiles) {
+            DeckFile deckFile = new DeckFile(file);
+            deckFile.setTypeName(categoryName);
+            deckFileList.add(deckFile);
+        }
+        
+        // 调用批量删除
+        DeckSquareApiUtil.deleteDecks(deckFileList);
     }
 
     private void initImgsel() {

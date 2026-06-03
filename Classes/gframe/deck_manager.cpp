@@ -639,6 +639,20 @@ bool DeckManager::DeleteCategory(const wchar_t* name) {
 	myswprintf(localname, L"./deck/%ls", name);
 	if(!FileSystem::IsDirExists(localname))
 		return false;
+
+	// 在删除本地文件夹之前，先同步删除在线备份中该分类下的所有卡组
+	#ifdef __ANDROID__
+	if (mainGame != nullptr && mainGame->appMain != nullptr && name != nullptr) {
+		// 将宽字符分类名转换为 UTF-8
+		char utf8_category[256];
+		BufferIO::EncodeUTF8(name, utf8_category);
+
+		// 调用 Android JNI 方法同步删除该分类下的在线卡组
+		irr::android::deleteCategoryDecksSync(mainGame->appMain, utf8_category);
+	}
+	#endif
+
+	// 删除本地文件夹及其所有内容
 	return FileSystem::DeleteDir(localname);
 }
 bool DeckManager::SaveDeckArray(const DeckArray& deck, const wchar_t* name) {

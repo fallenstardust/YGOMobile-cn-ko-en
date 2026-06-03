@@ -206,6 +206,8 @@ extern void runWindbot(ANDROID_APP app, const char* args);
 
 extern void deleteDeckSync(ANDROID_APP app, const char* deck_path);
 
+extern void deleteCategoryDecksSync(ANDROID_APP app, const char* category_name);
+
 } // namespace android
 } // namespace irr
 
