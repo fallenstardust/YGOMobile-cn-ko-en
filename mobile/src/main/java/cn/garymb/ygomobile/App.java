@@ -20,7 +20,13 @@ import java.util.List;
 
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.DeckUtil;
+import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ProcessUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
@@ -188,6 +194,62 @@ public class App extends GameApplication {
         
         // 调用批量删除
         DeckSquareApiUtil.deleteDecks(deckFileList);
+    }
+
+    public void renameCategoryDecksSync(String oldCategoryName, String newCategoryName) {
+        if (oldCategoryName == null || oldCategoryName.isEmpty() 
+                || newCategoryName == null || newCategoryName.isEmpty()) {
+            return;
+        }
+        
+        // 检查用户是否登录
+        if (DeckSquareApiUtil.needLogin()) {
+            return;
+        }
+        
+        LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+        if (loginToken == null) {
+            return;
+        }
+        
+        // 在后台线程执行
+        VUiKit.defer().when(() -> {
+            // 获取在线卡组列表
+            MyDeckResponse result =
+                    DeckSquareApiUtil.getUserDecks(loginToken);
+            if (result == null || result.getData() == null) {
+                throw new RuntimeException("获取用户卡组信息失败");
+            }
+
+            List<MyOnlineDeckDetail> onlineDecks = result.getData();
+            boolean hasChanges = false;
+            
+            // 遍历所有在线卡组，找到属于旧分类的卡组并更新分类名
+            for (MyOnlineDeckDetail deck : onlineDecks) {
+                if (oldCategoryName.equals(deck.getDeckType())) {
+                    deck.setDeckType(newCategoryName);
+                    hasChanges = true;
+                    LogUtil.d("App", "重命名卡组分类: " + deck.getDeckName()
+                            + " 从 [" + oldCategoryName + "] 到 [" + newCategoryName + "]");
+                }
+            }
+            
+            // 如果有修改，上传更新
+            if (hasChanges) {
+                DeckUtil deckUtil = new DeckUtil();
+                DeckSquareApiUtil.UploadMyDecks(
+                        deckUtil.toDeckItemList(onlineDecks), loginToken);
+                LogUtil.d("App", "卡组分类重命名同步成功: " + oldCategoryName + " -> " + newCategoryName);
+            } else {
+                LogUtil.d("App", "没有找到需要更新的在线卡组: " + oldCategoryName);
+            }
+            
+            return true;
+        }).fail((e) -> {
+            LogUtil.e("App", "重命名卡组分类失败!", e);
+        }).done((result) -> {
+            LogUtil.d("App", "卡组分类重命名完成");
+        });
     }
 
     private void initImgsel() {

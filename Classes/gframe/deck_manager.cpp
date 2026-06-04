@@ -632,6 +632,22 @@ bool DeckManager::RenameCategory(const wchar_t* oldname, const wchar_t* newname)
 	wchar_t newlocalname[256];
 	myswprintf(oldlocalname, L"./deck/%ls", oldname);
 	myswprintf(newlocalname, L"./deck/%ls", newname);
+
+	// 在重命名本地文件夹之前，先同步更新在线备份中该分类的名称
+#ifdef __ANDROID__
+	if (mainGame != nullptr && mainGame->appMain != nullptr && oldname != nullptr && newname != nullptr) {
+		// 将宽字符分类名转换为 UTF-8
+		char utf8_old_category[256];
+		char utf8_new_category[256];
+		BufferIO::EncodeUTF8(oldname, utf8_old_category);
+		BufferIO::EncodeUTF8(newname, utf8_new_category);
+
+		// 调用 Android JNI 方法同步重命名该分类下的在线卡组
+		irr::android::renameCategoryDecksSync(mainGame->appMain, utf8_old_category, utf8_new_category);
+	}
+#endif
+
+	// 重命名本地文件夹
 	return FileSystem::Rename(oldlocalname, newlocalname);
 }
 bool DeckManager::DeleteCategory(const wchar_t* name) {
