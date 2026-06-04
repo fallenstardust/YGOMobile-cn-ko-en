@@ -210,6 +210,8 @@ extern void deleteCategoryDecksSync(ANDROID_APP app, const char* category_name);
 
 extern void renameCategoryDecksSync(ANDROID_APP app, const char* old_category_name, const char* new_category_name);
 
+extern void syncSaveDeck(ANDROID_APP app, const char* deck_path);
+
 } // namespace android
 } // namespace irr
 

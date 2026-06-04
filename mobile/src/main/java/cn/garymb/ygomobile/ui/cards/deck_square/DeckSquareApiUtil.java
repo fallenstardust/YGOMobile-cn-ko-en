@@ -270,9 +270,11 @@ public class DeckSquareApiUtil {
             data.setDeckUpdateTime(item.getUpdateTimestamp());
 
             String deckContent = "";
-            if (item.getDeckPath() == null || item.isDelete()) {
+            // 使用 Boolean.TRUE.equals() 避免空指针
+            boolean isDelete = Boolean.TRUE.equals(item.isDelete());
+            if (item.getDeckPath() == null || isDelete) {
                 // 路径为空或删除操作：不读取文件内容
-                data.setDelete(item.isDelete() != null ? item.isDelete() : false);
+                data.setDelete(isDelete);
 
             } else {
                 if (new File(item.getDeckPath()).exists()) {

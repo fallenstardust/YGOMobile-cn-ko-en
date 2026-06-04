@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
@@ -215,12 +216,11 @@ public class App extends GameApplication {
         // 在后台线程执行
         VUiKit.defer().when(() -> {
             // 获取在线卡组列表
-            MyDeckResponse result =
-                    DeckSquareApiUtil.getUserDecks(loginToken);
+            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
             if (result == null || result.getData() == null) {
                 throw new RuntimeException("获取用户卡组信息失败");
             }
-
+            
             List<MyOnlineDeckDetail> onlineDecks = result.getData();
             boolean hasChanges = false;
             
@@ -249,6 +249,89 @@ public class App extends GameApplication {
             LogUtil.e("App", "重命名卡组分类失败!", e);
         }).done((result) -> {
             LogUtil.d("App", "卡组分类重命名完成");
+        });
+    }
+
+    public void syncSaveDeck(String deckPath) {
+        if (deckPath == null || deckPath.isEmpty()) {
+            return;
+        }
+        
+        java.io.File deckFile = new java.io.File(deckPath);
+        if (!deckFile.exists()) {
+            LogUtil.w("App", "卡组文件不存在，无法同步: " + deckPath);
+            return;
+        }
+        
+        // 检查用户是否登录
+        if (DeckSquareApiUtil.needLogin()) {
+            return;
+        }
+        
+        LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+        if (loginToken == null) {
+            return;
+        }
+        
+        // 从文件中读取 deckId
+        String deckId = DeckUtil.getDeckId(deckFile);
+        if (deckId == null || deckId.isEmpty()) {
+            LogUtil.d("App", "卡组没有 deckId，跳过同步: " + deckPath);
+            return;
+        }
+        
+        // 在后台线程执行
+        VUiKit.defer().when(() -> {
+            // 获取在线卡组列表
+            MyDeckResponse result =
+                    DeckSquareApiUtil.getUserDecks(loginToken);
+            if (result == null || result.getData() == null) {
+                throw new RuntimeException("获取用户卡组信息失败");
+            }
+            
+            List<MyOnlineDeckDetail> onlineDecks = result.getData();
+            MyOnlineDeckDetail targetDeck = null;
+            
+            // 查找匹配的在线卡组
+            for (MyOnlineDeckDetail deck : onlineDecks) {
+                if (deckId.equals(deck.getDeckId())) {
+                    targetDeck = deck;
+                    break;
+                }
+            }
+            
+            if (targetDeck == null) {
+                LogUtil.d("App", "未找到匹配的在线卡组，跳过同步: deckId=" + deckId);
+                return null;
+            }
+            
+            // 构建 MyDeckItem 用于上传
+            MyDeckItem deckItem = new MyDeckItem();
+            deckItem.setDeckPath(deckPath);
+            deckItem.setDeckId(deckId);
+            deckItem.setDeckName(targetDeck.getDeckName());
+            deckItem.setDeckType(targetDeck.getDeckType());
+            deckItem.setUpdateTimestamp(System.currentTimeMillis());
+            deckItem.setUserId(loginToken.getUserId());
+            deckItem.setDelete(false); // 明确设置为 false，避免 null
+            
+            // 提取封面卡片
+            deckItem.setDeckCoverCard1(DeckUtil.getFirstCardCode(deckFile.getPath())); // Changed from DeckUtil.getFirstCardCode(deckFile);
+            
+            // 上传更新
+            java.util.List<MyDeckItem> deckItems = new java.util.ArrayList<>();
+            deckItems.add(deckItem);
+            
+            DeckSquareApiUtil.UploadMyDecks(deckItems, loginToken);
+            LogUtil.d("App", "卡组同步保存成功: " + targetDeck.getDeckName() + " (deckId=" + deckId + ")");
+            
+            return true;
+        }).fail((e) -> {
+            LogUtil.e("App", "同步保存卡组失败!", e);
+        }).done((result) -> {
+            if (result != null && result) {
+                LogUtil.d("App", "卡组同步完成");
+            }
         });
     }
 

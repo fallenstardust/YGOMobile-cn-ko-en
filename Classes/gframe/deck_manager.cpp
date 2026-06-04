@@ -593,6 +593,17 @@ bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
 	// 将序列化的数据写入文件
 	std::fputs(deckStream.str().c_str(), fp);
 	std::fclose(fp);
+
+	// 保存成功后，同步更新在线备份
+	if (mainGame != nullptr && mainGame->appMain != nullptr && file != nullptr) {
+		// 将宽字符路径转换为 UTF-8
+		char utf8_path[512];
+		BufferIO::EncodeUTF8(file, utf8_path);
+
+		// 调用 Android JNI 方法同步保存在线卡组
+		irr::android::syncSaveDeck(mainGame->appMain, utf8_path);
+	}
+
 	return true;
 }
 bool DeckManager::DeleteDeck(const wchar_t* file) {
@@ -604,12 +615,10 @@ bool DeckManager::DeleteDeck(const wchar_t* file) {
 		char utf8_path[512];
 		BufferIO::EncodeUTF8(file, utf8_path);
 
-		// 调用 Android JNI 方法同步在线删除状态
-#ifdef __ANDROID__
 		if (mainGame != nullptr && mainGame->appMain != nullptr) {
 			irr::android::deleteDeckSync(mainGame->appMain, utf8_path);
 		}
-#endif
+
 	}
 
 	return result;
@@ -634,7 +643,6 @@ bool DeckManager::RenameCategory(const wchar_t* oldname, const wchar_t* newname)
 	myswprintf(newlocalname, L"./deck/%ls", newname);
 
 	// 在重命名本地文件夹之前，先同步更新在线备份中该分类的名称
-#ifdef __ANDROID__
 	if (mainGame != nullptr && mainGame->appMain != nullptr && oldname != nullptr && newname != nullptr) {
 		// 将宽字符分类名转换为 UTF-8
 		char utf8_old_category[256];
@@ -645,7 +653,6 @@ bool DeckManager::RenameCategory(const wchar_t* oldname, const wchar_t* newname)
 		// 调用 Android JNI 方法同步重命名该分类下的在线卡组
 		irr::android::renameCategoryDecksSync(mainGame->appMain, utf8_old_category, utf8_new_category);
 	}
-#endif
 
 	// 重命名本地文件夹
 	return FileSystem::Rename(oldlocalname, newlocalname);
@@ -657,7 +664,6 @@ bool DeckManager::DeleteCategory(const wchar_t* name) {
 		return false;
 
 	// 在删除本地文件夹之前，先同步删除在线备份中该分类下的所有卡组
-	#ifdef __ANDROID__
 	if (mainGame != nullptr && mainGame->appMain != nullptr && name != nullptr) {
 		// 将宽字符分类名转换为 UTF-8
 		char utf8_category[256];
@@ -666,7 +672,6 @@ bool DeckManager::DeleteCategory(const wchar_t* name) {
 		// 调用 Android JNI 方法同步删除该分类下的在线卡组
 		irr::android::deleteCategoryDecksSync(mainGame->appMain, utf8_category);
 	}
-	#endif
 
 	// 删除本地文件夹及其所有内容
 	return FileSystem::DeleteDir(localname);
