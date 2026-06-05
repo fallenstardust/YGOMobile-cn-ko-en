@@ -291,27 +291,6 @@ public class MyCard {
         return customServers;
     }
 
-    public static List<YGOServer> getWindbotServers() throws IOException, JSONException {
-        Response response = OkhttpUtil.synchronousGet(MYCARD_NEWS_URL, null, null);
-        String responseBody = response.body().string();
-        if (!response.isSuccessful()) {
-            throw new IOException("Failed to load MyCard server list: " + responseBody);
-        }
-
-        List<YGOServer> allServers = JsonUtil.getYGOServerList(responseBody);
-        List<YGOServer> windbotServers = new ArrayList<>();
-        for (YGOServer server : allServers) {
-            if (!server.isHidden()
-                    && server.getWindbot() != null
-                    && !server.getWindbot().isEmpty()
-                    && !TextUtils.isEmpty(server.getServerAddr())
-                    && server.getPort() > 0) {
-                windbotServers.add(server);
-            }
-        }
-        return windbotServers;
-    }
-
     public static YGOServer getDefaultCustomServer(List<YGOServer> servers) {
         if (servers == null || servers.isEmpty()) {
             return createFallbackCustomServer();

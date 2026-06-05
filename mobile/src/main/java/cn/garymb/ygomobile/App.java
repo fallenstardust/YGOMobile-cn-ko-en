@@ -237,8 +237,7 @@ public class App extends GameApplication {
             // 如果有修改，上传更新
             if (hasChanges) {
                 DeckUtil deckUtil = new DeckUtil();
-                DeckSquareApiUtil.UploadMyDecks(
-                        deckUtil.toDeckItemList(onlineDecks), loginToken);
+                DeckSquareApiUtil.UploadMyDecks(deckUtil.toDeckItemList(onlineDecks), loginToken);
                 LogUtil.d("App", "卡组分类重命名同步成功: " + oldCategoryName + " -> " + newCategoryName);
             } else {
                 LogUtil.d("App", "没有找到需要更新的在线卡组: " + oldCategoryName);

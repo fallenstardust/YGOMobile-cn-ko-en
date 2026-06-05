@@ -1801,7 +1801,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                             throw new Exception("获取u16Secret失败");
                         }
 
-                        Log.e("WaitingDuel", "u16SecretStr: " + u16SecretStr);
+                        Log.i("WaitingDuel", "u16SecretStr: " + u16SecretStr);
 
                         String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id(), u16SecretStr);
                         Log.e("WaitingDuel password", "password: " + password);

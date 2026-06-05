@@ -1,19 +1,21 @@
 package cn.garymb.ygomobile.ui.mycard;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.tencent.smtt.sdk.ValueCallback;
 import com.tencent.smtt.sdk.WebChromeClient;
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
@@ -39,6 +41,7 @@ public class MyCardWebFragment extends BaseFragemnt {
     private static final String TAG = "MyCardWebFragment";
     private static final String ARG_URL = "url";
     private static final String ARG_TITLE = "title";
+    private static final int FILE_CHOOSER_REQUEST = 100;
 
     private MyCardWebView mWebView;
     private ProgressBar mProgressBar;
@@ -46,13 +49,8 @@ public class MyCardWebFragment extends BaseFragemnt {
     private HomeActivity homeActivity;
 
     private String mUrl;
+    private ValueCallback<Uri[]> mFilePathCallback;
 
-    /**
-     * 创建MyCardWebFragment实例
-     * @param url 要加载的URL
-     * @param title 页面标题
-     * @return MyCardWebFragment实例
-     */
     public static MyCardWebFragment newInstance(String url, String title) {
         MyCardWebFragment fragment = new MyCardWebFragment();
         Bundle args = new Bundle();
@@ -145,15 +143,57 @@ public class MyCardWebFragment extends BaseFragemnt {
             public void onReceivedTitle(WebView view, String title) {
                 super.onReceivedTitle(view, title);
             }
+
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                Log.d(TAG, "onShowFileChooser: mode=" + fileChooserParams.getMode());
+                mFilePathCallback = filePathCallback;
+                openFileChooseProcess(fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                return true;
+            }
         });
     }
 
-    /**
-     * 处理文件下载 - 使用DownloadUtil
-     * @param url 下载链接
-     * @param contentDisposition Content-Disposition头
-     * @param mimetype MIME类型
-     */
+    private void openFileChooseProcess(boolean isMulti) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setType("*/*");
+        if (isMulti) {
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
+        startActivityForResult(Intent.createChooser(intent, getString(R.string.dialog_select_file)), FILE_CHOOSER_REQUEST);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILE_CHOOSER_REQUEST) {
+            if (resultCode == Activity.RESULT_OK) {
+                if (mFilePathCallback != null) {
+                    if (data != null && data.getClipData() != null) {
+                        int count = data.getClipData().getItemCount();
+                        Log.d(TAG, "Selected files count: " + count);
+                        Uri[] uris = new Uri[count];
+                        for (int i = 0; i < count; i++) {
+                            uris[i] = data.getClipData().getItemAt(i).getUri();
+                        }
+                        mFilePathCallback.onReceiveValue(uris);
+                    } else {
+                        Uri result = data == null ? null : data.getData();
+                        Log.d(TAG, "Selected file: " + result);
+                        mFilePathCallback.onReceiveValue(result != null ? new Uri[]{result} : null);
+                    }
+                    mFilePathCallback = null;
+                }
+            } else {
+                if (mFilePathCallback != null) {
+                    mFilePathCallback.onReceiveValue(null);
+                    mFilePathCallback = null;
+                }
+            }
+        }
+    }
+
     private void handleFileDownload(String url, String contentDisposition, String mimetype) {
         // 从URL或Content-Disposition中提取文件名
         String fileName = extractFileName(url, contentDisposition);
@@ -163,7 +203,7 @@ public class MyCardWebFragment extends BaseFragemnt {
 
         // 根据扩展名确定保存路径
         String saveDir = getSaveDirectoryPath(extension);
-        
+
         // 显示开始下载的提示
         String message = getSaveMessage(extension, fileName);
         YGOUtil.showTextToast(message);
@@ -173,7 +213,7 @@ public class MyCardWebFragment extends BaseFragemnt {
             @Override
             public void onDownloadSuccess(File file) {
                 Log.d(TAG, "下载成功: " + file.getAbsolutePath());
-                
+
                 // 根据文件类型显示不同的成功提示
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
@@ -192,7 +232,7 @@ public class MyCardWebFragment extends BaseFragemnt {
             @Override
             public void onDownloadFailed(Exception e) {
                 Log.e(TAG, "下载失败: " + e.getMessage());
-                
+
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         YGOUtil.showTextToast("下载失败: " + e.getMessage());
@@ -229,7 +269,7 @@ public class MyCardWebFragment extends BaseFragemnt {
             if (contentDisposition.contains("filename*=")) {
                 fileName = extractUtf8FileName(contentDisposition);
             }
-            
+
             // 如果没有找到 UTF-8 编码的文件名，再尝试普通的 filename
             if (TextUtils.isEmpty(fileName) && contentDisposition.contains("filename=")) {
                 int index = contentDisposition.indexOf("filename=");
@@ -280,10 +320,10 @@ public class MyCardWebFragment extends BaseFragemnt {
             if (startIndex == -1) {
                 return null;
             }
-            
+
             // 获取 filename*= 后面的内容
             String value = contentDisposition.substring(startIndex + 10).trim();
-            
+
             // 检查是否是 UTF-8 编码格式: UTF-8''encoded_text
             if (value.toUpperCase().startsWith("UTF-8")) {
                 // 找到两个单引号的位置
@@ -293,19 +333,19 @@ public class MyCardWebFragment extends BaseFragemnt {
                     if (secondQuote != -1) {
                         // 提取编码后的文本部分
                         String encodedText = value.substring(secondQuote + 1);
-                        
+
                         // 去除可能的分号和后续内容
                         int semicolonIndex = encodedText.indexOf(';');
                         if (semicolonIndex != -1) {
                             encodedText = encodedText.substring(0, semicolonIndex);
                         }
-                        
+
                         // 去除首尾空格和引号
                         encodedText = encodedText.trim();
                         if (encodedText.startsWith("\"") && encodedText.endsWith("\"")) {
                             encodedText = encodedText.substring(1, encodedText.length() - 1);
                         }
-                        
+
                         // URL解码，将 %XX 形式的编码转换为中文字符
                         return java.net.URLDecoder.decode(encodedText, "UTF-8");
                     }
@@ -322,7 +362,7 @@ public class MyCardWebFragment extends BaseFragemnt {
         } catch (Exception e) {
             Log.e(TAG, "解析UTF-8文件名失败: " + e.getMessage());
         }
-        
+
         return null;
     }
 
@@ -342,6 +382,7 @@ public class MyCardWebFragment extends BaseFragemnt {
 
     /**
      * 根据文件扩展名获取保存目录路径
+     *
      * @return 保存目录的绝对路径
      */
     private String getSaveDirectoryPath(String extension) {
