@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
@@ -67,9 +68,19 @@
                 android:textColor="@color/holo_green_bright"
                 android:textSize="8sp" />
         </LinearLayout>
-
-
     </LinearLayout>
+
+    <com.king.view.circleprogressview.CircleProgressView
+        android:id="@+id/cpv_athletic_win_rate"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerVertical="true"
+        app:cpvLabelTextColor="@color/white"
+        app:cpvLabelTextSize="12sp"
+        app:cpvNormalColor="@color/klein_blue"
+        app:cpvProgressColor="@color/colorAccent"
+        app:cpvShowTick="false"
+        app:cpvStrokeWidth="5dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -81,7 +92,7 @@
             android:id="@+id/tv_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_gravity="left"
             android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -89,7 +100,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -97,83 +107,89 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/match_start"
-                    android:textColor="@color/holo_blue_bright"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
+                android:orientation="horizontal">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="win"
-                        android:src="@drawable/ic_right" />
+                    android:gravity="left"
+                    android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tv_athletic_win"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="4dp"
-                        android:textColor="@color/holo_green_bright"
-                        android:textSize="11sp" />
+                        android:text="@string/match_start"
+                        android:textColor="@color/holo_blue_bright"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
 
-                    <ImageView
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="win"
-                        android:src="@drawable/ic_failed" />
-
-                    <TextView
-                        android:id="@+id/tv_athletic_lose"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="4dp"
-                        android:textColor="@color/holo_orange_bright"
-                        android:textSize="11sp" />
+                        android:layout_marginTop="4dp"
+                        android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="win"
-                        android:src="@drawable/ic_draw" />
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="win"
+                            android:src="@drawable/ic_right" />
 
-                    <TextView
-                        android:id="@+id/tv_athletic_draw"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="4dp"
-                        android:textColor="@color/grayLight"
-                        android:textSize="11sp" />
+                        <TextView
+                            android:id="@+id/tv_athletic_win"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:textColor="@color/gold_light"
+                            android:textSize="11sp" />
 
-                    <ImageView
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
-                        android:layout_gravity="center"
-                        android:visibility="gone"
-                        android:contentDescription="win"
-                        android:src="@drawable/ic_add_2" />
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="win"
+                            android:src="@drawable/ic_failed" />
 
-                    <TextView
-                        android:id="@+id/tv_athletic_all"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/white"
-                        android:visibility="gone"
-                        android:textSize="11sp" />
+                        <TextView
+                            android:id="@+id/tv_athletic_lose"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:textColor="@color/gold_light"
+                            android:textSize="11sp" />
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="win"
+                            android:src="@drawable/ic_draw" />
+
+                        <TextView
+                            android:id="@+id/tv_athletic_draw"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:textColor="@color/gold_light"
+                            android:textSize="11sp" />
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_gravity="center"
+                            android:visibility="gone"
+                            android:contentDescription="win"
+                            android:src="@drawable/ic_add_2" />
+
+                        <TextView
+                            android:id="@+id/tv_athletic_all"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/white"
+                            android:visibility="gone"
+                            android:textSize="11sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
@@ -187,14 +203,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="center"
+                android:gravity="left"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/fun_start"
-                    android:textColor="@color/holo_orange_bright"
+                    android:textColor="@color/gold"
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
@@ -216,7 +232,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="4dp"
-                        android:textColor="@color/holo_green_bright"
+                        android:textColor="@color/grayDark2"
                         android:textSize="11sp" />
 
                     <ImageView
@@ -231,7 +247,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="4dp"
-                        android:textColor="@color/holo_orange_bright"
+                        android:textColor="@color/grayDark2"
                         android:textSize="11sp" />
 
                     <ImageView
@@ -246,7 +262,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="4dp"
-                        android:textColor="@color/grayLight"
+                        android:textColor="@color/grayDark2"
                         android:textSize="11sp" />
 
                     <ImageView

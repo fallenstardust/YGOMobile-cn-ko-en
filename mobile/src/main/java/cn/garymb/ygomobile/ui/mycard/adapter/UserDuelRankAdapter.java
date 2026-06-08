@@ -9,6 +9,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.king.view.circleprogressview.CircleProgressView;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +57,7 @@ public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapte
         TextView tvEntertainLose;
         TextView tvEntertainDraw;
         TextView tvEntertainAll;
+        CircleProgressView cpvAthleticWinRate;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -70,6 +73,7 @@ public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapte
             tvEntertainLose = itemView.findViewById(R.id.tv_entertain_lose);
             tvEntertainDraw = itemView.findViewById(R.id.tv_entertain_draw);
             tvEntertainAll = itemView.findViewById(R.id.tv_entertain_all);
+            cpvAthleticWinRate = itemView.findViewById(R.id.cpv_athletic_win_rate);
         }
 
         void bind(UserDuelRank rank, int rankNum) {
@@ -86,6 +90,10 @@ public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapte
             tvEntertainLose.setText(String.valueOf(rank.getEntertainLose()));
             tvEntertainDraw.setText(String.valueOf(rank.getEntertainDraw()));
             tvEntertainAll.setText(String.valueOf(rank.getEntertainAll()));
+            
+            float athleticWinRate = rank.getAthleticWinRate();
+            cpvAthleticWinRate.setProgress((int) athleticWinRate);
+            cpvAthleticWinRate.setLabelText(String.format("%.2f%%", athleticWinRate));
         }
     }
 }
