@@ -7,8 +7,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,11 +49,12 @@ public class DuelRankFragment extends BaseFragemnt {
 
     private SwipeRefreshLayout srlRefresh;
     private RecyclerView rvDuelList;
-    private ProgressBar pbLoading;
     private TextView tvEmpty;
     private EditText etSearchUsername;
+    private Switch swByExp;
     private UserDuelRankAdapter adapter;
     private List<UserDuelRank> originalData = new ArrayList<>();
+    private boolean isSortByExp = false;
 
     @Nullable
     @Override
@@ -66,9 +69,9 @@ public class DuelRankFragment extends BaseFragemnt {
     private void initView(View view) {
         srlRefresh = view.findViewById(R.id.srl_refresh);
         rvDuelList = view.findViewById(R.id.rv_duel_list);
-        pbLoading = view.findViewById(R.id.pb_loading);
         tvEmpty = view.findViewById(R.id.tv_empty);
         etSearchUsername = view.findViewById(R.id.et_search_username);
+        swByExp = view.findViewById(R.id.sw_by_exp);
 
         srlRefresh.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
         srlRefresh.setOnRefreshListener(() -> loadData());
@@ -78,6 +81,14 @@ public class DuelRankFragment extends BaseFragemnt {
         rvDuelList.setAdapter(adapter);
 
         setupSearchFunction();
+        setupSortSwitch();
+    }
+
+    private void setupSortSwitch() {
+        swByExp.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isSortByExp = isChecked;
+            loadData();
+        });
     }
 
     private void setupSearchFunction() {
@@ -141,7 +152,6 @@ public class DuelRankFragment extends BaseFragemnt {
     }
 
     private void searchFromServer(String username) {
-        pbLoading.setVisibility(View.VISIBLE);
         tvEmpty.setVisibility(View.GONE);
 
         Map<String, Object> params = new HashMap<>();
@@ -153,7 +163,6 @@ public class DuelRankFragment extends BaseFragemnt {
                 Log.e(TAG, "搜索用户失败: " + e.getMessage(), e);
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        pbLoading.setVisibility(View.GONE);
                         Toast.makeText(getContext(), "搜索失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
                 }
@@ -165,7 +174,6 @@ public class DuelRankFragment extends BaseFragemnt {
                     Log.e(TAG, "请求失败，状态码: " + response.code());
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            pbLoading.setVisibility(View.GONE);
                             Toast.makeText(getContext(), "请求失败: " + response.code(), Toast.LENGTH_SHORT).show();
                         });
                     }
@@ -180,13 +188,11 @@ public class DuelRankFragment extends BaseFragemnt {
                     
                     if (duelInfo != null && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            pbLoading.setVisibility(View.GONE);
                             showDuelInfoInDialog(duelInfo, username);
                         });
                     } else {
                         if (getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
-                                pbLoading.setVisibility(View.GONE);
                                 Toast.makeText(getContext(), "未找到该用户", Toast.LENGTH_SHORT).show();
                             });
                         }
@@ -195,7 +201,6 @@ public class DuelRankFragment extends BaseFragemnt {
                     Log.e(TAG, "解析数据失败: " + e.getMessage(), e);
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            pbLoading.setVisibility(View.GONE);
                             Toast.makeText(getContext(), "解析数据失败", Toast.LENGTH_SHORT).show();
                         });
                     }
@@ -270,11 +275,10 @@ public class DuelRankFragment extends BaseFragemnt {
 
     private void loadData() {
         srlRefresh.setRefreshing(true);
-        pbLoading.setVisibility(View.VISIBLE);
         tvEmpty.setVisibility(View.GONE);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("o", "pt");
+        params.put("o", isSortByExp ? "exp" : "pt");
 
         OkhttpUtil.get(MyCard.MYCARD_USERS_DUEL_URL, params, new Callback() {
             @Override
@@ -283,7 +287,6 @@ public class DuelRankFragment extends BaseFragemnt {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         srlRefresh.setRefreshing(false);
-                        pbLoading.setVisibility(View.GONE);
                         tvEmpty.setVisibility(View.VISIBLE);
                         tvEmpty.setText("加载失败: " + e.getMessage());
                     });
@@ -297,7 +300,6 @@ public class DuelRankFragment extends BaseFragemnt {
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             srlRefresh.setRefreshing(false);
-                            pbLoading.setVisibility(View.GONE);
                             tvEmpty.setVisibility(View.VISIBLE);
                             tvEmpty.setText("请求失败: " + response.code());
                         });
@@ -325,7 +327,6 @@ public class DuelRankFragment extends BaseFragemnt {
                         List<UserDuelRank> finalRankList = rankList;
                         getActivity().runOnUiThread(() -> {
                             srlRefresh.setRefreshing(false);
-                            pbLoading.setVisibility(View.GONE);
 
                             if (finalRankList != null && !finalRankList.isEmpty()) {
                                 originalData.clear();
@@ -344,7 +345,6 @@ public class DuelRankFragment extends BaseFragemnt {
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             srlRefresh.setRefreshing(false);
-                            pbLoading.setVisibility(View.GONE);
                             tvEmpty.setVisibility(View.VISIBLE);
                             tvEmpty.setText("解析数据失败: " + e.getMessage());
                         });

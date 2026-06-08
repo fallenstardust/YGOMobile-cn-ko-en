@@ -22,7 +22,6 @@ public class CardRankFragment extends BaseFragemnt {
 
     private SwipeRefreshLayout srlRefresh;
     private RecyclerView rvCardList;
-    private ProgressBar pbLoading;
     private TextView tvEmpty;
     private DeckWinRateAdapter adapter;
 
@@ -39,7 +38,6 @@ public class CardRankFragment extends BaseFragemnt {
     private void initView(View view) {
         srlRefresh = view.findViewById(R.id.srl_refresh);
         rvCardList = view.findViewById(R.id.rv_card_list);
-        pbLoading = view.findViewById(R.id.pb_loading);
         tvEmpty = view.findViewById(R.id.tv_empty);
 
         srlRefresh.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
@@ -52,14 +50,12 @@ public class CardRankFragment extends BaseFragemnt {
 
     private void loadData() {
         srlRefresh.setRefreshing(true);
-        pbLoading.setVisibility(View.VISIBLE);
         tvEmpty.setVisibility(View.GONE);
 
         // TODO: 加载卡片排名数据
         // 模拟数据加载
         getActivity().runOnUiThread(() -> {
             srlRefresh.setRefreshing(false);
-            pbLoading.setVisibility(View.GONE);
             tvEmpty.setVisibility(View.VISIBLE);
             tvEmpty.setText("卡片排名功能开发中...");
         });

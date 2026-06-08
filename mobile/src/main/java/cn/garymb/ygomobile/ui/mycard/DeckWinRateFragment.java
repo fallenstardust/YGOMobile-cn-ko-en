@@ -28,7 +28,6 @@ public class DeckWinRateFragment extends BaseFragemnt {
 
     private SwipeRefreshLayout srlRefresh;
     private RecyclerView rvDeckList;
-    private ProgressBar pbLoading;
     private TextView tvEmpty;
     private DeckWinRateAdapter adapter;
     private LinearLayout llPieChartContainer;
@@ -48,7 +47,6 @@ public class DeckWinRateFragment extends BaseFragemnt {
     private void initView(View view) {
         srlRefresh = view.findViewById(R.id.srl_refresh);
         rvDeckList = view.findViewById(R.id.rv_deck_list);
-        pbLoading = view.findViewById(R.id.pb_loading);
         tvEmpty = view.findViewById(R.id.tv_empty);
         llPieChartContainer = view.findViewById(R.id.ll_pie_chart_container);
         llPieCharts = view.findViewById(R.id.ll_pie_charts);
@@ -64,7 +62,6 @@ public class DeckWinRateFragment extends BaseFragemnt {
 
     private void loadData() {
         srlRefresh.setRefreshing(true);
-        pbLoading.setVisibility(View.VISIBLE);
         tvEmpty.setVisibility(View.GONE);
 
         MyCardPieChart.getDayAthleticDeckTypeAnalytics(new MyCardPieChart.OnMyCardPieChartListener() {
@@ -76,7 +73,6 @@ public class DeckWinRateFragment extends BaseFragemnt {
                 
                 getActivity().runOnUiThread(() -> {
                     srlRefresh.setRefreshing(false);
-                    pbLoading.setVisibility(View.GONE);
 
                     if (exception != null) {
                         YGOUtil.show("加载失败: " + exception);
