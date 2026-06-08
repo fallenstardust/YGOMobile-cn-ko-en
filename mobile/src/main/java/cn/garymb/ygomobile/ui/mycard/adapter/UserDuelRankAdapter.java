@@ -46,7 +46,7 @@ public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapte
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvRank;
         TextView tvUsername;
-        TextView tvPt;
+        TextView tvPt, tvExp;
         TextView tvAthleticWin;
         TextView tvAthleticLose;
         TextView tvAthleticDraw;
@@ -61,6 +61,7 @@ public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapte
             tvRank = itemView.findViewById(R.id.tv_rank);
             tvUsername = itemView.findViewById(R.id.tv_username);
             tvPt = itemView.findViewById(R.id.tv_pt);
+            tvExp = itemView.findViewById(R.id.tv_exp);
             tvAthleticWin = itemView.findViewById(R.id.tv_athletic_win);
             tvAthleticLose = itemView.findViewById(R.id.tv_athletic_lose);
             tvAthleticDraw = itemView.findViewById(R.id.tv_athletic_draw);
@@ -75,7 +76,7 @@ public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapte
             tvRank.setText(String.valueOf(rankNum));
             tvUsername.setText(rank.getUsername());
             tvPt.setText(String.format("%.2f", rank.getPt()));
-            
+            tvExp.setText(String.format("%.2f", rank.getExp()));
             tvAthleticWin.setText(String.valueOf(rank.getAthleticWin()));
             tvAthleticLose.setText(String.valueOf(rank.getAthleticLose()));
             tvAthleticDraw.setText(String.valueOf(rank.getAthleticDraw()));

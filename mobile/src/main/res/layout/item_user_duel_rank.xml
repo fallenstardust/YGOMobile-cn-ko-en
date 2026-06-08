@@ -38,7 +38,7 @@
 
             <TextView
                 android:id="@+id/tv_pt"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="right"
                 android:text="1000.00"
@@ -60,7 +60,7 @@
 
             <TextView
                 android:id="@+id/tv_exp"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="right"
                 android:text="1000.00"
