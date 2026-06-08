@@ -1,12 +1,16 @@
 package cn.garymb.ygomobile.ui.mycard.arena;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,7 +32,9 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.adapter.UserDuelRankAdapter;
+import cn.garymb.ygomobile.ui.mycard.bean.McDuelInfo;
 import cn.garymb.ygomobile.ui.mycard.bean.UserDuelRank;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import okhttp3.Call;
@@ -43,7 +49,9 @@ public class DuelRankFragment extends BaseFragemnt {
     private RecyclerView rvDuelList;
     private ProgressBar pbLoading;
     private TextView tvEmpty;
+    private EditText etSearchUsername;
     private UserDuelRankAdapter adapter;
+    private List<UserDuelRank> originalData = new ArrayList<>();
 
     @Nullable
     @Override
@@ -60,6 +68,7 @@ public class DuelRankFragment extends BaseFragemnt {
         rvDuelList = view.findViewById(R.id.rv_duel_list);
         pbLoading = view.findViewById(R.id.pb_loading);
         tvEmpty = view.findViewById(R.id.tv_empty);
+        etSearchUsername = view.findViewById(R.id.et_search_username);
 
         srlRefresh.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
         srlRefresh.setOnRefreshListener(() -> loadData());
@@ -67,6 +76,196 @@ public class DuelRankFragment extends BaseFragemnt {
         rvDuelList.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new UserDuelRankAdapter();
         rvDuelList.setAdapter(adapter);
+
+        setupSearchFunction();
+    }
+
+    private void setupSearchFunction() {
+        etSearchUsername.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch();
+                return true;
+            }
+            return false;
+        });
+
+        etSearchUsername.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                String keyword = s.toString().trim();
+                if (TextUtils.isEmpty(keyword)) {
+                    restoreFullList();
+                } else {
+                    filterListByKeyword(keyword);
+                }
+            }
+        });
+    }
+
+    private void filterListByKeyword(String keyword) {
+        List<UserDuelRank> filteredList = new ArrayList<>();
+        for (UserDuelRank rank : originalData) {
+            if (rank.getUsername() != null && rank.getUsername().toLowerCase().contains(keyword.toLowerCase())) {
+                filteredList.add(rank);
+            }
+        }
+
+        if (!filteredList.isEmpty()) {
+            adapter.setNewData(filteredList);
+            if (filteredList.size() == 1) {
+                showUserDetailInDialog(filteredList.get(0));
+            }
+        } else {
+            searchFromServer(keyword);
+        }
+    }
+
+    private void performSearch() {
+        String keyword = etSearchUsername.getText().toString().trim();
+        
+        if (TextUtils.isEmpty(keyword)) {
+            Toast.makeText(getContext(), "请输入搜索关键词", Toast.LENGTH_SHORT).show();
+            restoreFullList();
+            return;
+        }
+
+        filterListByKeyword(keyword);
+    }
+
+    private void searchFromServer(String username) {
+        pbLoading.setVisibility(View.VISIBLE);
+        tvEmpty.setVisibility(View.GONE);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("username", username);
+
+        OkhttpUtil.get(MyCard.MYCARD_USER_DUEL_URL, params, new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "搜索用户失败: " + e.getMessage(), e);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        pbLoading.setVisibility(View.GONE);
+                        Toast.makeText(getContext(), "搜索失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    Log.e(TAG, "请求失败，状态码: " + response.code());
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            pbLoading.setVisibility(View.GONE);
+                            Toast.makeText(getContext(), "请求失败: " + response.code(), Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                    return;
+                }
+
+                String json = response.body().string();
+                Log.d(TAG, "搜索用户JSON: " + json);
+
+                try {
+                    McDuelInfo duelInfo = new Gson().fromJson(json, McDuelInfo.class);
+                    
+                    if (duelInfo != null && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            pbLoading.setVisibility(View.GONE);
+                            showDuelInfoInDialog(duelInfo, username);
+                        });
+                    } else {
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                pbLoading.setVisibility(View.GONE);
+                                Toast.makeText(getContext(), "未找到该用户", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "解析数据失败: " + e.getMessage(), e);
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            pbLoading.setVisibility(View.GONE);
+                            Toast.makeText(getContext(), "解析数据失败", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    private void showUserDetailInDialog(UserDuelRank rank) {
+        DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle("玩家详情");
+        dialog.setContentView(R.layout.item_user_duel_detail);
+        
+        TextView tvUsername = dialog.bind(R.id.tv_detail_username);
+        TextView tvPt = dialog.bind(R.id.tv_detail_pt);
+        TextView tvAthleticWin = dialog.bind(R.id.tv_detail_athletic_win);
+        TextView tvAthleticLose = dialog.bind(R.id.tv_detail_athletic_lose);
+        TextView tvAthleticDraw = dialog.bind(R.id.tv_detail_athletic_draw);
+        TextView tvAthleticAll = dialog.bind(R.id.tv_detail_athletic_all);
+        TextView tvEntertainWin = dialog.bind(R.id.tv_detail_entertain_win);
+        TextView tvEntertainLose = dialog.bind(R.id.tv_detail_entertain_lose);
+        TextView tvEntertainDraw = dialog.bind(R.id.tv_detail_entertain_draw);
+        TextView tvEntertainAll = dialog.bind(R.id.tv_detail_entertain_all);
+
+        tvUsername.setText(rank.getUsername());
+        tvPt.setText(String.format("%.2f", rank.getPt()));
+        tvAthleticWin.setText(String.valueOf(rank.getAthleticWin()));
+        tvAthleticLose.setText(String.valueOf(rank.getAthleticLose()));
+        tvAthleticDraw.setText(String.valueOf(rank.getAthleticDraw()));
+        tvAthleticAll.setText(String.valueOf(rank.getAthleticAll()));
+        tvEntertainWin.setText(String.valueOf(rank.getEntertainWin()));
+        tvEntertainLose.setText(String.valueOf(rank.getEntertainLose()));
+        tvEntertainDraw.setText(String.valueOf(rank.getEntertainDraw()));
+        tvEntertainAll.setText(String.valueOf(rank.getEntertainAll()));
+
+        dialog.show();
+    }
+
+    private void showDuelInfoInDialog(McDuelInfo duelInfo, String username) {
+        DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle("玩家详情");
+        dialog.setContentView(R.layout.item_user_duel_detail);
+        
+        TextView tvUsername = dialog.bind(R.id.tv_detail_username);
+        TextView tvPt = dialog.bind(R.id.tv_detail_pt);
+        TextView tvAthleticWin = dialog.bind(R.id.tv_detail_athletic_win);
+        TextView tvAthleticLose = dialog.bind(R.id.tv_detail_athletic_lose);
+        TextView tvAthleticDraw = dialog.bind(R.id.tv_detail_athletic_draw);
+        TextView tvAthleticAll = dialog.bind(R.id.tv_detail_athletic_all);
+        TextView tvEntertainWin = dialog.bind(R.id.tv_detail_entertain_win);
+        TextView tvEntertainLose = dialog.bind(R.id.tv_detail_entertain_lose);
+        TextView tvEntertainDraw = dialog.bind(R.id.tv_detail_entertain_draw);
+        TextView tvEntertainAll = dialog.bind(R.id.tv_detail_entertain_all);
+
+        tvUsername.setText(username);
+        tvPt.setText(String.valueOf(duelInfo.getDp() != null ? duelInfo.getDp() : 0));
+        tvAthleticWin.setText(String.valueOf(duelInfo.getMatchWin() != null ? duelInfo.getMatchWin() : 0));
+        tvAthleticLose.setText(String.valueOf(duelInfo.getMatchLose() != null ? duelInfo.getMatchLose() : 0));
+        tvAthleticDraw.setText(String.valueOf(duelInfo.getMatchDraw() != null ? duelInfo.getMatchDraw() : 0));
+        tvAthleticAll.setText(String.valueOf(duelInfo.getMatchAll() != null ? duelInfo.getMatchAll() : 0));
+        tvEntertainWin.setText(String.valueOf(duelInfo.getFunWin() != null ? duelInfo.getFunWin() : 0));
+        tvEntertainLose.setText(String.valueOf(duelInfo.getFunLose() != null ? duelInfo.getFunLose() : 0));
+        tvEntertainDraw.setText(String.valueOf(duelInfo.getFunDraw() != null ? duelInfo.getFunDraw() : 0));
+        tvEntertainAll.setText(String.valueOf(duelInfo.getFunAll() != null ? duelInfo.getFunAll() : 0));
+
+        dialog.show();
+    }
+
+    private void restoreFullList() {
+        adapter.setNewData(originalData);
     }
 
     private void loadData() {
@@ -112,7 +311,6 @@ public class DuelRankFragment extends BaseFragemnt {
                 try {
                     List<UserDuelRank> rankList;
 
-                    // 直接是数组
                     Type listType = new TypeToken<List<UserDuelRank>>() {}.getType();
                     rankList = new Gson().fromJson(json, listType);
                     Log.d(TAG, "直接解析为数组，数据条数: " + (rankList != null ? rankList.size() : "null"));
@@ -130,6 +328,8 @@ public class DuelRankFragment extends BaseFragemnt {
                             pbLoading.setVisibility(View.GONE);
 
                             if (finalRankList != null && !finalRankList.isEmpty()) {
+                                originalData.clear();
+                                originalData.addAll(finalRankList);
                                 adapter.setNewData(finalRankList);
                                 tvEmpty.setVisibility(View.GONE);
                             } else {
