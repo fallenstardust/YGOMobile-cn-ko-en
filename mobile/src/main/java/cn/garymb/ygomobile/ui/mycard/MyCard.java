@@ -64,7 +64,10 @@ public class MyCard {
     public static final String MC_MAIN_URL = "https://mycard.world/mobile/ygopro/lobby";
 
     public static final String MYCARD_NEWS_URL = "https://sapi.moecube.com:444/apps.json";
+    // 单玩家查询接口 可选添加param 例如：?username=暗星（查询特定玩家的数值）
     public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
+    // 前100名玩家排名接口 可选添加param 例如：?o=pt、exp（不同字段从高到低排序）、
+    public static final String MYCARD_USERS_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/users";
     public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
     public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
     public static final String URL_MC_JOIN_DUEL_MATCH = "wss://tiramisu.moecube.com:17923/?filter=waiting";
@@ -99,11 +102,12 @@ public class MyCard {
     public static final String URL_MC_SIGN_UP = "https://accounts.moecube.com/signup";
     public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
     public static final String URL_MC_USER_PROFILE = "https://accounts.moecube.com/profiles";
+    // 查询单个玩家数据接口，需要添加param 例如：?username=暗星
     public static final String URL_MC_AUTH_USER = "https://sapi.moecube.com:444/accounts/authUser";
-    public static final String URL_MC_ATHLETIC_RATE = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type?source=mycard-athletic";
+    // 每个卡组各自胜率分析接口 需要添加param 例如：?source=mycard-athletic（mycard-entertain）
     public static final String URL_DECK_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/deck/type";
-    //每个卡组对其他卡组胜率分析接口
-    public static final String URL_DECK_MATCHUP_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type?source=mycard-athletic";
+    //每个卡组对其他卡组胜率分析接口 需要添加param 例如：?source=mycard-athletic（mycard-entertain）
+    public static final String URL_DECK_MATCHUP_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type";
     public static final int MATCH_TYPE_ATHLETIC = 0;
     public static final int MATCH_TYPE_ENTERTAIN = 1;
 

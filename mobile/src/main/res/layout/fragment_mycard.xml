@@ -816,5 +816,10 @@
             android:id="@+id/fragment_web_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragment_duel_arena_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
     </FrameLayout>
 </androidx.appcompat.widget.LinearLayoutCompat>

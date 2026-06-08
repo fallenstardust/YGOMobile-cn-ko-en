@@ -1,0 +1,90 @@
+package cn.garymb.ygomobile.ui.mycard.adapter;
+
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.mycard.bean.UserDuelRank;
+
+public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapter.ViewHolder> {
+
+    private List<UserDuelRank> mData = new ArrayList<>();
+
+    public void setNewData(List<UserDuelRank> data) {
+        this.mData = data != null ? data : new ArrayList<>();
+        notifyDataSetChanged();
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_user_duel_rank, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        UserDuelRank rank = mData.get(position);
+        holder.bind(rank, position + 1);
+    }
+
+    @Override
+    public int getItemCount() {
+        return mData.size();
+    }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView tvRank;
+        TextView tvUsername;
+        TextView tvPt;
+        TextView tvAthleticWin;
+        TextView tvAthleticLose;
+        TextView tvAthleticDraw;
+        TextView tvAthleticAll;
+        TextView tvEntertainWin;
+        TextView tvEntertainLose;
+        TextView tvEntertainDraw;
+        TextView tvEntertainAll;
+
+        ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvRank = itemView.findViewById(R.id.tv_rank);
+            tvUsername = itemView.findViewById(R.id.tv_username);
+            tvPt = itemView.findViewById(R.id.tv_pt);
+            tvAthleticWin = itemView.findViewById(R.id.tv_athletic_win);
+            tvAthleticLose = itemView.findViewById(R.id.tv_athletic_lose);
+            tvAthleticDraw = itemView.findViewById(R.id.tv_athletic_draw);
+            tvAthleticAll = itemView.findViewById(R.id.tv_athletic_all);
+            tvEntertainWin = itemView.findViewById(R.id.tv_entertain_win);
+            tvEntertainLose = itemView.findViewById(R.id.tv_entertain_lose);
+            tvEntertainDraw = itemView.findViewById(R.id.tv_entertain_draw);
+            tvEntertainAll = itemView.findViewById(R.id.tv_entertain_all);
+        }
+
+        void bind(UserDuelRank rank, int rankNum) {
+            tvRank.setText(String.valueOf(rankNum));
+            tvUsername.setText(rank.getUsername());
+            tvPt.setText(String.format("%.2f", rank.getPt()));
+            
+            tvAthleticWin.setText(String.valueOf(rank.getAthleticWin()));
+            tvAthleticLose.setText(String.valueOf(rank.getAthleticLose()));
+            tvAthleticDraw.setText(String.valueOf(rank.getAthleticDraw()));
+            tvAthleticAll.setText(String.valueOf(rank.getAthleticAll()));
+            
+            tvEntertainWin.setText(String.valueOf(rank.getEntertainWin()));
+            tvEntertainLose.setText(String.valueOf(rank.getEntertainLose()));
+            tvEntertainDraw.setText(String.valueOf(rank.getEntertainDraw()));
+            tvEntertainAll.setText(String.valueOf(rank.getEntertainAll()));
+        }
+    }
+}

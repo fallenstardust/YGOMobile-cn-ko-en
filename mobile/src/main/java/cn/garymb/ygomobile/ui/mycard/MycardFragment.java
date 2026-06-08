@@ -62,6 +62,7 @@ import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.adapter.McNewsAdapter;
+import cn.garymb.ygomobile.ui.mycard.arena.MycardDuelArenaFragment;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
@@ -743,17 +744,20 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         });
     }
 
-    private void showWindbotServerDialog(List<YGOServer> servers) {
-        if (servers == null || servers.isEmpty()) {
-            YGOUtil.show(R.string.mycard_ai_empty);
-            return;
-        }
+    private void showDuelArena() {
+        MycardDuelArenaFragment duelArenaFragment = new MycardDuelArenaFragment();
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.mycard_select_environment)
-                .setItems(getServerNames(servers), (dialog, which) -> showWindbotDialog(servers.get(which)))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+        getChildFragmentManager().beginTransaction()
+                .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                        R.anim.push_in, R.anim.push_out)
+                .add(R.id.fragment_duel_arena_content, duelArenaFragment)
+                .addToBackStack(null)
+                .commit();
+
+        View mainContentView = getView().findViewById(R.id.ll_main_ui);
+        if (mainContentView != null) {
+            mainContentView.setVisibility(View.GONE);
+        }
     }
 
     private void showWindbotDialog(YGOServer server) {
@@ -1116,7 +1120,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 switchRegisterWithWebView();
                 break;
             case R.id.pie_chart_view:
-                switchDuelArenaWithWebView();
+                showDuelArena();
+                //switchDuelArenaWithWebView();
                 break;
         }
     }

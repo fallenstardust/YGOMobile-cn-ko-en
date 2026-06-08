@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -35,7 +34,6 @@ public class DeckWinRateFragment extends BaseFragemnt {
     private LinearLayout llPieChartContainer;
     private LinearLayout llPieCharts;
     private TextView tvTotalMatches;
-    private ImageButton btnClose;
 
     @Nullable
     @Override
@@ -55,10 +53,6 @@ public class DeckWinRateFragment extends BaseFragemnt {
         llPieChartContainer = view.findViewById(R.id.ll_pie_chart_container);
         llPieCharts = view.findViewById(R.id.ll_pie_charts);
         tvTotalMatches = view.findViewById(R.id.tv_total_matches);
-
-        btnClose = view.findViewById(R.id.btn_close_fragment);
-        // 设置关闭按钮点击事件
-        btnClose.setOnClickListener(v -> goBack());
 
         srlRefresh.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
         srlRefresh.setOnRefreshListener(() -> loadData());
@@ -253,24 +247,6 @@ public class DeckWinRateFragment extends BaseFragemnt {
 
     @Override
     public boolean onBackPressed() {
-        goBack();
-        return true;
-    }
-
-    private void goBack() {
-        if (getActivity() != null && getParentFragment() != null) {
-            // 使用 hide 方式关闭，因为该 Fragment 是通过 show/hide 管理的
-            getParentFragment().getChildFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
-                    .hide(this)
-                    .commit();
-            
-            // 显示主内容视图
-            View mainContentView = getActivity().findViewById(R.id.ll_main_ui);
-            if (mainContentView != null) {
-                mainContentView.setVisibility(View.VISIBLE);
-            }
-        }
+        return false;
     }
 }
