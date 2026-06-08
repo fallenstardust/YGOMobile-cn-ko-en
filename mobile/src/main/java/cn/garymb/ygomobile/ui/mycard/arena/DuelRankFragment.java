@@ -55,6 +55,7 @@ public class DuelRankFragment extends BaseFragemnt {
     private UserDuelRankAdapter adapter;
     private List<UserDuelRank> originalData = new ArrayList<>();
     private boolean isSortByExp = false;
+    private boolean isDialogShowing = false;
 
     @Nullable
     @Override
@@ -131,11 +132,6 @@ public class DuelRankFragment extends BaseFragemnt {
 
         if (!filteredList.isEmpty()) {
             adapter.setNewData(filteredList);
-            if (filteredList.size() == 1) {
-                showUserDetailInDialog(filteredList.get(0));
-            }
-        } else {
-            searchFromServer(keyword);
         }
     }
 
@@ -148,10 +144,25 @@ public class DuelRankFragment extends BaseFragemnt {
             return;
         }
 
-        filterListByKeyword(keyword);
+        List<UserDuelRank> filteredList = new ArrayList<>();
+        for (UserDuelRank rank : originalData) {
+            if (rank.getUsername() != null && rank.getUsername().toLowerCase().contains(keyword.toLowerCase())) {
+                filteredList.add(rank);
+            }
+        }
+
+        if (!filteredList.isEmpty()) {
+            adapter.setNewData(filteredList);
+        } else {
+            searchFromServer(keyword);
+        }
     }
 
     private void searchFromServer(String username) {
+        if (isDialogShowing) {
+            return;
+        }
+        
         tvEmpty.setVisibility(View.GONE);
 
         Map<String, Object> params = new HashMap<>();
@@ -188,7 +199,9 @@ public class DuelRankFragment extends BaseFragemnt {
                     
                     if (duelInfo != null && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            showDuelInfoInDialog(duelInfo, username);
+                            if (!isDialogShowing) {
+                                showDuelInfoInDialog(duelInfo, username);
+                            }
                         });
                     } else {
                         if (getActivity() != null) {
@@ -209,37 +222,12 @@ public class DuelRankFragment extends BaseFragemnt {
         });
     }
 
-    private void showUserDetailInDialog(UserDuelRank rank) {
-        DialogPlus dialog = new DialogPlus(getContext());
-        dialog.setTitle("玩家详情");
-        dialog.setContentView(R.layout.item_user_duel_detail);
-        
-        TextView tvUsername = dialog.bind(R.id.tv_detail_username);
-        TextView tvPt = dialog.bind(R.id.tv_detail_pt);
-        TextView tvAthleticWin = dialog.bind(R.id.tv_detail_athletic_win);
-        TextView tvAthleticLose = dialog.bind(R.id.tv_detail_athletic_lose);
-        TextView tvAthleticDraw = dialog.bind(R.id.tv_detail_athletic_draw);
-        TextView tvAthleticAll = dialog.bind(R.id.tv_detail_athletic_all);
-        TextView tvEntertainWin = dialog.bind(R.id.tv_detail_entertain_win);
-        TextView tvEntertainLose = dialog.bind(R.id.tv_detail_entertain_lose);
-        TextView tvEntertainDraw = dialog.bind(R.id.tv_detail_entertain_draw);
-        TextView tvEntertainAll = dialog.bind(R.id.tv_detail_entertain_all);
-
-        tvUsername.setText(rank.getUsername());
-        tvPt.setText(String.format("%.2f", rank.getPt()));
-        tvAthleticWin.setText(String.valueOf(rank.getAthleticWin()));
-        tvAthleticLose.setText(String.valueOf(rank.getAthleticLose()));
-        tvAthleticDraw.setText(String.valueOf(rank.getAthleticDraw()));
-        tvAthleticAll.setText(String.valueOf(rank.getAthleticAll()));
-        tvEntertainWin.setText(String.valueOf(rank.getEntertainWin()));
-        tvEntertainLose.setText(String.valueOf(rank.getEntertainLose()));
-        tvEntertainDraw.setText(String.valueOf(rank.getEntertainDraw()));
-        tvEntertainAll.setText(String.valueOf(rank.getEntertainAll()));
-
-        dialog.show();
-    }
-
     private void showDuelInfoInDialog(McDuelInfo duelInfo, String username) {
+        if (isDialogShowing) {
+            return;
+        }
+        
+        isDialogShowing = true;
         DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle("玩家详情");
         dialog.setContentView(R.layout.item_user_duel_detail);
@@ -266,6 +254,10 @@ public class DuelRankFragment extends BaseFragemnt {
         tvEntertainDraw.setText(String.valueOf(duelInfo.getFunDraw() != null ? duelInfo.getFunDraw() : 0));
         tvEntertainAll.setText(String.valueOf(duelInfo.getFunAll() != null ? duelInfo.getFunAll() : 0));
 
+        dialog.setOnDismissListener(dialogInterface -> {
+            isDialogShowing = false;
+        });
+        
         dialog.show();
     }
 
