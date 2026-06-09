@@ -476,6 +476,7 @@ public class DuelRankFragment extends BaseFragemnt {
         xAxis.setLabelRotationAngle(entries.size() > 30 ? -45f : -30f);
         xAxis.setDrawAxisLine(true);
         xAxis.setTextColor(ContextCompat.getColor(getContext(), R.color.grayLight));
+        xAxis.setTextSize(1f);
         xAxis.setValueFormatter(new IndexAxisValueFormatter(dateLabels));
 
         chartPtHistory.getAxisLeft().setTextColor(ContextCompat.getColor(getContext(), R.color.grayLight));
@@ -519,8 +520,14 @@ public class DuelRankFragment extends BaseFragemnt {
         dataSet.setCircleRadius(3.5f);
         dataSet.setCircleColor(ContextCompat.getColor(getContext(), R.color.holo_blue_bright));
         dataSet.setValueTextColor(ContextCompat.getColor(getContext(), R.color.grayLight));
-        dataSet.setValueTextSize(9f);
-        dataSet.setDrawValues(false);
+        dataSet.setValueTextSize(5f);
+        dataSet.setDrawValues(true);
+        dataSet.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.format(Locale.getDefault(), "%.0f", value);
+            }
+        });
         dataSet.setDrawFilled(true);
         dataSet.setFillColor(ContextCompat.getColor(getContext(), R.color.klein_blue));
         dataSet.setFillAlpha(80);
