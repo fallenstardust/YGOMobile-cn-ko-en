@@ -33,6 +33,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.google.android.material.tabs.TabLayout;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.king.view.circleprogressview.CircleProgressView;
@@ -275,7 +276,35 @@ public class DuelRankFragment extends BaseFragemnt {
         DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle("玩家详情");
         dialog.setContentView(R.layout.item_user_duel_detail);
-        
+
+        TabLayout tabDuelData = dialog.bind(R.id.tab_duel_data);
+        LinearLayout llArenaData = dialog.bind(R.id.ll_arena_data);
+        LinearLayout llEntertainData = dialog.bind(R.id.ll_entertain_data);
+        LinearLayout llChartSection = dialog.bind(R.id.ll_chart_section);
+
+        tabDuelData.addTab(tabDuelData.newTab().setText("竞技场"));
+        tabDuelData.addTab(tabDuelData.newTab().setText("娱乐场"));
+        tabDuelData.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 0) {
+                    llArenaData.setVisibility(View.VISIBLE);
+                    llEntertainData.setVisibility(View.GONE);
+                    llChartSection.setVisibility(View.VISIBLE);
+                } else {
+                    llArenaData.setVisibility(View.GONE);
+                    llEntertainData.setVisibility(View.VISIBLE);
+                    llChartSection.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+
         TextView tvUsername = dialog.bind(R.id.tv_detail_username);
         TextView tvPt = dialog.bind(R.id.tv_detail_pt);
         TextView tvExp = dialog.bind(R.id.tv_detail_exp);
