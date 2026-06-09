@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
     android:layout_margin="2dp"
-    android:background="@drawable/button_radius_black_transparents"
+    android:background="@drawable/list_item_bg"
     android:orientation="horizontal">
 
     <LinearLayout
@@ -113,12 +113,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="left"
-                    android:orientation="vertical">
+                    android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/match_start"
+                        android:visibility="gone"
                         android:textColor="@color/holo_blue_bright"
                         android:textSize="10sp"
                         android:textStyle="bold" />
@@ -197,6 +198,7 @@
                 android:layout_width="1dp"
                 android:layout_height="match_parent"
                 android:layout_marginHorizontal="8dp"
+                android:visibility="gone"
                 android:background="@color/grayLight" />
 
             <LinearLayout
@@ -204,6 +206,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="left"
+                android:visibility="gone"
                 android:orientation="vertical">
 
                 <TextView

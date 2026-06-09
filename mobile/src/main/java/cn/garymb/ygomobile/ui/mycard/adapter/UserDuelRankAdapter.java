@@ -21,6 +21,16 @@ public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapte
 
     private List<UserDuelRank> mData = new ArrayList<>();
 
+    public interface OnItemClickListener {
+        void onItemClick(UserDuelRank rank);
+    }
+
+    private OnItemClickListener mOnItemClickListener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.mOnItemClickListener = listener;
+    }
+
     public void setNewData(List<UserDuelRank> data) {
         this.mData = data != null ? data : new ArrayList<>();
         notifyDataSetChanged();
@@ -38,6 +48,11 @@ public class UserDuelRankAdapter extends RecyclerView.Adapter<UserDuelRankAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         UserDuelRank rank = mData.get(position);
         holder.bind(rank, position + 1);
+        holder.itemView.setOnClickListener(v -> {
+            if (mOnItemClickListener != null) {
+                mOnItemClickListener.onItemClick(rank);
+            }
+        });
     }
 
     @Override

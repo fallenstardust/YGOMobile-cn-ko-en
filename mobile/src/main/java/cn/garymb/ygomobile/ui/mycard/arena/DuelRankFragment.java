@@ -113,6 +113,12 @@ public class DuelRankFragment extends BaseFragemnt {
 
         rvDuelList.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new UserDuelRankAdapter();
+        adapter.setOnItemClickListener(rank -> {
+            String username = rank.getUsername();
+            if (!TextUtils.isEmpty(username)) {
+                searchFromServer(username);
+            }
+        });
         rvDuelList.setAdapter(adapter);
 
         setupSearchFunction();
