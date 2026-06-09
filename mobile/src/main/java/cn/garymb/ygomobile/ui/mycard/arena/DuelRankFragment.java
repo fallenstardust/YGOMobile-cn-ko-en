@@ -56,6 +56,8 @@ public class DuelRankFragment extends BaseFragemnt {
     private List<UserDuelRank> originalData = new ArrayList<>();
     private boolean isSortByExp = false;
     private boolean isDialogShowing = false;
+    private long lastSearchTime = 0;
+    private static final long SEARCH_DEBOUNCE_DELAY = 500; // 0.5秒防抖延迟
 
     @Nullable
     @Override
@@ -162,6 +164,13 @@ public class DuelRankFragment extends BaseFragemnt {
         if (isDialogShowing) {
             return;
         }
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastSearchTime < SEARCH_DEBOUNCE_DELAY) {
+            Log.d(TAG, "搜索请求被防抖拦截，距离上次请求不足0.5秒");
+            return;
+        }
+        lastSearchTime = currentTime;
         
         tvEmpty.setVisibility(View.GONE);
 
@@ -226,7 +235,7 @@ public class DuelRankFragment extends BaseFragemnt {
         if (isDialogShowing) {
             return;
         }
-        
+
         isDialogShowing = true;
         DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle("玩家详情");
