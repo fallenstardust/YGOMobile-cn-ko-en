@@ -281,4 +281,79 @@
             android:textColor="@color/white"
             android:textSize="13sp" />
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="8dp"
+        android:background="@color/klein_blue" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PT变化趋势"
+        android:textColor="@color/holo_blue_bright"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_history_20"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:background="@color/holo_blue_bright"
+            android:minWidth="50dp"
+            android:paddingHorizontal="10dp"
+            android:text="20场"
+            android:textColor="@color/black"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_history_50"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_marginStart="6dp"
+            android:background="@color/transparent"
+            android:minWidth="50dp"
+            android:paddingHorizontal="10dp"
+            android:text="50场"
+            android:textColor="@color/grayLight"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_history_100"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_marginStart="6dp"
+            android:background="@color/transparent"
+            android:minWidth="50dp"
+            android:paddingHorizontal="10dp"
+            android:text="100场"
+            android:textColor="@color/grayLight"
+            android:textSize="12sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ProgressBar
+            android:id="@+id/pb_chart_loading"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/chart_pt_history"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginTop="8dp" />
+
 </LinearLayout>

@@ -68,6 +68,8 @@ public class MyCard {
     public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
     // 前100名玩家排名接口 可选添加param 例如：?o=pt、exp（不同字段从高到低排序）、
     public static final String MYCARD_USERS_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/users";
+    // 单玩家对局历史接口 可选添加param 例如：?username=暗星（查询特定玩家的竞技历史记录，默认最近15条）、&type=1&page_num=100（历史条数）
+    public static final String MYCARD_USER_HISTORY_URL = "https://sapi.moecube.com:444/ygopro/arena/history";
     public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
     public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
     public static final String URL_MC_JOIN_DUEL_MATCH = "wss://tiramisu.moecube.com:17923/?filter=waiting";
