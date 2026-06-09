@@ -29,6 +29,14 @@
             android:textColor="@color/grayDark"
             android:textSize="11sp" />
 
+        <TextView
+            android:id="@+id/tv_match_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:textColor="@color/grayLight"
+            android:textSize="11sp" />
+
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
