@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -9,37 +10,15 @@
         android:id="@+id/tv_detail_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/colorAccent"
+        android:textColor="@color/holo_green_bright"
         android:textSize="18sp"
         android:textStyle="bold" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="D.P: "
-            android:textColor="@color/grayLight"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/tv_detail_pt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/holo_green_bright"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginVertical="8dp"
-        android:background="@color/grayLight" />
+        android:background="@color/klein_blue" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -58,76 +37,184 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="胜: "
+            android:text="D.P: "
             android:textColor="@color/grayLight"
-            android:textSize="13sp" />
+            android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/tv_detail_athletic_win"
+            android:id="@+id/tv_detail_pt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/holo_green_bright"
-            android:textSize="13sp" />
+            android:textColor="@color/holo_blue_bright"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:text="负: "
+            android:text="竞技排名: "
             android:textColor="@color/grayLight"
-            android:textSize="13sp" />
+            android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/tv_detail_athletic_lose"
+            android:id="@+id/tv_detail_arena_rank"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/holo_orange_bright"
-            android:textSize="13sp" />
+            android:textColor="@color/holo_blue_bright"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <com.king.view.circleprogressview.CircleProgressView
+            android:id="@+id/cpv_detail_athletic_wl_ratio"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            app:cpvLabelTextColor="@color/white"
+            app:cpvLabelTextSize="12sp"
+            app:cpvNormalColor="@color/klein_blue"
+            app:cpvProgressColor="@color/colorAccent"
+            app:cpvShowTick="false"
+            app:cpvStrokeWidth="5dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:layout_marginStart="12dp"
-            android:text="平: "
-            android:textColor="@color/grayLight"
-            android:textSize="13sp" />
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_detail_athletic_draw"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/grayLight"
-            android:textSize="13sp" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:text="总: "
-            android:textColor="@color/grayLight"
-            android:textSize="13sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="胜: "
+                    android:textColor="@color/grayLight"
+                    android:textSize="13sp" />
 
-        <TextView
-            android:id="@+id/tv_detail_athletic_all"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:textSize="13sp" />
+                <TextView
+                    android:id="@+id/tv_detail_athletic_win"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/holo_green_bright"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="负: "
+                    android:textColor="@color/grayLight"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tv_detail_athletic_lose"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/holo_orange_bright"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="平: "
+                    android:textColor="@color/grayLight"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tv_detail_athletic_draw"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/grayLight"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="总: "
+                    android:textColor="@color/grayLight"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tv_detail_athletic_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginVertical="8dp"
-        android:background="@color/grayLight" />
+        android:background="@color/klein_blue" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="娱乐场数据"
-        android:textColor="@color/holo_orange_bright"
+        android:textColor="@color/gold_light"
         android:textSize="14sp"
         android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="E.X.P: "
+            android:textColor="@color/grayLight"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_detail_exp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/gold_light"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="娱乐排名: "
+            android:textColor="@color/grayLight"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_detail_exp_rank"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/gold_light"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

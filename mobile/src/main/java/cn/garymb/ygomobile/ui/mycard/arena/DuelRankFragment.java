@@ -22,6 +22,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.king.view.circleprogressview.CircleProgressView;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -249,10 +250,14 @@ public class DuelRankFragment extends BaseFragemnt {
         
         TextView tvUsername = dialog.bind(R.id.tv_detail_username);
         TextView tvPt = dialog.bind(R.id.tv_detail_pt);
+        TextView tvExp = dialog.bind(R.id.tv_detail_exp);
+        TextView tvArenaRank = dialog.bind(R.id.tv_detail_arena_rank);
+        TextView tvExpRank = dialog.bind(R.id.tv_detail_exp_rank);
         TextView tvAthleticWin = dialog.bind(R.id.tv_detail_athletic_win);
         TextView tvAthleticLose = dialog.bind(R.id.tv_detail_athletic_lose);
         TextView tvAthleticDraw = dialog.bind(R.id.tv_detail_athletic_draw);
         TextView tvAthleticAll = dialog.bind(R.id.tv_detail_athletic_all);
+        CircleProgressView cpvAthleticWlRatio = dialog.bind(R.id.cpv_detail_athletic_wl_ratio);
         TextView tvEntertainWin = dialog.bind(R.id.tv_detail_entertain_win);
         TextView tvEntertainLose = dialog.bind(R.id.tv_detail_entertain_lose);
         TextView tvEntertainDraw = dialog.bind(R.id.tv_detail_entertain_draw);
@@ -260,10 +265,18 @@ public class DuelRankFragment extends BaseFragemnt {
 
         tvUsername.setText(username);
         tvPt.setText(String.valueOf(duelInfo.getDp() != null ? duelInfo.getDp() : 0));
+        tvExp.setText(String.valueOf(duelInfo.getExp() != null ? duelInfo.getExp() : 0));
+        tvArenaRank.setText(String.valueOf(duelInfo.getMatchRank() != null ? duelInfo.getMatchRank() : 0));
+        tvExpRank.setText(String.valueOf(duelInfo.getFunRank() != null ? duelInfo.getFunRank() : 0));
         tvAthleticWin.setText(String.valueOf(duelInfo.getMatchWin() != null ? duelInfo.getMatchWin() : 0));
         tvAthleticLose.setText(String.valueOf(duelInfo.getMatchLose() != null ? duelInfo.getMatchLose() : 0));
         tvAthleticDraw.setText(String.valueOf(duelInfo.getMatchDraw() != null ? duelInfo.getMatchDraw() : 0));
         tvAthleticAll.setText(String.valueOf(duelInfo.getMatchAll() != null ? duelInfo.getMatchAll() : 0));
+        
+        float winRatio = duelInfo.getMatchWinRatio();
+        cpvAthleticWlRatio.setProgress((int) winRatio);
+        cpvAthleticWlRatio.setLabelText(String.format("%.2f%%", winRatio));
+        
         tvEntertainWin.setText(String.valueOf(duelInfo.getFunWin() != null ? duelInfo.getFunWin() : 0));
         tvEntertainLose.setText(String.valueOf(duelInfo.getFunLose() != null ? duelInfo.getFunLose() : 0));
         tvEntertainDraw.setText(String.valueOf(duelInfo.getFunDraw() != null ? duelInfo.getFunDraw() : 0));
