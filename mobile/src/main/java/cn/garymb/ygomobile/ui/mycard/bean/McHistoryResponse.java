@@ -27,13 +27,8 @@ public class McHistoryResponse implements Serializable {
     public static class HistoryItem implements Serializable {
         private String usernamea;
         private String usernameb;
-
-        @SerializedName("userscorea")
         private Integer userscorea;
-
-        @SerializedName("userscoreb")
         private Integer userscoreb;
-
         private Double expa;
         private Double expb;
 
@@ -68,156 +63,61 @@ public class McHistoryResponse implements Serializable {
         private String decka;
         private String deckb;
 
-        public String getUsernamea() {
-            return usernamea;
-        }
+        public String getUsernamea() { return usernamea; }
+        public void setUsernamea(String usernamea) { this.usernamea = usernamea; }
 
-        public void setUsernamea(String usernamea) {
-            this.usernamea = usernamea;
-        }
+        public String getUsernameb() { return usernameb; }
+        public void setUsernameb(String usernameb) { this.usernameb = usernameb; }
 
-        public String getUsernameb() {
-            return usernameb;
-        }
+        public Integer getUserscorea() { return userscorea; }
+        public void setUserscorea(Integer userscorea) { this.userscorea = userscorea; }
 
-        public void setUsernameb(String usernameb) {
-            this.usernameb = usernameb;
-        }
+        public Integer getUserscoreb() { return userscoreb; }
+        public void setUserscoreb(Integer userscoreb) { this.userscoreb = userscoreb; }
 
-        public Integer getUserscorea() {
-            return userscorea;
-        }
+        public Double getExpa() { return expa; }
+        public void setExpa(Double expa) { this.expa = expa; }
 
-        public void setUserscorea(Integer userscorea) {
-            this.userscorea = userscorea;
-        }
+        public Double getExpb() { return expb; }
+        public void setExpb(Double expb) { this.expb = expb; }
 
-        public Integer getUserscoreb() {
-            return userscoreb;
-        }
+        public Double getExpaEx() { return expaEx; }
+        public void setExpaEx(Double expaEx) { this.expaEx = expaEx; }
 
-        public void setUserscoreb(Integer userscoreb) {
-            this.userscoreb = userscoreb;
-        }
+        public Double getExpbEx() { return expbEx; }
+        public void setExpbEx(Double expbEx) { this.expbEx = expbEx; }
 
-        public Double getExpa() {
-            return expa;
-        }
+        public Double getPta() { return pta; }
+        public void setPta(Double pta) { this.pta = pta; }
 
-        public void setExpa(Double expa) {
-            this.expa = expa;
-        }
+        public Double getPtb() { return ptb; }
+        public void setPtb(Double ptb) { this.ptb = ptb; }
 
-        public Double getExpb() {
-            return expb;
-        }
+        public Double getPtaEx() { return ptaEx; }
+        public void setPtaEx(Double ptaEx) { this.ptaEx = ptaEx; }
 
-        public void setExpb(Double expb) {
-            this.expb = expb;
-        }
+        public Double getPtbEx() { return ptbEx; }
+        public void setPtbEx(Double ptbEx) { this.ptbEx = ptbEx; }
 
-        public Double getExpaEx() {
-            return expaEx;
-        }
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
 
-        public void setExpaEx(Double expaEx) {
-            this.expaEx = expaEx;
-        }
+        public String getStartTime() { return startTime; }
+        public void setStartTime(String startTime) { this.startTime = startTime; }
 
-        public Double getExpbEx() {
-            return expbEx;
-        }
+        public String getEndTime() { return endTime; }
+        public void setEndTime(String endTime) { this.endTime = endTime; }
 
-        public void setExpbEx(Double expbEx) {
-            this.expbEx = expbEx;
-        }
+        public String getWinner() { return winner; }
+        public void setWinner(String winner) { this.winner = winner; }
 
-        public Double getPta() {
-            return pta;
-        }
+        public Boolean getIsfirstwin() { return isfirstwin; }
+        public void setIsfirstwin(Boolean isfirstwin) { this.isfirstwin = isfirstwin; }
 
-        public void setPta(Double pta) {
-            this.pta = pta;
-        }
+        public String getDecka() { return decka; }
+        public void setDecka(String decka) { this.decka = decka; }
 
-        public Double getPtEx() {
-            return ptaEx;
-        }
-
-        public void setPtEx(Double ptaEx) {
-            this.ptaEx = ptaEx;
-        }
-
-        public Double getPtb() {
-            return ptb;
-        }
-
-        public void setPtb(Double ptb) {
-            this.ptb = ptb;
-        }
-
-        public Double getPtbEx() {
-            return ptbEx;
-        }
-
-        public void setPtbEx(Double ptbEx) {
-            this.ptbEx = ptbEx;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public String getStartTime() {
-            return startTime;
-        }
-
-        public void setStartTime(String startTime) {
-            this.startTime = startTime;
-        }
-
-        public String getEndTime() {
-            return endTime;
-        }
-
-        public void setEndTime(String endTime) {
-            this.endTime = endTime;
-        }
-
-        public String getWinner() {
-            return winner;
-        }
-
-        public void setWinner(String winner) {
-            this.winner = winner;
-        }
-
-        public Boolean getIsfirstwin() {
-            return isfirstwin;
-        }
-
-        public void setIsfirstwin(Boolean isfirstwin) {
-            this.isfirstwin = isfirstwin;
-        }
-
-        public String getDecka() {
-            return decka;
-        }
-
-        public void setDecka(String decka) {
-            this.decka = decka;
-        }
-
-        public String getDeckb() {
-            return deckb;
-        }
-
-        public void setDeckb(String deckb) {
-            this.deckb = deckb;
-        }
+        public String getDeckb() { return deckb; }
+        public void setDeckb(String deckb) { this.deckb = deckb; }
     }
 }

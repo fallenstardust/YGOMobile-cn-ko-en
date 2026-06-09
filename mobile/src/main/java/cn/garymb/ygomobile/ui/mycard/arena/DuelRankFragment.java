@@ -49,6 +49,7 @@ import java.util.Map;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
+import cn.garymb.ygomobile.ui.mycard.adapter.MatchHistoryAdapter;
 import cn.garymb.ygomobile.ui.mycard.adapter.UserDuelRankAdapter;
 import cn.garymb.ygomobile.ui.mycard.bean.McDuelInfo;
 import cn.garymb.ygomobile.ui.mycard.bean.McHistoryResponse;
@@ -83,6 +84,10 @@ public class DuelRankFragment extends BaseFragemnt {
     private String currentHistoryUsername;
     private int currentPageSize = 20;
     private List<McHistoryResponse.HistoryItem> historyDataList;
+    private TextView tvShowAllMatches;
+    private TextView tvMatchHistoryTitle;
+    private RecyclerView rvMatchHistory;
+    private MatchHistoryAdapter matchHistoryAdapter;
 
     @Nullable
     @Override
@@ -310,6 +315,19 @@ public class DuelRankFragment extends BaseFragemnt {
         btnHistory50 = dialog.bind(R.id.btn_history_50);
         btnHistory100 = dialog.bind(R.id.btn_history_100);
         pbChartLoading = dialog.bind(R.id.pb_chart_loading);
+        tvShowAllMatches = dialog.bind(R.id.tv_show_all_matches);
+        tvMatchHistoryTitle = dialog.bind(R.id.tv_match_history_title);
+        rvMatchHistory = dialog.bind(R.id.rv_match_history);
+        rvMatchHistory.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvMatchHistory.setNestedScrollingEnabled(false);
+        matchHistoryAdapter = new MatchHistoryAdapter();
+        matchHistoryAdapter.setUsername(username);
+        rvMatchHistory.setAdapter(matchHistoryAdapter);
+
+        tvShowAllMatches.setOnClickListener(v -> {
+            chartPtHistory.highlightValues(null);
+            showMatchHistoryList(historyDataList);
+        });
 
         currentPageSize = 20;
         updatePageSizeButtonsState();
@@ -374,6 +392,7 @@ public class DuelRankFragment extends BaseFragemnt {
                             if (finalItems != null && !finalItems.isEmpty()) {
                                 historyDataList = finalItems;
                                 setupPtChart(finalItems, username);
+                                showMatchHistoryList(finalItems);
                             } else {
                                 historyDataList = null;
                                 chartPtHistory.clear();
@@ -455,12 +474,14 @@ public class DuelRankFragment extends BaseFragemnt {
             public void onValueSelected(Entry e, Highlight h) {
                 int index = (int) e.getData();
                 if (historyDataList != null && index >= 0 && index < historyDataList.size()) {
-                    showMatchDetailDialog(historyDataList.get(index));
+                    filterMatchHistory(index);
                 }
             }
 
             @Override
-            public void onNothingSelected() {}
+            public void onNothingSelected() {
+                showMatchHistoryList(historyDataList);
+            }
         });
 
         LineDataSet dataSet = new LineDataSet(entries, "PT");
@@ -541,76 +562,24 @@ public class DuelRankFragment extends BaseFragemnt {
         }
     }
 
-    private void showMatchDetailDialog(McHistoryResponse.HistoryItem item) {
-        if (getContext() == null) return;
-
-        boolean isUserA = currentHistoryUsername.equals(item.getUsernamea());
-        String userPlayer = isUserA ? item.getUsernamea() : item.getUsernameb();
-        String opponent = isUserA ? item.getUsernameb() : item.getUsernamea();
-        int userScore = isUserA ? (item.getUserscorea() != null ? item.getUserscorea() : 0)
-                : (item.getUserscoreb() != null ? item.getUserscoreb() : 0);
-        int oppScore = isUserA ? (item.getUserscoreb() != null ? item.getUserscoreb() : 0)
-                : (item.getUserscorea() != null ? item.getUserscorea() : 0);
-        Double userPtBefore = isUserA ? item.getPta() : item.getPtb();
-        Double userPtAfter = isUserA ? item.getPta() : item.getPtb();
-        Double oppPtBefore = isUserA ? item.getPtb() : item.getPta();
-        Double oppPtAfter = isUserA ? item.getPtb() : item.getPta();
-
-        int dp = 16;
-        int density = getContext().getResources().getDisplayMetrics().densityDpi;
-        int dpPx = (int) (dp * (density / 160f));
-
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(dpPx, dpPx, dpPx, dpPx);
-
-        addDialogRow(layout, "⚔ " + userPlayer + "  vs  " + opponent);
-        addDialogDivider(layout);
-        addDialogRow(layout, "比分:  " + userScore + " : " + oppScore);
-        addDialogRow(layout, "胜者:  " + (item.getWinner() != null ? item.getWinner() : "N/A"));
-        addDialogRow(layout, "时间:  " + formatDate(item.getStartTime()));
-        addDialogDivider(layout);
-        addDialogRow(layout, userPlayer + "  PT: "
-                + String.format(Locale.getDefault(), "%.1f", userPtBefore != null ? userPtBefore : 0.0)
-                + " → "
-                + String.format(Locale.getDefault(), "%.1f", userPtAfter != null ? userPtAfter : 0.0)
-                + "  (" + formatPtDelta(userPtBefore, userPtAfter) + ")");
-        addDialogRow(layout, opponent + "  PT: "
-                + String.format(Locale.getDefault(), "%.1f", oppPtBefore != null ? oppPtBefore : 0.0)
-                + " → "
-                + String.format(Locale.getDefault(), "%.1f", oppPtAfter != null ? oppPtAfter : 0.0)
-                + "  (" + formatPtDelta(oppPtBefore, oppPtAfter) + ")");
-
-        DialogPlus matchDialog = new DialogPlus(getContext());
-        matchDialog.setTitle("对局详情");
-        matchDialog.setContentView(layout);
-        matchDialog.setLeftButtonText("关闭");
-        matchDialog.setLeftButtonListener((d, which) -> d.dismiss());
-        matchDialog.show();
+    private void showMatchHistoryList(List<McHistoryResponse.HistoryItem> items) {
+        if (items == null || items.isEmpty()) {
+            matchHistoryAdapter.setNewData(null);
+            tvShowAllMatches.setVisibility(View.GONE);
+            tvMatchHistoryTitle.setText("对局记录");
+            return;
+        }
+        matchHistoryAdapter.setNewData(items);
+        tvShowAllMatches.setVisibility(View.GONE);
+        tvMatchHistoryTitle.setText("对局记录 (" + items.size() + ")");
     }
 
-    private void addDialogRow(LinearLayout parent, String text) {
-        TextView tv = new TextView(getContext());
-        tv.setText(text);
-        tv.setTextSize(13f);
-        tv.setTextColor(ContextCompat.getColor(getContext(), R.color.grayLight));
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.topMargin = 8;
-        tv.setLayoutParams(params);
-        parent.addView(tv);
-    }
-
-    private void addDialogDivider(LinearLayout parent) {
-        View divider = new View(getContext());
-        divider.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.klein_blue));
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 1);
-        params.topMargin = 16;
-        params.bottomMargin = 8;
-        divider.setLayoutParams(params);
-        parent.addView(divider);
+    private void filterMatchHistory(int index) {
+        if (historyDataList == null || index < 0 || index >= historyDataList.size()) return;
+        matchHistoryAdapter.setNewData(Collections.singletonList(historyDataList.get(index)));
+        matchHistoryAdapter.setHighlightIndex(0);
+        tvShowAllMatches.setVisibility(View.VISIBLE);
+        tvMatchHistoryTitle.setText("对局记录 (1/" + historyDataList.size() + ")");
     }
 
     private void restoreFullList() {
