@@ -432,6 +432,7 @@
     <string name="server_area">Área de Servidor:</string>
     <string name="allowed_cards">Cartas Permitidas:</string>
     <string name="s_room">\'s Room</string>
+    <string name="random">Aleatorio</string>
     <string name="mycard_ai_battle">Batalla IA MyCard</string>
     <string name="mycard_select_environment">"Entorno: "</string>
     <string name="mycard_select_ai">Seleccionar IA</string>
@@ -447,6 +448,9 @@
     <string name="no_duel_history">Sin historial de duelos</string>
     <string name="no_opponent_found">No se encontró oponente</string>
     <string name="match_failed">Fallo de emparejamiento</string>
+    <string name="sort_exp">Ordenar por EXP</string>
+    <string name="disconnect">Desconexión</string>
+    <string name="interrupt">Interrupción</string>
 </resources>
 
 

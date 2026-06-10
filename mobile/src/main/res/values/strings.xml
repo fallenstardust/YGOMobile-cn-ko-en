@@ -474,4 +474,7 @@
     <string name="no_duel_history">No duel history yet</string>
     <string name="no_opponent_found">No opponent matched</string>
     <string name="match_failed">Match failed</string>
+    <string name="sort_exp">Sort by EXP</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="interrupt">Interrupt</string>
 </resources>

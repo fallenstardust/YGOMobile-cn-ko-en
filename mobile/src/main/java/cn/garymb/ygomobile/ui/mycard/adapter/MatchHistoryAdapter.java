@@ -102,7 +102,15 @@ public class MatchHistoryAdapter extends RecyclerView.Adapter<MatchHistoryAdapte
 
             tvDate.setText(formatDate(item.getStartTime()));
             tvDuration.setText(calcDuration(item.getStartTime(), item.getEndTime()));
-            tvScore.setText(userScore + " : " + oppScore);
+            
+            if (userScore == -9) {
+                tvScore.setText("拔螺丝");
+            } else if (userScore == -5) {
+                tvScore.setText("中断");
+            } else {
+                tvScore.setText(userScore + " : " + oppScore);
+            }
+            
             tvOpponent.setText("vs " + opponent);
 
             tvPtInfo.setText("D.P: "

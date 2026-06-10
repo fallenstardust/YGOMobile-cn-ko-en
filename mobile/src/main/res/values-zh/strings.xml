@@ -453,4 +453,7 @@
     <string name="no_duel_history">暂无对局记录</string>
     <string name="no_opponent_found">未找到对手</string>
     <string name="match_failed">匹配失败</string>
+    <string name="sort_exp">按EXP排序</string>
+    <string name="disconnect">掉线</string>
+    <string name="interrupt">中断</string>
 </resources>

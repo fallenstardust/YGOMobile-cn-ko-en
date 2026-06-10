@@ -1,11 +1,10 @@
-package cn.garymb.ygomobile.ui.mycard;
+package cn.garymb.ygomobile.ui.mycard.arena;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -166,7 +165,7 @@ public class DeckWinRateFragment extends BaseFragemnt {
             cpv.setProgressColor(YGOUtil.c(colorResId));
 
             tvDeckName.setText(item.getName());
-            tvDeckMatches.setText(String.valueOf(deckTotal) + "场");
+            tvDeckMatches.setText(deckTotal + YGOUtil.s(R.string.unit_match_count));
 
             llPieCharts.addView(pieItemView);
             colorIndex++;

@@ -17,7 +17,6 @@ import com.google.android.material.tabs.TabLayout;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.mycard.DeckWinRateFragment;
 
 public class MycardDuelArenaFragment extends BaseFragemnt {
 

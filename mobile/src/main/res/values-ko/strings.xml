@@ -451,6 +451,7 @@
     <string name="server_area">서버 구역:</string>
     <string name="allowed_cards">허용 카드:</string>
     <string name="s_room">의 방</string>
+    <string name="random">랜덤</string>
     <string name="mycard_ai_battle">MyCard AI 배틀</string>
     <string name="mycard_select_environment">"환경 선택: "</string>
     <string name="mycard_select_ai">AI 선택</string>
@@ -466,4 +467,7 @@
     <string name="no_duel_history">듀얼 기록 없음</string>
     <string name="no_opponent_found">상대 매칭 실패</string>
     <string name="match_failed">매칭 오류</string>
+    <string name="sort_exp">EXP 순 정렬</string>
+    <string name="disconnect">연결 끊김</string>
+    <string name="interrupt">중단</string>
 </resources>

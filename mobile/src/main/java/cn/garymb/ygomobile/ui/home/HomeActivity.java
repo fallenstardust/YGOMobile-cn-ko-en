@@ -52,9 +52,10 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
-import cn.garymb.ygomobile.ui.mycard.DeckWinRateFragment;
+import cn.garymb.ygomobile.ui.mycard.arena.DeckWinRateFragment;
 import cn.garymb.ygomobile.ui.mycard.MyCardWebFragment;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
+import cn.garymb.ygomobile.ui.mycard.arena.MycardDuelArenaFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
@@ -90,8 +91,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public MycardFragment fragment_mycard;
     public SettingFragment fragment_settings;
     public MycardChatFragment fragment_mycard_chatting_room;
-    public DeckWinRateFragment fragment_deck_win_rate;
     public MyCardWebFragment fragment_mycard_web;
+    public MycardDuelArenaFragment fragment_duel_arena;
     long exitLasttime = 0;
     private CardLoader cardLoader;
     private ImageLoader imageLoader;
@@ -183,7 +184,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         fragment_settings = new SettingFragment();
 
         fragment_mycard_chatting_room = new MycardChatFragment();
-        fragment_deck_win_rate = new DeckWinRateFragment();
+        fragment_duel_arena = new MycardDuelArenaFragment();
         fragment_mycard_web = new MyCardWebFragment();
 
         mFragment = fragment_home;

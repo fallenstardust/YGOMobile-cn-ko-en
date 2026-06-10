@@ -34,9 +34,9 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:layout_weight="0.3"
-                android:textSize="10sp"
+                android:textSize="9sp"
                 android:textColor="@color/white"
-                android:text="按E.X.P排序"/>
+                android:text="@string/sort_exp"/>
         </LinearLayout>
 
 

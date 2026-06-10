@@ -34,6 +34,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -777,46 +778,28 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     }
 
     private void showDuelArena() {
-        MycardDuelArenaFragment duelArenaFragment = new MycardDuelArenaFragment();
+        if (homeActivity.fragment_duel_arena == null) {
+            homeActivity.fragment_duel_arena = new MycardDuelArenaFragment();
+        }
 
-        getChildFragmentManager().beginTransaction()
+        boolean isAdded = homeActivity.fragment_duel_arena.isAdded();
+
+        androidx.fragment.app.FragmentTransaction transaction = getChildFragmentManager().beginTransaction()
                 .setCustomAnimations(R.anim.push_in, R.anim.push_out,
-                        R.anim.push_in, R.anim.push_out)
-                .add(R.id.fragment_duel_arena_content, duelArenaFragment)
-                .addToBackStack(null)
-                .commit();
+                        R.anim.push_in, R.anim.push_out);
+
+        if (isAdded) {
+            transaction.show(homeActivity.fragment_duel_arena);
+        } else {
+            transaction.add(R.id.fragment_duel_arena_content, homeActivity.fragment_duel_arena);
+        }
+
+        transaction.addToBackStack(null).commit();
 
         View mainContentView = getView().findViewById(R.id.ll_main_ui);
         if (mainContentView != null) {
             mainContentView.setVisibility(View.GONE);
         }
-    }
-
-    private void showWindbotDialog(YGOServer server) {
-        if (server == null || server.getWindbot() == null || server.getWindbot().isEmpty()) {
-            YGOUtil.show(R.string.mycard_ai_empty);
-            return;
-        }
-
-        List<String> windbots = new ArrayList<>();
-        windbots.add(getString(R.string.random));
-        windbots.addAll(server.getWindbot());
-
-        String title = getString(R.string.mycard_select_ai);
-        if (!TextUtils.isEmpty(server.getName())) {
-            title += " - " + server.getName();
-        }
-
-        new AlertDialog.Builder(requireContext())
-                .setTitle(title)
-                .setItems(windbots.toArray(new String[0]), (dialog, which) -> {
-                    String windbotName = which == 0
-                            ? server.getWindbot().get(new Random().nextInt(server.getWindbot().size()))
-                            : windbots.get(which);
-                    joinMyCardWindbot(server, windbotName);
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
     }
 
     private void joinMyCardWindbot(YGOServer server, String windbotName) {
@@ -952,25 +935,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         super.onResume();
     }
 
-    private boolean hasVisibleChildFragment() {
-        if (homeActivity.fragment_mycard_chatting_room != null &&
-                homeActivity.fragment_mycard_chatting_room.isAdded() &&
-                homeActivity.fragment_mycard_chatting_room.isVisible()) {
-            return true;
-        }
-        if (homeActivity.fragment_deck_win_rate != null &&
-                homeActivity.fragment_deck_win_rate.isAdded() &&
-                homeActivity.fragment_deck_win_rate.isVisible()) {
-            return true;
-        }
-        if (homeActivity.fragment_mycard_web != null &&
-                homeActivity.fragment_mycard_web.isAdded() &&
-                homeActivity.fragment_mycard_web.isVisible()) {
-            return true;
-        }
-        return false;
-    }
-
     @Override
     public void onDestroy() {
         YGOStarter.onDestroy(getActivity());
@@ -1023,9 +987,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public boolean onBackPressed() {
-        if (homeActivity.fragment_mycard_chatting_room != null && 
-            homeActivity.fragment_mycard_chatting_room.isAdded() && 
-            homeActivity.fragment_mycard_chatting_room.isVisible()) {
+        if (homeActivity.fragment_mycard_chatting_room != null &&
+                homeActivity.fragment_mycard_chatting_room.isAdded() &&
+                homeActivity.fragment_mycard_chatting_room.isVisible()) {
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(R.anim.in_from_bottom, R.anim.out_to_top,
                             R.anim.in_from_bottom, R.anim.out_to_top)
@@ -1034,33 +998,28 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             rl_chat.setVisibility(View.VISIBLE);
             return true;
         }
-        
-        if (homeActivity.fragment_deck_win_rate != null && 
-            homeActivity.fragment_deck_win_rate.isAdded() && 
-            homeActivity.fragment_deck_win_rate.isVisible()) {
+
+        if (homeActivity.fragment_duel_arena != null &&
+                homeActivity.fragment_duel_arena.isAdded() &&
+                homeActivity.fragment_duel_arena.isVisible()) {
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                             android.R.anim.fade_in, android.R.anim.fade_out)
-                    .hide(homeActivity.fragment_deck_win_rate)
+                    .hide(homeActivity.fragment_duel_arena)
                     .commit();
             if (ll_main_ui != null) {
                 ll_main_ui.setVisibility(View.VISIBLE);
             }
-            // 恢复所有按钮状态
             updateToolBarButtonState(null);
             return true;
         }
-        
-        if (homeActivity.fragment_mycard_web != null && 
-            homeActivity.fragment_mycard_web.isAdded() && 
-            homeActivity.fragment_mycard_web.isVisible()) {
-            // 优先让WebView返回上一页
+
+        if (homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible()) {
             if (homeActivity.fragment_mycard_web.onBackPressed()) {
                 return true;
             }
-            // WebView没有上一页可返回，如果是论坛页面则弹出确认对话框
-            Bundle webArgs = homeActivity.fragment_mycard_web.getArguments();
-            String webUrl = webArgs != null ? webArgs.getString("url") : null;
 
             removeMycardWebFragment();
 
@@ -1189,13 +1148,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         } else {
             // 如果未显示，则打开用户资料页面
             // 如果 DeckWinRateFragment 正在显示，先隐藏它
-            if (homeActivity.fragment_deck_win_rate != null &&
-                    homeActivity.fragment_deck_win_rate.isAdded() &&
-                    homeActivity.fragment_deck_win_rate.isVisible()) {
+            if (homeActivity.fragment_duel_arena != null &&
+                    homeActivity.fragment_duel_arena.isAdded() &&
+                    homeActivity.fragment_duel_arena.isVisible()) {
                 getChildFragmentManager().beginTransaction()
                         .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                 android.R.anim.fade_in, android.R.anim.fade_out)
-                        .hide(homeActivity.fragment_deck_win_rate)
+                        .hide(homeActivity.fragment_duel_arena)
                         .commit();
             }
 
@@ -1244,13 +1203,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         } else {
             // 如果未显示，则打开它
             // 如果 DeckWinRateFragment 正在显示，先隐藏它
-            if (homeActivity.fragment_deck_win_rate != null &&
-                    homeActivity.fragment_deck_win_rate.isAdded() &&
-                    homeActivity.fragment_deck_win_rate.isVisible()) {
+            if (homeActivity.fragment_duel_arena != null &&
+                    homeActivity.fragment_duel_arena.isAdded() &&
+                    homeActivity.fragment_duel_arena.isVisible()) {
                 getChildFragmentManager().beginTransaction()
                         .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                 android.R.anim.fade_in, android.R.anim.fade_out)
-                        .hide(homeActivity.fragment_deck_win_rate)
+                        .hide(homeActivity.fragment_duel_arena)
                         .commit();
             }
 
@@ -1460,13 +1419,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             updateToolBarButtonState(null);
         }
 
-        if (homeActivity.fragment_deck_win_rate != null &&
-                homeActivity.fragment_deck_win_rate.isAdded() &&
-                homeActivity.fragment_deck_win_rate.isVisible()) {
+        if (homeActivity.fragment_duel_arena != null &&
+                homeActivity.fragment_duel_arena.isAdded() &&
+                homeActivity.fragment_duel_arena.isVisible()) {
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                             android.R.anim.fade_in, android.R.anim.fade_out)
-                    .hide(homeActivity.fragment_deck_win_rate)
+                    .hide(homeActivity.fragment_duel_arena)
                     .commit();
         }
 
