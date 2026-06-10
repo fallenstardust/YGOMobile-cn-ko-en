@@ -435,7 +435,6 @@
     <string name="create_room_failed">创建房间失败</string>
     <string name="no_waiting_rooms">没有等待中的房间</string>
     <string name="input_room_name">输入房间标题</string>
-    <string name="cancel">取消</string>
     <string name="random">随机</string>
     <string name="mycard_ai_battle">萌卡 AI 对战</string>
     <string name="mycard_select_environment">环境：</string>
@@ -443,4 +442,15 @@
     <string name="mycard_ai_empty">没有可用的萌卡 AI。</string>
     <string name="mycard_server_load_failed">加载萌卡环境失败：</string>
     <string name="s_room">的房间</string>
+    <string name="duel_record">对局记录</string>
+    <string name="stat_win">胜</string>
+    <string name="stat_lose">负</string>
+    <string name="stat_draw">平</string>
+    <string name="stat_all">总</string>
+    <string name="unit_minute">分钟</string>
+    <string name="unit_match_count">局</string>
+    <string name="show_all">显示全部</string>
+    <string name="no_duel_history">暂无对局记录</string>
+    <string name="no_opponent_found">未找到对手</string>
+    <string name="match_failed">匹配失败</string>
 </resources>

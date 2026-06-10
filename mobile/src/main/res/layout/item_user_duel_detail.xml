@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="@color/holo_green_bright"
+        android:visibility="gone"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -18,17 +19,8 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginVertical="8dp"
+        android:visibility="gone"
         android:background="@color/klein_blue" />
-
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_duel_data"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:tabIndicatorColor="@color/colorAccent"
-        app:tabSelectedTextColor="@color/colorAccent"
-        app:tabTextColor="@color/grayLight"
-        app:tabMode="fixed"
-        app:tabGravity="fill" />
 
     <LinearLayout
         android:id="@+id/ll_arena_data"
@@ -62,7 +54,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="竞技排名: "
+                android:text="@string/match_rank"
                 android:textColor="@color/grayLight"
                 android:textSize="14sp" />
 
@@ -190,7 +182,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="E.X.P: "
+                android:text="EXP: "
                 android:textColor="@color/grayLight"
                 android:textSize="14sp" />
 
@@ -206,7 +198,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="娱乐排名: "
+                android:text="@string/fun_rank"
                 android:textColor="@color/grayLight"
                 android:textSize="14sp" />
 
@@ -228,7 +220,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="胜: "
+                android:text="@string/win_num"
                 android:textColor="@color/grayLight"
                 android:textSize="13sp" />
 
@@ -243,7 +235,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="负: "
+                android:text="@string/lose_num"
                 android:textColor="@color/grayLight"
                 android:textSize="13sp" />
 
@@ -258,7 +250,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="平: "
+                android:text="@string/draw_num"
                 android:textColor="@color/grayLight"
                 android:textSize="13sp" />
 
@@ -273,7 +265,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="总: "
+                android:text="@string/all"
                 android:textColor="@color/grayLight"
                 android:textSize="13sp" />
 
@@ -301,7 +293,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PT变化趋势"
+            android:text="@string/match_record"
             android:textColor="@color/holo_blue_bright"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -377,7 +369,7 @@
                 android:id="@+id/tv_match_history_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="对局记录"
+                android:text="@string/duel_record"
                 android:textColor="@color/holo_blue_bright"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -393,7 +385,7 @@
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="2dp"
-                android:text="显示全部"
+                android:text="@string/show_all"
                 android:textColor="@color/holo_blue_bright"
                 android:textSize="12sp"
                 android:visibility="gone" />

@@ -436,5 +436,16 @@
     <string name="mycard_select_environment">"Ambiente: "</string>
     <string name="mycard_select_ai">Selecionar IA</string>
     <string name="mycard_ai_empty">Sin IA MyCard disponible.</string>
+    <string name="duel_record">Registro de Duelos</string>
+    <string name="stat_win">Vitória</string>
+    <string name="stat_lose">Derrota</string>
+    <string name="stat_draw">Empate</string>
+    <string name="stat_all">Todos</string>
+    <string name="unit_minute">Minutos</string>
+    <string name="unit_match_count">Partidas</string>
+    <string name="show_all">Mostrar tudo</string>
+    <string name="no_duel_history">Sem histórico de duelos</string>
+    <string name="no_opponent_found">Nenhum oponente encontrado</string>
+    <string name="match_failed">Falha no emparelhamento</string>
 </resources>
 

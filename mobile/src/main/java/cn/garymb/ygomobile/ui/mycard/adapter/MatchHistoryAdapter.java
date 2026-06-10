@@ -20,6 +20,7 @@ import java.util.TimeZone;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.bean.McHistoryResponse;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class MatchHistoryAdapter extends RecyclerView.Adapter<MatchHistoryAdapter.ViewHolder> {
 
@@ -95,7 +96,7 @@ public class MatchHistoryAdapter extends RecyclerView.Adapter<MatchHistoryAdapte
             boolean isWin = userScore > oppScore;
             boolean isDraw = userScore == oppScore;
 
-            tvResult.setText(isWin ? "胜" : isDraw ? "平" : "负");
+            tvResult.setText(isWin ? R.string.stat_win : isDraw ? R.string.stat_draw : R.string.stat_lose);
             tvResult.setTextColor(ContextCompat.getColor(itemView.getContext(),
                     isWin ? R.color.holo_green_bright : isDraw ? R.color.grayLight : R.color.holo_orange_bright));
 
@@ -152,7 +153,7 @@ public class MatchHistoryAdapter extends RecyclerView.Adapter<MatchHistoryAdapte
                 if (start == null || end == null) return "";
                 long diffMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
                 if (diffMinutes < 0) diffMinutes = 0;
-                return diffMinutes + "分钟";
+                return diffMinutes + YGOUtil.s(R.string.unit_minute);
             } catch (Exception e) {
                 return "";
             }

@@ -439,4 +439,15 @@
     <string name="mycard_select_environment">"環境を選択: "</string>
     <string name="mycard_select_ai">AIを選択</string>
     <string name="mycard_ai_empty">MyCard AIは利用できません。</string>
+    <string name="duel_record">デュエル記録</string>
+    <string name="stat_win">勝ち</string>
+    <string name="stat_lose">負け</string>
+    <string name="stat_draw">引き分け</string>
+    <string name="stat_all">全て</string>
+    <string name="unit_minute">分</string>
+    <string name="unit_match_count">回</string>
+    <string name="show_all">すべて表示</string>
+    <string name="no_duel_history">対局履歴なし</string>
+    <string name="no_opponent_found">相手が見つかりません</string>
+    <string name="match_failed">マッチング失敗</string>
 </resources>

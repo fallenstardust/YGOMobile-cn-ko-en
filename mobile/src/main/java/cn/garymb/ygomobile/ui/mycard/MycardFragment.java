@@ -195,7 +195,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                             if (diffMsg.length() > 0) {
                                 diffMsg.append("  ");
                             }
-                            diffMsg.append("E.X.P ").append(expDiff > 0 ? "+" : "").append(expDiff);
+                            diffMsg.append("EXP ").append(expDiff > 0 ? "+" : "").append(expDiff);
                         }
                         if (diffMsg.length() > 0) {
                             YGOUtil.showTextToast(Gravity.TOP, diffMsg.toString(), Toast.LENGTH_LONG);
@@ -205,7 +205,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     updateFunRank(currentMcDuelInfo);
                     updateMatchRank(currentMcDuelInfo);
                     if (currentMcDuelInfo != null) {
-                        tv_dp_title.setText("D.P: " + currentMcDuelInfo.getDp() + "\nE.X.P: " + currentMcDuelInfo.getExp());
+                        tv_dp_title.setText("D.P: " + currentMcDuelInfo.getDp() + "\nEXP: " + currentMcDuelInfo.getExp());
                     }
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
@@ -214,7 +214,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     Log.e("MCFragment", "查询决斗信息失败: " + msg.obj);
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
-                    YGOUtil.show("战绩加载失败: " + msg.obj.toString());
+                    YGOUtil.show(YGOUtil.s(R.string.loading_failed) +": " + msg.obj.toString());
                     break;
                 case MC_MATCH_ATHLETIC_OK:
                 case MC_MATCH_ENTERTAIN_OK:
@@ -241,7 +241,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     if (srl_mcNews != null) {
                         srl_mcNews.setRefreshing(false);
                     }
-                    YGOUtil.show("资讯加载失败: " + msg.obj.toString());
+                    YGOUtil.show(YGOUtil.s(R.string.loading_failed) + ": " + msg.obj.toString());
                     break;
             }
         }
@@ -578,7 +578,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private void updateTitle() {
         if (getActivity() != null && duelRoomBQAdapter != null) {
             int size = duelRoomBQAdapter.getData().size();
-            String title = "观战（" + size + "）";
+            String title = YGOUtil.s(R.string.watch_duel) + "（" + size + "）";
 
             if (getActivity() instanceof androidx.appcompat.app.AppCompatActivity) {
                 androidx.appcompat.app.AppCompatActivity appCompatActivity = (androidx.appcompat.app.AppCompatActivity) getActivity();
@@ -1322,69 +1322,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         }
     }
 
-    private void switchDeckWinRateFragment() {
-        if (homeActivity == null) {
-            return;
-        }
-
-        // 判断 DeckWinRateFragment 是否已经显示
-        boolean isShowing = homeActivity.fragment_deck_win_rate != null &&
-                homeActivity.fragment_deck_win_rate.isAdded() &&
-                homeActivity.fragment_deck_win_rate.isVisible();
-
-        if (isShowing) {
-            // 如果正在显示，则隐藏它
-            getChildFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
-                    .hide(homeActivity.fragment_deck_win_rate)
-                    .commit();
-            
-            if (ll_main_ui != null) {
-                ll_main_ui.setVisibility(View.VISIBLE);
-            }
-            
-            // 恢复所有按钮状态
-            updateToolBarButtonState(null);
-        } else {
-            // 如果未显示，则打开它
-            
-            // 如果 MyCardWebFragment 正在显示，先隐藏它
-            if (homeActivity.fragment_mycard_web != null &&
-                    homeActivity.fragment_mycard_web.isAdded() &&
-                    homeActivity.fragment_mycard_web.isVisible()) {
-                getChildFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
-                        .hide(homeActivity.fragment_mycard_web)
-                        .commit();
-                Log.d("MycardFragment", "隐藏 MyCardWebFragment");
-            }
-
-            if (homeActivity.fragment_deck_win_rate == null) {
-                homeActivity.fragment_deck_win_rate = new DeckWinRateFragment();
-            }
-
-            if (ll_main_ui != null) {
-                ll_main_ui.setVisibility(View.GONE);
-            }
-
-            if (!homeActivity.fragment_deck_win_rate.isAdded()) {
-                getChildFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
-                        .add(R.id.fragment_deck_win_rate_content, homeActivity.fragment_deck_win_rate)
-                        .commit();
-            } else {
-                getChildFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
-                        .show(homeActivity.fragment_deck_win_rate)
-                        .commit();
-            }
-        }
-    }
-
     /**
      * 更新顶部工具栏按钮状态
      * 当打开某个按钮对应的页面时，该按钮显示为关闭状态，其他按钮恢复为原始状态
@@ -1844,7 +1781,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         if (activity != null) {
                             activity.runOnUiThread(() -> {
                                 if (!finalValid) {
-                                    YGOUtil.show("未知房间，请更新软件后进入");
+                                    YGOUtil.show(R.string.unknown_room);
                                     return;
                                 }
 

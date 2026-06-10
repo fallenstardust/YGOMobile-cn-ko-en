@@ -3,19 +3,15 @@ package cn.garymb.ygomobile.ui.mycard.arena;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,7 +29,6 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
-import com.google.android.material.tabs.TabLayout;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.king.view.circleprogressview.CircleProgressView;
@@ -177,9 +172,9 @@ public class DuelRankFragment extends BaseFragemnt {
 
     private void performSearch() {
         String keyword = etSearchUsername.getText().toString().trim();
-        
+
         if (TextUtils.isEmpty(keyword)) {
-            Toast.makeText(getContext(), "请输入搜索关键词", Toast.LENGTH_SHORT).show();
+            YGOUtil.show(R.string.input_user_name);
             restoreFullList();
             return;
         }
@@ -209,7 +204,7 @@ public class DuelRankFragment extends BaseFragemnt {
             return;
         }
         lastSearchTime = currentTime;
-        
+
         tvEmpty.setVisibility(View.GONE);
         pbLoading.setVisibility(View.VISIBLE);
 
@@ -223,7 +218,7 @@ public class DuelRankFragment extends BaseFragemnt {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         pbLoading.setVisibility(View.GONE);
-                        Toast.makeText(getContext(), "搜索失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        YGOUtil.show(YGOUtil.s(R.string.loading_failed) + ": " + e.getMessage());
                     });
                 }
             }
@@ -235,7 +230,7 @@ public class DuelRankFragment extends BaseFragemnt {
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             pbLoading.setVisibility(View.GONE);
-                            Toast.makeText(getContext(), "请求失败: " + response.code(), Toast.LENGTH_SHORT).show();
+                            YGOUtil.show(YGOUtil.s(R.string.loading_failed) + ": " + response.code());
                         });
                     }
                     return;
@@ -246,7 +241,7 @@ public class DuelRankFragment extends BaseFragemnt {
 
                 try {
                     McDuelInfo duelInfo = new Gson().fromJson(json, McDuelInfo.class);
-                    
+
                     if (duelInfo != null && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             pbLoading.setVisibility(View.GONE);
@@ -256,7 +251,7 @@ public class DuelRankFragment extends BaseFragemnt {
                         if (getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
                                 pbLoading.setVisibility(View.GONE);
-                                Toast.makeText(getContext(), "未找到该用户", Toast.LENGTH_SHORT).show();
+                                YGOUtil.show(YGOUtil.s(R.string.loading_failed));
                             });
                         }
                     }
@@ -265,7 +260,7 @@ public class DuelRankFragment extends BaseFragemnt {
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             pbLoading.setVisibility(View.GONE);
-                            Toast.makeText(getContext(), "解析数据失败", Toast.LENGTH_SHORT).show();
+                            YGOUtil.show(R.string.loading_failed);
                         });
                     }
                 }
@@ -280,36 +275,8 @@ public class DuelRankFragment extends BaseFragemnt {
 
         isDialogShowing = true;
         DialogPlus dialog = new DialogPlus(getContext());
-        dialog.setTitle("玩家详情");
+        dialog.setTitle(username);
         dialog.setContentView(R.layout.item_user_duel_detail);
-
-        TabLayout tabDuelData = dialog.bind(R.id.tab_duel_data);
-        LinearLayout llArenaData = dialog.bind(R.id.ll_arena_data);
-        LinearLayout llEntertainData = dialog.bind(R.id.ll_entertain_data);
-        LinearLayout llChartSection = dialog.bind(R.id.ll_chart_section);
-
-        tabDuelData.addTab(tabDuelData.newTab().setText("竞技场"));
-        tabDuelData.addTab(tabDuelData.newTab().setText("娱乐场"));
-        tabDuelData.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                if (tab.getPosition() == 0) {
-                    llArenaData.setVisibility(View.VISIBLE);
-                    llEntertainData.setVisibility(View.GONE);
-                    llChartSection.setVisibility(View.VISIBLE);
-                } else {
-                    llArenaData.setVisibility(View.GONE);
-                    llEntertainData.setVisibility(View.VISIBLE);
-                    llChartSection.setVisibility(View.GONE);
-                }
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
-        });
 
         TextView tvUsername = dialog.bind(R.id.tv_detail_username);
         TextView tvPt = dialog.bind(R.id.tv_detail_pt);
@@ -335,20 +302,25 @@ public class DuelRankFragment extends BaseFragemnt {
         tvAthleticLose.setText(String.valueOf(duelInfo.getMatchLose() != null ? duelInfo.getMatchLose() : 0));
         tvAthleticDraw.setText(String.valueOf(duelInfo.getMatchDraw() != null ? duelInfo.getMatchDraw() : 0));
         tvAthleticAll.setText(String.valueOf(duelInfo.getMatchAll() != null ? duelInfo.getMatchAll() : 0));
-        
+
         float winRatio = duelInfo.getMatchWinRatio();
         cpvAthleticWlRatio.setProgress((int) winRatio);
         cpvAthleticWlRatio.setLabelText(String.format("%.2f%%", winRatio));
-        
+
         tvEntertainWin.setText(String.valueOf(duelInfo.getFunWin() != null ? duelInfo.getFunWin() : 0));
         tvEntertainLose.setText(String.valueOf(duelInfo.getFunLose() != null ? duelInfo.getFunLose() : 0));
         tvEntertainDraw.setText(String.valueOf(duelInfo.getFunDraw() != null ? duelInfo.getFunDraw() : 0));
         tvEntertainAll.setText(String.valueOf(duelInfo.getFunAll() != null ? duelInfo.getFunAll() : 0));
 
         chartPtHistory = dialog.bind(R.id.chart_pt_history);
+
         btnHistory20 = dialog.bind(R.id.btn_history_20);
+        btnHistory20.setText("20" + YGOUtil.s(R.string.unit_match_count));
         btnHistory50 = dialog.bind(R.id.btn_history_50);
+        btnHistory50.setText("50" + YGOUtil.s(R.string.unit_match_count));
         btnHistory100 = dialog.bind(R.id.btn_history_100);
+        btnHistory100.setText("100" + YGOUtil.s(R.string.unit_match_count));
+
         pbChartLoading = dialog.bind(R.id.pb_chart_loading);
         tvShowAllMatches = dialog.bind(R.id.tv_show_all_matches);
         tvMatchHistoryTitle = dialog.bind(R.id.tv_match_history_title);
@@ -372,7 +344,7 @@ public class DuelRankFragment extends BaseFragemnt {
         dialog.setOnDismissListener(dialogInterface -> {
             isDialogShowing = false;
         });
-        
+
         dialog.show();
     }
 
@@ -395,7 +367,7 @@ public class DuelRankFragment extends BaseFragemnt {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         pbChartLoading.setVisibility(View.GONE);
-                        Toast.makeText(getContext(), "获取历史数据失败", Toast.LENGTH_SHORT).show();
+                        YGOUtil.show(YGOUtil.s(R.string.loading_failed) + ": " + e);
                     });
                 }
             }
@@ -431,7 +403,7 @@ public class DuelRankFragment extends BaseFragemnt {
                             } else {
                                 historyDataList = null;
                                 chartPtHistory.clear();
-                                chartPtHistory.setNoDataText("暂无对局历史");
+                                chartPtHistory.setNoDataText(YGOUtil.s(R.string.no_duel_history));
                                 chartPtHistory.invalidate();
                             }
                         });
@@ -448,7 +420,7 @@ public class DuelRankFragment extends BaseFragemnt {
 
     private void setupPtChart(List<McHistoryResponse.HistoryItem> items, String username) {
         chartPtHistory.getDescription().setEnabled(false);
-        chartPtHistory.setNoDataText("加载中...");
+        chartPtHistory.setNoDataText(YGOUtil.s(R.string.loading));
 
         ArrayList<Entry> entries = new ArrayList<>();
         ArrayList<String> dateLabels = new ArrayList<>();
@@ -469,7 +441,7 @@ public class DuelRankFragment extends BaseFragemnt {
 
         if (entries.isEmpty()) {
             chartPtHistory.clear();
-            chartPtHistory.setNoDataText("暂无PT数据");
+            chartPtHistory.setNoDataText(YGOUtil.s(R.string.no_duel_history));
             chartPtHistory.invalidate();
             return;
         }
@@ -608,12 +580,12 @@ public class DuelRankFragment extends BaseFragemnt {
         if (items == null || items.isEmpty()) {
             matchHistoryAdapter.setNewData(null);
             tvShowAllMatches.setVisibility(View.GONE);
-            tvMatchHistoryTitle.setText("对局记录");
+            tvMatchHistoryTitle.setText(R.string.duel_record);
             return;
         }
         matchHistoryAdapter.setNewData(items);
         tvShowAllMatches.setVisibility(View.GONE);
-        tvMatchHistoryTitle.setText("对局记录 (" + items.size() + ")");
+        tvMatchHistoryTitle.setText(YGOUtil.s(R.string.duel_record) + "(" + items.size() + ")");
     }
 
     private void filterMatchHistory(int index) {
@@ -621,7 +593,7 @@ public class DuelRankFragment extends BaseFragemnt {
         matchHistoryAdapter.setNewData(Collections.singletonList(historyDataList.get(index)));
         matchHistoryAdapter.setHighlightIndex(0);
         tvShowAllMatches.setVisibility(View.VISIBLE);
-        tvMatchHistoryTitle.setText("对局记录 (1/" + historyDataList.size() + ")");
+        tvMatchHistoryTitle.setText(YGOUtil.s(R.string.duel_record) + "(1/" + historyDataList.size() + ")");
     }
 
     private void restoreFullList() {
@@ -643,7 +615,7 @@ public class DuelRankFragment extends BaseFragemnt {
                     getActivity().runOnUiThread(() -> {
                         srlRefresh.setRefreshing(false);
                         tvEmpty.setVisibility(View.VISIBLE);
-                        tvEmpty.setText("加载失败: " + e.getMessage());
+                        tvEmpty.setText(YGOUtil.s(R.string.loading_failed) + ": " + e.getMessage());
                     });
                 }
             }
@@ -656,7 +628,7 @@ public class DuelRankFragment extends BaseFragemnt {
                         getActivity().runOnUiThread(() -> {
                             srlRefresh.setRefreshing(false);
                             tvEmpty.setVisibility(View.VISIBLE);
-                            tvEmpty.setText("请求失败: " + response.code());
+                            tvEmpty.setText(YGOUtil.s(R.string.loading_failed) + ": " + response.code());
                         });
                     }
                     return;
@@ -668,7 +640,8 @@ public class DuelRankFragment extends BaseFragemnt {
                 try {
                     List<UserDuelRank> rankList;
 
-                    Type listType = new TypeToken<List<UserDuelRank>>() {}.getType();
+                    Type listType = new TypeToken<List<UserDuelRank>>() {
+                    }.getType();
                     rankList = new Gson().fromJson(json, listType);
                     Log.d(TAG, "直接解析为数组，数据条数: " + (rankList != null ? rankList.size() : "null"));
 
@@ -690,7 +663,7 @@ public class DuelRankFragment extends BaseFragemnt {
                                 tvEmpty.setVisibility(View.GONE);
                             } else {
                                 tvEmpty.setVisibility(View.VISIBLE);
-                                tvEmpty.setText("暂无数据");
+                                tvEmpty.setText(R.string.loading_failed);
                             }
                         });
                     }
@@ -701,7 +674,7 @@ public class DuelRankFragment extends BaseFragemnt {
                         getActivity().runOnUiThread(() -> {
                             srlRefresh.setRefreshing(false);
                             tvEmpty.setVisibility(View.VISIBLE);
-                            tvEmpty.setText("解析数据失败: " + e.getMessage());
+                            tvEmpty.setText(YGOUtil.s(R.string.loading_failed) + e.getMessage());
                         });
                     }
                 }

@@ -463,5 +463,15 @@
     <string name="server_area">Server Area:</string>
     <string name="allowed_cards">Allowed Cards:</string>
     <string name="s_room">\'s Room</string>
-
+    <string name="duel_record">Duel Record</string>
+    <string name="stat_win">Win</string>
+    <string name="stat_lose">Lose</string>
+    <string name="stat_draw">Draw</string>
+    <string name="stat_all">All</string>
+    <string name="unit_minute">Minutes</string>
+    <string name="unit_match_count">Matches</string>
+    <string name="show_all">Show All</string>
+    <string name="no_duel_history">No duel history yet</string>
+    <string name="no_opponent_found">No opponent matched</string>
+    <string name="match_failed">Match failed</string>
 </resources>

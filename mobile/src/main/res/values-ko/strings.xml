@@ -455,4 +455,15 @@
     <string name="mycard_select_environment">"환경 선택: "</string>
     <string name="mycard_select_ai">AI 선택</string>
     <string name="mycard_ai_empty">MyCard AI를 사용할 수 없습니다.</string>
+    <string name="duel_record">듀얼 기록</string>
+    <string name="stat_win">승</string>
+    <string name="stat_lose">패</string>
+    <string name="stat_draw">무승부</string>
+    <string name="stat_all">전체</string>
+    <string name="unit_minute">분</string>
+    <string name="unit_match_count">회</string>
+    <string name="show_all">전체 보기</string>
+    <string name="no_duel_history">듀얼 기록 없음</string>
+    <string name="no_opponent_found">상대 매칭 실패</string>
+    <string name="match_failed">매칭 오류</string>
 </resources>
