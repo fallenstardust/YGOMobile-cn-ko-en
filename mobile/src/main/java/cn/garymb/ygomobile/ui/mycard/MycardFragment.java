@@ -62,6 +62,7 @@ import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.adapter.McNewsAdapter;
+import cn.garymb.ygomobile.ui.mycard.adapter.UserDuelDetailAdapter;
 import cn.garymb.ygomobile.ui.mycard.arena.MycardDuelArenaFragment;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
@@ -122,6 +123,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     private CircleProgressView funCpvRank, matchCpvRank;
     private McDuelInfo currentMcDuelInfo;
+    private LinearLayout ll_user_data;
+    private UserDuelDetailAdapter duelDetailAdapter;
+
     private SwipeRefreshLayout srl_update;
     private RecyclerView rv_list;
     private WatchDuelManagement duelManagement;
@@ -449,6 +453,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         ll_athletic = view.findViewById(R.id.ll_athletic);
         ll_entertain = view.findViewById(R.id.ll_entertain);
 
+        ll_user_data = view.findViewById(R.id.ll_user_data);
+        ll_user_data.setOnClickListener(v -> {
+            showUserDuelDetailDialog();
+        });
+
         ll_athletic.setOnClickListener(this);
         ll_entertain.setOnClickListener(this);
         iv_refresh.setOnClickListener(v -> {
@@ -587,6 +596,29 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 }
             }
         }
+    }
+
+    private void showUserDuelDetailDialog() {
+        if (currentMcDuelInfo == null || mMcUser == null) {
+            YGOUtil.showTextToast(R.string.loading);
+            return;
+        }
+
+        String username = mMcUser.getUsername();
+        if (TextUtils.isEmpty(username)) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+
+        DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle(username);
+        dialog.setContentView(R.layout.item_user_duel_detail);
+
+        duelDetailAdapter = new UserDuelDetailAdapter(getContext(), dialog.getContentView());
+        duelDetailAdapter.setUsername(username);
+        duelDetailAdapter.bindDuelInfo(currentMcDuelInfo, username);
+
+        dialog.show();
     }
 
     private void queryDuelInfo() {
