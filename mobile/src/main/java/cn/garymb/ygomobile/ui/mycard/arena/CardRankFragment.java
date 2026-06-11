@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.mycard.arena;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -26,13 +27,22 @@ import java.util.Map;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.activities.BaseActivity;
+import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
+import cn.garymb.ygomobile.ui.cards.CardDetail;
+import cn.garymb.ygomobile.ui.cards.CardListProvider;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.adapter.CardRankAdapter;
 import cn.garymb.ygomobile.ui.mycard.bean.CardTypeAnalytics;
+import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.DataManager;
+import ocgcore.data.Card;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -52,6 +62,9 @@ public class CardRankFragment extends BaseFragemnt {
     private Button btnFilterEx;
     private Button btnFilterSide;
     private CardRankAdapter adapter;
+    private CardDetail mCardDetail;
+    private DialogPlus mDialog;
+    private ImageLoader imageLoader;
 
     private String currentTimeRange = "day";
     private String currentDataSource = "mycard-athletic";
@@ -97,7 +110,15 @@ public class CardRankFragment extends BaseFragemnt {
         srlRefresh.setOnRefreshListener(() -> loadData());
 
         rvCardList.setLayoutManager(new LinearLayoutManager(getContext()));
+        imageLoader = new ImageLoader();
         adapter = new CardRankAdapter();
+        adapter.setImageLoader(imageLoader);
+        adapter.setOnCardClickListener(new CardRankAdapter.OnCardClickListener() {
+            @Override
+            public void onCardClick(CardTypeAnalytics.CardItem cardItem) {
+                showCardDetail(cardItem);
+            }
+        });
         rvCardList.setAdapter(adapter);
     }
 
@@ -108,11 +129,11 @@ public class CardRankFragment extends BaseFragemnt {
         }
 
         SimpleSpinnerAdapter timeRangeAdapter = new SimpleSpinnerAdapter(getContext());
-        timeRangeAdapter.setColor(getResources().getColor(R.color.item_title));
+        timeRangeAdapter.setColor(getResources().getColor(R.color.white));
         timeRangeAdapter.setTextSize(14f);
         timeRangeAdapter.set(timeRangeItems);
         spTimeRange.setAdapter(timeRangeAdapter);
-        spTimeRange.setPopupBackgroundResource(R.color.colorPrimaryDark);
+        spTimeRange.setPopupBackgroundResource(R.color.colorNavy);
         spTimeRange.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -131,11 +152,11 @@ public class CardRankFragment extends BaseFragemnt {
         }
 
         SimpleSpinnerAdapter dataSourceAdapter = new SimpleSpinnerAdapter(getContext());
-        dataSourceAdapter.setColor(getResources().getColor(R.color.item_title));
+        dataSourceAdapter.setColor(getResources().getColor(R.color.white));
         dataSourceAdapter.setTextSize(14f);
         dataSourceAdapter.set(dataSourceItems);
         spDataSource.setAdapter(dataSourceAdapter);
-        spDataSource.setPopupBackgroundResource(R.color.colorPrimaryDark);
+        spDataSource.setPopupBackgroundResource(R.color.colorNavy);
         spDataSource.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -332,8 +353,99 @@ public class CardRankFragment extends BaseFragemnt {
     public void onBackHome() {
     }
 
+    private void showCardDetail(CardTypeAnalytics.CardItem cardItem) {
+        if (cardItem == null || getActivity() == null) return;
+        
+        Card cardInfo = DataManager.get().getCardManager().getCard(cardItem.getId());
+        if (cardInfo == null) return;
+
+        if (mCardDetail == null) {
+            mCardDetail = new CardDetail((BaseActivity)getActivity(), imageLoader, DataManager.get().getStringManager());
+            mCardDetail.setOnCardClickListener(new CardDetail.OnDeckManagerCardClickListener() {
+                @Override
+                public void onClose() {
+                    if (mDialog != null && mDialog.isShowing()) {
+                        mDialog.dismiss();
+                    }
+                }
+
+                @Override
+                public void onOpenUrl(Card cardInfo) {
+                    WebActivity.openFAQ(getContext(), cardInfo);
+                }
+
+                @Override
+                public void onSearchKeyWord(String keyword) {
+
+                }
+
+                @Override
+                public void onShowCardList(List<Card> cardList, boolean sort) {
+
+                }
+
+                @Override
+                public void onImageUpdate(Card cardInfo) {
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+
+                @Override
+                public void onAddMainCard(Card cardInfo) {
+                }
+
+                @Override
+                public void onAddSideCard(Card cardInfo) {
+                }
+            });
+        }
+
+        if (mDialog == null) {
+            mDialog = new DialogPlus(getContext());
+            mDialog.setView(mCardDetail.getView());
+            mDialog.hideButton(true);
+            mDialog.hideTitleBar();
+            mDialog.setOnGestureListener(new AOnGestureListener() {
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                    if (isLeftFling(e1, e2, velocityX, velocityY)) {
+                        mCardDetail.onNextCard();
+                        return true;
+                    } else if (isRightFling(e1, e2, velocityX, velocityY)) {
+                        mCardDetail.onPreCard();
+                        return true;
+                    }
+                    return super.onFling(e1, e2, velocityX, velocityY);
+                }
+            });
+        }
+
+        if (!mDialog.isShowing()) {
+            mDialog.show();
+        }
+
+        CardListProvider provider = new CardListProvider() {
+            @Override
+            public int getCardsCount() {
+                return 0;
+            }
+
+            @Override
+            public Card getCard(int position) {
+                return null;
+            }
+        };
+
+        mCardDetail.bind(cardInfo, 0, provider);
+    }
+
     @Override
     public boolean onBackPressed() {
+        if (mDialog != null && mDialog.isShowing()) {
+            mDialog.dismiss();
+            return true;
+        }
         return false;
     }
 }
