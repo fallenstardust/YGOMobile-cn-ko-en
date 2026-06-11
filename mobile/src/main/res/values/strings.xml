@@ -477,4 +477,18 @@
     <string name="sort_exp">Sort by EXP</string>
     <string name="disconnect">Disconnect</string>
     <string name="interrupt">Interrupt</string>
+    <string name="time_today">Today</string>
+    <string name="time_7day">Last 7 Days</string>
+    <string name="time_15day">Last 15 Days</string>
+    <string name="time_1month">Last Month</string>
+    <string name="current_banlist">Current Banlist</string>
+    <string name="tag_mycard_athletic">mycard-athletic</string>
+    <string name="tag_mycard_entertain">mycard-entertain</string>
+    <string name="tag_233_athletic">233-athletic</string>
+    <string name="tag_233_entertain">233-entertain</string>
+    <string name="cat_monster">Monster</string>
+    <string name="cat_spell">Spell</string>
+    <string name="cat_trap">Trap</string>
+    <string name="cat_extra">Extra</string>
+    <string name="cat_side">Side</string>
 </resources>

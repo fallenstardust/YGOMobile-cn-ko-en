@@ -26,9 +26,12 @@ import java.util.Map;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.adapter.CardRankAdapter;
 import cn.garymb.ygomobile.ui.mycard.bean.CardTypeAnalytics;
+import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -57,10 +60,10 @@ public class CardRankFragment extends BaseFragemnt {
     private List<CardTypeAnalytics.CardItem> filteredCardList = new ArrayList<>();
 
     private static final String[] TIME_RANGE_VALUES = {"day", "week", "halfmonth", "month", "season"};
-    private static final String[] TIME_RANGE_LABELS = {"今日", "最近7天", "最近15天", "最近1月", "当前禁卡表"};
-    
+    private static final String[] TIME_RANGE_LABELS = {YGOUtil.s(R.string.time_today), YGOUtil.s(R.string.time_7day), YGOUtil.s(R.string.time_15day), YGOUtil.s(R.string.time_1month), YGOUtil.s(R.string.current_banlist)};
+
     private static final String[] DATA_SOURCE_VALUES = {"mycard-athletic", "mycard-entertain", "233-athletic", "233-entertain"};
-    private static final String[] DATA_SOURCE_LABELS = {"萌卡竞技", "萌卡娱乐", "233服竞技", "233服娱乐"};
+    private static final String[] DATA_SOURCE_LABELS = {YGOUtil.s(R.string.tag_mycard_athletic), YGOUtil.s(R.string.tag_mycard_entertain), YGOUtil.s(R.string.tag_233_athletic), YGOUtil.s(R.string.tag_233_entertain)};
 
     @Nullable
     @Override
@@ -79,8 +82,10 @@ public class CardRankFragment extends BaseFragemnt {
         rvCardList = view.findViewById(R.id.rv_card_list);
         tvEmpty = view.findViewById(R.id.tv_empty);
         pbLoading = view.findViewById(R.id.pb_loading);
+
         spTimeRange = view.findViewById(R.id.sp_time_range);
         spDataSource = view.findViewById(R.id.sp_data_source);
+
         btnFilterAll = view.findViewById(R.id.btn_filter_all);
         btnFilterMonster = view.findViewById(R.id.btn_filter_monster);
         btnFilterSpell = view.findViewById(R.id.btn_filter_spell);
@@ -97,13 +102,17 @@ public class CardRankFragment extends BaseFragemnt {
     }
 
     private void setupSpinners() {
-        android.widget.ArrayAdapter<String> timeRangeAdapter = new android.widget.ArrayAdapter<>(
-                getContext(),
-                R.layout.support_simple_spinner_dropdown_item,
-                TIME_RANGE_LABELS
-        );
-        timeRangeAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        List<SimpleSpinnerItem> timeRangeItems = new ArrayList<>();
+        for (int i = 0; i < TIME_RANGE_VALUES.length; i++) {
+            timeRangeItems.add(new SimpleSpinnerItem(i, TIME_RANGE_LABELS[i]));
+        }
+
+        SimpleSpinnerAdapter timeRangeAdapter = new SimpleSpinnerAdapter(getContext());
+        timeRangeAdapter.setColor(getResources().getColor(R.color.item_title));
+        timeRangeAdapter.setTextSize(14f);
+        timeRangeAdapter.set(timeRangeItems);
         spTimeRange.setAdapter(timeRangeAdapter);
+        spTimeRange.setPopupBackgroundResource(R.color.colorPrimaryDark);
         spTimeRange.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -116,13 +125,17 @@ public class CardRankFragment extends BaseFragemnt {
             }
         });
 
-        android.widget.ArrayAdapter<String> dataSourceAdapter = new android.widget.ArrayAdapter<>(
-                getContext(),
-                R.layout.support_simple_spinner_dropdown_item,
-                DATA_SOURCE_LABELS
-        );
-        dataSourceAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        List<SimpleSpinnerItem> dataSourceItems = new ArrayList<>();
+        for (int i = 0; i < DATA_SOURCE_VALUES.length; i++) {
+            dataSourceItems.add(new SimpleSpinnerItem(i, DATA_SOURCE_LABELS[i]));
+        }
+
+        SimpleSpinnerAdapter dataSourceAdapter = new SimpleSpinnerAdapter(getContext());
+        dataSourceAdapter.setColor(getResources().getColor(R.color.item_title));
+        dataSourceAdapter.setTextSize(14f);
+        dataSourceAdapter.set(dataSourceItems);
         spDataSource.setAdapter(dataSourceAdapter);
+        spDataSource.setPopupBackgroundResource(R.color.colorPrimaryDark);
         spDataSource.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -141,27 +154,33 @@ public class CardRankFragment extends BaseFragemnt {
             @Override
             public void onClick(View v) {
                 resetFilterButtons();
-                
+
                 if (v == btnFilterAll) {
                     currentFilter = "all";
                     btnFilterAll.setSelected(true);
+                    btnFilterAll.setBackground(getResources().getDrawable(R.drawable.radius, null));
                 } else if (v == btnFilterMonster) {
                     currentFilter = "monster";
                     btnFilterMonster.setSelected(true);
+                    btnFilterMonster.setBackground(getResources().getDrawable(R.drawable.radius, null));
                 } else if (v == btnFilterSpell) {
                     currentFilter = "spell";
                     btnFilterSpell.setSelected(true);
+                    btnFilterSpell.setBackground(getResources().getDrawable(R.drawable.radius, null));
                 } else if (v == btnFilterTrap) {
                     currentFilter = "trap";
                     btnFilterTrap.setSelected(true);
+                    btnFilterTrap.setBackground(getResources().getDrawable(R.drawable.radius, null));
                 } else if (v == btnFilterEx) {
                     currentFilter = "ex";
                     btnFilterEx.setSelected(true);
+                    btnFilterEx.setBackground(getResources().getDrawable(R.drawable.radius, null));
                 } else if (v == btnFilterSide) {
                     currentFilter = "side";
                     btnFilterSide.setSelected(true);
+                    btnFilterSide.setBackground(getResources().getDrawable(R.drawable.radius, null));
                 }
-                
+
                 applyFilter();
             }
         };
@@ -174,20 +193,32 @@ public class CardRankFragment extends BaseFragemnt {
         btnFilterSide.setOnClickListener(filterClickListener);
 
         btnFilterAll.setSelected(true);
+        btnFilterAll.setBackground(getResources().getDrawable(R.drawable.radius, null));
     }
 
     private void resetFilterButtons() {
         btnFilterAll.setSelected(false);
+        btnFilterAll.setBackground(getResources().getDrawable(R.drawable.button_radius_black_transparents, null));
+
         btnFilterMonster.setSelected(false);
+        btnFilterMonster.setBackground(getResources().getDrawable(R.drawable.button_radius_black_transparents, null));
+
         btnFilterSpell.setSelected(false);
+        btnFilterSpell.setBackground(getResources().getDrawable(R.drawable.button_radius_black_transparents, null));
+
         btnFilterTrap.setSelected(false);
+        btnFilterTrap.setBackground(getResources().getDrawable(R.drawable.button_radius_black_transparents, null));
+
         btnFilterEx.setSelected(false);
+        btnFilterEx.setBackground(getResources().getDrawable(R.drawable.button_radius_black_transparents, null));
+
         btnFilterSide.setSelected(false);
+        btnFilterSide.setBackground(getResources().getDrawable(R.drawable.button_radius_black_transparents, null));
     }
 
     private void applyFilter() {
         filteredCardList.clear();
-        
+
         if ("all".equals(currentFilter)) {
             filteredCardList.addAll(allCardList);
         } else {
@@ -197,9 +228,9 @@ public class CardRankFragment extends BaseFragemnt {
                 }
             }
         }
-        
+
         adapter.setData(filteredCardList);
-        
+
         if (filteredCardList.isEmpty()) {
             tvEmpty.setVisibility(View.VISIBLE);
             tvEmpty.setText("暂无数据");
@@ -217,7 +248,7 @@ public class CardRankFragment extends BaseFragemnt {
         params.put("type", currentTimeRange);
         params.put("source", currentDataSource);
 
-        cn.garymb.ygomobile.utils.OkhttpUtil.get(MyCard.URL_CARD_TYPE_ANALYTICS, params, new Callback() {
+        OkhttpUtil.get(MyCard.URL_CARD_TYPE_ANALYTICS, params, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 if (getActivity() != null) {
@@ -245,10 +276,10 @@ public class CardRankFragment extends BaseFragemnt {
                 }
 
                 String json = response.body().string();
-                
+
                 try {
                     CardTypeAnalytics analytics = new Gson().fromJson(json, CardTypeAnalytics.class);
-                    
+
                     List<CardTypeAnalytics.CardItem> mergedList = new ArrayList<>();
                     if (analytics != null) {
                         if (analytics.getMonster() != null) mergedList.addAll(analytics.getMonster());
@@ -262,7 +293,7 @@ public class CardRankFragment extends BaseFragemnt {
                         getActivity().runOnUiThread(() -> {
                             srlRefresh.setRefreshing(false);
                             pbLoading.setVisibility(View.GONE);
-                            
+
                             allCardList = mergedList;
                             applyFilter();
                         });

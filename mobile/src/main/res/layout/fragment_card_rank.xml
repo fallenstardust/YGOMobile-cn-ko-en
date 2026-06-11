@@ -7,97 +7,92 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/button_radius_black_transparents"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="@drawable/button_radius_black_transparents">
+        android:padding="8dp">
 
         <Spinner
             android:id="@+id/sp_time_range"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp" />
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1" />
 
         <Spinner
             android:id="@+id/sp_data_source"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp" />
+            android:layout_marginStart="4dp"
+            android:layout_weight="1" />
     </LinearLayout>
 
-    <HorizontalScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:background="@color/white">
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:weightSum="6">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/btn_filter_all"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp">
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_radius_black_transparents"
+            android:text="@string/all"
+            android:textSize="10sp" />
 
-            <Button
-                android:id="@+id/btn_filter_all"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="全部"
-                android:textSize="12sp"
-                android:padding="8dp"
-                android:layout_marginEnd="4dp"
-                style="?android:attr/buttonBarButtonStyle" />
+        <Button
+            android:id="@+id/btn_filter_monster"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_radius_black_transparents"
+            android:text="@string/cat_monster"
+            android:textSize="10sp" />
 
-            <Button
-                android:id="@+id/btn_filter_monster"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="怪兽卡"
-                android:textSize="12sp"
-                android:padding="8dp"
-                android:layout_marginEnd="4dp"
-                style="?android:attr/buttonBarButtonStyle" />
+        <Button
+            android:id="@+id/btn_filter_spell"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_radius_black_transparents"
+            android:text="@string/cat_spell"
+            android:textSize="10sp" />
 
-            <Button
-                android:id="@+id/btn_filter_spell"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="魔法卡"
-                android:textSize="12sp"
-                android:padding="8dp"
-                android:layout_marginEnd="4dp"
-                style="?android:attr/buttonBarButtonStyle" />
+        <Button
+            android:id="@+id/btn_filter_trap"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_radius_black_transparents"
+            android:text="@string/cat_trap"
+            android:textSize="10sp" />
 
-            <Button
-                android:id="@+id/btn_filter_trap"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="陷阱卡"
-                android:textSize="12sp"
-                android:padding="8dp"
-                android:layout_marginEnd="4dp"
-                style="?android:attr/buttonBarButtonStyle" />
+        <Button
+            android:id="@+id/btn_filter_ex"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_radius_black_transparents"
+            android:text="@string/cat_extra"
+            android:textSize="10sp" />
 
-            <Button
-                android:id="@+id/btn_filter_ex"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="额外卡组"
-                android:textSize="12sp"
-                android:padding="8dp"
-                android:layout_marginEnd="4dp"
-                style="?android:attr/buttonBarButtonStyle" />
-
-            <Button
-                android:id="@+id/btn_filter_side"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="副卡组"
-                android:textSize="12sp"
-                android:padding="8dp"
-                style="?android:attr/buttonBarButtonStyle" />
-        </LinearLayout>
-    </HorizontalScrollView>
+        <Button
+            android:id="@+id/btn_filter_side"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/button_radius_black_transparents"
+            android:padding="8dp"
+            android:text="@string/cat_side"
+            android:textSize="10sp" />
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"

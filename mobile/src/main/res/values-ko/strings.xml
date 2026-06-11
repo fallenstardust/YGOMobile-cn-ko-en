@@ -470,4 +470,18 @@
     <string name="sort_exp">EXP 순 정렬</string>
     <string name="disconnect">연결 끊김</string>
     <string name="interrupt">중단</string>
+    <string name="time_today">오늘</string>
+    <string name="time_7day">최근 7일</string>
+    <string name="time_15day">최근 15일</string>
+    <string name="time_1month">최근 한 달</string>
+    <string name="current_banlist">현재 금지 카드 리스트</string>
+    <string name="tag_mycard_athletic">MyCard 경쟁전</string>
+    <string name="tag_mycard_entertain">MyCard 캐주얼</string>
+    <string name="tag_233_athletic">233 경쟁전</string>
+    <string name="tag_233_entertain">233 캐주얼</string>
+    <string name="cat_monster">몬스터</string>
+    <string name="cat_spell">마법</string>
+    <string name="cat_trap">함정</string>
+    <string name="cat_extra">엑스트라</string>
+    <string name="cat_side">사이드</string>
 </resources>

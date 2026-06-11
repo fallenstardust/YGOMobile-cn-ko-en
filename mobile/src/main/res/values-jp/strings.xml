@@ -454,4 +454,18 @@
     <string name="sort_exp">EXPで並び替え</string>
     <string name="disconnect">切断</string>
     <string name="interrupt">中断</string>
+    <string name="time_today">今日</string>
+    <string name="time_7day">直近7日間</string>
+    <string name="time_15day">直近15日間</string>
+    <string name="time_1month">直近1ヶ月</string>
+    <string name="current_banlist">最新禁止カードリスト</string>
+    <string name="tag_mycard_athletic">MyCard 競技</string>
+    <string name="tag_mycard_entertain">MyCard カジュアル</string>
+    <string name="tag_233_athletic">233 競技</string>
+    <string name="tag_233_entertain">233 カジュアル</string>
+    <string name="cat_monster">モンスター</string>
+    <string name="cat_spell">魔法</string>
+    <string name="cat_trap">罠</string>
+    <string name="cat_extra">EX</string>
+    <string name="cat_side">サイド</string>
 </resources>
