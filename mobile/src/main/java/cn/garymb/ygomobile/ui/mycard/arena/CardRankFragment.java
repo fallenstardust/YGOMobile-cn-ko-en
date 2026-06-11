@@ -425,19 +425,34 @@ public class CardRankFragment extends BaseFragemnt {
             mDialog.show();
         }
 
+        final int currentPositionInFiltered = findCurrentPositionInFilteredList(cardItem);
+
         CardListProvider provider = new CardListProvider() {
             @Override
             public int getCardsCount() {
-                return 0;
+                return filteredCardList.size();
             }
 
             @Override
             public Card getCard(int position) {
+                if (position >= 0 && position < filteredCardList.size()) {
+                    CardTypeAnalytics.CardItem item = filteredCardList.get(position);
+                    return DataManager.get().getCardManager().getCard(item.getId());
+                }
                 return null;
             }
         };
 
-        mCardDetail.bind(cardInfo, 0, provider);
+        mCardDetail.bind(cardInfo, currentPositionInFiltered, provider);
+    }
+
+    private int findCurrentPositionInFilteredList(CardTypeAnalytics.CardItem cardItem) {
+        for (int i = 0; i < filteredCardList.size(); i++) {
+            if (filteredCardList.get(i).getId() == cardItem.getId()) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     @Override
