@@ -48,6 +48,7 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_card_rank, parent, false);
+        imageLoader = new ImageLoader(true);
         return new ViewHolder(view);
     }
 
@@ -74,7 +75,12 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
         holder.tvStats.setText(statsBuilder.toString());
 
         if (imageLoader != null) {
-            imageLoader.bindImage(holder.ivCardImage, item.getId(), ImageLoader.Type.small);
+            Card card = DataManager.get().getCardManager().getCard(item.getId());
+            if (card != null) {
+                imageLoader.bindImage(holder.ivCardImage, card.Code, ImageLoader.Type.small);
+            } else {
+                holder.ivCardImage.setImageResource(R.drawable.unknown);
+            }
         }
 
         holder.itemView.setOnClickListener(v -> {
