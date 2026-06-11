@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.mycard.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,11 +14,29 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.mycard.bean.CardTypeAnalytics;
+import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.DataManager;
+import ocgcore.data.Card;
 
 public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHolder> {
 
     private List<CardTypeAnalytics.CardItem> dataList = new ArrayList<>();
+    private ImageLoader imageLoader;
+    private OnCardClickListener onCardClickListener;
+
+    public interface OnCardClickListener {
+        void onCardClick(CardTypeAnalytics.CardItem cardItem);
+    }
+
+    public void setOnCardClickListener(OnCardClickListener listener) {
+        this.onCardClickListener = listener;
+    }
+
+    public void setImageLoader(ImageLoader loader) {
+        this.imageLoader = loader;
+    }
 
     public void setData(List<CardTypeAnalytics.CardItem> data) {
         this.dataList = data != null ? data : new ArrayList<>();
@@ -36,8 +55,10 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         CardTypeAnalytics.CardItem item = dataList.get(position);
         
-        String locale = getSystemLocale();
-        String cardName = item.getCardName(locale);
+        String cardName = getCardNameById(item.getId());
+        if ("Unknown".equals(cardName)) {
+            cardName = item.getCardName(getSystemLocale());
+        }
         holder.tvCardName.setText(cardName);
         
         holder.tvFrequency.setText("使用次数: " + item.getFrequency());
@@ -51,11 +72,30 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
                    .append(" | 两张: ").append(item.getPuttwo())
                    .append(" | 三张: ").append(item.getPutthree());
         holder.tvStats.setText(statsBuilder.toString());
+
+        if (imageLoader != null) {
+            imageLoader.bindImage(holder.ivCardImage, item.getId(), ImageLoader.Type.small);
+        }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (onCardClickListener != null) {
+                onCardClickListener.onCardClick(item);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return dataList.size();
+    }
+
+    private String getCardNameById(int cardId) {
+        Card card = DataManager.get().getCardManager().getCard(cardId);
+        if (card != null && card.Name != null) {
+            return card.Name;
+        }
+        
+        return "Unknown";
     }
 
     private String getSystemLocale() {
@@ -79,15 +119,15 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
     private String getCategoryText(String category) {
         switch (category) {
             case "monster":
-                return "怪兽卡";
+                return YGOUtil.s(R.string.cat_monster);
             case "spell":
-                return "魔法卡";
+                return YGOUtil.s(R.string.cat_spell);
             case "trap":
-                return "陷阱卡";
+                return YGOUtil.s(R.string.cat_trap);
             case "ex":
-                return "额外卡组";
+                return YGOUtil.s(R.string.cat_extra);
             case "side":
-                return "副卡组";
+                return YGOUtil.s(R.string.cat_side);
             default:
                 return category;
         }
@@ -99,6 +139,7 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
         TextView tvFrequency;
         TextView tvNumbers;
         TextView tvStats;
+        ImageView ivCardImage;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -107,6 +148,7 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
             tvFrequency = itemView.findViewById(R.id.tv_frequency);
             tvNumbers = itemView.findViewById(R.id.tv_numbers);
             tvStats = itemView.findViewById(R.id.tv_stats);
+            ivCardImage = itemView.findViewById(R.id.iv_card_image);
         }
     }
 }
