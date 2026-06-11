@@ -40,7 +40,20 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
 
     public void setData(List<CardTypeAnalytics.CardItem> data) {
         this.dataList = data != null ? data : new ArrayList<>();
+        sortDataByFrequency();
         notifyDataSetChanged();
+    }
+
+    private void sortDataByFrequency() {
+        dataList.sort((item1, item2) -> {
+            try {
+                int freq1 = Integer.parseInt(item1.getFrequency());
+                int freq2 = Integer.parseInt(item2.getFrequency());
+                return Integer.compare(freq2, freq1);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        });
     }
 
     @NonNull
@@ -55,6 +68,8 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         CardTypeAnalytics.CardItem item = dataList.get(position);
+        
+        holder.tvRank.setText(String.valueOf(position + 1));
         
         String cardName = getCardNameById(item.getId());
         if ("Unknown".equals(cardName)) {
@@ -140,6 +155,7 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView tvRank;
         TextView tvCardName;
         TextView tvCategory;
         TextView tvFrequency;
@@ -149,6 +165,7 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+            tvRank = itemView.findViewById(R.id.tv_rank);
             tvCardName = itemView.findViewById(R.id.tv_card_name);
             tvCategory = itemView.findViewById(R.id.tv_category);
             tvFrequency = itemView.findViewById(R.id.tv_frequency);
