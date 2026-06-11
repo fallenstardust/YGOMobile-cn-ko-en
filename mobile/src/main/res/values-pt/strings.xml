@@ -465,5 +465,10 @@
     <string name="cat_trap">Armadilha</string>
     <string name="cat_extra">Extra</string>
     <string name="cat_side">Side</string>
+    <string name="stat_usage_count">Quantidade de usos:</string>
+    <string name="stat_user_count">Quantidade de usuários:</string>
+    <string name="play_3">3 cópias:</string>
+    <string name="play_2">2 cópias:</string>
+    <string name="play_1">1 cópia:</string>
 </resources>
 

@@ -465,6 +465,11 @@
     <string name="cat_trap">Trampa</string>
     <string name="cat_extra">Extra</string>
     <string name="cat_side">Side</string>
+    <string name="stat_usage_count">Cantidad de usos:</string>
+    <string name="stat_user_count">Cantidad de usuarios:</string>
+    <string name="play_3">3 copias:</string>
+    <string name="play_2">2 copias:</string>
+    <string name="play_1">1 copia:</string>
 </resources>
 
 

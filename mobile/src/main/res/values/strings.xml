@@ -491,4 +491,9 @@
     <string name="cat_trap">Trap</string>
     <string name="cat_extra">Extra</string>
     <string name="cat_side">Side</string>
+    <string name="stat_usage_count">Usage Count:</string>
+    <string name="stat_user_count">Users Count:</string>
+    <string name="play_3">3 Copies:</string>
+    <string name="play_2">2 Copies:</string>
+    <string name="play_1">1 Copy:</string>
 </resources>

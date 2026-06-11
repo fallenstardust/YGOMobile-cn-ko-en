@@ -468,4 +468,9 @@
     <string name="cat_trap">罠</string>
     <string name="cat_extra">EX</string>
     <string name="cat_side">サイド</string>
+    <string name="stat_usage_count">使用回数:</string>
+    <string name="stat_user_count">使用者数:</string>
+    <string name="play_3">3枚投入：</string>
+    <string name="play_2">2枚投入：</string>
+    <string name="play_1">1枚投入：</string>
 </resources>

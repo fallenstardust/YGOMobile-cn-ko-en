@@ -484,4 +484,9 @@
     <string name="cat_trap">함정</string>
     <string name="cat_extra">엑스트라</string>
     <string name="cat_side">사이드</string>
+    <string name="stat_usage_count">사용 횟수:</string>
+    <string name="stat_user_count">사용자 수:</string>
+    <string name="play_3">3장 투입：</string>
+    <string name="play_2">2장 투입：</string>
+    <string name="play_1">1장 투입：</string>
 </resources>

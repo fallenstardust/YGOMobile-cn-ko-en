@@ -470,4 +470,9 @@
     <string name="cat_trap">陷阱卡</string>
     <string name="cat_extra">额外卡组</string>
     <string name="cat_side">副卡组</string>
+    <string name="stat_usage_count">使用次数：</string>
+    <string name="stat_user_count">使用人数：</string>
+    <string name="play_3">投入3张：</string>
+    <string name="play_2">投入2张：</string>
+    <string name="play_1">投入1张：</string>
 </resources>

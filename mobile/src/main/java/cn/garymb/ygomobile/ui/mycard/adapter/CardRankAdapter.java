@@ -77,17 +77,15 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
         }
         holder.tvCardName.setText(cardName);
         
-        holder.tvFrequency.setText("使用次数: " + item.getFrequency());
-        holder.tvNumbers.setText("使用人数: " + item.getNumbers());
+        holder.tvFrequency.setText(item.getFrequency());
+        holder.tvNumbers.setText(item.getNumbers());
         
         String categoryText = getCategoryText(item.getCategory());
         holder.tvCategory.setText(categoryText);
         
-        StringBuilder statsBuilder = new StringBuilder();
-        statsBuilder.append("单张: ").append(item.getPutone())
-                   .append(" | 两张: ").append(item.getPuttwo())
-                   .append(" | 三张: ").append(item.getPutthree());
-        holder.tvStats.setText(statsBuilder.toString());
+        holder.tvPutone.setText(item.getPutone());
+        holder.tvPuttwo.setText(item.getPuttwo());
+        holder.tvPutthree.setText(item.getPutthree());
 
         if (imageLoader != null) {
             Card card = DataManager.get().getCardManager().getCard(item.getId());
@@ -160,7 +158,9 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
         TextView tvCategory;
         TextView tvFrequency;
         TextView tvNumbers;
-        TextView tvStats;
+        TextView tvPutone;
+        TextView tvPuttwo;
+        TextView tvPutthree;
         ImageView ivCardImage;
 
         ViewHolder(@NonNull View itemView) {
@@ -170,7 +170,9 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
             tvCategory = itemView.findViewById(R.id.tv_category);
             tvFrequency = itemView.findViewById(R.id.tv_frequency);
             tvNumbers = itemView.findViewById(R.id.tv_numbers);
-            tvStats = itemView.findViewById(R.id.tv_stats);
+            tvPutone = itemView.findViewById(R.id.tv_putone);
+            tvPuttwo = itemView.findViewById(R.id.tv_puttwo);
+            tvPutthree = itemView.findViewById(R.id.tv_putthree);
             ivCardImage = itemView.findViewById(R.id.iv_card_image);
         }
     }
