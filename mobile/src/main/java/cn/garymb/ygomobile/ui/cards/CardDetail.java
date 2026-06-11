@@ -136,6 +136,7 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
     private boolean mShowAdd = false;
     private OnFavoriteChangedListener mOnFavoriteChangedListener;
     private String mCurrentSearchKeyword = null;
+    private boolean mHideRelatedButton = false;
 
     public CardDetail(BaseActivity context, ImageLoader imageLoader, StringManager stringManager) {
         super(context.getLayoutInflater().inflate(R.layout.dialog_cardinfo, null));
@@ -275,6 +276,11 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
         mShowAdd = true;
         addSide.setVisibility(View.VISIBLE);
         addMain.setVisibility(View.VISIBLE);
+    }
+
+    public void hideRelatedButton() {
+        mHideRelatedButton = true;
+        btn_related.setVisibility(View.INVISIBLE);
     }
 
     public View getView() {
@@ -676,7 +682,9 @@ public class CardDetail extends BaseAdapterPlus.BaseViewHolder {
             setHighlightTextWithClickableSpans(cardInfo.Name.equals("Unknown") ? context.getString(R.string.tip_card_info_diff) : cardInfo.Desc);
         }
 
-        btn_related.setVisibility(relatable(cardInfo) ? View.VISIBLE : View.INVISIBLE);
+        if (!mHideRelatedButton) {
+            btn_related.setVisibility(relatable(cardInfo) ? View.VISIBLE : View.INVISIBLE);
+        }
         cardCode.setText(String.format("%08d", cardInfo.getCode()));
         if (cardInfo.isType(CardType.Token)) {
             faq.setVisibility(View.INVISIBLE);

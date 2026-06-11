@@ -399,6 +399,7 @@ public class CardRankFragment extends BaseFragemnt {
                 public void onAddSideCard(Card cardInfo) {
                 }
             });
+            mCardDetail.hideRelatedButton();
         }
 
         if (mDialog == null) {
