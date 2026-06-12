@@ -277,7 +277,7 @@ public class DeckMatchupFragment extends BaseFragemnt {
                 statsA.addFirstGoMatchup(deckB, win, draw, lose);
 
                 DeckMatchupStats statsB = statsMap.computeIfAbsent(deckB, k -> new DeckMatchupStats(deckB));
-                statsB.addSecondGoMatchup(deckA, win, draw, lose);
+                statsB.addSecondGoMatchup(deckA, lose, draw, win);
             }
         }
 

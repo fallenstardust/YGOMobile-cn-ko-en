@@ -1,8 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard.bean;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class DeckMatchupStats {
@@ -41,14 +39,14 @@ public class DeckMatchupStats {
     private void updateTotalMatchup(String opponentDeck) {
         MatchStats firstGo = firstGoMatchupMap.get(opponentDeck);
         MatchStats secondGo = secondGoMatchupMap.get(opponentDeck);
-        
+
         if (firstGo != null || secondGo != null) {
             MatchStats total = totalMatchupMap.computeIfAbsent(opponentDeck, k -> new MatchStats());
             total.win = (firstGo != null ? firstGo.win : 0) + (secondGo != null ? secondGo.win : 0);
             total.draw = (firstGo != null ? firstGo.draw : 0) + (secondGo != null ? secondGo.draw : 0);
             total.lose = (firstGo != null ? firstGo.lose : 0) + (secondGo != null ? secondGo.lose : 0);
         }
-        
+
         aggregatedTotalStats.win = aggregatedFirstGoStats.win + aggregatedSecondGoStats.win;
         aggregatedTotalStats.draw = aggregatedFirstGoStats.draw + aggregatedSecondGoStats.draw;
         aggregatedTotalStats.lose = aggregatedFirstGoStats.lose + aggregatedSecondGoStats.lose;

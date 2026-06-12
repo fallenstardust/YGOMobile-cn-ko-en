@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import cn.garymb.ygomobile.ui.mycard.MyCard;
@@ -15,9 +14,6 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public class DeckMatchupAnalytics extends ArrayList<DeckMatchupAnalytics.Item> {
-
-    public static final String SOURCE_MYCARD_ATHLETIC = "mycard-athletic";
-    public static final String SOURCE_MYCARD_ENTERTAIN = "mycard-entertain";
 
     public static void getDeckMatchupAnalytics(String source, OnDeckMatchupListener listener) {
         Map<String, Object> params = new HashMap<>();
