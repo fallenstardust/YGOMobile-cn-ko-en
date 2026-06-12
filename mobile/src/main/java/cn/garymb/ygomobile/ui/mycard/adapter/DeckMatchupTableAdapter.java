@@ -76,6 +76,12 @@ public class DeckMatchupTableAdapter extends RecyclerView.Adapter<DeckMatchupTab
         TextView cell = (TextView) LayoutInflater.from(context)
                 .inflate(R.layout.item_win_rate_cell, null);
 
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                cn.garymb.ygomobile.utils.YGOUtil.dp2px(80),
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cell.setLayoutParams(params);
+
         if (stats == null || stats.getTotalMatches() == 0) {
             cell.setText("N/A");
             cell.setTextColor(Color.GRAY);

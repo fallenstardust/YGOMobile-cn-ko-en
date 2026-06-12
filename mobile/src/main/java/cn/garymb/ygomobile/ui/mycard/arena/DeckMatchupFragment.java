@@ -232,14 +232,20 @@ public class DeckMatchupFragment extends BaseFragemnt {
         llTableHeader.removeAllViews();
 
         TextView deckNameHeader = createHeaderCell("卡组名称");
-        deckNameHeader.setLayoutParams(new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams deckNameParams = new LinearLayout.LayoutParams(
                 YGOUtil.dp2px(120),
                 LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
+        );
+        deckNameHeader.setLayoutParams(deckNameParams);
         llTableHeader.addView(deckNameHeader);
 
         for (String opponentDeck : allOpponentDecks) {
             TextView headerCell = createHeaderCell(opponentDeck);
+            LinearLayout.LayoutParams cellParams = new LinearLayout.LayoutParams(
+                    YGOUtil.dp2px(80),
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            headerCell.setLayoutParams(cellParams);
             llTableHeader.addView(headerCell);
         }
     }
