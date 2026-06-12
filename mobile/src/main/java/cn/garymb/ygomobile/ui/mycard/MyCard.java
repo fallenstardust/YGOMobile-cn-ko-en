@@ -114,6 +114,7 @@ public class MyCard {
     // 时间范围：type=day（今日）、week（最近7天）、halfmonth（最近15天）、month（最近1月）、season（当前禁卡表）；
     // 数据来源：source=mycard-athletic（萌卡竞技）、mycard-entertain（萌卡娱乐）、233-athletic（233服竞技）、233-entertain（233服娱乐）
     public static final String URL_CARD_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/single/type";
+    // 获取卡组之间的胜率分析接口 需要添加param，例如：source=mycard-athletic（萌卡竞技）、mycard-entertain（萌卡娱乐）
     public static final String URL_DECK_MATCHUP_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type";
     public static final int MATCH_TYPE_ATHLETIC = 0;
     public static final int MATCH_TYPE_ENTERTAIN = 1;

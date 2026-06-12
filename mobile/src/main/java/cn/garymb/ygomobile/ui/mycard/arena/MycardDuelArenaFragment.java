@@ -94,7 +94,7 @@ public class MycardDuelArenaFragment extends BaseFragemnt {
 
     class TabPageAdapter extends FragmentPagerAdapter {
 
-        private final String[] tabTitles = {"卡组排名", "决斗排名", "卡片排名"};
+        private final String[] tabTitles = {"卡组排名", "卡组胜率", "决斗排名", "卡片排名"};
 
         public TabPageAdapter(FragmentManager fm) {
             super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
@@ -106,8 +106,10 @@ public class MycardDuelArenaFragment extends BaseFragemnt {
                 case 0:
                     return new DeckWinRateFragment();
                 case 1:
-                    return new DuelRankFragment();
+                    return new DeckMatchupFragment();
                 case 2:
+                    return new DuelRankFragment();
+                case 3:
                     return new CardRankFragment();
                 default:
                     return null;
