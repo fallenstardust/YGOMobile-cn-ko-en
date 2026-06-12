@@ -53,9 +53,17 @@ public class DeckMatchupTableAdapter extends RecyclerView.Adapter<DeckMatchupTab
 
         holder.llWinRateCells.removeAllViews();
 
+        int screenWidth = holder.itemView.getContext().getResources().getDisplayMetrics().widthPixels;
+        int columnCount = allOpponentDecks.size() + 1;
+        int columnWidth = screenWidth / columnCount;
+
+        ViewGroup.LayoutParams nameParams = holder.tvDeckName.getLayoutParams();
+        nameParams.width = columnWidth;
+        holder.tvDeckName.setLayoutParams(nameParams);
+
         for (String opponentDeck : allOpponentDecks) {
             DeckMatchupStats.MatchStats matchStats = getMatchStats(stats, opponentDeck);
-            TextView cell = createCell(holder.itemView.getContext(), matchStats);
+            TextView cell = createCell(holder.itemView.getContext(), matchStats, columnWidth);
             holder.llWinRateCells.addView(cell);
         }
     }
@@ -72,22 +80,24 @@ public class DeckMatchupTableAdapter extends RecyclerView.Adapter<DeckMatchupTab
         }
     }
 
-    private TextView createCell(android.content.Context context, DeckMatchupStats.MatchStats stats) {
+    private TextView createCell(android.content.Context context, DeckMatchupStats.MatchStats stats, int columnWidth) {
         TextView cell = (TextView) LayoutInflater.from(context)
-                .inflate(R.layout.item_win_rate_cell, null);
+                .inflate(R.layout.item_matchup_win_rate_cell, null);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                cn.garymb.ygomobile.utils.YGOUtil.dp2px(80),
+                columnWidth,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
         cell.setLayoutParams(params);
+
+        cell.setTextSize(10f);
 
         if (stats == null || stats.getTotalMatches() == 0) {
             cell.setText("N/A");
             cell.setTextColor(Color.GRAY);
         } else {
             float winRate = stats.getWinRate();
-            cell.setText(String.format("%.0f%%", winRate));
+            cell.setText(String.format("%.2f%%", winRate));
 
             if (winRate >= 60) {
                 cell.setTextColor(Color.parseColor("#00FF00"));

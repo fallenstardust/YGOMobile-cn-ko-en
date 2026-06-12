@@ -436,7 +436,6 @@
     <string name="match_start">Ranked Match</string>
     <string name="watch_duel">Spectate</string>
     <string name="waiting_message">Waiting for match, please wait...</string>
-    <string name="deck_win_rate">Deck Win Rate</string>
     <string name="mycard_bbs">MyCard BBS</string>
     <string name="tips_click_to_arena">Click pie chart for details</string>
     <string name="single_duel">Single Duel</string>
@@ -496,4 +495,11 @@
     <string name="play_3">3 Copies:</string>
     <string name="play_2">2 Copies:</string>
     <string name="play_1">1 Copy:</string>
+    <string name="winrate_first">First Win Rate</string>
+    <string name="winrate_second">Second Win Rate</string>
+    <string name="winrate_total">Total Win Rate</string>
+    <string name="deck_ranking">Deck Rank</string>
+    <string name="deck_winrate">Deck Win Rate</string>
+    <string name="duel_ranking">Duel Rank</string>
+    <string name="card_ranking">Card Rank</string>
 </resources>

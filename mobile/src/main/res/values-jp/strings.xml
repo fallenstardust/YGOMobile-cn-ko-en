@@ -413,7 +413,6 @@
     <string name="match_start">ランクマッチ</string>
     <string name="watch_duel">観戦</string>
     <string name="waiting_message">マッチング中、しばらくお待ちください...</string>
-    <string name="deck_win_rate">デッキ勝率</string>
     <string name="mycard_bbs">萌カードフォーラム</string>
     <string name="tips_click_to_arena">円グラフをタップで詳細表示</string>
     <string name="single_duel">シングルモード</string>
@@ -473,4 +472,11 @@
     <string name="play_3">3枚投入：</string>
     <string name="play_2">2枚投入：</string>
     <string name="play_1">1枚投入：</string>
+    <string name="winrate_first">先攻勝率</string>
+    <string name="winrate_second">後攻勝率</string>
+    <string name="winrate_total">総合勝率</string>
+    <string name="deck_ranking">デッキ順位</string>
+    <string name="deck_winrate">デッキ勝率</string>
+    <string name="duel_ranking">デュエル順位</string>
+    <string name="card_ranking">カード順位</string>
 </resources>

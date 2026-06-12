@@ -19,7 +19,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,8 +28,6 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
-
-import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.adapter.DeckMatchupTableAdapter;
 import cn.garymb.ygomobile.ui.mycard.bean.DeckMatchupAnalytics;
 import cn.garymb.ygomobile.ui.mycard.bean.DeckMatchupStats;
@@ -59,8 +56,8 @@ public class DeckMatchupFragment extends BaseFragemnt {
             "mycard-entertain"
     };
     private static final String[] DATA_SOURCE_LABELS = {
-        YGOUtil.s(R.string.tag_mycard_athletic), 
-        YGOUtil.s(R.string.tag_mycard_entertain)
+            YGOUtil.s(R.string.tag_mycard_athletic),
+            YGOUtil.s(R.string.tag_mycard_entertain)
     };
 
     @Nullable
@@ -207,12 +204,12 @@ public class DeckMatchupFragment extends BaseFragemnt {
 
                     if (exception != null || analytics == null) {
                         tvEmpty.setVisibility(View.VISIBLE);
-                        tvEmpty.setText(exception != null ? "加载失败: " + exception : "暂无数据");
+                        tvEmpty.setText(exception != null ? YGOUtil.s(R.string.loading_failed) + ": " + exception : "暂无数据");
                         return;
                     }
 
                     processAnalyticsData(analytics);
-                    
+
                     if (allStatsList.isEmpty()) {
                         tvEmpty.setVisibility(View.VISIBLE);
                         tvEmpty.setText("暂无数据");
@@ -231,9 +228,13 @@ public class DeckMatchupFragment extends BaseFragemnt {
     private void setupTableHeaders() {
         llTableHeader.removeAllViews();
 
-        TextView deckNameHeader = createHeaderCell("卡组名称");
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int columnCount = allOpponentDecks.size() + 1;
+        int columnWidth = screenWidth / columnCount;
+
+        TextView deckNameHeader = createHeaderCell(YGOUtil.s(R.string.deck_name));
         LinearLayout.LayoutParams deckNameParams = new LinearLayout.LayoutParams(
-                YGOUtil.dp2px(120),
+                columnWidth,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
         deckNameHeader.setLayoutParams(deckNameParams);
@@ -242,7 +243,7 @@ public class DeckMatchupFragment extends BaseFragemnt {
         for (String opponentDeck : allOpponentDecks) {
             TextView headerCell = createHeaderCell(opponentDeck);
             LinearLayout.LayoutParams cellParams = new LinearLayout.LayoutParams(
-                    YGOUtil.dp2px(80),
+                    columnWidth,
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
             headerCell.setLayoutParams(cellParams);
@@ -252,7 +253,7 @@ public class DeckMatchupFragment extends BaseFragemnt {
 
     private TextView createHeaderCell(String text) {
         TextView header = (TextView) LayoutInflater.from(getContext())
-                .inflate(R.layout.item_table_header_cell, null);
+                .inflate(R.layout.item_matchup_table_header_cell, null);
         header.setText(text);
         return header;
     }
@@ -285,7 +286,7 @@ public class DeckMatchupFragment extends BaseFragemnt {
 
         allStatsList.clear();
         allStatsList.addAll(statsMap.values());
-        
+
         allStatsList.sort((a, b) -> Integer.compare(b.getTotalMatches(), a.getTotalMatches()));
     }
 

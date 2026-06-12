@@ -7,14 +7,15 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/list_item_bg"
         android:orientation="horizontal"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:visibility="gone">
 
         <Spinner
             android:id="@+id/sp_data_source"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/list_item_bg" />
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
     <LinearLayout
@@ -28,35 +29,35 @@
             android:id="@+id/btn_first_go"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:text="先攻胜率"
-            android:textSize="12sp"
+            android:layout_weight="1"
             android:background="@drawable/button_radius_black_transparents"
-            android:textColor="@color/white" />
+            android:text="@string/winrate_first"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
 
         <Button
             android:id="@+id/btn_second_go"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="2dp"
             android:layout_marginEnd="2dp"
-            android:text="后攻胜率"
-            android:textSize="12sp"
+            android:layout_weight="1"
             android:background="@drawable/button_radius_black_transparents"
-            android:textColor="@color/white" />
+            android:text="@string/winrate_second"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
 
         <Button
             android:id="@+id/btn_total"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:text="综合胜率"
-            android:textSize="12sp"
+            android:layout_weight="1"
             android:background="@drawable/button_radius_black_transparents"
-            android:textColor="@color/white" />
+            android:text="@string/winrate_total"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
     </LinearLayout>
 
     <FrameLayout
@@ -82,20 +83,18 @@
                         android:id="@+id/ll_table_header"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="8dp" />
+                        android:orientation="horizontal" />
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#50ffffff" />
+                        android:background="@color/grayDark2" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_matchup_table"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:clipToPadding="false"
-                        android:padding="4dp" />
+                        android:clipToPadding="false" />
                 </LinearLayout>
             </HorizontalScrollView>
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

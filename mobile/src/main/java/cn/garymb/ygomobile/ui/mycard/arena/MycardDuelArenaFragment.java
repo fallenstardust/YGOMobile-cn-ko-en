@@ -17,6 +17,7 @@ import com.google.android.material.tabs.TabLayout;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class MycardDuelArenaFragment extends BaseFragemnt {
 
@@ -94,7 +95,12 @@ public class MycardDuelArenaFragment extends BaseFragemnt {
 
     class TabPageAdapter extends FragmentPagerAdapter {
 
-        private final String[] tabTitles = {"卡组排名", "卡组胜率", "决斗排名", "卡片排名"};
+        private final String[] tabTitles = {
+                YGOUtil.s(R.string.deck_ranking),
+                YGOUtil.s(R.string.deck_winrate),
+                YGOUtil.s(R.string.duel_ranking),
+                YGOUtil.s(R.string.card_ranking)
+        };
 
         public TabPageAdapter(FragmentManager fm) {
             super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);

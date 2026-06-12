@@ -410,7 +410,6 @@
     <string name="match_start">Partida Competitiva</string>
     <string name="watch_duel">Assistir Duelo</string>
     <string name="waiting_message">Buscando partida, espere por favor...</string>
-    <string name="deck_win_rate">Tasa de Victoria</string>
     <string name="mycard_bbs">Foro MyCard</string>
     <string name="tips_click_to_arena">Pulsa el gráfico para detalles</string>
     <string name="single_duel">Modo Single</string>
@@ -470,6 +469,13 @@
     <string name="play_3">3 copias:</string>
     <string name="play_2">2 copias:</string>
     <string name="play_1">1 copia:</string>
+    <string name="winrate_first">Victoria 1°</string>
+    <string name="winrate_second">Victoria 2°</string>
+    <string name="winrate_total">Victoria Total</string>
+    <string name="deck_ranking">Ranking Mazos</string>
+    <string name="deck_winrate">% Mazo</string>
+    <string name="duel_ranking">Ranking Duelos</string>
+    <string name="card_ranking">Ranking Cartas</string>
 </resources>
 
 

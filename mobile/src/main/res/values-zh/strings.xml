@@ -416,7 +416,6 @@
     <string name="draw_num">平局</string>
     <string name="watch_duel">萌卡观战</string>
     <string name="waiting_message">等待匹配中，请稍后...</string>
-    <string name="deck_win_rate">卡组胜率</string>
     <string name="mycard_bbs">萌卡论坛</string>
     <string name="tips_click_to_arena">点击饼图查看详情</string>
     <string name="server_area">环境：</string>
@@ -475,4 +474,11 @@
     <string name="play_3">投入3张：</string>
     <string name="play_2">投入2张：</string>
     <string name="play_1">投入1张：</string>
+    <string name="winrate_first">先攻胜率</string>
+    <string name="winrate_second">后攻胜率</string>
+    <string name="winrate_total">综合胜率</string>
+    <string name="deck_ranking">卡组排名</string>
+    <string name="deck_winrate">卡组胜率</string>
+    <string name="duel_ranking">决斗排名</string>
+    <string name="card_ranking">卡片排名</string>
 </resources>

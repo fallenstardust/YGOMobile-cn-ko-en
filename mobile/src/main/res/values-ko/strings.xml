@@ -431,7 +431,6 @@
     <string name="match_start">랭크 매칭</string>
     <string name="watch_duel">관전</string>
     <string name="waiting_message">매칭 대기 중입니다. 잠시 기다려 주세요...</string>
-    <string name="deck_win_rate">덱 승률</string>
     <string name="mycard_bbs">몽카드 포럼</string>
     <string name="tips_click_to_arena">원그래프 클릭 시 상세보기</string>
     <string name="single_duel">싱글 모드</string>
@@ -489,4 +488,11 @@
     <string name="play_3">3장 투입：</string>
     <string name="play_2">2장 투입：</string>
     <string name="play_1">1장 투입：</string>
+    <string name="winrate_first">선공 승률</string>
+    <string name="winrate_second">후공 승률</string>
+    <string name="winrate_total">종합 승률</string>
+    <string name="deck_ranking">덱 순위</string>
+    <string name="deck_winrate">덱 승률</string>
+    <string name="duel_ranking">듀얼 순위</string>
+    <string name="card_ranking">카드 순위</string>
 </resources>
