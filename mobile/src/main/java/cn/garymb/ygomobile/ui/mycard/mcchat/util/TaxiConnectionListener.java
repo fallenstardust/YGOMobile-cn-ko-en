@@ -4,6 +4,7 @@ package cn.garymb.ygomobile.ui.mycard.mcchat.util;
  * 连接监听类
  */
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.jivesoftware.smack.ConnectionListener;
@@ -50,56 +51,65 @@ public class TaxiConnectionListener implements ConnectionListener {
 
     @Override
     public void connectionClosedOnError(Exception e) {
-        //非正常关闭连接
         Log.e("TaxiConnectionListener", "连接关闭异常" + e);
         sm.setIsListener(false);
-        // 重连服务器
+        
+        if (e instanceof org.jivesoftware.smack.XMPPException.StreamErrorException) {
+            Log.e("TaxiConnectionListener", "Stream error - likely authentication or protocol issue", e);
+            return;
+        }
+        
         tExit = new Timer();
         tExit.schedule(new timetask(), logintime);
-
     }
 
     class timetask extends TimerTask {
         @Override
         public void run() {
             McUser mcUser=UserManagement.getDx().getMcUser();
-            if (mcUser==null)
+            if (mcUser==null) {
+                Log.w("TaxiConnectionListener", "User is null, canceling reconnect");
                 return;
+            }
+            
             username = mcUser.getUsername();
             password = mcUser.getPassword();
-            if (username != null && password != null) {
+            
+            if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
+                Log.w("TaxiConnectionListener", "Username or password is empty, canceling reconnect");
+                return;
+            }
+            
+            try {
                 sm.setReLogin(false);
                 Log.e("TaxiConnectionListener", "尝试登录");
-                // 连接服务器
-                try {
-                    if (sm.login(username, password)) {
-                        sm.setReLogin(true);
-                        Log.e("TaxiConnectionListener", "登录成功");
-                        tExit.schedule(new timeJoin(), logintime);
-                    } else {
-                        Log.e("TaxiConnectionListener", "重新登录");
-                        tExit.schedule(new timetask(), logintime);
-                    }
-                } catch (Exception e) {
+                if (sm.login(username, password)) {
+                    sm.setReLogin(true);
+                    Log.e("TaxiConnectionListener", "登录成功");
+                    tExit.schedule(new timeJoin(), logintime);
+                } else {
+                    Log.e("TaxiConnectionListener", "重新登录");
                     tExit.schedule(new timetask(), logintime);
                 }
+            } catch (Exception e) {
+                Log.e("TaxiConnectionListener", "Reconnect failed: " + e.getMessage(), e);
+                tExit.schedule(new timetask(), logintime);
             }
         }
 
         class timeJoin extends TimerTask {
             @Override
             public void run() {
-                sm.setReJoin(false);
-                Log.e("TaxiConnectionListener", "尝试加入房间");
                 try {
+                    sm.setReJoin(false);
+                    Log.e("TaxiConnectionListener", "尝试加入房间");
                     sm.joinChat();
                     sm.setReJoin(true);
                     Log.e("TaxiConnectionListener", "加入房间成功");
                 } catch (Exception e) {
-                    Log.e("TaxiConnectionListener", "重新加入房间");
+                    Log.e("TaxiConnectionListener", "重新加入房间: " + e.getMessage(), e);
                     tExit.schedule(new timeJoin(), logintime);
                 }
-                // TODO: Implement this method
             }
         }
 

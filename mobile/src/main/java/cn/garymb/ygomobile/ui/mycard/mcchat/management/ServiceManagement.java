@@ -7,6 +7,7 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
+import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
@@ -145,6 +146,7 @@ public class ServiceManagement {
     private boolean isConnected = false;
     private boolean isListener = false;
     private boolean isStartLoading = false;
+    private final Object connectionLock = new Object();
 
     private ServiceManagement() {
         chatMessageList = Collections.synchronizedList(new ArrayList<>());
@@ -191,28 +193,79 @@ public class ServiceManagement {
     }
 
     private XMPPTCPConnection getConnextion(String name, String password) throws IOException {
-        XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                .setUsernameAndPassword(name, password)
-                .setXmppDomain("mycard.moe")
-                .setKeystoreType(null)
-                .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
-                .setHostAddress(InetAddress.getByName("mchat.moecube.com"))
-                .build();
-        con = new XMPPTCPConnection(config);
-        return con;
+        try {
+            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+                    .setUsernameAndPassword(name, password)
+                    .setXmppDomain("mycard.moe")
+                    .setKeystoreType(null)
+                    .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
+                    .setHostAddress(InetAddress.getByName("mchat.moecube.com"))
+                    .setPort(5222)
+                    .setConnectTimeout(10000)
+                    .setCompressionEnabled(false)
+                    .build();
+            
+            synchronized (connectionLock) {
+                if (con != null && con.isConnected()) {
+                    try {
+                        con.disconnect();
+                    } catch (Exception e) {
+                        Log.w("ServiceManagement", "Error disconnecting old connection", e);
+                    }
+                }
+                con = new XMPPTCPConnection(config);
+            }
+            return con;
+        } catch (Exception e) {
+            Log.e("ServiceManagement", "Failed to create XMPP connection configuration", e);
+            throw new IOException("Failed to create connection configuration: " + e.getMessage(), e);
+        }
     }
 
     public boolean login(String name, String password) throws IOException, SmackException, XMPPException, InterruptedException {
-        XMPPTCPConnection con = getConnextion(name, password);
-        con.connect();
-        if (con.isConnected()) {
-            con.login();
-            con.addConnectionListener(new TaxiConnectionListener());
-            setIsConnected(true);
-            return true;
+        synchronized (connectionLock) {
+            try {
+                XMPPTCPConnection connection = getConnextion(name, password);
+                
+                connection.connect();
+                
+                if (!connection.isConnected()) {
+                    Log.e("ServiceManagement", "Connection failed - not connected after connect()");
+                    setIsConnected(false);
+                    return false;
+                }
+                
+                connection.login();
+                
+                if (connection.isAuthenticated()) {
+                    connection.addConnectionListener(new TaxiConnectionListener());
+                    setIsConnected(true);
+                    Log.d("ServiceManagement", "XMPP login successful for user: " + name);
+                    return true;
+                } else {
+                    Log.e("ServiceManagement", "Authentication failed");
+                    setIsConnected(false);
+                    try {
+                        connection.disconnect();
+                    } catch (Exception e) {
+                        Log.w("ServiceManagement", "Error disconnecting after auth failure", e);
+                    }
+                    return false;
+                }
+            } catch (XMPPException.StreamErrorException | XMPPException.XMPPErrorException e) {
+                Log.e("ServiceManagement", "XMPP authentication error", e);
+                setIsConnected(false);
+                throw e;
+            } catch (SmackException.NotConnectedException | SmackException.NoResponseException e) {
+                Log.e("ServiceManagement", "Connection error during login", e);
+                setIsConnected(false);
+                throw e;
+            } catch (Exception e) {
+                Log.e("ServiceManagement", "Unexpected error during login", e);
+                setIsConnected(false);
+                throw e;
+            }
         }
-        setIsConnected(false);
-        return false;
     }
 
     public void sendMessage(String message) throws SmackException.NotConnectedException, InterruptedException {
@@ -267,24 +320,32 @@ public class ServiceManagement {
     }
 
     public void disSerVice() {
-        if (muc != null) {
-            try {
-                if (isListener) {
-                    muc.leave();
+        synchronized (connectionLock) {
+            if (muc != null) {
+                try {
+                    if (isListener) {
+                        muc.leave();
+                    }
+                } catch (SmackException.NotConnectedException | InterruptedException e) {
+                    Log.e("ServiceManagement", "Error leaving MUC", e);
                 }
-            } catch (SmackException.NotConnectedException | InterruptedException e) {
-                Log.e("ServiceManagement", "Error leaving MUC", e);
+                muc = null;
             }
-            muc = null;
-        }
 
-        if (con != null) {
-            con.disconnect();
-            con = null;
-        }
+            if (con != null) {
+                try {
+                    if (con.isConnected()) {
+                        con.disconnect();
+                    }
+                } catch (Exception e) {
+                    Log.e("ServiceManagement", "Error disconnecting XMPP connection", e);
+                }
+                con = null;
+            }
 
-        setIsConnected(false);
-        setIsListener(false);
+            setIsConnected(false);
+            setIsListener(false);
+        }
     }
 
     public void disClass() {
@@ -311,7 +372,7 @@ public class ServiceManagement {
         String name, password;
         McUser mcUser = UserManagement.getDx().getMcUser();
 
-        if (mcUser == null || TextUtils.isEmpty(mcUser.getUsername()) || TextUtils.isEmpty(mcUser.getPassword())) {
+        if (mcUser == null || TextUtils.isEmpty(mcUser.getUsername())) {
             isStartLoading = false;
             han.sendEmptyMessage(CHAT_USER_NULL);
             return;
@@ -319,6 +380,13 @@ public class ServiceManagement {
 
         name = mcUser.getUsername();
         password = mcUser.getPassword();
+        
+        if (TextUtils.isEmpty(password)) {
+            Log.e("ServiceManagement", "Password is empty for user: " + name);
+            isStartLoading = false;
+            han.sendEmptyMessage(CHAT_USER_NULL);
+            return;
+        }
 
         if (su.isListener()) {
             isStartLoading = false;
@@ -337,27 +405,32 @@ public class ServiceManagement {
                 } catch (InterruptedException e) {
                     Log.e("ServiceManagement", "Login interrupted", e);
                     isStartLoading = false;
-                    me.obj = "InterruptedException：" + e;
+                    me.obj = "登录被中断";
                     han.sendMessage(me);
                 } catch (IOException e) {
                     Log.e("ServiceManagement", "IO error during login", e);
                     isStartLoading = false;
-                    me.obj = "IOException：" + e;
+                    me.obj = "网络错误：" + e.getMessage();
+                    han.sendMessage(me);
+                } catch (XMPPException.StreamErrorException | XMPPException.XMPPErrorException e) {
+                    Log.e("ServiceManagement", "XMPP authentication error", e);
+                    isStartLoading = false;
+                    me.obj = "认证失败，请检查账号状态";
+                    han.sendMessage(me);
+                } catch (SmackException.NotConnectedException | SmackException.NoResponseException e) {
+                    Log.e("ServiceManagement", "Connection error during login", e);
+                    isStartLoading = false;
+                    me.obj = "连接超时，请检查网络";
                     han.sendMessage(me);
                 } catch (SmackException e) {
                     Log.e("ServiceManagement", "Smack error during login", e);
                     isStartLoading = false;
-                    me.obj = "SmackException：" + e;
-                    han.sendMessage(me);
-                } catch (XMPPException e) {
-                    Log.e("ServiceManagement", "XMPP error during login", e);
-                    isStartLoading = false;
-                    me.obj = "XMPPException：" + e;
+                    me.obj = "通信错误：" + e.getMessage();
                     han.sendMessage(me);
                 } catch (Exception e) {
                     Log.e("ServiceManagement", "Other error during login", e);
                     isStartLoading = false;
-                    me.obj = "otherException：" + e;
+                    me.obj = "登录失败：" + e.getMessage();
                     han.sendMessage(me);
                 }
             }
@@ -371,7 +444,7 @@ public class ServiceManagement {
                 } catch (Exception e) {
                     Log.e("ServiceManagement", "Error joining chat", e);
                     isStartLoading = false;
-                    HandlerUtil.sendMessage(han, CHAT_LOGIN_EXCEPTION, e);
+                    HandlerUtil.sendMessage(han, CHAT_LOGIN_EXCEPTION, "加入聊天室失败: " + e.getMessage());
                 }
             }
         }).start();
