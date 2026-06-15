@@ -1852,6 +1852,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         TabLayout tabLayout = dialog.findViewById(R.id.tl_room_n_bot);
         View tabRoomSettings = dialog.findViewById(R.id.tab_room_settings);
         View tabAiList = dialog.findViewById(R.id.tab_ai_list);
+        View tabJoinPrivateRoom = dialog.findViewById(R.id.tab_join_private_room);
+        EditText etPrivateRoomPassword = dialog.findViewById(R.id.et_private_room_password);
         ListView lvAiList = dialog.findViewById(R.id.lv_ai_list);
         TextView tvAiEmpty = dialog.findViewById(R.id.tv_ai_empty);
 
@@ -1914,18 +1916,29 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         tabLayout.addTab(tabLayout.newTab().setText(R.string.settings_game).setIcon(R.drawable.setting));
         tabLayout.addTab(tabLayout.newTab().setText(R.string.mycard_ai_battle).setIcon(R.drawable.bot));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.mycard_join_private_room).setIcon(R.drawable.ic_search));
+
+        int[] currentTab = {0};
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                currentTab[0] = tab.getPosition();
                 if (tab.getPosition() == 0) {
                     tabRoomSettings.setVisibility(View.VISIBLE);
                     tabAiList.setVisibility(View.GONE);
+                    tabJoinPrivateRoom.setVisibility(View.GONE);
                     dialog.hideButton(false);
-                } else {
+                } else if (tab.getPosition() == 1) {
                     tabRoomSettings.setVisibility(View.GONE);
                     tabAiList.setVisibility(View.VISIBLE);
+                    tabJoinPrivateRoom.setVisibility(View.GONE);
                     dialog.hideButton(true);
+                } else {
+                    tabRoomSettings.setVisibility(View.GONE);
+                    tabAiList.setVisibility(View.GONE);
+                    tabJoinPrivateRoom.setVisibility(View.VISIBLE);
+                    dialog.hideButton(false);
                 }
             }
 
@@ -1989,7 +2002,6 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             if (position >= 0 && position < currentAiList.size()) {
                 String selectedAi = currentAiList.get(position);
                 YGOServer selectedServer = servers.get(serverSpinner.getSelectedItemPosition());
-                // 检查 position == 0（即"随机"选项）且列表中有其他选项,则随机加入某个ai房
                 if (position == 0 && currentAiList.size() > 1) {
                     int randomIndex = 1 + (int) (Math.random() * (currentAiList.size() - 1));
                     selectedAi = currentAiList.get(randomIndex);
@@ -2001,33 +2013,39 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         });
 
         dialog.setLeftButtonListener((dlg, s) -> {
-            boolean privateRoom = privateBox.isChecked();
-            String title = titleEdit.getText().toString().trim();
-            if (!privateRoom && TextUtils.isEmpty(title)) {
-                YGOUtil.show(R.string.input_room_name);
-                return;
+            if (currentTab[0] == 2) {
+                String privatePassword = etPrivateRoomPassword.getText().toString().trim();
+                if (TextUtils.isEmpty(privatePassword)) {
+                    YGOUtil.show(R.string.mycard_private_room_password);
+                    return;
+                }
+                YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
+                joinPrivateCustomRoom(server, privatePassword);
+                dialog.dismiss();
+            } else {
+                boolean privateRoom = privateBox.isChecked();
+                String title = titleEdit.getText().toString().trim();
+                if (!privateRoom && TextUtils.isEmpty(title)) {
+                    YGOUtil.show(R.string.input_room_name);
+                    return;
+                }
+
+                DuelRoom.OptionsBean options = new DuelRoom.OptionsBean();
+                options.setRule(ruleSpinner.getSelectedItemPosition());
+                options.setMode(modeSpinner.getSelectedItemPosition());
+                options.setDuel_rule(duelRuleSpinner.getSelectedItemPosition() + 1);
+                options.setStart_lp(readInt(startLpEdit, 1, 65535, modeSpinner.getSelectedItemPosition() == DuelRoom.MODE_TAG ? 16000 : 8000));
+                options.setStart_hand(readInt(startHandEdit, 0, 16, 5));
+                options.setDraw_count(readInt(drawCountEdit, 0, 16, 1));
+                options.setNo_check_deck(noCheckDeckBox.isChecked());
+                options.setNo_shuffle_deck(noShuffleDeckBox.isChecked());
+                options.setAuto_death(autoDeathBox.isChecked());
+
+                YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
+                createCustomRoom(dialog, server, options, title, privateRoom);
             }
-
-            DuelRoom.OptionsBean options = new DuelRoom.OptionsBean();
-            options.setRule(ruleSpinner.getSelectedItemPosition());
-            options.setMode(modeSpinner.getSelectedItemPosition());
-            options.setDuel_rule(duelRuleSpinner.getSelectedItemPosition() + 1);
-            options.setStart_lp(readInt(startLpEdit, 1, 65535, modeSpinner.getSelectedItemPosition() == DuelRoom.MODE_TAG ? 16000 : 8000));
-            options.setStart_hand(readInt(startHandEdit, 0, 16, 5));
-            options.setDraw_count(readInt(drawCountEdit, 0, 16, 1));
-            options.setNo_check_deck(noCheckDeckBox.isChecked());
-            options.setNo_shuffle_deck(noShuffleDeckBox.isChecked());
-            options.setAuto_death(autoDeathBox.isChecked());
-
-            YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
-            createCustomRoom(dialog, server, options, title, privateRoom);
         });
         dialog.setLeftButtonText(R.string.create_custom_room);
-        dialog.setRightButtonText(R.string.mycard_join_private_room);
-        dialog.setRightButtonListener((dlg, s) -> {
-            YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
-            showJoinPrivateRoomDialog(dialog, server);
-        });
 
         dialog.show();
     }

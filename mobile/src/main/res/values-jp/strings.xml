@@ -429,6 +429,11 @@
     <string name="create_room_failed">ルーム作成失敗</string>
     <string name="no_waiting_rooms">待機中の部屋はありません</string>
     <string name="mycard_server_load_failed">MyCard環境の読み込みに失敗：</string>
+    <string name="mycard_join_private_room">プライベートルームに参加</string>
+    <string name="mycard_private_room">プライベートルーム</string>
+    <string name="mycard_private_room_password">ルームパスワードを入力</string>
+    <string name="mycard_private_room_copied">プライベートルームパスワードをコピーしました：</string>
+    <string name="private_room_env_tip">プライベートルームのパスワードを入力する前に、選択した環境が一致しているか確認してください</string>
     <string name="title_rank_start">ランクマッチ</string>
     <string name="input_room_name">ルーム名を入力</string>
     <string name="server_area">サーバーエリア:</string>

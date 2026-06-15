@@ -449,8 +449,57 @@
                 android:textColor="@color/gray"
                 android:visibility="gone" />
         </LinearLayout>
+
+        <!-- Tab 3: 加入私密房间 -->
+        <LinearLayout
+            android:id="@+id/tab_join_private_room"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:text="@string/mycard_join_private_room"
+                android:textColor="@color/gold"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:gravity="center" />
+
+            <EditText
+                android:id="@+id/et_private_room_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/mycard_private_room_password"
+                android:inputType="text"
+                android:padding="12dp"
+                android:textSize="14sp"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    app:tint="@color/gold"
+                    android:src="@drawable/tutorial"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/private_room_env_tip"
+                    android:textColor="@color/gray"
+                    android:textSize="12sp"
+                    android:layout_marginTop="10dp" />
+            </LinearLayout>
+
+
+        </LinearLayout>
     </FrameLayout>
-
-
-
 </LinearLayout>

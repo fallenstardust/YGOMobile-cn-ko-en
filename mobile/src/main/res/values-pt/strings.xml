@@ -426,6 +426,11 @@
     <string name="create_room_failed">Falha ao Criar Sala</string>
     <string name="no_waiting_rooms">Sem Salas em Espera</string>
     <string name="mycard_server_load_failed">Falha ao carregar ambiente MyCard:</string>
+    <string name="mycard_join_private_room">Entrar na sala privada</string>
+    <string name="mycard_private_room">Sala privada</string>
+    <string name="mycard_private_room_password">Digite a senha da sala privada</string>
+    <string name="mycard_private_room_copied">Senha da sala privada copiada:</string>
+    <string name="private_room_env_tip">Confirme se o formato selecionado é o mesmo antes de digitar a senha da sala privada</string>
     <string name="title_rank_start">Partida Competitiva</string>
     <string name="input_room_name">Digite o nome da sala</string>
     <string name="server_area">Área do Servidor:</string>

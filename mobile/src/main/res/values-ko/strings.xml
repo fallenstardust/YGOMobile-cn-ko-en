@@ -80,6 +80,11 @@
     <string name="settings_game_avatar">게임 아바타</string>
     <string name="tip_credit_max">%d 상한선 초과</string>
     <string name="mycard_server_load_failed">MyCard 환경 불러오기 실패:</string>
+    <string name="mycard_join_private_room">비밀 방 입장</string>
+    <string name="mycard_private_room">비밀 방</string>
+    <string name="mycard_private_room_password">비밀 방 비밀번호 입력</string>
+    <string name="mycard_private_room_copied">비밀 방 비밀번호 복사 완료：</string>
+    <string name="private_room_env_tip">비밀 방 비밀번호 입력 전 선택한 환경이 일치하는지 확인하세요</string>
     <string name="title_rank_start">랭크 매칭</string>
     <string name="restart_app">앱을 다시 시작하십시오!</string>
     <string-array name="opengl_version">

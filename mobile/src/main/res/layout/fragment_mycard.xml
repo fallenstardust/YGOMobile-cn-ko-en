@@ -79,9 +79,9 @@
                 android:layout_height="45dp"
                 android:layout_gravity="center"
                 android:layout_marginHorizontal="5dp"
-                android:src="@drawable/avatar"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="true"
+                android:src="@drawable/avatar" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/img_logout"
@@ -578,8 +578,8 @@
                                     android:id="@+id/ll_create_room"
                                     android:layout_width="match_parent"
                                     android:layout_height="0dp"
-                                    android:layout_weight="1"
                                     android:layout_margin="2dp"
+                                    android:layout_weight="1"
                                     android:background="@drawable/list_item_bg"
                                     android:gravity="center"
                                     android:orientation="horizontal">
@@ -595,9 +595,9 @@
                                         android:layout_height="wrap_content"
                                         android:layout_gravity="center"
                                         android:text="@string/create_custom_room"
-                                        android:textSize="12sp"
                                         android:textColor="@color/colorAccent"
-                                        android:textStyle="bold"/>
+                                        android:textSize="12sp"
+                                        android:textStyle="bold" />
                                 </LinearLayout>
                             </LinearLayout>
 
