@@ -363,6 +363,28 @@ public class MyCard {
         return Base64.encodeToString(optionsBuffer, Base64.NO_WRAP) + suffix;
     }
 
+    public static String createPrivateRoomJoinPassword(String roomPassword, int u16Secret) {
+        byte[] optionsBuffer = new byte[6];
+        optionsBuffer[1] = (byte) (5 << 4);
+
+        int checksum = 0;
+        for (int i = 1; i < optionsBuffer.length; i++) {
+            checksum -= optionsBuffer[i] & 0xff;
+        }
+        optionsBuffer[0] = (byte) (checksum & 0xff);
+
+        int secret = (u16Secret % 65535) + 1;
+        for (int i = 0; i < optionsBuffer.length; i += 2) {
+            int value = (optionsBuffer[i] & 0xff) | ((optionsBuffer[i + 1] & 0xff) << 8);
+            value ^= secret;
+            optionsBuffer[i] = (byte) (value & 0xff);
+            optionsBuffer[i + 1] = (byte) ((value >> 8) & 0xff);
+        }
+
+        String suffix = roomPassword == null ? "" : roomPassword.replaceFirst("\\s", "\ufeff");
+        return Base64.encodeToString(optionsBuffer, Base64.NO_WRAP) + suffix;
+    }
+
     private static int intValue(Integer value, int defaultValue) {
         return value == null ? defaultValue : value;
     }

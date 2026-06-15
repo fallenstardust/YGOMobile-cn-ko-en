@@ -440,6 +440,10 @@
     <string name="mycard_select_ai">选择 AI</string>
     <string name="mycard_ai_empty">没有可用的萌卡 AI。</string>
     <string name="mycard_server_load_failed">加载萌卡环境失败：</string>
+    <string name="mycard_join_private_room">加入私密房间</string>
+    <string name="mycard_private_room">私密房间</string>
+    <string name="mycard_private_room_password">房间密码</string>
+    <string name="mycard_private_room_copied">私密房间密码已复制：</string>
     <string name="s_room">的房间</string>
     <string name="duel_record">对局记录</string>
     <string name="stat_win">胜</string>
