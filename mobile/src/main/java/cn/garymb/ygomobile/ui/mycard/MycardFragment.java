@@ -2021,6 +2021,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
             createCustomRoom(dialog, server, options, title, privateRoom);
         });
+        dialog.setLeftButtonText(R.string.create_custom_room);
+        dialog.setRightButtonText(R.string.mycard_join_private_room);
+        dialog.setRightButtonListener((dlg, s) -> {
+            YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
+            showJoinPrivateRoomDialog(dialog, server);
+        });
 
         dialog.show();
     }
@@ -2046,7 +2052,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     server.setPlayerName(mMcUser.getUsername());
                     YGOUtil.joinGame(activity, server, password);
                     if (privateRoom) {
-                        YGOUtil.show(YGOUtil.s(R.string.server_room_pwd) + hostPassword);
+                        YGOUtil.copyMessage(activity, hostPassword);
+                        YGOUtil.show(YGOUtil.s(R.string.mycard_private_room_copied) + hostPassword);
                     }
                 });
             } catch (Exception e) {
@@ -2056,6 +2063,64 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     activity.runOnUiThread(() -> {
                         YGOUtil.show(YGOUtil.s(R.string.create_room_failed) + e.getMessage());
                     });
+                }
+            }
+        }).start();
+    }
+
+    private void showJoinPrivateRoomDialog(DialogPlus parentDialog, YGOServer server) {
+        EditText input = new EditText(requireContext());
+        input.setSingleLine(true);
+        input.setHint(R.string.mycard_private_room_password);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        int padding = YGOUtil.dp2px(20);
+        input.setPadding(padding, 0, padding, 0);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.mycard_join_private_room)
+                .setView(input)
+                .setNegativeButton(R.string.Cancel, null)
+                .setPositiveButton(R.string.quick_join, (dialog, which) -> {
+                    String privatePassword = input.getText().toString().trim();
+                    if (TextUtils.isEmpty(privatePassword)) {
+                        YGOUtil.show(R.string.mycard_private_room_password);
+                        return;
+                    }
+                    parentDialog.dismiss();
+                    joinPrivateCustomRoom(server, privatePassword);
+                })
+                .show();
+    }
+
+    private void joinPrivateCustomRoom(YGOServer server, String privatePassword) {
+        if (!isUserLoggedIn()) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                String token = SharedPreferenceUtil.getServerToken();
+                if (TextUtils.isEmpty(token)) {
+                    throw new IOException("token not found");
+                }
+
+                int u16Secret = MyCard.getUserU16Secret(token);
+                String password = MyCard.createPrivateRoomJoinPassword(privatePassword, u16Secret);
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+
+                activity.runOnUiThread(() -> {
+                    server.setPlayerName(mMcUser.getUsername());
+                    YGOUtil.joinGame(activity, server, password);
+                });
+            } catch (Exception e) {
+                Log.e("MyCard", "加入私密房间失败: " + e);
+                Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> YGOUtil.show(YGOUtil.s(R.string.start_game_error) + e.getMessage()));
                 }
             }
         }).start();

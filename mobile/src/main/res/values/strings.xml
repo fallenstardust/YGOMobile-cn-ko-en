@@ -457,6 +457,10 @@
     <string name="mycard_select_ai">Select AI</string>
     <string name="mycard_ai_empty">No MyCard AI is available.</string>
     <string name="mycard_server_load_failed">Failed to load MyCard environments: </string>
+    <string name="mycard_join_private_room">Join Private Room</string>
+    <string name="mycard_private_room">Private room</string>
+    <string name="mycard_private_room_password">Private room password</string>
+    <string name="mycard_private_room_copied">Private room password copied: </string>
     <string name="title_rank_start">Ranked Match</string>
     <string name="input_room_name">Input Room Name</string>
     <string name="server_area">Server Area:</string>
