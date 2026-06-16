@@ -13,7 +13,7 @@ import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
 public class DeckWinRateAdapter extends BaseQuickAdapter<MyCardPieChart.Item, BaseViewHolder> {
 
     public DeckWinRateAdapter() {
-        super(R.layout.item_deck_win_rate);
+        super(R.layout.item_mycard_deck_win_rate);
     }
 
     @Override

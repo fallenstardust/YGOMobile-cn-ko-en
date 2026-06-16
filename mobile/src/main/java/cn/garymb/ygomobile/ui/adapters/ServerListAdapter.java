@@ -21,7 +21,7 @@ import cn.garymb.ygomobile.utils.ServerUtil;
 
 public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseViewHolder> {
     public ServerListAdapter(Context context) {
-        super(context, R.layout.item_server_info_swipe);
+        super(context, R.layout.item_home_server_info_swipe);
         bindMenu();
     }
 

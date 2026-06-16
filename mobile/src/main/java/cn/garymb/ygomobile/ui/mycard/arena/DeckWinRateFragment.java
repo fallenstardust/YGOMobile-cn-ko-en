@@ -148,7 +148,7 @@ public class DeckWinRateFragment extends BaseFragemnt {
 
             if (deckTotal == 0) continue;
 
-            View pieItemView = LayoutInflater.from(getContext()).inflate(R.layout.item_pie_chart_deck, llPieCharts, false);
+            View pieItemView = LayoutInflater.from(getContext()).inflate(R.layout.item_mycard_pie_chart_deck, llPieCharts, false);
             
             CircleProgressView cpv = pieItemView.findViewById(R.id.cpv_deck_percentage);
             TextView tvDeckName = pieItemView.findViewById(R.id.tv_deck_name_short);

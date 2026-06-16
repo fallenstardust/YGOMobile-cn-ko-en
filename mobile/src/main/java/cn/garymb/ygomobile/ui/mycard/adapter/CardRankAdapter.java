@@ -60,7 +60,7 @@ public class CardRankAdapter extends RecyclerView.Adapter<CardRankAdapter.ViewHo
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_card_rank, parent, false);
+                .inflate(R.layout.item_mycard_card_rank, parent, false);
         return new ViewHolder(view);
     }
 

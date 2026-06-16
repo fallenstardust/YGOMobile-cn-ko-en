@@ -253,7 +253,7 @@ public class DeckMatchupFragment extends BaseFragemnt {
 
     private TextView createHeaderCell(String text) {
         TextView header = (TextView) LayoutInflater.from(getContext())
-                .inflate(R.layout.item_matchup_table_header_cell, null);
+                .inflate(R.layout.item_mycard_matchup_table_header_cell, null);
         header.setText(text);
         return header;
     }

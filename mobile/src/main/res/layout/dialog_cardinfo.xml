@@ -184,7 +184,7 @@
 
             <include
                 android:id="@+id/detail_link_arrows"
-                layout="@layout/item_linkmaker_small"
+                layout="@layout/item_carddetail_linkmaker_small"
                 android:visibility="gone" />
 
             <ImageView

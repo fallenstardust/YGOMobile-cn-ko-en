@@ -175,7 +175,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         mServerListAdapter = new ServerListAdapter(getContext());
         LayoutInflater infla = LayoutInflater.from(getContext());
         //添加服务器
-        View footView = infla.inflate(R.layout.item_ic_add, null);
+        View footView = infla.inflate(R.layout.item_home_ic_add, null);
         TextView add_server = footView.findViewById(R.id.add_server);
         add_server.setOnClickListener(this);
 

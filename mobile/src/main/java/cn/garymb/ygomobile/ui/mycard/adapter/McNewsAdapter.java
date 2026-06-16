@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.mycard.adapter;
 
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,7 +24,7 @@ public class McNewsAdapter extends BaseQuickAdapter<McNews, BaseViewHolder> {
     }
 
     public McNewsAdapter(OnNewsClickListener listener) {
-        super(R.layout.item_mc_news);
+        super(R.layout.item_mycard_mc_news);
         this.mListener = listener;
     }
 

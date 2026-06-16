@@ -1293,7 +1293,7 @@
 
                         <include
                             android:id="@+id/btn_linkmarker"
-                            layout="@layout/item_linkmarker" />
+                            layout="@layout/item_searcher_linkmarker" />
                     </LinearLayout>
                 </LinearLayout>
 

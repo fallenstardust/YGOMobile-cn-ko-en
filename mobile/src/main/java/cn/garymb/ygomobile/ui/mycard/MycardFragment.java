@@ -35,7 +35,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -49,7 +48,6 @@ import com.ourygo.lib.duelassistant.util.Util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -614,7 +612,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle(username);
-        dialog.setContentView(R.layout.item_user_duel_detail);
+        dialog.setContentView(R.layout.item_mycard_user_duel_detail);
 
         duelDetailAdapter = new UserDuelDetailAdapter(getContext(), dialog.getContentView());
         duelDetailAdapter.setUsername(username);
@@ -1851,7 +1849,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     private void showCreateRoomDialog(List<YGOServer> servers) {
         DialogPlus dialog = new DialogPlus(requireContext());
-        dialog.setContentView(R.layout.dialog_custom_mode_select_with_tabs);
+        dialog.setContentView(R.layout.dialog_mycard_custom_mode_select_with_tabs);
         dialog.setTitle(R.string.create_custom_room);
 
         TextView serverLabel = dialog.findViewById(R.id.tv_create_room_server);

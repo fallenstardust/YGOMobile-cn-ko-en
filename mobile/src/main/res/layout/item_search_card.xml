@@ -5,6 +5,8 @@
     android:id="@+id/swipe_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/list_item_bg"
+    android:layout_marginVertical="2dp"
     sml:sml_auto_open_percent="0.2"
     sml:sml_scroller_duration="250"
     sml:sml_scroller_interpolator="@android:anim/bounce_interpolator">
@@ -78,7 +80,7 @@
 
                 <include
                     android:id="@+id/search_link_arrows"
-                    layout="@layout/item_linkmaker_small"
+                    layout="@layout/item_carddetail_linkmaker_small"
                     android:visibility="gone" />
 
                 <ImageView

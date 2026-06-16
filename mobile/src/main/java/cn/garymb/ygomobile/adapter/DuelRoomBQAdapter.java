@@ -4,7 +4,6 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 
@@ -35,7 +34,7 @@ public class DuelRoomBQAdapter extends BaseQuickAdapter<DuelRoom, BaseViewHolder
     private static final int ITEM_ONE = 4;
 
     public DuelRoomBQAdapter(Context context, List<DuelRoom> data) {
-        super(R.layout.item_duel_room, data);
+        super(R.layout.item_mycard_duel_room, data);
         this.context = context;
     }
 

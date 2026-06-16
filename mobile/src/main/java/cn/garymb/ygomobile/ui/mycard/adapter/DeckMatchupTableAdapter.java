@@ -42,7 +42,7 @@ public class DeckMatchupTableAdapter extends RecyclerView.Adapter<DeckMatchupTab
     @Override
     public TableViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_matchup_table_row, parent, false);
+                .inflate(R.layout.item_mycard_matchup_table_row, parent, false);
         return new TableViewHolder(view);
     }
 
@@ -82,7 +82,7 @@ public class DeckMatchupTableAdapter extends RecyclerView.Adapter<DeckMatchupTab
 
     private TextView createCell(android.content.Context context, DeckMatchupStats.MatchStats stats, int columnWidth) {
         TextView cell = (TextView) LayoutInflater.from(context)
-                .inflate(R.layout.item_matchup_win_rate_cell, null);
+                .inflate(R.layout.item_mycard_matchup_win_rate_cell, null);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 columnWidth,
