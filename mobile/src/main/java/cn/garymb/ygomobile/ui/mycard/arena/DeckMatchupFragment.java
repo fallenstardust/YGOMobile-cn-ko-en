@@ -64,7 +64,7 @@ public class DeckMatchupFragment extends BaseFragemnt {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        View view = inflater.inflate(R.layout.fragment_deck_matchup_table, container, false);
+        View view = inflater.inflate(R.layout.fragment_mycard_deck_matchup_table, container, false);
         initView(view);
         setupSpinners();
         setupDisplayModeButtons();

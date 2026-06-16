@@ -82,7 +82,7 @@ public class CardRankFragment extends BaseFragemnt {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        View view = inflater.inflate(R.layout.fragment_card_rank, container, false);
+        View view = inflater.inflate(R.layout.fragment_mycard_card_rank, container, false);
         initView(view);
         setupSpinners();
         setupFilterButtons();

@@ -65,7 +65,7 @@ public class DuelRankFragment extends BaseFragemnt {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        View view = inflater.inflate(R.layout.fragment_duel_rank, container, false);
+        View view = inflater.inflate(R.layout.fragment_mycard_duel_rank, container, false);
         initView(view);
         loadData();
         return view;

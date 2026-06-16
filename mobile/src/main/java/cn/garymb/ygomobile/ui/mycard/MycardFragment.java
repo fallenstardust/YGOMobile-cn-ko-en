@@ -1347,6 +1347,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
         }
     }
+
+    /**
+     * 供子Fragment调用，更新工具栏按钮状态
+     * @param activeButton 当前激活的按钮View，传null表示所有按钮都恢复为原始状态
+     */
+    public void updateToolBarButtonStatePublic(View activeButton) {
+        updateToolBarButtonState(activeButton);
+    }
     private void initMcNewsView(View view) {
         srl_mcNews = view.findViewById(R.id.srl_mcNews);
         rv_mcNews_list = view.findViewById(R.id.rv_mcNews_list);

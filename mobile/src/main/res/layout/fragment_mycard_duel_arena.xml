@@ -10,26 +10,52 @@
         android:layout_height="wrap_content"
         android:background="@drawable/veil2">
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/button_radius_black_transparents"
             android:layout_gravity="center"
-            android:padding="12dp"
-            android:text="@string/arena"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:padding="3dp"
+                android:src="@drawable/mycard"
+                app:tint="@color/holo_blue_bright" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="5dp"
+                android:text="@string/arena"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btn_jump_out"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:background="@drawable/button_radius_black_transparents"
+                android:padding="4dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_jump_to" />
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/btn_close_fragment"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="end|center_vertical"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="right"
+            android:background="@drawable/button_radius_black_transparents"
             android:contentDescription="关闭"
             android:padding="8dp"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_close_black_24dp" />
+            android:src="@drawable/delete" />
     </FrameLayout>
 
     <com.google.android.material.tabs.TabLayout
@@ -37,8 +63,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/button_radius_black_transparents"
-        app:tabIndicatorColor="@color/colorAccent"
-        app:tabSelectedTextColor="@color/colorAccent"
+        app:tabIndicatorColor="@color/holo_blue_bright"
+        app:tabSelectedTextColor="@color/holo_blue_bright"
         app:tabTextColor="@color/white" />
 
     <androidx.viewpager.widget.ViewPager

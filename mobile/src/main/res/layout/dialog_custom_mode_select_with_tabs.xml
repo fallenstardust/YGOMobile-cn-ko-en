@@ -454,7 +454,8 @@
         <LinearLayout
             android:id="@+id/tab_join_private_room"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@drawable/button_radius_black_transparents"
             android:orientation="vertical"
             android:visibility="gone"
             android:padding="20dp">
@@ -487,6 +488,7 @@
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
+                    android:layout_gravity="center"
                     app:tint="@color/gold"
                     android:src="@drawable/tutorial"/>
 

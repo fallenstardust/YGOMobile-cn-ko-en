@@ -17,6 +17,9 @@ import com.google.android.material.tabs.TabLayout;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
+import cn.garymb.ygomobile.ui.mycard.MyCard;
+import cn.garymb.ygomobile.ui.mycard.MyCardWebFragment;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class MycardDuelArenaFragment extends BaseFragemnt {
@@ -24,11 +27,14 @@ public class MycardDuelArenaFragment extends BaseFragemnt {
     private TabLayout tabLayout;
     private ViewPager viewPager;
     private ImageButton btnClose;
+    private ImageButton btnJumpOut;
+    private HomeActivity homeActivity;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
+        homeActivity = (HomeActivity) getActivity();
         View view = inflater.inflate(R.layout.fragment_mycard_duel_arena, container, false);
         initView(view);
         setupTabs();
@@ -39,8 +45,76 @@ public class MycardDuelArenaFragment extends BaseFragemnt {
         tabLayout = view.findViewById(R.id.tab_layout);
         viewPager = view.findViewById(R.id.view_pager);
         btnClose = view.findViewById(R.id.btn_close_fragment);
+        btnJumpOut = view.findViewById(R.id.btn_jump_out);
 
         btnClose.setOnClickListener(v -> goBack());
+        
+        btnJumpOut.setOnClickListener(v -> openArenaWebPage());
+    }
+
+    private void openArenaWebPage() {
+        if (homeActivity == null || getParentFragment() == null) {
+            return;
+        }
+
+        // 判断 MyCardWebFragment 是否已经显示
+        boolean isShowing = homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible();
+
+        if (isShowing) {
+            // 如果正在显示，则移除它
+            getParentFragment().getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .remove(homeActivity.fragment_mycard_web)
+                    .commit();
+            homeActivity.fragment_mycard_web = null;
+            
+            // 显示 MycardDuelArenaFragment
+            getParentFragment().getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .show(MycardDuelArenaFragment.this)
+                    .commit();
+            
+            // 恢复萌卡论坛按钮状态
+            if (getParentFragment() instanceof cn.garymb.ygomobile.ui.mycard.MycardFragment) {
+                ((cn.garymb.ygomobile.ui.mycard.MycardFragment) getParentFragment())
+                        .updateToolBarButtonStatePublic(null);
+            }
+        } else {
+            // 如果未显示，则打开竞技场网页
+            homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
+                    MyCard.getArenaUrl(),
+                    YGOUtil.s(R.string.arena)
+            );
+
+            // 隐藏 MycardDuelArenaFragment
+            getParentFragment().getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .hide(MycardDuelArenaFragment.this)
+                    .commit();
+
+            // 在独立的 fragment_web_content 容器中添加 Web Fragment
+            getParentFragment().getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
+                    .commit();
+            
+            // 将萌卡论坛按钮设置为关闭状态（传入 null 表示没有按钮被激活，但这里我们需要传入 btn_mycard_bbs）
+            // 由于无法直接访问 btn_mycard_bbs，我们通过反射或其他方式获取
+            View parentView = getParentFragment().getView();
+            if (parentView != null) {
+                View btnBbs = parentView.findViewById(R.id.btn_mycard_bbs);
+                if (getParentFragment() instanceof cn.garymb.ygomobile.ui.mycard.MycardFragment) {
+                    ((cn.garymb.ygomobile.ui.mycard.MycardFragment) getParentFragment())
+                            .updateToolBarButtonStatePublic(btnBbs);
+                }
+            }
+        }
     }
 
     private void setupTabs() {
