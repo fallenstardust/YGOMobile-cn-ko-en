@@ -2,8 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/list_item_bg"
     android:layout_marginVertical="2dp"
+    android:background="@drawable/list_item_bg"
     android:orientation="vertical">
 
     <TextView
@@ -22,6 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:padding="2dp"
         android:weightSum="3">
 
         <LinearLayout
@@ -31,7 +32,8 @@
             android:layout_weight="1"
             android:background="@drawable/button_radius_black_transparents"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="4dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -45,17 +47,99 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:text="100.0%"
                 android:textColor="@color/holo_green_bright"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tv_first_record"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/grayLight"
-                android:textSize="9sp" />
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:weightSum="3">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_win"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_first_record_win"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/holo_green_bright"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_draw"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_first_record_draw"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_lose"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_first_record_lose"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/holo_orange_bright"
+                        android:textSize="9sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+
         </LinearLayout>
 
         <LinearLayout
@@ -65,7 +149,8 @@
             android:layout_weight="1"
             android:background="@drawable/button_radius_black_transparents"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="4dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -79,17 +164,96 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:text="100.0%"
                 android:textColor="@color/holo_blue_bright"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tv_second_record"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/grayLight"
-                android:textSize="9sp" />
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_win"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_second_record_win"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/holo_green_bright"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_draw"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_second_record_draw"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_lose"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_second_record_lose"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/holo_orange_bright"
+                        android:textSize="9sp" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -99,7 +263,8 @@
             android:layout_weight="1"
             android:background="@drawable/button_radius_black_transparents"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="4dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -113,26 +278,120 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:text="100.0%"
                 android:textColor="@color/holo_orange_bright"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tv_total_record"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/grayLight"
-                android:textSize="9sp" />
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_win"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_total_record_win"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/holo_green_bright"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_draw"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_total_record_draw"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/stat_lose"
+                        android:textColor="@color/grayLight"
+                        android:textSize="9sp" />
+
+                    <TextView
+                        android:id="@+id/tv_total_record_lose"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="99999"
+                        android:textColor="@color/holo_orange_bright"
+                        android:textSize="9sp" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tv_match_count"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_margin="6dp"
-        android:textColor="@color/grayDark2"
-        android:textSize="11sp" />
+        android:layout_gravity="right"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="6dp"
+            android:text="@string/stat_all"
+            android:textColor="@color/grayDark2"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tv_match_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="6dp"
+            android:textColor="@color/grayDark2"
+            android:textSize="11sp" />
+    </LinearLayout>
 </LinearLayout>

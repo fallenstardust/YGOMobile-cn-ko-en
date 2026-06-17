@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.mycard.adapter;
 
-import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -33,9 +32,15 @@ public class DeckWinRateAdapter extends BaseQuickAdapter<MyCardPieChart.Item, Ba
         TextView tvFirstWinRate = helper.getView(R.id.tv_first_win_rate);
         TextView tvSecondWinRate = helper.getView(R.id.tv_second_win_rate);
         TextView tvTotalWinRate = helper.getView(R.id.tv_total_win_rate);
-        TextView tvFirstRecord = helper.getView(R.id.tv_first_record);
-        TextView tvSecondRecord = helper.getView(R.id.tv_second_record);
-        TextView tvTotalRecord = helper.getView(R.id.tv_total_record);
+        TextView tvFirstRecordWin = helper.getView(R.id.tv_first_record_win);
+        TextView tvFirstRecordDraw = helper.getView(R.id.tv_first_record_draw);
+        TextView tvFirstRecordLose = helper.getView(R.id.tv_first_record_lose);
+        TextView tvSecondRecordWin = helper.getView(R.id.tv_second_record_win);
+        TextView tvSecondRecordDraw = helper.getView(R.id.tv_second_record_draw);
+        TextView tvSecondRecordLose = helper.getView(R.id.tv_second_record_lose);
+        TextView tvTotalRecordWin = helper.getView(R.id.tv_total_record_win);
+        TextView tvTotalRecordDraw = helper.getView(R.id.tv_total_record_draw);
+        TextView tvTotalRecordLose = helper.getView(R.id.tv_total_record_lose);
         TextView tvMatchCount = helper.getView(R.id.tv_match_count);
 
         tvDeckName.setText(item.getName());
@@ -54,10 +59,14 @@ public class DeckWinRateAdapter extends BaseQuickAdapter<MyCardPieChart.Item, Ba
 
                 float firstWinRate = firstTotal > 0 ? (float) firstWin / firstTotal * 100 : 0;
                 tvFirstWinRate.setText(String.format("%.1f%%", firstWinRate));
-                tvFirstRecord.setText(String.format("%d胜/%d平/%d负", firstWin, firstDraw, firstLose));
+                tvFirstRecordWin.setText(String.valueOf(firstWin));
+                tvFirstRecordDraw.setText(String.valueOf(firstDraw));
+                tvFirstRecordLose.setText(String.valueOf(firstLose));
             } else {
                 tvFirstWinRate.setText("N/A");
-                tvFirstRecord.setText("无数据");
+                tvFirstRecordWin.setText("-");
+                tvFirstRecordDraw.setText("-");
+                tvFirstRecordLose.setText("-");
             }
 
             if (second != null) {
@@ -68,10 +77,14 @@ public class DeckWinRateAdapter extends BaseQuickAdapter<MyCardPieChart.Item, Ba
 
                 float secondWinRate = secondTotal > 0 ? (float) secondWin / secondTotal * 100 : 0;
                 tvSecondWinRate.setText(String.format("%.1f%%", secondWinRate));
-                tvSecondRecord.setText(String.format("%d胜/%d平/%d负", secondWin, secondDraw, secondLose));
+                tvSecondRecordWin.setText(String.valueOf(secondWin));
+                tvSecondRecordDraw.setText(String.valueOf(secondDraw));
+                tvSecondRecordLose.setText(String.valueOf(secondLose));
             } else {
                 tvSecondWinRate.setText("N/A");
-                tvSecondRecord.setText("无数据");
+                tvSecondRecordWin.setText("-");
+                tvSecondRecordDraw.setText("-");
+                tvSecondRecordLose.setText("-");
             }
 
             int totalWin = (first != null ? parseInt(first.getWin()) : 0) + (second != null ? parseInt(second.getWin()) : 0);
@@ -81,16 +94,24 @@ public class DeckWinRateAdapter extends BaseQuickAdapter<MyCardPieChart.Item, Ba
 
             float totalWinRate = totalMatches > 0 ? (float) totalWin / totalMatches * 100 : 0;
             tvTotalWinRate.setText(String.format("%.1f%%", totalWinRate));
-            tvTotalRecord.setText(String.format("%d胜/%d平/%d负", totalWin, totalDraw, totalLose));
-            tvMatchCount.setText("总场次: " + totalMatches);
+            tvTotalRecordWin.setText(String.valueOf(totalWin));
+            tvTotalRecordDraw.setText(String.valueOf(totalDraw));
+            tvTotalRecordLose.setText(String.valueOf(totalLose));
+            tvMatchCount.setText(String.valueOf(totalMatches));
         } else {
             tvFirstWinRate.setText("N/A");
             tvSecondWinRate.setText("N/A");
             tvTotalWinRate.setText("N/A");
-            tvFirstRecord.setText("无数据");
-            tvSecondRecord.setText("无数据");
-            tvTotalRecord.setText("无数据");
-            tvMatchCount.setText("总场次: 0");
+            tvFirstRecordWin.setText("-");
+            tvFirstRecordDraw.setText("-");
+            tvFirstRecordLose.setText("-");
+            tvSecondRecordWin.setText("-");
+            tvSecondRecordDraw.setText("-");
+            tvSecondRecordLose.setText("-");
+            tvTotalRecordWin.setText("-");
+            tvTotalRecordDraw.setText("-");
+            tvTotalRecordLose.setText("-");
+            tvMatchCount.setText("-");
         }
 
         helper.itemView.setOnClickListener(v -> {
