@@ -219,7 +219,26 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 初始化抽屉布局和列表视图
         mDrawerLayout = layoutView.findViewById(R.id.drawer_layout);
+        mDrawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {}
+
+            @Override
+            public void onDrawerOpened(@NonNull View drawerView) {
+                updateUndoRedoButtonVisibility();
+            }
+
+            @Override
+            public void onDrawerClosed(@NonNull View drawerView) {
+                updateUndoRedoButtonVisibility();
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {}
+        });
+
         mListView = layoutView.findViewById(R.id.list_cards);
+
 
         // 设置卡片列表适配器并启用滑动删除功能
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
@@ -813,6 +832,26 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         //同时刷新信用分总计
         refreshDeckCreditCount();
     }
+
+    private void updateUndoRedoButtonVisibility() {
+        if (btnUndo == null || btnRedo == null) return;
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)
+                || mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY);
+        if (drawerOpen) {
+            btnUndo.setVisibility(View.INVISIBLE);
+            btnRedo.setVisibility(View.INVISIBLE);
+        } else {
+            // 抽屉关闭时，根据原有逻辑恢复按钮状态
+            if (deckHistory.size() > 1 && !isPackMode) {
+                btnUndo.setVisibility(canUndo() ? View.VISIBLE : View.INVISIBLE);
+                btnRedo.setVisibility(canRedo() ? View.VISIBLE : View.INVISIBLE);
+            } else {
+                btnUndo.setVisibility(View.INVISIBLE);
+                btnRedo.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
 
     /**
      * 刷新卡组信用分显示
