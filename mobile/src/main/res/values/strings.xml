@@ -507,4 +507,5 @@
     <string name="deck_winrate">Deck Win Rate</string>
     <string name="duel_ranking">Duel Rank</string>
     <string name="card_ranking">Card Rank</string>
+    <string name="deck_dist_pie_analysis">Deck Distribution Pie Analysis</string>
 </resources>

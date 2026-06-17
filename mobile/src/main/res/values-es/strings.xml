@@ -481,6 +481,7 @@
     <string name="deck_winrate">% Mazo</string>
     <string name="duel_ranking">Ranking Duelos</string>
     <string name="card_ranking">Ranking Cartas</string>
+    <string name="deck_dist_pie_analysis">Análisis de distribución de mazos en gráfico circular</string>
 </resources>
 
 

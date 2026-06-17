@@ -23,7 +23,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="8dp"
                 android:gravity="center"
-                android:text="卡组场次分布"
+                android:text="@string/deck_dist_pie_analysis"
                 android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold" />

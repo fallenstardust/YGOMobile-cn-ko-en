@@ -418,6 +418,7 @@
     <string name="waiting_message">等待匹配中，请稍后...</string>
     <string name="mycard_bbs">萌卡论坛</string>
     <string name="tips_click_to_arena">点击饼图查看详情</string>
+    <string name="deck_dist_pie_analysis">饼图卡组分布分析</string>
     <string name="server_area">环境：</string>
     <string name="allowed_cards">卡片允许：</string>
     <string name="single_duel">单局模式</string>

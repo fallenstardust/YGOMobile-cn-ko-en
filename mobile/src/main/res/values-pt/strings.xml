@@ -481,5 +481,6 @@
     <string name="deck_winrate">% Baralho</string>
     <string name="duel_ranking">Rank Duelos</string>
     <string name="card_ranking">Rank Cartas</string>
+    <string name="deck_dist_pie_analysis">Análise de distribuição de baralhos em gráfico de pizza</string>
 </resources>
 

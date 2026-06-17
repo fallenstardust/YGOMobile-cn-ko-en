@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.mycard.arena;
 
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,11 +18,11 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.king.view.circleprogressview.CircleProgressView;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
-import cn.garymb.ygomobile.bean.DeckType;
-import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckManageDialog;
@@ -38,6 +40,10 @@ public class DeckWinRateFragment extends BaseFragemnt {
     private LinearLayout llPieChartContainer;
     private LinearLayout llPieCharts;
     private TextView tvTotalMatches;
+
+    private List<MyCardPieChart.Item> allDeckItems = new ArrayList<>();
+    private String currentFilterDeckName = null;
+    private View selectedPieChartView = null;
 
     @Nullable
     @Override
@@ -109,23 +115,60 @@ public class DeckWinRateFragment extends BaseFragemnt {
                     }
 
                     if (pieChart != null && !pieChart.isEmpty()) {
-                        List<MyCardPieChart.Item> sortedList = new java.util.ArrayList<>(pieChart);
+                        List<MyCardPieChart.Item> sortedList = new ArrayList<>(pieChart);
                         sortedList.sort((item1, item2) -> {
                             int matches1 = getDeckTotalMatches(item1);
                             int matches2 = getDeckTotalMatches(item2);
                             return Integer.compare(matches2, matches1);
                         });
                         
+                        allDeckItems = sortedList;
+                        currentFilterDeckName = null;
+                        selectedPieChartView = null;
                         adapter.setNewData(sortedList);
                         tvEmpty.setVisibility(View.GONE);
                         updatePieChart(pieChart);
                     } else {
+                        allDeckItems.clear();
                         tvEmpty.setVisibility(View.VISIBLE);
                         llPieChartContainer.setVisibility(View.GONE);
                     }
                 });
             }
         });
+    }
+
+    private void filterListByDeckName(String deckName) {
+        // 再次点击同一个 pie chart 时取消过滤
+        if (deckName != null && deckName.equals(currentFilterDeckName)) {
+            currentFilterDeckName = null;
+            selectedPieChartView = null;
+            adapter.setNewData(allDeckItems);
+            clearPieChartHighlight();
+            return;
+        }
+
+        currentFilterDeckName = deckName;
+        List<MyCardPieChart.Item> filtered = allDeckItems.stream()
+                .filter(item -> deckName != null && deckName.equals(item.getName()))
+                .collect(Collectors.toList());
+        adapter.setNewData(filtered);
+    }
+
+    private void clearPieChartHighlight() {
+        for (int i = 0; i < llPieCharts.getChildCount(); i++) {
+            View child = llPieCharts.getChildAt(i);
+            child.setBackground(null);
+        }
+    }
+
+    private void highlightPieChartItem(View itemView) {
+        clearPieChartHighlight();
+        GradientDrawable highlightBg = new GradientDrawable();
+        highlightBg.setCornerRadius(8f);
+        highlightBg.setColor(Color.parseColor("#33FFFFFF"));
+        itemView.setBackground(highlightBg);
+        selectedPieChartView = itemView;
     }
 
     private void updatePieChart(MyCardPieChart pieChart) {
@@ -151,7 +194,7 @@ public class DeckWinRateFragment extends BaseFragemnt {
             return;
         }
 
-        List<MyCardPieChart.Item> sortedForPie = new java.util.ArrayList<>(pieChart);
+        List<MyCardPieChart.Item> sortedForPie = new ArrayList<>(pieChart);
         sortedForPie.sort((item1, item2) -> {
             int total1 = getDeckTotalMatches(item1);
             int total2 = getDeckTotalMatches(item2);
@@ -194,14 +237,22 @@ public class DeckWinRateFragment extends BaseFragemnt {
             int colorResId = colors[colorIndex % colors.length];
             cpv.setProgressColor(YGOUtil.c(colorResId));
 
-            tvDeckName.setText(item.getName());
+            final String deckName = item.getName();
+            tvDeckName.setText(deckName);
             tvDeckMatches.setText(deckTotal + YGOUtil.s(R.string.unit_match_count));
+
+            pieItemView.setOnClickListener(v -> {
+                filterListByDeckName(deckName);
+                if (deckName.equals(currentFilterDeckName)) {
+                    highlightPieChartItem(v);
+                }
+            });
 
             llPieCharts.addView(pieItemView);
             colorIndex++;
         }
 
-        tvTotalMatches.setText("总场次: " + totalMatches);
+        tvTotalMatches.setText(String.valueOf(totalMatches));
         llPieChartContainer.setVisibility(View.VISIBLE);
     }
 

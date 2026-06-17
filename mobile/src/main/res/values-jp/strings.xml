@@ -484,4 +484,5 @@
     <string name="deck_winrate">デッキ勝率</string>
     <string name="duel_ranking">デュエル順位</string>
     <string name="card_ranking">カード順位</string>
+    <string name="deck_dist_pie_analysis">デッキ分布円グラフ分析</string>
 </resources>
