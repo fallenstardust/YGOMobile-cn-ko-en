@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -18,7 +19,12 @@ import com.king.view.circleprogressview.CircleProgressView;
 import java.util.List;
 
 import cn.garymb.ygomobile.base.BaseFragemnt;
+import cn.garymb.ygomobile.bean.DeckType;
+import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckManageDialog;
+import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.adapter.DeckWinRateAdapter;
 import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -56,7 +62,31 @@ public class DeckWinRateFragment extends BaseFragemnt {
 
         rvDeckList.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new DeckWinRateAdapter();
+        
+        adapter.setOnItemClickListener(deckName -> {
+            openDeckSquareWithSearch(deckName);
+        });
+        
         rvDeckList.setAdapter(adapter);
+    }
+
+    private void openDeckSquareWithSearch(String deckName) {
+        FragmentActivity activity = getActivity();
+        if (activity == null || !(activity instanceof HomeActivity)) {
+            return;
+        }
+
+        HomeActivity homeActivity = (HomeActivity) activity;
+        DeckManagerFragment deckManagerFragment = homeActivity.fragment_deck_cards;
+
+        if (deckManagerFragment == null) {
+            return;
+        }
+
+        homeActivity.switchFragment(deckManagerFragment, 2, false);
+
+        DeckManageDialog dialog = new DeckManageDialog(deckManagerFragment, 1, deckName);
+        dialog.show(activity.getSupportFragmentManager(), "deck_manage_dialog");
     }
 
     private void loadData() {

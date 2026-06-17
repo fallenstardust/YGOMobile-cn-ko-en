@@ -13,7 +13,7 @@
             android:id="@+id/ll_pie_chart_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/dialogshort"
+            android:background="@drawable/sdialogl"
             android:orientation="vertical"
             android:padding="12dp">
 

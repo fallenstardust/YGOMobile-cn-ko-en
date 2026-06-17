@@ -21,22 +21,31 @@ import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 
 public class DeckManageDialog extends DialogFragment implements YGODeckDialogUtil.OnDeckDialogListener {
 
+    private int initialTabPosition = 0;
+    private String searchKeyword = null;
 
     public void onDismiss() {
         dismiss();
     }
 
     public void onShow() {
-        //todo
-
     }
 
     private YGODeckDialogUtil.OnDeckMenuListener mOnDeckMenuListener;
 
     public DeckManageDialog(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener) {
+        this(onDeckMenuListener, 0, null);
+    }
+
+    public DeckManageDialog(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, int initialTabPosition, String searchKeyword) {
         super();
         mOnDeckMenuListener = onDeckMenuListener;
+        this.initialTabPosition = initialTabPosition;
+        this.searchKeyword = searchKeyword;
+    }
 
+    public String getSearchKeyword() {
+        return searchKeyword;
     }
 
     @Override
@@ -52,16 +61,14 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
         ViewPager2 viewPager = view.findViewById(R.id.deck_view_pager);
         TabLayout tabLayout = view.findViewById(R.id.deck_manager_tab_layout);
         viewPager.setUserInputEnabled(true);
-        // Setup adapter
+        
         ViewPagerAdapter adapter = new ViewPagerAdapter(this, mOnDeckMenuListener, this);
         viewPager.setAdapter(adapter);
 
-        // Connect TabLayout with ViewPager
         new TabLayoutMediator(tabLayout, viewPager,
                 new TabLayoutMediator.TabConfigurationStrategy() {
                     @Override
                     public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
-                        //tab.setText("Tab " + (position + 1));
                         switch (position) {
                             case 0:
                                 tab.setIcon(R.drawable.ic_deck_box);
@@ -75,17 +82,18 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
                                 tab.setIcon(R.drawable.my_deck_square);
                                 tab.setText(R.string.my_deck_online);
                                 break;
-
                         }
-
                     }
                 }).attach();
+
+        if (initialTabPosition > 0 && initialTabPosition < 3) {
+            viewPager.setCurrentItem(initialTabPosition, false);
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        // Set dialog dimensions
         Window window = getDialog().getWindow();
         if (window != null) {
             window.setLayout(

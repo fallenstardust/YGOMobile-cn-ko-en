@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.mycard.adapter;
 
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,6 +12,16 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
 
 public class DeckWinRateAdapter extends BaseQuickAdapter<MyCardPieChart.Item, BaseViewHolder> {
+
+    private OnItemClickListener mListener;
+
+    public interface OnItemClickListener {
+        void onItemClick(String deckName);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.mListener = listener;
+    }
 
     public DeckWinRateAdapter() {
         super(R.layout.item_mycard_deck_win_rate);
@@ -81,6 +92,12 @@ public class DeckWinRateAdapter extends BaseQuickAdapter<MyCardPieChart.Item, Ba
             tvTotalRecord.setText("无数据");
             tvMatchCount.setText("总场次: 0");
         }
+
+        helper.itemView.setOnClickListener(v -> {
+            if (mListener != null) {
+                mListener.onItemClick(item.getName());
+            }
+        });
     }
 
     private int parseInt(String value) {

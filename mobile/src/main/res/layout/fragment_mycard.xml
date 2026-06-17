@@ -50,16 +50,18 @@
 
                     <ProgressBar
                         android:id="@+id/pb_loading"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
                         android:layout_gravity="center|right"
                         android:visibility="gone" />
 
                     <ImageView
                         android:id="@+id/iv_refresh"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="center|right"
+                        android:background="@drawable/button_radius_black_transparents"
+                        android:padding="2dp"
                         android:src="@drawable/ic_refresh"
                         android:visibility="visible" />
 
@@ -309,7 +311,7 @@
                                             app:cpvLabelTextColor="@color/white"
                                             app:cpvLabelTextSize="12sp"
                                             app:cpvNormalColor="@color/klein_blue"
-                                            app:cpvProgressColor="@color/colorAccent"
+                                            app:cpvProgressColor="@color/holo_blue_bright"
                                             app:cpvShowTick="false"
                                             app:cpvStrokeWidth="5dp" />
 

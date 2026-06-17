@@ -25,7 +25,7 @@ public class DeckSquareFragment extends Fragment {
     private static final String TAG = DeckSquareFragment.class.getSimpleName();
     private FragmentDeckSquareBinding binding;
     private DeckSquareListAdapter deckSquareListAdapter;
-    private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
+    private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
     private String keyWord;
     private Boolean sortLike;
@@ -53,15 +53,14 @@ public class DeckSquareFragment extends Fragment {
         binding.refreshData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //根据按钮使用的图标决定是否是按赞排序还是按上传时间排序, 切换成另一种图标
                 if (sortLike == false) {
                     sortLike = true;
-                    binding.tvSortMode.setText(R.string.sort_by_thumb);//当按时间顺序时，点击应切换为按点赞顺序
-                    binding.refreshData.setImageDrawable(icon_new);//因为点击后会变成按点赞顺序，就需要图标显示为按时间顺序，告诉用户点它可变回时间顺序
+                    binding.tvSortMode.setText(R.string.sort_by_thumb);
+                    binding.refreshData.setImageDrawable(icon_new);
                 } else {
                     sortLike = false;
-                    binding.tvSortMode.setText(R.string.sort_by_time);//当按点赞顺序时，点击应切换为按时间顺序
-                    binding.refreshData.setImageDrawable(icon_like);//因为点击后会变成按时间顺序，就需要图标切换为按点赞顺序，告诉用户点它可变成点赞顺序
+                    binding.tvSortMode.setText(R.string.sort_by_time);
+                    binding.refreshData.setImageDrawable(icon_like);
                 }
                 int targetPage = 1;
                 try {
@@ -72,7 +71,6 @@ public class DeckSquareFragment extends Fragment {
                 deckSquareListAdapter.loadData(targetPage, 30, "", sortLike, false, "");
             }
         });
-        // 设置页码跳转监听
         binding.etGoToPage.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 int targetPage = 0;
@@ -124,7 +122,6 @@ public class DeckSquareFragment extends Fragment {
 
             }
         });
-        //查询卡组名称
         binding.etDeckSquareInputDeckName.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 Editable contributorName = binding.etInputContributorName.getText();
@@ -138,7 +135,6 @@ public class DeckSquareFragment extends Fragment {
             }
             return false;
         });
-        // 添加文本变化监听器
         binding.etDeckSquareInputDeckName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -196,7 +192,6 @@ public class DeckSquareFragment extends Fragment {
             }
             return false;
         });
-        // 添加文本变化监听器
         binding.etInputContributorName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -213,23 +208,19 @@ public class DeckSquareFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                // 当输入框内容为空时
                 if (s.toString().isEmpty()) {
                     binding.btnClearDeckName.setVisibility(View.GONE);
-                    // 恢复底部按钮可用状态
                     binding.formerPageBtn.setEnabled(true);
                     binding.formerPageBtn.clearColorFilter();
                     binding.nextPageBtn.setEnabled(true);
                     binding.nextPageBtn.clearColorFilter();
                     binding.refreshData.setEnabled(true);
                     binding.refreshData.clearColorFilter();
-                    // 重置页码为1
                     binding.etGoToPage.setText("1");
                     binding.etGoToPage.setEnabled(true);
                     deckSquareListAdapter.loadData();
                     binding.listDeckInfo.scrollToPosition(0);
                 } else {
-                    // 底部按钮不可用状态
                     binding.formerPageBtn.setEnabled(false);
                     binding.formerPageBtn.setColorFilter(R.color.navigator_dir_text_color);
                     binding.nextPageBtn.setEnabled(false);
@@ -240,14 +231,11 @@ public class DeckSquareFragment extends Fragment {
                 }
             }
         });
-        //设置清空按钮点击清除输入内容
         binding.btnClearDeckName.setOnClickListener(view -> binding.etDeckSquareInputDeckName.getText().clear());
         binding.btnClearContributorName.setOnClickListener(view -> binding.etInputContributorName.getText().clear());
-        // Set click listener in your adapter
         deckSquareListAdapter.setOnItemClickListener((adapter, view, position) -> {
             OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
             LogUtil.v("seesee", item.toString());
-            //调用
             mDialogListener.onDismiss();
             DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.SQUARE_DECK);
             onDeckMenuListener.onDeckSelect(deckFile);
@@ -255,9 +243,29 @@ public class DeckSquareFragment extends Fragment {
         return binding.getRoot();
     }
 
+    public void searchDeck(String keyword) {
+        if (binding == null || keyword == null || keyword.isEmpty()) {
+            return;
+        }
+        
+        binding.etDeckSquareInputDeckName.setText(keyword);
+        binding.etDeckSquareInputDeckName.setSelection(keyword.length());
+        binding.etGoToPage.setText("1");
+        binding.etGoToPage.setEnabled(false);
+        deckSquareListAdapter.loadData(1, 1000, keyword, true, false, "");
+        binding.listDeckInfo.scrollToPosition(0);
+    }
+
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        Fragment parent = getParentFragment();
+        if (parent instanceof DeckManageDialog) {
+            DeckManageDialog dialog = (DeckManageDialog) parent;
+            String keyword = dialog.getSearchKeyword();
+            if (keyword != null && !keyword.isEmpty()) {
+                searchDeck(keyword);
+            }
+        }
     }
 
     @Override
