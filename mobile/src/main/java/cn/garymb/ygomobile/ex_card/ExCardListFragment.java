@@ -69,8 +69,10 @@ public class ExCardListFragment extends Fragment {
     public void onStop() {
         super.onStop();
         LogUtil.i(TAG, "excard fragment on stop");
-        if (EventBus.getDefault().isRegistered(this))//加上判断
+        if (EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
+        
+        handler.removeCallbacksAndMessages(null);
     }
 
     public void initView(View layoutView) {
@@ -193,6 +195,11 @@ public class ExCardListFragment extends Fragment {
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
+            
+            if (!isAdded() || getContext() == null) {
+                return;
+            }
+            
             switch (msg.what) {
                 case DownloadUtil.TYPE_DOWNLOAD_ING:
                     textDownload.setText(msg.arg1 + "%");
