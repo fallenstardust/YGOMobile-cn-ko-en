@@ -113,12 +113,14 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
     protected void onPermission(boolean isOk) {
         super.onPermission(isOk);
         if (isOk) {
+            /*
             try {
                 FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
             } catch (Throwable e) {
                 YGOUtil.showTextToast(e + "", Toast.LENGTH_LONG);
             }
             YGOUtil.showTextToast(R.string.done);
+             */
         }
     }
 
