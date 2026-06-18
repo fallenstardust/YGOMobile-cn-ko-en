@@ -913,6 +913,9 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, size_t len) {
 				// 显示观战者交换按钮
 				mainGame->btnSpectatorSwap->setVisible(true);
                 mainGame->imgEmoticon->setVisible(false);// 观战时暂不允许发送表情
+			} else {
+				// 对战玩家显示表情按钮
+				mainGame->imgEmoticon->setVisible(true);
 			}
 			// 根据玩家位置设置主机名和客机名
 			if(selftype != 1) {
@@ -937,6 +940,9 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, size_t len) {
 				// 显示观战者交换按钮
 				mainGame->btnSpectatorSwap->setVisible(true);
                 mainGame->imgEmoticon->setVisible(false);// 观战时暂不允许发送表情
+			} else {
+				// 对战玩家显示表情按钮
+				mainGame->imgEmoticon->setVisible(true);
 			}
 			// 根据玩家位置设置主机名、主机标签名、客机名和客机标签名
 			if(selftype > 1 && selftype < 4) {
