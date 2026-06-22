@@ -4463,8 +4463,8 @@ void DuelClient::SetResponseI(int32_t respI) {
  */
 void DuelClient::SetResponseB(void* respB, size_t len) {
 	// 限制复制长度不超过缓冲区最大容量
-	if (len > SIZE_RETURN_VALUE)
-		len = SIZE_RETURN_VALUE;
+	if (len > UINT8_MAX)
+		len = UINT8_MAX;
 
 	// 将响应数据复制到内部缓冲区
 	std::memcpy(response_buf, respB, len);
