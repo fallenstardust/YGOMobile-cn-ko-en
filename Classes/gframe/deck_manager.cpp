@@ -576,7 +576,7 @@ void DeckManager::SaveDeck(const Deck& deck, std::stringstream& deckStream) {
  * @param file 保存的目标文件路径
  * @return 保存成功返回true，失败返回false
  */
-bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
+bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file, bool requestNewId) {
 	// 检查并创建deck目录
 	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
 		return false;
@@ -585,6 +585,16 @@ bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
 	FILE* fp = OpenDeckFile(file, "w");
 	if(!fp)
 		return false;
+
+	// 如果需要获取新deckId，清除缓存中的旧deckId/userId注释行
+	if (requestNewId) {
+		deckComments.erase(
+			std::remove_if(deckComments.begin(), deckComments.end(), [](const std::wstring& comment) {
+				return comment.length() >= 2 && comment[0] == L'#' && comment[1] == L'#';
+			}),
+			deckComments.end()
+		);
+	}
 
 	// 将卡组数据序列化到字符串流中
 	std::stringstream deckStream;
@@ -600,8 +610,13 @@ bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
 		char utf8_path[512];
 		BufferIO::EncodeUTF8(file, utf8_path);
 
-		// 调用 Android JNI 方法同步保存在线卡组
-		irr::android::syncSaveDeck(mainGame->appMain, utf8_path);
+		if (requestNewId) {
+			// 新建/另存为/复制：请求新的 deckId 并和 userId 一起保存到文件
+			irr::android::requestNewDeckIdAndSync(mainGame->appMain, utf8_path);
+		} else {
+			// 普通保存：维持现有 deckId 不变
+			irr::android::syncSaveDeck(mainGame->appMain, utf8_path);
+		}
 	}
 
 	return true;

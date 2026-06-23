@@ -212,6 +212,8 @@ extern void renameCategoryDecksSync(ANDROID_APP app, const char* old_category_na
 
 extern void syncSaveDeck(ANDROID_APP app, const char* deck_path);
 
+extern void requestNewDeckIdAndSync(ANDROID_APP app, const char* deck_path);
+
 } // namespace android
 } // namespace irr
 

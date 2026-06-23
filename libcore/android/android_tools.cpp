@@ -1169,6 +1169,30 @@ void syncSaveDeck(ANDROID_APP app, const char* deck_path) {
 	jni->DeleteLocalRef(ClassNativeActivity);
 	app->activity->vm->DetachCurrentThread();
 }
+void requestNewDeckIdAndSync(ANDROID_APP app, const char* deck_path) {
+	if (!app || !app->activity || !app->activity->vm)
+		return;
+	JNIEnv* jni = nullptr;
+	app->activity->vm->AttachCurrentThread(&jni, NULL);
+	if (!jni)
+		return;
+	jobject lNativeActivity = app->activity->clazz;
+	jclass ClassNativeActivity = jni->GetObjectClass(lNativeActivity);
+	jmethodID MethodGetApp = jni->GetMethodID(ClassNativeActivity,
+											  "getApplication", "()Landroid/app/Application;");
+	jobject application = jni->CallObjectMethod(lNativeActivity, MethodGetApp);
+	jclass classApp = jni->GetObjectClass(application);
+	jmethodID requestMethod = jni->GetMethodID(classApp, "requestNewDeckIdAndSync",
+											   "(Ljava/lang/String;)V");
+	jstring pathstring = jni->NewStringUTF(deck_path);
+	jni->CallVoidMethod(application, requestMethod, pathstring);
+	if (pathstring) {
+		jni->DeleteLocalRef(pathstring);
+	}
+	jni->DeleteLocalRef(classApp);
+	jni->DeleteLocalRef(ClassNativeActivity);
+	app->activity->vm->DetachCurrentThread();
+}
 
 } // namespace android
 } // namespace irr

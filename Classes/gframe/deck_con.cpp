@@ -277,7 +277,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				wchar_t filepath[256];
 				get_deck_file(filepath);
-				if(deckManager.SaveDeck(deckManager.current_deck, filepath)) {
+				if(deckManager.SaveDeck(deckManager.current_deck, filepath, false)) {
 					mainGame->stACMessage->setText(dataManager.GetSysString(1335));
 					mainGame->PopupElement(mainGame->wACMessage, 20);
 					is_modified = false;

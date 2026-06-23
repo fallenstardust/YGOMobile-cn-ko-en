@@ -256,7 +256,7 @@ public class App extends GameApplication {
             return;
         }
         
-        java.io.File deckFile = new java.io.File(deckPath);
+        File deckFile = new File(deckPath);
         if (!deckFile.exists()) {
             LogUtil.w("App", "卡组文件不存在，无法同步: " + deckPath);
             return;
@@ -308,7 +308,7 @@ public class App extends GameApplication {
             MyDeckItem deckItem = new MyDeckItem();
             deckItem.setDeckPath(deckPath);
             deckItem.setDeckId(deckId);
-            deckItem.setDeckName(targetDeck.getDeckName());
+            deckItem.setDeckName(targetDeck.getDeckName().replace(Constants.YDK_FILE_EX, ""));
             deckItem.setDeckType(targetDeck.getDeckType());
             deckItem.setUpdateTimestamp(System.currentTimeMillis());
             deckItem.setUserId(loginToken.getUserId());
@@ -318,7 +318,7 @@ public class App extends GameApplication {
             deckItem.setDeckCoverCard1(DeckUtil.getFirstCardCode(deckFile.getPath())); // Changed from DeckUtil.getFirstCardCode(deckFile);
             
             // 上传更新
-            java.util.List<MyDeckItem> deckItems = new java.util.ArrayList<>();
+            List<MyDeckItem> deckItems = new ArrayList<>();
             deckItems.add(deckItem);
             
             DeckSquareApiUtil.UploadMyDecks(deckItems, loginToken);
@@ -331,6 +331,58 @@ public class App extends GameApplication {
             if (result != null && result) {
                 LogUtil.d("App", "卡组同步完成");
             }
+        });
+    }
+
+    public void requestNewDeckIdAndSync(String deckPath) {
+        if (deckPath == null || deckPath.isEmpty()) {
+            return;
+        }
+
+        File deckFile = new File(deckPath);
+        if (!deckFile.exists()) {
+            LogUtil.w("App", "卡组文件不存在，无法请求新deckId: " + deckPath);
+            return;
+        }
+
+        if (DeckSquareApiUtil.needLogin()) {
+            return;
+        }
+
+        LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+        if (loginToken == null) {
+            return;
+        }
+
+        VUiKit.defer().when(() -> {
+            MyDeckItem deckItem = new MyDeckItem();
+            deckItem.setDeckPath(deckPath);
+            deckItem.setDeckName(deckFile.getName());
+
+            String parentName = deckFile.getParentFile().getName();
+            String deckDir = AppsSettings.get().getDeckDir();
+            File deckDirFile = new File(deckDir);
+            if (deckDirFile.getName().equals(parentName)) {
+                deckItem.setDeckType("");
+            } else {
+                deckItem.setDeckType(parentName);
+            }
+
+            deckItem.setUpdateTimestamp(System.currentTimeMillis());
+            deckItem.setUserId(loginToken.getUserId());
+            deckItem.setDeckCoverCard1(DeckUtil.getFirstCardCode(deckPath));
+            deckItem.setDelete(false);
+
+            List<MyDeckItem> deckItems = new ArrayList<>();
+            deckItems.add(deckItem);
+
+            DeckSquareApiUtil.requestIdAndPushNewDecks(deckItems, loginToken);
+            LogUtil.d("App", "请求新deckId并推送成功: " + deckPath);
+            return true;
+        }).fail((e) -> {
+            LogUtil.e("App", "请求新deckId失败!", e);
+        }).done((result) -> {
+            LogUtil.d("App", "requestNewDeckIdAndSync 完成");
         });
     }
 
