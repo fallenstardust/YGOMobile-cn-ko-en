@@ -370,7 +370,7 @@ public class App extends GameApplication {
         VUiKit.defer().when(() -> {
             MyDeckItem deckItem = new MyDeckItem();
             deckItem.setDeckPath(deckPath);
-            deckItem.setDeckName(deckFile.getName());
+            deckItem.setDeckName(deckFile.getName().replace(Constants.YDK_FILE_EX, ""));
 
             String parentName = deckFile.getParentFile().getName();
             String deckDir = AppsSettings.get().getDeckDir();
