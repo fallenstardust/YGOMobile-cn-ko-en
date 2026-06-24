@@ -81,7 +81,7 @@
                 app:cpvLabelTextColor="@color/white"
                 app:cpvLabelTextSize="12sp"
                 app:cpvNormalColor="@color/klein_blue"
-                app:cpvProgressColor="@color/colorAccent"
+                app:cpvProgressColor="@color/holo_blue_bright"
                 app:cpvShowTick="false"
                 app:cpvStrokeWidth="5dp" />
 

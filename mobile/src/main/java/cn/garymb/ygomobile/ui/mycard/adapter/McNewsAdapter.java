@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.ui.mycard.adapter;
 
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -12,7 +14,9 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.bean.McNews;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 public class McNewsAdapter extends BaseQuickAdapter<McNews, BaseViewHolder> {
@@ -48,8 +52,26 @@ public class McNewsAdapter extends BaseQuickAdapter<McNews, BaseViewHolder> {
         }
 
         helper.itemView.setOnClickListener(v -> {
-            if (mListener != null) {
-                mListener.onNewsClick(item);
+            String newsUrl = item.getNews_url();
+            
+            if (TextUtils.isEmpty(newsUrl)) {
+                YGOUtil.showTextToast(R.string.loading_failed);
+                return;
+            }
+            
+            if (newsUrl.startsWith(MyCard.MYCARD_POST_URL)) {
+                if (mListener != null) {
+                    mListener.onNewsClick(item);
+                }
+            } else {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(newsUrl));
+                
+                if (intent.resolveActivity(v.getContext().getPackageManager()) != null) {
+                    v.getContext().startActivity(intent);
+                } else {
+                    YGOUtil.showTextToast(R.string.loading_failed);
+                }
             }
         });
     }

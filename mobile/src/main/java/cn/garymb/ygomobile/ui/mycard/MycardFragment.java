@@ -612,7 +612,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
         DialogPlus dialog = new DialogPlus(getContext());
         dialog.setTitle(username);
-        dialog.setContentView(R.layout.item_mycard_user_duel_detail);
+        dialog.setContentView(R.layout.dialog_mycard_user_duel_detail);
 
         duelDetailAdapter = new UserDuelDetailAdapter(getContext(), dialog.getContentView());
         duelDetailAdapter.setUsername(username);
