@@ -622,19 +622,20 @@ bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file, bool requestNe
 	return true;
 }
 bool DeckManager::DeleteDeck(const wchar_t* file) {
-	bool result = FileSystem::RemoveFile(file);
+	bool result = false;
 
-	// 如果本地文件删除成功，同步删除在线卡组
-	if (result && file != nullptr) {
-		// 将宽字符路径转换为 UTF-8
+	// 先同步删除在线卡组（此时文件还存在，可以读取 deckId）
+	if (file != nullptr) {
 		char utf8_path[512];
 		BufferIO::EncodeUTF8(file, utf8_path);
 
 		if (mainGame != nullptr && mainGame->appMain != nullptr) {
 			irr::android::deleteDeckSync(mainGame->appMain, utf8_path);
 		}
-
 	}
+
+	// 再删除本地文件
+	result = FileSystem::RemoveFile(file);
 
 	return result;
 }

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
@@ -171,12 +172,20 @@ public class App extends GameApplication {
         }
         
         String deckId = DeckUtil.getDeckId(deckFileObj);
+        String typeName = DeckUtil.getDeckTypeName(deckPath);
+        String fileName = deckFileObj.getName();
+        int firstCode = DeckUtil.getFirstCardCode(deckPath);
+        
         if (deckId == null || deckId.isEmpty()) {
             LogUtil.d("App", "卡组没有 deckId，跳过在线删除同步: " + deckPath);
             return;
         }
         
-        DeckFile deckFile = new DeckFile(deckFileObj);
+        DeckFile deckFile = new DeckFile(deckId, DeckType.ServerType.LOCAL);
+        deckFile.setName(fileName.replace(Constants.YDK_FILE_EX, ""));
+        deckFile.setTypeName(typeName);
+        deckFile.setFirstCode(firstCode);
+        
         List<DeckFile> deckFileList = new ArrayList<>();
         deckFileList.add(deckFile);
         DeckSquareApiUtil.deleteDecks(deckFileList);
