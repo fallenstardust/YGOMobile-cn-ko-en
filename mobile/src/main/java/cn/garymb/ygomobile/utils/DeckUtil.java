@@ -159,23 +159,17 @@ public class DeckUtil {
      */
     public static String getDeckTypeName(String deckPath) {
         File file = new File(deckPath);
-        if (file.exists()) {
-            String name = file.getParentFile().getName();
-            String lastName = file.getParentFile().getParentFile().getName();
-            if (name.equals("pack") || name.equals("cacheDeck")) {
-                //卡包
-                return YGOUtil.s(R.string.category_pack);
-            } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
-                //ai卡组
-                return YGOUtil.s(R.string.category_windbot_deck);
-            } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
-                //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
-                return YGOUtil.s(R.string.category_Uncategorized);
-            } else {
-                return name;
-            }
+        String name = file.getParentFile().getName();
+        String lastName = file.getParentFile().getParentFile().getName();
+        if (name.equals("pack") || name.equals("cacheDeck")) {
+            return YGOUtil.s(R.string.category_pack);
+        } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
+            return YGOUtil.s(R.string.category_windbot_deck);
+        } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
+            return YGOUtil.s(R.string.category_Uncategorized);
+        } else {
+            return name;
         }
-        return null;
     }
 
     //获取扩展卡的列表

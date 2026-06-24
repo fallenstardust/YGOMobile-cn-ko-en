@@ -191,6 +191,147 @@ public class App extends GameApplication {
         DeckSquareApiUtil.deleteDecks(deckFileList);
     }
 
+    public void syncMoveDeck(String oldDeckPath, String newDeckPath) {
+        if (oldDeckPath == null || oldDeckPath.isEmpty() || newDeckPath == null || newDeckPath.isEmpty()) {
+            return;
+        }
+        
+        File oldDeckFile = new File(oldDeckPath);
+        if (!oldDeckFile.exists()) {
+            LogUtil.w("App", "原卡组文件不存在，无法同步移动: " + oldDeckPath);
+            return;
+        }
+        
+        String deckId = DeckUtil.getDeckId(oldDeckFile);
+        if (deckId == null || deckId.isEmpty()) {
+            LogUtil.d("App", "卡组没有 deckId，跳过同步移动: " + oldDeckPath);
+            return;
+        }
+        
+        String newTypeName = DeckUtil.getDeckTypeName(newDeckPath);
+        
+        VUiKit.defer().when(() -> {
+            if (DeckSquareApiUtil.needLogin()) {
+                return null;
+            }
+            
+            LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+            if (loginToken == null) {
+                return null;
+            }
+            
+            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
+            if (result == null || result.getData() == null) {
+                throw new RuntimeException("获取用户卡组信息失败");
+            }
+            
+            List<MyOnlineDeckDetail> onlineDecks = result.getData();
+            MyOnlineDeckDetail targetDeck = null;
+            
+            for (MyOnlineDeckDetail deck : onlineDecks) {
+                if (deckId.equals(deck.getDeckId())) {
+                    targetDeck = deck;
+                    break;
+                }
+            }
+            
+            if (targetDeck == null) {
+                LogUtil.d("App", "未找到匹配的在线卡组，跳过同步移动: deckId=" + deckId);
+                return null;
+            }
+            
+            targetDeck.setDeckType(newTypeName != null ? newTypeName : "");
+            LogUtil.d("App", "同步移动卡组分类: " + targetDeck.getDeckName() 
+                    + " 到新分类 [" + newTypeName + "]");
+            
+            DeckUtil deckUtil = new DeckUtil();
+            List<MyDeckItem> deckItems = deckUtil.toDeckItemList(onlineDecks);
+            for (MyDeckItem item : deckItems) {
+                if (deckId.equals(item.getDeckId())) {
+                    item.setDeckPath(newDeckPath);
+                    break;
+                }
+            }
+            DeckSquareApiUtil.UploadMyDecks(deckItems, loginToken);
+            LogUtil.d("App", "卡组移动同步成功");
+            
+            return true;
+        }).fail((e) -> {
+            LogUtil.e("App", "同步移动卡组失败!", e);
+        }).done((result) -> {
+            LogUtil.d("App", "卡组移动同步完成");
+        });
+    }
+
+    public void syncRenameDeck(String deckPath, String newDeckName) {
+        if (deckPath == null || deckPath.isEmpty() || newDeckName == null || newDeckName.isEmpty()) {
+            return;
+        }
+        
+        File deckFile = new File(deckPath);
+        if (!deckFile.exists()) {
+            LogUtil.w("App", "卡组文件不存在，无法同步重命名: " + deckPath);
+            return;
+        }
+        
+        String deckId = DeckUtil.getDeckId(deckFile);
+        if (deckId == null || deckId.isEmpty()) {
+            LogUtil.d("App", "卡组没有 deckId，跳过同步重命名: " + deckPath);
+            return;
+        }
+        
+        VUiKit.defer().when(() -> {
+            if (DeckSquareApiUtil.needLogin()) {
+                return null;
+            }
+            
+            LoginToken loginToken = DeckSquareApiUtil.getLoginData();
+            if (loginToken == null) {
+                return null;
+            }
+            
+            MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
+            if (result == null || result.getData() == null) {
+                throw new RuntimeException("获取用户卡组信息失败");
+            }
+            
+            List<MyOnlineDeckDetail> onlineDecks = result.getData();
+            MyOnlineDeckDetail targetDeck = null;
+            
+            for (MyOnlineDeckDetail deck : onlineDecks) {
+                if (deckId.equals(deck.getDeckId())) {
+                    targetDeck = deck;
+                    break;
+                }
+            }
+            
+            if (targetDeck == null) {
+                LogUtil.d("App", "未找到匹配的在线卡组，跳过同步重命名: deckId=" + deckId);
+                return null;
+            }
+            
+            targetDeck.setDeckName(newDeckName.replace(Constants.YDK_FILE_EX, ""));
+            LogUtil.d("App", "同步重命名卡组: " + newDeckName);
+            
+            DeckUtil deckUtil = new DeckUtil();
+            List<MyDeckItem> deckItems = deckUtil.toDeckItemList(onlineDecks);
+            for (MyDeckItem item : deckItems) {
+                if (deckId.equals(item.getDeckId())) {
+                    item.setDeckPath(deckPath);
+                    break;
+                }
+            }
+            DeckSquareApiUtil.UploadMyDecks(deckItems, loginToken);
+            LogUtil.d("App", "卡组重命名同步成功");
+            
+            return true;
+        }).fail((e) -> {
+            LogUtil.e("App", "同步重命名卡组失败!", e);
+        }).done((result) -> {
+            LogUtil.d("App", "卡组重命名同步完成");
+        });
+    }
+
     public void deleteCategoryDecksSync(String categoryName) {
         if (categoryName == null || categoryName.isEmpty()) {
             return;

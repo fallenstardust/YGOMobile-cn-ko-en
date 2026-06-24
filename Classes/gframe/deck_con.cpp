@@ -642,23 +642,30 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					}
 					break;
 				}
-				case BUTTON_RENAME_DECK: {
-					int catesel = mainGame->lstCategories->getSelected();
-					int decksel = mainGame->lstDecks->getSelected();
-					const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
-					wchar_t oldfilepath[256];
-					get_deck_file(oldfilepath);
-					const wchar_t* newdeckname = mainGame->ebDMName->getText();
-					wchar_t newfilepath[256];
-					if(catesel == 2) {
-						myswprintf(newfilepath, L"./deck/%ls.ydk", newdeckname);
-					} else {
-						myswprintf(newfilepath, L"./deck/%ls/%ls.ydk", catename, newdeckname);
-					}
-					bool res = false;
-					if(!FileSystem::IsFileExists(newfilepath)) {
-						res = FileSystem::Rename(oldfilepath, newfilepath);
-					}
+                case BUTTON_RENAME_DECK: {
+                    int catesel = mainGame->lstCategories->getSelected();
+                    int decksel = mainGame->lstDecks->getSelected();
+                    const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
+                    wchar_t oldfilepath[256];
+                    get_deck_file(oldfilepath);
+                    const wchar_t* newdeckname = mainGame->ebDMName->getText();
+                    wchar_t newfilepath[256];
+                    if(catesel == 2) {
+                        myswprintf(newfilepath, L"./deck/%ls.ydk", newdeckname);
+                    } else {
+                        myswprintf(newfilepath, L"./deck/%ls/%ls.ydk", catename, newdeckname);
+                    }
+                    bool res = false;
+                    if(!FileSystem::IsFileExists(newfilepath)) {
+                        res = FileSystem::Rename(oldfilepath, newfilepath);
+                        if(res && mainGame != nullptr && mainGame->appMain != nullptr) {
+                            char utf8_path[512];
+                            BufferIO::EncodeUTF8(newfilepath, utf8_path);
+                            char utf8_name[256];
+                            BufferIO::EncodeUTF8(newdeckname, utf8_name);
+                            irr::android::syncRenameDeck(mainGame->appMain, utf8_path, utf8_name);
+                        }
+                    }
 					RefreshDeckList(true);
 					ChangeCategory(catesel);
 					for(int i = 0; i < (int)mainGame->lstDecks->getItemCount(); i++) {
@@ -718,6 +725,13 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					}
 					bool res = false;
 					if(!FileSystem::IsFileExists(newfilepath)) {
+                        if(mainGame != nullptr && mainGame->appMain != nullptr) {
+                            char utf8_old_path[512];
+                            char utf8_new_path[512];
+                            BufferIO::EncodeUTF8(oldfilepath, utf8_old_path);
+                            BufferIO::EncodeUTF8(newfilepath, utf8_new_path);
+                            irr::android::syncMoveDeck(mainGame->appMain, utf8_old_path, utf8_new_path);
+                        }
 						res = FileSystem::Rename(oldfilepath, newfilepath);
 					}
 					mainGame->lstCategories->setSelected(newcatename);

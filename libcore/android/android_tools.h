@@ -206,6 +206,10 @@ extern void runWindbot(ANDROID_APP app, const char* args);
 
 extern void deleteDeckSync(ANDROID_APP app, const char* deck_path);
 
+extern void syncMoveDeck(ANDROID_APP app, const char* old_deck_path, const char* new_deck_path);
+
+extern void syncRenameDeck(ANDROID_APP app, const char* deck_path, const char* new_deck_name);
+
 extern void deleteCategoryDecksSync(ANDROID_APP app, const char* category_name);
 
 extern void renameCategoryDecksSync(ANDROID_APP app, const char* old_category_name, const char* new_category_name);
