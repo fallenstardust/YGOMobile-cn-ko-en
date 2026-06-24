@@ -163,7 +163,20 @@ public class App extends GameApplication {
     }
 
     public void deleteDeckSync(String deckPath) {
-        DeckFile deckFile = new DeckFile(new File(deckPath));
+        File deckFileObj = new File(deckPath);
+        
+        if (!deckFileObj.exists()) {
+            LogUtil.w("App", "卡组文件不存在，无法同步删除: " + deckPath);
+            return;
+        }
+        
+        String deckId = DeckUtil.getDeckId(deckFileObj);
+        if (deckId == null || deckId.isEmpty()) {
+            LogUtil.d("App", "卡组没有 deckId，跳过在线删除同步: " + deckPath);
+            return;
+        }
+        
+        DeckFile deckFile = new DeckFile(deckFileObj);
         List<DeckFile> deckFileList = new ArrayList<>();
         deckFileList.add(deckFile);
         DeckSquareApiUtil.deleteDecks(deckFileList);

@@ -281,6 +281,11 @@ public class DeckUtil {
 
     //读取file指定的ydk文件，返回其内包含的deckId。如果不包含deckId，返回null
     public static String getDeckId(File file) {
+        if (file == null || !file.exists() || !file.isFile()) {
+            LogUtil.w(TAG, "文件不存在或不是有效文件: " + (file != null ? file.getAbsolutePath() : "null"));
+            return null;
+        }
+        
         String deckId = null;
         Integer userId = null;
         FileInputStream inputStream = null;
