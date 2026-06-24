@@ -233,6 +233,7 @@ public class MyOnlineDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListI
             deleteList.add(deleteDeckFile);
             try {
                 DeckSquareApiUtil.deleteDecks(deleteList);
+                DeckManagerFragment.getOriginalData().remove(item);
                 rebuildGroupedList(DeckManagerFragment.getOriginalData());
             } catch (Throwable e) {
                 LogUtil.i(TAG, "square deck detail fail" + e.getMessage());
