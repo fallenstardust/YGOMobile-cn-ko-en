@@ -169,20 +169,23 @@ public class YGOStarter {
      *                 或者(播放完不退出游戏)：-k -r 1111.yrp
      */
     public static void startGame(Activity activity, YGOGameOptions options, String... args) {
-        //如果距离上次加入游戏的时间大于1秒才处理
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();
             Log.e(TAG, "设置背景前" + System.currentTimeMillis());
-            //显示加载背景
             showLoadingBg(activity);
             Log.e(TAG, "设置背景后" + System.currentTimeMillis());
         }
-        Intent intent = new Intent(activity, YGOMobileActivity.class);
+        Class<?> targetActivity = AppsSettings.get().isNativeGameMode()
+                ? YGONativeGameActivity.class
+                : YGOMobileActivity.class;
+        Intent intent = new Intent(activity, targetActivity);
         if (options != null) {
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());
         }
-        IrrlichtBridge.setArgs(intent, args);
+        if (args != null && args.length > 0) {
+            intent.putExtra("gameArgs", args);
+        }
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Log.e(TAG, "跳转前" + System.currentTimeMillis());
         activity.startActivity(intent);

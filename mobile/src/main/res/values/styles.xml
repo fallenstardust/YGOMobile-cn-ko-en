@@ -42,6 +42,16 @@
         <item name="android:windowBackground">@color/FallNavy</item>
     </style>
 
+    <style name="AppTheme.NativeGame" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowBackground">@color/FallNavy</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+
     <style name="AppTheme.Logo" parent="AppTheme">
         <item name="android:windowBackground">@drawable/bg3</item>
     </style>

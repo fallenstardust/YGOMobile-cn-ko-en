@@ -28,6 +28,7 @@ import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
+import static cn.garymb.ygomobile.Constants.PREF_NATIVE_GAME_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_RESET_GAME_RES;
 import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
@@ -145,6 +146,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
         bind(PREF_IMMERSIVE_MODE, mSettings.isImmerSiveMode());
         bind(PREF_PENDULUM_SCALE, mSettings.isPendulumScale());
+        bind(PREF_NATIVE_GAME_MODE, mSettings.isNativeGameMode());
         bind(PREF_SENSOR_REFRESH, mSettings.isSensorRefresh());
         bind(PREF_OPENGL_VERSION, mSettings.getOpenglVersion());
         bind(PREF_IMAGE_QUALITY, mSettings.getCardQuality());

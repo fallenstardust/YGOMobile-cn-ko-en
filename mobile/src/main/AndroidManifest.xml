@@ -138,6 +138,13 @@
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />
         <activity
+            android:name="cn.garymb.ygomobile.YGONativeGameActivity"
+            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme.NativeGame"
+            android:launchMode="singleTop"
+            tools:replace="android:theme" />
+        <activity
             android:name="cn.garymb.ygomobile.ui.file.FileActivity"
             android:configChanges="orientation|keyboardHidden|navigation"
             android:launchMode="singleTop"
