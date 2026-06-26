@@ -6,17 +6,14 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.engine.LuaScriptEngine;
 import cn.garymb.ygomobile.network.DuelClient;
 import cn.garymb.ygomobile.network.WindBotClient;
 import cn.garymb.ygomobile.network.YGOProtocol;
-import cn.garymb.ygomobile.engine.LuaScriptEngine;
 import ocgcore.enums.CardLocation;
-import ocgcore.enums.DuelPhase;
-import ocgcore.enums.GameMessage;
 
 public class GameEngine implements DuelClient.ClientListener, GameMessageParser.MessageHandler {
     private static final String TAG = "GameEngine";
@@ -36,15 +33,25 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public interface EngineListener {
         void onStateChanged(GameState newState);
+
         void onFieldChanged();
+
         void onPlayerInfoUpdated(int player);
+
         void onPhaseChanged(int phase);
+
         void onChatReceived(String player, String message);
+
         void onSelectRequired(int selectType, ByteBuffer data);
+
         void onDuelResult(int winner, int reason);
+
         void onHintMessage(String hint);
+
         void onReplayData(byte[] data);
+
         void onTimeLimitUpdate(int player, int leftTime);
+
         void onChainAnimation(int code, int controler, int location, int sequence);
     }
 
@@ -109,10 +116,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     // === Connection ===
 
     public void connectToServer(String host, int port, boolean createGame,
-                                 String roomName, String password,
-                                 int rule, int mode, int duelRule,
-                                 int startLp, int startHand, int drawCount, int timeLimit,
-                                 boolean noCheckDeck, boolean noShuffleDeck) {
+                                String roomName, String password,
+                                int rule, int mode, int duelRule,
+                                int startLp, int startHand, int drawCount, int timeLimit,
+                                boolean noCheckDeck, boolean noShuffleDeck) {
         setState(GameState.CONNECTING);
         this.isHost = createGame;
         this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
@@ -136,7 +143,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     public void startBotDuel(String host, int port,
-                              String botName, String deckFile, String botAI) {
+                             String botName, String deckFile, String botAI) {
         botClient = new WindBotClient();
         botClient.setListener(new WindBotClient.BotListener() {
             @Override
@@ -166,6 +173,32 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             botClient = null;
         }
         setState(GameState.DISCONNECTED);
+    }
+
+    public void startLocalServer() {
+        Log.i(TAG, "Starting local server...");
+        connectToServer("127.0.0.1", 7911, true,
+                "Local Game", "",
+                0, 0, 5, 8000, 5, 1, 0, false, false);
+    }
+
+    public void startSingleMode(String luaPath) {
+        Log.i(TAG, "Starting single mode: " + luaPath);
+        setState(GameState.CONNECTING);
+        connectToServer("127.0.0.1", 7911, true,
+                "Single Play", "",
+                0, 0, 5, 8000, 5, 1, 0, false, false);
+    }
+
+    public void loadReplay(String replayPath) {
+        Log.i(TAG, "Loading replay: " + replayPath);
+        setState(GameState.CONNECTING);
+        mainHandler.post(() -> {
+            if (listener != null) {
+                listener.onHintMessage("录像回放功能开发中...");
+            }
+            setState(GameState.IDLE);
+        });
     }
 
     // === Lobby Actions ===
@@ -375,8 +408,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onJoinGame(int lflist, int rule, int mode, int duelRule,
-                            int noCheckDeck, int noShuffleDeck,
-                            int startLp, int startHand, int drawCount, int timeLimit) {
+                           int noCheckDeck, int noShuffleDeck,
+                           int startLp, int startHand, int drawCount, int timeLimit) {
         playerInfos[0].startLp = startLp;
         playerInfos[1].startLp = startLp;
         playerInfos[0].lp = startLp;
@@ -396,10 +429,18 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onHint(int type, int player, int data) {
         String hintText = "";
         switch (type) {
-            case 1: hintText = "卡片效果发动"; break;
-            case 2: hintText = "请选择"; break;
-            case 3: hintText = "等待对方操作"; break;
-            case 5: hintText = "当前连锁: " + data; break;
+            case 1:
+                hintText = "卡片效果发动";
+                break;
+            case 2:
+                hintText = "请选择";
+                break;
+            case 3:
+                hintText = "等待对方操作";
+                break;
+            case 5:
+                hintText = "当前连锁: " + data;
+                break;
             case 6:
                 mainHandler.post(() -> {
                     if (listener != null) listener.onHintMessage("提示ID: " + data);
@@ -665,7 +706,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onMove(int code, int oldCtrl, int oldLoc, int oldSeq,
-                        int newCtrl, int newLoc, int newSeq, int position, int reason) {
+                       int newCtrl, int newLoc, int newSeq, int position, int reason) {
         GameField.ClientCard card = field.getCard(oldCtrl, oldLoc, oldSeq);
         if (card == null) {
             card = new GameField.ClientCard();
@@ -846,7 +887,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onEquip(int eqCode, int eqCtrl, int eqLoc, int eqSeq,
-                         int tCtrl, int tLoc, int tSeq) {
+                        int tCtrl, int tLoc, int tSeq) {
         GameField.ClientCard equipCard = field.getCard(eqCtrl, eqLoc, eqSeq);
         GameField.ClientCard target = field.getCard(tCtrl, tLoc, tSeq);
         if (equipCard != null && target != null) {

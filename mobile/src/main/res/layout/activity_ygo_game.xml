@@ -9,6 +9,95 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- 主菜单覆盖层（参考 game.cpp wMainMenu） -->
+    <LinearLayout
+        android:id="@+id/layout_main_menu"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="#D0000000"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="360dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:background="#CC111133">
+
+            <TextView
+                android:id="@+id/tv_version"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="YGOPro Version:1.036.2"
+                android:textColor="#88FFFFFF"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:paddingBottom="12dp" />
+
+            <Button
+                android:id="@+id/btn_menu_lan"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="本地联机"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:background="@android:color/holo_blue_dark"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_menu_single"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="单人游戏"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:background="@android:color/holo_blue_dark"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_menu_replay"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="观看录像"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:background="@android:color/holo_blue_dark"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_menu_deck"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="编辑卡组"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:background="@android:color/holo_blue_dark"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_menu_settings"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="系统设定"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:background="@android:color/holo_blue_dark"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_menu_exit"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="退出"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:background="@android:color/holo_red_dark" />
+
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- 顶部信息栏：对手信息 -->
     <LinearLayout
         android:id="@+id/layout_opponent_info"
