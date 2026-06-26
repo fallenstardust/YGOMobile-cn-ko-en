@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_create_host_settings"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="4"
+        android:rowCount="5">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="禁限卡表："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <Spinner
+            android:id="@+id/spinner_banlist"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_columnWeight="1"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/selected_light" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="规则："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <Spinner
+            android:id="@+id/spinner_rule"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_columnWeight="1"
+            android:background="@drawable/selected_light" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="卡片允许："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <Spinner
+            android:id="@+id/spinner_card_allowed"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_columnWeight="1"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/selected_light" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="初始基本分："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/et_start_lp"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_columnWeight="1"
+            android:background="@drawable/selected_light"
+            android:inputType="number"
+            android:text="8000"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="决斗模式："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <Spinner
+            android:id="@+id/spinner_duel_mode"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_columnWeight="1"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/selected_light" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="初始手卡数："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/et_start_hand"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_columnWeight="1"
+            android:background="@drawable/selected_light"
+            android:inputType="number"
+            android:text="5"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="每回合时间："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/et_time_limit"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_columnWeight="1"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/selected_light"
+            android:inputType="number"
+            android:text="180"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="每回合抽卡："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/et_draw_count"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_columnWeight="1"
+            android:background="@drawable/selected_light"
+            android:inputType="number"
+            android:text="1"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center" />
+
+    </GridLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp">
+
+        <CheckBox
+            android:id="@+id/chk_no_check_deck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="不检查卡组"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginEnd="20dp" />
+
+        <CheckBox
+            android:id="@+id/chk_no_shuffle_deck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="不洗切卡组"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:text="主机名称："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/et_host_name"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:background="@drawable/selected_light"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#888888"
+            android:hint="请输入主机名称（可选）" />
+        <Button
+            android:id="@+id/btn_confirm_create"
+            android:layout_width="110dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="10dp"
+            android:text="确定"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:background="@drawable/button2_bg" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:text="主机密码："
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/et_host_password"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:background="@drawable/selected_light"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#888888"
+            android:hint="请输入主机密码（可选）"
+            android:inputType="textPassword" />
+        <Button
+            android:id="@+id/btn_cancel_create"
+            android:layout_width="110dp"
+            android:layout_height="38dp"
+            android:layout_gravity="end"
+            android:layout_marginTop="10dp"
+            android:text="取消"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:background="@drawable/button2_bg" />
+    </LinearLayout>
+
+</LinearLayout>

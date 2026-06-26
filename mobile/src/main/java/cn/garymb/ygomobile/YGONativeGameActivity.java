@@ -13,6 +13,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -22,6 +23,7 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -341,90 +343,117 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private void showLanModeDialog() {
         View customView = getLayoutInflater().inflate(R.layout.dialog_lan_connection, null);
-
-        EditText etNickname = customView.findViewById(R.id.et_nickname);
-        EditText etHostIp = customView.findViewById(R.id.et_host_ip);
-        EditText etHostPort = customView.findViewById(R.id.et_host_port);
-        EditText etRoomPassword = customView.findViewById(R.id.et_room_password);
-        ListView lvHostList = customView.findViewById(R.id.lv_host_list);
-        Button btnCreateHost = customView.findViewById(R.id.btn_create_host);
-        Button btnRefreshLan = customView.findViewById(R.id.btn_refresh_lan);
-        Button btnJoinGame = customView.findViewById(R.id.btn_join_game);
-        Button btnCancel = customView.findViewById(R.id.btn_cancel);
-
-        etNickname.setText(Constants.PlayerName);
-        etHostIp.setText("127.0.0.1");
-        etHostPort.setText("7911");
-
-        SimpleListAdapter hostAdapter = new SimpleListAdapter(this);
-        lvHostList.setAdapter(hostAdapter);
-
+        
+        View layoutLanMain = customView.findViewById(R.id.layout_lan_main);
+        View layoutCreateHost = customView.findViewById(R.id.layout_create_host_settings);
+        View layoutPlayerWaiting = customView.findViewById(R.id.layout_player_waiting);
+        
+        EditText etNickname = layoutLanMain.findViewById(R.id.et_nickname);
+        EditText etHostIp = layoutLanMain.findViewById(R.id.et_host_ip);
+        EditText etHostPort = layoutLanMain.findViewById(R.id.et_host_port);
+        EditText etRoomPassword = layoutLanMain.findViewById(R.id.et_room_password);
+        ListView lvHostList = layoutLanMain.findViewById(R.id.lv_host_list);
+        Button btnCreateHost = layoutLanMain.findViewById(R.id.btn_create_host);
+        Button btnRefreshLan = layoutLanMain.findViewById(R.id.btn_refresh_lan);
+        Button btnJoinGame = layoutLanMain.findViewById(R.id.btn_join_game);
+        Button btnExitLan = layoutLanMain.findViewById(R.id.btn_exit_lan);
+        
+        Spinner spinnerBanlist = layoutCreateHost.findViewById(R.id.spinner_banlist);
+        Spinner spinnerRule = layoutCreateHost.findViewById(R.id.spinner_rule);
+        Spinner spinnerCardAllowed = layoutCreateHost.findViewById(R.id.spinner_card_allowed);
+        EditText etStartLP = layoutCreateHost.findViewById(R.id.et_start_lp);
+        Spinner spinnerDuelMode = layoutCreateHost.findViewById(R.id.spinner_duel_mode);
+        EditText etStartHand = layoutCreateHost.findViewById(R.id.et_start_hand);
+        EditText etTimeLimit = layoutCreateHost.findViewById(R.id.et_time_limit);
+        EditText etDrawCount = layoutCreateHost.findViewById(R.id.et_draw_count);
+        CheckBox chkNoCheckDeck = layoutCreateHost.findViewById(R.id.chk_no_check_deck);
+        CheckBox chkNoShuffleDeck = layoutCreateHost.findViewById(R.id.chk_no_shuffle_deck);
+        EditText etHostName = layoutCreateHost.findViewById(R.id.et_host_name);
+        EditText etHostPassword = layoutCreateHost.findViewById(R.id.et_host_password);
+        Button btnConfirmCreate = layoutCreateHost.findViewById(R.id.btn_confirm_create);
+        Button btnCancelCreate = layoutCreateHost.findViewById(R.id.btn_cancel_create);
+        
+        EditText etPlayer1Name = layoutPlayerWaiting.findViewById(R.id.et_player1_name);
+        EditText etPlayer2Name = layoutPlayerWaiting.findViewById(R.id.et_player2_name);
+        CheckBox chkPlayer1Ready = layoutPlayerWaiting.findViewById(R.id.chk_player1_ready);
+        CheckBox chkPlayer2Ready = layoutPlayerWaiting.findViewById(R.id.chk_player2_ready);
+        Button btnDuelistMode = layoutPlayerWaiting.findViewById(R.id.btn_duelist_mode);
+        Button btnSpectatorMode = layoutPlayerWaiting.findViewById(R.id.btn_spectator_mode);
+        Button btnReady = layoutPlayerWaiting.findViewById(R.id.btn_ready);
+        Spinner spinnerDeckSelect = layoutPlayerWaiting.findViewById(R.id.spinner_deck_select);
+        TextView tvBanlist = layoutPlayerWaiting.findViewById(R.id.tv_banlist);
+        TextView tvCardAllowed = layoutPlayerWaiting.findViewById(R.id.tv_card_allowed);
+        TextView tvDuelMode = layoutPlayerWaiting.findViewById(R.id.tv_duel_mode);
+        TextView tvStartLP = layoutPlayerWaiting.findViewById(R.id.tv_start_lp);
+        TextView tvStartHand = layoutPlayerWaiting.findViewById(R.id.tv_start_hand);
+        TextView tvDrawCount = layoutPlayerWaiting.findViewById(R.id.tv_draw_count);
+        Button btnExitWaiting = layoutPlayerWaiting.findViewById(R.id.btn_exit_waiting);
+        
         int popupWidth = (int) (640 * getResources().getDisplayMetrics().density);
         int popupHeight = (int) (480 * getResources().getDisplayMetrics().density);
         PopupWindow popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
         popupWindow.setOnDismissListener(() -> restoreMainMenu());
-
-        btnRefreshLan.setOnClickListener(v -> {
-            List<String> hosts = new ArrayList<>();
-            hosts.add("192.168.1.100:7911 - Room1");
-            hosts.add("192.168.1.101:7911 - Room2");
-            hostAdapter.set(hosts);
-        });
-
+        
         btnCreateHost.setOnClickListener(v -> {
-            String nick = etNickname.getText().toString().trim();
-            if (!TextUtils.isEmpty(nick)) {
-                engine.setPlayerName(nick);
-            }
+            layoutLanMain.setVisibility(View.GONE);
+            layoutCreateHost.setVisibility(View.VISIBLE);
+        });
+        
+        btnCancelCreate.setOnClickListener(v -> {
+            layoutCreateHost.setVisibility(View.GONE);
+            layoutLanMain.setVisibility(View.VISIBLE);
+        });
+        
+        btnConfirmCreate.setOnClickListener(v -> {
+            String banlist = spinnerBanlist.getSelectedItem() != null ? spinnerBanlist.getSelectedItem().toString() : "";
+            String rule = spinnerRule.getSelectedItem() != null ? spinnerRule.getSelectedItem().toString() : "";
+            String cardAllowed = spinnerCardAllowed.getSelectedItem() != null ? spinnerCardAllowed.getSelectedItem().toString() : "";
+            String startLP = etStartLP.getText().toString();
+            String duelMode = spinnerDuelMode.getSelectedItem() != null ? spinnerDuelMode.getSelectedItem().toString() : "";
+            String startHand = etStartHand.getText().toString();
+            String timeLimit = etTimeLimit.getText().toString();
+            String drawCount = etDrawCount.getText().toString();
+            boolean noCheckDeck = chkNoCheckDeck.isChecked();
+            boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
+            String hostName = etHostName.getText().toString();
+            String password = etHostPassword.getText().toString();
+            
             popupWindow.dismiss();
             hideMainMenu();
             engine.startLocalServer();
+            
+            layoutCreateHost.setVisibility(View.GONE);
+            layoutPlayerWaiting.setVisibility(View.VISIBLE);
+            
+            tvBanlist.setText(banlist.isEmpty() ? "N/A" : banlist);
+            tvCardAllowed.setText(cardAllowed.isEmpty() ? "所有卡片" : cardAllowed);
+            tvDuelMode.setText(duelMode.isEmpty() ? "单局模式" : duelMode);
+            tvStartLP.setText(startLP.isEmpty() ? "8000" : startLP);
+            tvStartHand.setText(startHand.isEmpty() ? "5" : startHand);
+            tvDrawCount.setText(drawCount.isEmpty() ? "1" : drawCount);
         });
-
-        btnJoinGame.setOnClickListener(v -> {
-            String host = etHostIp.getText().toString().trim();
-            String portStr = etHostPort.getText().toString().trim();
-            String room = etRoomPassword.getText().toString().trim();
-            String nick = etNickname.getText().toString().trim();
-
-            int port = 7911;
-            try {
-                port = Integer.parseInt(portStr);
-            } catch (NumberFormatException e) {
-                Toast.makeText(this, "端口号格式错误", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (TextUtils.isEmpty(host)) {
-                Toast.makeText(this, "请输入主机地址", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (!TextUtils.isEmpty(nick)) {
-                engine.setPlayerName(nick);
-            }
-
-            popupWindow.dismiss();
-            hideMainMenu();
-            engine.connectToServer(host, port, false, room, "",
-                    0, 0, 5, 8000, 5, 1, 0, false, false);
+        
+        btnExitLan.setOnClickListener(v -> popupWindow.dismiss());
+        
+        btnExitWaiting.setOnClickListener(v -> popupWindow.dismiss());
+        
+        btnReady.setOnClickListener(v -> {
+            btnReady.setEnabled(false);
+            btnReady.setText("已准备");
         });
-
-        btnCancel.setOnClickListener(v -> popupWindow.dismiss());
-
-        lvHostList.setOnItemClickListener((parent, view, position, id) -> {
-            String hostInfo = (String) parent.getItemAtPosition(position);
-            if (hostInfo != null && hostInfo.contains(":")) {
-                String[] parts = hostInfo.split(" - ")[0].split(":");
-                if (parts.length == 2) {
-                    etHostIp.setText(parts[0]);
-                    etHostPort.setText(parts[1]);
-                }
-            }
+        
+        btnDuelistMode.setOnClickListener(v -> {
+            btnDuelistMode.setEnabled(false);
+            btnSpectatorMode.setEnabled(true);
         });
-
+        
+        btnSpectatorMode.setOnClickListener(v -> {
+            btnSpectatorMode.setEnabled(false);
+            btnDuelistMode.setEnabled(true);
+        });
+        
         layoutMainMenu.setVisibility(View.GONE);
         popupWindow.showAtLocation(layoutMainMenu, Gravity.CENTER, 0, 0);
     }
