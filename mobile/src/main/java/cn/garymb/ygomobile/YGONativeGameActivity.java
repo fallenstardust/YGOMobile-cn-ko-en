@@ -7,10 +7,8 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -19,32 +17,29 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.activity.OnBackPressedCallback;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.network.DuelClient;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygodata.YGOGameOptions;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.enums.DuelPhase;
@@ -78,8 +73,12 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private TextView tvLobbyStatus;
     private Button btnLobbyReady, btnLobbyLeave;
 
-    private LinearLayout layoutMainMenu;
+    private RelativeLayout layoutMainMenu;
     private TextView tvVersion;
+    
+    // 添加对游戏界面元素的引用
+    private LinearLayout layoutOpponentInfo;
+    private LinearLayout layoutPlayerInfo;
 
     private String chatHistory = "";
     private boolean isMyTurn = false;
@@ -152,6 +151,10 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         tvLobbyStatus = findViewById(R.id.tv_lobby_status);
         btnLobbyReady = findViewById(R.id.btn_lobby_ready);
         btnLobbyLeave = findViewById(R.id.btn_lobby_leave);
+        
+        // 保存游戏界面元素的引用
+        layoutOpponentInfo = findViewById(R.id.layout_opponent_info);
+        layoutPlayerInfo = findViewById(R.id.layout_player_info);
 
         setupButtonListeners(btnChatSend);
         setupAvatarImages();
@@ -251,8 +254,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             engine.connectToServer("127.0.0.1", 7911, true,
                     "Bot Game", "",
                     5, 0, 5, 8000, 5, 1, 0, true, false);
-            engine.startBotDuel("127.0.0.1", 7911,
-                    "WindBot", "", "Normal");
+            engine.startBotDuel("127.0.0.1", 7911, "WindBot", "");
             hideMainMenu();
             return true;
         }
@@ -276,78 +278,153 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         layoutMainMenu = findViewById(R.id.layout_main_menu);
         tvVersion = findViewById(R.id.tv_version);
         layoutMainMenu.setVisibility(View.VISIBLE);
+        
+        // 隐藏所有游戏界面元素
+        if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
+        if (layoutOpponentInfo != null) layoutOpponentInfo.setVisibility(View.GONE);
+        if (layoutPlayerInfo != null) layoutPlayerInfo.setVisibility(View.GONE);
+        if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
+        if (layoutChat != null) layoutChat.setVisibility(View.GONE);
+        if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
+        if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
+
+        // 设置背景图片
+        String bgPath = AppsSettings.get().getResourcePath() + "textures/extra/bg_menu.jpg";
+        java.io.File bgFile = new java.io.File(bgPath);
+        if (bgFile.exists()) {
+            try {
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(bgPath);
+                if (bitmap != null) {
+                    layoutMainMenu.setBackground(new android.graphics.drawable.BitmapDrawable(getResources(), bitmap));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load background image", e);
+            }
+        }
 
         int v1 = (PRO_VERSION & 0xf000) >> 12;
         int v2 = (PRO_VERSION & 0x0ff0) >> 4;
         int v3 = PRO_VERSION & 0x000f;
         tvVersion.setText(String.format("YGOPro Version:%X.0%X.%X", v1, v2, v3));
 
+        // 绑定按钮点击事件
         findViewById(R.id.btn_menu_lan).setOnClickListener(v -> showLanModeDialog());
         findViewById(R.id.btn_menu_single).setOnClickListener(v -> showSingleModeDialog());
         findViewById(R.id.btn_menu_replay).setOnClickListener(v -> showReplayModeDialog());
         findViewById(R.id.btn_menu_deck).setOnClickListener(v -> showDeckEditDialog());
         findViewById(R.id.btn_menu_settings).setOnClickListener(v -> showSettingsDialog());
-        findViewById(R.id.btn_menu_exit).setOnClickListener(v -> finish());
+        findViewById(R.id.btn_menu_exit).setOnClickListener(v -> {
+            soundManager.stopBGM();
+            finish();
+        });
 
         soundManager.playBGM(SoundManager.BGM.MENU);
+        applySettingsToEngine();
     }
 
     private void hideMainMenu() {
         if (layoutMainMenu != null) {
             layoutMainMenu.setVisibility(View.GONE);
         }
+        // 显示游戏界面元素
+        if (gameFieldView != null) gameFieldView.setVisibility(View.VISIBLE);
         soundManager.playBGM(SoundManager.BGM.DUEL);
     }
 
     private void showLanModeDialog() {
-        final EditText etNickname = new EditText(this);
-        final EditText etHost = new EditText(this);
-        final EditText etPort = new EditText(this);
-        final EditText etRoomPass = new EditText(this);
-        etNickname.setHint("昵称");
+        // 加载自定义布局
+        View customView = getLayoutInflater().inflate(R.layout.dialog_lan_connection, null);
+        
+        // 获取视图引用
+        EditText etNickname = customView.findViewById(R.id.et_nickname);
+        EditText etHostIp = customView.findViewById(R.id.et_host_ip);
+        EditText etHostPort = customView.findViewById(R.id.et_host_port);
+        EditText etRoomPassword = customView.findViewById(R.id.et_room_password);
+        ListView lvHostList = customView.findViewById(R.id.lv_host_list);
+        Button btnCreateHost = customView.findViewById(R.id.btn_create_host);
+        Button btnRefreshLan = customView.findViewById(R.id.btn_refresh_lan);
+        Button btnJoinGame = customView.findViewById(R.id.btn_join_game);
+        Button btnCancel = customView.findViewById(R.id.btn_cancel);
+        
+        // 设置默认值
         etNickname.setText(Constants.PlayerName);
-        etHost.setHint("主机地址 (IP/域名)");
-        etHost.setText("127.0.0.1");
-        etPort.setHint("端口");
-        etPort.setText("7911");
-        etPort.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        etRoomPass.setHint("房间密码（可留空）");
-
-        LinearLayout container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (12 * getResources().getDisplayMetrics().density);
-        container.setPadding(pad, pad, pad, pad);
-        container.addView(etNickname);
-        container.addView(etHost);
-        container.addView(etPort);
-        container.addView(etRoomPass);
-
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("本地联机");
-        dialog.setContentView(container);
-        dialog.setLeftButtonText("加入游戏");
-        dialog.setLeftButtonListener((d, w) -> {
-            String host = etHost.getText().toString().trim();
-            int port = 7911;
-            try { port = Integer.parseInt(etPort.getText().toString().trim()); } catch (Exception ignored) {}
-            String room = etRoomPass.getText().toString().trim();
-            String nick = etNickname.getText().toString().trim();
-            if (!TextUtils.isEmpty(nick)) engine.setPlayerName(nick);
-            if (!TextUtils.isEmpty(host)) {
-                hideMainMenu();
-                engine.connectToServer(host, port, false, room, "",
-                        0, 0, 5, 8000, 5, 1, 0, false, false);
-            }
-            d.dismiss();
+        etHostIp.setText("127.0.0.1");
+        etHostPort.setText("7911");
+        
+        // 初始化主机列表适配器
+        SimpleListAdapter hostAdapter = new SimpleListAdapter(this);
+        lvHostList.setAdapter(hostAdapter);
+        
+        // 刷新局域网按钮 - 扫描并显示可用的主机
+        btnRefreshLan.setOnClickListener(v -> {
+            // TODO: 实现局域网主机扫描逻辑
+            List<String> hosts = new ArrayList<>();
+            hosts.add("192.168.1.100:7911 - Room1");
+            hosts.add("192.168.1.101:7911 - Room2");
+            hostAdapter.set(hosts);
         });
-        dialog.setRightButtonText("局域网建主");
-        dialog.setRightButtonListener((d, w) -> {
+        
+        // 创建主机按钮
+        btnCreateHost.setOnClickListener(v -> {
             String nick = etNickname.getText().toString().trim();
-            if (!TextUtils.isEmpty(nick)) engine.setPlayerName(nick);
+            if (!TextUtils.isEmpty(nick)) {
+                engine.setPlayerName(nick);
+            }
             hideMainMenu();
             engine.startLocalServer();
-            d.dismiss();
         });
+        
+        // 加入游戏按钮
+        btnJoinGame.setOnClickListener(v -> {
+            String host = etHostIp.getText().toString().trim();
+            String portStr = etHostPort.getText().toString().trim();
+            String room = etRoomPassword.getText().toString().trim();
+            String nick = etNickname.getText().toString().trim();
+            
+            int port = 7911;
+            try {
+                port = Integer.parseInt(portStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "端口号格式错误", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            if (TextUtils.isEmpty(host)) {
+                Toast.makeText(this, "请输入主机地址", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            if (!TextUtils.isEmpty(nick)) {
+                engine.setPlayerName(nick);
+            }
+            
+            hideMainMenu();
+            engine.connectToServer(host, port, false, room, "",
+                    0, 0, 5, 8000, 5, 1, 0, false, false);
+        });
+        
+        // 取消按钮
+        btnCancel.setOnClickListener(v -> {
+            // 关闭对话框
+        });
+        
+        // 点击主机列表项自动填充IP和端口
+        lvHostList.setOnItemClickListener((parent, view, position, id) -> {
+            String hostInfo = (String) parent.getItemAtPosition(position);
+            if (hostInfo != null && hostInfo.contains(":")) {
+                String[] parts = hostInfo.split(" - ")[0].split(":");
+                if (parts.length == 2) {
+                    etHostIp.setText(parts[0]);
+                    etHostPort.setText(parts[1]);
+                }
+            }
+        });
+        
+        // 创建 DialogPlus
+        DialogPlus dialog = new DialogPlus(this);
+        dialog.setTitle("本地联机");
+        dialog.setContentView(customView);
+        dialog.setCancelable(true);
         dialog.show();
     }
 
@@ -357,12 +434,16 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 ? singleDir.listFiles((dir, name) -> name.endsWith(Constants.LUA_FILE_EX))
                 : null;
         List<String> nameList = new ArrayList<>();
+        List<String> descList = new ArrayList<>();
         if (files != null && files.length > 0) {
             for (File f : files) {
-                nameList.add(f.getName().replace(Constants.LUA_FILE_EX, ""));
+                String name = f.getName().replace(Constants.LUA_FILE_EX, "");
+                nameList.add(name);
+                descList.add(readLuaDescription(f));
             }
         } else {
             nameList.add("（暂无残局文件）");
+            descList.add("");
         }
 
         final File[] finalFiles = files;
@@ -383,8 +464,36 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         });
         dialog.setLeftButtonText("退出");
         dialog.setLeftButtonListener((d, w) -> d.dismiss());
-        dialog.hideButton(false);
         dialog.show();
+    }
+
+    private String readLuaDescription(File luaFile) {
+        StringBuilder message = new StringBuilder();
+        boolean inMessage = false;
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(luaFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("--[[message")) {
+                    if (line.length() <= 13) {
+                        inMessage = true;
+                        continue;
+                    } else {
+                        int end = line.indexOf(']', 11);
+                        if (end > 11) {
+                            message.append(line, 12, end - 1);
+                            break;
+                        }
+                    }
+                }
+                if (inMessage) {
+                    if (line.startsWith("]]")) break;
+                    message.append(line);
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to read lua description: " + luaFile.getName(), e);
+        }
+        return message.toString();
     }
 
     private void showReplayModeDialog() {
@@ -394,6 +503,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 : null;
         List<String> nameList = new ArrayList<>();
         if (files != null && files.length > 0) {
+            java.util.Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
             for (File f : files) {
                 nameList.add(f.getName());
             }
@@ -424,27 +534,67 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private void showDeckEditDialog() {
         hideMainMenu();
-        startActivity(new Intent(this, cn.garymb.ygomobile.ui.home.HomeActivity.class));
+        Intent intent = new Intent(this, cn.garymb.ygomobile.ui.home.HomeActivity.class);
+        intent.putExtra("tab", 2);
+        startActivity(intent);
     }
 
     private void showSettingsDialog() {
-        String[] items = {
+        android.content.SharedPreferences prefs = getSharedPreferences(getPackageName() + ".settings", Context.MODE_PRIVATE);
+        String[] keys = {
+                "chkMAutoPos", "chkSTAutoPos", "chkRandomPos",
+                "chkAutoChain", "chkWaitChain", "chkDefaultShowChain",
+                "chkAutoSaveReplay", "chkEnableSound", "chkEnableMusic"
+        };
+        String[] labels = {
                 "主卡位置自动", "魔陷位置自动", "随机出卡",
                 "自动连锁", "等待连锁确认", "显示连锁标记",
                 "自动保存录像", "启用音效", "启用BGM"
         };
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (12 * getResources().getDisplayMetrics().density);
+        container.setPadding(pad, pad, pad, pad);
+        android.widget.CheckBox[] checkBoxes = new android.widget.CheckBox[keys.length];
+        for (int i = 0; i < keys.length; i++) {
+            android.widget.CheckBox cb = new android.widget.CheckBox(this);
+            cb.setText(labels[i]);
+            cb.setTextColor(0xFFFFFFFF);
+            cb.setChecked(prefs.getBoolean(keys[i], false));
+            container.addView(cb);
+            checkBoxes[i] = cb;
+        }
+
+        ScrollView scrollContainer = new ScrollView(this);
+        scrollContainer.addView(container);
+
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle("系统设定");
-        dialog.setContentView(R.layout.dialog_edit_and_list);
-        dialog.bind(R.id.room_name).setVisibility(View.GONE);
-        ListView listView = dialog.bind(R.id.room_list);
-        SimpleListAdapter adapter = new SimpleListAdapter(this);
-        adapter.set(Arrays.asList(items));
-        listView.setAdapter(adapter);
-        listView.setOnItemClickListener((parent, view, position, id) -> dialog.dismiss());
-        dialog.setLeftButtonText("关闭");
-        dialog.setLeftButtonListener((d, w) -> d.dismiss());
+        dialog.setContentView(scrollContainer);
+        dialog.setLeftButtonText("保存");
+        dialog.setLeftButtonListener((d, w) -> {
+            android.content.SharedPreferences.Editor editor = prefs.edit();
+            for (int i = 0; i < keys.length; i++) {
+                editor.putBoolean(keys[i], checkBoxes[i].isChecked());
+            }
+            editor.apply();
+            applySettingsToEngine();
+            d.dismiss();
+        });
+        dialog.setRightButtonText("取消");
+        dialog.setRightButtonListener((d, w) -> d.dismiss());
         dialog.show();
+    }
+
+    private void applySettingsToEngine() {
+        android.content.SharedPreferences prefs = getSharedPreferences(getPackageName() + ".settings", Context.MODE_PRIVATE);
+        boolean enableSound = prefs.getBoolean("chkEnableSound", true);
+        boolean enableMusic = prefs.getBoolean("chkEnableMusic", true);
+        if (soundManager != null) {
+            soundManager.enableSounds(enableSound);
+            soundManager.enableMusic(enableMusic);
+        }
     }
 
     // === EngineListener ===
@@ -454,11 +604,12 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         Log.i(TAG, "State: " + newState);
         switch (newState) {
             case LOBBY:
-                layoutLobby.setVisibility(View.VISIBLE);
+                hideMainMenu();
+                if (layoutLobby != null) layoutLobby.setVisibility(View.VISIBLE);
                 tvLobbyStatus.setText("已连接 - 等待玩家准备");
                 break;
             case DECK_SELECT:
-                layoutLobby.setVisibility(View.GONE);
+                if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
                 showDeckSelectDialog();
                 break;
             case HAND_SELECT:
@@ -468,9 +619,10 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 showTPSelectDialog();
                 break;
             case DUELING:
-                layoutLobby.setVisibility(View.GONE);
-                layoutActionButtons.setVisibility(View.GONE);
-                layoutChat.setVisibility(View.VISIBLE);
+                hideMainMenu();
+                if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
+                if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
+                if (layoutChat != null) layoutChat.setVisibility(View.VISIBLE);
                 isGameStarted = true;
                 break;
             case SIDING:
@@ -830,11 +982,21 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         }, which -> {
             int pos;
             switch (which) {
-                case 0: pos = 0x1; break;
-                case 1: pos = 0x2; break;
-                case 2: pos = 0x4; break;
-                case 3: pos = 0x8; break;
-                default: pos = 0x1; break;
+                case 0:
+                    pos = 0x1;
+                    break;
+                case 1:
+                    pos = 0x2;
+                    break;
+                case 2:
+                    pos = 0x4;
+                    break;
+                case 3:
+                    pos = 0x8;
+                    break;
+                default:
+                    pos = 0x1;
+                    break;
             }
             sendResponseInt(pos);
         });
@@ -968,6 +1130,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             @Override
             public void handleOnBackPressed() {
                 if (layoutMainMenu != null && layoutMainMenu.getVisibility() == View.VISIBLE) {
+                    soundManager.stopBGM();
                     finish();
                     return;
                 }
@@ -977,7 +1140,11 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 dialog.setLeftButtonText("确定");
                 dialog.setLeftButtonListener((d, w) -> {
                     if (engine != null) {
-                        engine.sendSurrender();
+                        if (engine.getState() == GameEngine.GameState.DUELING) {
+                            engine.sendSurrender();
+                        } else {
+                            engine.disconnect();
+                        }
                     }
                     d.dismiss();
                     setEnabled(false);

@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
@@ -142,52 +143,80 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         }, "GameConnect").start();
     }
 
-    public void startBotDuel(String host, int port,
-                             String botName, String deckFile, String botAI) {
+    public void startLocalServer() {
+        Log.i(TAG, "Starting local server...");
+        setState(GameState.CONNECTING);
+        new Thread(() -> {
+            boolean connected = client.connect("127.0.0.1", 7911);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(0, 0, 0, 5,
+                    false, false,
+                    8000, 5, 1, 0,
+                    "Local Game", "");
+        }, "LocalServer").start();
+    }
+
+    public void startSingleMode(String luaPath) {
+        Log.i(TAG, "Starting single mode: " + luaPath);
+        byte[] scriptData = scriptEngine.loadSingleScript(new File(luaPath).getName());
+        if (scriptData == null || scriptData.length == 0) {
+            Log.e(TAG, "Failed to load single mode script: " + luaPath);
+            setState(GameState.IDLE);
+            mainHandler.post(() -> {
+                if (listener != null) listener.onHintMessage("无法加载残局脚本: " + new File(luaPath).getName());
+            });
+            return;
+        }
+        setState(GameState.CONNECTING);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage("正在加载残局...");
+        });
+        isBotMode = false;
+        new Thread(() -> {
+            boolean connected = client.connect("127.0.0.1", 7911);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(0, 0, 1, 5,
+                    true, false,
+                    8000, 5, 1, 0,
+                    "Single Play", "");
+        }, "SingleMode").start();
+    }
+
+    public void startBotDuel(String host, int port, String botCommand, String deckFile) {
+        Log.i(TAG, "Starting bot duel: " + botCommand);
+        isBotMode = true;
         botClient = new WindBotClient();
         botClient.setListener(new WindBotClient.BotListener() {
             @Override
             public void onBotConnected() {
                 Log.i(TAG, "Bot connected");
             }
-
             @Override
             public void onBotDisconnected() {
                 Log.i(TAG, "Bot disconnected");
             }
-
             @Override
             public void onBotError(String error) {
                 Log.e(TAG, "Bot error: " + error);
+                mainHandler.post(() -> {
+                    if (listener != null) listener.onHintMessage("AI错误: " + error);
+                });
             }
         });
         new Thread(() -> {
-            botClient.startBot(host, port, botName, deckFile, botAI);
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) { /* ignore */ }
+            botClient.startBot(host, port, "WindBot", deckFile, botCommand);
         }, "BotConnect").start();
-    }
-
-    public void disconnect() {
-        client.disconnect();
-        if (botClient != null) {
-            botClient.disconnect();
-            botClient = null;
-        }
-        setState(GameState.DISCONNECTED);
-    }
-
-    public void startLocalServer() {
-        Log.i(TAG, "Starting local server...");
-        connectToServer("127.0.0.1", 7911, true,
-                "Local Game", "",
-                0, 0, 5, 8000, 5, 1, 0, false, false);
-    }
-
-    public void startSingleMode(String luaPath) {
-        Log.i(TAG, "Starting single mode: " + luaPath);
-        setState(GameState.CONNECTING);
-        connectToServer("127.0.0.1", 7911, true,
-                "Single Play", "",
-                0, 0, 5, 8000, 5, 1, 0, false, false);
     }
 
     public void loadReplay(String replayPath) {
@@ -199,6 +228,15 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             }
             setState(GameState.IDLE);
         });
+    }
+
+    public void disconnect() {
+        client.disconnect();
+        if (botClient != null) {
+            botClient.disconnect();
+            botClient = null;
+        }
+        setState(GameState.DISCONNECTED);
     }
 
     // === Lobby Actions ===
