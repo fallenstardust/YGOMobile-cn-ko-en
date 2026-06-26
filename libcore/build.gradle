@@ -7,7 +7,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 22
         flavorDimensions "versionCode"
-        ndkVersion "21.3.6528147"
+        ndkVersion "29.0.14206865"
        /* ndk {
             moduleName "YGOMobile"
             abiFilters "armeabi-v7a","x86"
@@ -30,4 +30,21 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 //    implementation "me.weishu:free_reflection:2.1.0"
+}
+
+// 编译ygo内核: 在 jni 目录执行 ndk-build -j4, 产物输出到 libs/<abi>/libYGOMobile.so
+// 使用: ./gradlew :libcore:buildYgoCore  或在 Android Studio Gradle 面板双击
+task buildYgoCore(type: Exec) {
+    group = 'ygo'
+    description = '使用 ndk-build 编译 libYGOMobile.so'
+    workingDir file('jni')
+    commandLine "${android.ndkDirectory}/ndk-build", '-j4'
+}
+
+// 清理内核构建产物: ndk-build clean
+task cleanYgoCore(type: Exec) {
+    group = 'ygo'
+    description = '清理 ndk-build 产物 (obj/ 和 libs/)'
+    workingDir file('jni')
+    commandLine "${android.ndkDirectory}/ndk-build", 'clean'
 }
