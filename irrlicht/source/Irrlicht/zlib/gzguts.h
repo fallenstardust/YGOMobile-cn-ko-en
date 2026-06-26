@@ -33,6 +33,8 @@
 
 #if defined(__TURBOC__) || defined(_MSC_VER) || defined(_WIN32)
 #  include <io.h>
+#else
+#  include <unistd.h>  /* 适配NDK29: r29 严格检查隐式声明, gzread.c 调用 close() 但未包含 unistd.h, 此处补上 */
 #endif
 
 #ifdef WINAPI_FAMILY

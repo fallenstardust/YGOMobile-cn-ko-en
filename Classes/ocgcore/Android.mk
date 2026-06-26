@@ -22,7 +22,7 @@ LOCAL_SRC_FILES := card.cpp \
                    processor.cpp \
                    scriptlib.cpp
                    
-LOCAL_CFLAGS    := -frtti -std=gnu++1y -D_IRR_ANDROID_PLATFORM_
+LOCAL_CFLAGS    := -frtti -std=gnu++14 -D_IRR_ANDROID_PLATFORM_  # 适配NDK29: 原为 -std=gnu++0x(C++11草案), 统一到 C++14, 与 Application.mk 的 -std=gnu++14 保持一致
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../lua
 
 include $(BUILD_STATIC_LIBRARY)
