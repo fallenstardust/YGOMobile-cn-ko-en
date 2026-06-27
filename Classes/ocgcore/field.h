@@ -156,9 +156,9 @@ struct processor_unit {
 	void* ptr3{ nullptr };
 	void* ptr4{ nullptr };
 };
-constexpr int SIZE_SVALUE = SIZE_RETURN_VALUE / 2;
-constexpr int SIZE_IVALUE = SIZE_RETURN_VALUE / 4;
-constexpr int SIZE_LVALUE = SIZE_RETURN_VALUE / 8;
+constexpr size_t SIZE_SVALUE = SIZE_RETURN_VALUE / 2;
+constexpr size_t SIZE_IVALUE = SIZE_RETURN_VALUE / 4;
+constexpr size_t SIZE_LVALUE = SIZE_RETURN_VALUE / 8;
 union return_value {
 	uint8_t bvalue[SIZE_RETURN_VALUE];
 	uint16_t svalue[SIZE_SVALUE];
@@ -383,6 +383,7 @@ public:
 	void set_control(card* pcard, uint8_t playerid, uint16_t reset_phase, uint8_t reset_count);
 
 	int32_t get_pzone_sequence(uint8_t pseq) const;
+	const card_vector* get_field_vector(uint8_t playerid, uint8_t location) const;
 	card* get_field_card(uint8_t playerid, uint32_t general_location, uint8_t sequence) const;
 	int32_t is_location_useable(uint8_t playerid, uint32_t general_location, uint8_t sequence) const;
 	int32_t get_useable_count(card* pcard, uint8_t playerid, uint8_t location, uint8_t uplayer, uint32_t reason, uint32_t zone = 0xff, uint32_t* list = nullptr);

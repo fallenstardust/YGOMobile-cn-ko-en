@@ -263,6 +263,8 @@ enum effect_category : uint64_t {
 	CATEGORY_ANNOUNCE		= 0x20000000,
 	CATEGORY_FUSION_SUMMON	= 0x40000000,
 	CATEGORY_TOEXTRA		= 0x80000000,
+	CATEGORY_MSET			= 0x100000000,
+	CATEGORY_SSET			= 0x200000000,
 };
 
 const std::map<uint64_t, uint64_t> category_checklist{
@@ -532,6 +534,7 @@ const std::map<uint64_t, uint64_t> category_checklist{
 #define EFFECT_SYNCHRO_LEVEL_EX		373
 #define EFFECT_RITUAL_LEVEL_EX		374
 #define EFFECT_DOUBLE_XMATERIAL		375
+#define EFFECT_REVEAL_ONFIELD			376
 
 //#define EVENT_STARTUP		1000
 #define EVENT_FLIP			1001

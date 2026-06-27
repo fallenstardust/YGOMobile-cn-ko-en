@@ -1,6 +1,9 @@
+#include <algorithm>
 #include <array>
 #include "config.h"
 #include "deck_con.h"
+#include "data_manager.h"
+#include "deck_manager.h"
 #include "myfilesystem.h"
 #include "image_manager.h"
 #include "game.h"
@@ -89,23 +92,37 @@ void DeckBuilder::Initialize() {
     mainGame->btnSortDeck->setVisible(true);
     mainGame->btnClearDeck->setVisible(true);
 	mainGame->imgChat->setVisible(false);
+	mainGame->imgEmoticon->setVisible(false);
 	mainGame->imgQuickAnimation->setVisible(false);
 	mainGame->btnSideOK->setVisible(false);
 	mainGame->btnSideShuffle->setVisible(false);
 	mainGame->btnSideSort->setVisible(false);
 	mainGame->btnSideReload->setVisible(false);
-	if (mainGame->gameConf.use_lflist) {
-		if (mainGame->gameConf.default_lflist >= 0 && mainGame->gameConf.default_lflist < (int)deckManager._lfList.size()) {
-			filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
-		}
-		else {
-			mainGame->gameConf.default_lflist = 0;
-			filterList = &deckManager._lfList.front();
-		}
-	}
-	else {
-		filterList = &deckManager._lfList.back();
-	}
+    if (mainGame->gameConf.enable_genesys_mode) {
+        if (mainGame->gameConf.use_genesys_lflist) {
+            if (mainGame->gameConf.default_genesys_lflist >= 0 && mainGame->gameConf.default_genesys_lflist < (int)deckManager._genesys_lfList.size()) {
+                filterList = &deckManager._genesys_lfList[mainGame->gameConf.default_genesys_lflist];
+            } else {
+                mainGame->gameConf.default_genesys_lflist = 0;
+                filterList = &deckManager._genesys_lfList.front();
+            }
+        } else {
+            filterList = &deckManager._genesys_lfList.back();
+        }
+    } else{
+        if (mainGame->gameConf.use_lflist) {
+            if (mainGame->gameConf.default_lflist >= 0 && mainGame->gameConf.default_lflist < (int)deckManager._lfList.size()) {
+                filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
+            }
+            else {
+                mainGame->gameConf.default_lflist = 0;
+                filterList = &deckManager._lfList.front();
+            }
+        } else {
+            filterList = &deckManager._lfList.back();
+        }
+    }
+
 	ClearSearch();
 	mouse_pos.set(0, 0);
 	hovered_code = 0;
@@ -141,6 +158,7 @@ void DeckBuilder::Terminate() {
     mainGame->btnClearDeck->setVisible(false);
 	mainGame->ResizeChatInputWindow();
     mainGame->imgChat->setVisible(true);
+    mainGame->imgEmoticon->setVisible(true);
     mainGame->imgQuickAnimation->setVisible(true);
     mainGame->wSettings->setVisible(false);
     mainGame->wLogs->setVisible(false);
@@ -148,25 +166,55 @@ void DeckBuilder::Terminate() {
 	mainGame->device->setEventReceiver(&mainGame->menuHandler);
 	mainGame->wACMessage->setVisible(false);
 	mainGame->ClearTextures();
+	mainGame->showingcode = 0;
 	mainGame->scrFilter->setVisible(false);
 	mainGame->scrPackCards->setVisible(false);
 	mainGame->scrPackCards->setPos(0);
+
+    char linebuf[256];
 	int catesel = mainGame->cbDBCategory->getSelected();
-	char linebuf[256];
-	if (catesel >= 0)
-		BufferIO::CopyWideString(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory);
-	    BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
-		irr::android::setLastCategory(mainGame->appMain, linebuf);
-		//irr:os::Printer::log("setLastCategory", linebuf);
+	if (catesel >= 0) {
+        BufferIO::CopyWideString(mainGame->cbDBCategory->getItem(catesel), mainGame->gameConf.lastcategory);
+        BufferIO::EncodeUTF8(mainGame->gameConf.lastcategory, linebuf);
+        irr::android::setLastCategory(mainGame->appMain, linebuf);
+        ALOGD("setLastCategory=%s", linebuf);
+    }
+
 	int decksel = mainGame->cbDBDecks->getSelected();
-	if (decksel >= 0)
-		BufferIO::CopyWideString(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck);
-		BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
-		irr::android::setLastDeck(mainGame->appMain, linebuf);
-		//os::Printer::log("setLastDeck", linebuf);
-	mainGame->SaveConfig();
-	if(exit_on_return)
+	if (decksel >= 0) {
+        BufferIO::CopyWideString(mainGame->cbDBDecks->getItem(decksel), mainGame->gameConf.lastdeck);
+        BufferIO::EncodeUTF8(mainGame->gameConf.lastdeck, linebuf);
+        irr::android::setLastDeck(mainGame->appMain, linebuf);
+        ALOGD("setLastDeck=%s", linebuf);
+    }
+    setLastLimit();
+    mainGame->SaveConfig();
+	if(mainGame->exit_on_return)
 		mainGame->OnGameClose();
+}
+
+void DeckBuilder::setLastLimit() {
+    char linebuf[256];
+    if (mainGame->gameConf.use_lflist) {
+        int lflistsel = mainGame->cbLFlist->getSelected();
+        if (lflistsel >= 0) {
+            BufferIO::CopyWideString(mainGame->cbLFlist->getItem(lflistsel), mainGame->gameConf.last_limit_list_name);
+            BufferIO::EncodeUTF8(mainGame->cbLFlist->getItem(lflistsel), linebuf);
+            irr::android::setLastLimit(mainGame->appMain, linebuf);
+            ALOGD("cc: game: setLastLimit=%s", linebuf);
+        }
+    }
+    if (mainGame->gameConf.use_genesys_lflist) {
+        int lflistsel = mainGame->cbGenesysLFlist->getSelected();
+        if (lflistsel >= 0) {
+            BufferIO::CopyWideString(mainGame->cbGenesysLFlist->getItem(lflistsel),
+                                     mainGame->gameConf.last_genesys_limit_list_name);
+            BufferIO::EncodeUTF8(mainGame->cbGenesysLFlist->getItem(lflistsel), linebuf);
+            irr::android::setLastGenesysLimit(mainGame->appMain, linebuf);
+            ALOGD("cc: game: setLastGenesysLimit=%s", linebuf);
+        }
+    }
+
 }
 bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -177,6 +225,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 #endif
 	if(mainGame->dField.OnCommonEvent(event))
 		return false;
+	auto& _datas = dataManager.GetDataTable();
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
 		irr::s32 id = event.GUIEvent.Caller->getID();
@@ -184,7 +233,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			(mainGame->wQuery->isVisible() && id != BUTTON_YES && id != BUTTON_NO) ||
 			(mainGame->wLinkMarks->isVisible() && id != BUTTON_MARKERS_OK) ||
 			(mainGame->wDMQuery->isVisible() && id != BUTTON_DM_OK && id != BUTTON_DM_CANCEL) ||
-			(mainGame->wDeckManage->isVisible() && !(id >= WINDOW_DECK_MANAGE && id < COMBOBOX_LFLIST)))
+			(mainGame->wDeckManage->isVisible() && !(id >= WINDOW_DECK_MANAGE && (id < COMBOBOX_LFLIST) || id < COMBOBOX_GENESYS_LFLIST)))
 			&& event.GUIEvent.EventType != irr::gui::EGET_LISTBOX_CHANGED
 			&& event.GUIEvent.EventType != irr::gui::EGET_COMBO_BOX_CHANGED) {
 			if(mainGame->wDMQuery->isVisible())
@@ -204,7 +253,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			switch(id) {
 			case BUTTON_CLEAR_DECK: {
 				mainGame->gMutex.lock();
-				mainGame->SetStaticText(mainGame->stQMessage, 370, mainGame->guiFont, dataManager.GetSysString(1339));
+				mainGame->SetStaticText(mainGame->stQMessage, 370, mainGame->guiFont, dataManager.GetSysString(1339)/*是否清空正在编辑的卡组？*/);
 				mainGame->PopupElement(mainGame->wQuery);
 				mainGame->gMutex.unlock();
 				prev_operation = id;
@@ -214,10 +263,12 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				std::sort(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), DataManager::deck_sort_lv);
 				std::sort(deckManager.current_deck.extra.begin(), deckManager.current_deck.extra.end(), DataManager::deck_sort_lv);
 				std::sort(deckManager.current_deck.side.begin(), deckManager.current_deck.side.end(), DataManager::deck_sort_lv);
+				is_modified = true;
 				break;
 			}
 			case BUTTON_SHUFFLE_DECK: {
 				std::shuffle(deckManager.current_deck.main.begin(), deckManager.current_deck.main.end(), rnd);
+				is_modified = true;
 				break;
 			}
 			case BUTTON_SAVE_DECK: {
@@ -226,7 +277,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				wchar_t filepath[256];
 				get_deck_file(filepath);
-				if(deckManager.SaveDeck(deckManager.current_deck, filepath)) {
+				if(deckManager.SaveDeck(deckManager.current_deck, filepath, false)) {
 					mainGame->stACMessage->setText(dataManager.GetSysString(1335));
 					mainGame->PopupElement(mainGame->wACMessage, 20);
 					is_modified = false;
@@ -250,6 +301,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					mainGame->cbDBDecks->addItem(dname);
 					mainGame->cbDBDecks->setSelected(mainGame->cbDBDecks->getItemCount() - 1);
 				}
+				prev_deck = mainGame->cbDBDecks->getSelected();
 				int catesel = mainGame->cbDBCategory->getSelected();
 				wchar_t catepath[256];
 				deckManager.GetCategoryPath(catepath, catesel, mainGame->cbDBCategory->getText(), true);
@@ -277,7 +329,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				mainGame->gMutex.lock();
 				wchar_t textBuffer[256];
-				myswprintf(textBuffer, L"%ls\n%ls", mainGame->cbDBDecks->getItem(sel), dataManager.GetSysString(1337));
+				myswprintf(textBuffer, L"%ls\n%ls", mainGame->cbDBDecks->getItem(sel), dataManager.GetSysString(1337)/*是否删除这个卡组？*/);
 				mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, textBuffer);
 				mainGame->PopupElement(mainGame->wQuery);
 				mainGame->gMutex.unlock();
@@ -289,7 +341,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			case BUTTON_LEAVE_GAME: {
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356)/*此操作将放弃对当前卡组的修改，是否继续？*/);
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
@@ -313,6 +365,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			    mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 			    mainGame->HideElement(mainGame->wSettings);
                 mainGame->imgSettings->setPressed(false);
+
+                setLastLimit();
 			    break;
 			}
 			case BUTTON_SHOW_LOG: {
@@ -373,7 +427,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			case BUTTON_MANAGE_DECK: {
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356)/*此操作将放弃对当前卡组的修改，是否继续？*/);
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
@@ -384,7 +438,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_NEW_CATEGORY: {
 				mainGame->gMutex.lock();
-				mainGame->stDMMessage->setText(dataManager.GetSysString(1469));
+				mainGame->stDMMessage->setText(dataManager.GetSysString(1469)/*请输入分类名：*/);
 				mainGame->ebDMName->setVisible(true);
 				mainGame->ebDMName->setText(L"");
 				mainGame->PopupElement(mainGame->wDMQuery);
@@ -488,7 +542,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						mainGame->lstCategories->addItem(catename);
 						catesel = mainGame->lstCategories->getItemCount() - 1;
 					} else {
-						for(int i = 3; i < (int)mainGame->lstCategories->getItemCount(); i++) {
+						for(int i = DECK_CATEGORY_CUSTOM; i < (int)mainGame->lstCategories->getItemCount(); i++) {
 							if(!mywcsncasecmp(mainGame->lstCategories->getListItem(i), catename, 256)) {
 								catesel = i;
 								mainGame->stACMessage->setText(dataManager.GetSysString(1474));
@@ -508,6 +562,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				case BUTTON_RENAME_CATEGORY: {
 					int catesel = mainGame->lstCategories->getSelected();
+					if (catesel < DECK_CATEGORY_CUSTOM)
+						break;
 					const wchar_t* oldcatename = mainGame->lstCategories->getListItem(catesel);
 					const wchar_t* newcatename = mainGame->ebDMName->getText();
 					if(deckManager.RenameCategory(oldcatename, newcatename)) {
@@ -518,7 +574,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 						catesel = mainGame->lstCategories->getItemCount() - 1;
 					} else {
 						catesel = 0;
-						for(int i = 3; i < (int)mainGame->lstCategories->getItemCount(); i++) {
+						for(int i = DECK_CATEGORY_CUSTOM; i < (int)mainGame->lstCategories->getItemCount(); i++) {
 							if(!mywcsncasecmp(mainGame->lstCategories->getListItem(i), newcatename, 256)) {
 								catesel = i;
 								mainGame->stACMessage->setText(dataManager.GetSysString(1474));
@@ -538,11 +594,13 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				case BUTTON_DELETE_CATEGORY: {
 					int catesel = mainGame->lstCategories->getSelected();
+					if (catesel < DECK_CATEGORY_CUSTOM)
+						break;
 					const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
 					if(deckManager.DeleteCategory(catename)) {
 						mainGame->cbDBCategory->removeItem(catesel);
 						mainGame->lstCategories->removeItem(catesel);
-						catesel = 2;
+						catesel = DECK_CATEGORY_NONE;
 						mainGame->lstCategories->setSelected(catesel);
 						RefreshDeckList(true);
 						mainGame->lstDecks->setSelected(0);
@@ -584,23 +642,30 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					}
 					break;
 				}
-				case BUTTON_RENAME_DECK: {
-					int catesel = mainGame->lstCategories->getSelected();
-					int decksel = mainGame->lstDecks->getSelected();
-					const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
-					wchar_t oldfilepath[256];
-					get_deck_file(oldfilepath);
-					const wchar_t* newdeckname = mainGame->ebDMName->getText();
-					wchar_t newfilepath[256];
-					if(catesel == 2) {
-						myswprintf(newfilepath, L"./deck/%ls.ydk", newdeckname);
-					} else {
-						myswprintf(newfilepath, L"./deck/%ls/%ls.ydk", catename, newdeckname);
-					}
-					bool res = false;
-					if(!FileSystem::IsFileExists(newfilepath)) {
-						res = FileSystem::Rename(oldfilepath, newfilepath);
-					}
+                case BUTTON_RENAME_DECK: {
+                    int catesel = mainGame->lstCategories->getSelected();
+                    int decksel = mainGame->lstDecks->getSelected();
+                    const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
+                    wchar_t oldfilepath[256];
+                    get_deck_file(oldfilepath);
+                    const wchar_t* newdeckname = mainGame->ebDMName->getText();
+                    wchar_t newfilepath[256];
+                    if(catesel == 2) {
+                        myswprintf(newfilepath, L"./deck/%ls.ydk", newdeckname);
+                    } else {
+                        myswprintf(newfilepath, L"./deck/%ls/%ls.ydk", catename, newdeckname);
+                    }
+                    bool res = false;
+                    if(!FileSystem::IsFileExists(newfilepath)) {
+                        res = FileSystem::Rename(oldfilepath, newfilepath);
+                        if(res && mainGame != nullptr && mainGame->appMain != nullptr) {
+                            char utf8_path[512];
+                            BufferIO::EncodeUTF8(newfilepath, utf8_path);
+                            char utf8_name[256];
+                            BufferIO::EncodeUTF8(newdeckname, utf8_name);
+                            irr::android::syncRenameDeck(mainGame->appMain, utf8_path, utf8_name);
+                        }
+                    }
 					RefreshDeckList(true);
 					ChangeCategory(catesel);
 					for(int i = 0; i < (int)mainGame->lstDecks->getItemCount(); i++) {
@@ -660,6 +725,13 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					}
 					bool res = false;
 					if(!FileSystem::IsFileExists(newfilepath)) {
+                        if(mainGame != nullptr && mainGame->appMain != nullptr) {
+                            char utf8_old_path[512];
+                            char utf8_new_path[512];
+                            BufferIO::EncodeUTF8(oldfilepath, utf8_old_path);
+                            BufferIO::EncodeUTF8(newfilepath, utf8_new_path);
+                            irr::android::syncMoveDeck(mainGame->appMain, utf8_old_path, utf8_new_path);
+                        }
 						res = FileSystem::Rename(oldfilepath, newfilepath);
 					}
 					mainGame->lstCategories->setSelected(newcatename);
@@ -751,18 +823,9 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				}
 				mainGame->ClearCardInfo();
-                mainGame->imgChat->setVisible(true);
-				unsigned char deckbuf[1024];
-				auto pdeck = deckbuf;
-				BufferIO::WriteInt32(pdeck, deckManager.current_deck.main.size() + deckManager.current_deck.extra.size());
-				BufferIO::WriteInt32(pdeck, deckManager.current_deck.side.size());
-				for(size_t i = 0; i < deckManager.current_deck.main.size(); ++i)
-					BufferIO::WriteInt32(pdeck, deckManager.current_deck.main[i]->first);
-				for(size_t i = 0; i < deckManager.current_deck.extra.size(); ++i)
-					BufferIO::WriteInt32(pdeck, deckManager.current_deck.extra[i]->first);
-				for(size_t i = 0; i < deckManager.current_deck.side.size(); ++i)
-					BufferIO::WriteInt32(pdeck, deckManager.current_deck.side[i]->first);
-				DuelClient::SendBufferToServer(CTOS_UPDATE_DECK, deckbuf, pdeck - deckbuf);
+				mainGame->imgChat->setVisible(true);
+				mainGame->imgEmoticon->setVisible(true);
+				DuelClient::SendUpdateDeck(deckManager.current_deck);
 				break;
 			}
 			case BUTTON_SIDE_RELOAD: {
@@ -902,7 +965,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame->xScale, mainGame->guiFont, dataManager.GetSysString(1356)/*此操作将放弃对当前卡组的修改，是否继续？*/);
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
@@ -918,7 +981,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				}
 				if(is_modified && !readonly && !mainGame->chkIgnoreDeckChanges->isChecked()) {
 					mainGame->gMutex.lock();
-					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame-> xScale, mainGame->guiFont, dataManager.GetSysString(1356));
+					mainGame->SetStaticText(mainGame->stQMessage, 370 * mainGame-> xScale, mainGame->guiFont, dataManager.GetSysString(1356)/*此操作将放弃对当前卡组的修改，是否继续？*/);
 					mainGame->PopupElement(mainGame->wQuery);
 					mainGame->gMutex.unlock();
 					prev_operation = id;
@@ -1051,6 +1114,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				InstantSearch();
 				break;
 			}
+			break;
 		}
 		case irr::gui::EGET_LISTBOX_CHANGED: {
 			switch(id) {
@@ -1114,9 +1178,14 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			dragx = event.MouseInput.X;
 			dragy = event.MouseInput.Y;
-			draging_pointer = dataManager.GetCodePointer(hovered_code);
-			if(draging_pointer == dataManager.datas_end())
+			auto dit = _datas.find(hovered_code);
+			if (dit == _datas.end()) {
+				draging_pointer = nullptr;
+				is_starting_dragging = false;
+				is_draging = false;
 				break;
+			}
+			draging_pointer = &dit->second;
 			if(hovered_pos == 4) {
 				if(!check_limit(draging_pointer))
 					break;
@@ -1127,6 +1196,10 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_LEFT_UP: {
 			is_starting_dragging = false;
 			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
+			if(!is_draging && !mainGame->is_siding && root->getElementFromPoint(mouse_pos) == mainGame->imgCard) {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
+				break;
+			}
 			if(!is_draging)
 				break;
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
@@ -1153,6 +1226,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_DOUBLE_CLICK: {
 			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
 			if(!is_draging && !mainGame->is_siding && root->getElementFromPoint(mouse_pos) == root && hovered_code) {
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
 				break;
 			}
 			break;
@@ -1163,18 +1237,19 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				if(hovered_pos == 0 || hovered_seq == -1)
 					break;
-				auto pointer = dataManager.GetCodePointer(hovered_code);
-				if(pointer == dataManager.datas_end())
+				auto pointer = _datas.find(hovered_code);
+				if (pointer == _datas.end())
 					break;
+				auto cd = &pointer->second;
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_DROP);
 				if(hovered_pos == 1) {
-					if(push_side(pointer))
+					if(push_side(cd))
 						pop_main(hovered_seq);
 				} else if(hovered_pos == 2) {
-					if(push_side(pointer))
+					if(push_side(cd))
 						pop_extra(hovered_seq);
 				} else {
-					if(push_extra(pointer) || push_main(pointer))
+					if(push_extra(cd) || push_main(cd))
 						pop_side(hovered_seq);
 				}
 				break;
@@ -1194,13 +1269,14 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				} else if(hovered_pos == 3) {
 					pop_side(hovered_seq);
 				} else {
-					auto pointer = dataManager.GetCodePointer(hovered_code);
-					if(pointer == dataManager.datas_end())
+					auto pointer = _datas.find(hovered_code);
+					if (pointer == _datas.end())
 						break;
-					if(!check_limit(pointer))
+					auto cd = &pointer->second;
+					if(!check_limit(cd))
 						break;
-					if(!push_extra(pointer) && !push_main(pointer))
-						push_side(pointer);
+					if(!push_extra(cd) && !push_main(cd))
+						push_side(cd);
 				}
 			} else {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_PICK);
@@ -1214,8 +1290,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				} else {
 					push_side(draging_pointer);
 				}
-				is_draging = false;
 			}
+			is_draging = false;
 			break;
 		}
 		case irr::EMIE_MMOUSE_LEFT_UP: {
@@ -1229,24 +1305,25 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 				break;
 			if (is_draging)
 				break;
-			auto pointer = dataManager.GetCodePointer(hovered_code);
-			if (pointer == dataManager.datas_end())
+			auto pointer = _datas.find(hovered_code);
+			if (pointer == _datas.end())
 				break;
-			if(!check_limit(pointer))
+			auto cd = &pointer->second;
+			if(!check_limit(cd))
 				break;
 			mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::CARD_PICK);
 			if (hovered_pos == 1) {
-				if(!push_main(pointer))
-					push_side(pointer);
+				if(!push_main(cd))
+					push_side(cd);
 			} else if (hovered_pos == 2) {
-				if(!push_extra(pointer))
-					push_side(pointer);
+				if(!push_extra(cd))
+					push_side(cd);
 			} else if (hovered_pos == 3) {
-				if(!push_side(pointer) && !push_extra(pointer))
-					push_main(pointer);
+				if(!push_side(cd) && !push_extra(cd))
+					push_main(cd);
 			} else {
-				if(!push_extra(pointer) && !push_main(pointer))
-					push_side(pointer);
+				if(!push_extra(cd) && !push_main(cd))
+					push_side(cd);
 			}
 			break;
 		}
@@ -1329,7 +1406,7 @@ void DeckBuilder::GetHoveredCard() {
 					hovered_seq = -1;
 					hovered_code = 0;
 				} else {
-					hovered_code = deckManager.current_deck.main[hovered_seq]->first;
+					hovered_code = deckManager.current_deck.main[hovered_seq]->code;
 				}
 			}
 		} else if(y >= 164 * mainGame->yScale && y <= 435 * mainGame->yScale) {
@@ -1346,7 +1423,7 @@ void DeckBuilder::GetHoveredCard() {
 				hovered_seq = -1;
 				hovered_code = 0;
 			} else {
-				hovered_code = deckManager.current_deck.main[hovered_seq]->first;
+				hovered_code = deckManager.current_deck.main[hovered_seq]->code;
 			}
 		} else if(y >= 466 * mainGame->yScale && y <= 530 * mainGame->yScale) {
 			int lx = deckManager.current_deck.extra.size();
@@ -1361,7 +1438,7 @@ void DeckBuilder::GetHoveredCard() {
 				hovered_seq = -1;
 				hovered_code = 0;
 			} else {
-				hovered_code = deckManager.current_deck.extra[hovered_seq]->first;
+				hovered_code = deckManager.current_deck.extra[hovered_seq]->code;
 				if(x >= 772 * mainGame->xScale)
 					is_lastcard = 1;
 			}
@@ -1378,7 +1455,7 @@ void DeckBuilder::GetHoveredCard() {
 				hovered_seq = -1;
 				hovered_code = 0;
 			} else {
-				hovered_code = deckManager.current_deck.side[hovered_seq]->first;
+				hovered_code = deckManager.current_deck.side[hovered_seq]->code;
 				if(x >= 772 * mainGame->xScale)
 					is_lastcard = 1;
 			}
@@ -1391,7 +1468,7 @@ void DeckBuilder::GetHoveredCard() {
 			hovered_seq = -1;
 			hovered_code = 0;
 		} else {
-			hovered_code = results[current_pos]->first;
+			hovered_code = results[current_pos]->code;
 		}
 	}
 	if(is_draging) {
@@ -1401,14 +1478,24 @@ void DeckBuilder::GetHoveredCard() {
 	if(!is_draging && pre_code != hovered_code) {
 		if(hovered_code)
 			mainGame->ShowCardInfo(hovered_code);
-		if(pre_code)
-			imageManager.RemoveTexture(pre_code);
 	}
 }
+
+/**
+ * @brief 开始卡片过滤操作
+ *
+ * 该函数用于启动卡片过滤流程，根据用户界面中选择的过滤条件来筛选卡片。
+ * 首先获取基本的过滤类型、二级类型和限制条件，如果是一般怪兽过滤类型，
+ * 还会进一步获取属性、种族、攻击力、守备力、等级和刻度等详细过滤条件，
+ * 最后调用FilterCards函数执行实际的卡片过滤操作。
+ */
 void DeckBuilder::StartFilter() {
+	// 获取基础过滤条件：卡片类型、二级类型和限制条件
 	filter_type = mainGame->cbCardType->getSelected();
 	filter_type2 = mainGame->cbCardType2->getItemData(mainGame->cbCardType2->getSelected());
 	filter_lm = mainGame->cbLimit->getSelected();
+
+	// 当选择的过滤类型为1时，获取详细的怪兽卡片过滤条件
 	if(filter_type == 1) {
 		filter_attrib = mainGame->cbAttribute->getItemData(mainGame->cbAttribute->getSelected());
 		filter_race = mainGame->cbRace->getItemData(mainGame->cbRace->getSelected());
@@ -1417,40 +1504,70 @@ void DeckBuilder::StartFilter() {
 		filter_lv = parse_filter(mainGame->ebStar->getText(), &filter_lvtype);
 		filter_scl = parse_filter(mainGame->ebScale->getText(), &filter_scltype);
 	}
+
+	// 执行卡片过滤操作
 	FilterCards();
 }
+
+/**
+ * @brief 根据用户输入的关键字和其他筛选条件过滤卡牌数据，并将结果存储在results中。
+ *
+ * 此函数首先解析用户输入的搜索关键字（支持多关键字、排除模式等），然后遍历所有卡牌，
+ * 应用类型、种族、属性、攻击力、守备力、等级、灵摆刻度、效果分类、连接标记、限制状态等多种筛选条件，
+ * 最终筛选出符合条件的卡牌并更新界面显示。
+ *
+ * @note 该函数会清空之前的筛选结果(results)，并对结果进行排序和分页处理。
+ */
 void DeckBuilder::FilterCards() {
+	// 清除上一次的筛选结果
 	results.clear();
+
+	/**
+	 * 定义用于解析查询字符串的结构体元素
+	 * 包含关键字(keyword)、对应的系列码(setcodes)、匹配类型(type)以及是否排除(exclude)
+	 */
 	struct element_t {
-		std::wstring keyword;
-		std::vector<unsigned int> setcodes;
+		std::wstring keyword;                      ///< 搜索关键词
+		std::vector<uint32_t> setcodes;        ///< 对应的系列码列表
 		enum class type_t {
-			all,
-			name,
-			setcode
-		} type{ type_t::all };
-		bool exclude{ false };
+			all,                                   ///< 全字段匹配
+			name,                                  ///< 名称匹配
+			setcode                                ///< 字段码匹配
+		} type{ type_t::all };                     ///< 当前匹配类型，默认为全字段匹配
+		bool exclude{ false };                     ///< 是否是排除项
 	};
+
+	// 获取用户输入的文本内容
 	const wchar_t* pstr = mainGame->ebCardName->getText();
-	int trycode = BufferIO::GetVal(pstr);
-	std::wstring str{ pstr };
-	std::vector<element_t> query_elements;
+	int trycode = BufferIO::GetVal(pstr);          // 尝试将输入转换为卡号
+	std::wstring str{ pstr };                      // 转换为宽字符字符串便于处理
+
+	std::vector<element_t> query_elements;         // 存储解析后的查询元素
+
+	// 处理多个关键字的情况（根据配置决定使用空格还是+作为分隔符）
 	if(mainGame->gameConf.search_multiple_keywords) {
 		const wchar_t separator = mainGame->gameConf.search_multiple_keywords == 1 ? L' ' : L'+';
-		const wchar_t minussign = L'-';
-		const wchar_t quotation = L'\"';
+		const wchar_t minussign = L'-';            // 表示排除的关键字
+		const wchar_t quotation = L'\"';           // 引号表示精确匹配范围
+
 		size_t element_start = 0;
+
+		// 循环解析每一个关键字片段
 		for(;;) {
 			element_start = str.find_first_not_of(separator, element_start);
 			if(element_start == std::wstring::npos)
 				break;
+
 			element_t element;
+			// 判断是否有排除标志 '-'
 			if(str[element_start] == minussign) {
 				element.exclude = true;
 				element_start++;
 			}
 			if(element_start >= str.size())
 				break;
+
+			// 判断匹配方式：$表示名称匹配，@表示系列码匹配
 			if(str[element_start] == L'$') {
 				element.type = element_t::type_t::name;
 				element_start++;
@@ -1460,26 +1577,36 @@ void DeckBuilder::FilterCards() {
 			}
 			if(element_start >= str.size())
 				break;
+
+			// 判断是否存在引号包裹的内容
 			wchar_t delimiter = separator;
 			if(str[element_start] == quotation) {
 				delimiter = quotation;
 				element_start++;
 			}
+
+			// 提取关键字部分
 			size_t element_end = str.find_first_of(delimiter, element_start);
 			if(element_end != std::wstring::npos) {
 				size_t length = element_end - element_start;
 				element.keyword = str.substr(element_start, length);
 			} else
 				element.keyword = str.substr(element_start);
+
+			// 获取对应系列码
 			element.setcodes = dataManager.GetSetCodes(element.keyword);
 			query_elements.push_back(element);
+
 			if(element_end == std::wstring::npos)
 				break;
 			element_start = element_end + 1;
 		}
 	} else {
+		// 不启用多关键字时只处理第一个关键字
 		element_t element;
 		size_t element_start = 0;
+
+		// 同样判断匹配方式
 		if(str[element_start] == L'$') {
 			element.type = element_t::type_t::name;
 			element_start++;
@@ -1487,34 +1614,49 @@ void DeckBuilder::FilterCards() {
 			element.type = element_t::type_t::setcode;
 			element_start++;
 		}
+
 		if(element_start < str.size()) {
 			element.keyword = str.substr(element_start);
 			element.setcodes = dataManager.GetSetCodes(element.keyword);
 			query_elements.push_back(element);
 		}
 	}
-	for(code_pointer ptr = dataManager.datas_begin(); ptr != dataManager.datas_end(); ++ptr) {
-		const CardDataC& data = ptr->second;
-		auto strpointer = dataManager.GetStringPointer(ptr->first);
-		if (strpointer == dataManager.strings_end())
+
+	// 获取卡牌数据库中的数据表与字符串表
+	auto& _datas = dataManager.GetDataTable();
+	auto& _strings = dataManager.GetStringTable();
+	for (auto& kv : _datas) {
+		auto code = kv.first;
+		auto& data = kv.second;
+		auto strpointer = _strings.find(code);
+		if (strpointer == _strings.end())
 			continue;
-		const CardString& text = strpointer->second;
+
+		const CardString& strings = strpointer->second;
+
+		// 排除TOKEN类型的卡片
 		if(data.type & TYPE_TOKEN)
 			continue;
+
+		// 根据主类别进行初步筛选
 		switch(filter_type) {
-		case 1: {
+		case 1: { // 怪兽卡筛选逻辑
 			if(!(data.type & TYPE_MONSTER) || (data.type & filter_type2) != filter_type2)
 				continue;
 			if(filter_race && data.race != filter_race)
 				continue;
 			if(filter_attrib && data.attribute != filter_attrib)
 				continue;
+
+			// 攻击力筛选
 			if(filter_atktype) {
 				if((filter_atktype == 1 && data.attack != filter_atk) || (filter_atktype == 2 && data.attack < filter_atk)
 				        || (filter_atktype == 3 && data.attack <= filter_atk) || (filter_atktype == 4 && (data.attack > filter_atk || data.attack < 0))
 				        || (filter_atktype == 5 && (data.attack >= filter_atk || data.attack < 0)) || (filter_atktype == 6 && data.attack != -2))
 					continue;
 			}
+
+			// 守备力筛选
 			if(filter_deftype) {
 				if((filter_deftype == 1 && data.defense != filter_def) || (filter_deftype == 2 && data.defense < filter_def)
 				        || (filter_deftype == 3 && data.defense <= filter_def) || (filter_deftype == 4 && (data.defense > filter_def || data.defense < 0))
@@ -1522,12 +1664,16 @@ void DeckBuilder::FilterCards() {
 				        || (data.type & TYPE_LINK))
 					continue;
 			}
+
+			// 等级/阶级筛选
 			if(filter_lvtype) {
 				if((filter_lvtype == 1 && data.level != filter_lv) || (filter_lvtype == 2 && data.level < filter_lv)
 				        || (filter_lvtype == 3 && data.level <= filter_lv) || (filter_lvtype == 4 && data.level > filter_lv)
 				        || (filter_lvtype == 5 && data.level >= filter_lv) || filter_lvtype == 6)
 					continue;
 			}
+
+			// 灵摆刻度筛选
 			if(filter_scltype) {
 				if((filter_scltype == 1 && data.lscale != filter_scl) || (filter_scltype == 2 && data.lscale < filter_scl)
 				        || (filter_scltype == 3 && data.lscale <= filter_scl) || (filter_scltype == 4 && (data.lscale > filter_scl))
@@ -1537,14 +1683,14 @@ void DeckBuilder::FilterCards() {
 			}
 			break;
 		}
-		case 2: {
+		case 2: { // 魔法卡筛选逻辑
 			if(!(data.type & TYPE_SPELL))
 				continue;
 			if(filter_type2 && data.type != filter_type2)
 				continue;
 			break;
 		}
-		case 3: {
+		case 3: { // 陷阱卡筛选逻辑
 			if(!(data.type & TYPE_TRAP))
 				continue;
 			if(filter_type2 && data.type != filter_type2)
@@ -1552,51 +1698,96 @@ void DeckBuilder::FilterCards() {
 			break;
 		}
 		}
+
+		// 效果分类筛选
 		if(filter_effect && !(data.category & filter_effect))
 			continue;
+
+		// 连接标记筛选
 		if(filter_marks && (data.link_marker & filter_marks) != filter_marks)
 			continue;
-		if(filter_lm) {
-			if(filter_lm <= 3 && (!filterList->content.count(ptr->first) || filterList->content.at(ptr->first) != filter_lm - 1))
-				continue;
-			if(filter_lm == 4 && !(data.ot & AVAIL_OCG))
-				continue;
-			if(filter_lm == 5 && !(data.ot & AVAIL_TCG))
-				continue;
-			if(filter_lm == 6 && !(data.ot & AVAIL_SC))
-				continue;
-			if(filter_lm == 7 && !(data.ot & AVAIL_CUSTOM))
-				continue;
-			if(filter_lm == 8 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
-				continue;
-		}
+
+		// 限制状态筛选
+        if(filter_lm) {
+            // 检查当前卡片是否符合指定的禁限状态
+            if(filter_lm <= 4) {
+                // 普通禁限卡检查
+                if(filter_lm <= 3 && (!filterList->content.count(kv.first) || filterList->content.at(kv.first) != filter_lm - 1))
+                    continue;
+                // genesys点数检查 (filter_lm == 4 对应点数限制)
+                else if(filter_lm == 4) {
+                    // 检查该卡片是否在genesys禁卡表中有点数限制
+                    auto credit_it = filterList->credits.find(kv.first);
+                    // 同时检查卡片的alias是否在genesys禁卡表中有点数限制
+                    auto alias_credit_it = (kv.second.alias != 0) ? filterList->credits.find(kv.second.alias) : filterList->credits.end();
+
+                    // 如果卡片本身和alias都不在genesys列表中，则不符合筛选条件
+                    if(credit_it == filterList->credits.end() && alias_credit_it == filterList->credits.end())
+                        continue; // 如果不在genesys列表中，则不符合筛选条件
+                }
+            }
+
+            // filter_lm == 5 表示只显示OCG卡+非独有卡
+            if(filter_lm == 5 && !(data.ot & AVAIL_OCG))
+                continue;
+
+            // filter_lm == 6 表示只显示TCG卡+非独有卡
+            if(filter_lm == 6 && !(data.ot & AVAIL_TCG))
+                continue;
+
+            // filter_lm == 7 表示只显示简体中文卡
+            if(filter_lm == 7 && !(data.ot & AVAIL_SC))
+                continue;
+
+            // filter_lm == 8 表示只显示自定义卡
+            if(filter_lm == 8 && !(data.ot & AVAIL_CUSTOM))
+                continue;
+
+            // filter_lm == 9 表示只显示同时属于OCG和TCG的卡片（无独有卡）
+            if(filter_lm == 9 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
+                continue;
+        }
+
+
+		// 关键词匹配检查
 		bool is_target = true;
 		for (auto elements_iterator = query_elements.begin(); elements_iterator != query_elements.end(); ++elements_iterator) {
 			bool match = false;
+
+			// 根据不同匹配类型执行不同的比较操作
 			if (elements_iterator->type == element_t::type_t::name) {
-				match = CardNameContains(text.name.c_str(), elements_iterator->keyword.c_str());
+				match = DataManager::CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str());
 			} else if (elements_iterator->type == element_t::type_t::setcode) {
 				match = data.is_setcodes(elements_iterator->setcodes);
-			} else if (trycode && (data.code == trycode || data.alias == trycode && data.is_alternative())){
+			} else if (trycode && data.get_original_code() == trycode) {
 				match = true;
 			} else {
-				match = CardNameContains(text.name.c_str(), elements_iterator->keyword.c_str())
-					|| text.text.find(elements_iterator->keyword) != std::wstring::npos
+				match = DataManager::CardNameContains(strings.name.c_str(), elements_iterator->keyword.c_str())
+					|| strings.text.find(elements_iterator->keyword) != std::wstring::npos
 					|| data.is_setcodes(elements_iterator->setcodes);
 			}
+
+			// 若为排除项则反转匹配结果
 			if(elements_iterator->exclude)
 				match = !match;
+
 			if(!match) {
 				is_target = false;
 				break;
 			}
 		}
+
+		// 符合所有条件则加入结果集
 		if(is_target)
-			results.push_back(ptr);
+			results.push_back(&data);
 		else
 			continue;
 	}
-	myswprintf(result_string, L"%d", results.size());
+
+	// 更新结果数量显示
+	myswprintf(result_string, L"%zu", results.size());
+
+	// 控制滚动条可见性及位置设置
 	if(results.size() > 7) {
 		mainGame->scrFilter->setVisible(true);
 		mainGame->scrFilter->setMax(results.size() - 7);
@@ -1605,8 +1796,11 @@ void DeckBuilder::FilterCards() {
 		mainGame->scrFilter->setVisible(false);
 		mainGame->scrFilter->setPos(0);
 	}
+
+	// 对最终结果进行排序
 	SortList();
 }
+
 void DeckBuilder::InstantSearch() {
 	if(mainGame->gameConf.auto_search_limit >= 0 && ((int)std::wcslen(mainGame->ebCardName->getText()) >= mainGame->gameConf.auto_search_limit))
 		StartFilter();
@@ -1649,11 +1843,12 @@ void DeckBuilder::SortList() {
 	auto left = results.begin();
 	const wchar_t* pstr = mainGame->ebCardName->getText();
 	for(auto it = results.begin(); it != results.end(); ++it) {
-		if(std::wcscmp(pstr, dataManager.GetName((*it)->first)) == 0) {
+		if(std::wcscmp(pstr, dataManager.GetName((*it)->code)) == 0) {
 			std::iter_swap(left, it);
 			++left;
 		}
 	}
+	std::sort(results.begin(), left, DataManager::deck_sort_id);
 	switch(mainGame->cbSortType->getSelected()) {
 	case 0:
 		std::sort(left, results.end(), DataManager::deck_sort_lv);
@@ -1727,10 +1922,10 @@ void DeckBuilder::ShowDeckManage() {
 	mainGame->cbDBDecks->setSelected(prev_deck);
 	irr::gui::IGUIListBox* lstCategories = mainGame->lstCategories;
 	lstCategories->clear();
-	lstCategories->addItem(dataManager.GetSysString(1450));
-	lstCategories->addItem(dataManager.GetSysString(1451));
-	lstCategories->addItem(dataManager.GetSysString(1452));
-	lstCategories->addItem(dataManager.GetSysString(1453));
+	lstCategories->addItem(dataManager.GetSysString(1450));// 卡包展示
+	lstCategories->addItem(dataManager.GetSysString(1451));// 人机卡组
+	lstCategories->addItem(dataManager.GetSysString(1452));// 未分类卡组
+	lstCategories->addItem(dataManager.GetSysString(1453));//--------(分割线)
 	FileSystem::TraversalDir(L"./deck", [lstCategories](const wchar_t* name, bool isdir) {
 		if(isdir) {
 			lstCategories->addItem(name);
@@ -1742,53 +1937,9 @@ void DeckBuilder::ShowDeckManage() {
 	mainGame->lstDecks->setSelected(prev_deck);
 	mainGame->PopupElement(mainGame->wDeckManage);
 }
-static inline wchar_t NormalizeChar(wchar_t c) {
-	/*
-	// Convert all symbols and punctuations to space.
-	if (c != 0 && c < 128 && !isalnum(c)) {
-		return ' ';
-	}
-	*/
-	// Convert latin chararacters to uppercase to ignore case.
-	if (c < 128 && isalpha(c)) {
-		return toupper(c);
-	}
-	// Remove some accentued characters that are not supported by the editbox.
-	if (c >= 232 && c <= 235) {
-		return 'E';
-	}
-	if (c >= 238 && c <= 239) {
-		return 'I';
-	}
-	return c;
-}
-bool DeckBuilder::CardNameContains(const wchar_t* haystack, const wchar_t* needle) {
-	if(!needle[0]) {
-		return true;
-	}
-	if(!haystack) {
-		return false;
-	}
-	int i = 0;
-	int j = 0;
-	while(haystack[i]) {
-		wchar_t ca = NormalizeChar(haystack[i]);
-		wchar_t cb = NormalizeChar(needle[j]);
-		if(ca == cb) {
-			j++;
-			if(!needle[j]) {
-				return true;
-			}
-		} else {
-			i -= j;
-			j = 0;
-		}
-		i++;
-	}
-	return false;
-}
-bool DeckBuilder::push_main(code_pointer pointer, int seq) {
-	if(pointer->second.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
+
+bool DeckBuilder::push_main(const CardDataC* pointer, int seq) {
+	if(pointer->type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
 		return false;
 	auto& container = deckManager.current_deck.main;
 	int maxc = mainGame->is_siding ? DECK_MAX_SIZE + 5 : DECK_MAX_SIZE;
@@ -1802,8 +1953,8 @@ bool DeckBuilder::push_main(code_pointer pointer, int seq) {
 	GetHoveredCard();
 	return true;
 }
-bool DeckBuilder::push_extra(code_pointer pointer, int seq) {
-	if(!(pointer->second.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)))
+bool DeckBuilder::push_extra(const CardDataC* pointer, int seq) {
+	if(!(pointer->type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK)))
 		return false;
 	auto& container = deckManager.current_deck.extra;
 	int maxc = mainGame->is_siding ? EXTRA_MAX_SIZE + 5 : EXTRA_MAX_SIZE;
@@ -1817,7 +1968,7 @@ bool DeckBuilder::push_extra(code_pointer pointer, int seq) {
 	GetHoveredCard();
 	return true;
 }
-bool DeckBuilder::push_side(code_pointer pointer, int seq) {
+bool DeckBuilder::push_side(const CardDataC* pointer, int seq) {
 	auto& container = deckManager.current_deck.side;
 	int maxc = mainGame->is_siding ? SIDE_MAX_SIZE + 5 : SIDE_MAX_SIZE;
 	if((int)container.size() >= maxc)
@@ -1848,24 +1999,104 @@ void DeckBuilder::pop_side(int seq) {
 	is_modified = true;
 	GetHoveredCard();
 }
-bool DeckBuilder::check_limit(code_pointer pointer) {
-	unsigned int limitcode = pointer->second.alias ? pointer->second.alias : pointer->first;
+/**
+ * @brief 检查指定卡片在当前卡组中是否超过限制数量，并处理信用点数消耗逻辑。
+ *
+ * 此函数用于判断一张卡片（由 pointer 指定）能否被加入当前卡组，
+ * 包括常规禁卡表卡片的数量限制以及GeneSys存在的“信用点”数量限制。
+ *
+ * @param pointer 指向卡片信息的指针，包含卡片ID及别名等数据。
+ * @return 如果该卡片可以合法地加入卡组（未超出数量限制、信用点足够），则返回 true；否则返回 false。
+ */
+bool DeckBuilder::check_limit(const CardDataC* pointer) {
+	// 获取实际用于限制检查的卡片编码：如果存在别名则使用别名，否则使用原ID
+	auto limitcode = pointer->get_duel_code();
+
+	// 默认每张卡最多允许3张
 	int limit = 3;
+
+	// 查找此卡片是否在禁卡表有数量限制
 	auto flit = filterList->content.find(limitcode);
 	if(flit != filterList->content.end())
 		limit = flit->second;
-	for(auto it = deckManager.current_deck.main.begin(); it != deckManager.current_deck.main.end(); ++it) {
-		if((*it)->first == limitcode || (*it)->second.alias == limitcode)
+
+	// 记录已使用的各类信用点数
+	std::unordered_map<std::wstring, uint32_t> credit_used;
+
+	// Lambda 函数：尝试消费某张卡所需的信用点数，若超限则返回false
+	auto spend_credit = [&](uint32_t code) {
+        ALOGD("spend_credit, code=%d", code);
+		// 查找该卡所需信用点配置
+		auto code_credit_it = filterList->credits.find(code);
+		if(code_credit_it == filterList->credits.end())
+            return limit > 0;// 不在信用点表中的卡再检查是否是常规禁卡，以便实现对特定ID的禁止（geneSys表之下列出了全部灵摆、连接卡的ID做禁止）
+
+		auto code_credit = code_credit_it->second;//过滤一遍卡组中所有卡的点数，把有点数的卡归集一起
+		auto valid = true;
+
+		// 遍历所有需要扣除的点数类型与数值
+		for(auto& credit_it : code_credit) {
+			auto key = credit_it.first;//一般得到的是“genesys”这个识别字符串
+			auto credit_limit_it = filterList->credit_limits.find(key);//按lflist中的“$genesys”识别字符串得到信用分上限，一般是100
+			if(credit_limit_it == filterList->credit_limits.end())
+				continue; // 若没有设定上限，则跳过
+
+			auto credit_limit = credit_limit_it->second;//按lflist中的“genesys”识别字符串得到信用分上限，一般是100
+
+			// 初始化该点数类型的已用量
+			if(credit_used.find(key) == credit_used.end())
+				credit_used[key] = 0;
+
+			// 判断是否会超出点数上限
+			auto credit_after = credit_used[key] + credit_it.second;
+			if(credit_after > credit_limit)
+				valid = false;
+
+			// 更新已用点数量
+			credit_used[key] = credit_after;
+		}
+
+		return valid;
+	};
+
+	// Lambda 函数：处理单张卡的计数和点数检查
+	auto handle_card = [&](const CardDataC* card) {
+		// 如果是目标卡，则减少其剩余可放数量
+		if (card->get_duel_code() == limitcode) {
 			limit--;
+			if(limit <= 0)
+				return false; // 已达最大数量限制
+		}
+
+		// 获取真实卡号并尝试扣减信用点
+        auto code = (card->alias != 0 &&
+                     abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) > 0 &&
+                     abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) <= 20)
+                    ? card->alias
+                    : card->code;
+        return spend_credit(code);
+	};
+
+	// 遍历主卡组中的所有卡片进行检查
+	for (auto& card : deckManager.current_deck.main) {
+		if(!handle_card(card))
+			return false;
 	}
-	for(auto it = deckManager.current_deck.extra.begin(); it != deckManager.current_deck.extra.end(); ++it) {
-		if((*it)->first == limitcode || (*it)->second.alias == limitcode)
-			limit--;
+
+	// 遍历额外卡组中的所有卡片进行检查
+	for (auto& card : deckManager.current_deck.extra) {
+		if(!handle_card(card))
+			return false;
 	}
-	for(auto it = deckManager.current_deck.side.begin(); it != deckManager.current_deck.side.end(); ++it) {
-		if((*it)->first == limitcode || (*it)->second.alias == limitcode)
-			limit--;
+
+	// 遍历副卡组中的所有卡片进行检查
+	for (auto& card : deckManager.current_deck.side) {
+		if(!handle_card(card))
+			return false;
 	}
-	return limit > 0;
+
+	// 最后尝试为当前要插入的卡扣除一次信用点数
+	return spend_credit(pointer->code);
 }
+
 }

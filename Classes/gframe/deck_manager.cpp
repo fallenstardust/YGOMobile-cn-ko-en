@@ -1,48 +1,187 @@
+#include <algorithm>
 #include "deck_manager.h"
+#include "data_manager.h"
 #include "game.h"
 #include "myfilesystem.h"
 #include "network.h"
 
 namespace ygo {
 
-char DeckManager::deckBuffer[0x10000]{};
 DeckManager deckManager;
+std::vector<std::wstring> DeckManager::deckComments;
+    // 检查宽字符串是否包含指定子串（不区分大小写）
+    bool ContainsIgnoreCase(const std::wstring& str, const std::wstring& substr) {
+        if (substr.empty()) return true;
+        if (str.empty()) return false;
+
+        std::wstring lowerStr = str;
+        std::wstring lowerSubstr = substr;
+
+        // 转换为小写
+        std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::towlower);
+        std::transform(lowerSubstr.begin(), lowerSubstr.end(), lowerSubstr.begin(), ::towlower);
+
+        // 查找子串
+        return lowerStr.find(lowerSubstr) != std::wstring::npos;
+    }
 
 void DeckManager::LoadLFListSingle(const char* path) {
-	auto cur = _lfList.rend();
-	FILE* fp = myfopen(path, "r");
-	char linebuf[256]{};
-	wchar_t strBuffer[256]{};
-	char str1[16]{};
-	if(fp) {
-		while(std::fgets(linebuf, sizeof linebuf, fp)) {
-			if(linebuf[0] == '#')
-				continue;
-			if(linebuf[0] == '!') {
-				auto len = std::strcspn(linebuf, "\r\n");
-				linebuf[len] = 0;
-				BufferIO::DecodeUTF8(&linebuf[1], strBuffer);
-				LFList newlist;
-				newlist.listName = strBuffer;
-				newlist.hash = 0x7dfcee6a;
-				_lfList.push_back(newlist);
-				cur = _lfList.rbegin();
-				continue;
-			}
-			if (cur == _lfList.rend())
-				continue;
-			unsigned int code = 0;
-			int count = -1;
-			if (std::sscanf(linebuf, "%10s%*[ ]%1d", str1, &count) != 2)
-				continue;
-			if (count < 0 || count > 2)
-				continue;
-			code = std::strtoul(str1, nullptr, 10);
-			cur->content[code] = count;
-			cur->hash = cur->hash ^ ((code << 18) | (code >> 14)) ^ ((code << (27 + count)) | (code >> (5 - count)));
-		}
+    // 初始化迭代器，指向_lfList容器的反向末尾位置
+    auto cur = _lfList.rend();
+    // 以只读模式打开指定路径的文件
+    FILE* fp = myfopen(path, "r");
+    // 定义字符缓冲区，用于存储从文件读取的单行内容
+    char linebuf[1024]{};
+    // 定义宽字符缓冲区，用于存储转换后的字符串
+    wchar_t strBuffer[256]{};
+    // 检查文件是否成功打开
+    if(fp) {
+        // 循环读取文件中的每一行，直到文件结束
+        while(std::fgets(linebuf, sizeof linebuf, fp)) {
+            // 跳过以#开头的注释行
+            if(linebuf[0] == '#')
+                continue;
+            // 处理以!开头的列表名称定义行
+            if(linebuf[0] == '!') {
+                // 查找行中换行符或回车符的位置
+                auto len = std::strcspn(linebuf, "\r\n");
+                // 在找到的位置添加字符串结束符
+                linebuf[len] = 0;
+                // 将UTF-8编码的字符串转换为宽字符串
+                BufferIO::DecodeUTF8(&linebuf[1], strBuffer);
+                // 创建新的限制列表对象
+                LFList newlist;
+                // 设置列表名称
+                newlist.listName = strBuffer;
+                // 设置默认哈希值
+                newlist.hash = 0x7dfcee6a;
+                // 判断列表名称是否包含"genesys"（不区分大小写）
+                if(ContainsIgnoreCase(newlist.listName, L"Genesys")) {
+                    _genesys_lfList.push_back(newlist);
+                    // 更新cur迭代器，使其指向新添加的列表
+                    cur = _genesys_lfList.rbegin();
+                } else {
+                    _lfList.push_back(newlist);
+                    // 更新cur迭代器，使其指向新添加的列表
+                    cur = _lfList.rbegin();
+                }
+                continue;
+            }
+            // 如果cur仍指向_lfList的反向末尾位置（即没有有效的列表），则跳过后续处理
+            if (cur == _lfList.rend() || cur == _genesys_lfList.rend())
+                continue;
+            // 处理以$开头的信用限制定义行
+            if(linebuf[0] == '$') {
+                // 指向$符号后的第一个非空白字符
+                char* keyPos = linebuf + 1;
+                keyPos += std::strspn(keyPos, " \t");
+                // 计算关键字的长度（到空白字符或行结束符为止）
+                auto keyLen = std::strcspn(keyPos, " \t\r\n");
+                // 如果关键字长度为0，则跳过
+                if(!keyLen)
+                    continue;
+                // 临时缓冲区，用于存储关键字
+                char keybuf[256];
+                // 确保关键字长度不超过缓冲区大小
+                if(keyLen >= sizeof keybuf)
+                    keyLen = sizeof keybuf - 1;
+                // 复制关键字到缓冲区
+                std::memcpy(keybuf, keyPos, keyLen);
+                // 添加字符串结束符
+                keybuf[keyLen] = 0;
+                // 移动到关键字后的第一个非空白字符
+                keyPos += keyLen;
+                keyPos += std::strspn(keyPos, " \t");
+                // 重置错误标志
+                errno = 0;
+                // 记录数值开始位置
+                char* valuePos = keyPos;
+                // 将字符串转换为无符号长整型
+                auto limitValue = std::strtoul(keyPos, &keyPos, 10);
+                // 如果转换出错或没有读取到数值，则跳过
+                if(errno || valuePos == keyPos)
+                    continue;
+                // 将UTF-8编码的关键字转换为宽字符串
+                BufferIO::DecodeUTF8(keybuf, strBuffer);
+                // 在当前列表的信用限制映射中添加键值对
+                cur->credit_limits[strBuffer] = static_cast<uint32_t>(limitValue);
+                continue;
+            }
+            // 从行的开始位置解析卡牌代码
+            char* pos = linebuf;
+            // 重置错误标志
+            errno = 0;
+            // 记录代码开始位置
+            char* codePos = pos;
+            // 将字符串转换为无符号长整型（卡牌代码）
+            auto result = std::strtoul(pos, &pos, 10);
+            // 如果转换出错、超出范围或没有读取到数值，则跳过
+            if(errno || result > UINT32_MAX || codePos == pos)
+                continue;
+            // 检查数值后是否跟有空格或制表符
+            if(*pos != ' ' && *pos != '\t')
+                continue;
+            // 跳过空格和制表符
+            pos += std::strspn(pos, " \t");
+            // 将结果转换为32位无符号整型
+            uint32_t code = static_cast<uint32_t>(result);
+            // 处理包含信用分的行（以$开头）
+            if(*pos == '$') {
+                // 跳过$符号
+                ++pos;
+                // 跳过空白字符
+                pos += std::strspn(pos, " \t");
+                // 获取信用分键的长度
+                auto creditKeyLen = std::strcspn(pos, " \t\r\n");
+                // 如果键长度为0，则跳过
+                if(!creditKeyLen)
+                    continue;
+                // 临时缓冲区存储信用分键
+                char keybuf[256];
+                // 确保键长度不超过缓冲区大小
+                if(creditKeyLen >= sizeof keybuf)
+                    creditKeyLen = sizeof keybuf - 1;
+                // 复制键到缓冲区
+                std::memcpy(keybuf, pos, creditKeyLen);
+                // 添加字符串结束符
+                keybuf[creditKeyLen] = 0;
+                // 跳过键后的空白字符
+                pos += creditKeyLen;
+                pos += std::strspn(pos, " \t");
+                // 重置错误标志
+                errno = 0;
+                // 记录信用分数值开始位置
+                char* creditValuePos = pos;
+                // 将字符串转换为无符号长整型（信用分数值）
+                auto creditValue = std::strtoul(pos, &pos, 10);
+                // 如果转换出错或没有读取到数值，则跳过
+                if(errno || creditValuePos == pos)
+                    continue;
+                // 将UTF-8编码的键转换为宽字符串
+                BufferIO::DecodeUTF8(keybuf, strBuffer);
+                // 在当前列表的卡牌信用分映射中添加键值对
+                cur->credits[code][strBuffer] = static_cast<uint32_t>(creditValue);
+                continue;
+            }
+            // 重置错误标志
+            errno = 0;
+            // 记录数量开始位置
+            char* countPos = pos;
+            // 将字符串转换为长整型（卡牌数量限制）
+            int count = std::strtol(pos, &pos, 10);
+            // 如果转换出错或没有读取到数值，则跳过
+            if(errno || countPos == pos)
+                continue;
+            // 检查数量是否在有效范围内（0-2）
+            if(count < 0 || count > 2)
+                continue;
+            // 将卡牌代码和数量限制添加到当前列表的内容映射中
+            cur->content[code] = count;
+            // 更新当前列表的哈希值（用于验证）
+            cur->hash = cur->hash ^ ((code << 18) | (code >> 14)) ^ ((code << (27 + count)) | (code >> (5 - count)));
+        }
 		std::fclose(fp);
-	}
+    }
 }
 void DeckManager::LoadLFList(irr::android::InitOptions *options) {
     irr::io::path workingDir = options->getWorkDir();
@@ -52,21 +191,41 @@ void DeckManager::LoadLFList(irr::android::InitOptions *options) {
 	nolimit.listName = L"N/A";
 	nolimit.hash = 0;
 	_lfList.push_back(nolimit);
+	_genesys_lfList.push_back(nolimit);
 }
 const wchar_t* DeckManager::GetLFListName(unsigned int lfhash) {
+    // 在_lfList中搜索
 	auto lit = std::find_if(_lfList.begin(), _lfList.end(), [lfhash](const ygo::LFList& list) {
 		return list.hash == lfhash;
 	});
 	if(lit != _lfList.end())
 		return lit->listName.c_str();
+
+    // 在_genesys_lfList中搜索
+    auto glit = std::find_if(_genesys_lfList.begin(), _genesys_lfList.end(), [lfhash](const ygo::LFList& list) {
+        return list.hash == lfhash;
+    });
+    if(glit != _genesys_lfList.end())
+        return glit->listName.c_str();
+
 	return dataManager.unknown_string;
 }
+
 const LFList* DeckManager::GetLFList(unsigned int lfhash) {
+    // 在_lfList中搜索
 	auto lit = std::find_if(_lfList.begin(), _lfList.end(), [lfhash](const ygo::LFList& list) {
 		return list.hash == lfhash;
 	});
 	if (lit != _lfList.end())
 		return &(*lit);
+
+    // 在_genesys_lfList中搜索
+    auto glit = std::find_if(_genesys_lfList.begin(), _genesys_lfList.end(), [lfhash](const ygo::LFList& list) {
+        return list.hash == lfhash;
+    });
+    if (glit != _genesys_lfList.end())
+        return &(*glit);
+
 	return nullptr;
 }
 static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
@@ -78,8 +237,8 @@ static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
 		return DECKERROR_TCGONLY;
 	return DECKERROR_NOTAVAIL;
 }
-unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int rule) {
-	std::unordered_map<int, int> ccount;
+uint32_t DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, size_t rule) {
+	std::unordered_map<uint32_t, int> ccount;
 	// rule
 	if(deck.main.size() < DECK_MIN_SIZE || deck.main.size() > DECK_MAX_SIZE)
 		return (DECKERROR_MAINCOUNT << 28) | (unsigned)deck.main.size();
@@ -91,114 +250,159 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 	if (!lflist)
 		return 0;
 	auto& list = lflist->content;
+	std::unordered_map<std::wstring, uint32_t> credit_used;
+	auto spend_credit = [&](uint32_t code) {
+		auto code_credit_it = lflist->credits.find(code);
+		if(code_credit_it == lflist->credits.end())
+			return (uint32_t)0;
+		auto code_credit = code_credit_it->second;
+		for(auto& credit_it : code_credit) {
+			auto key = credit_it.first;
+			auto credit_limit_it = lflist->credit_limits.find(key);
+			if(credit_limit_it == lflist->credit_limits.end())
+				continue;
+			auto credit_limit = credit_limit_it->second;
+			if(credit_used.find(key) == credit_used.end())
+				credit_used[key] = 0;
+			auto credit_after = credit_used[key] + credit_it.second;
+			if(credit_after > credit_limit)
+				return (DECKERROR_LFLIST << 28) | code;
+			credit_used[key] = credit_after;
+		}
+		return (uint32_t)0;
+	};
 	const unsigned int rule_map[6] = { AVAIL_OCG, AVAIL_TCG, AVAIL_SC, AVAIL_CUSTOM, AVAIL_OCGTCG, 0 };
 	unsigned int avail = 0;
-	if (rule >= 0 && rule < (int)(sizeof rule_map / sizeof rule_map[0]))
+	if (rule < sizeof rule_map / sizeof rule_map[0])
 		avail = rule_map[rule];
 	for (auto& cit : deck.main) {
-		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
+		auto gameruleDeckError = checkAvail(cit->ot, avail);
 		if(gameruleDeckError)
-			return (gameruleDeckError << 28) | cit->first;
-		if (cit->second.type & (TYPES_EXTRA_DECK | TYPE_TOKEN))
+			return (gameruleDeckError << 28) | cit->code;
+		if (cit->type & (TYPES_EXTRA_DECK | TYPE_TOKEN))
 			return (DECKERROR_MAINCOUNT << 28);
-		int code = cit->second.alias ? cit->second.alias : cit->first;
+		auto code = cit->get_duel_code();
 		ccount[code]++;
 		int dc = ccount[code];
 		if(dc > 3)
-			return (DECKERROR_CARDCOUNT << 28) | cit->first;
+			return (DECKERROR_CARDCOUNT << 28) | cit->code;
 		auto it = list.find(code);
 		if(it != list.end() && dc > it->second)
-			return (DECKERROR_LFLIST << 28) | cit->first;
+			return (DECKERROR_LFLIST << 28) | cit->code;
+		auto spend_credit_error = spend_credit(code);
+		if(spend_credit_error)
+			return spend_credit_error;
 	}
 	for (auto& cit : deck.extra) {
-		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
+		auto gameruleDeckError = checkAvail(cit->ot, avail);
 		if(gameruleDeckError)
-			return (gameruleDeckError << 28) | cit->first;
-		if (!(cit->second.type & TYPES_EXTRA_DECK) || cit->second.type & TYPE_TOKEN)
+			return (gameruleDeckError << 28) | cit->code;
+		if (!(cit->type & TYPES_EXTRA_DECK) || cit->type & TYPE_TOKEN)
 			return (DECKERROR_EXTRACOUNT << 28);
-		int code = cit->second.alias ? cit->second.alias : cit->first;
+		auto code = cit->get_duel_code();
 		ccount[code]++;
 		int dc = ccount[code];
 		if(dc > 3)
-			return (DECKERROR_CARDCOUNT << 28) | cit->first;
+			return (DECKERROR_CARDCOUNT << 28) | cit->code;
 		auto it = list.find(code);
 		if(it != list.end() && dc > it->second)
-			return (DECKERROR_LFLIST << 28) | cit->first;
+			return (DECKERROR_LFLIST << 28) | cit->code;
+		auto spend_credit_error = spend_credit(code);
+		if(spend_credit_error)
+			return spend_credit_error;
 	}
 	for (auto& cit : deck.side) {
-		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
+		auto gameruleDeckError = checkAvail(cit->ot, avail);
 		if(gameruleDeckError)
-			return (gameruleDeckError << 28) | cit->first;
-		if (cit->second.type & TYPE_TOKEN)
+			return (gameruleDeckError << 28) | cit->code;
+		if (cit->type & TYPE_TOKEN)
 			return (DECKERROR_SIDECOUNT << 28);
-		int code = cit->second.alias ? cit->second.alias : cit->first;
+		auto code = cit->get_duel_code();
 		ccount[code]++;
 		int dc = ccount[code];
 		if(dc > 3)
-			return (DECKERROR_CARDCOUNT << 28) | cit->first;
+			return (DECKERROR_CARDCOUNT << 28) | cit->code;
 		auto it = list.find(code);
 		if(it != list.end() && dc > it->second)
-			return (DECKERROR_LFLIST << 28) | cit->first;
+			return (DECKERROR_LFLIST << 28) | cit->code;
+		auto spend_credit_error = spend_credit(code);
+		if(spend_credit_error)
+			return spend_credit_error;
 	}
 	return 0;
 }
-uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec, bool is_packlist) {
+uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], uint32_t mainc, uint32_t sidec, bool is_packlist) {
 	deck.clear();
 	uint32_t errorcode = 0;
-	CardData cd;
-	for(int i = 0; i < mainc; ++i) {
+	auto& _datas = dataManager.GetDataTable();
+	for(uint32_t i = 0; i < mainc; ++i) {
 		auto code = dbuf[i];
-		if(!dataManager.GetData(code, &cd)) {
+		auto it = _datas.find(code);
+		if(it == _datas.end()) {
 			errorcode = code;
 			continue;
 		}
+		auto& cd = it->second;
 		if (cd.type & TYPE_TOKEN) {
 			errorcode = code;
 			continue;
 		}
 		if(is_packlist) {
-			deck.main.push_back(dataManager.GetCodePointer(code));
+			deck.main.push_back(&cd);
 			continue;
 		}
 		if (cd.type & TYPES_EXTRA_DECK) {
 			if (deck.extra.size() < EXTRA_MAX_SIZE)
-				deck.extra.push_back(dataManager.GetCodePointer(code));
+				deck.extra.push_back(&cd);
 		}
 		else {
 			if (deck.main.size() < DECK_MAX_SIZE)
-				deck.main.push_back(dataManager.GetCodePointer(code));
+				deck.main.push_back(&cd);
 		}
 	}
-	for(int i = 0; i < sidec; ++i) {
+	for(uint32_t i = 0; i < sidec; ++i) {
 		auto code = dbuf[mainc + i];
-		if(!dataManager.GetData(code, &cd)) {
+		auto it = _datas.find(code);
+		if(it == _datas.end()) {
 			errorcode = code;
 			continue;
 		}
+		auto& cd = it->second;
 		if (cd.type & TYPE_TOKEN) {
 			errorcode = code;
 			continue;
 		}
 		if(deck.side.size() < SIDE_MAX_SIZE)
-			deck.side.push_back(dataManager.GetCodePointer(code));
+			deck.side.push_back(&cd);
 	}
 	return errorcode;
 }
 uint32_t DeckManager::LoadDeckFromStream(Deck& deck, std::istringstream& deckStream, bool is_packlist) {
+    // 清空之前的注释
+    deckComments.clear();
+
 	int ct = 0;
 	int mainc = 0, sidec = 0;
 	uint32_t cardlist[PACK_MAX_SIZE]{};
 	bool is_side = false;
 	std::string linebuf;
-	while (std::getline(deckStream, linebuf, '\n') && ct < PACK_MAX_SIZE) {
+	while (std::getline(deckStream, linebuf) && ct < PACK_MAX_SIZE) {
+		// 缓存以##或###开头的注释行
+		if (linebuf.length() >= 2 && linebuf[0] == '#' && linebuf[1] == '#') {
+			wchar_t wline[256];
+			BufferIO::DecodeUTF8(linebuf.c_str(), wline);
+			deckComments.push_back(wline);
+			continue;
+		}
 		if (linebuf[0] == '!') {
 			is_side = true;
 			continue;
 		}
 		if (linebuf[0] < '0' || linebuf[0] > '9')
 			continue;
+		errno = 0;
 		auto code = std::strtoul(linebuf.c_str(), nullptr, 10);
-		if (code >= UINT32_MAX)
+		if (errno || code > UINT32_MAX)
 			continue;
 		cardlist[ct++] = code;
 		if (is_side)
@@ -208,25 +412,25 @@ uint32_t DeckManager::LoadDeckFromStream(Deck& deck, std::istringstream& deckStr
 	}
 	return LoadDeck(deck, cardlist, mainc, sidec, is_packlist);
 }
-bool DeckManager::LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec) {
+bool DeckManager::LoadSide(Deck& deck, uint32_t dbuf[], uint32_t mainc, uint32_t sidec) {
 	std::unordered_map<uint32_t, int> pcount;
 	std::unordered_map<uint32_t, int> ncount;
-	for(size_t i = 0; i < deck.main.size(); ++i)
-		pcount[deck.main[i]->first]++;
-	for(size_t i = 0; i < deck.extra.size(); ++i)
-		pcount[deck.extra[i]->first]++;
-	for(size_t i = 0; i < deck.side.size(); ++i)
-		pcount[deck.side[i]->first]++;
+	for(auto card : deck.main)
+		pcount[card->code]++;
+	for(auto card : deck.extra)
+		pcount[card->code]++;
+	for(auto card : deck.side)
+		pcount[card->code]++;
 	Deck ndeck;
 	LoadDeck(ndeck, dbuf, mainc, sidec);
 	if (ndeck.main.size() != deck.main.size() || ndeck.extra.size() != deck.extra.size() || ndeck.side.size() != deck.side.size())
 		return false;
-	for(size_t i = 0; i < ndeck.main.size(); ++i)
-		ncount[ndeck.main[i]->first]++;
-	for(size_t i = 0; i < ndeck.extra.size(); ++i)
-		ncount[ndeck.extra[i]->first]++;
-	for(size_t i = 0; i < ndeck.side.size(); ++i)
-		ncount[ndeck.side[i]->first]++;
+	for(auto card : ndeck.main)
+		ncount[card->code]++;
+	for(auto card : ndeck.extra)
+		ncount[card->code]++;
+	for(auto card : ndeck.side)
+		ncount[card->code]++;
 	for (auto& cdit : ncount)
 		if (cdit.second != pcount[cdit.first])
 			return false;
@@ -236,14 +440,14 @@ bool DeckManager::LoadSide(Deck& deck, uint32_t dbuf[], int mainc, int sidec) {
 void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, bool showPack) {//hide packlist if showing on duelling ready
 	wchar_t catepath[256];
 	switch(index) {
-	case 0:
+	case DECK_CATEGORY_PACK:
 		if (showPack) {
 			myswprintf(catepath, L"./pack");
 		} else {
 			myswprintf(catepath, L"./windbot/Decks");
 		}
 		break;
-	case 1:
+	case DECK_CATEGORY_BOT:
 		if (showPack) {
 			myswprintf(catepath, L"./windbot/Decks");
 		} else {
@@ -251,8 +455,8 @@ void DeckManager::GetCategoryPath(wchar_t* ret, int index, const wchar_t* text, 
 		}
 		break;
 	case -1:
-	case 2:
-	case 3:
+	case DECK_CATEGORY_NONE:
+	case DECK_CATEGORY_SEPARATOR:
 		if (showPack) {
 			myswprintf(catepath, L"./deck");
 		} else {
@@ -284,7 +488,7 @@ FILE* DeckManager::OpenDeckFile(const wchar_t* file, const char* mode) {
 irr::io::IReadFile* DeckManager::OpenDeckReader(const wchar_t* file) {
 	char file2[256];
 	BufferIO::EncodeUTF8(file, file2);
-	auto reader = DataManager::FileSystem->createAndOpenFile(file2);
+	auto reader = dataManager.IrrFileSystem->createAndOpenFile(file2);
 	return reader;
 }
 bool DeckManager::LoadCurrentDeck(std::istringstream& deckStream, bool is_packlist) {
@@ -293,6 +497,9 @@ bool DeckManager::LoadCurrentDeck(std::istringstream& deckStream, bool is_packli
 }
 bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 	current_deck.clear();
+	if (!file[0])
+		return false;
+	char deckBuffer[MAX_YDK_SIZE]{};
 	auto reader = OpenDeckReader(file);
 	if(!reader) {
 		wchar_t localfile[256];
@@ -306,7 +513,6 @@ bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 	}
 	if(!reader)
 		return false;
-	std::memset(deckBuffer, 0, sizeof deckBuffer);
 	int size = reader->read(deckBuffer, sizeof deckBuffer);
 	reader->drop();
 	if (size >= (int)sizeof deckBuffer) {
@@ -319,38 +525,119 @@ bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 bool DeckManager::LoadCurrentDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck) {
 	wchar_t filepath[256];
 	GetDeckFile(filepath, cbCategory, cbDeck);
-	bool is_packlist = (cbCategory->getSelected() == 0);
-	bool res = LoadCurrentDeck(filepath, is_packlist);
-	if (res && mainGame->is_building)
+	bool is_packlist = (cbCategory->getSelected() == DECK_CATEGORY_PACK);
+	if(!LoadCurrentDeck(filepath, is_packlist))
+		return false;
+	if (mainGame->is_building)
 		mainGame->deckBuilder.RefreshPackListScroll();
-	return res;
+	return true;
 }
+/**
+ * @brief 将卡牌组保存到字符串流中
+ * @param deck 要保存的卡牌组对象
+ * @param deckStream 用于存储卡牌组数据的字符串流
+ *
+ * 该函数将卡牌组按照特定格式保存到字符串流中，
+ * 包括主卡组、额外卡组和副卡组的内容
+ */
 void DeckManager::SaveDeck(const Deck& deck, std::stringstream& deckStream) {
+	// 写入文件头标识和创建者信息
 	deckStream << "#created by ..." << std::endl;
+
+	// 保存主卡组卡片
 	deckStream << "#main" << std::endl;
 	for(size_t i = 0; i < deck.main.size(); ++i)
-		deckStream << deck.main[i]->first << std::endl;
+		deckStream << deck.main[i]->code << std::endl;
+
+	// 保存额外卡组卡片
 	deckStream << "#extra" << std::endl;
 	for(size_t i = 0; i < deck.extra.size(); ++i)
-		deckStream << deck.extra[i]->first << std::endl;
+		deckStream << deck.extra[i]->code << std::endl;
+
+	// 保存副卡组卡片
 	deckStream << "!side" << std::endl;
 	for(size_t i = 0; i < deck.side.size(); ++i)
-		deckStream << deck.side[i]->first << std::endl;
+		deckStream << deck.side[i]->code << std::endl;
+
+	// 将缓存的注释写入文件末尾
+	if (!deckComments.empty()) {
+		deckStream << "\r\n";  // 添加换行符隔断
+		for (const auto& comment : deckComments) {
+			char utf8line[512];
+			BufferIO::EncodeUTF8(comment.c_str(), utf8line);
+			deckStream << utf8line << std::endl;
+		}
+	}
 }
-bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
+
+/**
+ * @brief 保存卡组数据到指定文件
+ * @param deck 要保存的卡组对象
+ * @param file 保存的目标文件路径
+ * @return 保存成功返回true，失败返回false
+ */
+bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file, bool requestNewId) {
+	// 检查并创建deck目录
 	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
 		return false;
+
+	// 打开卡组文件用于写入
 	FILE* fp = OpenDeckFile(file, "w");
 	if(!fp)
 		return false;
+
+	// 如果需要获取新deckId，清除缓存中的旧deckId/userId注释行
+	if (requestNewId) {
+		deckComments.erase(
+			std::remove_if(deckComments.begin(), deckComments.end(), [](const std::wstring& comment) {
+				return comment.length() >= 2 && comment[0] == L'#' && comment[1] == L'#';
+			}),
+			deckComments.end()
+		);
+	}
+
+	// 将卡组数据序列化到字符串流中
 	std::stringstream deckStream;
 	SaveDeck(deck, deckStream);
-	std::fwrite(deckStream.str().c_str(), 1, deckStream.str().length(), fp);
+
+	// 将序列化的数据写入文件
+	std::fputs(deckStream.str().c_str(), fp);
 	std::fclose(fp);
+
+	// 保存成功后，同步更新在线备份
+	if (mainGame != nullptr && mainGame->appMain != nullptr && file != nullptr) {
+		// 将宽字符路径转换为 UTF-8
+		char utf8_path[512];
+		BufferIO::EncodeUTF8(file, utf8_path);
+
+		if (requestNewId) {
+			// 新建/另存为/复制：请求新的 deckId 并和 userId 一起保存到文件
+			irr::android::requestNewDeckIdAndSync(mainGame->appMain, utf8_path);
+		} else {
+			// 普通保存：维持现有 deckId 不变
+			irr::android::syncSaveDeck(mainGame->appMain, utf8_path);
+		}
+	}
+
 	return true;
 }
 bool DeckManager::DeleteDeck(const wchar_t* file) {
-	return FileSystem::RemoveFile(file);
+	bool result = false;
+
+	// 先同步删除在线卡组（此时文件还存在，可以读取 deckId）
+	if (file != nullptr) {
+		char utf8_path[512];
+		BufferIO::EncodeUTF8(file, utf8_path);
+
+		if (mainGame != nullptr && mainGame->appMain != nullptr) {
+			irr::android::deleteDeckSync(mainGame->appMain, utf8_path);
+		}
+	}
+
+	// 再删除本地文件
+	result = FileSystem::RemoveFile(file);
+
+	return result;
 }
 bool DeckManager::CreateCategory(const wchar_t* name) {
 	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
@@ -370,6 +657,20 @@ bool DeckManager::RenameCategory(const wchar_t* oldname, const wchar_t* newname)
 	wchar_t newlocalname[256];
 	myswprintf(oldlocalname, L"./deck/%ls", oldname);
 	myswprintf(newlocalname, L"./deck/%ls", newname);
+
+	// 在重命名本地文件夹之前，先同步更新在线备份中该分类的名称
+	if (mainGame != nullptr && mainGame->appMain != nullptr && oldname != nullptr && newname != nullptr) {
+		// 将宽字符分类名转换为 UTF-8
+		char utf8_old_category[256];
+		char utf8_new_category[256];
+		BufferIO::EncodeUTF8(oldname, utf8_old_category);
+		BufferIO::EncodeUTF8(newname, utf8_new_category);
+
+		// 调用 Android JNI 方法同步重命名该分类下的在线卡组
+		irr::android::renameCategoryDecksSync(mainGame->appMain, utf8_old_category, utf8_new_category);
+	}
+
+	// 重命名本地文件夹
 	return FileSystem::Rename(oldlocalname, newlocalname);
 }
 bool DeckManager::DeleteCategory(const wchar_t* name) {
@@ -377,6 +678,18 @@ bool DeckManager::DeleteCategory(const wchar_t* name) {
 	myswprintf(localname, L"./deck/%ls", name);
 	if(!FileSystem::IsDirExists(localname))
 		return false;
+
+	// 在删除本地文件夹之前，先同步删除在线备份中该分类下的所有卡组
+	if (mainGame != nullptr && mainGame->appMain != nullptr && name != nullptr) {
+		// 将宽字符分类名转换为 UTF-8
+		char utf8_category[256];
+		BufferIO::EncodeUTF8(name, utf8_category);
+
+		// 调用 Android JNI 方法同步删除该分类下的在线卡组
+		irr::android::deleteCategoryDecksSync(mainGame->appMain, utf8_category);
+	}
+
+	// 删除本地文件夹及其所有内容
 	return FileSystem::DeleteDir(localname);
 }
 bool DeckManager::SaveDeckArray(const DeckArray& deck, const wchar_t* name) {
@@ -397,11 +710,11 @@ bool DeckManager::SaveDeckArray(const DeckArray& deck, const wchar_t* name) {
 	std::fclose(fp);
 	return true;
 }
-int DeckManager::TypeCount(std::vector<code_pointer> list, unsigned int ctype) {
+int DeckManager::TypeCount(std::vector<const CardDataC*> list, unsigned int ctype) {
 	int res = 0;
-	for(size_t i = 0; i < list.size(); ++i) {
-		code_pointer cur = list[i];
-		if(cur->second.type & ctype)
+	for (auto & i : list) {
+		auto* cur = const_cast<CardDataC *>(i);
+		if(cur->type & ctype)
 			res++;
 	}
 	return res;

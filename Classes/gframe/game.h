@@ -2,12 +2,6 @@
 #define GAME_H
 
 #include "config.h"
-#ifdef _IRR_ANDROID_PLATFORM_
-#include <GLES/gl.h>
-#include <GLES/glext.h>
-#include <GLES/glplatform.h>
-#endif
-#include "CGUIImageButton.h"
 #include "CGUITTFont.h"
 #include "mysignal.h"
 #include "client_field.h"
@@ -21,11 +15,17 @@
 #include <functional>
 #include "sound_manager.h"
 
-constexpr int DEFAULT_DUEL_RULE = 5;
-constexpr int CONFIG_LINE_SIZE = 1024;
-constexpr int TEXT_LINE_SIZE = 256;
-
 namespace ygo {
+
+constexpr int DEFAULT_DUEL_RULE = CURRENT_RULE;
+constexpr int CONFIG_LINE_SIZE = 1024;
+
+constexpr int GAME_WINDOW_WIDTH = 1024;
+constexpr int GAME_WINDOW_HEIGHT = 640;
+constexpr int CARD_IMG_WIDTH = 200;
+constexpr int CARD_IMG_HEIGHT = 290;
+constexpr int CARD_THUMB_WIDTH = 44;
+constexpr int CARD_THUMB_HEIGHT = 64;
 
 template<size_t N>
 bool IsExtension(const wchar_t* filename, const wchar_t(&extension)[N]) {
@@ -45,30 +45,26 @@ bool IsExtension(const char* filename, const char(&extension)[N]) {
 	return !mystrncasecmp(filename + (flen - elen), extension, elen);
 }
 
-#ifdef _IRR_ANDROID_PLATFORM_
-#define LOG_TAG "ygo-jni"
-#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG ,__VA_ARGS__)
-#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG ,__VA_ARGS__)
-#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG ,__VA_ARGS__)
-#define ALOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG ,__VA_ARGS__)
-#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG ,__VA_ARGS__)
-#endif
 struct Config {
 	bool use_d3d{ false };
-	bool use_image_scale{ true };
-	unsigned short antialias{ 1 };
+	bool use_image_scale_multi_thread{ false };
+	bool use_image_load_background_thread{ false };
+	unsigned short antialias{ 2 };
+	unsigned int enable_log{ 0x3 };
 	unsigned short serverport{ 7911 };
 	unsigned char textfontsize{ 18 };
 	wchar_t lasthost[100]{};
 	wchar_t lastport[10]{};
-	wchar_t nickname[20]{};
-	wchar_t gamename[20]{};
+	wchar_t nickname[20]{ L"YGOMobile_User" };
+	wchar_t gamename[20]{ L"YGOMobile_Game" };
 	wchar_t roompass[20]{};
 	//path
+    wchar_t last_limit_list_name[256]{};
+    wchar_t last_genesys_limit_list_name[256]{};
 	wchar_t lastcategory[256]{};
 	wchar_t lastdeck[256]{};
-	wchar_t textfont[256]{};
-	wchar_t numfont[256]{};
+	char textfont[256]{};
+	char numfont[256]{};
 	wchar_t bot_deck_path[256]{};
 	//settings
 	int chkMAutoPos{ 0 };
@@ -97,6 +93,9 @@ struct Config {
 	int draw_single_chain{ 0 };
 	int hide_player_name{ 0 };
 	int prefer_expansion_script{ 1 };
+	int enable_genesys_mode{ 0 };
+    int use_genesys_lflist{ 0 };
+	int default_genesys_lflist{ 0 };
 	//sound
 	bool enable_sound{ true };
 	bool enable_music{ true };
@@ -156,27 +155,22 @@ struct BotInfo {
 };
 
 struct FadingUnit {
-	bool signalAction;
-	bool isFadein;
-	int fadingFrame;
-	int autoFadeoutFrame;
-	irr::gui::IGUIElement* guiFading;
+	bool signalAction{};
+	bool isFadein{};
+	int fadingFrame{};
+	int autoFadeoutFrame{};
+	irr::gui::IGUIElement* guiFading{};
 	irr::core::recti fadingSize;
 	irr::core::vector2di fadingUL;
 	irr::core::vector2di fadingLR;
 	irr::core::vector2di fadingDiff;
 };
 
-class Game :irr::IProcessEventReceiver{
+class Game:irr::IProcessEventReceiver{
 
 public:
-#ifdef _IRR_ANDROID_PLATFORM_
-	void stopBGM();
-	void playBGM();
 	bool Initialize(ANDROID_APP app, irr::android::InitOptions *options);
-#endif
 	void MainLoop();
-	void RefreshTimeDisplay();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
@@ -187,45 +181,57 @@ public:
 	void RefreshReplay();
 	void RefreshSingleplay();
 	void RefreshBot();
-    void SetCardS3DVertex();
-	void DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv);
+	void Draw2DImageQuad(irr::video::IVideoDriver* driver, irr::video::ITexture* texture, const irr::core::recti& sourceRect,
+						 const irr::core::vector2di corner[4], bool useAlphaChannel = true, irr::video::SColor color = 0xffffffff);
+	void DrawSelectionLine(irr::video::S3DVertex* vec, bool stipple, irr::video::SColor color);
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
-	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
 	void DrawLinkedZones(ClientCard* pcard, ClientCard* fcard = 0);
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
 	void DrawMisc();
 	void DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2);
-	void DrawGUI();
+	void DrawGUI(); // called from MainLoop with gMutex held
 	void DrawSpec();
 	void DrawBackImage(irr::video::ITexture* texture);
-	void ShowElement(irr::gui::IGUIElement* element, int autoframe = 0);
-	void HideElement(irr::gui::IGUIElement* element, bool set_action = false);
-	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0);
+	void ShowElement(irr::gui::IGUIElement* element, int autoframe = 0); // caller must hold gMutex
+	void HideElement(irr::gui::IGUIElement* element, bool set_action = false); // caller must hold gMutex
+	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0); // caller must hold gMutex
+	void SetImageButtonDrawing(irr::gui::IGUIElement* element, bool draw = true);
 	void WaitFrameSignal(int frame);
-	void DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lflist, bool drag = false);
+	void DrawThumb(const CardDataC* cp, irr::core::vector2di pos, const LFList* lflist, bool drag = false);
 	void DrawDeckBd();
 	void LoadConfig();
 	void SaveConfig();
-	void ShowCardInfo(int code);
+	void ShowCardInfo(int code, bool resize = false);
 	void ClearCardInfo(int player = 0);
 	void AddLog(const wchar_t* msg, int param = 0);
 	void AddChatMsg(const wchar_t* msg, int player, bool play_sound = false);
 	void ClearChatMsg();
 	void AddDebugMsg(const char* msgbuf);
 	void ErrorLog(const char* msgbuf);
-	void addMessageBox(const wchar_t* caption, const wchar_t* text);
-	void initUtils(){}
-	void ClearTextures();
+	void ClearTextures(); // caller must hold gMutex
 	void CloseGameButtons();
 	void CloseGameWindow();
 	void CloseDuelWindow();
+	void stopBGM();
+	void playBGM();
+	void RefreshTimeDisplay();
+	void SetCardS3DVertex();
+	void DrawSelField(int player, int loc, size_t seq, irr::video::ITexture* texture, bool reverse = false, bool spin = false);
+	void addMessageBox(const wchar_t* caption, const wchar_t* text);
+	void initUtils(){}
 	void OnGameClose();
 	void ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image);
 	void ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font=0);
-
+	// 表情显示方法
+    void ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe);
+    void DrawEmoticon();
+    void DrawBubbleHeptagonBorder(const irr::core::recti& rect, irr::video::SColor color, int borderWidth) const;
+    virtual std::wstring OnReceiveChatMessage(const std::wstring& msg, bool isFromMe);
+    virtual std::wstring AppendCardNames(const std::wstring& msg);
+	
 	int LocalPlayer(int player) const;
 	int OppositePlayer(int player);
 	int ChatLocalPlayer(int player);
@@ -241,21 +247,33 @@ public:
 		text.trim();
 		editbox->setText(text.c_str());
 	}
-
 	void ResizeChatInputWindow();
+	void ResizePosSelectButtons();
+	void ResizeCardSelectButtons(irr::gui::IGUIWindow* window, irr::gui::IGUIImage* bgWindow, irr::gui::IGUIStaticText** labels, irr::gui::IGUIButton** images,
+		irr::gui::IGUIScrollBar* scrollbar, irr::gui::IGUIButton* buttonOK, const std::vector<ClientCard*>& cards);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
 	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);
 	irr::core::vector2di Resize(irr::s32 x, irr::s32 y);
 	irr::core::vector2di ResizeReverse(irr::s32 x, irr::s32 y);
 	irr::core::recti ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 width);
 	irr::core::recti ResizeWin(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::recti ResizeCardImgWin(irr::s32 x, irr::s32 y, irr::s32 mx, irr::s32 my);
+	irr::core::recti ResizeCardHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::vector2di ResizeCardHint(irr::s32 x, irr::s32 y);
+	irr::core::recti ResizeCardMid(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 midx, irr::s32 midy);
+	irr::core::vector2di ResizeCardMid(irr::s32 x, irr::s32 y, irr::s32 midx, irr::s32 midy);
+	irr::core::recti ResizeFit(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::recti Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+    irr::core::recti Resize_X_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::vector2di Resize_Y(irr::s32 x, irr::s32 y);
     template<typename T>
     static std::vector<T> TokenizeString(T input, const T& token);
 	template<typename T>
 	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position, const irr::core::rect<irr::s32>& padding,
 		irr::video::SColor color = 0xffffffff, irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const irr::core::rect<irr::s32>* clip = nullptr);
+    template<typename T>
+    static void DrawBoldText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position,
+		irr::video::SColor color = 0xffffffff, irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false);
 
 	std::unique_ptr<SoundManager> soundManager;
 	std::mutex gMutex;
@@ -277,11 +295,12 @@ public:
 	bool hideChat{};
 	int chatTiming[8]{};
 	int chatType[8]{};
-	unsigned short linePatternD3D{};
-	unsigned short linePatternGL{ 0x0f0f };
+	unsigned short linePattern{ 0 };
+	unsigned short stippleMask{ 0x0f0f };
 	int waitFrame{};
 	int signalFrame{};
 	int actionParam{};
+	int showingcode{};
 	const wchar_t* showingtext{};
 	int showcard{};
 	int showcardcode{};
@@ -295,7 +314,7 @@ public:
 	int lpframe{};
 	int lpd{};
 	int lpplayer{};
-	int lpccolor{};
+	irr::u32 lpccolor{};
 	std::wstring lpcstring;
 	bool always_chain{};
 	bool ignore_chain{};
@@ -303,6 +322,8 @@ public:
 
 	bool is_building{};
 	bool is_siding{};
+	bool exit_on_return{ false };
+	bool bot_mode{ false };
 
 	irr::core::dimension2d<irr::u32> window_size;
 	float xScale{ 1.0f };
@@ -311,399 +332,411 @@ public:
 	ClientField dField;
 	DeckBuilder deckBuilder;
 	MenuHandler menuHandler;
-	irr::IrrlichtDevice* device;
-	irr::video::IVideoDriver* driver;
-	irr::scene::ISceneManager* smgr;
-	irr::scene::ICameraSceneNode* camera;
+	irr::IrrlichtDevice* device{};
+	irr::video::IVideoDriver* driver{};
+	irr::scene::ISceneManager* smgr{};
+	irr::scene::ICameraSceneNode* camera{};
 	std::vector<Utils::IrrArchiveHelper> archives;
 	//GUI
-	irr::gui::IGUIEnvironment* env;
-	irr::gui::CGUITTFont* guiFont;
-	irr::gui::CGUITTFont* textFont;
-	irr::gui::CGUITTFont* numFont;
-	irr::gui::CGUITTFont* adFont;
-	irr::gui::CGUITTFont* lpcFont;
-	irr::gui::CGUITTFont* titleFont;
-	std::map<irr::gui::CGUIImageButton*, int> imageLoading;
+	irr::gui::IGUIEnvironment* env{};
+	irr::gui::CGUITTFont* guiFont{};
+	irr::gui::CGUITTFont* textFont{};
+	irr::gui::CGUITTFont* numFont{};
+	irr::gui::CGUITTFont* adFont{};
+	irr::gui::CGUITTFont* lpcFont{};
+	irr::gui::CGUITTFont* titleFont{};
+	irr::gui::CGUITTFont* miniFont{};
+	irr::gui::CGUITTFont* icFont{};
+	// textures must be added in the main thread which handle OpenGL context,
+	// {card_code, rotated} written in network thread, loaded in main thread's DrawGUI
+	std::unordered_map<irr::gui::IGUIButton*, std::pair<int, bool>> btnImagePending;
+	// persistent tracking for image refresh on resize:
+	// {card_code, rotated} for buttons showing a card image from GetTextureButton
+	std::unordered_map<irr::gui::IGUIButton*, std::pair<int, bool>> btnCardImgInfo;
+	// {cover_idx, rotated} for buttons showing a facedown card (cover) image
+	std::unordered_map<irr::gui::IGUIButton*, std::pair<int, bool>> btnFacedownImgInfo;
 	//card image
-	irr::gui::IGUIStaticText* wCardImg;
-	irr::gui::IGUIImage* imgCard;
+	irr::gui::IGUIStaticText* wCardImg{};
+	irr::gui::IGUIImage* imgCard{};
 	//imageButtons pallet
 	irr::gui::IGUIWindow* wPallet;
 	//Logs
-	irr::gui::CGUIImageButton* imgLog;
+	irr::gui::IGUIButton* imgLog;
 	irr::gui::IGUIWindow* wLogs;
 	irr::gui::IGUIImage* bgLogs;
 	irr::gui::IGUIListBox* lstLog;
 	irr::gui::IGUIButton* btnClearLog;//
 	irr::gui::IGUIButton* btnCloseLog;//
 	//imageButton BGM
-	irr::gui::CGUIImageButton* imgVol;
+	irr::gui::IGUIButton* imgVol;
     //imageButton Quick Animation
-    irr::gui::CGUIImageButton* imgQuickAnimation;
+    irr::gui::IGUIButton* imgQuickAnimation;
 	//imageButton Chatting
-    irr::gui::CGUIImageButton* imgChat;
+    irr::gui::IGUIButton* imgChat;
+    irr::gui::IGUIButton* imgEmoticon;
 	//Settings
-	irr::gui::CGUIImageButton* imgSettings;
+	irr::gui::IGUIButton* imgSettings;
 	irr::gui::IGUIWindow* wSettings;
 	irr::gui::IGUIImage* bgSettings;
-	irr::gui::CGUIImageButton* btnCloseSettings;//
+	irr::gui::IGUIButton* btnCloseSettings;//
 	//hint text
-	irr::gui::IGUIStaticText* stHintMsg;
-	irr::gui::IGUIStaticText* stTip;
-	irr::gui::IGUIStaticText* stCardListTip;
+	irr::gui::IGUIStaticText* stHintMsg{};
+	irr::gui::IGUIStaticText* stTip{};
+	irr::gui::IGUIStaticText* stCardListTip{};
 	//infos
 	irr::gui::IGUIWindow* wInfos;
 	irr::gui::IGUIImage* bgInfos;
-	irr::gui::IGUIStaticText* stName;
-	irr::gui::IGUIStaticText* stInfo;
-	irr::gui::IGUIStaticText* stDataInfo;
-	irr::gui::IGUIStaticText* stSetName;
-	irr::gui::IGUIStaticText* stText;
-	irr::gui::IGUIScrollBar* scrCardText;
-	irr::gui::IGUICheckBox* chkMAutoPos;
-	irr::gui::IGUICheckBox* chkSTAutoPos;
-	irr::gui::IGUICheckBox* chkRandomPos;
-	irr::gui::IGUICheckBox* chkAutoChain;
-	irr::gui::IGUICheckBox* chkWaitChain;
-	irr::gui::IGUICheckBox* chkDefaultShowChain;
-	irr::gui::IGUICheckBox* chkQuickAnimation;
-	irr::gui::IGUICheckBox* chkAutoSaveReplay;
-	irr::gui::IGUICheckBox* chkDrawSingleChain;
-	irr::gui::IGUICheckBox* chkHidePlayerName;
-	irr::gui::IGUIElement* elmTabSystemLast;
-	irr::gui::IGUIScrollBar* scrTabSystem;
+	irr::gui::IGUIStaticText* stName{};
+	irr::gui::IGUIStaticText* stInfo{};
+	irr::gui::IGUIStaticText* stDataInfo{};
+	irr::gui::IGUIStaticText* stSetName{};
+	irr::gui::IGUIStaticText* stText{};
+	irr::gui::IGUIScrollBar* scrCardText{};
+	irr::gui::IGUICheckBox* chkMAutoPos{};
+	irr::gui::IGUICheckBox* chkSTAutoPos{};
+	irr::gui::IGUICheckBox* chkRandomPos{};
+	irr::gui::IGUICheckBox* chkAutoChain{};
+	irr::gui::IGUICheckBox* chkWaitChain{};
+	irr::gui::IGUICheckBox* chkDefaultShowChain{};
+	irr::gui::IGUICheckBox* chkQuickAnimation{};
+	irr::gui::IGUICheckBox* chkAutoSaveReplay{};
+	irr::gui::IGUICheckBox* chkDrawSingleChain{};
+	irr::gui::IGUICheckBox* chkHidePlayerName{};
+	irr::gui::IGUIElement* elmTabSystemLast{};
+	irr::gui::IGUIScrollBar* scrTabSystem{};
+	
+	irr::gui::IGUICheckBox* chkIgnoreDeckChanges{};
+	irr::gui::IGUICheckBox* chkAutoSearch{};
+	irr::gui::IGUICheckBox* chkMultiKeywords{};
+	irr::gui::IGUICheckBox* chkPreferExpansionScript{};
+	
+	irr::gui::IGUICheckBox* chkLFlist{};
+	irr::gui::IGUIComboBox* cbLFlist{};
 	irr::gui::IGUICheckBox* chkDrawFieldSpell;
-	irr::gui::IGUICheckBox* chkIgnoreDeckChanges;
-	irr::gui::IGUICheckBox* chkAutoSearch;
-	irr::gui::IGUICheckBox* chkMultiKeywords;
-	irr::gui::IGUICheckBox* chkPreferExpansionScript;
-	irr::gui::IGUICheckBox* chkLFlist;
-	irr::gui::IGUIComboBox* cbLFlist;
+	irr::gui::IGUICheckBox* chkEnableGenesysMode;
+    irr::gui::IGUICheckBox* chkGenesysLFlist;
+	irr::gui::IGUIComboBox* cbGenesysLFlist;
 	//sound
-	irr::gui::IGUICheckBox* chkEnableSound;
-	irr::gui::IGUICheckBox* chkEnableMusic;
-	irr::gui::IGUIScrollBar* scrSoundVolume;
-	irr::gui::IGUIScrollBar* scrMusicVolume;
-	irr::gui::IGUICheckBox* chkMusicMode;
+	irr::gui::IGUICheckBox* chkEnableSound{};
+	irr::gui::IGUICheckBox* chkEnableMusic{};
+	irr::gui::IGUIScrollBar* scrSoundVolume{};
+	irr::gui::IGUIScrollBar* scrMusicVolume{};
+	irr::gui::IGUICheckBox* chkMusicMode{};
 	//main menu
-	irr::gui::IGUIWindow* wMainMenu;
-	irr::gui::CGUIImageButton* btnLanMode;
-	irr::gui::IGUIStaticText* textLanMode;
-	irr::gui::CGUIImageButton* btnSingleMode;
-	irr::gui::IGUIStaticText* textSingleMode;
-	irr::gui::CGUIImageButton* btnReplayMode;
-	irr::gui::IGUIStaticText* textReplayMode;
-	irr::gui::IGUIButton* btnTestMode;
-	irr::gui::CGUIImageButton* btnDeckEdit;
-	irr::gui::IGUIStaticText* textDeckEdit;
-	irr::gui::CGUIImageButton* btnSettings;
-	irr::gui::IGUIStaticText* textSettings;
-	irr::gui::CGUIImageButton* btnModeExit;
-	irr::gui::IGUIStaticText* textModeExit;
+	irr::gui::IGUIWindow* wMainMenu{};
+	irr::gui::IGUIButton* btnLanMode{};
+	irr::gui::IGUIButton* btnSingleMode{};
+	irr::gui::IGUIButton* btnReplayMode{};
+	irr::gui::IGUIButton* btnTestMode{};
+	irr::gui::IGUIButton* btnDeckEdit{};
+	irr::gui::IGUIButton* btnSettings;
+	irr::gui::IGUIButton* btnModeExit{};
 	//lan
-	irr::gui::IGUIWindow* wLanWindow;
+	irr::gui::IGUIWindow* wLanWindow{};
 	irr::gui::IGUIImage* bgLanWindow;
-	irr::gui::IGUIEditBox* ebNickName;
-	irr::gui::IGUIListBox* lstHostList;
-	irr::gui::IGUIButton* btnLanRefresh;
-	irr::gui::IGUIEditBox* ebJoinHost;
-	irr::gui::IGUIEditBox* ebJoinPort;
-	irr::gui::IGUIEditBox* ebJoinPass;
-	irr::gui::IGUIButton* btnJoinHost;
-	irr::gui::IGUIButton* btnJoinCancel;
-	irr::gui::IGUIButton* btnCreateHost;
+	irr::gui::IGUIEditBox* ebNickName{};
+	irr::gui::IGUIListBox* lstHostList{};
+	irr::gui::IGUIButton* btnLanRefresh{};
+	irr::gui::IGUIEditBox* ebJoinHost{};
+	irr::gui::IGUIEditBox* ebJoinPort{};
+	irr::gui::IGUIEditBox* ebJoinPass{};
+	irr::gui::IGUIButton* btnJoinHost{};
+	irr::gui::IGUIButton* btnJoinCancel{};
+	irr::gui::IGUIButton* btnCreateHost{};
 	//create host
-	irr::gui::IGUIWindow* wCreateHost;
+	irr::gui::IGUIWindow* wCreateHost{};
 	irr::gui::IGUIImage* bgCreateHost;
-	irr::gui::IGUIComboBox* cbHostLFlist;
-	irr::gui::IGUIComboBox* cbMatchMode;
-	irr::gui::IGUIComboBox* cbRule;
-	irr::gui::IGUIEditBox* ebTimeLimit;
-	irr::gui::IGUIEditBox* ebStartLP;
-	irr::gui::IGUIEditBox* ebStartHand;
-	irr::gui::IGUIEditBox* ebDrawCount;
-	irr::gui::IGUIEditBox* ebServerName;
-	irr::gui::IGUIEditBox* ebServerPass;
-	irr::gui::IGUIComboBox* cbDuelRule;
-	irr::gui::IGUICheckBox* chkNoCheckDeck;
-	irr::gui::IGUICheckBox* chkNoShuffleDeck;
-	irr::gui::IGUIButton* btnHostConfirm;
-	irr::gui::IGUIButton* btnHostCancel;
+	irr::gui::IGUIComboBox* cbHostLFlist{};
+	irr::gui::IGUIComboBox* cbHostGenesysLFlist;
+	irr::gui::IGUIComboBox* cbMatchMode{};
+	irr::gui::IGUIComboBox* cbRule{};
+	irr::gui::IGUIEditBox* ebTimeLimit{};
+	irr::gui::IGUIEditBox* ebStartLP{};
+	irr::gui::IGUIEditBox* ebStartHand{};
+	irr::gui::IGUIEditBox* ebDrawCount{};
+	irr::gui::IGUIEditBox* ebServerName{};
+	irr::gui::IGUIEditBox* ebServerPass{};
+	irr::gui::IGUIComboBox* cbDuelRule{};
+	irr::gui::IGUICheckBox* chkNoCheckDeck{};
+	irr::gui::IGUICheckBox* chkNoShuffleDeck{};
+	irr::gui::IGUIButton* btnHostConfirm{};
+	irr::gui::IGUIButton* btnHostCancel{};
 	//host panel
-	irr::gui::IGUIWindow* wHostPrepare;
+	irr::gui::IGUIWindow* wHostPrepare{};
 	irr::gui::IGUIImage* bgHostPrepare;
-	irr::gui::IGUIButton* btnHostPrepDuelist;
-	irr::gui::IGUIButton* btnHostPrepOB;
-	irr::gui::IGUIStaticText* stHostPrepDuelist[4];
-	irr::gui::IGUICheckBox* chkHostPrepReady[4];
-	irr::gui::CGUIImageButton* btnHostPrepKick[4];
-	irr::gui::IGUIComboBox* cbCategorySelect;
-	irr::gui::IGUIComboBox* cbDeckSelect;
-	irr::gui::IGUIStaticText* stHostPrepRule;
-	irr::gui::IGUIStaticText* stHostPrepOB;
-	irr::gui::IGUIButton* btnHostPrepReady;
-	irr::gui::IGUIButton* btnHostPrepNotReady;
-	irr::gui::IGUIButton* btnHostPrepStart;
-	irr::gui::IGUIButton* btnHostPrepCancel;
+	irr::gui::IGUIButton* btnHostPrepDuelist{};
+	irr::gui::IGUIButton* btnHostPrepOB{};
+	irr::gui::IGUIStaticText* stHostPrepDuelist[4]{};
+	irr::gui::IGUICheckBox* chkHostPrepReady[4]{};
+	irr::gui::IGUIButton* btnHostPrepKick[4]{};
+	irr::gui::IGUIComboBox* cbCategorySelect{};
+	irr::gui::IGUIComboBox* cbDeckSelect{};
+	irr::gui::IGUIStaticText* stHostPrepRule{};
+	irr::gui::IGUIStaticText* stHostPrepOB{};
+	irr::gui::IGUIButton* btnHostPrepReady{};
+	irr::gui::IGUIButton* btnHostPrepNotReady{};
+	irr::gui::IGUIButton* btnHostPrepStart{};
+	irr::gui::IGUIButton* btnHostPrepCancel{};
 	irr::gui::IGUIButton* btnHostDeckSelect;
 	//replay
-	irr::gui::IGUIWindow* wReplay;
+	irr::gui::IGUIWindow* wReplay{};
 	irr::gui::IGUIImage* bgReplay;
-	irr::gui::IGUIListBox* lstReplayList;
-	irr::gui::IGUIStaticText* stReplayInfo;
-	irr::gui::IGUIButton* btnLoadReplay;
-	irr::gui::IGUIButton* btnDeleteReplay;
-	irr::gui::IGUIButton* btnRenameReplay;
-	irr::gui::IGUIButton* btnReplayCancel;
-	irr::gui::IGUIButton* btnExportDeck;
+	irr::gui::IGUIListBox* lstReplayList{};
+	irr::gui::IGUIStaticText* stReplayInfo{};
+	irr::gui::IGUIButton* btnLoadReplay{};
+	irr::gui::IGUIButton* btnDeleteReplay{};
+	irr::gui::IGUIButton* btnRenameReplay{};
+	irr::gui::IGUIButton* btnReplayCancel{};
+	irr::gui::IGUIButton* btnExportDeck{};
 	irr::gui::IGUIButton* btnShareReplay;
-	irr::gui::IGUIEditBox* ebRepStartTurn;
+	irr::gui::IGUIEditBox* ebRepStartTurn{};
 	//single play
-	irr::gui::IGUIWindow* wSinglePlay;
+	irr::gui::IGUIWindow* wSinglePlay{};
 	irr::gui::IGUIImage* bgSinglePlay;
 	//TEST BOT MODE
-	irr::gui::IGUIListBox* lstBotList;
-	irr::gui::IGUIStaticText* stBotInfo;
-	irr::gui::IGUIButton* btnStartBot;
-	irr::gui::IGUIButton* btnBotCancel;
-	irr::gui::IGUIComboBox* cbBotDeckCategory;
-	irr::gui::IGUIComboBox* cbBotDeck;
+	irr::gui::IGUIListBox* lstBotList{};
+	irr::gui::IGUIStaticText* stBotInfo{};
+	irr::gui::IGUIButton* btnStartBot{};
+	irr::gui::IGUIButton* btnBotCancel{};
+	irr::gui::IGUIComboBox* cbBotDeckCategory{};
+	irr::gui::IGUIComboBox* cbBotDeck{};
     irr::gui::IGUIButton* btnBotDeckSelect;//
-	irr::gui::IGUIComboBox* cbBotRule;
-	irr::gui::IGUICheckBox* chkBotHand;
-	irr::gui::IGUICheckBox* chkBotNoCheckDeck;
-	irr::gui::IGUICheckBox* chkBotNoShuffleDeck;
-	irr::gui::IGUIListBox* lstSinglePlayList;
-	irr::gui::IGUIStaticText* stSinglePlayInfo;
-	irr::gui::IGUICheckBox* chkSinglePlayReturnDeckTop;
-	irr::gui::IGUIButton* btnLoadSinglePlay;
-	irr::gui::IGUIButton* btnSinglePlayCancel;
+	irr::gui::IGUIComboBox* cbBotRule{};
+	irr::gui::IGUICheckBox* chkBotHand{};
+	irr::gui::IGUICheckBox* chkBotNoCheckDeck{};
+	irr::gui::IGUICheckBox* chkBotNoShuffleDeck{};
+	irr::gui::IGUIListBox* lstSinglePlayList{};
+	irr::gui::IGUIStaticText* stSinglePlayInfo{};
+	irr::gui::IGUICheckBox* chkSinglePlayReturnDeckTop{};
+	irr::gui::IGUIButton* btnLoadSinglePlay{};
+	irr::gui::IGUIButton* btnSinglePlayCancel{};
 	//hand
-	irr::gui::IGUIWindow* wHand;
-	irr::gui::CGUIImageButton* btnHand[3];
+	irr::gui::IGUIWindow* wHand{};
+	irr::gui::IGUIButton* btnHand[3]{};
 	//
-	irr::gui::IGUIWindow* wFTSelect;
+	irr::gui::IGUIWindow* wFTSelect{};
 	irr::gui::IGUIImage* bgFTSelect;
-	irr::gui::IGUIButton* btnFirst;
-	irr::gui::IGUIButton* btnSecond;
+	irr::gui::IGUIButton* btnFirst{};
+	irr::gui::IGUIButton* btnSecond{};
 	//message
-	irr::gui::IGUIWindow* wMessage;
+	irr::gui::IGUIWindow* wMessage{};
 	irr::gui::IGUIImage* bgMessage;
-	irr::gui::IGUIStaticText* stMessage;
-	irr::gui::IGUIButton* btnMsgOK;
+	irr::gui::IGUIStaticText* stMessage{};
+	irr::gui::IGUIButton* btnMsgOK{};
 	//system message
 	irr::gui::IGUIWindow* wSysMessage;
 	irr::gui::IGUIImage* bgSysMessage;
 	irr::gui::IGUIStaticText* stSysMessage;
 	irr::gui::IGUIButton* btnSysMsgOK;
 	//auto close message
-	irr::gui::IGUIWindow* wACMessage;
-	irr::gui::IGUIStaticText* stACMessage;
+	irr::gui::IGUIWindow* wACMessage{};
+	irr::gui::IGUIStaticText* stACMessage{};
 	//yes/no
-	irr::gui::IGUIWindow* wQuery;
+	irr::gui::IGUIWindow* wQuery{};
 	irr::gui::IGUIImage* bgQuery;
-	irr::gui::IGUIStaticText* stQMessage;
-	irr::gui::IGUIButton* btnYes;
-	irr::gui::IGUIButton* btnNo;
+	irr::gui::IGUIStaticText* stQMessage{};
+	irr::gui::IGUIButton* btnYes{};
+	irr::gui::IGUIButton* btnNo{};
 	//surrender yes/no
-	irr::gui::IGUIWindow* wSurrender;
+	irr::gui::IGUIWindow* wSurrender{};
 	irr::gui::IGUIImage* bgSurrender;
-	irr::gui::IGUIStaticText* stSurrenderMessage;
-	irr::gui::IGUIButton* btnSurrenderYes;
-	irr::gui::IGUIButton* btnSurrenderNo;
+	irr::gui::IGUIStaticText* stSurrenderMessage{};
+	irr::gui::IGUIButton* btnSurrenderYes{};
+	irr::gui::IGUIButton* btnSurrenderNo{};
 	//options
-	irr::gui::IGUIWindow* wOptions;
+	irr::gui::IGUIWindow* wOptions{};
 	irr::gui::IGUIImage* bgOptions;
-	irr::gui::IGUIStaticText* stOptions;
-	irr::gui::IGUIButton* btnOptionp;
-	irr::gui::IGUIButton* btnOptionn;
-	irr::gui::IGUIButton* btnOptionOK;
-	irr::gui::IGUIButton* btnOption[5];
-	irr::gui::IGUIScrollBar* scrOption;
+	irr::gui::IGUIStaticText* stOptions{};
+	irr::gui::IGUIButton* btnOptionp{};
+	irr::gui::IGUIButton* btnOptionn{};
+	irr::gui::IGUIButton* btnOptionOK{};
+	irr::gui::IGUIButton* btnOption[5]{};
+	irr::gui::IGUIScrollBar* scrOption{};
 	//pos selection
-	irr::gui::IGUIWindow* wPosSelect;
+	irr::gui::IGUIWindow* wPosSelect{};
 	irr::gui::IGUIImage* bgPosSelect;
-	irr::gui::CGUIImageButton* btnPSAU;
-	irr::gui::CGUIImageButton* btnPSAD;
-	irr::gui::CGUIImageButton* btnPSDU;
-	irr::gui::CGUIImageButton* btnPSDD;
+	irr::gui::IGUIButton* btnPSAU{};
+	irr::gui::IGUIButton* btnPSAD{};
+	irr::gui::IGUIButton* btnPSDU{};
+	irr::gui::IGUIButton* btnPSDD{};
 	//card selection
-	irr::gui::IGUIWindow* wCardSelect;
+	irr::gui::IGUIWindow* wCardSelect{};
 	irr::gui::IGUIImage* bgCardSelect;
 	irr::gui::IGUIStaticText* stCardSelect;
-	irr::gui::CGUIImageButton* btnCardSelect[5];
-	irr::gui::IGUIStaticText *stCardPos[5];
-	irr::gui::IGUIScrollBar *scrCardList;
-	irr::gui::IGUIButton* btnSelectOK;
+	irr::gui::IGUIButton* btnCardSelect[5]{};
+	irr::gui::IGUIStaticText *stCardPos[5]{};
+	irr::gui::IGUIScrollBar *scrCardList{};
+	irr::gui::IGUIButton* btnSelectOK{};
 	//card display
-	irr::gui::IGUIWindow* wCardDisplay;
+	irr::gui::IGUIWindow* wCardDisplay{};
 	irr::gui::IGUIImage* bgCardDisplay;
 	irr::gui::IGUIStaticText* stCardDisplay;
-	irr::gui::CGUIImageButton* btnCardDisplay[5];
-	irr::gui::IGUIStaticText *stDisplayPos[5];
-	irr::gui::IGUIScrollBar *scrDisplayList;
-	irr::gui::IGUIButton* btnDisplayOK;
+	irr::gui::IGUIButton* btnCardDisplay[5]{};
+	irr::gui::IGUIStaticText *stDisplayPos[5]{};
+	irr::gui::IGUIScrollBar *scrDisplayList{};
+	irr::gui::IGUIButton* btnDisplayOK{};
 	//announce number
-	irr::gui::IGUIWindow* wANNumber;
+	irr::gui::IGUIWindow* wANNumber{};
 	irr::gui::IGUIImage* bgANNumber;
 	irr::gui::IGUIStaticText* stANNumber;
-	irr::gui::IGUIComboBox* cbANNumber;
-	irr::gui::IGUIButton* btnANNumber[12];
-	irr::gui::IGUIButton* btnANNumberOK;
+	irr::gui::IGUIComboBox* cbANNumber{};
+	irr::gui::IGUIButton* btnANNumber[12]{};
+	irr::gui::IGUIButton* btnANNumberOK{};
 	//announce card
-	irr::gui::IGUIWindow* wANCard;
+	irr::gui::IGUIWindow* wANCard{};
 	irr::gui::IGUIImage* bgANCard;
 	irr::gui::IGUIStaticText* stANCard;
-	irr::gui::IGUIEditBox* ebANCard;
-	irr::gui::IGUIListBox* lstANCard;
-	irr::gui::IGUIButton* btnANCardOK;
+	irr::gui::IGUIEditBox* ebANCard{};
+	irr::gui::IGUIListBox* lstANCard{};
+	irr::gui::IGUIButton* btnANCardOK{};
 	//announce attribute
-	irr::gui::IGUIWindow* wANAttribute;
+	irr::gui::IGUIWindow* wANAttribute{};
 	irr::gui::IGUIImage* bgANAttribute;
 	irr::gui::IGUIStaticText* stANAttribute;
-	irr::gui::IGUICheckBox* chkAttribute[7];
+	irr::gui::IGUICheckBox* chkAttribute[ATTRIBUTES_COUNT]{};
 	//announce race
-	irr::gui::IGUIWindow* wANRace;
+	irr::gui::IGUIWindow* wANRace{};
 	irr::gui::IGUIImage* bgANRace;
 	irr::gui::IGUIStaticText* stANRace;
-	irr::gui::IGUICheckBox* chkRace[RACES_COUNT];
+	irr::gui::IGUICheckBox* chkRace[RACES_COUNT]{};
 	//cmd menu
-	irr::gui::IGUIWindow* wCmdMenu;
-	irr::gui::IGUIButton* btnActivate;
-	irr::gui::IGUIButton* btnSummon;
-	irr::gui::IGUIButton* btnSPSummon;
-	irr::gui::IGUIButton* btnMSet;
-	irr::gui::IGUIButton* btnSSet;
-	irr::gui::IGUIButton* btnRepos;
-	irr::gui::IGUIButton* btnAttack;
-	irr::gui::IGUIButton* btnShowList;
-	irr::gui::IGUIButton* btnOperation;
-	irr::gui::IGUIButton* btnReset;
-	irr::gui::IGUIButton* btnShuffle;
+	irr::gui::IGUIWindow* wCmdMenu{};
+	irr::gui::IGUIButton* btnActivate{};
+	irr::gui::IGUIButton* btnSummon{};
+	irr::gui::IGUIButton* btnSPSummon{};
+	irr::gui::IGUIButton* btnMSet{};
+	irr::gui::IGUIButton* btnSSet{};
+	irr::gui::IGUIButton* btnRepos{};
+	irr::gui::IGUIButton* btnAttack{};
+	irr::gui::IGUIButton* btnShowList{};
+	irr::gui::IGUIButton* btnOperation{};
+	irr::gui::IGUIButton* btnReset{};
+	irr::gui::IGUIButton* btnShuffle{};
 	//chat window
-	irr::gui::IGUIWindow* wChat;
-	irr::gui::IGUIListBox* lstChatLog;
-	irr::gui::IGUIEditBox* ebChatInput;
-	irr::gui::IGUICheckBox* chkIgnore1;
-	irr::gui::IGUICheckBox* chkIgnore2;
+	irr::gui::IGUIWindow* wChat{};
+	irr::gui::IGUIListBox* lstChatLog{};
+	irr::gui::IGUIEditBox* ebChatInput{};
+	irr::gui::IGUICheckBox* chkIgnore1{};
+	irr::gui::IGUICheckBox* chkIgnore2{};
+    irr::gui::IGUIWindow* wEmoticon;
+    irr::gui::IGUIButton* btnEmoticon[16];
 	//phase button
-	irr::gui::IGUIStaticText* wPhase;
-	irr::gui::IGUIButton* btnPhaseStatus;
-	irr::gui::IGUIButton* btnBP;
-	irr::gui::IGUIButton* btnM2;
-	irr::gui::IGUIButton* btnEP;
+	irr::gui::IGUIStaticText* wPhase{};
+	irr::gui::IGUIButton* btnPhaseStatus{};
+	irr::gui::IGUIButton* btnBP{};
+	irr::gui::IGUIButton* btnM2{};
+	irr::gui::IGUIButton* btnEP{};
 	//deck edit
 	irr::gui::IGUIWindow* wDeckEdit;
 	irr::gui::IGUIImage* bgDeckEdit;
-	irr::gui::IGUIComboBox* cbDBCategory;
-	irr::gui::IGUIComboBox* cbDBDecks;
-	irr::gui::IGUIButton* btnManageDeck;
-	irr::gui::IGUIButton* btnClearDeck;
-	irr::gui::IGUIButton* btnSortDeck;
-	irr::gui::IGUIButton* btnShuffleDeck;
-	irr::gui::IGUIButton* btnSaveDeck;
-	irr::gui::IGUIButton* btnDeleteDeck;
-	irr::gui::IGUIButton* btnSaveDeckAs;
-	irr::gui::IGUIButton* btnSideOK;
-	irr::gui::IGUIButton* btnSideShuffle;
-	irr::gui::IGUIButton* btnSideSort;
-	irr::gui::IGUIButton* btnSideReload;
-	irr::gui::IGUIEditBox* ebDeckname;
-	irr::gui::IGUIStaticText* stDBCategory;
-	irr::gui::IGUIStaticText* stDeck;
-	irr::gui::IGUIStaticText* stCategory;
-	irr::gui::IGUIStaticText* stLimit;
-	irr::gui::IGUIStaticText* stAttribute;
-	irr::gui::IGUIStaticText* stRace;
-	irr::gui::IGUIStaticText* stAttack;
-	irr::gui::IGUIStaticText* stDefense;
-	irr::gui::IGUIStaticText* stStar;
-	irr::gui::IGUIStaticText* stSearch;
-	irr::gui::IGUIStaticText* stScale;
+	irr::gui::IGUIComboBox* cbDBCategory{};
+	irr::gui::IGUIComboBox* cbDBDecks{};
+	irr::gui::IGUIButton* btnManageDeck{};
+	irr::gui::IGUIButton* btnClearDeck{};
+	irr::gui::IGUIButton* btnSortDeck{};
+	irr::gui::IGUIButton* btnShuffleDeck{};
+	irr::gui::IGUIButton* btnSaveDeck{};
+	irr::gui::IGUIButton* btnDeleteDeck{};
+	irr::gui::IGUIButton* btnSaveDeckAs{};
+	irr::gui::IGUIButton* btnSideOK{};
+	irr::gui::IGUIButton* btnSideShuffle{};
+	irr::gui::IGUIButton* btnSideSort{};
+	irr::gui::IGUIButton* btnSideReload{};
+	irr::gui::IGUIEditBox* ebDeckname{};
+	irr::gui::IGUIStaticText* stDBCategory{};
+	irr::gui::IGUIStaticText* stDeck{};
+	irr::gui::IGUIStaticText* stCategory{};
+	irr::gui::IGUIStaticText* stLimit{};
+	irr::gui::IGUIStaticText* stAttribute{};
+	irr::gui::IGUIStaticText* stRace{};
+	irr::gui::IGUIStaticText* stAttack{};
+	irr::gui::IGUIStaticText* stDefense{};
+	irr::gui::IGUIStaticText* stStar{};
+	irr::gui::IGUIStaticText* stSearch{};
+	irr::gui::IGUIStaticText* stScale{};
 	//deck manage
-	irr::gui::IGUIWindow* wDeckManage;
+	irr::gui::IGUIWindow* wDeckManage{};
 	irr::gui::IGUIImage* bgDeckManage;
-	irr::gui::IGUIListBox* lstCategories;
-	irr::gui::IGUIListBox* lstDecks;
-	irr::gui::IGUIButton* btnNewCategory;
-	irr::gui::IGUIButton* btnRenameCategory;
-	irr::gui::IGUIButton* btnDeleteCategory;
-	irr::gui::IGUIButton* btnNewDeck;
-	irr::gui::IGUIButton* btnRenameDeck;
-	irr::gui::IGUIButton* btnDMDeleteDeck;
-	irr::gui::IGUIButton* btnMoveDeck;
-	irr::gui::IGUIButton* btnCopyDeck;
+	irr::gui::IGUIListBox* lstCategories{};
+	irr::gui::IGUIListBox* lstDecks{};
+	irr::gui::IGUIButton* btnNewCategory{};
+	irr::gui::IGUIButton* btnRenameCategory{};
+	irr::gui::IGUIButton* btnDeleteCategory{};
+	irr::gui::IGUIButton* btnNewDeck{};
+	irr::gui::IGUIButton* btnRenameDeck{};
+	irr::gui::IGUIButton* btnDMDeleteDeck{};
+	irr::gui::IGUIButton* btnMoveDeck{};
+	irr::gui::IGUIButton* btnCopyDeck{};
 	irr::gui::IGUIButton* btnCloseDM;
 	irr::gui::IGUIWindow* wDMQuery;
 	irr::gui::IGUIImage* bgDMQuery;
-	irr::gui::IGUIStaticText* stDMMessage;
-	irr::gui::IGUIStaticText* stDMMessage2;
-	irr::gui::IGUIEditBox* ebDMName;
-	irr::gui::IGUIComboBox* cbDMCategory;
-	irr::gui::IGUIButton* btnDMOK;
-	irr::gui::IGUIButton* btnDMCancel;
-	irr::gui::IGUIScrollBar* scrPackCards;
+	irr::gui::IGUIStaticText* stDMMessage{};
+	irr::gui::IGUIStaticText* stDMMessage2{};
+	irr::gui::IGUIEditBox* ebDMName{};
+	irr::gui::IGUIComboBox* cbDMCategory{};
+	irr::gui::IGUIButton* btnDMOK{};
+	irr::gui::IGUIButton* btnDMCancel{};
+	irr::gui::IGUIScrollBar* scrPackCards{};
 	//filter
 	irr::gui::IGUIWindow* wFilter;
 	irr::gui::IGUIImage* bgFilter;
-	irr::gui::IGUIScrollBar* scrFilter;
-	irr::gui::IGUIComboBox* cbCardType;
-	irr::gui::IGUIComboBox* cbCardType2;
-	irr::gui::IGUIComboBox* cbRace;
-	irr::gui::IGUIComboBox* cbAttribute;
-	irr::gui::IGUIComboBox* cbLimit;
-	irr::gui::IGUIEditBox* ebStar;
-	irr::gui::IGUIEditBox* ebScale;
-	irr::gui::IGUIEditBox* ebAttack;
-	irr::gui::IGUIEditBox* ebDefense;
-	irr::gui::IGUIEditBox* ebCardName;
-	irr::gui::IGUIButton* btnEffectFilter;
-	irr::gui::IGUIButton* btnStartFilter;
-	irr::gui::IGUIButton* btnClearFilter;
-	irr::gui::IGUIWindow* wCategories;
+	irr::gui::IGUIScrollBar* scrFilter{};
+	irr::gui::IGUIComboBox* cbCardType{};
+	irr::gui::IGUIComboBox* cbCardType2{};
+	irr::gui::IGUIComboBox* cbRace{};
+	irr::gui::IGUIComboBox* cbAttribute{};
+	irr::gui::IGUIComboBox* cbLimit{};
+	irr::gui::IGUIEditBox* ebStar{};
+	irr::gui::IGUIEditBox* ebScale{};
+	irr::gui::IGUIEditBox* ebAttack{};
+	irr::gui::IGUIEditBox* ebDefense{};
+	irr::gui::IGUIEditBox* ebCardName{};
+	irr::gui::IGUIButton* btnEffectFilter{};
+	irr::gui::IGUIButton* btnStartFilter{};
+	irr::gui::IGUIButton* btnClearFilter{};
+	irr::gui::IGUIWindow* wCategories{};
 	irr::gui::IGUIImage* bgCategories;
-	irr::gui::IGUICheckBox* chkCategory[32];
-	irr::gui::IGUIButton* btnCategoryOK;
-	irr::gui::IGUIButton* btnMarksFilter;
-	irr::gui::IGUIWindow* wLinkMarks;
+	irr::gui::IGUICheckBox* chkCategory[32]{};
+	irr::gui::IGUIButton* btnCategoryOK{};
+	irr::gui::IGUIButton* btnMarksFilter{};
+	irr::gui::IGUIWindow* wLinkMarks{};
 	irr::gui::IGUIImage* bgLinkMarks;
-	irr::gui::IGUIButton* btnMark[8];
-	irr::gui::IGUIButton* btnMarksOK;
+	irr::gui::IGUIButton* btnMark[8]{};
+	irr::gui::IGUIButton* btnMarksOK{};
 	//sort type
-	irr::gui::IGUIStaticText* wSort;
-	irr::gui::IGUIComboBox* cbSortType;
+	irr::gui::IGUIStaticText* wSort{};
+	irr::gui::IGUIComboBox* cbSortType{};
 	//replay save
-	irr::gui::IGUIWindow* wReplaySave;
+	irr::gui::IGUIWindow* wReplaySave{};
 	irr::gui::IGUIImage* bgReplaySave;
-	irr::gui::IGUIEditBox* ebRSName;
-	irr::gui::IGUIButton* btnRSYes;
-	irr::gui::IGUIButton* btnRSNo;
+	irr::gui::IGUIEditBox* ebRSName{};
+	irr::gui::IGUIButton* btnRSYes{};
+	irr::gui::IGUIButton* btnRSNo{};
 	//replay control
 	irr::gui::IGUIWindow* wReplayControl;
-	irr::gui::IGUIButton* btnReplayStart;
-	irr::gui::IGUIButton* btnReplayPause;
-	irr::gui::IGUIButton* btnReplayStep;
-	irr::gui::IGUIButton* btnReplayUndo;
-	irr::gui::IGUIButton* btnReplayExit;
-	irr::gui::IGUIButton* btnReplaySwap;
+	irr::gui::IGUIButton* btnReplayStart{};
+	irr::gui::IGUIButton* btnReplayPause{};
+	irr::gui::IGUIButton* btnReplayStep{};
+	irr::gui::IGUIButton* btnReplayUndo{};
+	irr::gui::IGUIButton* btnReplayExit{};
+	irr::gui::IGUIButton* btnReplaySwap{};
 	//surrender/leave
-	irr::gui::IGUIButton* btnLeaveGame;
+	irr::gui::IGUIButton* btnLeaveGame{};
 	//swap
-	irr::gui::IGUIButton* btnSpectatorSwap;
+	irr::gui::IGUIButton* btnSpectatorSwap{};
 	//chain control
-	irr::gui::IGUIButton* btnChainIgnore;
-	irr::gui::IGUIButton* btnChainAlways;
-	irr::gui::IGUIButton* btnChainWhenAvail;
+	irr::gui::IGUIButton* btnChainIgnore{};
+	irr::gui::IGUIButton* btnChainAlways{};
+	irr::gui::IGUIButton* btnChainWhenAvail{};
 	//cancel or finish
-	irr::gui::IGUIButton* btnCancelOrFinish;
+	irr::gui::IGUIButton* btnCancelOrFinish{};
 	//big picture
-	irr::gui::IGUIWindow* wBigCard;
-	irr::gui::IGUIImage* imgBigCard;
-	irr::gui::IGUIButton* btnBigCardOriginalSize;
-	irr::gui::IGUIButton* btnBigCardZoomIn;
-	irr::gui::IGUIButton* btnBigCardZoomOut;
-	irr::gui::IGUIButton* btnBigCardClose;
+	irr::gui::IGUIWindow* wBigCard{};
+	irr::gui::IGUIImage* imgBigCard{};
+	irr::gui::IGUIButton* btnBigCardOriginalSize{};
+	irr::gui::IGUIButton* btnBigCardZoomIn{};
+	irr::gui::IGUIButton* btnBigCardZoomOut{};
+	irr::gui::IGUIButton* btnBigCardClose{};
 #ifdef _IRR_ANDROID_PLATFORM_
 	ANDROID_APP appMain;
 	int glversion;
@@ -737,7 +770,13 @@ public:
     void process(irr::SEvent &event);
 private:
 	irr::core::position2di InputFix;
-    };
+    // 表情显示相关
+    bool showingEmoticon = false;          // 是否正在显示表情
+
+    bool isMyEmoticon = false;             // 是否是自己的表情
+    std::wstring currentEmoticonCode;      // 当前显示的表情代码
+
+};
 
 extern Game* mainGame;
 template<typename T>
@@ -945,6 +984,7 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 #define BUTTON_DM_CANCEL			342
 #define BUTTON_CLOSE_DECKMANAGER	343
 #define COMBOBOX_LFLIST				349
+#define COMBOBOX_GENESYS_LFLIST		398//genesys禁卡表下拉菜单
 
 #define BUTTON_CLEAR_LOG			350
 #define LISTBOX_LOG					351
@@ -967,13 +1007,32 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 //#define CHECKBOX_PREFER_EXPANSION	373
 #define CHECKBOX_DRAW_SINGLE_CHAIN	374
 #define CHECKBOX_LFLIST				375
+#define CHECKBOX_GENESYS_LFLIST		399//genesys禁卡表勾选
 #define CHECKBOX_HIDE_PLAYER_NAME	376
 #define BUTTON_QUICK_ANIMIATION	    379
 #define BUTTON_BIG_CARD_CLOSE		380
 #define BUTTON_BIG_CARD_ZOOM_IN		381
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
-
+#define CHECKBOX_ENABLE_GENESYS_MODE    398//启用genesys模式
+#define CHECKBOX_GENESYS_LFLIST		399//genesys禁卡表勾选
+#define BUTTON_EMOTICON             999
+#define BUTTON_EMOTICON_0           1000
+#define BUTTON_EMOTICON_1           1001
+#define BUTTON_EMOTICON_2           1002
+#define BUTTON_EMOTICON_3           1003
+#define BUTTON_EMOTICON_4           1004
+#define BUTTON_EMOTICON_5           1005
+#define BUTTON_EMOTICON_6           1006
+#define BUTTON_EMOTICON_7           1007
+#define BUTTON_EMOTICON_8           1008
+#define BUTTON_EMOTICON_9           1009
+#define BUTTON_EMOTICON_10          1010
+#define BUTTON_EMOTICON_11          1011
+#define BUTTON_EMOTICON_12          1012
+#define BUTTON_EMOTICON_13          1013
+#define BUTTON_EMOTICON_14          1014
+#define BUTTON_EMOTICON_15          1015
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2
 #define AVAIL_CUSTOM				0x4
@@ -983,8 +1042,12 @@ inline std::vector<T> Game::TokenizeString(T input, const T & token) {
 #define MAX_LAYER_COUNT	6
 
 #ifdef _IRR_ANDROID_PLATFORM_
-#define GAME_WIDTH 1024
-#define GAME_HEIGHT 640
 #define GUI_INFO_FPS 1000
+#define LOG_TAG "ygopro-gframe"
+#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG ,__VA_ARGS__)
+#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG ,__VA_ARGS__)
+#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG ,__VA_ARGS__)
+#define ALOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG ,__VA_ARGS__)
+#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG ,__VA_ARGS__)
 #endif
 #endif // GAME_H

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "event_handler.h"
 #include "client_field.h"
 #include "network.h"
@@ -16,12 +17,13 @@ namespace ygo {
 bool ClientField::OnEvent(const irr::SEvent& event) {
 	if(OnCommonEvent(event))
 		return false;
-#ifdef _IRR_ANDROID_PLATFORM_
-	irr::SEvent transferEvent;
-	if (irr::android::TouchEventTransferAndroid::OnTransferCommon(event, false)) {
-		return true;
-	}
-#endif
+
+	// 定义一个事件变量用于处理Android平台的触摸事件转换
+    irr::SEvent transferEvent;
+    // 调用Android平台的触摸事件转换处理函数，如果事件已被处理则返回true
+    if (irr::android::TouchEventTransferAndroid::OnTransferCommon(event, false)) {
+        return true;
+    }
 	switch(event.EventType) {
 	case irr::EET_GUI_EVENT: {
 		if(mainGame->fadingList.size())
@@ -30,31 +32,47 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		switch(event.GUIEvent.EventType) {
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
-			case BUTTON_HAND1:
-			case BUTTON_HAND2:
-			case BUTTON_HAND3: {
-				mainGame->wHand->setVisible(false);
-				if(mainGame->dInfo.curMsg == MSG_ROCK_PAPER_SCISSORS) {
-					DuelClient::SetResponseI(id - BUTTON_HAND1 + 1);
-					DuelClient::SendResponse();
-				} else {
-					mainGame->stHintMsg->setText(L"");
-					mainGame->stHintMsg->setVisible(true);
-					CTOS_HandResult cshr;
-					cshr.res = id - BUTTON_HAND1 + 1;
-					DuelClient::SendPacketToServer(CTOS_HAND_RESULT, cshr);
-				}
-				break;
-			}
-			case BUTTON_FIRST:
-			case BUTTON_SECOND: {
-				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
-				mainGame->HideElement(mainGame->wFTSelect);
-				CTOS_TPResult cstr;
-				cstr.res = BUTTON_SECOND - id;
-				DuelClient::SendPacketToServer(CTOS_TP_RESULT, cstr);
-				break;
-			}
+			// 处理猜拳选择的3个按钮的点击事件
+            case BUTTON_HAND1:
+            case BUTTON_HAND2:
+            case BUTTON_HAND3: {
+                // 隐藏手势选择窗口
+                mainGame->wHand->setVisible(false);
+                // 判断当前消息是否为猜拳(MSG_ROCK_PAPER_SCISSORS)
+                if(mainGame->dInfo.curMsg == MSG_ROCK_PAPER_SCISSORS) {
+                    // 设置响应值为按钮索引+1(1=石头,2=布,3=剪刀)
+                    DuelClient::SetResponseI(id - BUTTON_HAND1 + 1);
+                    // 发送响应给服务器
+                    DuelClient::SendResponse();
+                } else {
+                    // 清空提示信息文本
+                    mainGame->stHintMsg->setText(L"");
+                    // 显示提示信息窗口
+                    mainGame->stHintMsg->setVisible(true);
+                    // 创建手势结果数据包
+                    CTOS_HandResult cshr;
+                    // 设置手势结果为按钮索引+1
+                    cshr.res = id - BUTTON_HAND1 + 1;
+                    // 发送手势结果数据包到服务器
+                    DuelClient::SendPacketToServer(CTOS_HAND_RESULT, cshr);
+                }
+                break;
+            }
+            // 处理先后攻选择按钮的点击事件
+            case BUTTON_FIRST:
+            case BUTTON_SECOND: {
+                // 播放按钮点击音效
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                // 隐藏先后手选择窗口
+                mainGame->HideElement(mainGame->wFTSelect);
+                // 创建先后手选择结果数据包
+                CTOS_TPResult cstr;
+                // 设置选择结果(BUTTON_SECOND-BUTTON_FIRST=1表示先手，BUTTON_SECOND-BUTTON_SECOND=0表示后手)
+                cstr.res = BUTTON_SECOND - id;
+                // 发送先后手选择结果数据包到服务器
+                DuelClient::SendPacketToServer(CTOS_TP_RESULT, cstr);
+                break;
+            }
 			case BUTTON_REPLAY_START: {
 				if(!mainGame->dInfo.isReplay)
 					break;
@@ -141,11 +159,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->btnJoinCancel->setEnabled(true);
 					mainGame->btnStartBot->setEnabled(true);
 					mainGame->btnBotCancel->setEnabled(true);
-					if(bot_mode)
+					if(mainGame->bot_mode)
 						mainGame->ShowElement(mainGame->wSinglePlay);
 					else
 						mainGame->ShowElement(mainGame->wLanWindow);
-					if(exit_on_return)
+					if(mainGame->exit_on_return)
 						mainGame->OnGameClose();
 				} else {
 					if(!(mainGame->dInfo.isTag && mainGame->dField.tag_surrender))
@@ -235,12 +253,47 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					mainGame->imgChat->setImage(imageManager.tShut);
 				}
 				mainGame->chkIgnore1->setChecked(mainGame->gameConf.chkIgnore1);
-				bool show = mainGame->is_building ? false : !mainGame->chkIgnore1->isChecked();
+				bool show = !mainGame->is_building && !mainGame->chkIgnore1->isChecked();
 				mainGame->wChat->setVisible(show);
 				if(!show)
 					mainGame->ClearChatMsg();
 			    break;
 			}
+            case BUTTON_EMOTICON: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                mainGame->wEmoticon->isVisible() ? mainGame->HideElement(mainGame->wEmoticon) : mainGame->ShowElement(mainGame->wEmoticon);
+                break;
+            }
+            case BUTTON_EMOTICON_0:
+            case BUTTON_EMOTICON_1:
+            case BUTTON_EMOTICON_2:
+            case BUTTON_EMOTICON_3:
+            case BUTTON_EMOTICON_4:
+            case BUTTON_EMOTICON_5:
+            case BUTTON_EMOTICON_6:
+            case BUTTON_EMOTICON_7:
+            case BUTTON_EMOTICON_8:
+            case BUTTON_EMOTICON_9:
+            case BUTTON_EMOTICON_10:
+            case BUTTON_EMOTICON_11:
+            case BUTTON_EMOTICON_12:
+            case BUTTON_EMOTICON_13:
+            case BUTTON_EMOTICON_14:
+            case BUTTON_EMOTICON_15: {
+                mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
+                mainGame->HideElement(mainGame->wEmoticon);
+                int emoticonIndex = id - BUTTON_EMOTICON_0;
+                if (emoticonIndex >= 0 && emoticonIndex < 16) {
+                    const wchar_t* emoticonText = imageManager.emoticonCodes[emoticonIndex];
+                    // 使用与聊天输入框相同的发送逻辑
+                    uint16_t msgbuf[LEN_CHAT_MSG];
+                    int len = BufferIO::CopyCharArray(emoticonText, msgbuf);
+                    if(len > 0) {
+                        DuelClient::SendBufferToServer(CTOS_CHAT, msgbuf, (len + 1) * sizeof(uint16_t));
+                    }
+                }
+                break;
+            }
 			case BUTTON_CHAIN_IGNORE: {
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
 				mainGame->ignore_chain = mainGame->btnChainIgnore->isPressed();
@@ -485,7 +538,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					}
 				} else {
 					selectable_cards.clear();
-					conti_selecting = false;
+					bool is_continuous = false;
 					switch(command_location) {
 					case LOCATION_DECK: {
 						for(size_t i = 0; i < deck[command_controler].size(); ++i)
@@ -512,15 +565,15 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						break;
 					}
 					case POSITION_HINT: {
+						is_continuous = true;
 						selectable_cards = conti_cards;
 						std::sort(selectable_cards.begin(), selectable_cards.end());
 						auto eit = std::unique(selectable_cards.begin(), selectable_cards.end());
 						selectable_cards.erase(eit, selectable_cards.end());
-						conti_selecting = true;
 						break;
 					}
 					}
-					if(!conti_selecting) {
+					if (!is_continuous) {
 						mainGame->stCardSelect->setText(dataManager.GetSysString(566));
 						list_command = COMMAND_ACTIVATE;
 					} else {
@@ -528,80 +581,108 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						list_command = COMMAND_OPERATION;
 					}
 					std::sort(selectable_cards.begin(), selectable_cards.end(), ClientCard::client_card_sort);
-					ShowSelectCard(true, true);
+					ShowSelectCard(true, is_continuous);
 				}
 				break;
 			}
 			case BUTTON_CMD_SUMMON: {
-				HideMenu();
-				if(!menu_card)
-					break;
-				for(size_t i = 0; i < summonable_cards.size(); ++i) {
-					if(summonable_cards[i] == menu_card) {
-						ClearCommandFlag();
-						DuelClient::SetResponseI(i << 16);
-						DuelClient::SendResponse();
-						break;
-					}
-				}
-				break;
-			}
-			case BUTTON_CMD_SPSUMMON: {
-				HideMenu();
-				if(!list_command) {
-					if(!menu_card)
-						break;
-					for(size_t i = 0; i < spsummonable_cards.size(); ++i) {
-						if(spsummonable_cards[i] == menu_card) {
-							ClearCommandFlag();
-							DuelClient::SetResponseI((i << 16) + 1);
-							DuelClient::SendResponse();
-							break;
-						}
-					}
-				} else {
-					selectable_cards.clear();
-					switch(command_location) {
-					case LOCATION_DECK: {
-						for(size_t i = 0; i < deck[command_controler].size(); ++i)
-							if(deck[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
-								selectable_cards.push_back(deck[command_controler][i]);
-						break;
-					}
-					case LOCATION_GRAVE: {
-						for(size_t i = 0; i < grave[command_controler].size(); ++i)
-							if(grave[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
-								selectable_cards.push_back(grave[command_controler][i]);
-						break;
-					}
-					case LOCATION_EXTRA: {
-						for(size_t i = 0; i < extra[command_controler].size(); ++i)
-							if(extra[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
-								selectable_cards.push_back(extra[command_controler][i]);
-						break;
-					}
-					}
-					list_command = COMMAND_SPSUMMON;
-					mainGame->stCardSelect->setText(dataManager.GetSysString(509));
-					ShowSelectCard();
-					select_ready = false;
-					ShowCancelOrFinishButton(1);
-				}
-				break;
-			}
-			case BUTTON_CMD_MSET: {
-				HideMenu();
-				if(!menu_card)
-					break;
-				for(size_t i = 0; i < msetable_cards.size(); ++i) {
-					if(msetable_cards[i] == menu_card) {
-						DuelClient::SetResponseI((i << 16) + 3);
-						DuelClient::SendResponse();
-						break;
-					}
-				}
-				break;
-			}
+                // 隐藏右键菜单
+                HideMenu();
+                // 如果没有选中卡片则退出
+                if(!menu_card)
+                    break;
+                // 遍历可召唤卡片列表，找到与菜单选中卡片相同的卡片
+                for(size_t i = 0; i < summonable_cards.size(); ++i) {
+                    if(summonable_cards[i] == menu_card) {
+                        // 清除所有卡片的命令标记
+                        ClearCommandFlag();
+                        // 设置响应为召唤操作，i<<16表示召唤第i张可召唤的卡片
+                        DuelClient::SetResponseI(i << 16);
+                        // 发送响应到服务器
+                        DuelClient::SendResponse();
+                        break;
+                    }
+                }
+                break;
+            }
+            case BUTTON_CMD_SPSUMMON: {
+                // 隐藏右键菜单
+                HideMenu();
+                // 如果不是列表命令模式
+                if(!list_command) {
+                    // 如果没有选中菜单卡片则退出
+                    if(!menu_card)
+                        break;
+                    // 遍历可特殊召唤卡片列表，找到与菜单选中卡片相同的卡片
+                    for(size_t i = 0; i < spsummonable_cards.size(); ++i) {
+                        if(spsummonable_cards[i] == menu_card) {
+                            // 清除所有卡片的命令标记
+                            ClearCommandFlag();
+                            // 设置响应为特殊召唤操作，(i<<16)+1表示特殊召唤第i张可特殊召唤的卡片
+                            DuelClient::SetResponseI((i << 16) + 1);
+                            // 发送响应到服务器
+                            DuelClient::SendResponse();
+                            break;
+                        }
+                    }
+                } else {
+                    // 清空可选择卡片列表
+                    selectable_cards.clear();
+                    // 根据命令位置选择相应的卡片
+                    switch(command_location) {
+                        case LOCATION_DECK: {
+                            // 从卡组中筛选出可特殊召唤的卡片
+                            for(size_t i = 0; i < deck[command_controler].size(); ++i)
+                                if(deck[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
+                                    selectable_cards.push_back(deck[command_controler][i]);
+                            break;
+                        }
+                        case LOCATION_GRAVE: {
+                            // 从墓地中筛选出可特殊召唤的卡片
+                            for(size_t i = 0; i < grave[command_controler].size(); ++i)
+                                if(grave[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
+                                    selectable_cards.push_back(grave[command_controler][i]);
+                            break;
+                        }
+                        case LOCATION_EXTRA: {
+                            // 从额外卡组中筛选出可特殊召唤的卡片
+                            for(size_t i = 0; i < extra[command_controler].size(); ++i)
+                                if(extra[command_controler][i]->cmdFlag & COMMAND_SPSUMMON)
+                                    selectable_cards.push_back(extra[command_controler][i]);
+                            break;
+                        }
+                    }
+                    // 设置列表命令为特殊召唤命令
+                    list_command = COMMAND_SPSUMMON;
+                    // 设置卡片选择窗口标题为"选择怪兽"
+                    mainGame->stCardSelect->setText(dataManager.GetSysString(509));
+                    // 显示卡片选择窗口
+                    ShowSelectCard();
+                    // 设置选择未就绪状态
+                    select_ready = false;
+                    // 显示取消/完成按钮
+                    ShowCancelOrFinishButton(1);
+                }
+                break;
+            }
+            case BUTTON_CMD_MSET: {
+                // 隐藏右键菜单
+                HideMenu();
+                // 如果没有选中菜单卡片则退出
+                if(!menu_card)
+                    break;
+                // 遍历可放置卡片列表，找到与菜单选中卡片相同的卡片
+                for(size_t i = 0; i < msetable_cards.size(); ++i) {
+                    if(msetable_cards[i] == menu_card) {
+                        // 设置响应为放置操作，(i<<16)+3表示放置第i张可放置的卡片
+                        DuelClient::SetResponseI((i << 16) + 3);
+                        // 发送响应到服务器
+                        DuelClient::SendResponse();
+                        break;
+                    }
+                }
+                break;
+            }
 			case BUTTON_CMD_SSET: {
 				HideMenu();
 				if(!menu_card)
@@ -648,32 +729,32 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				switch(command_location) {
 				case LOCATION_DECK: {
 					selectable_cards.assign(deck[command_controler].rbegin(), deck[command_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1000), deck[command_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1000), deck[command_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_MZONE: {
 					ClientCard* pcard = mzone[command_controler][command_sequence];
 					selectable_cards.assign(pcard->overlayed.begin(), pcard->overlayed.end());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), pcard->overlayed.size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1007), pcard->overlayed.size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_GRAVE: {
 					selectable_cards.assign(grave[command_controler].rbegin(), grave[command_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[command_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1004), grave[command_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_REMOVED: {
 					selectable_cards.assign(remove[command_controler].rbegin(), remove[command_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[command_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1005), remove[command_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_EXTRA: {
 					selectable_cards.assign(extra[command_controler].rbegin(), extra[command_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[command_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1006), extra[command_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -974,13 +1055,19 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					// draw selectable_cards[i + pos] in btnCardSelect[i]
 					mainGame->stCardPos[i]->enableOverrideColor(false);
 					// image
-					if(selectable_cards[i + pos]->code)
-						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->code));
-					else if(conti_selecting)
-						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->chain_code));
-					else
-						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler + 2]);
-					mainGame->btnCardSelect[i]->setRelativePosition(irr::core::rect<irr::s32>((30 + i * 125)  * mainGame->yScale, 65 * mainGame->yScale, (30 + 120 + i * 125)  * mainGame->yScale, 235  * mainGame->yScale));
+					if(selectable_cards[i + pos]->code) {
+						mainGame->btnCardSelect[i]->setImage(imageManager.GetTextureButton(selectable_cards[i + pos]->code));
+						mainGame->btnCardImgInfo[mainGame->btnCardSelect[i]] = {selectable_cards[i + pos]->code, false};
+						mainGame->btnFacedownImgInfo.erase(mainGame->btnCardSelect[i]);
+					} else if(select_continuous) {
+						mainGame->btnCardSelect[i]->setImage(imageManager.GetTextureButton(selectable_cards[i + pos]->chain_code));
+						mainGame->btnCardImgInfo[mainGame->btnCardSelect[i]] = {selectable_cards[i + pos]->chain_code, false};
+						mainGame->btnFacedownImgInfo.erase(mainGame->btnCardSelect[i]);
+					} else {
+						mainGame->btnCardSelect[i]->setImage(imageManager.tButtonFacedown[selectable_cards[i + pos]->controler]);
+						mainGame->btnFacedownImgInfo[mainGame->btnCardSelect[i]] = {selectable_cards[i + pos]->controler, false};
+						mainGame->btnCardImgInfo.erase(mainGame->btnCardSelect[i]);
+					}
 					// text
 					wchar_t formatBuffer[2048];
 					if(mainGame->dInfo.curMsg == MSG_SORT_CARD) {
@@ -989,21 +1076,19 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						else
 							myswprintf(formatBuffer, L"");
 					} else {
-						if(conti_selecting)
-							myswprintf(formatBuffer, L"%ls", DataManager::unknown_string);
-						else if(cant_check_grave && selectable_cards[i]->location == LOCATION_GRAVE)
-							myswprintf(formatBuffer, L"%ls", dataManager.FormatLocation(selectable_cards[i]->location, 0));
-						else if(selectable_cards[i + pos]->location == LOCATION_OVERLAY)
+						if (select_continuous)
+							myswprintf(formatBuffer, L"%ls", dataManager.unknown_string);
+						else if (cant_check_grave && selectable_cards[i + pos]->location == LOCATION_GRAVE)
+							myswprintf(formatBuffer, L"%ls", dataManager.FormatLocation(selectable_cards[i + pos]->location, 0));
+						else if (selectable_cards[i + pos]->location == LOCATION_OVERLAY)
 							myswprintf(formatBuffer, L"%ls[%d](%d)",
-								dataManager.FormatLocation(selectable_cards[i + pos]->overlayTarget->location, selectable_cards[i + pos]->overlayTarget->sequence),
-								selectable_cards[i + pos]->overlayTarget->sequence + 1, selectable_cards[i + pos]->sequence + 1);
+								dataManager.FormatLocation(selectable_cards[i + pos]->overlayTarget), selectable_cards[i + pos]->overlayTarget->sequence + 1, selectable_cards[i + pos]->sequence + 1);
 						else
-							myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(selectable_cards[i + pos]->location, selectable_cards[i + pos]->sequence),
-								selectable_cards[i + pos]->sequence + 1);
+							myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(selectable_cards[i + pos]), selectable_cards[i + pos]->sequence + 1);
 					}
 					mainGame->stCardPos[i]->setText(formatBuffer);
 					// color
-					if(conti_selecting)
+					if(select_continuous)
 						mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
 					else if(selectable_cards[i + pos]->location == LOCATION_OVERLAY) {
 						if(selectable_cards[i + pos]->owner != selectable_cards[i + pos]->overlayTarget->controler)
@@ -1039,19 +1124,23 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				for(int i = 0; i < 5; ++i) {
 					// draw display_cards[i + pos] in btnCardDisplay[i]
 					mainGame->stDisplayPos[i]->enableOverrideColor(false);
-					if(display_cards[i + pos]->code)
-						mainGame->btnCardDisplay[i]->setImage(imageManager.GetTexture(display_cards[i + pos]->code));
-					else
-						mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i + pos]->controler + 2]);
-					mainGame->btnCardDisplay[i]->setRelativePosition(irr::core::rect<irr::s32>((30 + i * 125) * mainGame->yScale, 65 * mainGame->yScale, (30 + 120 + i * 125) * mainGame->yScale, 235 * mainGame->yScale));
+					// image
+					if(display_cards[i + pos]->code) {
+						mainGame->btnCardDisplay[i]->setImage(imageManager.GetTextureButton(display_cards[i + pos]->code));
+						mainGame->btnCardImgInfo[mainGame->btnCardDisplay[i]] = {display_cards[i + pos]->code, false};
+						mainGame->btnFacedownImgInfo.erase(mainGame->btnCardDisplay[i]);
+					} else {
+						mainGame->btnCardDisplay[i]->setImage(imageManager.tButtonFacedown[display_cards[i + pos]->controler]);
+						mainGame->btnFacedownImgInfo[mainGame->btnCardDisplay[i]] = {display_cards[i + pos]->controler, false};
+						mainGame->btnCardImgInfo.erase(mainGame->btnCardDisplay[i]);
+					}
+					// text
 					wchar_t formatBuffer[2048];
-					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
-							myswprintf(formatBuffer, L"%ls[%d](%d)",
-								dataManager.FormatLocation(display_cards[i + pos]->overlayTarget->location, display_cards[i + pos]->overlayTarget->sequence),
-								display_cards[i + pos]->overlayTarget->sequence + 1, display_cards[i + pos]->sequence + 1);
-					} else
-						myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(display_cards[i + pos]->location, display_cards[i + pos]->sequence),
-							display_cards[i + pos]->sequence + 1);
+					if(display_cards[i + pos]->location == LOCATION_OVERLAY)
+						myswprintf(formatBuffer, L"%ls[%d](%d)",
+							dataManager.FormatLocation(display_cards[i + pos]->overlayTarget), display_cards[i + pos]->overlayTarget->sequence + 1, display_cards[i + pos]->sequence + 1);
+					else
+						myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(display_cards[i + pos]), display_cards[i + pos]->sequence + 1);
 					mainGame->stDisplayPos[i]->setText(formatBuffer);
 					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
 						if(display_cards[i + pos]->owner != display_cards[i + pos]->overlayTarget->controler)
@@ -1188,7 +1277,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(deck[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(deck[hovered_controler].rbegin(), deck[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1000), deck[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1000), deck[hovered_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1196,7 +1285,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(!clicked_card || clicked_card->overlayed.size() == 0)
 						break;
 					selectable_cards.assign(clicked_card->overlayed.begin(), clicked_card->overlayed.end());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1204,7 +1293,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(grave[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(grave[hovered_controler].rbegin(), grave[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1004), grave[hovered_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1212,7 +1301,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(remove[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(remove[hovered_controler].rbegin(), remove[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1005), remove[hovered_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1220,7 +1309,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(extra[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(extra[hovered_controler].rbegin(), extra[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1006), extra[hovered_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1238,7 +1327,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(!clicked_card || clicked_card->overlayed.size() == 0)
 						break;
 					selectable_cards.assign(clicked_card->overlayed.begin(), clicked_card->overlayed.end());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1246,7 +1335,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(grave[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(grave[hovered_controler].rbegin(), grave[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1004), grave[hovered_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1254,7 +1343,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if (remove[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(remove[hovered_controler].rbegin(), remove[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1005), remove[hovered_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1262,7 +1351,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if (extra[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(extra[hovered_controler].rbegin(), extra[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1006), extra[hovered_controler].size());
 					mainGame->stCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1386,7 +1475,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			case MSG_SELECT_DISFIELD: {
 				if (!(hovered_location & LOCATION_ONFIELD))
 					break;
-				unsigned int flag = 1 << (hovered_sequence + (hovered_controler << 4) + ((hovered_location == LOCATION_MZONE) ? 0 : 8));
+				unsigned int flag = 0x1U << (hovered_sequence + (hovered_controler << 4) + ((hovered_location == LOCATION_MZONE) ? 0 : 8));
 				if (flag & selectable_field) {
 					if (flag & selected_field) {
 						selected_field &= ~flag;
@@ -1679,7 +1768,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 									myswprintf(formatBuffer, L"\nLINK-%d", mcard->link);
 									str.append(formatBuffer);
 								}
-								myswprintf(formatBuffer, L" %ls/%ls", dataManager.FormatRace(mcard->race).c_str(), dataManager.FormatAttribute(mcard->attribute).c_str());
+								const auto& race = dataManager.FormatRace(mcard->race);
+								const auto& attribute = dataManager.FormatAttribute(mcard->attribute);
+								myswprintf(formatBuffer, L" %ls/%ls", race.c_str(), attribute.c_str());
 								str.append(formatBuffer);
 								if(mcard->location == LOCATION_HAND && (mcard->type & TYPE_PENDULUM)) {
 									myswprintf(formatBuffer, L"\n%d/%d", mcard->lscale, mcard->rscale);
@@ -1704,10 +1795,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 									myswprintf(formatBuffer, L"\n%ls%d", dataManager.GetSysString(211), mcard->chValue);
 								else if(mcard->cHint == CHINT_CARD)
 									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(212), dataManager.GetName(mcard->chValue));
-								else if(mcard->cHint == CHINT_RACE)
-									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(213), dataManager.FormatRace(mcard->chValue).c_str());
-								else if(mcard->cHint == CHINT_ATTRIBUTE)
-									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(214), dataManager.FormatAttribute(mcard->chValue).c_str());
+								else if(mcard->cHint == CHINT_RACE) {
+									const auto& race = dataManager.FormatRace(mcard->chValue);
+									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(213), race.c_str());
+								}
+								else if(mcard->cHint == CHINT_ATTRIBUTE) {
+									const auto& attribute = dataManager.FormatAttribute(mcard->chValue);
+									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(214), attribute.c_str());
+								}
 								else if(mcard->cHint == CHINT_NUMBER)
 									myswprintf(formatBuffer, L"\n%ls%d", dataManager.GetSysString(215), mcard->chValue);
 								str.append(formatBuffer);
@@ -1771,12 +1866,16 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::EMIE_LMOUSE_PRESSED_DOWN: {
 			if(!mainGame->dInfo.isStarted)
 				break;
-			//if(mainGame->wCardSelect->isVisible())
-			    //break;
+			if(mainGame->gameConf.control_mode == 1 && event.MouseInput.X > 300 * mainGame->xScale) {
+				mainGame->always_chain = event.MouseInput.isLeftPressed();
+				mainGame->ignore_chain = false;
+				mainGame->chain_when_avail = false;
+				UpdateChainButtons();
+			}
 			if (mainGame->wQuery->isVisible() || mainGame->wANAttribute->isVisible()
 				|| mainGame->wANCard->isVisible() || mainGame->wANNumber->isVisible()
 				|| mainGame->wCardSelect->isVisible()|| mainGame->wCardDisplay->isVisible()
-				||mainGame->wOptions->isVisible()){
+				|| mainGame->wOptions->isVisible()){
                 display_cards.clear();
                 int loc_id = 0;
                 switch(hovered_location) {
@@ -1846,9 +1945,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		break;
 	}
 	case irr::EET_KEY_INPUT_EVENT: {
+		if (mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX))
+			break;
 		switch(event.KeyInput.Key) {
 		case irr::KEY_KEY_A: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->always_chain = event.KeyInput.PressedDown;
 				mainGame->ignore_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1857,7 +1958,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_KEY_S: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->ignore_chain = event.KeyInput.PressedDown;
 				mainGame->always_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1866,7 +1967,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_KEY_D: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->chain_when_avail = event.KeyInput.PressedDown;
 				mainGame->always_chain = false;
 				mainGame->ignore_chain = false;
@@ -1882,70 +1983,50 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::KEY_F6:
 		case irr::KEY_F7:
 		case irr::KEY_F8: {
-			if(!event.KeyInput.PressedDown && !mainGame->dInfo.isReplay && mainGame->dInfo.player_type != 7 && mainGame->dInfo.isStarted
-					&& !mainGame->wCardDisplay->isVisible() && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
-				int loc_id = 0;
-				display_cards.clear();
-				switch(event.KeyInput.Key) {
-					case irr::KEY_F1:
-						if(cant_check_grave)
-							break;
-						loc_id = 1004;
-						for(auto it = grave[0].rbegin(); it != grave[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F2:
-						loc_id = 1005;
-						for(auto it = remove[0].rbegin(); it != remove[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F3:
-						loc_id = 1006;
-						for(auto it = extra[0].rbegin(); it != extra[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F4:
-						loc_id = 1007;
-						for(auto it = mzone[0].begin(); it != mzone[0].end(); ++it) {
-							if(*it) {
-								for(auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
-									display_cards.push_back(*oit);
-							}
-						}
-						break;
-					case irr::KEY_F5:
-						if(cant_check_grave)
-							break;
-						loc_id = 1004;
-						for(auto it = grave[1].rbegin(); it != grave[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F6:
-						loc_id = 1005;
-						for(auto it = remove[1].rbegin(); it != remove[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F7:
-						loc_id = 1006;
-						for(auto it = extra[1].rbegin(); it != extra[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F8:
-						loc_id = 1007;
-						for(auto it = mzone[1].begin(); it != mzone[1].end(); ++it) {
-							if(*it) {
-								for(auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
-									display_cards.push_back(*oit);
-							}
-						}
-						break;
+			if (event.KeyInput.PressedDown)
+				break;
+			if (!mainGame->dInfo.isStarted || mainGame->dInfo.isReplay || mainGame->dInfo.player_type == 7)
+				break;
+			if (mainGame->wCardDisplay->isVisible())
+				break;
+			int loc_id = 0;
+			static_assert(irr::KEY_F8 - irr::KEY_F1 == 7, "keycode F1-F8 must be consecutive");
+			int p = (event.KeyInput.Key >= irr::KEY_F5) ? 1 : 0;
+			int key_offset = (p == 1) ? (event.KeyInput.Key - irr::KEY_F5) : (event.KeyInput.Key - irr::KEY_F1);
+			display_cards.clear();
+			if (key_offset == 0) { // Grave
+				if (cant_check_grave)
+					break;
+				loc_id = 1004;
+				for (auto it = grave[p].rbegin(); it != grave[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 1) { // Remove
+				loc_id = 1005;
+				for (auto it = remove[p].rbegin(); it != remove[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 2) { // Extra
+				loc_id = 1006;
+				for (auto it = extra[p].rbegin(); it != extra[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 3) { // Overlay
+				loc_id = 1007;
+				for (auto it = mzone[p].begin(); it != mzone[p].end(); ++it) {
+					if (*it) {
+						for (auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
+							display_cards.push_back(*oit);
+					}
 				}
-				if(display_cards.size()) {
-					wchar_t formatBuffer[2048];
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(loc_id), display_cards.size());
-					mainGame->stCardDisplay->setText(formatBuffer);
-					ShowLocationCard();
-				}
+			}
+			if (loc_id && display_cards.size()) {
+				wchar_t formatBuffer[2048];
+				myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(loc_id), display_cards.size());
+				mainGame->stCardDisplay->setText(formatBuffer);
+				mainGame->gMutex.lock();
+				ShowLocationCard();
+				mainGame->gMutex.unlock();
 			}
 			break;
 		}
@@ -2012,7 +2093,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 					mainGame->imgChat->setImage(imageManager.tShut);
 				}
 				mainGame->chkIgnore1->setChecked(mainGame->gameConf.chkIgnore1);
-				bool show = (mainGame->is_building && !mainGame->is_siding) ? false : !mainGame->chkIgnore1->isChecked();
+				bool show = !(mainGame->is_building && !mainGame->is_siding) && !mainGame->chkIgnore1->isChecked();
 				mainGame->wChat->setVisible(show);
 				if(!show)
 					mainGame->ClearChatMsg();
@@ -2042,15 +2123,83 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 				return true;
 				break;
 			}*/
+            case CHECKBOX_ENABLE_GENESYS_MODE: {
+				mainGame->gameConf.enable_genesys_mode = mainGame->chkEnableGenesysMode->isChecked() ? 1 : 0;
+                if (mainGame->gameConf.enable_genesys_mode == 1) {// 判断是否启用genesys模式
+                    // 常规禁卡表开关和下拉菜单隐藏
+                    mainGame->chkLFlist->setVisible(false);
+                    mainGame->cbLFlist->setVisible(false);
+                    // 局域网建主-常规禁卡表下拉菜单隐藏
+                    mainGame->cbHostLFlist->setVisible(false);
+                    // genesys禁卡表开关和下拉菜单显示
+                    mainGame->chkGenesysLFlist->setVisible(true);
+                    mainGame->cbGenesysLFlist->setVisible(true);
+                    mainGame->cbHostGenesysLFlist->setVisible(true);
+                    // 立刻启用被选择的禁卡表
+                    mainGame->deckBuilder.filterList = &deckManager._genesys_lfList[mainGame->cbGenesysLFlist->getSelected()];
+
+                } else {// 如果是禁限常规模式
+                    // 常规禁卡表开关和下拉菜单显示
+                    mainGame->chkLFlist->setVisible(true);
+                    mainGame->cbLFlist->setVisible(true);
+                    // 局域网建主-常规禁卡表下拉菜单显示
+                    mainGame->cbHostLFlist->setVisible(true);
+                    // genesys禁卡表开关和下拉菜单隐藏
+                    mainGame->chkGenesysLFlist->setVisible(false);
+                    mainGame->cbGenesysLFlist->setVisible(false);
+                    // 局域网建主-genesys禁卡表下拉菜单隐藏
+                    mainGame->cbHostGenesysLFlist->setVisible(false);
+                    // 立刻启用被选择的禁卡表
+                    mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->cbLFlist->getSelected()];
+                }
+
+                return true;
+				break;
+			}
 			case CHECKBOX_LFLIST: {
 				mainGame->gameConf.use_lflist = mainGame->chkLFlist->isChecked() ? 1 : 0;
 				mainGame->cbLFlist->setEnabled(mainGame->gameConf.use_lflist);
-				mainGame->cbLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbLFlist->getItemCount() - 1);
-				mainGame->cbHostLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbHostLFlist->getItemCount() - 1);
+                // 获取保存的最后禁卡表名称
+                wchar_t lastLimitName[256];
+                BufferIO::CopyWideString(mainGame->gameConf.last_limit_list_name, lastLimitName);
+                // 在禁卡表列表中查找匹配的名称
+                int selectedIndex = -1;
+                for (unsigned int i = 0; i < mainGame->cbLFlist->getItemCount(); i++) {
+                    if (!wcscmp(lastLimitName, mainGame->cbLFlist->getItem(i))) {
+                        mainGame->gameConf.default_lflist = i;
+                        break;
+                    }
+                }
+                // 重设2个禁卡表选择combobox的选中项,如果use_lflist的值代表未启用，则设置选项为N/A
+                mainGame->cbLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbLFlist->getItemCount() - 1);
+                mainGame->cbHostLFlist->setSelected(mainGame->gameConf.use_lflist ? mainGame->gameConf.default_lflist : mainGame->cbHostLFlist->getItemCount() - 1);
+                // 立刻启用被选择的禁卡表
 				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->cbLFlist->getSelected()];
 				return true;
 				break;
 			}
+            case CHECKBOX_GENESYS_LFLIST: {
+                mainGame->gameConf.use_genesys_lflist = mainGame->chkGenesysLFlist->isChecked() ? 1 : 0;
+                mainGame->cbGenesysLFlist->setEnabled(mainGame->gameConf.use_genesys_lflist);
+                // 获取保存的最后禁卡表名称
+                wchar_t lastLimitName[256];
+                BufferIO::CopyWideString(mainGame->gameConf.last_genesys_limit_list_name, lastLimitName);
+                // 在禁卡表列表中查找匹配的名称
+                int selectedIndex = -1;
+                for (unsigned int i = 0; i < mainGame->cbGenesysLFlist->getItemCount(); i++) {
+                    if (!wcscmp(lastLimitName, mainGame->cbGenesysLFlist->getItem(i))) {
+                        mainGame->gameConf.default_genesys_lflist = i;
+                        break;
+                    }
+                }
+                // 重设2个禁卡表选择combobox的选中项,如果use_lflist的值代表未启用，则设置选项为N/A
+                mainGame->cbGenesysLFlist->setSelected(mainGame->gameConf.use_genesys_lflist ? mainGame->gameConf.default_genesys_lflist : mainGame->cbGenesysLFlist->getItemCount() - 1);
+                mainGame->cbHostGenesysLFlist->setSelected(mainGame->gameConf.use_genesys_lflist ? mainGame->gameConf.default_genesys_lflist : mainGame->cbHostGenesysLFlist->getItemCount() - 1);
+                // 立刻启用被选择的禁卡表
+                mainGame->deckBuilder.filterList = &deckManager._genesys_lfList[mainGame->cbGenesysLFlist->getSelected()];
+                return true;
+                break;
+            }
  			case CHECKBOX_DRAW_FIELD_SPELL: {
  			    mainGame->gameConf.draw_field_spell = mainGame->chkDrawFieldSpell->isChecked() ? 1 : 0;
 				return true;
@@ -2079,10 +2228,21 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 			case COMBOBOX_LFLIST: {
 				mainGame->gameConf.default_lflist = mainGame->cbLFlist->getSelected();
 				mainGame->cbHostLFlist->setSelected(mainGame->gameConf.default_lflist);
+                // 保存最后使用的禁卡表名称
+                BufferIO::CopyWideString(mainGame->cbLFlist->getItem(mainGame->gameConf.default_lflist), mainGame->gameConf.last_limit_list_name);
 				mainGame->deckBuilder.filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
 				return true;
 				break;
 			}
+            case COMBOBOX_GENESYS_LFLIST: {
+                mainGame->gameConf.default_genesys_lflist = mainGame->cbGenesysLFlist->getSelected();
+                mainGame->cbHostLFlist->setSelected(mainGame->gameConf.default_genesys_lflist);
+                // 保存最后使用的禁卡表名称
+                BufferIO::CopyWideString(mainGame->cbGenesysLFlist->getItem(mainGame->gameConf.default_genesys_lflist), mainGame->gameConf.last_genesys_limit_list_name);
+                mainGame->deckBuilder.filterList = &deckManager._genesys_lfList[mainGame->gameConf.default_genesys_lflist];
+                return true;
+                break;
+            }
 			}
 			break;
 		}
@@ -2274,11 +2434,11 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     eventElement == mainGame->wReplay ||
                     eventElement == mainGame->wSinglePlay ||
                     eventElement == mainGame->wLanWindow) {
-                    mainGame->gMutex.lock();
+                    if (mainGame->wEmoticon->isVisible()) mainGame->HideElement(mainGame->wEmoticon);
                     mainGame->textFont->setTransparency(true);
 					mainGame->guiFont->setTransparency(true);
                     mainGame->ClearChatMsg();
-                    mainGame->gMutex.unlock();
+
                     break;
                 }//touch the target place to refresh textfonts
                 leftuptime = mainGame->device->getTimer()->getRealTime();
@@ -2458,8 +2618,8 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_sequence = hc - 1 - (x - ofRect.UpperLeftCorner.X) * (hc - 1) / (int)((cardSize + cardSpace) * 5 * mainGame->xScale);
 		}
 	} else {
-		double screenx = x / (GAME_WIDTH * mainGame->xScale) * 1.35  - 0.90;
-		double screeny = y / (GAME_HEIGHT * mainGame->yScale) * 0.84 - 0.42;
+		double screenx = x / (static_cast<double>(GAME_WINDOW_WIDTH) * mainGame->xScale) * 1.35  - 0.90;
+		double screeny = y / (static_cast<double>(GAME_WINDOW_HEIGHT) * mainGame->yScale) * 0.84 - 0.42;
 		double angle = 0.798056 - atan(screeny);	//0.798056 = arctan(8.0/7.8)
 		double vlen = sqrt(1.0 + screeny * screeny);
 		double boardx = 4.2 + 7.8 * screenx / vlen / cos(angle);
@@ -2628,100 +2788,154 @@ void ClientField::GetHoverField(int x, int y) {
 		}
 	}
 }
+/**
+ * @brief 显示右键菜单界面，根据传入的标志位决定显示哪些操作按钮。
+ *
+ * 此函数用于在游戏客户端中响应用户点击卡牌时弹出的操作菜单。它会根据传入的 flag 参数，
+ * 判断需要显示哪些命令按钮（如召唤、特殊召唤、设置等），并动态调整这些按钮的位置。
+ * 同时禁用部分主界面按钮以防止误操作，并将菜单窗口定位到指定坐标位置。
+ *
+ * @param flag 操作命令标志位组合，每一位代表一个可执行的操作类型。
+ * @param x 菜单左上角横坐标（屏幕像素）。
+ * @param y 菜单左上角纵坐标（屏幕像素）。
+ */
 void ClientField::ShowMenu(int flag, int x, int y) {
+	// 如果没有可用操作，则隐藏当前菜单并直接返回
 	if(!flag) {
 		HideMenu();
 		return;
 	}
+
+	// 记录被点击的卡牌对象
 	menu_card = clicked_card;
+
+	// 初始化菜单高度计数器，从顶部开始排列按钮
 	int height = 1;
+
+	// 根据标志位依次判断是否启用各个功能按钮，并设置其可见性和相对位置
+
+	// 【发动】按钮处理逻辑
 	if(flag & COMMAND_ACTIVATE) {
 		mainGame->btnActivate->setVisible(true);
 		mainGame->btnActivate->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnActivate->setVisible(false);
+	} else {
+		mainGame->btnActivate->setVisible(false);
+	}
+
+	// 【召唤】按钮处理逻辑
 	if(flag & COMMAND_SUMMON) {
 		mainGame->btnSummon->setVisible(true);
 		mainGame->btnSummon->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnSummon->setVisible(false);
+	} else {
+		mainGame->btnSummon->setVisible(false);
+	}
+
+	// 【特殊召唤】按钮处理逻辑
 	if(flag & COMMAND_SPSUMMON) {
 		mainGame->btnSPSummon->setVisible(true);
 		mainGame->btnSPSummon->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnSPSummon->setVisible(false);
+	} else {
+		mainGame->btnSPSummon->setVisible(false);
+	}
+
+	// 【盖放（怪兽区）】按钮处理逻辑
 	if(flag & COMMAND_MSET) {
 		mainGame->btnMSet->setVisible(true);
 		mainGame->btnMSet->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnMSet->setVisible(false);
+	} else {
+		mainGame->btnMSet->setVisible(false);
+	}
+
+	// 【盖放（魔法·陷阱区）】按钮处理逻辑
 	if(flag & COMMAND_SSET) {
+		// 区分怪兽卡与其他类型卡片的文字提示
 		if(!(clicked_card->type & TYPE_MONSTER))
-			mainGame->btnSSet->setText(dataManager.GetSysString(1153));
+			mainGame->btnSSet->setText(dataManager.GetSysString(1153)); // 设置魔法陷阱卡
 		else
-			mainGame->btnSSet->setText(dataManager.GetSysString(1159));
+			mainGame->btnSSet->setText(dataManager.GetSysString(1159)); // 设置怪兽卡为里侧守备
 		mainGame->btnSSet->setVisible(true);
 		mainGame->btnSSet->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnSSet->setVisible(false);
+	} else {
+		mainGame->btnSSet->setVisible(false);
+	}
+
+	// 【改变表示形式】按钮处理逻辑
 	if(flag & COMMAND_REPOS) {
+		// 根据当前卡牌状态设置不同的按钮文字
 		if(clicked_card->position & POS_FACEDOWN)
-			mainGame->btnRepos->setText(dataManager.GetSysString(1154));
+			mainGame->btnRepos->setText(dataManager.GetSysString(1154)); // 反转
 		else if(clicked_card->position & POS_ATTACK)
-			mainGame->btnRepos->setText(dataManager.GetSysString(1155));
+			mainGame->btnRepos->setText(dataManager.GetSysString(1155)); // 改为守备
 		else
-			mainGame->btnRepos->setText(dataManager.GetSysString(1156));
+			mainGame->btnRepos->setText(dataManager.GetSysString(1156)); // 改为攻击
 		mainGame->btnRepos->setVisible(true);
 		mainGame->btnRepos->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnRepos->setVisible(false);
+	} else {
+		mainGame->btnRepos->setVisible(false);
+	}
+
+	// 【攻击宣言】按钮处理逻辑
 	if(flag & COMMAND_ATTACK) {
 		mainGame->btnAttack->setVisible(true);
 		mainGame->btnAttack->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnAttack->setVisible(false);
+	} else {
+		mainGame->btnAttack->setVisible(false);
+	}
+
+	// 【查看连锁列表】按钮处理逻辑
 	if(flag & COMMAND_LIST) {
 		mainGame->btnShowList->setVisible(true);
 		mainGame->btnShowList->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnShowList->setVisible(false);
+	} else {
+		mainGame->btnShowList->setVisible(false);
+	}
+
+	// 【操作】按钮处理逻辑
 	if(flag & COMMAND_OPERATION) {
 		mainGame->btnOperation->setVisible(true);
 		mainGame->btnOperation->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnOperation->setVisible(false);
+	} else {
+		mainGame->btnOperation->setVisible(false);
+	}
+
+	// 【重置】按钮处理逻辑
 	if(flag & COMMAND_RESET) {
 		mainGame->btnReset->setVisible(true);
 		mainGame->btnReset->setRelativePosition(irr::core::vector2di(1, height));
-#ifdef _IRR_ANDROID_PLATFORM_
 		height += 60 * mainGame->yScale;
-#endif
-	} else mainGame->btnReset->setVisible(false);
+	} else {
+		mainGame->btnReset->setVisible(false);
+	}
+
+	// 设置当前面板为命令菜单窗口，并使其可见
 	panel = mainGame->wCmdMenu;
 	mainGame->wCmdMenu->setVisible(true);
+
+	// 禁用战斗阶段相关按钮避免冲突
 	mainGame->btnBP->setEnabled(false);
 	mainGame->btnM2->setEnabled(false);
 	mainGame->btnEP->setEnabled(false);
-	mainGame->wCmdMenu->setRelativePosition(irr::core::recti(x - 20 * mainGame->xScale , y - 30 * mainGame->yScale - height, x + 130 * mainGame->xScale, y - 30 * mainGame->yScale));
+
+	// 设置悬浮命令菜单窗口的位置与尺寸
+	mainGame->wCmdMenu->setRelativePosition(
+		irr::core::recti(
+			x - 20 * mainGame->xScale,
+			y - 30 * mainGame->yScale - height,
+			x + 130 * mainGame->xScale,
+			y - 30 * mainGame->yScale
+		)
+	);
 }
+
 void ClientField::HideMenu() {
 	mainGame->wCmdMenu->setVisible(false);
 	mainGame->btnBP->setEnabled(true);
@@ -2819,21 +3033,51 @@ void ClientField::ShowCardInfoInList(ClientCard* pcard, irr::gui::IGUIElement* e
 		mainGame->stCardListTip->setVisible(true);
 	}
 }
+/**
+ * @brief 设置客户端响应中选中的卡片信息
+ *
+ * 该函数将当前选中的卡片序列号打包成响应数据，并发送给决斗客户端。
+ * 响应数据格式为：第一个字节表示选中卡片数量，后续字节依次为各卡片的选择序号。
+ *
+ * @param 无参数
+ * @return 无返回值
+ */
 void ClientField::SetResponseSelectedCards() const {
+	// 准备响应数据缓冲区
 	unsigned char respbuf[SIZE_RETURN_VALUE]{};
+
+	// 获取选中卡片数量，最多不超过UINT8_MAX个
 	int len = (int)selected_cards.size();
 	if (len > UINT8_MAX)
 		len = UINT8_MAX;
+
+	// 设置响应数据：第一个字节为卡片数量
 	respbuf[0] = (unsigned char)len;
+
+	// 依次填充每张选中卡片的选择序号
 	for (int i = 0; i < len; ++i)
 		respbuf[i + 1] = selected_cards[i]->select_seq;
+
+	// 发送响应数据到决斗客户端
 	DuelClient::SetResponseB(respbuf, len + 1);
 }
+/**
+ * @brief 设置客户端选择的响应选项
+ *
+ * 根据当前游戏消息类型和选择的选项，设置相应的响应数据，
+ * 并隐藏选项窗口
+ *
+ * @param 无
+ * @return 无
+ */
 void ClientField::SetResponseSelectedOption() const {
+	// 处理选项选择消息
 	if(mainGame->dInfo.curMsg == MSG_SELECT_OPTION) {
 		DuelClient::SetResponseI(selected_option);
 	} else {
+		// 获取选择选项的索引
 		int index = select_options_index[selected_option];
+		// 根据不同的消息类型设置响应数据
 		if(mainGame->dInfo.curMsg == MSG_SELECT_IDLECMD) {
 			DuelClient::SetResponseI((index << 16) + 5);
 		} else if(mainGame->dInfo.curMsg == MSG_SELECT_BATTLECMD) {
@@ -2842,166 +3086,217 @@ void ClientField::SetResponseSelectedOption() const {
 			DuelClient::SetResponseI(index);
 		}
 	}
+	// 隐藏选项窗口
 	mainGame->HideElement(mainGame->wOptions, true);
 }
+/**
+ * @brief 处理取消或完成操作的函数
+ *
+ * 根据当前游戏消息类型处理相应的取消或完成逻辑，包括隐藏界面元素、设置响应数据、发送响应等操作
+ */
 void ClientField::CancelOrFinish() {
+	// 根据当前游戏消息类型进行不同的处理
 	switch(mainGame->dInfo.curMsg) {
-	case MSG_WAITING: {
-		if(mainGame->wCardSelect->isVisible()) {
-			mainGame->HideElement(mainGame->wCardSelect);
-			ShowCancelOrFinishButton(0);
-		}
-		break;
-	}
-	case MSG_SELECT_BATTLECMD: {
-		if(mainGame->wCardSelect->isVisible()) {
-			mainGame->HideElement(mainGame->wCardSelect);
-			ShowCancelOrFinishButton(0);
-		}
-		if(mainGame->wOptions->isVisible()) {
-			mainGame->HideElement(mainGame->wOptions);
-			ShowCancelOrFinishButton(0);
-		}
-		break;
-	}
-	case MSG_SELECT_IDLECMD: {
-		if(mainGame->wCardSelect->isVisible()) {
-			mainGame->HideElement(mainGame->wCardSelect);
-			ShowCancelOrFinishButton(0);
-		}
-		if(mainGame->wOptions->isVisible()) {
-			mainGame->HideElement(mainGame->wOptions);
-			ShowCancelOrFinishButton(0);
-		}
-		break;
-	}
-	case MSG_SELECT_YESNO:
-	case MSG_SELECT_EFFECTYN: {
-		if(highlighting_card)
-			highlighting_card->is_highlighting = false;
-		highlighting_card = 0;
-		DuelClient::SetResponseI(0);
-		mainGame->HideElement(mainGame->wQuery, true);
-		break;
-	}
-	case MSG_SELECT_CARD: {
-		if(selected_cards.size() == 0) {
-			if(select_cancelable) {
-				DuelClient::SetResponseI(-1);
-				ShowCancelOrFinishButton(0);
-				if(mainGame->wCardSelect->isVisible())
-					mainGame->HideElement(mainGame->wCardSelect, true);
-				else
-					DuelClient::SendResponse();
-			}
-		}
-		if(mainGame->wQuery->isVisible()) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-			mainGame->HideElement(mainGame->wQuery, true);
-			break;
-		}
-		if(select_ready) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-			if(mainGame->wCardSelect->isVisible())
-				mainGame->HideElement(mainGame->wCardSelect, true);
-			else
-				DuelClient::SendResponse();
-		}
-		break;
-	}
-	case MSG_SELECT_UNSELECT_CARD: {
-        if (select_cancelable) {
-            DuelClient::SetResponseI(-1);
-            ShowCancelOrFinishButton(0);
-            if (mainGame->wCardSelect->isVisible())
-                mainGame->HideElement(mainGame->wCardSelect, true);
-            else
-                DuelClient::SendResponse();
+        case MSG_WAITING: {
+            // 如果卡片选择窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wCardSelect->isVisible()) {
+                mainGame->HideElement(mainGame->wCardSelect);
+                ShowCancelOrFinishButton(0);
+            }
+            break;
         }
-        break;
-    }
-	case MSG_SELECT_TRIBUTE: {
-		if(selected_cards.size() == 0) {
-			if(select_cancelable) {
-				DuelClient::SetResponseI(-1);
-				ShowCancelOrFinishButton(0);
-				if(mainGame->wCardSelect->isVisible())
-					mainGame->HideElement(mainGame->wCardSelect, true);
-				else
-					DuelClient::SendResponse();
-			}
-			break;
-		}
-		if(mainGame->wQuery->isVisible()) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-			mainGame->HideElement(mainGame->wQuery, true);
-			break;
-		}
-		if(select_ready) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-			DuelClient::SendResponse();
-		}
-		break;
-	}
-	case MSG_SELECT_SUM: {
-		if (select_ready) {
-			SetResponseSelectedCards();
-			ShowCancelOrFinishButton(0);
-
-			if(mainGame->wCardSelect->isVisible())
-				mainGame->HideElement(mainGame->wCardSelect, true);
-			else
-				DuelClient::SendResponse();
-		}
-		break;
-	}
-	case MSG_SELECT_CHAIN: {
-		if(chain_forced)
-			break;
-		if(mainGame->wCardSelect->isVisible()) {
-			mainGame->HideElement(mainGame->wCardSelect);
-			break;
-		}
-		if(mainGame->wQuery->isVisible()) {
-			DuelClient::SetResponseI(-1);
-			ShowCancelOrFinishButton(0);
-			mainGame->HideElement(mainGame->wQuery, true);
-		} else {
-			mainGame->PopupElement(mainGame->wQuery);
-			ShowCancelOrFinishButton(0);
-		}
-		if(mainGame->wOptions->isVisible()) {
-			DuelClient::SetResponseI(-1);
-			ShowCancelOrFinishButton(0);
-			mainGame->HideElement(mainGame->wOptions);
-		}
-		break;
-	}
-	case MSG_SORT_CARD: {
-		if(mainGame->wCardSelect->isVisible()) {
-			DuelClient::SetResponseI(-1);
-			mainGame->HideElement(mainGame->wCardSelect, true);
-			sort_list.clear();
-		}
-		break;
-	}
-	case MSG_SELECT_PLACE: {
-		if(select_cancelable) {
-			unsigned char respbuf[3];
-			respbuf[0] = mainGame->LocalPlayer(0);
-			respbuf[1] = 0;
-			respbuf[2] = 0;
-			mainGame->dField.selectable_field = 0;
-			DuelClient::SetResponseB(respbuf, 3);
-			DuelClient::SendResponse();
-			ShowCancelOrFinishButton(0);
-		}
-		break;
-	}
+        case MSG_SELECT_BATTLECMD: {
+            // 如果卡片选择窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wCardSelect->isVisible()) {
+                mainGame->HideElement(mainGame->wCardSelect);
+                ShowCancelOrFinishButton(0);
+            }
+            // 如果选项窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wOptions->isVisible()) {
+                mainGame->HideElement(mainGame->wOptions);
+                ShowCancelOrFinishButton(0);
+            }
+            break;
+        }
+        case MSG_SELECT_IDLECMD: {
+            // 如果卡片选择窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wCardSelect->isVisible()) {
+                mainGame->HideElement(mainGame->wCardSelect);
+                ShowCancelOrFinishButton(0);
+            }
+            // 如果选项窗口可见，则隐藏它并隐藏取消/完成按钮
+            if(mainGame->wOptions->isVisible()) {
+                mainGame->HideElement(mainGame->wOptions);
+                ShowCancelOrFinishButton(0);
+            }
+            break;
+        }
+        case MSG_SELECT_YESNO:
+        case MSG_SELECT_EFFECTYN: {
+            // 如果有高亮显示的卡片，则取消高亮
+            if(highlighting_card)
+                highlighting_card->is_highlighting = false;
+            highlighting_card = 0;
+            // 设置响应为否(0)
+            DuelClient::SetResponseI(0);
+            // 隐藏询问窗口并发送响应
+            mainGame->HideElement(mainGame->wQuery, true);
+            break;
+        }
+        case MSG_SELECT_CARD: {
+            // 如果没有选择任何卡片且可以选择取消
+            if(selected_cards.size() == 0) {
+                if(select_cancelable) {
+                    // 设置响应为-1表示取消选择
+                    DuelClient::SetResponseI(-1);
+                    ShowCancelOrFinishButton(0);
+                    // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                    if(mainGame->wCardSelect->isVisible())
+                        mainGame->HideElement(mainGame->wCardSelect, true);
+                    else
+                        DuelClient::SendResponse();
+                }
+            }
+            // 如果询问窗口可见
+            if(mainGame->wQuery->isVisible()) {
+                // 设置选中卡片的响应并隐藏询问窗口
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                mainGame->HideElement(mainGame->wQuery, true);
+                break;
+            }
+            // 如果已准备好选择
+            if(select_ready) {
+                // 设置选中卡片的响应
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                if(mainGame->wCardSelect->isVisible())
+                    mainGame->HideElement(mainGame->wCardSelect, true);
+                else
+                    DuelClient::SendResponse();
+            }
+            break;
+        }
+        case MSG_SELECT_UNSELECT_CARD: {
+            // 如果可以选择取消
+            if (select_cancelable) {
+                // 设置响应为-1表示取消选择
+                DuelClient::SetResponseI(-1);
+                ShowCancelOrFinishButton(0);
+                // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                if (mainGame->wCardSelect->isVisible())
+                    mainGame->HideElement(mainGame->wCardSelect, true);
+                else
+                    DuelClient::SendResponse();
+            }
+            break;
+        }
+        case MSG_SELECT_TRIBUTE: {
+            // 如果没有选择任何卡片且可以选择取消
+            if(selected_cards.size() == 0) {
+                if(select_cancelable) {
+                    // 设置响应为-1表示取消选择
+                    DuelClient::SetResponseI(-1);
+                    ShowCancelOrFinishButton(0);
+                    // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                    if(mainGame->wCardSelect->isVisible())
+                        mainGame->HideElement(mainGame->wCardSelect, true);
+                    else
+                        DuelClient::SendResponse();
+                }
+                break;
+            }
+            // 如果询问窗口可见
+            if(mainGame->wQuery->isVisible()) {
+                // 设置选中卡片的响应并隐藏询问窗口
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                mainGame->HideElement(mainGame->wQuery, true);
+                break;
+            }
+            // 如果已准备好选择
+            if(select_ready) {
+                // 设置选中卡片的响应并发送
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                DuelClient::SendResponse();
+            }
+            break;
+        }
+        case MSG_SELECT_SUM: {
+            // 如果已准备好选择
+            if (select_ready) {
+                // 设置选中卡片的响应
+                SetResponseSelectedCards();
+                ShowCancelOrFinishButton(0);
+                // 如果卡片选择窗口可见则隐藏它，否则直接发送响应
+                if(mainGame->wCardSelect->isVisible())
+                    mainGame->HideElement(mainGame->wCardSelect, true);
+                else
+                    DuelClient::SendResponse();
+            }
+            break;
+        }
+        case MSG_SELECT_CHAIN: {
+            // 如果必须选择连锁则不能取消
+            if(chain_forced)
+                break;
+            // 如果卡片选择窗口可见则隐藏它
+            if(mainGame->wCardSelect->isVisible()) {
+                mainGame->HideElement(mainGame->wCardSelect);
+                break;
+            }
+            // 如果询问窗口可见
+            if(mainGame->wQuery->isVisible()) {
+                // 设置响应为-1表示不选择连锁并隐藏询问窗口
+                DuelClient::SetResponseI(-1);
+                ShowCancelOrFinishButton(0);
+                mainGame->HideElement(mainGame->wQuery, true);
+            } else {
+                // 弹出询问窗口
+                mainGame->PopupElement(mainGame->wQuery);
+                ShowCancelOrFinishButton(0);
+            }
+            // 如果选项窗口可见
+            if(mainGame->wOptions->isVisible()) {
+                // 设置响应为-1表示不选择选项并隐藏选项窗口
+                DuelClient::SetResponseI(-1);
+                ShowCancelOrFinishButton(0);
+                mainGame->HideElement(mainGame->wOptions);
+            }
+            break;
+        }
+        case MSG_SORT_CARD: {
+            // 如果卡片选择窗口可见
+            if(mainGame->wCardSelect->isVisible()) {
+                // 设置响应为-1表示取消排序并隐藏卡片选择窗口
+                DuelClient::SetResponseI(-1);
+                mainGame->HideElement(mainGame->wCardSelect, true);
+                // 清空排序列表
+                sort_list.clear();
+            }
+            break;
+        }
+        case MSG_SELECT_PLACE: {
+            // 如果可以选择取消
+            if(select_cancelable) {
+                // 准备响应数据，表示不选择任何位置
+                unsigned char respbuf[3];
+                respbuf[0] = mainGame->LocalPlayer(0);
+                respbuf[1] = 0;
+                respbuf[2] = 0;
+                // 清空可选择字段
+                mainGame->dField.selectable_field = 0;
+                // 设置并发送响应
+                DuelClient::SetResponseB(respbuf, 3);
+                DuelClient::SendResponse();
+                // 隐藏取消/完成按钮
+                ShowCancelOrFinishButton(0);
+            }
+            break;
+        }
 	}
 }
+
 }

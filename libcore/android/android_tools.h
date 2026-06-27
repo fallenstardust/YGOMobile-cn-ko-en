@@ -159,6 +159,10 @@ extern float getYScale(ANDROID_APP app);
 //Retrive font path.
 extern irr::io::path getFontPath(ANDROID_APP app);
 
+//Retrive last limit name.
+extern irr::io::path getLastLimit(ANDROID_APP app);
+extern irr::io::path getLastGenesysLimit(ANDROID_APP app);
+
 //Retrive last deck name.
 extern irr::io::path getLastDeck(ANDROID_APP app);
 
@@ -168,6 +172,10 @@ extern irr::io::path getLastCategory(ANDROID_APP app);
 extern int getIntSetting(ANDROID_APP app, const char* key,int defvalue);
 
 extern irr::io::path getSetting(ANDROID_APP app, const char* key);
+
+//save last limit name.
+extern void setLastLimit(ANDROID_APP app, const char* limitname);
+extern void setLastGenesysLimit(ANDROID_APP app, const char* limitname);
 
 //save last deck name.
 extern void setLastDeck(ANDROID_APP app, const char* deckname);
@@ -192,13 +200,25 @@ extern void process_input(ANDROID_APP app,
 
 extern s32 handleInput(ANDROID_APP app, AInputEvent* androidEvent);
 
-extern bool android_deck_delete(const char* deck_name);
-
 extern void onGameExit(ANDROID_APP app);
 
 extern void runWindbot(ANDROID_APP app, const char* args);
 
-}
-}
+extern void deleteDeckSync(ANDROID_APP app, const char* deck_path);
+
+extern void syncMoveDeck(ANDROID_APP app, const char* old_deck_path, const char* new_deck_path);
+
+extern void syncRenameDeck(ANDROID_APP app, const char* deck_path, const char* new_deck_name);
+
+extern void deleteCategoryDecksSync(ANDROID_APP app, const char* category_name);
+
+extern void renameCategoryDecksSync(ANDROID_APP app, const char* old_category_name, const char* new_category_name);
+
+extern void syncSaveDeck(ANDROID_APP app, const char* deck_path);
+
+extern void requestNewDeckIdAndSync(ANDROID_APP app, const char* deck_path);
+
+} // namespace android
+} // namespace irr
 
 #endif // __IRR_ANDROID_TOOLS_H__

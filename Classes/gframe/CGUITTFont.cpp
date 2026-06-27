@@ -28,7 +28,6 @@
    john@suckerfreegames.com
 */
 
-#define _IRR_STATIC_LIB_
 #include <irrlicht.h>
 #include "CGUITTFont.h"
 
@@ -91,7 +90,6 @@ video::IImage* SGUITTGlyph::createGlyphImage(const FT_Bitmap& bits, video::IVide
 			}
 			image_data += image_pitch;
 		}
-		image->unlock();
 		break;
 	}
 
@@ -114,7 +112,6 @@ video::IImage* SGUITTGlyph::createGlyphImage(const FT_Bitmap& bits, video::IVide
 			}
 			glyph_data += bits.pitch;
 		}
-		image->unlock();
 		break;
 	}
 	default:
@@ -185,7 +182,19 @@ void SGUITTGlyph::unload() {
 
 //////////////////////
 
+/**
+ * 创建TrueType字体对象
+ * 该函数负责初始化FreeType库（如果尚未初始化），创建CGUITTFont实例并加载指定的字体文件
+ *
+ * @param env GUI环境指针，用于字体渲染和管理
+ * @param filename 字体文件路径
+ * @param size 字体大小
+ * @param antialias 是否启用抗锯齿
+ * @param transparency 是否启用透明度
+ * @return 成功时返回CGUITTFont指针，失败时返回0
+ */
 CGUITTFont* CGUITTFont::createTTFont(IGUIEnvironment *env, const io::path& filename, const u32 size, const bool antialias, const bool transparency) {
+	// 检查FreeType库是否已加载，如果未加载则进行初始化
 	if (!c_libraryLoaded) {
 		if (FT_Init_FreeType(&c_library))
 			return 0;
@@ -194,6 +203,7 @@ CGUITTFont* CGUITTFont::createTTFont(IGUIEnvironment *env, const io::path& filen
 
 	CGUITTFont* font = new CGUITTFont(env);
 	bool ret = font->load(filename, size, antialias, transparency);
+	// 如果字体加载失败，释放已创建的字体对象并返回空指针
 	if (!ret) {
 		font->drop();
 		return 0;
@@ -322,7 +332,7 @@ bool CGUITTFont::load(const io::path& filename, const u32 size, const bool antia
 	tt_face = face->face;
 
 	// Store font metrics.
-	FT_Set_Pixel_Sizes(tt_face, size, 0);
+	FT_Set_Pixel_Sizes(tt_face, 0, size);
 	font_metrics = tt_face->size->metrics;
 
 	// Allocate our glyphs.
@@ -834,6 +844,7 @@ video::IImage* CGUITTFont::createTextureFromChar(const uchar32_t& ch) {
 	core::dimension2du glyph_size(glyph.source_rect.getSize());
 	video::IImage* image = Driver->createImage(format, glyph_size);
 	pageholder->copyTo(image, irr::core::vector2di(0, 0), glyph.source_rect);
+	pageholder->drop();
 
 	tex->unlock();
 	return image;

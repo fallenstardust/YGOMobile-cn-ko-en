@@ -54,12 +54,7 @@ public final class IrrlichtBridge {
         }
     }
 
-    private IrrlichtBridge() {
-
-    }
-
-    //显示卡图
-    public static native byte[] nativeBpgImage(byte[] data);
+    private IrrlichtBridge() {}
 
     //插入文本（大概是发送消息）
     private static native void nativeInsertText(long handle, String text);
@@ -97,62 +92,6 @@ public final class IrrlichtBridge {
             return intent.getStringArrayExtra(EXTRA_ARGV);
         }
         return null;
-    }
-
-    public static Bitmap getBpgImage(InputStream inputStream, Bitmap.Config config) {
-        ByteArrayOutputStream outputStream = null;
-        try {
-            outputStream = new ByteArrayOutputStream();
-            byte[] tmp = new byte[4096];
-            int len = 0;
-            while ((len = inputStream.read(tmp)) != -1) {
-                outputStream.write(tmp, 0, len);
-            }
-            //解码前
-            byte[] bpg = outputStream.toByteArray();
-            return getBpgImage(bpg, config);
-        } catch (Exception e) {
-            if (DEBUG)
-                Log.e(TAG, "zip image", e);
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return null;
-    }
-
-    /***
-     *
-     */
-    public static Bitmap getBpgImage(byte[] bpg, Bitmap.Config config) {
-        try {
-            //解码后
-            byte[] data = nativeBpgImage(bpg);
-            int start = 8;
-            int w = byte2int(Arrays.copyOfRange(data, 0, 4));
-            int h = byte2int(Arrays.copyOfRange(data, 4, 8));
-            if (w < 0 || h < 0) {
-                if (DEBUG)
-                    Log.e(TAG, "zip image:w=" + w + ",h=" + h);
-                return null;
-            }
-            int index = 0;
-            int[] colors = new int[(data.length - start) / 3];
-            for (int i = 0; i < colors.length; i++) {
-                index = start + i * 3;
-                colors[i] = Color.rgb(byte2uint(data[index + 0]), byte2uint(data[index + 1]), byte2uint(data[index + 2]));
-            }
-            return Bitmap.createBitmap(colors, w, h, config);
-        } catch (Throwable e) {
-            if (DEBUG)
-                Log.e(TAG, "zip image", e);
-            return null;
-        }
     }
 
     public static void setInputFix(int x, int y) {

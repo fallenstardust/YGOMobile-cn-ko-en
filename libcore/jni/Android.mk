@@ -10,6 +10,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := YGOMobile
 
+LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384
+
 LOCAL_CFLAGS := -D_IRR_ANDROID_PLATFORM_ -pipe -fno-rtti -fno-exceptions -fstrict-aliasing -D_ANDROID -fPIC -DLUA_COMPAT_5_2
 TARGET_FORMAT_STRING_CFLAGS := 
 
@@ -51,7 +53,6 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/android/android_tools.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIEditBox.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIButton.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUIComboBox.cpp \
-				$(LOCAL_PATH)/../Classes/gframe/CGUIImageButton.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/CGUITTFont.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/client_card.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/client_field.cpp \
@@ -64,6 +65,7 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/android/android_tools.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/game.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/gframe.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/image_manager.cpp \
+				$(LOCAL_PATH)/../Classes/gframe/image_utility.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/materials.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/menu_handler.cpp \
 				$(LOCAL_PATH)/../Classes/gframe/netserver.cpp \

@@ -90,14 +90,14 @@ public:
 	ChainInfo current_chain;
 	bool last_chain{ false };
 	bool deck_reversed{ false };
-	bool conti_selecting{ false };
+	bool select_continuous{ false };
 	bool cant_check_grave{ false };
 	bool tag_surrender{ false };
 	bool tag_teammate_surrender{ false };
 	std::mt19937 rnd;
 
 	ClientField();
-	~ClientField();
+	~ClientField() override;
 	void Clear();
 	void Initial(int player, int deckc, int extrac, int sidec = 0);
 	void ResetSequence(std::vector<ClientCard*>& list, bool reset_height);
@@ -109,10 +109,10 @@ public:
 	void ClearCommandFlag();
 	void ClearSelect();
 	void ClearChainSelect();
-	void ShowSelectCard(bool buttonok = false, bool chain = false);
-	void ShowChainCard();
-	void ShowLocationCard();
-	void ShowSelectOption(int select_hint = 0);
+	void ShowSelectCard(bool buttonok = false, bool is_continuous = false); // caller must hold gMutex
+	void ShowChainCard(); // caller must hold gMutex
+	void ShowLocationCard(); // caller must hold gMutex
+	void ShowSelectOption(int select_hint = 0); // caller must NOT hold gMutex
 	void ReplaySwap();
 	void RefreshAllCards();
 
@@ -120,7 +120,7 @@ public:
 	void GetCardLocation(ClientCard* pcard, irr::core::vector3df* t, irr::core::vector3df* r, bool setTrans = false);
 	void MoveCard(ClientCard* pcard, int frame);
 	void FadeCard(ClientCard* pcard, int alpha, int frame);
-	bool ShowSelectSum(bool panelmode);
+	bool ShowSelectSum(bool panelmode); // caller must hold gMutex
 	bool CheckSelectSum();
 	bool CheckSelectTribute();
 	void get_sum_params(unsigned int opParam, int& op1, int& op2);

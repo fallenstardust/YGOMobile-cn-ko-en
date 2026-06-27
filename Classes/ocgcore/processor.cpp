@@ -662,56 +662,77 @@ uint32_t field::process() {
 		return pduel->buffer_size();
 	}
 	case PROCESSOR_SORT_DECK: {
-		uint8_t sort_player = it->arg1 & 0xffff;
-		uint8_t target_player = it->arg1 >> 16;
-		uint8_t count = it->arg2, i = 0;
-		if(count > player[target_player].list_main.size())
-			count = (uint8_t)player[target_player].list_main.size();
-		if(it->step == 0) {
-			core.select_cards.clear();
-			for(auto clit = player[target_player].list_main.rbegin(); i < count; ++i, ++clit)
-				core.select_cards.push_back(*clit);
-			add_process(PROCESSOR_SORT_CARD, 0, 0, 0, sort_player, 0);
-			++it->step;
-		} else {
-			if(returns.bvalue[0] != 0xff) {
-				card* tc[16];
-				for(i = 0; i < count; ++i)
-					player[target_player].list_main.pop_back();
-				for(i = 0; i < count; ++i)
-					tc[returns.bvalue[i]] = core.select_cards[i];
-				for(i = 0; i < count; ++i) {
-					player[target_player].list_main.push_back(tc[count - i - 1]);
-					tc[count - i - 1]->current.sequence = (uint8_t)player[target_player].list_main.size() - 1;
-				}
-				auto clit = player[target_player].list_main.rbegin();
-				for(i = 0; i < count; ++i, ++clit) {
-					card* pcard = *clit;
-					pduel->write_buffer8(MSG_MOVE);
-					pduel->write_buffer32(0);
-					pduel->write_buffer32(pcard->get_info_location());
-					pduel->write_buffer32(pcard->get_info_location());
-					pduel->write_buffer32(REASON_EFFECT);
-				}
-			}
-			if(core.global_flag & GLOBALFLAG_DECK_REVERSE_CHECK) {
-				if(count > 0) {
-					card* ptop = player[target_player].list_main.back();
-					if(core.deck_reversed || (ptop->current.position == POS_FACEUP_DEFENSE)) {
-						pduel->write_buffer8(MSG_DECK_TOP);
-						pduel->write_buffer8(target_player);
-						pduel->write_buffer8(0);
-						if(ptop->current.position != POS_FACEUP_DEFENSE)
-							pduel->write_buffer32(ptop->data.code);
-						else
-							pduel->write_buffer32(ptop->data.code | 0x80000000);
-					}
-				}
-			}
-			core.units.pop_front();
-		}
-		return pduel->buffer_size();
-	}
+        // 从参数中提取排序玩家、目标玩家和卡片数量
+        uint8_t sort_player = it->arg1 & 0xffff;      // 执行排序的玩家
+        uint8_t target_player = it->arg1 >> 16;       // 被排序卡组的玩家
+        uint8_t count = it->arg2, i = 0;              // 需要排序的卡片数量，循环变量初始化
+
+        // 如果要求排序的数量超过目标玩家主卡组的实际数量，则调整为实际数量
+        if(count > player[target_player].list_main.size())
+            count = (uint8_t)player[target_player].list_main.size();
+
+        // 第一步：准备需要排序的卡片并启动排序处理器
+        if(it->step == 0) {
+            core.select_cards.clear();                // 清空选择卡片列表
+            // 从目标玩家主卡组末尾开始，取count张卡片加入选择列表
+            for(auto clit = player[target_player].list_main.rbegin(); i < count; ++i, ++clit)
+                core.select_cards.push_back(*clit);
+            // 添加卡片排序处理器，让sort_player对这些卡片进行排序
+            add_process(PROCESSOR_SORT_CARD, 0, 0, 0, sort_player, 0);
+            ++it->step;                               // 进入下一步
+        } else {
+            // 第二步：处理排序结果
+            // 如果返回值不是0xff（表示排序未被取消）
+            if(returns.bvalue[0] != 0xff) {
+                card* tc[256];                        // 临时卡片数组，用于存储重新排序后的卡片
+                // 从目标玩家主卡组中移除之前取出的count张卡片
+                for(i = 0; i < count; ++i)
+                    player[target_player].list_main.pop_back();
+                // 根据玩家的排序结果，将卡片放入临时数组的正确位置
+                for(i = 0; i < count; ++i)
+                    tc[returns.bvalue[i]] = core.select_cards[i];
+                // 按照新的顺序将卡片重新放入目标玩家的主卡组
+                for(i = 0; i < count; ++i) {
+                    player[target_player].list_main.push_back(tc[count - 1 - i]);
+                }
+                // 重置目标玩家主卡组中所有卡片的序列号
+                reset_sequence(target_player, LOCATION_DECK);
+                // 从卡组末尾开始遍历刚重新排序的卡片
+                auto clit = player[target_player].list_main.rbegin();
+                for(i = 0; i < count; ++i, ++clit) {
+                    card* pcard = *clit;
+                    // 向客户端发送卡片移动消息（虽然位置未变，但用于同步排序结果）
+                    pduel->write_buffer8(MSG_MOVE);
+                    pduel->write_buffer32(0);         // 原位置（这里用0表示无来源）
+                    pduel->write_buffer32(pcard->get_info_location());  // 当前位置
+                    pduel->write_buffer32(pcard->get_info_location());  // 目标位置
+                    pduel->write_buffer32(REASON_EFFECT);               // 移动原因
+                }
+            }
+            // 如果启用了卡组顶部检查的全局标志
+            if(core.global_flag & GLOBALFLAG_DECK_REVERSE_CHECK) {
+                // 如果有卡片被排序
+                if(count > 0) {
+                    // 获取目标玩家主卡组最上面的卡片
+                    card* ptop = player[target_player].list_main.back();
+                    // 如果卡组是翻转状态或者最上面的卡片是表侧守备表示
+                    if(core.deck_reversed || (ptop->current.position == POS_FACEUP_DEFENSE)) {
+                        // 向客户端发送卡组顶部卡片信息
+                        pduel->write_buffer8(MSG_DECK_TOP);
+                        pduel->write_buffer8(target_player);            // 玩家
+                        pduel->write_buffer8(0);                        // 序号（0表示最上面）
+                        // 根据卡片位置发送卡片密码
+                        if(ptop->current.position != POS_FACEUP_DEFENSE)
+                            pduel->write_buffer32(ptop->data.code);     // 里侧表示
+                        else
+                            pduel->write_buffer32(ptop->data.code | 0x80000000); // 表侧表示
+                    }
+                }
+            }
+            core.units.pop_front();                   // 移除当前处理单元
+        }
+        return pduel->buffer_size();                  // 返回缓冲区大小
+    }
 	case PROCESSOR_REMOVE_OVERLAY: {
 		if(remove_overlay_card(it->step, it->arg3, (card*)(it->ptarget), it->arg1 >> 16,
 		                       (it->arg1 >> 8) & 0xff, it->arg1 & 0xff, it->arg2 & 0xffff, it->arg2 >> 16)) {
@@ -2609,8 +2630,14 @@ int32_t field::process_battle_command(uint16_t step) {
 			core.units.begin()->step = 6;
 			return FALSE;
 		}
-		// must attack monster
-		if(atype == 3 || is_player_affected_by_effect(infos.turn_player, EFFECT_PATRICIAN_OF_DARKNESS)) {
+		bool must_attack_monster = atype == 3;
+		bool oppo_select = is_player_affected_by_effect(infos.turn_player, EFFECT_PATRICIAN_OF_DARKNESS);
+		if(!oppo_select && must_attack_monster && core.select_cards.size() > 1) {
+			effect_set eset;
+			core.attacker->filter_effect(EFFECT_MUST_ATTACK_MONSTER, &eset);
+			oppo_select = eset.size() > 1;
+		}
+		if(oppo_select) {
 			if(core.select_cards.size() == 1)
 				returns.bvalue[1] = 0;
 			else {
@@ -2628,7 +2655,7 @@ int32_t field::process_battle_command(uint16_t step) {
 			pduel->write_buffer8(HINT_SELECTMSG);
 			pduel->write_buffer8(infos.turn_player);
 			pduel->write_buffer32(549);
-			add_process(PROCESSOR_SELECT_CARD, 0, 0, 0, infos.turn_player + (core.attack_cancelable ? 0x20000 : 0), 0x10001);
+			add_process(PROCESSOR_SELECT_CARD, 0, 0, 0, infos.turn_player + (core.attack_cancelable && !must_attack_monster ? 0x20000 : 0), 0x10001);
 		}
 		core.units.begin()->step = 5;
 		return FALSE;
@@ -3671,10 +3698,22 @@ void field::calculate_battle_damage(effect** pdamchange, card** preason_card, ui
 		battle_destroyed[1] = bd[1];
 	}
 }
+
+/**
+ * @brief 处理游戏回合流程的函数
+ *
+ * 该函数根据不同的步骤编号处理游戏回合中的各个阶段，包括抽卡阶段、准备阶段、主要阶段、战斗阶段和结束阶段等。
+ * 每个阶段都有相应的初始化、事件触发和状态重置操作。
+ *
+ * @param step 当前处理的步骤编号，用于确定执行哪个阶段的操作
+ * @param turn_player 当前回合的玩家ID
+ * @return int32_t 返回处理结果，TRUE表示完成，FALSE表示继续处理
+ */
 int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 	switch(step) {
 	case 0: {
 		//Pre Draw
+		// 清理上一回合使用的事件和效果
 		for(const auto& ev : core.used_event) {
 			if(ev.event_cards)
 				pduel->delete_group(ev.event_cards);
@@ -3687,6 +3726,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		core.effect_count_code[0].clear();
 		core.effect_count_code[1].clear();
 		core.effect_count_code[PLAYER_NONE].clear();
+		// 重置场上所有卡片的状态和计数器
 		for(uint8_t p = 0; p < 2; ++p) {
 			for(auto& pcard : player[p].list_mzone) {
 				if(!pcard)
@@ -3711,6 +3751,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 				pcard->set_status(STATUS_SET_TURN, FALSE);
 				pcard->indestructable_effects.clear();
 			}
+			// 重置各种召唤和攻击计数器
 			core.summon_state_count[p] = 0;
 			core.normalsummon_state_count[p] = 0;
 			core.flipsummon_state_count[p] = 0;
@@ -3722,9 +3763,11 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 			core.extra_summon[p] = 0;
 			core.spsummon_once_map[p].clear();
 		}
+		// 重置计算回合的效果
 		for(auto& peffect : effects.rechargeable)
 			if(!peffect->is_flag(EFFECT_FLAG_NO_TURN_RESET))
 				peffect->recharge();
+		// 重置各种计数器
 		for(auto& iter : core.summon_counter)
 			iter.second.second = 0;
 		for(auto& iter : core.normalsummon_counter)
@@ -3737,6 +3780,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 			iter.second.second = 0;
 		for(auto& iter : core.chain_counter)
 			iter.second.second = 0;
+		// 重置特殊召唤计数
 		if(core.global_flag & GLOBALFLAG_SPSUMMON_COUNT) {
 			for(auto& peffect : effects.spsummon_count_eff) {
 				card* pcard = peffect->get_handler();
@@ -3745,6 +3789,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 				}
 			}
 		}
+		// 更新回合信息并检查跳过回合效果
 		++infos.turn_id;
 		++infos.turn_id_by_player[turn_player];
 		infos.turn_player = turn_player;
@@ -3769,10 +3814,12 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 1: {
+		// 清理连锁相关容器
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
 		core.delayed_quick_tmp.clear();
+		// 检查是否跳过抽卡阶段
 		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_DP)) {
 			core.units.begin()->step = 2;
 			reset_phase(PHASE_DRAW);
@@ -3792,7 +3839,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 2: {
-		// Draw, new ruling
+		// 抽卡阶段：根据规则版本和回合数决定是否抽卡
 		if((core.duel_rule <= 2) || (infos.turn_id > 1)) {
 			int32_t count = get_draw_count(infos.turn_player);
 			if(count > 0) {
@@ -3808,7 +3855,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 4: {
-		//Standby Phase
+		// 准备阶段：初始化阶段变量并检查跳过效果
 		infos.phase = PHASE_STANDBY;
 		core.phase_action = FALSE;
 		core.new_fchain.clear();
@@ -3828,14 +3875,14 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 5: {
-		// EVENT_PHASE_START + PHASE_STANDBY is a special case(c89642993)
+		// 处理准备阶段的即时事件和阶段事件
 		if(core.new_fchain.size() || core.new_ochain.size() || core.instant_event.back().event_code != EVENT_PHASE_START + PHASE_STANDBY)
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		add_process(PROCESSOR_PHASE_EVENT, 0, 0, 0, PHASE_STANDBY, 0);
 		return FALSE;
 	}
 	case 6: {
-		//Main1
+		// 主要阶段1：开始第一个主要阶段
 		infos.phase = PHASE_MAIN1;
 		core.phase_action = FALSE;
 		raise_event(nullptr, EVENT_PHASE_START + PHASE_MAIN1, 0, 0, 0, turn_player, 0);
@@ -3847,6 +3894,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 8: {
+		// 清理连锁容器并进入空闲命令处理器
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
@@ -3857,6 +3905,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 9: {
+		// 检查是否直接进入结束阶段或开始战斗阶段
 		if(returns.ivalue[0] == 7) { // End Phase
 			core.units.begin()->step = 14;
 			return FALSE;
@@ -3870,7 +3919,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		++core.battle_phase_count[infos.turn_player];
 		pduel->write_buffer8(MSG_NEW_PHASE);
 		pduel->write_buffer16(infos.phase);
-		// Show the texts to indicate that BP is entered and skipped
+		// 检查是否跳过战斗阶段
 		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_BP)) {
 			core.units.begin()->step = 14;
 			reset_phase(PHASE_BATTLE_START);
@@ -3885,12 +3934,14 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 10: {
+		// 处理战斗开始阶段的连锁事件
 		if(core.new_fchain.size() || core.new_ochain.size())
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		add_process(PROCESSOR_PHASE_EVENT, 0, 0, 0, PHASE_BATTLE_START, 0);
 		return FALSE;
 	}
 	case 11: {
+		// 战斗步骤：进入战斗步骤并启动战斗命令处理器
 		infos.phase = PHASE_BATTLE_STEP;
 		core.new_fchain.clear();
 		core.new_ochain.clear();
@@ -3902,6 +3953,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 12: {
+		// 处理第二次战斗阶段或进入主阶段2
 		if(core.units.begin()->arg2 == 0 && returns.ivalue[1]) { // 2nd Battle Phase
 			core.units.begin()->arg2 = 1;
 			core.units.begin()->step = 8;
@@ -3919,11 +3971,14 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 			}
 			return FALSE;
 		}
+		// 确保"entered 2nd Battle Phase"标记不会影响主阶段2
+		core.units.begin()->arg2 = 0;
+
 		core.skip_m2 = FALSE;
 		if(returns.ivalue[0] == 3) { // End Phase
 			core.skip_m2 = TRUE;
 		}
-		//Main2
+		// 主要阶段2：开始第二个主要阶段
 		infos.phase = PHASE_MAIN2;
 		core.phase_action = FALSE;
 		raise_event(nullptr, EVENT_PHASE_START + PHASE_MAIN2, 0, 0, 0, turn_player, 0);
@@ -3932,11 +3987,13 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 13: {
+		// 处理主阶段2的连锁事件
 		if(core.new_fchain.size() || core.new_ochain.size())
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		return FALSE;
 	}
 	case 14: {
+		// 清理连锁容器并进入空闲命令处理器（结束阶段前）
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
@@ -3948,7 +4005,7 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 15: {
-		//End Phase
+		// 结束阶段：开始回合结束阶段并检查跳过效果
 		infos.phase = PHASE_END;
 		core.phase_action = FALSE;
 		if(is_player_affected_by_effect(infos.turn_player, EFFECT_SKIP_EP)) {
@@ -3965,11 +4022,13 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 16: {
+		// 处理结束阶段的连锁事件
 		if(core.new_fchain.size() || core.new_ochain.size())
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		return FALSE;
 	}
 	case 17: {
+		// 清理连锁容器并处理结束阶段事件
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
@@ -3978,12 +4037,14 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 		return FALSE;
 	}
 	case 18: {
+		// 触发回合结束事件
 		raise_event(nullptr, EVENT_TURN_END, 0, 0, 0, turn_player, 0);
 		process_instant_event();
 		adjust_all();
 		return FALSE;
 	}
 	case 19: {
+		// 清理连锁容器并准备下一回合
 		core.new_fchain.clear();
 		core.new_ochain.clear();
 		core.quick_f_chain.clear();
@@ -3995,34 +4056,59 @@ int32_t field::process_turn(uint16_t step, uint8_t turn_player) {
 	}
 	return TRUE;
 }
+
+/**
+ * @brief 处理连锁的添加过程
+ *
+ * 该函数负责将新发动的效果添加到连锁中，包括处理发动cost、移动卡片、设置连锁状态等操作。
+ * 连锁添加过程分为多个步骤，每个步骤处理不同的阶段，如cost处理、位置调整、取对象选择等。
+ *
+ * @param step 当前处理步骤
+ * @return int32_t 处理结果，TRUE表示处理完成，FALSE表示需要继续处理
+ */
 int32_t field::add_chain(uint16_t step) {
 	switch (step) {
 	case 0: {
+		// 如果没有新的连锁需要处理，则直接返回TRUE结束
 		if (!core.new_chains.size())
 			return TRUE;
+
+		// 获取第一个待处理的连锁
 		auto& clit = core.new_chains.front();
-		effect* peffect = clit.triggering_effect;
-		card* phandler = peffect->get_handler();
+		effect* peffect = clit.triggering_effect;  // 获取发动的效果
+		card* phandler = peffect->get_handler();   // 获取效果持有者卡片
+
+		// 处理发动cost(EFFECT_ACTIVATE_COST)
 		effect_set eset;
 		filter_player_effect(clit.triggering_player, EFFECT_ACTIVATE_COST, &eset);
 		for(effect_set::size_type i = 0; i < eset.size(); ++i) {
+			// 添加参数并检查条件
 			pduel->lua->add_param(eset[i], PARAM_TYPE_EFFECT);
 			pduel->lua->add_param(clit.triggering_effect, PARAM_TYPE_EFFECT);
 			pduel->lua->add_param(clit.triggering_player, PARAM_TYPE_INT);
 			if(!pduel->lua->check_condition(eset[i]->target, 3))
 				continue;
+			// 如果有条件且有操作，则执行操作
 			if(eset[i]->operation) {
 				core.sub_solving_event.push_back(clit.evt);
 				add_process(PROCESSOR_EXECUTE_OPERATION, 0, eset[i], 0, clit.triggering_player, 0);
 			}
 		}
+
+		// 如果是卡的发动类型的效果
 		if(peffect->type & EFFECT_TYPE_ACTIVATE) {
+			// 获取手牌或场地设置所需的效果
 			if(peffect->get_required_handorset_effects(&clit.required_handorset_effects, clit.triggering_player, clit.evt) != 2) {
 				clit.required_handorset_effects.clear();
 			}
+
+			// 如果卡片在手牌中
 			if(phandler->current.location == LOCATION_HAND) {
-				uint32_t zone = 0xff;
+				uint32_t zone = 0xff;  // 默认可放置区域
+
+				// 如果不是场地卡或钟摆卡，且有限制区域标志
 				if(!(phandler->data.type & (TYPE_FIELD | TYPE_PENDULUM)) && peffect->is_flag(EFFECT_FLAG_LIMIT_ZONE)) {
+					// 添加参数计算可用区域
 					pduel->lua->add_param(clit.triggering_player, PARAM_TYPE_INT);
 					pduel->lua->add_param(clit.evt.event_cards , PARAM_TYPE_GROUP);
 					pduel->lua->add_param(clit.evt.event_player, PARAM_TYPE_INT);
@@ -4034,12 +4120,19 @@ int32_t field::add_chain(uint16_t step) {
 					if(!zone)
 						zone = 0xff;
 				}
+
+				// 禁用手牌效果，设置从手发动状态
 				phandler->enable_field_effect(false);
 				phandler->set_status(STATUS_ACT_FROM_HAND, TRUE);
+
+				// 场地卡只能放在特定区域
 				if(phandler->data.type & TYPE_FIELD)
 					zone = 0x1U << 5;
+
+				// 移动卡片到场上
 				move_to_field(phandler, phandler->current.controler, phandler->current.controler, LOCATION_SZONE, POS_FACEUP, FALSE, 0, (phandler->data.type & TYPE_PENDULUM) ? TRUE : FALSE, zone);
 			} else {
+				// 如果不在手牌中，清除从手牌发动状态，并改为表侧表示
 				phandler->set_status(STATUS_ACT_FROM_HAND, FALSE);
 				change_position(phandler, 0, phandler->current.controler, POS_FACEUP, 0);
 			}
@@ -4047,32 +4140,47 @@ int32_t field::add_chain(uint16_t step) {
 		return FALSE;
 	}
 	case 1: {
+		// 获取当前处理的连锁
 		auto& clit = core.new_chains.front();
 		effect* peffect = clit.triggering_effect;
 		card* phandler = peffect->get_handler();
+
+		// 刷新卡片的禁用状态
 		phandler->refresh_disable_status();
+
+		// 如果是卡的发动类型效果，更新发动状态
 		if(peffect->type & EFFECT_TYPE_ACTIVATE) {
 			clit.set_triggering_state(phandler);
 		}
+
+		// 向客户端发送连锁消息
 		pduel->write_buffer8(MSG_CHAINING);
-		pduel->write_buffer32(phandler->data.code);
-		pduel->write_buffer32(phandler->get_info_location());
-		pduel->write_buffer8(clit.triggering_controler);
-		pduel->write_buffer8((uint8_t)clit.triggering_location);
-		pduel->write_buffer8(clit.triggering_sequence);
-		pduel->write_buffer32(peffect->description);
-		pduel->write_buffer8((uint8_t)core.current_chain.size() + 1);
+		pduel->write_buffer32(phandler->data.code);           // 卡片密码
+		pduel->write_buffer32(phandler->get_info_location()); // 卡片位置
+		pduel->write_buffer8(clit.triggering_controler);      // 诱发的玩家
+		pduel->write_buffer8((uint8_t)clit.triggering_location); // 诱发位置
+		pduel->write_buffer8(clit.triggering_sequence);       // 诱发序号
+		pduel->write_buffer32(peffect->description);          // 效果描述
+		pduel->write_buffer8((uint8_t)core.current_chain.size() + 1); // 连锁序号
+
+		// 清除连锁限制
 		for(auto& ch_lim : core.chain_limit)
 			luaL_unref(pduel->lua->lua_state, LUA_REGISTRYINDEX, ch_lim.function);
 		core.chain_limit.clear();
+
+		// 设置效果类型
 		peffect->card_type = phandler->get_type();
 		if((peffect->card_type & (TYPE_TRAP | TYPE_MONSTER)) == (TYPE_TRAP | TYPE_MONSTER))
 			peffect->card_type -= TYPE_TRAP;
 		peffect->set_active_type();
+
+		// 处理叠置素材效果
 		if (peffect->type & EFFECT_TYPE_XMATERIAL) {
 			peffect->active_handler = peffect->handler->overlay_target;
 			peffect->last_handler = peffect->handler->overlay_target;
 		}
+
+		// 设置连锁属性
 		clit.chain_count = (uint8_t)core.current_chain.size() + 1;
 		clit.target_cards = 0;
 		clit.target_player = PLAYER_NONE;
@@ -4080,18 +4188,28 @@ int32_t field::add_chain(uint16_t step) {
 		clit.disable_reason = 0;
 		clit.disable_player = PLAYER_NONE;
 		clit.replace_op = 0;
+
+		// 如果从手牌发动，设置相应标志
 		if(phandler->current.location == LOCATION_HAND)
 			clit.flag |= CHAIN_HAND_EFFECT;
+
+		// 将连锁添加到当前连锁列表
 		core.current_chain.push_back(clit);
 		core.is_target_ready = false;
+
+		// 检查连锁计数
 		check_chain_counter(peffect, clit.triggering_player, clit.chain_count);
-		// triggered events which are not caused by event create relation with the handler
-		if(!peffect->is_flag(EFFECT_FLAG_FIELD_ONLY) 
+
+		// 为非事件诱发的效果创建关系
+		if(!peffect->is_flag(EFFECT_FLAG_FIELD_ONLY)
 			&& (!(peffect->type & (EFFECT_TYPE_TRIGGER_F | EFFECT_TYPE_TRIGGER_O)) || peffect->get_code_type() == CODE_PHASE)) {
 			phandler->create_relation(clit);
 		}
+
+		// 设置效果拥有者
 		peffect->effect_owner = clit.triggering_player;
-		// DISABLE_CHAIN should be check before cost
+
+		// 检查禁用效果
 		effect* deffect;
 		if(!peffect->is_flag(EFFECT_FLAG_FIELD_ONLY) && phandler->is_has_relation(clit) && (deffect = phandler->is_affected_by_effect(EFFECT_DISABLE_EFFECT))) {
 			effect* negeff = pduel->new_effect();
@@ -4102,32 +4220,42 @@ int32_t field::add_chain(uint16_t step) {
 			negeff->reset_flag = RESET_CHAIN | RESET_EVENT | deffect->get_value();
 			phandler->add_effect(negeff);
 		}
+
+		// 从新连锁列表中移除已处理的连锁
 		core.new_chains.pop_front();
 		return FALSE;
 	}
 	case 2: {
+		// 获取当前连锁
 		auto& clit = core.current_chain.back();
 		int32_t playerid = clit.triggering_player;
 		effect* peffect = clit.triggering_effect;
+
+		// 检查是否存在CEFFECT（手牌或场地区域设置效果）
 		if(get_cteffect(peffect, playerid, TRUE)) {
+			// 检查是否在伤害步骤且效果不允许在伤害步骤使用
 			const bool damage_step = infos.phase == PHASE_DAMAGE && !peffect->is_flag(EFFECT_FLAG_DAMAGE_STEP);
 			const bool damage_cal = infos.phase == PHASE_DAMAGE_CAL && !peffect->is_flag(EFFECT_FLAG_DAMAGE_CAL);
 			if(damage_step || damage_cal) {
 				returns.ivalue[0] = TRUE;
 				return FALSE;
 			}
+			// 询问玩家是否使用CEFFECT
 			add_process(PROCESSOR_SELECT_EFFECTYN, 0, 0, (group*)peffect->get_handler(), playerid, 94);
 		} else
 			returns.ivalue[0] = FALSE;
 		return FALSE;
 	}
 	case 3: {
+		// 如果玩家选择不使用CEFFECT
 		if(!returns.ivalue[0]) {
 			core.select_chains.clear();
 			core.select_options.clear();
 			core.units.begin()->step = 4;
 			return FALSE;
 		}
+
+		// 如果有多个CEFFECT选项，让玩家选择
 		if(core.select_chains.size() > 1) {
 			auto& clit = core.current_chain.back();
 			add_process(PROCESSOR_SELECT_OPTION, 0, 0, 0, clit.triggering_player, 0);
@@ -4136,25 +4264,37 @@ int32_t field::add_chain(uint16_t step) {
 		return FALSE;
 	}
 	case 4: {
+		// 处理CEFFECT选择结果
 		auto& clit = core.current_chain.back();
 		chain& ch = core.select_chains[returns.ivalue[0]];
 		int32_t playerid = clit.triggering_player;
 		effect* peffect = ch.triggering_effect;
 		card* phandler = peffect->get_handler();
+
+		// 发送选择提示消息
 		pduel->write_buffer8(MSG_HINT);
 		pduel->write_buffer8(HINT_OPSELECTED);
 		pduel->write_buffer8(playerid);
 		pduel->write_buffer32(core.select_options.size() > 1 ? core.select_options[returns.ivalue[0]] : 65);
+
+		// 更新连锁效果和事件
 		clit.triggering_effect = peffect;
 		clit.evt = ch.evt;
 		phandler->create_relation(clit);
+		peffect->set_active_type();
 		peffect->dec_count(playerid);
+
+		// 如果不是卡的发动类型效果，添加发动标志
 		if(!(peffect->type & EFFECT_TYPE_ACTIVATE)) {
 			peffect->type |= EFFECT_TYPE_ACTIVATE;
 			clit.flag |= CHAIN_ACTIVATING;
 		}
+
+		// 清理选择项
 		core.select_chains.clear();
 		core.select_options.clear();
+
+		// 添加客户端提示效果
 		effect* deffect = pduel->new_effect();
 		deffect->owner = phandler;
 		deffect->code = 0;
@@ -4166,16 +4306,19 @@ int32_t field::add_chain(uint16_t step) {
 		return FALSE;
 	}
 	case 5: {
+		// 处理必需的手牌或场地设置效果
 		auto& clit = core.current_chain.back();
 		if (!clit.required_handorset_effects.size()) {
 			core.units.begin()->step = 6;
 			return FALSE;
 		}
+
+		// 如果只有一个必需效果，直接使用
 		if(clit.required_handorset_effects.size() == 1) {
 			returns.ivalue[0] = 0;
 			return FALSE;
 		} else {
-			// check if there's only one type of ceffects
+			// 检查是否所有效果都是同一种类型
 			auto peffect = clit.triggering_effect;
 			auto playerid = clit.triggering_player;
 			int32_t ceffect_unique_id = 0;
@@ -4192,11 +4335,13 @@ int32_t field::add_chain(uint16_t step) {
 				}
 			}
 			if (ceffect_unique_id) {
-				// all ceffects are the same type, so skip asking
+				// 所有效果相同，无需选择
 				returns.ivalue[0] = 0;
 				return FALSE;
 			}
 		}
+
+		// 让玩家选择必需效果
 		core.select_options.clear();
 		for(effect_set::size_type i = 0; i < clit.required_handorset_effects.size(); ++i) {
 			core.select_options.push_back(clit.required_handorset_effects[i]->description);
@@ -4205,15 +4350,20 @@ int32_t field::add_chain(uint16_t step) {
 		return FALSE;
 	}
 	case 6: {
+		// 执行选择的必需效果
 		auto& clit = core.current_chain.back();
 		auto ceffect = clit.required_handorset_effects[returns.ivalue[0]];
 		ceffect->dec_count(clit.triggering_player);
+
+		// 发送选择提示
 		if(ceffect->description) {
 			pduel->write_buffer8(MSG_HINT);
 			pduel->write_buffer8(HINT_OPSELECTED);
 			pduel->write_buffer8(clit.triggering_player);
 			pduel->write_buffer32(ceffect->description);
 		}
+
+		// 执行支付cost步骤
 		if(ceffect->cost) {
 			pduel->lua->add_param(clit.triggering_effect, PARAM_TYPE_EFFECT);
 			core.sub_solving_event.push_back(clit.evt);
@@ -4222,6 +4372,7 @@ int32_t field::add_chain(uint16_t step) {
 		return FALSE;
 	}
 	case 7: {
+		// 支付主要效果的cost
 		auto& clit = core.current_chain.back();
 		effect* peffect = clit.triggering_effect;
 		peffect->cost_checked = TRUE;
@@ -4232,6 +4383,7 @@ int32_t field::add_chain(uint16_t step) {
 		return FALSE;
 	}
 	case 8: {
+		// 执行选择主要效果的发动对象
 		auto& clit = core.current_chain.back();
 		effect* peffect = clit.triggering_effect;
 		if(peffect->target) {
@@ -4241,12 +4393,15 @@ int32_t field::add_chain(uint16_t step) {
 		return FALSE;
 	}
 	case 9: {
+		// 连锁添加完成后的处理
 		break_effect();
 		core.is_target_ready = true;
 		auto& clit = core.current_chain.back();
 		effect* peffect = clit.triggering_effect;
 		peffect->cost_checked = FALSE;
 		card* phandler = peffect->get_handler();
+
+		// 处理作为对象的卡片成为目标事件
 		if(clit.target_cards && clit.target_cards->container.size()) {
 			if(peffect->is_flag(EFFECT_FLAG_CARD_TARGET)) {
 				for(auto& pcard : clit.target_cards->container)
@@ -4256,29 +4411,42 @@ int32_t field::add_chain(uint16_t step) {
 					raise_event(clit.target_cards->container, EVENT_BECOME_TARGET, peffect, 0, clit.triggering_player, clit.triggering_player, clit.chain_count);
 			}
 		}
+
+		// 处理发动的卡片的离场确认
 		if(peffect->type & EFFECT_TYPE_ACTIVATE) {
 			core.leave_confirmed.insert(phandler);
 			if(!(phandler->data.type & (TYPE_CONTINUOUS | TYPE_FIELD | TYPE_EQUIP | TYPE_PENDULUM))
 			        && !phandler->is_affected_by_effect(EFFECT_REMAIN_FIELD))
 				phandler->set_status(STATUS_LEAVE_CONFIRMED, TRUE);
 		}
+
+		// 设置连续卡片标志
 		if((phandler->get_type() & (TYPE_SPELL | TYPE_TRAP))
 				&& (phandler->get_type() & (TYPE_CONTINUOUS | TYPE_FIELD | TYPE_EQUIP | TYPE_PENDULUM))
 				&& phandler->is_has_relation(clit) && phandler->current.location == LOCATION_SZONE
 				&& !peffect->is_flag(EFFECT_FLAG_FIELD_ONLY))
 			clit.flag |= CHAIN_CONTINUOUS_CARD;
+
+		// 发送连锁完成消息
 		pduel->write_buffer8(MSG_CHAINED);
 		pduel->write_buffer8(clit.chain_count);
+
+		// 诱发连锁事件
 		raise_event(phandler, EVENT_CHAINING, peffect, 0, clit.triggering_player, clit.triggering_player, clit.chain_count);
 		process_instant_event();
+
+		// 如果还有新的连锁需要处理，继续添加
 		if(core.new_chains.size())
 			add_process(PROCESSOR_ADD_CHAIN, 0, 0, 0, 0, 0);
+
+		// 调整所有状态
 		adjust_all();
 		return TRUE;
 	}
 	}
 	return TRUE;
 }
+
 void field::solve_continuous(uint8_t playerid, effect* peffect, const tevent& e) {
 	chain newchain;
 	newchain.chain_id = 0;

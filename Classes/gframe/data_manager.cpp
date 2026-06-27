@@ -1,106 +1,203 @@
 #include "data_manager.h"
 #include "game.h"
-#include "spmemvfs/spmemvfs.h"
+#include "client_card.h"
 
 namespace ygo {
 
-const wchar_t* DataManager::unknown_string = L"???";
-unsigned char DataManager::scriptBuffer[0x100000] = {};
-irr::io::IFileSystem* DataManager::FileSystem = nullptr;
+namespace{
+	unsigned char scriptBuffer[0x100000]{};
+}
+
 DataManager dataManager;
 
-DataManager::DataManager() : _datas(32768), _strings(32768) {
-	extra_setcode = { {8512558u, {0x8f, 0x54, 0x59, 0x82, 0x13a}}, };
+/**
+ * @brief SQL查询语句，用于从数据库中获取卡片数据和文本信息
+ *
+ * 该查询语句通过INNER JOIN连接datas表和texts表，获取完整的卡片信息：
+ * - datas表包含：卡片ID、OCG/TCG限制、别名、字段码、类型、攻击力、守备力、等级、种族、属性、分类
+ * - texts表包含：卡片名称、描述、16个额外描述字段(str1-str16)
+ *
+ * 查询结果按照卡片ID进行匹配，确保每张卡片的数据和文本信息能够正确关联
+ */
+static const char SELECT_STMT[] = "SELECT datas.id, datas.ot, datas.alias, datas.setcode, datas.type, datas.atk, datas.def, datas.level, datas.race, datas.attribute, datas.category,"
+" texts.name, texts.desc, texts.str1, texts.str2, texts.str3, texts.str4, texts.str5, texts.str6, texts.str7, texts.str8,"
+" texts.str9, texts.str10, texts.str11, texts.str12, texts.str13, texts.str14, texts.str15, texts.str16 FROM datas INNER JOIN texts ON datas.id = texts.id";
+static constexpr int DATAS_COUNT = 11;
+
+static constexpr int CARD_ARTWORK_VERSIONS_OFFSET = 20;
+static inline bool is_alternative(uint32_t code, uint32_t alias) {
+	return alias && (alias < code + CARD_ARTWORK_VERSIONS_OFFSET) && (code < alias + CARD_ARTWORK_VERSIONS_OFFSET);
 }
+/**
+ * @brief DataManager构造函数
+ * @details 初始化DataManager对象，预分配数据容器和字符串容器的容量，
+ *          并初始化额外的设置码映射表：拟声希望皇和拟声蜥蜴
+ */
+DataManager::DataManager() : _datas(32768), _strings(32768) {
+	// 初始化额外设置码映射表，包含拟声希望皇和拟声蜥蜴的5字段setcode集合（因cdb最多4个字段，在此重新设置）
+	extra_setcode = {
+		{8512558u, {0x8f, 0x54, 0x59, 0x82, 0x13a}},
+		{55088578u, {0x8f, 0x54, 0x59, 0x82, 0x13a}},
+	};
+}
+
+/**
+ * @brief 从指定的 SQLite 数据库中读取卡牌数据并填充到内部数据结构中。
+ *
+ * 此函数执行一个预定义的 SQL 查询语句（SELECT_STMT），遍历查询结果，
+ * 并将每条记录解析为卡牌数据和字符串信息，分别存储在 [_datas](file://D:\YGOPro_New_Master_Rule\YGOMobile-cn-ko-en\Classes\gframe\data_manager.h#L123-L123) 和 [_strings](file://D:\YGOPro_New_Master_Rule\YGOMobile-cn-ko-en\Classes\gframe\data_manager.h#L124-L124) 中。
+ * 同时处理额外的 setcode 数据。
+ *
+ * @param pDB 指向已打开的 SQLite 数据库对象的指针。
+ * @return 成功读取并处理所有数据时返回 true；若发生错误则调用 Error 函数并返回其结果。
+ */
 bool DataManager::ReadDB(sqlite3* pDB) {
 	sqlite3_stmt* pStmt = nullptr;
-	const char* sql = "select * from datas,texts where datas.id=texts.id";
-	if (sqlite3_prepare_v2(pDB, sql, -1, &pStmt, 0) != SQLITE_OK)
+	int texts_offset = DATAS_COUNT;
+	// 准备 SQL 查询语句
+	if (sqlite3_prepare_v2(pDB, SELECT_STMT, -1, &pStmt, nullptr) != SQLITE_OK)
 		return Error(pDB, pStmt);
+
 	wchar_t strBuffer[4096];
-	int step = 0;
-	do {
-		CardDataC cd;
-		CardString cs;
-		step = sqlite3_step(pStmt);
-		if (step == SQLITE_ROW) {
-			cd.code = sqlite3_column_int(pStmt, 0);
-			cd.ot = sqlite3_column_int(pStmt, 1);
-			cd.alias = sqlite3_column_int(pStmt, 2);
-			uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
-			if (setcode) {
-				auto it = extra_setcode.find(cd.code);
-				if (it != extra_setcode.end()) {
-					int len = it->second.size();
-					if (len > SIZE_SETCODE)
-						len = SIZE_SETCODE;
-					if (len)
-						std::memcpy(cd.setcode, it->second.data(), len * sizeof(uint16_t));
-				}
-				else
-					cd.set_setcode(setcode);
-			}
-			cd.type = static_cast<decltype(cd.type)>(sqlite3_column_int64(pStmt, 4));
-			cd.attack = sqlite3_column_int(pStmt, 5);
-			cd.defense = sqlite3_column_int(pStmt, 6);
-			if (cd.type & TYPE_LINK) {
-				cd.link_marker = cd.defense;
-				cd.defense = 0;
-			}
-			else
-				cd.link_marker = 0;
-			uint32_t level = static_cast<uint32_t>(sqlite3_column_int(pStmt, 7));
-			cd.level = level & 0xff;
-			cd.lscale = (level >> 24) & 0xff;
-			cd.rscale = (level >> 16) & 0xff;
-			cd.race = static_cast<decltype(cd.race)>(sqlite3_column_int64(pStmt, 8));
-			cd.attribute = static_cast<decltype(cd.attribute)>(sqlite3_column_int64(pStmt, 9));
-			cd.category = static_cast<decltype(cd.category)>(sqlite3_column_int64(pStmt, 10));
-			_datas[cd.code] = cd;
-			if (const char* text = (const char*)sqlite3_column_text(pStmt, 12)) {
-				BufferIO::DecodeUTF8(text, strBuffer);
-				cs.name = strBuffer;
-			}
-			if (const char* text = (const char*)sqlite3_column_text(pStmt, 13)) {
-				BufferIO::DecodeUTF8(text, strBuffer);
-				cs.text = strBuffer;
-			}
-			constexpr int desc_count = sizeof cs.desc / sizeof cs.desc[0];
-			for (int i = 0; i < desc_count; ++i) {
-				if (const char* text = (const char*)sqlite3_column_text(pStmt, i + 14)) {
-					BufferIO::DecodeUTF8(text, strBuffer);
-					cs.desc[i] = strBuffer;
-				}
-			}
-			_strings[cd.code] = cs;
-		}
-		else if (step != SQLITE_DONE)
+
+	// 遍历查询结果中的每一行
+	for (int step = sqlite3_step(pStmt); step != SQLITE_DONE; step = sqlite3_step(pStmt)) {
+		if (step != SQLITE_ROW)
 			return Error(pDB, pStmt);
-	} while (step == SQLITE_ROW);
+
+		// 提取基本字段数据
+		uint32_t code = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 0));
+		auto& cd = _datas[code];
+		cd.code = code;
+		cd.ot = sqlite3_column_int(pStmt, 1);
+		cd.alias = sqlite3_column_int(pStmt, 2);
+		uint64_t setcode = static_cast<uint64_t>(sqlite3_column_int64(pStmt, 3));
+		write_setcode(cd.setcode, setcode);
+		cd.type = static_cast<decltype(cd.type)>(sqlite3_column_int64(pStmt, 4));
+		cd.attack = sqlite3_column_int(pStmt, 5);
+		cd.defense = sqlite3_column_int(pStmt, 6);
+
+		// 处理连接怪兽特殊逻辑：link_marker 存储在 defense 字段中
+		if (cd.type & TYPE_LINK) {
+			cd.link_marker = cd.defense;
+			cd.defense = 0;
+		}
+		else
+			cd.link_marker = 0;
+
+		// 解析等级、左右刻度等复合字段
+		uint32_t level = static_cast<uint32_t>(sqlite3_column_int64(pStmt, 7));
+		cd.level = level & 0xff;
+		cd.lscale = (level >> 24) & 0xff;
+		cd.rscale = (level >> 16) & 0xff;
+
+		// 其他基础属性
+		cd.race = static_cast<decltype(cd.race)>(sqlite3_column_int64(pStmt, 8));
+		cd.attribute = static_cast<decltype(cd.attribute)>(sqlite3_column_int64(pStmt, 9));
+		cd.category = static_cast<decltype(cd.category)>(sqlite3_column_int64(pStmt, 10));
+		// rule_code
+		if (cd.code == 5405695) {
+			cd.rule_code = cd.alias;
+			cd.alias = 0;
+		}
+		else if (cd.alias && !(cd.type & TYPE_TOKEN) && !is_alternative(cd.code, cd.alias)) {
+			cd.rule_code = cd.alias;
+			cd.alias = 0;
+		}
+		auto& cs = _strings[code];
+		if (const char* text = (const char*)sqlite3_column_text(pStmt, texts_offset + 0)) {
+			BufferIO::DecodeUTF8(text, strBuffer);
+			cs.name = strBuffer;
+		}
+		if (const char* text = (const char*)sqlite3_column_text(pStmt, texts_offset + 1)) {
+			BufferIO::DecodeUTF8(text, strBuffer);
+			cs.text = strBuffer;
+		}
+
+		// 解码多个描述字段
+		for (int i = 0; i < DESC_COUNT; ++i) {
+			if (const char* text = (const char*)sqlite3_column_text(pStmt, (texts_offset + 2) + i)) {
+				BufferIO::DecodeUTF8(text, strBuffer);
+				cs.desc[i] = strBuffer;
+			}
+		}
+	}
+
+	// 清理 SQL 语句资源
 	sqlite3_finalize(pStmt);
+	for (auto& entry : _datas) {
+		auto& cd = entry.second;
+		if (cd.rule_code || !cd.alias || (cd.type & TYPE_TOKEN))
+			continue;
+		auto it = _datas.find(cd.alias);
+		if (it == _datas.end())
+			continue;
+		cd.rule_code = it->second.rule_code;
+	}
+	for (const auto& entry : extra_setcode) {
+		const auto& code = entry.first;
+		const auto& list = entry.second;
+
+		// 忽略无效或超出大小限制的数据
+		if (list.size() > SIZE_SETCODE || list.empty())
+			continue;
+
+		auto it = _datas.find(code);
+		if (it == _datas.end())
+			continue;
+
+		// 将额外的 setcode 写入对应卡牌数据
+		std::memcpy(it->second.setcode, list.data(), list.size() * sizeof(uint16_t));
+	}
+
 	return true;
 }
-bool DataManager::LoadDB(const wchar_t* wfile) {
-	char file[256];
-	BufferIO::EncodeUTF8(wfile, file);
-	auto reader = FileSystem->createAndOpenFile(file);
-	if(reader == nullptr)
+bool DataManager::LoadDB(const char* file) {
+	auto reader = IrrFileSystem->createAndOpenFile(file);
+	if (reader == nullptr) {
+		mysnprintf(errmsg, "File does not exist or failed to unzip: %s", file);
 		return false;
-	spmemvfs_db_t db;
-	spmembuffer_t* mem = (spmembuffer_t*)std::calloc(sizeof(spmembuffer_t), 1);
-	spmemvfs_env_init();
-	mem->total = mem->used = reader->getSize();
-	mem->data = (char*)std::malloc(mem->total + 1);
-	reader->read(mem->data, mem->total);
+	}
+
+	sqlite3* db_handle = nullptr;
+	if (sqlite3_open(":memory:", &db_handle) != SQLITE_OK) {
+		Error(db_handle, nullptr);
+		sqlite3_close(db_handle);
+		reader->drop();
+		return false;
+	}
+
+	sqlite3_int64 sz = reader->getSize();
+	unsigned char* buffer = (unsigned char*)sqlite3_malloc64(sz);
+	if (!buffer) {
+		Error(db_handle, nullptr);
+		sqlite3_close(db_handle);
+		reader->drop();
+		return false;
+	}
+
+	reader->read(buffer, sz);
 	reader->drop();
-	(mem->data)[mem->total] = '\0';
-	bool ret{};
-	if (spmemvfs_open_db(&db, file, mem) != SQLITE_OK)
-		ret = Error(db.handle);
-	else
-		ret = ReadDB(db.handle);
-	spmemvfs_close_db(&db);
-	spmemvfs_env_fini();
+	// force rollback-journal mode by setting header bytes 18 and 19 to 0x01
+	if (sz >= 20 && buffer[18] == 0x02) {
+		buffer[18] = 0x01;
+		buffer[19] = 0x01;
+	}
+	int rc = sqlite3_deserialize(
+		db_handle,
+		nullptr,
+		buffer,
+		sz,
+		sz,
+		SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_READONLY
+	);
+	if (rc != SQLITE_OK) {
+		Error(db_handle, nullptr);
+		sqlite3_close(db_handle);
+		return false;
+	}
+	bool ret = ReadDB(db_handle);
+	sqlite3_close(db_handle);
 	return ret;
 }
 bool DataManager::LoadStrings(const char* file) {
@@ -126,6 +223,9 @@ bool DataManager::LoadStrings(irr::io::IReadFile* reader) {
 			linebuf.clear();
 		}
 	}
+	if (!linebuf.empty()) {
+		ReadStringConfLine(linebuf.data());
+	}
 	reader->drop();
 	return true;
 }
@@ -133,20 +233,20 @@ void DataManager::ReadStringConfLine(const char* linebuf) {
 	if(linebuf[0] != '!')
 		return;
 	char strbuf[TEXT_LINE_SIZE]{};
-	int value{};
+	uint32_t value{};
 	wchar_t strBuffer[4096]{};
 	if (std::sscanf(linebuf, "!%63s", strbuf) != 1)
 		return;
 	if(!std::strcmp(strbuf, "system")) {
-		if (std::sscanf(&linebuf[7], "%d %240[^\n]", &value, strbuf) != 2)
+		if (std::sscanf(&linebuf[7], "%u %240[^\n]", &value, strbuf) != 2)
 			return;
 		BufferIO::DecodeUTF8(strbuf, strBuffer);
-		_sysStrings[value] = strBuffer;
+		_sysStrings.emplace(value, strBuffer);
 	} else if(!std::strcmp(strbuf, "victory")) {
 		if (std::sscanf(&linebuf[8], "%x %240[^\n]", &value, strbuf) != 2)
 			return;
 		BufferIO::DecodeUTF8(strbuf, strBuffer);
-		_victoryStrings[value] = strBuffer;
+		_victoryStrings.emplace(value, strBuffer);
 	} else if(!std::strcmp(strbuf, "counter")) {
 		if (std::sscanf(&linebuf[8], "%x %240[^\n]", &value, strbuf) != 2)
 			return;
@@ -161,40 +261,29 @@ void DataManager::ReadStringConfLine(const char* linebuf) {
 	}
 }
 bool DataManager::Error(sqlite3* pDB, sqlite3_stmt* pStmt) {
-	std::snprintf(errmsg, sizeof errmsg, "%s", sqlite3_errmsg(pDB));
-	if(pStmt)
-		sqlite3_finalize(pStmt);
-    ALOGE("cc data_manager: cdb Error=", errmsg);
+	if (const char* msg = sqlite3_errmsg(pDB))
+		mysnprintf(errmsg, "sqlite3_errmsg: %s", msg);
+	else
+		errmsg[0] = '\0';
+	sqlite3_finalize(pStmt);
 	return false;
 }
-code_pointer DataManager::GetCodePointer(unsigned int code) const {
+code_pointer DataManager::GetCodePointer(uint32_t code) const {
 	return _datas.find(code);
 }
-string_pointer DataManager::GetStringPointer(unsigned int code) const {
+string_pointer DataManager::GetStringPointer(uint32_t code) const {
 	return _strings.find(code);
 }
-code_pointer DataManager::datas_begin() const {
-	return _datas.cbegin();
-}
-code_pointer DataManager::datas_end() const {
-	return _datas.cend();
-}
-string_pointer DataManager::strings_begin() const {
-	return _strings.cbegin();
-}
-string_pointer DataManager::strings_end() const {
-	return _strings.cend();
-}
-bool DataManager::GetData(unsigned int code, CardData* pData) const {
+bool DataManager::GetData(uint32_t code, CardData* pData) const {
 	auto cdit = _datas.find(code);
 	if(cdit == _datas.end())
 		return false;
 	if (pData) {
-		*pData = cdit->second;
+		std::memcpy(pData, &cdit->second, sizeof(CardData));
 	}
 	return true;
 }
-bool DataManager::GetString(unsigned int code, CardString* pStr) const {
+bool DataManager::GetString(uint32_t code, CardString* pStr) const {
 	auto csit = _strings.find(code);
 	if(csit == _strings.end()) {
 		pStr->name = unknown_string;
@@ -204,7 +293,7 @@ bool DataManager::GetString(unsigned int code, CardString* pStr) const {
 	*pStr = csit->second;
 	return true;
 }
-const wchar_t* DataManager::GetName(unsigned int code) const {
+const wchar_t* DataManager::GetName(uint32_t code) const {
 	auto csit = _strings.find(code);
 	if(csit == _strings.end())
 		return unknown_string;
@@ -212,7 +301,7 @@ const wchar_t* DataManager::GetName(unsigned int code) const {
 		return csit->second.name.c_str();
 	return unknown_string;
 }
-const wchar_t* DataManager::GetText(unsigned int code) const {
+const wchar_t* DataManager::GetText(uint32_t code) const {
 	auto csit = _strings.find(code);
 	if(csit == _strings.end())
 		return unknown_string;
@@ -220,8 +309,8 @@ const wchar_t* DataManager::GetText(unsigned int code) const {
 		return csit->second.text.c_str();
 	return unknown_string;
 }
-const wchar_t* DataManager::GetDesc(unsigned int strCode) const {
-	if (strCode < (MIN_CARD_ID << 4))
+const wchar_t* DataManager::GetDesc(uint32_t strCode) const {
+	if (strCode <= MAX_STRING_ID)
 		return GetSysString(strCode);
 	unsigned int code = (strCode >> 4) & 0x0fffffff;
 	unsigned int offset = strCode & 0xf;
@@ -232,45 +321,51 @@ const wchar_t* DataManager::GetDesc(unsigned int strCode) const {
 		return csit->second.desc[offset].c_str();
 	return unknown_string;
 }
-const wchar_t* DataManager::GetSysString(int code) const {
-	if (code < 0 || code > MAX_STRING_ID)
-		return unknown_string;
-	auto csit = _sysStrings.find(code);
-	if(csit == _sysStrings.end())
+const wchar_t* DataManager::GetMapString(const wstring_map& table, uint32_t code) const {
+	auto csit = table.find(code);
+	if (csit == table.end())
 		return unknown_string;
 	return csit->second.c_str();
 }
-const wchar_t* DataManager::GetVictoryString(int code) const {
-	auto csit = _victoryStrings.find(code);
-	if(csit == _victoryStrings.end())
-		return unknown_string;
-	return csit->second.c_str();
+const wchar_t* DataManager::GetSysString(uint32_t code) const {
+	return GetMapString(_sysStrings, code);
 }
-const wchar_t* DataManager::GetCounterName(int code) const {
-	auto csit = _counterStrings.find(code);
-	if(csit == _counterStrings.end())
-		return unknown_string;
-	return csit->second.c_str();
+const wchar_t* DataManager::GetVictoryString(uint32_t code) const {
+	return GetMapString(_victoryStrings, code);
 }
-const wchar_t* DataManager::GetSetName(int code) const {
-	auto csit = _setnameStrings.find(code);
-	if(csit == _setnameStrings.end())
-		return unknown_string;
-	return csit->second.c_str();
+const wchar_t* DataManager::GetCounterName(uint32_t code) const {
+	return GetMapString(_counterStrings, code);
 }
-std::vector<unsigned int> DataManager::GetSetCodes(std::wstring setname) const {
-	std::vector<unsigned int> matchingCodes;
+const wchar_t* DataManager::GetSetName(uint32_t code) const {
+	return GetMapString(_setnameStrings, code);
+}
+std::vector<uint32_t> DataManager::GetSetCodes(std::wstring setname) const {
+	std::vector<uint32_t> matchingCodes;
 	for(auto csit = _setnameStrings.begin(); csit != _setnameStrings.end(); ++csit) {
-		auto xpos = csit->second.find_first_of(L'|');//setname|another setname or extra info
-		if(setname.size() < 2) {
-			if(csit->second.compare(0, xpos, setname) == 0
-				|| csit->second.compare(xpos + 1, csit->second.length(), setname) == 0)
-				matchingCodes.push_back(csit->first);
-		} else {
-			if(csit->second.substr(0, xpos).find(setname) != std::wstring::npos
-				|| csit->second.substr(xpos + 1).find(setname) != std::wstring::npos) {
-				matchingCodes.push_back(csit->first);
+		const std::wstring& setnameString = csit->second;
+		size_t start = 0;
+		while(start < setnameString.size()) { // handle "setname|another setname"
+			auto pos = setnameString.find(L'|', start);
+			std::wstring token;
+			if(pos == std::wstring::npos)
+				token = setnameString.substr(start);
+			else
+				token = setnameString.substr(start, pos - start);
+			if(setname.size() < 2) {
+				// exact match for short set names to avoid too many results
+				if(token == setname) {
+					matchingCodes.push_back(csit->first);
+					break;
+				}
+			} else {
+				if(token.find(setname) != std::wstring::npos) {
+					matchingCodes.push_back(csit->first);
+					break;
+				}
 			}
+			if(pos == std::wstring::npos)
+				break;
+			start = pos + 1;
 		}
 	}
 	return matchingCodes;
@@ -292,11 +387,10 @@ const wchar_t* DataManager::FormatLocation(int location, int sequence) const {
 		else
 			return GetSysString(1009);
 	}
-	int i = 1000;
 	int string_id = 0;
-	for (unsigned filter = LOCATION_DECK; filter <= LOCATION_PZONE; filter <<= 1, ++i) {
-		if (filter == location) {
-			string_id = i;
+	for (int i = 0; i < 10; ++i) {
+		if ((0x1U << i) == location) {
+			string_id = STRING_ID_LOCATION + i;
 			break;
 		}
 	}
@@ -305,17 +399,22 @@ const wchar_t* DataManager::FormatLocation(int location, int sequence) const {
 	else
 		return unknown_string;
 }
+const wchar_t* DataManager::FormatLocation(ClientCard* card) const {
+	if (!card)
+		return unknown_string;
+	return FormatLocation(card->location, card->sequence);
+}
 std::wstring DataManager::FormatAttribute(unsigned int attribute) const {
 	std::wstring buffer;
 	for (int i = 0; i < ATTRIBUTES_COUNT; ++i) {
 		if (attribute & (0x1U << i)) {
 			if (!buffer.empty())
 				buffer.push_back(L'|');
-			buffer.append(GetSysString(1010 + i));
+			buffer.append(GetSysString(STRING_ID_ATTRIBUTE + i));
 		}
 	}
 	if (buffer.empty())
-		return std::wstring(unknown_string);
+		buffer = unknown_string;
 	return buffer;
 }
 std::wstring DataManager::FormatRace(unsigned int race) const {
@@ -324,30 +423,29 @@ std::wstring DataManager::FormatRace(unsigned int race) const {
 		if(race & (0x1U << i)) {
 			if (!buffer.empty())
 				buffer.push_back(L'|');
-			buffer.append(GetSysString(1020 + i));
+			buffer.append(GetSysString(STRING_ID_RACE + i));
 		}
 	}
 	if (buffer.empty())
-		return std::wstring(unknown_string);
+		buffer = unknown_string;
 	return buffer;
 }
 std::wstring DataManager::FormatType(unsigned int type) const {
 	std::wstring buffer;
-	int i = 1050;
-	for (unsigned filter = TYPE_MONSTER; filter <= TYPE_LINK; filter <<= 1, ++i) {
-		if (type & filter) {
+	for (int i = 0; i < TYPES_COUNT; ++i) {
+		if (type & (0x1U << i)) {
 			if (!buffer.empty())
 				buffer.push_back(L'|');
-			buffer.append(GetSysString(i));
+			buffer.append(GetSysString(STRING_ID_TYPE + i));
 		}
 	}
 	if (buffer.empty())
-		return std::wstring(unknown_string);
+		buffer = unknown_string;
 	return buffer;
 }
 std::wstring DataManager::FormatSetName(const uint16_t setcode[]) const {
 	std::wstring buffer;
-	for(int i = 0; i < 10; ++i) {
+	for(int i = 0; i < SIZE_SETCODE; ++i) {
 		if (!setcode[i])
 			break;
 		const wchar_t* setname = GetSetName(setcode[i]);
@@ -356,7 +454,7 @@ std::wstring DataManager::FormatSetName(const uint16_t setcode[]) const {
 		buffer.append(setname);
 	}
 	if (buffer.empty())
-		return std::wstring(unknown_string);
+		buffer = unknown_string;
 	return buffer;
 }
 std::wstring DataManager::FormatLinkMarker(unsigned int link_marker) const {
@@ -379,6 +477,59 @@ std::wstring DataManager::FormatLinkMarker(unsigned int link_marker) const {
 		buffer.append(L"[\u2198]");
 	return buffer;
 }
+wchar_t DataManager::NormalizeChar(wchar_t c) {
+	// Convert Alphabet characters to uppercase to ignore case.
+	if (c >= 0x0061 && c <= 0x007A) {
+		return c - 0x0020;
+	}
+	// Normalize accented characters (Latin-1 Supplement).
+	if ((c >= 0x00C0 && c <= 0x00C5) || (c >= 0x00E0 && c <= 0x00E5)) {
+		return L'A';
+	}
+	if (c == 0x00C7 || c == 0x00E7) {
+		return L'C';
+	}
+	if ((c >= 0x00C8 && c <= 0x00CB) || (c >= 0x00E8 && c <= 0x00EB)) {
+		return L'E';
+	}
+	if ((c >= 0x00CC && c <= 0x00CF) || (c >= 0x00EC && c <= 0x00EF)) {
+		return L'I';
+	}
+	if (c == 0x00D1 || c == 0x00F1) {
+		return L'N';
+	}
+	if ((c >= 0x00D2 && c <= 0x00D6) || (c >= 0x00F2 && c <= 0x00F6)) {
+		return L'O';
+	}
+	if ((c >= 0x00D9 && c <= 0x00DC) || (c >= 0x00F9 && c <= 0x00FC)) {
+		return L'U';
+	}
+	if (c == 0x00DD || c == 0x00FD || c == 0x00FF) {
+		return L'Y';
+	}
+	return c;
+}
+void DataManager::NormalizeString(const wchar_t* src, wchar_t* dst, size_t dst_size) {
+	size_t i = 0;
+	for(; src[i] && i < dst_size - 1; ++i) {
+		dst[i] = NormalizeChar(src[i]);
+	}
+	dst[i] = 0;
+}
+bool DataManager::CardNameContains(const wchar_t* haystack, const wchar_t* needle) {
+	if(!needle[0]) {
+		return true;
+	}
+	if(!haystack) {
+		return false;
+	}
+	wchar_t normalized_haystack[TEXT_LINE_SIZE]{};
+	wchar_t normalized_needle[TEXT_LINE_SIZE]{};
+	NormalizeString(haystack, normalized_haystack, TEXT_LINE_SIZE);
+	NormalizeString(needle, normalized_needle, TEXT_LINE_SIZE);
+	return std::wcsstr(normalized_haystack, normalized_needle) != nullptr;
+}
+
 uint32_t DataManager::CardReader(uint32_t code, card_data* pData) {
 	if (!dataManager.GetData(code, pData))
 		pData->clear();
@@ -390,7 +541,7 @@ unsigned char* DataManager::ScriptReaderEx(const char* script_path, int* slen) {
 		return ReadScriptFromFile(script_path, slen);
 	const char* script_name = script_path + 2;
 	char expansions_path[1024]{};
-	std::snprintf(expansions_path, sizeof expansions_path, "./expansions/%s", script_name);
+	mysnprintf(expansions_path, "./expansions/%s", script_name);
 	if (mainGame->gameConf.prefer_expansion_script) { // debug script with raw file in expansions
 		if (ReadScriptFromFile(expansions_path, slen))
 			return scriptBuffer;
@@ -410,7 +561,7 @@ unsigned char* DataManager::ScriptReaderEx(const char* script_path, int* slen) {
 	return nullptr;
 }
 unsigned char* DataManager::ReadScriptFromIrrFS(const char* script_name, int* slen) {
-	auto reader = FileSystem->createAndOpenFile(script_name);
+	auto reader = dataManager.IrrFileSystem->createAndOpenFile(script_name);
 	if (!reader)
 		return nullptr;
 	int size = reader->read(scriptBuffer, sizeof scriptBuffer);
@@ -431,73 +582,76 @@ unsigned char* DataManager::ReadScriptFromFile(const char* script_name, int* sle
 	*slen = (int)len;
 	return scriptBuffer;
 }
-bool DataManager::deck_sort_lv(code_pointer p1, code_pointer p2) {
-	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
-		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
-	if ((p1->second.type & 0x7) == 1) {
-		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
-		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
+bool DataManager::deck_sort_lv(const CardDataC* p1, const CardDataC* p2) {
+	if ((p1->type & 0x7) != (p2->type & 0x7))
+		return (p1->type & 0x7) < (p2->type & 0x7);
+	if ((p1->type & 0x7) == 1) {
+		auto type1 = (p1->type & 0x48020c0) ? (p1->type & 0x48020c1) : (p1->type & 0x31);
+		auto type2 = (p2->type & 0x48020c0) ? (p2->type & 0x48020c1) : (p2->type & 0x31);
 		if (type1 != type2)
 			return type1 < type2;
-		if (p1->second.level != p2->second.level)
-			return p1->second.level > p2->second.level;
-		if (p1->second.attack != p2->second.attack)
-			return p1->second.attack > p2->second.attack;
-		if (p1->second.defense != p2->second.defense)
-			return p1->second.defense > p2->second.defense;
-		return p1->first < p2->first;
+		if (p1->level != p2->level)
+			return p1->level > p2->level;
+		if (p1->attack != p2->attack)
+			return p1->attack > p2->attack;
+		if (p1->defense != p2->defense)
+			return p1->defense > p2->defense;
+		return p1->code < p2->code;
 	}
-	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
-		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
-	return p1->first < p2->first;
+	if ((p1->type & 0xfffffff8) != (p2->type & 0xfffffff8))
+		return (p1->type & 0xfffffff8) < (p2->type & 0xfffffff8);
+	return p1->code < p2->code;
 }
-bool DataManager::deck_sort_atk(code_pointer p1, code_pointer p2) {
-	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
-		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
-	if ((p1->second.type & 0x7) == 1) {
-		if (p1->second.attack != p2->second.attack)
-			return p1->second.attack > p2->second.attack;
-		if (p1->second.defense != p2->second.defense)
-			return p1->second.defense > p2->second.defense;
-		if (p1->second.level != p2->second.level)
-			return p1->second.level > p2->second.level;
-		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
-		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
+bool DataManager::deck_sort_atk(const CardDataC* p1, const CardDataC* p2) {
+	if ((p1->type & 0x7) != (p2->type & 0x7))
+		return (p1->type & 0x7) < (p2->type & 0x7);
+	if ((p1->type & 0x7) == 1) {
+		if (p1->attack != p2->attack)
+			return p1->attack > p2->attack;
+		if (p1->defense != p2->defense)
+			return p1->defense > p2->defense;
+		if (p1->level != p2->level)
+			return p1->level > p2->level;
+		auto type1 = (p1->type & 0x48020c0) ? (p1->type & 0x48020c1) : (p1->type & 0x31);
+		auto type2 = (p2->type & 0x48020c0) ? (p2->type & 0x48020c1) : (p2->type & 0x31);
 		if (type1 != type2)
 			return type1 < type2;
-		return p1->first < p2->first;
+		return p1->code < p2->code;
 	}
-	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
-		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
-	return p1->first < p2->first;
+	if ((p1->type & 0xfffffff8) != (p2->type & 0xfffffff8))
+		return (p1->type & 0xfffffff8) < (p2->type & 0xfffffff8);
+	return p1->code < p2->code;
 }
-bool DataManager::deck_sort_def(code_pointer p1, code_pointer p2) {
-	if ((p1->second.type & 0x7) != (p2->second.type & 0x7))
-		return (p1->second.type & 0x7) < (p2->second.type & 0x7);
-	if ((p1->second.type & 0x7) == 1) {
-		if (p1->second.defense != p2->second.defense)
-			return p1->second.defense > p2->second.defense;
-		if (p1->second.attack != p2->second.attack)
-			return p1->second.attack > p2->second.attack;
-		if (p1->second.level != p2->second.level)
-			return p1->second.level > p2->second.level;
-		int type1 = (p1->second.type & 0x48020c0) ? (p1->second.type & 0x48020c1) : (p1->second.type & 0x31);
-		int type2 = (p2->second.type & 0x48020c0) ? (p2->second.type & 0x48020c1) : (p2->second.type & 0x31);
+bool DataManager::deck_sort_def(const CardDataC* p1, const CardDataC* p2) {
+	if ((p1->type & 0x7) != (p2->type & 0x7))
+		return (p1->type & 0x7) < (p2->type & 0x7);
+	if ((p1->type & 0x7) == 1) {
+		if (p1->defense != p2->defense)
+			return p1->defense > p2->defense;
+		if (p1->attack != p2->attack)
+			return p1->attack > p2->attack;
+		if (p1->level != p2->level)
+			return p1->level > p2->level;
+		auto type1 = (p1->type & 0x48020c0) ? (p1->type & 0x48020c1) : (p1->type & 0x31);
+		auto type2 = (p2->type & 0x48020c0) ? (p2->type & 0x48020c1) : (p2->type & 0x31);
 		if (type1 != type2)
 			return type1 < type2;
-		return p1->first < p2->first;
+		return p1->code < p2->code;
 	}
-	if ((p1->second.type & 0xfffffff8) != (p2->second.type & 0xfffffff8))
-		return (p1->second.type & 0xfffffff8) < (p2->second.type & 0xfffffff8);
-	return p1->first < p2->first;
+	if ((p1->type & 0xfffffff8) != (p2->type & 0xfffffff8))
+		return (p1->type & 0xfffffff8) < (p2->type & 0xfffffff8);
+	return p1->code < p2->code;
 }
-bool DataManager::deck_sort_name(code_pointer p1, code_pointer p2) {
-	const wchar_t* name1 = dataManager.GetName(p1->first);
-	const wchar_t* name2 = dataManager.GetName(p2->first);
+bool DataManager::deck_sort_name(const CardDataC* p1, const CardDataC* p2) {
+	const wchar_t* name1 = dataManager.GetName(p1->code);
+	const wchar_t* name2 = dataManager.GetName(p2->code);
 	int res = std::wcscmp(name1, name2);
 	if (res != 0)
 		return res < 0;
-	return p1->first < p2->first;
+	return p1->code < p2->code;
+}
+bool DataManager::deck_sort_id(const CardDataC* p1, const CardDataC* p2) {
+	return p1->code < p2->code;
 }
 
 }

@@ -1,6 +1,8 @@
+#include <algorithm>
+#include "config.h"
 #include "replay.h"
 #include "myfilesystem.h"
-#include "network.h"
+#include "deck_manager.h"
 #include "lzma/LzmaLib.h"
 
 namespace ygo {
@@ -16,67 +18,67 @@ Replay::~Replay() {
 void Replay::BeginRecord() {
 	if(!FileSystem::IsDirExists(L"./replay") && !FileSystem::MakeDir(L"./replay"))
 		return;
-#ifdef _WIN32
-	if(is_recording)
-		CloseHandle(recording_fp);
-	recording_fp = CreateFileW(L"./replay/_LastReplay.yrp", GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_FLAG_WRITE_THROUGH, nullptr);
-	if(recording_fp == INVALID_HANDLE_VALUE)
-		return;
-#else
 	if(is_recording)
 		std::fclose(fp);
 	fp = myfopen("./replay/_LastReplay.yrp", "wb");
 	if(!fp)
 		return;
-#endif
 	Reset();
 	is_recording = true;
 }
 void Replay::WriteHeader(ExtendedReplayHeader& header) {
 	pheader = header;
-#ifdef _WIN32
-	DWORD size;
-	WriteFile(recording_fp, &header, sizeof(header), &size, nullptr);
-#else
-	std::fwrite(&header, sizeof(header), 1, fp);
+	std::fwrite(&header, sizeof header, 1, fp);
 	std::fflush(fp);
-#endif
 }
 void Replay::WriteData(const void* data, size_t length, bool flush) {
 	if(!is_recording)
 		return;
-	if (replay_size + length > MAX_REPLAY_SIZE)
+	if (length > MAX_REPLAY_SIZE - replay_size)
 		return;
 	std::memcpy(replay_data + replay_size, data, length);
 	replay_size += length;
-#ifdef _WIN32
-	DWORD size;
-	WriteFile(recording_fp, data, length, &size, nullptr);
-#else
 	std::fwrite(data, length, 1, fp);
 	if(flush)
 		std::fflush(fp);
-#endif
 }
 void Replay::WriteInt32(int32_t data, bool flush) {
 	Write<int32_t>(data, flush);
 }
+size_t Replay::WriteResponse(const void* data, size_t length) {
+	if(!is_recording || !data)
+		return 0;
+	const size_t response_length = std::min<size_t>(length, UINT8_MAX);
+	if(!response_length)
+		return 0;
+	const size_t total_length = sizeof(uint8_t) + response_length;
+	if(total_length > MAX_REPLAY_SIZE - replay_size)
+		return 0;
+	Write<uint8_t>(static_cast<uint8_t>(response_length), false);
+	WriteData(data, response_length);
+	return total_length;
+}
+bool Replay::RemoveData(size_t length) {
+	if(!is_recording)
+		return false;
+	if(length > replay_size)
+		return false;
+	replay_size -= length;
+	if(fp) {
+		std::fflush(fp);
+		std::fseek(fp, -static_cast<long>(length), SEEK_CUR);
+	}
+	return true;
+}
 void Replay::Flush() {
 	if(!is_recording)
 		return;
-#ifdef _WIN32
-#else
 	std::fflush(fp);
-#endif
 }
 void Replay::EndRecord() {
 	if(!is_recording)
 		return;
-#ifdef _WIN32
-	CloseHandle(recording_fp);
-#else
 	std::fclose(fp);
-#endif
 	pheader.base.datasize = replay_size;
 	pheader.base.flag |= REPLAY_COMPRESSED;
 	size_t propsize = 5;
@@ -88,23 +90,29 @@ void Replay::EndRecord() {
 	}
 	is_recording = false;
 }
-void Replay::SaveReplay(const wchar_t* name) {
+bool Replay::SaveReplay(const wchar_t* base_name) {
 	if(!FileSystem::IsDirExists(L"./replay") && !FileSystem::MakeDir(L"./replay"))
-		return;
-	wchar_t fname[256];
-	myswprintf(fname, L"./replay/%ls.yrp", name);
-	FILE* rfp = mywfopen(fname, "wb");
+		return false;
+	wchar_t filename[256]{};
+	wchar_t path[256]{};
+	BufferIO::CopyWideString(base_name, filename);
+	FileSystem::SafeFileName(filename);
+	if (myswprintf(path, L"./replay/%ls.yrp", filename) <= 0)
+		return false;
+	FILE* rfp = mywfopen(path, "wb");
 	if(!rfp)
-		return;
+		return false;
 	std::fwrite(&pheader, sizeof pheader, 1, rfp);
 	std::fwrite(comp_data, comp_size, 1, rfp);
 	std::fclose(rfp);
+	return true;
 }
 bool Replay::OpenReplay(const wchar_t* name) {
 	FILE* rfp = mywfopen(name, "rb");
 	if(!rfp) {
 		wchar_t fname[256];
-		myswprintf(fname, L"./replay/%ls", name);
+		if (myswprintf(fname, L"./replay/%ls", name) <= 0)
+			return false;
 		rfp = mywfopen(fname, "rb");
 	}
 	if(!rfp)
@@ -156,29 +164,28 @@ bool Replay::OpenReplay(const wchar_t* name) {
 	return true;
 }
 bool Replay::DeleteReplay(const wchar_t* name) {
+	if (std::wcschr(name, L'/') || std::wcschr(name, L'\\'))
+		return false;
 	wchar_t fname[256];
-	myswprintf(fname, L"./replay/%ls", name);
+	if(myswprintf(fname, L"./replay/%ls", name) <= 0)
+		return false;
 	return FileSystem::RemoveFile(fname);
 }
 bool Replay::RenameReplay(const wchar_t* oldname, const wchar_t* newname) {
-	wchar_t oldfname[256];
-	wchar_t newfname[256];
-	myswprintf(oldfname, L"./replay/%ls", oldname);
-	myswprintf(newfname, L"./replay/%ls", newname);
-#ifdef _WIN32
-	BOOL result = MoveFileW(oldfname, newfname);
-	return !!result;
-#else
-	char oldfilefn[256];
-	char newfilefn[256];
-	BufferIO::EncodeUTF8(oldfname, oldfilefn);
-	BufferIO::EncodeUTF8(newfname, newfilefn);
-	int result = rename(oldfilefn, newfilefn);
-	return result == 0;
-#endif
+	wchar_t old_path[256];
+	wchar_t new_path[256];
+	if (std::wcschr(oldname, L'/') || std::wcschr(oldname, L'\\'))
+		return false;
+	if (std::wcschr(newname, L'/') || std::wcschr(newname, L'\\'))
+		return false;
+	if (myswprintf(old_path, L"./replay/%ls", oldname) <= 0)
+		return false;
+	if (myswprintf(new_path, L"./replay/%ls", newname) <= 0)
+		return false;
+	return FileSystem::Rename(old_path, new_path);
 }
 bool Replay::ReadNextResponse(unsigned char resp[]) {
-	unsigned char len{};
+	uint8_t len{};
 	if (!ReadData(&len, sizeof len))
 		return false;
 	if (!ReadData(resp, len))
@@ -199,12 +206,12 @@ void Replay::ReadHeader(ExtendedReplayHeader& header) {
 bool Replay::ReadData(void* data, size_t length) {
 	if (!is_replaying || !can_read)
 		return false;
-	if (data_position + length > replay_size) {
+	if (length > replay_size - data_position) {
 		can_read = false;
 		return false;
 	}
 	if (length)
-		std::memcpy(data, &replay_data[data_position], length);
+		std::memcpy(data, replay_data + data_position, length);
 	data_position += length;
 	return true;
 }
@@ -234,6 +241,14 @@ void Replay::SkipInfo(){
 }
 bool Replay::IsReplaying() const {
 	return is_replaying;
+}
+bool Replay::SaveDeck(size_t index, const wchar_t* filename) {
+	if(index >= decks.size())
+		return false;
+	DeckArray deck = decks[index];
+	std::reverse(deck.main.begin(), deck.main.end());
+	std::reverse(deck.extra.begin(), deck.extra.end());
+	return DeckManager::SaveDeckArray(deck, filename);
 }
 bool Replay::ReadInfo() {
 	int player_count = (pheader.base.flag & REPLAY_TAG) ? 4 : 2;

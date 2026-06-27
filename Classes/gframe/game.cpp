@@ -12,7 +12,7 @@
 #include <thread>
 #include <string>
 #include <regex>
-#ifdef _IRR_ANDROID_PLATFORM_
+
 #include <android/CAndroidGUIEditBox.h>
 #include <android/CAndroidGUIComboBox.h>
 #include <android/CAndroidGUISkin.h>
@@ -21,15 +21,22 @@
 #include <COGLESExtensionHandler.h>
 #include <COGLES2Driver.h>
 #include <COGLESDriver.h>
-#endif
-
-const unsigned short PRO_VERSION = 0x1362;
 
 namespace ygo {
 
 Game* mainGame;
 
+/**
+ * @brief 清空决斗信息结构体中的所有数据
+ *
+ * 该函数将DuelInfo结构体中的所有成员变量重置为初始状态，
+ * 包括决斗状态标志、玩家生命值、回合信息、时间限制等。
+ *
+ * @param this 指向DuelInfo对象的指针
+ * @return 无返回值
+ */
 void DuelInfo::Clear() {
+	// 重置决斗状态标志
 	isStarted = false;
 	isInDuel = false;
 	isFinished = false;
@@ -42,18 +49,26 @@ void DuelInfo::Clear() {
 	tag_player[0] = false;
 	tag_player[1] = false;
 	isReplaySwapped = false;
+
+	// 重置生命值相关数据
 	lp[0] = 0;
 	lp[1] = 0;
 	start_lp = 0;
+
+	// 重置决斗规则和回合信息
 	duel_rule = 0;
 	turn = 0;
 	curMsg = 0;
+
+	// 清空主机名和客户端名称
 	hostname[0] = 0;
 	clientname[0] = 0;
 	hostname_tag[0] = 0;
 	clientname_tag[0] = 0;
 	strLP[0][0] = 0;
 	strLP[1][0] = 0;
+
+	// 重置玩家类型和时间限制
 	player_type = 0;
 	time_player = 0;
 	time_limit = 0;
@@ -61,10 +76,20 @@ void DuelInfo::Clear() {
 	time_left[1] = 0;
 }
 
+/**
+ * @brief 处理游戏事件
+ * @param event 输入事件引用，包含鼠标或键盘等输入信息
+ *
+ * 该函数主要用于处理鼠标输入事件，对鼠标的坐标进行优化处理。
+ * 当事件类型为鼠标输入时，会获取当前鼠标坐标并调用optX和optY函数
+ * 对坐标进行转换或优化，然后更新鼠标输入事件中的坐标值。
+ */
 void Game::process(irr::SEvent &event) {
+	// 检查事件类型是否为鼠标输入事件
 	if (event.EventType == irr::EET_MOUSE_INPUT_EVENT) {
         irr::s32 x = event.MouseInput.X;
         irr::s32 y = event.MouseInput.Y;
+		// 对鼠标坐标进行优化处理并更新事件中的坐标值
 		event.MouseInput.X = optX(x);
 		event.MouseInput.Y = optY(y);
 	}
@@ -128,92 +153,107 @@ void Game::onHandleAndroidCommand(ANDROID_APP app, int32_t cmd){
     }
 }
 
-bool IsExtension(const char* filename, const char* extension) {
-	auto flen = std::strlen(filename);
-	auto elen = std::strlen(extension);
-	if (!elen || flen < elen)
-		return false;
-	return !mystrncasecmp(filename + (flen - elen), extension, elen);
-}
-
 bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
+	// 保存应用程序句柄
 	this->appMain = app;
+	// 初始化随机数种子
 	srand(time(0));
+	// 创建Irrlicht引擎参数结构体
 	irr::SIrrlichtCreationParameters params{};
+	// 获取OpenGL版本设置
 	glversion = options->getOpenglVersion();
+	// 根据OpenGL版本选择渲染驱动类型
 	if (glversion == 0) {
 		params.DriverType = irr::video::EDT_OGLES1;
 	} else{
 		params.DriverType = irr::video::EDT_OGLES2;
 	}
+	// 设置应用程序私有数据
 	params.PrivateData = app;
+	// 设置颜色深度为24位
 	params.Bits = 24;
+	// 设置Z缓冲区深度为16位
 	params.ZBufferBits = 16;
-	params.AntiAlias  = 0;
+	// 关闭抗锯齿
+	params.AntiAlias  = 1;
+	// 设置窗口大小为自适应
 	params.WindowSize = irr::core::dimension2d<irr::u32>(0, 0);
 
+	// 创建Irrlicht设备实例
 	device = irr::createDeviceEx(params);
+	// 检查设备创建是否成功
 	if(!device) {
 		ErrorLog("Failed to create Irrlicht Engine device!");
 		return false;
 	}
+	// 执行Android平台特定的初始化技巧
 	if (!irr::android::perfromTrick(app)) {
 		return false;
 	}
+	// 初始化Java桥接并获取应用位置信息
 	irr::core::vector2di appPosition = irr::android::initJavaBridge(app, device);
+	// 设置位置修正参数
 	setPositionFix(appPosition);
+	// 设置进程接收器
 	device->setProcessReceiver(this);
 
+	// 设置输入事件处理函数
 	app->onInputEvent = irr::android::handleInput;
+    // 获取日志记录器
     irr::ILogger* logger = device->getLogger();
 //	logger->setLogLevel(ELL_WARNING);
+	// 检查是否启用钟摆刻度显示
 	isPSEnabled = options->isPendulumScaleEnabled();
 
-	dataManager.FileSystem = device->getFileSystem();
+	// 获取文件系统并设置给数据管理器
+	dataManager.IrrFileSystem = device->getFileSystem();
+    // 设置应用命令回调函数
     ((irr::CIrrDeviceAndroid*)device)->onAppCmd = onHandleAndroidCommand;
 
+	// 获取屏幕缩放比例
 	xScale = irr::android::getXScale(app);
 	yScale = irr::android::getYScale(app);
 
 	ALOGD("cc game: xScale = %f, yScale = %f", xScale, yScale);
 
-    SetCardS3DVertex();//reset cardfront cardback S3DVertex size
-	//io::path databaseDir = options->getDBDir();
+    // 重置卡片顶点数据大小
+    SetCardS3DVertex();
+	// 获取工作目录路径
     irr::io::path workingDir = options->getWorkDir();
     ALOGD("cc game: workingDir= %s", workingDir.c_str());
-	dataManager.FileSystem->changeWorkingDirectoryTo(workingDir);
+	// 更改工作目录
+	dataManager.IrrFileSystem->changeWorkingDirectoryTo(workingDir);
 
 	/* Your media must be somewhere inside the assets folder. The assets folder is the root for the file system.
 	 This example copies the media in the Android.mk makefile. */
+    // 定义媒体资源路径
     irr::core::stringc mediaPath = "media/";
 
 	// The Android assets file-system does not know which sub-directories it has (blame google).
 	// So we have to add all sub-directories in assets manually. Otherwise we could still open the files,
 	// but existFile checks will fail (which are for example needed by getFont).
-	for ( irr::u32 i=0; i < dataManager.FileSystem->getFileArchiveCount(); ++i )
+	// 遍历文件档案，为Android资产文件系统添加目录列表
+	for ( irr::u32 i=0; i < dataManager.IrrFileSystem->getFileArchiveCount(); ++i )
 	{
-		IFileArchive* archive = dataManager.FileSystem->getFileArchive(i);
+		IFileArchive* archive = dataManager.IrrFileSystem->getFileArchive(i);
 		if ( archive->getType() == EFAT_ANDROID_ASSET )
 		{
 			archive->addDirectoryToFileList(mediaPath);
 			break;
 		}
 	}
-	//pics.zip, scripts.zip, ...zip
+	// 加载ZIP压缩包资源
 	irr::io::path* zips = options->getArchiveFiles();
 	int len = options->getArchiveCount();
 	for(int i=0;i<len;i++){
 		irr::io::path zip_path = zips[i];
-		if(dataManager.FileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
-		    ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
-	    }else{
-			ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
-		}
+        if (dataManager.IrrFileSystem->addFileArchive(zip_path.c_str(), false, false, EFAT_ZIP)) {
+            ALOGD("cc game: add arrchive ok:%s", zip_path.c_str());
+        } else {
+            ALOGW("cc game: add arrchive fail:%s", zip_path.c_str());
+        }
 	}
-
-	LoadConfig();
-	linePatternD3D = 0;
-	linePatternGL = 0x0f0f;
+	// 初始化各种游戏状态变量
 	waitFrame = 0;
 	signalFrame = 0;
 	showcard = 0;
@@ -225,16 +265,19 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	is_building = false;
 	menuHandler.prev_operation = 0;
 	menuHandler.prev_sel = -1;
-	deckManager.LoadLFList(options);
+	// 获取视频驱动和场景管理器
 	driver = device->getVideoDriver();
-#ifdef _IRR_ANDROID_PLATFORM_
+
+	// 获取卡片质量设置
 	int quality = options->getCardQualityOp();
+	// 检查是否支持非2次幂纹理
 	if (driver->getDriverType() == irr::video::EDT_OGLES2) {
 		isNPOTSupported = ((irr::video::COGLES2Driver *) driver)->queryOpenGLFeature(irr::video::COGLES2ExtensionHandler::IRR_OES_texture_npot);
 	} else {
 		isNPOTSupported = ((irr::video::COGLES1Driver *) driver)->queryOpenGLFeature(irr::video::COGLES1ExtensionHandler::IRR_OES_texture_npot);
 	}
 	ALOGD("cc game: isNPOTSupported = %d", isNPOTSupported);
+	// 根据纹理支持情况设置纹理创建标志
 	if (isNPOTSupported) {
 		if (quality == 1) {
 			driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
@@ -245,161 +288,164 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		driver->setTextureCreationFlag(irr::video::ETCF_ALLOW_NON_POWER_2, true);
 		driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, false);
 	}
-#endif
+
+	// 设置纹理优化质量标志
 	driver->setTextureCreationFlag(irr::video::ETCF_OPTIMIZED_FOR_QUALITY, true);
+	// 初始化图像管理器
 	imageManager.SetDevice(device);
 	imageManager.ClearTexture();
+	// 初始化图像资源
 	if(!imageManager.Initial(workingDir)) {
-		ErrorLog("Failed to load textures!");
+        ALOGD("cc game: Failed to load textures!");
 		return false;
 	}
-	// LoadExpansions only load zips, the other cdb databases are still loaded by getDBFiles
-	irr::io::path* cdbs = options->getDBFiles();
-	len = options->getDbCount();
-	//os::Printer::log("load cdbs count %d", len);
-	for(int i=0;i<len;i++){
-		irr::io::path cdb_path = cdbs[i];
-		wchar_t wpath[1024];
-		BufferIO::DecodeUTF8(cdb_path.c_str(), wpath);
-		if(dataManager.LoadDB(wpath)) {
-		    ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
-	    }else{
-			ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
-		}
-	}
-	//if(!dataManager.LoadDB(workingDir.append("/cards.cdb").c_str()))
-	//	return false;
-	if(dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
-		ALOGD("cc game: loadStrings expansions/strings.conf");
+    // 加载数据库文件
+    irr::io::path* cdbs = options->getDBFiles();
+    len = options->getDbCount();
+    for(int i=0;i<len;i++){
+        irr::io::path cdb_path = cdbs[i];
+        // 加载数据库
+        if(dataManager.LoadDB(cdb_path.c_str())) {
+            ALOGD("cc game: add cdb ok:%s", cdb_path.c_str());
+        }else{
+            ALOGW("cc game: add cdb fail:%s", cdb_path.c_str());
+        }
+    }
+	// 加载字符串配置文件
+	if(!dataManager.LoadStrings((workingDir + path("/expansions/strings.conf")).c_str())){
+		ALOGD("cc game: Failed to loadStrings expansions/strings.conf");
 	}
 	if(!dataManager.LoadStrings((workingDir + path("/strings.conf")).c_str())) {
-		ErrorLog("Failed to load strings!");
+        ALOGD("cc game: Failed to load strings!");
 		return false;
 	}
-	LoadExpansions();
+    // 加载配置文件
+    LoadConfig();
+    // 加载扩展卡包
+    LoadExpansions();
+    // 加载禁限卡表
+    deckManager.LoadLFList(options);
+	// 获取GUI环境
 	env = device->getGUIEnvironment();
+	// 检查是否启用字体抗锯齿
 	bool isAntialias = options->isFontAntiAliasEnabled();
+	// 创建各种字体
 	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 18 * yScale, isAntialias, false);
 	adFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 12 * yScale, isAntialias, false);
 	lpcFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 48 * yScale, isAntialias, true);
-	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 18 * yScale, isAntialias, true);
+	guiFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 16 * yScale, isAntialias, true);
     titleFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 32 * yScale, isAntialias, true);
 	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, (int)gameConf.textfontsize * yScale, isAntialias, true);
+	miniFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 8 * yScale, isAntialias, true);//最小的文字，用于genesys点数图标
+    icFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, 14 * yScale, isAntialias, true);// 图标数字，用于禁限①②的图标
+	// 检查字体创建是否成功
 	if(!numFont || !guiFont) {
 	  ALOGW("cc game: add font fail ");
 	}
+	// 获取场景管理器
 	smgr = device->getSceneManager();
+	// 设置窗口标题
 	device->setWindowCaption(L"[---]");
+	// 禁止窗口大小调整
 	device->setResizable(false);
+	// 创建并设置新的GUI皮肤
 	irr::gui::IGUISkin* newskin = irr::gui::CAndroidGUISkin::createAndroidSkin(irr::gui::EGST_BURNING_SKIN, driver, env, xScale, yScale);
 	newskin->setFont(guiFont);
 	env->setSkin(newskin);
+	// 释放皮肤资源
 	newskin->drop();
-#ifdef _IRR_ANDROID_PLATFORM_
+
 	//main menu
 	wMainMenu = env->addWindow(Resize(450, 40, 900, 600), false, L"");
 	wMainMenu->getCloseButton()->setVisible(false);
 	wMainMenu->setDrawBackground(false);
     //button Lan Mode
-	btnLanMode = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 30, 350, 106), wMainMenu, BUTTON_LAN_MODE);
-	btnLanMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
-	btnLanMode->setDrawBorder(false);
-	btnLanMode->setImage(imageManager.tTitleBar);
-    textLanMode = env->addStaticText(dataManager.GetSysString(1200), Resize(15, 25, 350, 60), false, false, btnLanMode);
-    textLanMode->setOverrideFont(titleFont);
-    textLanMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	btnLanMode = env->addButton(Resize(15, 30, 350, 106), wMainMenu, BUTTON_LAN_MODE, dataManager.GetSysString(1200)/*本地联机*/);
+        ChangeToIGUIImageButton(btnLanMode, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //version code
 	wchar_t strbuf[256];
 	myswprintf(strbuf, L"YGOPro Version:%X.0%X.%X", (PRO_VERSION & 0xf000U) >> 12, (PRO_VERSION & 0x0ff0U) >> 4, PRO_VERSION & 0x000fU);
 	env->addStaticText(strbuf, Resize(55, 2, 280, 35), false, false, btnLanMode);
     //button Single Mode
-	btnSingleMode = irr::gui::CGUIImageButton::addImageButton(env,  Resize(15, 110, 350, 186), wMainMenu, BUTTON_SINGLE_MODE);
-	btnSingleMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
-	btnSingleMode->setDrawBorder(false);
-    btnSingleMode->setImage(imageManager.tTitleBar);
-	textSingleMode = env->addStaticText(dataManager.GetSysString(1201), Resize(15, 25, 350, 60), false, false, btnSingleMode);
-	textSingleMode->setOverrideFont(titleFont);
-    textSingleMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	btnSingleMode = env->addButton(Resize(15, 110, 350, 186), wMainMenu, BUTTON_SINGLE_MODE, dataManager.GetSysString(1201)/*单人游戏*/);
+        ChangeToIGUIImageButton(btnSingleMode, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //button Replay Mode
-	btnReplayMode = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 190, 350, 266), wMainMenu, BUTTON_REPLAY_MODE);
-    btnReplayMode->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
-    btnReplayMode->setDrawBorder(false);
-    btnReplayMode->setImage(imageManager.tTitleBar);
-	textReplayMode = env->addStaticText(dataManager.GetSysString(1202), Resize(15, 25, 350, 60), false, false, btnReplayMode);
-	textReplayMode->setOverrideFont(titleFont);
-	textReplayMode->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	btnReplayMode = env->addButton(Resize(15, 190, 350, 266), wMainMenu, BUTTON_REPLAY_MODE, dataManager.GetSysString(1202)/*观看录像*/);
+        ChangeToIGUIImageButton(btnReplayMode, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //button Deck Edit
-	btnDeckEdit = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 270, 350, 346), wMainMenu, BUTTON_DECK_EDIT);
-    btnDeckEdit->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
-    btnDeckEdit->setDrawBorder(false);
-    btnDeckEdit->setImage(imageManager.tTitleBar);
-	textDeckEdit = env->addStaticText(dataManager.GetSysString(1204), Resize(15, 25, 350, 60), false, false, btnDeckEdit);
-	textDeckEdit->setOverrideFont(titleFont);
-	textDeckEdit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	btnDeckEdit = env->addButton(Resize(15, 270, 350, 346), wMainMenu, BUTTON_DECK_EDIT, dataManager.GetSysString(1204)/*编辑卡组*/);
+        ChangeToIGUIImageButton(btnDeckEdit, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //button Settings
-    btnSettings = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 350, 350, 426), wMainMenu, BUTTON_SETTINGS);
-    btnSettings->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
-	btnSettings->setDrawBorder(false);
-	btnSettings->setImage(imageManager.tTitleBar);
-	textSettings = env->addStaticText(dataManager.GetSysString(1273), Resize(15, 25, 350, 60), false, false, btnSettings);
-	textSettings->setOverrideFont(titleFont);
-	textSettings->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    btnSettings = env->addButton(Resize(15, 350, 350, 426), wMainMenu, BUTTON_SETTINGS, dataManager.GetSysString(1273)/*系统设定*/);
+        ChangeToIGUIImageButton(btnSettings, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
     //button Exit
-    btnModeExit = irr::gui::CGUIImageButton::addImageButton(env, Resize(15, 430, 350, 506), wMainMenu, BUTTON_MODE_EXIT);
-    btnModeExit->setImageSize(irr::core::dimension2di(400 * yScale, 76 * yScale));
-	btnModeExit->setDrawBorder(false);
-	btnModeExit->setImage(imageManager.tTitleBar);
-	textModeExit = env->addStaticText(dataManager.GetSysString(1210), Resize(15, 25, 350, 65), false, false, btnModeExit);
-	textModeExit->setOverrideFont(titleFont);
-	textModeExit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+    btnModeExit = env->addButton(Resize(15, 430, 350, 506), wMainMenu, BUTTON_MODE_EXIT, dataManager.GetSysString(1210)/*退出*/);
+        ChangeToIGUIImageButton(btnModeExit, imageManager.tTitleBar,imageManager.tTitleBar, titleFont);
 
     //---------------------game windows---------------------
     //lan mode
-	wLanWindow = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1200));
+	wLanWindow = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1200)/*本地联机*/);
 	wLanWindow->getCloseButton()->setVisible(false);
 	wLanWindow->setVisible(false);
-    ChangeToIGUIImageWindow(wLanWindow, &bgLanWindow, imageManager.tWindow);
-	env->addStaticText(dataManager.GetSysString(1220), Resize(30, 30, 70, 70), false, false, wLanWindow);
+    	ChangeToIGUIImageWindow(wLanWindow, &bgLanWindow, imageManager.tWindow);
+	env->addStaticText(dataManager.GetSysString(1220)/*昵称：*/, Resize(30, 30, 70, 70), false, false, wLanWindow);
 	ebNickName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.nickname, true, env, Resize(110, 25, 420, 65), wLanWindow);
 	ebNickName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	lstHostList = env->addListBox(Resize(30, 75, 540, 240), wLanWindow, LISTBOX_LAN_HOST, true);
 	lstHostList->setItemHeight(30 * yScale);
 	btnLanRefresh = env->addButton(Resize(205, 250, 315, 290), wLanWindow, BUTTON_LAN_REFRESH, dataManager.GetSysString(1217));
 		ChangeToIGUIImageButton(btnLanRefresh, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	env->addStaticText(dataManager.GetSysString(1221), Resize(30, 305, 100, 340), false, false, wLanWindow);
+	env->addStaticText(dataManager.GetSysString(1221)/*主机信息：*/, Resize(30, 305, 100, 340), false, false, wLanWindow);
 	ebJoinHost = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.lasthost, true, env, Resize(110, 300, 270, 340), wLanWindow);
 	ebJoinHost->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	ebJoinPort = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.lastport, true, env, Resize(280, 300, 340, 340), wLanWindow);
 	ebJoinPort->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1222), Resize(30, 355, 100, 390), false, false, wLanWindow);
+	env->addStaticText(dataManager.GetSysString(1222)/*房间密码：*/, Resize(30, 355, 100, 390), false, false, wLanWindow);
 	ebJoinPass = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(gameConf.roompass, true, env, Resize(110, 350, 340, 390), wLanWindow);
 	ebJoinPass->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnJoinHost = env->addButton(Resize(430, 300, 540, 340), wLanWindow, BUTTON_JOIN_HOST, dataManager.GetSysString(1223));
+	btnJoinHost = env->addButton(Resize(430, 300, 540, 340), wLanWindow, BUTTON_JOIN_HOST, dataManager.GetSysString(1223)/*加入游戏*/);
 		ChangeToIGUIImageButton(btnJoinHost, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnJoinCancel = env->addButton(Resize(430, 350, 540, 390), wLanWindow, BUTTON_JOIN_CANCEL, dataManager.GetSysString(1212));
+	btnJoinCancel = env->addButton(Resize(430, 350, 540, 390), wLanWindow, BUTTON_JOIN_CANCEL, dataManager.GetSysString(1212)/*取消*/);
 		ChangeToIGUIImageButton(btnJoinCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnCreateHost = env->addButton(Resize(430, 25, 540, 65), wLanWindow, BUTTON_CREATE_HOST, dataManager.GetSysString(1224));
+	btnCreateHost = env->addButton(Resize(430, 25, 540, 65), wLanWindow, BUTTON_CREATE_HOST, dataManager.GetSysString(1224)/*局域网建主*/);
 		ChangeToIGUIImageButton(btnCreateHost, imageManager.tButton_S, imageManager.tButton_S_pressed);
 
 	//create host
-	wCreateHost = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1224));
+	wCreateHost = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1224)/*局域网建主*/);
 	wCreateHost->getCloseButton()->setVisible(false);
 	wCreateHost->setVisible(false);
         ChangeToIGUIImageWindow(wCreateHost, &bgCreateHost, imageManager.tWindow);
-    env->addStaticText(dataManager.GetSysString(1226), Resize(20, 30, 90, 65), false, false, wCreateHost);
-	cbHostLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 260, 65), wCreateHost);
-	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
-		cbHostLFlist->addItem(deckManager._lfList[i].listName.c_str(), deckManager._lfList[i].hash);
-	cbHostLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbHostLFlist->getItemCount() - 1);
-	env->addStaticText(dataManager.GetSysString(1225), Resize(20, 75, 100, 110), false, false, wCreateHost);
+    env->addStaticText(dataManager.GetSysString(1226)/*禁限卡表：*/, Resize(20, 30, 90, 65), false, false, wCreateHost);
+    // 局域网建主的禁卡表选择combobox
+    cbHostLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 260, 65), wCreateHost);
+	for(unsigned int i = 0; i < deckManager._lfList.size(); ++i) {
+        cbHostLFlist->addItem(deckManager._lfList[i].listName.c_str(), deckManager._lfList[i].hash);
+        if(!wcscmp(deckManager._lfList[i].listName.c_str(), gameConf.last_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值
+            gameConf.default_lflist = i;
+        }
+    }
+    cbHostLFlist->setVisible(!gameConf.enable_genesys_mode);
+    cbHostLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbHostLFlist->getItemCount() - 1);// 设置默认选中的禁限卡表
+    // 局域网建主的genesys禁卡表选择combobox
+    cbHostGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 25, 260, 65), wCreateHost);
+	for(unsigned int i = 0; i < deckManager._genesys_lfList.size(); ++i) {
+        cbHostGenesysLFlist->addItem(deckManager._genesys_lfList[i].listName.c_str(), deckManager._genesys_lfList[i].hash);
+        if(!wcscmp(deckManager._genesys_lfList[i].listName.c_str(), gameConf.last_genesys_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值
+            gameConf.default_genesys_lflist = i;
+        }
+    }
+    cbHostGenesysLFlist->setVisible(gameConf.enable_genesys_mode);
+    cbHostGenesysLFlist->setSelected(gameConf.use_genesys_lflist ? gameConf.default_genesys_lflist : cbHostGenesysLFlist->getItemCount() - 1);// 设置默认选中的禁限卡表
+    // 局域网建主的卡片允许的选择combobox
+	env->addStaticText(dataManager.GetSysString(1225)/*卡片允许：*/, Resize(20, 75, 100, 110), false, false, wCreateHost);
 	cbRule = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 75, 260, 115), wCreateHost);
 	cbRule->setMaxSelectionRows(10);
-	cbRule->addItem(dataManager.GetSysString(1481));
-	cbRule->addItem(dataManager.GetSysString(1482));
-	cbRule->addItem(dataManager.GetSysString(1483));
-	cbRule->addItem(dataManager.GetSysString(1484));
-	cbRule->addItem(dataManager.GetSysString(1485));
-	cbRule->addItem(dataManager.GetSysString(1486));
+	cbRule->addItem(dataManager.GetSysString(1481));// ＯＣＧ
+	cbRule->addItem(dataManager.GetSysString(1482));// ＴＣＧ
+	cbRule->addItem(dataManager.GetSysString(1483));// 简体中文
+	cbRule->addItem(dataManager.GetSysString(1484));// 自定义卡片
+	cbRule->addItem(dataManager.GetSysString(1485));// 无独有卡
+	cbRule->addItem(dataManager.GetSysString(1486));// 所有卡片
 	switch(gameConf.defaultOT) {
 	case 1:
 		cbRule->setSelected(0);
@@ -416,23 +462,24 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	default:
 		cbRule->setSelected(5);
 		break;
-	}	
-	env->addStaticText(dataManager.GetSysString(1227), Resize(20, 130, 100, 165), false, false, wCreateHost);
+	}
+    // 局域网建主的决斗模式的选择combobox
+	env->addStaticText(dataManager.GetSysString(1227)/*决斗模式：*/, Resize(20, 130, 100, 165), false, false, wCreateHost);
 	cbMatchMode = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(110, 125, 260, 165), wCreateHost);
-	cbMatchMode->addItem(dataManager.GetSysString(1244));
-	cbMatchMode->addItem(dataManager.GetSysString(1245));
-	cbMatchMode->addItem(dataManager.GetSysString(1246));
-	env->addStaticText(dataManager.GetSysString(1237), Resize(20, 180, 100, 215), false, false, wCreateHost);
+	cbMatchMode->addItem(dataManager.GetSysString(1244));// 单局模式
+	cbMatchMode->addItem(dataManager.GetSysString(1245));// 比赛模式
+	cbMatchMode->addItem(dataManager.GetSysString(1246));// TAG
+	env->addStaticText(dataManager.GetSysString(1237)/*每回合时间：*/, Resize(20, 180, 100, 215), false, false, wCreateHost);
 	myswprintf(strbuf, L"%d", 180);
 	ebTimeLimit = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(strbuf, true, env, Resize(110, 175, 260, 215), wCreateHost);
 	ebTimeLimit->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1236), Resize(270, 30, 350, 65), false, false, wCreateHost);
+	env->addStaticText(dataManager.GetSysString(1236)/*规则：*/, Resize(270, 30, 350, 65), false, false, wCreateHost);
 	cbDuelRule = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(360, 25, 510, 65), wCreateHost);
-	cbDuelRule->addItem(dataManager.GetSysString(1260));
-	cbDuelRule->addItem(dataManager.GetSysString(1261));
-	cbDuelRule->addItem(dataManager.GetSysString(1262));
-	cbDuelRule->addItem(dataManager.GetSysString(1263));
-	cbDuelRule->addItem(dataManager.GetSysString(1264));
+	cbDuelRule->addItem(dataManager.GetSysString(1260));// 大师规则
+	cbDuelRule->addItem(dataManager.GetSysString(1261));// 大师规则２
+	cbDuelRule->addItem(dataManager.GetSysString(1262));// 大师规则３
+	cbDuelRule->addItem(dataManager.GetSysString(1263));// 新大师规则（2017）
+	cbDuelRule->addItem(dataManager.GetSysString(1264));// 大师规则（2020）
 	cbDuelRule->setSelected(gameConf.default_rule - 1);
 	chkNoCheckDeck = env->addCheckBox(false, Resize(250, 235, 350, 275), wCreateHost, -1, dataManager.GetSysString(1229));
 	chkNoShuffleDeck = env->addCheckBox(false, Resize(360, 235, 460, 275), wCreateHost, -1, dataManager.GetSysString(1230));
@@ -470,9 +517,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	for(int i = 0; i < 2; ++i) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", Resize(60, 80 + i * 45, 260, 120 + i * 45), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-		btnHostPrepKick[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize(10, 80 + i * 45, 50, 120 + i * 45), wHostPrepare, BUTTON_HP_KICK);
-        btnHostPrepKick[i]->setImageSize(irr::core::dimension2di(40 * yScale, 40 * yScale));
+		btnHostPrepKick[i] = env->addButton(Resize(10, 80 + i * 45, 50, 120 + i * 45), wHostPrepare, BUTTON_HP_KICK);
         btnHostPrepKick[i]->setDrawBorder(false);
+        btnHostPrepKick[i]->setUseAlphaChannel(true);
         btnHostPrepKick[i]->setImage(imageManager.tClose);
 		chkHostPrepReady[i] = env->addCheckBox(false, Resize(270, 80 + i * 45, 310, 120 + i * 45), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
@@ -480,9 +527,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	for(int i = 2; i < 4; ++i) {
 		stHostPrepDuelist[i] = env->addStaticText(L"", Resize(60, 135 + i * 45, 260, 175 + i * 45), true, false, wHostPrepare);
 		stHostPrepDuelist[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-        btnHostPrepKick[i] = irr::gui::CGUIImageButton::addImageButton(env,Resize(10, 135 + i * 45, 50, 175 + i * 45), wHostPrepare, BUTTON_HP_KICK);
-        btnHostPrepKick[i]->setImageSize(irr::core::dimension2di(40 * yScale, 40 * yScale));
+        btnHostPrepKick[i] = env->addButton(Resize(10, 135 + i * 45, 50, 175 + i * 45), wHostPrepare, BUTTON_HP_KICK);
         btnHostPrepKick[i]->setDrawBorder(false);
+        btnHostPrepKick[i]->setUseAlphaChannel(true);
         btnHostPrepKick[i]->setImage(imageManager.tClose);
 		chkHostPrepReady[i] = env->addCheckBox(false, Resize(270, 135 + i * 45, 310, 175 + i * 45), wHostPrepare, CHECKBOX_HP_READY, L"");
 		chkHostPrepReady[i]->setEnabled(false);
@@ -562,9 +609,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     wPallet->setDrawBackground(false);
     wPallet->setVisible(false);
     //Logs
-    imgLog = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 55, 45, 100), wPallet, BUTTON_SHOW_LOG);
-	imgLog->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
-	imgLog->setImage(imageManager.tLogs);
+    imgLog = env->addButton(Resize_Y(0, 55, 45, 100), wPallet, BUTTON_SHOW_LOG);
+    imgLog->setUseAlphaChannel(true);
+    imgLog->setImage(imageManager.tLogs);
 	imgLog->setIsPushButton(true);
 	wLogs = env->addWindow(Resize(720, 1, 1020, 501), false, dataManager.GetSysString(1271));
     wLogs->getCloseButton()->setVisible(false);
@@ -577,24 +624,16 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     btnCloseLog = env->addButton(Resize(170, 450, 280, 490), wLogs, BUTTON_CLOSE_LOG, dataManager.GetSysString(1211));
 		ChangeToIGUIImageButton(btnCloseLog, imageManager.tButton_S, imageManager.tButton_S_pressed);
     //vol play/mute
-	imgVol = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 110, 45, 155), wPallet, BUTTON_BGM);
-    imgVol->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
-	if (gameConf.enable_music) {
-		imgVol->setImage(imageManager.tPlay);
-	} else {
-		imgVol->setImage(imageManager.tMute);
-	}
+	imgVol = env->addButton(Resize_Y(0, 110, 45, 155), wPallet, BUTTON_BGM);
+    imgVol->setUseAlphaChannel(true);
+	imgVol->setImage(gameConf.enable_music ? imageManager.tPlay : imageManager.tMute);
     //shift quick animation
-    imgQuickAnimation = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 165, 45, 210), wPallet, BUTTON_QUICK_ANIMIATION);
-    imgQuickAnimation->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
-    if (gameConf.quick_animation) {
-        imgQuickAnimation->setImage(imageManager.tDoubleX);
-    } else {
-        imgQuickAnimation->setImage(imageManager.tOneX);
-    }
+    imgQuickAnimation = env->addButton(Resize_Y(0, 165, 45, 210), wPallet, BUTTON_QUICK_ANIMIATION);
+    imgQuickAnimation->setUseAlphaChannel(true);
+    imgQuickAnimation->setImage(gameConf.quick_animation ? imageManager.tDoubleX : imageManager.tOneX);
     //Settings
-	imgSettings = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 0, 45, 45), wPallet, BUTTON_SETTINGS);
-	imgSettings->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
+	imgSettings = env->addButton(Resize_Y(0, 0, 45, 45), wPallet, BUTTON_SETTINGS);
+    imgSettings->setUseAlphaChannel(true);
 	imgSettings->setImage(imageManager.tSettings);
 	imgSettings->setIsPushButton(true);
     wSettings = env->addWindow(Resize(220, 80, 800, 540), false, dataManager.GetSysString(1273));
@@ -603,7 +642,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wSettings->setVisible(false);
 	    ChangeToIGUIImageWindow(wSettings, &bgSettings, imageManager.tWindow);
 	int posX = 20;
-	int posY = 40;
+	int posY = 80;
 	chkMAutoPos = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1274));
 	chkMAutoPos->setChecked(gameConf.chkMAutoPos != 0);
 	posY += 40;
@@ -621,8 +660,11 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     posY += 40;
 	chkDefaultShowChain = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1354));
 	chkDefaultShowChain->setChecked(gameConf.chkDefaultShowChain != 0);
-	posY += 40;
-    chkQuickAnimation = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
+    posY += 40;
+    chkHidePlayerName = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_HIDE_PLAYER_NAME, dataManager.GetSysString(1289));
+    chkHidePlayerName->setChecked(gameConf.hide_player_name != 0);
+	posY += 0;
+    chkQuickAnimation = env->addCheckBox(false, Resize(0, 0, 0, 0), wSettings, CHECKBOX_QUICK_ANIMATION, dataManager.GetSysString(1299));
 	chkQuickAnimation->setChecked(gameConf.quick_animation != 0);
     posY += 40;
     chkDrawFieldSpell = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_DRAW_FIELD_SPELL, dataManager.GetSysString(1283));
@@ -630,25 +672,49 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     posY += 40;
     chkDrawSingleChain = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_DRAW_SINGLE_CHAIN, dataManager.GetSysString(1287));
 	chkDrawSingleChain->setChecked(gameConf.draw_single_chain != 0);
-	posX = 250;//another Column
-	posY = 40;
+	posX = 250;//重启一列显示
+	posY = 80;//重新设定posY的初始值为80，作为新一行的初始位置
+    chkEnableGenesysMode = env->addCheckBox(false, Resize(posX, posY, posX + 230, posY + 30), wSettings, CHECKBOX_ENABLE_GENESYS_MODE, dataManager.GetSysString(1698));
+    chkEnableGenesysMode->setChecked(gameConf.enable_genesys_mode);
+    posY += 40;
+    // 勾选启用禁卡表
     chkLFlist = env->addCheckBox(false, Resize(posX, posY, posX + 100, posY + 30), wSettings, CHECKBOX_LFLIST, dataManager.GetSysString(1288));
     chkLFlist->setChecked(gameConf.use_lflist);
-    cbLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 230, posY + 30), wSettings, COMBOBOX_LFLIST);
+    chkLFlist->setVisible(!gameConf.enable_genesys_mode);
+    // 启用禁卡表的combobox
+    cbLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 280, posY + 30), wSettings, COMBOBOX_LFLIST);
     cbLFlist->setMaxSelectionRows(6);
-    for(unsigned int i = 0; i < deckManager._lfList.size(); ++i)
+    for(unsigned int i = 0; i < deckManager._lfList.size(); ++i) {
         cbLFlist->addItem(deckManager._lfList[i].listName.c_str());
+        if(!wcscmp(deckManager._lfList[i].listName.c_str(), gameConf.last_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值
+            gameConf.default_lflist = i;
+        }
+    }
+    cbLFlist->setVisible(!gameConf.enable_genesys_mode);
     cbLFlist->setEnabled(gameConf.use_lflist);
     cbLFlist->setSelected(gameConf.use_lflist ? gameConf.default_lflist : cbLFlist->getItemCount() - 1);
-	posY += 40;
-	chkIgnore1 = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
+    // 勾选启用genesys禁卡表
+    chkGenesysLFlist = env->addCheckBox(false, Resize(posX, posY, posX + 100, posY + 30), wSettings, CHECKBOX_GENESYS_LFLIST, dataManager.GetSysString(1288));
+    chkGenesysLFlist->setChecked(gameConf.use_genesys_lflist);
+    chkGenesysLFlist->setVisible(gameConf.enable_genesys_mode);
+    // 启用genesys禁卡表的combobox
+    cbGenesysLFlist = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(posX + 110, posY, posX + 280, posY + 30), wSettings, COMBOBOX_GENESYS_LFLIST);
+    cbGenesysLFlist->setMaxSelectionRows(6);
+    for(unsigned int i = 0; i < deckManager._genesys_lfList.size(); ++i) {
+        cbGenesysLFlist->addItem(deckManager._genesys_lfList[i].listName.c_str());
+        if(!wcscmp(deckManager._genesys_lfList[i].listName.c_str(), gameConf.last_genesys_limit_list_name)) {//找到名称相同时找到对应的index值作为默认值
+            gameConf.default_genesys_lflist = i;
+        }
+    }
+    cbGenesysLFlist->setVisible(gameConf.enable_genesys_mode);
+    cbGenesysLFlist->setEnabled(gameConf.use_genesys_lflist);
+    cbGenesysLFlist->setSelected(gameConf.use_genesys_lflist ? gameConf.default_genesys_lflist : cbGenesysLFlist->getItemCount() - 1);
+	posY += 0;//隐藏此布局，因为决斗界面已经有快捷按钮
+	chkIgnore1 = env->addCheckBox(false, Resize(0, 0, 0, 0), wSettings, CHECKBOX_DISABLE_CHAT, dataManager.GetSysString(1290));
 	chkIgnore1->setChecked(gameConf.chkIgnore1 != 0);
 	posY += 40;
 	chkIgnore2 = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1291));
 	chkIgnore2->setChecked(gameConf.chkIgnore2 != 0);
-	posY += 40;
-	chkHidePlayerName = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, CHECKBOX_HIDE_PLAYER_NAME, dataManager.GetSysString(1289));
-	chkHidePlayerName->setChecked(gameConf.hide_player_name != 0);
 	posY += 40;
 	chkIgnoreDeckChanges = env->addCheckBox(false, Resize(posX, posY, posX + 260, posY + 30), wSettings, -1, dataManager.GetSysString(1357));
 	chkIgnoreDeckChanges->setChecked(gameConf.chkIgnoreDeckChanges != 0);
@@ -677,9 +743,10 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     scrMusicVolume->setLargeStep(1);
     scrMusicVolume->setSmallStep(1);
     elmTabSystemLast = chkEnableMusic;
-	btnCloseSettings =irr::gui::CGUIImageButton::addImageButton(env,Resize(500, 30, 550, 80), wSettings, BUTTON_CLOSE_SETTINGS);
-	btnCloseSettings->setImageSize(irr::core::dimension2di(50 * yScale, 50 * yScale));
+	btnCloseSettings =env->addButton(Resize_X_Y(500, 30, 550, 80), wSettings, BUTTON_CLOSE_SETTINGS);
 	btnCloseSettings->setDrawBorder(false);
+	btnCloseSettings->setUseAlphaChannel(true);
+    btnCloseSettings->setScaleImage(true);
     btnCloseSettings->setImage(imageManager.tClose);
     //
 	wHand = env->addWindow(Resize(500, 450, 825, 605), false, L"");
@@ -688,9 +755,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wHand->setDrawTitlebar(false);
 	wHand->setVisible(false);
 	for(int i = 0; i < 3; ++i) {
-		btnHand[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize(10 + 105 * i, 10, 105 + 105 * i, 144), wHand, BUTTON_HAND1 + i);
+		btnHand[i] = env->addButton(Resize(10 + 105 * i, 10, 105 + 105 * i, 144), wHand, BUTTON_HAND1 + i);
 		btnHand[i]->setImage(imageManager.tHand[i]);
-		btnHand[i]->setImageScale(irr::core::vector2df(xScale, yScale));
+        btnHand[i]->setScaleImage(true);
 	}
 
 	//first or second to go
@@ -774,25 +841,20 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	scrOption->setLargeStep(1);
 	scrOption->setSmallStep(1);
 	scrOption->setMin(0);
-#endif
+
 	//pos select
 	wPosSelect = env->addWindow(irr::core::recti(660 * xScale - 223 * yScale, 160 * yScale, 660 * xScale + 223 * yScale, (160 + 228) * yScale), false, dataManager.GetSysString(561));
 	wPosSelect->getCloseButton()->setVisible(false);
 	wPosSelect->setVisible(false);
         ChangeToIGUIImageWindow(wPosSelect, &bgPosSelect, imageManager.tDialog_L);
-	btnPSAU = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_AU);
-	btnPSAU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
-	btnPSAD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_AD);
-	btnPSAD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
-	btnPSAD->setImage(imageManager.tCover[0]);//show cover of player1
-	btnPSDU = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_DU);
-	btnPSDU->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
-	btnPSDU->setImageRotation(270);
-	btnPSDD = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_DD);
-	btnPSDD->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
-	btnPSDD->setImageRotation(270);
-	btnPSDD->setImage(imageManager.tCover[0]);//show cover of player1
-#ifdef _IRR_ANDROID_PLATFORM_
+	btnPSAU = env->addButton(Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_AU);
+	btnPSAD = env->addButton(Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_AD);
+	btnFacedownImgInfo[btnPSAD] = {0, false};
+	btnPSAD->setVisible(false); // PSAD = PoSition Attack face-Down, is not allowed in the rules, so the width of wPosSelect only support 3 buttons
+	btnPSDU = env->addButton(Resize_Y(50, 30, 50 + 168, 30 + 168), wPosSelect, BUTTON_POS_DU);
+	btnPSDD = env->addButton(Resize_Y(218 + 10, 30, 228 + 168, 30 + 168), wPosSelect, BUTTON_POS_DD);
+	btnFacedownImgInfo[btnPSDD] = {0, true};
+
 	//card select
 	wCardSelect = env->addWindow(irr::core::recti(660 * xScale - 340 * yScale, 55 * yScale, 660 * xScale + 340 * yScale, 400 * yScale), false, L"");
 	wCardSelect->getCloseButton()->setVisible(false);
@@ -804,8 +866,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		stCardPos[i] = env->addStaticText(L"", Resize_Y(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardSelect, -1, true);
 		stCardPos[i]->setBackgroundColor(0xffffffff);
 		stCardPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-		btnCardSelect[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(30 + 125 * i, 65, 150 + 125 * i, 235), wCardSelect, BUTTON_CARD_0 + i);
-		btnCardSelect[i]->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+		btnCardSelect[i] = env->addButton(Resize_Y(30 + 125 * i, 65, 150 + 125 * i, 235), wCardSelect, BUTTON_CARD_0 + i);
 	}
 	scrCardList = env->addScrollBar(true, Resize_Y(30, 245, 650, 285), wCardSelect, SCROLL_CARD_SELECT);
 	btnSelectOK = env->addButton(Resize_Y(340 - 55, 295, 340 + 55, 295 + 40), wCardSelect, BUTTON_CARD_SEL_OK, dataManager.GetSysString(1211));
@@ -821,13 +882,12 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		stDisplayPos[i] = env->addStaticText(L"", Resize_Y(30 + 125 * i, 40, 150 + 125 * i, 60), true, false, wCardDisplay, -1, true);
 		stDisplayPos[i]->setBackgroundColor(0xffffffff);
 		stDisplayPos[i]->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-		btnCardDisplay[i] = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(30 + 125 * i, 65, 150 + 125 * i, 235), wCardDisplay, BUTTON_DISPLAY_0 + i);
-		btnCardDisplay[i]->setImageSize(irr::core::dimension2di(CARD_IMG_WIDTH * 0.6f * yScale, CARD_IMG_HEIGHT * 0.6f * yScale));
+		btnCardDisplay[i] = env->addButton(Resize_Y(30 + 125 * i, 65, 150 + 125 * i, 235), wCardDisplay, BUTTON_DISPLAY_0 + i);
 	}
 	scrDisplayList = env->addScrollBar(true, Resize_Y(30, 245, 30 + 620, 285), wCardDisplay, SCROLL_CARD_DISPLAY);
 	btnDisplayOK = env->addButton(Resize_Y(340 - 55, 295, 340 + 55, 335), wCardDisplay, BUTTON_CARD_DISP_OK, dataManager.GetSysString(1211));
         ChangeToIGUIImageButton(btnDisplayOK, imageManager.tButton_S, imageManager.tButton_S_pressed);
-#endif
+
 	//announce number
 	wANNumber = env->addWindow(Resize(500, 50, 800, 470), false, L"");
 	wANNumber->getCloseButton()->setVisible(false);
@@ -864,8 +924,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	    ChangeToIGUIImageWindow(wANAttribute, &bgANAttribute, imageManager.tDialog_L);
 	stANAttribute = env->addStaticText(L"", Resize(20, 10, 370, 40), false, false, wANAttribute, -1, false);
     stANAttribute->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	for(int filter = 0x1, i = 0; i < 7; filter <<= 1, ++i)
-		chkAttribute[i] = env->addCheckBox(false, Resize(50 + (i % 4) * 80, 60 + (i / 4) * 55, 130 + (i % 4) * 80, 90 + (i / 4) * 55),wANAttribute, CHECK_ATTRIBUTE, dataManager.FormatAttribute(filter).c_str());
+	for (int i = 0; i < ATTRIBUTES_COUNT; ++i)
+		chkAttribute[i] = env->addCheckBox(false, Resize(50 + (i % 4) * 80, 60 + (i / 4) * 55, 130 + (i % 4) * 80, 90 + (i / 4) * 55),
+			wANAttribute, CHECK_ATTRIBUTE, dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i));
 	//announce race
 	wANRace = env->addWindow(Resize(500, 40, 800, 560), false, dataManager.GetSysString(563));
 	wANRace->getCloseButton()->setVisible(false);
@@ -873,9 +934,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	    ChangeToIGUIImageWindow(wANRace, &bgANRace, imageManager.tDialog_S);
     stANRace = env->addStaticText(L"", Resize(20, 10, 280, 40), false, false, wANRace, -1, false);
     stANRace->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	for(int filter = 0x1, i = 0; i < RACES_COUNT; filter <<= 1, ++i)
+	for (int i = 0; i < RACES_COUNT; ++i)
 		chkRace[i] = env->addCheckBox(false, Resize(30 + (i % 3) * 90, 60 + (i / 3) * 50, 100 + (i % 3) * 90, 110 + (i / 3) * 50),
-		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter).c_str());
+			wANRace, CHECK_RACE, dataManager.GetSysString(DataManager::STRING_ID_RACE + i));
 	//selection hint
     stHintMsg = env->addStaticText(L"", Resize(500, 90, 820, 120), true, false, 0, -1, false);
     //todo ygocolor 提示的文字背景
@@ -916,10 +977,12 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	//deck edit
 	wDeckEdit = env->addWindow(Resize(310, 1, 600, 130), false, L"");
     wDeckEdit->getCloseButton()->setVisible(false);
+    wDeckEdit->setDraggable(false);
     wDeckEdit->setDrawTitlebar(false);
 	wDeckEdit->setVisible(false);
 	    ChangeToIGUIImageWindow(wDeckEdit, &bgDeckEdit, imageManager.tDialog_L);
-	btnManageDeck = env->addButton(Resize(10, 35, 220, 75), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460));
+	btnManageDeck = env->addButton(Resize(10, 35, 220, 75), wDeckEdit, BUTTON_MANAGE_DECK, dataManager.GetSysString(1460)/*卡组管理（其实它实际会显示分类名\n卡组名）*/);
+
     //deck manage
 	wDeckManage = env->addWindow(Resize(530, 10, 920, 460), false, dataManager.GetSysString(1460), 0, WINDOW_DECK_MANAGE);
 	wDeckManage->setVisible(false);
@@ -1015,8 +1078,8 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	for(int i = 1370; i <= 1373; i++)
 		cbSortType->addItem(dataManager.GetSysString(i));
 	wSort->setVisible(false);
-#ifdef _IRR_ANDROID_PLATFORM_
-    //filters
+
+	//filters
 	wFilter = env->addWindow(Resize(610, 1, 1020, 130), false, L"");
 	wFilter->getCloseButton()->setVisible(false);
     wFilter->setDrawTitlebar(false);
@@ -1032,44 +1095,54 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	cbCardType2 = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(125, 3, 200, 23), wFilter, COMBOBOX_SECONDTYPE);
 	cbCardType2->addItem(dataManager.GetSysString(1310), 0);
 	env->addStaticText(dataManager.GetSysString(1315), Resize(205, 5, 280, 25), false, false, wFilter);
-	cbLimit = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(260, 3, 390, 23), wFilter, COMBOBOX_LIMIT);
-	cbLimit->addItem(dataManager.GetSysString(1310));
-	cbLimit->addItem(dataManager.GetSysString(1316));
-	cbLimit->addItem(dataManager.GetSysString(1317));
-	cbLimit->addItem(dataManager.GetSysString(1318));
-	cbLimit->addItem(dataManager.GetSysString(1481));
-	cbLimit->addItem(dataManager.GetSysString(1482));
-	cbLimit->addItem(dataManager.GetSysString(1483));
-	cbLimit->addItem(dataManager.GetSysString(1484));
-	cbLimit->addItem(dataManager.GetSysString(1485));
-	env->addStaticText(dataManager.GetSysString(1319), Resize(10, 28, 70, 48), false, false, wFilter);
+	// 筛选卡片的条件：禁限类型、卡片允许情况
+    cbLimit = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(260, 3, 390, 23), wFilter, COMBOBOX_LIMIT);
+	cbLimit->addItem(dataManager.GetSysString(1310));//（无）
+	cbLimit->addItem(dataManager.GetSysString(1316));// 禁止
+	cbLimit->addItem(dataManager.GetSysString(1317));// 限制
+	cbLimit->addItem(dataManager.GetSysString(1318));// 准限制
+	cbLimit->addItem(dataManager.GetSysString(1699));// 点数
+	cbLimit->addItem(dataManager.GetSysString(1481));// ＯＣＧ
+	cbLimit->addItem(dataManager.GetSysString(1482));// ＴＣＧ
+	cbLimit->addItem(dataManager.GetSysString(1483));// 简体中文
+	cbLimit->addItem(dataManager.GetSysString(1484));// 自定义卡片
+	cbLimit->addItem(dataManager.GetSysString(1485));// 无独有卡
+    // 筛选卡片的条件：属性
+	stAttribute = env->addStaticText(dataManager.GetSysString(1319)/*属性：*/, Resize(10, 28, 70, 48), false, false, wFilter);
 	cbAttribute = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 26, 190, 46), wFilter, COMBOBOX_ATTRIBUTE);
 	cbAttribute->setMaxSelectionRows(10);
-	cbAttribute->addItem(dataManager.GetSysString(1310), 0);
-	for(int filter = 0x1; filter != 0x80; filter <<= 1)
-		cbAttribute->addItem(dataManager.FormatAttribute(filter).c_str(), filter);
-	env->addStaticText(dataManager.GetSysString(1321), Resize(10, 51, 70, 71), false, false, wFilter);
+	cbAttribute->addItem(dataManager.GetSysString(1310)/*（无）*/, 0);
+	for (int i = 0; i < ATTRIBUTES_COUNT; ++i)
+		cbAttribute->addItem(dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i), 0x1U << i);
+    // 筛选卡片的条件：种族
+	env->addStaticText(dataManager.GetSysString(1321)/*种族：*/, Resize(10, 51, 70, 71), false, false, wFilter);
 	cbRace = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(60, 40 + 75 / 6, 190, 60 + 75 / 6), wFilter, COMBOBOX_RACE);
 	cbRace->setMaxSelectionRows(10);
-	cbRace->addItem(dataManager.GetSysString(1310), 0);
-	for(int filter = 0x1; filter < (1 << RACES_COUNT); filter <<= 1)
-		cbRace->addItem(dataManager.FormatRace(filter).c_str(), filter);
-	env->addStaticText(dataManager.GetSysString(1322), Resize(205, 28, 280, 48), false, false, wFilter);
+	cbRace->addItem(dataManager.GetSysString(1310)/*（无）*/, 0);
+	for (int i = 0; i < RACES_COUNT; ++i)
+		cbRace->addItem(dataManager.GetSysString(DataManager::STRING_ID_RACE + i), 0x1U << i);
+	// 筛选卡片的条件：攻击力
+    env->addStaticText(dataManager.GetSysString(1322)/*攻击：*/, Resize(205, 28, 280, 48), false, false, wFilter);
 	ebAttack = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 26, 340, 46), wFilter, EDITBOX_INPUTS);
 	ebAttack->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1323), Resize(205, 51, 280, 71), false, false, wFilter);
+	// 筛选卡片的条件：防御力
+    env->addStaticText(dataManager.GetSysString(1323)/*守备：*/, Resize(205, 51, 280, 71), false, false, wFilter);
 	ebDefense = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 49, 340, 69), wFilter, EDITBOX_INPUTS);
 	ebDefense->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1324), Resize(10, 74, 80, 94), false, false, wFilter);
+	// 筛选卡片的条件：星数
+    env->addStaticText(dataManager.GetSysString(1324)/*星数：*/, Resize(10, 74, 80, 94), false, false, wFilter);
 	ebStar = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(60, 60 + 100 / 6, 100, 80 + 100 / 6), wFilter, EDITBOX_INPUTS);
 	ebStar->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1336), Resize(101, 60 + 100 / 6, 150 * xScale, 82 + 100 / 6), false, false, wFilter);
+	// 筛选卡片的条件：刻度
+    env->addStaticText(dataManager.GetSysString(1336)/*刻度：*/, Resize(101, 60 + 100 / 6, 150 * xScale, 82 + 100 / 6), false, false, wFilter);
 	ebScale = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(150, 60 + 100 / 6, 190, 80 + 100 / 6), wFilter, EDITBOX_INPUTS);
 	ebScale->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	env->addStaticText(dataManager.GetSysString(1325), Resize(205, 60 + 100 / 6, 280, 82 + 100 / 6), false, false, wFilter);
+	// 筛选卡片的条件：关键字
+    env->addStaticText(dataManager.GetSysString(1325)/*关键字：*/, Resize(205, 60 + 100 / 6, 280, 82 + 100 / 6), false, false, wFilter);
 	ebCardName = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(260, 72, 390, 92), wFilter, EDITBOX_KEYWORD);
 	ebCardName->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnEffectFilter = env->addButton(Resize(345, 28, 390, 69), wFilter, BUTTON_EFFECT_FILTER, dataManager.GetSysString(1326));
+    // 筛选卡片的条件：效果
+	btnEffectFilter = env->addButton(Resize(345, 28, 390, 69), wFilter, BUTTON_EFFECT_FILTER, dataManager.GetSysString(1326)/*效果*/);
 		ChangeToIGUIImageButton(btnEffectFilter, imageManager.tButton_C, imageManager.tButton_C_pressed);
 	btnStartFilter = env->addButton(Resize(210, 96, 390, 118), wFilter, BUTTON_START_FILTER, dataManager.GetSysString(1327));
 		ChangeToIGUIImageButton(btnStartFilter, imageManager.tButton_L, imageManager.tButton_L_pressed);
@@ -1092,11 +1165,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	scrFilter->setLargeStep(10);
 	scrFilter->setSmallStep(1);
 	scrFilter->setVisible(false);
-#endif
 
-#ifdef _IRR_ANDROID_PLATFORM_
     //LINK MARKER SEARCH
-	btnMarksFilter = env->addButton(Resize(60, 80 + 125 / 6, 190, 100 + 125 / 6), wFilter, BUTTON_MARKS_FILTER, dataManager.GetSysString(1374));
+	btnMarksFilter = env->addButton(Resize(60, 80 + 125 / 6, 190, 100 + 125 / 6), wFilter, BUTTON_MARKS_FILTER, dataManager.GetSysString(1374)/*连接标记*/);
  	   ChangeToIGUIImageButton(btnMarksFilter, imageManager.tButton_L, imageManager.tButton_L_pressed);
 	wLinkMarks = env->addWindow(Resize(600, 30, 820, 250), false, L"");
 	wLinkMarks->getCloseButton()->setVisible(false);
@@ -1104,7 +1175,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wLinkMarks->setDraggable(false);
 	wLinkMarks->setVisible(false);
 	    ChangeToIGUIImageWindow(wLinkMarks, &bgLinkMarks, imageManager.tWindow_V);
-	btnMarksOK = env->addButton(Resize(80, 80, 140, 140), wLinkMarks, BUTTON_MARKERS_OK, dataManager.GetSysString(1211));
+	btnMarksOK = env->addButton(Resize(80, 80, 140, 140), wLinkMarks, BUTTON_MARKERS_OK, dataManager.GetSysString(1211)/*确定*/);
         ChangeToIGUIImageButton(btnMarksOK, imageManager.tButton_C, imageManager.tButton_C_pressed);
 	btnMark[0] = env->addButton(Resize(10, 10, 70, 70), wLinkMarks, -1, L"\u2196");
         ChangeToIGUIImageButton(btnMark[0], imageManager.tButton_C, imageManager.tButton_C_pressed, titleFont);
@@ -1125,7 +1196,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	for(int i=0;i<8;i++)
 		btnMark[i]->setIsPushButton(true);
 	//replay window
-	wReplay = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1202));
+	wReplay = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1202)/*观看录像*/);
 	wReplay->getCloseButton()->setVisible(false);
 	wReplay->setDrawBackground(false);
 	wReplay->setVisible(false);
@@ -1134,25 +1205,25 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     bgReplay->setScaleImage(true);
 	lstReplayList = env->addListBox(Resize(20, 30, 310, 400), wReplay, LISTBOX_REPLAY_LIST, true);
 	lstReplayList->setItemHeight(30 * yScale);
-	btnLoadReplay = env->addButton(Resize(440, 310, 550, 350), wReplay, BUTTON_LOAD_REPLAY, dataManager.GetSysString(1348));
+	btnLoadReplay = env->addButton(Resize(440, 310, 550, 350), wReplay, BUTTON_LOAD_REPLAY, dataManager.GetSysString(1348)/*载入录像*/);
         ChangeToIGUIImageButton(btnLoadReplay, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnDeleteReplay = env->addButton(Resize(320, 310, 430, 350), wReplay, BUTTON_DELETE_REPLAY, dataManager.GetSysString(1361));
+	btnDeleteReplay = env->addButton(Resize(320, 310, 430, 350), wReplay, BUTTON_DELETE_REPLAY, dataManager.GetSysString(1361)/*删除录像*/);
         ChangeToIGUIImageButton(btnDeleteReplay, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnRenameReplay = env->addButton(Resize(320, 360, 430, 400), wReplay, BUTTON_RENAME_REPLAY, dataManager.GetSysString(1362));
+	btnRenameReplay = env->addButton(Resize(320, 360, 430, 400), wReplay, BUTTON_RENAME_REPLAY, dataManager.GetSysString(1362)/*重命名*/);
         ChangeToIGUIImageButton(btnRenameReplay, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnReplayCancel = env->addButton(Resize(440, 360, 550, 400), wReplay, BUTTON_CANCEL_REPLAY, dataManager.GetSysString(1347));
+	btnReplayCancel = env->addButton(Resize(440, 360, 550, 400), wReplay, BUTTON_CANCEL_REPLAY, dataManager.GetSysString(1347)/*退出*/);
         ChangeToIGUIImageButton(btnReplayCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	env->addStaticText(dataManager.GetSysString(1349), Resize(320, 30, 550, 50), false, true, wReplay);
 	stReplayInfo = env->addStaticText(L"", Resize(320, 60, 570, 315), false, true, wReplay);
 	env->addStaticText(dataManager.GetSysString(1353), Resize(320, 180, 550, 200), false, true, wReplay);
 	ebRepStartTurn = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(320, 210, 430, 250), wReplay, -1);
 	ebRepStartTurn->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	btnExportDeck = env->addButton(Resize(440, 260, 550, 300), wReplay, BUTTON_EXPORT_DECK, dataManager.GetSysString(1369));
+	btnExportDeck = env->addButton(Resize(440, 260, 550, 300), wReplay, BUTTON_EXPORT_DECK, dataManager.GetSysString(1369)/*提取卡组*/);
         ChangeToIGUIImageButton(btnExportDeck, imageManager.tButton_S, imageManager.tButton_S_pressed);
-	btnShareReplay = env->addButton(Resize(320, 260, 430, 300), wReplay, BUTTON_SHARE_REPLAY, dataManager.GetSysString(1368));
+	btnShareReplay = env->addButton(Resize(320, 260, 430, 300), wReplay, BUTTON_SHARE_REPLAY, dataManager.GetSysString(1368)/*分享录像*/);
 		ChangeToIGUIImageButton(btnShareReplay, imageManager.tButton_S, imageManager.tButton_S_pressed);
         //single play window
-	wSinglePlay = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1201));
+	wSinglePlay = env->addWindow(Resize(220, 100, 800, 520), false, dataManager.GetSysString(1201)/*单人游戏*/);
 	wSinglePlay->getCloseButton()->setVisible(false);
 	wSinglePlay->setDrawBackground(false);
 	wSinglePlay->setVisible(false);
@@ -1163,12 +1234,12 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	wSingle->setTabHeight(40 * yScale);
 	//TEST BOT MODE
 	if(gameConf.enable_bot_mode) {
-		irr::gui::IGUITab* tabBot = wSingle->addTab(dataManager.GetSysString(1380));
+		irr::gui::IGUITab* tabBot = wSingle->addTab(dataManager.GetSysString(1380)/*人机模式（双方无禁）*/);
 		lstBotList = env->addListBox(Resize(0, 0, 300, 330), tabBot, LISTBOX_BOT_LIST, true);
 		lstBotList->setItemHeight(30 * yScale);
-		btnStartBot = env->addButton(Resize(420, 240, 530, 280), tabBot, BUTTON_BOT_START, dataManager.GetSysString(1211));
+		btnStartBot = env->addButton(Resize(420, 240, 530, 280), tabBot, BUTTON_BOT_START, dataManager.GetSysString(1211)/*确定*/);
             ChangeToIGUIImageButton(btnStartBot, imageManager.tButton_S, imageManager.tButton_S_pressed);
-		btnBotCancel = env->addButton(Resize(420, 290, 530, 330), tabBot, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210));
+		btnBotCancel = env->addButton(Resize(420, 290, 530, 330), tabBot, BUTTON_CANCEL_SINGLEPLAY, dataManager.GetSysString(1210)/*退出*/);
             ChangeToIGUIImageButton(btnBotCancel, imageManager.tButton_S, imageManager.tButton_S_pressed);
 		env->addStaticText(dataManager.GetSysString(1382), Resize(310, 10, 500, 30), false, true, tabBot);
 		stBotInfo = env->addStaticText(L"", Resize(310, 40, 560, 160), false, true, tabBot);
@@ -1179,9 +1250,9 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
         btnBotDeckSelect = env->addButton(Resize(310, 110, 530, 150), tabBot, BUTTON_BOT_DECK_SELECT, L"");
 		btnBotDeckSelect->setVisible(false);
 		cbBotRule = irr::gui::CAndroidGUIComboBox::addAndroidComboBox(env, Resize(310, 160, 530, 200), tabBot, COMBOBOX_BOT_RULE);
-		cbBotRule->addItem(dataManager.GetSysString(1262));
-		cbBotRule->addItem(dataManager.GetSysString(1263));
-		cbBotRule->addItem(dataManager.GetSysString(1264));
+		cbBotRule->addItem(dataManager.GetSysString(1262));// 大师规则３
+		cbBotRule->addItem(dataManager.GetSysString(1263));// 新大师规则（2017）
+		cbBotRule->addItem(dataManager.GetSysString(1264));// 大师规则（2020）
 		cbBotRule->setSelected(gameConf.default_rule - 3);
 		chkBotHand = env->addCheckBox(false, Resize(310, 210, 410, 240), tabBot, -1, dataManager.GetSysString(1384));
 		chkBotNoCheckDeck = env->addCheckBox(false, Resize(310, 250, 410, 280), tabBot, -1, dataManager.GetSysString(1229));
@@ -1235,20 +1306,33 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	btnReplayExit = env->addButton(Resize_Y(0, 220 + 5, 110, 225 + 40), wReplayControl, BUTTON_REPLAY_EXIT, dataManager.GetSysString(1347));
         ChangeToIGUIImageButton(btnReplayExit, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	//chat
-    imgChat = irr::gui::CGUIImageButton::addImageButton(env, Resize_Y(0, 300, 45, 300 + 45), wPallet, BUTTON_CHATTING);
-    imgChat->setImageSize(irr::core::dimension2di(28 * yScale, 28 * yScale));
-    if (gameConf.chkIgnore1) {
-        imgChat->setImage(imageManager.tShut);
-    } else {
-        imgChat->setImage(imageManager.tTalk);
-    }
-	wChat = env->addWindow(Resize(305, 605, 1020, 640), false, L"");
+    imgChat = env->addButton(Resize_Y(0, 300, 45, 300 + 45), wPallet, BUTTON_CHATTING);
+    imgChat->setUseAlphaChannel(true);
+    imgChat->setImage(gameConf.chkIgnore1 ? imageManager.tShut : imageManager.tTalk);
+	wChat = env->addWindow(Resize(305, 605, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT), false, L"");
 	wChat->getCloseButton()->setVisible(false);
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
 	wChat->setVisible(false);
 	ebChatInput = irr::gui::CAndroidGUIEditBox::addAndroidEditBox(L"", true, env, Resize(3, 2, 710, 28), wChat, EDITBOX_CHAT);
-	//swap
+	// chat Emoticon
+    imgEmoticon = env->addButton(Resize_Y(0, 250, 45, 250 + 45), wPallet, BUTTON_EMOTICON);
+    imgEmoticon->setUseAlphaChannel(true);
+    imgEmoticon->setImage(imageManager.tEmoticon);
+    wEmoticon = env->addWindow(Resize_Y(300 - 44 * 4, 595 - 44 * 4, 305, 600), false, L"");
+    wEmoticon->getCloseButton()->setVisible(false);
+    wEmoticon->setDraggable(false);
+    wEmoticon->setDrawTitlebar(false);
+    wEmoticon->setVisible(false);
+
+    // 创建4x4宫格表情按钮
+    for (int i = 0; i < 16; i++) {
+        btnEmoticon[i] = env->addButton(Resize_Y(2 + i % 4 * 44, 2 + i / 4 * 44, 2 + (i % 4 + 1) * 44, 2 + (i / 4 + 1) * 44), wEmoticon, BUTTON_EMOTICON_0 + i);
+        btnEmoticon[i]->setUseAlphaChannel(true);
+        btnEmoticon[i]->setScaleImage(true);
+        btnEmoticon[i]->setImage(imageManager.GetEmoticon(imageManager.emoticonCodes[i]));
+    }
+    //swap
 	btnSpectatorSwap = env->addButton(Resize_Y(3 + CARD_IMG_WIDTH, 70, 310, 70 + 40), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
         ChangeToIGUIImageButton(btnSpectatorSwap, imageManager.tButton_S, imageManager.tButton_S_pressed);
 	btnSpectatorSwap->setVisible(false);
@@ -1286,7 +1370,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		chkMusicMode->setEnabled(false);
 		chkMusicMode->setVisible(false);
 	}
-#endif
+
 	//big picture
 	wBigCard = env->addWindow(Resize(0, 0, 0, 0), false, L"");
 	wBigCard->getCloseButton()->setVisible(false);
@@ -1321,7 +1405,7 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	stCardListTip->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stCardListTip->setVisible(false);
 	device->setEventReceiver(&menuHandler);
-	LoadConfig();
+
 	env->getSkin()->setFont(guiFont);
 	env->getSkin()->setSize(irr::gui::EGDS_CHECK_BOX_WIDTH, (gameConf.textfontsize + 10) * yScale);
 	env->setFocus(wMainMenu);
@@ -1330,112 +1414,167 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 		col.setAlpha(200);
 		env->getSkin()->setColor((irr::gui::EGUI_DEFAULT_COLOR)i, col);
 	}
-#ifdef _IRR_ANDROID_PLATFORM_
-irr::gui::IGUIStaticText *text = env->addStaticText(L"", Resize(1,1,100,45), false, false, 0, GUI_INFO_FPS);
-#endif
+    //左上角FPS数字
+    irr::gui::IGUIStaticText *text = env->addStaticText(L"", Resize(1,1,100,45), false, false, 0, GUI_INFO_FPS);
+
 	hideChat = false;
 	hideChatTimer = 0;
 	
 	return true;
 }//bool Game::Initialize
+/**
+ * @brief 游戏主循环函数，负责渲染游戏画面、处理输入事件以及更新逻辑状态。
+ *
+ * 此函数初始化摄像机、设置投影矩阵与视图矩阵，并根据平台加载对应的着色器材质。
+ * 在主循环中进行场景绘制、界面刷新、音频播放等操作，并控制帧率和时间显示。
+ * 同时支持多线程同步机制（如互斥锁）以确保数据安全访问。
+ */
 void Game::MainLoop() {
-	wchar_t cap[256];
+	wchar_t cap[256]; // 字符缓冲区，用于临时存储宽字符文本
+
+	// 添加一个摄像机节点到场景管理器
 	camera = smgr->addCameraSceneNode(0);
+
+	// 构建并设置自定义的投影矩阵
 	irr::core::matrix4 mProjection;
 	BuildProjectionMatrix(mProjection, -0.90f, 0.45f, -0.42f, 0.42f, 1.0f, 100.0f);
 	camera->setProjectionMatrix(mProjection);
 
-	mProjection.buildCameraLookAtMatrixLH(irr::core::vector3df(4.2f, 8.0f, 7.8f), irr::core::vector3df(4.2f, 0, 0), irr::core::vector3df(0, 0, 1));
+	// 设置摄像机视角变换矩阵（LookAt）
+	mProjection.buildCameraLookAtMatrixLH(
+		irr::core::vector3df(4.2f, 8.0f, 7.8f),   // 摄像机位置
+		irr::core::vector3df(4.2f, 0, 0),         // 观察目标点
+		irr::core::vector3df(0, 0, 1)             // 上方向向量
+	);
 	camera->setViewMatrixAffector(mProjection);
+
+	// 设置环境光颜色为白色
 	smgr->setAmbientLight(irr::video::SColorf(1.0f, 1.0f, 1.0f));
-	float atkframe = 0.1f;
+
+	float atkframe = 0.1f; // 动画帧计数器初始值
+
+	// 获取设备定时器并重置时间为0
 	irr::ITimer* timer = device->getTimer();
 	timer->setTime(0);
-    // get FPS
-	irr::gui::IGUIElement *stat = device->getGUIEnvironment()->getRootGUIElement()->getElementFromId ( GUI_INFO_FPS );
-	int fps = 0;
-	int cur_time = 0;
-#if defined(_IRR_ANDROID_PLATFORM_)
+
+	// 获取GUI中的FPS信息控件
+	irr::gui::IGUIElement *stat = device->getGUIEnvironment()->getRootGUIElement()->getElementFromId(GUI_INFO_FPS);
+	int fps = 0;       // 当前秒内已渲染帧数
+	int cur_time = 0;  // 定时器当前时间戳
+
+	// 初始化OpenGL ES 2.0材质类型变量
 	ogles2Solid = 0;
 	ogles2TrasparentAlpha = 0;
 	ogles2BlendTexture = 0;
+
+	// 根据GL版本选择是否使用内置或外部着色器文件
 	if (glversion == 0 || glversion == 2) {
 		ogles2Solid = irr::video::EMT_SOLID;
 		ogles2TrasparentAlpha = irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL;
 		ogles2BlendTexture = irr::video::EMT_ONETEXTURE_BLEND;
 	} else {
-        irr::io::path solidvsFileName = "media/ogles2customsolid.frag";
-        irr::io::path TACvsFileName = "media/ogles2customTAC.frag";
-        irr::io::path blendvsFileName = "media/ogles2customblend.frag";
-        irr::io::path psFileName = "media/ogles2custom.vert";
+		// 着色器文件路径配置
+		irr::io::path solidvsFileName = "media/ogles2customsolid.frag";
+		irr::io::path TACvsFileName = "media/ogles2customTAC.frag";
+		irr::io::path blendvsFileName = "media/ogles2customblend.frag";
+		irr::io::path psFileName = "media/ogles2custom.vert";
+
+		// 检查硬件是否支持像素着色器
 		if (!driver->queryFeature(irr::video::EVDF_PIXEL_SHADER_1_1) &&
-				!driver->queryFeature(irr::video::EVDF_ARB_FRAGMENT_PROGRAM_1))
-		{
-			ALOGD("cc game: WARNING: Pixel shaders disabled "
-					"because of missing driver/hardware support.");
+		    !driver->queryFeature(irr::video::EVDF_ARB_FRAGMENT_PROGRAM_1)) {
+			ALOGD("cc game: WARNING: Pixel shaders disabled because of missing driver/hardware support.");
 			psFileName = "";
 		}
+
+		// 检查硬件是否支持顶点着色器
 		if (!driver->queryFeature(irr::video::EVDF_VERTEX_SHADER_1_1) &&
-				!driver->queryFeature(irr::video::EVDF_ARB_VERTEX_PROGRAM_1))
-		{
-			ALOGD("cc game: WARNING: Vertex shaders disabled "
-					"because of missing driver/hardware support.");
+		    !driver->queryFeature(irr::video::EVDF_ARB_VERTEX_PROGRAM_1)) {
+			ALOGD("cc game: WARNING: Vertex shaders disabled because of missing driver/hardware support.");
 			solidvsFileName = "";
 			TACvsFileName = "";
 			blendvsFileName = "";
 		}
-        irr::video::IGPUProgrammingServices* gpu = driver->getGPUProgrammingServices();
+
+		// 加载高级着色器程序
+		irr::video::IGPUProgrammingServices* gpu = driver->getGPUProgrammingServices();
 		if (gpu) {
 			const irr::video::E_GPU_SHADING_LANGUAGE shadingLanguage = irr::video::EGSL_DEFAULT;
+
 			ogles2Solid = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
-					solidvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
-					&customShadersCallback, irr::video::EMT_SOLID, 0, shadingLanguage);
+				psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+				solidvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+				&customShadersCallback, irr::video::EMT_SOLID, 0, shadingLanguage);
+
 			ogles2TrasparentAlpha = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
-					TACvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
-					&customShadersCallback, irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL, 0 , shadingLanguage);
+				psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+				TACvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+				&customShadersCallback, irr::video::EMT_TRANSPARENT_ALPHA_CHANNEL, 0, shadingLanguage);
+
 			ogles2BlendTexture = gpu->addHighLevelShaderMaterialFromFiles(
-					psFileName, "vertexMain", irr::video::EVST_VS_1_1,
-					blendvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
-					&customShadersCallback, irr::video::EMT_ONETEXTURE_BLEND, 0 , shadingLanguage);
+				psFileName, "vertexMain", irr::video::EVST_VS_1_1,
+				blendvsFileName, "pixelMain", irr::video::EPST_PS_1_1,
+				&customShadersCallback, irr::video::EMT_ONETEXTURE_BLEND, 0, shadingLanguage);
+
 			ALOGD("cc game:ogles2Sold = %d", ogles2Solid);
 			ALOGD("cc game:ogles2BlendTexture = %d", ogles2BlendTexture);
 			ALOGD("cc game:ogles2TrasparentAlpha = %d", ogles2TrasparentAlpha);
 		}
 	}
-	matManager.mCard.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
-	matManager.mBackLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mSelField.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
-	matManager.mOutLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2Solid;
-	matManager.mTRTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
-	matManager.mATK.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+
+	// 将着色器材质应用至各个材质对象
+	// 设置卡片正面材质类型为混合纹理着色器
+    matManager.mCard.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+    // 设置纹理材质类型为透明alpha通道着色器
+    matManager.mTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
+    // 设置背景线条材质类型为混合纹理着色器
+    matManager.mBackLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+    // 设置选择区域材质类型为混合纹理着色器
+    matManager.mSelField.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+    // 设置轮廓线材质类型为纯色着色器
+    matManager.mOutLine.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2Solid;
+    // 设置透明纹理材质类型为透明alpha通道着色器
+    matManager.mTRTexture.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2TrasparentAlpha;
+    // 设置攻击指示器材质类型为混合纹理着色器
+    matManager.mATK.MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2BlendTexture;
+
+	// 若不支持非幂次纹理尺寸，则设置纹理环绕模式为边缘夹紧
 	if (!isNPOTSupported) {
-		matManager.mCard.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mCard.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mBackLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mBackLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mSelField.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mSelField.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mOutLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mOutLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mTRTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mTRTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mATK.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
-		matManager.mATK.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 当不支持非2次幂纹理时，设置各个材质的纹理环绕模式为边缘夹紧(CLAMP_TO_EDGE)
+        // 卡片正面材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mCard.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mCard.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 纹理材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 背景线条材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mBackLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mBackLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 选择区域材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mSelField.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mSelField.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 轮廓线材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mOutLine.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mOutLine.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 透明纹理材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mTRTexture.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mTRTexture.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
+        // 攻击指示器材质的U轴和V轴纹理环绕模式设为边缘夹紧
+        matManager.mATK.TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
+        matManager.mATK.TextureLayer[0].TextureWrapV = irr::video::ETC_CLAMP_TO_EDGE;
 	}
-#endif
+
+	// 主循环开始：持续运行直到窗口关闭
 	while(device->run()) {
-		//ALOGV("cc game draw frame");
-		linePatternD3D = (linePatternD3D + 1) % 30;
-		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
-		atkframe += 0.1f;
-		atkdy = (float)sin(atkframe);
+		linePattern = (linePattern + 1) % 30;
+		stippleMask = (stippleMask << 1) | (stippleMask >> 15);
+
+		atkframe += 0.1f;                               // 增加动画帧计数
+		atkdy = (float)sin(atkframe);                   // 计算攻击动作偏移量
+
+		// 开始渲染场景
 		driver->beginScene(true, true, irr::video::SColor(0, 0, 0, 0));
-#ifdef _IRR_ANDROID_PLATFORM_
+
+		// 设置2D材质并启用2D渲染
 		driver->getMaterial2D().MaterialType = (irr::video::E_MATERIAL_TYPE)ogles2Solid;
 		if (!isNPOTSupported) {
 			driver->getMaterial2D().TextureLayer[0].TextureWrapU = irr::video::ETC_CLAMP_TO_EDGE;
@@ -1443,88 +1582,96 @@ void Game::MainLoop() {
 		}
 		driver->enableMaterial2D(true);
 		driver->getMaterial2D().ZBuffer = irr::video::ECFN_NEVER;
-		if(imageManager.tBackGround) {
-			driver->draw2DImage(imageManager.tBackGround, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
-		}
-		if(imageManager.tBackGround_menu) {
-			driver->draw2DImage(imageManager.tBackGround_menu, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
-		}
-		if(imageManager.tBackGround_deck) {
-			driver->draw2DImage(imageManager.tBackGround_deck, Resize(0, 0, GAME_WIDTH, GAME_HEIGHT), irr::core::recti(0, 0, imageManager.tBackGround->getOriginalSize().Width, imageManager.tBackGround->getOriginalSize().Height));
-		}
-		driver->enableMaterial2D(false);
+
+		// 多线程保护：锁定互斥锁防止并发修改共享资源
 		gMutex.lock();
+
+		// 根据不同状态绘制对应内容
 		if(dInfo.isStarted) {
-			DrawBackImage(imageManager.tBackGround);
-			DrawBackGround();
-			DrawCards();
-			DrawMisc();
-			smgr->drawAll();
+			DrawBackImage(imageManager.tBackGround); // 背景图片
+			DrawBackGround();                        // 场地背景
+			DrawCards();                             // 所有卡牌
+			DrawMisc();                              // 其他元素
+			smgr->drawAll();                         // 渲染所有3D场景节点
 			driver->setMaterial(irr::video::IdentityMaterial);
-			driver->clearZBuffer();
+			driver->clearZBuffer();                  // 清除深度缓存
 		} else if(is_building) {
-			DrawBackImage(imageManager.tBackGround_deck);
-			driver->enableMaterial2D(true);
-			DrawDeckBd();
-			driver->enableMaterial2D(false);
+			DrawBackImage(imageManager.tBackGround_deck); // 牌组编辑界面背景
+			DrawDeckBd();                            // 绘制牌组边框
 		} else {
-			DrawBackImage(imageManager.tBackGround_menu);
+			DrawBackImage(imageManager.tBackGround_menu); // 菜单界面背景
 		}
-		driver->enableMaterial2D(true);
-		DrawGUI();
-		DrawSpec();
-		driver->enableMaterial2D(false);
-		gMutex.unlock();
-		playBGM();
+
+		// 绘制用户界面及特殊效果
+		DrawGUI();                                   // UI组件
+		DrawSpec();                                  // 特效相关
+		gMutex.unlock();                             // 解锁互斥锁
+		playBGM();                                   // 播放背景音乐
+		// 控制信号帧倒计时
 		if(signalFrame > 0) {
 			signalFrame--;
 			if(!signalFrame)
-				frameSignal.Set();
+				frameSignal.Set();                     // 发送信号通知其他线程
 		}
+
+		// 显示等待提示消息
 		if(waitFrame >= 0) {
 			waitFrame++;
 			if(waitFrame % 90 == 0) {
-				stHintMsg->setText(dataManager.GetSysString(1390));
+				stHintMsg->setText(dataManager.GetSysString(1390)); // "等待行动中..."
 			} else if(waitFrame % 90 == 30) {
-				stHintMsg->setText(dataManager.GetSysString(1391));
+				stHintMsg->setText(dataManager.GetSysString(1391)); // "等待行动中...."
 			} else if(waitFrame % 90 == 60) {
-				stHintMsg->setText(dataManager.GetSysString(1392));
+				stHintMsg->setText(dataManager.GetSysString(1392)); // "等待行动中....."
 			}
 		}
-		driver->endScene();
+
+		driver->endScene();                          // 结束渲染过程
+
+		// 检查是否需要退出对战窗口
 		if(closeSignal.Wait(1))
 			CloseDuelWindow();
-		fps++;
-		cur_time = timer->getTime();
+
+		fps++;                                       // 帧计数增加
+		cur_time = timer->getTime();                 // 获取当前时间
+
+		// 控制帧率为约60FPS（每帧最大延迟20毫秒）
 		if(cur_time < fps * 17 - 20)
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+		// 每秒钟更新一次FPS显示和剩余时间
 		if(cur_time >= 1000) {
-			if ( stat ) {
+			if(stat) {
 				irr::core::stringw str = L"FPS: ";
 				str += (irr::s32)device->getVideoDriver()->getFPS();
-				stat->setText ( str.c_str() );
+				stat->setText(str.c_str());
 			}
 			fps = 0;
 			cur_time -= 1000;
 			timer->setTime(0);
+
+			// 更新玩家剩余时间
 			if(dInfo.time_player == 0 || dInfo.time_player == 1)
 				if(dInfo.time_left[dInfo.time_player]) {
 					dInfo.time_left[dInfo.time_player]--;
 					RefreshTimeDisplay();
 				}
 		}
-		device->yield(); // probably nicer to the battery
-#endif
+
+		device->yield(); // 礼让CPU，节省电池电量
 	}
+
+	// 游戏结束后的清理工作
 	DuelClient::StopClient(true);
 	if(dInfo.isSingleMode)
 		SingleMode::StopPlay(true);
 
-	usleep(500000);
+	usleep(500000);      // 等待半秒后保存配置
 	SaveConfig();
-	usleep(500000);
+	usleep(500000);      // 再等待半秒后释放设备资源
 	device->drop();
 }
+
 void Game::RefreshTimeDisplay() {
 	for(int i = 0; i < 2; ++i) {
 		if(dInfo.time_left[i] && dInfo.time_limit) {
@@ -1571,89 +1718,128 @@ void Game::InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, i
 	scrCardText->setPos(0);
 }
 std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos) {
-	int pbuffer = 0;
 	irr::u32 _width = 0, _height = 0;
 	wchar_t prev = 0;
-	wchar_t strBuffer[4096];
-	std::wstring ret;
+	std::wstring result;
+	result.reserve(4096);
+	const size_t text_len = std::wcslen(text);
 
-	for(size_t i = 0; text[i] != 0 && i < std::wcslen(text); ++i) {
+	for(size_t i = 0; i < text_len ; ++i) {
 		wchar_t c = text[i];
 		irr::u32 w = font->getCharDimension(c).Width + font->getKerningWidth(c, prev);
 		prev = c;
-		if(text[i] == L'\r') {
+		if (c == L'\r') {
 			continue;
-		} else if(text[i] == L'\n') {
-			strBuffer[pbuffer++] = L'\n';
+		}
+		if (c == L'\n') {
+			result.push_back(L'\n');
 			_width = 0;
 			_height++;
 			prev = 0;
-			if(_height == pos)
-				pbuffer = 0;
+			if (_height == pos)
+				result.clear();
 			continue;
-		} else if(_width > 0 && _width + w > cWidth) {
-			strBuffer[pbuffer++] = L'\n';
+		}
+		if (_width > 0 && _width + w > cWidth) {
+			result.push_back(L'\n');
 			_width = 0;
 			_height++;
 			prev = 0;
-			if(_height == pos)
-				pbuffer = 0;
+			if (_height == pos)
+				result.clear();
 		}
 		_width += w;
-		strBuffer[pbuffer++] = c;
+		result.push_back(c);
 	}
-	strBuffer[pbuffer] = 0;
-	if(pControl) pControl->setText(strBuffer);
-	ret.assign(strBuffer);
-	return ret;
+	if (pControl)
+		pControl->setText(result.c_str());
+	return result;
 }
+/**
+ * @brief 加载游戏扩展包（如卡牌数据库、配置文件等）。
+ *
+ * 此函数会扫描 ./expansions/ 目录下的 .zip 或 .ypk 扩展包文件，
+ * 将其作为文件档案加载到文件系统中，并进一步解析其中的数据库文件 (.cdb)、
+ * 配置文件 (.conf) 和卡组文件 (.ydk)，用于初始化游戏数据。
+ *
+ */
 void Game::LoadExpansions() {
-	// TODO: get isUseExtraCards
-#ifdef _IRR_ANDROID_PLATFORM_
-	DIR * dir;
-	struct dirent * dirp;
-	if((dir = opendir("./expansions/")) == NULL)
-		return;
-	while((dirp = readdir(dir)) != NULL) {
-		size_t len = strlen(dirp->d_name);
-		if(len < 5 || strcasecmp(dirp->d_name + len - 4, ".zip") != 0 ||strcasecmp(dirp->d_name + len - 4, ".ypk") != 0)
-			continue;
-		char upath[1024];
-		sprintf(upath, "./expansions/%s", dirp->d_name);
-		dataManager.FileSystem->addFileArchive(upath, true, false, EFAT_ZIP);
-	}
-	closedir(dir);
-#endif
-	for(irr::u32 i = 0; i < DataManager::FileSystem->getFileArchiveCount(); ++i) {
-		auto archive = DataManager::FileSystem->getFileArchive(i)->getFileList();
+	FileSystem::TraversalDir("./expansions", [](const char* name, bool isdir) {
+		if (isdir)
+			return;
+		char fpath[1024];
+		mysnprintf(fpath, "./expansions/%s", name);
+		if (IsExtension(name, ".cdb")) {
+			if (!dataManager.LoadDB(fpath)) {
+				std::string errmsg = "Warning: Failed to load DB file on disk (";
+				errmsg.append(fpath);
+				errmsg.append(")! ");
+				errmsg.append(dataManager.errmsg);
+				mainGame->ErrorLog(errmsg.c_str());
+			}
+			return;
+		}
+		if (IsExtension(name, ".conf")) {
+			if (std::strstr(name, "lflist") != nullptr) {
+				deckManager.LoadLFListSingle(fpath);
+			} else {
+				dataManager.LoadStrings(fpath);
+			}
+			return;
+		}
+	});
+	// 遍历所有已加载的文件档案（包括 zip 等压缩档案）
+	for(irr::u32 i = 0; i < dataManager.IrrFileSystem->getFileArchiveCount(); ++i) {
+		auto archive = dataManager.IrrFileSystem->getFileArchive(i)->getFileList();
+
+		// 遍历当前档案中的每一个文件
 		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
-			wchar_t fname[1024];
-			const char* uname = archive->getFullFileName(j).c_str();
-			BufferIO::DecodeUTF8(uname, fname);
-			if (IsExtension(fname, L".cdb")) {
-				dataManager.LoadDB(fname);
+			const char* name = archive->getFullFileName(j).c_str();
+			if (IsExtension(name, ".cdb")) {
+				if (!dataManager.LoadDB(name)) {
+					std::string errmsg = "Warning: Failed to load DB file in expansion archive (";
+					errmsg.append(dataManager.IrrFileSystem->getFileArchive(i)->getArchiveName().c_str());
+					errmsg.append(" : ");
+					errmsg.append(name);
+					errmsg.append(")! ");
+					errmsg.append(dataManager.errmsg);
+					mainGame->ErrorLog(errmsg.c_str());
+				}
 				continue;
 			}
-			if (IsExtension(fname, L".conf")) {
-				auto reader = DataManager::FileSystem->createAndOpenFile(uname);
+			if (IsExtension(name, ".conf")) {
+				auto reader = dataManager.IrrFileSystem->createAndOpenFile(name);
 				dataManager.LoadStrings(reader);
 				continue;
 			}
-			if (!mywcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
+			if (!mystrncasecmp(name, "pack/", 5) && IsExtension(name, ".ydk")) {
+				wchar_t fname[1024];
+				int len = BufferIO::DecodeUTF8(name, fname);
+				// TODO: zip file may contain non-UTF8 file name. DecodeUTF8 can't parse it and returns 0.
+				if (!len) {
+					std::string errmsg = "Warning: Failed to decode deck file name in expansion archive (";
+					errmsg.append(dataManager.IrrFileSystem->getFileArchive(i)->getArchiveName().c_str());
+					errmsg.append(" : ");
+					errmsg.append(name);
+					errmsg.append(")! Please make sure the file name is UTF-8 encoded in the archive.");
+					mainGame->ErrorLog(errmsg.c_str());
+					continue;
+				}
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
 			}
 		}
 	}
 }
+
 void Game::RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused) {
 	cbCategory->clear();
 	if (cbCategory == mainGame->cbDBCategory) {
 		cbCategory->addItem(dataManager.GetSysString(1450));
 	}
-	cbCategory->addItem(dataManager.GetSysString(1451));
-	cbCategory->addItem(dataManager.GetSysString(1452));
-	cbCategory->addItem(dataManager.GetSysString(1453));
+	cbCategory->addItem(dataManager.GetSysString(1451));// 人机卡组
+	cbCategory->addItem(dataManager.GetSysString(1452));// 未分类卡组
+	cbCategory->addItem(dataManager.GetSysString(1453));// --------（分割线）
 	FileSystem::TraversalDir(L"./deck", [cbCategory](const wchar_t* name, bool isdir) {
 		if(isdir) {
 			cbCategory->addItem(name);
@@ -1704,11 +1890,8 @@ void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const w
 	}
 	FileSystem::TraversalDir(deckpath, [additem](const wchar_t* name, bool isdir) {
 		if (!isdir && IsExtension(name, L".ydk")) {
-			size_t len = std::wcslen(name);
 			wchar_t deckname[256]{};
-			size_t count = std::min(len - 4, sizeof deckname / sizeof deckname[0] - 1);
-			std::wcsncpy(deckname, name, count);
-			deckname[count] = 0;
+			BufferIO::CopyWideString(name, deckname, std::wcslen(name) - 4);
 			additem(deckname);
 		}
 	});
@@ -1732,7 +1915,7 @@ void Game::RefreshBot() {
 	if(!gameConf.enable_bot_mode)
 		return;
 	botInfo.clear();
-	FILE* fp = std::fopen("bot.conf", "r");
+	FILE* fp = myfopen("bot.conf", "r");
 	char linebuf[256]{};
 	char strbuf[256]{};
 	if(fp) {
@@ -1778,7 +1961,7 @@ void Game::RefreshBot() {
 		lstBotList->addItem(botInfo[i].name);
 	}
 	if(botInfo.size() == 0) {
-		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385));
+		SetStaticText(stBotInfo, 200, guiFont, dataManager.GetSysString(1385)); // 此模式人机尚未实装
 	}
 	else {
 		RefreshCategoryDeck(cbBotDeckCategory, cbBotDeck);
@@ -1790,24 +1973,34 @@ void Game::RefreshBot() {
 		if (cbBotDeck->getItemCount() != 0) {
 			myswprintf(cate_deck, L"%ls%ls", cate, cbBotDeck->getItem(cbBotDeck->getSelected()));
 		} else {
-			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));
+			myswprintf(cate_deck, L"%ls%ls", cate, dataManager.GetSysString(1301));// 未选择卡组！
 		}
 		mainGame->btnBotDeckSelect->setText(cate_deck);
 	}
 }
 void Game::LoadConfig() {
 	wchar_t wstr[256];
-	gameConf.antialias = 1;
+	gameConf.antialias = 2;
 	gameConf.serverport = 7911;
 	gameConf.textfontsize = irr::android::getIntSetting(appMain, "textfontsize", 18);;
 	gameConf.nickname[0] = 0;
 	gameConf.gamename[0] = 0;
+    // 获取 enable_genesys_mode 值并存储到 gameConf.enable_genesys_mode
+    gameConf.enable_genesys_mode = irr::android::getIntSetting(appMain, "enable_genesys_mode", 0);;
+    // 获取 lastLimit 值并存储到 gameConf.last_limit_list_name
+    BufferIO::DecodeUTF8(irr::android::getLastLimit(appMain).c_str(), wstr);
+    BufferIO::CopyWStr(wstr, gameConf.last_limit_list_name, 64);
+    // 获取 lastGenesysLimit 值并存储到 gameConf.last_genesys_limit_list_name
+    BufferIO::DecodeUTF8(irr::android::getLastGenesysLimit(appMain).c_str(), wstr);
+    BufferIO::CopyWStr(wstr, gameConf.last_genesys_limit_list_name, 64);
+    ALOGW("cc game: lastLimit: %ls", wstr);
+    // 获取 lastCategory 值并存储到 gameConf.lastcategory
     BufferIO::DecodeUTF8(irr::android::getLastCategory(appMain).c_str(), wstr);;
     BufferIO::CopyWStr(wstr, gameConf.lastcategory, 64);
-
+    // 获取 lastDeck 值并存储到 gameConf.lastdeck
 	BufferIO::DecodeUTF8(irr::android::getLastDeck(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.lastdeck, 64);
-
+    // 获取 fontPath 值并存储到 gameConf.numfont 和 gameConf.textfont
 	BufferIO::DecodeUTF8(irr::android::getFontPath(appMain).c_str(), wstr);
 	BufferIO::CopyWStr(wstr, gameConf.numfont, 256);
 	BufferIO::CopyWStr(wstr, gameConf.textfont, 256);
@@ -1834,7 +2027,11 @@ void Game::LoadConfig() {
 	gameConf.enable_music = irr::android::getIntSetting(appMain, "enable_music", 1);
 	gameConf.music_volume = irr::android::getIntSetting(appMain, "music_volume", 50);
 	gameConf.music_mode = irr::android::getIntSetting(appMain, "music_mode", 1);
+    // 加载是否启用常规禁限卡表的开关值
 	gameConf.use_lflist = irr::android::getIntSetting(appMain, "use_lflist", 1);
+    // 加载是否启用genesys禁限卡表的开关值
+	gameConf.use_genesys_lflist = irr::android::getIntSetting(appMain, "use_genesys_lflist", 1);
+
 	gameConf.chkDefaultShowChain = irr::android::getIntSetting(appMain, "chkDefaultShowChain", 0);
 	gameConf.hide_player_name = irr::android::getIntSetting(appMain, "chkHidePlayerName", 0);
 	//defult Setting without checked
@@ -1845,9 +2042,10 @@ void Game::LoadConfig() {
 	gameConf.defaultOT = 1;
 	gameConf.auto_search_limit = 1;
 	//enable errorLog
-	enable_log = 3;
+    gameConf.enable_log = 3;
 	//TEST BOT MODE
 	gameConf.enable_bot_mode = 1;
+	gameConf.use_image_scale_multi_thread = 1;
 }
 
 void Game::SaveConfig() {
@@ -1865,7 +2063,11 @@ void Game::SaveConfig() {
     irr::android::saveIntSetting(appMain, "chkWaitChain", gameConf.chkWaitChain);
 
 	//system
-	gameConf.chkIgnore1 = chkIgnore1->isChecked() ? 1 : 0;
+    //保存启用起源点数模式的勾选值
+    gameConf.enable_genesys_mode = chkEnableGenesysMode->isChecked() ? 1 : 0;
+    irr::android::saveIntSetting(appMain, "enable_genesys_mode", gameConf.enable_genesys_mode);
+
+    gameConf.chkIgnore1 = chkIgnore1->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "chkIgnore1", gameConf.chkIgnore1);
 	gameConf.chkIgnore2 = chkIgnore2->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "chkIgnore2", gameConf.chkIgnore2);
@@ -1889,47 +2091,70 @@ void Game::SaveConfig() {
     irr::android::saveIntSetting(appMain, "sound_volume", gameConf.sound_volume);
 	gameConf.music_volume = (double)scrMusicVolume->getPos();
     irr::android::saveIntSetting(appMain, "music_volume", gameConf.music_volume);
+    // 保存启用LFLIST的勾选值
 	gameConf.use_lflist = chkLFlist->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "use_lflist", gameConf.use_lflist);
-	gameConf.chkDefaultShowChain = chkDefaultShowChain->isChecked() ? 1 : 0;
+    // 保存启用Genesys LFLIST的勾选值
+	gameConf.use_genesys_lflist = chkGenesysLFlist->isChecked() ? 1 : 0;
+    irr::android::saveIntSetting(appMain, "use_genesys_lflist", gameConf.use_genesys_lflist);
+
+    gameConf.chkDefaultShowChain = chkDefaultShowChain->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "chkDefaultShowChain", gameConf.chkDefaultShowChain);
 	gameConf.hide_player_name  = chkHidePlayerName->isChecked() ? 1 : 0;
     irr::android::saveIntSetting(appMain, "chkHidePlayerName", gameConf.hide_player_name);
-//gameConf.control_mode = control_mode->isChecked()?1:0;
-//	  android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
+//  gameConf.control_mode = control_mode->isChecked()?1:0;
+//	android::saveIntSetting(appMain, "control_mode", gameConf.control_mode);
 }
 
-void Game::ShowCardInfo(int code) {
+/**
+ * @brief 显示指定卡牌的信息。
+ *
+ * 此函数用于在游戏界面中显示一张卡牌的详细信息，包括图像、名称、类型、种族、属性、攻击力/守备力等，
+ * 并根据卡牌是否有效（存在于数据表中）以及其具体类型（怪兽卡、魔法卡、陷阱卡等）进行不同的处理。
+ * 同时会设置文本区域以展示卡牌描述，并调整控件位置与缩放。
+ *
+ * @param code 卡牌编号，用作查找卡牌数据的关键字。
+ */
+void Game::ShowCardInfo(int code, bool resize) {
+	if(showingcode == code && !resize)
+		return;
 	wchar_t formatBuffer[256];
-	auto cit = dataManager.GetCodePointer(code);
-	bool is_valid = (cit != dataManager.datas_end());
-	imgCard->setImage(imageManager.GetTexture(code));
-	imgCard->setScaleImage(true);
+	auto& _datas = dataManager.GetDataTable();
+	auto cit = _datas.find(code);
+	bool is_valid = (cit != _datas.end());
+
+    // 设置卡片图片并启用自动缩放
+	imgCard->setImage(imageManager.GetTexture(code, true));
+
+    // 根据卡牌是否存在决定如何显示名称：若存在且是替代卡则使用别名
 	if (is_valid) {
 		auto& cd = cit->second;
-		if (cd.is_alternative())
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-		else
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.get_original_code()), cd.get_original_code());
 	}
 	else {
 		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
 	}
+    // 设置名称标签文本及提示工具文本（当文字超出宽度时）
 	stName->setText(formatBuffer);
-	if((int)guiFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
+    if ((int)textFont->getDimension(formatBuffer).Width > stName->getRelativePosition().getWidth() - gameConf.textfontsize)
 		stName->setToolTipText(formatBuffer);
 	else
 		stName->setToolTipText(nullptr);
+
+    // 字段名显示逻辑
 	int offset = 0;
 	if (is_valid && !gameConf.hide_setname) {
 		auto& cd = cit->second;
 		auto target = cit;
-		if (cd.alias && dataManager.GetCodePointer(cd.alias) != dataManager.datas_end()) {
-			target = dataManager.GetCodePointer(cd.alias);
+        // 若当前卡有同名卡并且该同名卡存在于数据库中，则使用该同名卡对应的数据
+		if (cd.rule_code && _datas.count(cd.rule_code)) {
+			target = _datas.find(cd.rule_code);
 		}
+        // 如果目标卡具有字段码，则构造并显示字段名
 		if (target->second.setcode[0]) {
-			offset = 23;// *yScale;
-			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(target->second.setcode).c_str());
+            offset = 23; // 固定偏移量用于布局调整
+			const auto& setname = dataManager.FormatSetName(target->second.setcode);
+			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), setname.c_str());
 			stSetName->setText(formatBuffer);
 		}
 		else
@@ -1938,20 +2163,34 @@ void Game::ShowCardInfo(int code) {
 	else {
 		stSetName->setText(L"");
 	}
+
+    // 怪物卡信息处理分支
 	if(is_valid && cit->second.type & TYPE_MONSTER) {
 		auto& cd = cit->second;
-		myswprintf(formatBuffer, L"[%ls] %ls/%ls", dataManager.FormatType(cd.type).c_str(), dataManager.FormatRace(cd.race).c_str(), dataManager.FormatAttribute(cd.attribute).c_str());
+
+        // 构造并显示怪物卡的基本信息（类型、种族、属性）
+		const auto& type = dataManager.FormatType(cd.type);
+		const auto& race = dataManager.FormatRace(cd.race);
+		const auto& attribute = dataManager.FormatAttribute(cd.attribute);
+		myswprintf(formatBuffer, L"[%ls] %ls/%ls", type.c_str(), race.c_str(), attribute.c_str());
 		stInfo->setText(formatBuffer);
+
+        // 判断文本长度是否需要换行偏移
 		int offset_info = 0;
-		irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
+        irr::core::dimension2d<unsigned int> dtxt = textFont->getDimension(formatBuffer);
 		if(dtxt.Width > (300 * xScale - 13) - 15)
 			offset_info = 15;
+
+        // 准备等级符号和攻防数值字符串
 		const wchar_t* form = L"\u2605";
 		wchar_t adBuffer[64]{};
 		wchar_t scaleBuffer[16]{};
+
+        // 非连接卡处理
 		if(!(cd.type & TYPE_LINK)) {
 			if(cd.type & TYPE_XYZ)
 				form = L"\u2606";
+            // 攻击力/防御力未知情况下的特殊处理
 			if(cd.attack < 0 && cd.defense < 0)
 				myswprintf(adBuffer, L"?/?");
 			else if(cd.attack < 0)
@@ -1962,37 +2201,49 @@ void Game::ShowCardInfo(int code) {
 				myswprintf(adBuffer, L"%d/%d", cd.attack, cd.defense);
 		} else {
 			form = L"LINK-";
+			const auto& link_marker = dataManager.FormatLinkMarker(cd.link_marker);
 			if(cd.attack < 0)
-				myswprintf(adBuffer, L"?/-   %ls", dataManager.FormatLinkMarker(cd.link_marker).c_str());
+				myswprintf(adBuffer, L"?/-   %ls", link_marker.c_str());
 			else
-				myswprintf(adBuffer, L"%d/-   %ls", cd.attack, dataManager.FormatLinkMarker(cd.link_marker).c_str());
+				myswprintf(adBuffer, L"%d/-   %ls", cd.attack, link_marker.c_str());
 		}
+        // 灵摆卡额外显示左右刻度
 		if(cd.type & TYPE_PENDULUM) {
 			myswprintf(scaleBuffer, L"   %d/%d", cd.lscale, cd.rscale);
 		}
+        // 组合最终数据信息并设置到界面上
 		myswprintf(formatBuffer, L"[%ls%d] %ls%ls", form, cd.level, adBuffer, scaleBuffer);
 		stDataInfo->setText(formatBuffer);
-		stSetName->setRelativePosition(Resize(10, 83, 250, 106));
-		stText->setRelativePosition(Resize(10, 83 + offset, 251, 340));
-		scrCardText->setRelativePosition(Resize(255, 83 + offset, 258, 340));
+
+        // 调整控件的位置
+        stSetName->setRelativePosition(Resize(10, 83, 250, 106));
+        stText->setRelativePosition(Resize(10, 83 + offset, 251, 340));
+        scrCardText->setRelativePosition(Resize(255, 83 + offset, 258, 340));
 	}
 	else {
-		if (is_valid)
-			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cit->second.type).c_str());
+		if (is_valid) {
+			const auto& type = dataManager.FormatType(cit->second.type);
+			myswprintf(formatBuffer, L"[%ls]", type.c_str());
+		}
 		else
 			myswprintf(formatBuffer, L"[%ls]", dataManager.unknown_string);
 		stInfo->setText(formatBuffer);
 		stDataInfo->setText(L"");
-		stSetName->setRelativePosition(Resize(10, 60, 250, 106));
-		stText->setRelativePosition(Resize(10, 60 + offset, 251, 340));
-		scrCardText->setRelativePosition(Resize(255, 60 + offset, 258, 340));
-	}
-	showingtext = dataManager.GetText(code);
-	const auto& tsize = stText->getRelativePosition();
-	InitStaticText(stText, tsize.getWidth(), tsize.getHeight(), textFont, showingtext);
+
+        // 调整控件位置适应非怪物卡布局
+        stSetName->setRelativePosition(Resize(10, 60, 250, 106));
+        stText->setRelativePosition(Resize(10, 60 + offset, 251, 340));
+        scrCardText->setRelativePosition(Resize(255, 60 + offset, 258, 340));
+    }
+
+    // 获取并初始化卡牌描述文本
+    showingtext = dataManager.GetText(code);
+    const auto& tsize = stText->getRelativePosition();
+    InitStaticText(stText, tsize.getWidth(), tsize.getHeight(), textFont, showingtext);
 }
 void Game::ClearCardInfo(int player) {
 	imgCard->setImage(imageManager.tCover[player]);
+	showingcode = 0;
 	stName->setText(L"");
 	stInfo->setText(L"");
 	stDataInfo->setText(L"");
@@ -2054,7 +2305,8 @@ void Game::AddChatMsg(const wchar_t* msg, int player, bool play_sound) {
 		if(player < 11 || player > 19)
 			chatMsg[0].append(L"[---]: ");
 	}
-	chatMsg[0].append(msg);
+    // 处理消息,player是0，2，10(隐藏nickname)视为自己发的
+    chatMsg[0].append(OnReceiveChatMessage(msg,player == 0 || player == 2 || player == 10));
 }
 void Game::ClearChatMsg() {
 	for(int i = 7; i >= 0; --i) {
@@ -2072,39 +2324,24 @@ std::string WCharToUTF8(const wchar_t* input) {
 }
 
 void Game::AddDebugMsg(const char* msg) {
-    std::string message(msg);
-    unsigned int cardID = 0;
-    std::regex cardIdPattern(R"((\d{3,9}))");
-    auto words_begin = std::sregex_iterator(message.begin(), message.end(), cardIdPattern);
-    auto words_end = std::sregex_iterator();
-    for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
-        std::smatch match = *i;
-        cardID = std::stoul(match.str());
-        break;
-    }
-    std::string cardName = "Unknown";
-    if(cardID != 0) {
-        cardName = WCharToUTF8(dataManager.GetName(cardID));
-    }
-    std::string fullMsg;
-    if(cardID != 0 && cardName != "???") {
-        fullMsg += cardName;
-        fullMsg += ":";
-    } else {
-        fullMsg += "";
-    }
-    fullMsg += message;
-    if (enable_log & 0x1) {
-        wchar_t wbuf[1024];
-        BufferIO::DecodeUTF8(fullMsg.c_str(), wbuf);
-        AddChatMsg(wbuf, 9);
-    }
-    if (enable_log & 0x2) {
-        char msgbuf[1040];
-        std::snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", fullMsg.c_str());
-        ErrorLog(msgbuf);
-    }
+	if (gameConf.enable_log & 0x1) {
+		wchar_t wbuf[1024];
+		BufferIO::DecodeUTF8(msg, wbuf);
+		// 使用 AppendCardNames 处理消息
+		std::wstring processedMsg = AppendCardNames(std::wstring(wbuf));
+		AddChatMsg(processedMsg.c_str(), 9);
+	}
+	if (gameConf.enable_log & 0x2) {
+		// 对于错误日志，也可以先处理消息内容
+		wchar_t wbuf[1024];
+		BufferIO::DecodeUTF8(msg, wbuf);
+		std::wstring processedMsg = AppendCardNames(std::wstring(wbuf));
+		char msgbuf[1040];
+		BufferIO::EncodeUTF8(processedMsg.c_str(), msgbuf);
+		ErrorLog(msgbuf);
+	}
 }
+
 void Game::ErrorLog(const char* msg) {
 	std::fprintf(stderr, "%s\n", msg);
 	FILE* fp = myfopen("error.log", "a");
@@ -2117,7 +2354,7 @@ void Game::ErrorLog(const char* msg) {
 	std::fclose(fp);
 }
 void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
-	SetStaticText(stSysMessage, 370 * xScale, guiFont, text);
+	SetStaticText(stSysMessage, 370 * xScale, textFont, text);
 	wSysMessage->setVisible(true);
 	wSysMessage->getParent()->bringToFront(wSysMessage);
 	//env->setFocus(wSysMessage);
@@ -2125,15 +2362,17 @@ void Game::addMessageBox(const wchar_t* caption, const wchar_t* text) {
 void Game::ClearTextures() {
 	matManager.mCard.setTexture(0, 0);
 	ClearCardInfo(0);
-	imgCard->setImage(imageManager.tCover[0]);
-	scrCardText->setVisible(false);
-	imgCard->setScaleImage(true);
-	btnPSAU->setImage();
-	btnPSDU->setImage();
+	btnPSAU->setImage(nullptr);
+	btnPSDU->setImage(nullptr);
 	for(int i=0; i<=4; ++i) {
-		btnCardSelect[i]->setImage();
-		btnCardDisplay[i]->setImage();
+		btnCardSelect[i]->setImage(nullptr);
+		btnCardDisplay[i]->setImage(nullptr);
 	}
+	btnImagePending.clear();
+	btnCardImgInfo.clear();
+	btnFacedownImgInfo.clear();
+	btnFacedownImgInfo[btnPSAD] = {0, false};
+	btnFacedownImgInfo[btnPSDD] = {0, true};
 	imageManager.ClearTexture();
 }
 void Game::CloseGameButtons() {
@@ -2178,6 +2417,7 @@ void Game::CloseDuelWindow() {
 	wChat->setVisible(false);
 	wPallet->setVisible(false);
 	imgChat->setVisible(true);
+    wEmoticon->setVisible(false);
 	wSettings->setVisible(false);
 	wLogs->setVisible(false);
 	btnSideOK->setVisible(false);
@@ -2209,7 +2449,7 @@ int Game::ChatLocalPlayer(int player) {
 	if(dInfo.isStarted || is_siding) {
 		if(dInfo.isInDuel)
 			// when in duel
-			player = mainGame->dInfo.isFirst ? player : OppositePlayer(player);
+			player = dInfo.isFirst ? player : OppositePlayer(player);
 		else {
 			// when changing side or waiting tp result
 			auto selftype_boundary = dInfo.isTag ? 2 : 1;
@@ -2238,8 +2478,82 @@ const wchar_t* Game::LocalName(int local_player) {
 void Game::ResizeChatInputWindow() {
 	irr::s32 x = 305;
 	if(is_building) x = 802;
-	wChat->setRelativePosition(Resize(x, GAME_HEIGHT - 35, GAME_WIDTH - 4, GAME_HEIGHT));
-	ebChatInput->setRelativePosition(irr::core::recti(3 * xScale, 2 * yScale, (GAME_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * yScale));
+	wChat->setRelativePosition(Resize(x, GAME_WINDOW_HEIGHT - 35, GAME_WINDOW_WIDTH - 4, GAME_WINDOW_HEIGHT));
+	ebChatInput->setRelativePosition(irr::core::recti(3 * xScale, 2 * yScale, (GAME_WINDOW_WIDTH - 6) * xScale - wChat->getRelativePosition().UpperLeftCorner.X, 28 * yScale));
+}
+void Game::ResizePosSelectButtons() {
+	irr::s32 imgHeight = CARD_IMG_HEIGHT * 0.5f * yScale + 0.5f;
+	irr::s32 gap = 5 * xScale + 0.5f;
+	irr::s32 btnPosWidth = imgHeight + gap * 2; // Square buttons, width = height
+	irr::s32 stride = btnPosWidth + gap;
+	int totalWidth = 0, visCount = 0;
+	if(btnPSAU->isVisible()) { totalWidth += btnPosWidth; visCount++; }
+	if(btnPSAD->isVisible()) { totalWidth += btnPosWidth; visCount++; }
+	if(btnPSDU->isVisible()) { totalWidth += btnPosWidth; visCount++; }
+	if(btnPSDD->isVisible()) { totalWidth += btnPosWidth; visCount++; }
+	totalWidth += (visCount - 1) * gap;
+	irr::s32 posY = 19 + 16 * yScale;
+	irr::s32 windowWidth = 30 * xScale * 2 + stride * 3 - gap;
+	irr::s32 windowHeight = posY + 180 * yScale;
+	irr::s32 posX = (windowWidth - totalWidth) / 2;
+	if(btnPSAU->isVisible()) {
+		btnPSAU->setRelativePosition(irr::core::recti(posX, posY, posX + btnPosWidth, posY + btnPosWidth));
+		posX += btnPosWidth + gap;
+	}
+	if(btnPSAD->isVisible()) {
+		btnPSAD->setRelativePosition(irr::core::recti(posX, posY, posX + btnPosWidth, posY + btnPosWidth));
+		posX += btnPosWidth + gap;
+	}
+	if(btnPSDU->isVisible()) {
+		btnPSDU->setRelativePosition(irr::core::recti(posX, posY, posX + btnPosWidth, posY + btnPosWidth));
+		posX += btnPosWidth + gap;
+	}
+	if(btnPSDD->isVisible()) {
+		btnPSDD->setRelativePosition(irr::core::recti(posX, posY, posX + btnPosWidth, posY + btnPosWidth));
+		posX += btnPosWidth + gap;
+	}
+	wPosSelect->setRelativePosition(irr::core::recti(660 * xScale - windowWidth / 2, 300 * yScale - windowHeight / 2, 660 * xScale + windowWidth / 2, 300 * yScale + windowHeight / 2));
+	bgPosSelect->setRelativePosition(irr::core::recti(0, 0, windowWidth, windowHeight));
+}
+void Game::ResizeCardSelectButtons(irr::gui::IGUIWindow* window,
+                                   irr::gui::IGUIImage* bgWindow,
+								   irr::gui::IGUIStaticText** labels,
+								   irr::gui::IGUIButton** images,
+								   irr::gui::IGUIScrollBar* scrollbar,
+								   irr::gui::IGUIButton* buttonOK,
+								   const std::vector<ClientCard*>& cards) {
+	irr::s32 gap = 5 * xScale + 0.5f;
+	irr::s32 btnWidth = CARD_IMG_WIDTH * 0.55f * yScale + 0.5f;
+	irr::s32 btnHeight = CARD_IMG_HEIGHT * 0.55f * yScale + 0.5f;
+	irr::s32 stride = btnWidth + gap;
+	int startpos = 30 * xScale;
+	int ct = 5;
+	if (cards.size() < 5) {
+		startpos = 30 * xScale + stride * (5 - (int)cards.size()) / 2;
+		ct = cards.size();
+	}
+	irr::s32 top = 20 + 30 * yScale;
+	irr::s32 labelHeight = 20 * yScale;
+	irr::s32 minTextHeight = gameConf.textfontsize * 1.4f + 0.5f;
+	if (labelHeight < minTextHeight) labelHeight = minTextHeight;
+	irr::s32 btnTop = top + labelHeight + gap;
+	for (int i = 0; i < ct; ++i) {
+		labels[i]->setRelativePosition(irr::core::recti(startpos + stride * i, top, startpos + stride * i + btnWidth, top + labelHeight));
+		images[i]->setRelativePosition(irr::core::recti(startpos + stride * i, btnTop, startpos + stride * i + btnWidth, btnTop + btnHeight));
+	}
+	irr::s32 barTop = btnTop + btnHeight + gap;
+	irr::s32 barWidth = stride * ct - gap;
+	irr::s32 barHeight = 40 * yScale;
+	if (barHeight > 45) barHeight = 40 * yScale;
+	scrollbar->setRelativePosition(irr::core::recti(startpos, barTop, startpos + barWidth, barTop + barHeight));
+	irr::s32 btnOKWidth = 110 * xScale;
+	irr::s32 btnOKHeight = 50 * yScale;
+	if (btnOKHeight < minTextHeight) btnOKHeight = minTextHeight;
+	buttonOK->setRelativePosition(irr::core::recti(startpos + barWidth / 2 - btnOKWidth / 2, barTop + barHeight + gap * 2, startpos + barWidth / 2 + btnOKWidth / 2, barTop + barHeight + gap * 2 + btnOKHeight));
+	irr::s32 windowWidth = 30 * xScale * 2 + stride * 5 - gap;
+	irr::s32 windowHeight = top + labelHeight + btnHeight + barHeight + btnOKHeight + gap * 6;
+	window->setRelativePosition(irr::core::recti(660 * xScale - windowWidth / 2, 260 * yScale - windowHeight / 2, 660 * xScale + windowWidth / 2, 260 * yScale + windowHeight / 2));
+	bgWindow->setRelativePosition(irr::core::recti(0, 0, windowWidth, windowHeight));
 }
 irr::core::recti Game::Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
 	x = x * xScale;
@@ -2281,12 +2595,68 @@ irr::core::recti Game::ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr:
 	y2 = y2 * yScale;
 	return irr::core::recti(x, y, x2, y2);
 }
+irr::core::recti Game::ResizeCardImgWin(irr::s32 x, irr::s32 y, irr::s32 mx, irr::s32 my) {
+	float mul = xScale;
+	if(xScale > yScale)
+		mul = yScale;
+	irr::s32 w = CARD_IMG_WIDTH * mul + mx * xScale;
+	irr::s32 h = CARD_IMG_HEIGHT * mul + my * yScale;
+	x = x * xScale;
+	y = y * yScale;
+	return irr::core::recti(x, y, x + w, y + h);
+}
+irr::core::recti Game::ResizeCardHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
+	return ResizeCardMid(x, y, x2, y2, (x + x2) * 0.5, (y + y2) * 0.5);
+}
+irr::core::vector2di Game::ResizeCardHint(irr::s32 x, irr::s32 y) {
+	return ResizeCardMid(x, y, x + CARD_IMG_WIDTH * 0.5, y + CARD_IMG_HEIGHT * 0.5);
+}
+irr::core::recti Game::ResizeCardMid(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 midx, irr::s32 midy) {
+	float mul = xScale;
+	if(xScale > yScale)
+		mul = yScale;
+	irr::s32 cx = midx * xScale;
+	irr::s32 cy = midy * yScale;
+	x = cx + (x - midx) * mul;
+	y = cy + (y - midy) * mul;
+	x2 = cx + (x2 - midx) * mul;
+	y2 = cy + (y2 - midy) * mul;
+	return irr::core::recti(x, y, x2, y2);
+}
+irr::core::vector2di Game::ResizeCardMid(irr::s32 x, irr::s32 y, irr::s32 midx, irr::s32 midy) {
+	float mul = xScale;
+	if(xScale > yScale)
+		mul = yScale;
+	irr::s32 cx = midx * xScale;
+	irr::s32 cy = midy * yScale;
+	x = cx + (x - midx) * mul;
+	y = cy + (y - midy) * mul;
+	return irr::core::vector2di(x, y);
+}
+irr::core::recti Game::ResizeFit(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
+	float mul = xScale;
+	if(xScale > yScale)
+		mul = yScale;
+	x = x * mul;
+	y = y * mul;
+	x2 = x2 * mul;
+	y2 = y2 * mul;
+	return irr::core::recti(x, y, x2, y2);
+}
 irr::core::recti Game::Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
     x = x * yScale;
 	y = y * yScale;
     x2 = x2 * yScale;
     y2 = y2 * yScale;
 	return irr::core::recti(x, y, x2, y2);
+}
+irr::core::recti Game::Resize_X_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2) {
+    irr::s32 w = x2 - x;
+    x = x * xScale;
+    y = y * yScale;
+    x2 = x + w * yScale;
+    y2 = y2 * yScale;
+    return irr::core::recti(x, y, x2, y2);
 }
 irr::core::vector2di Game::Resize_Y(irr::s32 x, irr::s32 y) {
     x = x * yScale;
@@ -2299,6 +2669,7 @@ void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUII
 	*pWindowBackground = env->addImage(irr::core::rect<irr::s32>(0, 0, pos.getWidth(), pos.getHeight()), window, -1, 0, true);
 	irr::gui::IGUIImage* bgwindow = *pWindowBackground;
 	bgwindow->setImage(image);
+    bgwindow->setUseAlphaChannel(true);
 	bgwindow->setScaleImage(true);
 }
 void Game::ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITexture* image, irr::video::ITexture* pressedImage, irr::gui::CGUITTFont* font) {
@@ -2314,4 +2685,58 @@ void Game::OnGameClose() {
 	irr::android::onGameExit(appMain);
     this->device->closeDevice();
 }
+/**
+ * @brief 显示表情包
+ * @param emoticonCode 表情代码（如 &smile）
+ * @param isFromMe 是否是自己发送的消息
+ */
+void Game::ShowEmoticon(const std::wstring& emoticonCode, bool isFromMe) {
+    currentEmoticonCode = emoticonCode;
+    isMyEmoticon = isFromMe;
+    showingEmoticon = true;
+}
+// 过滤消息中的卡片数字ID
+std::wstring Game::AppendCardNames(const std::wstring& msg) {
+    // 实现卡片ID到名称的转换逻辑
+    std::wstring result = msg;
+
+    // 使用正则表达式匹配可能的卡片ID（3-9位数字）
+    std::wregex cardIdPattern(L"(\\d{3,9})");
+    std::wstring::const_iterator start = msg.begin();
+    std::wstring::const_iterator end = msg.end();
+    std::wsregex_iterator iter(start, end, cardIdPattern);
+    std::wsregex_iterator iterEnd;
+
+    for (; iter != iterEnd; ++iter) {
+        std::wstring cardIdStr = iter->str();
+        int cardId = std::stoi(cardIdStr);
+        // 查询卡片名称
+        const wchar_t* cardName = dataManager.GetName(cardId);
+        if (cardName && wcscmp(cardName, L"") != 0 && wcscmp(cardName, dataManager.unknown_string) != 0) {
+            // 替换卡片ID为 [ID:卡片名称] 格式
+            std::wstring replacement = L"[" + std::wstring(cardName) + L"]";
+            result = std::regex_replace(result,std::wregex(cardIdStr),replacement);
+        }
+    }
+
+    return result;
+}
+// 过滤消息中包含的表情代码
+std::wstring Game::OnReceiveChatMessage(const std::wstring& msg, bool isFromMe) {
+    // 实现卡片ID到名称的转换逻辑
+    std::wstring result = msg;
+    // 检查消息中是否包含表情代码
+    std::wregex emoticonPattern(L"&([a-zA-Z0-9_]+)");
+    std::wsregex_iterator iter(msg.begin(), msg.end(), emoticonPattern);
+    std::wsregex_iterator iterEnd;
+    // 如果找到了表情代码，则显示表情
+    if(iter != iterEnd) {
+        std::wstring emoticonCode = iter->str();
+        mainGame->ShowEmoticon(emoticonCode, isFromMe);
+        result = std::regex_replace(result, std::wregex(emoticonCode), L"");
+    }
+
+    return AppendCardNames(result);//之后过滤消息中的卡片数字ID
+}
+
 }

@@ -172,7 +172,7 @@ int32_t card::get_infos(byte* buf, uint32_t query_flag, int32_t use_cache) {
 		buffer_write<uint32_t>(p, data.code);
 	}
 	if (query_flag & QUERY_POSITION) {
-		uint32_t tdata = get_info_location();
+		uint32_t tdata = get_public_info_location();
 		buffer_write<uint32_t>(p, tdata);
 		if (q_cache.info_location != tdata) {
 			q_cache.clear_cache();
@@ -401,22 +401,23 @@ uint32_t card::get_info_location() const {
 		return c | (l << 8) | (s << 16) | (ss << 24);
 	}
 }
+uint32_t card::get_public_info_location() {
+	uint32_t info = get_info_location();
+	if((current.location & LOCATION_ONFIELD) && is_affected_by_effect(EFFECT_REVEAL_ONFIELD))
+		info |= (static_cast<uint32_t>(POS_REVEAL) << 24);
+	return info;
+}
 // get the printed code on card
 uint32_t card::get_original_code() const {
 	return data.get_original_code();
 }
 // get the original code in duel (can be different from printed code)
 std::tuple<uint32_t, uint32_t> card::get_original_code_rule() const {
-	auto it = second_code.find(data.code);
+	auto it = second_code.find(data.get_original_code());
 	if (it != second_code.end()) {
-		return std::make_tuple(data.code, it->second);
+		return std::make_tuple(data.get_original_code(), it->second);
 	}
-	else {
-		if (data.alias)
-			return std::make_tuple(data.alias, 0);
-		else
-			return std::make_tuple(data.code, 0);
-	}
+	return std::make_tuple(data.get_duel_code(), 0);
 }
 // return: the current card name
 // for double-name cards, it returns printed name
@@ -454,11 +455,6 @@ uint32_t card::get_another_code() {
 	if(code1 != otcode)
 		return otcode;
 	return 0;
-}
-inline bool check_setcode(uint16_t setcode, uint32_t value) {
-	const uint32_t settype = value & 0x0fffU;
-	const uint32_t setsubtype = value & 0xf000U;
-	return (setcode & 0x0fffU) == settype && (setcode & setsubtype) == setsubtype;
 }
 int32_t card::is_set_card(uint32_t set_code) {
 	uint32_t code1 = get_code();
@@ -1758,6 +1754,8 @@ int32_t card::add_effect(effect* peffect) {
 		&& get_status(STATUS_DISABLED) && (peffect->reset_flag & RESET_DISABLE))
 		return 0;
 	if (peffect->type & EFFECT_TYPES_TRIGGER_LIKE && is_continuous_event(peffect->code))
+		return 0;
+	if (peffect->type & EFFECT_TYPES_CHAIN_LINK && peffect->owner == pduel->game_field->temp_card)
 		return 0;
 	// the trigger effect in phase is "once per turn" by default
 	if (peffect->get_code_type() == CODE_PHASE && peffect->code & (PHASE_DRAW | PHASE_STANDBY | PHASE_END)
@@ -4098,19 +4096,6 @@ int32_t card::is_can_be_synchro_material(card* scard, card* tuner) {
 	for(effect_set::size_type i = 0; i < eset.size(); ++i)
 		if(eset[i]->get_value(scard))
 			return FALSE;
-	if(scard && !(current.location == LOCATION_MZONE && current.controler == scard->current.controler)) {
-		eset.clear();
-		filter_effect(EFFECT_EXTRA_SYNCHRO_MATERIAL, &eset);
-		if(eset.size()) {
-			for(effect_set::size_type i = 0; i < eset.size(); ++i) {
-				if(!eset[i]->check_count_limit(scard->current.controler))
-					continue;
-				if(eset[i]->get_value(scard))
-					return TRUE;
-			}
-			return FALSE;
-		}
-	}
 	return TRUE;
 }
 int32_t card::is_can_be_ritual_material(card* scard) {

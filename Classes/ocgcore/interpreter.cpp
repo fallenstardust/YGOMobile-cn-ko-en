@@ -14,13 +14,11 @@
 #include "ocgapi.h"
 #include "interpreter.h"
 
-interpreter::interpreter(duel* pd): coroutines(256) {
+interpreter::interpreter(duel* pd, bool enable_unsafe_libraries)
+	: coroutines(256), pduel(pd), enable_unsafe_feature(enable_unsafe_libraries) {
 	lua_state = luaL_newstate();
 	current_state = lua_state;
-	pduel = pd;
 	std::memcpy(lua_getextraspace(lua_state), &pd, LUA_EXTRASPACE); //set_duel_info
-	no_action = 0;
-	call_depth = 0;
 	//Initial
 	luaL_requiref(lua_state, "base", luaopen_base, 0);
 	lua_pop(lua_state, 1);
@@ -32,15 +30,20 @@ interpreter::interpreter(duel* pd): coroutines(256) {
 	lua_pop(lua_state, 1);
 	luaL_requiref(lua_state, "math", luaopen_math, 1);
 	lua_pop(lua_state, 1);
+	if (enable_unsafe_libraries) {
+		luaL_requiref(lua_state, "io", luaopen_io, 1);
+		lua_pop(lua_state, 1);
+	}
+
 	auto nil_out = [&](const char* name) {
 		lua_pushnil(lua_state);
 		lua_setglobal(lua_state, name);
 	};
 	nil_out("collectgarbage");
-#ifndef ENABLE_UNSAFE_LIBRARIES
-	nil_out("dofile");
-	nil_out("loadfile");
-#endif // ENABLE_UNSAFE_LIBRARIES
+	if (!enable_unsafe_libraries) {
+		nil_out("dofile");
+		nil_out("loadfile");
+	}
 	//open all libs
 	scriptlib::open_cardlib(lua_state);
 	scriptlib::open_effectlib(lua_state);
@@ -79,6 +82,12 @@ void interpreter::register_card(card *pcard) {
 		pcard->set_status(STATUS_INITIALIZING, FALSE);
 	}
 	pcard->cardid = pduel->game_field->infos.card_id++;
+}
+void interpreter::unregister_card(card *pcard) {
+	if (!pcard)
+		return;
+	luaL_unref(lua_state, LUA_REGISTRYINDEX, pcard->ref_handle);
+	pcard->ref_handle = 0;
 }
 void interpreter::register_effect(effect *peffect) {
 	if (!peffect)
@@ -137,7 +146,11 @@ int32_t interpreter::load_script(const char* script_name) {
 		return OPERATION_FAIL;
 	++no_action;
 	luaL_checkstack(current_state, 2, nullptr);
-	int32_t error = luaL_loadbuffer(current_state, (const char*)buffer, len, script_name) || lua_pcall(current_state, 0, 0, 0);
+	int32_t error = 0;
+	if (enable_unsafe_feature)
+		error = luaL_loadbuffer(current_state, (const char*)buffer, len, script_name) || lua_pcall(current_state, 0, 0, 0);
+	else
+		error = luaL_loadbufferx(current_state, (const char*)buffer, len, script_name, "t") || lua_pcall(current_state, 0, 0, 0);
 	if (error) {
 		interpreter::sprintf(pduel->strbuffer, "%s", lua_tostring(current_state, -1));
 		handle_message(pduel, 1);

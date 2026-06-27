@@ -12,15 +12,25 @@
 #include "effect.h"
 #include "group.h"
 
+/**
+ * @brief 获取效果对象的属性值
+ *
+ * 该函数用于从Lua环境中获取效果对象(effect)的指定属性值，并将结果压入Lua栈中
+ *
+ * @param L Lua状态机指针，用于与Lua环境交互
+ * @param type 要获取的效果成员类型，指定需要获取哪个属性
+ * @return int32_t 返回值个数，固定返回1表示向Lua栈中压入了一个整数值
+ */
 int32_t scriptlib::get_effect_property(lua_State* L, effect_member type) {
 	check_param_count(L, 1);
 	check_param(L, PARAM_TYPE_EFFECT, 1);
 	effect* peffect = *(effect**)lua_touserdata(L, 1);
 	lua_Integer value{};
 	if (peffect) {
+		// 根据不同的成员类型提取对应的属性值
 		switch (type) {
 		case MEMBER_CATEGORY:
-			value = peffect->category;
+			value = (lua_Integer)peffect->category;
 			break;
 		case MEMBER_CODE:
 			value = peffect->code;
@@ -271,7 +281,7 @@ int32_t scriptlib::effect_set_category(lua_State *L) {
 	check_param_count(L, 2);
 	check_param(L, PARAM_TYPE_EFFECT, 1);
 	effect* peffect = *(effect**) lua_touserdata(L, 1);
-	uint32_t v = (uint32_t)lua_tointeger(L, 2);
+	uint64_t v = (uint64_t)lua_tointeger(L, 2);
 	peffect->category = v;
 	return 0;
 }

@@ -91,24 +91,23 @@ int main(int argc, char* argv[]) {
         if (arg[0] == '-' && arg[1] == 'e') {
 			wchar_t fname[1024];
 			char* tmp = sub_string(arg, 2);
-			BufferIO::DecodeUTF8(tmp, fname);
-			ygo::dataManager.LoadDB(fname);
+			ygo::dataManager.LoadDB(tmp);
 			delete tmp;
 		} else if(!strcmp(arg, "-k")) { // Keep on return
-			exit_on_return = false;
+            ygo::mainGame->exit_on_return = false;
 			keep_on_return = true;
 		} else if(!strcmp(arg, "-c")) { // Create host
-		    exit_on_return = !keep_on_return;
+            ygo::mainGame->exit_on_return = !keep_on_return;
 			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 			ClickButton(ygo::mainGame->btnJoinHost);
 			break;
 		} else if(!strcmp(arg, "-j")) { // Join host
-		    exit_on_return = !keep_on_return;
+            ygo::mainGame->exit_on_return = !keep_on_return;
 			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 			ClickButton(ygo::mainGame->btnJoinHost);
 			break;
 		} else if(!strcmp(arg, "-r")) { // Replay
-		    exit_on_return = !keep_on_return;
+            ygo::mainGame->exit_on_return = !keep_on_return;
 			//显示录像窗口
 			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 			ygo::mainGame->ShowElement(ygo::mainGame->wReplay);
@@ -137,7 +136,7 @@ int main(int argc, char* argv[]) {
 
             break;//只播放一个
 		} else if(!strcmp(arg, "-s")) { // Single
-		    exit_on_return = !keep_on_return;
+            ygo::mainGame->exit_on_return = !keep_on_return;
 			//显示残局窗口
 			ygo::mainGame->HideElement(ygo::mainGame->wMainMenu);
 			ygo::mainGame->ShowElement(ygo::mainGame->wSinglePlay);

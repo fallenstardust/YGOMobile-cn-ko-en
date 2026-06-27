@@ -113,7 +113,9 @@ class card {
 public:
 	struct effect_relation_hash {
 		std::size_t operator()(const std::pair<effect*, uint16_t>& v) const {
-			return std::hash<uint16_t>()(v.second);
+			std::size_t h1 = std::hash<effect*>()(v.first);
+			std::size_t h2 = std::hash<uint16_t>()(v.second);
+			return h1 ^ (h2 << 1);
 		}
 	};
 	using effect_relation = std::unordered_set<std::pair<effect*, uint16_t>, effect_relation_hash>;
@@ -218,6 +220,7 @@ public:
 
 	int32_t get_infos(byte* buf, uint32_t query_flag, int32_t use_cache = TRUE);
 	uint32_t get_info_location() const;
+	uint32_t get_public_info_location();
 	uint32_t get_original_code() const;
 	std::tuple<uint32_t, uint32_t> get_original_code_rule() const;
 	uint32_t get_code();

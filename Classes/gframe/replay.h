@@ -1,8 +1,11 @@
 #ifndef REPLAY_H
 #define REPLAY_H
 
-#include "config.h"
-#include "deck_manager.h"
+#include <cstdio>
+#include <vector>
+#include <string>
+#include "../ocgcore/ocgapi.h"
+#include "deck.h"
 
 namespace ygo {
 
@@ -15,10 +18,6 @@ namespace ygo {
 
 #define REPLAY_ID_YRP1	0x31707279
 #define REPLAY_ID_YRP2	0x32707279
-
-// max size
-constexpr int MAX_REPLAY_SIZE = 0x80000;
-constexpr int MAX_COMP_SIZE = UINT16_MAX + 1;
 
 struct ReplayHeader {
 	uint32_t id{};
@@ -46,6 +45,10 @@ struct DuelParameters {
 	uint32_t duel_flag{};
 };
 
+// max size
+constexpr size_t MAX_REPLAY_SIZE = 0x80000;
+constexpr size_t MAX_COMP_SIZE = UINT16_MAX - 1 - sizeof(ExtendedReplayHeader); // UINT16_MAX - 1 : MAX_DATA_SIZE
+
 class Replay {
 public:
 	Replay();
@@ -60,9 +63,11 @@ public:
 		WriteData(&data, sizeof(T), flush);
 	}
 	void WriteInt32(int32_t data, bool flush = true);
+	size_t WriteResponse(const void* data, size_t length);
+	bool RemoveData(size_t length);
 	void Flush();
 	void EndRecord();
-	void SaveReplay(const wchar_t* name);
+	bool SaveReplay(const wchar_t* base_name);
 
 	// play
 	static bool DeleteReplay(const wchar_t* name);
@@ -93,9 +98,9 @@ public:
 	void Reset();
 	void SkipInfo();
 	bool IsReplaying() const;
+	bool SaveDeck(size_t index, const wchar_t* filename);
 
 	FILE* fp{ nullptr };
-
 	ExtendedReplayHeader pheader;
 	unsigned char* comp_data;
 	size_t comp_size{};
