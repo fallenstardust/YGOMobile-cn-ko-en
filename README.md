@@ -8,14 +8,16 @@ Android编译环境
 ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
 ---------------------
     稳定ndk
-    https://dl.google.com/android/repository/android-ndk-r21d-windows-x86_64.zip
-    https://dl.google.com/android/repository/android-ndk-r21d-darwin-x86_64.zip
-    https://dl.google.com/android/repository/android-ndk-r21d-linux-x86_64.zip
+    https://dl.google.com/android/repository/android-ndk-r29-windows.zip
+    https://dl.google.com/android/repository/android-ndk-r29-darwin.dmg
+    https://dl.google.com/android/repository/android-ndk-r29-linux.zip
     
 重要
 ---------------------------------------------
-    NDKR21d编译已经通过，更加新的NDK可能通不过
-    根据自己的系统下载上面的压缩包，解压并且配置环境变量，cmd窗口，输ndk-build --version，看到一堆数字和英文的版权就是ok了
+    使用NDK R29编译已通过，其他NDK可能通不过，可选择以下其中一种方法配置NDK环境
+    方式一（推荐）：直接使用Android Studio的SDK Manager安装NDK 29.0.14206865（不需要单独下载上面链接的包）
+
+    方式二：根据自己的系统下载上面的压缩包，解压并且配置环境变量，cmd窗口，输ndk-build --version，看到一堆数字和英文的版权就是ok了
     不懂环境变量？没关系，自己自动把下文的ndk-build前面，加上NDK解压的文件夹比如D:\NDK\ndk-build -j4
 
 1.准备数据
@@ -31,9 +33,18 @@ ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
 
 2.编译ygo的so
 -------------------------
+    方式一（推荐）：使用 Gradle 任务 buildYgoCore
+    项目根目录运行命令行窗口
+    ./gradlew :libcore:buildYgoCore
+    或在 Android Studio 右侧 Gradle 面板：libcore -> ygo -> buildYgoCore 双击执行
+    清理产物：./gradlew :libcore:cleanYgoCore
+    该任务自动使用 build.gradle 中 ndkVersion 指定的 NDK，无需配置系统环境变量
+    
+    方式二：命令行手动编译
     项目根目录运行命令行窗口
     cd libcore
     ndk-build -j4
+    
     成功：libcore\libs\armeabi-v7a\libYGOMobile.so
     大于8M
 
