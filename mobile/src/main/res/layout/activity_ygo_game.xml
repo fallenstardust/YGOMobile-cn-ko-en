@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:background="@drawable/bg3">
 
     <cn.garymb.ygomobile.render.GameFieldView
         android:id="@+id/game_field_view"
@@ -15,111 +15,188 @@
         android:id="@+id/layout_main_menu"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone">
-
-        <!-- 版本号 - 右上角 -->
-        <TextView
-            android:id="@+id/tv_version"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="24dp"
-            android:text="YGOPro Version:1.036.2"
-            android:textColor="#AAFFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+        android:visibility="visible">
 
         <!-- 菜单按钮容器 - 右侧垂直排列 -->
         <LinearLayout
             android:id="@+id/layout_menu_buttons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
             android:layout_alignParentEnd="true"
-            android:layout_marginEnd="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="200dp"
             android:orientation="vertical"
             android:padding="8dp">
 
-            <Button
+            <LinearLayout
                 android:id="@+id/btn_menu_lan"
-                android:layout_width="320dp"
-                android:layout_height="60dp"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/menu_button_selector"
-                android:text="本地联机"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/stitlebar"
+                android:orientation="vertical">
 
-            <Button
+                <TextView
+                    android:id="@+id/tv_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:text="YGOPro Version:1.036.2"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/server_list"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btn_menu_single"
-                android:layout_width="320dp"
-                android:layout_height="60dp"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/menu_button_selector"
-                android:text="单人游戏"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/stitlebar"
+                android:orientation="vertical">
 
-            <Button
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/action_game"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btn_menu_replay"
-                android:layout_width="320dp"
-                android:layout_height="60dp"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/menu_button_selector"
-                android:text="观看录像"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/stitlebar"
+                android:orientation="vertical">
+                <!-- 版本号 - 左上角 -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
 
-            <Button
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/replay"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btn_menu_deck"
-                android:layout_width="320dp"
-                android:layout_height="60dp"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/menu_button_selector"
-                android:text="编辑卡组"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/stitlebar"
+                android:orientation="vertical">
+                <!-- 版本号 - 左上角 -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
 
-            <Button
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/deck_manager"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btn_menu_settings"
-                android:layout_width="320dp"
-                android:layout_height="60dp"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/menu_button_selector"
-                android:text="系统设定"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/stitlebar"
+                android:orientation="vertical">
 
-            <Button
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/settings_game"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btn_menu_exit"
-                android:layout_width="320dp"
-                android:layout_height="60dp"
-                android:background="@drawable/menu_button_selector"
-                android:text="退出"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/stitlebar"
+                android:orientation="vertical">
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/quit"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
 
-    <!-- 顶部信息栏：对手信息 -->
     <LinearLayout
         android:id="@+id/layout_opponent_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
+        android:background="#80000000"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:gravity="center_vertical"
-        android:background="#80000000"
         android:visibility="gone">
 
         <ImageView
@@ -132,8 +209,8 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
@@ -159,10 +236,10 @@
             android:id="@+id/tv_opponent_hand_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:text="Hand: 5"
             android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:layout_marginEnd="8dp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tv_opponent_time"
@@ -181,10 +258,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:background="#80000000"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:gravity="center_vertical"
-        android:background="#80000000"
         android:visibility="gone">
 
         <ImageView
@@ -197,8 +274,8 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
@@ -224,19 +301,19 @@
             android:id="@+id/tv_phase_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:text="Draw Phase"
             android:textColor="#AAFFFF"
-            android:textSize="12sp"
-            android:layout_marginEnd="8dp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tv_turn_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:text="Turn 1"
             android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:layout_marginEnd="8dp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tv_player_time"
@@ -275,50 +352,50 @@
             android:id="@+id/btn_m2"
             android:layout_width="80dp"
             android:layout_height="36dp"
-            android:text="M2"
-            android:textSize="12sp"
+            android:layout_marginBottom="4dp"
             android:background="@android:color/holo_blue_dark"
+            android:text="M2"
             android:textColor="@android:color/white"
-            android:layout_marginBottom="4dp" />
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btn_ep"
             android:layout_width="80dp"
             android:layout_height="36dp"
-            android:text="EP"
-            android:textSize="12sp"
+            android:layout_marginBottom="4dp"
             android:background="@android:color/holo_green_dark"
+            android:text="EP"
             android:textColor="@android:color/white"
-            android:layout_marginBottom="4dp" />
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btn_bp"
             android:layout_width="80dp"
             android:layout_height="36dp"
-            android:text="BP"
-            android:textSize="12sp"
+            android:layout_marginBottom="4dp"
             android:background="@android:color/holo_red_dark"
+            android:text="BP"
             android:textColor="@android:color/white"
-            android:layout_marginBottom="4dp" />
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btn_chain"
             android:layout_width="80dp"
             android:layout_height="36dp"
-            android:text="Chain"
-            android:textSize="12sp"
+            android:layout_marginBottom="4dp"
             android:background="@android:color/holo_orange_dark"
+            android:text="Chain"
             android:textColor="@android:color/white"
-            android:layout_marginBottom="4dp" />
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btn_cancel"
             android:layout_width="80dp"
             android:layout_height="36dp"
-            android:text="Cancel"
-            android:textSize="12sp"
             android:background="#666666"
-            android:textColor="@android:color/white" />
+            android:text="Cancel"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <!-- 聊天区域 -->
@@ -327,8 +404,8 @@
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_gravity="start|center_vertical"
-        android:orientation="vertical"
         android:background="#80000000"
+        android:orientation="vertical"
         android:padding="4dp"
         android:visibility="gone">
 
@@ -355,25 +432,25 @@
                 android:layout_width="0dp"
                 android:layout_height="32dp"
                 android:layout_weight="1"
-                android:hint="Chat..."
-                android:textSize="11sp"
-                android:textColor="@android:color/white"
-                android:textColorHint="#888888"
                 android:background="#40000000"
+                android:hint="Chat..."
+                android:imeOptions="actionSend"
+                android:inputType="text"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
                 android:singleLine="true"
-                android:imeOptions="actionSend"
-                android:inputType="text" />
+                android:textColor="@android:color/white"
+                android:textColorHint="#888888"
+                android:textSize="11sp" />
 
             <Button
                 android:id="@+id/btn_chat_send"
                 android:layout_width="40dp"
                 android:layout_height="32dp"
-                android:text="Send"
-                android:textSize="10sp"
                 android:background="@android:color/holo_blue_dark"
-                android:textColor="@android:color/white" />
+                android:text="Send"
+                android:textColor="@android:color/white"
+                android:textSize="10sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -390,19 +467,19 @@
         android:id="@+id/layout_lobby"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
         android:background="#CC000000"
+        android:gravity="center"
+        android:orientation="vertical"
         android:visibility="gone">
 
         <TextView
             android:id="@+id/tv_lobby_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="等待中..."
             android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:layout_marginBottom="16dp" />
+            android:textSize="18sp" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_lobby_players"
@@ -419,17 +496,17 @@
                 android:id="@+id/btn_lobby_ready"
                 android:layout_width="100dp"
                 android:layout_height="44dp"
-                android:text="Ready"
+                android:layout_marginEnd="8dp"
                 android:background="@android:color/holo_green_dark"
-                android:textColor="@android:color/white"
-                android:layout_marginEnd="8dp" />
+                android:text="Ready"
+                android:textColor="@android:color/white" />
 
             <Button
                 android:id="@+id/btn_lobby_leave"
                 android:layout_width="100dp"
                 android:layout_height="44dp"
-                android:text="Leave"
                 android:background="@android:color/holo_red_dark"
+                android:text="Leave"
                 android:textColor="@android:color/white" />
         </LinearLayout>
     </LinearLayout>
