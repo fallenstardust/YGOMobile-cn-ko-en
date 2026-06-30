@@ -7,6 +7,7 @@ import android.util.Log;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -72,6 +73,15 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     private int maxMatch = 1;
     private boolean isHost = false;
     private boolean isBotMode = false;
+    private ReplayEngine replayEngine;
+
+    public ReplayEngine getReplayEngine() {
+        return replayEngine;
+    }
+
+    public void setReplayEngine(ReplayEngine engine) {
+        this.replayEngine = engine;
+    }
 
     public static class PlayerInfo {
         public String name = "";
@@ -104,6 +114,75 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public DuelClient getClient() {
         return client;
+    }
+
+    public static final int COMMAND_ACTIVATE = 0x0001;
+    public static final int COMMAND_SUMMON   = 0x0002;
+    public static final int COMMAND_SPSUMMON = 0x0004;
+    public static final int COMMAND_MSET     = 0x0008;
+    public static final int COMMAND_SSET     = 0x0010;
+    public static final int COMMAND_REPOS    = 0x0020;
+    public static final int COMMAND_ATTACK   = 0x0040;
+
+    public static class CmdCardInfo {
+        public GameField.ClientCard card;
+        public int code;
+        public int desc;
+        public int flag;
+        public int index;
+        public CmdCardInfo(GameField.ClientCard card, int code, int desc, int flag, int index) {
+            this.card = card; this.code = code; this.desc = desc; this.flag = flag; this.index = index;
+        }
+    }
+
+    public List<CmdCardInfo> activatableCards = new ArrayList<>();
+    public List<CmdCardInfo> attackableCards = new ArrayList<>();
+    public List<CmdCardInfo> summonableCards = new ArrayList<>();
+    public List<CmdCardInfo> spsummonableCards = new ArrayList<>();
+    public List<CmdCardInfo> reposableCards = new ArrayList<>();
+    public List<CmdCardInfo> msetableCards = new ArrayList<>();
+    public List<CmdCardInfo> ssetableCards = new ArrayList<>();
+    public boolean showBP, showEP, showM2, showShuffle;
+
+    public int selectFieldMask;
+    public int selectFieldPlayer;
+    public int selectFieldCount;
+
+    public void clearCommandFlags() {
+        activatableCards.clear();
+        attackableCards.clear();
+        summonableCards.clear();
+        spsummonableCards.clear();
+        reposableCards.clear();
+        msetableCards.clear();
+        ssetableCards.clear();
+        showBP = false;
+        showEP = false;
+        showM2 = false;
+        showShuffle = false;
+        for (int p = 0; p < 2; p++) {
+            for (GameField.ClientCard c : field.players[p].monsterZone) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].spellZone) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].hand) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].grave) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].removed) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].extra) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].deck) {
+                if (c != null) c.clearCmdFlag();
+            }
+        }
     }
 
     public void setPlayerName(String name) {
@@ -221,13 +300,29 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public void loadReplay(String replayPath) {
         Log.i(TAG, "Loading replay: " + replayPath);
+        if (replayEngine == null) {
+            replayEngine = new ReplayEngine(field, soundManager);
+        }
         setState(GameState.CONNECTING);
-        mainHandler.post(() -> {
-            if (listener != null) {
-                listener.onHintMessage("录像回放功能开发中...");
-            }
-            setState(GameState.IDLE);
-        });
+        replayEngine.loadAndPlay(replayPath);
+        setState(GameState.DUELING);
+    }
+
+    public void pauseReplay() {
+        if (replayEngine != null) replayEngine.pause();
+    }
+
+    public void resumeReplay() {
+        if (replayEngine != null) replayEngine.resume();
+    }
+
+    public void stopReplay() {
+        if (replayEngine != null) replayEngine.stop();
+        setState(GameState.IDLE);
+    }
+
+    public void skipReplayAhead() {
+        if (replayEngine != null) replayEngine.skipAhead();
     }
 
     public void disconnect() {
@@ -296,6 +391,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public void sendTimeConfirm() {
         client.sendTimeConfirm();
+    }
+
+    public int getSelfType() {
+        return client.selfType;
     }
 
     // === State Management ===
@@ -559,15 +658,17 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectBattleCmd(ByteBuffer data) {
+        parseBattleCmd(data);
         mainHandler.post(() -> {
-            if (listener != null) listener.onSelectRequired(10, data);
+            if (listener != null) listener.onSelectRequired(10, null);
         });
     }
 
     @Override
     public void onSelectIdleCmd(ByteBuffer data) {
+        parseIdleCmd(data);
         mainHandler.post(() -> {
-            if (listener != null) listener.onSelectRequired(11, data);
+            if (listener != null) listener.onSelectRequired(11, null);
         });
     }
 
@@ -608,6 +709,12 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectPlace(int player, int count, int fieldMask) {
+        selectFieldPlayer = player;
+        selectFieldCount = count;
+        selectFieldMask = ~fieldMask;
+        if (player != client.selfType) {
+            selectFieldMask = ((selectFieldMask >> 16) | (selectFieldMask << 16));
+        }
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(18, null);
         });
@@ -650,6 +757,12 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectDisfield(int player, int count, int fieldMask) {
+        selectFieldPlayer = player;
+        selectFieldCount = count;
+        selectFieldMask = ~fieldMask;
+        if (player != client.selfType) {
+            selectFieldMask = ((selectFieldMask >> 16) | (selectFieldMask << 16));
+        }
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(24, null);
         });
@@ -1189,6 +1302,139 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         if ((flag & 0x100000) != 0 && data.remaining() >= 4) card.isPublic = data.getInt() != 0;
         if ((flag & 0x200000) != 0 && data.remaining() >= 4) card.lScale = data.getInt();
         if ((flag & 0x400000) != 0 && data.remaining() >= 4) card.rScale = data.getInt();
+    }
+
+    private void parseBattleCmd(ByteBuffer data) {
+        clearCommandFlags();
+        int selectingPlayer = data.get() & 0xFF;
+        int count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 9; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            int desc = data.getInt();
+            int flag = 0;
+            if ((code & 0x80000000) != 0) {
+                flag = 1;
+                code &= 0x7fffffff;
+            }
+            GameField.ClientCard card = field.getCard(con, loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_ACTIVATE;
+                activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));
+            }
+        }
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 8; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            int diratt = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(con, loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_ATTACK;
+                attackableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+        showM2 = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+        showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+    }
+
+    private void parseIdleCmd(ByteBuffer data) {
+        clearCommandFlags();
+        int selectingPlayer = data.get() & 0xFF;
+        int count;
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(con, loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_SUMMON;
+                summonableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(con, loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_SPSUMMON;
+                if (card.code == 0 && code != 0) card.code = code;
+                spsummonableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(con, loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_REPOS;
+                reposableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(con, loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_MSET;
+                msetableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(con, loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_SSET;
+                ssetableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 11; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            int desc = data.getInt();
+            int flag = 0;
+            if ((code & 0x80000000) != 0) {
+                flag = 1;
+                code &= 0x7fffffff;
+            }
+            GameField.ClientCard card = field.getCard(con, loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_ACTIVATE;
+                activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));
+            }
+        }
+
+        showBP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+        showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+        showShuffle = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
     }
 
     public void release() {

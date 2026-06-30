@@ -157,13 +157,25 @@ public class GameMessageParser {
                 handler.onSelectOption(buf);
                 break;
             case SelectCard:
-            case SelectTribute:
-            case SelectSum:
-            case SortChain:
-            case SortCard:
-            case SelectCounter:
-            case SelectChain:
                 handler.onSelectCard(buf);
+                break;
+            case SelectChain:
+                handler.onSelectChain(buf);
+                break;
+            case SelectTribute:
+                handler.onSelectTribute(buf);
+                break;
+            case SelectSum:
+                handler.onSelectSum(buf);
+                break;
+            case SelectCounter:
+                handler.onSelectCounter(buf);
+                break;
+            case SortChain:
+                handler.onSortChain(buf);
+                break;
+            case SortCard:
+                handler.onSortCard(buf);
                 break;
             case SelectPlace:
             case SelectDisfield: {

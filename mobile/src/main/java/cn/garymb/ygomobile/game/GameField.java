@@ -46,6 +46,21 @@ public class GameField {
         public List<int[]> counters = new ArrayList<>();
         public int turnCounter;
 
+        public int cmdFlag;
+        public int opParam;
+        public int select_seq;
+        public boolean is_selectable;
+        public boolean is_selected;
+        public boolean is_highlighting;
+        public int chain_code;
+        public int link;
+        public int link_marker;
+        public ClientCard equipTarget;
+        public List<ClientCard> equipped = new ArrayList<>();
+        public List<ClientCard> overlayed = new ArrayList<>();
+        public ClientCard overlayTarget;
+        public int status;
+
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
         }
@@ -63,8 +78,22 @@ public class GameField {
                     | CardType.Xyz.getId() | CardType.Link.getId())) != 0;
         }
 
+        public boolean isLink() {
+            return (type & CardType.Link.getId()) != 0;
+        }
+
+        public boolean isXyz() {
+            return (type & CardType.Xyz.getId()) != 0;
+        }
+
+        public void clearCmdFlag() {
+            cmdFlag = 0;
+            is_selectable = false;
+            is_selected = false;
+            is_highlighting = false;
+        }
+
         public void updateQuery(ByteBuffer buf) {
-            // Parse query flags from buffer
         }
     }
 
