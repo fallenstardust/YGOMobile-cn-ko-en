@@ -45,7 +45,7 @@
     <ListView
         android:id="@+id/lv_host_list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="@drawable/selected_light"
         android:divider="#33FFFFFF"
@@ -56,7 +56,7 @@
         android:id="@+id/btn_refresh_lan"
         android:layout_width="110dp"
         android:layout_height="38dp"
-        android:layout_gravity="center_horizontal"
+        android:layout_gravity="center_horizontal|bottom"
         android:text="刷新局域网"
         android:textColor="#FFFFFF"
         android:textSize="13sp"
@@ -67,7 +67,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:layout_gravity="center_horizontal|bottom"
         android:layout_marginBottom="8dp">
 
         <TextView
@@ -118,7 +118,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:layout_gravity="center_horizontal|bottom">
 
         <TextView
             android:layout_width="70dp"

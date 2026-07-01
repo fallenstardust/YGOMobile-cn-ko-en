@@ -71,8 +71,8 @@
             android:background="@drawable/selected_light"
             android:inputType="number"
             android:text="8000"
-            android:textColor="#FFFFFF"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="#FFFFFF" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -104,8 +104,8 @@
             android:background="@drawable/selected_light"
             android:inputType="number"
             android:text="5"
-            android:textColor="#FFFFFF"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="#FFFFFF" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -123,8 +123,8 @@
             android:background="@drawable/selected_light"
             android:inputType="number"
             android:text="180"
-            android:textColor="#FFFFFF"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="#FFFFFF" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -141,27 +141,27 @@
             android:background="@drawable/selected_light"
             android:inputType="number"
             android:text="1"
-            android:textColor="#FFFFFF"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textColor="#FFFFFF" />
 
     </GridLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp">
+        android:layout_marginBottom="10dp"
+        android:gravity="center"
+        android:orientation="horizontal">
 
         <CheckBox
             android:id="@+id/chk_no_check_deck"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
             android:text="不检查卡组"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:layout_marginEnd="20dp" />
+            android:textSize="14sp" />
 
         <CheckBox
             android:id="@+id/chk_no_shuffle_deck"
@@ -175,9 +175,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginBottom="8dp"
         android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="70dp"
@@ -192,27 +192,29 @@
             android:layout_height="36dp"
             android:layout_weight="1"
             android:background="@drawable/selected_light"
+            android:hint="请输入主机名称（可选）"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:textColor="#FFFFFF"
-            android:textColorHint="#888888"
-            android:hint="请输入主机名称（可选）" />
+            android:textColorHint="#888888" />
+
         <Button
             android:id="@+id/btn_confirm_create"
             android:layout_width="110dp"
             android:layout_height="38dp"
             android:layout_marginStart="10dp"
-            android:text="确定"
+            android:layout_gravity="center"
+            android:background="@drawable/button2_bg"
+            android:text="@string/ok"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:background="@drawable/button2_bg" />
+            android:textSize="13sp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="70dp"
@@ -227,22 +229,23 @@
             android:layout_height="36dp"
             android:layout_weight="1"
             android:background="@drawable/selected_light"
+            android:hint="请输入主机密码（可选）"
+            android:inputType="textPassword"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:textColor="#FFFFFF"
-            android:textColorHint="#888888"
-            android:hint="请输入主机密码（可选）"
-            android:inputType="textPassword" />
+            android:textColorHint="#888888" />
+
         <Button
             android:id="@+id/btn_cancel_create"
             android:layout_width="110dp"
             android:layout_height="38dp"
-            android:layout_gravity="end"
-            android:layout_marginTop="10dp"
-            android:text="取消"
+            android:layout_gravity="center"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/button2_bg"
+            android:text="@string/quit"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:background="@drawable/button2_bg" />
+            android:textSize="13sp" />
     </LinearLayout>
 
 </LinearLayout>

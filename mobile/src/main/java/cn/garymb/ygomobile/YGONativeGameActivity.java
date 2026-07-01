@@ -1,5 +1,8 @@
 package cn.garymb.ygomobile;
 
+import static cn.garymb.ygomobile.utils.BotUtil.parseBotConfig;
+import static cn.garymb.ygomobile.utils.PuzzleUtil.loadPuzzleFiles;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,8 +22,12 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -47,6 +55,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
+import com.google.android.material.tabs.TabLayout;
+import cn.garymb.ygomobile.adapter.BotListAdapter;
+import cn.garymb.ygomobile.adapter.PuzzleListAdapter;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
@@ -59,6 +70,8 @@ import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.utils.BotUtil;
+import cn.garymb.ygomobile.utils.PuzzleUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.enums.DuelPhase;
@@ -94,6 +107,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private RelativeLayout layoutMainMenu;
     private TextView tvVersion;
+    private Drawable menuBackgroundDrawable;
 
     private LinearLayout layoutOpponentInfo;
     private LinearLayout layoutPlayerInfo;
@@ -348,13 +362,14 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
 
         // 设置背景图片
-        String bgPath = AppsSettings.get().getResourcePath() + "textures/extra/bg_menu.jpg";
+        String bgPath = AppsSettings.get().getResourcePath() + "/textures/bg_menu.jpg";
         File bgFile = new File(bgPath);
         if (bgFile.exists()) {
             try {
                 Bitmap bitmap = BitmapFactory.decodeFile(bgPath);
                 if (bitmap != null) {
-                    layoutMainMenu.setBackground(new BitmapDrawable(getResources(), bitmap));
+                    menuBackgroundDrawable = new BitmapDrawable(getResources(), bitmap);
+                    layoutMainMenu.setBackground(menuBackgroundDrawable);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load background image", e);
@@ -391,6 +406,9 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private void restoreMainMenu() {
         if (layoutMainMenu != null) {
+            if (menuBackgroundDrawable != null) {
+                layoutMainMenu.setBackground(menuBackgroundDrawable);
+            }
             layoutMainMenu.setVisibility(View.VISIBLE);
         }
     }
@@ -443,8 +461,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         TextView tvDrawCount = layoutPlayerWaiting.findViewById(R.id.tv_draw_count);
         Button btnExitWaiting = layoutPlayerWaiting.findViewById(R.id.btn_exit_waiting);
 
-        int popupWidth = (int) (640 * getResources().getDisplayMetrics().density);
-        int popupHeight = (int) (480 * getResources().getDisplayMetrics().density);
+        int popupWidth = (int) (420 * getResources().getDisplayMetrics().density);
+        int popupHeight = (int) (300 * getResources().getDisplayMetrics().density);
         PopupWindow popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
@@ -513,75 +531,176 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showSingleModeDialog() {
+        float density = getResources().getDisplayMetrics().density;
+
+        // 读取 bot.conf 文件
+        File botConfFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH);
+        List<BotUtil.BotInfo> botList = parseBotConfig(botConfFile);
+
+        // 读取残局lua文件列表
         File singleDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_SINGLE_PATH);
-        File[] files = singleDir.exists()
-                ? singleDir.listFiles((dir, name) -> name.endsWith(Constants.LUA_FILE_EX))
-                : null;
-        List<String> nameList = new ArrayList<>();
-        List<String> descList = new ArrayList<>();
-        if (files != null && files.length > 0) {
-            for (File f : files) {
-                String name = f.getName().replace(Constants.LUA_FILE_EX, "");
-                nameList.add(name);
-                descList.add(readLuaDescription(f));
-            }
-        } else {
-            nameList.add("（暂无残局文件）");
-            descList.add("");
-        }
+        List<PuzzleUtil.PuzzleInfo> puzzleList = loadPuzzleFiles(singleDir);
 
-        final File[] finalFiles = files;
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("单人游戏 - 残局模式");
-        dialog.setContentView(R.layout.dialog_edit_and_list);
-        dialog.bind(R.id.room_name).setVisibility(View.GONE);
-        ListView listView = dialog.bind(R.id.room_list);
-        SimpleListAdapter adapter = new SimpleListAdapter(this);
-        adapter.set(nameList);
-        listView.setAdapter(adapter);
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            if (finalFiles != null && position < finalFiles.length) {
-                dialog.dismiss();
-                hideMainMenu();
-                engine.startSingleMode(finalFiles[position].getAbsolutePath());
-            }
-        });
-        dialog.setLeftButtonText("退出");
-        dialog.setLeftButtonListener((d, w) -> {
-            d.dismiss();
-            restoreMainMenu();
-        });
-        layoutMainMenu.setVisibility(View.GONE);
-        dialog.show();
-    }
+        View customView = getLayoutInflater().inflate(R.layout.dialog_bot_duel, null);
 
-    private String readLuaDescription(File luaFile) {
-        StringBuilder message = new StringBuilder();
-        boolean inMessage = false;
-        try (BufferedReader reader = new BufferedReader(new FileReader(luaFile))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("--[[message")) {
-                    if (line.length() <= 13) {
-                        inMessage = true;
-                        continue;
-                    } else {
-                        int end = line.indexOf(']', 11);
-                        if (end > 11) {
-                            message.append(line, 12, end - 1);
-                            break;
-                        }
+        TabLayout tabLayoutMode = customView.findViewById(R.id.tab_layout_mode);
+        ListView lvBotList = customView.findViewById(R.id.lv_bot_list);
+        TextView tvBotDesc = customView.findViewById(R.id.tv_bot_desc);
+        EditText etBotName = customView.findViewById(R.id.et_bot_name);
+        Spinner spinnerRule = customView.findViewById(R.id.spinner_rule);
+        CheckBox chkAiOnlyScissors = customView.findViewById(R.id.chk_ai_only_scissors);
+        CheckBox chkNoCheckDeck = customView.findViewById(R.id.chk_no_check_deck);
+        CheckBox chkNoShuffleDeck = customView.findViewById(R.id.chk_no_shuffle_deck);
+        Button btnStartBotDuel = customView.findViewById(R.id.btn_start_bot_duel);
+        Button btnExitBot = customView.findViewById(R.id.btn_exit_bot);
+
+        // 设置规则选择器
+        String[] rules = {"大师规则（2020）", "新大师规则", "大师规则3"};
+        ArrayAdapter<String> ruleAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, rules);
+        ruleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerRule.setAdapter(ruleAdapter);
+        spinnerRule.setSelection(0);
+
+        final int[] currentMode = {0}; // 0: 人机模式, 1: 残局模式
+        final int[] selectedPosition = {-1};
+        final boolean[] supportsDeckSelection = {false};
+
+        // 创建两个适配器并保持引用
+        final BotListAdapter botAdapter = new BotListAdapter(this, botList);
+        final PuzzleListAdapter puzzleAdapter = new PuzzleListAdapter(this, puzzleList);
+
+        // 添加Tab
+        tabLayoutMode.addTab(tabLayoutMode.newTab().setText("人机模式(双方无禁)"));
+        tabLayoutMode.addTab(tabLayoutMode.newTab().setText("残局模式(含教学局)"));
+
+        // 显示人机模式列表
+        lvBotList.setAdapter(botAdapter);
+        tvBotDesc.setText("人机卡组由你选择。随缘出牌。暂不支持使用扩展卡。");
+        etBotName.setVisibility(View.VISIBLE);
+        spinnerRule.setVisibility(View.VISIBLE);
+        chkAiOnlyScissors.setVisibility(View.VISIBLE);
+        chkNoCheckDeck.setVisibility(View.VISIBLE);
+        chkNoShuffleDeck.setVisibility(View.VISIBLE);
+        btnStartBotDuel.setText("确定");
+
+        lvBotList.setOnItemClickListener((parent, view, position, id) -> {
+            selectedPosition[0] = position;
+            if (currentMode[0] == 0) {
+                botAdapter.setSelectedPosition(position);
+                if (position >= 0 && position < botList.size()) {
+                    BotUtil.BotInfo bot = botList.get(position);
+                    etBotName.setText(bot.name != null ? bot.name : "");
+                    tvBotDesc.setText(bot.description != null ? bot.description : "");
+                    supportsDeckSelection[0] = bot.supportsDeckSelection;
+
+                    if (bot.supportsDeckSelection) {
+                        Toast.makeText(this, "请选择你的卡组供AI使用", Toast.LENGTH_SHORT).show();
                     }
                 }
-                if (inMessage) {
-                    if (line.startsWith("]]")) break;
-                    message.append(line);
+            } else {
+                puzzleAdapter.setSelectedPosition(position);
+                if (position >= 0 && position < puzzleList.size()) {
+                    PuzzleUtil.PuzzleInfo puzzle = puzzleList.get(position);
+                    etBotName.setText(puzzle.fileName.replace(".lua", ""));
+                    tvBotDesc.setText(puzzle.description != null ? puzzle.description : "无描述");
+                    supportsDeckSelection[0] = false;
                 }
             }
-        } catch (Exception e) {
-            Log.w(TAG, "Failed to read lua description: " + luaFile.getName(), e);
-        }
-        return message.toString();
+        });
+
+        tabLayoutMode.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int position = tab.getPosition();
+                currentMode[0] = position;
+                selectedPosition[0] = -1;
+                supportsDeckSelection[0] = false;
+
+                if (position == 0) {
+                    // 人机模式
+                    lvBotList.setAdapter(botAdapter);
+                    botAdapter.setSelectedPosition(-1);
+                    tvBotDesc.setText("人机卡组由你选择。随缘出牌。暂不支持使用扩展卡。");
+                    etBotName.setVisibility(View.VISIBLE);
+                    spinnerRule.setVisibility(View.VISIBLE);
+                    chkAiOnlyScissors.setVisibility(View.VISIBLE);
+                    chkNoCheckDeck.setVisibility(View.VISIBLE);
+                    chkNoShuffleDeck.setVisibility(View.VISIBLE);
+                    btnStartBotDuel.setText("确定");
+                } else {
+                    // 残局模式
+                    lvBotList.setAdapter(puzzleAdapter);
+                    puzzleAdapter.setSelectedPosition(-1);
+                    tvBotDesc.setText("选择一个残局开始挑战。");
+                    etBotName.setVisibility(View.GONE);
+                    spinnerRule.setVisibility(View.GONE);
+                    chkAiOnlyScissors.setVisibility(View.GONE);
+                    chkNoCheckDeck.setVisibility(View.GONE);
+                    chkNoShuffleDeck.setVisibility(View.GONE);
+                    btnStartBotDuel.setText("开始残局");
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+
+        int popupWidth = (int) (700 * density);
+        int popupHeight = (int) (380 * density);
+        PopupWindow popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setOnDismissListener(() -> restoreMainMenu());
+
+        btnStartBotDuel.setOnClickListener(v -> {
+            if (selectedPosition[0] < 0) {
+                Toast.makeText(this, "请先选择一个项目", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (currentMode[0] == 0) {
+                // 人机模式
+                if (selectedPosition[0] >= botList.size()) {
+                    Toast.makeText(this, "无效的AI选择", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                BotUtil.BotInfo selectedBot = botList.get(selectedPosition[0]);
+                String botCommand = selectedBot.command;
+                String deckFile = "";
+
+                if (supportsDeckSelection[0]) {
+                    Toast.makeText(this, "请选择卡组（功能待实现）", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                popupWindow.dismiss();
+                hideMainMenu();
+                engine.startBotDuel("127.0.0.1", 7911, botCommand, deckFile);
+            } else {
+                // 残局模式
+                if (selectedPosition[0] >= puzzleList.size()) {
+                    Toast.makeText(this, "无效的残局选择", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                PuzzleUtil.PuzzleInfo selectedPuzzle = puzzleList.get(selectedPosition[0]);
+                popupWindow.dismiss();
+                hideMainMenu();
+                engine.startSingleMode(selectedPuzzle.filePath);
+            }
+        });
+
+        btnExitBot.setOnClickListener(v -> popupWindow.dismiss());
+
+        layoutMainMenu.setVisibility(View.GONE);
+        popupWindow.showAtLocation(layoutMainMenu, Gravity.CENTER, 0, 0);
     }
 
     private void showReplayModeDialog() {
@@ -600,28 +719,52 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         }
 
         final File[] finalFiles = files;
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("观看录像");
-        dialog.setContentView(R.layout.dialog_edit_and_list);
-        dialog.bind(R.id.room_name).setVisibility(View.GONE);
-        ListView listView = dialog.bind(R.id.room_list);
+        float density = getResources().getDisplayMetrics().density;
+
+        LinearLayout rootLayout = new LinearLayout(this);
+        rootLayout.setOrientation(LinearLayout.VERTICAL);
+        rootLayout.setBackgroundResource(R.drawable.sdialogl);
+        int pad = (int) (16 * density);
+        rootLayout.setPadding(pad, pad, pad, pad);
+
+        TextView tvTitle = new TextView(this);
+        tvTitle.setText("观看录像");
+        tvTitle.setTextSize(18);
+        tvTitle.setTextColor(0xFFFFFFFF);
+        tvTitle.setPadding(0, 0, 0, (int) (8 * density));
+        rootLayout.addView(tvTitle);
+
+        ListView listView = new ListView(this);
         SimpleListAdapter adapter = new SimpleListAdapter(this);
         adapter.set(nameList);
         listView.setAdapter(adapter);
+        LinearLayout.LayoutParams listLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
+        rootLayout.addView(listView, listLp);
+
+        Button btnExit = new Button(this);
+        btnExit.setText("退出");
+        rootLayout.addView(btnExit);
+
+        int popupWidth = (int) (420 * density);
+        int popupHeight = (int) (300 * density);
+        PopupWindow popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setOnDismissListener(() -> restoreMainMenu());
+
         listView.setOnItemClickListener((parent, view, position, id) -> {
             if (finalFiles != null && position < finalFiles.length) {
-                dialog.dismiss();
+                popupWindow.dismiss();
                 hideMainMenu();
                 startReplayPlayback(finalFiles[position].getAbsolutePath());
             }
         });
-        dialog.setLeftButtonText("退出");
-        dialog.setLeftButtonListener((d, w) -> {
-            d.dismiss();
-            restoreMainMenu();
-        });
+
+        btnExit.setOnClickListener(v -> popupWindow.dismiss());
+
         layoutMainMenu.setVisibility(View.GONE);
-        dialog.show();
+        popupWindow.showAtLocation(layoutMainMenu, Gravity.CENTER, 0, 0);
     }
 
     private void startReplayPlayback(String replayPath) {
@@ -753,44 +896,82 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 "自动保存录像", "启用音效", "启用BGM"
         };
 
-        LinearLayout container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (12 * getResources().getDisplayMetrics().density);
-        container.setPadding(pad, pad, pad, pad);
+        float density = getResources().getDisplayMetrics().density;
+
+        LinearLayout rootLayout = new LinearLayout(this);
+        rootLayout.setOrientation(LinearLayout.VERTICAL);
+        rootLayout.setBackgroundResource(R.drawable.sdialogl);
+        int pad = (int) (16 * density);
+        rootLayout.setPadding(pad, pad, pad, pad);
+
+        TextView tvTitle = new TextView(this);
+        tvTitle.setText("系统设定");
+        tvTitle.setTextSize(18);
+        tvTitle.setTextColor(0xFFFFFFFF);
+        tvTitle.setPadding(0, 0, 0, (int) (8 * density));
+        rootLayout.addView(tvTitle);
+
+        ScrollView scrollContainer = new ScrollView(this);
+        LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
+        rootLayout.addView(scrollContainer, scrollLp);
+
+        LinearLayout checkboxContainer = new LinearLayout(this);
+        checkboxContainer.setOrientation(LinearLayout.VERTICAL);
+        scrollContainer.addView(checkboxContainer);
+
         CheckBox[] checkBoxes = new CheckBox[keys.length];
         for (int i = 0; i < keys.length; i++) {
             CheckBox cb = new CheckBox(this);
             cb.setText(labels[i]);
             cb.setTextColor(0xFFFFFFFF);
             cb.setChecked(prefs.getBoolean(keys[i], false));
-            container.addView(cb);
+            checkboxContainer.addView(cb);
             checkBoxes[i] = cb;
         }
 
-        ScrollView scrollContainer = new ScrollView(this);
-        scrollContainer.addView(container);
+        LinearLayout buttonLayout = new LinearLayout(this);
+        buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
+        buttonLayout.setGravity(Gravity.CENTER);
 
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("系统设定");
-        dialog.setContentView(scrollContainer);
-        dialog.setLeftButtonText("保存");
-        dialog.setLeftButtonListener((d, w) -> {
+        Button btnSave = new Button(this);
+        btnSave.setText("保存");
+        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        btnLp.setMargins(0, 0, (int) (4 * density), 0);
+        buttonLayout.addView(btnSave, btnLp);
+
+        Button btnCancel = new Button(this);
+        btnCancel.setText("取消");
+        LinearLayout.LayoutParams btnCancelLp = new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        btnCancelLp.setMargins((int) (4 * density), 0, 0, 0);
+        buttonLayout.addView(btnCancel, btnCancelLp);
+
+        rootLayout.addView(buttonLayout);
+
+        int popupWidth = (int) (380 * density);
+        int popupHeight = (int) (350 * density);
+        PopupWindow popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setOnDismissListener(() -> restoreMainMenu());
+
+        btnSave.setOnClickListener(v -> {
             SharedPreferences.Editor editor = prefs.edit();
             for (int i = 0; i < keys.length; i++) {
                 editor.putBoolean(keys[i], checkBoxes[i].isChecked());
             }
             editor.apply();
             applySettingsToEngine();
-            d.dismiss();
+            popupWindow.dismiss();
             restoreMainMenu();
         });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> {
-            d.dismiss();
-            restoreMainMenu();
-        });
+
+        btnCancel.setOnClickListener(v -> popupWindow.dismiss());
+
         layoutMainMenu.setVisibility(View.GONE);
-        dialog.show();
+        popupWindow.showAtLocation(layoutMainMenu, Gravity.CENTER, 0, 0);
     }
 
     private void applySettingsToEngine() {
