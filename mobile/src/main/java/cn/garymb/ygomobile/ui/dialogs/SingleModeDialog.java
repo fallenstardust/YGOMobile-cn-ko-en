@@ -92,8 +92,9 @@ public class SingleModeDialog {
         loadLastDeckInfo(btnSelectDeck);
 
         btnSelectDeck.setOnClickListener(v -> {
-            DeckSelectorDialog deckDialog = new DeckSelectorDialog(context, false);
+            DeckSelectorDialog deckDialog = new DeckSelectorDialog(context);
             deckDialog.setOnDeckSelectedListener(new DeckSelectorDialog.OnDeckSelectedListener() {
+
                 @Override
                 public void onDeckSelected(String deckPath, String deckName, String categoryName) {
                     selectedDeckPath = deckPath;

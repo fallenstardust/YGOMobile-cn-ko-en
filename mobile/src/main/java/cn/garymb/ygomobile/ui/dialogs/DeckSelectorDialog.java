@@ -6,41 +6,33 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import androidx.appcompat.widget.AppCompatTextView;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DeckSelectorUtil;
 
-/**
- * 卡组选择对话框
- * 用于显示本地deck文件夹或windbot/Decks文件夹下的卡组列表
- */
 public class DeckSelectorDialog {
 
     private Context context;
     private PopupWindow popupWindow;
     private OnDeckSelectedListener listener;
-    private boolean isWindBotMode;  // true: windbot模式, false: 本地deck模式
 
     public interface OnDeckSelectedListener {
         void onDeckSelected(String deckPath, String deckName, String categoryName);
         void onCancelled();
     }
 
-    public DeckSelectorDialog(Context context, boolean isWindBotMode) {
+    public DeckSelectorDialog(Context context) {
         this.context = context;
-        this.isWindBotMode = isWindBotMode;
     }
 
     public void setOnDeckSelectedListener(OnDeckSelectedListener listener) {
@@ -50,48 +42,112 @@ public class DeckSelectorDialog {
     public void show(View anchorView) {
         float density = context.getResources().getDisplayMetrics().density;
 
-        // 读取卡组数据
-        File deckDir;
-        if (isWindBotMode) {
-            deckDir = new File(context.getExternalFilesDir(null),
-                "data/windbot/Decks");
-        } else {
-            deckDir = new File(context.getExternalFilesDir(null),
-                "data/deck");
+        String uncatLocalName = context.getString(R.string.category_Uncategorized);
+        String uncatAiName = context.getString(R.string.category_windbot_deck);
+
+        List<DeckSelectorUtil.DeckCategory> categories = new ArrayList<>();
+
+        File localDeckDir = new File(AppsSettings.get().getDeckDir());
+        List<DeckSelectorUtil.DeckCategory> localCategories = DeckSelectorUtil.loadDeckCategories(localDeckDir);
+        for (DeckSelectorUtil.DeckCategory c : localCategories) {
+            String name = c.categoryName.equals("未分类卡组") ? uncatLocalName : c.categoryName;
+            categories.add(new DeckSelectorUtil.DeckCategory(name));
+            categories.get(categories.size() - 1).deckList.addAll(c.deckList);
         }
 
-        List<DeckSelectorUtil.DeckCategory> categories =
-            DeckSelectorUtil.loadDeckCategories(deckDir);
+        File aiDeckDir = new File(AppsSettings.get().getAiDeckDir());
+        List<DeckSelectorUtil.DeckCategory> aiCategories = DeckSelectorUtil.loadDeckCategories(aiDeckDir);
+        for (DeckSelectorUtil.DeckCategory c : aiCategories) {
+            String name = c.categoryName.equals("未分类卡组") ? uncatAiName : c.categoryName;
+            categories.add(new DeckSelectorUtil.DeckCategory(name));
+            categories.get(categories.size() - 1).deckList.addAll(c.deckList);
+        }
+
+        categories.sort((a, b) -> {
+            boolean aUncat = a.categoryName.equals(uncatLocalName) || a.categoryName.equals(uncatAiName);
+            boolean bUncat = b.categoryName.equals(uncatLocalName) || b.categoryName.equals(uncatAiName);
+            if (aUncat != bUncat) return aUncat ? -1 : 1;
+            return a.categoryName.compareToIgnoreCase(b.categoryName);
+        });
 
         View contentView = LayoutInflater.from(context).inflate(R.layout.dialog_deck_selector, null);
 
         ListView lvCategories = contentView.findViewById(R.id.lv_categories);
         ListView lvDecks = contentView.findViewById(R.id.lv_decks);
-        Button btnCancel = contentView.findViewById(R.id.btn_cancel_deck);
         Button btnConfirm = contentView.findViewById(R.id.btn_confirm_deck);
 
         CategoryListAdapter categoryAdapter = new CategoryListAdapter(context, categories);
         lvCategories.setAdapter(categoryAdapter);
+
+        final DeckListAdapter[] currentDeckAdapter = {null};
 
         final int[] selectedCategoryPos = {-1};
         final int[] selectedDeckPos = {-1};
         final String[] selectedDeckPath = {""};
         final String[] selectedDeckName = {""};
 
+        String lastCategory = AppsSettings.get().getLastCategory();
+        String lastDeckName = AppsSettings.get().getLastDeckName();
+
+        int lastCategoryIndex = -1;
+        for (int i = 0; i < categories.size(); i++) {
+            if (categories.get(i).categoryName.equals(lastCategory)) {
+                lastCategoryIndex = i;
+                break;
+            }
+        }
+
+        if (lastCategoryIndex >= 0) {
+            selectedCategoryPos[0] = lastCategoryIndex;
+            categoryAdapter.setSelectedPosition(lastCategoryIndex);
+
+            DeckSelectorUtil.DeckCategory category = categories.get(lastCategoryIndex);
+            DeckListAdapter deckAdapter = new DeckListAdapter(context, category.deckList);
+            lvDecks.setAdapter(deckAdapter);
+            currentDeckAdapter[0] = deckAdapter;
+
+            int lastDeckIndex = -1;
+            for (int i = 0; i < category.deckList.size(); i++) {
+                if (category.deckList.get(i).deckName.equals(lastDeckName)) {
+                    lastDeckIndex = i;
+                    break;
+                }
+            }
+
+            if (lastDeckIndex >= 0) {
+                selectedDeckPos[0] = lastDeckIndex;
+                deckAdapter.setSelectedPosition(lastDeckIndex);
+                DeckSelectorUtil.DeckItem deck = category.deckList.get(lastDeckIndex);
+                selectedDeckPath[0] = deck.deckPath;
+                selectedDeckName[0] = deck.deckName;
+            }
+
+            final int catIdx = lastCategoryIndex;
+            final int deckIdx = selectedDeckPos[0] >= 0 ? selectedDeckPos[0] : 0;
+            lvCategories.post(() -> lvCategories.setSelection(catIdx));
+            lvDecks.post(() -> lvDecks.setSelection(deckIdx));
+        }
+
         lvCategories.setOnItemClickListener((parent, view, position, id) -> {
             selectedCategoryPos[0] = position;
             selectedDeckPos[0] = -1;
+            selectedDeckPath[0] = "";
+            selectedDeckName[0] = "";
             categoryAdapter.setSelectedPosition(position);
 
             if (position >= 0 && position < categories.size()) {
                 DeckSelectorUtil.DeckCategory category = categories.get(position);
                 DeckListAdapter deckAdapter = new DeckListAdapter(context, category.deckList);
                 lvDecks.setAdapter(deckAdapter);
+                currentDeckAdapter[0] = deckAdapter;
             }
         });
 
         lvDecks.setOnItemClickListener((parent, view, position, id) -> {
             selectedDeckPos[0] = position;
+            if (currentDeckAdapter[0] != null) {
+                currentDeckAdapter[0].setSelectedPosition(position);
+            }
             if (selectedCategoryPos[0] >= 0 && selectedCategoryPos[0] < categories.size()) {
                 DeckSelectorUtil.DeckCategory category = categories.get(selectedCategoryPos[0]);
                 if (position >= 0 && position < category.deckList.size()) {
@@ -100,11 +156,6 @@ public class DeckSelectorDialog {
                     selectedDeckName[0] = deck.deckName;
                 }
             }
-        });
-
-        btnCancel.setOnClickListener(v -> {
-            popupWindow.dismiss();
-            if (listener != null) listener.onCancelled();
         });
 
         btnConfirm.setOnClickListener(v -> {
@@ -123,8 +174,8 @@ public class DeckSelectorDialog {
             }
         });
 
-        int popupWidth = (int) (600 * density);
-        int popupHeight = (int) (450 * density);
+        int popupWidth = (int) (480 * density);
+        int popupHeight = (int) (320 * density);
         popupWindow = new PopupWindow(contentView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);

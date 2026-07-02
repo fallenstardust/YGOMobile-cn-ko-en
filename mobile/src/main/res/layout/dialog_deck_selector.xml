@@ -3,25 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/sdialogl"
+    android:background="@drawable/window3"
     android:padding="12dp">
-
-    <!-- 标题 -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="选择P2卡组"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="12dp"/>
 
     <!-- 左右分栏：左侧分类，右侧卡组 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:layout_margin="5dp"
         android:orientation="horizontal">
 
         <!-- 左侧：分类列表 -->
@@ -29,7 +19,7 @@
             android:id="@+id/lv_categories"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="0.5"
             android:background="#1A3A4A"
             android:divider="#3A5A6B"
             android:dividerHeight="1dp" />
@@ -53,34 +43,13 @@
             android:dividerHeight="1dp" />
     </LinearLayout>
 
-    <!-- 按钮区域 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="12dp">
-
-        <Button
-            android:id="@+id/btn_cancel_deck"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="取消"
-            android:background="#3A5A7B"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:padding="10dp"
-            android:layout_marginRight="8dp"/>
-
         <Button
             android:id="@+id/btn_confirm_deck"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="确定"
-            android:background="#4A6A8B"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:padding="10dp"/>
-    </LinearLayout>
+            android:text="@string/ok"
+            android:layout_gravity="center"
+            android:background="@drawable/button3_bg"
+            android:textColor="@color/white"
+            android:textSize="14sp"/>
 </LinearLayout>
