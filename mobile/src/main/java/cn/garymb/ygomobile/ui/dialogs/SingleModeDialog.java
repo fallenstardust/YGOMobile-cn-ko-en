@@ -82,7 +82,7 @@ public class SingleModeDialog {
 
         lvBotList.setAdapter(botAdapter);
         tvBotDesc.setText("请选择一个AI查看信息");
-        btnSelectDeck.setVisibility(View.VISIBLE);
+        btnSelectDeck.setVisibility(View.GONE);
         spinnerRule.setVisibility(View.VISIBLE);
         chkAiOnlyScissors.setVisibility(View.VISIBLE);
         chkNoCheckDeck.setVisibility(View.VISIBLE);
@@ -118,6 +118,7 @@ public class SingleModeDialog {
                 if (position >= 0 && position < botList.size()) {
                     BotUtil.BotInfo bot = botList.get(position);
                     tvBotDesc.setText(bot.description != null ? bot.description : "");
+                    btnSelectDeck.setVisibility(bot.supportsDeckSelection ? View.VISIBLE : View.GONE);
                 }
             } else {
                 puzzleAdapter.setSelectedPosition(position);
@@ -139,7 +140,7 @@ public class SingleModeDialog {
                     lvBotList.setAdapter(botAdapter);
                     botAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText("请选择一个AI查看信息");
-                    btnSelectDeck.setVisibility(View.VISIBLE);
+                    btnSelectDeck.setVisibility(View.GONE);
                     spinnerRule.setVisibility(View.VISIBLE);
                     chkAiOnlyScissors.setVisibility(View.VISIBLE);
                     chkNoCheckDeck.setVisibility(View.VISIBLE);
@@ -167,8 +168,8 @@ public class SingleModeDialog {
             }
         });
 
-        int popupWidth = (int) (700 * density);
-        int popupHeight = (int) (380 * density);
+        int popupWidth = (int) (560 * density);
+        int popupHeight = (int) (320 * density);
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);

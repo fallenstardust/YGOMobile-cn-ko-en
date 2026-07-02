@@ -11,7 +11,7 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_weight="0.6"
         android:orientation="vertical">
 
         <!-- 模式选择Tab -->
@@ -33,6 +33,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:background="#1A3A4A"
+            android:foreground="@drawable/selected_light"
             android:divider="#3A5A6B"
             android:dividerHeight="1dp" />
     </LinearLayout>
@@ -41,7 +42,7 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.5"
+        android:layout_weight="0.4"
         android:layout_marginHorizontal="5dp"
         android:orientation="vertical">
 
@@ -72,12 +73,11 @@
             android:id="@+id/btn_select_deck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/selected_light"
-            android:padding="8dp"
-            android:text="选择卡组"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/button3_bg"
+            android:text="@string/select_deck"
             android:textAllCaps="false"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="12sp" />
 
         <!-- 规则选择 -->
@@ -85,7 +85,7 @@
             android:id="@+id/spinner_rule"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="5dp"
             android:background="#1A3A4A"
             android:padding="8dp" />
 
@@ -97,15 +97,16 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_gravity="bottom"
+                android:layout_weight="0.6"
+                android:layout_marginRight="5dp"
+                android:gravity="bottom"
                 android:orientation="vertical">
 
                 <CheckBox
                     android:id="@+id/chk_ai_only_scissors"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginBottom="4dp"
                     android:checked="false"
                     android:text="AI只出剪刀"
                     android:textColor="#FFFFFF" />
@@ -114,7 +115,7 @@
                     android:id="@+id/chk_no_check_deck"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginBottom="4dp"
                     android:checked="false"
                     android:text="不检查卡组"
                     android:textColor="#FFFFFF" />
@@ -123,7 +124,6 @@
                     android:id="@+id/chk_no_shuffle_deck"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
                     android:checked="false"
                     android:text="不洗切卡组"
                     android:textColor="#FFFFFF" />
@@ -133,7 +133,7 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_weight="0.4"
                 android:layout_gravity="bottom"
                 android:orientation="vertical">
 
