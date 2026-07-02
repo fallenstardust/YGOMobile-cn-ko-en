@@ -34,7 +34,7 @@ public class DeckSelectorDialog {
     private boolean isWindBotMode;  // true: windbot模式, false: 本地deck模式
 
     public interface OnDeckSelectedListener {
-        void onDeckSelected(String deckPath, String deckName);
+        void onDeckSelected(String deckPath, String deckName, String categoryName);
         void onCancelled();
     }
 
@@ -113,9 +113,13 @@ public class DeckSelectorDialog {
                     android.widget.Toast.LENGTH_SHORT).show();
                 return;
             }
+            String categoryName = "";
+            if (selectedCategoryPos[0] >= 0 && selectedCategoryPos[0] < categories.size()) {
+                categoryName = categories.get(selectedCategoryPos[0]).categoryName;
+            }
             popupWindow.dismiss();
             if (listener != null) {
-                listener.onDeckSelected(selectedDeckPath[0], selectedDeckName[0]);
+                listener.onDeckSelected(selectedDeckPath[0], selectedDeckName[0], categoryName);
             }
         });
 

@@ -68,6 +68,11 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.dialogs.DeckEditDialog;
+import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
+import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.BotUtil;
@@ -414,357 +419,57 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showLanModeDialog() {
-        View customView = getLayoutInflater().inflate(R.layout.dialog_lan_connection, null);
+        LanModeDialog dialog = new LanModeDialog(this, new LanModeDialog.OnLanModeListener() {
+            @Override
+            public void onCreateHostConfirmed(String banlist, String rule, String cardAllowed,
+                                              String startLP, String duelMode, String startHand,
+                                              String timeLimit, String drawCount,
+                                              boolean noCheckDeck, boolean noShuffleDeck,
+                                              String hostName, String password) {
+                hideMainMenu();
+                engine.startLocalServer();
+            }
 
-        View layoutLanMain = customView.findViewById(R.id.layout_lan_main);
-        View layoutCreateHost = customView.findViewById(R.id.layout_create_host_settings);
-        View layoutPlayerWaiting = customView.findViewById(R.id.layout_player_waiting);
-
-        EditText etNickname = layoutLanMain.findViewById(R.id.et_nickname);
-        EditText etHostIp = layoutLanMain.findViewById(R.id.et_host_ip);
-        EditText etHostPort = layoutLanMain.findViewById(R.id.et_host_port);
-        EditText etRoomPassword = layoutLanMain.findViewById(R.id.et_room_password);
-        ListView lvHostList = layoutLanMain.findViewById(R.id.lv_host_list);
-        Button btnCreateHost = layoutLanMain.findViewById(R.id.btn_create_host);
-        Button btnRefreshLan = layoutLanMain.findViewById(R.id.btn_refresh_lan);
-        Button btnJoinGame = layoutLanMain.findViewById(R.id.btn_join_game);
-        Button btnExitLan = layoutLanMain.findViewById(R.id.btn_exit_lan);
-
-        Spinner spinnerBanlist = layoutCreateHost.findViewById(R.id.spinner_banlist);
-        Spinner spinnerRule = layoutCreateHost.findViewById(R.id.spinner_rule);
-        Spinner spinnerCardAllowed = layoutCreateHost.findViewById(R.id.spinner_card_allowed);
-        EditText etStartLP = layoutCreateHost.findViewById(R.id.et_start_lp);
-        Spinner spinnerDuelMode = layoutCreateHost.findViewById(R.id.spinner_duel_mode);
-        EditText etStartHand = layoutCreateHost.findViewById(R.id.et_start_hand);
-        EditText etTimeLimit = layoutCreateHost.findViewById(R.id.et_time_limit);
-        EditText etDrawCount = layoutCreateHost.findViewById(R.id.et_draw_count);
-        CheckBox chkNoCheckDeck = layoutCreateHost.findViewById(R.id.chk_no_check_deck);
-        CheckBox chkNoShuffleDeck = layoutCreateHost.findViewById(R.id.chk_no_shuffle_deck);
-        EditText etHostName = layoutCreateHost.findViewById(R.id.et_host_name);
-        EditText etHostPassword = layoutCreateHost.findViewById(R.id.et_host_password);
-        Button btnConfirmCreate = layoutCreateHost.findViewById(R.id.btn_confirm_create);
-        Button btnCancelCreate = layoutCreateHost.findViewById(R.id.btn_cancel_create);
-
-        EditText etPlayer1Name = layoutPlayerWaiting.findViewById(R.id.et_player1_name);
-        EditText etPlayer2Name = layoutPlayerWaiting.findViewById(R.id.et_player2_name);
-        CheckBox chkPlayer1Ready = layoutPlayerWaiting.findViewById(R.id.chk_player1_ready);
-        CheckBox chkPlayer2Ready = layoutPlayerWaiting.findViewById(R.id.chk_player2_ready);
-        Button btnDuelistMode = layoutPlayerWaiting.findViewById(R.id.btn_duelist_mode);
-        Button btnSpectatorMode = layoutPlayerWaiting.findViewById(R.id.btn_spectator_mode);
-        Button btnReady = layoutPlayerWaiting.findViewById(R.id.btn_ready);
-        Spinner spinnerDeckSelect = layoutPlayerWaiting.findViewById(R.id.spinner_deck_select);
-        TextView tvBanlist = layoutPlayerWaiting.findViewById(R.id.tv_banlist);
-        TextView tvCardAllowed = layoutPlayerWaiting.findViewById(R.id.tv_card_allowed);
-        TextView tvDuelMode = layoutPlayerWaiting.findViewById(R.id.tv_duel_mode);
-        TextView tvStartLP = layoutPlayerWaiting.findViewById(R.id.tv_start_lp);
-        TextView tvStartHand = layoutPlayerWaiting.findViewById(R.id.tv_start_hand);
-        TextView tvDrawCount = layoutPlayerWaiting.findViewById(R.id.tv_draw_count);
-        Button btnExitWaiting = layoutPlayerWaiting.findViewById(R.id.btn_exit_waiting);
-
-        int popupWidth = (int) (420 * getResources().getDisplayMetrics().density);
-        int popupHeight = (int) (300 * getResources().getDisplayMetrics().density);
-        PopupWindow popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
-        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
-        popupWindow.setOnDismissListener(() -> restoreMainMenu());
-
-        btnCreateHost.setOnClickListener(v -> {
-            layoutLanMain.setVisibility(View.GONE);
-            layoutCreateHost.setVisibility(View.VISIBLE);
+            @Override
+            public void onExitLan() {
+            }
         });
-
-        btnCancelCreate.setOnClickListener(v -> {
-            layoutCreateHost.setVisibility(View.GONE);
-            layoutLanMain.setVisibility(View.VISIBLE);
-        });
-
-        btnConfirmCreate.setOnClickListener(v -> {
-            String banlist = spinnerBanlist.getSelectedItem() != null ? spinnerBanlist.getSelectedItem().toString() : "";
-            String rule = spinnerRule.getSelectedItem() != null ? spinnerRule.getSelectedItem().toString() : "";
-            String cardAllowed = spinnerCardAllowed.getSelectedItem() != null ? spinnerCardAllowed.getSelectedItem().toString() : "";
-            String startLP = etStartLP.getText().toString();
-            String duelMode = spinnerDuelMode.getSelectedItem() != null ? spinnerDuelMode.getSelectedItem().toString() : "";
-            String startHand = etStartHand.getText().toString();
-            String timeLimit = etTimeLimit.getText().toString();
-            String drawCount = etDrawCount.getText().toString();
-            boolean noCheckDeck = chkNoCheckDeck.isChecked();
-            boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
-            String hostName = etHostName.getText().toString();
-            String password = etHostPassword.getText().toString();
-
-            popupWindow.dismiss();
-            hideMainMenu();
-            engine.startLocalServer();
-
-            layoutCreateHost.setVisibility(View.GONE);
-            layoutPlayerWaiting.setVisibility(View.VISIBLE);
-
-            tvBanlist.setText(banlist.isEmpty() ? "N/A" : banlist);
-            tvCardAllowed.setText(cardAllowed.isEmpty() ? "所有卡片" : cardAllowed);
-            tvDuelMode.setText(duelMode.isEmpty() ? "单局模式" : duelMode);
-            tvStartLP.setText(startLP.isEmpty() ? "8000" : startLP);
-            tvStartHand.setText(startHand.isEmpty() ? "5" : startHand);
-            tvDrawCount.setText(drawCount.isEmpty() ? "1" : drawCount);
-        });
-
-        btnExitLan.setOnClickListener(v -> popupWindow.dismiss());
-
-        btnExitWaiting.setOnClickListener(v -> popupWindow.dismiss());
-
-        btnReady.setOnClickListener(v -> {
-            btnReady.setEnabled(false);
-            btnReady.setText("已准备");
-        });
-
-        btnDuelistMode.setOnClickListener(v -> {
-            btnDuelistMode.setEnabled(false);
-            btnSpectatorMode.setEnabled(true);
-        });
-
-        btnSpectatorMode.setOnClickListener(v -> {
-            btnSpectatorMode.setEnabled(false);
-            btnDuelistMode.setEnabled(true);
-        });
-
-        layoutMainMenu.setVisibility(View.GONE);
-        popupWindow.showAtLocation(layoutMainMenu, Gravity.CENTER, 0, 0);
+        dialog.show(layoutMainMenu);
+        dialog.setOnDismissListener(() -> restoreMainMenu());
     }
 
     private void showSingleModeDialog() {
-        float density = getResources().getDisplayMetrics().density;
-
-        // 读取 bot.conf 文件
         File botConfFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH);
         List<BotUtil.BotInfo> botList = parseBotConfig(botConfFile);
 
-        // 读取残局lua文件列表
         File singleDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_SINGLE_PATH);
         List<PuzzleUtil.PuzzleInfo> puzzleList = loadPuzzleFiles(singleDir);
 
-        View customView = getLayoutInflater().inflate(R.layout.dialog_bot_duel, null);
-
-        TabLayout tabLayoutMode = customView.findViewById(R.id.tab_layout_mode);
-        ListView lvBotList = customView.findViewById(R.id.lv_bot_list);
-        TextView tvBotDesc = customView.findViewById(R.id.tv_bot_desc);
-        EditText etBotName = customView.findViewById(R.id.et_bot_name);
-        Spinner spinnerRule = customView.findViewById(R.id.spinner_rule);
-        CheckBox chkAiOnlyScissors = customView.findViewById(R.id.chk_ai_only_scissors);
-        CheckBox chkNoCheckDeck = customView.findViewById(R.id.chk_no_check_deck);
-        CheckBox chkNoShuffleDeck = customView.findViewById(R.id.chk_no_shuffle_deck);
-        Button btnStartBotDuel = customView.findViewById(R.id.btn_start_bot_duel);
-        Button btnExitBot = customView.findViewById(R.id.btn_exit_bot);
-
-        // 设置规则选择器
-        String[] rules = {"大师规则（2020）", "新大师规则", "大师规则3"};
-        ArrayAdapter<String> ruleAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, rules);
-        ruleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerRule.setAdapter(ruleAdapter);
-        spinnerRule.setSelection(0);
-
-        final int[] currentMode = {0}; // 0: 人机模式, 1: 残局模式
-        final int[] selectedPosition = {-1};
-        final boolean[] supportsDeckSelection = {false};
-
-        // 创建两个适配器并保持引用
-        final BotListAdapter botAdapter = new BotListAdapter(this, botList);
-        final PuzzleListAdapter puzzleAdapter = new PuzzleListAdapter(this, puzzleList);
-
-        // 添加Tab
-        tabLayoutMode.addTab(tabLayoutMode.newTab().setText("人机模式(双方无禁)"));
-        tabLayoutMode.addTab(tabLayoutMode.newTab().setText("残局模式(含教学局)"));
-
-        // 显示人机模式列表
-        lvBotList.setAdapter(botAdapter);
-        tvBotDesc.setText("人机卡组由你选择。随缘出牌。暂不支持使用扩展卡。");
-        etBotName.setVisibility(View.VISIBLE);
-        spinnerRule.setVisibility(View.VISIBLE);
-        chkAiOnlyScissors.setVisibility(View.VISIBLE);
-        chkNoCheckDeck.setVisibility(View.VISIBLE);
-        chkNoShuffleDeck.setVisibility(View.VISIBLE);
-        btnStartBotDuel.setText("确定");
-
-        lvBotList.setOnItemClickListener((parent, view, position, id) -> {
-            selectedPosition[0] = position;
-            if (currentMode[0] == 0) {
-                botAdapter.setSelectedPosition(position);
-                if (position >= 0 && position < botList.size()) {
-                    BotUtil.BotInfo bot = botList.get(position);
-                    etBotName.setText(bot.name != null ? bot.name : "");
-                    tvBotDesc.setText(bot.description != null ? bot.description : "");
-                    supportsDeckSelection[0] = bot.supportsDeckSelection;
-
-                    if (bot.supportsDeckSelection) {
-                        Toast.makeText(this, "请选择你的卡组供AI使用", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            } else {
-                puzzleAdapter.setSelectedPosition(position);
-                if (position >= 0 && position < puzzleList.size()) {
-                    PuzzleUtil.PuzzleInfo puzzle = puzzleList.get(position);
-                    etBotName.setText(puzzle.fileName.replace(".lua", ""));
-                    tvBotDesc.setText(puzzle.description != null ? puzzle.description : "无描述");
-                    supportsDeckSelection[0] = false;
-                }
-            }
-        });
-
-        tabLayoutMode.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        SingleModeDialog dialog = new SingleModeDialog(this, new SingleModeDialog.OnSingleModeListener() {
             @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                int position = tab.getPosition();
-                currentMode[0] = position;
-                selectedPosition[0] = -1;
-                supportsDeckSelection[0] = false;
-
-                if (position == 0) {
-                    // 人机模式
-                    lvBotList.setAdapter(botAdapter);
-                    botAdapter.setSelectedPosition(-1);
-                    tvBotDesc.setText("人机卡组由你选择。随缘出牌。暂不支持使用扩展卡。");
-                    etBotName.setVisibility(View.VISIBLE);
-                    spinnerRule.setVisibility(View.VISIBLE);
-                    chkAiOnlyScissors.setVisibility(View.VISIBLE);
-                    chkNoCheckDeck.setVisibility(View.VISIBLE);
-                    chkNoShuffleDeck.setVisibility(View.VISIBLE);
-                    btnStartBotDuel.setText("确定");
-                } else {
-                    // 残局模式
-                    lvBotList.setAdapter(puzzleAdapter);
-                    puzzleAdapter.setSelectedPosition(-1);
-                    tvBotDesc.setText("选择一个残局开始挑战。");
-                    etBotName.setVisibility(View.GONE);
-                    spinnerRule.setVisibility(View.GONE);
-                    chkAiOnlyScissors.setVisibility(View.GONE);
-                    chkNoCheckDeck.setVisibility(View.GONE);
-                    chkNoShuffleDeck.setVisibility(View.GONE);
-                    btnStartBotDuel.setText("开始残局");
-                }
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
-
-        int popupWidth = (int) (700 * density);
-        int popupHeight = (int) (380 * density);
-        PopupWindow popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
-        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
-        popupWindow.setOnDismissListener(() -> restoreMainMenu());
-
-        btnStartBotDuel.setOnClickListener(v -> {
-            if (selectedPosition[0] < 0) {
-                Toast.makeText(this, "请先选择一个项目", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (currentMode[0] == 0) {
-                // 人机模式
-                if (selectedPosition[0] >= botList.size()) {
-                    Toast.makeText(this, "无效的AI选择", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                BotUtil.BotInfo selectedBot = botList.get(selectedPosition[0]);
-                String botCommand = selectedBot.command;
-                String deckFile = "";
-
-                if (supportsDeckSelection[0]) {
-                    Toast.makeText(this, "请选择卡组（功能待实现）", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                popupWindow.dismiss();
+            public void onStartBotDuel(String botCommand, String deckFile) {
                 hideMainMenu();
                 engine.startBotDuel("127.0.0.1", 7911, botCommand, deckFile);
-            } else {
-                // 残局模式
-                if (selectedPosition[0] >= puzzleList.size()) {
-                    Toast.makeText(this, "无效的残局选择", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+            }
 
-                PuzzleUtil.PuzzleInfo selectedPuzzle = puzzleList.get(selectedPosition[0]);
-                popupWindow.dismiss();
+            @Override
+            public void onStartSingleMode(String luaFilePath) {
                 hideMainMenu();
-                engine.startSingleMode(selectedPuzzle.filePath);
+                engine.startSingleMode(luaFilePath);
             }
         });
-
-        btnExitBot.setOnClickListener(v -> popupWindow.dismiss());
-
-        layoutMainMenu.setVisibility(View.GONE);
-        popupWindow.showAtLocation(layoutMainMenu, Gravity.CENTER, 0, 0);
+        dialog.show(layoutMainMenu, botList, puzzleList);
+        dialog.setOnDismissListener(() -> restoreMainMenu());
     }
 
     private void showReplayModeDialog() {
         File replayDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_REPLAY_PATH);
-        File[] files = replayDir.exists()
-                ? replayDir.listFiles((dir, name) -> name.endsWith(Constants.YRP_FILE_EX))
-                : null;
-        List<String> nameList = new ArrayList<>();
-        if (files != null && files.length > 0) {
-            Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
-            for (File f : files) {
-                nameList.add(f.getName());
-            }
-        } else {
-            nameList.add("（暂无录像文件）");
-        }
-
-        final File[] finalFiles = files;
-        float density = getResources().getDisplayMetrics().density;
-
-        LinearLayout rootLayout = new LinearLayout(this);
-        rootLayout.setOrientation(LinearLayout.VERTICAL);
-        rootLayout.setBackgroundResource(R.drawable.sdialogl);
-        int pad = (int) (16 * density);
-        rootLayout.setPadding(pad, pad, pad, pad);
-
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText("观看录像");
-        tvTitle.setTextSize(18);
-        tvTitle.setTextColor(0xFFFFFFFF);
-        tvTitle.setPadding(0, 0, 0, (int) (8 * density));
-        rootLayout.addView(tvTitle);
-
-        ListView listView = new ListView(this);
-        SimpleListAdapter adapter = new SimpleListAdapter(this);
-        adapter.set(nameList);
-        listView.setAdapter(adapter);
-        LinearLayout.LayoutParams listLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
-        rootLayout.addView(listView, listLp);
-
-        Button btnExit = new Button(this);
-        btnExit.setText("退出");
-        rootLayout.addView(btnExit);
-
-        int popupWidth = (int) (420 * density);
-        int popupHeight = (int) (300 * density);
-        PopupWindow popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
-        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
-        popupWindow.setOnDismissListener(() -> restoreMainMenu());
-
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            if (finalFiles != null && position < finalFiles.length) {
-                popupWindow.dismiss();
-                hideMainMenu();
-                startReplayPlayback(finalFiles[position].getAbsolutePath());
-            }
+        ReplayModeDialog dialog = new ReplayModeDialog(this, replayPath -> {
+            hideMainMenu();
+            startReplayPlayback(replayPath);
         });
-
-        btnExit.setOnClickListener(v -> popupWindow.dismiss());
-
-        layoutMainMenu.setVisibility(View.GONE);
-        popupWindow.showAtLocation(layoutMainMenu, Gravity.CENTER, 0, 0);
+        dialog.show(layoutMainMenu, replayDir);
+        dialog.setOnDismissListener(() -> restoreMainMenu());
     }
 
     private void startReplayPlayback(String replayPath) {
@@ -877,101 +582,12 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showDeckEditDialog() {
-        layoutMainMenu.setVisibility(View.GONE);
-        Intent intent = new Intent(this, HomeActivity.class);
-        intent.putExtra("tab", 2);
-        startActivity(intent);
+        new DeckEditDialog(this).show();
     }
-
     private void showSettingsDialog() {
-        SharedPreferences prefs = getSharedPreferences(getPackageName() + ".settings", Context.MODE_PRIVATE);
-        String[] keys = {
-                "chkMAutoPos", "chkSTAutoPos", "chkRandomPos",
-                "chkAutoChain", "chkWaitChain", "chkDefaultShowChain",
-                "chkAutoSaveReplay", "chkEnableSound", "chkEnableMusic"
-        };
-        String[] labels = {
-                "主卡位置自动", "魔陷位置自动", "随机出卡",
-                "自动连锁", "等待连锁确认", "显示连锁标记",
-                "自动保存录像", "启用音效", "启用BGM"
-        };
-
-        float density = getResources().getDisplayMetrics().density;
-
-        LinearLayout rootLayout = new LinearLayout(this);
-        rootLayout.setOrientation(LinearLayout.VERTICAL);
-        rootLayout.setBackgroundResource(R.drawable.sdialogl);
-        int pad = (int) (16 * density);
-        rootLayout.setPadding(pad, pad, pad, pad);
-
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText("系统设定");
-        tvTitle.setTextSize(18);
-        tvTitle.setTextColor(0xFFFFFFFF);
-        tvTitle.setPadding(0, 0, 0, (int) (8 * density));
-        rootLayout.addView(tvTitle);
-
-        ScrollView scrollContainer = new ScrollView(this);
-        LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
-        rootLayout.addView(scrollContainer, scrollLp);
-
-        LinearLayout checkboxContainer = new LinearLayout(this);
-        checkboxContainer.setOrientation(LinearLayout.VERTICAL);
-        scrollContainer.addView(checkboxContainer);
-
-        CheckBox[] checkBoxes = new CheckBox[keys.length];
-        for (int i = 0; i < keys.length; i++) {
-            CheckBox cb = new CheckBox(this);
-            cb.setText(labels[i]);
-            cb.setTextColor(0xFFFFFFFF);
-            cb.setChecked(prefs.getBoolean(keys[i], false));
-            checkboxContainer.addView(cb);
-            checkBoxes[i] = cb;
-        }
-
-        LinearLayout buttonLayout = new LinearLayout(this);
-        buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
-        buttonLayout.setGravity(Gravity.CENTER);
-
-        Button btnSave = new Button(this);
-        btnSave.setText("保存");
-        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        btnLp.setMargins(0, 0, (int) (4 * density), 0);
-        buttonLayout.addView(btnSave, btnLp);
-
-        Button btnCancel = new Button(this);
-        btnCancel.setText("取消");
-        LinearLayout.LayoutParams btnCancelLp = new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        btnCancelLp.setMargins((int) (4 * density), 0, 0, 0);
-        buttonLayout.addView(btnCancel, btnCancelLp);
-
-        rootLayout.addView(buttonLayout);
-
-        int popupWidth = (int) (380 * density);
-        int popupHeight = (int) (350 * density);
-        PopupWindow popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
-        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
-        popupWindow.setOnDismissListener(() -> restoreMainMenu());
-
-        btnSave.setOnClickListener(v -> {
-            SharedPreferences.Editor editor = prefs.edit();
-            for (int i = 0; i < keys.length; i++) {
-                editor.putBoolean(keys[i], checkBoxes[i].isChecked());
-            }
-            editor.apply();
-            applySettingsToEngine();
-            popupWindow.dismiss();
-            restoreMainMenu();
-        });
-
-        btnCancel.setOnClickListener(v -> popupWindow.dismiss());
-
-        layoutMainMenu.setVisibility(View.GONE);
-        popupWindow.showAtLocation(layoutMainMenu, Gravity.CENTER, 0, 0);
+        SettingsDialog dialog = new SettingsDialog(this, () -> applySettingsToEngine());
+        dialog.show(layoutMainMenu);
+        dialog.setOnDismissListener(() -> restoreMainMenu());
     }
 
     private void applySettingsToEngine() {

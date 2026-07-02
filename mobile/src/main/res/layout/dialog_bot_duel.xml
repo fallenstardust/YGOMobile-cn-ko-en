@@ -76,19 +76,19 @@
             android:textSize="12sp"
             android:lineSpacingExtra="4dp"
             android:layout_marginBottom="12dp"/>
-        <!-- 当前选中AI名称 -->
-        <EditText
-            android:id="@+id/et_bot_name"
+
+        <!-- 选择卡组按钮 -->
+        <Button
+            android:id="@+id/btn_select_deck"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="AI名称"
+            android:text="选择卡组"
             android:textColor="#FFFFFF"
-            android:textColorHint="#999999"
+            android:textSize="12sp"
             android:background="#2A3A5B"
             android:padding="8dp"
             android:layout_marginBottom="8dp"
-            android:focusable="false"
-            android:focusableInTouchMode="false"/>
+            android:textAllCaps="false"/>
 
         <!-- 规则选择 -->
         <Spinner
