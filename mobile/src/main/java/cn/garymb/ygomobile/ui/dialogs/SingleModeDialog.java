@@ -26,6 +26,7 @@ import cn.garymb.ygomobile.adapter.PuzzleListAdapter;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class SingleModeDialog {
 
@@ -83,11 +84,12 @@ public class SingleModeDialog {
         lvBotList.setAdapter(botAdapter);
         tvBotDesc.setText("请选择一个AI查看信息");
         btnSelectDeck.setVisibility(View.GONE);
+        btnStartBotDuel.setEnabled(false);
+        btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
         spinnerRule.setVisibility(View.VISIBLE);
         chkAiOnlyScissors.setVisibility(View.VISIBLE);
         chkNoCheckDeck.setVisibility(View.VISIBLE);
         chkNoShuffleDeck.setVisibility(View.VISIBLE);
-        btnStartBotDuel.setText("确定");
 
         loadLastDeckInfo(btnSelectDeck);
 
@@ -113,6 +115,8 @@ public class SingleModeDialog {
 
         lvBotList.setOnItemClickListener((parent, view, position, id) -> {
             selectedPosition[0] = position;
+            btnStartBotDuel.setEnabled(true);
+            btnStartBotDuel.setTextColor(YGOUtil.c(R.color.white));
             if (currentMode[0] == 0) {
                 botAdapter.setSelectedPosition(position);
                 if (position >= 0 && position < botList.size()) {
@@ -141,21 +145,23 @@ public class SingleModeDialog {
                     botAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText("请选择一个AI查看信息");
                     btnSelectDeck.setVisibility(View.GONE);
+                    btnStartBotDuel.setEnabled(false);
+                    btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
                     spinnerRule.setVisibility(View.VISIBLE);
                     chkAiOnlyScissors.setVisibility(View.VISIBLE);
                     chkNoCheckDeck.setVisibility(View.VISIBLE);
                     chkNoShuffleDeck.setVisibility(View.VISIBLE);
-                    btnStartBotDuel.setText("确定");
                 } else {
                     lvBotList.setAdapter(puzzleAdapter);
                     puzzleAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText("选择一个残局开始挑战。");
                     btnSelectDeck.setVisibility(View.GONE);
+                    btnStartBotDuel.setEnabled(false);
+                    btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
                     spinnerRule.setVisibility(View.GONE);
                     chkAiOnlyScissors.setVisibility(View.GONE);
                     chkNoCheckDeck.setVisibility(View.GONE);
                     chkNoShuffleDeck.setVisibility(View.GONE);
-                    btnStartBotDuel.setText("开始残局");
                 }
             }
 
