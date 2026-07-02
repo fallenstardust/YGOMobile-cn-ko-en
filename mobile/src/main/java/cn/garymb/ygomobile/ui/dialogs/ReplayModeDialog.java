@@ -10,7 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
-
+import cn.garymb.ygomobile.lite.R;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,6 +81,7 @@ public class ReplayModeDialog {
         popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
+        popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         listView.setOnItemClickListener((parent, view, position, id) -> {
             if (finalFiles != null && position < finalFiles.length) {

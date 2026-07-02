@@ -171,4 +171,10 @@
         <item name="android:shape">rectangle</item>
         <item name="android:radius">8dp</item>
     </style>
+
+    <style name="PopupCenterAnimation">
+        <item name="android:windowEnterAnimation">@anim/popup_open</item>
+        <item name="android:windowExitAnimation">@anim/popup_close</item>
+    </style>
+
 </resources>

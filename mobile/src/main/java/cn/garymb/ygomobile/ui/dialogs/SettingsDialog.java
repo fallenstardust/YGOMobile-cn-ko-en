@@ -104,6 +104,7 @@ public class SettingsDialog {
         popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
+        popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         btnSave.setOnClickListener(v -> {
             SharedPreferences.Editor editor = prefs.edit();

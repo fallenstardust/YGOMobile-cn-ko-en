@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.dialogs;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -177,8 +178,10 @@ public class DeckSelectorDialog {
         int popupWidth = (int) (480 * density);
         int popupHeight = (int) (320 * density);
         popupWindow = new PopupWindow(contentView, popupWidth, popupHeight, true);
-        popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
+        popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+
         popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
     }
 

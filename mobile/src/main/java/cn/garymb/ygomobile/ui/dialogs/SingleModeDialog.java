@@ -179,6 +179,7 @@ public class SingleModeDialog {
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
+        popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         btnStartBotDuel.setOnClickListener(v -> {
             if (selectedPosition[0] < 0) {

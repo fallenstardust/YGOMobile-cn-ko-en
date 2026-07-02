@@ -95,6 +95,7 @@ public class LanModeDialog {
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
+        popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         btnCreateHost.setOnClickListener(v -> {
             layoutLanMain.setVisibility(View.GONE);
