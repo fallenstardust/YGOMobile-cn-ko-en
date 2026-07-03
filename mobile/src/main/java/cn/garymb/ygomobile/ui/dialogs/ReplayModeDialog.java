@@ -10,6 +10,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import java.io.File;
 import java.util.ArrayList;
@@ -76,8 +78,8 @@ public class ReplayModeDialog {
         btnExit.setText("退出");
         rootLayout.addView(btnExit);
 
-        int popupWidth = (int) (420 * density);
-        int popupHeight = (int) (300 * density);
+        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
+        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);

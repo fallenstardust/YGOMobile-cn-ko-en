@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.adapter.BotListAdapter;
 import cn.garymb.ygomobile.adapter.PuzzleListAdapter;
 import cn.garymb.ygomobile.lite.R;
@@ -174,8 +175,8 @@ public class SingleModeDialog {
             }
         });
 
-        int popupWidth = (int) (560 * density);
-        int popupHeight = (int) (320 * density);
+        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
+        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);

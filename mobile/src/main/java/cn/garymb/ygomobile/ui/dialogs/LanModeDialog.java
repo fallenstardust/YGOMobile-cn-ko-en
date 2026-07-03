@@ -13,6 +13,7 @@ import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 
 public class LanModeDialog {
@@ -90,8 +91,8 @@ public class LanModeDialog {
         Button btnExitWaiting = layoutPlayerWaiting.findViewById(R.id.btn_exit_waiting);
 
         float density = context.getResources().getDisplayMetrics().density;
-        int popupWidth = (int) (420 * density);
-        int popupHeight = (int) (300 * density);
+        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
+        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
