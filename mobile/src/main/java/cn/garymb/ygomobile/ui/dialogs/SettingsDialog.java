@@ -46,25 +46,43 @@ public class SettingsDialog {
         float density = context.getResources().getDisplayMetrics().density;
         View rootLayout = LayoutInflater.from(context).inflate(R.layout.dialog_settings, null);
 
+        StringManager stringManager = DataManager.get().getStringManager();
+
         CheckBox chkMAutoPos = rootLayout.findViewById(R.id.chkMAutoPos);
+        chkMAutoPos.setText(stringManager.getSystemString(1274, ""));
         CheckBox chkSTAutoPos = rootLayout.findViewById(R.id.chkSTAutoPos);
+        chkSTAutoPos.setText(stringManager.getSystemString(1278, ""));
         CheckBox chkRandomPos = rootLayout.findViewById(R.id.chkRandomPos);
+        chkRandomPos.setText(stringManager.getSystemString(1275, ""));
         CheckBox chkAutoChain = rootLayout.findViewById(R.id.chkAutoChain);
+        chkAutoChain.setText(stringManager.getSystemString(1276, ""));
         CheckBox chkWaitChain = rootLayout.findViewById(R.id.chkWaitChain);
+        chkWaitChain.setText(stringManager.getSystemString(1277, ""));
         CheckBox chkDefaultShowChain = rootLayout.findViewById(R.id.chkDefaultShowChain);
+        chkDefaultShowChain.setText(stringManager.getSystemString(1354, ""));
         CheckBox chkHideNickName = rootLayout.findViewById(R.id.chkHideNickName);
+        chkHideNickName.setText(stringManager.getSystemString(1289, ""));
         CheckBox chkDrawFieldSpell = rootLayout.findViewById(R.id.chkDrawFieldSpell);
+        chkDrawFieldSpell.setText(stringManager.getSystemString(1283, ""));
         CheckBox chkQuickAnimation = rootLayout.findViewById(R.id.chkQuickAnimation);
+        chkQuickAnimation.setText(stringManager.getSystemString(1299, ""));
         CheckBox chkGenesysMode = rootLayout.findViewById(R.id.chkGenesysMode);
+        chkGenesysMode.setText(stringManager.getSystemString(1698, ""));
         CheckBox chkBanList = rootLayout.findViewById(R.id.chkBanList);
+        chkBanList.setText(stringManager.getSystemString(1288, ""));
         Spinner spinnerBanList = rootLayout.findViewById(R.id.spinner_banlist);
         CheckBox chkMuteSpectators = rootLayout.findViewById(R.id.chkMuteSpectators);
         CheckBox chkDisableChatting = rootLayout.findViewById(R.id.chkDisableChatting);
+        chkDisableChatting.setText(stringManager.getSystemString(1290, ""));
         CheckBox chkAutoSaveReplay = rootLayout.findViewById(R.id.chkAutoSaveReplay);
+        chkAutoSaveReplay.setText(stringManager.getSystemString(1366, ""));
         CheckBox chkSwitchBGM = rootLayout.findViewById(R.id.chkSwitchBGM);
+        chkSwitchBGM.setText(stringManager.getSystemString(1281, ""));
         CheckBox chkEnableSound = rootLayout.findViewById(R.id.chkEnableSound);
+        chkEnableSound.setText(stringManager.getSystemString(1279, ""));
         SeekBar seekbarSound = rootLayout.findViewById(R.id.seekbar_sound);
         CheckBox chkEnableMusic = rootLayout.findViewById(R.id.chkEnableMusic);
+        chkEnableMusic.setText(stringManager.getSystemString(1280, ""));
         SeekBar seekbarMusic = rootLayout.findViewById(R.id.seekbar_music);
         Button btnCancel = rootLayout.findViewById(R.id.btn_cancel);
 
@@ -108,7 +126,6 @@ public class SettingsDialog {
         boolean isBanListEnabled = appsSettings.getIntSettings("chkBanList", 0) == 1;
         String lastLimit;
         if (!isBanListEnabled) {
-            lastLimit = "N/A";
             int naIndex = currentBanListNames.indexOf("N/A");
             if (naIndex >= 0) {
                 spinnerBanList.setSelection(naIndex);
@@ -251,7 +268,7 @@ public class SettingsDialog {
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
+        popupWindow.setOutsideTouchable(false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         btnCancel.setOnClickListener(v -> {

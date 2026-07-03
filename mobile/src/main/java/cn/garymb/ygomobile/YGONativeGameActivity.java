@@ -9,9 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,23 +20,15 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,13 +41,9 @@ import java.io.FileReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
-import com.google.android.material.tabs.TabLayout;
-import cn.garymb.ygomobile.adapter.BotListAdapter;
-import cn.garymb.ygomobile.adapter.PuzzleListAdapter;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
@@ -67,13 +53,11 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.TextureLoader;
-import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.dialogs.DeckEditDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
-import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
@@ -112,7 +96,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private RelativeLayout layoutMainMenu;
     private TextView tvVersion;
-    private Drawable menuBackgroundDrawable;
 
     private LinearLayout layoutOpponentInfo;
     private LinearLayout layoutPlayerInfo;
@@ -366,21 +349,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
         if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
 
-        // 设置背景图片
-        String bgPath = AppsSettings.get().getResourcePath() + "/textures/bg_menu.jpg";
-        File bgFile = new File(bgPath);
-        if (bgFile.exists()) {
-            try {
-                Bitmap bitmap = BitmapFactory.decodeFile(bgPath);
-                if (bitmap != null) {
-                    menuBackgroundDrawable = new BitmapDrawable(getResources(), bitmap);
-                    layoutMainMenu.setBackground(menuBackgroundDrawable);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to load background image", e);
-            }
-        }
-
         int v1 = (PRO_VERSION & 0xf000) >> 12;
         int v2 = (PRO_VERSION & 0x0ff0) >> 4;
         int v3 = PRO_VERSION & 0x000f;
@@ -411,9 +379,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private void restoreMainMenu() {
         if (layoutMainMenu != null) {
-            if (menuBackgroundDrawable != null) {
-                layoutMainMenu.setBackground(menuBackgroundDrawable);
-            }
             layoutMainMenu.setVisibility(View.VISIBLE);
         }
     }
@@ -582,8 +547,25 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showDeckEditDialog() {
+        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
         new DeckEditDialog(this).show();
     }
+    private void setWindowBackground(String relativePath) {
+        String path = AppsSettings.get().getResourcePath() + "/" + relativePath;
+        File file = new File(path);
+        if (file.exists()) {
+            try {
+                Bitmap bitmap = BitmapFactory.decodeFile(path);
+                if (bitmap != null) {
+                    getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), bitmap));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load background: " + relativePath, e);
+            }
+        }
+    }
+
+
     private void showSettingsDialog() {
         SettingsDialog dialog = new SettingsDialog(this, () -> applySettingsToEngine());
         dialog.show(layoutMainMenu);

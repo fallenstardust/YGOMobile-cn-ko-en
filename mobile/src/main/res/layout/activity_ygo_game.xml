@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/bg3">
 
     <cn.garymb.ygomobile.render.GameFieldView
         android:id="@+id/game_field_view"
@@ -9,7 +10,7 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <!-- 主菜单覆盖层 -->
+    <!-- 主菜单按钮覆盖层 -->
     <RelativeLayout
         android:id="@+id/layout_main_menu"
         android:layout_width="match_parent"
@@ -21,9 +22,8 @@
             android:id="@+id/layout_menu_buttons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:layout_marginEnd="200dp"
+            android:layout_centerHorizontal="true"
             android:orientation="vertical"
             android:padding="8dp">
 
