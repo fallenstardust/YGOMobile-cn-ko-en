@@ -10,14 +10,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="end"
-        android:layout_marginTop="8dp">
+        android:gravity="end">
 
         <Button
             android:id="@+id/btn_cancel"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="4dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:background="@drawable/ic_failed"
             android:textAllCaps="false" />
     </LinearLayout>
@@ -44,8 +42,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="自动选择怪兽卡片位置"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -53,8 +51,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="自动选择魔陷卡片位置"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -62,8 +60,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="随机选择位置"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -71,8 +69,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="自动发动并排序必发效果"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -80,8 +78,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="没有可连锁的卡时延迟回应"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -89,8 +87,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="开局默认显示所有时点"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -98,8 +96,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="隐藏玩家昵称"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -107,8 +105,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="显示场地背景"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -116,8 +114,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="只有连锁1也显示连锁动画"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
             </LinearLayout>
@@ -133,8 +131,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="启用起源点数模式"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <LinearLayout
@@ -147,8 +145,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="禁限卡表"
-                        android:textColor="#FFFFFF"
-                        android:textSize="14sp"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
                         android:paddingVertical="6dp" />
 
                     <Spinner
@@ -156,7 +154,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="2dp"
-                        android:background="@android:color/transparent" />
+                        android:background="@color/FallGreen" />
                 </LinearLayout>
 
                 <CheckBox
@@ -164,8 +162,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="忽略观战者发言"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -173,8 +171,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="不提示保留对卡组的修改"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -182,8 +180,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="自动保存录像"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <CheckBox
@@ -191,8 +189,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="按场景切换音乐"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:paddingVertical="6dp" />
 
                 <LinearLayout
@@ -207,15 +205,19 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="开启音效"
-                        android:textColor="#FFFFFF"
-                        android:textSize="14sp" />
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
 
                     <SeekBar
                         android:id="@+id/seekbar_sound"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="8dp" />
+                        android:layout_marginStart="2dp"
+                        android:max="100"
+                        android:progress="50"
+                        android:progressDrawable="@color/FallGreen"
+                        android:thumb="@drawable/radius" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -230,15 +232,19 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="开启音乐"
-                        android:textColor="#FFFFFF"
-                        android:textSize="14sp" />
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
 
                     <SeekBar
                         android:id="@+id/seekbar_music"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="8dp" />
+                        android:layout_marginStart="2dp"
+                        android:max="100"
+                        android:progress="50"
+                        android:progressDrawable="@color/FallGreen"
+                        android:thumb="@drawable/radius"  />
                 </LinearLayout>
 
             </LinearLayout>

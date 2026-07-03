@@ -151,25 +151,83 @@ public class SettingsDialog {
             newAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerBanList.setAdapter(newAdapter);
             
-            String savedLimit = isChecked ? appsSettings.getLastGenesysLimit() : appsSettings.getLastLimit();
-            int newIndex = newBanListNames.indexOf(savedLimit);
-            if (newIndex >= 0) {
-                spinnerBanList.setSelection(newIndex);
+            if (!chkBanList.isChecked()) {
+                int naIndex = -1;
+                for (int i = 0; i < newBanListNames.size(); i++) {
+                    if ("N/A".equals(newBanListNames.get(i))) {
+                        naIndex = i;
+                        break;
+                    }
+                }
+                if (naIndex >= 0) {
+                    spinnerBanList.setSelection(naIndex);
+                } else {
+                    spinnerBanList.setSelection(0);
+                }
             } else {
-                spinnerBanList.setSelection(0);
+                String savedLimit = isChecked ? appsSettings.getLastGenesysLimit() : appsSettings.getLastLimit();
+                int newIndex = newBanListNames.indexOf(savedLimit);
+                if (newIndex >= 0) {
+                    spinnerBanList.setSelection(newIndex);
+                } else {
+                    spinnerBanList.setSelection(0);
+                }
             }
-            
-            spinnerBanList.setEnabled(!isChecked);
-            chkBanList.setEnabled(!isChecked);
         });
         
-        spinnerBanList.setEnabled(!isGenesysMode);
-        chkBanList.setEnabled(!isGenesysMode);
+        spinnerBanList.setEnabled(chkBanList.isChecked());
+        chkBanList.setEnabled(true);
 
         chkBanList.setOnCheckedChangeListener((buttonView, isChecked) -> {
             spinnerBanList.setEnabled(isChecked);
+            if (!isChecked) {
+                int naIndex = -1;
+                for (int i = 0; i < banListData[0].size(); i++) {
+                    if ("N/A".equals(banListData[0].get(i))) {
+                        naIndex = i;
+                        break;
+                    }
+                }
+                if (naIndex >= 0) {
+                    spinnerBanList.setSelection(naIndex);
+                }
+                if (isCurrentlyGenesys[0]) {
+                    appsSettings.setLastGenesysLimit("N/A");
+                } else {
+                    appsSettings.setLastLimit("N/A");
+                }
+            } else {
+                int firstNonNaIndex = -1;
+                for (int i = 0; i < banListData[0].size(); i++) {
+                    String item = banListData[0].get(i);
+                    if (!"N/A".equals(item)) {
+                        firstNonNaIndex = i;
+                        break;
+                    }
+                }
+                
+                if (firstNonNaIndex >= 0) {
+                    spinnerBanList.setSelection(firstNonNaIndex);
+                    String selectedLimit = banListData[0].get(firstNonNaIndex);
+                    if (isCurrentlyGenesys[0]) {
+                        appsSettings.setLastGenesysLimit(selectedLimit);
+                    } else {
+                        appsSettings.setLastLimit(selectedLimit);
+                    }
+                } else {
+                    int naIndex = -1;
+                    for (int i = 0; i < banListData[0].size(); i++) {
+                        if ("N/A".equals(banListData[0].get(i))) {
+                            naIndex = i;
+                            break;
+                        }
+                    }
+                    if (naIndex >= 0) {
+                        spinnerBanList.setSelection(naIndex);
+                    }
+                }
+            }
         });
-        spinnerBanList.setEnabled(chkBanList.isChecked());
 
         spinnerBanList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
