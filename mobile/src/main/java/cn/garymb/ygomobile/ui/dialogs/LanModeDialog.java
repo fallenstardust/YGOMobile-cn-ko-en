@@ -9,12 +9,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 
 public class LanModeDialog {
 
@@ -58,6 +60,22 @@ public class LanModeDialog {
         Button btnRefreshLan = layoutLanMain.findViewById(R.id.btn_refresh_lan);
         Button btnJoinGame = layoutLanMain.findViewById(R.id.btn_join_game);
         Button btnExitLan = layoutLanMain.findViewById(R.id.btn_exit_lan);
+        ListView lvHostList = layoutLanMain.findViewById(R.id.lv_host_list);
+
+        SimpleListAdapter hostAdapter = new SimpleListAdapter(context);
+        lvHostList.setAdapter(hostAdapter);
+
+        lvHostList.setOnItemClickListener((parent, view, position, id) -> {
+            hostAdapter.setSelectedPosition(position);
+            String selectedHost = hostAdapter.getDataItem(position);
+            if (selectedHost != null) {
+                String[] parts = selectedHost.split(":");
+                if (parts.length >= 2) {
+                    etHostIp.setText(parts[0].trim());
+                    etHostPort.setText(parts[1].trim());
+                }
+            }
+        });
 
         Spinner spinnerBanlist = layoutCreateHost.findViewById(R.id.spinner_banlist);
         Spinner spinnerRule = layoutCreateHost.findViewById(R.id.spinner_rule);
@@ -156,6 +174,10 @@ public class LanModeDialog {
         btnSpectatorMode.setOnClickListener(v -> {
             btnSpectatorMode.setEnabled(false);
             btnDuelistMode.setEnabled(true);
+        });
+
+        btnRefreshLan.setOnClickListener(v -> {
+            // TODO: 实际扫描局域网主机后调用 hostAdapter.set(hostNames) 刷新列表
         });
 
         anchorView.setVisibility(View.GONE);

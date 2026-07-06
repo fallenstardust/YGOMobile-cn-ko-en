@@ -24,14 +24,13 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:orientation="vertical">
 
             <LinearLayout
                 android:id="@+id/btn_menu_lan"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
+                android:layout_marginBottom="2dp"
                 android:background="@drawable/stitlebar"
                 android:orientation="vertical">
 
@@ -59,7 +58,7 @@
                 android:id="@+id/btn_menu_single"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
+                android:layout_marginBottom="2dp"
                 android:background="@drawable/stitlebar"
                 android:orientation="vertical">
 
@@ -85,7 +84,7 @@
                 android:id="@+id/btn_menu_replay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
+                android:layout_marginBottom="2dp"
                 android:background="@drawable/stitlebar"
                 android:orientation="vertical">
                 <!-- 版本号 - 左上角 -->
@@ -111,7 +110,7 @@
                 android:id="@+id/btn_menu_deck"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
+                android:layout_marginBottom="2dp"
                 android:background="@drawable/stitlebar"
                 android:orientation="vertical">
                 <!-- 版本号 - 左上角 -->
@@ -137,7 +136,7 @@
                 android:id="@+id/btn_menu_settings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
+                android:layout_marginBottom="2dp"
                 android:background="@drawable/stitlebar"
                 android:orientation="vertical">
 
@@ -163,7 +162,6 @@
                 android:id="@+id/btn_menu_exit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
                 android:background="@drawable/stitlebar"
                 android:orientation="vertical">
 

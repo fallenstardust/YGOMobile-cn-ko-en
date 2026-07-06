@@ -198,4 +198,35 @@ public class GameField {
         }
         return count;
     }
+
+    public void swapField() {
+        PlayerField temp = players[0];
+        players[0] = players[1];
+        players[1] = temp;
+        
+        for (int p = 0; p < 2; p++) {
+            updateCardControler(players[p], p);
+        }
+    }
+
+    private void updateCardControler(PlayerField playerField, int controler) {
+        updateListControler(playerField.deck, controler);
+        updateListControler(playerField.hand, controler);
+        updateListControler(playerField.monsterZone, controler);
+        updateListControler(playerField.spellZone, controler);
+        updateListControler(playerField.grave, controler);
+        updateListControler(playerField.removed, controler);
+        updateListControler(playerField.extra, controler);
+        if (playerField.fieldSpell != null) {
+            playerField.fieldSpell.controler = controler;
+        }
+    }
+
+    private void updateListControler(List<ClientCard> list, int controler) {
+        for (ClientCard card : list) {
+            if (card != null) {
+                card.controler = controler;
+            }
+        }
+    }
 }
