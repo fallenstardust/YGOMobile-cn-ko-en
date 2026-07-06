@@ -210,15 +210,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 setState(GameState.DISCONNECTED);
                 return;
             }
+            client.sendExternalAddress(host);
             client.sendPlayerInfo(playerName);
-            if (createGame) {
-                client.sendCreateGame(0, rule, mode, duelRule,
-                        noCheckDeck, noShuffleDeck,
-                        startLp, startHand, drawCount, timeLimit,
-                        roomName, password);
-            } else {
-                client.sendJoinGame(0x930, 0, password);
-            }
+            client.sendJoinGame(0x1362, password);
         }, "GameConnect").start();
     }
 

@@ -312,9 +312,16 @@ public class DuelClient implements YGOProtocol {
 
     // === Send methods ===
 
+    public void sendExternalAddress(String address) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_EXTERNAL_ADDRESS);
+        buf.position(buf.position() + 4);
+        BufferIO.writeUTF16(buf, address, address.length() * 2);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
     public void sendPlayerInfo(String playerName) {
         ByteBuffer buf = BufferIO.createPacket(CTOS_PLAYER_INFO);
-        BufferIO.writeUTF16(buf, playerName, 20);
+        BufferIO.writeUTF16(buf, playerName, 40);
         sendRaw(BufferIO.finalizePacket(buf));
     }
 
@@ -339,12 +346,11 @@ public class DuelClient implements YGOProtocol {
         sendRaw(BufferIO.finalizePacket(buf));
     }
 
-    public void sendJoinGame(int version, int gameId, String pass) {
+    public void sendJoinGame(int version, String pass) {
         ByteBuffer buf = BufferIO.createPacket(CTOS_JOIN_GAME);
         buf.putShort((short) version);
-        buf.position(buf.position() + 2);
-        buf.putInt(gameId);
-        BufferIO.writeUTF16(buf, pass, 20);
+        buf.position(buf.position() + 6);
+        BufferIO.writeUTF16(buf, pass, 40);
         sendRaw(BufferIO.finalizePacket(buf));
     }
 

@@ -19,6 +19,7 @@ public interface YGOProtocol {
     int CTOS_SURRENDER = 0x14;
     int CTOS_TIME_CONFIRM = 0x15;
     int CTOS_CHAT = 0x16;
+    int CTOS_EXTERNAL_ADDRESS = 0x17;
     int CTOS_HS_TODUELIST = 0x20;
     int CTOS_HS_TOOBSERVER = 0x21;
     int CTOS_HS_READY = 0x22;
