@@ -10,67 +10,68 @@
         android:id="@+id/lv_replay_list"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.6"
+        android:layout_marginVertical="10dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="5dp"
-        android:layout_marginVertical="10dp"
+        android:layout_weight="0.6"
         android:background="#0A5C5C"
         android:divider="#33FFFFFF"
-        android:dividerHeight="1dp"/>
+        android:dividerHeight="1dp" />
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:layout_marginVertical="10dp"
         android:layout_marginLeft="5dp"
         android:layout_marginRight="10dp"
-        android:layout_marginVertical="10dp"
         android:layout_weight="0.4"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_marginBottom="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="5dp"
                 android:text="录像信息："
                 android:textColor="@color/white"
-                android:textSize="15sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/tv_replay_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="10sp"
+                android:layout_weight="1"
                 android:lineSpacingExtra="2dp"
-                android:text="请选择录像文件" />
+                android:text="请选择录像文件"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
                 android:text="播放起始于回合："
                 android:textColor="@color/white"
-                android:textSize="15sp" />
+                android:textSize="14sp" />
 
             <EditText
                 android:id="@+id/et_start_turn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="20dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="5dp"
                 android:background="@drawable/selected_light"
                 android:inputType="number"
                 android:paddingHorizontal="10dp"
@@ -78,96 +79,97 @@
                 android:textAlignment="center"
                 android:textColor="@color/white" />
 
-            <GridLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:columnCount="2"
-                android:rowCount="3">
+                android:orientation="vertical">
 
-                <Button
-                    android:id="@+id/btn_share_replay"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_row="0"
-                    android:layout_column="0"
-                    android:layout_columnWeight="1"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/button3_bg"
-                    android:text="分享录像"
-                    android:textColor="@color/white"
-                    android:textSize="13sp" />
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
 
-                <Button
-                    android:id="@+id/btn_extract_deck"
-                    android:layout_width="0dp"
+                    <Button
+                        android:id="@+id/btn_share_replay"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginRight="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="分享录像"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btn_extract_deck"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="提取卡组"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_row="0"
-                    android:layout_column="1"
-                    android:layout_columnWeight="1"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/button3_bg"
-                    android:text="提取卡组"
-                    android:textColor="@color/white"
-                    android:textSize="13sp" />
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
 
-                <Button
-                    android:id="@+id/btn_delete_replay"
-                    android:layout_width="0dp"
+                    <Button
+                        android:id="@+id/btn_delete_replay"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginVertical="5dp"
+                        android:layout_marginRight="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="删除录像"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btn_load_replay"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginVertical="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="载入录像"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_row="1"
-                    android:layout_column="0"
-                    android:layout_columnWeight="1"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/button3_bg"
-                    android:text="删除录像"
-                    android:textColor="@color/white"
-                    android:textSize="13sp" />
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
 
-                <Button
-                    android:id="@+id/btn_load_replay"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_row="1"
-                    android:layout_column="1"
-                    android:layout_columnWeight="1"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/button3_bg"
-                    android:text="载入录像"
-                    android:textColor="@color/white"
-                    android:textSize="13sp" />
+                    <Button
+                        android:id="@+id/btn_rename_replay"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginRight="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/rename_deck"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
 
-                <Button
-                    android:id="@+id/btn_rename_replay"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_row="2"
-                    android:layout_column="0"
-                    android:layout_columnWeight="1"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/button3_bg"
-                    android:text="重命名"
-                    android:textColor="@color/white"
-                    android:textSize="13sp" />
-
-                <Button
-                    android:id="@+id/btn_exit_replay"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_row="2"
-                    android:layout_column="1"
-                    android:layout_columnWeight="1"
-                    android:background="@drawable/button3_bg"
-                    android:text="退出"
-                    android:textColor="@color/white"
-                    android:textSize="13sp" />
-
-            </GridLayout>
+                    <Button
+                        android:id="@+id/btn_exit_replay"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/quit"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
-
-
-    </FrameLayout>
-
+    </LinearLayout>
 </LinearLayout>

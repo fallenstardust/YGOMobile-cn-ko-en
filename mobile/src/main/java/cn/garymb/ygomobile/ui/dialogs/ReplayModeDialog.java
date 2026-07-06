@@ -33,6 +33,7 @@ public class ReplayModeDialog {
     private File selectedReplayFile;
     private int startTurn = 1;
     private File replayDir;
+    private SimpleListAdapter replayAdapter;
 
     public interface OnReplaySelectedListener {
         void onReplaySelected(String replayFilePath, int startTurn);
@@ -59,7 +60,9 @@ public class ReplayModeDialog {
         Button btnRenameReplay = customView.findViewById(R.id.btn_rename_replay);
         Button btnExitReplay = customView.findViewById(R.id.btn_exit_replay);
 
-        refreshReplayList(lvReplayList);
+        replayAdapter = new SimpleListAdapter(context);
+        refreshReplayList();
+        lvReplayList.setAdapter(replayAdapter);
 
         float density = context.getResources().getDisplayMetrics().density;
         int popupWidth = (int) (560 * density);
@@ -73,6 +76,7 @@ public class ReplayModeDialog {
             File[] files = getReplayFiles();
             if (files != null && position < files.length) {
                 selectedReplayFile = files[position];
+                replayAdapter.setSelectedPosition(position);
                 updateReplayInfo(tvReplayInfo, selectedReplayFile);
             }
         });
@@ -149,7 +153,7 @@ public class ReplayModeDialog {
         return files;
     }
 
-    private void refreshReplayList(ListView listView) {
+    private void refreshReplayList() {
         File[] files = getReplayFiles();
         List<String> nameList = new ArrayList<>();
         if (files != null && files.length > 0) {
@@ -159,10 +163,8 @@ public class ReplayModeDialog {
         } else {
             nameList.add("（暂无录像文件）");
         }
-
-        SimpleListAdapter adapter = new SimpleListAdapter(context);
-        adapter.set(nameList);
-        listView.setAdapter(adapter);
+        replayAdapter.set(nameList);
+        replayAdapter.setSelectedPosition(-1);
     }
 
     private void shareReplay(File replayFile) {
@@ -213,7 +215,7 @@ public class ReplayModeDialog {
                     if (deleted) {
                         Toast.makeText(context, "已删除: " + replayFile.getName(), Toast.LENGTH_SHORT).show();
                         selectedReplayFile = null;
-                        refreshReplayList(listView);
+                        refreshReplayList();
                     } else {
                         Toast.makeText(context, "删除失败", Toast.LENGTH_SHORT).show();
                     }
@@ -247,7 +249,7 @@ public class ReplayModeDialog {
                     if (success) {
                         Toast.makeText(context, "重命名成功", Toast.LENGTH_SHORT).show();
                         selectedReplayFile = null;
-                        refreshReplayList(listView);
+                        refreshReplayList();
                     } else {
                         Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
                     }
