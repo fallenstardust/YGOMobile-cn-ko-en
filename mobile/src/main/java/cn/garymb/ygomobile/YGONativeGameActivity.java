@@ -429,15 +429,15 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private void showReplayModeDialog() {
         File replayDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_REPLAY_PATH);
-        ReplayModeDialog dialog = new ReplayModeDialog(this, replayPath -> {
+        ReplayModeDialog dialog = new ReplayModeDialog(this, (replayPath, startTurn) -> {
             hideMainMenu();
-            startReplayPlayback(replayPath);
+            startReplayPlayback(replayPath, startTurn);
         });
         dialog.show(layoutMainMenu, replayDir);
         dialog.setOnDismissListener(() -> restoreMainMenu());
     }
 
-    private void startReplayPlayback(String replayPath) {
+    private void startReplayPlayback(String replayPath, int startTurn) {
         if (engine == null) return;
         ReplayEngine replayEngine = new ReplayEngine(engine.getField(), soundManager);
         engine.setReplayEngine(replayEngine);
@@ -452,7 +452,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                             layoutActionButtons.setVisibility(View.GONE);
                             break;
                         case PAUSED:
-                            tvPhaseInfo.setText("⏸ 已暂停");
+                            tvPhaseInfo.setText(" 已暂停");
                             break;
                         case FINISHED:
                             tvPhaseInfo.setText("⏹ 回放结束");
@@ -509,7 +509,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             }
         });
 
-        replayEngine.loadAndPlay(replayPath);
+        replayEngine.loadAndPlay(replayPath, startTurn);
         showReplayControlOverlay(replayEngine);
     }
 
@@ -519,7 +519,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         controlBar.setGravity(Gravity.CENTER);
         controlBar.setBackgroundColor(0x88000000);
 
-        String[] labels = {"⏸ 暂停", "▶ 继续", "⏩ 快进", "⏹ 停止"};
+        String[] labels = {"⏸ 暂停", "▶ 继续", "⏩ 快进", "↩ 撤销", "🔄 交换", "⏹ 停止"};
         for (String label : labels) {
             Button btn = new Button(this);
             btn.setText(label);
@@ -534,7 +534,9 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         controlBar.getChildAt(0).setOnClickListener(v -> replayEngine.pause());
         controlBar.getChildAt(1).setOnClickListener(v -> replayEngine.resume());
         controlBar.getChildAt(2).setOnClickListener(v -> replayEngine.skipAhead());
-        controlBar.getChildAt(3).setOnClickListener(v -> {
+        controlBar.getChildAt(3).setOnClickListener(v -> replayEngine.undo());
+        controlBar.getChildAt(4).setOnClickListener(v -> replayEngine.swapField());
+        controlBar.getChildAt(5).setOnClickListener(v -> {
             replayEngine.stop();
             controlBar.setVisibility(View.GONE);
             restoreMainMenu();
