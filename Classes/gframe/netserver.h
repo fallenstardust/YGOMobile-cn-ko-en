@@ -10,6 +10,11 @@ class NetServer {
 private:
 	static unsigned char net_server_write[SIZE_NETWORK_BUFFER];
 	static size_t last_sent;
+	static bufferevent* disconnecting_bev;
+
+	static bool CanWriteToPlayer(DuelPlayer* dp) {
+		return dp && dp->bev && dp->bev != disconnecting_bev;
+	}
 
 public:
 	static bool StartServer(unsigned short port);
@@ -22,7 +27,7 @@ public:
 	static void ServerAcceptError(evconnlistener *listener, void* ctx);
 	static void ServerEchoRead(bufferevent* bev, void* ctx);
 	static void ServerEchoEvent(bufferevent* bev, short events, void* ctx);
-	static int ServerThread();
+	static void ServerThread();
 	static void DisconnectPlayer(DuelPlayer* dp);
 	static void HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, size_t len);
 	static size_t CreateChatPacket(unsigned char* src, int src_size, unsigned char* dst, uint16_t dst_player_type);
@@ -58,7 +63,7 @@ public:
 		last_sent = 3;
 
 		// 如果目标玩家存在，则发送数据包
-		if (dp)
+		if (CanWriteToPlayer(dp))
 			bufferevent_write(dp->bev, net_server_write, 3);
 	}
 	/**
@@ -93,7 +98,7 @@ public:
 		last_sent = sizeof(ST) + 3;
 
 		// 如果目标玩家存在，则实际发送数据包
-		if (dp)
+		if (CanWriteToPlayer(dp))
 			bufferevent_write(dp->bev, net_server_write, sizeof(ST) + 3);
 	}
 	/**
@@ -107,22 +112,22 @@ public:
 	 * @param buffer 要发送的数据缓冲区指针
 	 * @param len 要发送的数据长度
 	 */
-		static void SendBufferToPlayer(DuelPlayer* dp, unsigned char proto, void* buffer, size_t len) {
-			auto p = net_server_write;
+	static void SendBufferToPlayer(DuelPlayer* dp, unsigned char proto, void* buffer, size_t len) {
+		auto p = net_server_write;
 			// 限制发送数据长度不超过最大允许值
-			if (len > MAX_DATA_SIZE)
-				len = MAX_DATA_SIZE;
+		if (len > MAX_DATA_SIZE)
+			len = MAX_DATA_SIZE;
 			// 写入数据包总长度（1字节协议号 + 数据长度）
-			BufferIO::Write<uint16_t>(p, (uint16_t)(1 + len));
+		BufferIO::Write<uint16_t>(p, (uint16_t)(1 + len));
 			// 写入协议类型字节
-			BufferIO::Write<uint8_t>(p, proto);
+		BufferIO::Write<uint8_t>(p, proto);
 			// 拷贝实际数据到发送缓冲区
-			std::memcpy(p, buffer, len);
-			last_sent = len + 3;
+		std::memcpy(p, buffer, len);
+		last_sent = len + 3;
 			// 如果目标玩家存在，则通过bufferevent发送数据
-			if (dp)
-				bufferevent_write(dp->bev, net_server_write, len + 3);
-		}
+		if (CanWriteToPlayer(dp))
+			bufferevent_write(dp->bev, net_server_write, len + 3);
+	}
 	/**
 	 * @brief 重新发送数据给指定的决斗玩家
 	 *
@@ -130,11 +135,11 @@ public:
 	 *
 	 * @note 该函数会检查玩家指针是否有效，如果有效则将缓冲区中的数据重新发送给该玩家
 	 */
-		static void ReSendToPlayer(DuelPlayer* dp) {
+	static void ReSendToPlayer(DuelPlayer* dp) {
 			// 如果玩家指针有效，则重新发送数据
-			if(dp)
-				bufferevent_write(dp->bev, net_server_write, last_sent);
-		}
+		if (CanWriteToPlayer(dp))
+			bufferevent_write(dp->bev, net_server_write, last_sent);
+	}
 };
 
 }

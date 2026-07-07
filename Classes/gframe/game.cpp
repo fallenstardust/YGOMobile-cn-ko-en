@@ -10,6 +10,10 @@
 #include "netserver.h"
 #include "single_mode.h"
 #include <thread>
+#include <chrono>
+#include <spawn.h>
+extern char **environ;
+#define GetEnviron() environ
 #include <string>
 #include <regex>
 
@@ -2661,6 +2665,7 @@ irr::core::vector2di Game::Resize_Y(irr::s32 x, irr::s32 y) {
     y = y * yScale;
 	return irr::core::vector2di(x, y);
 }
+
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image) {
     window->setDrawBackground(false);
     irr::core::recti pos = window->getRelativePosition();
