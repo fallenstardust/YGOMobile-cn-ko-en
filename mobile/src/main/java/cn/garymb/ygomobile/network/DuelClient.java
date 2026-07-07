@@ -18,6 +18,8 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import cn.garymb.ygomobile.Constants;
@@ -59,6 +61,11 @@ public class DuelClient implements YGOProtocol {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private ClientListener listener;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final ExecutorService sendExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "DuelClient-Send");
+        t.setDaemon(true);
+        return t;
+    });
 
     public int selfType = -1;
 
@@ -441,15 +448,17 @@ public class DuelClient implements YGOProtocol {
 
     private void sendRaw(byte[] data) {
         if (!connected.get() || output == null) return;
-        try {
-            synchronized (this) {
-                output.write(data);
-                output.flush();
+        sendExecutor.execute(() -> {
+            try {
+                synchronized (this) {
+                    output.write(data);
+                    output.flush();
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Send failed", e);
+                disconnect();
             }
-        } catch (IOException e) {
-            Log.e(TAG, "Send failed", e);
-            disconnect();
-        }
+        });
     }
 
     // === LAN Discovery ===

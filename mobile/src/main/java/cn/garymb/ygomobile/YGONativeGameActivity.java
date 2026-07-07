@@ -10,7 +10,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
+import cn.garymb.ygodata.YGOGameOptions;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -114,6 +114,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private int sumSelectMax = 0;
     private List<SumCardInfo> sumCardInfos;
     private boolean[] sumSelected;
+    private boolean exitOnReturn = true;
+    private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
 
     private static class SumCardInfo {
         int code, controler, location, sequence, opParam, value, index;
@@ -299,6 +301,11 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             }
         }
 
+        String[] args = cn.garymb.ygomobile.core.IrrlichtBridge.getArgs(intent);
+        if (args != null && args.length > 0) {
+            return handleArgs(args);
+        }
+
         String host = intent.getStringExtra("host");
         if (!TextUtils.isEmpty(host)) {
             int port = intent.getIntExtra("port", 7911);
@@ -321,6 +328,97 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         }
 
         return false;
+    }
+
+    private boolean handleArgs(String[] args) {
+        boolean keepOnReturn = false;
+        boolean showReplayDialog = false;
+        boolean showSingleDialog = false;
+
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if ("-k".equals(arg)) {
+                keepOnReturn = true;
+                exitOnReturn = false;
+            } else if ("-r".equals(arg)) {
+                exitOnReturn = !keepOnReturn;
+                String replayName = null;
+                if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                    replayName = args[i + 1];
+                    i++;
+                }
+                if (replayName != null) {
+                    File replayFile = new File(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, replayName);
+                    if (replayFile.exists()) {
+                        hideMainMenu();
+                        startReplayPlayback(replayFile.getAbsolutePath(), 1);
+                        return true;
+                    }
+                } else {
+                    showReplayDialog = true;
+                }
+            } else if ("-s".equals(arg)) {
+                exitOnReturn = !keepOnReturn;
+                String singleName = null;
+                if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                    singleName = args[i + 1];
+                    i++;
+                }
+                if (singleName != null) {
+                    File singleFile = new File(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SINGLE_PATH, singleName);
+                    if (singleFile.exists()) {
+                        hideMainMenu();
+                        engine.startSingleMode(singleFile.getAbsolutePath());
+                        return true;
+                    }
+                } else {
+                    showSingleDialog = true;
+                }
+            } else if ("-j".equals(arg) || "-c".equals(arg)) {
+                exitOnReturn = !keepOnReturn;
+            }
+        }
+
+        if (showReplayDialog) {
+            initMainMenuIfNeeded();
+            directEnterMode = 1;
+            layoutMainMenu.post(() -> showReplayModeDialog());
+            return true;
+        }
+
+        if (showSingleDialog) {
+            initMainMenuIfNeeded();
+            directEnterMode = 2;
+            layoutMainMenu.post(() -> showSingleModeDialog());
+            return true;
+        }
+
+        return false;
+    }
+
+    private void initMainMenuIfNeeded() {
+        if (layoutMainMenu == null) {
+            layoutMainMenu = findViewById(R.id.layout_main_menu);
+            tvVersion = findViewById(R.id.tv_version);
+            bindMainMenuButtons();
+        }
+    }
+
+    private void bindMainMenuButtons() {
+        int v1 = (PRO_VERSION & 0xf000) >> 12;
+        int v2 = (PRO_VERSION & 0x0ff0) >> 4;
+        int v3 = PRO_VERSION & 0x000f;
+        tvVersion.setText(String.format("YGOPro Version:%X.0%X.%X", v1, v2, v3));
+
+        findViewById(R.id.btn_menu_lan).setOnClickListener(v -> showLanModeDialog());
+        findViewById(R.id.btn_menu_single).setOnClickListener(v -> showSingleModeDialog());
+        findViewById(R.id.btn_menu_replay).setOnClickListener(v -> showReplayModeDialog());
+        findViewById(R.id.btn_menu_deck).setOnClickListener(v -> showDeckEditDialog());
+        findViewById(R.id.btn_menu_settings).setOnClickListener(v -> showSettingsDialog());
+        findViewById(R.id.btn_menu_exit).setOnClickListener(v -> {
+            soundManager.stopBGM();
+            finish();
+        });
     }
 
     private void joinFromOptions(YGOGameOptions options) {
@@ -349,21 +447,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
         if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
 
-        int v1 = (PRO_VERSION & 0xf000) >> 12;
-        int v2 = (PRO_VERSION & 0x0ff0) >> 4;
-        int v3 = PRO_VERSION & 0x000f;
-        tvVersion.setText(String.format("YGOPro Version:%X.0%X.%X", v1, v2, v3));
-
-        // 绑定按钮点击事件
-        findViewById(R.id.btn_menu_lan).setOnClickListener(v -> showLanModeDialog());
-        findViewById(R.id.btn_menu_single).setOnClickListener(v -> showSingleModeDialog());
-        findViewById(R.id.btn_menu_replay).setOnClickListener(v -> showReplayModeDialog());
-        findViewById(R.id.btn_menu_deck).setOnClickListener(v -> showDeckEditDialog());
-        findViewById(R.id.btn_menu_settings).setOnClickListener(v -> showSettingsDialog());
-        findViewById(R.id.btn_menu_exit).setOnClickListener(v -> {
-            soundManager.stopBGM();
-            finish();
-        });
+        bindMainMenuButtons();
 
         soundManager.playBGM(SoundManager.BGM.MENU);
         applySettingsToEngine();
