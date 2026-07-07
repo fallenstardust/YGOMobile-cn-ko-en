@@ -27,6 +27,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.ShareFileActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.Constants;
 
 public class ReplayModeDialog {
 
@@ -68,8 +69,8 @@ public class ReplayModeDialog {
         lvReplayList.setAdapter(replayAdapter);
 
         float density = context.getResources().getDisplayMetrics().density;
-        int popupWidth = (int) (560 * density);
-        int popupHeight = (int) (320 * density);
+        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
+        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
@@ -277,11 +278,21 @@ public class ReplayModeDialog {
         sb.append(dateStr).append("\n");
 
         if (!data.playerNames.isEmpty()) {
-            for (int i = 0; i < data.playerNames.size(); i++) {
-                if (i > 0) sb.append("\n===vs===\n");
-                sb.append(data.playerNames.get(i));
+            if (data.isTag && data.playerNames.size() >= 4) {
+                // Tag模式：两两组队显示
+                sb.append(data.playerNames.get(0)).append("\n");
+                sb.append(data.playerNames.get(1)).append("\n");
+                sb.append("===VS===\n");
+                sb.append(data.playerNames.get(2)).append("\n");
+                sb.append(data.playerNames.get(3)).append("\n");
+            } else {
+                // 普通模式
+                for (int i = 0; i < data.playerNames.size(); i++) {
+                    if (i > 0) sb.append("\n===VS===\n");
+                    sb.append(data.playerNames.get(i));
+                }
+                sb.append("\n");
             }
-            sb.append("\n");
         }
         /*TODO: 解析出来的其他信息暂时先不显示
         if (data.isTag) sb.append("[双打模式] ");

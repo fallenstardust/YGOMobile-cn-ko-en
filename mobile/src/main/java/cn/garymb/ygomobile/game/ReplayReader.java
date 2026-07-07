@@ -175,11 +175,13 @@ public class ReplayReader {
         replay.params.drawCount = buf.getInt();
         replay.params.duelFlag = buf.getInt();
 
-        boolean isTag1 = replay.isTag;
-        boolean isTag2 = (replay.params.duelFlag & 0x2000) != 0;
-        if (isTag1 != isTag2) {
-            Log.e(TAG, "Tag mode mismatch");
-            return false;
+        // 使用 header flag 作为主要的 tag 判断依据，duelFlag 仅作为参考
+        // 移除严格的一致性检查，避免误判合法的 tag 录像
+        boolean duelFlagTag = (replay.params.duelFlag & 0x2000) != 0;
+        if (replay.isTag && !duelFlagTag) {
+            Log.w(TAG, "Header indicates tag mode but duelFlag does not, trusting header");
+        } else if (!replay.isTag && duelFlagTag) {
+            Log.w(TAG, "DuelFlag indicates tag mode but header does not, trusting header");
         }
 
         if (replay.isSingleMode) {
