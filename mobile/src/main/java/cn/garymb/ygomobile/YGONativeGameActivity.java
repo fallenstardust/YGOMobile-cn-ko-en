@@ -20,6 +20,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -60,6 +61,7 @@ import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.BotUtil;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -103,6 +105,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private String chatHistory = "";
     private boolean isMyTurn = false;
     private volatile boolean isGameStarted = false;
+    private DraggablePopupHelper mainMenuDragHelper;
 
     private static final int CMD_CONTEXT_IDLE = 1;
     private static final int CMD_CONTEXT_BATTLE = 2;
@@ -437,6 +440,10 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         layoutMainMenu = findViewById(R.id.layout_main_menu);
         tvVersion = findViewById(R.id.tv_version);
         layoutMainMenu.setVisibility(View.VISIBLE);
+
+        mainMenuDragHelper = new DraggablePopupHelper(this, "main_menu");
+        mainMenuDragHelper.setupDraggableView(layoutMainMenu);
+        mainMenuDragHelper.applySavedPositionToView(layoutMainMenu);
 
         // 隐藏所有游戏界面元素
         if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
@@ -2771,6 +2778,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        DraggablePopupHelper.resetAllPositions(this);
         if (engine != null) {
             engine.release();
         }

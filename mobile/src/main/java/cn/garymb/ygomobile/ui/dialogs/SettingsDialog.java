@@ -21,6 +21,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -29,6 +30,7 @@ public class SettingsDialog {
 
     private Context context;
     private PopupWindow popupWindow;
+    private DraggablePopupHelper draggableHelper;
 
     public interface OnSettingsSaveListener {
         void onSettingsSaved();
@@ -271,6 +273,9 @@ public class SettingsDialog {
         popupWindow.setOutsideTouchable(false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
+        draggableHelper = new DraggablePopupHelper(context, "settings_dialog");
+        draggableHelper.setupDraggablePopup(popupWindow, rootLayout);
+
         btnCancel.setOnClickListener(v -> {
             appsSettings.saveIntSettings("chkMAutoPos", chkMAutoPos.isChecked() ? 1 : 0);
             appsSettings.saveIntSettings("chkSTAutoPos", chkSTAutoPos.isChecked() ? 1 : 0);
@@ -298,7 +303,7 @@ public class SettingsDialog {
         });
 
         anchorView.setVisibility(View.GONE);
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
+        draggableHelper.showPopup(popupWindow, anchorView);
     }
 
     public void dismiss() {

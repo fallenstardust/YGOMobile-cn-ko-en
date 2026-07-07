@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +26,7 @@ import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.activities.ShareFileActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 
 public class ReplayModeDialog {
 
@@ -34,6 +36,7 @@ public class ReplayModeDialog {
     private int startTurn = 1;
     private File replayDir;
     private SimpleListAdapter replayAdapter;
+    private DraggablePopupHelper draggableHelper;
 
     public interface OnReplaySelectedListener {
         void onReplaySelected(String replayFilePath, int startTurn);
@@ -71,6 +74,9 @@ public class ReplayModeDialog {
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+
+        draggableHelper = new DraggablePopupHelper(context, "replay_mode_dialog");
+        draggableHelper.setupDraggablePopup(popupWindow, customView);
 
         lvReplayList.setOnItemClickListener((parent, view, position, id) -> {
             File[] files = getReplayFiles();
@@ -141,7 +147,7 @@ public class ReplayModeDialog {
         btnExitReplay.setOnClickListener(v -> popupWindow.dismiss());
 
         anchorView.setVisibility(View.GONE);
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
+        draggableHelper.showPopup(popupWindow, anchorView);
     }
 
     private File[] getReplayFiles() {
@@ -266,35 +272,31 @@ public class ReplayModeDialog {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("文件名: ").append(replayFile.getName()).append("\n");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateStr = sdf.format(new java.util.Date(replayFile.lastModified()));
+        sb.append(dateStr).append("\n");
 
         if (!data.playerNames.isEmpty()) {
             for (int i = 0; i < data.playerNames.size(); i++) {
-                if (i > 0) sb.append(" vs ");
+                if (i > 0) sb.append("\n===vs===\n");
                 sb.append(data.playerNames.get(i));
             }
             sb.append("\n");
         }
-
-        sb.append("LP: ").append(data.params.startLp);
-        sb.append(" | 手牌: ").append(data.params.startHand);
-        sb.append(" | 抽卡: ").append(data.params.drawCount).append("\n");
-
+        /*TODO: 解析出来的其他信息暂时先不显示
         if (data.isTag) sb.append("[双打模式] ");
         if (data.isSingleMode) sb.append("[残局模式] ");
         if (!data.isTag && !data.isSingleMode) sb.append("[普通模式] ");
-
+        sb.append("LP: ").append(data.params.startLp);
+        sb.append(" | 手牌: ").append(data.params.startHand);
+        sb.append(" | 抽卡: ").append(data.params.drawCount).append("\n");
         if (!data.decks.isEmpty()) {
             sb.append("\n主卡组: ");
             for (int i = 0; i < data.decks.size(); i++) {
                 if (i > 0) sb.append(" / ");
                 sb.append(data.decks.get(i).main.size()).append("张");
             }
-        }
-
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String dateStr = sdf.format(new java.util.Date(replayFile.lastModified()));
-        sb.append("\n录制时间: ").append(dateStr);
+        }*/
 
         tvReplayInfo.setText(sb.toString());
     }

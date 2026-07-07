@@ -17,11 +17,13 @@ import android.widget.TextView;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 
 public class LanModeDialog {
 
     private Context context;
     private PopupWindow popupWindow;
+    private DraggablePopupHelper draggableHelper;
 
     public interface OnLanModeListener {
         void onCreateHostConfirmed(String banlist, String rule, String cardAllowed,
@@ -116,6 +118,9 @@ public class LanModeDialog {
         popupWindow.setOutsideTouchable(true);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
+        draggableHelper = new DraggablePopupHelper(context, "lan_mode_dialog");
+        draggableHelper.setupDraggablePopup(popupWindow, customView);
+
         btnCreateHost.setOnClickListener(v -> {
             layoutLanMain.setVisibility(View.GONE);
             layoutCreateHost.setVisibility(View.VISIBLE);
@@ -181,7 +186,7 @@ public class LanModeDialog {
         });
 
         anchorView.setVisibility(View.GONE);
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
+        draggableHelper.showPopup(popupWindow, anchorView);
     }
 
     public void dismiss() {

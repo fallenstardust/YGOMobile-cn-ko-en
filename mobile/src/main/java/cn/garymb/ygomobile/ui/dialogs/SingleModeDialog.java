@@ -25,6 +25,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -33,6 +34,7 @@ public class SingleModeDialog {
 
     private Context context;
     private PopupWindow popupWindow;
+    private DraggablePopupHelper draggableHelper;
 
     public interface OnSingleModeListener {
         void onStartBotDuel(String botCommand, String deckFile);
@@ -197,6 +199,9 @@ public class SingleModeDialog {
         popupWindow.setOutsideTouchable(false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
+        draggableHelper = new DraggablePopupHelper(context, "single_mode_dialog");
+        draggableHelper.setupDraggablePopup(popupWindow, customView);
+
         btnStartBotDuel.setOnClickListener(v -> {
             if (selectedPosition[0] < 0) {
                 Toast.makeText(context, "请先选择一个项目", Toast.LENGTH_SHORT).show();
@@ -234,7 +239,7 @@ public class SingleModeDialog {
         btnExitBot.setOnClickListener(v -> popupWindow.dismiss());
 
         anchorView.setVisibility(View.GONE);
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
+        draggableHelper.showPopup(popupWindow, anchorView);
     }
 
     private void loadLastDeckInfo(Button btnSelectDeck) {

@@ -19,6 +19,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.DeckSelectorUtil;
 
 public class DeckSelectorDialog {
@@ -26,6 +27,7 @@ public class DeckSelectorDialog {
     private Context context;
     private PopupWindow popupWindow;
     private OnDeckSelectedListener listener;
+    private DraggablePopupHelper draggableHelper;
 
     public interface OnDeckSelectedListener {
         void onDeckSelected(String deckPath, String deckName, String categoryName);
@@ -182,7 +184,10 @@ public class DeckSelectorDialog {
         popupWindow.setOutsideTouchable(true);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
+        draggableHelper = new DraggablePopupHelper(context, "deck_selector_dialog");
+        draggableHelper.setupDraggablePopup(popupWindow, contentView);
+
+        draggableHelper.showPopup(popupWindow, anchorView);
     }
 
     public void dismiss() {
