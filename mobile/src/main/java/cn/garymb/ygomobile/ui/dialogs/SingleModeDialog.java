@@ -203,11 +203,6 @@ public class SingleModeDialog {
         draggableHelper.setupDraggablePopup(popupWindow, customView);
 
         btnStartBotDuel.setOnClickListener(v -> {
-            if (selectedPosition[0] < 0) {
-                Toast.makeText(context, "请先选择一个项目", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
             if (currentMode[0] == 0) {
                 if (selectedPosition[0] >= botList.size()) {
                     Toast.makeText(context, "无效的AI选择", Toast.LENGTH_SHORT).show();

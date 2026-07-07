@@ -293,10 +293,6 @@ public class ReplayModeDialog {
         
         dialog.setLeftButtonListener((d, w) -> {
             Set<Integer> selectedPositions = adapter.getMultiSelectedPositions();
-            if (selectedPositions.isEmpty()) {
-                Toast.makeText(context, "请至少选择一个卡组", Toast.LENGTH_SHORT).show();
-                return;
-            }
             
             int successCount = 0;
             for (int pos : selectedPositions) {

@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_lan_main"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical">
 
     <LinearLayout
@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:text="昵称："
             android:textColor="#FFFFFF"
-            android:textSize="15sp" />
+            android:textSize="14sp" />
 
         <EditText
             android:id="@+id/et_nickname"
@@ -45,7 +45,7 @@
     <ListView
         android:id="@+id/lv_host_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"
         android:background="@drawable/selected_light"
         android:divider="#33FFFFFF"
@@ -73,9 +73,9 @@
         <TextView
             android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:text="主机信息："
+            android:text="@string/server_ip"
             android:textColor="#FFFFFF"
-            android:textSize="15sp" />
+            android:textSize="14sp" />
 
         <EditText
             android:id="@+id/et_host_ip"
@@ -108,9 +108,9 @@
             android:layout_width="110dp"
             android:layout_height="38dp"
             android:layout_marginStart="10dp"
-            android:text="加入游戏"
+            android:text="@string/join_game"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:background="@drawable/button3_bg" />
     </LinearLayout>
 
@@ -123,9 +123,9 @@
         <TextView
             android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:text="房间密码："
+            android:text="@string/server_room_pwd"
             android:textColor="#FFFFFF"
-            android:textSize="15sp" />
+            android:textSize="14sp" />
 
         <EditText
             android:id="@+id/et_room_password"
@@ -145,9 +145,9 @@
             android:layout_width="110dp"
             android:layout_height="38dp"
             android:layout_marginStart="10dp"
-            android:text="退出"
+            android:text="@string/quit"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:background="@drawable/button3_bg" />
     </LinearLayout>
 
