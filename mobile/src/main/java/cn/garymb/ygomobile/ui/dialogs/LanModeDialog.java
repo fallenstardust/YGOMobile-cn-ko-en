@@ -49,6 +49,8 @@ public class LanModeDialog {
     private Button btnPwDuelistMode, btnPwSpectatorMode, btnPwReady, btnPwDeckSelect, btnPwExitWaiting;
     private TextView tvPwBanlist, tvPwCardAllowed, tvPwDuelMode, tvPwStartLP, tvPwStartHand, tvPwDrawCount;
     private View layoutTagPlayers;
+    private int selfPos = 0;
+    private boolean isSelfReady = false;
 
     public interface OnLanModeListener {
         void onCreateHostConfirmed(String banlist, String rule, String cardAllowed,
@@ -59,6 +61,7 @@ public class LanModeDialog {
         void onJoinGameRequested(String ip, String port, String password, String nickname);
         void onExitLan();
         void onPlayerWaitingReady();
+        void onPlayerWaitingNotReady();
         void onPlayerWaitingToDuelist();
         void onPlayerWaitingToObserver();
         void onPlayerWaitingExit();
@@ -216,11 +219,7 @@ public class LanModeDialog {
             popupWindow.dismiss();
         });
 
-        btnPwReady.setOnClickListener(v -> {
-            if (listener != null) listener.onPlayerWaitingReady();
-            btnPwReady.setEnabled(false);
-            btnPwReady.setText("已准备");
-        });
+        setupSelfReadyInteraction();
 
         btnPwDuelistMode.setOnClickListener(v -> {
             if (listener != null) listener.onPlayerWaitingToDuelist();
@@ -309,17 +308,22 @@ public class LanModeDialog {
         if (etPwPlayer2Name != null) etPwPlayer2Name.setText("");
         if (etPwPlayer3Name != null) etPwPlayer3Name.setText("");
         if (etPwPlayer4Name != null) etPwPlayer4Name.setText("");
-        if (chkPwPlayer1Ready != null) chkPwPlayer1Ready.setChecked(false);
-        if (chkPwPlayer2Ready != null) chkPwPlayer2Ready.setChecked(false);
-        if (chkPwPlayer3Ready != null) chkPwPlayer3Ready.setChecked(false);
-        if (chkPwPlayer4Ready != null) chkPwPlayer4Ready.setChecked(false);
+        if (chkPwPlayer1Ready != null) { chkPwPlayer1Ready.setChecked(false); chkPwPlayer1Ready.setOnCheckedChangeListener(null); }
+        if (chkPwPlayer2Ready != null) { chkPwPlayer2Ready.setChecked(false); chkPwPlayer2Ready.setOnCheckedChangeListener(null); }
+        if (chkPwPlayer3Ready != null) { chkPwPlayer3Ready.setChecked(false); chkPwPlayer3Ready.setOnCheckedChangeListener(null); }
+        if (chkPwPlayer4Ready != null) { chkPwPlayer4Ready.setChecked(false); chkPwPlayer4Ready.setOnCheckedChangeListener(null); }
+        isSelfReady = false;
+        selfPos = 0;
         if (btnPwReady != null) {
             btnPwReady.setEnabled(true);
             btnPwReady.setText("点击准备");
+            btnPwReady.setPressed(false);
         }
         if (btnPwDuelistMode != null) btnPwDuelistMode.setEnabled(false);
         if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(true);
         if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.GONE);
+
+        updateSelfCheckboxInteractivity();
     }
 
     public void setPlayerName(int pos, String name) {
@@ -332,11 +336,16 @@ public class LanModeDialog {
     }
 
     public void setPlayerReady(int pos, boolean ready) {
-        switch (pos) {
-            case 0: if (chkPwPlayer1Ready != null) chkPwPlayer1Ready.setChecked(ready); break;
-            case 1: if (chkPwPlayer2Ready != null) chkPwPlayer2Ready.setChecked(ready); break;
-            case 2: if (chkPwPlayer3Ready != null) chkPwPlayer3Ready.setChecked(ready); break;
-            case 3: if (chkPwPlayer4Ready != null) chkPwPlayer4Ready.setChecked(ready); break;
+        CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+        if (pos >= 0 && pos < checkboxes.length && checkboxes[pos] != null) {
+            if (pos == selfPos) {
+                isSelfReady = ready;
+                if (btnPwReady != null) {
+                    btnPwReady.setText(ready ? "已准备" : "点击准备");
+                    btnPwReady.setPressed(ready);
+                }
+            }
+            checkboxes[pos].setChecked(ready);
         }
     }
 
@@ -377,6 +386,9 @@ public class LanModeDialog {
     }
 
     public void updateTypeChange(int selfType, boolean isTag) {
+        selfPos = selfType;
+        updateSelfCheckboxInteractivity();
+
         if (selfType < 2 || (isTag && selfType < 4)) {
             if (btnPwReady != null) btnPwReady.setEnabled(true);
             if (btnPwDuelistMode != null) btnPwDuelistMode.setEnabled(false);
@@ -478,6 +490,69 @@ public class LanModeDialog {
             btnDeckSelect.setText(displayText);
         } else {
             btnDeckSelect.setText("请选择卡组");
+        }
+    }
+
+    private void setupSelfReadyInteraction() {
+        CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+        for (int i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i] == null) continue;
+            checkboxes[i].setEnabled(false);
+            checkboxes[i].setClickable(false);
+        }
+
+        if (btnPwReady != null) {
+            btnPwReady.setOnClickListener(v -> {
+                if (!isSelfReady) {
+                    isSelfReady = true;
+                    setSelfCheckboxChecked(true);
+                    btnPwReady.setText("已准备");
+                    btnPwReady.setPressed(true);
+                    if (listener != null) listener.onPlayerWaitingReady();
+                } else {
+                    isSelfReady = false;
+                    setSelfCheckboxChecked(false);
+                    btnPwReady.setText("点击准备");
+                    btnPwReady.setPressed(false);
+                    if (listener != null) listener.onPlayerWaitingNotReady();
+                }
+            });
+        }
+    }
+
+    private void setSelfCheckboxChecked(boolean checked) {
+        CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+        if (selfPos >= 0 && selfPos < checkboxes.length && checkboxes[selfPos] != null) {
+            checkboxes[selfPos].setChecked(checked);
+        }
+    }
+
+    private void updateSelfCheckboxInteractivity() {
+        CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+        for (int i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i] == null) continue;
+            if (i == selfPos) {
+                checkboxes[i].setEnabled(true);
+                checkboxes[i].setClickable(true);
+                final int pos = i;
+                checkboxes[i].setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    if (pos != selfPos) return;
+                    isSelfReady = isChecked;
+                    if (isChecked) {
+                        btnPwReady.setText("已准备");
+                        btnPwReady.setPressed(true);
+                        if (listener != null) listener.onPlayerWaitingReady();
+                    } else {
+                        btnPwReady.setText("点击准备");
+                        btnPwReady.setPressed(false);
+                        if (listener != null) listener.onPlayerWaitingNotReady();
+                    }
+                });
+            } else {
+                checkboxes[i].setEnabled(false);
+                checkboxes[i].setClickable(false);
+                checkboxes[i].setOnCheckedChangeListener(null);
+            }
         }
     }
 

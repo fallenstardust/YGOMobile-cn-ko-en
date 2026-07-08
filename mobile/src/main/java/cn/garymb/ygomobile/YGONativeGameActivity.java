@@ -660,6 +660,11 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     @Override
+    public void onPlayerWaitingNotReady() {
+        if (engine != null) engine.sendNotReady();
+    }
+
+    @Override
     public void onPlayerWaitingToDuelist() {
         if (engine != null) engine.sendToDuelist();
     }

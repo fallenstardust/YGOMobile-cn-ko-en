@@ -14,7 +14,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="2"
             android:orientation="vertical">
 
             <Button
@@ -43,7 +43,7 @@
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:textColor="#FFFFFF"
-                    android:text="Knight of Hanoi"
+                    android:text="player1"
                     android:editable="false"
                     android:focusable="false" />
 
@@ -65,13 +65,13 @@
                 <EditText
                     android:id="@+id/et_player2_name"
                     android:layout_width="0dp"
-                    android:layout_height="38dp"
+                    android:layout_height="40dp"
                     android:layout_weight="1"
                     android:background="@drawable/selected_light"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:textColor="#FFFFFF"
-                    android:text="凯瑟琳·罗森塔尔"
+                    android:textColor="@color/white"
+                    android:text="player2"
                     android:editable="false"
                     android:focusable="false" />
 
@@ -83,15 +83,12 @@
                     android:button="@null" />
             </LinearLayout>
 
-
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginTop="15dp"
-                android:layout_marginBottom="8dp">
+                android:layout_marginVertical="10dp">
 
                 <Button
                     android:id="@+id/btn_spectator_mode"
@@ -135,7 +132,7 @@
                         android:paddingStart="10dp"
                         android:paddingEnd="10dp"
                         android:textColor="#FFFFFF"
-                        android:text="诺玛·林斯科特"
+                        android:text="player3"
                         android:editable="false"
                         android:focusable="false" />
 
@@ -163,7 +160,7 @@
                         android:paddingStart="10dp"
                         android:paddingEnd="10dp"
                         android:textColor="#FFFFFF"
-                        android:text="下垣鸣海凛央奈"
+                        android:text="player4"
                         android:editable="false"
                         android:focusable="false" />
 
@@ -196,7 +193,7 @@
                 android:id="@+id/btn_deck_select"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:background="@drawable/selected_light"
+                android:background="@drawable/button3_bg"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="[SAMPLE]CyberMata"
