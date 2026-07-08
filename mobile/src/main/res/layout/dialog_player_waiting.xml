@@ -3,8 +3,7 @@
     android:id="@+id/layout_player_waiting"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:visibility="gone">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,7 +24,7 @@
                 android:text="→决斗者"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp"
-                android:background="@drawable/button2_bg"
+                android:background="@drawable/button3_bg"
                 android:layout_marginBottom="8dp" />
 
             <LinearLayout
@@ -84,11 +83,14 @@
                     android:button="@null" />
             </LinearLayout>
 
+
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:layout_marginTop="15dp"
                 android:layout_marginBottom="8dp">
 
                 <Button
@@ -98,7 +100,7 @@
                     android:text="→观战"
                     android:textColor="#FFFFFF"
                     android:textSize="13sp"
-                    android:background="@drawable/button2_bg" />
+                    android:background="@drawable/button3_bg" />
 
                 <Button
                     android:id="@+id/btn_ready"
@@ -108,7 +110,70 @@
                     android:text="点击准备"
                     android:textColor="#FFFFFF"
                     android:textSize="13sp"
-                    android:background="@drawable/button2_bg" />
+                    android:background="@drawable/button3_bg" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layout_tag_players"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <EditText
+                        android:id="@+id/et_player3_name"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/selected_light"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:textColor="#FFFFFF"
+                        android:text="诺玛·林斯科特"
+                        android:editable="false"
+                        android:focusable="false" />
+
+                    <CheckBox
+                        android:id="@+id/chk_player3_ready"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_marginStart="8dp"
+                        android:button="@null" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <EditText
+                        android:id="@+id/et_player4_name"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/selected_light"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:textColor="#FFFFFF"
+                        android:text="下垣鸣海凛央奈"
+                        android:editable="false"
+                        android:focusable="false" />
+
+                    <CheckBox
+                        android:id="@+id/chk_player4_ready"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_marginStart="8dp"
+                        android:button="@null" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -127,13 +192,17 @@
                     android:textSize="15sp" />
             </LinearLayout>
 
-            <Spinner
-                android:id="@+id/spinner_deck_select"
+            <Button
+                android:id="@+id/btn_deck_select"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:background="@drawable/selected_light"
                 android:paddingStart="10dp"
-                android:paddingEnd="10dp" />
+                android:paddingEnd="10dp"
+                android:text="[SAMPLE]CyberMata"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:gravity="start|center_vertical" />
         </LinearLayout>
 
         <LinearLayout
@@ -286,17 +355,16 @@
                     android:textSize="15sp"
                     android:layout_marginStart="5dp" />
             </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_exit_waiting"
+                android:layout_width="120dp"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:text="退出"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:background="@drawable/button3_bg" />
         </LinearLayout>
     </LinearLayout>
-
-    <Button
-        android:id="@+id/btn_exit_waiting"
-        android:layout_width="120dp"
-        android:layout_height="40dp"
-        android:layout_gravity="end"
-        android:text="退出"
-        android:textColor="#FFFFFF"
-        android:textSize="13sp"
-        android:background="@drawable/button2_bg" />
-
 </LinearLayout>

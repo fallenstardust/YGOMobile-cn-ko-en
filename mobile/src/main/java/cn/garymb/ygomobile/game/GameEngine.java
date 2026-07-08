@@ -55,6 +55,16 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         void onTimeLimitUpdate(int player, int leftTime);
 
         void onChainAnimation(int code, int controler, int location, int sequence);
+
+        void onPlayerEnter(String name, int pos);
+
+        void onPlayerChange(int status);
+
+        void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                        int noCheckDeck, int noShuffleDeck,
+                        int startLp, int startHand, int drawCount, int timeLimit);
+
+        void onTypeChange(int type);
     }
 
     private GameState state = GameState.IDLE;
@@ -74,6 +84,25 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     private boolean isHost = false;
     private boolean isBotMode = false;
     private ReplayEngine replayEngine;
+    private int gameMode = 0;
+    private int gameRule = 0;
+    private int gameLflist = 0;
+    private int gameStartLp = 8000;
+    private int gameStartHand = 5;
+    private int gameDrawCount = 1;
+    private int gameTimeLimit = 0;
+    private int gameNoCheckDeck = 0;
+    private int gameNoShuffleDeck = 0;
+
+    public int getGameMode() { return gameMode; }
+    public int getGameRule() { return gameRule; }
+    public int getGameLflist() { return gameLflist; }
+    public int getGameStartLp() { return gameStartLp; }
+    public int getGameStartHand() { return gameStartHand; }
+    public int getGameDrawCount() { return gameDrawCount; }
+    public int getGameTimeLimit() { return gameTimeLimit; }
+    public int getGameNoCheckDeck() { return gameNoCheckDeck; }
+    public int getGameNoShuffleDeck() { return gameNoShuffleDeck; }
 
     public ReplayEngine getReplayEngine() {
         return replayEngine;
@@ -230,6 +259,28 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                     false, false,
                     8000, 5, 1, 0,
                     "Local Game", "");
+        }, "LocalServer").start();
+    }
+
+    public void startLocalServerWithSettings(int lflist, int rule, int mode, int duelRule,
+                                              boolean noCheckDeck, boolean noShuffleDeck,
+                                              int startLp, int startHand, int drawCount, int timeLimit,
+                                              String roomName, String password) {
+        Log.i(TAG, "Starting local server with settings: " + roomName);
+        setState(GameState.CONNECTING);
+        this.isHost = true;
+        this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+        new Thread(() -> {
+            boolean connected = client.connect("127.0.0.1", 7911);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(lflist, rule, mode, duelRule,
+                    noCheckDeck, noShuffleDeck,
+                    startLp, startHand, drawCount, timeLimit,
+                    roomName, password);
         }, "LocalServer").start();
     }
 
@@ -437,15 +488,21 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onPlayerEnter(String name, int pos) {
         Log.i(TAG, "Player entered: " + name + " at pos " + pos);
-        if (pos < 2) {
+        if (pos < playerInfos.length) {
             playerInfos[pos].name = name;
         }
         soundManager.playSoundEffect(SoundManager.SFX.PLAYER_ENTER);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerEnter(name, pos);
+        });
     }
 
     @Override
     public void onPlayerChange(int status) {
         Log.i(TAG, "Player change: " + String.format("0x%02X", status));
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerChange(status);
+        });
     }
 
     @Override
@@ -534,6 +591,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onTypeChange(int type) {
         Log.i(TAG, "Type changed to: " + type);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onTypeChange(type);
+        });
         setState(GameState.LOBBY);
     }
 
@@ -546,6 +606,20 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         playerInfos[0].lp = startLp;
         playerInfos[1].lp = startLp;
         this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+        this.gameMode = mode;
+        this.gameRule = rule;
+        this.gameLflist = lflist;
+        this.gameStartLp = startLp;
+        this.gameStartHand = startHand;
+        this.gameDrawCount = drawCount;
+        this.gameTimeLimit = timeLimit;
+        this.gameNoCheckDeck = noCheckDeck;
+        this.gameNoShuffleDeck = noShuffleDeck;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onJoinGame(lflist, rule, mode, duelRule,
+                    noCheckDeck, noShuffleDeck,
+                    startLp, startHand, drawCount, timeLimit);
+        });
         setState(GameState.LOBBY);
     }
 

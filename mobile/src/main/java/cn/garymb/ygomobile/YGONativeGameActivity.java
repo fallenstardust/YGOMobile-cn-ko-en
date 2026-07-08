@@ -20,10 +20,12 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -53,6 +55,7 @@ import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.GameFieldView;
+import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.DeckEditDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
@@ -64,12 +67,14 @@ import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import ocgcore.DataManager;
+import ocgcore.LimitManager;
 import ocgcore.data.Card;
 import ocgcore.enums.DuelPhase;
 
 public class YGONativeGameActivity extends AppCompatActivity implements
         GameEngine.EngineListener,
-        GameFieldView.OnCardClickListener {
+        GameFieldView.OnCardClickListener,
+        LanModeDialog.OnLanModeListener {
 
     private static final String TAG = "YGONativeGame";
     private static final int PRO_VERSION = 0x1362;
@@ -79,7 +84,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private ImageLoader imageLoader;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    private GameFieldView gameFieldView;
+    private GameFieldViewController fieldViewController;
     private TextView tvPlayerLp, tvPlayerName, tvOpponentLp, tvOpponentName;
     private TextView tvPhaseInfo, tvTurnInfo;
     private TextView tvPlayerTime, tvOpponentTime;
@@ -101,6 +106,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private LinearLayout layoutOpponentInfo;
     private LinearLayout layoutPlayerInfo;
+    private LanModeDialog lanModeDialog;
 
     private String chatHistory = "";
     private boolean isMyTurn = false;
@@ -151,6 +157,58 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         }
     }
 
+    @Override
+    public void onPlayerEnter(String name, int pos) {
+        runOnUiThread(() -> {
+            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
+                lanModeDialog.setPlayerName(pos, name);
+            }
+        });
+    }
+
+    @Override
+    public void onPlayerChange(int status) {
+        runOnUiThread(() -> {
+            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
+                int pos = (status >> 4) & 0x0F;
+                int state = status & 0x0F;
+
+                if (state < 8) {
+                    lanModeDialog.movePlayer(pos, state);
+                } else if (state == 0x9) {
+                    lanModeDialog.setPlayerReady(pos, true);
+                } else if (state == 0xa) {
+                    lanModeDialog.setPlayerReady(pos, false);
+                } else if (state == 0xb) {
+                    lanModeDialog.clearPlayerPos(pos);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                           int noCheckDeck, int noShuffleDeck,
+                           int startLp, int startHand, int drawCount, int timeLimit) {
+        runOnUiThread(() -> {
+            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
+                lanModeDialog.updateRoomInfo(mode, startLp, startHand, drawCount);
+            }
+        });
+    }
+
+    @Override
+    public void onTypeChange(int type) {
+        runOnUiThread(() -> {
+            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
+                int selfType = type & 0x0F;
+                boolean isHost = ((type >> 4) & 0x0F) != 0;
+                boolean isTag = engine.getGameMode() == 2;
+                lanModeDialog.updateTypeChange(selfType, isTag);
+            }
+        });
+    }
+
     private void setupFullScreen() {
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -168,8 +226,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void initViews() {
-        gameFieldView = findViewById(R.id.game_field_view);
-        gameFieldView.setCardClickListener(this);
+        fieldViewController = new GameFieldViewController(this);
 
         tvPlayerLp = findViewById(R.id.tv_player_lp);
         tvPlayerName = findViewById(R.id.tv_player_name);
@@ -243,7 +300,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         btnCancel.setOnClickListener(v -> {
             if (isPlaceSelecting) {
                 isPlaceSelecting = false;
-                gameFieldView.setHighlightFieldMask(0);
+                fieldViewController.clearHighlight();
                 sendResponseInt(-1);
             } else {
                 sendActionResponse(-1);
@@ -278,8 +335,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         engine.setListener(this);
         engine.setPlayerName(Constants.PlayerName);
 
-        gameFieldView.setField(engine.getField());
-        gameFieldView.setImageLoader(imageLoader);
+        fieldViewController.init(engine.getField(), imageLoader, this);
 
         TextureLoader.get().init();
     }
@@ -299,7 +355,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
             if (System.currentTimeMillis() - time < YGOGameOptions.TIME_OUT) {
                 joinFromOptions(options);
-                hideMainMenu();
+                showPlayerWaitingForDirectJoin(options);
                 return true;
             }
         }
@@ -316,7 +372,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             engine.connectToServer(host, port, false,
                     room != null ? room : "", "",
                     0, 0, 5, 8000, 5, 1, 0, false, false);
-            hideMainMenu();
+            showPlayerWaitingForDirectJoin(null);
             return true;
         }
 
@@ -429,9 +485,44 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         int port = options.mPort;
         String room = options.mRoomName != null ? options.mRoomName : "";
         String user = options.mUserName != null ? options.mUserName : Constants.PlayerName;
+        String password = options.mRoomPasswd != null ? options.mRoomPasswd : "";
         engine.setPlayerName(user);
-        engine.connectToServer(host, port, false, room, "",
+        engine.connectToServer(host, port, false, room, password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
+    }
+
+    private void showPlayerWaitingForDirectJoin(YGOGameOptions options) {
+        if (layoutMainMenu == null) {
+            layoutMainMenu = findViewById(R.id.layout_main_menu);
+            tvVersion = findViewById(R.id.tv_version);
+            bindMainMenuButtons();
+        }
+
+        fieldViewController.setVisible(false);
+        if (layoutOpponentInfo != null) layoutOpponentInfo.setVisibility(View.GONE);
+        if (layoutPlayerInfo != null) layoutPlayerInfo.setVisibility(View.GONE);
+        if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
+        if (layoutChat != null) layoutChat.setVisibility(View.GONE);
+        if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
+        if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
+
+        String name = Constants.PlayerName;
+        if (options != null && options.mUserName != null && !options.mUserName.isEmpty()) {
+            name = options.mUserName;
+        }
+        final String playerName = name;
+
+        layoutMainMenu.post(() -> {
+            if (isFinishing() || isDestroyed()) return;
+
+            lanModeDialog = new LanModeDialog(this, YGONativeGameActivity.this);
+            lanModeDialog.show(layoutMainMenu);
+            lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
+            lanModeDialog.showPlayerWaiting();
+            lanModeDialog.setPlayerName(0, playerName);
+
+            soundManager.playBGM(SoundManager.BGM.DUEL);
+        });
     }
 
     // === Main Menu ===
@@ -445,8 +536,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         mainMenuDragHelper.setupDraggableView(layoutMainMenu);
         mainMenuDragHelper.applySavedPositionToView(layoutMainMenu);
 
-        // 隐藏所有游戏界面元素
-        if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
+        fieldViewController.setVisible(false);
         if (layoutOpponentInfo != null) layoutOpponentInfo.setVisibility(View.GONE);
         if (layoutPlayerInfo != null) layoutPlayerInfo.setVisibility(View.GONE);
         if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
@@ -464,7 +554,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (layoutMainMenu != null) {
             layoutMainMenu.setVisibility(View.GONE);
         }
-        if (gameFieldView != null) gameFieldView.setVisibility(View.VISIBLE);
+        fieldViewController.setVisible(true);
         soundManager.playBGM(SoundManager.BGM.DUEL);
     }
 
@@ -475,23 +565,118 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showLanModeDialog() {
-        LanModeDialog dialog = new LanModeDialog(this, new LanModeDialog.OnLanModeListener() {
-            @Override
-            public void onCreateHostConfirmed(String banlist, String rule, String cardAllowed,
-                                              String startLP, String duelMode, String startHand,
-                                              String timeLimit, String drawCount,
-                                              boolean noCheckDeck, boolean noShuffleDeck,
-                                              String hostName, String password) {
-                hideMainMenu();
-                engine.startLocalServer();
-            }
+        lanModeDialog = new LanModeDialog(this, this);
+        lanModeDialog.show(layoutMainMenu);
+        lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
+    }
+    @Override
+    public void onCreateHostConfirmed(String banlist, String rule, String cardAllowed,
+                                      String startLP, String duelMode, String startHand,
+                                      String timeLimit, String drawCount,
+                                      boolean noCheckDeck, boolean noShuffleDeck,
+                                      String hostName, String password) {
+        hideMainMenu();
 
-            @Override
-            public void onExitLan() {
-            }
-        });
-        dialog.show(layoutMainMenu);
-        dialog.setOnDismissListener(() -> restoreMainMenu());
+        int lflist = parseBanlistIndex(banlist);
+        int ruleIdx = parseRuleIndex(rule);
+        int modeIdx = parseDuelModeIndex(duelMode);
+        int duelRule = ruleIdx + 1;
+        int lp = parseIntSafe(startLP, 8000);
+        int hand = parseIntSafe(startHand, 5);
+        int draw = parseIntSafe(drawCount, 1);
+        int time = parseIntSafe(timeLimit, 0);
+        String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
+
+        engine.startLocalServerWithSettings(lflist, ruleIdx, modeIdx, duelRule,
+                noCheckDeck, noShuffleDeck,
+                lp, hand, draw, time,
+                roomName, password != null ? password : "");
+    }
+
+    private int parseBanlistIndex(String banlist) {
+        if (banlist == null || banlist.equals("N/A")) return 0;
+        LimitManager limitManager = DataManager.get().getLimitManager();
+        boolean isGenesysMode = AppsSettings.get().getGenesysMode() == 1;
+        List<String> limitNames = isGenesysMode ?
+                limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
+        for (int i = 0; i < limitNames.size(); i++) {
+            if (limitNames.get(i).equals(banlist)) return i + 1;
+        }
+        return 0;
+    }
+
+    private int parseRuleIndex(String rule) {
+        if (rule == null) return 1;
+        switch (rule) {
+            case "大师规则4": return 0;
+            case "大师规则2020": return 1;
+            case "新大师规则": return 2;
+            case "大师规则": return 3;
+            default: return 1;
+        }
+    }
+
+    private int parseDuelModeIndex(String duelMode) {
+        if (duelMode == null) return 0;
+        switch (duelMode) {
+            case "单局模式": return 0;
+            case "三局两胜": return 1;
+            case "TAG": return 2;
+            default: return 0;
+        }
+    }
+
+    private int parseIntSafe(String value, int defaultValue) {
+        if (value == null || value.isEmpty()) return defaultValue;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    @Override
+    public void onJoinGameRequested(String ip, String port, String password, String nickname) {
+        hideMainMenu();
+        int portNum;
+        try {
+            portNum = Integer.parseInt(port);
+        } catch (NumberFormatException e) {
+            portNum = 7911;
+        }
+        String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+        engine.setPlayerName(userName);
+        engine.connectToServer(ip, portNum, false, "", password,
+                0, 0, 5, 8000, 5, 1, 0, false, false);
+    }
+
+    @Override
+    public void onExitLan() {
+    }
+
+    @Override
+    public void onPlayerWaitingReady() {
+        if (engine != null) engine.sendReady();
+    }
+
+    @Override
+    public void onPlayerWaitingToDuelist() {
+        if (engine != null) engine.sendToDuelist();
+    }
+
+    @Override
+    public void onPlayerWaitingToObserver() {
+        if (engine != null) engine.sendToObserver();
+    }
+
+    @Override
+    public void onPlayerWaitingExit() {
+        if (engine != null) engine.disconnect();
+        restoreMainMenu();
+    }
+
+    @Override
+    public void onPlayerWaitingDeckSelected(String deckPath, String deckName, String categoryName) {
     }
 
     private void showSingleModeDialog() {
@@ -554,9 +739,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
             @Override
             public void onReplayFieldChanged() {
-                runOnUiThread(() -> gameFieldView.invalidate());
+                fieldViewController.invalidate();
             }
-
             @Override
             public void onReplayPlayerInfoUpdated(int player) {
                 runOnUiThread(() -> {
@@ -682,12 +866,13 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         Log.i(TAG, "State: " + newState);
         switch (newState) {
             case LOBBY:
-                hideMainMenu();
-                if (layoutLobby != null) layoutLobby.setVisibility(View.VISIBLE);
-                tvLobbyStatus.setText("已连接 - 等待玩家准备");
+                if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
+                    // Already showing player waiting via LanModeDialog, do nothing
+                } else {
+                    hideMainMenu();
+                }
                 break;
             case DECK_SELECT:
-                if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
                 showDeckSelectDialog();
                 break;
             case HAND_SELECT:
@@ -698,6 +883,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 break;
             case DUELING:
                 hideMainMenu();
+                if (lanModeDialog != null) lanModeDialog.dismiss();
                 if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
                 if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
                 if (layoutChat != null) layoutChat.setVisibility(View.VISIBLE);
@@ -712,6 +898,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             case DISCONNECTED:
                 if (!isFinishing()) {
                     runOnUiThread(() -> {
+                        if (lanModeDialog != null) lanModeDialog.dismiss();
                         Toast.makeText(this, "连接已断开", Toast.LENGTH_SHORT).show();
                         finish();
                     });
@@ -722,9 +909,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     @Override
     public void onFieldChanged() {
-        runOnUiThread(() -> {
-            gameFieldView.invalidate();
-        });
+        fieldViewController.invalidate();
     }
 
     @Override
@@ -916,8 +1101,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     @Override
     public void onChainAnimation(int code, int controler, int location, int sequence) {
         runOnUiThread(() -> {
-            gameFieldView.setSelectedCard(controler, location, sequence);
-            mainHandler.postDelayed(() -> gameFieldView.clearSelection(), 1500);
+            fieldViewController.setSelectedCard(controler, location, sequence);
+            fieldViewController.clearSelectionDelayed(1500);
         });
     }
 
@@ -1453,8 +1638,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private void showPlaceSelectDialog(boolean isDisfield) {
         isPlaceSelecting = true;
         int mask = engine.selectFieldMask;
-        gameFieldView.setHighlightFieldMask(mask);
-        gameFieldView.invalidate();
+        fieldViewController.setHighlightFieldMask(mask);
         String msg = isDisfield ? "请选择要禁用的区域" : "请选择放置位置";
         showHintMessage(msg);
     }
@@ -1466,7 +1650,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             return;
         }
         isPlaceSelecting = false;
-        gameFieldView.setHighlightFieldMask(0);
+        fieldViewController.clearHighlight();
 
         int respPlayer = player;
         int respLocation;

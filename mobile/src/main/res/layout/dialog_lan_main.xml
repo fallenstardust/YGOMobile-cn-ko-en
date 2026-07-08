@@ -16,29 +16,28 @@
             android:layout_width="70dp"
             android:layout_height="wrap_content"
             android:text="昵称："
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="14sp" />
 
         <EditText
             android:id="@+id/et_nickname"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:layout_weight="1"
             android:background="@drawable/selected_light"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:textColor="#FFFFFF"
+            android:paddingHorizontal="10dp"
+            android:textColor="@color/white"
             android:textColorHint="#888888"
             android:hint="请输入昵称" />
 
         <Button
             android:id="@+id/btn_create_host"
             android:layout_width="110dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:layout_marginStart="10dp"
             android:text="局域网建主"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
+            android:textColor="@color/white"
+            android:textSize="12sp"
             android:background="@drawable/button3_bg" />
     </LinearLayout>
 
@@ -47,58 +46,57 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@drawable/selected_light"
+        android:background="#0A5C5C"
         android:divider="#33FFFFFF"
-        android:dividerHeight="1dp"
-        android:layout_marginBottom="10dp" />
+        android:dividerHeight="1dp" />
 
     <Button
         android:id="@+id/btn_refresh_lan"
         android:layout_width="110dp"
-        android:layout_height="38dp"
+        android:layout_height="40dp"
         android:layout_gravity="center_horizontal|bottom"
         android:text="刷新局域网"
-        android:textColor="#FFFFFF"
-        android:textSize="13sp"
+        android:textColor="@color/white"
+        android:textSize="12sp"
         android:background="@drawable/button3_bg"
-        android:layout_marginBottom="10dp" />
+        android:layout_marginVertical="5dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="5dp">
 
         <TextView
             android:layout_width="70dp"
             android:layout_height="wrap_content"
             android:text="@string/server_ip"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="14sp" />
 
         <EditText
             android:id="@+id/et_host_ip"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
             android:background="@drawable/selected_light"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textColorHint="#888888"
-            android:hint="IP地址"
+            android:hint="IP/域名地址"
             android:inputType="text" />
 
         <EditText
             android:id="@+id/et_host_port"
             android:layout_width="70dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:background="@drawable/selected_light"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textColorHint="#888888"
             android:hint="端口"
             android:inputType="number" />
@@ -106,10 +104,10 @@
         <Button
             android:id="@+id/btn_join_game"
             android:layout_width="110dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:layout_marginStart="10dp"
             android:text="@string/join_game"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="12sp"
             android:background="@drawable/button3_bg" />
     </LinearLayout>
@@ -124,18 +122,18 @@
             android:layout_width="70dp"
             android:layout_height="wrap_content"
             android:text="@string/server_room_pwd"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="14sp" />
 
         <EditText
             android:id="@+id/et_room_password"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:layout_weight="1"
             android:background="@drawable/selected_light"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textColorHint="#888888"
             android:hint="请输入房间密码（可选）"
             android:inputType="textPassword" />
@@ -143,10 +141,10 @@
         <Button
             android:id="@+id/btn_exit_lan"
             android:layout_width="110dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:layout_marginStart="10dp"
             android:text="@string/quit"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="12sp"
             android:background="@drawable/button3_bg" />
     </LinearLayout>

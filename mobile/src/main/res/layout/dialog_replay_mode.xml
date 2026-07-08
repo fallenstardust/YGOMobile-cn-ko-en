@@ -76,7 +76,7 @@
                 android:inputType="number"
                 android:paddingHorizontal="10dp"
                 android:text="1"
-                android:textAlignment="center"
+                android:gravity="center"
                 android:textColor="@color/white" />
 
             <LinearLayout

@@ -71,7 +71,7 @@
             android:background="@drawable/selected_light"
             android:inputType="number"
             android:text="8000"
-            android:textAlignment="center"
+            android:gravity="center"
             android:textColor="#FFFFFF" />
 
         <TextView
@@ -104,7 +104,7 @@
             android:background="@drawable/selected_light"
             android:inputType="number"
             android:text="5"
-            android:textAlignment="center"
+            android:gravity="center"
             android:textColor="#FFFFFF" />
 
         <TextView
@@ -123,7 +123,7 @@
             android:background="@drawable/selected_light"
             android:inputType="number"
             android:text="180"
-            android:textAlignment="center"
+            android:gravity="center"
             android:textColor="#FFFFFF" />
 
         <TextView
@@ -141,7 +141,7 @@
             android:background="@drawable/selected_light"
             android:inputType="number"
             android:text="1"
-            android:textAlignment="center"
+            android:gravity="center"
             android:textColor="#FFFFFF" />
 
     </GridLayout>
@@ -182,8 +182,8 @@
         <TextView
             android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:text="主机名称："
-            android:textColor="#FFFFFF"
+            android:text="@string/server_ip"
+            android:textColor="@color/white"
             android:textSize="14sp" />
 
         <EditText
@@ -193,21 +193,21 @@
             android:layout_weight="1"
             android:background="@drawable/selected_light"
             android:hint="请输入主机名称（可选）"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#888888" />
+            android:paddingHorizontal="10dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/blackLight"
+            android:gravity="center" />
 
         <Button
             android:id="@+id/btn_confirm_create"
             android:layout_width="110dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:layout_marginStart="10dp"
             android:layout_gravity="center"
-            android:background="@drawable/button2_bg"
+            android:background="@drawable/button3_bg"
             android:text="@string/ok"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp" />
+            android:textColor="@color/white"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -219,8 +219,8 @@
         <TextView
             android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:text="主机密码："
-            android:textColor="#FFFFFF"
+            android:text="@string/server_room_pwd"
+            android:textColor="@color/white"
             android:textSize="14sp" />
 
         <EditText
@@ -233,19 +233,20 @@
             android:inputType="textPassword"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#888888" />
+            android:textColor="@color/white"
+            android:textColorHint="@color/blackLight"
+            android:gravity="center" />
 
         <Button
             android:id="@+id/btn_cancel_create"
             android:layout_width="110dp"
-            android:layout_height="38dp"
+            android:layout_height="40dp"
             android:layout_gravity="center"
             android:layout_marginStart="10dp"
-            android:background="@drawable/button2_bg"
+            android:background="@drawable/button3_bg"
             android:text="@string/quit"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp" />
+            android:textColor="@color/white"
+            android:textSize="12sp" />
     </LinearLayout>
 
 </LinearLayout>
