@@ -41,4 +41,5 @@
     <color name="grayDark">#A7A7A7</color>
     <color name="grayDark2">#8E8E8E</color>
     <color name="FallGreen">#1A3A4A</color>
+    <color name="ygopro_list_background">#0A5C5C</color>
 </resources>

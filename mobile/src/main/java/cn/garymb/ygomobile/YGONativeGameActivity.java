@@ -1,5 +1,9 @@
 package cn.garymb.ygomobile;
 
+import static cn.garymb.ygomobile.ui.dialogs.LanModeDialog.parseBanlistIndex;
+import static cn.garymb.ygomobile.ui.dialogs.LanModeDialog.parseDuelModeIndex;
+import static cn.garymb.ygomobile.ui.dialogs.LanModeDialog.parseIntSafe;
+import static cn.garymb.ygomobile.ui.dialogs.LanModeDialog.parseRuleIndex;
 import static cn.garymb.ygomobile.utils.BotUtil.parseBotConfig;
 import static cn.garymb.ygomobile.utils.PuzzleUtil.loadPuzzleFiles;
 
@@ -174,14 +178,61 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 int state = status & 0x0F;
 
                 if (state < 8) {
+                    String oldName = "";
+                    switch (pos) {
+                        case 0:
+                            oldName = lanModeDialog.getPlayerName(0);
+                            break;
+                        case 1:
+                            oldName = lanModeDialog.getPlayerName(1);
+                            break;
+                        case 2:
+                            oldName = lanModeDialog.getPlayerName(2);
+                            break;
+                        case 3:
+                            oldName = lanModeDialog.getPlayerName(3);
+                            break;
+                    }
+
                     lanModeDialog.movePlayer(pos, state);
+
+                    if (!oldName.isEmpty() && state >= 4) {
+                        lanModeDialog.addObserver(oldName);
+                    }
                 } else if (state == 0x9) {
                     lanModeDialog.setPlayerReady(pos, true);
                 } else if (state == 0xa) {
                     lanModeDialog.setPlayerReady(pos, false);
                 } else if (state == 0xb) {
+                    String leavingName = "";
+                    switch (pos) {
+                        case 0:
+                            leavingName = lanModeDialog.getPlayerName(0);
+                            break;
+                        case 1:
+                            leavingName = lanModeDialog.getPlayerName(1);
+                            break;
+                        case 2:
+                            leavingName = lanModeDialog.getPlayerName(2);
+                            break;
+                        case 3:
+                            leavingName = lanModeDialog.getPlayerName(3);
+                            break;
+                    }
                     lanModeDialog.clearPlayerPos(pos);
+                    if (!leavingName.isEmpty()) {
+                        lanModeDialog.removeObserver(leavingName);
+                    }
                 }
+            }
+        });
+    }
+
+    @Override
+    public void onWatchChange(int watchCount) {
+        runOnUiThread(() -> {
+            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
+                lanModeDialog.updateWatchCount(watchCount);
             }
         });
     }
@@ -485,7 +536,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         int port = options.mPort;
         String room = options.mRoomName != null ? options.mRoomName : "";
         String user = options.mUserName != null ? options.mUserName : Constants.PlayerName;
-        String password = options.mRoomPasswd != null ? options.mRoomPasswd : "";
+        String password = options.mRoomName != null ? options.mRoomName : "";
         engine.setPlayerName(user);
         engine.connectToServer(host, port, false, room, password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -570,69 +621,18 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
     }
     @Override
-    public void onCreateHostConfirmed(String banlist, String rule, String cardAllowed,
-                                      String startLP, String duelMode, String startHand,
-                                      String timeLimit, String drawCount,
+    public void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
+                                      int startLP, int startHand, int drawCount, int timeLimit,
                                       boolean noCheckDeck, boolean noShuffleDeck,
                                       String hostName, String password) {
         hideMainMenu();
 
-        int lflist = parseBanlistIndex(banlist);
-        int ruleIdx = parseRuleIndex(rule);
-        int modeIdx = parseDuelModeIndex(duelMode);
-        int duelRule = ruleIdx + 1;
-        int lp = parseIntSafe(startLP, 8000);
-        int hand = parseIntSafe(startHand, 5);
-        int draw = parseIntSafe(drawCount, 1);
-        int time = parseIntSafe(timeLimit, 0);
         String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
 
         engine.startLocalServerWithSettings(lflist, ruleIdx, modeIdx, duelRule,
                 noCheckDeck, noShuffleDeck,
-                lp, hand, draw, time,
+                startLP, startHand, drawCount, timeLimit,
                 roomName, password != null ? password : "");
-    }
-
-    private int parseBanlistIndex(String banlist) {
-        if (banlist == null || banlist.equals("N/A")) return 0;
-        LimitManager limitManager = DataManager.get().getLimitManager();
-        boolean isGenesysMode = AppsSettings.get().getGenesysMode() == 1;
-        List<String> limitNames = isGenesysMode ?
-                limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
-        for (int i = 0; i < limitNames.size(); i++) {
-            if (limitNames.get(i).equals(banlist)) return i + 1;
-        }
-        return 0;
-    }
-
-    private int parseRuleIndex(String rule) {
-        if (rule == null) return 1;
-        switch (rule) {
-            case "大师规则4": return 0;
-            case "大师规则2020": return 1;
-            case "新大师规则": return 2;
-            case "大师规则": return 3;
-            default: return 1;
-        }
-    }
-
-    private int parseDuelModeIndex(String duelMode) {
-        if (duelMode == null) return 0;
-        switch (duelMode) {
-            case "单局模式": return 0;
-            case "三局两胜": return 1;
-            case "TAG": return 2;
-            default: return 0;
-        }
-    }
-
-    private int parseIntSafe(String value, int defaultValue) {
-        if (value == null || value.isEmpty()) return defaultValue;
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
     }
 
     @Override
@@ -682,6 +682,20 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     @Override
     public void onPlayerWaitingDeckSelected(String deckPath, String deckName, String categoryName) {
+    }
+
+    @Override
+    public void onStartGameRequested() {
+        if (engine != null) {
+            engine.sendStart();
+        }
+    }
+
+    @Override
+    public void onKickPlayerRequested(int pos) {
+        if (engine != null) {
+            engine.sendKick(pos);
+        }
     }
 
     private void showSingleModeDialog() {

@@ -482,12 +482,16 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 case 70: // MSG_CHAINING
                     if (buf.remaining() < 16) return false;
                     int chCode = buf.getInt();
-                    int chCtrl = buf.get() & 0xFF;
-                    int chLoc = buf.get() & 0xFF;
-                    int chSeq = buf.get() & 0xFF;
-                    int chCount = buf.get() & 0xFF;
-                    skipBytes(7);
-                    onChaining(chCode, chCtrl, chLoc, chSeq, chCount);
+                    int chPcc = buf.get() & 0xFF;
+                    int chPcl = buf.get() & 0xFF;
+                    int chPcs = buf.get() & 0xFF;
+                    int chSubs = buf.get() & 0xFF;
+                    int chCc = buf.get() & 0xFF;
+                    int chCl = buf.get() & 0xFF;
+                    int chCs = buf.get() & 0xFF;
+                    int chDesc = buf.getInt();
+                    int chCt = buf.get() & 0xFF;
+                    onChaining(chCode, chPcc, chPcl, chPcs, chSubs, chCc, chCl, chCs, chDesc);
                     break;
                 case 71: skipBytes(1); onChained(0); break;
                 case 72: skipBytes(1); onChainSolving(0); break;
@@ -866,8 +870,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onSpSummoned() { notifyField(); }
     @Override public void onFlipSummoning(int code, int ctrl, int loc, int seq) { soundManager.playSoundEffect(SoundManager.SFX.FLIP); }
     @Override public void onFlipSummoned() { notifyField(); }
-    @Override public void onChaining(int code, int ctrl, int loc, int seq, int chainCount) { soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE); }
-    @Override public void onChained(int code) { notifyField(); }
+
+    @Override
+    public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
+        soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
+    }
+
+    @Override public void onChained(int chainCount) { notifyField(); }
     @Override public void onChainSolving(int chainCount) {}
     @Override public void onChainSolved(int chainCount) { notifyField(); }
     @Override public void onChainEnd() { notifyField(); }

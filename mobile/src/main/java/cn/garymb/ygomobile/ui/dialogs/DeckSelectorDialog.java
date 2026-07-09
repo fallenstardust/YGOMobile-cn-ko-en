@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,9 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.DeckSelectorUtil;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 
 public class DeckSelectorDialog {
 
@@ -31,6 +31,7 @@ public class DeckSelectorDialog {
 
     public interface OnDeckSelectedListener {
         void onDeckSelected(String deckPath, String deckName, String categoryName);
+
         void onCancelled();
     }
 
@@ -164,7 +165,7 @@ public class DeckSelectorDialog {
         btnConfirm.setOnClickListener(v -> {
             if (selectedDeckPath[0].isEmpty()) {
                 android.widget.Toast.makeText(context, "请先选择一个卡组",
-                    android.widget.Toast.LENGTH_SHORT).show();
+                        android.widget.Toast.LENGTH_SHORT).show();
                 return;
             }
             String categoryName = "";
@@ -177,8 +178,8 @@ public class DeckSelectorDialog {
             }
         });
 
-        int popupWidth = (int) (480 * density);
-        int popupHeight = (int) (320 * density);
+        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
+        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(contentView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
@@ -235,7 +236,7 @@ public class DeckSelectorDialog {
             ViewHolder holder;
             if (convertView == null) {
                 convertView = LayoutInflater.from(context).inflate(
-                    R.layout.item_bot_list, parent, false);
+                        R.layout.item_bot_list, parent, false);
                 holder = new ViewHolder();
                 holder.textView = convertView.findViewById(R.id.tv_bot_item);
                 convertView.setTag(holder);
@@ -300,7 +301,7 @@ public class DeckSelectorDialog {
             ViewHolder holder;
             if (convertView == null) {
                 convertView = LayoutInflater.from(context).inflate(
-                    R.layout.item_bot_list, parent, false);
+                        R.layout.item_bot_list, parent, false);
                 holder = new ViewHolder();
                 holder.textView = convertView.findViewById(R.id.tv_bot_item);
                 convertView.setTag(holder);

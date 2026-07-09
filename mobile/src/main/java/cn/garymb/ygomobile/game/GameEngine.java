@@ -60,6 +60,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
         void onPlayerChange(int status);
 
+        void onWatchChange(int watchCount);
+
         void onJoinGame(int lflist, int rule, int mode, int duelRule,
                         int noCheckDeck, int noShuffleDeck,
                         int startLp, int startHand, int drawCount, int timeLimit);
@@ -502,6 +504,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         Log.i(TAG, "Player change: " + String.format("0x%02X", status));
         mainHandler.post(() -> {
             if (listener != null) listener.onPlayerChange(status);
+        });
+    }
+
+    @Override
+    public void onWatchChange(int watchCount) {
+        Log.i(TAG, "Watch count changed: " + watchCount);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onWatchChange(watchCount);
         });
     }
 
@@ -1029,10 +1039,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onChaining(int code, int ctrl, int loc, int seq, int chainCount) {
+    public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
         soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
         mainHandler.post(() -> {
-            if (listener != null) listener.onChainAnimation(code, ctrl, loc, seq);
+            if (listener != null) listener.onChainAnimation(code, cc, cl, cs);
         });
     }
 
