@@ -219,41 +219,41 @@
                     android:textSize="15sp"
                     tools:text="[A/XYZ]" />
 
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/ll_add_btn"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:orientation="horizontal">
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-
-                    <ImageButton
-                        android:id="@+id/btn_add_main"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:background="@drawable/button2_bg"
-                        android:padding="2dp"
-                        android:gravity="center"
-                        android:src="@drawable/ic_to_main"
-                        android:tooltipText="@string/card_add_main" />
+                        android:layout_gravity="right"
+                        android:orientation="horizontal">
+                        <ImageButton
+                            android:id="@+id/btn_add_main"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:background="@drawable/button2_bg"
+                            android:gravity="center"
+                            android:src="@drawable/ic_to_main"
+                            android:tooltipText="@string/card_add_main" />
 
-                    <ImageButton
-                        android:id="@+id/btn_add_side"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:padding="2dp"
-                        android:layout_marginLeft="5dp"
-                        android:background="@drawable/button2_bg"
-                        android:gravity="center"
-                        android:src="@drawable/ic_to_side"
-                        android:tooltipText="@string/card_add_side" />
-                </LinearLayout>
+                        <ImageButton
+                            android:id="@+id/btn_add_side"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:padding="2dp"
+                            android:layout_marginLeft="5dp"
+                            android:background="@drawable/button2_bg"
+                            android:gravity="center"
+                            android:src="@drawable/ic_to_side"
+                            android:tooltipText="@string/card_add_side" />
+                    </LinearLayout>
+                </FrameLayout>
             </LinearLayout>
 
             <LinearLayout

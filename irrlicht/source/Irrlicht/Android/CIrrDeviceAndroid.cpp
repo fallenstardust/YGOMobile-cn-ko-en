@@ -66,7 +66,8 @@ CIrrDeviceAndroid::CIrrDeviceAndroid(const SIrrlichtCreationParameters& param)
 		s32 Events = 0;
 		android_poll_source* Source = 0;
 
-		while ((ALooper_pollAll(((Focused && !Paused) || !Initialized) ? 0 : -1, 0, &Events, (void**)&Source)) >= 0)
+		// 适配NDK29: 原为 ALooper_pollAll, 在 NDK r29 中已废弃不可用, 改用 ALooper_pollOnce
+		while ((ALooper_pollOnce(((Focused && !Paused) || !Initialized) ? 0 : -1, 0, &Events, (void**)&Source)) >= 0)
 		{
 			if(Source)
 				Source->process(Android, Source);
@@ -107,7 +108,7 @@ bool CIrrDeviceAndroid::run()
 	s32 Events = 0;
 	android_poll_source* Source = 0;
 
-	while ((ALooper_pollAll(((Focused && !Paused) || !Initialized) ? 0 : -1, 0, &Events, (void**)&Source)) >= 0)
+	while ((ALooper_pollOnce(((Focused && !Paused) || !Initialized) ? 0 : -1, 0, &Events, (void**)&Source)) >= 0)
 	{
 		if(Source)
 			Source->process(Android, Source);

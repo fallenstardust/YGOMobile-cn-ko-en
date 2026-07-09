@@ -1742,9 +1742,12 @@ void DeckBuilder::FilterCards() {
             // filter_lm == 8 表示只显示自定义卡
             if(filter_lm == 8 && !(data.ot & AVAIL_CUSTOM))
                 continue;
-
-            // filter_lm == 9 表示只显示同时属于OCG和TCG的卡片（无独有卡）
-            if(filter_lm == 9 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
+			if(filter_lm == 9 && (!(data.ot & AVAIL_OCG) || (data.ot & AVAIL_TCG)))
+				continue;
+			if(filter_lm == 10 && (!(data.ot & AVAIL_TCG) || (data.ot & AVAIL_OCG)))
+				continue;
+            // filter_lm == 11 表示只显示同时属于OCG和TCG的卡片（无独有卡）
+            if(filter_lm == 11 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
                 continue;
         }
 

@@ -10,6 +10,10 @@
 #include "netserver.h"
 #include "single_mode.h"
 #include <thread>
+#include <chrono>
+#include <spawn.h>
+extern char **environ;
+#define GetEnviron() environ
 #include <string>
 #include <regex>
 
@@ -1100,10 +1104,12 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
 	cbLimit->addItem(dataManager.GetSysString(1317));// 限制
 	cbLimit->addItem(dataManager.GetSysString(1318));// 准限制
 	cbLimit->addItem(dataManager.GetSysString(1699));// 点数
-	cbLimit->addItem(dataManager.GetSysString(1481));// ＯＣＧ
-	cbLimit->addItem(dataManager.GetSysString(1482));// ＴＣＧ
+	cbLimit->addItem(dataManager.GetSysString(1481));// ＯＣＧ + 无独有
+	cbLimit->addItem(dataManager.GetSysString(1482));// ＴＣＧ + 无独有
 	cbLimit->addItem(dataManager.GetSysString(1483));// 简体中文
 	cbLimit->addItem(dataManager.GetSysString(1484));// 自定义卡片
+	cbLimit->addItem(dataManager.GetSysString(1487));// ＯＣＧ独有
+	cbLimit->addItem(dataManager.GetSysString(1488));// ＴＣＧ独有
 	cbLimit->addItem(dataManager.GetSysString(1485));// 无独有卡
     // 筛选卡片的条件：属性
 	stAttribute = env->addStaticText(dataManager.GetSysString(1319)/*属性：*/, Resize(10, 28, 70, 48), false, false, wFilter);
@@ -2659,6 +2665,7 @@ irr::core::vector2di Game::Resize_Y(irr::s32 x, irr::s32 y) {
     y = y * yScale;
 	return irr::core::vector2di(x, y);
 }
+
 void Game::ChangeToIGUIImageWindow(irr::gui::IGUIWindow* window, irr::gui::IGUIImage** pWindowBackground, irr::video::ITexture* image) {
     window->setDrawBackground(false);
     irr::core::recti pos = window->getRelativePosition();
