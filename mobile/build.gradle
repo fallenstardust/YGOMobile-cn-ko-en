@@ -9,8 +9,8 @@ android {
         minSdkVersion 25
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 312013009
-        versionName "3.13.5"
+        versionCode 312013010
+        versionName "3.13.5fix1"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "21.3.6528147"
@@ -149,4 +149,6 @@ dependencies {
     implementation 'org.java-websocket:Java-WebSocket:1.5.3'
     // MPAndroidChart 折线图库
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    // LZMA decompression for replay files
+    implementation 'org.tukaani:xz:1.9'
 }

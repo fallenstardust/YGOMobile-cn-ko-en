@@ -47,6 +47,10 @@ public interface Constants {
     boolean PREF_DEF_IMMERSIVE_MODE = false;
     String PREF_SENSOR_REFRESH = "pref_key_sensor_refresh";
     boolean PREF_DEF_SENSOR_REFRESH = true;
+
+    String PREF_NATIVE_GAME_MODE = "pref_key_native_game_mode";
+    boolean PREF_DEF_NATIVE_GAME_MODE = false;
+
     String PREF_CHANGE_LOG = "pref_key_change_log";
     String PREF_CHECK_UPDATE = "pref_key_about_check_update";
     String PREF_RESET_GAME_RES = "pref_key_reset_game_res";
@@ -162,6 +166,10 @@ public interface Constants {
 
     int CARD_RESULT_GRAVITY = Gravity.LEFT;
     int CARD_SEARCH_GRAVITY = Gravity.RIGHT;
+
+    int DIALOG_POPUP_WIDTH_DP = 560;
+    int DIALOG_POPUP_HEIGHT_DP = 320;
+
     int DEFAULT_CARD_COUNT = 500;
     int DECK_WIDTH_MAX_COUNT = 15;
     int DECK_WIDTH_COUNT = 10;

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/sdialogl"
+    android:padding="16dp">
+
+    <include
+        layout="@layout/dialog_lan_main"
+        android:id="@+id/layout_lan_main" />
+
+    <include
+        layout="@layout/dialog_create_host"
+        android:id="@+id/layout_create_host_settings"
+        android:visibility="gone" />
+
+    <include
+        layout="@layout/dialog_player_waiting"
+        android:id="@+id/layout_player_waiting"
+        android:visibility="gone" />
+
+</FrameLayout>
