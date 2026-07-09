@@ -18,34 +18,33 @@
             android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="20dp"
                 android:text="禁限卡表："
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="12sp" />
 
             <Spinner
                 android:id="@+id/spinner_banlist"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginHorizontal="10dp"
                 android:background="@color/ygopro_list_background" />
 
             ·<TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="20dp"
                 android:text="规则："
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="12sp" />
 
             <Spinner
                 android:id="@+id/spinner_rule"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="10dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
                 android:background="@color/ygopro_list_background" />
         </LinearLayout>
 
@@ -57,34 +56,33 @@
             android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="20dp"
                 android:text="卡片允许："
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="12sp" />
 
             <Spinner
                 android:id="@+id/spinner_card_allowed"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginHorizontal="10dp"
                 android:background="@color/ygopro_list_background" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="20dp"
                 android:text="初始基本分："
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/et_start_lp"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="10dp"
                 android:background="@color/ygopro_list_background"
                 android:inputType="number"
                 android:text="8000"
@@ -100,34 +98,33 @@
             android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="20dp"
                 android:text="决斗模式："
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="12sp" />
 
             <Spinner
                 android:id="@+id/spinner_duel_mode"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginHorizontal="10dp"
                 android:background="@color/ygopro_list_background" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="20dp"
                 android:text="初始手卡数："
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/et_start_hand"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="10dp"
                 android:background="@color/ygopro_list_background"
                 android:inputType="number"
                 android:text="5"
@@ -143,19 +140,18 @@
             android:layout_marginBottom="4dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="20dp"
                 android:text="每回合时间："
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/et_time_limit"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginHorizontal="10dp"
                 android:background="@color/ygopro_list_background"
                 android:inputType="number"
                 android:text="180"
@@ -163,18 +159,18 @@
                 android:textColor="#FFFFFF" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="20dp"
                 android:text="每回合抽卡："
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="12sp" />
 
             <EditText
                 android:id="@+id/et_draw_count"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="10dp"
                 android:background="@color/ygopro_list_background"
                 android:inputType="number"
                 android:text="1"
@@ -187,7 +183,6 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="5dp"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -197,7 +192,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="20dp"
             android:text="不检查卡组"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="12sp" />
 
         <CheckBox
@@ -205,7 +200,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="不洗切卡组"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="12sp" />
     </LinearLayout>
 
@@ -218,7 +213,7 @@
 
         <TextView
             android:layout_width="70dp"
-            android:layout_height="wrap_content"
+            android:layout_height="20dp"
             android:text="@string/server_ip"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -226,20 +221,17 @@
         <EditText
             android:id="@+id/et_host_name"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="40dp"
             android:layout_weight="1"
-            android:background="@drawable/selected_light"
-            android:hint="请输入主机名称（可选）"
-            android:paddingHorizontal="10dp"
+            android:background="@color/ygopro_list_background"
+            android:layout_marginHorizontal="10dp"
             android:textColor="@color/white"
-            android:textColorHint="@color/blackLight"
             android:gravity="center" />
 
         <Button
             android:id="@+id/btn_confirm_create"
             android:layout_width="110dp"
             android:layout_height="40dp"
-            android:layout_marginStart="10dp"
             android:layout_gravity="center"
             android:background="@drawable/button3_bg"
             android:text="@string/ok"
@@ -255,7 +247,7 @@
 
         <TextView
             android:layout_width="70dp"
-            android:layout_height="wrap_content"
+            android:layout_height="20dp"
             android:text="@string/server_room_pwd"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -263,15 +255,11 @@
         <EditText
             android:id="@+id/et_host_password"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="40dp"
             android:layout_weight="1"
-            android:background="@drawable/selected_light"
-            android:hint="请输入主机密码（可选）"
-            android:inputType="textPassword"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
+            android:background="@color/ygopro_list_background"
+            android:layout_marginHorizontal="10dp"
             android:textColor="@color/white"
-            android:textColorHint="@color/blackLight"
             android:gravity="center" />
 
         <Button
@@ -279,7 +267,6 @@
             android:layout_width="110dp"
             android:layout_height="40dp"
             android:layout_gravity="center"
-            android:layout_marginStart="10dp"
             android:background="@drawable/button3_bg"
             android:text="@string/quit"
             android:textColor="@color/white"

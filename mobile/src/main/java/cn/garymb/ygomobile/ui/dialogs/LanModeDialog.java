@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
@@ -47,7 +48,7 @@ public class LanModeDialog {
     private CheckBox chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready;
     private Button btnPwDuelistMode, btnPwSpectatorMode, btnPwReady, btnPwDeckSelect, btnPwExitWaiting;
     private Button btnPwStartGame;
-    private Button btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
+    private ImageButton btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
     private TextView tvPwBanlist, tvPwCardAllowed, tvPwDuelMode, tvPwStartLP, tvPwStartHand, tvPwDrawCount;
     private TextView tvWatchCount;
     private ListView lvWatchList;
@@ -841,7 +842,7 @@ public class LanModeDialog {
     }
 
     private void updateKickButtonsVisibility() {
-        Button[] kickButtons = {btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4};
+        ImageButton[] kickButtons = {btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4};
         TextView[] nameFields = {etPwPlayer1Name, etPwPlayer2Name, etPwPlayer3Name, etPwPlayer4Name};
         
         for (int i = 0; i < kickButtons.length; i++) {
@@ -861,7 +862,7 @@ public class LanModeDialog {
             return;
         }
         
-        Button kickButton = null;
+        ImageButton kickButton = null;
         switch (pos) {
             case 0:
                 kickButton = btnPwKickPlayer1;

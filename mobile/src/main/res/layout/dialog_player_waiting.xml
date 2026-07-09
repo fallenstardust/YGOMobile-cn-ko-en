@@ -2,9 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_player_waiting"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="20dp">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,36 +13,31 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="2"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <Button
                 android:id="@+id/btn_duelist_mode"
-                android:layout_width="120dp"
+                android:layout_width="110dp"
                 android:layout_height="40dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/button3_bg"
                 android:text="→决斗者"
                 android:textColor="#FFFFFF"
-                android:textSize="13sp"
-                android:background="@drawable/button3_bg"
-                android:layout_marginBottom="8dp" />
+                android:textSize="13sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginBottom="5dp"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="8dp">
+                android:orientation="horizontal">
 
-                <Button
+                <ImageButton
                     android:id="@+id/btn_kick_player1"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_marginEnd="4dp"
-                    android:text="×"
-                    android:textColor="#FF6B6B"
-                    android:textSize="16sp"
-                    android:background="@drawable/button3_bg"
-                    android:visibility="gone" />
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/ic_failed" />
 
                 <TextView
                     android:id="@+id/et_player1_name"
@@ -51,36 +45,28 @@
                     android:layout_height="38dp"
                     android:layout_weight="1"
                     android:background="@drawable/selected_light"
-                    android:paddingHorizontal="10dp"
-                    android:textColor="#FFFFFF"
+                    android:gravity="center"
+                    android:layout_marginHorizontal="5dp"
                     android:text="player1"
-                    android:gravity="center" />
+                    android:textColor="#FFFFFF" />
 
                 <CheckBox
                     android:id="@+id/chk_player1_ready"
                     android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_marginStart="8dp"
-                    android:button="@null" />
+                    android:layout_height="30dp" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="8dp">
+                android:orientation="horizontal">
 
-                <Button
+                <ImageButton
                     android:id="@+id/btn_kick_player2"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_marginEnd="4dp"
-                    android:text="×"
-                    android:textColor="#FF6B6B"
-                    android:textSize="16sp"
-                    android:background="@drawable/button3_bg"
-                    android:visibility="gone" />
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/ic_failed" />
 
                 <TextView
                     android:id="@+id/et_player2_name"
@@ -88,45 +74,44 @@
                     android:layout_height="40dp"
                     android:layout_weight="1"
                     android:background="@drawable/selected_light"
-                    android:paddingHorizontal="10dp"
-                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:layout_marginHorizontal="5dp"
                     android:text="player2"
-                    android:gravity="center" />
+                    android:textColor="@color/white" />
 
                 <CheckBox
                     android:id="@+id/chk_player2_ready"
                     android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_marginStart="8dp"
-                    android:button="@null" />
+                    android:layout_height="30dp" />
             </LinearLayout>
 
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginVertical="5dp"
                 android:gravity="center_vertical"
-                android:layout_marginVertical="10dp">
+                android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/btn_spectator_mode"
-                    android:layout_width="120dp"
+                    android:layout_width="110dp"
                     android:layout_height="40dp"
+                    android:layout_gravity="left"
+                    android:background="@drawable/button3_bg"
                     android:text="→观战"
                     android:textColor="#FFFFFF"
-                    android:textSize="13sp"
-                    android:background="@drawable/button3_bg" />
+                    android:textSize="13sp" />
 
                 <Button
                     android:id="@+id/btn_ready"
-                    android:layout_width="120dp"
+                    android:layout_width="110dp"
                     android:layout_height="40dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_gravity="right"
+                    android:background="@drawable/button3_bg"
                     android:text="点击准备"
                     android:textColor="#FFFFFF"
-                    android:textSize="13sp"
-                    android:background="@drawable/button3_bg" />
-            </LinearLayout>
+                    android:textSize="13sp" />
+            </FrameLayout>
 
             <LinearLayout
                 android:id="@+id/layout_tag_players"
@@ -137,20 +122,15 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
+                    android:orientation="horizontal">
 
-                    <Button
+                    <ImageButton
                         android:id="@+id/btn_kick_player3"
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:layout_marginEnd="4dp"
-                        android:text="×"
-                        android:textColor="#FF6B6B"
-                        android:textSize="16sp"
-                        android:background="@drawable/button3_bg"
-                        android:visibility="gone" />
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:background="@drawable/ic_failed" />
 
                     <TextView
                         android:id="@+id/et_player3_name"
@@ -158,36 +138,28 @@
                         android:layout_height="38dp"
                         android:layout_weight="1"
                         android:background="@drawable/selected_light"
-                        android:paddingHorizontal="10dp"
-                        android:textColor="#FFFFFF"
+                        android:gravity="center"
+                        android:layout_marginHorizontal="5dp"
                         android:text="player3"
-                        android:gravity="center" />
+                        android:textColor="#FFFFFF" />
 
                     <CheckBox
                         android:id="@+id/chk_player3_ready"
                         android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_marginStart="8dp"
-                        android:button="@null" />
+                        android:layout_height="30dp" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
+                    android:orientation="horizontal">
 
-                    <Button
+                    <ImageButton
                         android:id="@+id/btn_kick_player4"
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:layout_marginEnd="4dp"
-                        android:text="×"
-                        android:textColor="#FF6B6B"
-                        android:textSize="16sp"
-                        android:background="@drawable/button3_bg"
-                        android:visibility="gone" />
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:background="@drawable/ic_failed" />
 
                     <TextView
                         android:id="@+id/et_player4_name"
@@ -195,27 +167,25 @@
                         android:layout_height="38dp"
                         android:layout_weight="1"
                         android:background="@drawable/selected_light"
-                        android:paddingHorizontal="10dp"
-                        android:textColor="#FFFFFF"
+                        android:gravity="center"
+                        android:layout_marginHorizontal="5dp"
                         android:text="player4"
-                        android:gravity="center" />
+                        android:textColor="#FFFFFF" />
 
                     <CheckBox
                         android:id="@+id/chk_player4_ready"
                         android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_marginStart="8dp"
-                        android:button="@null" />
+                        android:layout_height="30dp" />
                 </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
                 android:layout_marginTop="15dp"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -230,12 +200,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:background="@drawable/button3_bg"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
+                android:gravity="center"
                 android:text="[SAMPLE]CyberMata"
-                android:textColor="#FFFFFF"
-                android:textSize="13sp"
-                android:gravity="start|center_vertical" />
+                android:textColor="@color/white"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -248,8 +216,8 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -262,17 +230,17 @@
                     android:id="@+id/tv_banlist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
                     android:text="N/A"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginStart="5dp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -285,17 +253,17 @@
                     android:id="@+id/tv_card_allowed"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
                     android:text="所有卡片"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginStart="5dp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -308,23 +276,23 @@
                     android:id="@+id/tv_duel_mode"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
                     android:text="单局模式"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginStart="5dp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="#33FFFFFF"
-                android:layout_marginVertical="10dp" />
+                android:layout_marginVertical="10dp"
+                android:background="#33FFFFFF" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -337,17 +305,17 @@
                     android:id="@+id/tv_start_lp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
                     android:text="8000"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginStart="5dp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -360,17 +328,17 @@
                     android:id="@+id/tv_start_hand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
                     android:text="5"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginStart="5dp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -383,84 +351,82 @@
                     android:id="@+id/tv_draw_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
                     android:text="1"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginStart="5dp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/layout_watch_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
                 android:layout_marginTop="10dp"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="#33FFFFFF"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="8dp"
+                    android:background="#33FFFFFF" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
                     android:text="观战玩家："
                     android:textColor="#AAAAAA"
-                    android:textSize="12sp"
-                    android:layout_marginBottom="4dp" />
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tv_watch_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="观战: 0"
-                    android:textColor="#FFFFFF"
-                    android:textSize="13sp"
+                    android:background="?android:attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="4dp"
-                    android:background="?android:attr/selectableItemBackground" />
+                    android:text="观战: 0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp" />
 
                 <ListView
                     android:id="@+id/lv_watch_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:maxHeight="80dp"
-                    android:visibility="gone"
                     android:divider="#33FFFFFF"
                     android:dividerHeight="1dp"
-                    android:padding="4dp" />
+                    android:maxHeight="80dp"
+                    android:padding="4dp"
+                    android:visibility="gone" />
             </LinearLayout>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginTop="15dp"
                 android:gravity="end"
-                android:layout_marginTop="15dp">
+                android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/btn_start_game"
-                    android:layout_width="80dp"
-                    android:layout_height="28dp"
+                    android:layout_width="110dp"
+                    android:layout_height="40dp"
                     android:layout_marginEnd="8dp"
+                    android:background="@drawable/button3_bg"
                     android:text="开始"
                     android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:background="@drawable/button3_bg"
-                    android:visibility="gone" />
+                    android:textSize="12sp"/>
 
                 <Button
                     android:id="@+id/btn_exit_waiting"
-                    android:layout_width="80dp"
-                    android:layout_height="28dp"
+                    android:layout_width="110dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/button3_bg"
                     android:text="退出"
                     android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:background="@drawable/button3_bg" />
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
