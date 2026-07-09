@@ -1,11 +1,13 @@
 package cn.garymb.ygomobile.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.PopupWindow;
 
 public class DraggablePopupHelper {
@@ -13,6 +15,7 @@ public class DraggablePopupHelper {
     private static final String KEY_X = "_x";
     private static final String KEY_Y = "_y";
     private static final long LONG_PRESS_TIMEOUT = 300;
+    private static final boolean ENABLE_DRAG = false;
 
     private final Context context;
     private final SharedPreferences prefs;
@@ -68,6 +71,7 @@ public class DraggablePopupHelper {
     }
 
     public void setupDraggablePopup(PopupWindow popupWindow, View contentView) {
+        if (!ENABLE_DRAG) return;
         final float[] initialTouchX = new float[1];
         final float[] initialTouchY = new float[1];
         final int[] initialPopupX = new int[1];
@@ -137,6 +141,7 @@ public class DraggablePopupHelper {
     }
 
     public void setupDraggableView(View targetView) {
+        if (!ENABLE_DRAG) return;
         if (!(targetView instanceof ViewGroup)) {
             setupSimpleDraggableView(targetView);
             return;
@@ -229,6 +234,7 @@ public class DraggablePopupHelper {
     }
 
     private void setupSimpleDraggableView(View targetView) {
+        if (!ENABLE_DRAG) return;
         final float[] initialTouchX = new float[1];
         final float[] initialTouchY = new float[1];
         final int[] initialViewX = new int[1];
@@ -308,10 +314,27 @@ public class DraggablePopupHelper {
     }
 
     public void showPopup(PopupWindow popupWindow, View anchorView) {
-        if (hasSavedPosition) {
-            popupWindow.showAtLocation(anchorView, Gravity.NO_GRAVITY, lastX, lastY);
-        } else {
-            popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
+        View effectiveAnchor = anchorView;
+        if (anchorView != null && anchorView.getWindowToken() == null) {
+            if (context instanceof Activity) {
+                effectiveAnchor = ((Activity) context).getWindow().getDecorView();
+            }
+        }
+        try {
+            if (hasSavedPosition) {
+                popupWindow.showAtLocation(effectiveAnchor, Gravity.NO_GRAVITY, lastX, lastY);
+            } else {
+                popupWindow.showAtLocation(effectiveAnchor, Gravity.CENTER, 0, 0);
+            }
+        } catch (WindowManager.BadTokenException e) {
+            if (context instanceof Activity) {
+                View decorView = ((Activity) context).getWindow().getDecorView();
+                if (hasSavedPosition) {
+                    popupWindow.showAtLocation(decorView, Gravity.NO_GRAVITY, lastX, lastY);
+                } else {
+                    popupWindow.showAtLocation(decorView, Gravity.CENTER, 0, 0);
+                }
+            }
         }
     }
 

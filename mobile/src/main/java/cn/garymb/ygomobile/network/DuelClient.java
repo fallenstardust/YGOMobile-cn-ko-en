@@ -37,6 +37,7 @@ public class DuelClient implements YGOProtocol {
         void onChatMessage(String player, String message);
         void onPlayerEnter(String name, int pos);
         void onPlayerChange(int status);
+        void onWatchChange(int watchCount);
         void onDuelStart();
         void onDuelEnd();
         void onGameMsg(int msgType, ByteBuffer data);
@@ -219,6 +220,9 @@ public class DuelClient implements YGOProtocol {
                 case STOC_HS_PLAYER_CHANGE:
                     listener.onPlayerChange(buf.get() & 0xFF);
                     break;
+                case STOC_HS_WATCH_CHANGE:
+                    handleWatchChange(buf);
+                    break;
                 default:
                     listener.onPacketReceived(proto, buf);
                     break;
@@ -314,6 +318,14 @@ public class DuelClient implements YGOProtocol {
         int pos = buf.get() & 0xFF;
         if (listener != null) {
             listener.onPlayerEnter(nameBuilder.toString(), pos);
+        }
+    }
+
+    private void handleWatchChange(ByteBuffer buf) {
+        if (buf.remaining() < 2) return;
+        int watchCount = buf.getShort() & 0xFFFF;
+        if (listener != null) {
+            listener.onWatchChange(watchCount);
         }
     }
 

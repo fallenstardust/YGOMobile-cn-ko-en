@@ -3,19 +3,18 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +34,7 @@ public class LanModeDialog {
     private PopupWindow popupWindow;
     private DraggablePopupHelper draggableHelper;
     private DeckSelectorDialog deckSelectorDialog;
-    
+
     private String currentDeckCategory = "";
     private String currentDeckName = "";
     private String currentDeckPath = "";
@@ -44,28 +43,46 @@ public class LanModeDialog {
     private View layoutCreateHost;
     private View layoutPlayerWaiting;
 
-    private EditText etPwPlayer1Name, etPwPlayer2Name, etPwPlayer3Name, etPwPlayer4Name;
+    private TextView etPwPlayer1Name, etPwPlayer2Name, etPwPlayer3Name, etPwPlayer4Name;
     private CheckBox chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready;
     private Button btnPwDuelistMode, btnPwSpectatorMode, btnPwReady, btnPwDeckSelect, btnPwExitWaiting;
+    private Button btnPwStartGame;
+    private Button btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
     private TextView tvPwBanlist, tvPwCardAllowed, tvPwDuelMode, tvPwStartLP, tvPwStartHand, tvPwDrawCount;
+    private TextView tvWatchCount;
+    private ListView lvWatchList;
     private View layoutTagPlayers;
+    private View layoutWatchInfo;
     private int selfPos = 0;
     private boolean isSelfReady = false;
+    private int watchCount = 0;
+    private List<String> observerNames = new ArrayList<>();
 
     public interface OnLanModeListener {
-        void onCreateHostConfirmed(String banlist, String rule, String cardAllowed,
-                                   String startLP, String duelMode, String startHand,
-                                   String timeLimit, String drawCount,
+        void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
+                                   int startLP, int startHand, int drawCount, int timeLimit,
                                    boolean noCheckDeck, boolean noShuffleDeck,
                                    String hostName, String password);
+
         void onJoinGameRequested(String ip, String port, String password, String nickname);
+
         void onExitLan();
+
         void onPlayerWaitingReady();
+
         void onPlayerWaitingNotReady();
+
         void onPlayerWaitingToDuelist();
+
         void onPlayerWaitingToObserver();
+
         void onPlayerWaitingExit();
+
         void onPlayerWaitingDeckSelected(String deckPath, String deckName, String categoryName);
+
+        void onStartGameRequested();
+
+        void onKickPlayerRequested(int pos);
     }
 
     private OnLanModeListener listener;
@@ -128,7 +145,7 @@ public class LanModeDialog {
         Button btnConfirmCreate = layoutCreateHost.findViewById(R.id.btn_confirm_create);
         Button btnCancelCreate = layoutCreateHost.findViewById(R.id.btn_cancel_create);
 
-        initPlayerWaitingViews(layoutPlayerWaiting);
+        initPlayerWaitingViews(customView);
 
         float density = context.getResources().getDisplayMetrics().density;
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
@@ -183,19 +200,28 @@ public class LanModeDialog {
             String banlist = SimpleSpinnerAdapter.getSelectText(spinnerBanlist);
             String rule = SimpleSpinnerAdapter.getSelectText(spinnerRule);
             String cardAllowed = SimpleSpinnerAdapter.getSelectText(spinnerCardAllowed);
-            String startLP = etStartLP.getText().toString();
+            String startLPStr = etStartLP.getText().toString();
             String duelMode = SimpleSpinnerAdapter.getSelectText(spinnerDuelMode);
-            String startHand = etStartHand.getText().toString();
-            String timeLimit = etTimeLimit.getText().toString();
-            String drawCount = etDrawCount.getText().toString();
+            String startHandStr = etStartHand.getText().toString();
+            String timeLimitStr = etTimeLimit.getText().toString();
+            String drawCountStr = etDrawCount.getText().toString();
             boolean noCheckDeck = chkNoCheckDeck.isChecked();
             boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
             String hostName = etHostName.getText().toString();
             String password = etHostPassword.getText().toString();
 
+            int lflist = parseBanlistIndex(banlist);
+            int ruleIdx = parseRuleIndex(rule);
+            int modeIdx = parseDuelModeIndex(duelMode);
+            int duelRule = ruleIdx + 1;
+            int lp = parseIntSafe(startLPStr, 8000);
+            int hand = parseIntSafe(startHandStr, 5);
+            int draw = parseIntSafe(drawCountStr, 1);
+            int time = parseIntSafe(timeLimitStr, 0);
+
             if (listener != null) {
-                listener.onCreateHostConfirmed(banlist, rule, cardAllowed, startLP,
-                        duelMode, startHand, timeLimit, drawCount,
+                listener.onCreateHostConfirmed(lflist, ruleIdx, modeIdx, duelRule,
+                        lp, hand, draw, time,
                         noCheckDeck, noShuffleDeck, hostName, password);
             }
 
@@ -205,10 +231,10 @@ public class LanModeDialog {
             tvPwBanlist.setText(banlist.isEmpty() ? "N/A" : banlist);
             tvPwCardAllowed.setText(cardAllowed.isEmpty() ? "所有卡片" : cardAllowed);
             tvPwDuelMode.setText(duelMode.isEmpty() ? "单局模式" : duelMode);
-            tvPwStartLP.setText(startLP.isEmpty() ? "8000" : startLP);
-            tvPwStartHand.setText(startHand.isEmpty() ? "5" : startHand);
-            tvPwDrawCount.setText(drawCount.isEmpty() ? "1" : drawCount);
-            
+            tvPwStartLP.setText(startLPStr.isEmpty() ? "8000" : startLPStr);
+            tvPwStartHand.setText(startHandStr.isEmpty() ? "5" : startHandStr);
+            tvPwDrawCount.setText(drawCountStr.isEmpty() ? "1" : drawCountStr);
+
             AppsSettings.get().setLastLimit(banlist);
         });
 
@@ -272,7 +298,10 @@ public class LanModeDialog {
         draggableHelper.showPopup(popupWindow, anchorView);
     }
 
-    private void initPlayerWaitingViews(View layoutPlayerWaiting) {
+    private void initPlayerWaitingViews(View root) {
+        View layoutPlayerWaiting = root.findViewById(R.id.layout_player_waiting);
+        if (layoutPlayerWaiting == null) return;
+
         etPwPlayer1Name = layoutPlayerWaiting.findViewById(R.id.et_player1_name);
         etPwPlayer2Name = layoutPlayerWaiting.findViewById(R.id.et_player2_name);
         etPwPlayer3Name = layoutPlayerWaiting.findViewById(R.id.et_player3_name);
@@ -286,13 +315,91 @@ public class LanModeDialog {
         btnPwReady = layoutPlayerWaiting.findViewById(R.id.btn_ready);
         btnPwDeckSelect = layoutPlayerWaiting.findViewById(R.id.btn_deck_select);
         btnPwExitWaiting = layoutPlayerWaiting.findViewById(R.id.btn_exit_waiting);
+        btnPwStartGame = layoutPlayerWaiting.findViewById(R.id.btn_start_game);
+        btnPwKickPlayer1 = layoutPlayerWaiting.findViewById(R.id.btn_kick_player1);
+        btnPwKickPlayer2 = layoutPlayerWaiting.findViewById(R.id.btn_kick_player2);
+        btnPwKickPlayer3 = layoutPlayerWaiting.findViewById(R.id.btn_kick_player3);
+        btnPwKickPlayer4 = layoutPlayerWaiting.findViewById(R.id.btn_kick_player4);
         tvPwBanlist = layoutPlayerWaiting.findViewById(R.id.tv_banlist);
         tvPwCardAllowed = layoutPlayerWaiting.findViewById(R.id.tv_card_allowed);
         tvPwDuelMode = layoutPlayerWaiting.findViewById(R.id.tv_duel_mode);
         tvPwStartLP = layoutPlayerWaiting.findViewById(R.id.tv_start_lp);
         tvPwStartHand = layoutPlayerWaiting.findViewById(R.id.tv_start_hand);
         tvPwDrawCount = layoutPlayerWaiting.findViewById(R.id.tv_draw_count);
+        tvWatchCount = layoutPlayerWaiting.findViewById(R.id.tv_watch_count);
+        lvWatchList = layoutPlayerWaiting.findViewById(R.id.lv_watch_list);
         layoutTagPlayers = layoutPlayerWaiting.findViewById(R.id.layout_tag_players);
+        layoutWatchInfo = layoutPlayerWaiting.findViewById(R.id.layout_watch_info);
+        
+        setupWatchView();
+    }
+
+    private void setupWatchView() {
+        if (tvWatchCount != null) {
+            tvWatchCount.setOnClickListener(v -> toggleWatchList());
+        }
+    }
+
+    private void toggleWatchList() {
+        if (lvWatchList != null) {
+            if (lvWatchList.getVisibility() == View.VISIBLE) {
+                lvWatchList.setVisibility(View.GONE);
+            } else {
+                updateWatchListAdapter();
+                lvWatchList.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    private void updateWatchListAdapter() {
+        if (lvWatchList == null || observerNames.isEmpty()) return;
+        
+        SimpleListAdapter adapter = new SimpleListAdapter(context);
+        adapter.set(observerNames);
+        lvWatchList.setAdapter(adapter);
+    }
+
+    public void updateWatchCount(int count) {
+        watchCount = count;
+        if (tvWatchCount != null) {
+            tvWatchCount.setText("观战: " + count);
+        }
+        
+        if (layoutWatchInfo != null) {
+            if (count > 0) {
+                layoutWatchInfo.setVisibility(View.VISIBLE);
+            } else {
+                layoutWatchInfo.setVisibility(View.GONE);
+                observerNames.clear();
+                if (lvWatchList != null) {
+                    lvWatchList.setVisibility(View.GONE);
+                }
+            }
+        }
+    }
+
+    public void addObserver(String name) {
+        if (name != null && !name.isEmpty() && !observerNames.contains(name)) {
+            observerNames.add(name);
+            if (lvWatchList != null && lvWatchList.getVisibility() == View.VISIBLE) {
+                updateWatchListAdapter();
+            }
+        }
+    }
+
+    public void removeObserver(String name) {
+        if (observerNames.remove(name)) {
+            if (lvWatchList != null && lvWatchList.getVisibility() == View.VISIBLE) {
+                updateWatchListAdapter();
+            }
+        }
+    }
+
+    public void clearObservers() {
+        observerNames.clear();
+        if (lvWatchList != null) {
+            lvWatchList.setVisibility(View.GONE);
+        }
     }
 
     public void showPlayerWaiting() {
@@ -301,6 +408,8 @@ public class LanModeDialog {
         if (layoutPlayerWaiting != null) layoutPlayerWaiting.setVisibility(View.VISIBLE);
 
         resetPlayerWaitingState();
+        setupKickButtons();
+        setupStartButton();
     }
 
     public void resetPlayerWaitingState() {
@@ -308,10 +417,22 @@ public class LanModeDialog {
         if (etPwPlayer2Name != null) etPwPlayer2Name.setText("");
         if (etPwPlayer3Name != null) etPwPlayer3Name.setText("");
         if (etPwPlayer4Name != null) etPwPlayer4Name.setText("");
-        if (chkPwPlayer1Ready != null) { chkPwPlayer1Ready.setChecked(false); chkPwPlayer1Ready.setOnCheckedChangeListener(null); }
-        if (chkPwPlayer2Ready != null) { chkPwPlayer2Ready.setChecked(false); chkPwPlayer2Ready.setOnCheckedChangeListener(null); }
-        if (chkPwPlayer3Ready != null) { chkPwPlayer3Ready.setChecked(false); chkPwPlayer3Ready.setOnCheckedChangeListener(null); }
-        if (chkPwPlayer4Ready != null) { chkPwPlayer4Ready.setChecked(false); chkPwPlayer4Ready.setOnCheckedChangeListener(null); }
+        if (chkPwPlayer1Ready != null) {
+            chkPwPlayer1Ready.setChecked(false);
+            chkPwPlayer1Ready.setOnCheckedChangeListener(null);
+        }
+        if (chkPwPlayer2Ready != null) {
+            chkPwPlayer2Ready.setChecked(false);
+            chkPwPlayer2Ready.setOnCheckedChangeListener(null);
+        }
+        if (chkPwPlayer3Ready != null) {
+            chkPwPlayer3Ready.setChecked(false);
+            chkPwPlayer3Ready.setOnCheckedChangeListener(null);
+        }
+        if (chkPwPlayer4Ready != null) {
+            chkPwPlayer4Ready.setChecked(false);
+            chkPwPlayer4Ready.setOnCheckedChangeListener(null);
+        }
         isSelfReady = false;
         selfPos = 0;
         if (btnPwReady != null) {
@@ -322,17 +443,57 @@ public class LanModeDialog {
         if (btnPwDuelistMode != null) btnPwDuelistMode.setEnabled(false);
         if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(true);
         if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.GONE);
+        
+        hideAllKickButtons();
+        if (btnPwStartGame != null) btnPwStartGame.setVisibility(View.GONE);
+        
+        watchCount = 0;
+        observerNames.clear();
+        if (layoutWatchInfo != null) layoutWatchInfo.setVisibility(View.GONE);
+        if (lvWatchList != null) lvWatchList.setVisibility(View.GONE);
+        if (tvWatchCount != null) tvWatchCount.setText("观战: 0");
 
         updateSelfCheckboxInteractivity();
     }
 
     public void setPlayerName(int pos, String name) {
         switch (pos) {
-            case 0: if (etPwPlayer1Name != null) etPwPlayer1Name.setText(name); break;
-            case 1: if (etPwPlayer2Name != null) etPwPlayer2Name.setText(name); break;
-            case 2: if (etPwPlayer3Name != null) etPwPlayer3Name.setText(name); break;
-            case 3: if (etPwPlayer4Name != null) etPwPlayer4Name.setText(name); break;
+            case 0:
+                if (etPwPlayer1Name != null) etPwPlayer1Name.setText(name);
+                break;
+            case 1:
+                if (etPwPlayer2Name != null) etPwPlayer2Name.setText(name);
+                break;
+            case 2:
+                if (etPwPlayer3Name != null) etPwPlayer3Name.setText(name);
+                break;
+            case 3:
+                if (etPwPlayer4Name != null) etPwPlayer4Name.setText(name);
+                break;
         }
+        
+        if (selfPos == 0) {
+            updateKickButtonsVisibility();
+        }
+    }
+
+    public String getPlayerName(int pos) {
+        TextView nameField = null;
+        switch (pos) {
+            case 0:
+                nameField = etPwPlayer1Name;
+                break;
+            case 1:
+                nameField = etPwPlayer2Name;
+                break;
+            case 2:
+                nameField = etPwPlayer3Name;
+                break;
+            case 3:
+                nameField = etPwPlayer4Name;
+                break;
+        }
+        return nameField != null ? nameField.getText().toString() : "";
     }
 
     public void setPlayerReady(int pos, boolean ready) {
@@ -352,15 +513,27 @@ public class LanModeDialog {
     public void clearPlayerPos(int pos) {
         setPlayerName(pos, "");
         setPlayerReady(pos, false);
+        
+        if (selfPos == 0) {
+            updateKickButtonsVisibility();
+        }
     }
 
     public void movePlayer(int fromPos, int toPos) {
         String name = "";
         switch (fromPos) {
-            case 0: name = etPwPlayer1Name != null ? etPwPlayer1Name.getText().toString() : ""; break;
-            case 1: name = etPwPlayer2Name != null ? etPwPlayer2Name.getText().toString() : ""; break;
-            case 2: name = etPwPlayer3Name != null ? etPwPlayer3Name.getText().toString() : ""; break;
-            case 3: name = etPwPlayer4Name != null ? etPwPlayer4Name.getText().toString() : ""; break;
+            case 0:
+                name = etPwPlayer1Name != null ? etPwPlayer1Name.getText().toString() : "";
+                break;
+            case 1:
+                name = etPwPlayer2Name != null ? etPwPlayer2Name.getText().toString() : "";
+                break;
+            case 2:
+                name = etPwPlayer3Name != null ? etPwPlayer3Name.getText().toString() : "";
+                break;
+            case 3:
+                name = etPwPlayer4Name != null ? etPwPlayer4Name.getText().toString() : "";
+                break;
         }
         setPlayerName(toPos, name);
         clearPlayerPos(fromPos);
@@ -373,10 +546,17 @@ public class LanModeDialog {
 
         String duelModeText;
         switch (mode) {
-            case 0: duelModeText = "单局模式"; break;
-            case 1: duelModeText = "三局两胜"; break;
-            case 2: duelModeText = "TAG"; break;
-            default: duelModeText = "单局模式";
+            case 0:
+                duelModeText = "单局模式";
+                break;
+            case 1:
+                duelModeText = "三局两胜";
+                break;
+            case 2:
+                duelModeText = "TAG";
+                break;
+            default:
+                duelModeText = "单局模式";
         }
         if (tvPwDuelMode != null) tvPwDuelMode.setText(duelModeText);
 
@@ -398,35 +578,47 @@ public class LanModeDialog {
             if (btnPwDuelistMode != null) btnPwDuelistMode.setEnabled(true);
             if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(false);
         }
+        
+        boolean isHost = (selfType == 0);
+        
+        if (btnPwStartGame != null) {
+            btnPwStartGame.setVisibility(isHost ? View.VISIBLE : View.GONE);
+        }
+        
+        if (isHost) {
+            updateKickButtonsVisibility();
+        } else {
+            hideAllKickButtons();
+        }
     }
 
     public boolean isPlayerWaitingVisible() {
         return layoutPlayerWaiting != null && layoutPlayerWaiting.getVisibility() == View.VISIBLE;
     }
 
-    private void setupSpinners(Spinner spinnerBanlist, Spinner spinnerRule, 
+    private void setupSpinners(Spinner spinnerBanlist, Spinner spinnerRule,
                                Spinner spinnerCardAllowed, Spinner spinnerDuelMode) {
         LimitManager limitManager = DataManager.get().getLimitManager();
-        
+
         List<SimpleSpinnerItem> banlistItems = new ArrayList<>();
         banlistItems.add(new SimpleSpinnerItem(0, "N/A"));
-        
+
         boolean isGenesysMode = AppsSettings.get().getGenesysMode() == 1;
-        List<String> limitNames = isGenesysMode ? 
-            limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
-        
+        List<String> limitNames = isGenesysMode ?
+                limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
+
         for (String limitName : limitNames) {
             banlistItems.add(new SimpleSpinnerItem(banlistItems.size(), limitName));
         }
-        
+
         SimpleSpinnerAdapter banlistAdapter = new SimpleSpinnerAdapter(context);
         banlistAdapter.setColor(Color.WHITE);
         banlistAdapter.set(banlistItems);
         spinnerBanlist.setAdapter(banlistAdapter);
-        
-        String lastLimit = isGenesysMode ? 
-            AppsSettings.get().getLastGenesysLimit() : AppsSettings.get().getLastLimit();
-        
+
+        String lastLimit = isGenesysMode ?
+                AppsSettings.get().getLastGenesysLimit() : AppsSettings.get().getLastLimit();
+
         int selectedIndex = 0;
         for (int i = 0; i < banlistItems.size(); i++) {
             if (banlistItems.get(i).text.equals(lastLimit)) {
@@ -441,7 +633,7 @@ public class LanModeDialog {
         ruleItems.add(new SimpleSpinnerItem(1, "大师规则2020"));
         ruleItems.add(new SimpleSpinnerItem(2, "新大师规则"));
         ruleItems.add(new SimpleSpinnerItem(3, "大师规则"));
-        
+
         SimpleSpinnerAdapter ruleAdapter = new SimpleSpinnerAdapter(context);
         ruleAdapter.setColor(Color.WHITE);
         ruleAdapter.set(ruleItems);
@@ -452,7 +644,7 @@ public class LanModeDialog {
         cardAllowedItems.add(new SimpleSpinnerItem(0, "所有卡片"));
         cardAllowedItems.add(new SimpleSpinnerItem(1, "仅OCG"));
         cardAllowedItems.add(new SimpleSpinnerItem(2, "仅TCG"));
-        
+
         SimpleSpinnerAdapter cardAllowedAdapter = new SimpleSpinnerAdapter(context);
         cardAllowedAdapter.setColor(Color.WHITE);
         cardAllowedAdapter.set(cardAllowedItems);
@@ -463,7 +655,7 @@ public class LanModeDialog {
         duelModeItems.add(new SimpleSpinnerItem(0, "单局模式"));
         duelModeItems.add(new SimpleSpinnerItem(1, "三局两胜"));
         duelModeItems.add(new SimpleSpinnerItem(2, "TAG"));
-        
+
         SimpleSpinnerAdapter duelModeAdapter = new SimpleSpinnerAdapter(context);
         duelModeAdapter.setColor(Color.WHITE);
         duelModeAdapter.set(duelModeItems);
@@ -556,12 +748,149 @@ public class LanModeDialog {
         }
     }
 
+    public static int parseBanlistIndex(String banlist) {
+        if (banlist == null || banlist.equals("N/A")) return 0;
+        LimitManager limitManager = DataManager.get().getLimitManager();
+        boolean isGenesysMode = AppsSettings.get().getGenesysMode() == 1;
+        List<String> limitNames = isGenesysMode ?
+                limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
+        for (int i = 0; i < limitNames.size(); i++) {
+            if (limitNames.get(i).equals(banlist)) return i + 1;
+        }
+        return 0;
+    }
+
+    public static int parseRuleIndex(String rule) {
+        if (rule == null) return 1;
+        switch (rule) {
+            case "大师规则4":
+                return 0;
+            case "大师规则2020":
+                return 1;
+            case "新大师规则":
+                return 2;
+            case "大师规则":
+                return 3;
+            default:
+                return 1;
+        }
+    }
+
+    public static int parseDuelModeIndex(String duelMode) {
+        if (duelMode == null) return 0;
+        switch (duelMode) {
+            case "单局模式":
+                return 0;
+            case "三局两胜":
+                return 1;
+            case "TAG":
+                return 2;
+            default:
+                return 0;
+        }
+    }
+
+    public static int parseIntSafe(String value, int defaultValue) {
+        if (value == null || value.isEmpty()) return defaultValue;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     public void dismiss() {
         if (popupWindow != null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }
         if (deckSelectorDialog != null) {
             deckSelectorDialog.dismiss();
+        }
+    }
+
+    private void setupKickButtons() {
+        if (btnPwKickPlayer1 != null) {
+            btnPwKickPlayer1.setOnClickListener(v -> sendKickPacket(0));
+        }
+        if (btnPwKickPlayer2 != null) {
+            btnPwKickPlayer2.setOnClickListener(v -> sendKickPacket(1));
+        }
+        if (btnPwKickPlayer3 != null) {
+            btnPwKickPlayer3.setOnClickListener(v -> sendKickPacket(2));
+        }
+        if (btnPwKickPlayer4 != null) {
+            btnPwKickPlayer4.setOnClickListener(v -> sendKickPacket(3));
+        }
+    }
+
+    private void setupStartButton() {
+        if (btnPwStartGame != null) {
+            btnPwStartGame.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onStartGameRequested();
+                }
+            });
+        }
+    }
+
+    private void hideAllKickButtons() {
+        if (btnPwKickPlayer1 != null) btnPwKickPlayer1.setVisibility(View.GONE);
+        if (btnPwKickPlayer2 != null) btnPwKickPlayer2.setVisibility(View.GONE);
+        if (btnPwKickPlayer3 != null) btnPwKickPlayer3.setVisibility(View.GONE);
+        if (btnPwKickPlayer4 != null) btnPwKickPlayer4.setVisibility(View.GONE);
+    }
+
+    private void updateKickButtonsVisibility() {
+        Button[] kickButtons = {btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4};
+        TextView[] nameFields = {etPwPlayer1Name, etPwPlayer2Name, etPwPlayer3Name, etPwPlayer4Name};
+        
+        for (int i = 0; i < kickButtons.length; i++) {
+            if (kickButtons[i] != null && nameFields[i] != null) {
+                String playerName = nameFields[i].getText().toString();
+                if (!playerName.isEmpty()) {
+                    kickButtons[i].setVisibility(View.VISIBLE);
+                } else {
+                    kickButtons[i].setVisibility(View.GONE);
+                }
+            }
+        }
+    }
+
+    private void updateKickButtonVisibility(int pos, String name) {
+        if (name == null || name.isEmpty()) {
+            return;
+        }
+        
+        Button kickButton = null;
+        switch (pos) {
+            case 0:
+                kickButton = btnPwKickPlayer1;
+                break;
+            case 1:
+                kickButton = btnPwKickPlayer2;
+                break;
+            case 2:
+                kickButton = btnPwKickPlayer3;
+                break;
+            case 3:
+                kickButton = btnPwKickPlayer4;
+                break;
+        }
+        
+        if (kickButton != null && selfPos == 0) {
+            kickButton.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void updateStartButtonVisibility() {
+        if (btnPwStartGame != null && selfPos == 0) {
+            btnPwStartGame.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void sendKickPacket(int pos) {
+        if (listener != null) {
+            listener.onKickPlayerRequested(pos);
         }
     }
 }
