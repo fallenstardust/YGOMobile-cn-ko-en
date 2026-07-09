@@ -443,7 +443,7 @@ public class LanModeDialog {
         }
         if (btnPwDuelistMode != null) btnPwDuelistMode.setEnabled(false);
         if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(true);
-        if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.GONE);
+        if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.INVISIBLE);
         
         hideAllKickButtons();
         if (btnPwStartGame != null) btnPwStartGame.setVisibility(View.GONE);
@@ -562,7 +562,7 @@ public class LanModeDialog {
         if (tvPwDuelMode != null) tvPwDuelMode.setText(duelModeText);
 
         if (layoutTagPlayers != null) {
-            layoutTagPlayers.setVisibility(mode == 2 ? View.VISIBLE : View.GONE);
+            layoutTagPlayers.setVisibility(mode == 2 ? View.VISIBLE : View.INVISIBLE);
         }
     }
 
@@ -835,10 +835,10 @@ public class LanModeDialog {
     }
 
     private void hideAllKickButtons() {
-        if (btnPwKickPlayer1 != null) btnPwKickPlayer1.setVisibility(View.GONE);
-        if (btnPwKickPlayer2 != null) btnPwKickPlayer2.setVisibility(View.GONE);
-        if (btnPwKickPlayer3 != null) btnPwKickPlayer3.setVisibility(View.GONE);
-        if (btnPwKickPlayer4 != null) btnPwKickPlayer4.setVisibility(View.GONE);
+        if (btnPwKickPlayer1 != null) btnPwKickPlayer1.setVisibility(View.INVISIBLE);
+        if (btnPwKickPlayer2 != null) btnPwKickPlayer2.setVisibility(View.INVISIBLE);
+        if (btnPwKickPlayer3 != null) btnPwKickPlayer3.setVisibility(View.INVISIBLE);
+        if (btnPwKickPlayer4 != null) btnPwKickPlayer4.setVisibility(View.INVISIBLE);
     }
 
     private void updateKickButtonsVisibility() {
@@ -851,7 +851,7 @@ public class LanModeDialog {
                 if (!playerName.isEmpty()) {
                     kickButtons[i].setVisibility(View.VISIBLE);
                 } else {
-                    kickButtons[i].setVisibility(View.GONE);
+                    kickButtons[i].setVisibility(View.INVISIBLE);
                 }
             }
         }

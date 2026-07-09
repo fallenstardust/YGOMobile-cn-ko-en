@@ -18,13 +18,13 @@
 
             <Button
                 android:id="@+id/btn_duelist_mode"
-                android:layout_width="110dp"
-                android:layout_height="40dp"
+                android:layout_width="100dp"
+                android:layout_height="30dp"
                 android:layout_marginBottom="5dp"
                 android:background="@drawable/button3_bg"
                 android:text="→决斗者"
                 android:textColor="#FFFFFF"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -42,7 +42,7 @@
                 <TextView
                     android:id="@+id/et_player1_name"
                     android:layout_width="0dp"
-                    android:layout_height="38dp"
+                    android:layout_height="30dp"
                     android:layout_weight="1"
                     android:background="@drawable/selected_light"
                     android:gravity="center"
@@ -71,7 +71,7 @@
                 <TextView
                     android:id="@+id/et_player2_name"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="30dp"
                     android:layout_weight="1"
                     android:background="@drawable/selected_light"
                     android:gravity="center"
@@ -94,23 +94,23 @@
 
                 <Button
                     android:id="@+id/btn_spectator_mode"
-                    android:layout_width="110dp"
-                    android:layout_height="40dp"
+                    android:layout_width="100dp"
+                    android:layout_height="30dp"
                     android:layout_gravity="left"
                     android:background="@drawable/button3_bg"
                     android:text="→观战"
                     android:textColor="#FFFFFF"
-                    android:textSize="13sp" />
+                    android:textSize="12sp" />
 
                 <Button
                     android:id="@+id/btn_ready"
-                    android:layout_width="110dp"
-                    android:layout_height="40dp"
+                    android:layout_width="100dp"
+                    android:layout_height="30dp"
                     android:layout_gravity="right"
                     android:background="@drawable/button3_bg"
                     android:text="点击准备"
                     android:textColor="#FFFFFF"
-                    android:textSize="13sp" />
+                    android:textSize="12sp" />
             </FrameLayout>
 
             <LinearLayout
@@ -135,11 +135,11 @@
                     <TextView
                         android:id="@+id/et_player3_name"
                         android:layout_width="0dp"
-                        android:layout_height="38dp"
+                        android:layout_height="30dp"
+                        android:layout_marginHorizontal="5dp"
                         android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
-                        android:layout_marginHorizontal="5dp"
                         android:text="player3"
                         android:textColor="#FFFFFF" />
 
@@ -164,7 +164,7 @@
                     <TextView
                         android:id="@+id/et_player4_name"
                         android:layout_width="0dp"
-                        android:layout_height="38dp"
+                        android:layout_height="30dp"
                         android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
@@ -182,8 +182,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginVertical="5dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -192,7 +191,7 @@
                     android:layout_height="wrap_content"
                     android:text="卡组选择："
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <Button
@@ -208,7 +207,7 @@
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:orientation="vertical"
             android:paddingStart="20dp">
