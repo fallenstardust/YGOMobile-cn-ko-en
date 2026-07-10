@@ -58,6 +58,7 @@ import cn.garymb.ygomobile.game.ReplayEngine;
 import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
@@ -258,6 +259,63 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 lanModeDialog.updateTypeChange(selfType, isTag);
             }
         });
+    }
+
+    @Override
+    public void onDeckError(int errorType, int cardCode) {
+        String errorDesc;
+        switch (errorType) {
+            case YGOProtocol.DECKERROR_LFLIST:
+                errorDesc = "禁限卡表违规";
+                break;
+            case YGOProtocol.DECKERROR_OCGONLY:
+                errorDesc = "仅限OCG卡片";
+                break;
+            case YGOProtocol.DECKERROR_TCGONLY:
+                errorDesc = "仅限TCG卡片";
+                break;
+            case YGOProtocol.DECKERROR_UNKNOWNCARD:
+                errorDesc = "未知卡片";
+                break;
+            case YGOProtocol.DECKERROR_CARDCOUNT:
+                errorDesc = "卡片数量超限";
+                break;
+            case YGOProtocol.DECKERROR_MAINCOUNT:
+                errorDesc = "主卡组数量不符(" + cardCode + "张)";
+                break;
+            case YGOProtocol.DECKERROR_EXTRACOUNT:
+                errorDesc = "额外卡组数量超限(" + cardCode + "张)";
+                break;
+            case YGOProtocol.DECKERROR_SIDECOUNT:
+                errorDesc = "副卡组数量超限(" + cardCode + "张)";
+                break;
+            case YGOProtocol.DECKERROR_NOTAVAIL:
+                errorDesc = "卡片不可用";
+                break;
+            default:
+                errorDesc = "未知卡组错误(type=" + errorType + ")";
+                break;
+        }
+
+        String cardName = "";
+        if (cardCode > 0 && errorType != YGOProtocol.DECKERROR_MAINCOUNT
+                && errorType != YGOProtocol.DECKERROR_EXTRACOUNT
+                && errorType != YGOProtocol.DECKERROR_SIDECOUNT) {
+            cardName = getCardDisplayName(cardCode);
+        }
+
+        String title = "卡组验证失败";
+        String message = errorDesc;
+        if (!cardName.isEmpty()) {
+            message += "\n卡片: " + cardName + " (" + cardCode + ")";
+        }
+
+        DialogPlus dialog = new DialogPlus(this);
+        dialog.setTitle(title);
+        dialog.setMessage(message);
+        dialog.setRightButtonText("确定");
+        dialog.setRightButtonListener((d, w) -> d.dismiss());
+        dialog.show();
     }
 
     private void setupFullScreen() {
@@ -681,7 +739,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onPlayerWaitingDeckSelected(String deckPath, String deckName, String categoryName) {
+    public void onPlayerWaitingDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
+
     }
 
     @Override
@@ -1352,9 +1411,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             });
             layoutOptions.addView(btn);
         }
-
-        ScrollView scrollContainer = new ScrollView(this);
-        scrollContainer.addView(layoutOptions);
         dialog.setCancelable(false);
         dialog.show();
     }
@@ -1473,9 +1529,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             });
             layoutOptions.addView(btn);
         }
-
-        ScrollView scrollContainer = new ScrollView(this);
-        scrollContainer.addView(layoutOptions);
         dialog.setCancelable(false);
         dialog.show();
     }
@@ -1719,9 +1772,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             });
             layoutOptions.addView(btn);
         }
-
-        ScrollView scrollContainer = new ScrollView(this);
-        scrollContainer.addView(layoutOptions);
         dialog.setLeftButtonText("跳过");
         dialog.setLeftButtonListener((d, w) -> {
             d.dismiss();
@@ -2260,9 +2310,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 d.dismiss();
             });
         }
-
-        ScrollView scrollContainer = new ScrollView(this);
-        scrollContainer.addView(layoutOptions);
         dialog.setCancelable(false);
         dialog.show();
     }
@@ -2453,9 +2500,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 d.dismiss();
             });
         }
-
-        ScrollView scrollContainer = new ScrollView(this);
-        scrollContainer.addView(layoutOptions);
         dialog.setCancelable(false);
         dialog.show();
     }
@@ -2866,9 +2910,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             });
             layoutOptions.addView(btn);
         }
-
-        ScrollView scrollContainer = new ScrollView(this);
-        scrollContainer.addView(layoutOptions);
         dialog.setCancelable(false);
         dialog.show();
     }
