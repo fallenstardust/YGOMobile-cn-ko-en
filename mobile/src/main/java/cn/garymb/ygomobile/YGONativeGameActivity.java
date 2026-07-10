@@ -244,7 +244,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                            int startLp, int startHand, int drawCount, int timeLimit) {
         runOnUiThread(() -> {
             if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
-                lanModeDialog.updateRoomInfo(mode, startLp, startHand, drawCount);
+                lanModeDialog.updateRoomInfo(mode, startLp, startHand, drawCount, timeLimit);
             }
         });
     }
@@ -740,7 +740,9 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     @Override
     public void onPlayerWaitingDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
-
+        if (engine != null) {
+            engine.sendDeckUpdate(main, extra, side);
+        }
     }
 
     @Override

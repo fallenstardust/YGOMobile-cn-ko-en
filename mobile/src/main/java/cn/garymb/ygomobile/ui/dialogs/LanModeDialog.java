@@ -52,7 +52,7 @@ public class LanModeDialog {
     private Button btnPwDuelistMode, btnPwSpectatorMode, btnPwReady, btnPwDeckSelect, btnPwExitWaiting;
     private Button btnPwStartGame;
     private ImageButton btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
-    private TextView tvPwBanlist, tvPwCardAllowed, tvPwDuelMode, tvPwStartLP, tvPwStartHand, tvPwDrawCount;
+    private TextView tvPwBanlist, tvPwCardAllowed, tvPwDuelMode, tvPwStartLP, tvPwStartHand, tvPwDrawCount, tvPwTimeLimit;
     private TextView tvWatchCount;
     private ListView lvWatchList;
     private View layoutTagPlayers;
@@ -236,6 +236,7 @@ public class LanModeDialog {
             tvPwStartLP.setText(startLPStr.isEmpty() ? "8000" : startLPStr);
             tvPwStartHand.setText(startHandStr.isEmpty() ? "5" : startHandStr);
             tvPwDrawCount.setText(drawCountStr.isEmpty() ? "1" : drawCountStr);
+            tvPwTimeLimit.setText(timeLimitStr.isEmpty() ? "0" : timeLimitStr);
 
             AppsSettings.get().setLastLimit(banlist);
         });
@@ -292,6 +293,7 @@ public class LanModeDialog {
             tvPwStartLP.setText("8000");
             tvPwStartHand.setText("5");
             tvPwDrawCount.setText("1");
+            if (tvPwTimeLimit != null) tvPwTimeLimit.setText("0");
 
             etPwPlayer1Name.setText(nickname.isEmpty() ? Constants.PlayerName : nickname);
         });
@@ -328,6 +330,7 @@ public class LanModeDialog {
         tvPwStartLP = layoutPlayerWaiting.findViewById(R.id.tv_start_lp);
         tvPwStartHand = layoutPlayerWaiting.findViewById(R.id.tv_start_hand);
         tvPwDrawCount = layoutPlayerWaiting.findViewById(R.id.tv_draw_count);
+        tvPwTimeLimit = layoutPlayerWaiting.findViewById(R.id.tv_time_limit);
         tvWatchCount = layoutPlayerWaiting.findViewById(R.id.tv_watch_count);
         lvWatchList = layoutPlayerWaiting.findViewById(R.id.lv_watch_list);
         layoutTagPlayers = layoutPlayerWaiting.findViewById(R.id.layout_tag_players);
@@ -537,14 +540,23 @@ public class LanModeDialog {
                 name = etPwPlayer4Name != null ? etPwPlayer4Name.getText().toString() : "";
                 break;
         }
+
+        boolean wasReady = false;
+        CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+        if (fromPos >= 0 && fromPos < checkboxes.length && checkboxes[fromPos] != null) {
+            wasReady = checkboxes[fromPos].isChecked();
+        }
+
         setPlayerName(toPos, name);
+        setPlayerReady(toPos, wasReady);
         clearPlayerPos(fromPos);
     }
 
-    public void updateRoomInfo(int mode, int startLp, int startHand, int drawCount) {
+    public void updateRoomInfo(int mode, int startLp, int startHand, int drawCount, int timeLimit) {
         if (tvPwStartLP != null) tvPwStartLP.setText(String.valueOf(startLp));
         if (tvPwStartHand != null) tvPwStartHand.setText(String.valueOf(startHand));
         if (tvPwDrawCount != null) tvPwDrawCount.setText(String.valueOf(drawCount));
+        if (tvPwTimeLimit != null) tvPwTimeLimit.setText(timeLimit > 0 ? String.valueOf(timeLimit) : "无限制");
 
         String duelModeText;
         switch (mode) {
@@ -552,13 +564,13 @@ public class LanModeDialog {
                 duelModeText = "单局模式";
                 break;
             case 1:
-                duelModeText = "三局两胜";
+                duelModeText = "比赛模式";
                 break;
             case 2:
                 duelModeText = "TAG";
                 break;
             default:
-                duelModeText = "单局模式";
+                duelModeText = "unknown mode";
         }
         if (tvPwDuelMode != null) tvPwDuelMode.setText(duelModeText);
 

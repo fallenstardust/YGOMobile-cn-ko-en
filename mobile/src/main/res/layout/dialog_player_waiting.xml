@@ -43,10 +43,10 @@
                     android:id="@+id/et_player1_name"
                     android:layout_width="0dp"
                     android:layout_height="30dp"
+                    android:layout_marginHorizontal="5dp"
                     android:layout_weight="1"
                     android:background="@drawable/selected_light"
                     android:gravity="center"
-                    android:layout_marginHorizontal="5dp"
                     android:text="player1"
                     android:textColor="#FFFFFF" />
 
@@ -72,10 +72,10 @@
                     android:id="@+id/et_player2_name"
                     android:layout_width="0dp"
                     android:layout_height="30dp"
+                    android:layout_marginHorizontal="5dp"
                     android:layout_weight="1"
                     android:background="@drawable/selected_light"
                     android:gravity="center"
-                    android:layout_marginHorizontal="5dp"
                     android:text="player2"
                     android:textColor="@color/white" />
 
@@ -165,10 +165,10 @@
                         android:id="@+id/et_player4_name"
                         android:layout_width="0dp"
                         android:layout_height="30dp"
+                        android:layout_marginHorizontal="5dp"
                         android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
-                        android:layout_marginHorizontal="5dp"
                         android:text="player4"
                         android:textColor="#FFFFFF" />
 
@@ -277,6 +277,29 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:text="单局模式"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="回合时间："
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/tv_time_limit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:text="0"
                     android:textColor="#FFFFFF"
                     android:textSize="15sp" />
             </LinearLayout>
@@ -401,6 +424,7 @@
                     android:padding="4dp"
                     android:visibility="gone" />
             </LinearLayout>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -416,7 +440,7 @@
                     android:background="@drawable/button3_bg"
                     android:text="开始"
                     android:textColor="#FFFFFF"
-                    android:textSize="12sp"/>
+                    android:textSize="12sp" />
 
                 <Button
                     android:id="@+id/btn_exit_waiting"
