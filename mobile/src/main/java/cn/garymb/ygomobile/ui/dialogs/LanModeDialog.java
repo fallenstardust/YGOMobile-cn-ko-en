@@ -16,6 +16,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
+import android.view.Gravity;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -29,6 +30,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 
@@ -54,9 +56,7 @@ public class LanModeDialog {
     private ImageButton btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
     private TextView tvPwBanlist, tvPwCardAllowed, tvPwDuelMode, tvPwStartLP, tvPwStartHand, tvPwDrawCount, tvPwTimeLimit;
     private TextView tvWatchCount;
-    private ListView lvWatchList;
     private View layoutTagPlayers;
-    private View layoutWatchInfo;
     private int selfPos = 0;
     private boolean isSelfReady = false;
     private int watchCount = 0;
@@ -238,7 +238,11 @@ public class LanModeDialog {
             tvPwDrawCount.setText(drawCountStr.isEmpty() ? "1" : drawCountStr);
             tvPwTimeLimit.setText(timeLimitStr.isEmpty() ? "0" : timeLimitStr);
 
-            AppsSettings.get().setLastLimit(banlist);
+            if (layoutTagPlayers != null) {
+                layoutTagPlayers.setVisibility("TAG".equals(duelMode) ? View.VISIBLE : View.INVISIBLE);
+            }
+
+            etPwPlayer1Name.setText(etNickname.getText().toString().isEmpty() ? Constants.PlayerName : etNickname.getText().toString());
         });
 
         btnExitLan.setOnClickListener(v -> popupWindow.dismiss());
@@ -251,9 +255,15 @@ public class LanModeDialog {
         setupSelfReadyInteraction();
 
         btnPwDuelistMode.setOnClickListener(v -> {
-            if (listener != null) listener.onPlayerWaitingToDuelist();
-            btnPwDuelistMode.setEnabled(false);
-            btnPwSpectatorMode.setEnabled(true);
+            int targetPos = findNextEmptyPos(selfPos);
+            if (targetPos >= 0) {
+                movePlayer(selfPos, targetPos);
+                selfPos = targetPos;
+                updateSelfCheckboxInteractivity();
+                if (listener != null) listener.onPlayerWaitingToDuelist();
+                btnPwDuelistMode.setEnabled(false);
+                btnPwSpectatorMode.setEnabled(true);
+            }
         });
 
         btnPwSpectatorMode.setOnClickListener(v -> {
@@ -295,6 +305,8 @@ public class LanModeDialog {
             tvPwDrawCount.setText("1");
             if (tvPwTimeLimit != null) tvPwTimeLimit.setText("0");
 
+            if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.GONE);
+
             etPwPlayer1Name.setText(nickname.isEmpty() ? Constants.PlayerName : nickname);
         });
 
@@ -332,53 +344,42 @@ public class LanModeDialog {
         tvPwDrawCount = layoutPlayerWaiting.findViewById(R.id.tv_draw_count);
         tvPwTimeLimit = layoutPlayerWaiting.findViewById(R.id.tv_time_limit);
         tvWatchCount = layoutPlayerWaiting.findViewById(R.id.tv_watch_count);
-        lvWatchList = layoutPlayerWaiting.findViewById(R.id.lv_watch_list);
         layoutTagPlayers = layoutPlayerWaiting.findViewById(R.id.layout_tag_players);
-        layoutWatchInfo = layoutPlayerWaiting.findViewById(R.id.layout_watch_info);
         
         setupWatchView();
     }
 
     private void setupWatchView() {
         if (tvWatchCount != null) {
-            tvWatchCount.setOnClickListener(v -> toggleWatchList());
+            tvWatchCount.setOnClickListener(v -> showWatchersToast());
         }
     }
 
-    private void toggleWatchList() {
-        if (lvWatchList != null) {
-            if (lvWatchList.getVisibility() == View.VISIBLE) {
-                lvWatchList.setVisibility(View.GONE);
-            } else {
-                updateWatchListAdapter();
-                lvWatchList.setVisibility(View.VISIBLE);
-            }
+    private void showWatchersToast() {
+        if (observerNames.isEmpty()) return;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < observerNames.size(); i++) {
+            if (i > 0) sb.append("\n");
+            sb.append(observerNames.get(i));
         }
-    }
-
-    private void updateWatchListAdapter() {
-        if (lvWatchList == null || observerNames.isEmpty()) return;
-        
-        SimpleListAdapter adapter = new SimpleListAdapter(context);
-        adapter.set(observerNames);
-        lvWatchList.setAdapter(adapter);
+        Toast toast = Toast.makeText(context, sb.toString(), Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.END | Gravity.CENTER_VERTICAL, 0, 0);
+        toast.show();
     }
 
     public void updateWatchCount(int count) {
         watchCount = count;
         if (tvWatchCount != null) {
-            tvWatchCount.setText("观战: " + count);
+            tvWatchCount.setText("当前观战人数: " + count);
         }
         
-        if (layoutWatchInfo != null) {
+        if (tvWatchCount != null) {
             if (count > 0) {
-                layoutWatchInfo.setVisibility(View.VISIBLE);
+                tvWatchCount.setVisibility(View.VISIBLE);
             } else {
-                layoutWatchInfo.setVisibility(View.GONE);
+                tvWatchCount.setVisibility(View.INVISIBLE);
                 observerNames.clear();
-                if (lvWatchList != null) {
-                    lvWatchList.setVisibility(View.GONE);
-                }
+
             }
         }
     }
@@ -386,25 +387,19 @@ public class LanModeDialog {
     public void addObserver(String name) {
         if (name != null && !name.isEmpty() && !observerNames.contains(name)) {
             observerNames.add(name);
-            if (lvWatchList != null && lvWatchList.getVisibility() == View.VISIBLE) {
-                updateWatchListAdapter();
-            }
+
         }
     }
 
     public void removeObserver(String name) {
         if (observerNames.remove(name)) {
-            if (lvWatchList != null && lvWatchList.getVisibility() == View.VISIBLE) {
-                updateWatchListAdapter();
-            }
+
         }
     }
 
     public void clearObservers() {
         observerNames.clear();
-        if (lvWatchList != null) {
-            lvWatchList.setVisibility(View.GONE);
-        }
+
     }
 
     public void showPlayerWaiting() {
@@ -445,18 +440,16 @@ public class LanModeDialog {
             btnPwReady.setText("点击准备");
             btnPwReady.setPressed(false);
         }
-        if (btnPwDuelistMode != null) btnPwDuelistMode.setEnabled(false);
         if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(true);
-        if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.INVISIBLE);
         
         hideAllKickButtons();
-        if (btnPwStartGame != null) btnPwStartGame.setVisibility(View.GONE);
+        if (btnPwStartGame != null) btnPwStartGame.setVisibility(View.INVISIBLE);
+        if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.INVISIBLE);
         
         watchCount = 0;
         observerNames.clear();
-        if (layoutWatchInfo != null) layoutWatchInfo.setVisibility(View.GONE);
-        if (lvWatchList != null) lvWatchList.setVisibility(View.GONE);
-        if (tvWatchCount != null) tvWatchCount.setText("观战: 0");
+        if (tvWatchCount != null) tvWatchCount.setVisibility(View.INVISIBLE);
+        if (tvWatchCount != null) tvWatchCount.setText("当前观战人数: 0");
 
         updateSelfCheckboxInteractivity();
     }
@@ -509,6 +502,7 @@ public class LanModeDialog {
                 if (btnPwReady != null) {
                     btnPwReady.setText(ready ? "已准备" : "点击准备");
                     btnPwReady.setPressed(ready);
+                    btnPwReady.setBackground(ready ? context.getDrawable(R.drawable.sbutton_p) : context.getDrawable(R.drawable.sbutton));
                 }
             }
             checkboxes[pos].setChecked(ready);
@@ -552,6 +546,16 @@ public class LanModeDialog {
         clearPlayerPos(fromPos);
     }
 
+    private int findNextEmptyPos(int currentPos) {
+        for (int i = currentPos + 1; i < 4; i++) {
+            if (getPlayerName(i).isEmpty()) return i;
+        }
+        for (int i = 0; i < currentPos; i++) {
+            if (getPlayerName(i).isEmpty()) return i;
+        }
+        return -1;
+    }
+
     public void updateRoomInfo(int mode, int startLp, int startHand, int drawCount, int timeLimit) {
         if (tvPwStartLP != null) tvPwStartLP.setText(String.valueOf(startLp));
         if (tvPwStartHand != null) tvPwStartHand.setText(String.valueOf(startHand));
@@ -585,18 +589,16 @@ public class LanModeDialog {
 
         if (selfType < 2 || (isTag && selfType < 4)) {
             if (btnPwReady != null) btnPwReady.setEnabled(true);
-            if (btnPwDuelistMode != null) btnPwDuelistMode.setEnabled(false);
             if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(true);
         } else {
             if (btnPwReady != null) btnPwReady.setEnabled(false);
-            if (btnPwDuelistMode != null) btnPwDuelistMode.setEnabled(true);
             if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(false);
         }
         
         boolean isHost = (selfType == 0);
         
         if (btnPwStartGame != null) {
-            btnPwStartGame.setVisibility(isHost ? View.VISIBLE : View.GONE);
+            btnPwStartGame.setVisibility(isHost ? View.VISIBLE : View.INVISIBLE);
         }
         
         if (isHost) {

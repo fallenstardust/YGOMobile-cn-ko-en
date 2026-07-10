@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_player_waiting"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -178,31 +178,6 @@
                         android:layout_height="30dp" />
                 </LinearLayout>
             </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="5dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="卡组选择："
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/btn_deck_select"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:background="@drawable/button3_bg"
-                android:gravity="center"
-                android:text="[SAMPLE]CyberMata"
-                android:textColor="@color/white"
-                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -223,16 +198,16 @@
                     android:layout_height="wrap_content"
                     android:text="禁限卡表："
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
 
                 <TextView
                     android:id="@+id/tv_banlist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="N/A"
+                    android:text="----"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -246,16 +221,16 @@
                     android:layout_height="wrap_content"
                     android:text="卡片允许："
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
 
                 <TextView
                     android:id="@+id/tv_card_allowed"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="所有卡片"
+                    android:text="----"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -269,16 +244,16 @@
                     android:layout_height="wrap_content"
                     android:text="决斗模式："
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
 
                 <TextView
                     android:id="@+id/tv_duel_mode"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="单局模式"
+                    android:text="----"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -292,16 +267,16 @@
                     android:layout_height="wrap_content"
                     android:text="回合时间："
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
 
                 <TextView
                     android:id="@+id/tv_time_limit"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="0"
+                    android:text="----"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
             </LinearLayout>
 
             <View
@@ -321,16 +296,16 @@
                     android:layout_height="wrap_content"
                     android:text="初始基本分："
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
 
                 <TextView
                     android:id="@+id/tv_start_lp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="8000"
+                    android:text="----"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -344,16 +319,16 @@
                     android:layout_height="wrap_content"
                     android:text="初始手卡数："
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
 
                 <TextView
                     android:id="@+id/tv_start_hand"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="5"
+                    android:text="--"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -367,76 +342,80 @@
                     android:layout_height="wrap_content"
                     android:text="每回合抽卡："
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
 
                 <TextView
                     android:id="@+id/tv_draw_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="1"
+                    android:text="-"
                     android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
+                    android:textSize="10sp" />
             </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="卡组选择："
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btn_deck_select"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginVertical="5dp"
+                android:background="@drawable/button3_bg"
+                android:gravity="center"
+                android:text="[SAMPLE]CyberMata"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="20dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_watch_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="当前观战人数: 0"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
 
             <LinearLayout
-                android:id="@+id/layout_watch_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="8dp"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="#33FFFFFF" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:text="观战玩家："
-                    android:textColor="#AAAAAA"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/tv_watch_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:padding="4dp"
-                    android:text="观战: 0"
-                    android:textColor="#FFFFFF"
-                    android:textSize="13sp" />
-
-                <ListView
-                    android:id="@+id/lv_watch_list"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:divider="#33FFFFFF"
-                    android:dividerHeight="1dp"
-                    android:maxHeight="80dp"
-                    android:padding="4dp"
-                    android:visibility="gone" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:gravity="end"
+                android:layout_marginVertical="5dp"
+                android:gravity="center_vertical|end"
                 android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/btn_start_game"
-                    android:layout_width="110dp"
+                    android:layout_width="0dp"
                     android:layout_height="40dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
                     android:background="@drawable/button3_bg"
                     android:text="开始"
                     android:textColor="#FFFFFF"
@@ -444,13 +423,14 @@
 
                 <Button
                     android:id="@+id/btn_exit_waiting"
-                    android:layout_width="110dp"
+                    android:layout_width="0dp"
                     android:layout_height="40dp"
+                    android:layout_weight="1"
                     android:background="@drawable/button3_bg"
                     android:text="退出"
                     android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>
