@@ -110,7 +110,9 @@ public class DuelClient implements YGOProtocol {
     }
 
     public void disconnect() {
-        running.set(false);
+        if (!running.compareAndSet(true, false)) {
+            return;
+        }
         connected.set(false);
         try {
             if (socket != null && !socket.isClosed()) {
@@ -146,6 +148,14 @@ public class DuelClient implements YGOProtocol {
 
                 handlePacket(data);
             }
+        } catch (java.net.SocketException e) {
+            if (running.get()) {
+                Log.w(TAG, "Connection aborted by remote: " + e.getMessage());
+            }
+        } catch (java.io.EOFException e) {
+            if (running.get()) {
+                Log.w(TAG, "Connection closed by remote (EOF)");
+            }
         } catch (Exception e) {
             if (running.get()) {
                 Log.e(TAG, "Read loop error", e);
@@ -161,7 +171,10 @@ public class DuelClient implements YGOProtocol {
         int total = 0;
         while (total < len) {
             int r = is.read(buf, off + total, len - total);
-            if (r < 0) return total;
+            if (r < 0) {
+                if (total == 0) return -1;
+                return total;
+            }
             total += r;
         }
         return total;
@@ -387,7 +400,7 @@ public class DuelClient implements YGOProtocol {
 
     public void sendUpdateDeck(List<Integer> main, List<Integer> extra, List<Integer> side) {
         ByteBuffer buf = BufferIO.createPacket(CTOS_UPDATE_DECK);
-        buf.putInt(main.size());
+        buf.putInt(main.size() + extra.size());
         buf.putInt(side.size());
         for (int code : main) buf.putInt(code);
         for (int code : extra) buf.putInt(code);

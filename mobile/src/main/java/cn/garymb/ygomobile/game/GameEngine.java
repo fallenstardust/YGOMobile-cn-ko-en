@@ -67,6 +67,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                         int startLp, int startHand, int drawCount, int timeLimit);
 
         void onTypeChange(int type);
+
+        void onDeckError(int errorType, int cardCode);
     }
 
     private GameState state = GameState.IDLE;
@@ -582,9 +584,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             case YGOProtocol.ERRMSG_JOINERROR:
                 errorMsg = "无法加入房间";
                 break;
-            case YGOProtocol.ERRMSG_DECKERROR:
-                errorMsg = "卡组验证错误: code=" + code;
-                break;
+            case YGOProtocol.ERRMSG_DECKERROR: {
+                int errorType = (code >> 28) & 0xF;
+                int cardCode = code & 0x0FFFFFFF;
+                mainHandler.post(() -> {
+                    if (listener != null) listener.onDeckError(errorType, cardCode);
+                });
+                return;
+            }
             case YGOProtocol.ERRMSG_SIDEERROR:
                 errorMsg = "副卡组错误";
                 break;
@@ -596,6 +603,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 break;
         }
         Log.e(TAG, "Server error: " + errorMsg);
+        final String finalMsg = errorMsg;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage(finalMsg);
+        });
     }
 
     @Override

@@ -16,6 +16,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,7 +82,7 @@ public class LanModeDialog {
 
         void onPlayerWaitingExit();
 
-        void onPlayerWaitingDeckSelected(String deckPath, String deckName, String categoryName);
+        void onPlayerWaitingDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side);
 
         void onStartGameRequested();
 
@@ -169,9 +172,7 @@ public class LanModeDialog {
                 currentDeckName = deckName;
                 currentDeckCategory = categoryName;
                 updateDeckButtonText(btnPwDeckSelect);
-                if (listener != null) {
-                    listener.onPlayerWaitingDeckSelected(deckPath, deckName, categoryName);
-                }
+                sendDeckIfLoaded();
             }
 
             @Override
@@ -697,6 +698,11 @@ public class LanModeDialog {
         if (btnPwReady != null) {
             btnPwReady.setOnClickListener(v -> {
                 if (!isSelfReady) {
+                    if (currentDeckPath == null || currentDeckPath.isEmpty()) {
+                        Toast.makeText(context, "请先选择卡组", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    sendDeckIfLoaded();
                     isSelfReady = true;
                     setSelfCheckboxChecked(true);
                     btnPwReady.setText("已准备");
@@ -730,12 +736,22 @@ public class LanModeDialog {
                 final int pos = i;
                 checkboxes[i].setOnCheckedChangeListener((buttonView, isChecked) -> {
                     if (pos != selfPos) return;
-                    isSelfReady = isChecked;
                     if (isChecked) {
+                        if (currentDeckPath == null || currentDeckPath.isEmpty()) {
+                            Toast.makeText(context, "请先选择卡组", Toast.LENGTH_SHORT).show();
+                            buttonView.setChecked(false);
+                            isSelfReady = false;
+                            btnPwReady.setText("点击准备");
+                            btnPwReady.setPressed(false);
+                            return;
+                        }
+                        sendDeckIfLoaded();
+                        isSelfReady = true;
                         btnPwReady.setText("已准备");
                         btnPwReady.setPressed(true);
                         if (listener != null) listener.onPlayerWaitingReady();
                     } else {
+                        isSelfReady = false;
                         btnPwReady.setText("点击准备");
                         btnPwReady.setPressed(false);
                         if (listener != null) listener.onPlayerWaitingNotReady();
@@ -746,6 +762,53 @@ public class LanModeDialog {
                 checkboxes[i].setClickable(false);
                 checkboxes[i].setOnCheckedChangeListener(null);
             }
+        }
+    }
+
+    private void sendDeckIfLoaded() {
+        if (currentDeckPath == null || currentDeckPath.isEmpty()) return;
+        File ydkFile = new File(currentDeckPath);
+        if (!ydkFile.exists()) return;
+
+        List<Integer> main = new ArrayList<>();
+        List<Integer> extra = new ArrayList<>();
+        List<Integer> side = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(ydkFile))) {
+            String line;
+            int section = 0;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+                if (line.equalsIgnoreCase("#main")) {
+                    section = 1;
+                    continue;
+                }
+                if (line.equalsIgnoreCase("#extra")) {
+                    section = 2;
+                    continue;
+                }
+                if (line.equalsIgnoreCase("!side")) {
+                    section = 3;
+                    continue;
+                }
+                if (line.startsWith("#")) continue;
+                try {
+                    int code = Integer.parseInt(line);
+                    switch (section) {
+                        case 1: main.add(code); break;
+                        case 2: extra.add(code); break;
+                        case 3: side.add(code); break;
+                    }
+                } catch (NumberFormatException e) { /* skip */ }
+            }
+        } catch (Exception e) {
+            Toast.makeText(context, "卡组加载失败", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (listener != null) {
+            listener.onPlayerWaitingDeckUpdate(main, extra, side);
         }
     }
 
