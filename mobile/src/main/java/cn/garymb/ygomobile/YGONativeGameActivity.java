@@ -32,6 +32,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -88,32 +89,45 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private SoundManager soundManager;
     private ImageLoader imageLoader;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-
     private GameFieldViewController fieldViewController;
     private TextView tvPlayerLp, tvPlayerName, tvOpponentLp, tvOpponentName;
-    private TextView tvPhaseInfo, tvTurnInfo;
-    private TextView tvPlayerTime, tvOpponentTime;
-    private TextView tvHintMessage;
-    private TextView tvChatLog;
+    private TextView tvPhaseInfo, tvTurnCounter;
     private TextView tvPlayerHandCount, tvOpponentHandCount;
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
+    private TextView tvHintMessage;
+
+    private LinearLayout layoutTopInfo, layoutLeftButtons, layoutCardDetail;
+    private LinearLayout layoutBottomActions, layoutDeckIndicators;
+    private LinearLayout layoutChatMessages;
+    private TextView tvChatMessage1, tvChatMessage2;
+
+    private ImageButton btnSettings, btnChat, btnSound, btnPlay, btnEmote, btnMenu;
+    private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
+
+    private ImageView ivCardImage;
+    private TextView tvCardName, tvCardAttr, tvCardLevel, tvCardDesc;
+
+    private TextView tvPlayerDeckCount, tvPlayerGraveCount;
+    private TextView tvOpponentDeckCount, tvOpponentGraveCount;
+
+    private FrameLayout dialogContainer;
+    private RelativeLayout layoutMainMenu;
+    private TextView tvVersion;
+    private LanModeDialog lanModeDialog;
+
+    private String chatHistory = "";
+    private TextView tvPlayerTime, tvOpponentTime;
+    private TextView tvChatLog;
     private LinearLayout layoutActionButtons;
     private Button btnM2, btnEp, btnBp, btnChain, btnCancel;
     private LinearLayout layoutChat;
     private EditText etChatInput;
-    private FrameLayout dialogContainer;
     private LinearLayout layoutLobby;
     private TextView tvLobbyStatus;
     private Button btnLobbyReady, btnLobbyLeave;
 
-    private RelativeLayout layoutMainMenu;
-    private TextView tvVersion;
-
     private LinearLayout layoutOpponentInfo;
     private LinearLayout layoutPlayerInfo;
-    private LanModeDialog lanModeDialog;
-
-    private String chatHistory = "";
     private boolean isMyTurn = false;
     private volatile boolean isGameStarted = false;
     private DraggablePopupHelper mainMenuDragHelper;
@@ -342,37 +356,49 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         tvOpponentLp = findViewById(R.id.tv_opponent_lp);
         tvOpponentName = findViewById(R.id.tv_opponent_name);
         tvPhaseInfo = findViewById(R.id.tv_phase_info);
-        tvTurnInfo = findViewById(R.id.tv_turn_info);
-        tvPlayerTime = findViewById(R.id.tv_player_time);
-        tvOpponentTime = findViewById(R.id.tv_opponent_time);
+        tvTurnCounter = findViewById(R.id.tv_turn_counter);
+        tvPlayerHandCount = findViewById(R.id.tv_player_hand_count);
+        tvOpponentHandCount = findViewById(R.id.tv_opponent_hand_count);
         tvHintMessage = findViewById(R.id.tv_hint_message);
-        tvChatLog = findViewById(R.id.tv_chat_log);
-        tvPlayerHandCount = findViewById(R.id.tv_opponent_hand_count);
         ivPlayerAvatar = findViewById(R.id.iv_player_avatar);
         ivOpponentAvatar = findViewById(R.id.iv_opponent_avatar);
 
-        layoutActionButtons = findViewById(R.id.layout_action_buttons);
-        btnM2 = findViewById(R.id.btn_m2);
-        btnEp = findViewById(R.id.btn_ep);
-        btnBp = findViewById(R.id.btn_bp);
-        btnChain = findViewById(R.id.btn_chain);
-        btnCancel = findViewById(R.id.btn_cancel);
+        layoutTopInfo = findViewById(R.id.layout_top_info);
+        layoutLeftButtons = findViewById(R.id.layout_left_buttons);
+        layoutCardDetail = findViewById(R.id.layout_card_detail);
+        layoutBottomActions = findViewById(R.id.layout_bottom_actions);
+        layoutDeckIndicators = findViewById(R.id.layout_deck_indicators);
+        layoutChatMessages = findViewById(R.id.layout_chat_messages);
 
-        layoutChat = findViewById(R.id.layout_chat);
-        etChatInput = findViewById(R.id.et_chat_input);
-        Button btnChatSend = findViewById(R.id.btn_chat_send);
+        tvChatMessage1 = findViewById(R.id.tv_chat_message_1);
+        tvChatMessage2 = findViewById(R.id.tv_chat_message_2);
+
+        btnSettings = findViewById(R.id.btn_settings);
+        btnChat = findViewById(R.id.btn_chat);
+        btnSound = findViewById(R.id.btn_sound);
+        btnPlay = findViewById(R.id.btn_play);
+        btnEmote = findViewById(R.id.btn_emote);
+        btnMenu = findViewById(R.id.btn_menu);
+
+        btnSurrender = findViewById(R.id.btn_surrender);
+        btnIgnoreTiming = findViewById(R.id.btn_ignore_timing);
+        btnShowTiming = findViewById(R.id.btn_show_timing);
+        btnAvailableTiming = findViewById(R.id.btn_available_timing);
+
+        ivCardImage = findViewById(R.id.iv_card_image);
+        tvCardName = findViewById(R.id.tv_card_name);
+        tvCardAttr = findViewById(R.id.tv_card_attr);
+        tvCardLevel = findViewById(R.id.tv_card_level);
+        tvCardDesc = findViewById(R.id.tv_card_desc);
+
+        tvPlayerDeckCount = findViewById(R.id.tv_player_deck_count);
+        tvPlayerGraveCount = findViewById(R.id.tv_player_grave_count);
+        tvOpponentDeckCount = findViewById(R.id.tv_opponent_deck_count);
+        tvOpponentGraveCount = findViewById(R.id.tv_opponent_grave_count);
 
         dialogContainer = findViewById(R.id.dialog_container);
-        layoutLobby = findViewById(R.id.layout_lobby);
-        tvLobbyStatus = findViewById(R.id.tv_lobby_status);
-        btnLobbyReady = findViewById(R.id.btn_lobby_ready);
-        btnLobbyLeave = findViewById(R.id.btn_lobby_leave);
 
-        // 保存游戏界面元素的引用
-        layoutOpponentInfo = findViewById(R.id.layout_opponent_info);
-        layoutPlayerInfo = findViewById(R.id.layout_player_info);
-
-        setupButtonListeners(btnChatSend);
+        setupButtonListeners();
         setupAvatarImages();
     }
 
@@ -383,54 +409,52 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (opAvatar != null) ivOpponentAvatar.setImageBitmap(opAvatar);
     }
 
-    private void setupButtonListeners(Button btnChatSend) {
-        btnM2.setOnClickListener(v -> {
-            if (cmdContext == CMD_CONTEXT_BATTLE) {
-                sendActionResponse(2);
-            }
+    private void setupButtonListeners() {
+        btnSurrender.setOnClickListener(v -> {
+            if (engine != null) engine.sendSurrender();
         });
-        btnEp.setOnClickListener(v -> {
-            if (cmdContext == CMD_CONTEXT_BATTLE) {
-                sendActionResponse(3);
-            } else if (cmdContext == CMD_CONTEXT_IDLE) {
-                sendActionResponse(7);
-            }
+
+        btnIgnoreTiming.setOnClickListener(v -> {
+            sendActionResponse(-1);
         });
-        btnBp.setOnClickListener(v -> {
-            if (cmdContext == CMD_CONTEXT_IDLE) {
-                sendActionResponse(6);
-            }
+
+        btnShowTiming.setOnClickListener(v -> {
         });
-        btnChain.setOnClickListener(v -> {
-            if (cmdContext == CMD_CONTEXT_IDLE) {
-                sendActionResponse(8);
-            }
+
+        btnAvailableTiming.setOnClickListener(v -> {
         });
-        btnCancel.setOnClickListener(v -> {
-            if (isPlaceSelecting) {
-                isPlaceSelecting = false;
-                fieldViewController.clearHighlight();
-                sendResponseInt(-1);
-            } else {
-                sendActionResponse(-1);
+
+        btnSettings.setOnClickListener(v -> {
+            showSettingsDialog();
+        });
+
+        btnChat.setOnClickListener(v -> {
+            toggleChatInput();
+        });
+
+        btnSound.setOnClickListener(v -> {
+            if (soundManager != null) {
+                SharedPreferences prefs = getSharedPreferences(getPackageName() + ".settings", Context.MODE_PRIVATE);
+                boolean currentSound = prefs.getBoolean("chkEnableSound", true);
+                boolean currentMusic = prefs.getBoolean("chkEnableMusic", true);
+                boolean newMuted = !currentSound && !currentMusic;
+                soundManager.enableSounds(newMuted);
+                soundManager.enableMusic(newMuted);
+                prefs.edit()
+                        .putBoolean("chkEnableSound", newMuted)
+                        .putBoolean("chkEnableMusic", newMuted)
+                        .apply();
             }
         });
 
-        btnLobbyReady.setOnClickListener(v -> {
-            if (engine != null) engine.sendReady();
-        });
-        btnLobbyLeave.setOnClickListener(v -> {
-            if (engine != null) engine.disconnect();
-            finish();
+        btnPlay.setOnClickListener(v -> {
         });
 
-        btnChatSend.setOnClickListener(v -> {
-            String msg = etChatInput.getText().toString().trim();
-            if (!TextUtils.isEmpty(msg) && engine != null) {
-                engine.sendChat(msg);
-                appendChat("Me", msg);
-                etChatInput.setText("");
-            }
+        btnEmote.setOnClickListener(v -> {
+        });
+
+        btnMenu.setOnClickListener(v -> {
+            showMainMenu();
         });
     }
 
@@ -607,13 +631,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             bindMainMenuButtons();
         }
 
-        fieldViewController.setVisible(false);
-        if (layoutOpponentInfo != null) layoutOpponentInfo.setVisibility(View.GONE);
-        if (layoutPlayerInfo != null) layoutPlayerInfo.setVisibility(View.GONE);
-        if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
-        if (layoutChat != null) layoutChat.setVisibility(View.GONE);
-        if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
-        if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
+        hideGameUI();
 
         String name = Constants.PlayerName;
         if (options != null && options.mUserName != null && !options.mUserName.isEmpty()) {
@@ -645,14 +663,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         mainMenuDragHelper.setupDraggableView(layoutMainMenu);
         mainMenuDragHelper.applySavedPositionToView(layoutMainMenu);
 
-        fieldViewController.setVisible(false);
-        if (layoutOpponentInfo != null) layoutOpponentInfo.setVisibility(View.GONE);
-        if (layoutPlayerInfo != null) layoutPlayerInfo.setVisibility(View.GONE);
-        if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
-        if (layoutChat != null) layoutChat.setVisibility(View.GONE);
-        if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
-        if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
-
+        hideGameUI();
         bindMainMenuButtons();
 
         soundManager.playBGM(SoundManager.BGM.MENU);
@@ -663,7 +674,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (layoutMainMenu != null) {
             layoutMainMenu.setVisibility(View.GONE);
         }
-        fieldViewController.setVisible(true);
+        showGameUI();
         soundManager.playBGM(SoundManager.BGM.DUEL);
     }
 
@@ -671,6 +682,23 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (layoutMainMenu != null) {
             layoutMainMenu.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void hideGameUI() {
+        if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
+        if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.GONE);
+        if (layoutCardDetail != null) layoutCardDetail.setVisibility(View.GONE);
+        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+        if (layoutDeckIndicators != null) layoutDeckIndicators.setVisibility(View.GONE);
+        if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
+        if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
+    }
+
+    private void showGameUI() {
+        if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.VISIBLE);
+        if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.VISIBLE);
+        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
+        if (layoutDeckIndicators != null) layoutDeckIndicators.setVisibility(View.VISIBLE);
     }
 
     private void showLanModeDialog() {
@@ -843,7 +871,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                     ocgcore.enums.DuelPhase dp = ocgcore.enums.DuelPhase.valueOf(phase);
                     String phaseName = dp != null ? dp.name() : "Unknown";
                     tvPhaseInfo.setText("▶ " + phaseName);
-                    tvTurnInfo.setText("Turn " + engine.getField().turnCount);
+                    tvTurnCounter.setText("Turn " + engine.getField().turnCount);
                 });
             }
 
@@ -998,13 +1026,27 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             GameEngine.PlayerInfo info = engine.playerInfos[player];
             GameField.PlayerField pf = engine.getField().players[player];
             if (player == 0) {
-                tvPlayerLp.setText("LP: " + pf.lp);
+                tvPlayerLp.setText(String.valueOf(pf.lp));
                 tvPlayerName.setText(info.name.isEmpty() ? Constants.PlayerName : info.name);
+                int handCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Hand.value());
+                tvPlayerHandCount.setText("手卡:" + handCount);
+
+                int deckCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Deck.value());
+                if (tvPlayerDeckCount != null) tvPlayerDeckCount.setText(String.valueOf(deckCount));
+
+                int graveCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Grave.value());
+                if (tvPlayerGraveCount != null) tvPlayerGraveCount.setText(String.valueOf(graveCount));
             } else {
-                tvOpponentLp.setText("LP: " + pf.lp);
+                tvOpponentLp.setText(String.valueOf(pf.lp));
                 tvOpponentName.setText(info.name.isEmpty() ? "Opponent" : info.name);
                 int handCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Hand.value());
-                tvPlayerHandCount.setText("Hand: " + handCount);
+                tvOpponentHandCount.setText("手卡:" + handCount);
+
+                int deckCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Deck.value());
+                if (tvOpponentDeckCount != null) tvOpponentDeckCount.setText(String.valueOf(deckCount));
+
+                int graveCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Grave.value());
+                if (tvOpponentGraveCount != null) tvOpponentGraveCount.setText(String.valueOf(graveCount));
             }
         });
     }
@@ -1015,10 +1057,12 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             DuelPhase dp = DuelPhase.valueOf(phase);
             String phaseName = dp != null ? dp.name() : "Unknown";
             tvPhaseInfo.setText(phaseName + " Phase");
-            tvTurnInfo.setText("Turn " + engine.getField().turnCount);
+            tvTurnCounter.setText(String.valueOf(engine.getField().turnCount));
             isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
-            layoutActionButtons.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
-            updateActionButtonsForPhase(phase);
+
+            if (layoutBottomActions != null) {
+                layoutBottomActions.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
+            }
         });
     }
 
@@ -1055,10 +1099,30 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void appendChat(String player, String message) {
-        chatHistory += "[" + player + "] " + message + "\n";
-        tvChatLog.setText(chatHistory);
-        ScrollView scrollChat = findViewById(R.id.scroll_chat);
-        scrollChat.post(() -> scrollChat.fullScroll(ScrollView.FOCUS_DOWN));
+        String chatLine = "[" + player + "] " + message;
+
+        if (tvChatMessage1 != null && tvChatMessage1.getVisibility() == View.GONE) {
+            tvChatMessage1.setText(chatLine);
+            tvChatMessage1.setVisibility(View.VISIBLE);
+        } else if (tvChatMessage2 != null && tvChatMessage2.getVisibility() == View.GONE) {
+            tvChatMessage2.setText(chatLine);
+            tvChatMessage2.setVisibility(View.VISIBLE);
+        } else {
+            if (tvChatMessage1 != null) {
+                tvChatMessage1.setText(tvChatMessage2 != null ? tvChatMessage2.getText() : "");
+            }
+            if (tvChatMessage2 != null) {
+                tvChatMessage2.setText(chatLine);
+                tvChatMessage2.setVisibility(View.VISIBLE);
+            }
+        }
+
+        if (layoutChatMessages != null) {
+            layoutChatMessages.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void toggleChatInput() {
     }
 
     @Override
@@ -1168,13 +1232,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     public void onTimeLimitUpdate(int player, int leftTime) {
         runOnUiThread(() -> {
             String timeStr = (leftTime / 60) + ":" + String.format("%02d", leftTime % 60);
-            if (player == 0) {
-                tvPlayerTime.setText(timeStr);
-                tvPlayerTime.setVisibility(View.VISIBLE);
-            } else {
-                tvOpponentTime.setText(timeStr);
-                tvOpponentTime.setVisibility(View.VISIBLE);
-            }
+            Log.d(TAG, "Time limit for player " + player + ": " + timeStr);
         });
     }
 
