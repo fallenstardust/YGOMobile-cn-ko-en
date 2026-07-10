@@ -39,7 +39,7 @@ LOCAL_SRC_FILES := lapi.c \
                    lutf8lib.c \
                    lvm.c \
                    lzio.c
-LOCAL_CFLAGS    := -DLUA_USE_POSIX -O2 -Wall -DLUA_COMPAT_5_2 -D"getlocaledecpoint()='.'" -Wno-psabi -fexceptions
+LOCAL_CFLAGS    := -DLUA_USE_POSIX -O2 -Wall -DLUA_COMPAT_5_2 -D"getlocaledecpoint()='.'" -Wno-psabi -fexceptions -Dl_fseek=fseek -Dl_ftell=ftell -Dl_seeknum=long  # 适配NDK29: -DLUA_USE_POSIX 会让 liolib.c 使用 fseeko/ftello, 但二者在 android-21 不可用(API24+ 才有), 这里预定义宏强制走 ISO C 的 fseek/ftell
 #LOCAL_CPP_EXTENSION := .c
 include $(BUILD_STATIC_LIBRARY)
 
