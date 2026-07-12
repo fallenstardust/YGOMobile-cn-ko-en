@@ -329,6 +329,10 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     LoadExpansions();
     // 加载禁限卡表
     deckManager.LoadLFList(options);
+	if(gameConf.default_lflist >= (int)deckManager._lfList.size() || gameConf.default_lflist < 0)
+		gameConf.default_lflist = 0;
+	if(gameConf.default_genesys_lflist >= (int)deckManager._genesys_lfList.size() || gameConf.default_genesys_lflist < 0)
+		gameConf.default_genesys_lflist = 0;
 	// 获取GUI环境
 	env = device->getGUIEnvironment();
 	// 检查是否启用字体抗锯齿

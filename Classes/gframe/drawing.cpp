@@ -752,15 +752,15 @@ void Game::DrawMisc() {
 		DrawSelectionLine(btnLeaveGame, 4, 0xff00ff00);
 
 	// 绘制生命值条
-	if(dInfo.start_lp) {
-		auto maxLP = dInfo.isTag ? dInfo.start_lp / 2 : dInfo.start_lp;
+	if(dInfo.start_lp > 0) {
+		auto maxLP = dInfo.isTag ? std::max(dInfo.start_lp / 2, 1) : dInfo.start_lp;
 
 		// 我方玩家 LP条
 		if(dInfo.lp[0] >= maxLP) {
 			auto layerCount = dInfo.lp[0] / maxLP;
 			auto partialLP = dInfo.lp[0] % maxLP;
 			auto bgColorPos = (layerCount - 1) % 5;
-			auto fgColorPos = layerCount % 5;
+			auto fgColorPos = layerCount % 5; 
 			driver->draw2DImage(imageManager.tLPBar, Resize(390 + 235 * partialLP / maxLP, 12, 625, 74),
 				irr::core::recti(0, bgColorPos * 60, 60, (bgColorPos + 1) * 60), 0, 0, true);
 			if(partialLP > 0) {
