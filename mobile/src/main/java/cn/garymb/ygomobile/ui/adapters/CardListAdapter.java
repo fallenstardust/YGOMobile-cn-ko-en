@@ -318,8 +318,8 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                 if (mLimitList.getCredits() != null) {
                     creditValue = mLimitList.getCredits().get(item.getCode());
                     holder.setImageBitmap(R.id.right_top, mImageTop.credits);
-                    tv_limit_num.setText(creditValue.toString());
-                    tv_limit_num.setTextSize((creditValue > -10 && creditValue < 100) ? 10 : 8);
+                    tv_limit_num.setText(creditValue == null ? "---" : creditValue.toString());
+                    tv_limit_num.setTextSize(creditValue == null ? 8 : ((creditValue > -10 && creditValue < 100) ? 10 : 8));
                     tv_limit_num.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
                 }
             } else {
