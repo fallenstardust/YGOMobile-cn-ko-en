@@ -1,0 +1,64 @@
+{
+  "welcome": [
+    "私が一番強いの！",
+    "AI機能はテスト中です。不具合があればすぐにフィードバックしてください。",
+    "饼蛙って何？美味しいの？"
+  ],
+  "deckerror": [
+    "どうして私の{0}が使えないの？"
+  ],
+  "duelstart": [
+    "あなたを凍らせてあげる！&angry",
+    "人間を倒すだけなら、私一人で十分！&angry"
+  ],
+  "newturn": [
+    "突然だけど、私に倒されなさい！&stick_tongue",
+    "私のターン、ドロー！&laugh"
+  ],
+  "endturn": [
+    "一命を与えてあげる！&sneaky",
+    "私の本気の前で凍りなさい！&angry"
+  ],
+  "directattack": [
+    "{0}、直接攻撃！&cool",
+    "歯が立たないわ！&stick_tongue",
+    "弱いなら殴られるしかない！&despise",
+    "計算するのが面倒だから、攻撃するわ！&cool",
+    "超⑨武神覇斬！&angry",
+    "雪符「Diamond Blizzard」"
+  ],
+  "attack": [
+    "{0}、この{1}を攻撃！&rage",
+    "{0}、この{1}を破壊！&cool",
+    "{0}、{1}を倒せ！&rage",
+    "氷符「Icicle Fall」&obedient"
+  ],
+  "ondirectattack": [
+    "ふざけるなよ～。あなたなんて、イングランドビーフと一緒に冷凍保存してあげるわ！！&rage",
+    "ただの{0}なんて、怖くない！&stick_tongue",
+    "バカは風邪をひかないの！&ridiculous"
+  ],
+  "facedownmonstername": "モンスター",
+  "activate": [
+    "{0}を発動するわ。&sneaky",
+    "{0}の効果を使うわ。&stick_tongue",
+    "私の{0}が一番強いの！&good"
+  ],
+  "summon": [
+    "{0}を召喚するわ。&cool",
+    "出でよ、{0}！&surprised",
+    "現れろ、{0}！&surprised",
+    "強力な{0}を召喚！&cool",
+    "{0}を呼び出すわ。&stick_tongue"
+  ],
+  "setmonster": [
+    "モンスターをセットしたわ。&sneaky",
+    "死ぬ気なら攻めてきなさい！&cool"
+  ],
+  "chaining": [
+    "ここを見て！{0}を発動！&rage",
+    "{0}の力を使うわ。&laugh",
+    "私の{0}を恐れなさい！&despise",
+    "凍符「Perfect Freeze」&surprised"
+  ]
+}

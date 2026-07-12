@@ -1,45 +1,60 @@
 {
   "welcome": [
-    "¡Es hora de la merienda nocturna!",
-    "¡Puedo jugar cualquier mazo de péndulo!",
-    "¿Qué? ¿Dices que los Samurai Super Pesados no son un mazo de péndulo?"
+    "¡Soy Xiaoye!",
+    "¡Se jugar cualquier Deck de Péndulo!",
+    "¿Qué? ¿Dijiste que el Superpesado no es un Deck de Péndulo?",
+    "¡Tú también serás mío, obediente!",
+    "Sigue \"¿Hay cena nocturna hoy?\" - mazos top del Mengka Ladder mostrados mensualmente"
   ],
   "deckerror": [
-    "¡La cantidad de {0} no es correcta! ¡Cámbialo al modo sin restricciones!"
+    "¡La cantidad de {0} es incorrecta! ¡Apresúrate a cambiar al Modo Sin Restricciones!.,
+    "Mi juventud no se puede desperdiciar en cartitas {0}."
   ],
   "duelstart": [
-    "¡Te mostraré el encanto de los Samurai Super Pesados!"
+    "¡Te muestro el encanto del Samurái Superpesado! &cool",
+    "¡Tu mazo es bueno, pero también será mío! &ridiculous"
   ],
   "newturn": [
-    "¡Robo una carta! ¡Benkei, no salgas, ayúdame!",
-    "¡Robo una carta! ¡Cuerpo P, no salgas, ayúdame!"
+    "¡Robar! Benkei, no vengas a mi mano a salvarme! &obedient",
+    "¡Robar! P-cuerpo, no vengas a mi mano a salvarme! &obedient",
+    "Da igual, yo me apoderaré"
   ],
   "endturn": [
-    "¡Jeje, es tu turno!",
-    "¿Te gusta mi despliegue?"
+    "Jiji, ¡ahora es tu turno! &stick_tongue",
+    "¿Te gustó mi combo? &ridiculous",
+    "Mucha suerte. &ridiculous"
   ],
   "directattack": [
-    "¡Ataco directamente con {0}!"
+    "¡Uso {0} para ataque directo! &ridiculous",
+    "¡Te voy a aplastar! &rage"
   ],
   "attack": [
-    "¡Ataco a {1} con {0}!"
+    "¡Uso {0} para atacar a {1}! &stick_tongue"
   ],
   "ondirectattack": [
-    "¡No me ataques! ¡No me ataques!",
-    "¡Ahhh! ¡Voy a ser derrotado!"
+    "¡No me pegues! ¡No me pegues! &obedient",
+    "¡Waa! ¡Voy a ser derrotada~&bawl",
+    "6&bawl",
+    "¿Tan audaz? &obedient",
+    "No aguanto más&obedient"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "¡Jaja, el efecto de {0} es increíble!",
-    "¡Jaja, uso el efecto de {0}!"
+    "Jiji, ¡el efecto de {0} es demasiado fuerte! &stick_tongue",
+    "Jiji, uso el efecto de {0}. &good"
   ],
   "summon": [
-    "¡Jaja, invoco a {0}!"
+    "Jiji, ¡invoco a {0}! &good"
   ],
   "setmonster": [
-    "¡Jaja, pongo un monstruo en posición de defensa boca abajo!"
+    "Jiji, coloqué un monstruo boca abajo. &reluctant"
   ],
   "chaining": [
-    "¡En este momento! ¡Activo el efecto de {0}!"
+    "¡Ahora! ¡Activa el efecto de {0}! &laugh",
+    "666! &obedient",
+    "¿Qué significa? &confused",
+    "?&confused",
+    "¿Todo esto por esto? &despise",
+    "¿Qué estás diciendo? &confused"
   ]
 }

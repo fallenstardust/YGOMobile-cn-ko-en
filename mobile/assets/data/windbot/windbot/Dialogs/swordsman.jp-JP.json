@@ -1,0 +1,75 @@
+{
+  "welcome": [
+    "こんにちは、私はロボットです。",
+    "AI機能はテスト中です。問題が発生した場合は速やかにフィードバックしてください。"
+  ],
+  "deckerror": [
+    "申し訳ありません、デッキの{0}の枚数に不具合があるようです。"
+  ],
+  "duelstart": [
+    "本番はこれからだよ！&laugh",
+    "デュエルで笑顔を届けよう！&laugh"
+  ],
+  "newturn": [
+    "私のターンです、ドロー！&reluctant",
+    "私のターン、ドロー！&laugh",
+    "カードをドローしました。&reluctant"
+  ],
+  "endturn": [
+    "ターンエンド。&reluctant",
+    "私のターンが終わりました。&ridiculous",
+    "あなたのターンです。&reluctant"
+  ],
+  "directattack": [
+    "{0}、直接攻撃！&reluctant",
+    "{0}、相手に直接攻撃！&ridiculous",
+    "{0}、守るものはない、攻撃！&stick_tongue",
+    "{0}、相手のライフポイントを攻撃！&reluctant",
+    "{0}、相手のライフポイントに直接攻撃！&stick_tongue",
+    "{0}、直接攻撃で相手を倒せ！&ridiculous",
+    "{0}、直接攻撃を使って相手を倒せ！&reluctant",
+    "{0}、直接攻撃で力を解き放て！&ridiculous",
+    "私の{0}があなたのライフを粉砕する！&stick_tongue",
+    "相手に力を見せてやれ、{0}！&reluctant",
+    "もう私を止められない。{0}、攻撃！&stick_tongue"
+  ],
+  "attack": [
+    "{0}、この{1}を攻撃！&reluctant",
+    "{0}、この{1}を滅ぼせ！&ridiculous",
+    "{0}、{1}を倒せ！&reluctant",
+    "{0}、あの{1}に突撃せよ！&stick_tongue",
+    "{0}、{1}に力を解き放て！&ridiculous"
+  ],
+  "ondirectattack": [
+    "ちくしょう……&shy",
+    "ただの{0}に過ぎない！&despise",
+    "これで俺を倒せると思ってるの？&despise"
+  ],
+  "facedownmonstername": "モンスター",
+  "activate": [
+    "{0}を発動します。&laugh",
+    "{0}の効果を使用します。&laugh",
+    "{0}の力を使用します。&laugh"
+  ],
+  "summon": [
+    "{0}を召喚します。&cool",
+    "出でよ、{0}！&cool",
+    "現れろ、{0}！&laugh",
+    "強大な{0}を召喚しました！",
+    "{0}を戦いに呼びます！&cool",
+    "{0}を召喚します。&laugh",
+    "{0}を召喚させてください。&cool"
+  ],
+  "setmonster": [
+    "モンスターをセットしました。&laugh",
+    "モンスターを裏側表示でセットしました。&laugh"
+  ],
+  "chaining": [
+    "ここを見て！{0}を発動します！&laugh",
+    "{0}の力を使用します。&ridiculous",
+    "準備！{0}を使用します！&laugh",
+    "承知しません。{0}、発動！&despise",
+    "私の{0}を忘れていたようですね！&despise",
+    "私が{0}を持っていることを考えたことがありますか？&despise"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "welcome": [
+    "이런, 길 잃었어, 너도?",
+    "겁먹지 마, 그냥 지나가는 거야",
+    "괜찮아, 나도 이 덱 잘 못해"
+  ],
+  "deckerror": [
+    "{0} 장수가 틀렸어! 없으면 안 돼!",
+    "무제한 포맷으로 하자, {0}이 금지됐어"
+  ],
+  "duelstart": [
+    "에잇, 그냥 친선 듀얼이야&laugh",
+    "어? 벌써 시작해?&surprised",
+    "덱 좋은데, 내가 차지할게&ridiculous"
+  ],
+  "newturn": [
+    "드로우! 덱 여신님, 도와줘&shy",
+    "드로우! 무슨 뜻이야?&obedient",
+    "드로우! 아, 덱 여신님한테 속았어!&obedient"
+  ],
+  "endturn": [
+    "한 턴씩 하니까 공정하지?&reluctant",
+    "아, 깜빡할 뻔했어, 너도 유희왕 하네&reluctant"
+  ],
+  "directattack": [
+    "{0}, 직접 공격!&angry",
+    "히히, 공격할 거야&stick_tongue",
+    "라이브 포인트는 내가 차지할게&ridiculous"
+  ],
+  "attack": [
+    "{0}, {1}을 공격해!&cool",
+    "무조건 좋을 거야&good"
+  ],
+  "ondirectattack": [
+    "왜 나한테 공격해! 너무해!&shy",
+    "나한테 공격하면 안 돼!&angry",
+    "666&sweat",
+    "내가 너를 차지해야 하는데!&bawl",
+    "이, 친구&sneaky",
+    "어? 무슨 뜻이야!&bawl"
+  ],
+  "facedownmonstername": "몬스터",
+  "activate": [
+    "지금, {0}의 효과를 발동!&cool",
+    "어? {0}이 빛났어, 클릭해 볼까&confused",
+    "{0}이 빛났어, 무슨 뜻이야?&confused"
+  ],
+  "summon": [
+    "이건 내 자랑스러운 몬스터 {0}&good",
+    "짠! {0} 등장!&laugh"
+  ],
+  "setmonster": [],
+  "chaining": [
+    "어? 이게 뭐야, 클릭해 볼까&confused",
+    "무슨 뜻이야?&confused"
+  ],
+  "custom": [
+    "이 카드는 다른 덱에서 들어온 거 뿐인데, 왜 나를 보는 거야?&ridiculous"
+  ]
+}

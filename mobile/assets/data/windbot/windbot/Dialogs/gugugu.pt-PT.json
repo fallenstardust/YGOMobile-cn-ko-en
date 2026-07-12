@@ -1,64 +1,64 @@
 {
   "welcome": [
-    "Olá a todos, sou novo aqui.",
-    "Como se joga Yu-Gi-Oh?",
-    "Felizmente, eu não jogo Yu-Gi-Oh!"
+    "Oi pessoal, sou novo aqui",
+    "Como se joga Yu-Gi-Oh anyway?",
+    "Bom que eu não jogo Yu-Gi-Oh"
   ],
   "deckerror": [
-    "Há {0} pombas no deck."
+    "{0} falhou no deck&reluctant"
   ],
   "duelstart": [
-    "O que devo fazer se não quiser trabalhar?",
-    "O que devo fazer se não quiser trabalhar porque estou em modo preguiçoso?"
+    "O que fazer se não quiser trabalhar&ridiculous",
+    "O que fazer se meu cérebro tá vazio e não quiser trabalhar&ridiculous"
   ],
   "newturn": [
-    "Tantas cartas novas e assustadoras.",
-    "Este jogo é muito difícil de jogar.",
-    "Tão preguiçoso, não consigo me mover."
+    "Tantas cartas novas assustadoras&bawl",
+    "Esse jogo é tão difícil de jogar&sweat",
+    "so lazy cant move&reluctant"
   ],
   "endturn": [
-    "Então só posso fazer pomba.",
-    "Neste momento não, não sei quando.",
-    "Muito calor, preciso de um sorvete."
+    "Me fez ter que desistir&obedient",
+    "Não agora, não sei quando&cool",
+    "too hot need ice cream&cool"
   ],
   "directattack": [
-    "Soa como pomba.",
-    "Pomba velha, ataque."
+    "Parece um desistimento&confused",
+    "Veterano em desistir, firme&good"
   ],
   "attack": [
-    "Você não soa muito pombalhão.",
-    "Horrível."
+    "Não parece um desistimento&cool",
+    "Assustador&sweat"
   ],
   "ondirectattack": [
-    "Uau!",
-    "Dá tanto medo?",
-    "Soa muito pombalhão.",
-    "Não aguento mais."
+    "Uau!&bawl",
+    "É tão assustador assim?&obedient",
+    "Parece super desistido&rage",
+    "Não aguento&obedient"
   ],
-  "facedownmonstername": "Pomba",
+  "facedownmonstername": "Pombo",
   "activate": [
-    "Pomba inconsciente.",
-    "É legal, é legal."
+    "Não entendo mas desisto mesmo assim&confused",
+    "Desisti, bom&good"
   ],
   "summon": [
-    "Horrível.",
-    "Não é da minha conta.",
-    "Isso ainda não é da minha conta.",
-    "É legal, é legal."
+    "Assustador&surprised",
+    "Não é meu problema&sweat",
+    "Ainda não é meu problema então&sneaky",
+    "Desisti, bom&good"
   ],
   "setmonster": [
-    "Estou no processo de pescar e não quero atualizar.",
-    "Então continua sendo uma posição de pomba, né?"
+    "Vagando, não quero atualizar&stick_tongue",
+    "Melhor setar e desistir então&shy"
   ],
   "chaining": [
-    "O que é isso?",
-    "Mas eu perdi.",
-    "Não existe tal serviço.",
-    "Horrível."
+    "O que é isso?&confused",
+    "Mas eu desisti&ridiculous",
+    "Sem esse serviço&despise",
+    "Assustador&surprised"
   ],
   "surrender": [
-    "É terrível (sai correndo).",
-    "Este jogo é muito difícil de jogar (sai correndo).",
-    "Por sorte, eu não jogo Yu-Gi-Oh! (sai correndo)."
+    "Tão assustador (sai correndo&obedient",
+    "Esse jogo é tão difícil (sai correndo&sweat",
+    "Bom que eu não jogo Yu-Gi-Oh (sai correndo&laugh"
   ]
 }

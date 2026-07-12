@@ -1,45 +1,60 @@
 {
-"welcome": [
-"It's midnight snack!",
-"I can play any Pendulum deck!",
-"What? You said Super Heavy Samurai is not a Pendulum deck?"
-],
-"deckerror": [
-"The number of {0} is wrong! Go change to unlimited mode!"
-],
-"duelstart": [
-"Show you the charm of Super Heavy Samurai!"
-],
-"newturn": [
-"Draw a card! Benkei, don't come save me!",
-"Draw a card! P body, don't come save me!"
-],
-"endturn": [
-"Hehe, it's your turn!",
-"Do you like my board?"
-],
-"directattack": [
-"I use {0} to attack directly!",
-],
-"attack": [
-"I use {0} to attack {1}!"
-],
-"ondirectattack": [
-"Don't fight! Don't fight!",
-"Uwaaa! I'm going to be defeated~"
-],
-"facedownmonstername": "Monster",
-"activate": [
-"Fufufu, {0}'s effect is too powerful!",
-"Fufufu, I use {0}'s effect."
-],
-"summon": [
-"Fufufu, I summon {0}!"
-],
-"setmonster": [
-"Fufufu, I set a monster."
-],
-"chaining": [
-"At this moment! {0}'s effect is activated!"
-]
+  "welcome": [
+    "It's Xiaoye here!",
+    "I can play any Pendulum Deck!",
+    "What? You said Superheavy isn't a Pendulum Deck?",
+    "You'll be mine too, obediently!",
+    "Follow \"Is there supper tonight?\" - top tier Mengka Ladder decks showcased monthly"
+  ],
+  "deckerror": [
+    "The number of {0} is wrong! Hurry up and switch to Unlimited Format!.",
+    "My youth can't be wasted on little cards {0}."
+  ],
+  "duelstart": [
+    "Let me show you the charm of Superheavy Samurai! &cool",
+    "Your deck is nice, but it'll be mine too! &ridiculous"
+  ],
+  "newturn": [
+    "Draw! Benkei, don't come to my hand to save me! &obedient",
+    "Draw! P-body, don't come to my hand to save me! &obedient",
+    "Whatever, I'll take possession of it"
+  ],
+  "endturn": [
+    "Hehe, it's your turn now! &stick_tongue",
+    "Do you like my combo? &ridiculous",
+    "Good luck. &ridiculous"
+  ],
+  "directattack": [
+    "I use {0} for a direct attack! &ridiculous",
+    "I'll beat you to a pulp! &rage"
+  ],
+  "attack": [
+    "I use {0} to attack {1}! &stick_tongue"
+  ],
+  "ondirectattack": [
+    "Don't hit me! Don't hit me! &obedient",
+    "Waaah! I'm gonna be defeated~&bawl",
+    "6&bawl",
+    "So cheeky? &obedient",
+    "I can't take it anymore&obedient"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "Hehe, the effect of {0} is too OP! &stick_tongue",
+    "Hehe, I use the effect of {0}. &good"
+  ],
+  "summon": [
+    "Hehe, I summon {0}! &good"
+  ],
+  "setmonster": [
+    "Hehe, I set a monster face-down. &reluctant"
+  ],
+  "chaining": [
+    "Now! Activate the effect of {0}! &laugh",
+    "666! &obedient",
+    "What does it mean? &confused",
+    "?&confused",
+    "All that fuss for this? &despise",
+    "What are you even saying? &confused"
+  ]
 }

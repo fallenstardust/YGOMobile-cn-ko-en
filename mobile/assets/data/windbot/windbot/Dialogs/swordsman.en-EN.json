@@ -1,75 +1,75 @@
 {
-"welcome": [
-"Hello, I'm a robot.",
-"The AI ​​function is under testing. Please report any problems in time."
-],
-"deckerror": [
-"Sorry, there seems to be a problem with the number of {0} in my deck."
-],
-"duelstart": [
-"The fun is just about to begin!",
-"Bring smiles with duels!"
-],
-"newturn": [
-"It's my turn, draw a card!",
-"My turn, draw a card!",
-"I drew a card."
-],
-"endturn": [
-"End of turn.",
-"My turn is over.",
-"It's your turn."
-],
-"directattack": [
-"{0}, direct attack!",
-"{0}, direct attack the opponent!",
-"{0}, no defense, attack!",
-"{0}, attack the opponent's life points!",
-"{0}, direct attack the opponent's life points!",
-"{0}, defeat the opponent with a direct attack!",
-"{0}, use direct attacks to defeat the opponent!",
-"{0}, use direct attacks to unleash your power!",
-"My {0} will crush your health!",
-"Show your power to the opponent, {0}!",
-"You can no longer stop me. {0}, attack!"
-],
-"attack": [
-"{0}, attack this {1}!",
-"{0}, destroy this {1}!",
-"{0}, defeat {1}!",
-"{0}, charge at that {1}!",
-"{0}, unleash your power on {1}!"
-],
-"ondirectattack": [
-"Damn...",
-"It's just {0}!",
-"Do you think you can defeat me like this?"
-],
-"facedownmonstername": "Monster",
-"activate": [
-"I activate {0}.",
-"I use the effect of {0}.",
-"I use the power of {0}."
-],
-"summon": [
-"I summon {0}.",
-"Come out, {0}!",
-"Show up, {0}!",
-"I summon the powerful {0}!",
-"I call {0} to battle!",
-"I call out {0}.",
-"Let me summon {0}."
-],
-"setmonster": [
-"I place a monster.",
-"I place a monster face-down."
-],
-"chaining": [
-"Look here! I activate {0}!",
-"I use the power of {0}.",
-"Ready! I use {0}!",
-"I disagree. {0}, activate!",
-"It seems you forgot about my {0}!",
-"Have you considered that I have {0}?"
-]
+  "welcome": [
+    "Hello, I am a robot.",
+    "AI functions are under testing. Please provide feedback promptly if you encounter any issues."
+  ],
+  "deckerror": [
+    "Sorry, there seems to be an issue with the number of {0} in my deck."
+  ],
+  "duelstart": [
+    "The real show is just beginning! &laugh",
+    "Let duels bring smiles! &laugh"
+  ],
+  "newturn": [
+    "It's my turn, draw! &reluctant",
+    "My turn, draw! &laugh",
+    "I drew a card. &reluctant"
+  ],
+  "endturn": [
+    "Turn end. &reluctant",
+    "My turn is over. &ridiculous",
+    "Your turn. &reluctant"
+  ],
+  "directattack": [
+    "{0}, direct attack! &reluctant",
+    "{0}, direct attack the opponent! &ridiculous",
+    "{0}, there's no defense, attack! &stick_tongue",
+    "{0}, attack the opponent's Life Points! &reluctant",
+    "{0}, direct attack the opponent's Life Points! &stick_tongue",
+    "{0}, defeat the opponent with a direct attack! &ridiculous",
+    "{0}, use direct attack to defeat the opponent! &reluctant",
+    "{0}, direct attack and unleash your power! &ridiculous",
+    "My {0} will crush your Life Points! &stick_tongue",
+    "Show your power to the opponent, {0}! &reluctant",
+    "You can't stop me anymore. {0}, attack! &stick_tongue"
+  ],
+  "attack": [
+    "{0}, attack this {1}! &reluctant",
+    "{0}, destroy this {1}! &ridiculous",
+    "{0}, defeat {1}! &reluctant",
+    "{0}, charge at that {1}! &stick_tongue",
+    "{0}, unleash your power onto {1}! &ridiculous"
+  ],
+  "ondirectattack": [
+    "Damn it……&shy",
+    "It's just {0}! &despise",
+    "Do you think this can defeat me? &despise"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "I activate {0}. &laugh",
+    "I use the effect of {0}. &laugh",
+    "I use the power of {0}. &laugh"
+  ],
+  "summon": [
+    "I summon {0}. &cool",
+    "Come forth, {0}! &cool",
+    "Appear, {0}! &laugh",
+    "I summoned the mighty {0}!",
+    "I call {0} to join the battle! &cool",
+    "I call forth {0}. &laugh",
+    "Let me summon {0}. &cool"
+  ],
+  "setmonster": [
+    "I set a monster. &laugh",
+    "I set a monster in face-down position. &laugh"
+  ],
+  "chaining": [
+    "Look here! I activate {0}! &laugh",
+    "I use the power of {0}. &ridiculous",
+    "Ready! I use {0}! &laugh",
+    "I disagree. Activate {0}! &despise",
+    "Looks like you forgot about my {0}! &despise",
+    "Did you consider I have {0}? &despise"
+  ]
 }

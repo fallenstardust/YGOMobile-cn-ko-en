@@ -1,0 +1,60 @@
+{
+  "welcome": [
+    "嘿，我迷路了，你也是吗？",
+    "哦，别怕，我只是路过的",
+    "没事的，我也不擅长这套卡组"
+  ],
+  "deckerror": [
+    "{0}的数量不对！我不能少了它！。",
+    "去开个无禁限好吗，我的{0}被禁了"
+  ],
+  "duelstart": [
+    "诶呀，友好切磋而已啦&laugh",
+    "啊嘞，这就开始了吗&surprised",
+    "你的卡组很不错，但我会占有&ridiculous"
+  ],
+  "newturn": [
+    "抽卡！发牌姬快来助我&shy",
+    "抽卡！何意味？&obedient",
+    "抽卡！哦，我这一定是被发牌姬算计了！&obedient"
+  ],
+  "endturn": [
+    "一人一个回合，很公平吧&reluctant",
+    "哦差点忘了，你也要玩游戏王&reluctant"
+  ],
+  "directattack": [
+    "{0}，直接攻击！&angry",
+    "欸嘿，就打就打就打&stick_tongue",
+    "你的生命值我占有了&ridiculous"
+  ],
+  "attack": [
+    "{0}，去攻击 {1}&cool",
+    "宵夜出品必属精品好吧&good"
+  ],
+  "ondirectattack": [
+    "怎么还打我！太过分了！&shy",
+    "你不许打我！&angry",
+    "666&sweat",
+    "应该是我占有你才对呀！&bawl",
+    "不是,哥们&sneaky",
+    "诶哟何意味啊你&bawl"
+  ],
+  "facedownmonstername": "怪兽",
+  "activate": [
+    " 此刻，我要发动 {0} 的效果&cool",
+    "欸，我的 {0} 亮了，点一下&confused",
+    "我的 {0} 亮了，何意味？&confused",
+  ],
+  "summon": [
+    "这是我引以为傲的怪兽 {0}&good",
+    "锵锵！{0} 登场！&laugh"
+  ],
+  "setmonster": [],
+  "chaining": [
+    "欸，这是什么，点一下&confused",
+    "何意味？&confused"
+  ],
+  "custom": [
+    "这卡明显是其他卡组送进去的，看我干什么&ridiculous"
+  ]
+}

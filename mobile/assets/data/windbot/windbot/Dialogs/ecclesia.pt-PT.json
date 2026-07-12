@@ -1,49 +1,50 @@
-{{
+{
   "welcome": [
-    "Esta é a cúspide do Grande Pico do Espírito?",
-    "Este é o reino de treinamento de dragões?"
+    "Este é o Pico do Grande Espírito?",
+    "Este é o País do Dragão Dogmático.",
+    "Esta é a Terra Aberta."
   ],
   "deckerror": [
-    "{0} está amaldiçoado pela água gelada!"
+    "{0} está amarrado pela maldição de água gelada!"
   ],
   "duelstart": [
-    "Depois de caminhar por tanto tempo, estou com fome...",
-    "Que tipo de companheiros encontraremos mais à frente?",
-    "Juntos, você, eu e Albas..."
+    "Caminhei tanto, estou com fome……&shy",
+    "Que tipo de companheiros vou encontrar à frente?&confused",
+    "Se o Albus estiver comigo……&shy"
   ],
   "newturn": [
-    "Minha vez!"
+    "Meu turno! &angry"
   ],
   "endturn": [
-    "Onde está Onii-chan...",
-    "Albas terminou de comer sua comida seca.",
-    "Quando será servido o jantar?"
+    "Onde diabos está a irmã……&bawl",
+    "A comida seca do Albus também acabou. &shy",
+    "Quando vamos comer?&confused"
   ],
   "directattack": [
-    "{0}, ataque direto!",
-    "Vamos comer!"
+    "{0}, ataque direto! &cool",
+    "Hora de comer! &laugh"
   ],
   "attack": [
-    "Ataque {1} com {0}!"
+    "Ataque {1} com {0}! &stick_tongue"
   ],
   "ondirectattack": [
-    "Tão faminto...",
-    "Woooo...",
-    "Onii-chan……"
+    "Tão com fome……&shy",
+    "Uuu……&bawl",
+    "Irmã……&shy"
   ],
   "facedownmonstername": "Monstro",
   "activate": [
-    "Ative o efeito de {0}!"
+    "Ative o efeito de {0}! &stick_tongue"
   ],
   "summon": [
-    "{0}, eu te invoco!",
-    "Saia, {0}!"
+    "Invoco {0}! &cool",
+    "Venha, {0}! &stick_tongue"
   ],
   "setmonster": [
-    "......"
+    "……&sneaky"
   ],
   "chaining": [
-    "Ativo o efeito de {0}!",
-    "{0}!"
+    "Ative o efeito de {0}! &laugh",
+    "{0}! &laugh"
   ]
 }

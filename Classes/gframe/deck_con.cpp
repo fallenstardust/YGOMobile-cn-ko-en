@@ -100,29 +100,17 @@ void DeckBuilder::Initialize() {
 	mainGame->btnSideReload->setVisible(false);
     if (mainGame->gameConf.enable_genesys_mode) {
         if (mainGame->gameConf.use_genesys_lflist) {
-            if (mainGame->gameConf.default_genesys_lflist >= 0 && mainGame->gameConf.default_genesys_lflist < (int)deckManager._genesys_lfList.size()) {
-                filterList = &deckManager._genesys_lfList[mainGame->gameConf.default_genesys_lflist];
-            } else {
-                mainGame->gameConf.default_genesys_lflist = 0;
-                filterList = &deckManager._genesys_lfList.front();
-            }
+            filterList = &deckManager._genesys_lfList[mainGame->gameConf.default_genesys_lflist];
         } else {
             filterList = &deckManager._genesys_lfList.back();
         }
-    } else{
+    } else {
         if (mainGame->gameConf.use_lflist) {
-            if (mainGame->gameConf.default_lflist >= 0 && mainGame->gameConf.default_lflist < (int)deckManager._lfList.size()) {
-                filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
-            }
-            else {
-                mainGame->gameConf.default_lflist = 0;
-                filterList = &deckManager._lfList.front();
-            }
-        } else {
-            filterList = &deckManager._lfList.back();
-        }
-    }
-
+			filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
+		} else {
+			filterList = &deckManager._lfList.back();
+		}
+	}
 	ClearSearch();
 	mouse_pos.set(0, 0);
 	hovered_code = 0;
@@ -1742,9 +1730,12 @@ void DeckBuilder::FilterCards() {
             // filter_lm == 8 表示只显示自定义卡
             if(filter_lm == 8 && !(data.ot & AVAIL_CUSTOM))
                 continue;
-
-            // filter_lm == 9 表示只显示同时属于OCG和TCG的卡片（无独有卡）
-            if(filter_lm == 9 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
+			if(filter_lm == 9 && (!(data.ot & AVAIL_OCG) || (data.ot & AVAIL_TCG)))
+				continue;
+			if(filter_lm == 10 && (!(data.ot & AVAIL_TCG) || (data.ot & AVAIL_OCG)))
+				continue;
+            // filter_lm == 11 表示只显示同时属于OCG和TCG的卡片（无独有卡）
+            if(filter_lm == 11 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
                 continue;
         }
 

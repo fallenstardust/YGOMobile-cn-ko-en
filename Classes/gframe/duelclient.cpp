@@ -36,6 +36,7 @@ namespace {
 	wchar_t event_string[256]{};
 	std::mt19937 rnd{};
 	std::uniform_real_distribution<float> real_dist{};
+	unsigned char duel_client_read[SIZE_NETWORK_BUFFER]{};
 
 	bool is_refreshing{};
 	int match_kill{};
@@ -184,9 +185,6 @@ void DuelClient::ClientRead(bufferevent* bev, void* ctx) {
 	size_t len = evbuffer_get_length(input);
 	if (len < 2)
 		return;
-
-	// 分配临时缓冲区用于存储读取的数据包
-	unsigned char* duel_client_read = new unsigned char[SIZE_NETWORK_BUFFER];
 	uint16_t packet_len = 0;
 
 	// 循环处理输入缓冲区中的完整数据包
@@ -208,9 +206,6 @@ void DuelClient::ClientRead(bufferevent* bev, void* ctx) {
 		// 更新剩余数据长度
 		len -= packet_len + 2;
 	}
-
-	// 释放临时缓冲区
-	delete[] duel_client_read;
 }
 /**
  * @brief 处理客户端网络事件的回调函数。
@@ -381,7 +376,7 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
  *
  * @return int 返回0表示正常退出
  */
-int DuelClient::ClientThread() {
+void DuelClient::ClientThread() {
 	// 启动事件循环，处理网络事件
 	event_base_dispatch(client_base);
 
@@ -393,7 +388,6 @@ int DuelClient::ClientThread() {
 	client_bev = 0;
 	client_base = 0;
 	connect_state = 0;
-	return 0;
 }
 void DuelClient::HandleSTOCPacketLan(unsigned char* data, size_t len) {
 	unsigned char* pdata = data;

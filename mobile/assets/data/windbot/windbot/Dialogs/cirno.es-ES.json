@@ -1,64 +1,64 @@
 {
   "welcome": [
-    "¡Soy Cirno, la chica más fuerte!",
-    "La función IA está bajo prueba. Si encuentra algún problema, infórmelo a tiempo.",
-    "¿Estás listo para el duelo?"
+    "¡Yo soy la más fuerte!",
+    "Las funciones de IA están en prueba. Por favor, envía comentarios si tienes problemas.",
+    "¿Qué es una Rana Pastel? ¿Está rica?"
   ],
   "deckerror": [
-    "¿Por qué no se puede utilizar mi {0}?"
+    "¿Por qué no puedo usar mi {0}?"
   ],
   "duelstart": [
-    "¡Te congelaré!",
-    "¡El duelo ha comenzado!"
+    "¡Te congelaré! &angry",
+    "Derrotar humanos no es nada, ¡yo sola soy suficiente! &angry"
   ],
   "newturn": [
-    "¡Como sea, demostraré que soy fuerte!",
-    "¡Es mi turno, robo!"
+    "Aunque es repentino, ¡serás derrotado por mí! &stick_tongue",
+    "Mi turno, robar! &laugh"
   ],
   "endturn": [
-    "¡Se acabó el turno!",
-    "¡Te dije que era el final de tu turno!"
+    "¡Te perdono la vida! &sneaky",
+    "¡Congélate hasta morir bajo mi seriedad! &angry"
   ],
   "directattack": [
-    "{0}, ¡Ataca directo!",
-    "¡Acaba con él de un solo golpe!",
-    "¡Ataca directo al oponente!",
-    "¡Es un ataque directo!",
-    "Tipo 9 ¡Explosión divina!",
-    "Talismán de Hielo 「Ventisca de Diamantes」"
+    "{0}, ¡ataque directo! &cool",
+    "¡No resistes un golpe! &stick_tongue",
+    "¡Los débiles son golpeados! &despise",
+    "¡Demasiado perezosa para calcular, solo ataco! &cool",
+    "¡Super ⑨ Golpe Tirano Marcial Divino! &angry",
+    "Snow Sign「Diamond Blizzard」"
   ],
   "attack": [
-    "¡{0}, Ataca a su {1}!",
-    "¡{0}, Destruye su {1}!!",
-    "¡{0}, Derrota a {1}!",
-    "Talismán de Hielo 「Caída del Carámbano」"
+    "{0}, ¡ataca este {1}! &rage",
+    "{0}, ¡destruye este {1}! &cool",
+    "{0}, ¡derrota a {1}! &rage",
+    "Ice Sign「Icicle Fall」&obedient"
   ],
   "ondirectattack": [
-    "¡¡¡Puaj!!! ¿¡Por qué le haces esto a una mujer!?",
-    "{0}.....",
-    "¡No puedo aguantar tanto!"
+    "No bromees～. ¡Te congelaré junto con la carne inglesa!! &rage",
+    "¡Un simple {0}, qué da miedo! &stick_tongue",
+    "¡Los tontos no se resfrían! &ridiculous"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "Me gustaría activar a {0}",
-    "Activaré el efecto de {0}.",
-    "{0} ¡Activado!"
+    "Activo {0}. &sneaky",
+    "Uso el efecto de {0}. &stick_tongue",
+    "¡Mi {0} es la más fuerte! &good"
   ],
   "summon": [
-    "Convoco a {0}.",
-    "¡Sal, {0}!",
-    "{0} ¡Yo te Invoco!",
-    "¡Invoco a mi monstruo {0}!",
-    "¡Preséntate, {0}!"
+    "Invoco a {0}. &cool",
+    "¡Ven, {0}! &surprised",
+    "¡Aparece, {0}! &surprised",
+    "¡Invoco al poderoso {0}! &cool",
+    "Hago aparecer a {0}. &stick_tongue"
   ],
   "setmonster": [
-    "Me gustaría colocar este monstruo.",
-    "¡Apuesto por este monstruo!"
+    "Coloqué un monstruo. &sneaky",
+    "¡Ven a atacarme si no te importa morir! &cool"
   ],
   "chaining": [
-    "¡Te atrapé! {0} ¡Activado!",
-    "Me gustaría activar {0}.",
-    "{0} ¡Activado!",
-    "Talismán de Hielo 「Congelación Perfecta」」"
+    "¡Mira aquí! Activo {0}! &rage",
+    "Uso el poder de {0}. &laugh",
+    "¡Teme a mi {0}! &despise",
+    "Freeze Sign「Perfect Freeze」&surprised"
   ]
 }

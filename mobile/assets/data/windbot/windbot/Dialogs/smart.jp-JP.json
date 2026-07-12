@@ -1,0 +1,43 @@
+{
+  "welcome": [
+    "こんにちは、俺はめちゃくちゃイケメンだ。"
+  ],
+  "deckerror": [
+    "申し訳ない、俺のデッキの{0}の枚数に問題があるみたいだ。&sneaky"
+  ],
+  "duelstart": [
+    "堂々たるデュエルをしよう（パンツの中に龍を隠す）&ridiculous"
+  ],
+  "newturn": [
+    "これからは俺のステージだ&cool"
+  ],
+  "endturn": [
+    "人それぞれ目的は違う、俺は強さを重視する、勝つだけだ。&ridiculous"
+  ],
+  "directattack": [
+    "俺が行く、お前の命を奪う&rage"
+  ],
+  "attack": [
+    "消えろ、雑魚&cool"
+  ],
+  "ondirectattack": [
+    "お父さん、助けて&bawl",
+    "これは恐ろしい&surprised"
+  ],
+  "facedownmonstername": "モンスター",
+  "activate": [
+    "このカードの効果は、表に書かれてないけど、それでもこう使える。&ridiculous"
+  ],
+  "summon": [
+    "強い、無敵&good",
+    "{0}を召喚、大儲け&stick_tongue",
+    "{0}はまるで偽カード&reluctant",
+    "俺はずっと{0}が好きだ&cool"
+  ],
+  "setmonster": [
+    "また手札事故だ&obedient"
+  ],
+  "chaining": [
+    "愚か者、俺が手を変え品を変えで対応してやる&sneaky"
+  ]
+}

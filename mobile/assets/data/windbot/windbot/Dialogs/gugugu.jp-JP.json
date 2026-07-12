@@ -1,0 +1,64 @@
+{
+  "welcome": [
+    "みんなこんにちは、新人です",
+    "遊戯王ってどうやって遊ぶの？",
+    "幸い俺は遊戯王やらない"
+  ],
+  "deckerror": [
+    "デッキの{0}が抜けちゃった&reluctant"
+  ],
+  "duelstart": [
+    "仕事する気がないどうしよ&ridiculous",
+    "頭が回らないし仕事する気がないどうしよ&ridiculous"
+  ],
+  "newturn": [
+    "怖い新カードがすごい多い&bawl",
+    "このゲームめちゃ難しい&sweat",
+    "so lazy cant move&reluctant"
+  ],
+  "endturn": [
+    "仕方なくサボるしかない&obedient",
+    "今じゃない、いつか分からない&cool",
+    "too hot need ice cream&cool"
+  ],
+  "directattack": [
+    "サボりそうな感じ&confused",
+    "ベテランサボリー、安定&good"
+  ],
+  "attack": [
+    "サボりそうにない感じ&cool",
+    "怖い&sweat"
+  ],
+  "ondirectattack": [
+    "わー！&bawl",
+    "そんなに怖いの？&obedient",
+    "超サボりそうな感じ&rage",
+    "耐えられない&obedient"
+  ],
+  "facedownmonstername": "ハト",
+  "activate": [
+    "分からないけどサボる&confused",
+    "サボった、気持ちいい&good"
+  ],
+  "summon": [
+    "怖い&surprised",
+    "俺の知ったことじゃない&sweat",
+    "それでも俺の知ったことじゃない&sneaky",
+    "サボった、気持ちいい&good"
+  ],
+  "setmonster": [
+    "だらけてる、更新したくない&stick_tongue",
+    "それならサボってセットするか&shy"
+  ],
+  "chaining": [
+    "それはなに？&confused",
+    "でも俺サボった&ridiculous",
+    "そのサービスはない&despise",
+    "怖い&surprised"
+  ],
+  "surrender": [
+    "めちゃ怖い（逃げる&obedient",
+    "このゲームめちゃ難しい（逃げる&sweat",
+    "幸い俺は遊戯王やらない（逃げる&laugh"
+  ]
+}

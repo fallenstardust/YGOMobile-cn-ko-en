@@ -1,0 +1,59 @@
+{
+  "welcome": [
+    "こんにちは、カード戦士！",
+    "こんにちは、俺とカード遊ぼう！"
+  ],
+  "deckerror": [
+    "ごめん、俺のデッキは{0}がないと遊べないんだ。"
+  ],
+  "duelstart": [
+    "へへ、二郎でお前を叩き潰すぞ。&ridiculous",
+    "俺のデッキは悪くない、禁止カードを何枚か忍ばせただけなの～&stick_tongue",
+    "俺は簡単なデッキしか遊べない、禁止カードで俺と戦わないで～&shy"
+  ],
+  "newturn": [
+    "俺の番だ、ドロー！（パンツからこっそり取り出す）&ridiculous",
+    "カードを1枚ドロー&cool"
+  ],
+  "endturn": [
+    "俺は遊び終わった、お前の番&stick_tongue",
+    "お前のターンだよ～マルチスレッドデュエルなの？&confused"
+  ],
+  "directattack": [
+    "{0}、相手を攻撃！&reluctant",
+    "{0}、粉砕しろ！&rage",
+    "{0}、小さな拳で殴れ！&stick_tongue"
+  ],
+  "attack": [
+    "{0}、{1}を倒せ！&good",
+    "へへ、{0}、{1}を攻撃！&reluctant"
+  ],
+  "ondirectattack": [
+    "ああ、打たないで、禁止カード貸してあげる～&shy",
+    "やあ、めちゃくちゃ強い、俺を連れてってくれない？&obedient",
+    "痛い...電源抜きたい&bawl"
+  ],
+  "facedownmonstername": "モンスター",
+  "activate": [
+    "へへ、{0}を発動する&reluctant",
+    "がが、{0}の力を使う&laugh"
+  ],
+  "summon": [
+    "召喚する（取り出す）{0}！&ridiculous",
+    "出てこい、俺の小さなモンスター{0}！&laugh"
+  ],
+  "setmonster": [
+    "名前も知らないモンスターをセットする。&stick_tongue"
+  ],
+  "chaining": [
+    "へい、禁止カード使えるの腹立つ？&ridiculous",
+    "ふん、{0}を発動する！&cool",
+    "ごめんね、{0}持ってるの&reluctant",
+    "ははは、{0}の効果発動！&stick_tongue"
+  ],
+  "custom": [
+    "ケロ！本体出撃！&cool",
+    "凸(艹皿艹 )手札事故だ、遊ぶのやめる！！！&bawl",
+    "へい慌てんな、ストールボードまだあるぜ(￣y▽￣)╭&ridiculous"
+  ]
+}

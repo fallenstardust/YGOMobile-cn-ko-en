@@ -20,6 +20,7 @@ namespace{
 
 unsigned char NetServer::net_server_write[SIZE_NETWORK_BUFFER]{};
 size_t NetServer::last_sent{};
+bufferevent* NetServer::disconnecting_bev = nullptr;
 
 /**
  * @brief 启动网络服务器
@@ -295,11 +296,14 @@ void NetServer::ServerEchoEvent(bufferevent* bev, short events, void* ctx) {
 		DuelPlayer* dp = &users[bev];
 		// 获取玩家所在的游戏模式对象
 		DuelMode* dm = dp->game;
+		auto* prev_disconnect = disconnecting_bev;
+		disconnecting_bev = bev;
 		// 根据玩家是否在游戏中的状态，执行不同的断开处理逻辑
 		if(dm)
 			dm->LeaveGame(dp);
 		else
 			DisconnectPlayer(dp);
+		disconnecting_bev = prev_disconnect;
 	}
 }
 /**
@@ -310,7 +314,7 @@ void NetServer::ServerEchoEvent(bufferevent* bev, short events, void* ctx) {
  *
  * @return int 返回0表示正常退出
  */
-int NetServer::ServerThread() {
+void NetServer::ServerThread() {
 	// 启动事件循环，处理网络IO事件
 	event_base_dispatch(net_evbase);
 
@@ -344,8 +348,6 @@ int NetServer::ServerThread() {
 	// 释放事件基础结构
 	event_base_free(net_evbase);
 	net_evbase = nullptr;
-
-	return 0;
 }
 /**
  * @brief 断开指定玩家的网络连接
@@ -359,12 +361,17 @@ void NetServer::DisconnectPlayer(DuelPlayer* dp) {
 	// 查找玩家对应的缓冲事件是否存在于用户列表中
 	auto bit = users.find(dp->bev);
 	if(bit != users.end()) {
+		if(dp->game) {
+			dp->game->OnPlayerDisconnected(dp);
+			dp->game = nullptr;
+		}
 		// 强制刷新输出缓冲区，确保所有数据都发送完毕
 		bufferevent_flush(dp->bev, EV_WRITE, BEV_FLUSH);
 		// 禁用缓冲事件的读取功能
 		bufferevent_disable(dp->bev, EV_READ);
 		// 释放缓冲事件资源
 		bufferevent_free(dp->bev);
+		dp->bev = nullptr;
 		// 从用户列表中移除该玩家
 		users.erase(bit);
 	}

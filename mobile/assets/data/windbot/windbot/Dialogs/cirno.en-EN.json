@@ -1,64 +1,64 @@
 {
-"welcome": [
-"I am the strongest!",
-"AI function is under testing, please report any problems in time.",
-"What is Pancake Frog, is it delicious?"
-],
-"deckerror": [
-"Why can't my {0} be used?"
-],
-"duelstart": [
-"Let me freeze you!",
-"It's just to defeat humans, I'm enough!"
-],
-"newturn": [
-"Although it's a bit sudden, I'll defeat you!",
-"My turn, draw a card!"
-],
-"endturn": [
-"Spare your life!",
-"Freeze to death under my seriousness!"
-],
-"directattack": [
-"{0}, direct attack!",
-"Unable to withstand a single blow!",
-"The weak will be beaten!",
-"I'm too lazy to count, I'll talk about it after the fight!",
-"Super ⑨ Martial God Tyrant Slash!",
-"Snow Talisman 「Diamond Blizzard」"
-],
-"attack": [
-"{0}, attack this {1}!",
-"{0}, destroy this {1}!",
-"{0}, defeat {1}!",
-"Ice Talisman 「Icicle Fall」"
-],
-"ondirectattack": [
-"Don't be ridiculous~. For someone like you, I'll keep you frozen together with English beef!! ",
-"What's so scary about a tiny {0}!",
-"Fools don't catch colds!"
-],
-"facedownmonstername": "Monster",
-"activate": [
-"I activate {0}.",
-"I use the effect of {0}.",
-"My {0} is the strongest!"
-],
-"summon": [
-"I summon {0}.",
-"Come out, {0}!",
-"Appear, {0}!",
-"I summoned the powerful {0}!",
-"I called out {0}."
-],
-"setmonster": [
-"I placed a monster. ",
-"If you are not afraid of death, come and attack me!"
-],
-"chaining": [
-"Look here! I activate {0}!",
-"I use the power of {0}. ",
-"Fear my {0}!",
-"Freezing Talisman 「Perfect Freeze」"
-]
+  "welcome": [
+    "I am the strongest!",
+    "AI functions are under testing. Please give feedback if you encounter any problems.",
+    "What is a Pie Frog? Is it tasty?"
+  ],
+  "deckerror": [
+    "Why can't I use my {0}?"
+  ],
+  "duelstart": [
+    "Let me freeze you! &angry",
+    "Defeating humans is nothing, I alone am enough! &angry"
+  ],
+  "newturn": [
+    "Though it's sudden, be defeated by me! &stick_tongue",
+    "My turn, draw! &laugh"
+  ],
+  "endturn": [
+    "I'll spare your life! &sneaky",
+    "Freeze to death under my seriousness! &angry"
+  ],
+  "directattack": [
+    "{0}, direct attack! &cool",
+    "You're defenseless! &stick_tongue",
+    "The weak get beaten! &despise",
+    "Too lazy to calculate, just attack! &cool",
+    "Super ⑨ Divine Martial Tyrant Slash! &angry",
+    "Snow Sign「Diamond Blizzard」"
+  ],
+  "attack": [
+    "{0}, attack this {1}! &rage",
+    "{0}, destroy this {1}! &cool",
+    "{0}, defeat {1}! &rage",
+    "Ice Sign「Icicle Fall」&obedient"
+  ],
+  "ondirectattack": [
+    "Don't make me laugh～. I'll freeze you along with the English beef!! &rage",
+    "A mere {0}, what's so scary! &stick_tongue",
+    "Fools don't catch colds! &ridiculous"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "I activate {0}. &sneaky",
+    "I use the effect of {0}. &stick_tongue",
+    "My {0} is the strongest! &good"
+  ],
+  "summon": [
+    "I summon {0}. &cool",
+    "Come forth, {0}! &surprised",
+    "Appear, {0}! &surprised",
+    "I summon the mighty {0}! &cool",
+    "I call forth {0}. &stick_tongue"
+  ],
+  "setmonster": [
+    "I set a monster. &sneaky",
+    "Come attack me if you dare! &cool"
+  ],
+  "chaining": [
+    "Look! I activate {0}! &rage",
+    "I use the power of {0}. &laugh",
+    "Tremble before my {0}! &despise",
+    "Freeze Sign「Perfect Freeze」&surprised"
+  ]
 }

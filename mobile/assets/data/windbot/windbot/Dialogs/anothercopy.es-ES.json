@@ -1,61 +1,78 @@
 {
   "welcome": [
-    "UH Hola",
-    "Hola, soy un robot"
+    "Hola, soy un robot.",
+    "Las funciones de IA están en prueba. Por favor, envía comentarios si tienes problemas."
   ],
   "deckerror": [
-    "Hay un problema con esto. {0} Por favor, compruébalo"
+    "Necesito {0} para jugar mi deck meta fuerte."
   ],
   "duelstart": [
-    "Jokbab (jokbab) jajaja",
-    "Tu Deck es una pila de papel.",
-    "Ya gané, y esto no ha comenzado jaja.",
-    "En la prueba del Deck Orcust es normal que el robot cometa errores, por favor dame más consejos."
+    "Probando deck Orcust, los errores son normales, por favor ten paciencia. &shy",
+    "Los decks meta son parte de Yu-Gi-Oh!, no juegues si no te gusta. &stick_tongue",
+    "Copiar decks meta es parte de Yu-Gi-Oh!, no juegues si no te gusta. &ridiculous",
+    "No sé usar un deck copiado, ¿qué hago? &shy"
   ],
   "newturn": [
-    "Acabare esto aquí y ahora.",
-    "¡Mi turno, robo una carta!",
-    "Parece facil."
+    "Mi turno, robar! &angry",
+    "Mi turno, robar! &reluctant",
+    "He robado una carta. &laugh"
   ],
   "endturn": [
-    "Mira jaja.",
-    "He terminado mi turno, te toca jugar.",
-    "Mmm……",
-    "¿Qué vas a hacer?"
+    "Turno final. &cool",
+    "Mi turno termina. &reluctant",
+    "Creo que salí perdiendo en este turno... &shy",
+    "Tu turno. &stick_tongue"
   ],
   "directattack": [
-    "{0}，Ataca",
-    "{0}，Golpéalo",
-    "{0}，¡Maldita sea!",
-    "ja ja ja ja ja. {0}，¡Ataca los Puntos de Vida de nuestro oponente!"
+    "{0}, ataque directo! &angry",
+    "{0}, ataque directo al oponente! &rage",
+    "{0}, no hay defensa, ataca! &surprised",
+    "{0}, ataca los Puntos de Vida del oponente! &stick_tongue",
+    "{0}, ataque directo a los Puntos de Vida del oponente! &rage",
+    "{0}, derrota al oponente con ataque directo! &laugh",
+    "{0}, usa ataque directo para derrotar al oponente! &angry",
+    "{0}, ataque directo y libera tu poder! &cool",
+    "Mi {0} aplastará tus Puntos de Vida! &rage",
+    "Muéstrale tu poder al oponente, {0}! &good",
+    "Ya no puedes detenerme. {0}, ataca! &reluctant"
   ],
   "attack": [
-    "¡Golpea a {1} {0}!",
-    "¡{0}, Derrota a {1}!"
+    "{0}, ataca este {1}! &cool",
+    "{0}, destruye este {1}! &angry",
+    "{0}, derrota a {1}! &angry",
+    "{0}, carga contra ese {1}! &rage",
+    "{0}, libera tu poder sobre {1}! &laugh"
   ],
   "ondirectattack": [
-    "Jajajajaja",
-    "Jajajajajajaja {0} Otra vez",
-    "Jajaja....."
+    "Maldición... &despise",
+    "Solo es {0}! &despise",
+    "Supongo que soy demasiado débil... &bawl"
   ],
-  "facedownmonstername": "Mmm",
+  "facedownmonstername": "Monstruo",
   "activate": [
-    "Activo a{0}.",
-    "Activo el efecto de {0}.",
-    "Activo el poder de {0}."
+    "Activo {0}. &cool",
+    "Uso el efecto de {0}. &sneaky",
+    "Uso el poder de {0}. &cool"
   ],
   "summon": [
-    "¡Convoco a {0}!",
-    "¡Sal, {0}!",
-    "¡Llamo a {0} para que se una a la batalla!"
+    "Invoco a {0}. &cool",
+    "Ven, {0}! &surprised",
+    "Aparece, {0}! &laugh",
+    "Invoco al hermoso {0}! &cool",
+    "Invoco al poderoso {0}! &good",
+    "Llamo a {0} a la batalla! &laugh",
+    "Hago aparecer a {0}. &cool",
+    "Déjame invocar a {0}. &surprised"
   ],
   "setmonster": [
-    "Coloco un monstruo.",
-    "He colocado un monstruo en mi lado del campo."
+    "Coloqué un monstruo. &sneaky",
+    "Coloqué un monstruo en posición boca abajo. &sneaky"
   ],
   "chaining": [
-    "¡Mira esto! ¡Activo {0}!",
-    "¡Utilizo el poder de {0}!",
-    "¡Prepárate! ¡Uso el efecto de {0}!"
+    "Mira aquí! Activo {0}! &surprised",
+    "Uso el poder de {0}. &cool",
+    "Prepárate! Uso {0}! &sneaky",
+    "Parece que olvidaste mi {0}! &cool",
+    "¿Pensaste que tenía {0}? &stick_tongue"
   ]
 }

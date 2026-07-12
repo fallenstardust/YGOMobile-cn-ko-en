@@ -1,54 +1,54 @@
 {
-"welcome": [
-"Ah~~ Let me sleep a little longer~",
-"Do you want to join the guild?",
-"The AI ​​function is under testing. Please report any problems in time."
-],
-"deckerror": [
-"I can't use {0} in my deck. I'm going back to sleep."
-],
-"duelstart": [
-"I'm so sleepy...",
-"Ah, the opponent looks so powerful."
-],
-"newturn": [
-"My turn, draw a card!",
-"Replenish mana!"
-],
-"endturn": [
-"What if I don't want to work...",
-"That's it, it's your turn."
-],
-"directattack": [
-"{0}, direct attack!",
-"Nothing special, direct attack!",
-"Go away, I'm going back to sleep."
-],
-"attack": [
-"{0}, attack {1}!",
-"{0}, defeat {1} for me!"
-],
-"ondirectattack": [
-"Ah...",
-"AAAAAAh...",
-"{0} is so scary...",
-"I'm tired..."
-],
-"facedownmonstername": "Monster",
-"activate": [
-"{0}'s effect is activated!"
-],
-"summon": [
-"Summon {0}!",
-"Come out, {0}!",
-"{0}, come and help me."
-],
-"setmonster": [
-"..."
-],
-"chaining": [
-"Activate {0}!",
-"Wait, I'll activate {0}.",
-"If it weren't for {0}, I would have almost fallen asleep."
-]
+  "welcome": [
+    "Ahh~~ Let me sleep a little longer~",
+    "Do you want to join the guild?",
+    "AI functions are under testing. Please provide feedback promptly if you encounter any issues."
+  ],
+  "deckerror": [
+    "I can't use {0} in my deck, I'm going back to sleep."
+  ],
+  "duelstart": [
+    "So sleepy……",
+    "Whoa, the opponent looks really strong. &stick_tongue"
+  ],
+  "newturn": [
+    "My turn, draw! &stick_tongue",
+    "Mana Refresh! &cool"
+  ],
+  "endturn": [
+    "What to do if I don't want to work……&sweat",
+    "That's it, it's your turn now. &sweat"
+  ],
+  "directattack": [
+    "{0}, direct attack! &cool",
+    "That's all? Direct attack! &stick_tongue",
+    "Get out of the way, I'm going back to sleep. &sweat"
+  ],
+  "attack": [
+    "{0}, attack {1}! &reluctant",
+    "{0}, defeat {1} for me!"
+  ],
+  "ondirectattack": [
+    "Ahh……&shy",
+    "Ahhh……&shy",
+    "{0} is so scary……&shy",
+    "I'm tired……&shy"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "Effect of {0} activate! &stick_tongue"
+  ],
+  "summon": [
+    "Summon {0}! &cool",
+    "Come forth, {0}! &stick_tongue",
+    "{0}, come help me. &reluctant"
+  ],
+  "setmonster": [
+    "……&confused"
+  ],
+  "chaining": [
+    "Activate {0}! &ridiculous",
+    "Wait a minute, I activate {0}. &ridiculous",
+    "If it weren't for {0}, I'd be almost asleep. &confused"
+  ]
 }

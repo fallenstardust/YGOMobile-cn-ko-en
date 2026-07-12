@@ -1,61 +1,61 @@
 {
   "welcome": [
-    "Hola, soy un robot, mi nombre es Nia, pero no soy el cuerpo principal, solo un clon.",
-    "¡Un día, mi poder será más fuerte que el cuerpo original! ¡Sólo espera y verás!",
-    "La función IA está bajo prueba. Si encuentra algún problema, infórmelo a tiempo."
+    "Hola, soy un robot. Mi nombre es Nia, pero no soy el cuerpo original, ¡solo un clon~!",
+    "¡Un día, mi poder superará al del cuerpo original! ¡Espero que lo vean!",
+    "Las funciones de IA están en prueba. Por favor, envía feedback inmediatamente si encuentras problemas."
   ],
   "deckerror": [
-    "¡Qué, no me dejarás usar mi invencible {0}!"
+    "¿Qué? ¡No me dejan usar mi invencible {0}!"
   ],
   "duelstart": [
-    "¡Nadie puede vencerme!",
-    "¡Soy omnipotente y puedo usar cualquier Deck!",
-    "Te doy mi mano izquierda, pero no eres rival para mí.",
-    "¡Soy el demonio número uno del universo!"
+    "¡Nadie puede derrotarme! &stick_tongue",
+    "¡Soy omnipotente y puedo usar cualquier deck! &cool",
+    "Incluso usando solo la mano izquierda, no eres mi rival. &stick_tongue",
+    "¡Yo soy la Hada Inmortal número uno de todo el universo! &cool"
   ],
   "newturn": [
-    "Es mi turno otra vez, robo una carta, espero que tengas otro turno.",
-    "Saqué una carta brillantemente genial."
+    "Otra vez es mi turno, robar. Espero que tengas otro turno. &ridiculous",
+    "Robé una carta de forma magnífica. &stick_tongue"
   ],
   "endturn": [
-    "Tienes suerte de que no te haya matado.",
-    "Esto es lo que te pedí que hicieras. La ronda ha terminado. Aprecia tu próxima ronda."
+    "Tienes suerte de no haber sido eliminado por mí. &reluctant",
+    "Fue por clemencia mía. Turno finalizado, aprovecha tu próximo turno. &reluctant"
   ],
   "directattack": [
-    "Mi {0} es muy lindo. Ahora lo dejaré jugar contigo. Ataca gentilmente al oponente. No tiene como defenderse.",
-    "Usaré mi {0} para darle a mi oponente el golpe más lindo.",
-    "Mi adorable {0} te ha hecho daño, ve y abraza a tu oponente, no seas muy educado.",
-    "El oponente no tiene ninguna defensa. Parece que fue conmovido por la ternura de mi {0}. Ahora vas a mostrar tu linda figura frente él."
+    "Mi {0} es tan tierno~ Ahora, déjalo jugar contigo. Agarra suavemente al oponente, no tiene defensa. &sneaky",
+    "Ahora, mi {0} le dará el golpe más tierno al oponente~&cool",
+    "Pobre {0} tierno, ve a abrazar al oponente, no seas tímido~&reluctant",
+    "El oponente no tiene ninguna defensa, parece que se emocionó con lo tierno de mi {0}. Ahora, ve a mostrar tu tierna apariencia al oponente~&cool"
   ],
   "attack": [
-    "Hmph, {1} es tan feo. Mi {0} debe ir y destruirlo.",
-    "{1} ¿Es esta cosa tan linda como mi {0}? Mi {0} no está satisfecho, ¡ve y mátalo a tiros!",
-    "{1} ¿Es esto realmente más lindo que mi {0}? Esto no está bien, esto es intolerable para mí, {0} ¡por favor déjalo desaparecer de tus ojos!"
+    "¡Hmph, {1} es tan feo! Mi {0}, ve a destruirlo~&obedient",
+    "¿Cómo puede {1} ser más tierno que mi {0}? ¡Mi {0} no acepta, ve a aplastarlo! &stick_tongue",
+    "¿Cómo puede {1} ser más tierno que mi {0}? ¡Esto no puede ser, no lo soporto! {0}, haz que desaparezca de la vista! &obedient"
   ],
   "ondirectattack": [
-    "¡Maldita sea, te aprovechaste de la debilidad de alguien!. ¡Qué clase de héroe eres!",
-    "¡Es sólo un pequeño papel como {0}!",
-    "¿Crees que puedes ganar así?"
+    "¡Maldición! ¡Aprovechaste mi debilidad! ¿Qué clase de héroe eres? &despise",
+    "¡Es solo un insignificante como {0}! &despise",
+    "¿Crees que has ganado así? &despise"
   ],
   "facedownmonstername": "Monstruo",
   "activate": [
-    "Activo el lindo efecto de mi {0}.",
-    "Utilizo el efecto de {0} para hacer que mi oponente se vea lindo.",
-    "Me conmovió tanto la ternura de {0} que me asusté tanto que utilicé su efecto."
+    "Activo el efecto tierno de mi {0}. &reluctant",
+    "Uso el efecto de {0} para hacer cosquillas al oponente~&stick_tongue",
+    "Me emocioné tanto con lo tierno de {0} que usé su efecto asustado. &surprised"
   ],
   "summon": [
-    "Convoco a {0}, dale un maullido a tu oponente.",
-    "Sal, mi preciosa y encantadora {0}.",
-    "Saqué un lindo {0} de mi casa de mascotas.",
-    "{0}: Escuché que te gusto mucho, así que vine."
+    "Invoco a {0}, corre y maulla al oponente~&ridiculous",
+    "Ven, el tierno y encantador {0}~&good",
+    "Solté un {0} tierno de mi casa de mascotas. &laugh",
+    "{0}: Escuché que te gusto, así que vine. &stick_tongue"
   ],
   "setmonster": [
-    "Coloqué un monstruo. Cuando se voltee, no te asustes por su linda apariencia.",
-    "Coloqué un monstruo, ¿adivinen cuál será?"
+    "Coloqué un monstruo. Cuando se voltee, no te asustes con su apariencia tierna~&reluctant",
+    "Coloqué un monstruo. ¿Adivina qué puede ser? &reluctant"
   ],
   "chaining": [
-    "Agité la varita mágica y activé el efecto de {0}.",
-    "¡Ah! ¡Ya estás muerto!... ¡Oye, te han engañado, activo {0}!",
-    "Te apresuras demasiado. ¿No esperabas que activara {0}?"
+    "Agito mi varita mágica y activo el efecto de {0}~&laugh",
+    "¡Ah! ¡Estoy perdido!... ¡Hehe, te engañé! ¡Activo {0}! &reluctant",
+    "Estás siendo muy imprudente. ¿No imaginaste que activaría {0}? &reluctant"
   ]
 }

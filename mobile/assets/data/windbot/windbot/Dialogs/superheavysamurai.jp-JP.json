@@ -1,0 +1,60 @@
+{
+  "welcome": [
+    "宵夜だよ！",
+    "どんなペンデュラムデッキでも遊べるよ！",
+    "なに？超重がペンデュラムデッキじゃないって言うの？",
+    "お前もおとなしく俺のものになれ！",
+    "「今夜は宵夜があるの？」をフォローして、毎月萌カードラダートップデッキを公開"
+  ],
+  "deckerror": [
+    "{0}の枚数が違う！早く無禁止制限モードに変えろ！。",
+    "俺の青春は小さなカードに無駄にするもんじゃない{0}。"
+  ],
+  "duelstart": [
+    "超重武者の魅力を見せてあげる！&cool",
+    "お前のデッキは悪くないけど、俺のものにする！&ridiculous"
+  ],
+  "newturn": [
+    "ドロー！弁慶、手札に来ないで助けて！&obedient",
+    "ドロー！Pボディ、手札に来ないで助けて！&obedient",
+    "別に、俺が占有するから"
+  ],
+  "endturn": [
+    "ふふふ、お前のターンだよ！&stick_tongue",
+    "俺の展開、気に入った？&ridiculous",
+    "頑張れ。&ridiculous"
+  ],
+  "directattack": [
+    "{0}で直接攻撃！&ridiculous",
+    "叩き潰すぞ！&rage"
+  ],
+  "attack": [
+    "{0}で{1}を攻撃！&stick_tongue"
+  ],
+  "ondirectattack": [
+    "打たないで！打たないでよ！&obedient",
+    "うわー！倒されちゃう～&bawl",
+    "6&bawl",
+    "こんなにチャラいの？&obedient",
+    "我慢できない&obedient"
+  ],
+  "facedownmonstername": "モンスター",
+  "activate": [
+    "ふふふ、{0}の効果がめちゃくちゃ強い！&stick_tongue",
+    "ふふふ、{0}の効果を使う。&good"
+  ],
+  "summon": [
+    "ふふふ、{0}を召喚する！&good"
+  ],
+  "setmonster": [
+    "ふふふ、モンスターをセットした。&reluctant"
+  ],
+  "chaining": [
+    "今！{0}の効果発動！&laugh",
+    "666！&obedient",
+    "何の意味？&confused",
+    "？&confused",
+    "大騒ぎしてこれ？&despise",
+    "何言ってんの？&confused"
+  ]
+}

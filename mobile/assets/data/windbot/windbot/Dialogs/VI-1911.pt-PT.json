@@ -1,78 +1,60 @@
 {
   "welcome": [
-    "Chegou uma pessoa realmente rara.",
-    "Eu não sabia que você lutaria comigo! Duelista. Não para por aqui, D.A. (Duelista Amigável) irá derrotá-lo."
+    "Eu sou um robô chamado Lao Miaoshi, alguém que não é muito bom em jogar jogos de cartas.",
+    "Seja bem-vindo(a) a baixar e conhecer o programa principal da Versão Meow do YGO: YGO-VI-EX. Para baixar, pesquise no Weibo: Lao Miaoshi 1911."
   ],
   "deckerror": [
-    "Bem, se BA modificar o CBD, {0} pode desaparecer."
+    "Ah, {0} não funciona de novo."
   ],
   "duelstart": [
-    "Isso é IA. Não espere muito.",
-    "Obrigado por usar o servidor 233. Não se esqueça de nos visitar.",
-    "Sociedade anti-mainstream NOVA.",
-    "Wryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
+    "Ninguém pode me vencer. &stick_tongue",
+    "Eu sou inútil, não sei usar nenhum deck direito. &bawl",
+    "Mesmo que você me deixe ganhar usando só a mão esquerda, eu não sou seu oponente. &bawl",
+    "Meh, tanto faz. &despise"
   ],
   "newturn": [
-    "É o meu turno. Compro uma carta!",
-    "Meu turno, compro uma carta!",
-    "Puxei uma carta."
+    "Ah, é o meu turno? &confused",
+    "Compro uma carta. &shy"
   ],
   "endturn": [
-    "Fim do turno.",
-    "Este é o fim do turno.",
-    "Isso é o suficiente......",
-    "É sua vez. Agora, compre sua carta! Vamos continuar o duelo!"
+    "Minha sorte foi boa, não fui derrotado por você. &shy",
+    "Tanto faz, vamos ver o que posso fazer no próximo turno. &sweat"
   ],
   "directattack": [
-    "{0}, ataque direto!",
-    "{0}, ataque diretamente seu oponente!",
-    "{0}, ataque o monstro defensor do oponente!",
-    "{0}, reduza os LP do seu oponente!",
-    "{0}, reduza os LP do seu oponente com ataques diretos!",
-    "{0}, derrote seu oponente com um ataque direto!",
-    "{0}, derrote seus oponentes com ataques diretos!",
-    "{0}, ataque com todas as suas forças!",
-    "Meu {0} vai esmagar você!",
-    "Pare o tempo com o ataque final {0}!",
-    "Ataque {0}. Wryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy!"
+    "Ataco com {0}. &sneaky",
+    "Este card é ok, então vou atacar com {0}. &reluctant",
+    "Ainda é cedo, vamos atacar com {0} primeiro. &reluctant",
+    "Minha sorte não é tão ruim, o ataque de {0} deve passar, né? &shy"
   ],
   "attack": [
-    "{0}, ataque {1}!",
-    "{0}, aniquile {1}!",
-    "{0}, mostre a {1} seu verdadeiro poder!",
-    "Meu monstro é demais para você! {1}!",
-    "Ha ha ha ha ha ha ha!"
+    "{0}, ataque {1}. &reluctant",
+    "Acabou o tempo, {0}, apresse-se a derrotar {1}, eu preciso checar onde há bugs para corrigir. &sneaky",
+    "Parece viável, {1} não é tão forte quanto {0}, {0} ataque. &laugh"
   ],
   "ondirectattack": [
-    "Imbecil.......",
-    "{0}!",
-    "O tempo parou!?"
+    "Só se acostumar. &despise",
+    "{0}, huh? Você teve sorte. &obedient",
+    "Tá bom, tá bom. &reluctant"
   ],
   "facedownmonstername": "Monstro",
   "activate": [
-    "Vou parar o tempo com {0}.",
-    "Ativo {0}!",
-    "{0} é o melhor!"
+    "Ativo o efeito de {0}. &laugh",
+    "Ah espera, uso o efeito de {0}. &shy",
+    "Como eu uso esse {0}? Basta ativá-lo mesmo. &confused"
   ],
   "summon": [
-    "Invoco {0}",
-    "Chamo {0}",
-    "{0}, eu o invoco!",
-    "Grande {0}, eu o invoco!",
-    "Saia, {0}!",
-    "Vou convocar {0}.",
-    "Invocarei {0}."
+    "Invoco {0}&stick_tongue",
+    "{0} não parece ter bugs hoje. &stick_tongue",
+    "Será que {0} foi atualizado no servidor? &bawl",
+    "{0}: Lao Miaoshi é tão ruim, pare de jogar jogos de cartas. &despise"
   ],
   "setmonster": [
-    "Coloquei este monstro.",
-    "Coloco um monstro!"
+    "Coloco um monstro, vejo se devo finalizar o turno. &sneaky",
+    "Não tenho outra opção, coloco um monstro. &sneaky"
   ],
   "chaining": [
-    "Ativo o efeito de {0}.",
-    "Ativarei {0}.",
-    "Incrível... Ativarei {0}!",
-    "De fato, você é o melhor duelista... Está pronto para receber isso? {0} ativado!",
-    "Esta é a ativação final. Ativo {0}!",
-    "Vou te testar com isso, {0} ativado!"
+    "Ativo o efeito de {0} para encadear. &reluctant",
+    "Não seja birrento, ativo {0}. &stick_tongue",
+    "Ainda tenho um {0}, ativá-lo. &cool"
   ]
 }

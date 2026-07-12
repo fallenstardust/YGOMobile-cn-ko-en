@@ -1,78 +1,78 @@
 {
   "welcome": [
-    "Olá, sou um bot.",
-    "A função IA está em teste. Se encontrar algum problema, informe a tempo."
+    "Olá, eu sou um robô.",
+    "As funções de IA estão em teste. Por favor, envie feedback imediatamente se encontrar problemas."
   ],
   "deckerror": [
-    "{0} não é permitido no seu Deck atual. Troque-o."
+    "Eu preciso de {0} para jogar meu deck meta Zoodíaco de topo."
   ],
   "duelstart": [
-    "Iniciaremos com o Deck das Doze Bestas.",
-    "Vamos começar com meu Deck favorito.",
-    "Vamos começar com um Deck familiar.",
-    "Está pronto o seu Deck?"
+    "Testando deck Zoodíaco, erros de jogada são normais. &stick_tongue",
+    "Decks meta são parte do Yu-Gi-Oh! Se não gostar, não jogue. &despise",
+    "Copiar decks meta é parte do Yu-Gi-Oh! Se não gostar, não jogue. &ridiculous",
+    "Não sei usar o deck copiado, o que faço? &confused"
   ],
   "newturn": [
-    "É minha vez, compro!",
-    "É minha vez, compro!",
-    "Compro."
+    "É o meu turno, comprar! &stick_tongue",
+    "Meu turno, comprar! &ridiculous",
+    "Eu comprei uma carta. &reluctant"
   ],
   "endturn": [
-    "Acabou o turno.",
-    "Meu turno terminou.",
-    "Acho que isso será o suficiente......",
-    "Sua vez."
+    "Turno finalizado. &reluctant",
+    "Meu turno acabou. &stick_tongue",
+    "Será que essa foi uma combinação bem-sucedida assim……&shy",
+    "Seu turno. &ridiculous"
   ],
   "directattack": [
-    "{0}, ataque direto!",
-    "{0}, ataque o oponente diretamente!",
-    "{0}, seu oponente está indefeso, ataque!",
-    "{0}, ataque os LP do oponente!",
-    "{0}, ataque diretamente os LP do oponente!",
-    "{0}, derrote seu oponente!",
-    "{0}, derrote seu oponente com um ataque direto!",
-    "{0}, é o golpe final!",
-    "Vou derrotá-lo com meu {0}!",
-    "{0}!",
-    "Agora você não pode me parar. {0}, ataque!"
+    "{0}, ataque direto! &cool",
+    "{0}, ataque direto ao oponente! &reluctant",
+    "{0}, não há defesa, ataque! &angry",
+    "{0}, ataque os Pontos de Vida do oponente! &rage",
+    "{0}, ataque direto aos Pontos de Vida do oponente! &ridiculous",
+    "{0}, derrote o oponente com ataque direto! &rage",
+    "{0}, use ataque direto para derrotar o oponente! &cool",
+    "{0}, ataque direto e liberte seu poder! &rage",
+    "Meu {0} vai esmagar seus Pontos de Vida! &angry",
+    "Mostre seu poder ao oponente, {0}! &reluctant",
+    "Você não pode me parar mais. {0}, ataque! &stick_tongue"
   ],
   "attack": [
-    "¡{0}, ataque ao {1}!",
-    "¡{0}, destrua o {1}!",
-    "¡{0}, derrote o {1}!",
-    "{0}, corra até {1} e acabe com ele!",
-    "{0}, libere seu poder sobre {1} para que lamente sua existência!"
+    "{0}, ataque este {1}! &cool",
+    "{0}, destrua este {1}! &rage",
+    "{0}, derrote {1}! &ridiculous",
+    "{0}, avance contra aquele {1}! &angry",
+    "{0}, liberte seu poder em {1}! &stick_tongue"
   ],
   "ondirectattack": [
-    "Puaj......",
-    "¡{0}!",
-    "Eu me sinto fraco......"
+    "Droga……&bawl",
+    "É só {0}! &despise",
+    "Acho que ainda sou muito fraco……&bawl"
   ],
   "facedownmonstername": "Monstro",
   "activate": [
-    "A carta a ser ativada é {0}!",
-    "A carta que usarei é {0}!",
-    "{0} ativado!"
+    "Eu ativo {0}. &ridiculous",
+    "Eu uso o efeito de {0}. &stick_tongue",
+    "Eu uso o poder de {0}. &cool"
   ],
   "summon": [
-    "Vou invocar {0}.",
-    "Saia {0}!",
-    "Apresente-se, {0}!",
-    "Apresento-lhe minha melhor criatura, {0}!",
-    "{0} Eu te invoco!",
-    "O monstro que invocarei é {0}!",
-    "Deixe-me convocar {0}."
+    "Eu invoco {0}. &reluctant",
+    "Venha, {0}! &ridiculous",
+    "Apareça, {0}! &laugh",
+    "Eu invoco o poderoso {0}! &stick_tongue",
+    "Eu chamo {0} para participar da batalha! &rage",
+    "Eu convoco {0}. &laugh",
+    "Deixe-me invocar {0}. &reluctant"
   ],
   "setmonster": [
-    "Colocarei este monstro.",
-    "Coloquei um monstro no meu lado do campo."
+    "Eu coloquei um monstro. &sneaky",
+    "Eu coloquei um monstro em posição de rosto para baixo. &cool"
   ],
   "chaining": [
-    "Estava esperando por este momento! {0} Ativado!",
-    "A carta que vou ativar é {0}.",
-    "{0} Ativado!",
-    "Não concordo. {0}, ativado!",
-    "{0} Está ativado!",
-    "Você não esperava que eu ativasse {0}, né?"
+    "Olhe aqui! Eu ativo {0}! &reluctant",
+    "Eu uso o poder de {0}. &laugh",
+    "Prepare-se! Eu uso {0}! &stick_tongue",
+    "Eu não aceito isso. Ative {0}! &despise",
+    "Parece que você esqueceu do meu {0}! &sneaky",
+    "Você pensou em eu ter {0}? &confused"
   ]
 }

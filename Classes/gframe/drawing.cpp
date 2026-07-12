@@ -752,8 +752,8 @@ void Game::DrawMisc() {
 		DrawSelectionLine(btnLeaveGame, 4, 0xff00ff00);
 
 	// 绘制生命值条
-	if(dInfo.start_lp) {
-		auto maxLP = dInfo.isTag ? dInfo.start_lp / 2 : dInfo.start_lp;
+	if(dInfo.start_lp > 0) {
+		auto maxLP = dInfo.isTag ? std::max(dInfo.start_lp / 2, 1) : dInfo.start_lp;
 
 		// 我方玩家 LP条
 		if(dInfo.lp[0] >= maxLP) {
@@ -1578,7 +1578,9 @@ void Game::DrawThumb(const CardDataC* cp, irr::core::vector2di pos, const LFList
 				|| (filter_lm == 6 && !(cp->ot & AVAIL_TCG))
 				|| (filter_lm == 7 && !(cp->ot & AVAIL_SC))
 				|| (filter_lm == 8 && !(cp->ot & AVAIL_CUSTOM))
-				|| (filter_lm == 9 && (cp->ot & AVAIL_OCGTCG) != AVAIL_OCGTCG)));
+				|| (filter_lm == 9 && !(cp->ot & AVAIL_OCG))
+				|| (filter_lm == 10 && !(cp->ot & AVAIL_TCG))
+				|| (filter_lm == 11 && (cp->ot & AVAIL_OCGTCG) != AVAIL_OCGTCG)));
 
 	if(filter_lm >= 5) {
 		showAvail = avail;

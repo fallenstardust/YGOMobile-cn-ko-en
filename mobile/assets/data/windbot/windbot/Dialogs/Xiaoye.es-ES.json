@@ -1,0 +1,60 @@
+{
+  "welcome": [
+    "Oye, me perdí, ¿tú también?",
+    "Oh no tengas miedo, solo estoy pasando",
+    "Está bien, tampoco soy bueno con este deck"
+  ],
+  "deckerror": [
+    "La cantidad de {0} es incorrecta! No puedo estar sin ella!",
+    "Vamos al formato ilimitado, mi {0} está prohibido"
+  ],
+  "duelstart": [
+    "Aw, es solo un duelo amistoso &laugh",
+    "¿Eh, ya empieza? &surprised",
+    "Tu deck es muy bueno, pero me lo quedo &ridiculous"
+  ],
+  "newturn": [
+    "Robar! Vamos diosa del mazo, ayúdame &shy",
+    "Robar! ¿Qué quieres decir? &obedient",
+    "Robar! Oh, me engañó la diosa del mazo! &obedient"
+  ],
+  "endturn": [
+    "Un turno cada uno, bastante justo no &reluctant",
+    "Oh casi se me olvida, tú también juegas Yu-Gi-Oh! &reluctant"
+  ],
+  "directattack": [
+    "{0}, ataque directo! &angry",
+    "Jeje, te voy a atacar &stick_tongue",
+    "Me quedo tus Puntos de Vida &ridiculous"
+  ],
+  "attack": [
+    "{0}, ve a atacar {1}&cool",
+    "Será genial, solo mira &good"
+  ],
+  "ondirectattack": [
+    "¡Por qué me atacas! ¡Eso es muy malo! &shy",
+    "¡No me ataques! &angry",
+    "666&sweat",
+    "¡Yo debería quedarme contigo! &bawl",
+    "Oye, tío&sneaky",
+    "¿Eh, qué quieres decir! &bawl"
+  ],
+  "facedownmonstername": "Monstruo",
+  "activate": [
+    "Ahora, activo el efecto de {0}&cool",
+    "¿Eh, mi {0} se encendió, vamos a dar clic &confused",
+    "Mi {0} se encendió, ¿qué quieres decir? &confused"
+  ],
+  "summon": [
+    "Este es mi monstruo orgulloso {0}&good",
+    "¡Taráan! Aparece {0}! &laugh"
+  ],
+  "setmonster": [],
+  "chaining": [
+    "¿Eh, qué es esto, vamos a dar clic &confused",
+    "¿Qué quieres decir? &confused"
+  ],
+  "custom": [
+    "Esta carta claramente entró de otro deck, ¿por qué me miras? &ridiculous"
+  ]
+}

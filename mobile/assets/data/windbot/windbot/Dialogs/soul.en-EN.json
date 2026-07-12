@@ -1,74 +1,75 @@
 {
-"welcome": [
-"Hello, I'm a robot.",
-"The AI ​​function is under testing. Please report any problems in time."
-],
-"deckerror": [
-"Sorry, there seems to be a problem with the number of {0} in my deck."
-],
-"duelstart": [
-"This deck is so old...",
-"What happened to the child who used this deck..."
-],
-"newturn": [
-"It's my turn, draw a card!",
-"My turn, draw a card!",
-"I drew a card."
-],
-"endturn": [
-"End of turn.",
-"My turn is over.",
-"It's your turn."
-],
-"directattack": [
-"{0}, direct attack!",
-"{0}, direct attack the opponent!",
-"{0}, no defense, attack!",
-"{0}, attack the opponent's life value!",
-"{0}, defeat the opponent with a direct attack!",
-"{0}, defeat the opponent with a direct attack!",
-"{0}, unleash your power with a direct attack!",
-"My {0} will crush your health!",
-"Show your power to the opponent, {0}!",
-"You can no longer stop me. {0}, attack!"
-],
-"attack": [
-"{0}, attack this {1}!",
-"{0}, destroy this {1}!",
-"{0}, defeat {1}!",
-"{0}, charge at that {1}!",
-"{0}, unleash your power on {1}!"
-],
-"ondirectattack": [
-"Damn...",
-"It's just {0}!",
-"Ahem..."
-],
-"facedownmonstername": "Monster",
-"activate": [
-"I activate {0}.",
-"I use the effect of {0}.",
-"I use the power of {0}."
-],
-"summon": [
-"I summon {0}.",
-"Come out, {0}!",
-"Show up, {0}!",
-"I summoned the powerful {0}!",
-"I called {0} to battle!",
-"I called out {0}.",
-"Let me summon {0}."
-],
-"setmonster": [
-"I placed a monster.",
-"I placed a monster face-down."
-],
-"chaining": [
-"Look here! I activate {0}!",
-"I use the power of {0}.",
-"Ready! I use {0}!",
-"I disagree. {0}, activate!",
-"It seems you forgot about my {0}!",
-"Have you considered that I have {0}?"
-]
+  "welcome": [
+    "Hello, I am a robot.",
+    "AI functions are under testing. Please provide feedback promptly if you encounter any issues."
+  ],
+  "deckerror": [
+    "Sorry, there seems to be an issue with the number of {0} in my deck."
+  ],
+  "duelstart": [
+    "This deck is so old……&shy",
+    "What happened to the child who used to play with this deck……&surprised"
+  ],
+  "newturn": [
+    "It's my turn, draw! &laugh",
+    "My turn, draw! &stick_tongue",
+    "I drew a card. &shy"
+  ],
+  "endturn": [
+    "Turn end. &laugh",
+    "My turn is over. &sneaky",
+    "Your turn. &laugh"
+  ],
+  "directattack": [
+    "{0}, direct attack! &cool",
+    "{0}, direct attack the opponent! &laugh",
+    "{0}, there's no defense, attack! &cool",
+    "{0}, attack the opponent's Life Points! &rage",
+    "{0}, direct attack the opponent's Life Points! &stick_tongue",
+    "{0}, defeat the opponent with a direct attack! &laugh",
+    "{0}, use direct attack to defeat the opponent! &laugh",
+    "{0}, direct attack and unleash your power! &cool",
+    "My {0} will crush your Life Points! &rage",
+    "Show your power to the opponent, {0}! &cool",
+    "You can't stop me anymore. {0}, attack! &rage"
+  ],
+  "attack": [
+    "{0}, attack this {1}! &cool",
+    "{0}, destroy this {1}! &laugh",
+    "{0}, defeat {1}! &cool",
+    "{0}, charge at that {1}! &laugh",
+    "{0}, unleash your power onto {1}! &cool"
+  ],
+  "ondirectattack": [
+    "Damn it……&shy",
+    "It's just {0}! &despise",
+    "Cough cough……&sneaky"
+  ],
+  "facedownmonstername": "Monster",
+  "activate": [
+    "I activate {0}. &laugh",
+    "I use the effect of {0}. &good",
+    "I use the power of {0}. &angry"
+  ],
+  "summon": [
+    "I summon {0}. &good",
+    "Come forth, {0}! &surprised",
+    "Appear, {0}! &laugh",
+    "I summoned the mighty {0}! &good",
+    "I call {0} to join the battle! &angry",
+    "I call forth {0}. &good",
+    "Let me summon {0}. &laugh"
+  ],
+  "setmonster": [
+    "I set a monster. &shy",
+    "I set a monster in face-down position. &shy"
+  ],
+  "chaining": [
+    "Look here! I activate {0}! &laugh",
+    "I use the power of {0}. &laugh",
+    "Ready! I use {0}! &good",
+    "I disagree. Activate {0}! &sneaky",
+    "Looks like you forgot about my {0}! &confused",
+    "Did you consider I have {0}? &sneaky"
+  ]
 }

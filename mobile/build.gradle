@@ -13,8 +13,8 @@ android {
         applicationId "com.ourygo.ygomobile"
         minSdkVersion 21
         targetSdkVersion 24
-        versionCode 50
-        versionName "1.2.11"
+        versionCode 51
+        versionName "1.2.12"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
