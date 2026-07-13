@@ -255,9 +255,17 @@ public class LanModeDialog {
         setupSelfReadyInteraction();
 
         btnPwDuelistMode.setOnClickListener(v -> {
-            int targetPos = findNextEmptyPos(selfPos);
+            boolean isSpectator = (selfPos >= 4);
+            int targetPos;
+            if (isSpectator) {
+                targetPos = findFirstEmptyPos();
+            } else {
+                targetPos = findNextEmptyPos(selfPos);
+            }
             if (targetPos >= 0) {
-                movePlayer(selfPos, targetPos);
+                if (!isSpectator) {
+                    movePlayer(selfPos, targetPos);
+                }
                 selfPos = targetPos;
                 updateSelfCheckboxInteractivity();
                 if (listener != null) listener.onPlayerWaitingToDuelist();
@@ -551,6 +559,13 @@ public class LanModeDialog {
             if (getPlayerName(i).isEmpty()) return i;
         }
         for (int i = 0; i < currentPos; i++) {
+            if (getPlayerName(i).isEmpty()) return i;
+        }
+        return -1;
+    }
+
+    private int findFirstEmptyPos() {
+        for (int i = 0; i < 4; i++) {
             if (getPlayerName(i).isEmpty()) return i;
         }
         return -1;

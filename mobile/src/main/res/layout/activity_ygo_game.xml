@@ -8,7 +8,8 @@
     <cn.garymb.ygomobile.render.GameFieldView
         android:id="@+id/game_field_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
     <!-- 顶部玩家信息区 -->
     <LinearLayout

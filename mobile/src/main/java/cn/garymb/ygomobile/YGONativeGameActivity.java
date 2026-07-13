@@ -685,6 +685,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void hideGameUI() {
+        if (fieldViewController != null) fieldViewController.hide();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
         if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.GONE);
         if (layoutCardDetail != null) layoutCardDetail.setVisibility(View.GONE);
@@ -695,6 +696,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showGameUI() {
+        if (fieldViewController != null) fieldViewController.show();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.VISIBLE);
         if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.VISIBLE);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
@@ -1239,8 +1241,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     @Override
     public void onChainAnimation(int code, int controler, int location, int sequence) {
         runOnUiThread(() -> {
-            fieldViewController.setSelectedCard(controler, location, sequence);
-            fieldViewController.clearSelectionDelayed(1500);
+            fieldViewController.selectCardWithAutoClear(controler, location, sequence, 1500);
         });
     }
 
@@ -1770,7 +1771,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private void showPlaceSelectDialog(boolean isDisfield) {
         isPlaceSelecting = true;
         int mask = engine.selectFieldMask;
-        fieldViewController.setHighlightFieldMask(mask);
+        fieldViewController.highlightField(mask);
         String msg = isDisfield ? "请选择要禁用的区域" : "请选择放置位置";
         showHintMessage(msg);
     }

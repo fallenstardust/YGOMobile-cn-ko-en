@@ -26,9 +26,15 @@ public class GameFieldViewController {
         }
     }
 
-    public void setVisible(boolean visible) {
+    public void show() {
         if (gameFieldView != null) {
-            gameFieldView.setVisibility(visible ? View.VISIBLE : View.GONE);
+            gameFieldView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void hide() {
+        if (gameFieldView != null) {
+            gameFieldView.setVisibility(View.GONE);
         }
     }
 
@@ -38,7 +44,7 @@ public class GameFieldViewController {
         }
     }
 
-    public void setHighlightFieldMask(int mask) {
+    public void highlightField(int mask) {
         if (gameFieldView != null) {
             gameFieldView.setHighlightFieldMask(mask);
             gameFieldView.invalidate();
@@ -46,10 +52,10 @@ public class GameFieldViewController {
     }
 
     public void clearHighlight() {
-        setHighlightFieldMask(0);
+        highlightField(0);
     }
 
-    public void setSelectedCard(int controler, int location, int sequence) {
+    public void selectCard(int controler, int location, int sequence) {
         if (gameFieldView != null) {
             gameFieldView.setSelectedCard(controler, location, sequence);
         }
@@ -61,8 +67,9 @@ public class GameFieldViewController {
         }
     }
 
-    public void clearSelectionDelayed(long delayMs) {
-        mainHandler.postDelayed(() -> clearSelection(), delayMs);
+    public void selectCardWithAutoClear(int controler, int location, int sequence, long clearDelayMs) {
+        selectCard(controler, location, sequence);
+        mainHandler.postDelayed(this::clearSelection, clearDelayMs);
     }
 
     public GameFieldView getView() {
