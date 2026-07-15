@@ -275,9 +275,33 @@ public class LanModeDialog {
         });
 
         btnPwSpectatorMode.setOnClickListener(v -> {
+            String selfName = "";
+            if (selfPos < 4) {
+                selfName = getPlayerName(selfPos);
+                setPlayerName(selfPos, "");
+                setPlayerReady(selfPos, false);
+                isSelfReady = false;
+            }
+            CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+            for (int i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i] != null) {
+                    checkboxes[i].setEnabled(false);
+                    checkboxes[i].setClickable(false);
+                    checkboxes[i].setOnCheckedChangeListener(null);
+                }
+            }
+            selfPos = 7;
+            if (!selfName.isEmpty()) {
+                addObserver(selfName);
+            }
             if (listener != null) listener.onPlayerWaitingToObserver();
             btnPwSpectatorMode.setEnabled(false);
             btnPwDuelistMode.setEnabled(true);
+            watchCount++;
+            if (tvWatchCount != null) {
+                tvWatchCount.setText("当前观战人数: " + watchCount);
+                tvWatchCount.setVisibility(View.VISIBLE);
+            }
         });
 
         btnRefreshLan.setOnClickListener(v -> {
@@ -379,15 +403,11 @@ public class LanModeDialog {
         watchCount = count;
         if (tvWatchCount != null) {
             tvWatchCount.setText("当前观战人数: " + count);
-        }
-        
-        if (tvWatchCount != null) {
-            if (count > 0) {
+            if (count > 0 || selfPos >= 4) {
                 tvWatchCount.setVisibility(View.VISIBLE);
             } else {
                 tvWatchCount.setVisibility(View.INVISIBLE);
                 observerNames.clear();
-
             }
         }
     }
@@ -503,6 +523,7 @@ public class LanModeDialog {
     }
 
     public void setPlayerReady(int pos, boolean ready) {
+        if (pos >= 4) return;
         CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
         if (pos >= 0 && pos < checkboxes.length && checkboxes[pos] != null) {
             if (pos == selfPos) {
@@ -608,6 +629,10 @@ public class LanModeDialog {
         } else {
             if (btnPwReady != null) btnPwReady.setEnabled(false);
             if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(false);
+        }
+
+        if (selfType >= 4 && tvWatchCount != null) {
+            tvWatchCount.setVisibility(View.VISIBLE);
         }
         
         boolean isHost = (selfType == 0);
