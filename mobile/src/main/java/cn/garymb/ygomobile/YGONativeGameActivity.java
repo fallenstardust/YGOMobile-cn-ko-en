@@ -181,6 +181,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         runOnUiThread(() -> {
             if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
                 lanModeDialog.setPlayerName(pos, name);
+                lanModeDialog.refreshPlayerDisplay();
             }
         });
     }
@@ -214,6 +215,9 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                     if (!oldName.isEmpty() && state >= 4) {
                         lanModeDialog.addObserver(oldName);
                     }
+                    if (pos >= 4 && !oldName.isEmpty() && state < 4) {
+                        lanModeDialog.removeObserver(oldName);
+                    }
                 } else if (state == 0x9) {
                     lanModeDialog.setPlayerReady(pos, true);
                 } else if (state == 0xa) {
@@ -239,6 +243,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                         lanModeDialog.removeObserver(leavingName);
                     }
                 }
+                lanModeDialog.refreshPlayerDisplay();
             }
         });
     }
@@ -248,6 +253,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         runOnUiThread(() -> {
             if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
                 lanModeDialog.updateWatchCount(watchCount);
+                lanModeDialog.refreshPlayerDisplay();
             }
         });
     }
@@ -271,6 +277,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 boolean isHost = ((type >> 4) & 0x0F) != 0;
                 boolean isTag = engine.getGameMode() == 2;
                 lanModeDialog.updateTypeChange(selfType, isTag);
+                lanModeDialog.refreshPlayerDisplay();
             }
         });
     }

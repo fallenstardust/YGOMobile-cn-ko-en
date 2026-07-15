@@ -263,14 +263,21 @@ public class LanModeDialog {
                 targetPos = findNextEmptyPos(selfPos);
             }
             if (targetPos >= 0) {
-                if (!isSpectator) {
-                    movePlayer(selfPos, targetPos);
+                boolean wasReady = isSelfReady;
+                String selfName = "";
+                if (isSpectator) {
+                    selfName = getPlayerName(targetPos);
+                } else {
+                    selfName = getPlayerName(selfPos);
+                    setPlayerName(targetPos, selfName);
+                    setPlayerReady(targetPos, wasReady);
                 }
                 selfPos = targetPos;
+                isSelfReady = wasReady;
                 updateSelfCheckboxInteractivity();
                 if (listener != null) listener.onPlayerWaitingToDuelist();
-                btnPwDuelistMode.setEnabled(false);
                 btnPwSpectatorMode.setEnabled(true);
+                refreshPlayerDisplay();
             }
         });
 
@@ -298,10 +305,7 @@ public class LanModeDialog {
             btnPwSpectatorMode.setEnabled(false);
             btnPwDuelistMode.setEnabled(true);
             watchCount++;
-            if (tvWatchCount != null) {
-                tvWatchCount.setText("当前观战人数: " + watchCount);
-                tvWatchCount.setVisibility(View.VISIBLE);
-            }
+            refreshPlayerDisplay();
         });
 
         btnRefreshLan.setOnClickListener(v -> {
@@ -573,6 +577,47 @@ public class LanModeDialog {
         setPlayerName(toPos, name);
         setPlayerReady(toPos, wasReady);
         clearPlayerPos(fromPos);
+    }
+
+    public void refreshPlayerDisplay() {
+        for (int i = 0; i < 4; i++) {
+            String name = getPlayerName(i);
+            if (etPwPlayer1Name != null && i == 0) etPwPlayer1Name.setText(name);
+            if (etPwPlayer2Name != null && i == 1) etPwPlayer2Name.setText(name);
+            if (etPwPlayer3Name != null && i == 2) etPwPlayer3Name.setText(name);
+            if (etPwPlayer4Name != null && i == 3) etPwPlayer4Name.setText(name);
+        }
+
+        if (selfPos < 4) {
+            if (btnPwReady != null) {
+                btnPwReady.setText(isSelfReady ? "已准备" : "点击准备");
+                btnPwReady.setPressed(isSelfReady);
+                btnPwReady.setBackground(isSelfReady
+                        ? context.getDrawable(R.drawable.sbutton_p)
+                        : context.getDrawable(R.drawable.sbutton));
+            }
+            CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+            for (int i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i] != null) {
+                    checkboxes[i].setChecked(i == selfPos && isSelfReady);
+                }
+            }
+        }
+
+        if (selfPos == 0) {
+            updateKickButtonsVisibility();
+        }
+
+        if (tvWatchCount != null) {
+            tvWatchCount.setText("当前观战人数: " + watchCount);
+            if (watchCount > 0 || selfPos >= 4) {
+                tvWatchCount.setVisibility(View.VISIBLE);
+            } else {
+                tvWatchCount.setVisibility(View.INVISIBLE);
+            }
+        }
+
+        updateSelfCheckboxInteractivity();
     }
 
     private int findNextEmptyPos(int currentPos) {
