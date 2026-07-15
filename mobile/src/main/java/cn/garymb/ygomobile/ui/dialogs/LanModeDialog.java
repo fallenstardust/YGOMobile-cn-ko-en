@@ -59,6 +59,7 @@ public class LanModeDialog {
     private View layoutTagPlayers;
     private int selfPos = 0;
     private boolean isSelfReady = false;
+    private boolean isHost = false;
     private int watchCount = 0;
     private List<String> observerNames = new ArrayList<>();
 
@@ -277,6 +278,7 @@ public class LanModeDialog {
                 updateSelfCheckboxInteractivity();
                 if (listener != null) listener.onPlayerWaitingToDuelist();
                 btnPwSpectatorMode.setEnabled(true);
+                if (btnPwReady != null) btnPwReady.setVisibility(View.VISIBLE);
                 refreshPlayerDisplay();
             }
         });
@@ -304,6 +306,7 @@ public class LanModeDialog {
             if (listener != null) listener.onPlayerWaitingToObserver();
             btnPwSpectatorMode.setEnabled(false);
             btnPwDuelistMode.setEnabled(true);
+            if (btnPwReady != null) btnPwReady.setVisibility(View.INVISIBLE);
             watchCount++;
             refreshPlayerDisplay();
         });
@@ -474,7 +477,6 @@ public class LanModeDialog {
         }
         if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(true);
         
-        hideAllKickButtons();
         if (btnPwStartGame != null) btnPwStartGame.setVisibility(View.INVISIBLE);
         if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.INVISIBLE);
         
@@ -500,10 +502,6 @@ public class LanModeDialog {
             case 3:
                 if (etPwPlayer4Name != null) etPwPlayer4Name.setText(name);
                 break;
-        }
-        
-        if (selfPos == 0) {
-            updateKickButtonsVisibility();
         }
     }
 
@@ -533,7 +531,7 @@ public class LanModeDialog {
             if (pos == selfPos) {
                 isSelfReady = ready;
                 if (btnPwReady != null) {
-                    btnPwReady.setText(ready ? "已准备" : "点击准备");
+                    btnPwReady.setText(ready ? "取消准备" : "点击准备");
                     btnPwReady.setPressed(ready);
                     btnPwReady.setBackground(ready ? context.getDrawable(R.drawable.sbutton_p) : context.getDrawable(R.drawable.sbutton));
                 }
@@ -545,10 +543,6 @@ public class LanModeDialog {
     public void clearPlayerPos(int pos) {
         setPlayerName(pos, "");
         setPlayerReady(pos, false);
-        
-        if (selfPos == 0) {
-            updateKickButtonsVisibility();
-        }
     }
 
     public void movePlayer(int fromPos, int toPos) {
@@ -590,22 +584,16 @@ public class LanModeDialog {
 
         if (selfPos < 4) {
             if (btnPwReady != null) {
-                btnPwReady.setText(isSelfReady ? "已准备" : "点击准备");
+                btnPwReady.setText(isSelfReady ? "取消准备" : "点击准备");
                 btnPwReady.setPressed(isSelfReady);
                 btnPwReady.setBackground(isSelfReady
                         ? context.getDrawable(R.drawable.sbutton_p)
                         : context.getDrawable(R.drawable.sbutton));
             }
             CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
-            for (int i = 0; i < checkboxes.length; i++) {
-                if (checkboxes[i] != null) {
-                    checkboxes[i].setChecked(i == selfPos && isSelfReady);
-                }
+            if (selfPos >= 0 && selfPos < checkboxes.length && checkboxes[selfPos] != null) {
+                checkboxes[selfPos].setChecked(isSelfReady);
             }
-        }
-
-        if (selfPos == 0) {
-            updateKickButtonsVisibility();
         }
 
         if (tvWatchCount != null) {
@@ -664,32 +652,64 @@ public class LanModeDialog {
         }
     }
 
-    public void updateTypeChange(int selfType, boolean isTag) {
+    public void updateTypeChange(int selfType, boolean isTag, boolean isHost) {
         selfPos = selfType;
+        this.isHost = isHost;
         updateSelfCheckboxInteractivity();
 
         if (selfType < 2 || (isTag && selfType < 4)) {
             if (btnPwReady != null) btnPwReady.setEnabled(true);
-            if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(true);
+        } else if (selfType < 4) {
+            if (btnPwReady != null) btnPwReady.setEnabled(true);
         } else {
             if (btnPwReady != null) btnPwReady.setEnabled(false);
-            if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(false);
+        }
+
+        if (selfType >= 4) {
+            if (btnPwReady != null) btnPwReady.setVisibility(View.INVISIBLE);
+            if (btnPwSpectatorMode != null) {
+                btnPwSpectatorMode.setEnabled(false);
+                btnPwSpectatorMode.setTextColor(Color.GRAY);
+            }
+            if (btnPwDuelistMode != null) {
+                btnPwDuelistMode.setEnabled(true);
+                btnPwDuelistMode.setTextColor(Color.WHITE);
+            }
+        } else {
+            if (btnPwReady != null) btnPwReady.setVisibility(View.VISIBLE);
+            if (btnPwSpectatorMode != null) {
+                btnPwSpectatorMode.setEnabled(true);
+                btnPwSpectatorMode.setTextColor(Color.WHITE);
+            }
+            if (btnPwDuelistMode != null) {
+                if (isSelfReady) {
+                    btnPwDuelistMode.setEnabled(false);
+                    btnPwDuelistMode.setTextColor(Color.GRAY);
+                } else {
+                    btnPwDuelistMode.setEnabled(true);
+                    btnPwDuelistMode.setTextColor(Color.WHITE);
+                }
+            }
         }
 
         if (selfType >= 4 && tvWatchCount != null) {
             tvWatchCount.setVisibility(View.VISIBLE);
         }
-        
-        boolean isHost = (selfType == 0);
-        
+
         if (btnPwStartGame != null) {
             btnPwStartGame.setVisibility(isHost ? View.VISIBLE : View.INVISIBLE);
         }
-        
+
         if (isHost) {
-            updateKickButtonsVisibility();
+            if (btnPwKickPlayer1 != null) btnPwKickPlayer1.setVisibility(View.VISIBLE);
+            if (btnPwKickPlayer2 != null) btnPwKickPlayer2.setVisibility(View.VISIBLE);
+            if (btnPwKickPlayer3 != null) btnPwKickPlayer3.setVisibility(View.VISIBLE);
+            if (btnPwKickPlayer4 != null) btnPwKickPlayer4.setVisibility(View.VISIBLE);
         } else {
-            hideAllKickButtons();
+            if (btnPwKickPlayer1 != null) btnPwKickPlayer1.setVisibility(View.INVISIBLE);
+            if (btnPwKickPlayer2 != null) btnPwKickPlayer2.setVisibility(View.INVISIBLE);
+            if (btnPwKickPlayer3 != null) btnPwKickPlayer3.setVisibility(View.INVISIBLE);
+            if (btnPwKickPlayer4 != null) btnPwKickPlayer4.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -804,14 +824,22 @@ public class LanModeDialog {
                     sendDeckIfLoaded();
                     isSelfReady = true;
                     setSelfCheckboxChecked(true);
-                    btnPwReady.setText("已准备");
+                    btnPwReady.setText("取消准备");
                     btnPwReady.setPressed(true);
+                    if (btnPwDuelistMode != null) {
+                        btnPwDuelistMode.setEnabled(false);
+                        btnPwDuelistMode.setTextColor(Color.GRAY);
+                    }
                     if (listener != null) listener.onPlayerWaitingReady();
                 } else {
                     isSelfReady = false;
                     setSelfCheckboxChecked(false);
                     btnPwReady.setText("点击准备");
                     btnPwReady.setPressed(false);
+                    if (btnPwDuelistMode != null) {
+                        btnPwDuelistMode.setEnabled(true);
+                        btnPwDuelistMode.setTextColor(Color.WHITE);
+                    }
                     if (listener != null) listener.onPlayerWaitingNotReady();
                 }
             });
@@ -846,13 +874,21 @@ public class LanModeDialog {
                         }
                         sendDeckIfLoaded();
                         isSelfReady = true;
-                        btnPwReady.setText("已准备");
+                        btnPwReady.setText("取消准备");
                         btnPwReady.setPressed(true);
+                        if (btnPwDuelistMode != null) {
+                            btnPwDuelistMode.setEnabled(false);
+                            btnPwDuelistMode.setTextColor(Color.GRAY);
+                        }
                         if (listener != null) listener.onPlayerWaitingReady();
                     } else {
                         isSelfReady = false;
                         btnPwReady.setText("点击准备");
                         btnPwReady.setPressed(false);
+                        if (btnPwDuelistMode != null) {
+                            btnPwDuelistMode.setEnabled(true);
+                            btnPwDuelistMode.setTextColor(Color.WHITE);
+                        }
                         if (listener != null) listener.onPlayerWaitingNotReady();
                     }
                 });
@@ -986,6 +1022,22 @@ public class LanModeDialog {
         }
     }
 
+    private void sendKickPacket(int pos) {
+        if (!isHost) {
+            return;
+        }
+        String playerName = getPlayerName(pos);
+        if (playerName.isEmpty()) {
+            return;
+        }
+        if (pos == selfPos) {
+            return;
+        }
+        if (listener != null) {
+            listener.onKickPlayerRequested(pos);
+        }
+    }
+
     private void setupStartButton() {
         if (btnPwStartGame != null) {
             btnPwStartGame.setOnClickListener(v -> {
@@ -996,64 +1048,9 @@ public class LanModeDialog {
         }
     }
 
-    private void hideAllKickButtons() {
-        if (btnPwKickPlayer1 != null) btnPwKickPlayer1.setVisibility(View.INVISIBLE);
-        if (btnPwKickPlayer2 != null) btnPwKickPlayer2.setVisibility(View.INVISIBLE);
-        if (btnPwKickPlayer3 != null) btnPwKickPlayer3.setVisibility(View.INVISIBLE);
-        if (btnPwKickPlayer4 != null) btnPwKickPlayer4.setVisibility(View.INVISIBLE);
-    }
-
-    private void updateKickButtonsVisibility() {
-        ImageButton[] kickButtons = {btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4};
-        TextView[] nameFields = {etPwPlayer1Name, etPwPlayer2Name, etPwPlayer3Name, etPwPlayer4Name};
-        
-        for (int i = 0; i < kickButtons.length; i++) {
-            if (kickButtons[i] != null && nameFields[i] != null) {
-                String playerName = nameFields[i].getText().toString();
-                if (!playerName.isEmpty()) {
-                    kickButtons[i].setVisibility(View.VISIBLE);
-                } else {
-                    kickButtons[i].setVisibility(View.INVISIBLE);
-                }
-            }
-        }
-    }
-
-    private void updateKickButtonVisibility(int pos, String name) {
-        if (name == null || name.isEmpty()) {
-            return;
-        }
-        
-        ImageButton kickButton = null;
-        switch (pos) {
-            case 0:
-                kickButton = btnPwKickPlayer1;
-                break;
-            case 1:
-                kickButton = btnPwKickPlayer2;
-                break;
-            case 2:
-                kickButton = btnPwKickPlayer3;
-                break;
-            case 3:
-                kickButton = btnPwKickPlayer4;
-                break;
-        }
-        
-        if (kickButton != null && selfPos == 0) {
-            kickButton.setVisibility(View.VISIBLE);
-        }
-    }
-
     private void updateStartButtonVisibility() {
-        if (btnPwStartGame != null && selfPos == 0) {
+        if (btnPwStartGame != null && isHost) {
             btnPwStartGame.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void sendKickPacket(int pos) {
-        if (listener != null) {
-            listener.onKickPlayerRequested(pos);
         }
     }
 }

@@ -50,6 +50,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -276,7 +277,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 int selfType = type & 0x0F;
                 boolean isHost = ((type >> 4) & 0x0F) != 0;
                 boolean isTag = engine.getGameMode() == 2;
-                lanModeDialog.updateTypeChange(selfType, isTag);
+                lanModeDialog.updateTypeChange(selfType, isTag, isHost);
                 lanModeDialog.refreshPlayerDisplay();
             }
         });
@@ -2876,8 +2877,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         }
         if (card.counters != null && !card.counters.isEmpty()) {
             StringBuilder counterStr = new StringBuilder("指示物: ");
-            for (int[] c : card.counters) {
-                counterStr.append("[").append(c[0]).append("×").append(c[1]).append("] ");
+            for (Map.Entry<Integer, Integer> c : card.counters.entrySet()) {
+                counterStr.append("[").append(c.getKey()).append("×").append(c.getValue()).append("] ");
             }
             TextView tvCounter = new TextView(this);
             tvCounter.setTextColor(0xFFCC88CC);
