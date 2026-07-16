@@ -314,27 +314,34 @@ public class DraggablePopupHelper {
     }
 
     public void showPopup(PopupWindow popupWindow, View anchorView) {
-        View effectiveAnchor = anchorView;
-        if (anchorView != null && anchorView.getWindowToken() == null) {
-            if (context instanceof Activity) {
-                effectiveAnchor = ((Activity) context).getWindow().getDecorView();
+        if (context instanceof Activity) {
+            Activity activity = (Activity) context;
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
             }
         }
+
+        View effectiveAnchor = null;
+        if (context instanceof Activity) {
+            Activity activity = (Activity) context;
+            View decorView = activity.getWindow().getDecorView();
+            effectiveAnchor = decorView;
+        }
+        if (effectiveAnchor == null) {
+            effectiveAnchor = anchorView;
+        }
+        if (effectiveAnchor == null || effectiveAnchor.getWindowToken() == null) {
+            return;
+        }
+
         try {
             if (hasSavedPosition) {
                 popupWindow.showAtLocation(effectiveAnchor, Gravity.NO_GRAVITY, lastX, lastY);
             } else {
                 popupWindow.showAtLocation(effectiveAnchor, Gravity.CENTER, 0, 0);
             }
-        } catch (WindowManager.BadTokenException e) {
-            if (context instanceof Activity) {
-                View decorView = ((Activity) context).getWindow().getDecorView();
-                if (hasSavedPosition) {
-                    popupWindow.showAtLocation(decorView, Gravity.NO_GRAVITY, lastX, lastY);
-                } else {
-                    popupWindow.showAtLocation(decorView, Gravity.CENTER, 0, 0);
-                }
-            }
+        } catch (Exception e) {
+            // Token may become invalid (e.g. OPPO ColorOS OplusViewRootImplHooks$ColorW)
         }
     }
 

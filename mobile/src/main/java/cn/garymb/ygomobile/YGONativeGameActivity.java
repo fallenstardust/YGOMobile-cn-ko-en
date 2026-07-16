@@ -182,6 +182,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     public void onPlayerEnter(String name, int pos) {
         runOnUiThread(() -> {
             if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
+                lanModeDialog.removeObserver(name);
                 lanModeDialog.setPlayerName(pos, name);
                 lanModeDialog.refreshPlayerDisplay();
             }

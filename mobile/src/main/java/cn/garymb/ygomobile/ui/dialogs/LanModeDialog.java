@@ -195,6 +195,7 @@ public class LanModeDialog {
         btnPwDeckSelect.setOnClickListener(v -> {
             if (deckSelectorDialog != null) {
                 deckSelectorDialog.show(btnPwDeckSelect);
+                deckSelectorDialog.setOperationButtonsEnabled(false);
             }
         });
 
@@ -702,7 +703,7 @@ public class LanModeDialog {
                 btnPwSpectatorMode.setTextColor(Color.WHITE);
             }
             if (btnPwDuelistMode != null) {
-                if (isSelfReady) {
+                if (!isTag || isSelfReady) {
                     btnPwDuelistMode.setEnabled(false);
                     btnPwDuelistMode.setTextColor(Color.GRAY);
                 } else {
