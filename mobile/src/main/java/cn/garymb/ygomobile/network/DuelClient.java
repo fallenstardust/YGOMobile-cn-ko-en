@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.utils.LogUtil;
 
 public class DuelClient implements YGOProtocol {
     private static final String TAG = "DuelClient";
@@ -184,6 +185,10 @@ public class DuelClient implements YGOProtocol {
         ByteBuffer buf = ByteBuffer.wrap(data);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         int proto = buf.get() & 0xFF;
+
+        if (Constants.DEBUG) {
+            LogUtil.d(TAG, "◀ RECV [" + stocName(proto) + " 0x" + Integer.toHexString(proto) + "] len=" + data.length + " data=" + bytesToHex(data));
+        }
 
         mainHandler.post(() -> {
             if (listener == null) return;
@@ -473,6 +478,12 @@ public class DuelClient implements YGOProtocol {
 
     private void sendRaw(byte[] data) {
         if (!connected.get() || output == null) return;
+
+        if (Constants.DEBUG) {
+            int proto = (data.length > 0) ? (data[0] & 0xFF) : -1;
+            LogUtil.d(TAG, "▶ SEND [" + ctosName(proto) + " 0x" + Integer.toHexString(proto >= 0 ? proto : 0) + "] len=" + data.length + " data=" + bytesToHex(data));
+        }
+
         sendExecutor.execute(() -> {
             try {
                 synchronized (this) {
@@ -484,6 +495,66 @@ public class DuelClient implements YGOProtocol {
                 disconnect();
             }
         });
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) return "";
+        StringBuilder sb = new StringBuilder();
+        int limit = Math.min(bytes.length, 128);
+        for (int i = 0; i < limit; i++) {
+            if (i > 0) sb.append(' ');
+            sb.append(String.format("%02X", bytes[i] & 0xFF));
+        }
+        if (bytes.length > 128) sb.append("...");
+        return sb.toString();
+    }
+
+    private static String stocName(int proto) {
+        switch (proto) {
+            case STOC_GAME_MSG: return "STOC_GAME_MSG";
+            case STOC_ERROR_MSG: return "STOC_ERROR_MSG";
+            case STOC_SELECT_HAND: return "STOC_SELECT_HAND";
+            case STOC_SELECT_TP: return "STOC_SELECT_TP";
+            case STOC_HAND_RESULT: return "STOC_HAND_RESULT";
+            case STOC_CHANGE_SIDE: return "STOC_CHANGE_SIDE";
+            case STOC_WAITING_SIDE: return "STOC_WAITING_SIDE";
+            case STOC_CREATE_GAME: return "STOC_CREATE_GAME";
+            case STOC_JOIN_GAME: return "STOC_JOIN_GAME";
+            case STOC_TYPE_CHANGE: return "STOC_TYPE_CHANGE";
+            case STOC_DUEL_START: return "STOC_DUEL_START";
+            case STOC_DUEL_END: return "STOC_DUEL_END";
+            case STOC_REPLAY: return "STOC_REPLAY";
+            case STOC_TIME_LIMIT: return "STOC_TIME_LIMIT";
+            case STOC_CHAT: return "STOC_CHAT";
+            case STOC_HS_PLAYER_ENTER: return "STOC_HS_PLAYER_ENTER";
+            case STOC_HS_PLAYER_CHANGE: return "STOC_HS_PLAYER_CHANGE";
+            case STOC_HS_WATCH_CHANGE: return "STOC_HS_WATCH_CHANGE";
+            default: return "UNKNOWN_STOC";
+        }
+    }
+
+    private static String ctosName(int proto) {
+        switch (proto) {
+            case CTOS_RESPONSE: return "CTOS_RESPONSE";
+            case CTOS_UPDATE_DECK: return "CTOS_UPDATE_DECK";
+            case CTOS_HAND_RESULT: return "CTOS_HAND_RESULT";
+            case CTOS_TP_RESULT: return "CTOS_TP_RESULT";
+            case CTOS_PLAYER_INFO: return "CTOS_PLAYER_INFO";
+            case CTOS_CREATE_GAME: return "CTOS_CREATE_GAME";
+            case CTOS_JOIN_GAME: return "CTOS_JOIN_GAME";
+            case CTOS_LEAVE_GAME: return "CTOS_LEAVE_GAME";
+            case CTOS_SURRENDER: return "CTOS_SURRENDER";
+            case CTOS_TIME_CONFIRM: return "CTOS_TIME_CONFIRM";
+            case CTOS_CHAT: return "CTOS_CHAT";
+            case CTOS_EXTERNAL_ADDRESS: return "CTOS_EXTERNAL_ADDRESS";
+            case CTOS_HS_TODUELIST: return "CTOS_HS_TODUELIST";
+            case CTOS_HS_TOOBSERVER: return "CTOS_HS_TOOBSERVER";
+            case CTOS_HS_READY: return "CTOS_HS_READY";
+            case CTOS_HS_NOTREADY: return "CTOS_HS_NOTREADY";
+            case CTOS_HS_KICK: return "CTOS_HS_KICK";
+            case CTOS_HS_START: return "CTOS_HS_START";
+            default: return "UNKNOWN_CTOS";
+        }
     }
 
     // === LAN Discovery ===

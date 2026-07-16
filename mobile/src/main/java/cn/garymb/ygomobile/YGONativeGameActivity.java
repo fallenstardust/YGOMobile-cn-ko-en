@@ -1050,7 +1050,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                         if (lanModeDialog != null) {
                             lanModeDialog.showLanMain();
                         }
-                        YGOUtil.show(R.string.disconnect);
                     });
                 }
                 break;
