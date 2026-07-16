@@ -73,6 +73,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.data.Card;
@@ -218,6 +219,26 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                     }
                     if (pos >= 4 && !oldName.isEmpty() && state < 4) {
                         lanModeDialog.removeObserver(oldName);
+                    }
+                } else if (state == 0x8) {
+                    String observerName = "";
+                    switch (pos) {
+                        case 0:
+                            observerName = lanModeDialog.getPlayerName(0);
+                            break;
+                        case 1:
+                            observerName = lanModeDialog.getPlayerName(1);
+                            break;
+                        case 2:
+                            observerName = lanModeDialog.getPlayerName(2);
+                            break;
+                        case 3:
+                            observerName = lanModeDialog.getPlayerName(3);
+                            break;
+                    }
+                    lanModeDialog.clearPlayerPos(pos);
+                    if (!observerName.isEmpty()) {
+                        lanModeDialog.addObserver(observerName);
                     }
                 } else if (state == 0x9) {
                     lanModeDialog.setPlayerReady(pos, true);
@@ -653,6 +674,16 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             lanModeDialog = new LanModeDialog(this, YGONativeGameActivity.this);
             lanModeDialog.show(layoutMainMenu);
             lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
+
+            if (options != null) {
+                lanModeDialog.preFillConnectionFields(
+                        options.mUserName,
+                        options.mServerAddr,
+                        String.valueOf(options.mPort),
+                        options.mRoomPasswd
+                );
+            }
+
             lanModeDialog.showPlayerWaiting();
             lanModeDialog.setPlayerName(0, playerName);
 
@@ -1016,9 +1047,10 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             case DISCONNECTED:
                 if (!isFinishing()) {
                     runOnUiThread(() -> {
-                        if (lanModeDialog != null) lanModeDialog.dismiss();
-                        Toast.makeText(this, "连接已断开", Toast.LENGTH_SHORT).show();
-                        finish();
+                        if (lanModeDialog != null) {
+                            lanModeDialog.showLanMain();
+                        }
+                        YGOUtil.show(R.string.disconnect);
                     });
                 }
                 break;

@@ -5,7 +5,9 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -271,6 +273,14 @@ public class SettingsDialog {
         popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
+        popupWindow.setFocusable(false);
+        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        popupWindow.setTouchInterceptor((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+                return true;
+            }
+            return false;
+        });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "settings_dialog");

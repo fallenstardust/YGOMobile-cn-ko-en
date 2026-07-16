@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -17,6 +18,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.WindowManager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -157,7 +160,15 @@ public class LanModeDialog {
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
+        popupWindow.setOutsideTouchable(false);
+        popupWindow.setFocusable(false);
+        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        popupWindow.setTouchInterceptor((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+                return true;
+            }
+            return false;
+        });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "lan_mode_dialog");
@@ -307,7 +318,6 @@ public class LanModeDialog {
             btnPwSpectatorMode.setEnabled(false);
             btnPwDuelistMode.setEnabled(true);
             if (btnPwReady != null) btnPwReady.setVisibility(View.INVISIBLE);
-            watchCount++;
             refreshPlayerDisplay();
         });
 
@@ -408,33 +418,43 @@ public class LanModeDialog {
 
     public void updateWatchCount(int count) {
         watchCount = count;
-        if (tvWatchCount != null) {
-            tvWatchCount.setText("当前观战人数: " + count);
-            if (count > 0 || selfPos >= 4) {
-                tvWatchCount.setVisibility(View.VISIBLE);
-            } else {
-                tvWatchCount.setVisibility(View.INVISIBLE);
-                observerNames.clear();
-            }
+        if (count == 0) {
+            observerNames.clear();
         }
+        refreshWatchCountDisplay();
     }
 
     public void addObserver(String name) {
         if (name != null && !name.isEmpty() && !observerNames.contains(name)) {
             observerNames.add(name);
-
+            watchCount++;
+            refreshWatchCountDisplay();
         }
     }
 
     public void removeObserver(String name) {
         if (observerNames.remove(name)) {
-
+            watchCount--;
+            if (watchCount < 0) watchCount = 0;
+            refreshWatchCountDisplay();
         }
     }
 
     public void clearObservers() {
         observerNames.clear();
+        watchCount = 0;
+        refreshWatchCountDisplay();
+    }
 
+    private void refreshWatchCountDisplay() {
+        if (tvWatchCount != null) {
+            tvWatchCount.setText("当前观战人数: " + watchCount);
+            if (watchCount > 0 || selfPos >= 4) {
+                tvWatchCount.setVisibility(View.VISIBLE);
+            } else {
+                tvWatchCount.setVisibility(View.INVISIBLE);
+            }
+        }
     }
 
     public void showPlayerWaiting() {
@@ -715,6 +735,24 @@ public class LanModeDialog {
 
     public boolean isPlayerWaitingVisible() {
         return layoutPlayerWaiting != null && layoutPlayerWaiting.getVisibility() == View.VISIBLE;
+    }
+
+    public void preFillConnectionFields(String nickname, String hostIp, String port, String roomPassword) {
+        if (layoutLanMain == null) return;
+        EditText etNickname = layoutLanMain.findViewById(R.id.et_nickname);
+        EditText etHostIp = layoutLanMain.findViewById(R.id.et_host_ip);
+        EditText etHostPort = layoutLanMain.findViewById(R.id.et_host_port);
+        EditText etRoomPassword = layoutLanMain.findViewById(R.id.et_room_password);
+        if (nickname != null && !nickname.isEmpty() && etNickname != null) etNickname.setText(nickname);
+        if (hostIp != null && !hostIp.isEmpty() && etHostIp != null) etHostIp.setText(hostIp);
+        if (port != null && !port.isEmpty() && etHostPort != null) etHostPort.setText(port);
+        if (roomPassword != null && etRoomPassword != null) etRoomPassword.setText(roomPassword);
+    }
+
+    public void showLanMain() {
+        if (layoutPlayerWaiting != null) layoutPlayerWaiting.setVisibility(View.GONE);
+        if (layoutCreateHost != null) layoutCreateHost.setVisibility(View.GONE);
+        if (layoutLanMain != null) layoutLanMain.setVisibility(View.VISIBLE);
     }
 
     private void setupSpinners(Spinner spinnerBanlist, Spinner spinnerRule,
