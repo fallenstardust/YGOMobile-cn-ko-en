@@ -314,6 +314,10 @@ public class DraggablePopupHelper {
     }
 
     public void showPopup(PopupWindow popupWindow, View anchorView) {
+        showPopup(popupWindow, anchorView, Gravity.CENTER, 0, 0);
+    }
+
+    public void showPopup(PopupWindow popupWindow, View anchorView, int gravity, int xOffset, int yOffset) {
         if (context instanceof Activity) {
             Activity activity = (Activity) context;
             if (activity.isFinishing() || activity.isDestroyed()) {
@@ -338,7 +342,7 @@ public class DraggablePopupHelper {
             if (hasSavedPosition) {
                 popupWindow.showAtLocation(effectiveAnchor, Gravity.NO_GRAVITY, lastX, lastY);
             } else {
-                popupWindow.showAtLocation(effectiveAnchor, Gravity.CENTER, 0, 0);
+                popupWindow.showAtLocation(effectiveAnchor, gravity, xOffset, yOffset);
             }
         } catch (Exception e) {
             // Token may become invalid (e.g. OPPO ColorOS OplusViewRootImplHooks$ColorW)
