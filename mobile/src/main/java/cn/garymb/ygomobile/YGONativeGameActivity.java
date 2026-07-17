@@ -1,9 +1,5 @@
 package cn.garymb.ygomobile;
 
-import static cn.garymb.ygomobile.ui.dialogs.LanModeDialog.parseBanlistIndex;
-import static cn.garymb.ygomobile.ui.dialogs.LanModeDialog.parseDuelModeIndex;
-import static cn.garymb.ygomobile.ui.dialogs.LanModeDialog.parseIntSafe;
-import static cn.garymb.ygomobile.ui.dialogs.LanModeDialog.parseRuleIndex;
 import static cn.garymb.ygomobile.utils.BotUtil.parseBotConfig;
 import static cn.garymb.ygomobile.utils.PuzzleUtil.loadPuzzleFiles;
 
@@ -14,7 +10,6 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import cn.garymb.ygodata.YGOGameOptions;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -24,12 +19,9 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -38,7 +30,6 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
@@ -50,7 +41,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -61,6 +51,7 @@ import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
@@ -73,9 +64,7 @@ import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
-import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
-import ocgcore.LimitManager;
 import ocgcore.data.Card;
 import ocgcore.enums.DuelPhase;
 
@@ -98,16 +87,21 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
     private TextView tvHintMessage;
 
-    private LinearLayout layoutTopInfo, layoutLeftButtons, layoutCardDetail;
+    private LinearLayout layoutTopInfo, layoutLeftButtons;
+    private LinearLayout layoutCardDetail;
     private LinearLayout layoutBottomActions, layoutDeckIndicators;
     private LinearLayout layoutChatMessages;
     private TextView tvChatMessage1, tvChatMessage2;
-
-    private ImageButton btnSettings, btnChat, btnSound, btnPlay, btnEmote, btnMenu;
-    private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
-
     private ImageView ivCardImage;
     private TextView tvCardName, tvCardAttr, tvCardLevel, tvCardDesc;
+    private CardDetailPanel cardDetailPanel;
+    private ImageButton btnSettings, btnChat, btnSound, btnPlay, btnEmote, btnMenu;
+    private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
+    private Button btnCancelOrFinish;
+    private Button btnPhaseCurrent, btnPhaseNext, btnEp;
+    private LinearLayout layoutPhaseButtons;
+    private int currentSelectType = -1;
+    private DialogPlus currentDialog;
 
     private TextView tvPlayerDeckCount, tvPlayerGraveCount;
     private TextView tvOpponentDeckCount, tvOpponentGraveCount;
@@ -121,7 +115,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private TextView tvPlayerTime, tvOpponentTime;
     private TextView tvChatLog;
     private LinearLayout layoutActionButtons;
-    private Button btnM2, btnEp, btnBp, btnChain, btnCancel;
+    private Button btnChain, btnCancel;
     private LinearLayout layoutChat;
     private EditText etChatInput;
     private LinearLayout layoutLobby;
@@ -379,8 +373,25 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void initViews() {
-        fieldViewController = new GameFieldViewController(this);
+        btnSurrender = findViewById(R.id.btn_surrender);
+        btnIgnoreTiming = findViewById(R.id.btn_ignore_timing);
+        btnShowTiming = findViewById(R.id.btn_show_timing);
+        btnAvailableTiming = findViewById(R.id.btn_available_timing);
+        btnCancelOrFinish = findViewById(R.id.btn_cancel_or_finish);
 
+        btnPhaseCurrent = findViewById(R.id.btn_phase_current);
+        btnPhaseNext = findViewById(R.id.btn_phase_next);
+        btnEp = findViewById(R.id.btn_ep);
+        layoutPhaseButtons = findViewById(R.id.layout_phase_buttons);
+
+
+        ivCardImage = findViewById(R.id.iv_card_image);
+        tvCardName = findViewById(R.id.tv_card_name);
+        tvCardAttr = findViewById(R.id.tv_card_attr);
+        tvCardLevel = findViewById(R.id.tv_card_level);
+        tvCardDesc = findViewById(R.id.tv_card_desc);
+
+        fieldViewController = new GameFieldViewController(this);
         tvPlayerLp = findViewById(R.id.tv_player_lp);
         tvPlayerName = findViewById(R.id.tv_player_name);
         tvOpponentLp = findViewById(R.id.tv_opponent_lp);
@@ -486,6 +497,33 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         btnMenu.setOnClickListener(v -> {
             showMainMenu();
         });
+
+        if (btnCancelOrFinish != null) {
+            btnCancelOrFinish.setOnClickListener(v -> cancelOrFinish());
+        }
+
+        if (btnPhaseNext != null) {
+            btnPhaseNext.setOnClickListener(v -> {
+                if (engine == null || engine.getClient() == null) return;
+                String label = btnPhaseNext.getText().toString();
+                if ("BP".equals(label) && currentSelectType == 11) {
+                    sendResponseInt(6);
+                } else if ("M2".equals(label) && currentSelectType == 10) {
+                    sendResponseInt(2);
+                }
+            });
+        }
+
+        if (btnEp != null) {
+            btnEp.setOnClickListener(v -> {
+                if (engine == null || engine.getClient() == null) return;
+                if (currentSelectType == 10) {
+                    sendResponseInt(3);
+                } else if (currentSelectType == 11) {
+                    sendResponseInt(7);
+                }
+            });
+        }
     }
 
     private void initEngine() {
@@ -493,6 +531,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         soundManager.init(0.8, 0.6, true, true);
 
         imageLoader = new ImageLoader(true);
+
+        cardDetailPanel = new CardDetailPanel(findViewById(android.R.id.content), imageLoader);
 
         engine = new GameEngine(soundManager);
         engine.setListener(this);
@@ -728,11 +768,13 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (fieldViewController != null) fieldViewController.hide();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
         if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.GONE);
-        if (layoutCardDetail != null) layoutCardDetail.setVisibility(View.GONE);
+        if (cardDetailPanel != null) cardDetailPanel.hide();
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
         if (layoutDeckIndicators != null) layoutDeckIndicators.setVisibility(View.GONE);
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
+        hideCancelOrFinishButton();
     }
 
     private void showGameUI() {
@@ -741,6 +783,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.VISIBLE);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
         if (layoutDeckIndicators != null) layoutDeckIndicators.setVisibility(View.VISIBLE);
+        if (cardDetailPanel != null) cardDetailPanel.showDefault();
+        hideCancelOrFinishButton();
     }
 
     private void showLanModeDialog() {
@@ -748,6 +792,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         lanModeDialog.show(layoutMainMenu);
         lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
     }
+
     @Override
     public void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
                                       int startLP, int startHand, int drawCount, int timeLimit,
@@ -891,6 +936,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             public void onReplayFieldChanged() {
                 fieldViewController.invalidate();
             }
+
             @Override
             public void onReplayPlayerInfoUpdated(int player) {
                 runOnUiThread(() -> {
@@ -977,6 +1023,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
         new DeckEditDialog(this).show();
     }
+
     private void setWindowBackground(String relativePath) {
         String path = AppsSettings.get().getResourcePath() + "/" + relativePath;
         File file = new File(path);
@@ -1037,12 +1084,14 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
                 if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
                 if (layoutChat != null) layoutChat.setVisibility(View.VISIBLE);
+                if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
                 isGameStarted = true;
                 break;
             case SIDING:
                 showSideSelectDialog();
                 break;
             case DUEL_END:
+                closeGameButtons();
                 showDuelEndDialog();
                 break;
             case DISCONNECTED:
@@ -1077,7 +1126,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 if (tvPlayerDeckCount != null) tvPlayerDeckCount.setText(String.valueOf(deckCount));
 
                 int graveCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Grave.value());
-                if (tvPlayerGraveCount != null) tvPlayerGraveCount.setText(String.valueOf(graveCount));
+                if (tvPlayerGraveCount != null)
+                    tvPlayerGraveCount.setText(String.valueOf(graveCount));
             } else {
                 tvOpponentLp.setText(String.valueOf(pf.lp));
                 tvOpponentName.setText(info.name.isEmpty() ? "Opponent" : info.name);
@@ -1085,10 +1135,12 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 tvOpponentHandCount.setText("手卡:" + handCount);
 
                 int deckCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Deck.value());
-                if (tvOpponentDeckCount != null) tvOpponentDeckCount.setText(String.valueOf(deckCount));
+                if (tvOpponentDeckCount != null)
+                    tvOpponentDeckCount.setText(String.valueOf(deckCount));
 
                 int graveCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Grave.value());
-                if (tvOpponentGraveCount != null) tvOpponentGraveCount.setText(String.valueOf(graveCount));
+                if (tvOpponentGraveCount != null)
+                    tvOpponentGraveCount.setText(String.valueOf(graveCount));
             }
         });
     }
@@ -1101,36 +1153,65 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             tvPhaseInfo.setText(phaseName + " Phase");
             tvTurnCounter.setText(String.valueOf(engine.getField().turnCount));
             isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
-
-            if (layoutBottomActions != null) {
-                layoutBottomActions.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
-            }
+            updateActionButtonsForPhase(phase);
         });
     }
 
     private void updateActionButtonsForPhase(int phase) {
         DuelPhase dp = DuelPhase.valueOf(phase);
         if (dp == null) return;
+
+        if (layoutPhaseButtons != null) {
+            layoutPhaseButtons.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
+        }
+
+        if (btnPhaseCurrent == null) return;
+
+        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
+        if (btnEp != null) btnEp.setVisibility(View.GONE);
+
         switch (dp) {
+            case Draw:
+                btnPhaseCurrent.setText("DP");
+                break;
+            case Standby:
+                btnPhaseCurrent.setText("SP");
+                break;
             case Main1:
-                btnBp.setVisibility(View.VISIBLE);
-                btnEp.setVisibility(View.GONE);
-                btnM2.setVisibility(View.GONE);
+                btnPhaseCurrent.setText("M1");
+                if (isMyTurn) {
+                    if (btnPhaseNext != null) {
+                        btnPhaseNext.setText("BP");
+                        btnPhaseNext.setVisibility(View.VISIBLE);
+                    }
+                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
+                }
+                break;
+            case BattleStart:
+            case BattleStep:
+            case Damage:
+            case DamageCal:
+            case Battle:
+                btnPhaseCurrent.setText("BP");
+                if (isMyTurn) {
+                    if (btnPhaseNext != null) {
+                        btnPhaseNext.setText("M2");
+                        btnPhaseNext.setVisibility(View.VISIBLE);
+                    }
+                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
+                }
                 break;
             case Main2:
-                btnBp.setVisibility(View.GONE);
-                btnEp.setVisibility(View.VISIBLE);
-                btnM2.setVisibility(View.GONE);
+                btnPhaseCurrent.setText("M2");
+                if (isMyTurn) {
+                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
+                }
                 break;
-            case BattleStep:
-                btnBp.setVisibility(View.GONE);
-                btnEp.setVisibility(View.VISIBLE);
-                btnM2.setVisibility(View.VISIBLE);
+            case End:
+                btnPhaseCurrent.setText("EP");
                 break;
             default:
-                btnBp.setVisibility(View.GONE);
-                btnEp.setVisibility(View.VISIBLE);
-                btnM2.setVisibility(View.GONE);
+                btnPhaseCurrent.setText(dp.name());
                 break;
         }
     }
@@ -1170,6 +1251,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     @Override
     public void onSelectRequired(int selectType, ByteBuffer data) {
         runOnUiThread(() -> {
+            currentSelectType = selectType;
             switch (selectType) {
                 case 0:
                     showHandSelectDialog();
@@ -1295,7 +1377,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             showCardCommandMenu(card, player, location, sequence);
             return;
         }
-        if (card != null && card.isFaceUp() && card.code > 0) {
+        if (card != null && card.code > 0) {
             showCardInfoPanel(card);
         }
     }
@@ -1382,17 +1464,25 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 : "是否发动效果？";
 
         DialogPlus dialog = new DialogPlus(this);
+        currentDialog = dialog;
         dialog.setTitle("确认");
         dialog.setMessage(desc);
         dialog.setLeftButtonText("是");
         dialog.setLeftButtonListener((d, w) -> {
             sendResponseInt(1);
+            hideCancelOrFinishButton();
             d.dismiss();
         });
         dialog.setRightButtonText("否");
         dialog.setRightButtonListener((d, w) -> {
             sendResponseInt(0);
+            hideCancelOrFinishButton();
             d.dismiss();
+        });
+        showCancelOrFinishButton("否");
+        dialog.setOnDismissListener((d) -> {
+            hideCancelOrFinishButton();
+            currentDialog = null;
         });
         dialog.setCancelable(false);
         dialog.show();
@@ -2294,6 +2384,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         }
 
         DialogPlus dialog = new DialogPlus(this);
+        currentDialog = dialog;
         dialog.setTitle("连锁选择");
         dialog.setContentView(R.layout.dialog_game_select);
         View contentView = dialog.getContentView();
@@ -2322,7 +2413,15 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         dialog.setRightButtonText("不连锁");
         dialog.setRightButtonListener((d, w) -> {
             sendResponseInt(-1);
+            hideCancelOrFinishButton();
             d.dismiss();
+        });
+        if (!hasForced) {
+            showCancelOrFinishButton("不连锁");
+        }
+        dialog.setOnDismissListener(d -> {
+            hideCancelOrFinishButton();
+            currentDialog = null;
         });
         dialog.setCancelable(false);
         dialog.show();
@@ -2337,6 +2436,8 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         int selectPlayer = data.get() & 0xFF;
         int min = data.get() & 0xFF;
         int max = data.get() & 0xFF;
+
+        boolean cancelable = (min == 0);
 
         List<CardSelectInfo> cardInfos = new ArrayList<>();
         int count = data.remaining() >= 1 ? (data.get() & 0xFF) : 0;
@@ -2357,6 +2458,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         boolean[] selected = new boolean[cardInfos.size()];
 
         DialogPlus dialog = new DialogPlus(this);
+        currentDialog = dialog;
         dialog.setTitle("选择卡片 (" + min + "-" + max + ")");
         dialog.setContentView(R.layout.dialog_game_select);
         View contentView = dialog.getContentView();
@@ -2396,21 +2498,31 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
                 if (selCount >= min && selCount <= max) {
                     sendCardSelectResponse(cardInfos, selected, selCount);
+                    hideCancelOrFinishButton();
                     dialog.dismiss();
                 }
+                updateCancelOrFinishButton(selCount >= min, cancelable, selCount > 0);
             });
             layoutOptions.addView(btn);
         }
 
-        if (min == 0) {
+        if (cancelable) {
+            showCancelOrFinishButton("取消");
             dialog.setRightButtonText("取消");
             dialog.setRightButtonListener((d, w) -> {
                 ByteBuffer buf = ByteBuffer.allocate(1);
                 buf.put((byte) 0);
                 engine.sendResponse(buf.array());
+                hideCancelOrFinishButton();
                 d.dismiss();
             });
+        } else if (min <= max) {
+            showCancelOrFinishButton("完成选择");
         }
+        dialog.setOnDismissListener(d -> {
+            hideCancelOrFinishButton();
+            currentDialog = null;
+        });
         dialog.setCancelable(false);
         dialog.show();
     }
@@ -2822,118 +2934,15 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private void showCardInfoDialog(int cardCode) {
         GameField.ClientCard tempCard = new GameField.ClientCard();
         tempCard.code = cardCode;
+        tempCard.position = 0x1;
         showCardInfoPanel(tempCard);
     }
 
     private void showCardInfoPanel(GameField.ClientCard card) {
         if (card == null || card.code <= 0) return;
-        Card cardData = DataManager.get().getCardManager().getCard(card.code);
-        String name = cardData != null ? cardData.Name : "Unknown Card";
-        if (name == null) name = "Unknown Card";
-
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle(name + " [" + card.code + "]");
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (10 * getResources().getDisplayMetrics().density);
-        root.setPadding(pad, pad, pad, pad);
-
-        if (card.isFaceUp() && card.isMonster()) {
-            LinearLayout statsRow = new LinearLayout(this);
-            statsRow.setOrientation(LinearLayout.HORIZONTAL);
-            TextView tvAtk = new TextView(this);
-            tvAtk.setTextColor(0xFFFF6666);
-            tvAtk.setTextSize(14);
-            tvAtk.setText("ATK: " + card.attack);
-            statsRow.addView(tvAtk);
-
-            if (!card.isLink()) {
-                TextView tvSep = new TextView(this);
-                tvSep.setTextColor(0xFFFFFFFF);
-                tvSep.setTextSize(14);
-                tvSep.setText(" / ");
-                statsRow.addView(tvSep);
-
-                TextView tvDef = new TextView(this);
-                tvDef.setTextColor(0xFF6666FF);
-                tvDef.setTextSize(14);
-                tvDef.setText("DEF: " + card.defense);
-                statsRow.addView(tvDef);
-            }
-            root.addView(statsRow);
+        if (cardDetailPanel != null) {
+            cardDetailPanel.showCard(card);
         }
-
-        if (card.isFaceUp() && card.level > 0) {
-            TextView tvLevel = new TextView(this);
-            tvLevel.setTextColor(0xFFFFCC00);
-            tvLevel.setTextSize(12);
-            tvLevel.setText("等级: " + "★".repeat(Math.min(card.level, 12)));
-            root.addView(tvLevel);
-        }
-        if (card.isFaceUp() && card.rank > 0) {
-            TextView tvRank = new TextView(this);
-            tvRank.setTextColor(0xFFFFCC00);
-            tvRank.setTextSize(12);
-            tvRank.setText("阶级: " + "☆".repeat(Math.min(card.rank, 12)));
-            root.addView(tvRank);
-        }
-
-        if (card.isFaceUp()) {
-            String posStr;
-            if ((card.position & 0x1) != 0) posStr = "表侧攻击";
-            else if ((card.position & 0x2) != 0) posStr = "里侧攻击";
-            else if ((card.position & 0x4) != 0) posStr = "表侧守备";
-            else if ((card.position & 0x8) != 0) posStr = "里侧守备";
-            else posStr = "未知";
-            TextView tvPos = new TextView(this);
-            tvPos.setTextColor(0xFFCCCCCC);
-            tvPos.setTextSize(11);
-            tvPos.setText("表示: " + posStr + " | 位置: " + getLocationName(card.location));
-            root.addView(tvPos);
-        }
-
-        if (card.overlayCards != null && !card.overlayCards.isEmpty()) {
-            TextView tvOverlay = new TextView(this);
-            tvOverlay.setTextColor(0xFF8888FF);
-            tvOverlay.setTextSize(11);
-            tvOverlay.setText("超量素材: ×" + card.overlayCards.size());
-            root.addView(tvOverlay);
-        }
-        if (card.equipCard != null) {
-            TextView tvEquip = new TextView(this);
-            tvEquip.setTextColor(0xFFFFCC88);
-            tvEquip.setTextSize(11);
-            tvEquip.setText("装备: " + getCardDisplayName(card.equipCard.code));
-            root.addView(tvEquip);
-        }
-        if (card.counters != null && !card.counters.isEmpty()) {
-            StringBuilder counterStr = new StringBuilder("指示物: ");
-            for (Map.Entry<Integer, Integer> c : card.counters.entrySet()) {
-                counterStr.append("[").append(c.getKey()).append("×").append(c.getValue()).append("] ");
-            }
-            TextView tvCounter = new TextView(this);
-            tvCounter.setTextColor(0xFFCC88CC);
-            tvCounter.setTextSize(11);
-            tvCounter.setText(counterStr.toString());
-            root.addView(tvCounter);
-        }
-
-        if (cardData != null && cardData.Desc != null) {
-            TextView tvDesc = new TextView(this);
-            tvDesc.setTextColor(0xFFDDDDDD);
-            tvDesc.setTextSize(10);
-            tvDesc.setText(cardData.Desc);
-            tvDesc.setPadding(0, pad, 0, 0);
-            root.addView(tvDesc);
-        }
-
-        ScrollView scrollView = new ScrollView(this);
-        scrollView.addView(root);
-        dialog.setContentView(scrollView);
-        dialog.setLeftButtonText("关闭");
-        dialog.setLeftButtonListener((d, w) -> d.dismiss());
-        dialog.show();
     }
 
     private void showSortCardDialog(ByteBuffer data) {
@@ -3107,6 +3116,133 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         sendResponseInt(action);
         layoutActionButtons.setVisibility(View.GONE);
     }
+
+    private void closeGameButtons() {
+        hideCancelOrFinishButton();
+        if (btnPhaseCurrent != null) btnPhaseCurrent.setText("");
+        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
+        if (btnEp != null) btnEp.setVisibility(View.GONE);
+        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
+        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+        if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
+    }
+
+    // === CancelOrFinish (mirrors C++ ClientField::CancelOrFinish) ===
+
+    private void showCancelOrFinishButton(String text) {
+        if (btnCancelOrFinish != null) {
+            btnCancelOrFinish.setText(text);
+            btnCancelOrFinish.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideCancelOrFinishButton() {
+        if (btnCancelOrFinish != null) {
+            btnCancelOrFinish.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateCancelOrFinishButton(boolean ready, boolean cancelable, boolean hasSelection) {
+        if (btnCancelOrFinish == null) return;
+        if (ready) {
+            btnCancelOrFinish.setText("完成选择");
+            btnCancelOrFinish.setVisibility(View.VISIBLE);
+        } else if (cancelable && !hasSelection) {
+            btnCancelOrFinish.setText("取消");
+            btnCancelOrFinish.setVisibility(View.VISIBLE);
+        } else {
+            btnCancelOrFinish.setVisibility(View.GONE);
+        }
+    }
+
+    private void cancelOrFinish() {
+        switch (currentSelectType) {
+            case 13:
+            case 12: {
+                sendResponseInt(0);
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
+            case 15:
+            case 20: {
+                GameField field = engine.getField();
+                if (field.selectedCards.isEmpty()) {
+                    if (field.selectCancelable) {
+                        sendResponseInt(-1);
+                        hideCancelOrFinishButton();
+                        if (currentDialog != null) currentDialog.dismiss();
+                    }
+                } else if (field.selectReady) {
+                    sendSelectedCardsResponse();
+                    hideCancelOrFinishButton();
+                    if (currentDialog != null) currentDialog.dismiss();
+                }
+                break;
+            }
+            case 23: {
+                GameField field = engine.getField();
+                if (field.selectReady) {
+                    sendSelectedCardsResponse();
+                    hideCancelOrFinishButton();
+                    if (currentDialog != null) currentDialog.dismiss();
+                }
+                break;
+            }
+            case 16: {
+                sendResponseInt(-1);
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
+            case 18:
+            case 24: {
+                if (isPlaceSelecting) {
+                    int selfType = engine.getClient().selfType;
+                    ByteBuffer buf = ByteBuffer.allocate(3);
+                    buf.put((byte) selfType);
+                    buf.put((byte) 0);
+                    buf.put((byte) 0);
+                    engine.sendResponse(buf.array());
+                    isPlaceSelecting = false;
+                    fieldViewController.clearHighlight();
+                    hideCancelOrFinishButton();
+                }
+                break;
+            }
+            case 25: {
+                sendResponseInt(-1);
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
+            case 10:
+            case 11: {
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
+            default: {
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
+        }
+        currentSelectType = -1;
+    }
+
+    private void sendSelectedCardsResponse() {
+        GameField field = engine.getField();
+        int len = field.selectedCards.size();
+        if (len > 255) len = 255;
+        byte[] respbuf = new byte[len + 1];
+        respbuf[0] = (byte) len;
+        for (int i = 0; i < len; i++) {
+            respbuf[i + 1] = (byte) field.selectedCards.get(i).select_seq;
+        }
+        engine.sendResponse(respbuf);
+    }
+
 
     // === Lifecycle ===
 
