@@ -41,8 +41,14 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private volatile boolean isPaused = false;
     private volatile boolean skipForward = false;
     private volatile boolean rewindToStart = false;
+    private volatile boolean isRestarting = false;
+    private volatile boolean isSwapping = false;
     private int currentStep = 0;
     private int totalSteps = 0;
+    private int skipStep = 0;
+    private int skipTurn = 0;
+    private boolean isSkipping = false;
+    private byte[] originalReplayBytes = null;
 
     public ReplayEngine(GameField field, SoundManager soundManager) {
         this.field = field;
@@ -65,6 +71,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     }
 
     public void loadAndPlay(String replayPath) {
+        loadAndPlay(replayPath, 1);
+    }
+
+    public void loadAndPlay(String replayPath, int startTurn) {
         setState(ReplayState.LOADING);
         new Thread(() -> {
             replayData = ReplayReader.loadReplay(replayPath);
@@ -76,6 +86,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 return;
             }
 
+            originalReplayBytes = replayData.replayBuffer.array().clone();
+
             field.clear();
             setupInitialField();
 
@@ -84,18 +96,25 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
             setState(ReplayState.PLAYING);
             isRunning = true;
+            this.skipTurn = startTurn > 0 ? startTurn - 1 : 0;
+            this.isSkipping = (this.skipTurn > 0);
+            
             mainHandler.post(() -> {
-                String info = buildReplayInfo();
+                String info = buildReplayInfo(startTurn);
                 if (listener != null) listener.onReplayHintMessage(info);
             });
 
-            replayThread = new Thread(this::replayLoop, "ReplayThread");
+            replayThread = new Thread(() -> replayLoop(startTurn), "ReplayThread");
             replayThread.setDaemon(true);
             replayThread.start();
         }, "ReplayLoad").start();
     }
 
     private String buildReplayInfo() {
+        return buildReplayInfo(1);
+    }
+
+    private String buildReplayInfo(int startTurn) {
         StringBuilder sb = new StringBuilder();
         sb.append("录像回放\n");
         for (int i = 0; i < replayData.playerNames.size(); i++) {
@@ -107,6 +126,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         sb.append(" | 抽卡: ").append(replayData.params.drawCount);
         if (replayData.isTag) sb.append(" [双打]");
         if (replayData.isSingleMode) sb.append(" [残局]");
+        if (startTurn > 1) sb.append(" | 从第").append(startTurn).append("回合开始");
         return sb.toString();
     }
 
@@ -160,24 +180,54 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         }
     }
 
-    private void replayLoop() {
+    private void replayLoop(int startTurn) {
         try {
             while (isRunning && replayBuffer != null && replayBuffer.remaining() > 0) {
-                if (isPaused) {
+                if (isPaused && !isRestarting) {
                     try { Thread.sleep(100); } catch (InterruptedException e) { break; }
                     continue;
+                }
+
+                if (isRestarting) {
+                    performRestart();
+                    continue;
+                }
+
+                if (isSwapping) {
+                    performSwapField();
+                    isSwapping = false;
                 }
 
                 if (replayBuffer.remaining() < 1) break;
                 int msgType = replayBuffer.get() & 0xFF;
 
+                boolean pauseable = isPauseable(msgType);
+                
                 if (!processMessage(msgType)) {
                     break;
                 }
 
+                if (pauseable && skipStep > 0) {
+                    skipStep--;
+                    continue;
+                }
+
                 currentStep++;
 
-                if (!skipForward) {
+                if (msgType == 40) { // MSG_NEW_TURN
+                    if (isSkipping && skipTurn > 0) {
+                        skipTurn--;
+                        if (skipTurn == 0) {
+                            isSkipping = false;
+                            mainHandler.post(() -> {
+                                if (listener != null) listener.onReplayHintMessage("快进结束，从当前回合开始正常播放");
+                            });
+                        }
+                        continue;
+                    }
+                }
+
+                if (!skipForward && !isSkipping) {
                     try { Thread.sleep(800); } catch (InterruptedException e) { break; }
                 }
             }
@@ -191,6 +241,53 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             soundManager.stopBGM();
             if (listener != null) listener.onReplayFinished("录像回放结束");
         });
+    }
+
+    private boolean isPauseable(int msgType) {
+        switch (msgType) {
+            case 52: // MSG_SET
+            case 54: // MSG_FIELD_DISABLED
+            case 60: // MSG_SUMMONING
+            case 61: // MSG_SUMMONED
+            case 62: // MSG_SPSUMMONING
+            case 63: // MSG_SPSUMMONED
+            case 64: // MSG_FLIPSUMMONING
+            case 65: // MSG_FLIPSUMMONED
+            case 70: // MSG_CHAINING
+            case 71: // MSG_CHAINED
+            case 72: // MSG_CHAIN_SOLVING
+            case 73: // MSG_CHAIN_SOLVED
+            case 74: // MSG_CHAIN_END
+            case 75: // MSG_CHAIN_NEGATED
+            case 76: // MSG_CHAIN_DISABLED
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    private void performRestart() {
+        isRestarting = false;
+        isSkipping = true;
+        
+        replayBuffer = ByteBuffer.wrap(originalReplayBytes).order(ByteOrder.LITTLE_ENDIAN);
+        
+        field.clear();
+        setupInitialField();
+        
+        currentStep = 0;
+        skipStep = Math.max(0, currentStep - 1);
+        
+        if (skipStep == 0) {
+            isSkipping = false;
+            pause();
+            notifyField();
+        }
+    }
+
+    private void performSwapField() {
+        field.swapField();
+        notifyField();
     }
 
     private boolean processMessage(int msgType) {
@@ -385,12 +482,16 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 case 70: // MSG_CHAINING
                     if (buf.remaining() < 16) return false;
                     int chCode = buf.getInt();
-                    int chCtrl = buf.get() & 0xFF;
-                    int chLoc = buf.get() & 0xFF;
-                    int chSeq = buf.get() & 0xFF;
-                    int chCount = buf.get() & 0xFF;
-                    skipBytes(7);
-                    onChaining(chCode, chCtrl, chLoc, chSeq, chCount);
+                    int chPcc = buf.get() & 0xFF;
+                    int chPcl = buf.get() & 0xFF;
+                    int chPcs = buf.get() & 0xFF;
+                    int chSubs = buf.get() & 0xFF;
+                    int chCc = buf.get() & 0xFF;
+                    int chCl = buf.get() & 0xFF;
+                    int chCs = buf.get() & 0xFF;
+                    int chDesc = buf.getInt();
+                    int chCt = buf.get() & 0xFF;
+                    onChaining(chCode, chPcc, chPcl, chPcs, chSubs, chCc, chCl, chCs, chDesc);
                     break;
                 case 71: skipBytes(1); onChained(0); break;
                 case 72: skipBytes(1); onChainSolving(0); break;
@@ -644,6 +745,31 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         }).start();
     }
 
+    public void undo() {
+        if (skipStep > 0 || currentStep == 0) {
+            return;
+        }
+        isRestarting = true;
+        resume();
+    }
+
+    public void swapField() {
+        if (isPaused) {
+            performSwapField();
+        } else {
+            isSwapping = true;
+        }
+    }
+
+    public void restart() {
+        isRestarting = true;
+        resume();
+    }
+
+    public int getCurrentStep() { return currentStep; }
+    public int getTotalSteps() { return totalSteps; }
+    public boolean isSkipping() { return isSkipping; }
+
     // === MessageHandler (for any forwarded messages) ===
 
     @Override public void onRetry() {}
@@ -744,8 +870,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onSpSummoned() { notifyField(); }
     @Override public void onFlipSummoning(int code, int ctrl, int loc, int seq) { soundManager.playSoundEffect(SoundManager.SFX.FLIP); }
     @Override public void onFlipSummoned() { notifyField(); }
-    @Override public void onChaining(int code, int ctrl, int loc, int seq, int chainCount) { soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE); }
-    @Override public void onChained(int code) { notifyField(); }
+
+    @Override
+    public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
+        soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
+    }
+
+    @Override public void onChained(int chainCount) { notifyField(); }
     @Override public void onChainSolving(int chainCount) {}
     @Override public void onChainSolved(int chainCount) { notifyField(); }
     @Override public void onChainEnd() { notifyField(); }

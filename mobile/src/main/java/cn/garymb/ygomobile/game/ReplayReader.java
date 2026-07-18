@@ -175,11 +175,13 @@ public class ReplayReader {
         replay.params.drawCount = buf.getInt();
         replay.params.duelFlag = buf.getInt();
 
-        boolean isTag1 = replay.isTag;
-        boolean isTag2 = (replay.params.duelFlag & 0x2000) != 0;
-        if (isTag1 != isTag2) {
-            Log.e(TAG, "Tag mode mismatch");
-            return false;
+        // 使用 header flag 作为主要的 tag 判断依据，duelFlag 仅作为参考
+        // 移除严格的一致性检查，避免误判合法的 tag 录像
+        boolean duelFlagTag = (replay.params.duelFlag & 0x2000) != 0;
+        if (replay.isTag && !duelFlagTag) {
+            Log.w(TAG, "Header indicates tag mode but duelFlag does not, trusting header");
+        } else if (!replay.isTag && duelFlagTag) {
+            Log.w(TAG, "DuelFlag indicates tag mode but header does not, trusting header");
         }
 
         if (replay.isSingleMode) {
@@ -284,5 +286,66 @@ public class ReplayReader {
             }
         }
         return names;
+    }
+
+    public static boolean deleteReplay(String replayPath) {
+        File file = new File(replayPath);
+        if (!file.exists()) return false;
+        String name = file.getName();
+        if (name.contains("/") || name.contains("\\")) return false;
+        return file.delete();
+    }
+
+    public static boolean renameReplay(String oldPath, String newName) {
+        File oldFile = new File(oldPath);
+        if (!oldFile.exists()) return false;
+        String oldName = oldFile.getName();
+        if (oldName.contains("/") || oldName.contains("\\") || 
+            newName.contains("/") || newName.contains("\\")) {
+            return false;
+        }
+        if (!newName.endsWith(".yrp")) {
+            newName = newName + ".yrp";
+        }
+        File parentDir = oldFile.getParentFile();
+        File newFile = new File(parentDir, newName);
+        return oldFile.renameTo(newFile);
+    }
+
+    public static boolean saveDeck(ReplayData replayData, int deckIndex, String outputPath) {
+        if (replayData == null || replayData.decks == null) return false;
+        if (deckIndex < 0 || deckIndex >= replayData.decks.size()) return false;
+        
+        DeckInfo deck = replayData.decks.get(deckIndex);
+        StringBuilder sb = new StringBuilder();
+        sb.append("#created by YGOMobile\n");
+        sb.append("#main\n");
+        for (int i = deck.main.size() - 1; i >= 0; i--) {
+            sb.append(deck.main.get(i)).append("\n");
+        }
+        sb.append("#extra\n");
+        for (int i = deck.extra.size() - 1; i >= 0; i--) {
+            sb.append(deck.extra.get(i)).append("\n");
+        }
+        sb.append("!side\n");
+        
+        try (java.io.FileWriter writer = new java.io.FileWriter(outputPath)) {
+            writer.write(sb.toString());
+            return true;
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save deck", e);
+            return false;
+        }
+    }
+
+    public static int getPlayerCount(ReplayData replayData) {
+        if (replayData == null) return 0;
+        return replayData.isTag ? 4 : 2;
+    }
+
+    public static String getPlayerName(ReplayData replayData, int index) {
+        if (replayData == null || replayData.playerNames == null) return "";
+        if (index < 0 || index >= replayData.playerNames.size()) return "";
+        return replayData.playerNames.get(index);
     }
 }

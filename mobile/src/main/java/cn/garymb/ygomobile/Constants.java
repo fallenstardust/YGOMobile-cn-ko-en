@@ -167,7 +167,7 @@ public interface Constants {
     int CARD_RESULT_GRAVITY = Gravity.LEFT;
     int CARD_SEARCH_GRAVITY = Gravity.RIGHT;
 
-    int DIALOG_POPUP_WIDTH_DP = 560;
+    int DIALOG_POPUP_WIDTH_DP = 480;
     int DIALOG_POPUP_HEIGHT_DP = 320;
 
     int DEFAULT_CARD_COUNT = 500;

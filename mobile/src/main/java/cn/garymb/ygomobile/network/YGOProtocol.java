@@ -51,6 +51,16 @@ public interface YGOProtocol {
     int ERRMSG_SIDEERROR = 0x3;
     int ERRMSG_VERERROR = 0x4;
 
+    int DECKERROR_LFLIST      = 0x1;
+    int DECKERROR_OCGONLY     = 0x2;
+    int DECKERROR_TCGONLY     = 0x3;
+    int DECKERROR_UNKNOWNCARD = 0x4;
+    int DECKERROR_CARDCOUNT   = 0x5;
+    int DECKERROR_MAINCOUNT   = 0x6;
+    int DECKERROR_EXTRACOUNT  = 0x7;
+    int DECKERROR_SIDECOUNT   = 0x8;
+    int DECKERROR_NOTAVAIL    = 0x9;
+
     int MODE_SINGLE = 0x0;
     int MODE_MATCH = 0x1;
     int MODE_TAG = 0x2;

@@ -55,6 +55,20 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         void onTimeLimitUpdate(int player, int leftTime);
 
         void onChainAnimation(int code, int controler, int location, int sequence);
+
+        void onPlayerEnter(String name, int pos);
+
+        void onPlayerChange(int status);
+
+        void onWatchChange(int watchCount);
+
+        void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                        int noCheckDeck, int noShuffleDeck,
+                        int startLp, int startHand, int drawCount, int timeLimit);
+
+        void onTypeChange(int type);
+
+        void onDeckError(int errorType, int cardCode);
     }
 
     private GameState state = GameState.IDLE;
@@ -74,6 +88,25 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     private boolean isHost = false;
     private boolean isBotMode = false;
     private ReplayEngine replayEngine;
+    private int gameMode = 0;
+    private int gameRule = 0;
+    private int gameLflist = 0;
+    private int gameStartLp = 8000;
+    private int gameStartHand = 5;
+    private int gameDrawCount = 1;
+    private int gameTimeLimit = 0;
+    private int gameNoCheckDeck = 0;
+    private int gameNoShuffleDeck = 0;
+
+    public int getGameMode() { return gameMode; }
+    public int getGameRule() { return gameRule; }
+    public int getGameLflist() { return gameLflist; }
+    public int getGameStartLp() { return gameStartLp; }
+    public int getGameStartHand() { return gameStartHand; }
+    public int getGameDrawCount() { return gameDrawCount; }
+    public int getGameTimeLimit() { return gameTimeLimit; }
+    public int getGameNoCheckDeck() { return gameNoCheckDeck; }
+    public int getGameNoShuffleDeck() { return gameNoShuffleDeck; }
 
     public ReplayEngine getReplayEngine() {
         return replayEngine;
@@ -230,6 +263,28 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                     false, false,
                     8000, 5, 1, 0,
                     "Local Game", "");
+        }, "LocalServer").start();
+    }
+
+    public void startLocalServerWithSettings(int lflist, int rule, int mode, int duelRule,
+                                              boolean noCheckDeck, boolean noShuffleDeck,
+                                              int startLp, int startHand, int drawCount, int timeLimit,
+                                              String roomName, String password) {
+        Log.i(TAG, "Starting local server with settings: " + roomName);
+        setState(GameState.CONNECTING);
+        this.isHost = true;
+        this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+        new Thread(() -> {
+            boolean connected = client.connect("127.0.0.1", 7911);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(lflist, rule, mode, duelRule,
+                    noCheckDeck, noShuffleDeck,
+                    startLp, startHand, drawCount, timeLimit,
+                    roomName, password);
         }, "LocalServer").start();
     }
 
@@ -437,15 +492,29 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onPlayerEnter(String name, int pos) {
         Log.i(TAG, "Player entered: " + name + " at pos " + pos);
-        if (pos < 2) {
+        if (pos < playerInfos.length) {
             playerInfos[pos].name = name;
         }
         soundManager.playSoundEffect(SoundManager.SFX.PLAYER_ENTER);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerEnter(name, pos);
+        });
     }
 
     @Override
     public void onPlayerChange(int status) {
         Log.i(TAG, "Player change: " + String.format("0x%02X", status));
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerChange(status);
+        });
+    }
+
+    @Override
+    public void onWatchChange(int watchCount) {
+        Log.i(TAG, "Watch count changed: " + watchCount);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onWatchChange(watchCount);
+        });
     }
 
     @Override
@@ -515,9 +584,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             case YGOProtocol.ERRMSG_JOINERROR:
                 errorMsg = "无法加入房间";
                 break;
-            case YGOProtocol.ERRMSG_DECKERROR:
-                errorMsg = "卡组验证错误: code=" + code;
-                break;
+            case YGOProtocol.ERRMSG_DECKERROR: {
+                int errorType = (code >> 28) & 0xF;
+                int cardCode = code & 0x0FFFFFFF;
+                mainHandler.post(() -> {
+                    if (listener != null) listener.onDeckError(errorType, cardCode);
+                });
+                return;
+            }
             case YGOProtocol.ERRMSG_SIDEERROR:
                 errorMsg = "副卡组错误";
                 break;
@@ -529,11 +603,18 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 break;
         }
         Log.e(TAG, "Server error: " + errorMsg);
+        final String finalMsg = errorMsg;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage(finalMsg);
+        });
     }
 
     @Override
     public void onTypeChange(int type) {
         Log.i(TAG, "Type changed to: " + type);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onTypeChange(type);
+        });
         setState(GameState.LOBBY);
     }
 
@@ -546,6 +627,20 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         playerInfos[0].lp = startLp;
         playerInfos[1].lp = startLp;
         this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+        this.gameMode = mode;
+        this.gameRule = rule;
+        this.gameLflist = lflist;
+        this.gameStartLp = startLp;
+        this.gameStartHand = startHand;
+        this.gameDrawCount = drawCount;
+        this.gameTimeLimit = timeLimit;
+        this.gameNoCheckDeck = noCheckDeck;
+        this.gameNoShuffleDeck = noShuffleDeck;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onJoinGame(lflist, rule, mode, duelRule,
+                    noCheckDeck, noShuffleDeck,
+                    startLp, startHand, drawCount, timeLimit);
+        });
         setState(GameState.LOBBY);
     }
 
@@ -955,10 +1050,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onChaining(int code, int ctrl, int loc, int seq, int chainCount) {
+    public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
         soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
         mainHandler.post(() -> {
-            if (listener != null) listener.onChainAnimation(code, ctrl, loc, seq);
+            if (listener != null) listener.onChainAnimation(code, cc, cl, cs);
         });
     }
 
@@ -1100,7 +1195,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onAddCounter(int type, int ctrl, int loc, int seq, int count) {
         GameField.ClientCard card = field.getCard(ctrl, loc, seq);
         if (card != null) {
-            card.counters.add(new int[]{type, count});
+            card.counters.put(type, count);
         }
         soundManager.playSoundEffect(SoundManager.SFX.COUNTER_ADD);
         mainHandler.post(() -> {
@@ -1112,7 +1207,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onRemoveCounter(int type, int ctrl, int loc, int seq, int count) {
         GameField.ClientCard card = field.getCard(ctrl, loc, seq);
         if (card != null) {
-            card.counters.removeIf(c -> c[0] == type);
+            card.counters.remove(type);
         }
         soundManager.playSoundEffect(SoundManager.SFX.COUNTER_REMOVE);
         mainHandler.post(() -> {
@@ -1254,7 +1349,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         for (int i = 0; i < count && data.remaining() >= 4; i++) {
             int flag = data.getInt();
             GameField.ClientCard card = new GameField.ClientCard();
-            parseCardQuery(card, flag, data);
+            if (flag != 0) {
+                int flagCopy = flag;
+                ByteBuffer subBuf = createSubBufferForQuery(flag, data);
+                if (subBuf != null) card.updateQuery(subBuf);
+            }
             while (list.size() <= i) list.add(null);
             list.set(i, card);
             if (card != null) {
@@ -1274,28 +1373,51 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             card = new GameField.ClientCard();
             field.addCard(player, location, sequence, card);
         }
-        parseCardQuery(card, flag, data);
+        if (flag != 0) {
+            ByteBuffer subBuf = createSubBufferForQuery(flag, data);
+            if (subBuf != null) card.updateQuery(subBuf);
+        }
     }
 
-    private void parseCardQuery(GameField.ClientCard card, int flag, ByteBuffer data) {
-        if ((flag & 0x01) != 0 && data.remaining() >= 4) card.code = data.getInt();
-        if ((flag & 0x02) != 0 && data.remaining() >= 4) card.position = data.getInt();
-        if ((flag & 0x04) != 0 && data.remaining() >= 4) card.alias = data.getInt();
-        if ((flag & 0x08) != 0 && data.remaining() >= 4) card.type = data.getInt();
-        if ((flag & 0x10) != 0 && data.remaining() >= 4) card.level = data.getInt();
-        if ((flag & 0x20) != 0 && data.remaining() >= 4) card.rank = data.getInt();
-        if ((flag & 0x40) != 0 && data.remaining() >= 4) card.attribute = data.getInt();
-        if ((flag & 0x80) != 0 && data.remaining() >= 4) card.race = data.getInt();
-        if ((flag & 0x100) != 0 && data.remaining() >= 4) card.attack = data.getInt();
-        if ((flag & 0x200) != 0 && data.remaining() >= 4) card.defense = data.getInt();
-        if ((flag & 0x400) != 0 && data.remaining() >= 4) card.baseAttack = data.getInt();
-        if ((flag & 0x800) != 0 && data.remaining() >= 4) card.baseDefense = data.getInt();
-        if ((flag & 0x1000) != 0 && data.remaining() >= 4) card.reason = data.getInt();
-        if ((flag & 0x40000) != 0 && data.remaining() >= 4) card.owner = data.getInt();
-        if ((flag & 0x80000) != 0 && data.remaining() >= 4) card.isDisabled = data.getInt() != 0;
-        if ((flag & 0x100000) != 0 && data.remaining() >= 4) card.isPublic = data.getInt() != 0;
-        if ((flag & 0x200000) != 0 && data.remaining() >= 4) card.lScale = data.getInt();
-        if ((flag & 0x400000) != 0 && data.remaining() >= 4) card.rScale = data.getInt();
+    private ByteBuffer createSubBufferForQuery(int flag, ByteBuffer data) {
+        int startPos = data.position();
+        int bytesNeeded = estimateQueryBytes(flag);
+        if (data.remaining() < bytesNeeded) return null;
+        byte[] buf = new byte[bytesNeeded + 4];
+        buf[0] = (byte) (flag & 0xFF);
+        buf[1] = (byte) ((flag >> 8) & 0xFF);
+        buf[2] = (byte) ((flag >> 16) & 0xFF);
+        buf[3] = (byte) ((flag >> 24) & 0xFF);
+        data.get(buf, 4, bytesNeeded);
+        ByteBuffer sub = ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN);
+        sub.getInt();
+        return sub;
+    }
+
+    private int estimateQueryBytes(int flag) {
+        int bytes = 0;
+        if ((flag & GameField.QUERY_CODE) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_POSITION) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_ALIAS) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_TYPE) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_LEVEL) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_RANK) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_ATTRIBUTE) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_RACE) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_ATTACK) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_DEFENSE) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_BASE_ATTACK) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_BASE_DEFENSE) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_REASON) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_REASON_CARD) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_EQUIP_CARD) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_OWNER) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_STATUS) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_IS_PUBLIC) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_LSCALE) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_RSCALE) != 0) bytes += 4;
+        if ((flag & GameField.QUERY_LINK) != 0) bytes += 8;
+        return bytes;
     }
 
     private void parseBattleCmd(ByteBuffer data) {

@@ -64,8 +64,8 @@ public class GameMessageParser {
         void onSpSummoned();
         void onFlipSummoning(int code, int controler, int location, int sequence);
         void onFlipSummoned();
-        void onChaining(int code, int controler, int location, int sequence, int chainCount);
-        void onChained(int code);
+        void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc);
+        void onChained(int chainCount);
         void onChainSolving(int chainCount);
         void onChainSolved(int chainCount);
         void onChainEnd();
@@ -326,15 +326,21 @@ public class GameMessageParser {
                 break;
             case Chaining: {
                 int code = buf.getInt();
-                int ctrl = buf.get() & 0xFF;
-                int loc = buf.get() & 0xFF;
-                int seq = buf.get() & 0xFF;
-                int chainCount = buf.get() & 0xFF;
-                handler.onChaining(code, ctrl, loc, seq, chainCount);
+                int pcc = buf.get() & 0xFF;
+                int pcl = buf.get() & 0xFF;
+                int pcs = buf.get() & 0xFF;
+                int subs = buf.get() & 0xFF;
+                int cc = buf.get() & 0xFF;
+                int cl = buf.get() & 0xFF;
+                int cs = buf.get() & 0xFF;
+                int desc = buf.getInt();
+                // ct is read but not used in C++, so we skip it
+                int ct = buf.get() & 0xFF;
+                handler.onChaining(code, pcc, pcl, pcs, subs, cc, cl, cs, desc);
                 break;
             }
             case Chained:
-                handler.onChained(buf.getInt());
+                handler.onChained(buf.get() & 0xFF);
                 break;
             case ChainSolving:
                 handler.onChainSolving(buf.get() & 0xFF);

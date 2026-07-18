@@ -5,7 +5,9 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -21,6 +23,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -29,6 +32,7 @@ public class SettingsDialog {
 
     private Context context;
     private PopupWindow popupWindow;
+    private DraggablePopupHelper draggableHelper;
 
     public interface OnSettingsSaveListener {
         void onSettingsSaved();
@@ -269,7 +273,18 @@ public class SettingsDialog {
         popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
+        popupWindow.setFocusable(false);
+        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        popupWindow.setTouchInterceptor((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+                return true;
+            }
+            return false;
+        });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+
+        draggableHelper = new DraggablePopupHelper(context, "settings_dialog");
+        draggableHelper.setupDraggablePopup(popupWindow, rootLayout);
 
         btnCancel.setOnClickListener(v -> {
             appsSettings.saveIntSettings("chkMAutoPos", chkMAutoPos.isChecked() ? 1 : 0);
@@ -298,7 +313,7 @@ public class SettingsDialog {
         });
 
         anchorView.setVisibility(View.GONE);
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
+        draggableHelper.showPopup(popupWindow, anchorView);
     }
 
     public void dismiss() {

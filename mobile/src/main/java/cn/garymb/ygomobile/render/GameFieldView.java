@@ -5,10 +5,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -21,14 +22,19 @@ import java.util.List;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import ocgcore.enums.CardLocation;
-import ocgcore.enums.CardPosition;
 
 public class GameFieldView extends View {
     private static final String TAG = "GameFieldView";
 
     private static final float FIELD_ASPECT_RATIO = 16f / 9f;
-    private static final int ZONE_ROWS = 7;
+    private static final int ZONE_ROWS = 8;
     private static final int ZONE_COLS = 8;
+
+    private static final float FIELD_PERSPECTIVE_ROT_X = 25f;
+    private static final float HAND_CARD_FAN_ANGLE = 3f;
+    private static final float HAND_CARD_OVERLAP_RATIO = 0.65f;
+    private static final float PILE_OFFSET_Z = 0.8f;
+    private static final float CARD_ELEVATION = 4f;
 
     private GameField field;
     private ImageLoader imageLoader;
@@ -47,6 +53,9 @@ public class GameFieldView extends View {
     private float cardWidth, cardHeight;
     private float offsetX, offsetY;
 
+    private float fieldCenterX, fieldCenterY;
+    private float fieldTop, fieldBottom, fieldLeft, fieldRight;
+
     private int selectedPlayer = -1;
     private int selectedLocation = -1;
     private int selectedSequence = -1;
@@ -62,11 +71,19 @@ public class GameFieldView extends View {
 
     private OnCardClickListener cardClickListener;
 
+    private SciFiRenderer sciFiRenderer;
+    private long animTimeMs = 0;
+
     private static class ChainLine {
         float x1, y1, x2, y2;
         int color;
+
         ChainLine(float x1, float y1, float x2, float y2, int color) {
-            this.x1 = x1; this.y1 = y1; this.x2 = x2; this.y2 = y2; this.color = color;
+            this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+            this.color = color;
         }
     }
 
@@ -81,7 +98,9 @@ public class GameFieldView extends View {
 
     public interface OnCardClickListener {
         void onCardClick(int player, int location, int sequence);
+
         void onZoneClick(int player, int location, int sequence);
+
         void onFieldLongPress(int player, int location, int sequence);
     }
 
@@ -96,10 +115,11 @@ public class GameFieldView extends View {
     }
 
     private void init() {
+        sciFiRenderer = new SciFiRenderer();
+
         textPaint.setColor(Color.WHITE);
         textPaint.setTypeface(Typeface.DEFAULT_BOLD);
         textPaint.setShadowLayer(2, 1, 1, Color.BLACK);
-        setLayerType(LAYER_TYPE_SOFTWARE, null);
 
         selectedPaint.setColor(Color.YELLOW);
         selectedPaint.setStyle(Paint.Style.STROKE);
@@ -125,6 +145,8 @@ public class GameFieldView extends View {
         lpPaint.setTextSize(20);
         lpPaint.setTypeface(Typeface.DEFAULT_BOLD);
         lpPaint.setShadowLayer(3, 1, 1, Color.BLACK);
+
+        setLayerType(LAYER_TYPE_SOFTWARE, null);
     }
 
     public void setField(GameField field) {
@@ -214,8 +236,17 @@ public class GameFieldView extends View {
 
         zoneWidth = fieldWidth / ZONE_COLS;
         zoneHeight = fieldHeight / ZONE_ROWS;
-        cardWidth = zoneWidth * 0.85f;
+        cardWidth = zoneWidth * 0.82f;
         cardHeight = cardWidth * 1.457f;
+
+        fieldCenterX = fieldWidth / 2f;
+        fieldCenterY = fieldHeight / 2f;
+
+        float fieldMargin = fieldHeight * 0.12f;
+        fieldTop = fieldMargin;
+        fieldBottom = fieldHeight - fieldMargin;
+        fieldLeft = fieldWidth * 0.05f;
+        fieldRight = fieldWidth * 0.95f;
     }
 
     @Override
@@ -223,169 +254,240 @@ public class GameFieldView extends View {
         super.onDraw(canvas);
         if (field == null) return;
 
+        animTimeMs = System.currentTimeMillis();
+
         canvas.save();
         canvas.translate(offsetX, offsetY);
 
-        drawFieldBackground(canvas);
-        drawFieldHighlight(canvas);
-        drawZones(canvas, 1, true);
-        drawZones(canvas, 0, false);
-        drawHandCards(canvas, 1, true);
-        drawHandCards(canvas, 0, false);
-        drawOverlayMaterials(canvas);
-        drawExtraInfo(canvas);
-        drawChainLines(canvas);
-        drawSelection(canvas);
-        drawCmdHighlights(canvas);
+        drawStarfieldBackground(canvas);
+        drawFieldWithPerspective(canvas);
 
         canvas.restore();
     }
 
-    private void drawFieldBackground(Canvas canvas) {
+    private void drawStarfieldBackground(Canvas canvas) {
+        sciFiRenderer.drawStarfieldBackground(canvas, fieldWidth, fieldHeight, animTimeMs);
+    }
+
+    private void drawFieldWithPerspective(Canvas canvas) {
+        canvas.save();
+
+        Matrix perspectiveMatrix = PerspectiveHelper.createPerspectiveMatrix(
+                fieldCenterX, fieldCenterY, FIELD_PERSPECTIVE_ROT_X, 0, -80);
+        canvas.concat(perspectiveMatrix);
+
+        drawFieldBoard(canvas);
+
+        drawFieldZone(canvas, 1, true);
+        drawFieldZone(canvas, 0, false);
+
+        drawPileZone3D(canvas, 0, false);
+        drawPileZone3D(canvas, 1, true);
+
+        canvas.restore();
+
+        drawHandCards3D(canvas, 1, true);
+        drawHandCards3D(canvas, 0, false);
+
+        drawChainLines(canvas);
+        drawSelection(canvas);
+        drawCmdHighlights(canvas);
+    }
+
+    private void drawFieldBoard(Canvas canvas) {
+        Paint boardPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        boardPaint.setColor(0x40002040);
+        boardPaint.setStyle(Paint.Style.FILL);
+
+        RectF boardRect = new RectF(fieldLeft, fieldTop, fieldRight, fieldBottom);
+        canvas.drawRoundRect(boardRect, 8, 8, boardPaint);
+
         Bitmap fieldBg = TextureLoader.get().getFieldTexture(false);
         if (fieldBg != null) {
-            Rect src = new Rect(0, 0, fieldBg.getWidth(), fieldBg.getHeight());
-            RectF dst = new RectF(0, 0, fieldWidth, fieldHeight);
-            canvas.drawBitmap(fieldBg, src, dst, paint);
-        } else {
-            paint.setColor(Color.argb(200, 0, 60, 0));
-            canvas.drawRect(0, 0, fieldWidth, fieldHeight, paint);
+            Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bgPaint.setAlpha(120);
+            canvas.drawBitmap(fieldBg, null, boardRect, bgPaint);
         }
+
+        sciFiRenderer.drawFieldGrid(canvas, fieldLeft, fieldTop, fieldRight, fieldBottom,
+                7, 6, animTimeMs);
+
+        Paint borderGlow = new Paint(Paint.ANTI_ALIAS_FLAG);
+        borderGlow.setStyle(Paint.Style.STROKE);
+        borderGlow.setStrokeWidth(2f);
+        borderGlow.setColor(0xFF00E5FF);
+        borderGlow.setShadowLayer(8, 0, 0, 0xFF00E5FF);
+        canvas.drawRoundRect(boardRect, 8, 8, borderGlow);
+
+        Paint dividerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        dividerPaint.setStyle(Paint.Style.STROKE);
+        dividerPaint.setStrokeWidth(1f);
+        dividerPaint.setColor(0x6000E5FF);
+        canvas.drawLine(fieldLeft, fieldCenterY, fieldRight, fieldCenterY, dividerPaint);
     }
 
-    private void drawFieldHighlight(Canvas canvas) {
-        if (highlightFieldMask == 0) return;
-        int mask = highlightFieldMask;
+    private void drawFieldZone(Canvas canvas, int player, boolean flipped) {
+        float halfFieldH = (fieldBottom - fieldTop) / 2f;
+        float baseY = flipped ? fieldTop : fieldCenterY;
 
-        for (int i = 0; i < 7; i++) {
-            if ((mask & (1 << i)) != 0) {
-                RectF r = getZoneRect(0, 0x04, i);
-                if (r != null) canvas.drawRect(r, highlightPaint);
-            }
-        }
-        for (int i = 0; i < 6; i++) {
-            if ((mask & (1 << (8 + i))) != 0) {
-                RectF r = getZoneRect(0, 0x08, i);
-                if (r != null) canvas.drawRect(r, highlightPaint);
-            }
-        }
-        if ((mask & (1 << 14)) != 0) {
-            RectF r = getZoneRect(0, 0x08, 6);
-            if (r != null) canvas.drawRect(r, highlightPaint);
-        }
-        if ((mask & (1 << 15)) != 0) {
-            RectF r = getZoneRect(0, 0x08, 7);
-            if (r != null) canvas.drawRect(r, highlightPaint);
-        }
+        float monsterRowY = flipped ? baseY + halfFieldH * 0.35f : baseY + halfFieldH * 0.35f;
+        float spellRowY = flipped ? baseY + halfFieldH * 0.05f : baseY + halfFieldH * 0.65f;
 
-        for (int i = 0; i < 7; i++) {
-            if ((mask & (1 << (16 + i))) != 0) {
-                RectF r = getZoneRect(1, 0x04, i);
-                if (r != null) canvas.drawRect(r, highlightPaint);
-            }
-        }
-        for (int i = 0; i < 6; i++) {
-            if ((mask & (1 << (24 + i))) != 0) {
-                RectF r = getZoneRect(1, 0x08, i);
-                if (r != null) canvas.drawRect(r, highlightPaint);
-            }
-        }
-        if ((mask & (1 << 30)) != 0) {
-            RectF r = getZoneRect(1, 0x08, 6);
-            if (r != null) canvas.drawRect(r, highlightPaint);
-        }
-        if ((mask & (1 << 31)) != 0) {
-            RectF r = getZoneRect(1, 0x08, 7);
-            if (r != null) canvas.drawRect(r, highlightPaint);
-        }
+        drawMonsterZoneRow(canvas, player, monsterRowY, flipped);
+        drawSpellZoneRow(canvas, player, spellRowY, flipped);
     }
 
-    private RectF getZoneRect(int player, int location, int sequence) {
-        boolean flipped = (player == 1);
-        float baseY = flipped ? 0 : fieldHeight * 0.5f;
-        float rowH = fieldHeight * 0.5f / 3f;
-
-        if (location == 0x04 || location == 0x08) {
-            int maxZones = (location == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
-            float totalWidth = maxZones * zoneWidth;
-            float sx = (fieldWidth - totalWidth) / 2f;
-            float rowY = (location == 0x04) ? baseY + rowH : baseY;
-            float x = sx + sequence * zoneWidth + (zoneWidth - cardWidth) / 2f;
-            return new RectF(x, rowY, x + cardWidth, rowY + cardHeight);
-        }
-        return null;
-    }
-
-    private void drawZones(Canvas canvas, int player, boolean flipped) {
-        float baseY = flipped ? 0 : fieldHeight * 0.5f;
-        float rowH = fieldHeight * 0.5f / 3;
-
-        drawZoneRow(canvas, player, CardLocation.MonsterZone.value(),
-                field.getCardCount(player, CardLocation.MonsterZone.value()),
-                0, baseY + rowH, flipped);
-        drawZoneRow(canvas, player, CardLocation.SpellZone.value(),
-                field.getCardCount(player, CardLocation.SpellZone.value()),
-                0, baseY, flipped);
-
-        drawPileZone(canvas, player, CardLocation.Deck.value(),
-                flipped ? fieldWidth - zoneWidth * 0.8f : zoneWidth * 0.1f,
-                baseY + rowH, flipped);
-        drawPileZone(canvas, player, CardLocation.Extra.value(),
-                flipped ? fieldWidth - zoneWidth * 1.8f : zoneWidth * 1.1f,
-                baseY + rowH, flipped);
-        drawPileZone(canvas, player, CardLocation.Grave.value(),
-                flipped ? zoneWidth * 0.1f : fieldWidth - zoneWidth * 0.8f,
-                baseY, flipped);
-        drawPileZone(canvas, player, CardLocation.Removed.value(),
-                flipped ? zoneWidth * 1.1f : fieldWidth - zoneWidth * 1.8f,
-                baseY, flipped);
-    }
-
-    private void drawZoneRow(Canvas canvas, int player, int location, int count,
-                              float startX, float y, boolean flipped) {
-        int maxZones = (location == CardLocation.MonsterZone.value())
-                ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
-        float totalWidth = maxZones * zoneWidth;
+    private void drawMonsterZoneRow(Canvas canvas, int player, float y, boolean flipped) {
+        int maxZones = 5;
+        float totalWidth = maxZones * zoneWidth * 1.05f;
         float sx = (fieldWidth - totalWidth) / 2f;
 
         for (int i = 0; i < maxZones; i++) {
-            float x = sx + i * zoneWidth;
+            float x = sx + i * zoneWidth * 1.05f;
             float cx = x + (zoneWidth - cardWidth) / 2f;
-            float cy = y;
 
-            paint.setColor(Color.argb(40, 255, 255, 255));
-            paint.setStyle(Paint.Style.STROKE);
-            canvas.drawRect(cx, cy, cx + cardWidth, cy + cardHeight, paint);
+            drawZoneSlot(canvas, cx, y, cardWidth, cardHeight);
 
-            GameField.ClientCard card = field.getCard(player, location, i);
+            GameField.ClientCard card = field.getCard(player, CardLocation.MonsterZone.value(), i);
             if (card != null) {
-                drawCard(canvas, card, cx, cy, cardWidth, cardHeight, flipped);
+                drawCard3D(canvas, card, cx, y, cardWidth, cardHeight, flipped, CARD_ELEVATION);
+            }
+        }
+
+        float extraZoneW = zoneWidth * 0.9f;
+        float extraZoneH = cardHeight * 0.9f;
+        float extraY = flipped ? y - extraZoneH * 1.2f : y + cardHeight * 1.1f;
+
+        for (int i = 5; i <= 6; i++) {
+            float ex = (i == 5) ? sx - extraZoneW * 0.5f : sx + totalWidth - extraZoneW * 0.5f;
+            drawZoneSlot(canvas, ex, extraY, extraZoneW, extraZoneH);
+
+            GameField.ClientCard card = field.getCard(player, CardLocation.MonsterZone.value(), i);
+            if (card != null) {
+                drawCard3D(canvas, card, ex, extraY, extraZoneW, extraZoneH, flipped, CARD_ELEVATION);
             }
         }
     }
 
-    private void drawPileZone(Canvas canvas, int player, int location,
-                               float x, float y, boolean flipped) {
+    private void drawSpellZoneRow(Canvas canvas, int player, float y, boolean flipped) {
+        int maxZones = 5;
+        float totalWidth = maxZones * zoneWidth * 1.05f;
+        float sx = (fieldWidth - totalWidth) / 2f;
+
+        for (int i = 0; i < maxZones; i++) {
+            float x = sx + i * zoneWidth * 1.05f;
+            float cx = x + (zoneWidth - cardWidth) / 2f;
+
+            drawZoneSlot(canvas, cx, y, cardWidth, cardHeight);
+
+            GameField.ClientCard card = field.getCard(player, CardLocation.SpellZone.value(), i);
+            if (card != null) {
+                drawCard3D(canvas, card, cx, y, cardWidth, cardHeight, flipped, CARD_ELEVATION);
+            }
+        }
+
+        float fieldSpellX = sx - zoneWidth * 1.2f;
+        float pendulumX = sx + totalWidth + zoneWidth * 0.2f;
+        drawZoneSlot(canvas, fieldSpellX, y, cardWidth * 0.9f, cardHeight * 0.9f);
+        drawZoneSlot(canvas, pendulumX, y, cardWidth * 0.9f, cardHeight * 0.9f);
+
+        GameField.ClientCard fsCard = field.getCard(player, CardLocation.SpellZone.value(), 5);
+        if (fsCard != null) {
+            drawCard3D(canvas, fsCard, fieldSpellX, y, cardWidth * 0.9f, cardHeight * 0.9f, flipped, CARD_ELEVATION);
+        }
+    }
+
+    private void drawZoneSlot(Canvas canvas, float x, float y, float w, float h) {
+        Paint slotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        slotPaint.setStyle(Paint.Style.STROKE);
+        slotPaint.setStrokeWidth(1f);
+        float pulse = (float) (0.15 + 0.1 * Math.sin(animTimeMs * 0.002));
+        slotPaint.setColor(Color.argb((int) (pulse * 255), 0, 200, 240));
+        canvas.drawRect(x, y, x + w, y + h, slotPaint);
+
+        Paint innerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        innerPaint.setStyle(Paint.Style.FILL);
+        innerPaint.setColor(0x0800E5FF);
+        canvas.drawRect(x, y, x + w, y + h, innerPaint);
+    }
+
+    private void drawPileZone3D(Canvas canvas, int player, boolean flipped) {
+        float halfFieldH = (fieldBottom - fieldTop) / 2f;
+
+        float deckX, deckY, graveX, graveY, removeX, removeY, extraX, extraY;
+
+        if (!flipped) {
+            deckX = fieldRight - zoneWidth * 1.2f;
+            deckY = fieldCenterY + halfFieldH * 0.35f;
+            extraX = fieldLeft + zoneWidth * 0.1f;
+            extraY = deckY;
+            graveX = fieldRight - zoneWidth * 1.2f;
+            graveY = fieldCenterY + halfFieldH * 0.05f;
+            removeX = fieldRight - zoneWidth * 2.5f;
+            removeY = graveY;
+        } else {
+            deckX = fieldLeft + zoneWidth * 0.2f;
+            deckY = fieldTop + halfFieldH * 0.35f;
+            extraX = fieldRight - zoneWidth * 1.2f;
+            extraY = deckY;
+            graveX = fieldLeft + zoneWidth * 0.2f;
+            graveY = fieldTop + halfFieldH * 0.65f;
+            removeX = fieldLeft + zoneWidth * 1.5f;
+            removeY = graveY;
+        }
+
+        drawCardPile(canvas, player, CardLocation.Deck.value(), deckX, deckY, flipped, 0xFF00AA44);
+        drawCardPile(canvas, player, CardLocation.Extra.value(), extraX, extraY, flipped, 0xFF8800AA);
+        drawCardPile(canvas, player, CardLocation.Grave.value(), graveX, graveY, flipped, 0xFFAA4400);
+        drawCardPile(canvas, player, CardLocation.Removed.value(), removeX, removeY, flipped, 0xFFAA0044);
+    }
+
+    private void drawCardPile(Canvas canvas, int player, int location,
+                              float x, float y, boolean flipped, int indicatorColor) {
         int count = field.getCardCount(player, location);
-        paint.setColor(Color.argb(40, 255, 255, 255));
-        paint.setStyle(Paint.Style.STROKE);
-        canvas.drawRect(x, y, x + cardWidth, y + cardHeight, paint);
+        float pileW = cardWidth * 0.95f;
+        float pileH = cardHeight * 0.95f;
+
+        drawZoneSlot(canvas, x, y, pileW, pileH);
 
         if (count > 0) {
-            Bitmap coverBmp = TextureLoader.get().getCardCover();
-            if (coverBmp != null) {
-                Rect src = new Rect(0, 0, coverBmp.getWidth(), coverBmp.getHeight());
-                RectF dst = new RectF(x, y, x + cardWidth, y + cardHeight);
-                canvas.drawBitmap(coverBmp, src, dst, paint);
+            int maxVisible = Math.min(count, 5);
+            for (int i = 0; i < maxVisible; i++) {
+                float offsetX = i * 0.8f;
+                float offsetY = -i * 0.8f;
+                Bitmap coverBmp = TextureLoader.get().getCardCover();
+                if (coverBmp != null) {
+                    Paint coverPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    coverPaint.setAlpha(200 - i * 20);
+                    sciFiRenderer.drawCardShadow(canvas, x + offsetX, y + offsetY, pileW, pileH);
+                    canvas.drawBitmap(coverBmp, null,
+                            new RectF(x + offsetX, y + offsetY, x + pileW + offsetX, y + pileH + offsetY),
+                            coverPaint);
+                }
             }
-            textPaint.setTextSize(cardWidth * 0.3f);
-            canvas.drawText(String.valueOf(count),
-                    x + cardWidth / 2f - textPaint.measureText(String.valueOf(count)) / 2f,
-                    y + cardHeight / 2f, textPaint);
+
+            sciFiRenderer.drawCountBadge(canvas,
+                    x + pileW / 2f, y + pileH / 2f,
+                    String.valueOf(count), indicatorColor);
         }
+
+        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(0xAA00E5FF);
+        labelPaint.setTextSize(cardWidth * 0.2f);
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+        String label = getPileLabel(location);
+        canvas.drawText(label, x + pileW / 2f, y + pileH + cardWidth * 0.25f, labelPaint);
     }
 
-    private void drawHandCards(Canvas canvas, int player, boolean flipped) {
+    private String getPileLabel(int location) {
+        if (location == CardLocation.Deck.value()) return "DECK";
+        if (location == CardLocation.Grave.value()) return "GRAVE";
+        if (location == CardLocation.Removed.value()) return "BANISH";
+        if (location == CardLocation.Extra.value()) return "EXTRA";
+        return "";
+    }
+
+    private void drawHandCards3D(Canvas canvas, int player, boolean flipped) {
         List<GameField.ClientCard> hand = field.players[player].hand;
         int handCount = 0;
         for (GameField.ClientCard card : hand) {
@@ -393,34 +495,66 @@ public class GameFieldView extends View {
         }
         if (handCount == 0) return;
 
-        float handY = flipped ? -cardHeight * 0.3f : fieldHeight - cardHeight * 0.7f;
-        float totalHandWidth = handCount * cardWidth * 0.7f;
+        float handCardW = cardWidth * 1.1f;
+        float handCardH = cardHeight * 1.1f;
+        float spacing = handCardW * HAND_CARD_OVERLAP_RATIO;
+        float totalHandWidth = handCount * spacing;
+        if (totalHandWidth > fieldWidth * 0.8f) {
+            spacing = (fieldWidth * 0.8f) / handCount;
+            totalHandWidth = fieldWidth * 0.8f;
+        }
         float startX = (fieldWidth - totalHandWidth) / 2f;
+
+        float handY;
+        if (flipped) {
+            handY = fieldTop - handCardH * 0.5f;
+        } else {
+            handY = fieldBottom - handCardH * 0.3f;
+        }
 
         int idx = 0;
         for (int i = 0; i < hand.size(); i++) {
             GameField.ClientCard card = hand.get(i);
             if (card == null) continue;
-            float x = startX + idx * cardWidth * 0.7f;
-            boolean faceUp = card.isPublic || (player == clientSelfType());
-            drawCard(canvas, card, x, handY, cardWidth, cardHeight, flipped);
+
+            float x = startX + idx * spacing;
+            float y = handY;
+
+            float centerOffset = (idx - (handCount - 1) / 2f);
+            float fanAngle = centerOffset * HAND_CARD_FAN_ANGLE;
+            float liftY = -Math.abs(centerOffset) * 1.5f;
+            float elevZ = CARD_ELEVATION + Math.abs(centerOffset) * 0.5f;
+
+            if (card.is_selectable) {
+                liftY -= 8f;
+                elevZ += 4f;
+            }
+
+            canvas.save();
+            float pivotX = x + handCardW / 2f;
+            float pivotY = y + handCardH;
+            canvas.rotate(fanAngle, pivotX, pivotY);
+
+            drawCard3D(canvas, card, x, y + liftY, handCardW, handCardH, flipped, elevZ);
+
+            canvas.restore();
             idx++;
         }
     }
 
-    private int clientSelfType() {
-        return 0;
-    }
-
-    private void drawCard(Canvas canvas, GameField.ClientCard card,
-                           float x, float y, float w, float h, boolean flipped) {
+    private void drawCard3D(Canvas canvas, GameField.ClientCard card,
+                            float x, float y, float w, float h, boolean flipped, float elevation) {
         canvas.save();
+
+        sciFiRenderer.drawCardShadow(canvas, x, y, w, h);
 
         float cx = x + w / 2f;
         float cy = y + h / 2f;
+
         if (flipped) {
             canvas.rotate(180, cx, cy);
         }
+
         boolean isDef = !card.isAttack();
         if (isDef) {
             canvas.rotate(90, cx, cy);
@@ -440,6 +574,9 @@ public class GameFieldView extends View {
                         "../pics/" + card.code + ".jpg", (int) w, (int) h);
                 if (cardBmp != null) {
                     canvas.drawBitmap(cardBmp, null, dst, paint);
+                    int borderColor = sciFiRenderer.getCardBorderColor(card.type, true);
+                    sciFiRenderer.drawCardBevel(canvas, x, y, w, h, borderColor);
+                    drawCardOverlayInfo(canvas, card, x, y, w, h);
                     canvas.restore();
                     return;
                 }
@@ -447,32 +584,83 @@ public class GameFieldView extends View {
         }
 
         if (card.isFaceUp()) {
-            paint.setColor(Color.argb(200, 200, 180, 100));
-            canvas.drawRect(dst, paint);
+            Paint cardBg = new Paint(Paint.ANTI_ALIAS_FLAG);
+            cardBg.setShader(new LinearGradient(x, y, x, y + h,
+                    0xFF2A1A0A, 0xFF1A0A00, Shader.TileMode.CLAMP));
+            canvas.drawRect(dst, cardBg);
             textPaint.setTextSize(w * 0.25f);
             String codeStr = String.valueOf(card.code);
             canvas.drawText(codeStr,
                     x + w / 2f - textPaint.measureText(codeStr) / 2f,
                     y + h / 2f, textPaint);
+            int borderColor = sciFiRenderer.getCardBorderColor(card.type, true);
+            sciFiRenderer.drawCardBevel(canvas, x, y, w, h, borderColor);
         } else {
             Bitmap coverBmp = TextureLoader.get().getCardCover();
             if (coverBmp != null) {
                 canvas.drawBitmap(coverBmp, null, dst, paint);
             } else {
-                paint.setColor(Color.argb(200, 100, 80, 50));
-                canvas.drawRect(dst, paint);
+                Paint coverBg = new Paint(Paint.ANTI_ALIAS_FLAG);
+                coverBg.setShader(new LinearGradient(x, y, x + w, y + h,
+                        0xFF3A2820, 0xFF1A1008, Shader.TileMode.CLAMP));
+                canvas.drawRect(dst, coverBg);
             }
+            sciFiRenderer.drawCardBevel(canvas, x, y, w, h, 0xFF4A3728);
+        }
+
+        drawCardOverlayInfo(canvas, card, x, y, w, h);
+        canvas.restore();
+    }
+
+    private void drawCardOverlayInfo(Canvas canvas, GameField.ClientCard card,
+                                     float x, float y, float w, float h) {
+        if (card.is_selectable) {
+            Paint selGlow = new Paint(Paint.ANTI_ALIAS_FLAG);
+            selGlow.setStyle(Paint.Style.STROKE);
+            selGlow.setStrokeWidth(3f);
+            float pulse = (float) (0.5 + 0.5 * Math.sin(animTimeMs * 0.005));
+            selGlow.setColor(Color.argb((int) (pulse * 255), 255, 255, 0));
+            selGlow.setShadowLayer(6, 0, 0, 0xFFFF0000);
+            canvas.drawRect(x - 2, y - 2, x + w + 2, y + h + 2, selGlow);
         }
 
         if (card.isMonster() && card.isFaceUp()) {
-            textPaint.setTextSize(w * 0.2f);
-            String atkDef = card.attack + "/" + card.defense;
+            textPaint.setTextSize(w * 0.18f);
+            textPaint.setColor(Color.WHITE);
+            String atkDef = card.atkString + "/" + card.defString;
+
+            Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bgPaint.setColor(0x80000000);
+            float textW = textPaint.measureText(atkDef);
+            canvas.drawRect(x + w / 2f - textW / 2f - 2, y + h - w * 0.22f,
+                    x + w / 2f + textW / 2f + 2, y + h, bgPaint);
             canvas.drawText(atkDef,
-                    x + w / 2f - textPaint.measureText(atkDef) / 2f,
-                    y + h - 4, textPaint);
+                    x + w / 2f - textW / 2f,
+                    y + h - 3, textPaint);
         }
 
-        canvas.restore();
+        if (card.overlayCards != null && !card.overlayCards.isEmpty()) {
+            sciFiRenderer.drawCountBadge(canvas,
+                    x + w - w * 0.15f, y + h - h * 0.1f,
+                    "×" + card.overlayCards.size(), 0xCC4444CC);
+        }
+
+        if (card.equipCard != null) {
+            Paint equipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            equipPaint.setColor(0xCCCCFF00);
+            equipPaint.setTextSize(w * 0.25f);
+            canvas.drawText("⚔", x + 2, y + w * 0.25f, equipPaint);
+        }
+
+        if (card.is_showequip || card.is_showtarget || card.is_showchaintarget) {
+            Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            markerPaint.setStyle(Paint.Style.STROKE);
+            markerPaint.setStrokeWidth(2f);
+            markerPaint.setColor(0xFFFF4444);
+            float pulse = (float) (0.5 + 0.5 * Math.sin(animTimeMs * 0.006));
+            markerPaint.setAlpha((int) (pulse * 255));
+            canvas.drawRect(x - 1, y - 1, x + w + 1, y + h + 1, markerPaint);
+        }
     }
 
     private void drawCmdHighlights(Canvas canvas) {
@@ -509,33 +697,6 @@ public class GameFieldView extends View {
         return Color.argb(80, 255, 255, 100);
     }
 
-    private void drawOverlayMaterials(Canvas canvas) {
-        if (field == null) return;
-        for (int p = 0; p < 2; p++) {
-            for (int i = 0; i < GameField.MAX_MONSTER_ZONE; i++) {
-                GameField.ClientCard card = field.getCard(p, 0x04, i);
-                if (card != null && card.overlayCards != null && !card.overlayCards.isEmpty()) {
-                    RectF r = getZoneRect(p, 0x04, i);
-                    if (r != null) {
-                        float ox = r.right - cardWidth * 0.3f;
-                        float oy = r.bottom - cardHeight * 0.15f;
-                        overlayPaint.setColor(Color.argb(200, 80, 80, 200));
-                        overlayPaint.setTextSize(cardWidth * 0.25f);
-                        canvas.drawText("×" + card.overlayCards.size(), ox, oy, overlayPaint);
-                    }
-                }
-                if (card != null && card.equipCard != null) {
-                    RectF r = getZoneRect(p, 0x04, i);
-                    if (r != null) {
-                        overlayPaint.setColor(Color.argb(180, 200, 200, 50));
-                        overlayPaint.setTextSize(cardWidth * 0.2f);
-                        canvas.drawText("⚔", r.left + 2, r.top + cardWidth * 0.2f, overlayPaint);
-                    }
-                }
-            }
-        }
-    }
-
     private void drawChainLines(Canvas canvas) {
         for (ChainLine line : chainLines) {
             chainPaint.setColor(line.color);
@@ -551,47 +712,83 @@ public class GameFieldView extends View {
         }
     }
 
-    private void drawExtraInfo(Canvas canvas) {
-        lpPaint.setTextSize(zoneWidth * 0.4f);
-
-        String lp0 = "LP: " + displayLp0;
-        canvas.drawText(lp0, 10, fieldHeight - 10, lpPaint);
-
-        String lp1 = "LP: " + displayLp1;
-        canvas.drawText(lp1, 10, lpPaint.getTextSize() + 5, lpPaint);
-
-        String turnInfo = "Turn " + field.turnCount;
-        canvas.drawText(turnInfo,
-                fieldWidth - lpPaint.measureText(turnInfo) - 10,
-                fieldHeight / 2f + lpPaint.getTextSize() / 2f, lpPaint);
-    }
-
     private void drawSelection(Canvas canvas) {
         if (selectedPlayer < 0 || selectedLocation < 0 || selectedSequence < 0) return;
 
         RectF cardRect = getCardRect(selectedPlayer, selectedLocation, selectedSequence);
         if (cardRect != null) {
-            canvas.drawRect(cardRect, selectedPaint);
+            Paint selPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            selPaint.setStyle(Paint.Style.STROKE);
+            selPaint.setStrokeWidth(3f);
+            selPaint.setColor(0xFFFFFF00);
+            selPaint.setShadowLayer(8, 0, 0, 0xFFFF0000);
+            canvas.drawRect(cardRect, selPaint);
         }
     }
 
-    private RectF getCardRect(int player, int location, int sequence) {
-        // Simplified - returns approximate card position
+    private RectF getZoneRect(int player, int location, int sequence) {
         boolean flipped = (player == 1);
-        float baseY = flipped ? 0 : fieldHeight * 0.5f;
-        float rowH = fieldHeight * 0.5f / 3f;
+        float halfFieldH = (fieldBottom - fieldTop) / 2f;
+        float baseY = flipped ? fieldTop : fieldCenterY;
 
-        if (location == CardLocation.MonsterZone.value() || location == CardLocation.SpellZone.value()) {
-            int maxZones = (location == CardLocation.MonsterZone.value())
-                    ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
-            float totalWidth = maxZones * zoneWidth;
+        if (location == 0x04) {
+            int maxZones = 5;
+            float totalWidth = maxZones * zoneWidth * 1.05f;
             float sx = (fieldWidth - totalWidth) / 2f;
-            float rowY = (location == CardLocation.MonsterZone.value())
-                    ? baseY + rowH : baseY;
-            float x = sx + sequence * zoneWidth + (zoneWidth - cardWidth) / 2f;
-            return new RectF(x + offsetX, rowY + offsetY, x + cardWidth + offsetX, rowY + cardHeight + offsetY);
+            float rowY = baseY + halfFieldH * 0.35f;
+            float x = sx + sequence * zoneWidth * 1.05f + (zoneWidth - cardWidth) / 2f;
+            return new RectF(x, rowY, x + cardWidth, rowY + cardHeight);
+        }
+        if (location == 0x08) {
+            int maxZones = 5;
+            float totalWidth = maxZones * zoneWidth * 1.05f;
+            float sx = (fieldWidth - totalWidth) / 2f;
+            float rowY = flipped ? baseY + halfFieldH * 0.05f : baseY + halfFieldH * 0.65f;
+            if (sequence < 5) {
+                float x = sx + sequence * zoneWidth * 1.05f + (zoneWidth - cardWidth) / 2f;
+                return new RectF(x, rowY, x + cardWidth, rowY + cardHeight);
+            }
         }
         return null;
+    }
+
+    private RectF getCardRect(int player, int location, int sequence) {
+        RectF r = getZoneRect(player, location, sequence);
+        if (r != null) {
+            r.offset(offsetX, offsetY);
+        }
+        return r;
+    }
+
+    private void drawFieldHighlight(Canvas canvas) {
+        if (highlightFieldMask == 0) return;
+        int mask = highlightFieldMask;
+
+        for (int i = 0; i < 7; i++) {
+            if ((mask & (1 << i)) != 0) {
+                RectF r = getZoneRect(0, 0x04, i);
+                if (r != null) sciFiRenderer.drawZoneHighlight(canvas, r, 0x00FF64, animTimeMs);
+            }
+        }
+        for (int i = 0; i < 6; i++) {
+            if ((mask & (1 << (8 + i))) != 0) {
+                RectF r = getZoneRect(0, 0x08, i);
+                if (r != null) sciFiRenderer.drawZoneHighlight(canvas, r, 0x00FF64, animTimeMs);
+            }
+        }
+
+        for (int i = 0; i < 7; i++) {
+            if ((mask & (1 << (16 + i))) != 0) {
+                RectF r = getZoneRect(1, 0x04, i);
+                if (r != null) sciFiRenderer.drawZoneHighlight(canvas, r, 0x00FF64, animTimeMs);
+            }
+        }
+        for (int i = 0; i < 6; i++) {
+            if ((mask & (1 << (24 + i))) != 0) {
+                RectF r = getZoneRect(1, 0x08, i);
+                if (r != null) sciFiRenderer.drawZoneHighlight(canvas, r, 0x00FF64, animTimeMs);
+            }
+        }
     }
 
     @Override
@@ -628,27 +825,11 @@ public class GameFieldView extends View {
         }
 
         for (int player = 0; player < 2; player++) {
-            boolean flipped = (player == 1);
-            float baseY = flipped ? 0 : fieldHeight * 0.5f;
-            float rowH = fieldHeight * 0.5f / 3f;
-
-            int[] locations = {0x04, 0x08};
-
-            for (int loc : locations) {
+            for (int loc : new int[]{0x04, 0x08}) {
                 int maxZones = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
-                float totalWidth = maxZones * zoneWidth;
-                float sx = (fieldWidth - totalWidth) / 2f;
-
                 for (int i = 0; i < maxZones; i++) {
-                    float cx = sx + i * zoneWidth;
-                    float rowY = (loc == 0x04) ? baseY + rowH : baseY;
-                    if (x >= cx && x <= cx + zoneWidth && y >= rowY && y <= rowY + cardHeight) {
-                        GameField.ClientCard card = field.getCard(player, loc, i);
-                        if (card != null && card.cmdFlag != 0) {
-                            setSelectedCard(player, loc, i);
-                            cardClickListener.onCardClick(player, loc, i);
-                            return;
-                        }
+                    RectF r = getZoneRect(player, loc, i);
+                    if (r != null && r.contains(x, y)) {
                         setSelectedCard(player, loc, i);
                         cardClickListener.onCardClick(player, loc, i);
                         return;
@@ -656,41 +837,33 @@ public class GameFieldView extends View {
                 }
             }
 
-            float handY = flipped ? -cardHeight * 0.3f : fieldHeight - cardHeight * 0.7f;
+            boolean flipped = (player == 1);
             List<GameField.ClientCard> hand = field.players[player].hand;
             int handCount = 0;
             for (GameField.ClientCard card : hand) {
                 if (card != null) handCount++;
             }
             if (handCount > 0) {
-                float totalHandWidth = handCount * cardWidth * 0.7f;
+                float handCardW = cardWidth * 1.1f;
+                float spacing = handCardW * HAND_CARD_OVERLAP_RATIO;
+                float totalHandWidth = handCount * spacing;
+                if (totalHandWidth > fieldWidth * 0.8f) {
+                    spacing = (fieldWidth * 0.8f) / handCount;
+                    totalHandWidth = fieldWidth * 0.8f;
+                }
                 float handStartX = (fieldWidth - totalHandWidth) / 2f;
+                float handY = flipped ? fieldTop - cardHeight * 0.5f : fieldBottom - cardHeight * 0.3f;
+
                 int idx = 0;
                 for (int i = 0; i < hand.size(); i++) {
                     if (hand.get(i) == null) continue;
-                    float hx = handStartX + idx * cardWidth * 0.7f;
-                    if (x >= hx && x <= hx + cardWidth && y >= handY && y <= handY + cardHeight) {
+                    float hx = handStartX + idx * spacing;
+                    if (x >= hx && x <= hx + handCardW && y >= handY && y <= handY + cardHeight * 1.1f) {
                         setSelectedCard(player, 0x02, i);
                         cardClickListener.onCardClick(player, 0x02, i);
                         return;
                     }
                     idx++;
-                }
-            }
-
-            int[] pileLocations = {0x01, 0x40, 0x10, 0x20};
-            float[] pileXs = {
-                    flipped ? fieldWidth - zoneWidth * 0.8f : zoneWidth * 0.1f,
-                    flipped ? fieldWidth - zoneWidth * 1.8f : zoneWidth * 1.1f,
-                    flipped ? zoneWidth * 0.1f : fieldWidth - zoneWidth * 0.8f,
-                    flipped ? zoneWidth * 1.1f : fieldWidth - zoneWidth * 1.8f
-            };
-            float[] pileYs = {baseY + rowH, baseY + rowH, baseY, baseY};
-            for (int p = 0; p < pileLocations.length; p++) {
-                if (x >= pileXs[p] && x <= pileXs[p] + cardWidth
-                        && y >= pileYs[p] && y <= pileYs[p] + cardHeight) {
-                    cardClickListener.onZoneClick(player, pileLocations[p], 0);
-                    return;
                 }
             }
         }

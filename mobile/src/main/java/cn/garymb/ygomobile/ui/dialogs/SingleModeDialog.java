@@ -5,7 +5,9 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -18,13 +20,14 @@ import android.widget.Toast;
 import com.google.android.material.tabs.TabLayout;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.adapter.BotListAdapter;
-import cn.garymb.ygomobile.adapter.PuzzleListAdapter;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -33,6 +36,7 @@ public class SingleModeDialog {
 
     private Context context;
     private PopupWindow popupWindow;
+    private DraggablePopupHelper draggableHelper;
 
     public interface OnSingleModeListener {
         void onStartBotDuel(String botCommand, String deckFile);
@@ -76,8 +80,19 @@ public class SingleModeDialog {
         final int[] currentMode = {0};
         final int[] selectedPosition = {-1};
 
-        final BotListAdapter botAdapter = new BotListAdapter(context, botList);
-        final PuzzleListAdapter puzzleAdapter = new PuzzleListAdapter(context, puzzleList);
+        List<String> botNames = new ArrayList<>();
+        for (BotUtil.BotInfo bot : botList) {
+            botNames.add(bot.toString());
+        }
+        List<String> puzzleNames = new ArrayList<>();
+        for (PuzzleUtil.PuzzleInfo puzzle : puzzleList) {
+            puzzleNames.add(puzzle.toString());
+        }
+
+        final SimpleListAdapter botAdapter = new SimpleListAdapter(context);
+        botAdapter.set(botNames);
+        final SimpleListAdapter puzzleAdapter = new SimpleListAdapter(context);
+        puzzleAdapter.set(puzzleNames);
 
         tabLayoutMode.addTab(tabLayoutMode.newTab().setText("人机模式(双方无禁)"));
         tabLayoutMode.addTab(tabLayoutMode.newTab().setText("残局模式(含教学局)"));
@@ -120,6 +135,7 @@ public class SingleModeDialog {
             btnStartBotDuel.setTextColor(YGOUtil.c(R.color.white));
             if (currentMode[0] == 0) {
                 botAdapter.setSelectedPosition(position);
+                puzzleAdapter.setSelectedPosition(-1);
                 if (position >= 0 && position < botList.size()) {
                     BotUtil.BotInfo bot = botList.get(position);
                     tvBotDesc.setText(bot.description != null ? bot.description : "");
@@ -127,6 +143,7 @@ public class SingleModeDialog {
                 }
             } else {
                 puzzleAdapter.setSelectedPosition(position);
+                botAdapter.setSelectedPosition(-1);
                 if (position >= 0 && position < puzzleList.size()) {
                     PuzzleUtil.PuzzleInfo puzzle = puzzleList.get(position);
                     tvBotDesc.setText(puzzle.description != null ? puzzle.description : "无描述");
@@ -144,6 +161,7 @@ public class SingleModeDialog {
                 if (position == 0) {
                     lvBotList.setAdapter(botAdapter);
                     botAdapter.setSelectedPosition(-1);
+                    puzzleAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText("请选择一个AI查看信息");
                     btnSelectDeck.setVisibility(View.GONE);
                     btnStartBotDuel.setEnabled(false);
@@ -155,6 +173,7 @@ public class SingleModeDialog {
                 } else {
                     lvBotList.setAdapter(puzzleAdapter);
                     puzzleAdapter.setSelectedPosition(-1);
+                    botAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText("选择一个残局开始挑战。");
                     btnSelectDeck.setVisibility(View.GONE);
                     btnStartBotDuel.setEnabled(false);
@@ -180,14 +199,20 @@ public class SingleModeDialog {
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
+        popupWindow.setFocusable(false);
+        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        popupWindow.setTouchInterceptor((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+                return true;
+            }
+            return false;
+        });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
-        btnStartBotDuel.setOnClickListener(v -> {
-            if (selectedPosition[0] < 0) {
-                Toast.makeText(context, "请先选择一个项目", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        draggableHelper = new DraggablePopupHelper(context, "single_mode_dialog");
+        draggableHelper.setupDraggablePopup(popupWindow, customView);
 
+        btnStartBotDuel.setOnClickListener(v -> {
             if (currentMode[0] == 0) {
                 if (selectedPosition[0] >= botList.size()) {
                     Toast.makeText(context, "无效的AI选择", Toast.LENGTH_SHORT).show();
@@ -219,7 +244,7 @@ public class SingleModeDialog {
         btnExitBot.setOnClickListener(v -> popupWindow.dismiss());
 
         anchorView.setVisibility(View.GONE);
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0);
+        draggableHelper.showPopup(popupWindow, anchorView);
     }
 
     private void loadLastDeckInfo(Button btnSelectDeck) {
