@@ -95,11 +95,11 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private ImageView ivCardImage;
     private TextView tvCardName, tvCardAttr, tvCardLevel, tvCardDesc;
     private CardDetailPanel cardDetailPanel;
-    private ImageButton btnSettings, btnChat, btnSound, btnPlay, btnEmote, btnMenu;
+    private ImageButton btnSettings, btnChat, btnSound, btnSpeed, btnEmote, btnNote;
     private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
     private Button btnCancelOrFinish;
     private Button btnPhaseCurrent, btnPhaseNext, btnEp;
-    private LinearLayout layoutPhaseButtons;
+    private FrameLayout layoutPhaseButtons;
     private int currentSelectType = -1;
     private DialogPlus currentDialog;
 
@@ -417,9 +417,9 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         btnSettings = findViewById(R.id.btn_settings);
         btnChat = findViewById(R.id.btn_chat);
         btnSound = findViewById(R.id.btn_sound);
-        btnPlay = findViewById(R.id.btn_play);
+        btnSpeed = findViewById(R.id.btn_speed);
         btnEmote = findViewById(R.id.btn_emote);
-        btnMenu = findViewById(R.id.btn_menu);
+        btnNote = findViewById(R.id.btn_note);
 
         btnSurrender = findViewById(R.id.btn_surrender);
         btnIgnoreTiming = findViewById(R.id.btn_ignore_timing);
@@ -488,13 +488,13 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             }
         });
 
-        btnPlay.setOnClickListener(v -> {
+        btnSpeed.setOnClickListener(v -> {
         });
 
         btnEmote.setOnClickListener(v -> {
         });
 
-        btnMenu.setOnClickListener(v -> {
+        btnNote.setOnClickListener(v -> {
             showMainMenu();
         });
 
