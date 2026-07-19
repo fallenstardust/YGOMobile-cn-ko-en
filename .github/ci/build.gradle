@@ -7,6 +7,7 @@ buildscript {
         mavenCentral()
         gradlePluginPortal()
         maven { url 'https://repo1.maven.org/maven2/' }
+        maven { url 'https://jcenter.bintray.com/' }
 
         maven { url 'https://maven.aliyun.com/repository/google/' }
         maven { url 'https://maven.aliyun.com/repository/central/' }
@@ -31,6 +32,7 @@ allprojects {
         mavenCentral()
         maven { url 'https://jitpack.io' }
         maven { url 'https://repo1.maven.org/maven2/' }
+        maven { url 'https://jcenter.bintray.com/' }
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
         }

@@ -91,7 +91,7 @@ jobs:
     - name: Build
       run: |
         chmod +x gradlew
-        ./gradlew assembleCnRelease
+        ./gradlew --no-configuration-cache assembleCnRelease
       env:
         GRADLE_OPTS: -Dorg.gradle.jvmargs="-Dhttp.proxyHost= -Dhttps.proxyHost="
 
