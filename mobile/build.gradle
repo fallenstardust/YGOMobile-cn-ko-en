@@ -44,7 +44,7 @@ android {
     }
     android.applicationVariants.all { variant ->
         variant.outputs.all {
-            def fileName = "YGOMobile_${versionName}.Apk"
+            def fileName = "YGOMobile.Apk"
             outputFileName = fileName
         }
     }

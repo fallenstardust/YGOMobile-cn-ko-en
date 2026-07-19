@@ -1,0 +1,123 @@
+name: build YGOMobile
+
+on:
+  push:
+    branches:
+      - github-action
+    
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+      
+    - name: Install wget and unzip
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+
+    - name: Setup Java 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        accept-android-sdk-licenses: true
+
+    - name: Install NDK 29
+      run: sdkmanager "ndk;29.0.14206865"
+
+    - name: Set Android Environment
+      run: |
+        echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+        echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_ENV
+        echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_ENV
+
+    - name: Git Config
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "github-actions@github.com"
+
+    - name: Set SSH Key
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+
+    - name: Prepare
+      run: |
+        git clone ${{ secrets.PICS }} --depth 1 pics
+        git clone https://github.com/Smile-DK/ygopro-scripts.git --depth 1 script
+        cd pics
+        rm -r .git
+        cd ../script
+        rm -r .git
+        cd ..
+        zip -r pics.zip pics
+        zip -r scripts.zip script
+        mv *.zip mobile/assets/data/
+
+    - name: Prepare DB
+      run: |
+        git clone https://github.com/mycard/ygopro-database.git --depth 1 ygopro-database
+        cp ygopro-database/locales/zh-CN/cards.cdb mobile/assets/data/cards.cdb
+        cp ygopro-database/locales/pt-PT/cards.cdb mobile/assets/pt/data/cards.cdb
+        cp ygopro-database/locales/ko-KR/cards.cdb mobile/assets/kor/data/cards.cdb
+        cp ygopro-database/locales/ja-JP/cards.cdb mobile/assets/jp/data/cards.cdb
+        cp ygopro-database/locales/es-ES/cards.cdb mobile/assets/es/data/cards.cdb
+        cp ygopro-database/locales/en-US/cards.cdb mobile/assets/en/data/cards.cdb
+
+    - name: Prepare Pack
+      run: |
+        git clone https://github.com/fallenstardust/ygopro-card-list.git --depth 1 ygopro-card-list
+        mv ygopro-card-list/pack mobile/assets/data/
+
+    - name: Prepare libWindbot.aar
+      run: |
+        cd mobile/libs
+        wget https://github.com/mercury233/libWindbot/releases/download/latest/libWindbot.aar
+
+    - name: Build
+      run: |
+        chmod +x gradlew
+        ./gradlew assembleCnRelease
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: YGOMobile.apk
+        retention-days: 1
+        path: mobile/build/outputs/apk/cn/release/YGOMobile.Apk
+
+  create-release:
+    needs: [build-android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: build
+
+      - name: Create release-latest
+        run: |
+          cd build
+          gh release delete release-latest --cleanup-tag -y || true
+          gh release create release-latest $(find . -type f) \
+            --target "$GITHUB_SHA" \
+            --title "release-latest" \
+            --notes "Latest build for ${{ github.ref_name }}" \
+            --latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
