@@ -1,0 +1,48 @@
+// CI-only root build file. Keep official Maven repositories first because
+// GitHub-hosted runners can intermittently fail against China mirrors.
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url 'https://repo1.maven.org/maven2/' }
+
+        maven { url 'https://maven.aliyun.com/repository/google/' }
+        maven { url 'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://maven.aliyun.com/repository/public/' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter/' }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.6.0'
+        classpath 'com.android.tools.build:gradle-experimental:0.11.1'
+    }
+}
+
+ext {
+    compileSdkVersion = 35
+    supportVersion = "30.0.0"
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+        }
+
+        maven { url 'https://maven.aliyun.com/repository/google/' }
+        maven { url 'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://maven.aliyun.com/repository/public/' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter/' }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
