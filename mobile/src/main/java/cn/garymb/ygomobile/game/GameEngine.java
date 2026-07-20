@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.engine.LuaScriptEngine;
 import cn.garymb.ygomobile.network.DuelClient;
-import cn.garymb.ygomobile.network.WindBotClient;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import ocgcore.enums.CardLocation;
 
@@ -73,7 +73,6 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     private GameState state = GameState.IDLE;
     private final DuelClient client;
-    private WindBotClient botClient;
     private final SoundManager soundManager;
     private final GameField field;
     private final LuaScriptEngine scriptEngine;
@@ -253,6 +252,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         Log.i(TAG, "Starting local server...");
         setState(GameState.CONNECTING);
         new Thread(() -> {
+            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
+            if (!serverStarted) {
+                Log.w(TAG, "NetServer may already be running");
+            }
+            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
             boolean connected = client.connect("127.0.0.1", 7911);
             if (!connected) {
                 setState(GameState.DISCONNECTED);
@@ -319,32 +323,48 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     public void startBotDuel(String host, int port, String botCommand, String deckFile) {
-        Log.i(TAG, "Starting bot duel: " + botCommand);
+        Log.i(TAG, "Starting bot duel via native WindBot: " + botCommand);
         isBotMode = true;
-        botClient = new WindBotClient();
-        botClient.setListener(new WindBotClient.BotListener() {
-            @Override
-            public void onBotConnected() {
-                Log.i(TAG, "Bot connected");
-            }
-            @Override
-            public void onBotDisconnected() {
-                Log.i(TAG, "Bot disconnected");
-            }
-            @Override
-            public void onBotError(String error) {
-                Log.e(TAG, "Bot error: " + error);
-                mainHandler.post(() -> {
-                    if (listener != null) listener.onHintMessage("AI错误: " + error);
-                });
-            }
-        });
+        setState(GameState.CONNECTING);
+
         new Thread(() -> {
-            try {
-                Thread.sleep(1500);
-            } catch (InterruptedException e) { /* ignore */ }
-            botClient.startBot(host, port, "WindBot", deckFile, botCommand);
-        }, "BotConnect").start();
+            boolean serverStarted = IrrlichtBridge.startGameServer(port);
+            if (!serverStarted) {
+                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
+            }
+            try { Thread.sleep(800); } catch (InterruptedException e) { /* ignore */ }
+
+            boolean connected = client.connect(host, port);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                mainHandler.post(() -> {
+                    if (listener != null) listener.onHintMessage("无法连接到本地游戏服务器"); });
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(0, 0, 0, 5,
+                    true, false,
+                    8000, 5, 1, 0,
+                    "Bot Duel", "");
+
+            try { Thread.sleep(1500); } catch (InterruptedException e) { /* ignore */ }
+
+            String windbotArgs = "WindBotHost:" + host + " Port:" + port
+                    + " Name:WindBot"                    + (botCommand != null && !botCommand.isEmpty() ? " " + botCommand : "");
+            Log.i(TAG, "Launching WindBot: " + windbotArgs);
+
+            mainHandler.post(() -> {
+                try {
+                    android.content.Intent intent = new android.content.Intent();
+                    intent.putExtra("args", windbotArgs);
+                    intent.setAction("RUN_WINDBOT");
+                    cn.garymb.ygomobile.GameApplication.get().sendBroadcast(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to launch WindBot", e);
+                    if (listener != null) listener.onHintMessage("启动AI失败: " + e.getMessage());
+                }
+            });
+        }, "BotDuel").start();
     }
 
     public void loadReplay(String replayPath) {
@@ -376,10 +396,6 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public void disconnect() {
         client.disconnect();
-        if (botClient != null) {
-            botClient.disconnect();
-            botClient = null;
-        }
         setState(GameState.DISCONNECTED);
     }
 
@@ -429,9 +445,6 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public void sendDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
         client.sendUpdateDeck(main, extra, side);
-        if (botClient != null && botClient.isConnected()) {
-            botClient.sendUpdateDeck(main, extra, side);
-        }
     }
 
     public void sendResponse(byte[] responseData) {

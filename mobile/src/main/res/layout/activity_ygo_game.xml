@@ -16,33 +16,31 @@
             android:id="@+id/layout_card_detail"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.25"
+            android:layout_weight="0.3"
             android:orientation="vertical"
             android:padding="1dp">
 
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.8"
-                android:gravity="left"
-                android:orientation="horizontal">
+                android:layout_weight="0.9">
 
                 <ImageView
                     android:id="@+id/iv_card_image"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_weight="1.3"
+                    android:layout_alignParentStart="true"
+                    android:adjustViewBounds="true"
                     android:scaleType="fitCenter"
                     android:src="@drawable/unknown" />
 
-                <!-- 左下操作按钮（投降/时点控制） -->
+                <!-- 时点按钮（投降/时点控制） -->
                 <LinearLayout
                     android:id="@+id/layout_bottom_actions"
-                    android:layout_width="0dp"
+                    android:layout_width="110dp"
                     android:layout_height="match_parent"
-                    android:layout_gravity="top"
+                    android:layout_toEndOf="@id/iv_card_image"
                     android:layout_marginStart="2dp"
-                    android:layout_weight="0.7"
                     android:orientation="vertical"
                     android:visibility="visible">
 
@@ -50,7 +48,7 @@
                         android:id="@+id/btn_surrender"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
+                        android:layout_marginBottom="2dp"
                         android:layout_weight="1.2"
                         android:background="@drawable/button3_bg"
                         android:text="投降"
@@ -61,7 +59,7 @@
                         android:id="@+id/btn_ignore_timing"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
+                        android:layout_marginBottom="2dp"
                         android:layout_weight="1"
                         android:background="@drawable/button3_bg"
                         android:text="忽略时点"
@@ -72,7 +70,7 @@
                         android:id="@+id/btn_show_timing"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
+                        android:layout_marginBottom="2dp"
                         android:layout_weight="1"
                         android:background="@drawable/button3_bg"
                         android:text="显示时点"
@@ -83,7 +81,7 @@
                         android:id="@+id/btn_available_timing"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
+                        android:layout_marginBottom="2dp"
                         android:layout_weight="1"
                         android:background="@drawable/button3_bg"
                         android:text="可用时点"
@@ -94,7 +92,6 @@
                         android:id="@+id/btn_shuffle_hand"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
                         android:layout_weight="1.2"
                         android:background="@drawable/button3_bg"
                         android:text="洗切手卡"
@@ -106,7 +103,6 @@
                         android:id="@+id/btn_cancel_or_finish"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
                         android:layout_weight="1.2"
                         android:background="@drawable/button3_bg"
                         android:text="完成选择"
@@ -115,12 +111,88 @@
                         android:visibility="gone" />
 
                 </LinearLayout>
-            </LinearLayout>
+                <!-- 录像控制按钮 -->
+                <LinearLayout
+                    android:id="@+id/layout_replay_control"
+                    android:layout_width="110dp"
+                    android:layout_height="match_parent"
+                    android:layout_toEndOf="@id/iv_card_image"
+                    android:layout_marginStart="2dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/btn_replay_play"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="播放"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_replay_pause"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="暂停"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_replay_next"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="下一步"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_replay_last"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="上一步"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_replay_shuffle"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="切换视角"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_replay_quit"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="退出"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                </LinearLayout>
+            </RelativeLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1.2"
+                android:layout_weight="1.1"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -193,7 +265,7 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="center"
                     android:layout_marginStart="2dp"
-                    android:layout_weight="0.2"
+                    android:layout_weight="0.15"
                     android:orientation="vertical">
 
                     <ImageButton
@@ -270,7 +342,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.75"
+            android:layout_weight="0.7"
             android:orientation="vertical">
 
             <!-- 顶部玩家信息区（常驻显示） -->
@@ -538,23 +610,6 @@
                         android:textSize="13sp"
                         android:textStyle="bold" />
                 </FrameLayout>
-
-                <!-- 阶段信息（底部中央） -->
-                <TextView
-                    android:id="@+id/tv_phase_info"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|center_horizontal"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/panel_sci_fi_bg"
-                    android:paddingStart="16dp"
-                    android:paddingTop="6dp"
-                    android:paddingEnd="16dp"
-                    android:paddingBottom="6dp"
-                    android:text="Draw Phase"
-                    android:textColor="#00E5FF"
-                    android:textSize="14sp"
-                    android:visibility="visible" />
 
                 <!-- 右下卡组/墓地/除外指示器 -->
                 <LinearLayout

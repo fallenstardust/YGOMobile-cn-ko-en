@@ -162,6 +162,9 @@ public class GameMessageParser {
             case SelectChain:
                 handler.onSelectChain(buf);
                 break;
+            case SortChain:
+                handler.onSortChain(buf);
+                break;
             case SelectTribute:
                 handler.onSelectTribute(buf);
                 break;
@@ -171,11 +174,11 @@ public class GameMessageParser {
             case SelectCounter:
                 handler.onSelectCounter(buf);
                 break;
-            case SortChain:
-                handler.onSortChain(buf);
-                break;
             case SortCard:
                 handler.onSortCard(buf);
+                break;
+            case SelectUnselectCard:
+                handler.onSelectCard(buf);
                 break;
             case SelectPlace:
             case SelectDisfield: {
@@ -455,7 +458,7 @@ public class GameMessageParser {
                 handler.onBattle(atkAtk, atkPos, defAtk, defPos);
                 break;
             }
-            case AttackDiabled:
+            case AttackDisabled:
                 handler.onAttackDisabled();
                 break;
             case DamageStepStart:

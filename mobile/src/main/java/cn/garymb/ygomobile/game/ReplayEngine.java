@@ -296,21 +296,21 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
         try {
             switch (msgType) {
-                case 0: // MSG_RETRY
+                case 1: // MSG_RETRY
                     mainHandler.post(() -> {
                         if (listener != null) listener.onReplayHintMessage("录像错误: Retry");
                     });
                     return false;
 
-                case 1: // MSG_HINT
+                case 2: // MSG_HINT
                     if (buf.remaining() < 6) return false;
                     int hintType = buf.get() & 0xFF;
                     int hintPlayer = buf.get() & 0xFF;
                     int hintData = buf.getInt();
-                    GameMessageParser.parse(msgType, createSubBuffer(0), this);
+                    onHint(hintType, hintPlayer, hintData);
                     break;
 
-                case 2: // MSG_WAITING
+                case 3: // MSG_WAITING
                     break;
 
                 case 4: { // MSG_START
@@ -339,25 +339,28 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     buf.get();
                     break;
 
-                case 16: // MSG_SELECT_BATTLECMD
-                case 17: // MSG_SELECT_IDLECMD
-                case 18: // MSG_SELECT_EFFECTYN
-                case 19: // MSG_SELECT_YESNO
-                case 20: // MSG_SELECT_OPTION
-                case 21: // MSG_SELECT_CARD
-                case 22: // MSG_SELECT_TRIBUTE
-                case 23: // MSG_SELECT_CHAIN
-                case 24: // MSG_SELECT_PLACE / DISFIELD
-                case 25: // MSG_SELECT_POSITION
-                case 26: // MSG_SELECT_COUNTER
-                case 27: // MSG_SELECT_SUM
-                case 28: // MSG_SORT_CARD
-                case 29: // MSG_SORT_CHAIN
+                case 10: // MSG_SELECT_BATTLECMD
+                case 11: // MSG_SELECT_IDLECMD
+                case 12: // MSG_SELECT_EFFECTYN
+                case 13: // MSG_SELECT_YESNO
+                case 14: // MSG_SELECT_OPTION
+                case 15: // MSG_SELECT_CARD
+                case 16: // MSG_SELECT_CHAIN
+                case 17: // MSG_SORT_CHAIN
+                case 18: // MSG_SELECT_PLACE
+                case 19: // MSG_SELECT_POSITION
+                case 20: // MSG_SELECT_TRIBUTE
+                case 22: // MSG_SELECT_COUNTER
+                case 23: // MSG_SELECT_SUM
+                case 24: // MSG_SELECT_DISFIELD
+                case 25: // MSG_SORT_CARD
+                case 26: // MSG_SELECT_UNSELECT_CARD
                     skipReplayResponse(msgType);
                     break;
 
                 case 30: // MSG_CONFIRM_DECKTOP
                 case 31: // MSG_CONFIRM_CARDS
+                case 42: // MSG_CONFIRM_EXTRATOP
                     skipConfirm(msgType);
                     break;
 
@@ -399,11 +402,21 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     break;
 
                 case 38: // MSG_DECK_TOP
-                    if (buf.remaining() < 5) return false;
+                    if (buf.remaining() < 6) return false;
                     int dtPlayer = buf.get() & 0xFF;
                     int dtCode = buf.getInt();
+                    buf.get();
                     onDeckTop(dtPlayer, dtCode);
                     break;
+
+                case 39: { // MSG_SHUFFLE_EXTRA
+                    skipBytes(1);
+                    if (buf.remaining() < 1) return false;
+                    int seCount = buf.get() & 0xFF;
+                    skipBytes(seCount * 4);
+                    notifyField();
+                    break;
+                }
 
                 case 40: // MSG_NEW_TURN
                     if (buf.remaining() < 1) return false;
@@ -432,7 +445,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onMove(mCode, mOldCtrl, mOldLoc, mOldSeq, mNewCtrl, mNewLoc, mNewSeq, mPos, mReason);
                     break;
 
-                case 51: // MSG_POS_CHANGE
+                case 53: // MSG_POS_CHANGE
                     if (buf.remaining() < 9) return false;
                     int pcCode = buf.getInt();
                     int pcCtrl = buf.get() & 0xFF;
@@ -443,40 +456,62 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onPosChange(pcCode, pcCtrl, pcLoc, pcSeq, pcOld, pcNew);
                     break;
 
-                case 52: // MSG_SET
+                case 54: // MSG_SET
                     if (buf.remaining() < 8) return false;
                     int setCode = buf.getInt();
                     int setCtrl = buf.get() & 0xFF;
                     int setLoc = buf.get() & 0xFF;
                     int setSeq = buf.get() & 0xFF;
-                    buf.getInt(); // padding or extra
+                    buf.get(); // padding
+                    buf.get();
+                    buf.get();
+                    buf.get();
                     onSet(setCode, setCtrl, setLoc, setSeq);
                     break;
 
-                case 53: // MSG_SWAP
+                case 55: // MSG_SWAP
                     if (buf.remaining() < 16) return false;
-                    buf.getInt(); int sw1c = buf.get() & 0xFF; int sw1l = buf.get() & 0xFF; int sw1s = buf.get() & 0xFF;
-                    buf.getInt(); int sw2c = buf.get() & 0xFF; int sw2l = buf.get() & 0xFF; int sw2s = buf.get() & 0xFF;
+                    buf.getInt(); int sw1c = buf.get() & 0xFF; int sw1l = buf.get() & 0xFF; int sw1s = buf.get() & 0xFF; buf.get();
+                    buf.getInt(); int sw2c = buf.get() & 0xFF; int sw2l = buf.get() & 0xFF; int sw2s = buf.get() & 0xFF; buf.get();
                     onSwap(sw1c, sw1l, sw1s, sw2c, sw2l, sw2s);
                     break;
 
-                case 54: // MSG_FIELD_DISABLED
+                case 56: // MSG_FIELD_DISABLED
                     skipBytes(4);
                     break;
 
-                case 60: // MSG_SUMMONING
+                case 60: { // MSG_SUMMONING
                     if (buf.remaining() < 8) return false;
                     int sumCode = buf.getInt();
                     int sumCtrl = buf.get() & 0xFF;
                     int sumLoc = buf.get() & 0xFF;
                     int sumSeq = buf.get() & 0xFF;
-                    buf.getInt();
+                    buf.get(); // pos
                     onSummoning(sumCode, sumCtrl, sumLoc, sumSeq);
                     break;
+                }
                 case 61: onSummoned(); break;
-                case 62: skipBytes(8); onSpSummoning(0,0,0,0); break;
+                case 62: { // MSG_SPSUMMONING
+                    if (buf.remaining() < 8) return false;
+                    int spCode = buf.getInt();
+                    int spCtrl = buf.get() & 0xFF;
+                    int spLoc = buf.get() & 0xFF;
+                    int spSeq = buf.get() & 0xFF;
+                    buf.get(); // pos
+                    onSpSummoning(spCode, spCtrl, spLoc, spSeq);
+                    break;
+                }
                 case 63: onSpSummoned(); break;
-                case 64: skipBytes(8); onFlipSummoning(0,0,0,0); break;
+                case 64: { // MSG_FLIPSUMMONING
+                    if (buf.remaining() < 8) return false;
+                    int flCode = buf.getInt();
+                    int flCtrl = buf.get() & 0xFF;
+                    int flLoc = buf.get() & 0xFF;
+                    int flSeq = buf.get() & 0xFF;
+                    buf.get(); // pos
+                    onFlipSummoning(flCode, flCtrl, flLoc, flSeq);
+                    break;
+                }
                 case 65: onFlipSummoned(); break;
 
                 case 70: // MSG_CHAINING
@@ -499,6 +534,18 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 case 74: onChainEnd(); break;
                 case 75: skipBytes(1); onChainNegated(0); break;
                 case 76: skipBytes(1); onChainDisabled(0); break;
+
+                case 80: case 81: { // MSG_CARD_SELECTED / MSG_RANDOM_SELECTED
+                    skipBytes(1);
+                    int csCount = buf.get() & 0xFF;
+                    skipBytes(csCount * 4);
+                    break;
+                }
+                case 83: { // MSG_BECOME_TARGET
+                    int btCount = buf.get() & 0xFF;
+                    skipBytes(btCount * 4);
+                    break;
+                }
 
                 case 90: // MSG_DRAW
                     if (buf.remaining() < 2) return false;
@@ -540,41 +587,43 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 case 95: skipBytes(4); onUnequip(0, 0, 0); break;
                 case 96: case 97: skipBytes(8); break; // CARD_TARGET / CANCEL_TARGET
 
-                case 98: // MSG_PAY_LPCOST
+                case 100: // MSG_PAY_LPCOST
                     if (buf.remaining() < 5) return false;
                     int costPlayer = buf.get() & 0xFF;
                     int costAmt = buf.getInt();
                     onPayLpCost(costPlayer, costAmt);
                     break;
 
-                case 99: case 100: // ADD_COUNTER / REMOVE_COUNTER
+                case 101: case 102: // ADD_COUNTER / REMOVE_COUNTER
                     skipBytes(7);
                     break;
 
-                case 101: // MSG_ATTACK
+                case 110: // MSG_ATTACK
                     if (buf.remaining() < 8) return false;
                     int aCtrl = buf.get() & 0xFF; int aLoc = buf.get() & 0xFF; int aSeq = buf.get() & 0xFF; buf.get();
                     int defCtrl = buf.get() & 0xFF; int defLoc = buf.get() & 0xFF; int defSeq = buf.get() & 0xFF; buf.get();
                     onAttack(aCtrl, aLoc, aSeq, defCtrl, defLoc, defSeq);
                     break;
 
-                case 102: // MSG_BATTLE
+                case 111: // MSG_BATTLE
                     skipBytes(26);
                     break;
 
-                case 103: onAttackDisabled(); break; // MSG_ATTACK_DISABLED
-                case 104: onDamageStepStart(); break;
-                case 105: onDamageStepEnd(); break;
+                case 112: onAttackDisabled(); break; // MSG_ATTACK_DISABLED
+                case 113: onDamageStepStart(); break; // MSG_DAMAGE_STEP_START
+                case 114: onDamageStepEnd(); break; // MSG_DAMAGE_STEP_END
 
-                case 110: skipBytes(8); break; // MSG_MISSED_EFFECT
-                case 111: { // MSG_TOSS_COIN
+                case 120: skipBytes(8); break; // MSG_MISSED_EFFECT
+                case 130: { // MSG_TOSS_COIN
+                    if (buf.remaining() < 2) return false;
                     int tcP = buf.get() & 0xFF;
                     int tcC = buf.get() & 0xFF;
                     skipBytes(tcC);
                     onTossCoin(tcP, tcC, null);
                     break;
                 }
-                case 112: { // MSG_TOSS_DICE
+                case 131: { // MSG_TOSS_DICE
+                    if (buf.remaining() < 2) return false;
                     int tdP = buf.get() & 0xFF;
                     int tdC = buf.get() & 0xFF;
                     skipBytes(tdC);
@@ -582,18 +631,30 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     break;
                 }
 
-                case 130: case 131: skipBytes(5); break; // ANNOUNCE_RACE / ATTRIB
-                case 132: case 133: { // ANNOUNCE_CARD / NUMBER
+                case 132: // MSG_ROCK_PAPER_SCISSORS
+                    skipBytes(1);
+                    break;
+
+                case 133: // MSG_HAND_RES
+                    skipBytes(1);
+                    break;
+
+                case 140: case 141: skipBytes(6); break; // ANNOUNCE_RACE / ATTRIB
+                case 142: case 143: { // ANNOUNCE_CARD / NUMBER
                     int anP = buf.get() & 0xFF;
                     int anC = buf.get() & 0xFF;
                     skipBytes(anC * 4);
                     break;
                 }
 
-                case 140: skipBytes(9); break; // CARD_HINT
-                case 141: skipBytes(6); break; // PLAYER_HINT
+                case 160: skipBytes(9); break; // CARD_HINT
+                case 165: skipBytes(6); break; // PLAYER_HINT
 
-                case 160: { // MSG_TAG_SWAP
+                case 170: // MSG_MATCH_KILL
+                    skipBytes(4);
+                    break;
+
+                case 161: { // MSG_TAG_SWAP
                     int tsPlayer = buf.get() & 0xFF;
                     buf.get();
                     int tsMainCount = buf.get() & 0xFF;
@@ -604,7 +665,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     break;
                 }
 
-                case 161: { // MSG_RELOAD_FIELD
+                case 162: { // MSG_RELOAD_FIELD
                     skipBytes(1);
                     for (int p = 0; p < 2; p++) {
                         skipBytes(4);
@@ -620,6 +681,25 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     }
                     skipBytes(1);
                     onReloadField();
+                    break;
+                }
+
+                case 163: { // MSG_AI_NAME
+                    int aiLen = buf.getShort() & 0xFFFF;
+                    if (buf.remaining() < aiLen + 1) return false;
+                    byte[] aiBytes = new byte[aiLen];
+                    buf.get(aiBytes);
+                    buf.get();
+                    onAiName(new String(aiBytes, java.nio.charset.StandardCharsets.UTF_8));
+                    break;
+                }
+                case 164: { // MSG_SHOW_HINT
+                    int shLen = buf.getShort() & 0xFFFF;
+                    if (buf.remaining() < shLen + 1) return false;
+                    byte[] shBytes = new byte[shLen];
+                    buf.get(shBytes);
+                    buf.get();
+                    onShowHint(new String(shBytes, java.nio.charset.StandardCharsets.UTF_8));
                     break;
                 }
 
@@ -644,14 +724,14 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private void skipReplayResponse(int msgType) {
         ByteBuffer buf = replayBuffer;
         switch (msgType) {
-            case 16: { // SELECT_BATTLECMD
+            case 10: { // SELECT_BATTLECMD
                 buf.get(); int cnt = buf.get() & 0xFF;
                 skipBytes(cnt * 11);
                 int cnt2 = buf.get() & 0xFF;
                 skipBytes(cnt2 * 8 + 2);
                 break;
             }
-            case 17: { // SELECT_IDLECMD
+            case 11: { // SELECT_IDLECMD
                 buf.get();
                 for (int t = 0; t < 5; t++) {
                     int c = buf.get() & 0xFF; skipBytes(c * 7);
@@ -659,32 +739,42 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 int c6 = buf.get() & 0xFF; skipBytes(c6 * 11 + 3);
                 break;
             }
-            case 18: buf.get(); skipBytes(12); break; // SELECT_EFFECTYN
-            case 19: buf.get(); skipBytes(4); break;  // SELECT_YESNO
-            case 20: buf.get(); int oc = buf.get() & 0xFF; skipBytes(oc * 4); break; // SELECT_OPTION
-            case 21: case 22: // SELECT_CARD / TRIBUTE
+            case 12: buf.get(); skipBytes(12); break; // SELECT_EFFECTYN
+            case 13: buf.get(); skipBytes(4); break;  // SELECT_YESNO
+            case 14: buf.get(); int oc = buf.get() & 0xFF; skipBytes(oc * 4); break; // SELECT_OPTION
+            case 15: case 20: // SELECT_CARD / SELECT_TRIBUTE
                 buf.get(); skipBytes(3);
                 int cc = buf.get() & 0xFF; skipBytes(cc * 8);
                 break;
-            case 23: // SELECT_CHAIN
+            case 16: // SELECT_CHAIN
                 buf.get(); int chc = buf.get() & 0xFF;
                 skipBytes(9 + chc * 14);
                 break;
-            case 24: buf.get(); skipBytes(5); break; // SELECT_PLACE/DISFIELD
-            case 25: buf.get(); skipBytes(5); break; // SELECT_POSITION
-            case 26: // SELECT_COUNTER
+            case 17: // SORT_CHAIN
+                buf.get(); int scC = buf.get() & 0xFF; skipBytes(scC * 7);
+                break;
+            case 18: case 24: buf.get(); skipBytes(5); break; // SELECT_PLACE / DISFIELD
+            case 19: buf.get(); skipBytes(5); break; // SELECT_POSITION
+            case 22: // SELECT_COUNTER
                 buf.get(); skipBytes(4);
                 int ccnt = buf.get() & 0xFF; skipBytes(ccnt * 9);
                 break;
-            case 27: // SELECT_SUM
+            case 23: // SELECT_SUM
                 buf.get(); buf.get();
                 skipBytes(6);
                 int sc1 = buf.get() & 0xFF; skipBytes(sc1 * 11);
                 int sc2 = buf.get() & 0xFF; skipBytes(sc2 * 11);
                 break;
-            case 28: case 29: // SORT_CARD / SORT_CHAIN
+            case 25: // SORT_CARD
                 buf.get(); int scc = buf.get() & 0xFF; skipBytes(scc * 7);
                 break;
+            case 26: { // SELECT_UNSELECT_CARD
+                buf.get();
+                skipBytes(4);
+                int uc1 = buf.get() & 0xFF; skipBytes(uc1 * 8);
+                int uc2 = buf.get() & 0xFF; skipBytes(uc2 * 8);
+                break;
+            }
         }
     }
 
@@ -693,7 +783,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         if (msgType == 30) { // CONFIRM_DECKTOP
             buf.get(); int cnt = buf.get() & 0xFF;
             skipBytes(cnt * 7);
-        } else { // CONFIRM_CARDS
+        } else if (msgType == 42) { // CONFIRM_EXTRATOP
+            buf.get(); int cnt = buf.get() & 0xFF;
+            skipBytes(cnt * 7);
+        } else { // CONFIRM_CARDS (31)
             buf.get(); buf.get();
             int cnt = buf.get() & 0xFF;
             skipBytes(cnt * 7);

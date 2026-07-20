@@ -82,7 +82,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private GameFieldViewController fieldViewController;
     private TextView tvPlayerLp, tvPlayerName, tvOpponentLp, tvOpponentName;
-    private TextView tvPhaseInfo, tvTurnCounter;
+    private TextView tvTurnCounter;
     private TextView tvPlayerHandCount, tvOpponentHandCount;
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
     private TextView tvHintMessage;
@@ -127,6 +127,10 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private boolean isMyTurn = false;
     private volatile boolean isGameStarted = false;
     private DraggablePopupHelper mainMenuDragHelper;
+
+    private LinearLayout layoutReplayControl;
+    private Button btnReplayPlay, btnReplayPause, btnReplayNext, btnReplayLast, btnReplayShuffle, btnReplayQuit;
+    private ReplayEngine currentReplayEngine;
 
     private static final int CMD_CONTEXT_IDLE = 1;
     private static final int CMD_CONTEXT_BATTLE = 2;
@@ -396,7 +400,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         tvPlayerName = findViewById(R.id.tv_player_name);
         tvOpponentLp = findViewById(R.id.tv_opponent_lp);
         tvOpponentName = findViewById(R.id.tv_opponent_name);
-        tvPhaseInfo = findViewById(R.id.tv_phase_info);
         tvTurnCounter = findViewById(R.id.tv_turn_counter);
         tvPlayerHandCount = findViewById(R.id.tv_player_hand_count);
         tvOpponentHandCount = findViewById(R.id.tv_opponent_hand_count);
@@ -438,6 +441,14 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         tvOpponentGraveCount = findViewById(R.id.tv_opponent_grave_count);
 
         dialogContainer = findViewById(R.id.dialog_container);
+
+        layoutReplayControl = findViewById(R.id.layout_replay_control);
+        btnReplayPlay = findViewById(R.id.btn_replay_play);
+        btnReplayPause = findViewById(R.id.btn_replay_pause);
+        btnReplayNext = findViewById(R.id.btn_replay_next);
+        btnReplayLast = findViewById(R.id.btn_replay_last);
+        btnReplayShuffle = findViewById(R.id.btn_replay_shuffle);
+        btnReplayQuit = findViewById(R.id.btn_replay_quit);
 
         setupButtonListeners();
         setupAvatarImages();
@@ -522,6 +533,39 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 } else if (currentSelectType == 11) {
                     sendResponseInt(7);
                 }
+            });
+        }
+
+        if (btnReplayPlay != null) {
+            btnReplayPlay.setOnClickListener(v -> {
+                if (currentReplayEngine != null) currentReplayEngine.resume();
+            });
+        }
+        if (btnReplayPause != null) {
+            btnReplayPause.setOnClickListener(v -> {
+                if (currentReplayEngine != null) currentReplayEngine.pause();
+            });
+        }
+        if (btnReplayNext != null) {
+            btnReplayNext.setOnClickListener(v -> {
+                if (currentReplayEngine != null) currentReplayEngine.skipAhead();
+            });
+        }
+        if (btnReplayLast != null) {
+            btnReplayLast.setOnClickListener(v -> {
+                if (currentReplayEngine != null) currentReplayEngine.undo();
+            });
+        }
+        if (btnReplayShuffle != null) {
+            btnReplayShuffle.setOnClickListener(v -> {
+                if (currentReplayEngine != null) currentReplayEngine.swapField();
+            });
+        }
+        if (btnReplayQuit != null) {
+            btnReplayQuit.setOnClickListener(v -> {
+                if (currentReplayEngine != null) currentReplayEngine.stop();
+                hideReplayControls();
+                restoreMainMenu();
             });
         }
     }
@@ -912,6 +956,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (engine == null) return;
         ReplayEngine replayEngine = new ReplayEngine(engine.getField(), soundManager);
         engine.setReplayEngine(replayEngine);
+        currentReplayEngine = replayEngine;
 
         replayEngine.setListener(new ReplayEngine.ReplayListener() {
             @Override
@@ -919,14 +964,16 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 runOnUiThread(() -> {
                     switch (state) {
                         case PLAYING:
-                            tvPhaseInfo.setText("▶ 回放中");
-                            layoutActionButtons.setVisibility(View.GONE);
+                            if (btnPhaseCurrent != null) btnPhaseCurrent.setText("▶");
+                            if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+                            if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.VISIBLE);
                             break;
                         case PAUSED:
-                            tvPhaseInfo.setText(" 已暂停");
+                            if (btnPhaseCurrent != null) btnPhaseCurrent.setText("⏸");
                             break;
                         case FINISHED:
-                            tvPhaseInfo.setText("⏹ 回放结束");
+                            if (btnPhaseCurrent != null) btnPhaseCurrent.setText("⏹");
+                            hideReplayControls();
                             break;
                     }
                 });
@@ -957,8 +1004,21 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             public void onReplayPhaseChanged(int phase) {
                 runOnUiThread(() -> {
                     ocgcore.enums.DuelPhase dp = ocgcore.enums.DuelPhase.valueOf(phase);
-                    String phaseName = dp != null ? dp.name() : "Unknown";
-                    tvPhaseInfo.setText("▶ " + phaseName);
+                    if (btnPhaseCurrent != null && dp != null) {
+                        switch (dp) {
+                            case Draw: btnPhaseCurrent.setText("DP"); break;
+                            case Standby: btnPhaseCurrent.setText("SP"); break;
+                            case Main1: btnPhaseCurrent.setText("M1"); break;
+                            case BattleStart:
+                            case BattleStep:
+                            case Battle:
+                            case Damage:
+                            case DamageCal: btnPhaseCurrent.setText("BP"); break;
+                            case Main2: btnPhaseCurrent.setText("M2"); break;
+                            case End: btnPhaseCurrent.setText("EP"); break;
+                            default: btnPhaseCurrent.setText(dp.name()); break;
+                        }
+                    }
                     tvTurnCounter.setText("Turn " + engine.getField().turnCount);
                 });
             }
@@ -975,50 +1035,20 @@ public class YGONativeGameActivity extends AppCompatActivity implements
             @Override
             public void onReplayFinished(String result) {
                 runOnUiThread(() -> {
+                    hideReplayControls();
                     showResultDialog(result);
                 });
             }
         });
 
         replayEngine.loadAndPlay(replayPath, startTurn);
-        showReplayControlOverlay(replayEngine);
     }
 
-    private void showReplayControlOverlay(ReplayEngine replayEngine) {
-        LinearLayout controlBar = new LinearLayout(this);
-        controlBar.setOrientation(LinearLayout.HORIZONTAL);
-        controlBar.setGravity(Gravity.CENTER);
-        controlBar.setBackgroundColor(0x88000000);
-
-        String[] labels = {"⏸ 暂停", "▶ 继续", "⏩ 快进", "↩ 撤销", "🔄 交换", "⏹ 停止"};
-        for (String label : labels) {
-            Button btn = new Button(this);
-            btn.setText(label);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0x00000000);
-            btn.setTextSize(12);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-            btn.setLayoutParams(lp);
-            controlBar.addView(btn);
-        }
-
-        controlBar.getChildAt(0).setOnClickListener(v -> replayEngine.pause());
-        controlBar.getChildAt(1).setOnClickListener(v -> replayEngine.resume());
-        controlBar.getChildAt(2).setOnClickListener(v -> replayEngine.skipAhead());
-        controlBar.getChildAt(3).setOnClickListener(v -> replayEngine.undo());
-        controlBar.getChildAt(4).setOnClickListener(v -> replayEngine.swapField());
-        controlBar.getChildAt(5).setOnClickListener(v -> {
-            replayEngine.stop();
-            controlBar.setVisibility(View.GONE);
-            restoreMainMenu();
-        });
-
-        FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-        flp.gravity = Gravity.BOTTOM;
-        dialogContainer.addView(controlBar, flp);
+    private void hideReplayControls() {
+        if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
+        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
+        currentReplayEngine = null;
     }
-
     private void showDeckEditDialog() {
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
         new DeckEditDialog(this).show();
@@ -1148,9 +1178,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     @Override
     public void onPhaseChanged(int phase) {
         runOnUiThread(() -> {
-            DuelPhase dp = DuelPhase.valueOf(phase);
-            String phaseName = dp != null ? dp.name() : "Unknown";
-            tvPhaseInfo.setText(phaseName + " Phase");
             tvTurnCounter.setText(String.valueOf(engine.getField().turnCount));
             isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
             updateActionButtonsForPhase(phase);
