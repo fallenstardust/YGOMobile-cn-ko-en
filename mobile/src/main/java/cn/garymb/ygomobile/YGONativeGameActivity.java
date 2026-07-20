@@ -114,7 +114,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     private String chatHistory = "";
     private TextView tvPlayerTime, tvOpponentTime;
     private TextView tvChatLog;
-    private LinearLayout layoutActionButtons;
     private Button btnChain, btnCancel;
     private LinearLayout layoutChat;
     private EditText etChatInput;
@@ -765,7 +764,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                         options.mUserName,
                         options.mServerAddr,
                         String.valueOf(options.mPort),
-                        options.mRoomPasswd
+                        options.mRoomName
                 );
             }
 
@@ -798,7 +797,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (layoutMainMenu != null) {
             layoutMainMenu.setVisibility(View.GONE);
         }
-        showGameUI();
         soundManager.playBGM(SoundManager.BGM.DUEL);
     }
 
@@ -822,6 +820,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showGameUI() {
+        hideMainMenu();
         if (fieldViewController != null) fieldViewController.show();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.VISIBLE);
         if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.VISIBLE);
@@ -832,6 +831,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showLanModeDialog() {
+        hideMainMenu();
         lanModeDialog = new LanModeDialog(this, this);
         lanModeDialog.show(layoutMainMenu);
         lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
@@ -842,8 +842,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                                       int startLP, int startHand, int drawCount, int timeLimit,
                                       boolean noCheckDeck, boolean noShuffleDeck,
                                       String hostName, String password) {
-        hideMainMenu();
-
         String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
 
         engine.startLocalServerWithSettings(lflist, ruleIdx, modeIdx, duelRule,
@@ -854,7 +852,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     @Override
     public void onJoinGameRequested(String ip, String port, String password, String nickname) {
-        hideMainMenu();
         int portNum;
         try {
             portNum = Integer.parseInt(port);
@@ -919,6 +916,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showSingleModeDialog() {
+        hideMainMenu();
         File botConfFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH);
         List<BotUtil.BotInfo> botList = parseBotConfig(botConfFile);
 
@@ -928,13 +926,11 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         SingleModeDialog dialog = new SingleModeDialog(this, new SingleModeDialog.OnSingleModeListener() {
             @Override
             public void onStartBotDuel(String botCommand, String deckFile) {
-                hideMainMenu();
                 engine.startBotDuel("127.0.0.1", 7911, botCommand, deckFile);
             }
 
             @Override
             public void onStartSingleMode(String luaFilePath) {
-                hideMainMenu();
                 engine.startSingleMode(luaFilePath);
             }
         });
@@ -943,9 +939,9 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     }
 
     private void showReplayModeDialog() {
+        hideMainMenu();
         File replayDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_REPLAY_PATH);
         ReplayModeDialog dialog = new ReplayModeDialog(this, (replayPath, startTurn) -> {
-            hideMainMenu();
             startReplayPlayback(replayPath, startTurn);
         });
         dialog.show(layoutMainMenu, replayDir);
@@ -1071,6 +1067,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
 
     private void showSettingsDialog() {
+        hideMainMenu();
         SettingsDialog dialog = new SettingsDialog(this, () -> applySettingsToEngine());
         dialog.show(layoutMainMenu);
         dialog.setOnDismissListener(() -> restoreMainMenu());
@@ -1110,9 +1107,9 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 break;
             case DUELING:
                 hideMainMenu();
+                showGameUI();
                 if (lanModeDialog != null) lanModeDialog.dismiss();
                 if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
-                if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
                 if (layoutChat != null) layoutChat.setVisibility(View.VISIBLE);
                 if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
                 isGameStarted = true;
@@ -3141,7 +3138,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
     private void sendActionResponse(int action) {
         sendResponseInt(action);
-        layoutActionButtons.setVisibility(View.GONE);
     }
 
     private void closeGameButtons() {
@@ -3151,7 +3147,6 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (btnEp != null) btnEp.setVisibility(View.GONE);
         if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
-        if (layoutActionButtons != null) layoutActionButtons.setVisibility(View.GONE);
     }
 
     // === CancelOrFinish (mirrors C++ ClientField::CancelOrFinish) ===

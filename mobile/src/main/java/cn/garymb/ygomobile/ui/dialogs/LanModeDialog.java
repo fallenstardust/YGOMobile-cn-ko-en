@@ -63,6 +63,7 @@ public class LanModeDialog {
     private int selfPos = 0;
     private boolean isSelfReady = false;
     private boolean isHost = false;
+    private boolean isTagMode = false;
     private int watchCount = 0;
     private List<String> observerNames = new ArrayList<>();
 
@@ -262,7 +263,7 @@ public class LanModeDialog {
 
         btnPwExitWaiting.setOnClickListener(v -> {
             if (listener != null) listener.onPlayerWaitingExit();
-            popupWindow.dismiss();
+            showLanMain();
         });
 
         setupSelfReadyInteraction();
@@ -559,6 +560,7 @@ public class LanModeDialog {
             }
             checkboxes[pos].setChecked(ready);
         }
+        updateStartButtonState();
     }
 
     public void clearPlayerPos(int pos) {
@@ -594,8 +596,7 @@ public class LanModeDialog {
         clearPlayerPos(fromPos);
     }
 
-    public void refreshPlayerDisplay() {
-        for (int i = 0; i < 4; i++) {
+    public void refreshPlayerDisplay() { for (int i = 0; i < 4; i++) {
             String name = getPlayerName(i);
             if (etPwPlayer1Name != null && i == 0) etPwPlayer1Name.setText(name);
             if (etPwPlayer2Name != null && i == 1) etPwPlayer2Name.setText(name);
@@ -627,6 +628,7 @@ public class LanModeDialog {
         }
 
         updateSelfCheckboxInteractivity();
+        updateStartButtonState();
     }
 
     private int findNextEmptyPos(int currentPos) {
@@ -652,6 +654,8 @@ public class LanModeDialog {
         if (tvPwDrawCount != null) tvPwDrawCount.setText(String.valueOf(drawCount));
         if (tvPwTimeLimit != null) tvPwTimeLimit.setText(timeLimit > 0 ? String.valueOf(timeLimit) : "无限制");
 
+        isTagMode = (mode == 2);
+
         String duelModeText;
         switch (mode) {
             case 0:
@@ -671,11 +675,13 @@ public class LanModeDialog {
         if (layoutTagPlayers != null) {
             layoutTagPlayers.setVisibility(mode == 2 ? View.VISIBLE : View.INVISIBLE);
         }
+        updateStartButtonState();
     }
 
     public void updateTypeChange(int selfType, boolean isTag, boolean isHost) {
         selfPos = selfType;
         this.isHost = isHost;
+        this.isTagMode = isTag;
         updateSelfCheckboxInteractivity();
 
         if (selfType < 2 || (isTag && selfType < 4)) {
@@ -720,6 +726,7 @@ public class LanModeDialog {
         if (btnPwStartGame != null) {
             btnPwStartGame.setVisibility(isHost ? View.VISIBLE : View.INVISIBLE);
         }
+        updateStartButtonState();
 
         if (isHost) {
             if (btnPwKickPlayer1 != null) btnPwKickPlayer1.setVisibility(View.VISIBLE);
@@ -865,20 +872,12 @@ public class LanModeDialog {
                     setSelfCheckboxChecked(true);
                     btnPwReady.setText("取消准备");
                     btnPwReady.setPressed(true);
-                    if (btnPwDuelistMode != null) {
-                        btnPwDuelistMode.setEnabled(false);
-                        btnPwDuelistMode.setTextColor(Color.GRAY);
-                    }
                     if (listener != null) listener.onPlayerWaitingReady();
                 } else {
                     isSelfReady = false;
                     setSelfCheckboxChecked(false);
                     btnPwReady.setText("点击准备");
                     btnPwReady.setPressed(false);
-                    if (btnPwDuelistMode != null) {
-                        btnPwDuelistMode.setEnabled(true);
-                        btnPwDuelistMode.setTextColor(Color.WHITE);
-                    }
                     if (listener != null) listener.onPlayerWaitingNotReady();
                 }
             });
@@ -915,19 +914,11 @@ public class LanModeDialog {
                         isSelfReady = true;
                         btnPwReady.setText("取消准备");
                         btnPwReady.setPressed(true);
-                        if (btnPwDuelistMode != null) {
-                            btnPwDuelistMode.setEnabled(false);
-                            btnPwDuelistMode.setTextColor(Color.GRAY);
-                        }
                         if (listener != null) listener.onPlayerWaitingReady();
                     } else {
                         isSelfReady = false;
                         btnPwReady.setText("点击准备");
                         btnPwReady.setPressed(false);
-                        if (btnPwDuelistMode != null) {
-                            btnPwDuelistMode.setEnabled(true);
-                            btnPwDuelistMode.setTextColor(Color.WHITE);
-                        }
                         if (listener != null) listener.onPlayerWaitingNotReady();
                     }
                 });
@@ -1084,7 +1075,34 @@ public class LanModeDialog {
                     listener.onStartGameRequested();
                 }
             });
+            btnPwStartGame.setEnabled(false);
+            btnPwStartGame.setTextColor(Color.GRAY);
         }
+    }
+
+    private void updateStartButtonState() {
+        if (btnPwStartGame == null) return;
+        if (!isHost) {
+            btnPwStartGame.setEnabled(false);
+            btnPwStartGame.setTextColor(Color.GRAY);
+            return;
+        }
+        int duelistCount = isTagMode ? 4 : 2;
+        CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+        for (int i = 0; i < duelistCount; i++) {
+            if (getPlayerName(i).isEmpty()) {
+                btnPwStartGame.setEnabled(false);
+                btnPwStartGame.setTextColor(Color.GRAY);
+                return;
+            }
+            if (checkboxes[i] == null || !checkboxes[i].isChecked()) {
+                btnPwStartGame.setEnabled(false);
+                btnPwStartGame.setTextColor(Color.GRAY);
+                return;
+            }
+        }
+        btnPwStartGame.setEnabled(true);
+        btnPwStartGame.setTextColor(Color.WHITE);
     }
 
     private void updateStartButtonVisibility() {
