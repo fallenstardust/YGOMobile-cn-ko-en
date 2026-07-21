@@ -223,9 +223,12 @@ Materials::Materials() {
     // 设置轮廓线材质属性：使用环境光颜色，关闭背面剔除
 	mOutLine.ColorMaterial = irr::video::ECM_AMBIENT;
 	mOutLine.DiffuseColor = 0xff000000;
+	mOutLine.MaterialType = irr::video::EMT_TRANSPARENT_VERTEX_ALPHA;
+	mOutLine.ZWriteEnable = false;
 	mOutLine.Thickness = 2;
-
-    // 设置透明纹理材质属性：环境光黄色
+	mOutLine.setFlag(irr::video::EMF_LIGHTING, false);
+	mOutLine.setFlag(irr::video::EMF_BACK_FACE_CULLING, false);
+	mOutLine.setFlag(irr::video::EMF_ANTI_ALIASING, true);
 	mTRTexture = mTexture;
 	mTRTexture.AmbientColor = 0xffffff00;
 

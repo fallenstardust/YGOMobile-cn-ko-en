@@ -20,13 +20,14 @@
 namespace ygo {
 
 namespace {
-	unsigned connect_state{};
+	unsigned connect_state{ CONNECT_STATE_NONE };
 	unsigned char response_buf[SIZE_RETURN_VALUE]{};
 	size_t response_len{};
 	unsigned int watching{};
 	bool is_host{};
 	event_base* client_base{};
-	bool is_closing{};
+	event* connect_timeout_event{};
+	unsigned close_reason{};
 	bool is_swapping{};
 	int select_hint{};
 	int select_unselect_hint{};
@@ -43,6 +44,20 @@ namespace {
 	std::set<std::pair<unsigned int, unsigned short>> remotes{};
 	event* resp_event{};
 	const std::set<int> select_effectyn_id{ 95, 96, 97, 218, 219, 220 };
+
+	void EndRefreshHost() {
+		is_refreshing = false;
+		if(close_reason != CLIENT_CLOSE_REASON_EXIT)
+			mainGame->btnLanRefresh->setEnabled(true);
+	}
+
+	void CancelConnectTimeout() {
+		if(!connect_timeout_event)
+			return;
+		event_del(connect_timeout_event);
+		event_free(connect_timeout_event);
+		connect_timeout_event = nullptr;
+	}
 }
 
 bufferevent* DuelClient::client_bev = 0;
@@ -59,14 +74,14 @@ std::vector<HostPacket> DuelClient::hosts;
  */
 bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_game) {
 	// 检查当前是否已经处于连接状态
-	if(connect_state)
+	if(connect_state != CONNECT_STATE_NONE)
 		return false;
 	sockaddr_in sin;
 	// 创建libevent事件基础结构
 	client_base = event_base_new();
 	if(!client_base)
 		return false;
-	// 初始化socket地址结构
+	close_reason = CLIENT_CLOSE_REASON_NONE;
 	std::memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = htonl(ip);
@@ -84,15 +99,14 @@ bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_g
 		client_base = 0;
 		return false;
 	}
-	// 设置连接状态为已连接
-	connect_state = 0x1;
+	connect_state = CONNECT_STATE_CONNECTING;
 	// 初始化随机数种子
 	rnd.seed(std::random_device()());
 	// 如果不是创建游戏，则设置连接超时事件
 	if(!create_game) {
 		timeval timeout = {5, 0};
-		event* timeout_event = event_new(client_base, 0, EV_TIMEOUT, ConnectTimeout, 0);
-		event_add(timeout_event, &timeout);
+		connect_timeout_event = event_new(client_base, 0, EV_TIMEOUT, ConnectTimeout, 0);
+		event_add(connect_timeout_event, &timeout);
 	}
 	// 启动客户端处理线程
 	std::thread(ClientThread).detach();
@@ -114,12 +128,9 @@ bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_g
  */
 void DuelClient::ConnectTimeout(evutil_socket_t fd, short events, void* arg) {
 	// 如果连接状态为0x7（已完成状态），则直接返回不进行任何处理
-	if(connect_state == 0x7)
+	if(connect_state & CONNECT_STATE_JOINED)
 		return;
-
-	// 检查客户端是否正在关闭过程中
-	if(!is_closing) {
-		// 恢复主界面所有操作按钮的可用状态
+	if(close_reason == CLIENT_CLOSE_REASON_NONE) {
 		mainGame->btnCreateHost->setEnabled(true);
 		mainGame->btnJoinHost->setEnabled(true);
 		mainGame->btnJoinCancel->setEnabled(true);
@@ -143,29 +154,15 @@ void DuelClient::ConnectTimeout(evutil_socket_t fd, short events, void* arg) {
 		// 解锁GUI操作
 		mainGame->gMutex.unlock();
 	}
-
-	// 退出libevent事件循环
-	event_base_loopbreak(client_base);
+	if(client_base)
+		event_base_loopbreak(client_base);
 }
-/**
- * @brief 停止客户端连接
- * @param is_exiting 是否正在退出程序
- *
- * 该函数用于停止客户端的网络连接。当连接状态不为0x7时直接返回，
- * 否则设置关闭标志并中断事件循环。
- */
-void DuelClient::StopClient(bool is_exiting) {
-	// 检查连接状态，如果不是0x7状态则直接返回
-	if(connect_state != 0x7)
+void DuelClient::StopClient(unsigned reason) {
+	close_reason = reason;
+	if(connect_state == CONNECT_STATE_NONE)
 		return;
-
-	// 设置关闭标志
-	is_closing = is_exiting;
-	if(!is_closing) {
-
-	}
-	// 中断客户端事件循环
-	event_base_loopbreak(client_base);
+	if(client_base)
+		event_base_loopbreak(client_base);
 }
 /**
  * @brief 处理客户端网络数据读取的回调函数
@@ -285,32 +282,30 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 
 		// 启用读取事件监听，并更新连接状态标记
 		bufferevent_enable(bev, EV_READ);
-		connect_state |= 0x2;
+		connect_state |= CONNECT_STATE_CONNECTED;
 	} else if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
 		// 禁用该 bufferevent 的读取功能
 		bufferevent_disable(bev, EV_READ);
-
-		// 在未主动关闭的情况下根据不同连接阶段显示不同提示信息并重置界面
-		if (!is_closing) {
-			if (connect_state == 0x1) {
-				// 连接尚未完成即中断的情况
+		if(close_reason == CLIENT_CLOSE_REASON_NONE) {
+			if(!(connect_state & CONNECT_STATE_JOINED)) {
 				mainGame->btnCreateHost->setEnabled(true);
 				mainGame->btnJoinHost->setEnabled(true);
 				mainGame->btnJoinCancel->setEnabled(true);
 				mainGame->btnStartBot->setEnabled(true);
 				mainGame->btnBotCancel->setEnabled(true);
 				mainGame->gMutex.lock();
-				if (mainGame->bot_mode && !mainGame->wSinglePlay->isVisible())
+				if(mainGame->bot_mode && !mainGame->wSinglePlay->isVisible())
 					mainGame->ShowElement(mainGame->wSinglePlay);
-				else if (!mainGame->bot_mode && !mainGame->wLanWindow->isVisible())
+				else if(!mainGame->bot_mode && !mainGame->wLanWindow->isVisible())
 					mainGame->ShowElement(mainGame->wLanWindow);
 				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-				mainGame->addMessageBox(L"", dataManager.GetSysString(1400));
+				if(connect_state == CONNECT_STATE_CONNECTING)
+					mainGame->addMessageBox(L"", dataManager.GetSysString(1400));
+				else
+					mainGame->addMessageBox(L"", dataManager.GetSysString(1402));
 				mainGame->gMutex.unlock();
-			} else if (connect_state == 0x7) {
-				// 已进入准备阶段后连接中断的情况
-				if (!mainGame->dInfo.isStarted && !mainGame->is_building) {
-					// 尚未开始决斗且不在卡组编辑器中的情况
+			} else {
+				if(!mainGame->dInfo.isStarted && !mainGame->is_building) {
 					mainGame->btnCreateHost->setEnabled(true);
 					mainGame->btnJoinHost->setEnabled(true);
 					mainGame->btnJoinCancel->setEnabled(true);
@@ -318,16 +313,15 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 					mainGame->btnBotCancel->setEnabled(true);
 					mainGame->gMutex.lock();
 					mainGame->HideElement(mainGame->wHostPrepare);
-					if (mainGame->bot_mode)
+					if(mainGame->bot_mode)
 						mainGame->ShowElement(mainGame->wSinglePlay);
 					else
 						mainGame->ShowElement(mainGame->wLanWindow);
 					mainGame->wChat->setVisible(false);
 					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-					if (events & BEV_EVENT_EOF)
+					if(events & BEV_EVENT_EOF)
 						mainGame->addMessageBox(L"", dataManager.GetSysString(1401));
-					else
-						mainGame->addMessageBox(L"", dataManager.GetSysString(1402));
+					else mainGame->addMessageBox(L"", dataManager.GetSysString(1402));
 					mainGame->gMutex.unlock();
 				} else {
 					// 决斗正在进行或在卡组构建过程中断开连接的情况
@@ -379,15 +373,14 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 void DuelClient::ClientThread() {
 	// 启动事件循环，处理网络事件
 	event_base_dispatch(client_base);
-
-	// 清理缓冲事件和事件基础结构
+	CancelConnectTimeout();
 	bufferevent_free(client_bev);
 	event_base_free(client_base);
 
 	// 重置相关指针和状态
 	client_bev = 0;
 	client_base = 0;
-	connect_state = 0;
+	connect_state = CONNECT_STATE_NONE;
 }
 void DuelClient::HandleSTOCPacketLan(unsigned char* data, size_t len) {
 	unsigned char* pdata = data;
@@ -740,8 +733,8 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, size_t len) {
 		// 重置观战者计数
 		watching = 0;
 		// 更新连接状态标志
-		connect_state |= 0x4;
-		// 跳出switch语句
+		connect_state |= CONNECT_STATE_JOINED;
+		CancelConnectTimeout();
 		break;
 	}
 	case STOC_TYPE_CHANGE: {
@@ -819,10 +812,33 @@ void DuelClient::HandleSTOCPacketLan(unsigned char* data, size_t len) {
 			}
 		}
 		mainGame->dInfo.player_type = selftype;
+		if(mainGame->bot_mode && !mainGame->pending_bot_executable.empty()) {
+			std::wstring executableName = mainGame->pending_bot_executable;
+			std::vector<std::wstring> processArgs = mainGame->pending_bot_args;
+			mainGame->pending_bot_executable.clear();
+			mainGame->pending_bot_args.clear();
+			if(!is_host) break; // should not happen
+			if(!Game::SpawnAsync(executableName, processArgs)) {
+				StopClient();
+				// don't call NetServer::StopServer(), StopClient will trigger LeaveGame, which will call StopServer
+				mainGame->btnCreateHost->setEnabled(true);
+				mainGame->btnJoinHost->setEnabled(true);
+				mainGame->btnJoinCancel->setEnabled(true);
+				mainGame->btnStartBot->setEnabled(true);
+				mainGame->btnBotCancel->setEnabled(true);
+				mainGame->gMutex.lock();
+				mainGame->HideElement(mainGame->wHostPrepare);
+				mainGame->ShowElement(mainGame->wSinglePlay);
+				mainGame->wChat->setVisible(false);
+				mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
+				mainGame->env->addMessageBox(L"", dataManager.GetSysString(1439));
+				mainGame->gMutex.unlock();
+			}
+		}
 		break;
 	}
 	// 处理决斗开始消息
-    case STOC_DUEL_START: {
+	case STOC_DUEL_START: {
 		// 隐藏房间准备界面和卡组管理界面
 		mainGame->HideElement(mainGame->wHostPrepare);
         mainGame->HideElement(mainGame->wDeckManage);
@@ -2935,7 +2951,7 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 		}
 		int appear = mainGame->gameConf.quick_animation ? 12 : 20;
 		if (pl == 0) {
-			ClientCard* pcard = new ClientCard;
+			ClientCard* pcard = mainGame->dField.CreateCard();
 			pcard->position = cp;
 			pcard->SetCode(code);
 			if(!mainGame->dInfo.isReplay || !mainGame->dInfo.isReplaySkiping) {
@@ -2953,8 +2969,8 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 			if (code != 0 && pcard->code != code)
 				pcard->SetCode(code);
 			pcard->ClearTarget();
-			for(auto eqit = pcard->equipped.begin(); eqit != pcard->equipped.end(); ++eqit)
-				(*eqit)->equipTarget = 0;
+			for (auto& equip_card : pcard->equipped)
+				equip_card->equipTarget = nullptr;
 			if(!mainGame->dInfo.isReplay || !mainGame->dInfo.isReplaySkiping) {
 				mainGame->dField.FadeCard(pcard, 5, appear);
 				mainGame->WaitFrameSignal(appear);
@@ -2965,7 +2981,7 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 					mainGame->dField.hovered_card = 0;
 			} else
 				mainGame->dField.RemoveCard(pc, pl, ps);
-			delete pcard;
+			mainGame->dField.DestroyCard(pcard);
 		} else {
 			if (!(pl & LOCATION_OVERLAY) && !(cl & LOCATION_OVERLAY)) {
 				ClientCard* pcard = mainGame->dField.GetCard(pc, pl, ps);
@@ -4183,13 +4199,13 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 			mainGame->gMutex.lock();
 		if(mainGame->dField.deck[player].size() > mcount) {
 			while(mainGame->dField.deck[player].size() > mcount) {
-				ClientCard* ccard = *mainGame->dField.deck[player].rbegin();
+				ClientCard* ccard = mainGame->dField.deck[player].back();
 				mainGame->dField.deck[player].pop_back();
-				delete ccard;
+				mainGame->dField.DestroyCard(ccard);
 			}
 		} else {
 			while(mainGame->dField.deck[player].size() < mcount) {
-				ClientCard* ccard = new ClientCard;
+				ClientCard* ccard = mainGame->dField.CreateCard();
 				ccard->controler = player;
 				ccard->location = LOCATION_DECK;
 				ccard->sequence = (unsigned char)mainGame->dField.deck[player].size();
@@ -4198,13 +4214,13 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 		}
 		if(mainGame->dField.hand[player].size() > hcount) {
 			while(mainGame->dField.hand[player].size() > hcount) {
-				ClientCard* ccard = *mainGame->dField.hand[player].rbegin();
+				ClientCard* ccard = mainGame->dField.hand[player].back();
 				mainGame->dField.hand[player].pop_back();
-				delete ccard;
+				mainGame->dField.DestroyCard(ccard);
 			}
 		} else {
 			while(mainGame->dField.hand[player].size() < hcount) {
-				ClientCard* ccard = new ClientCard;
+				ClientCard* ccard = mainGame->dField.CreateCard();
 				ccard->controler = player;
 				ccard->location = LOCATION_HAND;
 				ccard->sequence = (unsigned char)mainGame->dField.hand[player].size();
@@ -4213,13 +4229,13 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 		}
 		if(mainGame->dField.extra[player].size() > ecount) {
 			while(mainGame->dField.extra[player].size() > ecount) {
-				ClientCard* ccard = *mainGame->dField.extra[player].rbegin();
+				ClientCard* ccard = mainGame->dField.extra[player].back();
 				mainGame->dField.extra[player].pop_back();
-				delete ccard;
+				mainGame->dField.DestroyCard(ccard);
 			}
 		} else {
 			while(mainGame->dField.extra[player].size() < ecount) {
-				ClientCard* ccard = new ClientCard;
+				ClientCard* ccard = mainGame->dField.CreateCard();
 				ccard->controler = player;
 				ccard->location = LOCATION_EXTRA;
 				ccard->sequence = (unsigned char)mainGame->dField.extra[player].size();
@@ -4285,7 +4301,7 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 				val = BufferIO::Read<uint8_t>(pbuf);
 				if(val) {
 					// 创建新卡片对象并添加到场地
-					ClientCard* ccard = new ClientCard;
+					ClientCard* ccard = mainGame->dField.CreateCard();
 					mainGame->dField.AddCard(ccard, p, LOCATION_MZONE, seq);
 					// 读取卡片位置信息(正反面、攻击/防守状态等)
 					ccard->position = BufferIO::Read<uint8_t>(pbuf);
@@ -4294,7 +4310,7 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 					if(val) {
 						// 为每张叠放卡片创建对象并建立叠放关系
 						for(int xyz = 0; xyz < val; ++xyz) {
-							ClientCard* xcard = new ClientCard;
+							ClientCard* xcard = mainGame->dField.CreateCard();
 							ccard->overlayed.push_back(xcard);
 							mainGame->dField.overlay_cards.insert(xcard);
 							xcard->overlayTarget = ccard;
@@ -4312,7 +4328,7 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 				val = BufferIO::Read<uint8_t>(pbuf);
 				if(val) {
 					// 创建新卡片对象并添加到场地
-					ClientCard* ccard = new ClientCard;
+					ClientCard* ccard = mainGame->dField.CreateCard();
 					mainGame->dField.AddCard(ccard, p, LOCATION_SZONE, seq);
 					// 读取卡片位置信息
 					ccard->position = BufferIO::Read<uint8_t>(pbuf);
@@ -4321,31 +4337,31 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 			// 处理卡组中的卡片
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
-				ClientCard* ccard = new ClientCard;
+				ClientCard* ccard = mainGame->dField.CreateCard();
 				mainGame->dField.AddCard(ccard, p, LOCATION_DECK, seq);
 			}
 			// 处理手牌
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
-				ClientCard* ccard = new ClientCard;
+				ClientCard* ccard = mainGame->dField.CreateCard();
 				mainGame->dField.AddCard(ccard, p, LOCATION_HAND, seq);
 			}
 			// 处理墓地中的卡片
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
-				ClientCard* ccard = new ClientCard;
+				ClientCard* ccard = mainGame->dField.CreateCard();
 				mainGame->dField.AddCard(ccard, p, LOCATION_GRAVE, seq);
 			}
 			// 处理除外状态的卡片
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
-				ClientCard* ccard = new ClientCard;
+				ClientCard* ccard = mainGame->dField.CreateCard();
 				mainGame->dField.AddCard(ccard, p, LOCATION_REMOVED, seq);
 			}
 			// 处理额外卡组中的卡片
 			val = BufferIO::Read<uint8_t>(pbuf);
 			for(int seq = 0; seq < val; ++seq) {
-				ClientCard* ccard = new ClientCard;
+				ClientCard* ccard = mainGame->dField.CreateCard();
 				mainGame->dField.AddCard(ccard, p, LOCATION_EXTRA, seq);
 			}
 			// 读取额外卡组中灵摆卡片的数量
@@ -4560,8 +4576,29 @@ void DuelClient::BeginRefreshHost() {
 	mainGame->lstHostList->clear();
 	remotes.clear();
 	hosts.clear();
-
-	// 创建事件基础结构用于异步I/O处理
+	std::vector<unsigned int> local_addresses;
+	char hname[256]{};
+	if(gethostname(hname, sizeof(hname) - 1) != SOCKET_ERROR) {
+		evutil_addrinfo hints{};
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_protocol = IPPROTO_UDP;
+		hints.ai_flags = EVUTIL_AI_ADDRCONFIG;
+		evutil_addrinfo* answer = nullptr;
+		if(evutil_getaddrinfo(hname, nullptr, &hints, &answer) == 0 && answer) {
+			for(auto addr = answer; addr; addr = addr->ai_next) {
+				if(!addr->ai_addr || addr->ai_addrlen < sizeof(sockaddr_in))
+					continue;
+				auto* sin = reinterpret_cast<sockaddr_in*>(addr->ai_addr);
+				if(std::find(local_addresses.begin(), local_addresses.end(), sin->sin_addr.s_addr) == local_addresses.end())
+					local_addresses.push_back(sin->sin_addr.s_addr);
+			}
+		}
+		if(answer)
+			evutil_freeaddrinfo(answer);
+	}
+	if(local_addresses.empty())
+		local_addresses.push_back(INADDR_ANY);
 	event_base* broadev = event_base_new();
 
 #ifdef _IRR_ANDROID_PLATFORM_
@@ -4570,17 +4607,18 @@ void DuelClient::BeginRefreshHost() {
 	if (ipaddr == -1) {
 		return;
 	}
-#else
-	// 其他平台通过主机名解析本地地址
-	char hname[256];
-	gethostname(hname, 256);
-	hostent* host = gethostbyname(hname);
-	if(!host)
-		return;
 #endif
-
+	if(!broadev) {
+		EndRefreshHost();
+		return;
+	}
 	// 创建UDP套接字用于接收主机响应
 	SOCKET reply = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if(reply == INVALID_SOCKET) {
+		event_base_free(broadev);
+		EndRefreshHost();
+		return;
+	}
 	sockaddr_in reply_addr;
 	std::memset(&reply_addr, 0, sizeof reply_addr);
 	reply_addr.sin_family = AF_INET;
@@ -4588,15 +4626,24 @@ void DuelClient::BeginRefreshHost() {
 	reply_addr.sin_addr.s_addr = 0;            // 绑定到所有接口
 	if(bind(reply, (sockaddr*)&reply_addr, sizeof(reply_addr)) == SOCKET_ERROR) {
 		closesocket(reply);
+		event_base_free(broadev);
+		EndRefreshHost();
 		return;
 	}
 
 	// 设置超时时间，并注册事件处理器
 	timeval timeout = {3, 0};  // 3秒超时
 	resp_event = event_new(broadev, reply, EV_TIMEOUT | EV_READ | EV_PERSIST, BroadcastReply, broadev);
-	event_add(resp_event, &timeout);
-
-	// 启动新线程运行事件循环
+	if(!resp_event || event_add(resp_event, &timeout) != 0) {
+		if(resp_event) {
+			event_free(resp_event);
+			resp_event = nullptr;
+		}
+		closesocket(reply);
+		event_base_free(broadev);
+		EndRefreshHost();
+		return;
+	}
 	std::thread(RefreshThread, broadev).detach();
 
 	// 准备发送广播请求的数据包
@@ -4667,11 +4714,8 @@ int DuelClient::RefreshThread(event_base* broadev) {
 void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 	// 处理超时事件：关闭套接字并退出事件循环
 	if(events & EV_TIMEOUT) {
-		evutil_closesocket(fd);
 		event_base_loopbreak((event_base*)arg);
-		if(!is_closing)
-			mainGame->btnLanRefresh->setEnabled(true);
-	} else if(events & EV_READ) {// 处理可读事件：接收并解析广播数据包
+	} else if(events & EV_READ) {
 		sockaddr_in bc_addr;
 		socklen_t sz = sizeof(sockaddr_in);
 		char buf[256];
@@ -4683,7 +4727,7 @@ void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 		HostPacket* pHP = &packet;
 
 		// 验证数据包合法性及版本兼容性
-		if(is_closing || pHP->identifier != NETWORK_SERVER_ID)
+		if(close_reason == CLIENT_CLOSE_REASON_EXIT || pHP->identifier != NETWORK_SERVER_ID)
 			return;
 		if(pHP->version != PRO_VERSION)
 			return;
@@ -4728,4 +4772,26 @@ void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
 	}
 }
 
+unsigned int DuelClient::ResolveHostName(const char* hostname, const char* port) {
+	in_addr addr{};
+	if(inet_pton(AF_INET, hostname, &addr) == 1)
+		return ntohl(addr.s_addr);
+	evutil_addrinfo hints{};
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = EVUTIL_AI_ADDRCONFIG;
+	evutil_addrinfo* answer = nullptr;
+	if(evutil_getaddrinfo(hostname, port, &hints, &answer) != 0 || answer == nullptr) {
+		return 0;
+	}
+	if(!answer->ai_addr || answer->ai_addrlen < sizeof(sockaddr_in) || answer->ai_family != AF_INET) {
+		evutil_freeaddrinfo(answer);
+		return 0;
+	}
+	auto* sin = reinterpret_cast<sockaddr_in*>(answer->ai_addr);
+	unsigned int remote_addr = ntohl(sin->sin_addr.s_addr);
+	evutil_freeaddrinfo(answer);
+	return remote_addr;
+}
 }

@@ -67,16 +67,6 @@ inline T myclamp(T v, T lo, T hi) {
 	return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
-inline FILE* mywfopen(const wchar_t* filename, const char* mode) {
-	FILE* fp{};
-	char fname[1024]{};
-	BufferIO::EncodeUTF8(filename, fname);
-	fp = std::fopen(fname, mode);
-	return fp;
-}
-
-#define myfopen std::fopen
-
 #include <irrlicht.h>
 using namespace irr::io;
 using namespace irr::os;
