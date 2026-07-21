@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,8 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
+import cn.garymb.ygomobile.ui.adapters.HostListAdapter;
+import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -67,11 +70,15 @@ public class LanModeDialog {
     private int watchCount = 0;
     private List<String> observerNames = new ArrayList<>();
 
+    private LanDiscoveryManager discoveryManager;
+    private HostListAdapter hostListAdapter;
+    private List<LanDiscoveryManager.HostEntry> discoveredHosts = new ArrayList<>();
+
     public interface OnLanModeListener {
         void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
                                    int startLP, int startHand, int drawCount, int timeLimit,
                                    boolean noCheckDeck, boolean noShuffleDeck,
-                                   String hostName, String password);
+                                   String hostName, String password, String nickname);
 
         void onJoinGameRequested(String ip, String port, String password, String nickname);
 
@@ -124,18 +131,16 @@ public class LanModeDialog {
         Button btnExitLan = layoutLanMain.findViewById(R.id.btn_exit_lan);
         ListView lvHostList = layoutLanMain.findViewById(R.id.lv_host_list);
 
-        SimpleListAdapter hostAdapter = new SimpleListAdapter(context);
-        lvHostList.setAdapter(hostAdapter);
+        discoveryManager = new LanDiscoveryManager();
+        hostListAdapter = new HostListAdapter(context);
+        lvHostList.setAdapter(hostListAdapter);
 
         lvHostList.setOnItemClickListener((parent, view, position, id) -> {
-            hostAdapter.setSelectedPosition(position);
-            String selectedHost = hostAdapter.getDataItem(position);
-            if (selectedHost != null) {
-                String[] parts = selectedHost.split(":");
-                if (parts.length >= 2) {
-                    etHostIp.setText(parts[0].trim());
-                    etHostPort.setText(parts[1].trim());
-                }
+            hostListAdapter.setSelectedPosition(position);
+            LanDiscoveryManager.HostEntry entry = hostListAdapter.getDataItem(position);
+            if (entry != null) {
+                etHostIp.setText(entry.ip);
+                etHostPort.setText(String.valueOf(entry.port));
             }
         });
 
@@ -225,6 +230,7 @@ public class LanModeDialog {
             boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
             String hostName = etHostName.getText().toString();
             String password = etHostPassword.getText().toString();
+            String nickname = etNickname.getText().toString().trim();
 
             int lflist = parseBanlistIndex(banlist);
             int ruleIdx = parseRuleIndex(rule);
@@ -238,7 +244,7 @@ public class LanModeDialog {
             if (listener != null) {
                 listener.onCreateHostConfirmed(lflist, ruleIdx, modeIdx, duelRule,
                         lp, hand, draw, time,
-                        noCheckDeck, noShuffleDeck, hostName, password);
+                        noCheckDeck, noShuffleDeck, hostName, password, nickname);
             }
 
             layoutCreateHost.setVisibility(View.GONE);
@@ -256,7 +262,16 @@ public class LanModeDialog {
                 layoutTagPlayers.setVisibility("TAG".equals(duelMode) ? View.VISIBLE : View.INVISIBLE);
             }
 
-            etPwPlayer1Name.setText(etNickname.getText().toString().isEmpty() ? Constants.PlayerName : etNickname.getText().toString());
+            etPwPlayer1Name.setText(nickname.isEmpty() ? Constants.PlayerName : nickname);
+
+            String localIp = LanDiscoveryManager.getLocalIpAddress();
+            if (localIp != null) {
+                Toast.makeText(context,
+                        "房间已创建，本机IP: " + localIp + ":7911，等待玩家加入",
+                        Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, "房间已创建，等待玩家加入", Toast.LENGTH_SHORT).show();
+            }
         });
 
         btnExitLan.setOnClickListener(v -> popupWindow.dismiss());
@@ -324,6 +339,41 @@ public class LanModeDialog {
         });
 
         btnRefreshLan.setOnClickListener(v -> {
+            if (discoveryManager == null || discoveryManager.isDiscovering()) return;
+
+            btnRefreshLan.setEnabled(false);
+            btnRefreshLan.setText("搜索中...");
+            discoveredHosts.clear();
+            hostListAdapter.clear();
+            hostListAdapter.notifyDataSetChanged();
+
+            discoveryManager.startDiscovery(new LanDiscoveryManager.DiscoveryListener() {
+                @Override
+                public void onDiscoveryStarted() {
+                    Log.i("LanModeDialog", "LAN discovery started");
+                }
+
+                @Override
+                public void onHostFound(LanDiscoveryManager.HostEntry host) {
+                    discoveredHosts.add(host);
+                    hostListAdapter.add(host);
+                    hostListAdapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onDiscoveryFinished() {
+                    btnRefreshLan.setEnabled(true);
+                    btnRefreshLan.setText("刷新局域网");
+                    if (discoveredHosts.isEmpty()) {
+                        Toast.makeText(context, "未发现局域网房间", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onDiscoveryError(String message) {
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
         btnJoinGame.setOnClickListener(v -> {
@@ -1029,6 +1079,9 @@ public class LanModeDialog {
     }
 
     public void dismiss() {
+        if (discoveryManager != null) {
+            discoveryManager.stopDiscovery();
+        }
         if (popupWindow != null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }

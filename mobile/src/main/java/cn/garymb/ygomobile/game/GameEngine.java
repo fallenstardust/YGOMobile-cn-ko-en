@@ -251,6 +251,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void startLocalServer() {
         Log.i(TAG, "Starting local server...");
         setState(GameState.CONNECTING);
+        this.isHost = true;
+        this.maxMatch = 1;
         new Thread(() -> {
             boolean serverStarted = IrrlichtBridge.startGameServer(7911);
             if (!serverStarted) {
@@ -279,6 +281,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         this.isHost = true;
         this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
         new Thread(() -> {
+            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
+            if (!serverStarted) {
+                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
+            }
+            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
             boolean connected = client.connect("127.0.0.1", 7911);
             if (!connected) {
                 setState(GameState.DISCONNECTED);
@@ -309,6 +316,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         });
         isBotMode = false;
         new Thread(() -> {
+            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
+            if (!serverStarted) {
+                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
+            }
+            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
             boolean connected = client.connect("127.0.0.1", 7911);
             if (!connected) {
                 setState(GameState.DISCONNECTED);
@@ -396,6 +408,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public void disconnect() {
         client.disconnect();
+        if (isHost) {
+            try {
+                IrrlichtBridge.stopGameServer();
+                Log.i(TAG, "Local game server stopped");
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to stop local game server", e);
+            }
+        }
         setState(GameState.DISCONNECTED);
     }
 

@@ -841,9 +841,11 @@ public class YGONativeGameActivity extends AppCompatActivity implements
     public void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
                                       int startLP, int startHand, int drawCount, int timeLimit,
                                       boolean noCheckDeck, boolean noShuffleDeck,
-                                      String hostName, String password) {
+                                      String hostName, String password, String nickname) {
         String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
+        String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
 
+        engine.setPlayerName(userName);
         engine.startLocalServerWithSettings(lflist, ruleIdx, modeIdx, duelRule,
                 noCheckDeck, noShuffleDeck,
                 startLP, startHand, drawCount, timeLimit,
