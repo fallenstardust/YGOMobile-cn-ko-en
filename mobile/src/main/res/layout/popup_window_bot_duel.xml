@@ -52,7 +52,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:text="人机信息："
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -65,7 +65,7 @@
             android:layout_weight="1"
             android:lineSpacingExtra="4dp"
             android:text="人机卡组由你选择。随缘出牌。暂不支持使用扩展卡。"
-            android:textColor="#CCCCCC"
+            android:textColor="@color/white"
             android:textSize="12sp" />
 
         <!-- 选择卡组按钮 -->
@@ -97,7 +97,7 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.6"
+                android:layout_weight="2"
                 android:layout_marginRight="5dp"
                 android:gravity="bottom"
                 android:orientation="vertical">
@@ -109,7 +109,7 @@
                     android:layout_marginBottom="4dp"
                     android:checked="false"
                     android:text="AI只出剪刀"
-                    android:textColor="#FFFFFF" />
+                    android:textColor="@color/white" />
 
                 <CheckBox
                     android:id="@+id/chk_no_check_deck"
@@ -118,7 +118,7 @@
                     android:layout_marginBottom="4dp"
                     android:checked="false"
                     android:text="不检查卡组"
-                    android:textColor="#FFFFFF" />
+                    android:textColor="@color/white" />
 
                 <CheckBox
                     android:id="@+id/chk_no_shuffle_deck"
@@ -126,36 +126,34 @@
                     android:layout_height="wrap_content"
                     android:checked="false"
                     android:text="不洗切卡组"
-                    android:textColor="#FFFFFF" />
+                    android:textColor="@color/white" />
             </LinearLayout>
 
             <!-- 按钮区域 -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.4"
+                android:layout_weight="1"
                 android:layout_gravity="bottom"
                 android:orientation="vertical">
 
                 <Button
                     android:id="@+id/btn_start_bot_duel"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
+                    android:layout_height="40dp"
+                    android:layout_marginBottom="5dp"
                     android:background="@drawable/button3_bg"
-                    android:padding="10dp"
-                    android:text="@string/ok"
-                    android:textColor="#FFFFFF"
+                    android:text="@string/OK"
+                    android:textColor="@color/white"
                     android:textSize="14sp" />
 
                 <Button
                     android:id="@+id/btn_exit_bot"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40dp"
                     android:background="@drawable/button3_bg"
-                    android:padding="10dp"
                     android:text="@string/quit"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/white"
                     android:textSize="14sp" />
             </LinearLayout>
 

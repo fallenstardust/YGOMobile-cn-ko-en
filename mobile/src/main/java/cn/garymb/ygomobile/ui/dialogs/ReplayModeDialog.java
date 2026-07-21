@@ -1,11 +1,9 @@
 package cn.garymb.ygomobile.ui.dialogs;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,7 +13,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,7 +63,7 @@ public class ReplayModeDialog {
 
     public void show(View anchorView, File replayDir) {
         this.replayDir = replayDir;
-        View customView = LayoutInflater.from(context).inflate(R.layout.dialog_replay_mode, null);
+        View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_replay_mode, null);
 
         ListView lvReplayList = customView.findViewById(R.id.lv_replay_list);
         TextView tvReplayInfo = customView.findViewById(R.id.tv_replay_info);

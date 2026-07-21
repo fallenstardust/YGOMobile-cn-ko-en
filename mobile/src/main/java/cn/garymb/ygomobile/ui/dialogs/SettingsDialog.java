@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,7 +21,6 @@ import java.util.List;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -48,7 +46,7 @@ public class SettingsDialog {
     public void show(View anchorView) {
         AppsSettings appsSettings = AppsSettings.get();
         float density = context.getResources().getDisplayMetrics().density;
-        View rootLayout = LayoutInflater.from(context).inflate(R.layout.dialog_settings, null);
+        View rootLayout = LayoutInflater.from(context).inflate(R.layout.popup_window_settings, null);
 
         StringManager stringManager = DataManager.get().getStringManager();
 

@@ -138,7 +138,7 @@
             android:theme="@style/AppTheme.Game"
             tools:replace="android:theme" />
         <activity
-            android:name="cn.garymb.ygomobile.YGONativeGameActivity"
+            android:name="cn.garymb.ygomobile.YGOProActivity"
             android:configChanges="orientation|keyboardHidden|navigation|screenSize"
             android:screenOrientation="landscape"
             android:theme="@style/AppTheme.NativeGame"
@@ -195,6 +195,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" /><!--导入文件必需权限-->
 

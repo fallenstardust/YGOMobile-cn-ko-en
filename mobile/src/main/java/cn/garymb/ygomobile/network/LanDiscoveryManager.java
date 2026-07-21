@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.network;
 
+import android.content.Context;
+import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -19,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import cn.garymb.ygomobile.GameApplication;
 
 public class LanDiscoveryManager implements YGOProtocol {
     private static final String TAG = "LanDiscoveryManager";
@@ -69,28 +73,40 @@ public class LanDiscoveryManager implements YGOProtocol {
 
         private static String getRuleName(int rule) {
             switch (rule) {
-                case 0: return "大师规则4";
-                case 1: return "大师规则2020";
-                case 2: return "新大师规则";
-                case 3: return "大师规则";
-                default: return "规则" + rule;
+                case 0:
+                    return "大师规则4";
+                case 1:
+                    return "大师规则2020";
+                case 2:
+                    return "新大师规则";
+                case 3:
+                    return "大师规则";
+                default:
+                    return "规则" + rule;
             }
         }
 
         private static String getModeName(int mode) {
             switch (mode) {
-                case 0: return "单局模式";
-                case 1: return "三局两胜";
-                case 2: return "TAG";
-                default: return "未知模式";
+                case 0:
+                    return "单局模式";
+                case 1:
+                    return "三局两胜";
+                case 2:
+                    return "TAG";
+                default:
+                    return "未知模式";
             }
         }
     }
 
     public interface DiscoveryListener {
         void onDiscoveryStarted();
+
         void onHostFound(HostEntry host);
+
         void onDiscoveryFinished();
+
         void onDiscoveryError(String message);
     }
 
@@ -102,18 +118,54 @@ public class LanDiscoveryManager implements YGOProtocol {
         return isDiscovering.get();
     }
 
+    private static WifiManager.MulticastLock sMulticastLock;
+
+    /**
+     * 建立局域网主机时必须持有 MulticastLock，否则 Android 的 Wi-Fi 驱动会过滤掉
+     * 客户端发来的广播 HostRequest（目的地址 255.255.255.255），
+     * 导致 native NetServer 绑定的 UDP 7920 收不到发现请求、无法回复，主机因此不可被发现。
+     */
+    public static synchronized void acquireHostMulticastLock() {
+        try {
+            if (sMulticastLock != null && sMulticastLock.isHeld()) return;
+            Context ctx = GameApplication.get();
+            if (ctx == null) return;
+            WifiManager wm = (WifiManager) ctx.getApplicationContext()
+                    .getSystemService(Context.WIFI_SERVICE);
+            if (wm == null) return;
+            sMulticastLock = wm.createMulticastLock("ygo-lan-host");
+            sMulticastLock.setReferenceCounted(false);
+            sMulticastLock.acquire();
+            Log.i(TAG, "MulticastLock acquired for LAN host broadcast");
+        } catch (Exception e) {
+            Log.w(TAG, "acquireHostMulticastLock failed", e);
+        }
+    }
+
+    public static synchronized void releaseHostMulticastLock() {
+        try {
+            if (sMulticastLock != null && sMulticastLock.isHeld()) {
+                sMulticastLock.release();
+                Log.i(TAG, "MulticastLock released");
+            }
+            sMulticastLock = null;
+        } catch (Exception e) {
+            Log.w(TAG, "releaseHostMulticastLock failed", e);
+        }
+    }
+
     /**
      * 获取本机在局域网中的 IPv4 地址，供建立主机后向其他玩家展示，
-     * 以便在 UDP 广播被路由器/热点拦截时可手动输入连接。
+     * 以便在 UDP 广播可被……路由器手动输入连接。
      */
     public static String getLocalIpAddress() {
         try {
             for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-                    en.hasMoreElements(); ) {
+                 en.hasMoreElements(); ) {
                 NetworkInterface intf = en.nextElement();
                 if (!intf.isUp() || intf.isLoopback()) continue;
                 for (Enumeration<InetAddress> addrs = intf.getInetAddresses();
-                        addrs.hasMoreElements(); ) {
+                     addrs.hasMoreElements(); ) {
                     InetAddress addr = addrs.nextElement();
                     if (!addr.isLoopbackAddress() && addr instanceof Inet4Address) {
                         return addr.getHostAddress();
@@ -197,8 +249,10 @@ public class LanDiscoveryManager implements YGOProtocol {
                 } catch (SocketTimeoutException e) {
                     break;
                 }
-            }        } catch (Exception e) {
-            Log.e(TAG, "Discovery error", e);            mainHandler.post(() -> {
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Discovery error", e);
+            mainHandler.post(() -> {
                 if (listener != null) listener.onDiscoveryError("发现失败: " + e.getMessage());
             });
         } finally {

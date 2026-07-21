@@ -18,7 +18,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -68,7 +67,7 @@ import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.enums.DuelPhase;
 
-public class YGONativeGameActivity extends AppCompatActivity implements
+public class YGOProActivity extends AppCompatActivity implements
         GameEngine.EngineListener,
         GameFieldView.OnCardClickListener,
         LanModeDialog.OnLanModeListener {
@@ -755,7 +754,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         layoutMainMenu.post(() -> {
             if (isFinishing() || isDestroyed()) return;
 
-            lanModeDialog = new LanModeDialog(this, YGONativeGameActivity.this);
+            lanModeDialog = new LanModeDialog(this, this);
             lanModeDialog.show(layoutMainMenu);
             lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
 
@@ -767,6 +766,36 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                         options.mRoomName
                 );
             }
+
+            lanModeDialog.showPlayerWaiting();
+            lanModeDialog.setPlayerName(0, playerName);
+
+            soundManager.playBGM(SoundManager.BGM.DUEL);
+        });
+    }
+
+    /**
+     * 人机对战：以“主机”身份进入 LAN 的 player waiting 页面。
+     * 主机权限（开始/踢人按钮）由服务器回调 onTypeChange 自动开启，
+     * 房间信息由 onJoinGame 回调填充，WindBot 加入后会通过 onPlayerEnter 显示在房间中。
+     */
+    private void showPlayerWaitingForBotHost() {
+        if (layoutMainMenu == null) {
+            layoutMainMenu = findViewById(R.id.layout_main_menu);
+            tvVersion = findViewById(R.id.tv_version);
+            bindMainMenuButtons();
+        }
+
+        hideGameUI();
+
+        final String playerName = Constants.PlayerName;
+
+        layoutMainMenu.post(() -> {
+            if (isFinishing() || isDestroyed()) return;
+
+            lanModeDialog = new LanModeDialog(this, this);
+            lanModeDialog.show(layoutMainMenu);
+            lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
 
             lanModeDialog.showPlayerWaiting();
             lanModeDialog.setPlayerName(0, playerName);
@@ -927,8 +956,21 @@ public class YGONativeGameActivity extends AppCompatActivity implements
 
         SingleModeDialog dialog = new SingleModeDialog(this, new SingleModeDialog.OnSingleModeListener() {
             @Override
-            public void onStartBotDuel(String botCommand, String deckFile) {
-                engine.startBotDuel("127.0.0.1", 7911, botCommand, deckFile);
+            public void onStartBotDuel(String botCommand, String deckFile,
+                                       int duelRule, boolean noCheckDeck, boolean noShuffleDeck) {
+                engine.setBotMode(true);
+                engine.setPlayerName(Constants.PlayerName);
+                // 1. 建立局域网主机：参数对齐 duelclient.cpp 中 bot_mode 的 CTOS_CreateGame
+                //    rule=5(放开卡池) mode=0(单局) lflist=0 LP=8000 起手=5 抽卡=1 无时限；
+                //    duel_rule / no_check_deck / no_shuffle_deck 取自人机对战面板设置
+                engine.startLocalServerWithSettings(0, 5, 0, duelRule,
+                        noCheckDeck, noShuffleDeck,
+                        8000, 5, 1, 0,
+                        "Bot Game", "");
+                // 2. 切换进入 LAN 界面的 player waiting 页面（作为主机）
+                showPlayerWaitingForBotHost();
+                // 3. 启动 WindBot 连接本地主机并加入；deckFile 为 P2 指定卡组
+                engine.launchWindBot("127.0.0.1", 7911, botCommand, deckFile);
             }
 
             @Override
@@ -963,8 +1005,10 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                     switch (state) {
                         case PLAYING:
                             if (btnPhaseCurrent != null) btnPhaseCurrent.setText("▶");
-                            if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
-                            if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.VISIBLE);
+                            if (layoutBottomActions != null)
+                                layoutBottomActions.setVisibility(View.GONE);
+                            if (layoutReplayControl != null)
+                                layoutReplayControl.setVisibility(View.VISIBLE);
                             break;
                         case PAUSED:
                             if (btnPhaseCurrent != null) btnPhaseCurrent.setText("⏸");
@@ -1004,17 +1048,31 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                     ocgcore.enums.DuelPhase dp = ocgcore.enums.DuelPhase.valueOf(phase);
                     if (btnPhaseCurrent != null && dp != null) {
                         switch (dp) {
-                            case Draw: btnPhaseCurrent.setText("DP"); break;
-                            case Standby: btnPhaseCurrent.setText("SP"); break;
-                            case Main1: btnPhaseCurrent.setText("M1"); break;
+                            case Draw:
+                                btnPhaseCurrent.setText("DP");
+                                break;
+                            case Standby:
+                                btnPhaseCurrent.setText("SP");
+                                break;
+                            case Main1:
+                                btnPhaseCurrent.setText("M1");
+                                break;
                             case BattleStart:
                             case BattleStep:
                             case Battle:
                             case Damage:
-                            case DamageCal: btnPhaseCurrent.setText("BP"); break;
-                            case Main2: btnPhaseCurrent.setText("M2"); break;
-                            case End: btnPhaseCurrent.setText("EP"); break;
-                            default: btnPhaseCurrent.setText(dp.name()); break;
+                            case DamageCal:
+                                btnPhaseCurrent.setText("BP");
+                                break;
+                            case Main2:
+                                btnPhaseCurrent.setText("M2");
+                                break;
+                            case End:
+                                btnPhaseCurrent.setText("EP");
+                                break;
+                            default:
+                                btnPhaseCurrent.setText(dp.name());
+                                break;
                         }
                     }
                     tvTurnCounter.setText("Turn " + engine.getField().turnCount);
@@ -1047,6 +1105,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
         currentReplayEngine = null;
     }
+
     private void showDeckEditDialog() {
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
         new DeckEditDialog(this).show();
@@ -2874,7 +2933,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                 int limit = Math.min(results.size(), 10);
                 for (int i = 0; i < limit; i++) {
                     Card c = results.get(i);
-                    Button btn = new Button(YGONativeGameActivity.this);
+                    Button btn = new Button(YGOProActivity.this);
                     btn.setText(c.Name + " [" + c.Code + "]");
                     btn.setTextColor(0xFFFFFFFF);
                     btn.setBackgroundColor(0xFF335577);
@@ -3309,7 +3368,7 @@ public class YGONativeGameActivity extends AppCompatActivity implements
                     restoreMainMenu();
                     return;
                 }
-                DialogPlus dialog = new DialogPlus(YGONativeGameActivity.this);
+                DialogPlus dialog = new DialogPlus(YGOProActivity.this);
                 dialog.setTitle("退出决斗");
                 dialog.setMessage("确定要退出当前决斗吗？");
                 dialog.setLeftButtonText("确定");

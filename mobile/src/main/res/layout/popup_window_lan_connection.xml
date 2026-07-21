@@ -6,16 +6,16 @@
     android:padding="20dp">
 
     <include
-        layout="@layout/dialog_lan_main"
+        layout="@layout/popup_window_lan_main"
         android:id="@+id/layout_lan_main" />
 
     <include
-        layout="@layout/dialog_create_host"
+        layout="@layout/popup_window_create_host"
         android:id="@+id/layout_create_host_settings"
         android:visibility="gone" />
 
     <include
-        layout="@layout/dialog_player_waiting"
+        layout="@layout/popup_window_player_waiting"
         android:id="@+id/layout_player_waiting"
         android:visibility="gone" />
 

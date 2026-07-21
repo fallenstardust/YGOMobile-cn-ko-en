@@ -14,6 +14,7 @@ import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.engine.LuaScriptEngine;
 import cn.garymb.ygomobile.network.DuelClient;
+import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import ocgcore.enums.CardLocation;
 
@@ -258,6 +259,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             if (!serverStarted) {
                 Log.w(TAG, "NetServer may already be running");
             }
+            LanDiscoveryManager.acquireHostMulticastLock();
             try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
             boolean connected = client.connect("127.0.0.1", 7911);
             if (!connected) {
@@ -285,6 +287,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             if (!serverStarted) {
                 Log.w(TAG, "NetServer may already be running, trying to connect anyway");
             }
+            LanDiscoveryManager.acquireHostMulticastLock();
             try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
             boolean connected = client.connect("127.0.0.1", 7911);
             if (!connected) {
@@ -379,6 +382,47 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         }, "BotDuel").start();
     }
 
+    /**
+     * 启动 WindBot 连接到指定主机并加入房间。
+     * 用于人机对战：本地已通过 startLocalServerWithSettings 建立主机后，
+     * 让 AI 作为第二名玩家加入，主机端在 player waiting 页面即可看到其加入。
+     *
+     * @param deckFile 为 P2(WindBot) 指定的卡组文件绝对路径；非空时通过 DeckFile 参数
+     *                 覆盖 AI 自带卡组（对应 WindBot 内部 Deck.Load(DeckFile ?? Executor.Deck)）。
+     */
+    public void launchWindBot(String host, int port, String botCommand, String deckFile) {
+        isBotMode = true;
+        new Thread(() -> {
+            try { Thread.sleep(1500); } catch (InterruptedException e) { /* ignore */ }
+            // WindBot.RunAndroid 以空格拆分参数(保留单引号片段)，再以 '=' 拆 key/value。
+            // 因此所有参数必须是 Key=Value 形式；含空格的值需用单引号包裹。
+            StringBuilder sb = new StringBuilder();
+            sb.append("Host=").append(host)
+              .append(" Port=").append(port)
+              .append(" Name=WindBot");
+            if (botCommand != null && !botCommand.isEmpty()) {
+                sb.append(' ').append(botCommand);
+            }
+            if (deckFile != null && !deckFile.isEmpty()) {
+                // DeckFile 覆盖 AI 默认卡组，作为 P2 实际使用的卡组
+                sb.append(" DeckFile='").append(deckFile).append('\'');
+            }
+            String windbotArgs = sb.toString();
+            Log.i(TAG, "Launching WindBot: " + windbotArgs);
+            mainHandler.post(() -> {
+                try {
+                    android.content.Intent intent = new android.content.Intent();
+                    intent.putExtra("args", windbotArgs);
+                    intent.setAction("RUN_WINDBOT");
+                    cn.garymb.ygomobile.GameApplication.get().sendBroadcast(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to launch WindBot", e);
+                    if (listener != null) listener.onHintMessage("启动AI失败: " + e.getMessage());
+                }
+            });
+        }, "WindBotLauncher").start();
+    }
+
     public void loadReplay(String replayPath) {
         Log.i(TAG, "Loading replay: " + replayPath);
         if (replayEngine == null) {
@@ -416,6 +460,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 Log.w(TAG, "Failed to stop local game server", e);
             }
         }
+        LanDiscoveryManager.releaseHostMulticastLock();
         setState(GameState.DISCONNECTED);
     }
 

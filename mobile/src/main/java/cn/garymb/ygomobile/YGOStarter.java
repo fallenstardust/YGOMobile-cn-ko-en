@@ -179,7 +179,7 @@ public class YGOStarter {
         }
         Class<?> targetActivity;
         if (AppsSettings.get().isNativeGameMode()) {
-            targetActivity = YGONativeGameActivity.class;
+            targetActivity = YGOProActivity.class;
         } else {
             targetActivity = YGOMobileActivity.class;
         }

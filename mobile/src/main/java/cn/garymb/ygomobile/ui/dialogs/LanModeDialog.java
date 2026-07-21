@@ -11,15 +11,12 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.View;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.WindowManager;
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,13 +27,11 @@ import java.util.List;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.adapters.HostListAdapter;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
-import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 
@@ -115,7 +110,7 @@ public class LanModeDialog {
     }
 
     public void show(View anchorView) {
-        View customView = LayoutInflater.from(context).inflate(R.layout.dialog_lan_connection, null);
+        View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_lan_connection, null);
 
         layoutLanMain = customView.findViewById(R.id.layout_lan_main);
         layoutCreateHost = customView.findViewById(R.id.layout_create_host_settings);

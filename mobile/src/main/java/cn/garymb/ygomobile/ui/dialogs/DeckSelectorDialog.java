@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.dialogs;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
@@ -95,7 +94,7 @@ public class DeckSelectorDialog {
 
         buildCategoryData(uncatLocalName, uncatAiName);
 
-        View contentView = LayoutInflater.from(context).inflate(R.layout.dialog_deck_selector, null);
+        View contentView = LayoutInflater.from(context).inflate(R.layout.popup_window_deck_selector, null);
 
         ListView lvCategories = contentView.findViewById(R.id.lv_categories);
         lvDecks = contentView.findViewById(R.id.lv_decks);

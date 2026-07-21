@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,7 +18,6 @@ import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +37,8 @@ public class SingleModeDialog {
     private DraggablePopupHelper draggableHelper;
 
     public interface OnSingleModeListener {
-        void onStartBotDuel(String botCommand, String deckFile);
+        void onStartBotDuel(String botCommand, String deckFile,
+                            int duelRule, boolean noCheckDeck, boolean noShuffleDeck);
         void onStartSingleMode(String luaFilePath);
     }
 
@@ -57,7 +56,7 @@ public class SingleModeDialog {
     public void show(View anchorView, List<BotUtil.BotInfo> botList, List<PuzzleUtil.PuzzleInfo> puzzleList) {
         float density = context.getResources().getDisplayMetrics().density;
 
-        View customView = LayoutInflater.from(context).inflate(R.layout.dialog_bot_duel, null);
+        View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_bot_duel, null);
 
         TabLayout tabLayoutMode = customView.findViewById(R.id.tab_layout_mode);
         ListView lvBotList = customView.findViewById(R.id.lv_bot_list);
@@ -221,11 +220,21 @@ public class SingleModeDialog {
 
                 BotUtil.BotInfo selectedBot = botList.get(selectedPosition[0]);
                 String botCommand = selectedBot.command;
-                String deckFile = selectedDeckPath;
+                // 参考 menu_handler.cpp BUTTON_BOT_START：勾选后为 WindBot 追加 Hand 参数
+                if (chkAiOnlyScissors.isChecked()) {
+                    botCommand += " Hand=1";
+                }
+                // 仅支持自选卡组(SELECT_DECKFILE)的 AI 才把所选卡组作为 P2 卡组传出，
+                // 其余 AI 使用其在bot.conf 中通过 Deck= 指定的内置卡组。
+                String deckFile = selectedBot.supportsDeckSelection ? selectedDeckPath : "";
+                // spinnerRule: 0=大师规则(2020)->5, 1=新大师规则->4, 2=大师规则3->3
+                int duelRule = 5 - spinnerRule.getSelectedItemPosition();
+                boolean noCheckDeck = chkNoCheckDeck.isChecked();
+                boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
 
                 popupWindow.dismiss();
                 if (listener != null) {
-                    listener.onStartBotDuel(botCommand, deckFile);
+                    listener.onStartBotDuel(botCommand, deckFile, duelRule, noCheckDeck, noShuffleDeck);
                 }
             } else {
                 if (selectedPosition[0] >= puzzleList.size()) {
