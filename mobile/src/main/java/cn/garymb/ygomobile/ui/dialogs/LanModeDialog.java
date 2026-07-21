@@ -693,7 +693,9 @@ public class LanModeDialog {
         return -1;
     }
 
-    public void updateRoomInfo(int mode, int startLp, int startHand, int drawCount, int timeLimit) {
+    public void updateRoomInfo(int lflist, int rule, int mode, int startLp, int startHand, int drawCount, int timeLimit) {
+        if (tvPwBanlist != null) tvPwBanlist.setText(getBanlistName(lflist));
+        if (tvPwCardAllowed != null) tvPwCardAllowed.setText(getCardAllowedName(rule));
         if (tvPwStartLP != null) tvPwStartLP.setText(String.valueOf(startLp));
         if (tvPwStartHand != null) tvPwStartHand.setText(String.valueOf(startHand));
         if (tvPwDrawCount != null) tvPwDrawCount.setText(String.valueOf(drawCount));
@@ -721,6 +723,36 @@ public class LanModeDialog {
             layoutTagPlayers.setVisibility(mode == 2 ? View.VISIBLE : View.INVISIBLE);
         }
         updateStartButtonState();
+    }
+
+    /**
+     * lflist 是与 parseBanlistIndex 对应的索引：0 表示 N/A，k 表示禁卡表列表的第 k-1 项。
+     */
+    private String getBanlistName(int lflist) {
+        if (lflist <= 0) return "N/A";
+        LimitManager limitManager = DataManager.get().getLimitManager();
+        boolean isGenesysMode = AppsSettings.get().getGenesysMode() == 1;
+        List<String> limitNames = isGenesysMode ?
+                limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
+        int idx = lflist - 1;
+        if (idx >= 0 && idx < limitNames.size()) return limitNames.get(idx);
+        return "N/A";
+    }
+
+    /**
+     * 卡片允许：与 setupSpinners 中 cardAllowedItems 顺序一致；
+     * 人机房间使用原生 rule=5(放开卡池)，同样显示为“所有卡片”。
+     */
+    private String getCardAllowedName(int rule) {
+        switch (rule) {
+            case 1:
+                return "仅OCG";
+            case 2:
+                return "仅TCG";
+            case 0:
+            default:
+                return "所有卡片";
+        }
     }
 
     public void updateTypeChange(int selfType, boolean isTag, boolean isHost) {

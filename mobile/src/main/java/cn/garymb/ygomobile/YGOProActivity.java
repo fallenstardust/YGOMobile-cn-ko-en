@@ -283,7 +283,8 @@ public class YGOProActivity extends AppCompatActivity implements
                            int startLp, int startHand, int drawCount, int timeLimit) {
         runOnUiThread(() -> {
             if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
-                lanModeDialog.updateRoomInfo(mode, startLp, startHand, drawCount, timeLimit);
+                lanModeDialog.updateRoomInfo(lflist, rule, mode,
+                        startLp, startHand, drawCount, timeLimit);
             }
         });
     }
