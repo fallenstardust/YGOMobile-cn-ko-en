@@ -2,8 +2,8 @@ name: build YGOMobile
 
 on:
   push:
-    branches:
-      - github-action
+    tags:
+      - '*.*.*'
     
 jobs:
   build-android:
@@ -57,7 +57,7 @@ jobs:
 
     - name: Prepare
       run: |
-        git clone ${{ secrets.PICS }} --depth 1 pics
+        git clone ${{ secrets.PICS_REPO }} --depth 1 pics
         git clone https://github.com/Smile-DK/ygopro-scripts.git --depth 1 script
         cd pics
         rm -r .git
@@ -78,6 +78,13 @@ jobs:
         cp ygopro-database/locales/es-ES/cards.cdb mobile/assets/es/data/cards.cdb
         cp ygopro-database/locales/en-US/cards.cdb mobile/assets/en/data/cards.cdb
 
+    - name: Prepare Sound
+      run: |
+        cd mobile/assets/en/data
+        wget https://github.com/fallenstardust/YGOMobile-cn-ko-en/releases/download/sounds/sound.zip
+        unzip sound.zip
+        rm sound.zip
+
     - name: Prepare Pack
       run: |
         git clone https://github.com/fallenstardust/ygopro-card-list.git --depth 1 ygopro-card-list
@@ -95,12 +102,22 @@ jobs:
       env:
         GRADLE_OPTS: -Dorg.gradle.jvmargs="-Dhttp.proxyHost= -Dhttps.proxyHost="
 
+    - name: Decode Keystore File
+      run: |
+        git clone ${{ secrets.KEYSTORE_REPO }} --depth 1 jks
+        mv jks/ygomobile.jks ./ygomobile.jks
+
+    - name: Sign apk
+      run: |
+        mkdir build
+        apksigner sign --ks ./ygomobile.jks --ks-key-alias ${{ secrets.KEY_ALIAS }} --key-pass pass:${{ secrets.KEYSTORE_PASSWORD }} --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} --out ./build/YGOMobile.apk ./mobile/build/outputs/apk/cn/release/*.Apk
+
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
         name: YGOMobile.apk
         retention-days: 1
-        path: mobile/build/outputs/apk/cn/release/*.Apk
+        path: ./build/YGOMobile.apk
 
   create-release:
     needs: [build-android]

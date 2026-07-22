@@ -27,6 +27,9 @@ ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
     mobile\assets\data\pics.zip
     mobile\assets\data\scripts.zip
     mobile\assets\data\fonts\ygo.ttf
+    mobile\assets\data\sound
+    sound获取：
+    https://github.com/fallenstardust/YGOMobile-cn-ko-en/releases/download/sounds/sound.zip
     mobile\libs\libWindbot.aar
     最新Libwindbot.aar获取：
     https://github.com/mercury233/libWindbot/releases
