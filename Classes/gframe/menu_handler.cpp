@@ -1,7 +1,7 @@
 #include "config.h"
 #include "menu_handler.h"
 #include "data_manager.h"
-#include "myfilesystem.h"
+#include "file_system.h"
 #include "netserver.h"
 #include "duelclient.h"
 #include "deck_manager.h"
@@ -147,26 +147,13 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				char port[6];
 				BufferIO::EncodeUTF8(hoststr, hostname);
 				BufferIO::EncodeUTF8(portstr, port);
-				unsigned int remote_addr = htonl(inet_addr(hostname));
-				if(remote_addr == INADDR_NONE) {
-					evutil_addrinfo hints{};
-					hints.ai_family = AF_INET;
-					hints.ai_socktype = SOCK_STREAM;
-					hints.ai_protocol = IPPROTO_TCP;
-					hints.ai_flags = EVUTIL_AI_ADDRCONFIG;
-					evutil_addrinfo* answer = nullptr;
-					if(evutil_getaddrinfo(hostname, port, &hints, &answer) != 0) {
-						mainGame->gMutex.lock();
-						mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
-						mainGame->addMessageBox(L"", dataManager.GetSysString(1412));
-						mainGame->gMutex.unlock();
-						break;
-					}
-					char ip[20];
-					auto* sin = reinterpret_cast<sockaddr_in*>(answer->ai_addr);
-					evutil_inet_ntop(AF_INET, &sin->sin_addr, ip, sizeof(ip));
-					remote_addr = htonl(inet_addr(ip));
-					evutil_freeaddrinfo(answer);
+				unsigned int remote_addr = DuelClient::ResolveHostName(hostname, port);
+				if(remote_addr == 0) {
+					mainGame->gMutex.lock();
+					mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::INFO);
+					mainGame->env->addMessageBox(L"", dataManager.GetSysString(1412));
+					mainGame->gMutex.unlock();
+					break;
 				}
 				unsigned int remote_port = std::wcstol(portstr, nullptr, 10);
 				BufferIO::CopyWideString(hoststr, mainGame->gameConf.lasthost);
