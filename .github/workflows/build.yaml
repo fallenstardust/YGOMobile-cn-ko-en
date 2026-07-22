@@ -143,3 +143,25 @@ jobs:
             --latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-s3:
+    needs: [build-android]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: build
+
+      - name: Upload to Bucket
+        uses: jwyxym/jwyxym/s3@master
+        with:
+          s3_endpoint: ${{ secrets.S3_ENDPOINT }}
+          access_key: ${{ secrets.S3_ACCESS_KEY }}
+          secret_key: ${{ secrets.S3_SECRET_KEY }}
+          bucket: ${{ secrets.S3_BUCKET }}
+          file_name: YGOMobile.apk
+          file_path: ./build/YGOMobile.Apk/YGOMobile.Apk
