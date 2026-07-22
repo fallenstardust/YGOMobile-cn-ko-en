@@ -677,6 +677,200 @@ public class GameField {
         pcard.aniFrame = frame;
     }
 
+    public float[] getCardLocation(ClientCard pcard) {
+        float[] result = new float[]{0, 0, 0, 0, 0, 0};
+        int controler = pcard.controler;
+        int sequence = pcard.sequence;
+        int location = pcard.location;
+        boolean flipped = (controler == 1);
+        float halfFieldH = 1.0f;
+
+        switch (location) {
+            case 0x01: {
+                result[0] = flipped ? 0.15f : 0.75f;
+                result[1] = flipped ? 0.1f : 0.75f;                result[2] = 0.01f * sequence;
+                break;
+            }
+            case 0x02: {
+                List<ClientCard> hand = players[controler].hand;
+                int count = 0;
+                for (ClientCard c : hand) if (c != null) count++;
+                int idx = 0;
+                for (int i = 0; i < hand.size(); i++) {
+                    if (hand.get(i) == pcard) { idx = i; break; }
+                    if (hand.get(i) != null) idx++;
+                }
+                if (count <= 6) {
+                    result[0] = (5.5f - 0.8f * count) / 2f + 1.55f + idx * 0.8f;
+                } else {
+                    result[0] = 1.9f + idx * 4.0f / (count - 1);
+                }
+                if (flipped) {
+                    result[0] = 6.25f - result[0] + 1.55f;
+                    result[1] = -3.4f;
+                    result[2] = 0.5f - 0.001f * idx;
+                } else {                    result[1] = 4.0f;
+                    result[2] = 0.5f + 0.001f * idx;
+                }
+                break;
+            }
+            case 0x04: {
+                result[0] = 1.5f + sequence * 0.85f;
+                result[1] = flipped ? -1.5f : 1.5f;
+                result[2] = 0.02f;
+                break;
+            }
+            case 0x08: {
+                result[0] = 1.5f + sequence * 0.85f;
+                result[1] = flipped ? -2.5f : 2.5f;
+                result[2] = 0.01f;
+                break;
+            }
+            case 0x10: {
+                result[0] = flipped ? 0.5f : 0.5f; result[1] = flipped ? -0.5f : 0.5f;
+                result[2] = 0.01f * sequence;
+                break;
+            }
+            case 0x20: {
+                result[0] = flipped ? 0.8f : 0.8f;
+                result[1] = flipped ? -0.8f : 0.8f;
+                result[2] = 0.01f * sequence;
+                break;
+            }
+            case 0x40: {
+                result[0] = flipped ? 0.2f : 0.2f;
+                result[1] = flipped ? -0.2f : 0.2f;
+                result[2] = 0.01f * sequence;
+                break;
+            }
+            case 0x80: {
+                if (pcard.overlayTarget != null && pcard.overlayTarget.location == 0x04) {
+                    int oseq = pcard.overlayTarget.sequence;
+                    int mseq = Math.min(pcard.sequence, MAX_LAYER_COUNT - 1);
+                    result[0] = 1.5f + oseq * 0.85f + (flipped ? -0.12f + 0.06f * mseq : 0.12f - 0.06f * mseq);
+                    result[1] = (flipped ? -1.5f : 1.5f) + (flipped ? -0.05f : 0.05f);
+                    result[2] = 0.001f + mseq * 0.003f;
+                }
+                break;
+            }
+        }
+
+        if (flipped) {
+            result[4] = 0;
+            result[5] = 0;
+            result[3] = (float) Math.PI; }
+
+        return result;
+    }
+
+    public void updateCardAnimation(int frame) {        for (int p = 0; p < 2; p++) {
+            updateListAnimation(players[p].deck);
+            updateListAnimation(players[p].hand);
+            updateListAnimation(players[p].monsterZone);
+            updateListAnimation(players[p].spellZone);
+            updateListAnimation(players[p].grave);
+            updateListAnimation(players[p].removed);
+            updateListAnimation(players[p].extra);
+        }
+        updateListAnimation(overlayCards);
+    }
+
+    private void updateListAnimation(List<ClientCard> list) {
+        for (ClientCard pcard : list) {
+            if (pcard == null) continue;
+            if (pcard.is_moving) {
+                pcard.curX += pcard.dPosX;
+                pcard.curY += pcard.dPosY;
+                pcard.curZ += pcard.dPosZ;
+                pcard.curRotX += pcard.dRotX;
+                pcard.curRotY += pcard.dRotY;
+                pcard.curRotZ += pcard.dRotZ;
+                pcard.aniFrame--;
+                if (pcard.aniFrame <= 0) {
+                    pcard.is_moving = false;
+                    pcard.aniFrame = 0;
+                }
+            }
+            if (pcard.is_fading) {
+                pcard.curAlpha += pcard.dAlpha;
+                pcard.aniFrame--;
+                if (pcard.aniFrame <= 0) {
+                    pcard.is_fading = false;
+                    pcard.aniFrame = 0;
+                }
+            }
+        }
+    }
+
+    public void refreshAllCards() {
+        for (int p = 0; p < 2; p++) {
+            for (ClientCard c : players[p].deck) {
+                if (c != null) { setCardPos(c); c.is_moving = false; }
+            }
+            for (ClientCard c : players[p].hand) {
+                if (c != null) { setCardPos(c); c.is_moving = false; }
+            }
+            for (ClientCard c : players[p].monsterZone) {
+                if (c != null) { setCardPos(c); c.is_moving = false; }
+            }
+            for (ClientCard c : players[p].spellZone) {
+                if (c != null) { setCardPos(c); c.is_moving = false; }
+            }
+            for (ClientCard c : players[p].grave) {
+                if (c != null) { setCardPos(c); c.is_moving = false; }
+            }
+            for (ClientCard c : players[p].removed) {
+                if (c != null) { setCardPos(c); c.is_moving = false; }
+            }
+            for (ClientCard c : players[p].extra) {
+                if (c != null) { setCardPos(c); c.is_moving = false; }
+            }
+        }
+        for (ClientCard c : overlayCards) {
+            if (c != null) { setCardPos(c); c.is_moving = false; }
+        }
+    }
+
+    private void setCardPos(ClientCard pcard) {
+        float[] loc = getCardLocation(pcard);
+        pcard.curX = loc[0];
+        pcard.curY = loc[1];
+        pcard.curZ = loc[2];
+        pcard.curRotX = loc[3];
+        pcard.curRotY = loc[4];
+        pcard.curRotZ = loc[5];
+    }
+
+    public void moveCardAnimated(ClientCard pcard, int frame) {
+        if (pcard == null || frame <= 0) return;
+        float[] loc = getCardLocation(pcard);
+        float transX = loc[0], transY = loc[1], transZ = loc[2];
+        float rotX = loc[3], rotY = loc[4], rotZ = loc[5];
+
+        pcard.dPosX = (transX - pcard.curX) / frame;
+        pcard.dPosY = (transY - pcard.curY) / frame;
+        pcard.dPosZ = (transZ - pcard.curZ) / frame;
+
+        float diff;
+        diff = rotX - pcard.curRotX;
+        while (diff < 0) diff += (float) (Math.PI * 2);
+        while (diff > Math.PI * 2) diff -= (float) (Math.PI * 2);
+        pcard.dRotX = (diff < Math.PI) ? diff / frame : -(float) (Math.PI * 2 - diff) / frame;
+
+        diff = rotY - pcard.curRotY;
+        while (diff < 0) diff += (float) (Math.PI * 2);
+        while (diff > Math.PI * 2) diff -= (float) (Math.PI * 2);
+        pcard.dRotY = (diff < Math.PI) ? diff / frame : -(float) (Math.PI * 2 - diff) / frame;
+
+        diff = rotZ - pcard.curRotZ;
+        while (diff < 0) diff += (float) (Math.PI * 2);
+        while (diff > Math.PI * 2) diff -= (float) (Math.PI * 2);
+        pcard.dRotZ = (diff < Math.PI) ? diff / frame : -(float) (Math.PI * 2 - diff) / frame;
+
+        pcard.is_moving = true;
+        pcard.aniFrame = frame;
+    }
+
     public void clearCommandFlag() {
         for (ClientCard c : activatableCards) if (c != null) { c.cmdFlag = 0; c.chain_code = 0; c.is_selectable = false; c.is_selected = false; }
         for (ClientCard c : summonableCards) if (c != null) { c.cmdFlag = 0; c.is_selectable = false; c.is_selected = false; }

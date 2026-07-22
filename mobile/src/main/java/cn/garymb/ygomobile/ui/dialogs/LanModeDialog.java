@@ -184,6 +184,7 @@ public class LanModeDialog {
                 currentDeckPath = deckPath;
                 currentDeckName = deckName;
                 currentDeckCategory = categoryName;
+                AppsSettings.get().setLastDeckPath(deckPath);
                 updateDeckButtonText(btnPwDeckSelect);
                 sendDeckIfLoaded();
             }

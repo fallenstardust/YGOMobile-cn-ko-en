@@ -12,6 +12,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
+import android.view.Choreographer;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -23,7 +24,7 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import ocgcore.enums.CardLocation;
 
-public class GameFieldView extends View {
+public class GameFieldView extends View implements Choreographer.FrameCallback {
     private static final String TAG = "GameFieldView";
 
     private static final float FIELD_ASPECT_RATIO = 16f / 9f;
@@ -73,6 +74,8 @@ public class GameFieldView extends View {
 
     private SciFiRenderer sciFiRenderer;
     private long animTimeMs = 0;
+
+    private boolean animationRunning = false;
 
     private static class ChainLine {
         float x1, y1, x2, y2;
@@ -256,6 +259,8 @@ public class GameFieldView extends View {
 
         animTimeMs = System.currentTimeMillis();
 
+        field.updateCardAnimation(1);
+
         canvas.save();
         canvas.translate(offsetX, offsetY);
 
@@ -263,6 +268,30 @@ public class GameFieldView extends View {
         drawFieldWithPerspective(canvas);
 
         canvas.restore();
+
+        if (hasActiveAnimations()) {
+ postInvalidateOnAnimation();
+        }
+    }
+
+    private boolean hasActiveAnimations() {
+        for (int p = 0; p < 2; p++) {
+            if (hasListAnimation(field.players[p].deck)) return true;
+            if (hasListAnimation(field.players[p].hand)) return true;
+            if (hasListAnimation(field.players[p].monsterZone)) return true;
+            if (hasListAnimation(field.players[p].spellZone)) return true;
+            if (hasListAnimation(field.players[p].grave)) return true;
+            if (hasListAnimation(field.players[p].removed)) return true;
+            if (hasListAnimation(field.players[p].extra)) return true;
+        }
+        return hasListAnimation(field.overlayCards);
+    }
+
+    private boolean hasListAnimation(List<GameField.ClientCard> list) {
+        for (GameField.ClientCard c : list) {
+            if (c != null && (c.is_moving || c.is_fading)) return true;
+        }
+        return false;
     }
 
     private void drawStarfieldBackground(Canvas canvas) {
@@ -830,12 +859,14 @@ public class GameFieldView extends View {
                 for (int i = 0; i < maxZones; i++) {
                     RectF r = getZoneRect(player, loc, i);
                     if (r != null && r.contains(x, y)) {
-                        setSelectedCard(player, loc, i);
-                        cardClickListener.onCardClick(player, loc, i);
-                        return;
+                        GameField.ClientCard card = field.getCard(player, loc, i);
+                        if (card != null) {
+                            setSelectedCard(player, loc, i);
+                            cardClickListener.onCardClick(player, loc, i);
+                            return;
+                        }
                     }
-                }
-            }
+                }            }
 
             boolean flipped = (player == 1);
             List<GameField.ClientCard> hand = field.players[player].hand;
@@ -866,8 +897,78 @@ public class GameFieldView extends View {
                     idx++;
                 }
             }
+
+            if (checkPileTap(player, x, y, CardLocation.Deck.value())) return;
+            if (checkPileTap(player, x, y, CardLocation.Extra.value())) return;
+            if (checkPileTap(player, x, y, CardLocation.Grave.value())) return;
+            if (checkPileTap(player, x, y, CardLocation.Removed.value())) return;
         }
         clearSelection();
+    }
+
+    private boolean checkPileTap(int player, float x, float y, int location) {
+        RectF r = getPileRect(player, location);
+        if (r != null && r.contains(x, y)) {
+            int count = field.getCardCount(player, location);
+            if (count > 0) {
+                int seq = count - 1;
+                setSelectedCard(player, location, seq);
+                cardClickListener.onCardClick(player, location, seq);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private RectF getPileRect(int player, int location) {
+        boolean flipped = (player == 1);
+        float halfFieldH = (fieldBottom - fieldTop) / 2f;
+        float pileW = cardWidth * 0.95f;
+        float pileH = cardHeight * 0.95f;
+
+        float x, y;
+        if (!flipped) {
+            switch (location) {
+                case 0x01:
+                    x = fieldRight - zoneWidth * 1.2f;
+                    y = fieldCenterY + halfFieldH * 0.35f;
+                    break;
+                case 0x40:
+                    x = fieldLeft + zoneWidth * 0.1f;
+                    y = fieldCenterY + halfFieldH * 0.35f;
+                    break;
+                case 0x10:
+                    x = fieldRight - zoneWidth * 1.2f;
+                    y = fieldCenterY + halfFieldH * 0.05f;
+                    break;
+                case 0x20:
+                    x = fieldRight - zoneWidth * 2.5f;
+                    y = fieldCenterY + halfFieldH * 0.05f;
+                    break;
+                default: return null;
+ }
+        } else {
+            switch (location) {
+                case 0x01:
+                    x = fieldLeft + zoneWidth * 0.2f;
+                    y = fieldTop + halfFieldH * 0.35f;
+                    break;
+                case 0x40:
+                    x = fieldRight - zoneWidth * 1.2f;
+                    y = fieldTop + halfFieldH * 0.35f;
+                    break;
+                case 0x10:
+                    x = fieldLeft + zoneWidth * 0.2f;
+                    y = fieldTop + halfFieldH * 0.65f;
+                    break;
+                case 0x20:
+                    x = fieldLeft + zoneWidth * 1.5f;
+                    y = fieldTop + halfFieldH * 0.65f;
+                    break;
+                default: return null;
+            }
+        }
+        return new RectF(x + offsetX, y + offsetY, x + pileW + offsetX, y + pileH + offsetY);
     }
 
     private int getZoneBitPos(int player, int location, int sequence) {
@@ -893,4 +994,20 @@ public class GameFieldView extends View {
         displayLp1 = field.players[1].lp;
         invalidate();
     }
+
+    @Override
+    public void doFrame(long frameTimeNanos) {
+        if (field != null && hasActiveAnimations()) {
+            invalidate(); Choreographer.getInstance().postFrameCallback(this);
+        } else {
+ animationRunning = false;
+        }
+    }
+
+    public void startAnimationLoop() { if (!animationRunning) {
+            animationRunning = true;
+            Choreographer.getInstance().postFrameCallback(this);
+        }
+    }
+
 }

@@ -1033,8 +1033,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         card.position = position;
         field.removeCard(oldCtrl, oldLoc, oldSeq);
         field.addCard(newCtrl, newLoc, newSeq, card);
-
-        if (newLoc == CardLocation.Removed.value()) {
+        field.moveCardAnimated(card, 8); if (newLoc == CardLocation.Removed.value()) {
             soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
         } else if (newLoc == CardLocation.Grave.value()) {
             soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);

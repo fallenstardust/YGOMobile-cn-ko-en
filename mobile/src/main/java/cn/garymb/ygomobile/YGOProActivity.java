@@ -1466,6 +1466,8 @@ public class YGOProActivity extends AppCompatActivity implements
         }
         if (card != null && card.code > 0) {
             showCardInfoPanel(card);
+        } else if (card != null) {
+            showCardInfoPanel(card);
         }
     }
 

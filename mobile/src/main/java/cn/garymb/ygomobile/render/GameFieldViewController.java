@@ -40,7 +40,10 @@ public class GameFieldViewController {
 
     public void invalidate() {
         if (gameFieldView != null) {
-            mainHandler.post(gameFieldView::invalidate);
+            mainHandler.post(() -> {
+                gameFieldView.invalidate();
+                gameFieldView.startAnimationLoop();
+            });
         }
     }
 
