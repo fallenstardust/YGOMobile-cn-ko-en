@@ -1,6 +1,6 @@
 #include "config.h"
 #include "game.h"
-#include "myfilesystem.h"
+#include "file_system.h"
 #include "image_manager.h"
 #include "data_manager.h"
 #include "deck_manager.h"
@@ -329,6 +329,10 @@ bool Game::Initialize(ANDROID_APP app, irr::android::InitOptions *options) {
     LoadExpansions();
     // 加载禁限卡表
     deckManager.LoadLFList(options);
+	if(gameConf.default_lflist >= (int)deckManager._lfList.size() || gameConf.default_lflist < 0)
+		gameConf.default_lflist = 0;
+	if(gameConf.default_genesys_lflist >= (int)deckManager._genesys_lfList.size() || gameConf.default_genesys_lflist < 0)
+		gameConf.default_genesys_lflist = 0;
 	// 获取GUI环境
 	env = device->getGUIEnvironment();
 	// 检查是否启用字体抗锯齿
@@ -1664,13 +1668,11 @@ void Game::MainLoop() {
 	}
 
 	// 游戏结束后的清理工作
-	DuelClient::StopClient(true);
+	DuelClient::StopClient(CLIENT_CLOSE_REASON_EXIT);
 	if(dInfo.isSingleMode)
 		SingleMode::StopPlay(true);
-
-	usleep(500000);      // 等待半秒后保存配置
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	SaveConfig();
-	usleep(500000);      // 再等待半秒后释放设备资源
 	device->drop();
 }
 
@@ -2047,6 +2049,7 @@ void Game::LoadConfig() {
     gameConf.enable_log = 3;
 	//TEST BOT MODE
 	gameConf.enable_bot_mode = 1;
+	gameConf.bot_room_public = 1;
 	gameConf.use_image_scale_multi_thread = 1;
 }
 
@@ -2687,6 +2690,39 @@ void Game::ChangeToIGUIImageButton(irr::gui::IGUIButton* button, irr::video::ITe
 void Game::OnGameClose() {
 	irr::android::onGameExit(appMain);
     this->device->closeDevice();
+}
+bool Game::SpawnAsync(const std::wstring& exePath, const std::vector<std::wstring>& args) {
+	std::string exePathUTF8 = BufferIO::EncodeUTF8String(exePath);
+
+	std::vector<std::string> utf8Args;
+	utf8Args.emplace_back(exePathUTF8);
+	for (const auto& arg : args) {
+		utf8Args.push_back(BufferIO::EncodeUTF8String(arg));
+	}
+
+	std::vector<char*> execArgs;
+	execArgs.reserve(utf8Args.size() + 1);
+	for (auto& arg : utf8Args) {
+		execArgs.push_back(const_cast<char*>(arg.c_str()));
+	}
+	execArgs.push_back(nullptr);
+
+	// 忽略 SIGCHLD 以防止子进程结束后变成僵尸进程 (等价于原SIG_IGN 注释意图)
+	signal(SIGCHLD, SIG_IGN);
+
+	// posix_spawn 在 Android Bionic 中需要 __ANDROID_API__ >= 28,
+	// 而本项目minSdk / APP_PLATFORM 为 21, 故改用全版本可用的 fork + execv
+	pid_t pid = fork();
+	if (pid < 0) {
+		return false; // fork 失败
+	}
+	if (pid == 0) {
+		// 子进程:使用当前环境变量执行目标程序,失败则退出
+		execv(exePathUTF8.c_str(), execArgs.data());
+		_exit(127); // execv 返回即表示执行失败
+	}
+	// 父进程:忽略 pid 返回值, 认为子进程创建成功
+	return true;
 }
 /**
  * @brief 显示表情包

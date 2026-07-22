@@ -88,9 +88,11 @@ struct Config {
 	int chkIgnoreDeckChanges{ 0 };
 	int defaultOT{ 1 };
 	int enable_bot_mode{ 0 };
+	int bot_room_public{ 0 };
 	int quick_animation{ 0 };
 	int auto_save_replay{ 0 };
 	int draw_single_chain{ 0 };
+	int solid_selection_line{ 0 };
 	int hide_player_name{ 0 };
 	int prefer_expansion_script{ 1 };
 	int enable_genesys_mode{ 0 };
@@ -266,6 +268,8 @@ public:
     irr::core::recti Resize_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::recti Resize_X_Y(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
     irr::core::vector2di Resize_Y(irr::s32 x, irr::s32 y);
+
+	static bool SpawnAsync(const std::wstring& exePath, const std::vector<std::wstring>& args);
     template<typename T>
     static std::vector<T> TokenizeString(T input, const T& token);
 	template<typename T>
@@ -324,6 +328,8 @@ public:
 	bool is_siding{};
 	bool exit_on_return{ false };
 	bool bot_mode{ false };
+	std::wstring pending_bot_executable;
+	std::vector<std::wstring> pending_bot_args;
 
 	irr::core::dimension2d<irr::u32> window_size;
 	float xScale{ 1.0f };

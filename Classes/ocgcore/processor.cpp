@@ -3256,6 +3256,8 @@ int32_t field::process_battle_command(uint16_t step) {
 	}
 	case 39: {
 		//end of damage step
+		if(core.attacker->is_status(STATUS_ATTACK_CANCELED))
+			core.attacker->reset(EFFECT_ATTACK_DISABLED, RESET_CODE);
 		core.attacker->set_status(STATUS_OPPO_BATTLE, FALSE);
 		if(core.attack_target)
 			core.attack_target->set_status(STATUS_OPPO_BATTLE, FALSE);

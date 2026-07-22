@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -189,7 +190,13 @@ public class DeckUtil {
             if (file.isFile()) {
                 ZipFile zipFile = null;
                 try {
-                    zipFile = new ZipFile(file.getAbsoluteFile(), StandardCharsets.UTF_8);
+                    try {
+                        zipFile = new ZipFile(file.getAbsoluteFile(), StandardCharsets.UTF_8);
+                        zipFile.entries().hasMoreElements();
+                    } catch (IllegalArgumentException e) {
+                        IOUtils.close(zipFile);
+                        zipFile = new ZipFile(file.getAbsoluteFile(), Charset.forName("GBK"));
+                    }
                     Enumeration<?> entries = zipFile.entries();
                     while (entries.hasMoreElements()) {
                         ZipEntry entry = (ZipEntry) entries.nextElement();
@@ -200,6 +207,8 @@ public class DeckUtil {
                             deckList.add(new DeckFile(IOUtils.asFile(inputStream, appsSettings.getCacheDeckDir() + "/" + name)));
                         }
                     }
+                } catch (IllegalArgumentException e) {
+                    LogUtil.e(TAG, "无法解压文件，编码不兼容: " + file.getAbsolutePath());
                 } finally {
                     IOUtils.close(zipFile);
                 }
