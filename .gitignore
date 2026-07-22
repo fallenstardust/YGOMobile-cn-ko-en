@@ -64,6 +64,7 @@ output-metadata.json
 /mobile/assets/jp/data/*.cdb
 /mobile/assets/pt/data/*.cdb
 /mobile/assets/data/sound/
+/mobile/assets/data/fonts/
 /mobile/assets/data/*.zip
 
 /mobile/cn/release/baselineProfiles/

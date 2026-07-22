@@ -81,9 +81,9 @@ jobs:
     - name: Prepare Sound
       run: |
         cd mobile/assets/en/data
-        wget https://github.com/fallenstardust/YGOMobile-cn-ko-en/releases/download/sounds/sound.zip
-        unzip sound.zip
-        rm sound.zip
+        wget https://github.com/fallenstardust/YGOMobile-cn-ko-en/releases/download/sounds/sound.fonts.zip
+        unzip sound.fonts.zip
+        rm sound.fonts.zip
 
     - name: Prepare Pack
       run: |
