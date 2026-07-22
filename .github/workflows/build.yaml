@@ -164,4 +164,4 @@ jobs:
           secret_key: ${{ secrets.S3_SECRET_KEY }}
           bucket: ${{ secrets.S3_BUCKET }}
           file_name: YGOMobile.apk
-          file_path: ./build/YGOMobile.Apk/YGOMobile.Apk
+          file_path: ./build/YGOMobile.apk/YGOMobile.apk
