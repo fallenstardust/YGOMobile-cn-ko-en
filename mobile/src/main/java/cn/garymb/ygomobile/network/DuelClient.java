@@ -241,6 +241,14 @@ public class DuelClient implements YGOProtocol {
                 case STOC_HS_WATCH_CHANGE:
                     handleWatchChange(buf);
                     break;
+                case STOC_DECK_COUNT:
+                    handleDeckCount(buf);
+                    break;
+                case STOC_TP_RESULT:
+                case STOC_LEAVE_GAME:
+                case STOC_TEAMMATE_SURRENDER:
+                case STOC_FIELD_FINISH:
+                    break;
                 default:
                     listener.onPacketReceived(proto, buf);
                     break;
@@ -268,7 +276,9 @@ public class DuelClient implements YGOProtocol {
 
     private void handleTypeChange(ByteBuffer buf) {
         if (buf.remaining() < 1) return;
-        selfType = buf.get() & 0xFF;
+        int typeVal = buf.get() & 0xFF;
+        selfType = typeVal & 0xf;
+        boolean isHost = ((typeVal >> 4) & 0xf) != 0;
         if (listener != null) {
             listener.onTypeChange(selfType);
         }
@@ -282,7 +292,7 @@ public class DuelClient implements YGOProtocol {
         int duelRule = buf.get() & 0xFF;
         int noCheckDeck = buf.get() & 0xFF;
         int noShuffleDeck = buf.get() & 0xFF;
-        buf.position(buf.position() + 2);
+        buf.position(buf.position() + 3);
         int startLp = buf.getInt();
         int startHand = buf.get() & 0xFF;
         int drawCount = buf.get() & 0xFF;
@@ -347,6 +357,19 @@ public class DuelClient implements YGOProtocol {
         }
     }
 
+    private void handleDeckCount(ByteBuffer buf) {
+        if (buf.remaining() < 12) return;
+        int deck0 = buf.getShort() & 0xFFFF;
+        int extra0 = buf.getShort() & 0xFFFF;
+        int side0 = buf.getShort() & 0xFFFF;
+        int deck1 = buf.getShort() & 0xFFFF;
+        int extra1 = buf.getShort() & 0xFFFF;
+        int side1 = buf.getShort() & 0xFFFF;
+        if (listener != null) {
+            listener.onPacketReceived(STOC_DECK_COUNT, buf);
+        }
+    }
+
     // === Send methods ===
 
     public void sendExternalAddress(String address) {
@@ -373,7 +396,9 @@ public class DuelClient implements YGOProtocol {
         buf.put((byte) duelRule);
         buf.put((byte) (noCheckDeck ? 1 : 0));
         buf.put((byte) (noShuffleDeck ? 1 : 0));
-        buf.position(buf.position() + 2);
+        buf.put((byte) 0);
+        buf.put((byte) 0);
+        buf.put((byte) 0);
         buf.putInt(startLp);
         buf.put((byte) startHand);
         buf.put((byte) drawCount);
@@ -386,7 +411,8 @@ public class DuelClient implements YGOProtocol {
     public void sendJoinGame(int version, String pass) {
         ByteBuffer buf = BufferIO.createPacket(CTOS_JOIN_GAME);
         buf.putShort((short) version);
-        buf.position(buf.position() + 6);
+        buf.putShort((short) 0);
+        buf.putInt(0);
         BufferIO.writeUTF16(buf, pass, 20);
         sendRaw(BufferIO.finalizePacket(buf));
     }

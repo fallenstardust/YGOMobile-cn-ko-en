@@ -32,11 +32,14 @@ public interface YGOProtocol {
     int STOC_SELECT_HAND = 0x3;
     int STOC_SELECT_TP = 0x4;
     int STOC_HAND_RESULT = 0x5;
+    int STOC_TP_RESULT = 0x6;
     int STOC_CHANGE_SIDE = 0x7;
     int STOC_WAITING_SIDE = 0x8;
+    int STOC_DECK_COUNT = 0x9;
     int STOC_CREATE_GAME = 0x11;
     int STOC_JOIN_GAME = 0x12;
     int STOC_TYPE_CHANGE = 0x13;
+    int STOC_LEAVE_GAME = 0x14;
     int STOC_DUEL_START = 0x15;
     int STOC_DUEL_END = 0x16;
     int STOC_REPLAY = 0x17;
@@ -45,6 +48,8 @@ public interface YGOProtocol {
     int STOC_HS_PLAYER_ENTER = 0x20;
     int STOC_HS_PLAYER_CHANGE = 0x21;
     int STOC_HS_WATCH_CHANGE = 0x22;
+    int STOC_TEAMMATE_SURRENDER = 0x23;
+    int STOC_FIELD_FINISH = 0x30;
 
     int ERRMSG_JOINERROR = 0x1;
     int ERRMSG_DECKERROR = 0x2;

@@ -55,8 +55,8 @@ public class LanModeDialog {
     private Button btnPwDuelistMode, btnPwSpectatorMode, btnPwReady, btnPwDeckSelect, btnPwExitWaiting;
     private Button btnPwStartGame;
     private ImageButton btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
-    private TextView tvPwBanlist, tvPwCardAllowed, tvPwDuelMode, tvPwStartLP, tvPwStartHand, tvPwDrawCount, tvPwTimeLimit;
-    private TextView tvWatchCount;
+    private TextView tvRoomInfo;
+ private TextView tvWatchCount;
     private View layoutTagPlayers;
     private int selfPos = 0;
     private boolean isSelfReady = false;
@@ -245,14 +245,6 @@ public class LanModeDialog {
             layoutCreateHost.setVisibility(View.GONE);
             showPlayerWaiting();
 
-            tvPwBanlist.setText(banlist.isEmpty() ? "N/A" : banlist);
-            tvPwCardAllowed.setText(cardAllowed.isEmpty() ? "所有卡片" : cardAllowed);
-            tvPwDuelMode.setText(duelMode.isEmpty() ? "单局模式" : duelMode);
-            tvPwStartLP.setText(startLPStr.isEmpty() ? "8000" : startLPStr);
-            tvPwStartHand.setText(startHandStr.isEmpty() ? "5" : startHandStr);
-            tvPwDrawCount.setText(drawCountStr.isEmpty() ? "1" : drawCountStr);
-            tvPwTimeLimit.setText(timeLimitStr.isEmpty() ? "0" : timeLimitStr);
-
             if (layoutTagPlayers != null) {
                 layoutTagPlayers.setVisibility("TAG".equals(duelMode) ? View.VISIBLE : View.INVISIBLE);
             }
@@ -393,14 +385,6 @@ public class LanModeDialog {
             layoutLanMain.setVisibility(View.GONE);
             showPlayerWaiting();
 
-            tvPwBanlist.setText("N/A");
-            tvPwCardAllowed.setText("所有卡片");
-            tvPwDuelMode.setText("单局模式");
-            tvPwStartLP.setText("8000");
-            tvPwStartHand.setText("5");
-            tvPwDrawCount.setText("1");
-            if (tvPwTimeLimit != null) tvPwTimeLimit.setText("0");
-
             if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.GONE);
 
             etPwPlayer1Name.setText(nickname.isEmpty() ? Constants.PlayerName : nickname);
@@ -432,13 +416,7 @@ public class LanModeDialog {
         btnPwKickPlayer2 = layoutPlayerWaiting.findViewById(R.id.btn_kick_player2);
         btnPwKickPlayer3 = layoutPlayerWaiting.findViewById(R.id.btn_kick_player3);
         btnPwKickPlayer4 = layoutPlayerWaiting.findViewById(R.id.btn_kick_player4);
-        tvPwBanlist = layoutPlayerWaiting.findViewById(R.id.tv_banlist);
-        tvPwCardAllowed = layoutPlayerWaiting.findViewById(R.id.tv_card_allowed);
-        tvPwDuelMode = layoutPlayerWaiting.findViewById(R.id.tv_duel_mode);
-        tvPwStartLP = layoutPlayerWaiting.findViewById(R.id.tv_start_lp);
-        tvPwStartHand = layoutPlayerWaiting.findViewById(R.id.tv_start_hand);
-        tvPwDrawCount = layoutPlayerWaiting.findViewById(R.id.tv_draw_count);
-        tvPwTimeLimit = layoutPlayerWaiting.findViewById(R.id.tv_time_limit);
+        tvRoomInfo = layoutPlayerWaiting.findViewById(R.id.tv_room_info);
         tvWatchCount = layoutPlayerWaiting.findViewById(R.id.tv_watch_count);
         layoutTagPlayers = layoutPlayerWaiting.findViewById(R.id.layout_tag_players);
         
@@ -509,6 +487,7 @@ public class LanModeDialog {
         if (layoutCreateHost != null) layoutCreateHost.setVisibility(View.GONE);
         if (layoutPlayerWaiting != null) layoutPlayerWaiting.setVisibility(View.VISIBLE);
 
+        resetRoomInfo();
         resetPlayerWaitingState();
         setupKickButtons();
         setupStartButton();
@@ -693,15 +672,12 @@ public class LanModeDialog {
         return -1;
     }
 
-    public void updateRoomInfo(int lflist, int rule, int mode, int startLp, int startHand, int drawCount, int timeLimit) {
-        if (tvPwBanlist != null) tvPwBanlist.setText(getBanlistName(lflist));
-        if (tvPwCardAllowed != null) tvPwCardAllowed.setText(getCardAllowedName(rule));
-        if (tvPwStartLP != null) tvPwStartLP.setText(String.valueOf(startLp));
-        if (tvPwStartHand != null) tvPwStartHand.setText(String.valueOf(startHand));
-        if (tvPwDrawCount != null) tvPwDrawCount.setText(String.valueOf(drawCount));
-        if (tvPwTimeLimit != null) tvPwTimeLimit.setText(timeLimit > 0 ? String.valueOf(timeLimit) : "无限制");
-
-        isTagMode = (mode == 2);
+    public void updateRoomInfo(int lflist, int rule, int mode, int duelRule,
+                               int noCheckDeck, int noShuffleDeck,
+                               int startLp, int startHand, int drawCount, int timeLimit) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("禁限卡表：").append(getBanlistName(lflist)).append("\n");
+        sb.append("卡片允许：").append(getCardAllowedName(rule)).append("\n");
 
         String duelModeText;
         switch (mode) {
@@ -709,7 +685,7 @@ public class LanModeDialog {
                 duelModeText = "单局模式";
                 break;
             case 1:
-                duelModeText = "比赛模式";
+                duelModeText = "三局两胜";
                 break;
             case 2:
                 duelModeText = "TAG";
@@ -717,12 +693,52 @@ public class LanModeDialog {
             default:
                 duelModeText = "unknown mode";
         }
-        if (tvPwDuelMode != null) tvPwDuelMode.setText(duelModeText);
+        sb.append("决斗模式：").append(duelModeText).append("\n");
+
+        if (timeLimit > 0) {
+            sb.append("回合时间：").append(timeLimit).append("\n");
+        }
+
+        sb.append("==========\n");
+        sb.append("初始基本分：").append(startLp).append("\n");
+        sb.append("初始手卡数：").append(startHand).append("\n");
+        sb.append("每回合抽卡：").append(drawCount).append("\n");
+
+        if (duelRule != 5) {
+            sb.append("*").append(getDuelRuleName(duelRule)).append("\n");
+        }
+        if (noCheckDeck != 0) {
+            sb.append("*不检查卡组\n");
+        }
+        if (noShuffleDeck != 0) {
+            sb.append("*不洗切卡组\n");
+        }
+
+        if (tvRoomInfo != null) tvRoomInfo.setText(sb.toString());
+
+        isTagMode = (mode == 2);
 
         if (layoutTagPlayers != null) {
             layoutTagPlayers.setVisibility(mode == 2 ? View.VISIBLE : View.INVISIBLE);
         }
         updateStartButtonState();
+    }
+
+    private void resetRoomInfo() {
+        if (tvRoomInfo != null) {
+            tvRoomInfo.setText("禁限卡表：----\n卡片允许：----\n决斗模式：----\n回合时间：----\n==========\n初始基本分：----\n初始手卡数：----\n每回合抽卡：----");
+        }
+    }
+
+    private String getDuelRuleName(int duelRule) {
+        switch (duelRule) {
+            case 1: return "大师规则";
+            case 2: return "新大师规则";
+            case 3: return "大师规则(2020)";
+            case 4: return "大师规则(2020)";
+            case 5: return "大师规则(2020)";
+            default: return "大师规则(2020)";
+        }
     }
 
     /**
