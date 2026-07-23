@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.game;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,7 +54,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_deck_card2, parent, false);
+                .inflate(R.layout.item_deck_card_horizontal, parent, false);
         if (mImageTop == null) {
             mImageTop = new ImageTop(parent.getContext());
         }

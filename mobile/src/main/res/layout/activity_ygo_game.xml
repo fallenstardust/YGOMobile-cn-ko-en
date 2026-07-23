@@ -188,6 +188,7 @@
                 </LinearLayout>
                 <!-- 卡组操作按钮 -->
                 <LinearLayout
+                    android:id="@+id/layout_deck_control"
                     android:layout_width="110dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="2dp"

@@ -1193,6 +1193,9 @@ public class YGOProActivity extends AppCompatActivity implements
             soundManager.enableSounds(enableSound);
             soundManager.enableMusic(enableMusic);
         }
+        if (deckEditorManager != null) {
+            deckEditorManager.refreshLimitList();
+        }
     }
 
     // === EngineListener ===

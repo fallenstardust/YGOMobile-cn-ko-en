@@ -1,192 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/layout_deck_editor_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FF000814"
     android:orientation="horizontal">
-
-    <!-- 左侧面板：卡片预览 + 操作按钮 -->
-    <LinearLayout
-        android:id="@+id/layout_deck_left_panel"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="0.22"
-        android:orientation="vertical"
-        android:padding="2dp">
-
-        <!-- 卡片预览区（蓝色边框） -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.55"
-            android:background="@drawable/panel_sci_fi_bg"
-            android:orientation="vertical"
-            android:padding="3dp">
-
-            <ImageView
-                android:id="@+id/iv_deck_card_image"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0.6"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
-                android:src="@drawable/unknown" />
-
-            <TextView
-                android:id="@+id/tv_deck_card_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="2dp"
-                android:text="Unknown[0]"
-                android:textColor="@color/white"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_deck_card_attr"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="[怪兽|效果] 种族/属性"
-                android:textColor="@color/holo_green_bright"
-                android:textSize="9sp" />
-
-            <TextView
-                android:id="@+id/tv_deck_card_level"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="[★1] 0/0"
-                android:textColor="@color/yellow"
-                android:textSize="9sp" />
-
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0.4">
-
-                <TextView
-                    android:id="@+id/tv_deck_card_desc"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="选择卡片查看详情"
-                    android:textColor="@color/white"
-                    android:textSize="9sp" />
-            </ScrollView>
-        </LinearLayout>
-
-        <!-- 操作按钮区 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.45"
-            android:orientation="horizontal"
-            android:paddingTop="4dp">
-
-            <!-- 左侧功能按钮列 -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.7"
-                android:orientation="vertical">
-
-                <Button
-                    android:id="@+id/btn_deck_exit"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/button3_bg"
-                    android:text="退出编辑"
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/btn_deck_shuffle"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/button3_bg"
-                    android:text="打乱"
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/btn_deck_sort"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/button3_bg"
-                    android:text="排序"
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/btn_deck_clear"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/button3_bg"
-                    android:text="清空"
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-
-                <Button
-                    android:id="@+id/btn_deck_delete"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/button3_bg"
-                    android:text="删除"
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-            </LinearLayout>
-
-            <!-- 右侧图标按钮列 -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="3dp"
-                android:layout_weight="0.3"
-                android:orientation="vertical">
-
-                <ImageButton
-                    android:id="@+id/btn_deck_settings"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginBottom="3dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/btn_sci_fi_bg"
-                    android:padding="6dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/setting" />
-
-                <ImageButton
-                    android:id="@+id/btn_deck_note"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginBottom="3dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/btn_sci_fi_bg"
-                    android:padding="6dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_note" />
-
-                <ImageButton
-                    android:id="@+id/btn_deck_sound"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/btn_sci_fi_bg"
-                    android:padding="6dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_volume_on" />
-            </LinearLayout>
-        </LinearLayout>
-    </LinearLayout>
 
     <!-- 中央区域：卡组管理 -->
     <LinearLayout
@@ -426,12 +245,15 @@
             android:textColor="#FF8800"
             android:textSize="9sp" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_deck_main"
+        <cn.garymb.ygomobile.ui.widget.CardGroupView
+            android:id="@+id/cgv_deck_main"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.5"
-            android:background="#20FFFFFF" />
+            android:background="#20FFFFFF"
+            app:lines="4"
+            app:line_limit="10"
+            app:line_max_count="15" />
 
         <!-- 额外卡组网格 -->
         <TextView
@@ -442,12 +264,15 @@
             android:textColor="#00CC66"
             android:textSize="9sp" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_deck_extra"
+        <cn.garymb.ygomobile.ui.widget.CardGroupView
+            android:id="@+id/cgv_deck_extra"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.22"
-            android:background="#20FFFFFF" />
+            android:background="#20FFFFFF"
+            app:lines="1"
+            app:line_limit="10"
+            app:line_max_count="15" />
 
         <!-- 副卡组网格 -->
         <TextView
@@ -458,12 +283,15 @@
             android:textColor="#FF66AA"
             android:textSize="9sp" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_deck_side"
+        <cn.garymb.ygomobile.ui.widget.CardGroupView
+            android:id="@+id/cgv_deck_side"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.22"
-            android:background="#20FFFFFF" />
+            android:background="#20FFFFFF"
+            app:lines="1"
+            app:line_limit="10"
+            app:line_max_count="15" />
     </LinearLayout>
 
     <!-- 右侧面板：搜索结果 -->

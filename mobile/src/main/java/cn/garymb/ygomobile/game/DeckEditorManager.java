@@ -32,7 +32,9 @@ import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
-import ocgcore.CardManager;
+import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+import cn.garymb.ygomobile.ui.widget.CardGroupView;
+import cn.garymb.ygomobile.ui.widget.CardView;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -88,7 +90,8 @@ public class DeckEditorManager {
     private ImageView ivCardImage;
     private TextView tvCardName, tvCardAttr, tvCardLevel, tvCardDesc;
     private TextView tvMainCount, tvExtraCount, tvSideCount, tvSearchResult;
-    private RecyclerView rvMain, rvExtra, rvSide, rvSearchResults;
+    private CardGroupView cgvMain, cgvExtra, cgvSide;
+    private RecyclerView rvSearchResults;
     private Spinner spinnerCategory, spinnerDeckList, spinnerFilterType;
     private Spinner spinnerFilterType2, spinnerFilterAttribute, spinnerFilterRace, spinnerFilterLimit;
     private Spinner spinnerSortType;
@@ -96,7 +99,9 @@ public class DeckEditorManager {
     private Button btnSave, btnSaveAs, btnShuffle, btnSort, btnClear, btnDelete, btnExit;
     private Button btnFilterEffect;
 
-    private DeckCardAdapter mainAdapter, extraAdapter, sideAdapter, searchAdapter;
+    private DeckCardAdapter searchAdapter;
+    private ImageTop mImageTop;
+    private LimitList mLimitList;
 
     private List<String> categoryList = new ArrayList<>();
     private List<String> deckNameList = new ArrayList<>();
@@ -153,9 +158,9 @@ public class DeckEditorManager {
         tvExtraCount = root.findViewById(R.id.tv_deck_extra_count);
         tvSideCount = root.findViewById(R.id.tv_deck_side_count);
         tvSearchResult = root.findViewById(R.id.tv_deck_search_result);
-        rvMain = root.findViewById(R.id.rv_deck_main);
-        rvExtra = root.findViewById(R.id.rv_deck_extra);
-        rvSide = root.findViewById(R.id.rv_deck_side);
+        cgvMain = root.findViewById(R.id.cgv_deck_main);
+        cgvExtra = root.findViewById(R.id.cgv_deck_extra);
+        cgvSide = root.findViewById(R.id.cgv_deck_side);
         rvSearchResults = root.findViewById(R.id.rv_deck_search_results);
         spinnerCategory = root.findViewById(R.id.spinner_deck_category);
         spinnerDeckList = root.findViewById(R.id.spinner_deck_list);
@@ -181,31 +186,34 @@ public class DeckEditorManager {
     }
 
     private void setupRecyclerViews() {
-        int columns = Constants.DECK_WIDTH_COUNT;
-
-        LimitList limitList = AppsSettings.get().getGenesysMode() == 1
+        mLimitList = AppsSettings.get().getGenesysMode() == 1
                 ? cardLoader.getGenesysLimitList()
                 : cardLoader.getLimitList();
+        mImageTop = new ImageTop(activity);
 
-        rvMain.setLayoutManager(new GridLayoutManager(activity, columns));
-        mainAdapter = new DeckCardAdapter(imageLoader, this, DeckInfo.Type.Main);
-        mainAdapter.setLimitList(limitList);
-        rvMain.setAdapter(mainAdapter);
+        cgvMain.setImageLoader(imageLoader);
+        cgvMain.setLineLimit(4, 10, 15);
 
-        rvExtra.setLayoutManager(new GridLayoutManager(activity, columns));
-        extraAdapter = new DeckCardAdapter(imageLoader, this, DeckInfo.Type.Extra);
-        extraAdapter.setLimitList(limitList);
-        rvExtra.setAdapter(extraAdapter);
+        cgvExtra.setImageLoader(imageLoader);
+        cgvExtra.setLineLimit(1, 10, 15);
 
-        rvSide.setLayoutManager(new GridLayoutManager(activity, columns));
-        sideAdapter = new DeckCardAdapter(imageLoader, this, DeckInfo.Type.Side);
-        sideAdapter.setLimitList(limitList);
-        rvSide.setAdapter(sideAdapter);
+        cgvSide.setImageLoader(imageLoader);
+        cgvSide.setLineLimit(1, 10, 15);
 
         rvSearchResults.setLayoutManager(new GridLayoutManager(activity, 3));
         searchAdapter = new DeckCardAdapter(imageLoader, this, null);
-        searchAdapter.setLimitList(limitList);
+        searchAdapter.setLimitList(mLimitList);
         rvSearchResults.setAdapter(searchAdapter);
+    }
+
+    public void refreshLimitList() {
+        mLimitList = AppsSettings.get().getGenesysMode() == 1
+                ? cardLoader.getGenesysLimitList()
+                : cardLoader.getLimitList();
+        if (cgvMain != null) cgvMain.updateTopImage(mImageTop, mLimitList);
+        if (cgvExtra != null) cgvExtra.updateTopImage(mImageTop, mLimitList);
+        if (cgvSide != null) cgvSide.updateTopImage(mImageTop, mLimitList);
+        if (searchAdapter != null) searchAdapter.setLimitList(mLimitList);
     }
 
     private void setupSpinners() {
@@ -593,10 +601,30 @@ public class DeckEditorManager {
 
     private void notifyDeckChanged() {
         updateDeckCounts();
-        if (mainAdapter != null) mainAdapter.setCards(currentDeck.mainCards);
-        if (extraAdapter != null) extraAdapter.setCards(currentDeck.extraCards);
-        if (sideAdapter != null) sideAdapter.setCards(currentDeck.sideCards);
+        refreshCardGroupView(cgvMain, currentDeck.mainCards, DeckInfo.Type.Main);
+        refreshCardGroupView(cgvExtra, currentDeck.extraCards, DeckInfo.Type.Extra);
+        refreshCardGroupView(cgvSide, currentDeck.sideCards, DeckInfo.Type.Side);
         if (listener != null) listener.onDeckModified();
+    }
+
+    private void refreshCardGroupView(CardGroupView groupView, List<Card> cards, DeckInfo.Type type) {
+        if (groupView == null) return;
+        groupView.removeAllCards();
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.get(i);
+            groupView.addCard(card);
+        }
+        groupView.updateTopImage(mImageTop, mLimitList);
+        int count = groupView.getChildCount();
+        for (int i = 0; i < count; i++) {
+            CardView cardView = (CardView) groupView.getChildAt(i);
+            final int index = i;
+            cardView.setOnClickListener(v -> onDeckCardClicked(type, index));
+            cardView.setOnLongClickListener(v -> {
+                onDeckCardLongClicked(type, index);
+                return true;
+            });
+        }
     }
 
     private void updateDeckCounts() {
