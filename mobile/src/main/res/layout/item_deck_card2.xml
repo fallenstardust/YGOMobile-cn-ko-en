@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="1dp">
+
+    <ImageView
+        android:id="@+id/iv_deck_card_item"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/unknown" />
+
+    <ImageView
+        android:id="@+id/iv_deck_card_limit_top"
+        android:layout_width="@dimen/right_size2"
+        android:layout_height="@dimen/right_size2"
+        android:layout_gravity="top|end"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tv_deck_limit_num"
+        android:layout_width="@dimen/right_size2"
+        android:layout_height="@dimen/right_size2"
+        android:layout_gravity="top|end"
+        android:gravity="center"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+</FrameLayout>

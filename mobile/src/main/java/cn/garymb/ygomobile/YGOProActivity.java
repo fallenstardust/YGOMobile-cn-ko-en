@@ -43,6 +43,7 @@ import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.game.DeckEditorManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.ReplayEngine;
@@ -80,6 +81,8 @@ public class YGOProActivity extends AppCompatActivity implements
     private ImageLoader imageLoader;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private GameFieldViewController fieldViewController;
+    private DeckEditorManager deckEditorManager;
+    private View layoutDeckEditor;
     private TextView tvPlayerLp, tvPlayerName, tvOpponentLp, tvOpponentName;
     private TextView tvTurnCounter;
     private TextView tvPlayerHandCount, tvOpponentHandCount;
@@ -1110,7 +1113,53 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private void showDeckEditDialog() {
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
-        new DeckEditDialog(this).show();
+        hideMainMenu();
+        hideGameUI();
+        showDeckEditorView();
+    }
+
+    private void showDeckEditorView() {
+        if (layoutDeckEditor == null) {
+            layoutDeckEditor = findViewById(R.id.layout_deck_editor);
+        }
+        if (layoutDeckEditor != null) {
+            layoutDeckEditor.setVisibility(View.VISIBLE);
+        }
+        if (deckEditorManager == null) {
+            deckEditorManager = new DeckEditorManager(this, imageLoader);
+            deckEditorManager.setListener(new DeckEditorManager.DeckEditorListener() {
+                @Override
+                public void onDeckModified() {
+                }
+
+                @Override
+                public void onDeckSaved() {
+                }
+
+                @Override
+                public void onExitEditor() {
+                    hideDeckEditorView();
+                    restoreMainMenu();
+                }
+
+                @Override
+                public void onCardSelected(Card card) {
+                }
+
+                @Override
+                public void onSearchResultsUpdated(int count) {
+                }
+            });
+        }
+        if (layoutDeckEditor != null) {
+            deckEditorManager.initialize(layoutDeckEditor);
+        }
+    }
+
+    private void hideDeckEditorView() {
+        if (layoutDeckEditor != null) {
+            layoutDeckEditor.setVisibility(View.GONE);
+        }
     }
 
     private void setWindowBackground(String relativePath) {

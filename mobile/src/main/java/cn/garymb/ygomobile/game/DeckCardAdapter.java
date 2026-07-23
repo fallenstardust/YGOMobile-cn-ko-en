@@ -1,0 +1,154 @@
+package cn.garymb.ygomobile.game;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import cn.garymb.ygomobile.bean.DeckInfo;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+
+import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.data.Card;
+import ocgcore.data.LimitList;
+import ocgcore.enums.LimitType;
+
+public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardViewHolder> {
+
+    private final ImageLoader imageLoader;
+    private final DeckEditorManager editorManager;
+    private final DeckInfo.Type deckType;
+    private final List<Card> cards = new ArrayList<>();
+    private ImageTop mImageTop;
+    private LimitList mLimitList;
+
+    public DeckCardAdapter(ImageLoader imageLoader, DeckEditorManager editorManager, DeckInfo.Type deckType) {
+        this.imageLoader = imageLoader;
+        this.editorManager = editorManager;
+        this.deckType = deckType;
+    }
+
+    public void setLimitList(LimitList limitList) {
+        this.mLimitList = limitList;
+        notifyDataSetChanged();
+    }
+
+    public void setCards(List<Card> newCards) {
+        cards.clear();
+        if (newCards != null) {
+            cards.addAll(newCards);
+        }
+        notifyDataSetChanged();
+    }
+
+    @NonNull
+    @Override
+    public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_deck_card2, parent, false);
+        if (mImageTop == null) {
+            mImageTop = new ImageTop(parent.getContext());
+        }
+        return new CardViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
+        Card card = cards.get(position);
+        if (card == null) {
+            holder.ivCard.setImageResource(R.drawable.unknown);
+            holder.ivLimitTop.setVisibility(View.GONE);
+            holder.tvLimitNum.setVisibility(View.GONE);
+            return;
+        }
+
+        imageLoader.bindImage(holder.ivCard, card, ImageLoader.Type.small);
+        bindLimitOverlay(holder, card);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (deckType == null) {
+                editorManager.onSearchCardClicked(card);
+            } else {
+                editorManager.onDeckCardClicked(deckType, holder.getAdapterPosition());
+            }
+        });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (deckType != null) {
+                editorManager.onDeckCardLongClicked(deckType, holder.getAdapterPosition());
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void bindLimitOverlay(@NonNull CardViewHolder holder, Card card) {
+        if (mImageTop == null || mLimitList == null) {
+            holder.ivLimitTop.setVisibility(View.GONE);
+            holder.tvLimitNum.setVisibility(View.GONE);
+            return;
+        }
+
+        if (mLimitList.check(card, LimitType.Forbidden)) {
+            holder.ivLimitTop.setVisibility(View.VISIBLE);
+            holder.ivLimitTop.setImageBitmap(mImageTop.forbidden);
+            holder.tvLimitNum.setVisibility(View.VISIBLE);
+            holder.tvLimitNum.setText("");
+            holder.tvLimitNum.setTextColor(YGOUtil.c(R.color.white));
+        } else if (mLimitList.check(card, LimitType.Limit)) {
+            holder.ivLimitTop.setVisibility(View.VISIBLE);
+            holder.ivLimitTop.setImageBitmap(mImageTop.limit);
+            holder.tvLimitNum.setVisibility(View.VISIBLE);
+            holder.tvLimitNum.setText("1");
+            holder.tvLimitNum.setTextColor(YGOUtil.c(R.color.yellow));
+        } else if (mLimitList.check(card, LimitType.SemiLimit)) {
+            holder.ivLimitTop.setVisibility(View.VISIBLE);
+            holder.ivLimitTop.setImageBitmap(mImageTop.semiLimit);
+            holder.tvLimitNum.setVisibility(View.VISIBLE);
+            holder.tvLimitNum.setText("2");
+            holder.tvLimitNum.setTextColor(YGOUtil.c(R.color.yellow));
+        } else if (mLimitList.check(card, LimitType.GeneSys)) {
+            Integer creditValue = 0;
+            if (mLimitList.getCredits() != null) {
+                creditValue = mLimitList.getCredits().get(card.getCode());
+            }
+            holder.ivLimitTop.setVisibility(View.VISIBLE);
+            holder.ivLimitTop.setImageBitmap(mImageTop.credits);
+            holder.tvLimitNum.setVisibility(View.VISIBLE);
+            holder.tvLimitNum.setText(creditValue != null ? creditValue.toString() : "0");
+            holder.tvLimitNum.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
+            holder.tvLimitNum.setTextSize((creditValue != null && creditValue > -10 && creditValue < 100) ? 8 : 6);
+        } else {
+            holder.ivLimitTop.setVisibility(View.GONE);
+            holder.tvLimitNum.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        return cards.size();
+    }
+
+    static class CardViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivCard;
+        ImageView ivLimitTop;
+        TextView tvLimitNum;
+
+        CardViewHolder(@NonNull View itemView) {
+            super(itemView);
+            ivCard = itemView.findViewById(R.id.iv_deck_card_item);
+            ivLimitTop = itemView.findViewById(R.id.iv_deck_card_limit_top);
+            tvLimitNum = itemView.findViewById(R.id.tv_deck_limit_num);
+        }
+    }
+}

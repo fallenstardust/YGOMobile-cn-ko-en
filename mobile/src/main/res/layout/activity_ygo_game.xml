@@ -39,8 +39,8 @@
                     android:id="@+id/layout_bottom_actions"
                     android:layout_width="110dp"
                     android:layout_height="match_parent"
-                    android:layout_toEndOf="@id/iv_card_image"
                     android:layout_marginStart="2dp"
+                    android:layout_toEndOf="@id/iv_card_image"
                     android:orientation="vertical"
                     android:visibility="visible">
 
@@ -116,8 +116,8 @@
                     android:id="@+id/layout_replay_control"
                     android:layout_width="110dp"
                     android:layout_height="match_parent"
-                    android:layout_toEndOf="@id/iv_card_image"
                     android:layout_marginStart="2dp"
+                    android:layout_toEndOf="@id/iv_card_image"
                     android:orientation="vertical"
                     android:visibility="gone">
 
@@ -185,8 +185,72 @@
                         android:text="退出"
                         android:textColor="@color/white"
                         android:textSize="10sp" />
-
                 </LinearLayout>
+                <!-- 卡组操作按钮 -->
+                <LinearLayout
+                    android:layout_width="110dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="2dp"
+                    android:layout_toEndOf="@id/iv_card_image"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/btn_deck_exit"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/quit"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_deck_shuffle"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/unsort"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_deck_sort"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/sort"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_deck_clear"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/clear_deck"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Button
+                        android:id="@+id/btn_deck_delete"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/delete"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
             </RelativeLayout>
 
             <LinearLayout
@@ -735,6 +799,14 @@
         android:padding="12dp"
         android:textColor="@color/white"
         android:textSize="14sp"
+        android:visibility="gone" />
+
+    <!-- 卡组编辑器视图 -->
+    <include
+        android:id="@+id/layout_deck_editor"
+        layout="@layout/layout_deck_editor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:visibility="gone" />
 
     <!-- 对话框容器 -->
