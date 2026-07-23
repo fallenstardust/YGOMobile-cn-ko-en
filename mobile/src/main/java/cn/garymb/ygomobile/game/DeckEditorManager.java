@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.SparseArray;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
@@ -149,11 +151,19 @@ public class DeckEditorManager {
     }
 
     private void bindViews(View root) {
-        ivCardImage = root.findViewById(R.id.iv_deck_card_image);
-        tvCardName = root.findViewById(R.id.tv_deck_card_name);
-        tvCardAttr = root.findViewById(R.id.tv_deck_card_attr);
-        tvCardLevel = root.findViewById(R.id.tv_deck_card_level);
-        tvCardDesc = root.findViewById(R.id.tv_deck_card_desc);
+        // 卡片详情面板复用 activity_ygo_game.xml 的 layout_card_detail
+        ivCardImage = activity.findViewById(R.id.iv_card_image);
+        tvCardName = activity.findViewById(R.id.tv_card_name);
+        tvCardAttr = activity.findViewById(R.id.tv_card_attr);
+        tvCardLevel = activity.findViewById(R.id.tv_card_level);
+        tvCardDesc = activity.findViewById(R.id.tv_card_desc);
+        // 卡组操作按钮复用 activity_ygo_game.xml 的 layout_deck_control
+        btnShuffle = activity.findViewById(R.id.btn_deck_shuffle);
+        btnSort = activity.findViewById(R.id.btn_deck_sort);
+        btnClear = activity.findViewById(R.id.btn_deck_clear);
+        btnDelete = activity.findViewById(R.id.btn_deck_delete);
+        btnExit = activity.findViewById(R.id.btn_deck_exit);
+        // 以下为卡组编辑器自身布局 (layout_deck_editor.xml)
         tvMainCount = root.findViewById(R.id.tv_deck_main_count);
         tvExtraCount = root.findViewById(R.id.tv_deck_extra_count);
         tvSideCount = root.findViewById(R.id.tv_deck_side_count);
@@ -177,11 +187,6 @@ public class DeckEditorManager {
         etKeyword = root.findViewById(R.id.et_filter_keyword);
         btnSave = root.findViewById(R.id.btn_deck_save);
         btnSaveAs = root.findViewById(R.id.btn_deck_save_as);
-        btnShuffle = root.findViewById(R.id.btn_deck_shuffle);
-        btnSort = root.findViewById(R.id.btn_deck_sort);
-        btnClear = root.findViewById(R.id.btn_deck_clear);
-        btnDelete = root.findViewById(R.id.btn_deck_delete);
-        btnExit = root.findViewById(R.id.btn_deck_exit);
         btnFilterEffect = root.findViewById(R.id.btn_filter_effect);
     }
 
@@ -200,10 +205,51 @@ public class DeckEditorManager {
         cgvSide.setImageLoader(imageLoader);
         cgvSide.setLineLimit(1, 10, 15);
 
-        rvSearchResults.setLayoutManager(new GridLayoutManager(activity, 3));
+        setupDeckCardSize();
+
+        rvSearchResults.setLayoutManager(new LinearLayoutManager(activity));
         searchAdapter = new DeckCardAdapter(imageLoader, this, null);
         searchAdapter.setLimitList(mLimitList);
         rvSearchResults.setAdapter(searchAdapter);
+    }
+
+    /**
+     * 根据主卡组区域的实际测量宽高动态计算卡片尺寸，
+     * 保证一行能放下 {@link Constants#DECK_WIDTH_COUNT} 张，且主卡组 4 行能完整显示，
+     * 三个卡组区域使用同一尺寸。
+     */
+    private void setupDeckCardSize() {
+        if (cgvMain == null) return;
+        cgvMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int width = cgvMain.getWidth();
+                int height = cgvMain.getHeight();
+                if (width <= 0 || height <= 0) return;
+                cgvMain.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                applyDeckCardSize(width, height);
+            }
+        });
+    }
+
+    private void applyDeckCardSize(int mainWidth, int mainHeight) {
+        int availWidth = mainWidth - cgvMain.getPaddingLeft() - cgvMain.getPaddingRight();
+        int availHeight = mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom();
+        if (availWidth <= 0 || availHeight <= 0) return;
+
+        float ratio = (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[1] / (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
+        // 宽度约束：一行 DECK_WIDTH_COUNT 张
+        int widthByColumn = availWidth / Constants.DECK_WIDTH_COUNT;
+        // 高度约束：主卡组默认 4 行必须完整显示
+        int widthByRow = (int) ((availHeight / 4f) / ratio);
+        int cardWidth = Math.max(1, Math.min(widthByColumn, widthByRow));
+        int cardHeight = Math.round(cardWidth * ratio);
+
+        cgvMain.setCardSize(cardWidth, cardHeight);
+        cgvExtra.setCardSize(cardWidth, cardHeight);
+        cgvSide.setCardSize(cardWidth, cardHeight);
+
+        notifyDeckChanged();
     }
 
     public void refreshLimitList() {

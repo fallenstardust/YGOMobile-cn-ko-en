@@ -1,31 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="1dp">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="3dp">
 
-    <ImageView
-        android:id="@+id/iv_deck_card_item"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:adjustViewBounds="true"
-        android:scaleType="fitCenter"
-        android:src="@drawable/unknown" />
+    <FrameLayout
+        android:layout_width="40dp"
+        android:layout_height="58dp">
 
-    <ImageView
-        android:id="@+id/iv_deck_card_limit_top"
-        android:layout_width="@dimen/right_size2"
-        android:layout_height="@dimen/right_size2"
-        android:layout_gravity="top|end"
-        android:visibility="gone" />
+        <ImageView
+            android:id="@+id/iv_deck_card_item"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/unknown" />
 
-    <TextView
-        android:id="@+id/tv_deck_limit_num"
-        android:layout_width="@dimen/right_size2"
-        android:layout_height="@dimen/right_size2"
-        android:layout_gravity="top|end"
-        android:gravity="center"
-        android:textSize="8sp"
-        android:textStyle="bold"
-        android:visibility="gone" />
-</FrameLayout>
+        <ImageView
+            android:id="@+id/iv_deck_card_limit_top"
+            android:layout_width="@dimen/right_size2"
+            android:layout_height="@dimen/right_size2"
+            android:layout_gravity="top|end"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_deck_limit_num"
+            android:layout_width="@dimen/right_size2"
+            android:layout_height="@dimen/right_size2"
+            android:layout_gravity="top|end"
+            android:gravity="center"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_deck_card_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tv_deck_card_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#B0D8FF"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tv_deck_card_atkdef"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#B0D8FF"
+            android:textSize="11sp" />
+    </LinearLayout>
+</LinearLayout>

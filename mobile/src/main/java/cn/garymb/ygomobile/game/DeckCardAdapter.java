@@ -17,9 +17,13 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 
+import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
+import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
 public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardViewHolder> {
@@ -68,11 +72,15 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             holder.ivCard.setImageResource(R.drawable.unknown);
             holder.ivLimitTop.setVisibility(View.GONE);
             holder.tvLimitNum.setVisibility(View.GONE);
+            if (holder.tvName != null) holder.tvName.setText("");
+            if (holder.tvInfo != null) holder.tvInfo.setText("");
+            if (holder.tvAtkDef != null) holder.tvAtkDef.setText("");
             return;
         }
 
         imageLoader.bindImage(holder.ivCard, card, ImageLoader.Type.small);
         bindLimitOverlay(holder, card);
+        bindCardInfo(holder, card);
 
         holder.itemView.setOnClickListener(v -> {
             if (deckType == null) {
@@ -89,6 +97,30 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             }
             return false;
         });
+    }
+
+    private void bindCardInfo(@NonNull CardViewHolder holder, Card card) {
+        if (holder.tvName == null || holder.tvInfo == null || holder.tvAtkDef == null) {
+            return;
+        }
+        holder.tvName.setText(card.Name);
+        StringManager sm = DataManager.get().getStringManager();
+        if (card.isSpellTrap()) {
+            holder.tvInfo.setText(CardUtils.getAllTypeString(card, sm));
+            holder.tvAtkDef.setText("");
+        } else {
+            String attr = sm.getAttributeString(card.Attribute);
+            String race = sm.getRaceString(card.Race);
+            String atk = card.Attack < 0 ? "?" : String.valueOf(card.Attack);
+            if (card.isType(CardType.Link)) {
+                holder.tvInfo.setText(attr + "/" + race + "  LINK-" + card.getStar());
+                holder.tvAtkDef.setText(atk + "/-");
+            } else {
+                String def = card.Defense < 0 ? "?" : String.valueOf(card.Defense);
+                holder.tvInfo.setText(attr + "/" + race + "  ★" + card.getStar());
+                holder.tvAtkDef.setText(atk + "/" + def);
+            }
+        }
     }
 
     private void bindLimitOverlay(@NonNull CardViewHolder holder, Card card) {
@@ -142,12 +174,18 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         ImageView ivCard;
         ImageView ivLimitTop;
         TextView tvLimitNum;
+        TextView tvName;
+        TextView tvInfo;
+        TextView tvAtkDef;
 
         CardViewHolder(@NonNull View itemView) {
             super(itemView);
             ivCard = itemView.findViewById(R.id.iv_deck_card_item);
             ivLimitTop = itemView.findViewById(R.id.iv_deck_card_limit_top);
             tvLimitNum = itemView.findViewById(R.id.tv_deck_limit_num);
+            tvName = itemView.findViewById(R.id.tv_deck_card_name);
+            tvInfo = itemView.findViewById(R.id.tv_deck_card_info);
+            tvAtkDef = itemView.findViewById(R.id.tv_deck_card_atkdef);
         }
     }
 }

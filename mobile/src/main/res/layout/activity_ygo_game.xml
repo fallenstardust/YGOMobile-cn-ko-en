@@ -402,9 +402,17 @@
 
 
         </LinearLayout>
-
+        <!-- 卡组编辑器视图 -->
+        <include
+            android:id="@+id/layout_deck_editor"
+            layout="@layout/layout_deck_editor"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.7"
+            android:visibility="gone" />
         <!-- 右侧区域（垂直）：顶部玩家信息 + 决斗场 -->
         <LinearLayout
+            android:id="@+id/layout_game_right"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.7"
@@ -802,13 +810,7 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
-    <!-- 卡组编辑器视图 -->
-    <include
-        android:id="@+id/layout_deck_editor"
-        layout="@layout/layout_deck_editor"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
+
 
     <!-- 对话框容器 -->
     <FrameLayout

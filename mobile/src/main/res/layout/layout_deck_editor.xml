@@ -4,336 +4,721 @@
     android:id="@+id/layout_deck_editor_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF000814"
-    android:orientation="horizontal">
+    android:orientation="vertical">
 
-    <!-- 中央区域：卡组管理 -->
+    <!-- ================= 顶部区域：卡组信息 + 筛选 ================= -->
     <LinearLayout
-        android:id="@+id/layout_deck_center"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="0.58"
-        android:orientation="vertical"
-        android:padding="2dp">
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.2"
+        android:orientation="horizontal">
 
-        <!-- 顶部：卡组名称 + 保存按钮 -->
+        <!-- 左侧：卡组信息面板 -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="0.3"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <Spinner
-                android:id="@+id/spinner_deck_category"
-                android:layout_width="0dp"
-                android:layout_height="32dp"
-                android:layout_weight="0.25"
-                android:background="@drawable/button3_bg" />
-
-            <Spinner
-                android:id="@+id/spinner_deck_list"
-                android:layout_width="0dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="3dp"
-                android:layout_weight="0.35"
-                android:background="@drawable/button3_bg" />
-
-            <Button
-                android:id="@+id/btn_deck_save"
-                android:layout_width="0dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="3dp"
-                android:layout_weight="0.15"
-                android:background="@drawable/button3_bg"
-                android:text="保存"
-                android:textColor="@color/white"
-                android:textSize="11sp" />
-
-            <Button
-                android:id="@+id/btn_deck_save_as"
-                android:layout_width="0dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="3dp"
-                android:layout_weight="0.15"
-                android:background="@drawable/button3_bg"
-                android:text="另存"
-                android:textColor="@color/white"
-                android:textSize="11sp" />
-        </LinearLayout>
-
-        <!-- 筛选条件行 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <Spinner
-                android:id="@+id/spinner_filter_type"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg" />
-
-            <Spinner
-                android:id="@+id/spinner_filter_type2"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg" />
-
-            <Spinner
-                android:id="@+id/spinner_filter_attribute"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg" />
-
-            <Spinner
-                android:id="@+id/spinner_filter_race"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg" />
-
-            <Spinner
-                android:id="@+id/spinner_filter_limit"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg" />
-
-            <Button
-                android:id="@+id/btn_filter_effect"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="0.8"
-                android:background="@drawable/button3_bg"
-                android:text="效果"
-                android:textColor="@color/white"
-                android:textSize="9sp" />
-        </LinearLayout>
-
-        <!-- 第二行筛选：攻击/守备/星数/刻度/关键字 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/et_filter_attack"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg"
-                android:hint="攻击"
-                android:inputType="text"
-                android:paddingStart="4dp"
-                android:textColor="@color/white"
-                android:textColorHint="#888888"
-                android:textSize="9sp" />
-
-            <EditText
-                android:id="@+id/et_filter_defense"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg"
-                android:hint="守备"
-                android:inputType="text"
-                android:paddingStart="4dp"
-                android:textColor="@color/white"
-                android:textColorHint="#888888"
-                android:textSize="9sp" />
-
-            <EditText
-                android:id="@+id/et_filter_star"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg"
-                android:hint="星数"
-                android:inputType="text"
-                android:paddingStart="4dp"
-                android:textColor="@color/white"
-                android:textColorHint="#888888"
-                android:textSize="9sp" />
-
-            <EditText
-                android:id="@+id/et_filter_scale"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="1"
-                android:background="@drawable/button3_bg"
-                android:hint="刻度"
-                android:inputType="text"
-                android:paddingStart="4dp"
-                android:textColor="@color/white"
-                android:textColorHint="#888888"
-                android:textSize="9sp" />
-
-            <EditText
-                android:id="@+id/et_filter_keyword"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_marginStart="2dp"
-                android:layout_weight="1.5"
-                android:background="@drawable/button3_bg"
-                android:hint="关键字"
-                android:inputType="text"
-                android:paddingStart="4dp"
-                android:textColor="@color/white"
-                android:textColorHint="#888888"
-                android:textSize="9sp" />
-        </LinearLayout>
-
-        <!-- 统计信息行 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:background="@drawable/sdialogl"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tv_deck_main_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="主卡组: 0"
-                android:textColor="#FF8800"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_deck_extra_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="额外卡组: 0"
-                android:textColor="#00CC66"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_deck_side_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="副卡组: 0"
-                android:textColor="#FF66AA"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- 主卡组网格 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="主卡组"
-            android:textColor="#FF8800"
-            android:textSize="9sp" />
-
-        <cn.garymb.ygomobile.ui.widget.CardGroupView
-            android:id="@+id/cgv_deck_main"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.5"
-            android:background="#20FFFFFF"
-            app:lines="4"
-            app:line_limit="10"
-            app:line_max_count="15" />
-
-        <!-- 额外卡组网格 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="额外卡组"
-            android:textColor="#00CC66"
-            android:textSize="9sp" />
-
-        <cn.garymb.ygomobile.ui.widget.CardGroupView
-            android:id="@+id/cgv_deck_extra"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.22"
-            android:background="#20FFFFFF"
-            app:lines="1"
-            app:line_limit="10"
-            app:line_max_count="15" />
-
-        <!-- 副卡组网格 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="副卡组"
-            android:textColor="#FF66AA"
-            android:textSize="9sp" />
-
-        <cn.garymb.ygomobile.ui.widget.CardGroupView
-            android:id="@+id/cgv_deck_side"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.22"
-            android:background="#20FFFFFF"
-            app:lines="1"
-            app:line_limit="10"
-            app:line_max_count="15" />
-    </LinearLayout>
-
-    <!-- 右侧面板：搜索结果 -->
-    <LinearLayout
-        android:id="@+id/layout_deck_right_panel"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="0.20"
-        android:orientation="vertical"
-        android:padding="2dp">
-
-        <!-- 搜索结果标题 + 排序 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/tv_deck_search_result"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="搜索结果: 0"
+                android:layout_marginBottom="2dp"
+                android:text="卡组:"
                 android:textColor="@color/white"
                 android:textSize="10sp" />
 
-            <Spinner
-                android:id="@+id/spinner_sort_type"
-                android:layout_width="0dp"
-                android:layout_height="26dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
                 android:layout_weight="1"
-                android:background="@drawable/button3_bg" />
+                android:orientation="horizontal">
+
+                <Spinner
+                    android:id="@+id/spinner_deck_category"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="0.8"
+                    android:background="@drawable/button3_bg" />
+
+                <Button
+                    android:id="@+id/btn_deck_save"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.2"
+                    android:background="@drawable/button3_bg"
+                    android:text="保存"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="5dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <Spinner
+                    android:id="@+id/spinner_deck_list"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.8"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/button3_bg" />
+
+                <Button
+                    android:id="@+id/btn_deck_save_as"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.2"
+                    android:background="@drawable/button3_bg"
+                    android:text="另存"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- 搜索结果列表 -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_deck_search_results"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="3dp"
-            android:layout_weight="1"
-            android:background="#20FFFFFF" />
+        <!-- 右侧：筛选面板 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/sdialogl"
+            android:layout_weight="0.58"
+            android:orientation="vertical">
+
+            <!-- 前三行 + 效果按钮 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <!-- 种类 + 禁限 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:text="种类:"
+                            android:textColor="#7FD6FF"
+                            android:textSize="10sp" />
+
+                        <Spinner
+                            android:id="@+id/spinner_filter_type"
+                            android:layout_width="0dp"
+                            android:layout_height="26dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button3_bg" />
+
+                        <Spinner
+                            android:id="@+id/spinner_filter_type2"
+                            android:layout_width="0dp"
+                            android:layout_height="26dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button3_bg" />
+
+                        <TextView
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="禁限:"
+                            android:textColor="#7FD6FF"
+                            android:textSize="10sp" />
+
+                        <Spinner
+                            android:id="@+id/spinner_filter_limit"
+                            android:layout_width="0dp"
+                            android:layout_height="26dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button3_bg" />
+                    </LinearLayout>
+
+                    <!-- 属性 + 攻击 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:text="属性:"
+                            android:textColor="#7FD6FF"
+                            android:textSize="10sp" />
+
+                        <Spinner
+                            android:id="@+id/spinner_filter_attribute"
+                            android:layout_width="0dp"
+                            android:layout_height="26dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button3_bg" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="攻击:"
+                            android:textColor="#7FD6FF"
+                            android:textSize="10sp" />
+
+                        <EditText
+                            android:id="@+id/et_filter_attack"
+                            android:layout_width="0dp"
+                            android:layout_height="26dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button3_bg"
+                            android:inputType="text"
+                            android:paddingStart="4dp"
+                            android:textColor="@color/white"
+                            android:textColorHint="#888888"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- 种族 + 守备 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:text="种族:"
+                            android:textColor="#7FD6FF"
+                            android:textSize="10sp" />
+
+                        <Spinner
+                            android:id="@+id/spinner_filter_race"
+                            android:layout_width="0dp"
+                            android:layout_height="26dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button3_bg" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="守备:"
+                            android:textColor="#7FD6FF"
+                            android:textSize="10sp" />
+
+                        <EditText
+                            android:id="@+id/et_filter_defense"
+                            android:layout_width="0dp"
+                            android:layout_height="26dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/button3_bg"
+                            android:inputType="text"
+                            android:paddingStart="4dp"
+                            android:textColor="@color/white"
+                            android:textColorHint="#888888"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_filter_effect"
+                    android:layout_width="46dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/button3_bg"
+                    android:text="效果"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- 星数 / 刻度 / 关键字 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="34dp"
+                    android:layout_height="wrap_content"
+                    android:text="星数:"
+                    android:textColor="#7FD6FF"
+                    android:textSize="10sp" />
+
+                <EditText
+                    android:id="@+id/et_filter_star"
+                    android:layout_width="0dp"
+                    android:layout_height="26dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button3_bg"
+                    android:inputType="text"
+                    android:paddingStart="4dp"
+                    android:textColor="@color/white"
+                    android:textColorHint="#888888"
+                    android:textSize="9sp" />
+
+                <TextView
+                    android:layout_width="34dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="刻度:"
+                    android:textColor="#7FD6FF"
+                    android:textSize="10sp" />
+
+                <EditText
+                    android:id="@+id/et_filter_scale"
+                    android:layout_width="0dp"
+                    android:layout_height="26dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button3_bg"
+                    android:inputType="text"
+                    android:paddingStart="4dp"
+                    android:textColor="@color/white"
+                    android:textColorHint="#888888"
+                    android:textSize="9sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="关键字:"
+                    android:textColor="#7FD6FF"
+                    android:textSize="10sp" />
+
+                <EditText
+                    android:id="@+id/et_filter_keyword"
+                    android:layout_width="0dp"
+                    android:layout_height="26dp"
+                    android:layout_marginStart="2dp"
+                    android:layout_weight="2"
+                    android:background="@drawable/button3_bg"
+                    android:inputType="text"
+                    android:paddingStart="4dp"
+                    android:textColor="@color/white"
+                    android:textColorHint="#888888"
+                    android:textSize="9sp" />
+            </LinearLayout>
+
+            <!-- 连接标记 / 清空 / 搜索 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_filter_marks"
+                    android:layout_width="0dp"
+                    android:layout_height="28dp"
+                    android:layout_weight="2"
+                    android:background="@drawable/button3_bg"
+                    android:text="连接标记"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btn_filter_clear"
+                    android:layout_width="0dp"
+                    android:layout_height="28dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button3_bg"
+                    android:text="清空"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btn_filter_search"
+                    android:layout_width="0dp"
+                    android:layout_height="28dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button3_bg"
+                    android:text="搜索"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ================= 主体区域：卡组网格 + 搜索结果 ================= -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="2dp"
+        android:layout_weight="0.8"
+        android:orientation="horizontal">
+
+        <!-- 左侧：卡组网格区域 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.78"
+            android:orientation="vertical">
+
+            <!-- 主卡组统计行 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_deck_main_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="主卡组: 0"
+                    android:textColor="#FF8800"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_deck_limit_total"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="限 100"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tv_deck_credit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="计 0"
+                    android:textColor="#FF5555"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tv_deck_remain"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="余 0"
+                    android:textColor="#FF5555"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tv_deck_genesys"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:padding="2dp"
+                    android:background="@drawable/selected"
+                    android:text="GENESYS"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:background="#C08A4B" />
+
+                <TextView
+                    android:id="@+id/tv_main_monster_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="#1E9E8F" />
+
+                <TextView
+                    android:id="@+id/tv_main_spell_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="#B44A7D" />
+
+                <TextView
+                    android:id="@+id/tv_main_trap_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- 主卡组网格 -->
+            <cn.garymb.ygomobile.ui.widget.CardGroupView
+                android:id="@+id/cgv_deck_main"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="2dp"
+                android:layout_weight="0.5"
+                android:background="@drawable/panel_sci_fi_bg"
+                app:line_limit="10"
+                app:line_max_count="15"
+                app:lines="4" />
+
+            <!-- 额外卡组统计行 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_deck_extra_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="额外卡组: 0"
+                    android:textColor="#00CC66"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:background="#A45CC8" />
+
+                <TextView
+                    android:id="@+id/tv_extra_fusion_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="#E8E8E8" />
+
+                <TextView
+                    android:id="@+id/tv_extra_synchro_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="#2A2A2A" />
+
+                <TextView
+                    android:id="@+id/tv_extra_xyz_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="#4A90D9" />
+
+                <TextView
+                    android:id="@+id/tv_extra_link_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- 额外卡组网格 -->
+            <cn.garymb.ygomobile.ui.widget.CardGroupView
+                android:id="@+id/cgv_deck_extra"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="2dp"
+                android:layout_weight="0.22"
+                android:background="#20FFFFFF"
+                app:line_limit="10"
+                app:line_max_count="15"
+                app:lines="1" />
+
+            <!-- 副卡组统计行 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_deck_side_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="副卡组: 0"
+                    android:textColor="#FF66AA"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:background="#C08A4B" />
+
+                <TextView
+                    android:id="@+id/tv_side_monster_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="#1E9E8F" />
+
+                <TextView
+                    android:id="@+id/tv_side_spell_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="#B44A7D" />
+
+                <TextView
+                    android:id="@+id/tv_side_trap_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- 副卡组网格 -->
+            <cn.garymb.ygomobile.ui.widget.CardGroupView
+                android:id="@+id/cgv_deck_side"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="2dp"
+                android:layout_weight="0.22"
+                android:background="#20FFFFFF"
+                app:line_limit="10"
+                app:line_max_count="15"
+                app:lines="1" />
+        </LinearLayout>
+
+        <!-- 右侧：搜索结果 -->
+        <LinearLayout
+            android:id="@+id/layout_deck_right_panel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:layout_weight="0.22"
+            android:orientation="vertical">
+
+            <!-- 搜索结果标题 + 排序 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_deck_search_result"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="搜索结果: 0"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+
+                <Spinner
+                    android:id="@+id/spinner_sort_type"
+                    android:layout_width="0dp"
+                    android:layout_height="28dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button3_bg" />
+            </LinearLayout>
+
+            <!-- 搜索结果列表 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_deck_search_results"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="3dp"
+                android:layout_weight="1"
+                android:background="#20FFFFFF" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

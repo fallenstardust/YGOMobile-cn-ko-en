@@ -55,7 +55,6 @@ import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
-import cn.garymb.ygomobile.ui.dialogs.DeckEditDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
@@ -92,6 +91,8 @@ public class YGOProActivity extends AppCompatActivity implements
     private LinearLayout layoutTopInfo, layoutLeftButtons;
     private LinearLayout layoutCardDetail;
     private LinearLayout layoutBottomActions, layoutDeckIndicators;
+    private LinearLayout layoutDeckControl;
+    private LinearLayout layoutGameRight;
     private LinearLayout layoutChatMessages;
     private TextView tvChatMessage1, tvChatMessage2;
     private ImageView ivCardImage;
@@ -446,7 +447,9 @@ public class YGOProActivity extends AppCompatActivity implements
         dialogContainer = findViewById(R.id.dialog_container);
 
         layoutReplayControl = findViewById(R.id.layout_replay_control);
+        layoutDeckControl = findViewById(R.id.layout_deck_control);
         btnReplayPlay = findViewById(R.id.btn_replay_play);
+        layoutGameRight = findViewById(R.id.layout_game_right);
         btnReplayPause = findViewById(R.id.btn_replay_pause);
         btnReplayNext = findViewById(R.id.btn_replay_next);
         btnReplayLast = findViewById(R.id.btn_replay_last);
@@ -1125,6 +1128,16 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutDeckEditor != null) {
             layoutDeckEditor.setVisibility(View.VISIBLE);
         }
+        // 隐藏右侧决斗场区，让卡组编辑器占据其空间
+        if (layoutGameRight == null) layoutGameRight = findViewById(R.id.layout_game_right);
+        if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
+        // 复用游戏内的卡片详情面板与卡组操作按钮
+        if (layoutCardDetail != null) layoutCardDetail.setVisibility(View.VISIBLE);
+        if (cardDetailPanel != null) cardDetailPanel.showDefault();
+        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+        if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
+        if (layoutDeckControl == null) layoutDeckControl = findViewById(R.id.layout_deck_control);
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
         if (deckEditorManager == null) {
             deckEditorManager = new DeckEditorManager(this, imageLoader);
             deckEditorManager.setListener(new DeckEditorManager.DeckEditorListener() {
@@ -1160,6 +1173,10 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutDeckEditor != null) {
             layoutDeckEditor.setVisibility(View.GONE);
         }
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
+        if (cardDetailPanel != null) cardDetailPanel.hide();
+        // 恢复右侧决斗场区
+        if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
     }
 
     private void setWindowBackground(String relativePath) {
