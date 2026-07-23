@@ -90,7 +90,7 @@ public class DeckEditorManager {
 
     private View rootView;
     private ImageView ivCardImage;
-    private TextView tvCardName, tvCardAttr, tvCardLevel, tvCardDesc;
+    private TextView tvCardName, tvCardSetname, tvCardAttr, tvCardLevel, tvCardDesc;
     private TextView tvMainCount, tvExtraCount, tvSideCount, tvSearchResult;
     private CardGroupView cgvMain, cgvExtra, cgvSide;
     private RecyclerView rvSearchResults;
@@ -154,6 +154,7 @@ public class DeckEditorManager {
         // 卡片详情面板复用 activity_ygo_game.xml 的 layout_card_detail
         ivCardImage = activity.findViewById(R.id.iv_card_image);
         tvCardName = activity.findViewById(R.id.tv_card_name);
+        tvCardSetname = activity.findViewById(R.id.tv_card_setname);
         tvCardAttr = activity.findViewById(R.id.tv_card_attr);
         tvCardLevel = activity.findViewById(R.id.tv_card_level);
         tvCardDesc = activity.findViewById(R.id.tv_card_desc);
@@ -608,10 +609,38 @@ public class DeckEditorManager {
         if (ivCardImage != null) imageLoader.bindImage(ivCardImage, card, ImageLoader.Type.middle);
         if (tvCardName != null)
             tvCardName.setText((card.Name != null ? card.Name : "Unknown") + "[" + card.Code + "]");
+        bindCardSetname(card);
         if (tvCardAttr != null) tvCardAttr.setText(getCardTypeString(card));
-        if (tvCardLevel != null) tvCardLevel.setText(getCardLevelString(card));
+        if (tvCardLevel != null) {
+            if (Card.isType(card.Type, CardType.Spell) || Card.isType(card.Type, CardType.Trap)) {
+                tvCardLevel.setText("");
+                tvCardLevel.setVisibility(View.GONE);
+            } else {
+                tvCardLevel.setText(getCardLevelString(card));
+                tvCardLevel.setVisibility(View.VISIBLE);
+            }
+        }
         if (tvCardDesc != null) tvCardDesc.setText(card.Desc != null ? card.Desc : "");
         if (listener != null) listener.onCardSelected(card);
+    }
+
+    private void bindCardSetname(Card card) {
+        if (tvCardSetname == null) return;
+        long[] setCodes = card.getSetCode();
+        StringBuilder sb = new StringBuilder();
+        boolean hasSet = false;
+        for (long sc : setCodes) {
+            if (sc == 0) continue;
+            if (hasSet) sb.append("|");
+            sb.append(DataManager.get().getStringManager().getSetName(sc));
+            hasSet = true;
+        }
+        if (hasSet) {
+            tvCardSetname.setText("字段：" + sb);
+            tvCardSetname.setVisibility(View.VISIBLE);
+        } else {
+            tvCardSetname.setVisibility(View.GONE);
+        }
     }
 
     public void onSearchCardClicked(Card card) {

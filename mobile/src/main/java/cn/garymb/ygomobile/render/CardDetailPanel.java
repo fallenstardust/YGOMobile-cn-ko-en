@@ -132,15 +132,12 @@ public class CardDetailPanel {
         boolean hasSet = false;
         for (long sc : setCodes) {
             if (sc == 0) continue;
-            if (hasSet) sb.append(" | ");
-            String setName = sm.getSetName(sc);
-            if (setName != null && !setName.startsWith("0x")) {
-                sb.append(setName);
-                hasSet = true;
-            }
+            if (hasSet) sb.append("|");
+            sb.append(sm.getSetName(sc));
+            hasSet = true;
         }
         if (hasSet) {
-            tvCardSetname.setText("[" + sb.toString() + "]");
+            tvCardSetname.setText("字段：" + sb);
             tvCardSetname.setVisibility(View.VISIBLE);
         } else {
             tvCardSetname.setVisibility(View.GONE);
@@ -166,6 +163,13 @@ public class CardDetailPanel {
 
     private void bindCardLevel(Card cardData, GameField.ClientCard clientCard) {
         if (tvCardLevel == null) return;
+
+        if (cardData.isType(CardType.Spell) || cardData.isType(CardType.Trap)) {
+            tvCardLevel.setText("");
+            tvCardLevel.setVisibility(View.GONE);
+            return;
+        }
+
         StringBuilder sb = new StringBuilder();
 
         if (cardData.isLink()) {
@@ -195,6 +199,7 @@ public class CardDetailPanel {
         }
 
         tvCardLevel.setText(sb.toString());
+        tvCardLevel.setVisibility(View.VISIBLE);
     }
 
     private void bindCardDesc(Card cardData) {

@@ -1128,6 +1128,13 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutDeckEditor != null) {
             layoutDeckEditor.setVisibility(View.VISIBLE);
         }
+        // 卡组编辑时显示左侧功能栏，但隐藏note/speed/emote/chat按钮
+        if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.VISIBLE);
+        if (btnNote != null) btnNote.setVisibility(View.INVISIBLE);
+        if (btnSpeed != null) btnSpeed.setVisibility(View.INVISIBLE);
+        if (btnEmote != null) btnEmote.setVisibility(View.INVISIBLE);
+        if (btnChat != null) btnChat.setVisibility(View.INVISIBLE);
+
         // 隐藏右侧决斗场区，让卡组编辑器占据其空间
         if (layoutGameRight == null) layoutGameRight = findViewById(R.id.layout_game_right);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
@@ -1175,6 +1182,13 @@ public class YGOProActivity extends AppCompatActivity implements
         }
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
         if (cardDetailPanel != null) cardDetailPanel.hide();
+        //隐藏左侧功能栏并恢复被隐藏的按钮，供下次决斗使用
+        if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.GONE);
+        if (btnNote != null) btnNote.setVisibility(View.VISIBLE);
+        if (btnSpeed != null) btnSpeed.setVisibility(View.VISIBLE);
+        if (btnEmote != null) btnEmote.setVisibility(View.VISIBLE);
+        if (btnChat != null) btnChat.setVisibility(View.VISIBLE);
+
         // 恢复右侧决斗场区
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
     }
@@ -1199,7 +1213,15 @@ public class YGOProActivity extends AppCompatActivity implements
         hideMainMenu();
         SettingsDialog dialog = new SettingsDialog(this, () -> applySettingsToEngine());
         dialog.show(layoutMainMenu);
-        dialog.setOnDismissListener(() -> restoreMainMenu());
+        dialog.setOnDismissListener(() -> {
+            boolean deckEditorShowing = layoutDeckEditor != null
+                    && layoutDeckEditor.getVisibility() == View.VISIBLE;
+            boolean gameRightShowing = layoutGameRight != null
+                    && layoutGameRight.getVisibility() == View.VISIBLE;
+            if (!deckEditorShowing && !gameRightShowing) {
+                restoreMainMenu();
+            }
+        });
     }
 
     private void applySettingsToEngine() {
@@ -3406,10 +3428,6 @@ public class YGOProActivity extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
         setupFullScreen();
-        if (!isGameStarted && layoutMainMenu != null
-                && layoutMainMenu.getVisibility() != View.VISIBLE) {
-            restoreMainMenu();
-        }
     }
 
     @Override
