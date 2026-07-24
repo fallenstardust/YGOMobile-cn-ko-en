@@ -454,7 +454,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.8"
+            android:layout_weight="0.7"
             android:orientation="vertical">
 
             <!-- 主卡组统计行 -->
@@ -807,14 +807,15 @@
             <!-- 搜索结果标题 + 排序 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="0.07"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tv_deck_search_result"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center|left"
                     android:background="@drawable/panel_sci_fi_bg"
@@ -825,7 +826,8 @@
                 <Spinner
                     android:id="@+id/spinner_sort_type"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginHorizontal="2dp"
                     android:layout_weight="1"
                     android:background="@color/ygopro_list_background" />
             </LinearLayout>
@@ -835,8 +837,8 @@
                 android:id="@+id/rv_deck_search_results"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_marginTop="3dp"
-                android:layout_weight="1"
+                android:layout_marginTop="2dp"
+                android:layout_weight="0.93"
                 android:background="@drawable/panel_sci_fi_bg" />
         </LinearLayout>
     </LinearLayout>

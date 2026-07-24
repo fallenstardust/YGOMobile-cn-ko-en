@@ -8,6 +8,7 @@
     android:padding="3dp">
 
     <FrameLayout
+        android:id="@+id/card_container"
         android:layout_width="40dp"
         android:layout_height="58dp">
 
@@ -44,14 +45,13 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_deck_card_name"
+        <TextView android:id="@+id/tv_deck_card_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@color/white"
-            android:textSize="13sp" />
+            android:textSize="8sp" />
 
         <TextView
             android:id="@+id/tv_deck_card_info"
@@ -61,7 +61,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="#B0D8FF"
-            android:textSize="11sp" />
+            android:textSize="8sp" />
 
         <TextView
             android:id="@+id/tv_deck_card_atkdef"
@@ -71,6 +71,6 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="#B0D8FF"
-            android:textSize="11sp" />
+            android:textSize="8sp" />
     </LinearLayout>
 </LinearLayout>

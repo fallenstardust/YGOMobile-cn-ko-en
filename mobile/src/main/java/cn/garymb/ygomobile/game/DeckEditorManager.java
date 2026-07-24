@@ -263,9 +263,7 @@ public class DeckEditorManager {
         if (availWidth <= 0 || availHeight <= 0) return;
 
         float ratio = (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[1] / (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
-        // 宽度约束：一行 DECK_WIDTH_COUNT 张
         int widthByColumn = availWidth / Constants.DECK_WIDTH_COUNT;
-        // 高度约束：主卡组默认 4 行必须完整显示
         int widthByRow = (int) ((availHeight / 4f) / ratio);
         int cardWidth = Math.max(1, Math.min(widthByColumn, widthByRow));
         int cardHeight = Math.round(cardWidth * ratio);
@@ -273,6 +271,7 @@ public class DeckEditorManager {
         cgvMain.setCardSize(cardWidth, cardHeight);
         cgvExtra.setCardSize(cardWidth, cardHeight);
         cgvSide.setCardSize(cardWidth, cardHeight);
+        if (searchAdapter != null) searchAdapter.setCardSize(cardWidth, cardHeight);
 
         notifyDeckChanged();
     }

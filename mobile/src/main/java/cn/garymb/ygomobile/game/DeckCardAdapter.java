@@ -34,6 +34,8 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private final List<Card> cards = new ArrayList<>();
     private ImageTop mImageTop;
     private LimitList mLimitList;
+    private int mCardWidth = -1;
+    private int mCardHeight = -1;
 
     public DeckCardAdapter(ImageLoader imageLoader, DeckEditorManager editorManager, DeckInfo.Type deckType) {
         this.imageLoader = imageLoader;
@@ -54,6 +56,12 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         notifyDataSetChanged();
     }
 
+    public void setCardSize(int width, int height) {
+        mCardWidth = width;
+        mCardHeight = height;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -67,6 +75,13 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
 
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
+        if (mCardWidth > 0 && mCardHeight > 0) {
+            ViewGroup.LayoutParams lp = holder.cardContainer.getLayoutParams();
+            lp.width = mCardWidth;
+            lp.height = mCardHeight;
+            holder.cardContainer.setLayoutParams(lp);
+        }
+
         Card card = cards.get(position);
         if (card == null) {
             holder.ivCard.setImageResource(R.drawable.unknown);
@@ -171,6 +186,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     }
 
     static class CardViewHolder extends RecyclerView.ViewHolder {
+        ViewGroup cardContainer;
         ImageView ivCard;
         ImageView ivLimitTop;
         TextView tvLimitNum;
@@ -180,6 +196,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
 
         CardViewHolder(@NonNull View itemView) {
             super(itemView);
+            cardContainer = itemView.findViewById(R.id.card_container);
             ivCard = itemView.findViewById(R.id.iv_deck_card_item);
             ivLimitTop = itemView.findViewById(R.id.iv_deck_card_limit_top);
             tvLimitNum = itemView.findViewById(R.id.tv_deck_limit_num);
