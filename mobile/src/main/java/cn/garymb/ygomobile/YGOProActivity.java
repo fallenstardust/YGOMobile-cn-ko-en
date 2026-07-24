@@ -1146,7 +1146,7 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutDeckControl == null) layoutDeckControl = findViewById(R.id.layout_deck_control);
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
         if (deckEditorManager == null) {
-            deckEditorManager = new DeckEditorManager(this, imageLoader);
+            deckEditorManager = new DeckEditorManager(this, imageLoader, cardDetailPanel);
             deckEditorManager.setListener(new DeckEditorManager.DeckEditorListener() {
                 @Override
                 public void onDeckModified() {

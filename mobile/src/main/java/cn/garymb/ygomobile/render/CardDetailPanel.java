@@ -96,6 +96,30 @@ public class CardDetailPanel {
         }
     }
 
+    public void showCard(Card card) {
+        if (card == null || card.getCode() <= 0) {
+            showDefault();
+            return;
+        }
+
+        int code = card.getCode();
+        currentCardCode = code;
+        if (layout != null) {
+            layout.setVisibility(View.VISIBLE);
+        }
+
+        bindCardImage(code);
+        bindCardName(card, code);
+        bindCardSetname(card);
+        bindCardAttr(card);
+        bindCardLevel(card);
+        bindCardDesc(card);
+
+        if (svCardDesc != null) {
+            svCardDesc.fullScroll(ScrollView.FOCUS_UP);
+        }
+    }
+
     public void hide() {
         currentCardCode = -1;
         if (layout != null) {
@@ -161,6 +185,23 @@ public class CardDetailPanel {
         tvCardAttr.setText(sb.toString());
     }
 
+    private void bindCardAttr(Card cardData) {
+        if (tvCardAttr == null) return;
+        StringManager sm = DataManager.get().getStringManager();
+        StringBuilder sb = new StringBuilder();
+
+        String typeStr = sm.getTypeString(cardData.Type);
+        sb.append("[").append(typeStr).append("]");
+
+        if (cardData.isType(CardType.Monster)) {
+            String raceStr = sm.getRaceString(cardData.Race);
+            String attrStr = sm.getAttributeString(cardData.Attribute);
+            sb.append(" ").append(raceStr).append("/").append(attrStr);
+        }
+
+        tvCardAttr.setText(sb.toString());
+    }
+
     private void bindCardLevel(Card cardData, GameField.ClientCard clientCard) {
         if (tvCardLevel == null) return;
 
@@ -194,6 +235,45 @@ public class CardDetailPanel {
         if (cardData.LeftScale > 0 || cardData.RightScale > 0) {
             int lsc = clientCard.lScale > 0 ? clientCard.lScale : cardData.LeftScale;
             int rsc = clientCard.rScale > 0 ? clientCard.rScale : cardData.RightScale;
+            if (sb.length() > 0) sb.append("  ");
+            sb.append("灵摆 ").append(lsc).append("/").append(rsc);
+        }
+
+        tvCardLevel.setText(sb.toString());
+        tvCardLevel.setVisibility(View.VISIBLE);
+    }
+
+    private void bindCardLevel(Card cardData) {
+        if (tvCardLevel == null) return;
+
+        if (cardData.isType(CardType.Spell) || cardData.isType(CardType.Trap)) {
+            tvCardLevel.setText("");
+            tvCardLevel.setVisibility(View.GONE);
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        if (cardData.isLink()) {
+            sb.append("LINK-").append(cardData.getLinkNumber());
+        } else if (cardData.isType(CardType.Xyz)) {
+            sb.append("☆").append(cardData.getStar());
+        } else if (cardData.isType(CardType.Monster)) {
+            sb.append("★").append(cardData.getStar());
+        }
+
+        if (cardData.isType(CardType.Monster)) {
+            int atk = cardData.Attack;
+            int def = cardData.Defense;
+            String atkStr = atk < 0 ? "?" : String.valueOf(atk);
+            String defStr = cardData.isLink() ? "-" : (def < 0 ? "?" : String.valueOf(def));
+            if (sb.length() > 0) sb.append("  ");
+            sb.append(atkStr).append("/").append(defStr);
+        }
+
+        if (cardData.LeftScale > 0 || cardData.RightScale > 0) {
+            int lsc = cardData.LeftScale;
+            int rsc = cardData.RightScale;
             if (sb.length() > 0) sb.append("  ");
             sb.append("灵摆 ").append(lsc).append("/").append(rsc);
         }
