@@ -23,7 +23,7 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.9">
+                android:layout_weight="0.85">
 
                 <ImageView
                     android:id="@+id/iv_card_image"
@@ -37,7 +37,7 @@
                 <!-- 时点按钮（投降/时点控制） -->
                 <LinearLayout
                     android:id="@+id/layout_bottom_actions"
-                    android:layout_width="110dp"
+                    android:layout_width="100dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="2dp"
                     android:layout_toEndOf="@id/iv_card_image"
@@ -114,7 +114,7 @@
                 <!-- 录像控制按钮 -->
                 <LinearLayout
                     android:id="@+id/layout_replay_control"
-                    android:layout_width="110dp"
+                    android:layout_width="100dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="2dp"
                     android:layout_toEndOf="@id/iv_card_image"
@@ -189,7 +189,7 @@
                 <!-- 卡组操作按钮 -->
                 <LinearLayout
                     android:id="@+id/layout_deck_control"
-                    android:layout_width="110dp"
+                    android:layout_width="100dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="2dp"
                     android:layout_toEndOf="@id/iv_card_image"
@@ -257,7 +257,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1.1"
+                android:layout_weight="1.15"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -317,7 +317,7 @@
                             android:id="@+id/tv_card_desc"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="点击场上的卡片查看详细信息"
+                            android:text="@string/tip_card_info_diff"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </ScrollView>
@@ -427,9 +427,7 @@
                 android:paddingStart="12dp"
                 android:paddingTop="6dp"
                 android:paddingEnd="12dp"
-                android:paddingBottom="4dp"
-                android:visibility="gone">
-
+                android:paddingBottom="4dp">
 
                 <!-- 我方信息面板（左上） -->
                 <LinearLayout
@@ -440,6 +438,14 @@
                     android:background="@drawable/panel_sci_fi_bg"
                     android:orientation="horizontal"
                     android:padding="6dp">
+
+                    <ImageView
+                        android:id="@+id/iv_player_avatar"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="8dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/avatar" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -490,14 +496,6 @@
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
-
-                    <ImageView
-                        android:id="@+id/iv_player_avatar"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginStart="8dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/unknown" />
                 </LinearLayout>
 
                 <!-- 中央回合计数器 -->
@@ -532,13 +530,6 @@
                     android:background="@drawable/panel_sci_fi_bg"
                     android:orientation="horizontal"
                     android:padding="6dp">
-
-                    <ImageView
-                        android:id="@+id/iv_opponent_avatar"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/unknown" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -589,8 +580,27 @@
                                 android:textSize="12sp" />
                         </LinearLayout>
                     </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/iv_opponent_avatar"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/avatar" />
                 </LinearLayout>
             </LinearLayout>
+
+            <!-- 提示信息 -->
+            <TextView
+                android:id="@+id/tv_hint_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@drawable/panel_sci_fi_bg"
+                android:text="请选择要特殊召唤的怪兽（9-9）"
+                android:padding="3dp"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
 
             <!-- 决斗场区域（填充剩余空间） -->
             <FrameLayout
@@ -643,7 +653,7 @@
                 <!-- 阶段按钮组（决斗场中轴位置横向3个） -->
                 <FrameLayout
                     android:id="@+id/layout_phase_buttons"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:orientation="horizontal"
@@ -651,36 +661,35 @@
 
                     <Button
                         android:id="@+id/btn_phase_current"
-                        android:layout_width="72dp"
-                        android:layout_height="32dp"
+                        android:layout_width="60dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="left"
                         android:background="@drawable/button3_bg"
                         android:text="DP"
-                        android:textColor="#00E5FF"
+                        android:textColor="@color/white"
                         android:textSize="10sp"
                         android:textStyle="bold" />
 
                     <Button
                         android:id="@+id/btn_phase_next"
-                        android:layout_width="72dp"
-                        android:layout_height="32dp"
+                        android:layout_width="60dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="center"
-                        android:layout_marginEnd="6dp"
                         android:background="@drawable/button3_bg"
                         android:text="BP"
                         android:textColor="@color/white"
-                        android:textSize="13sp"
+                        android:textSize="10sp"
                         android:textStyle="bold" />
 
                     <Button
                         android:id="@+id/btn_ep"
-                        android:layout_width="72dp"
-                        android:layout_height="32dp"
+                        android:layout_width="60dp"
+                        android:layout_height="30dp"
                         android:layout_gravity="right"
                         android:background="@drawable/button3_bg"
                         android:text="EP"
                         android:textColor="@color/white"
-                        android:textSize="13sp"
+                        android:textSize="10sp"
                         android:textStyle="bold" />
                 </FrameLayout>
 
@@ -798,20 +807,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- 提示信息 -->
-    <TextView
-        android:id="@+id/tv_hint_message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:background="@drawable/panel_sci_fi_bg"
-        android:padding="12dp"
-        android:textColor="@color/white"
-        android:textSize="14sp"
-        android:visibility="gone" />
-
-
-
     <!-- 对话框容器 -->
     <FrameLayout
         android:id="@+id/dialog_container"
@@ -824,7 +819,7 @@
         android:id="@+id/layout_main_menu"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible">
+        android:visibility="gone">
 
         <LinearLayout
             android:id="@+id/layout_menu_buttons"

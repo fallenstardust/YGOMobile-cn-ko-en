@@ -266,13 +266,13 @@ public class SingleModeDialog {
 
     private void updateDeckButtonText(Button btnSelectDeck) {
         if (selectedDeckName != null && !selectedDeckName.isEmpty()) {
-            String displayText;
-            if (selectedDeckCategory != null && !selectedDeckCategory.isEmpty()) {
-                displayText = selectedDeckCategory + "/" + selectedDeckName;
+            String uncatName = context.getString(R.string.category_Uncategorized);
+            if (selectedDeckCategory != null && !selectedDeckCategory.isEmpty()
+                    && !selectedDeckCategory.equals(uncatName)) {
+                btnSelectDeck.setText(selectedDeckCategory + "/" + selectedDeckName);
             } else {
-                displayText = selectedDeckName;
+                btnSelectDeck.setText(selectedDeckName);
             }
-            btnSelectDeck.setText(displayText);
         } else {
             btnSelectDeck.setText("选择卡组");
         }

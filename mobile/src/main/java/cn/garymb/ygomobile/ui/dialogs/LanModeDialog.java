@@ -934,13 +934,13 @@ public class LanModeDialog {
 
     private void updateDeckButtonText(Button btnDeckSelect) {
         if (currentDeckName != null && !currentDeckName.isEmpty()) {
-            String displayText;
-            if (currentDeckCategory != null && !currentDeckCategory.isEmpty()) {
-                displayText = "[" + currentDeckCategory + "]" + currentDeckName;
+            String uncatName = context.getString(R.string.category_Uncategorized);
+            if (currentDeckCategory != null && !currentDeckCategory.isEmpty()
+                    && !currentDeckCategory.equals(uncatName)) {
+                btnDeckSelect.setText("[" + currentDeckCategory + "]" + currentDeckName);
             } else {
-                displayText = currentDeckName;
+                btnDeckSelect.setText(currentDeckName);
             }
-            btnDeckSelect.setText(displayText);
         } else {
             btnDeckSelect.setText("请选择卡组");
         }

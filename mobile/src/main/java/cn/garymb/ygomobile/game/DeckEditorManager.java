@@ -15,7 +15,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -33,14 +32,21 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+import cn.garymb.ygomobile.ui.dialogs.DeckSelectorDialog;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
 import cn.garymb.ygomobile.ui.widget.CardView;
 import ocgcore.DataManager;
+import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
+import ocgcore.enums.CardAttribute;
+import ocgcore.enums.CardRace;
 import ocgcore.enums.CardType;
+import ocgcore.enums.LimitType;
 
 public class DeckEditorManager {
     private static final String TAG = "DeckEditorManager";
@@ -68,7 +74,6 @@ public class DeckEditorManager {
     private final Random random = new Random();
     private boolean isModified = false;
     private boolean isReadonly = false;
-    private int prevCategory = 0;
     private int prevDeck = 0;
 
     private int filterType = 0;
@@ -94,20 +99,24 @@ public class DeckEditorManager {
     private TextView tvMainCount, tvExtraCount, tvSideCount, tvSearchResult;
     private CardGroupView cgvMain, cgvExtra, cgvSide;
     private RecyclerView rvSearchResults;
-    private Spinner spinnerCategory, spinnerDeckList, spinnerFilterType;
+    private Spinner spinnerFilterType;
     private Spinner spinnerFilterType2, spinnerFilterAttribute, spinnerFilterRace, spinnerFilterLimit;
     private Spinner spinnerSortType;
     private EditText etAttack, etDefense, etStar, etScale, etKeyword;
+    private EditText etDeckName;
     private Button btnSave, btnSaveAs, btnShuffle, btnSort, btnClear, btnDelete, btnExit;
     private Button btnFilterEffect;
+    private Button btnDeckManager;
 
     private DeckCardAdapter searchAdapter;
     private ImageTop mImageTop;
     private LimitList mLimitList;
 
-    private List<String> categoryList = new ArrayList<>();
-    private List<String> deckNameList = new ArrayList<>();
-    private String currentCategoryPath = "";
+    private String currentDeckCategoryName = "";
+    private String currentDeckName = "";
+    private String currentDeckFilePath = "";
+
+    private DeckSelectorDialog deckSelectorDialog;
 
     public DeckEditorManager(Activity activity, ImageLoader imageLoader) {
         this.activity = activity;
@@ -127,7 +136,7 @@ public class DeckEditorManager {
         setupRecyclerViews();
         setupSpinners();
         setupButtons();
-        refreshCategoryList();
+        setupDeckSelectorDialog();
         loadLastDeck();
         updateDeckCounts();
         isModified = false;
@@ -173,8 +182,8 @@ public class DeckEditorManager {
         cgvExtra = root.findViewById(R.id.cgv_deck_extra);
         cgvSide = root.findViewById(R.id.cgv_deck_side);
         rvSearchResults = root.findViewById(R.id.rv_deck_search_results);
-        spinnerCategory = root.findViewById(R.id.spinner_deck_category);
-        spinnerDeckList = root.findViewById(R.id.spinner_deck_list);
+        btnDeckManager = root.findViewById(R.id.btn_deck_manager);
+        etDeckName = root.findViewById(R.id.et_deck_name);
         spinnerFilterType = root.findViewById(R.id.spinner_filter_type);
         spinnerFilterType2 = root.findViewById(R.id.spinner_filter_type2);
         spinnerFilterAttribute = root.findViewById(R.id.spinner_filter_attribute);
@@ -264,16 +273,77 @@ public class DeckEditorManager {
     }
 
     private void setupSpinners() {
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(activity,
-                android.R.layout.simple_spinner_item,
-                new String[]{"全部", "怪兽", "魔法", "陷阱"});
-        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        StringManager sm = DataManager.get().getStringManager();
+
+        List<SimpleSpinnerItem> typeItems = new ArrayList<>();
+        typeItems.add(new SimpleSpinnerItem(0, "全部"));
+        typeItems.add(new SimpleSpinnerItem(1, "怪兽"));
+        typeItems.add(new SimpleSpinnerItem(2, "魔法"));
+        typeItems.add(new SimpleSpinnerItem(3, "陷阱"));
+        SimpleSpinnerAdapter typeAdapter = new SimpleSpinnerAdapter(activity);
+        typeAdapter.setTextSize(8f);
+        typeAdapter.set(typeItems);
         if (spinnerFilterType != null) spinnerFilterType.setAdapter(typeAdapter);
 
-        ArrayAdapter<String> sortAdapter = new ArrayAdapter<>(activity,
-                android.R.layout.simple_spinner_item,
-                new String[]{"星数↑", "攻击↑", "守备↑", "名称"});
-        sortAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        List<SimpleSpinnerItem> type2Items = new ArrayList<>();
+        type2Items.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
+        SimpleSpinnerAdapter type2Adapter = new SimpleSpinnerAdapter(activity);
+        type2Adapter.setTextSize(8f);
+        type2Adapter.set(type2Items);
+        if (spinnerFilterType2 != null) spinnerFilterType2.setAdapter(type2Adapter);
+
+        List<SimpleSpinnerItem> attrItems = new ArrayList<>();
+        attrItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
+        for (CardAttribute attr : CardAttribute.values()) {
+            attrItems.add(new SimpleSpinnerItem(attr.getId(),
+                    sm.getSystemString(attr.getLanguageIndex(), attr.name())));
+        }
+        SimpleSpinnerAdapter attrAdapter = new SimpleSpinnerAdapter(activity);
+        attrAdapter.setTextSize(8f);
+        attrAdapter.set(attrItems);
+        if (spinnerFilterAttribute != null) spinnerFilterAttribute.setAdapter(attrAdapter);
+
+        List<SimpleSpinnerItem> raceItems = new ArrayList<>();
+        raceItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
+        for (CardRace race : CardRace.values()) {
+            raceItems.add(new SimpleSpinnerItem(race.value(),
+                    sm.getSystemString(race.getLanguageIndex(), race.name())));
+        }
+        SimpleSpinnerAdapter raceAdapter = new SimpleSpinnerAdapter(activity);
+        raceAdapter.setTextSize(8f);
+        raceAdapter.set(raceItems);
+        if (spinnerFilterRace != null) spinnerFilterRace.setAdapter(raceAdapter);
+
+        List<SimpleSpinnerItem> limitItems = new ArrayList<>();
+        limitItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
+        limitItems.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(),
+                sm.getSystemString(LimitType.Forbidden.getLanguageIndex(), LimitType.Forbidden.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.Limit.getId(),
+                sm.getSystemString(LimitType.Limit.getLanguageIndex(), LimitType.Limit.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.SemiLimit.getId(),
+                sm.getSystemString(LimitType.SemiLimit.getLanguageIndex(), LimitType.SemiLimit.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.GeneSys.getId(),
+                sm.getSystemString(LimitType.GeneSys.getLanguageIndex(), LimitType.GeneSys.name())));
+        limitItems.add(new SimpleSpinnerItem(6, sm.getSystemString(1481, "OCG")));
+        limitItems.add(new SimpleSpinnerItem(7, sm.getSystemString(1482, "TCG")));
+        limitItems.add(new SimpleSpinnerItem(8, sm.getSystemString(1483, "简体中文")));
+        limitItems.add(new SimpleSpinnerItem(9, sm.getSystemString(1484, "自定义")));
+        limitItems.add(new SimpleSpinnerItem(10, sm.getSystemString(1487, "OCG独有")));
+        limitItems.add(new SimpleSpinnerItem(11, sm.getSystemString(1488, "TCG独有")));
+        limitItems.add(new SimpleSpinnerItem(12, sm.getSystemString(1485, "无独有")));
+        SimpleSpinnerAdapter limitAdapter = new SimpleSpinnerAdapter(activity);
+        limitAdapter.setTextSize(8f);
+        limitAdapter.set(limitItems);
+        if (spinnerFilterLimit != null) spinnerFilterLimit.setAdapter(limitAdapter);
+
+        List<SimpleSpinnerItem> sortItems = new ArrayList<>();
+        sortItems.add(new SimpleSpinnerItem(0, "星数↑"));
+        sortItems.add(new SimpleSpinnerItem(1, "攻击↑"));
+        sortItems.add(new SimpleSpinnerItem(2, "守备↑"));
+        sortItems.add(new SimpleSpinnerItem(3, "名称"));
+        SimpleSpinnerAdapter sortAdapter = new SimpleSpinnerAdapter(activity);
+        sortAdapter.setTextSize(8f);
+        sortAdapter.set(sortItems);
         if (spinnerSortType != null) spinnerSortType.setAdapter(sortAdapter);
     }
 
@@ -286,6 +356,62 @@ public class DeckEditorManager {
         if (btnSave != null) btnSave.setOnClickListener(v -> saveDeck());
         if (btnSaveAs != null) btnSaveAs.setOnClickListener(v -> saveDeckAs());
         if (btnFilterEffect != null) btnFilterEffect.setOnClickListener(v -> startFilter());
+    }
+
+    private void setupDeckSelectorDialog() {
+        deckSelectorDialog = new DeckSelectorDialog(activity);
+        deckSelectorDialog.setOnDeckSelectedListener(new DeckSelectorDialog.OnDeckSelectedListener() {
+            @Override
+            public void onDeckSelected(String deckPath, String deckName, String categoryName) {
+                currentDeckFilePath = deckPath;
+                currentDeckCategoryName = categoryName;
+                currentDeckName = deckName;
+                loadDeckFromPath(deckPath);
+                updateDeckManagerButtonText();
+                AppsSettings.get().saveSettings("lastcategory", categoryName);
+                AppsSettings.get().saveSettings("lastdeck", deckName);
+            }
+
+            @Override
+            public void onCancelled() {
+            }
+        });
+
+        if (btnDeckManager != null) {
+            btnDeckManager.setOnClickListener(v -> showDeckSelectorDialog());
+        }
+    }
+
+    private void updateDeckManagerButtonText() {
+        if (btnDeckManager != null) {
+            if (currentDeckName != null && !currentDeckName.isEmpty()) {
+                String uncatName = activity.getString(R.string.category_Uncategorized);
+                if (currentDeckCategoryName != null && !currentDeckCategoryName.isEmpty()
+                        && !currentDeckCategoryName.equals(uncatName)) {
+                    btnDeckManager.setText(currentDeckCategoryName + "|" + currentDeckName);
+                } else {
+                    btnDeckManager.setText(currentDeckName);
+                }
+            } else {
+                btnDeckManager.setText("卡组管理");
+            }
+        }
+    }
+
+    private void loadDeckFromPath(String deckPath) {
+        File deckFile = new File(deckPath);
+        if (deckFile.exists()) {
+            DeckInfo loaded = DeckLoader.readDeck(cardLoader, deckFile);
+            if (loaded != null) {
+                currentDeck.update(loaded);
+                currentDeck.source = deckFile;
+                notifyDeckChanged();
+                isModified = false;
+            }
+        }
+        String aiDeckDir = AppsSettings.get().getAiDeckDir();
+        isReadonly = deckPath.startsWith(aiDeckDir);
+        refreshReadonly();
     }
 
     // === 对应 deck_con.cpp: push_main ===
@@ -421,26 +547,21 @@ public class DeckEditorManager {
     // === 对应 deck_con.cpp: BUTTON_DELETE_DECK ===
     public void deleteDeck() {
         if (isReadonly) return;
-        int sel = spinnerDeckList != null ? spinnerDeckList.getSelectedItemPosition() : -1;
-        if (sel < 0 || sel >= deckNameList.size()) return;
-        String deckName = deckNameList.get(sel);
+        if (currentDeckFilePath == null || currentDeckFilePath.isEmpty()) return;
+        String deckName = currentDeckName != null && !currentDeckName.isEmpty()
+                ? currentDeckName : new File(currentDeckFilePath).getName().replace(".ydk", "");
         showConfirmDialog(deckName + "\n是否删除这个卡组？", () -> {
-            File deckFile = getDeckFile(deckName);
-            if (deckFile != null && deckFile.exists()) {
+            File deckFile = new File(currentDeckFilePath);
+            if (deckFile.exists()) {
                 deckFile.delete();
-                deckNameList.remove(sel);
-                refreshDeckSpinner();
-                if (!deckNameList.isEmpty()) {
-                    int newSel = Math.min(sel, deckNameList.size() - 1);
-                    if (spinnerDeckList != null) spinnerDeckList.setSelection(newSel);
-                    loadDeckByName(deckNameList.get(newSel));
-                } else {
-                    currentDeck.mainCards.clear();
-                    currentDeck.extraCards.clear();
-                    currentDeck.sideCards.clear();
-                    notifyDeckChanged();
-                }
+                currentDeckFilePath = "";
+ currentDeckName = "";
+                currentDeck.mainCards.clear();
+                currentDeck.extraCards.clear();
+                currentDeck.sideCards.clear();
+                notifyDeckChanged();
                 isModified = false;
+                updateDeckManagerButtonText();
                 showToast("卡组已删除");
             }
         });
@@ -449,42 +570,42 @@ public class DeckEditorManager {
     // === 对应 deck_con.cpp: BUTTON_SAVE_DECK ===
     public void saveDeck() {
         if (isReadonly) return;
-        int sel = spinnerDeckList != null ? spinnerDeckList.getSelectedItemPosition() : -1;
-        if (sel < 0 || sel >= deckNameList.size()) return;
-        String deckName = deckNameList.get(sel);
-        File deckFile = getDeckFile(deckName);
-        if (deckFile != null) {
-            boolean result = DeckUtils.save(currentDeck, deckFile);
-            if (result) {
-                isModified = false;
-                showToast("卡组已保存");
-                if (listener != null) listener.onDeckSaved();
-            }
+        if (currentDeckFilePath == null || currentDeckFilePath.isEmpty()) {
+            showToast("请先选择或另存卡组");
+            return;
+        }
+        File deckFile = new File(currentDeckFilePath);
+        boolean result = DeckUtils.save(currentDeck, deckFile);
+        if (result) {
+            isModified = false;
+            showToast("卡组已保存");
+            if (listener != null) listener.onDeckSaved();
         }
     }
 
     // === 对应 deck_con.cpp: BUTTON_SAVE_DECK_AS ===
     public void saveDeckAs() {
         if (isReadonly) return;
-        EditText input = new EditText(activity);
-        input.setHint("输入新卡组名称");
-        new AlertDialog.Builder(activity)
-                .setTitle("另存为")
-                .setView(input)
-                .setPositiveButton("确定", (dialog, which) -> {
-                    String name = input.getText().toString().trim();
-                    if (name.isEmpty()) return;
-                    File deckFile = getDeckFile(name);
-                    if (deckFile != null) {
-                        DeckUtils.save(currentDeck, deckFile);
-                        isModified = false;
-                        refreshDeckList();
-                        showToast("卡组已保存为: " + name);
-                        if (listener != null) listener.onDeckSaved();
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .show();
+        if (etDeckName == null) return;
+        String name = etDeckName.getText().toString().trim();
+        if (name.isEmpty()) {
+            showToast("请输入卡组名称");
+            return;
+        }
+        File deckFile = getDeckFile(name);
+        boolean result = DeckUtils.save(currentDeck, deckFile);
+        if (result) {
+            currentDeckFilePath = deckFile.getAbsolutePath();
+            currentDeckName = name;
+            String uncatName = activity.getString(R.string.category_Uncategorized);
+            currentDeckCategoryName = uncatName;
+            isModified = false;
+            updateDeckManagerButtonText();
+            AppsSettings.get().saveSettings("lastcategory", uncatName);
+            AppsSettings.get().saveSettings("lastdeck", name);
+            showToast("卡组已保存为: " + name);
+            if (listener != null) listener.onDeckSaved();
+        }
     }
 
     // === 对应 deck_con.cpp: StartFilter / FilterCards ===
@@ -565,18 +686,6 @@ public class DeckEditorManager {
         Collections.sort(searchResults, comparator);
     }
 
-    // === 对应 deck_con.cpp: ChangeCategory ===
-    public void changeCategory(int catesel) {
-        prevCategory = catesel;
-        isReadonly = catesel < 2;
-        refreshReadonly();
-        refreshDeckList();
-        if (!deckNameList.isEmpty()) {
-            loadDeckByName(deckNameList.get(0));
-        }
-        isModified = false;
-    }
-
     // === 对应 deck_con.cpp: RefreshReadonly ===
     public void refreshReadonly() {
         if (btnSave != null) btnSave.setEnabled(!isReadonly);
@@ -585,23 +694,6 @@ public class DeckEditorManager {
         if (btnShuffle != null) btnShuffle.setEnabled(!isReadonly);
         if (btnSort != null) btnSort.setEnabled(!isReadonly);
         if (btnDelete != null) btnDelete.setEnabled(!isReadonly);
-    }
-
-    // === 对应 deck_con.cpp: RefreshDeckList ===
-    public void refreshDeckList() {
-        deckNameList.clear();
-        File deckDir = getDeckDir();
-        if (deckDir != null && deckDir.isDirectory()) {
-            File[] files = deckDir.listFiles((dir, name) -> name.endsWith(".ydk"));
-            if (files != null) {
-                for (File f : files) {
-                    String name = f.getName().replace(".ydk", "");
-                    deckNameList.add(name);
-                }
-            }
-        }
-        Collections.sort(deckNameList);
-        refreshDeckSpinner();
     }
 
     public void showCardInfo(Card card) {
@@ -754,66 +846,6 @@ public class DeckEditorManager {
         return DataManager.get().getCardManager().getAllCards();
     }
 
-    private void refreshCategoryList() {
-        categoryList.clear();
-        categoryList.add("卡包展示");
-        categoryList.add("人机卡组");
-        categoryList.add("未分类卡组");
-        File deckBaseDir = new File(AppsSettings.get().getResourcePath(), "deck");
-        if (deckBaseDir.isDirectory()) {
-            File[] dirs = deckBaseDir.listFiles(File::isDirectory);
-            if (dirs != null) {
-                for (File dir : dirs) {
-                    categoryList.add(dir.getName());
-                }
-            }
-        }
-        if (spinnerCategory != null) {
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(activity,
-                    android.R.layout.simple_spinner_item, categoryList);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerCategory.setAdapter(adapter);
-            spinnerCategory.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                    changeCategory(position);
-                }
-
-                @Override
-                public void onNothingSelected(android.widget.AdapterView<?> parent) {
-                }
-            });
-        }
-    }
-
-    private void refreshDeckSpinner() {
-        if (spinnerDeckList != null) {
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(activity,
-                    android.R.layout.simple_spinner_item, deckNameList);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerDeckList.setAdapter(adapter);
-            spinnerDeckList.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                    if (position >= 0 && position < deckNameList.size()) {
-                        if (isModified && !isReadonly) {
-                            showConfirmDialog("此操作将放弃对当前卡组的修改，是否继续？", () -> {
-                                loadDeckByName(deckNameList.get(position));
-                                isModified = false;
-                            });
-                        } else {
-                            loadDeckByName(deckNameList.get(position));
-                        }
-                    }
-                }
-
-                @Override
-                public void onNothingSelected(android.widget.AdapterView<?> parent) {
-                }
-            });
-        }
-    }
-
     private void loadDeckByName(String name) {
         File deckFile = getDeckFile(name);
         if (deckFile != null && deckFile.exists()) {
@@ -828,50 +860,51 @@ public class DeckEditorManager {
     }
 
     private void loadLastDeck() {
-        String lastCategory = AppsSettings.get().getLastCategory();
-        String lastDeck = AppsSettings.get().getLastDeckName();
-        if (lastCategory != null && !lastCategory.isEmpty()) {
-            int idx = categoryList.indexOf(lastCategory);
-            if (idx >= 0 && spinnerCategory != null) {
-                spinnerCategory.setSelection(idx);
+        AppsSettings settings = AppsSettings.get();
+        String lastDeckPath = settings.getLastDeckPath();
+        String lastDeckName = settings.getLastDeckName();
+        String lastCategory = settings.getLastCategory();
+
+        if (lastDeckPath != null && !lastDeckPath.isEmpty()) {
+            File deckFile = new File(lastDeckPath);
+            if (deckFile.exists()) {
+                currentDeckCategoryName = lastCategory != null ? lastCategory : "";
+                currentDeckName = lastDeckName != null ? lastDeckName : "";
+                loadDeckFromPath(lastDeckPath);
+                updateDeckManagerButtonText();
+                if (etDeckName != null) {
+                    etDeckName.setText(currentDeckName);
+                }
+                return;
             }
         }
-        refreshDeckList();
-        if (lastDeck != null && !lastDeck.isEmpty()) {
-            int idx = deckNameList.indexOf(lastDeck);
-            if (idx >= 0 && spinnerDeckList != null) {
-                spinnerDeckList.setSelection(idx);
+
+        if (lastDeckName != null && !lastDeckName.isEmpty()) {
+            File deckFile = getDeckFile(lastDeckName);
+            if (deckFile.exists()) {
+                currentDeckCategoryName = lastCategory != null ? lastCategory : "";
+                currentDeckName = lastDeckName;
+                loadDeckFromPath(deckFile.getAbsolutePath());
+                updateDeckManagerButtonText();
+                if (etDeckName != null) {
+                    etDeckName.setText(currentDeckName);
+                }
             }
-        } else if (!deckNameList.isEmpty()) {
-            loadDeckByName(deckNameList.get(0));
         }
     }
 
     private void saveLastCategoryAndDeck() {
-        int catSel = spinnerCategory != null ? spinnerCategory.getSelectedItemPosition() : 0;
-        if (catSel >= 0 && catSel < categoryList.size()) {
-            AppsSettings.get().saveSettings("lastcategory", categoryList.get(catSel));
+        if (currentDeckCategoryName != null && !currentDeckCategoryName.isEmpty()) {
+            AppsSettings.get().saveSettings("lastcategory", currentDeckCategoryName);
         }
-        int deckSel = spinnerDeckList != null ? spinnerDeckList.getSelectedItemPosition() : 0;
-        if (deckSel >= 0 && deckSel < deckNameList.size()) {
-            AppsSettings.get().saveSettings("lastdeck", deckNameList.get(deckSel));
+        if (currentDeckFilePath != null && !currentDeckFilePath.isEmpty()) {
+            String deckName = new File(currentDeckFilePath).getName().replace(".ydk", "");
+            AppsSettings.get().saveSettings("lastdeck", deckName);
         }
     }
 
     private File getDeckDir() {
-        if (prevCategory < 2) {
-            return null;
-        } else if (prevCategory == 2) {
-            return new File(AppsSettings.get().getResourcePath(), "deck");
-        } else {
-            int dirIdx = prevCategory - 3;
-            File deckBaseDir = new File(AppsSettings.get().getResourcePath(), "deck");
-            File[] dirs = deckBaseDir.listFiles(File::isDirectory);
-            if (dirs != null && dirIdx < dirs.length) {
-                return dirs[dirIdx];
-            }
-            return new File(AppsSettings.get().getResourcePath(), "deck");
-        }
+        return new File(AppsSettings.get().getResourcePath(), "deck");
     }
 
     private File getDeckFile(String name) {
@@ -936,5 +969,12 @@ public class DeckEditorManager {
 
     public boolean isModified() {
         return isModified;
+    }
+
+    private void showDeckSelectorDialog() {
+        if (deckSelectorDialog == null) {
+            deckSelectorDialog = new DeckSelectorDialog(activity);
+        }
+        deckSelectorDialog.show(btnDeckManager);
     }
 }
