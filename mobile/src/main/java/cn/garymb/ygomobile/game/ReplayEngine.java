@@ -314,11 +314,16 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     break;
 
                 case 4: { // MSG_START
-                    if (buf.remaining() < 6) return false;
-                    int lp = buf.getInt();
-                    int startHand = buf.get() & 0xFF;
-                    int drawCount = buf.get() & 0xFF;
-                    onStart(lp, startHand, drawCount);
+                    if (buf.remaining() < 16) return false;
+                    int playerType = buf.get() & 0xFF;
+                    int duelRule = buf.get() & 0xFF;
+                    int lp0 = buf.getInt();
+                    int lp1 = buf.getInt();
+                    int deck0 = buf.getShort() & 0xFFFF;
+                    int extra0 = buf.getShort() & 0xFFFF;
+                    int deck1 = buf.getShort() & 0xFFFF;
+                    int extra1 = buf.getShort() & 0xFFFF;
+                    onStart(playerType, duelRule, lp0, lp1, deck0, extra0, deck1, extra1);
                     break;
                 }
 
@@ -547,13 +552,15 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     break;
                 }
 
-                case 90: // MSG_DRAW
+                case 90: { // MSG_DRAW
                     if (buf.remaining() < 2) return false;
                     int dPlayer = buf.get() & 0xFF;
                     int dCount = buf.get() & 0xFF;
-                    skipBytes(dCount * 4);
-                    onDraw(dPlayer, dCount);
+                    int[] dCodes = new int[dCount];
+                    for (int i = 0; i < dCount && buf.remaining() >= 4; i++) dCodes[i] = buf.getInt();
+                    onDraw(dPlayer, dCount, dCodes);
                     break;
+                }
 
                 case 91: // MSG_DAMAGE
                     if (buf.remaining() < 5) return false;
@@ -870,9 +877,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         mainHandler.post(() -> { if (listener != null) listener.onReplayHintMessage("提示: " + data); });
     }
     @Override public void onWaiting() {}
-    @Override public void onStart(int lp, int startHand, int drawCount) {
-        field.players[0].lp = lp;
-        field.players[1].lp = lp;
+    @Override public void onStart(int playerType, int duelRule, int lp0, int lp1,
+                                  int deck0, int extra0, int deck1, int extra1) {
+        field.clear();
+        field.players[0].lp = lp0;
+        field.players[1].lp = lp1;
+        field.initial(0, deck0, extra0, 0);
+        field.initial(1, deck1, extra1, 0);
         soundManager.playBGM(SoundManager.BGM.DUEL);
         mainHandler.post(() -> { if (listener != null) listener.onReplayFieldChanged(); });
     }
@@ -975,7 +986,27 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onChainEnd() { notifyField(); }
     @Override public void onChainNegated(int chainCount) { soundManager.playSoundEffect(SoundManager.SFX.NEGATE); }
     @Override public void onChainDisabled(int chainCount) { soundManager.playSoundEffect(SoundManager.SFX.NEGATE); }
-    @Override public void onDraw(int player, int count) { soundManager.playSoundEffect(SoundManager.SFX.DRAW); notifyField(); }
+    @Override public void onDraw(int player, int count, int[] codes) {
+        for (int i = 0; i < count; i++) {
+            GameField.ClientCard pcard = field.getCard(player, 0x01, field.getCardCount(player, 0x01) - 1 - i);
+            if (pcard != null && (!field.deckReversed || codes[i] != 0)) pcard.setCode(codes[i] & 0x7fffffff);
+        }
+        for (int i = 0; i < count; i++) {
+            GameField.ClientCard pcard = field.removeCard(player, 0x01, field.getCardCount(player, 0x01) - 1);
+            if (pcard == null) {
+                pcard = new GameField.ClientCard();
+                pcard.owner = player;
+                pcard.controler = player;
+                if (i < codes.length) pcard.setCode(codes[i] & 0x7fffffff);
+            }
+            field.addCard(player, 0x02, 0, pcard);
+            for (GameField.ClientCard hc : field.players[player].hand) {
+                if (hc != null) field.moveCardAnimated(hc, 10);
+            }
+        }
+        soundManager.playSoundEffect(SoundManager.SFX.DRAW);
+        notifyField();
+    }
     @Override public void onDamage(int player, int amount) {
         field.players[player].lp -= amount;
         if (field.players[player].lp < 0) field.players[player].lp = 0;

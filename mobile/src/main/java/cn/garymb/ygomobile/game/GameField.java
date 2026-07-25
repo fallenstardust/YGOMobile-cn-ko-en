@@ -1,10 +1,8 @@
 package cn.garymb.ygomobile.game;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -23,30 +21,37 @@ public class GameField {
     public static final int MAX_DECK = 128;
     public static final int MAX_LAYER_COUNT = 5;
 
-    public static final int QUERY_CODE         = 0x01;
-    public static final int QUERY_POSITION     = 0x02;
-    public static final int QUERY_ALIAS        = 0x04;
-    public static final int QUERY_TYPE         = 0x08;
-    public static final int QUERY_LEVEL        = 0x10;
-    public static final int QUERY_RANK         = 0x20;
-    public static final int QUERY_ATTRIBUTE    = 0x40;
-    public static final int QUERY_RACE         = 0x80;
-    public static final int QUERY_ATTACK       = 0x100;
-    public static final int QUERY_DEFENSE      = 0x200;
-    public static final int QUERY_BASE_ATTACK  = 0x400;
+    public static final int QUERY_CODE = 0x01;
+    public static final int QUERY_POSITION = 0x02;
+    public static final int QUERY_ALIAS = 0x04;
+    public static final int QUERY_TYPE = 0x08;
+    public static final int QUERY_LEVEL = 0x10;
+    public static final int QUERY_RANK = 0x20;
+    public static final int QUERY_ATTRIBUTE = 0x40;
+    public static final int QUERY_RACE = 0x80;
+    public static final int QUERY_ATTACK = 0x100;
+    public static final int QUERY_DEFENSE = 0x200;
+    public static final int QUERY_BASE_ATTACK = 0x400;
     public static final int QUERY_BASE_DEFENSE = 0x800;
-    public static final int QUERY_REASON       = 0x1000;
-    public static final int QUERY_REASON_CARD  = 0x2000;
-    public static final int QUERY_EQUIP_CARD   = 0x4000;
-    public static final int QUERY_TARGET_CARD  = 0x8000;
+    public static final int QUERY_REASON = 0x1000;
+    public static final int QUERY_REASON_CARD = 0x2000;
+    public static final int QUERY_EQUIP_CARD = 0x4000;
+    public static final int QUERY_TARGET_CARD = 0x8000;
     public static final int QUERY_OVERLAY_CARD = 0x10000;
-    public static final int QUERY_COUNTERS     = 0x20000;
-    public static final int QUERY_OWNER        = 0x40000;
-    public static final int QUERY_STATUS       = 0x80000;
-    public static final int QUERY_IS_PUBLIC    = 0x100000;
-    public static final int QUERY_LSCALE       = 0x200000;
-    public static final int QUERY_RSCALE       = 0x400000;
-    public static final int QUERY_LINK         = 0x800000;
+    public static final int QUERY_COUNTERS = 0x20000;
+    public static final int QUERY_OWNER = 0x40000;
+    public static final int QUERY_STATUS = 0x80000;
+    public static final int QUERY_IS_PUBLIC = 0x100000;
+    public static final int QUERY_LSCALE = 0x200000;
+    public static final int QUERY_RSCALE = 0x400000;
+    public static final int QUERY_LINK = 0x800000;
+
+    // client_field.cpp / materials.cpp 常量
+    public static final float PI = 3.1415926f;
+    public static final int POS_FACEUP = 0x5;
+    public static final int POS_FACEDOWN = 0xA;
+    public static final int POS_ATTACK = 0x3;
+    public static final int POS_DEFENSE = 0xC;
 
     public static class ClientCard {
         public int code;
@@ -240,7 +245,8 @@ public class GameField {
                 }
             }
             if ((flag & QUERY_BASE_ATTACK) != 0 && buf.remaining() >= 4) baseAttack = buf.getInt();
-            if ((flag & QUERY_BASE_DEFENSE) != 0 && buf.remaining() >= 4) baseDefense = buf.getInt();
+            if ((flag & QUERY_BASE_DEFENSE) != 0 && buf.remaining() >= 4)
+                baseDefense = buf.getInt();
             if ((flag & QUERY_REASON) != 0 && buf.remaining() >= 4) reason = buf.getInt();
             if ((flag & QUERY_REASON_CARD) != 0 && buf.remaining() >= 4) buf.getInt();
             if ((flag & QUERY_EQUIP_CARD) != 0 && buf.remaining() >= 4) {
@@ -405,6 +411,164 @@ public class GameField {
     public boolean selectReady;
     public int selectCurvalL, selectCurvalH;
 
+    /** DuelInfo 等价物（game.h dInfo 中 HUD 相关字段） */
+    public static class DuelInfo {
+        public int startLp = 8000;
+        public int[] lp = {8000, 8000};          // 显示值（LP 动画的中间值）
+        public int timeLimit;// 秒，0=无限时
+        public int[] timeLeft = new int[2];
+        public int timePlayer = -1;
+        public int[] timeColor = {0xFFFFFFFF, 0xFFFFFFFF};
+        public int[] cardCount = new int[2];
+        public int[] cardCountColor = {0xFFFFFFFF, 0xFFFFFFFF};
+        public int[] totalAttack = new int[2];
+        public int[] totalAttackColor = {0xFFFFFFFF, 0xFFFFFFFF};
+    }
+
+    public final DuelInfo dInfo = new DuelInfo();
+
+    // === Game::lpframe/lpplayer/lpd/lpccolor/lpcstring LP 动画状态机 ===
+    public int lpframe;
+    public int lpplayer;
+    public int lpd;
+    public int lpccolor;
+    public String lpcstring = "";
+    private int lpFinal;
+    private int lpDelay;        // 等价 WaitFrameSignal(30)：浮字先全亮展示 30 帧
+    private boolean lpPending;
+    private long lastTimeTickMs;
+
+    /**
+     * 触发 LP 变化动画（duelclient.cpp MSG_DAMAGE/RECOVER/LPUPDATE/PAY_LPCOST）
+     * @param showText true=伤害/回复（先 30 帧浮字再扣减）；false=LPUPDATE/支付（立即扣减）
+     */
+    public void startLpChange(int player, int finalLp, int color, String text, boolean showText) {
+        lpplayer = player;
+        lpFinal = finalLp;
+        lpd = (dInfo.lp[player] - finalLp) / 10;
+        if (showText && text != null) {
+            lpccolor = color;
+            lpcstring = text;
+            lpDelay = 30;
+            lpframe = 0;
+        } else {
+            lpccolor = 0;
+            lpcstring = "";
+            lpDelay = 0;
+            lpframe = 10;
+        }
+        lpPending = true;
+    }
+
+    /** 每帧调用（等价 DrawMisc L974-979 的推进） */
+    public void updateLpAnimation() {
+        if (!lpPending) return;
+        if (lpDelay > 0) {
+            lpDelay--;
+            if (lpDelay == 0) lpframe = 10;
+            return;
+        }
+        if (lpframe > 0) {
+            dInfo.lp[lpplayer] -= lpd;
+            int a = (lpccolor >>> 24) - 0x19;
+            if (a < 0) a = 0;
+            lpccolor = (a << 24) | (lpccolor & 0x00FFFFFF);
+            lpframe--;
+        }
+        if (lpframe <= 0) {
+            dInfo.lp[lpplayer] = lpFinal;
+            lpcstring = "";
+            lpPending = false;
+        }
+    }
+
+    public boolean isLpAnimating() {
+        return lpPending;
+    }
+
+    /** Game::RefreshTimeDisplay 忠实移植（game.cpp L1679-1695） */
+    public void refreshTimeDisplay() {
+        for (int i = 0; i < 2; i++) {
+            if (dInfo.timeLeft[i] > 0 && dInfo.timeLimit > 0) {
+                if (dInfo.timeLeft[i] >= dInfo.timeLimit / 2)
+                    dInfo.timeColor[i] = 0xFF00FF00;
+                else if (dInfo.timeLeft[i] >= dInfo.timeLimit / 3)
+                    dInfo.timeColor[i] = 0xFFFFFF00;
+                else if (dInfo.timeLeft[i] >= dInfo.timeLimit / 6)
+                    dInfo.timeColor[i] = 0xFFFF7F00;
+                else
+                    dInfo.timeColor[i] = 0xFFFF0000;
+            } else {
+                dInfo.timeColor[i] = 0xFFFFFFFF;
+            }
+        }
+    }
+
+    public void resetTimeTick() {
+        lastTimeTickMs = 0;
+    }
+
+    /** 本地每秒倒计时（game.cpp 主循环 L1659-1664，STOC_TIME_LIMIT 到达时被resetTimeTick 校正） */
+    public void tickTime(long nowMs) {
+        if (dInfo.timeLimit <= 0 || dInfo.timePlayer < 0 || dInfo.timePlayer > 1) return;
+        if (lastTimeTickMs == 0) {
+            lastTimeTickMs = nowMs;
+            return;
+        }
+        boolean changed = false;
+        while (nowMs - lastTimeTickMs >= 1000) {
+            lastTimeTickMs += 1000;
+            if (dInfo.timeLeft[dInfo.timePlayer] > 0) {
+                dInfo.timeLeft[dInfo.timePlayer]--;
+                changed = true;
+            }
+        }
+        if (changed) refreshTimeDisplay();
+    }
+
+    /** ClientField::RefreshCardCountDisplay 忠实移植（client_field.cpp L1583-1624） */
+    public void refreshCardCountDisplay() {
+        for (int p = 0; p < 2; p++) {
+            int count = 0;
+            int total = 0;
+            for (ClientCard c : players[p].hand) {
+                if (c != null) count++;
+            }
+            for (ClientCard c : players[p].monsterZone) {
+                if (c != null) {
+                    count++;
+                    if (c.position == CardPosition.FaceUpAttack.value() && c.attack > 0)
+                        total += c.attack;
+                }
+            }
+            for (ClientCard c : players[p].spellZone) {
+                if (c != null) count++;
+            }
+            dInfo.cardCount[p] = count;
+            dInfo.totalAttack[p] = total;
+        }
+        if (dInfo.cardCount[0] > dInfo.cardCount[1]) {
+            dInfo.cardCountColor[0] = 0xFFFFFF00;
+            dInfo.cardCountColor[1] = 0xFFFF2A00;
+        } else if (dInfo.cardCount[1] > dInfo.cardCount[0]) {
+            dInfo.cardCountColor[1] = 0xFFFFFF00;
+            dInfo.cardCountColor[0] = 0xFFFF2A00;
+        } else {
+            dInfo.cardCountColor[0] = 0xFFFFFFFF;
+            dInfo.cardCountColor[1] = 0xFFFFFFFF;
+        }
+        if (dInfo.totalAttack[0] > dInfo.totalAttack[1]) {
+            dInfo.totalAttackColor[0] = 0xFFFFFF00;
+            dInfo.totalAttackColor[1] = 0xFFFF2A00;
+        } else if (dInfo.totalAttack[1] > dInfo.totalAttack[0]) {
+            dInfo.totalAttackColor[1] = 0xFFFFFF00;
+            dInfo.totalAttackColor[0] = 0xFFFF2A00;
+        } else {
+            dInfo.totalAttackColor[0] = 0xFFFFFFFF;
+            dInfo.totalAttackColor[1] = 0xFFFFFFFF;
+        }
+    }
+
     public GameField() {
         players[0] = new PlayerField();
         players[1] = new PlayerField();
@@ -451,6 +615,7 @@ public class GameField {
             pcard.sequence = i;
             pcard.position = CardPosition.FaceDownDefence.value();
             players[player].deck.set(i, pcard);
+            setCardPos(pcard);
         }
         for (int i = 0; i < extrac && i < players[player].extra.size(); i++) {
             ClientCard pcard = new ClientCard();
@@ -460,6 +625,7 @@ public class GameField {
             pcard.sequence = i;
             pcard.position = CardPosition.FaceDownDefence.value();
             players[player].extra.set(i, pcard);
+            setCardPos(pcard);
         }
         for (int i = 0; i < sidec && i < players[player].removed.size(); i++) {
             ClientCard pcard = new ClientCard();
@@ -469,6 +635,7 @@ public class GameField {
             pcard.sequence = i;
             pcard.position = CardPosition.FaceDownDefence.value();
             players[player].removed.set(i, pcard);
+            setCardPos(pcard);
         }
     }
 
@@ -539,7 +706,13 @@ public class GameField {
                 break;
             }
             case 0x02: {
-                list.set(sequence, card);
+                // C++ AddCard(LOCATION_HAND)：push_back —— 追加到第一个空位而非覆盖
+                int idx = -1;
+                for (int i = 0; i < list.size(); i++) {
+                    if (list.get(i) == null) { idx = i; break; }
+                }
+                if (idx < 0) list.add(card);
+                else list.set(idx, card);
                 resetSequence(list, false);
                 break;
             }
@@ -598,7 +771,11 @@ public class GameField {
                 break;
             }
             case 0x02: {
-                list.set(sequence, null);
+                // C++ erase：前移压实，保持手卡序号与列表下标一致（getCard 依赖）
+                for (int i = sequence; i < list.size() - 1; i++) {
+                    list.set(i, list.get(i + 1));
+                }
+                list.set(list.size() - 1, null);
                 resetSequence(list, false);
                 break;
             }
@@ -665,9 +842,7 @@ public class GameField {
     }
 
     public void moveCard(ClientCard pcard, int frame) {
-        if (pcard == null) return;
-        pcard.is_moving = true;
-        pcard.aniFrame = frame;
+        moveCardAnimated(pcard, frame);
     }
 
     public void fadeCard(ClientCard pcard, int alpha, int frame) {
@@ -677,93 +852,182 @@ public class GameField {
         pcard.aniFrame = frame;
     }
 
+    // === ClientField::GetCardLocation 忠实移植（MR4，rule=1；坐标真值来自 materials.cpp）===
+
+    private static float mzoneCX(int c, int s) {
+        if (c == 0) return s < 5 ? 1.75f + 1.1f * s : (s == 5 ? 2.85f : 5.05f);
+        return s < 5 ? 6.15f - 1.1f * s : (s == 5 ? 5.05f : 2.85f);
+    }
+
+    private static float mzoneCY(int c, int s) {
+        if (s >= 5) return 0f;
+        return c == 0 ? 1.4f : -1.4f;
+    }
+
+    private static float szoneCX(int c, int s) {
+        if (c == 0) {
+            if (s < 5) return 1.75f + 1.1f * s;
+            if (s == 5) return 0.6f;
+            if (s == 6) return 0.6f;
+            return 8.3f;
+        }
+        if (s < 5) return 6.15f - 1.1f * s;
+        if (s == 5) return 7.3f;
+        if (s == 6) return 7.3f;
+        return -0.4f;
+    }
+
+    private static float szoneCY(int c, int s) {
+        if (c == 0) {
+            if (s < 5) return 2.6f;
+            if (s == 5) return 2.0f;
+            return 0.7f;
+        }
+        if (s < 5) return -2.6f;
+        if (s == 5) return -2.0f;
+        return -0.7f;
+    }
+
+    /**
+     * 返回 {x, y, z, rotX, rotY, rotZ}，与 ClientField::GetCardLocation 一致
+     */
     public float[] getCardLocation(ClientCard pcard) {
-        float[] result = new float[]{0, 0, 0, 0, 0, 0};
+        float[] t = new float[6];
         int controler = pcard.controler;
         int sequence = pcard.sequence;
         int location = pcard.location;
-        boolean flipped = (controler == 1);
-        float halfFieldH = 1.0f;
+        boolean facedown = (pcard.position & POS_FACEDOWN) != 0;
+        boolean defense = (pcard.position & POS_DEFENSE) != 0;
+        boolean faceup = (pcard.position & POS_FACEUP) != 0;
 
         switch (location) {
-            case 0x01: {
-                result[0] = flipped ? 0.15f : 0.75f;
-                result[1] = flipped ? 0.1f : 0.75f;                result[2] = 0.01f * sequence;
+            case 0x01: { // LOCATION_DECK
+                t[0] = controler == 0 ? 7.3f : 0.6f;
+                t[1] = controler == 0 ? 3.3f : -3.3f;
+                t[2] = 0.01f + 0.01f * sequence;
+                boolean back = (deckReversed == pcard.is_reversed);
+                t[4] = back ? PI : 0f;
+                t[5] = controler == 0 ? 0f : PI;
                 break;
             }
-            case 0x02: {
-                List<ClientCard> hand = players[controler].hand;
-                int count = 0;
-                for (ClientCard c : hand) if (c != null) count++;
-                int idx = 0;
-                for (int i = 0; i < hand.size(); i++) {
-                    if (hand.get(i) == pcard) { idx = i; break; }
-                    if (hand.get(i) != null) idx++;
-                }
-                if (count <= 6) {
-                    result[0] = (5.5f - 0.8f * count) / 2f + 1.55f + idx * 0.8f;
+            case 0:
+            case 0x02: { // LOCATION_HAND
+                int count = getCardCount(controler, 0x02);
+                if (count <= 0) count = 1;
+                if (controler == 0) {
+                    if (count <= 6) t[0] = (5.5f - 0.8f * count) / 2f + 1.55f + sequence * 0.8f;
+                    else t[0] = 1.9f + sequence * 4.0f / (count - 1);
+                    if (pcard.is_hovered) {
+                        t[1] = 3.84f;
+                        t[2] = 0.656f + 0.001f * sequence;
+                    } else {
+                        t[1] = 4.0f;
+                        t[2] = 0.5f + 0.001f * sequence;
+                    }
+                    if (pcard.code != 0) {
+                        t[3] = -0.798056f;
+                        t[4] = 0f;
+                    } else {
+                        t[3] = 0.798056f;
+                        t[4] = PI;
+                    }
                 } else {
-                    result[0] = 1.9f + idx * 4.0f / (count - 1);
+                    if (count <= 6) t[0] = 6.25f - (5.5f - 0.8f * count) / 2f - sequence * 0.8f;
+                    else t[0] = 5.9f - sequence * 4.0f / (count - 1);
+                    if (pcard.is_hovered) {
+                        t[1] = -3.56f;
+                        t[2] = 0.656f - 0.001f * sequence;
+                    } else {
+                        t[1] = -3.4f;
+                        t[2] = 0.5f - 0.001f * sequence;
+                    }
+                    if (pcard.code == 0) {
+                        t[3] = 0.798056f;
+                        t[4] = PI;
+                    } else {
+                        t[3] = -0.798056f;
+                        t[4] = 0f;
+                    }
                 }
-                if (flipped) {
-                    result[0] = 6.25f - result[0] + 1.55f;
-                    result[1] = -3.4f;
-                    result[2] = 0.5f - 0.001f * idx;
-                } else {                    result[1] = 4.0f;
-                    result[2] = 0.5f + 0.001f * idx;
+                break;
+            }
+            case 0x04: { // LOCATION_MZONE
+                t[0] = mzoneCX(controler, sequence);
+                t[1] = mzoneCY(controler, sequence);
+                t[2] = 0.02f;
+                if (controler == 0) {
+                    if (defense) {
+                        t[5] = -PI / 2f;
+                        t[4] = facedown ? PI + 0.001f : 0f;
+                    } else {
+                        t[5] = 0f;
+                        t[4] = facedown ? PI : 0f;
+                    }
+                } else {
+                    if (defense) {
+                        t[5] = PI / 2f;
+                        t[4] = facedown ? PI + 0.001f : 0f;
+                    } else {
+                        t[5] = PI;
+                        t[4] = facedown ? PI : 0f;
+                    }
                 }
                 break;
             }
-            case 0x04: {
-                result[0] = 1.5f + sequence * 0.85f;
-                result[1] = flipped ? -1.5f : 1.5f;
-                result[2] = 0.02f;
+            case 0x08: { // LOCATION_SZONE
+                t[0] = szoneCX(controler, sequence);
+                t[1] = szoneCY(controler, sequence);
+                t[2] = 0.01f;
+                t[4] = facedown ? PI : 0f;
+                t[5] = controler == 0 ? 0f : PI;
                 break;
             }
-            case 0x08: {
-                result[0] = 1.5f + sequence * 0.85f;
-                result[1] = flipped ? -2.5f : 2.5f;
-                result[2] = 0.01f;
+            case 0x10: { // LOCATION_GRAVE
+                t[0] = controler == 0 ? 7.3f : 0.6f;
+                t[1] = controler == 0 ? 2.0f : -2.0f;
+                t[2] = 0.01f + 0.01f * sequence;
+                t[5] = controler == 0 ? 0f : PI;
                 break;
             }
-            case 0x10: {
-                result[0] = flipped ? 0.5f : 0.5f; result[1] = flipped ? -0.5f : 0.5f;
-                result[2] = 0.01f * sequence;
+            case 0x20: { // LOCATION_REMOVED
+                t[0] = controler == 0 ? 7.3f : 0.6f;
+                t[1] = controler == 0 ? 0.7f : -0.7f;
+                t[2] = 0.01f + 0.01f * sequence;
+                t[4] = faceup ? 0f : PI;
+                t[5] = controler == 0 ? 0f : PI;
                 break;
             }
-            case 0x20: {
-                result[0] = flipped ? 0.8f : 0.8f;
-                result[1] = flipped ? -0.8f : 0.8f;
-                result[2] = 0.01f * sequence;
+            case 0x40: { // LOCATION_EXTRA
+                t[0] = controler == 0 ? 0.6f : 7.3f;
+                t[1] = controler == 0 ? 3.3f : -3.3f;
+                t[2] = 0.01f + 0.01f * sequence;
+                t[4] = faceup ? 0f : PI;
+                t[5] = controler == 0 ? 0f : PI;
                 break;
             }
-            case 0x40: {
-                result[0] = flipped ? 0.2f : 0.2f;
-                result[1] = flipped ? -0.2f : 0.2f;
-                result[2] = 0.01f * sequence;
-                break;
-            }
-            case 0x80: {
-                if (pcard.overlayTarget != null && pcard.overlayTarget.location == 0x04) {
-                    int oseq = pcard.overlayTarget.sequence;
-                    int mseq = Math.min(pcard.sequence, MAX_LAYER_COUNT - 1);
-                    result[0] = 1.5f + oseq * 0.85f + (flipped ? -0.12f + 0.06f * mseq : 0.12f - 0.06f * mseq);
-                    result[1] = (flipped ? -1.5f : 1.5f) + (flipped ? -0.05f : 0.05f);
-                    result[2] = 0.001f + mseq * 0.003f;
+            case 0x80: { // LOCATION_OVERLAY
+                ClientCard target = pcard.overlayTarget;
+                if (target == null || target.location != 0x04) return t;
+                int oseq = target.sequence;
+                int mseq = Math.max(0, Math.min(sequence, MAX_LAYER_COUNT - 1));
+                if (target.controler == 0) {
+                    t[0] = mzoneCX(0, oseq) - 0.12f + 0.06f * mseq;
+                    t[1] = mzoneCY(0, oseq) + 0.05f;
+                    t[5] = 0f;
+                } else {
+                    t[0] = mzoneCX(1, oseq) + 0.12f - 0.06f * mseq;
+                    t[1] = mzoneCY(1, oseq) - 0.05f;
+                    t[5] = PI;
                 }
+                t[2] = 0.001f + mseq * 0.003f;
                 break;
             }
         }
-
-        if (flipped) {
-            result[4] = 0;
-            result[5] = 0;
-            result[3] = (float) Math.PI; }
-
-        return result;
+        return t;
     }
 
-    public void updateCardAnimation(int frame) {        for (int p = 0; p < 2; p++) {
+    public void updateCardAnimation(int frame) {
+        for (int p = 0; p < 2; p++) {
             updateListAnimation(players[p].deck);
             updateListAnimation(players[p].hand);
             updateListAnimation(players[p].monsterZone);
@@ -777,7 +1041,8 @@ public class GameField {
 
     private void updateListAnimation(List<ClientCard> list) {
         for (ClientCard pcard : list) {
-            if (pcard == null) continue;
+            if (pcard == null || pcard.aniFrame <= 0) continue;
+            // Game::DrawCard 每帧推进：位移+旋转+透明度共用一次 aniFrame--
             if (pcard.is_moving) {
                 pcard.curX += pcard.dPosX;
                 pcard.curY += pcard.dPosY;
@@ -785,19 +1050,16 @@ public class GameField {
                 pcard.curRotX += pcard.dRotX;
                 pcard.curRotY += pcard.dRotY;
                 pcard.curRotZ += pcard.dRotZ;
-                pcard.aniFrame--;
-                if (pcard.aniFrame <= 0) {
-                    pcard.is_moving = false;
-                    pcard.aniFrame = 0;
-                }
             }
             if (pcard.is_fading) {
                 pcard.curAlpha += pcard.dAlpha;
-                pcard.aniFrame--;
-                if (pcard.aniFrame <= 0) {
-                    pcard.is_fading = false;
-                    pcard.aniFrame = 0;
-                }
+            }
+            pcard.aniFrame--;
+            if (pcard.aniFrame <= 0) {
+                pcard.aniFrame = 0;
+                pcard.is_moving = false;
+                pcard.is_fading = false;
+                pcard.chain_code = 0;
             }
         }
     }
@@ -805,29 +1067,53 @@ public class GameField {
     public void refreshAllCards() {
         for (int p = 0; p < 2; p++) {
             for (ClientCard c : players[p].deck) {
-                if (c != null) { setCardPos(c); c.is_moving = false; }
+                if (c != null) {
+                    setCardPos(c);
+                    c.is_moving = false;
+                }
             }
             for (ClientCard c : players[p].hand) {
-                if (c != null) { setCardPos(c); c.is_moving = false; }
+                if (c != null) {
+                    setCardPos(c);
+                    c.is_moving = false;
+                }
             }
             for (ClientCard c : players[p].monsterZone) {
-                if (c != null) { setCardPos(c); c.is_moving = false; }
+                if (c != null) {
+                    setCardPos(c);
+                    c.is_moving = false;
+                }
             }
             for (ClientCard c : players[p].spellZone) {
-                if (c != null) { setCardPos(c); c.is_moving = false; }
+                if (c != null) {
+                    setCardPos(c);
+                    c.is_moving = false;
+                }
             }
             for (ClientCard c : players[p].grave) {
-                if (c != null) { setCardPos(c); c.is_moving = false; }
+                if (c != null) {
+                    setCardPos(c);
+                    c.is_moving = false;
+                }
             }
             for (ClientCard c : players[p].removed) {
-                if (c != null) { setCardPos(c); c.is_moving = false; }
+                if (c != null) {
+                    setCardPos(c);
+                    c.is_moving = false;
+                }
             }
             for (ClientCard c : players[p].extra) {
-                if (c != null) { setCardPos(c); c.is_moving = false; }
+                if (c != null) {
+                    setCardPos(c);
+                    c.is_moving = false;
+                }
             }
         }
         for (ClientCard c : overlayCards) {
-            if (c != null) { setCardPos(c); c.is_moving = false; }
+            if (c != null) {
+                setCardPos(c);
+                c.is_moving = false;
+            }
         }
     }
 
@@ -872,13 +1158,49 @@ public class GameField {
     }
 
     public void clearCommandFlag() {
-        for (ClientCard c : activatableCards) if (c != null) { c.cmdFlag = 0; c.chain_code = 0; c.is_selectable = false; c.is_selected = false; }
-        for (ClientCard c : summonableCards) if (c != null) { c.cmdFlag = 0; c.is_selectable = false; c.is_selected = false; }
-        for (ClientCard c : spsummonableCards) if (c != null) { c.cmdFlag = 0; c.is_selectable = false; c.is_selected = false; }
-        for (ClientCard c : msetableCards) if (c != null) { c.cmdFlag = 0; c.is_selectable = false; c.is_selected = false; }
-        for (ClientCard c : ssetableCards) if (c != null) { c.cmdFlag = 0; c.is_selectable = false; c.is_selected = false; }
-        for (ClientCard c : reposableCards) if (c != null) { c.cmdFlag = 0; c.is_selectable = false; c.is_selected = false; }
-        for (ClientCard c : attackableCards) if (c != null) { c.cmdFlag = 0; c.is_selectable = false; c.is_selected = false; }
+        for (ClientCard c : activatableCards)
+            if (c != null) {
+                c.cmdFlag = 0;
+                c.chain_code = 0;
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
+        for (ClientCard c : summonableCards)
+            if (c != null) {
+                c.cmdFlag = 0;
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
+        for (ClientCard c : spsummonableCards)
+            if (c != null) {
+                c.cmdFlag = 0;
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
+        for (ClientCard c : msetableCards)
+            if (c != null) {
+                c.cmdFlag = 0;
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
+        for (ClientCard c : ssetableCards)
+            if (c != null) {
+                c.cmdFlag = 0;
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
+        for (ClientCard c : reposableCards)
+            if (c != null) {
+                c.cmdFlag = 0;
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
+        for (ClientCard c : attackableCards)
+            if (c != null) {
+                c.cmdFlag = 0;
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
         for (int i = 0; i < 2; i++) {
             deckAct[i] = false;
             extraAct[i] = false;
@@ -899,22 +1221,39 @@ public class GameField {
 
     public void clearSelect() {
         for (ClientCard c : selectableCards) {
-            if (c != null) { c.is_selectable = false; c.is_selected = false; }
+            if (c != null) {
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
         }
         for (ClientCard c : selectedCards) {
-            if (c != null) { c.is_selectable = false; c.is_selected = false; }
+            if (c != null) {
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
         }
         for (ClientCard c : selectsumAll) {
-            if (c != null) { c.is_selectable = false; c.is_selected = false; }
+            if (c != null) {
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
         }
         for (ClientCard c : selectsumCards) {
-            if (c != null) { c.is_selectable = false; c.is_selected = false; }
+            if (c != null) {
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
         }
     }
 
     public void clearChainSelect() {
         for (ClientCard c : activatableCards) {
-            if (c != null) { c.cmdFlag = 0; c.chain_code = 0; c.is_selectable = false; c.is_selected = false; }
+            if (c != null) {
+                c.cmdFlag = 0;
+                c.chain_code = 0;
+                c.is_selectable = false;
+                c.is_selected = false;
+            }
         }
         for (int i = 0; i < 2; i++) {
             deckAct[i] = false;

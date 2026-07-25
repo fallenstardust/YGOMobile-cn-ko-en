@@ -20,7 +20,8 @@ public class GameMessageParser {
         void onRetry();
         void onHint(int type, int player, int data);
         void onWaiting();
-        void onStart(int lp, int startHand, int drawCount);
+        void onStart(int playerType, int duelRule, int lp0, int lp1,
+                     int deck0, int extra0, int deck1, int extra1);
         void onWin(int player, int reason);
         void onUpdateData(int player, int location, ByteBuffer data);
         void onUpdateCard(int player, int location, int sequence, ByteBuffer data);
@@ -71,7 +72,7 @@ public class GameMessageParser {
         void onChainEnd();
         void onChainNegated(int chainCount);
         void onChainDisabled(int chainCount);
-        void onDraw(int player, int count);
+        void onDraw(int player, int count, int[] codes);
         void onDamage(int player, int amount);
         void onRecover(int player, int amount);
         void onEquip(int equip_code, int equip_ctrl, int equip_loc, int equip_seq,
@@ -125,10 +126,16 @@ public class GameMessageParser {
                 handler.onWaiting();
                 break;
             case Start: {
-                int lp = buf.getInt();
-                int startHand = buf.get() & 0xFF;
-                int drawCount = buf.get() & 0xFF;
-                handler.onStart(lp, startHand, drawCount);
+                // duelclient.cpp L1622-1642：playertype+duel_rule+lp0+lp1+deckc/extrac×2
+                int playerType = buf.get() & 0xFF;
+                int duelRule = buf.get() & 0xFF;
+                int lp0 = buf.getInt();
+                int lp1 = buf.getInt();
+                int deck0 = buf.getShort() & 0xFFFF;
+                int extra0 = buf.getShort() & 0xFFFF;
+                int deck1 = buf.getShort() & 0xFFFF;
+                int extra1 = buf.getShort() & 0xFFFF;
+                handler.onStart(playerType, duelRule, lp0, lp1, deck0, extra0, deck1, extra1);
                 break;
             }
             case Win:
@@ -363,7 +370,11 @@ public class GameMessageParser {
             case Draw: {
                 int player = buf.get() & 0xFF;
                 int count = buf.get() & 0xFF;
-                handler.onDraw(player, count);
+                int[] codes = new int[count];
+                for (int i = 0; i < count && buf.remaining() >= 4; i++) {
+                    codes[i] = buf.getInt();
+                }
+                handler.onDraw(player, count, codes);
                 break;
             }
             case Damage: {

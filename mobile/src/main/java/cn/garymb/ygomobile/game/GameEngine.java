@@ -650,6 +650,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onTimeLimit(int player, int leftTime) {
+        if (field.dInfo.timeLimit <= 0) {
+            field.dInfo.timeLimit = Math.max(gameTimeLimit, leftTime);
+        }
+        field.dInfo.timePlayer = player;
+        field.dInfo.timeLeft[player] = leftTime;
+        field.resetTimeTick();
+        field.refreshTimeDisplay();
         mainHandler.post(() -> {
             if (listener != null) listener.onTimeLimitUpdate(player, leftTime);
         });
@@ -714,6 +721,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         this.gameTimeLimit = timeLimit;
         this.gameNoCheckDeck = noCheckDeck;
         this.gameNoShuffleDeck = noShuffleDeck;
+        field.dInfo.timeLimit = timeLimit;
+        field.dInfo.startLp = startLp;
+        field.dInfo.lp[0] = startLp;
+        field.dInfo.lp[1] = startLp;
         mainHandler.post(() -> {
             if (listener != null) listener.onJoinGame(lflist, rule, mode, duelRule,
                     noCheckDeck, noShuffleDeck,
@@ -769,14 +780,24 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onStart(int lp, int startHand, int drawCount) {
+    public void onStart(int playerType, int duelRule, int lp0, int lp1,
+                        int deck0, int extra0, int deck1, int extra1) {
         field.clear();
-        playerInfos[0].lp = lp;
-        playerInfos[1].lp = lp;
-        playerInfos[0].startLp = lp;
-        playerInfos[1].startLp = lp;
-        field.players[0].lp = lp;
-        field.players[1].lp = lp;
+        duelIsFirst = (playerType & 0xf) == 0;
+        int p0 = localPlayer(0);
+        int p1 = localPlayer(1);
+        playerInfos[p0].lp = lp0;
+        playerInfos[p1].lp = lp1;
+        playerInfos[p0].startLp = lp0;
+        playerInfos[p1].startLp = lp1;
+        field.players[p0].lp = lp0;
+        field.players[p1].lp = lp1;
+        field.dInfo.startLp = Math.max(lp0, lp1);
+        field.dInfo.lp[p0] = lp0;
+        field.dInfo.lp[p1] = lp1;
+        // ClientField::Initial：为双方卡组/额外创建全部 ClientCard（背面朝下、带堆叠高度）
+        field.initial(p0, deck0, extra0, 0);
+        field.initial(p1, deck1, extra1, 0);
         setState(GameState.DUELING);
         mainHandler.post(() -> {
             if (listener != null) {
@@ -1005,7 +1026,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onNewTurn(int player) {
-        field.currentPlayer = player;
+        field.currentPlayer = localPlayer(player);
         field.turnCount++;
         soundManager.playSoundEffect(SoundManager.SFX.NEXT_TURN);
         mainHandler.post(() -> {
@@ -1025,6 +1046,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onMove(int code, int oldCtrl, int oldLoc, int oldSeq,
                        int newCtrl, int newLoc, int newSeq, int position, int reason) {
+        oldCtrl = localPlayer(oldCtrl);
+        newCtrl = localPlayer(newCtrl);
         GameField.ClientCard card = field.getCard(oldCtrl, oldLoc, oldSeq);
         if (card == null) {
             card = new GameField.ClientCard();
@@ -1048,6 +1071,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onPosChange(int code, int ctrl, int loc, int seq, int oldPos, int newPos) {
+        ctrl = localPlayer(ctrl);
         GameField.ClientCard card = field.getCard(ctrl, loc, seq);
         if (card != null) {
             card.position = newPos;
@@ -1062,6 +1086,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSet(int code, int ctrl, int loc, int seq) {
+        ctrl = localPlayer(ctrl);
         GameField.ClientCard card = new GameField.ClientCard();
         card.code = code;
         card.position = 0x2;
@@ -1173,20 +1198,48 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onDraw(int player, int count) {
+    public void onDraw(int player, int count, int[] codes) {
+        // duelclient.cpp MSG_DRAW L3519-3547
+        final int p = localPlayer(player);
+        int deckLoc = CardLocation.Deck.value();
+        int handLoc = CardLocation.Hand.value();
+        // 1) 给被抽的卡组顶设卡码
+        int top = field.getCardCount(p, deckLoc) - 1;
+        for (int i = 0; i < count; i++) {
+            GameField.ClientCard pcard = field.getCard(p, deckLoc, top - i);
+            if (pcard != null && (!field.deckReversed || codes[i] != 0)) {
+                pcard.setCode(codes[i] & 0x7fffffff);
+            }
+        }
+        // 2) 逐张从卡组顶移除 → 加入手卡 → 全部手卡重新布局（MoveCard 10 帧）
+        for (int i = 0; i < count; i++) {
+            int t = field.getCardCount(p, deckLoc) - 1;
+            GameField.ClientCard pcard = field.removeCard(p, deckLoc, t);
+            if (pcard == null) {
+                pcard = new GameField.ClientCard();
+                pcard.owner = p;
+                pcard.controler = p;
+                if (i < codes.length) pcard.setCode(codes[i] & 0x7fffffff);
+            }
+            field.addCard(p, handLoc, 0, pcard);
+            for (GameField.ClientCard hc : field.players[p].hand) {
+                if (hc != null) field.moveCardAnimated(hc, 10);
+            }
+        }
         soundManager.playSoundEffect(SoundManager.SFX.DRAW);
         mainHandler.post(() -> {
             if (listener != null) {
                 listener.onFieldChanged();
-                listener.onPlayerInfoUpdated(player);
+                listener.onPlayerInfoUpdated(p);
             }
         });
     }
 
     @Override
     public void onDamage(int player, int amount) {
-        field.players[player].lp -= amount;
-        if (field.players[player].lp < 0) field.players[player].lp = 0;
+        int fin = Math.max(0, field.players[player].lp - amount);
+        field.players[player].lp = fin;
+        field.startLpChange(player, fin, 0xFFFF0000, "-" + amount, true);
         soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
         mainHandler.post(() -> {
             if (listener != null) listener.onPlayerInfoUpdated(player);
@@ -1195,7 +1248,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onRecover(int player, int amount) {
-        field.players[player].lp += amount;
+        int fin = field.players[player].lp + amount;
+        field.players[player].lp = fin;
+        field.startLpChange(player, fin, 0xFF00FF00, "+" + amount, true);
         soundManager.playSoundEffect(SoundManager.SFX.RECOVER);
         mainHandler.post(() -> {
             if (listener != null) listener.onPlayerInfoUpdated(player);
@@ -1219,6 +1274,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onLpUpdate(int player, int lp) {
         field.players[player].lp = lp;
+        field.startLpChange(player, lp, 0, null, false);
         mainHandler.post(() -> {
             if (listener != null) listener.onPlayerInfoUpdated(player);
         });
@@ -1261,8 +1317,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onPayLpCost(int player, int cost) {
-        field.players[player].lp -= cost;
-        if (field.players[player].lp < 0) field.players[player].lp = 0;
+        int fin = Math.max(0, field.players[player].lp - cost);
+        field.players[player].lp = fin;
+        field.startLpChange(player, fin, 0, null, false);
         mainHandler.post(() -> {
             if (listener != null) listener.onPlayerInfoUpdated(player);
         });
@@ -1628,6 +1685,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         showBP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         showShuffle = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+    }
+
+    /** Game::LocalPlayer：dInfo.isFirst ? player : 1 - player */
+    private boolean duelIsFirst = true;
+
+    public int localPlayer(int player) {
+        return duelIsFirst ? player : 1 - player;
     }
 
     public void release() {

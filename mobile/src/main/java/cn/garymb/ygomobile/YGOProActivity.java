@@ -85,12 +85,13 @@ public class YGOProActivity extends AppCompatActivity implements
     private TextView tvPlayerLp, tvPlayerName, tvOpponentLp, tvOpponentName;
     private TextView tvTurnCounter;
     private TextView tvPlayerHandCount, tvOpponentHandCount;
+    private TextView tvPlayerTime, tvOpponentTime;
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
     private TextView tvHintMessage;
 
     private LinearLayout layoutTopInfo, layoutLeftButtons;
     private LinearLayout layoutCardDetail;
-    private LinearLayout layoutBottomActions, layoutDeckIndicators;
+    private LinearLayout layoutBottomActions;
     private LinearLayout layoutDeckControl;
     private LinearLayout layoutGameRight;
     private LinearLayout layoutChatMessages;
@@ -106,16 +107,12 @@ public class YGOProActivity extends AppCompatActivity implements
     private int currentSelectType = -1;
     private DialogPlus currentDialog;
 
-    private TextView tvPlayerDeckCount, tvPlayerGraveCount;
-    private TextView tvOpponentDeckCount, tvOpponentGraveCount;
-
     private FrameLayout dialogContainer;
     private RelativeLayout layoutMainMenu;
     private TextView tvVersion;
     private LanModeDialog lanModeDialog;
 
     private String chatHistory = "";
-    private TextView tvPlayerTime, tvOpponentTime;
     private TextView tvChatLog;
     private Button btnChain, btnCancel;
     private LinearLayout layoutChat;
@@ -146,6 +143,20 @@ public class YGOProActivity extends AppCompatActivity implements
     private boolean[] sumSelected;
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
+
+    private final int[] duelTimeLeft = new int[2];
+    private int duelTimePlayer = -1;
+    private int duelTimeLimit = 0;
+    private final Runnable duelTimeTicker = new Runnable() {
+        @Override
+        public void run() {
+            if (duelTimePlayer >= 0 && duelTimeLeft[duelTimePlayer] > 0) {
+                duelTimeLeft[duelTimePlayer]--;
+            }
+            updateTimeDisplay();
+            mainHandler.postDelayed(this, 1000);
+        }
+    };
 
     private static class SumCardInfo {
         int code, controler, location, sequence, opParam, value, index;
@@ -407,6 +418,8 @@ public class YGOProActivity extends AppCompatActivity implements
         tvTurnCounter = findViewById(R.id.tv_turn_counter);
         tvPlayerHandCount = findViewById(R.id.tv_player_hand_count);
         tvOpponentHandCount = findViewById(R.id.tv_opponent_hand_count);
+        tvPlayerTime = findViewById(R.id.tv_player_time);
+        tvOpponentTime = findViewById(R.id.tv_opponent_time);
         tvHintMessage = findViewById(R.id.tv_hint_message);
         ivPlayerAvatar = findViewById(R.id.iv_player_avatar);
         ivOpponentAvatar = findViewById(R.id.iv_opponent_avatar);
@@ -415,7 +428,6 @@ public class YGOProActivity extends AppCompatActivity implements
         layoutLeftButtons = findViewById(R.id.layout_left_buttons);
         layoutCardDetail = findViewById(R.id.layout_card_detail);
         layoutBottomActions = findViewById(R.id.layout_bottom_actions);
-        layoutDeckIndicators = findViewById(R.id.layout_deck_indicators);
         layoutChatMessages = findViewById(R.id.layout_chat_messages);
 
         tvChatMessage1 = findViewById(R.id.tv_chat_message_1);
@@ -438,11 +450,6 @@ public class YGOProActivity extends AppCompatActivity implements
         tvCardAttr = findViewById(R.id.tv_card_attr);
         tvCardLevel = findViewById(R.id.tv_card_level);
         tvCardDesc = findViewById(R.id.tv_card_desc);
-
-        tvPlayerDeckCount = findViewById(R.id.tv_player_deck_count);
-        tvPlayerGraveCount = findViewById(R.id.tv_player_grave_count);
-        tvOpponentDeckCount = findViewById(R.id.tv_opponent_deck_count);
-        tvOpponentGraveCount = findViewById(R.id.tv_opponent_grave_count);
 
         dialogContainer = findViewById(R.id.dialog_container);
 
@@ -850,7 +857,6 @@ public class YGOProActivity extends AppCompatActivity implements
         if (cardDetailPanel != null) cardDetailPanel.hide();
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
         if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
-        if (layoutDeckIndicators != null) layoutDeckIndicators.setVisibility(View.GONE);
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
         hideCancelOrFinishButton();
@@ -862,7 +868,6 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.VISIBLE);
         if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.VISIBLE);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
-        if (layoutDeckIndicators != null) layoutDeckIndicators.setVisibility(View.VISIBLE);
         if (cardDetailPanel != null) cardDetailPanel.showDefault();
         hideCancelOrFinishButton();
     }
@@ -1290,6 +1295,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onFieldChanged() {
         fieldViewController.invalidate();
+        runOnUiThread(this::updateCardCountDisplay);
     }
 
     @Override
@@ -1300,30 +1306,51 @@ public class YGOProActivity extends AppCompatActivity implements
             if (player == 0) {
                 tvPlayerLp.setText(String.valueOf(pf.lp));
                 tvPlayerName.setText(info.name.isEmpty() ? Constants.PlayerName : info.name);
-                int handCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Hand.value());
-                tvPlayerHandCount.setText("手卡:" + handCount);
-
-                int deckCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Deck.value());
-                if (tvPlayerDeckCount != null) tvPlayerDeckCount.setText(String.valueOf(deckCount));
-
-                int graveCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Grave.value());
-                if (tvPlayerGraveCount != null)
-                    tvPlayerGraveCount.setText(String.valueOf(graveCount));
             } else {
                 tvOpponentLp.setText(String.valueOf(pf.lp));
                 tvOpponentName.setText(info.name.isEmpty() ? "Opponent" : info.name);
-                int handCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Hand.value());
-                tvOpponentHandCount.setText("手卡:" + handCount);
-
-                int deckCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Deck.value());
-                if (tvOpponentDeckCount != null)
-                    tvOpponentDeckCount.setText(String.valueOf(deckCount));
-
-                int graveCount = engine.getField().getCardCount(player, ocgcore.enums.CardLocation.Grave.value());
-                if (tvOpponentGraveCount != null)
-                    tvOpponentGraveCount.setText(String.valueOf(graveCount));
             }
+            updateCardCountDisplay();
         });
+    }
+
+    private void updateCardCountDisplay() {
+        GameField field = engine.getField();
+        int[] handCount = new int[2];
+        int[] cardCount = new int[2];
+        for (int p = 0; p < 2; p++) {
+            int c = 0;
+            for (GameField.ClientCard cc : field.players[p].hand) {
+                if (cc != null) c++;
+            }
+            handCount[p] = c;
+            for (GameField.ClientCard cc : field.players[p].monsterZone) {
+                if (cc != null) c++;
+            }
+            for (GameField.ClientCard cc : field.players[p].spellZone) {
+                if (cc != null) c++;
+            }
+            cardCount[p] = c;
+        }
+        int color0, color1;
+        if (cardCount[0] > cardCount[1]) {
+            color0 = 0xFFFFFF00;
+            color1 = 0xFFFF2A00;
+        } else if (cardCount[1] > cardCount[0]) {
+            color1 = 0xFFFFFF00;
+            color0 = 0xFFFF2A00;
+        } else {
+            color0 = 0xFFFFFFFF;
+            color1 = 0xFFFFFFFF;
+        }
+        if (tvPlayerHandCount != null) {
+            tvPlayerHandCount.setText("手卡:" + handCount[0] + " 总:" + cardCount[0]);
+            tvPlayerHandCount.setTextColor(color0);
+        }
+        if (tvOpponentHandCount != null) {
+            tvOpponentHandCount.setText("手卡:" + handCount[1] + " 总:" + cardCount[1]);
+            tvOpponentHandCount.setTextColor(color1);
+        }
     }
 
     @Override
@@ -1503,6 +1530,8 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onDuelResult(int winner, int reason) {
+        mainHandler.removeCallbacks(duelTimeTicker);
+        duelTimePlayer = -1;
         runOnUiThread(() -> {
             String result;
             if (winner == 2) {
@@ -1533,9 +1562,43 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onTimeLimitUpdate(int player, int leftTime) {
         runOnUiThread(() -> {
-            String timeStr = (leftTime / 60) + ":" + String.format("%02d", leftTime % 60);
-            Log.d(TAG, "Time limit for player " + player + ": " + timeStr);
+            if (duelTimeLimit <= 0) {
+                duelTimeLimit = Math.max(engine.getGameTimeLimit(), leftTime);
+            }
+            duelTimePlayer = player;
+            duelTimeLeft[player] = leftTime;
+            mainHandler.removeCallbacks(duelTimeTicker);
+            mainHandler.postDelayed(duelTimeTicker, 1000);
+            updateTimeDisplay();
         });
+    }
+
+    private void updateTimeDisplay() {
+        if (duelTimeLimit <= 0) return;
+        if (tvPlayerTime != null) {
+            tvPlayerTime.setVisibility(View.VISIBLE);
+            tvPlayerTime.setText("\u23F1 " + formatDuelTime(duelTimeLeft[0]));
+            tvPlayerTime.setTextColor(getTimeColor(0));
+        }
+        if (tvOpponentTime != null) {
+            tvOpponentTime.setVisibility(View.VISIBLE);
+            tvOpponentTime.setText("\u23F1 " + formatDuelTime(duelTimeLeft[1]));
+            tvOpponentTime.setTextColor(getTimeColor(1));
+        }
+    }
+
+    private String formatDuelTime(int sec) {
+        return (sec / 60) + ":" + String.format("%02d", sec % 60);
+    }
+
+    private int getTimeColor(int player) {
+        if (duelTimeLeft[player] > 0 && duelTimeLimit > 0) {
+            if (duelTimeLeft[player] >= duelTimeLimit / 2) return 0xFF00FF00;
+            if (duelTimeLeft[player] >= duelTimeLimit / 3) return 0xFFFFFF00;
+            if (duelTimeLeft[player] >= duelTimeLimit / 6) return 0xFFFF7F00;
+            return 0xFFFF0000;
+        }
+        return 0xFFFFFFFF;
     }
 
     @Override
