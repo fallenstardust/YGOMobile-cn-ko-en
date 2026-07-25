@@ -825,7 +825,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onUpdateData(int player, int location, ByteBuffer data) {
-        parseUpdateData(player, location, data);
+        parseUpdateData(localPlayer(player), location, data);
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -833,7 +833,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onUpdateCard(int player, int location, int sequence, ByteBuffer data) {
-        parseUpdateCard(player, location, sequence, data);
+        parseUpdateCard(localPlayer(player), location, sequence, data);
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1474,84 +1474,51 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     // === Data parsing helpers ===
 
+    /**
+     * MSG_UPDATE_DATA（client_field.cpp UpdateFieldCard真值格式）：
+     * 无 count 字段，按列表条目遍历；每条先读 int32 len（含自身 4 字节），
+     * len>8 才有 query 数据（query 内首个 int32 是 flag），随后跳到 len-4 处。
+     * 固定槽位列表（怪兽区/魔法区）空位也有len=4 条目；动态列表只发实际卡。
+     */
     private void parseUpdateData(int player, int location, ByteBuffer data) {
-        if (data.remaining() < 4) return;
-        int count = data.getInt();
         List<GameField.ClientCard> list = field.players[player].getLocationList(location);
         if (list == null) return;
-
-        for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            int flag = data.getInt();
-            GameField.ClientCard card = new GameField.ClientCard();
-            if (flag != 0) {
-                int flagCopy = flag;
-                ByteBuffer subBuf = createSubBufferForQuery(flag, data);
-                if (subBuf != null) card.updateQuery(subBuf);
+        boolean fixedSlots = (location == 0x04 || location == 0x08);
+        for (int i = 0; i < list.size(); i++) {
+            GameField.ClientCard card = list.get(i);
+            if (card == null && !fixedSlots) continue;
+            if (data.remaining() < 4) break;
+            int len = data.getInt();
+            int next = data.position() + (len - 4);
+            if (next < data.position() || next > data.limit()) break;
+            if (len > 8 && card != null) {
+                ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
+                sub.limit(Math.min(sub.limit(), len - 4));
+                card.updateQuery(sub);
             }
-            while (list.size() <= i) list.add(null);
-            list.set(i, card);
-            if (card != null) {
-                card.controler = player;
-                card.location = location;
-                card.sequence = i;
-            }
+            data.position(next);
         }
     }
 
+    /**
+     * MSG_UPDATE_CARD（client_field.cpp UpdateCard 真值格式）：
+     * int32 len 前缀，len>8 时才解析 query（对现有卡对象更新，绝不整卡替换）
+     */
     private void parseUpdateCard(int player, int location, int sequence, ByteBuffer data) {
         if (data.remaining() < 4) return;
-        int flag = data.getInt();
+        int len = data.getInt();
+        if (len <= 8) return;
         GameField.ClientCard card = field.getCard(player, location, sequence);
         if (card == null) {
-            if (flag == 0) return;
             card = new GameField.ClientCard();
+            card.controler = player;
+            card.location = location;
+            card.sequence = sequence;
             field.addCard(player, location, sequence, card);
         }
-        if (flag != 0) {
-            ByteBuffer subBuf = createSubBufferForQuery(flag, data);
-            if (subBuf != null) card.updateQuery(subBuf);
-        }
-    }
-
-    private ByteBuffer createSubBufferForQuery(int flag, ByteBuffer data) {
-        int startPos = data.position();
-        int bytesNeeded = estimateQueryBytes(flag);
-        if (data.remaining() < bytesNeeded) return null;
-        byte[] buf = new byte[bytesNeeded + 4];
-        buf[0] = (byte) (flag & 0xFF);
-        buf[1] = (byte) ((flag >> 8) & 0xFF);
-        buf[2] = (byte) ((flag >> 16) & 0xFF);
-        buf[3] = (byte) ((flag >> 24) & 0xFF);
-        data.get(buf, 4, bytesNeeded);
-        ByteBuffer sub = ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN);
-        sub.getInt();
-        return sub;
-    }
-
-    private int estimateQueryBytes(int flag) {
-        int bytes = 0;
-        if ((flag & GameField.QUERY_CODE) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_POSITION) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_ALIAS) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_TYPE) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_LEVEL) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_RANK) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_ATTRIBUTE) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_RACE) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_ATTACK) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_DEFENSE) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_BASE_ATTACK) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_BASE_DEFENSE) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_REASON) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_REASON_CARD) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_EQUIP_CARD) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_OWNER) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_STATUS) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_IS_PUBLIC) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_LSCALE) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_RSCALE) != 0) bytes += 4;
-        if ((flag & GameField.QUERY_LINK) != 0) bytes += 8;
-        return bytes;
+        ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
+        sub.limit(Math.min(sub.limit(), len - 4));
+        card.updateQuery(sub);
     }
 
     private void parseBattleCmd(ByteBuffer data) {

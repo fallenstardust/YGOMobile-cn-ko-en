@@ -17,6 +17,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import androidx.appcompat.widget.AppCompatImageView;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,14 +44,43 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private static final float FIELD_X_MAX = 8.7f;
     private static final float FIELD_Y_MIN = -3.9f;
     private static final float FIELD_Y_MAX = 3.9f;
+    private static final float FIELD_CX_F = (FIELD_X_MIN + FIELD_X_MAX) / 2f;
+    private static final float FIELD_W_F = FIELD_X_MAX - FIELD_X_MIN;
+    private static final float FIELD_H_F = FIELD_Y_MAX - FIELD_Y_MIN;
+    // |fy| 超过该值视为手卡带（GetCardLocation 手卡 y=±3.84，堆叠区中心最大 ±3.3）
+    private static final float HAND_BAND_Y = 3.7f;
+    // 卡面高宽比（177×254）
+    private static final float CARD_RATIO = 254f / 177f;
 
     // 卡片在场地坐标系中的尺寸（gframe 格子 1.1×1.2，卡面略小于格子）
     private static final float CARD_W_F = 0.8f;
     private static final float CARD_H_F = 1.16f;
     private static final float PI_F = 3.1415926f;
+    // 离屏 ImageView 缓存：每个卡码一个，交给 ImageLoader.bindImage 走标准取图链，
+    // 绘制时直接把其中的 Drawable 画上 Canvas
+    private final android.util.LruCache<Integer, android.widget.ImageView> cardViewCache =
+            new android.util.LruCache<Integer, android.widget.ImageView>(80) {
+                @Override
+                protected void entryRemoved(boolean evicted, Integer key,
+                                            android.widget.ImageView oldValue,
+                                            android.widget.ImageView newValue) {
+                    try {
+                        cn.garymb.ygomobile.utils.glide.GlideCompat
+                                .with(getContext()).clear(oldValue);
+                    } catch (Exception ignored) {
+                    }
+                }
+            };
+    // 梯形透视参数（按目标截图标定：上窄下宽、近大远小）
+    private float trapCenterX;
+    private float trapTopY, trapBottomY;
+    private float trapTopHalfW, trapBottomHalfW;
+    // 手卡带（我方底部大卡、对方顶部小卡）
+    private float myHandCenterY, myHandCardH;
 
     private GameField field;
     private ImageLoader imageLoader;
+    private float oppHandCenterY, oppHandCardH;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint selectedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -237,30 +268,30 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     }
 
     private void calculateDimensions(int w, int h) {
-        float viewAspect = (float) w / h;
-        if (viewAspect > FIELD_ASPECT_RATIO) {
-            fieldHeight = h;
-            fieldWidth = h * FIELD_ASPECT_RATIO;
-        } else {
-            fieldWidth = w;
-            fieldHeight = w / FIELD_ASPECT_RATIO;
-        }
-        offsetX = (w - fieldWidth) / 2f;
-        offsetY = (h - fieldHeight) / 2f;
+        fieldWidth = w;
+        fieldHeight = h;
+        offsetX = 0;
+        offsetY = 0;
 
         zoneWidth = fieldWidth / ZONE_COLS;
         zoneHeight = fieldHeight / ZONE_ROWS;
         cardWidth = zoneWidth * 0.82f;
-        cardHeight = cardWidth * 1.457f;
+        cardHeight = cardWidth * CARD_RATIO;
 
         fieldCenterX = fieldWidth / 2f;
         fieldCenterY = fieldHeight / 2f;
 
-        float fieldMargin = fieldHeight * 0.12f;
-        fieldTop = fieldMargin;
-        fieldBottom = fieldHeight - fieldMargin;
-        fieldLeft = fieldWidth * 0.05f;
-        fieldRight = fieldWidth * 0.95f;
+        // 场地平面（线性矩形，透视矩阵负责变形为斜向梯形）
+        fieldLeft = w * 0.08f;
+        fieldRight = w * 0.92f;
+        fieldTop = h * 0.10f;
+        fieldBottom = h * 0.84f;
+
+        // 手卡带（透视外）：我方底部大卡、对方顶部小卡
+        myHandCardH = h * 0.21f;
+        myHandCenterY = h * 0.935f;
+        oppHandCardH = h * 0.105f;
+        oppHandCenterY = h * 0.10f;
     }
 
     @Override
@@ -277,7 +308,6 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
 
         drawStarfieldBackground(canvas);
         drawFieldWithPerspective(canvas);
-        drawDuelHud(canvas);
 
         canvas.restore();
 
@@ -312,22 +342,51 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
 
     private void drawFieldWithPerspective(Canvas canvas) {
         canvas.save();
-
         Matrix perspectiveMatrix = PerspectiveHelper.createPerspectiveMatrix(
                 fieldCenterX, fieldCenterY, FIELD_PERSPECTIVE_ROT_X, 0, -80);
         canvas.concat(perspectiveMatrix);
 
         drawFieldBoard(canvas);
         drawZoneSlots(canvas);
-        drawAllCards(canvas);
+        drawFieldCards(canvas);
         drawPileBadges(canvas);
         drawMonsterStatuses(canvas);
+        drawSelection(canvas);
+        drawCmdHighlights(canvas);
 
         canvas.restore();
 
+        // 手卡面向玩家，不做透视变形（原型图行为）
+        drawHandCards(canvas);
         drawChainLines(canvas);
-        drawSelection(canvas);
-        drawCmdHighlights(canvas);
+    }
+
+    private void drawFieldCards(Canvas canvas) {
+        for (GameField.ClientCard c : field.overlayCards) {
+            if (c == null) continue;
+            GameField.ClientCard ol = c.overlayTarget;
+            if (c.aniFrame > 0) {
+                drawClientCard(canvas, c);
+            } else if (ol != null && ol.location == 0x04) {
+                if (c.sequence < GameField.MAX_LAYER_COUNT) drawClientCard(canvas, c);
+            } else {
+                drawClientCard(canvas, c);
+            }
+        }
+        for (int p = 0; p < 2; p++) {
+            for (GameField.ClientCard c : field.players[p].monsterZone) drawClientCard(canvas, c);
+            for (GameField.ClientCard c : field.players[p].spellZone) drawClientCard(canvas, c);
+            for (GameField.ClientCard c : field.players[p].deck) drawClientCard(canvas, c);
+            for (GameField.ClientCard c : field.players[p].grave) drawClientCard(canvas, c);
+            for (GameField.ClientCard c : field.players[p].removed) drawClientCard(canvas, c);
+            for (GameField.ClientCard c : field.players[p].extra) drawClientCard(canvas, c);
+        }
+    }
+
+    private void drawHandCards(Canvas canvas) {
+        for (int p = 1; p >= 0; p--) {
+            for (GameField.ClientCard c : field.players[p].hand) drawClientCard(canvas, c);
+        }
     }
 
     // === Game::DrawMisc 的 2D 移植（1024×640 虚拟坐标，等价 C++ Resize） ===
@@ -542,7 +601,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     }
 
     /**
-     * 场地底板：发光面板 + 网格（对应 gframe DrawBackImage/DrawField 的 2D 等效）
+     * 场地底板：发光面板 + 网格（位于透视矩阵内，由矩阵变形出斜向梯形）
      */
     private void drawFieldBoard(Canvas canvas) {
         RectF board = new RectF(fieldLeft, fieldTop, fieldRight, fieldBottom);
@@ -551,51 +610,58 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
                 ZONE_COLS, ZONE_ROWS, animTimeMs);
     }
 
-    // === 场地坐标 →屏幕投影 ===
+    // === 场地坐标 →屏幕线性映射（透视由画布矩阵完成） ===
+
+    private float mapFieldX(float fx) {
+        return fieldLeft + (fx - FIELD_X_MIN) / FIELD_W_F * (fieldRight - fieldLeft);
+    }
+
+    private float mapFieldY(float fy) {
+        return fieldTop + (fy - FIELD_Y_MIN) / FIELD_H_F * (fieldBottom - fieldTop);
+    }
 
     private float fieldUnitX() {
-        return (fieldRight - fieldLeft) / (FIELD_X_MAX - FIELD_X_MIN);
+        return (fieldRight - fieldLeft) / FIELD_W_F;
     }
 
     private float fieldUnitY() {
-        return (fieldBottom - fieldTop) / (FIELD_Y_MAX - FIELD_Y_MIN);
+        return (fieldBottom - fieldTop) / FIELD_H_F;
     }
 
-    /**
-     * Z 高度换算为向上抬升 + 轻微放大，模拟卡片离开场地表面
-     */
-    private RectF projectCard(float fx, float fy, float fz) {
-        float cx = mapFieldX(fx);
-        float cy = mapFieldY(fy) - fz * fieldUnitY() * 0.6f;
-        float scale = 1f + fz * 0.08f;
-        float w = CARD_W_F * fieldUnitX() * scale;
-        float h = CARD_H_F * fieldUnitY() * scale;
+    private RectF projectZone(float cxF, float cyF, float wF, float hF) {
+        float cx = mapFieldX(cxF);
+        float cy = mapFieldY(cyF);
+        float w = wF * fieldUnitX();
+        float h = hF * fieldUnitY();
         return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
     }
 
-    // === Game::DrawCards 的绘制顺序 ===
-
-    private void drawAllCards(Canvas canvas) {
-        for (GameField.ClientCard c : field.overlayCards) {
-            if (c == null) continue;
-            GameField.ClientCard ol = c.overlayTarget;
-            if (c.aniFrame > 0) {
-                drawClientCard(canvas, c);
-            } else if (ol != null && ol.location == 0x04) {
-                if (c.sequence < GameField.MAX_LAYER_COUNT) drawClientCard(canvas, c);
-            } else {
-                drawClientCard(canvas, c);
-            }
+    /**
+     * 卡片投影：手卡带（|fy|>3.7）映射到透视外的手卡行；
+     * 场内卡线性映射（透视矩阵负责变形），Z 高度换算为向上抬升
+     */
+    private RectF projectCard(float fx, float fy, float fz) {
+        if (fy >= HAND_BAND_Y) { // 我方手卡：底部大卡
+            float ch = myHandCardH;
+            float cw = ch / CARD_RATIO;
+            float cx = fieldWidth * 0.5f
+                    + (fx - FIELD_CX_F) / FIELD_W_F * fieldWidth * 0.9f;
+            float cy = myHandCenterY - fz * ch * 0.06f;
+            return new RectF(cx - cw / 2f, cy - ch / 2f, cx + cw / 2f, cy + ch / 2f);
         }
-        for (int p = 0; p < 2; p++) {
-            for (GameField.ClientCard c : field.players[p].monsterZone) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].spellZone) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].deck) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].hand) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].grave) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].removed) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].extra) drawClientCard(canvas, c);
+        if (fy <= -HAND_BAND_Y) { // 对方手卡：顶部小卡
+            float ch = oppHandCardH;
+            float cw = ch / CARD_RATIO;
+            float cx = fieldWidth * 0.5f
+                    + (fx - FIELD_CX_F) / FIELD_W_F * fieldWidth * 0.55f;
+            float cy = oppHandCenterY;
+            return new RectF(cx - cw / 2f, cy - ch / 2f, cx + cw / 2f, cy + ch / 2f);
         }
+        float cx = mapFieldX(fx);
+        float cy = mapFieldY(fy) - fz * fieldUnitY() * 0.5f;
+        float w = CARD_W_F * fieldUnitX();
+        float h = CARD_H_F * fieldUnitY();
+        return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
     }
 
     // === Game::DrawCard 的 2D 等效实现 ===
@@ -633,16 +699,19 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         }
 
         if (showFront) {
-            // 移动中卡码为0时用 chain_code 兜底（drawing.cpp L617）
+            // 移动中卡码为0时用chain_code 兜底（drawing.cpp L617）
             int code = pcard.code;
             if (code == 0 && pcard.is_moving) code = pcard.chain_code;
-            Bitmap bmp = null;
+            android.graphics.drawable.Drawable cardDrawable = null;
             if (code > 0) {
-                bmp = TextureLoader.get().loadBitmapScaled(
-                        "../pics/" + code + ".jpg", (int) local.width(), (int) local.height());
+                cardDrawable = requestCardDrawable(code);
             }
-            if (bmp != null) {
-                canvas.drawBitmap(bmp, null, local, cardPaint);
+            if (cardDrawable != null) {
+                cardDrawable.setBounds((int) local.left, (int) local.top,
+                        (int) local.right, (int) local.bottom);
+                cardDrawable.setAlpha(alpha);
+                cardDrawable.draw(canvas);
+                cardDrawable.setAlpha(255);
                 int borderColor = sciFiRenderer.getCardBorderColor(pcard.type, true);
                 sciFiRenderer.drawCardBevel(canvas, local.left, local.top,
                         local.width(), local.height(), borderColor);
@@ -745,14 +814,9 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
                 cyF = sequence < 5 ? -2.6f : -2.0f;
             }
         } else {
-            RectF pile = getPileRectLocal(player, location);
-            return pile;
+            return getPileRectLocal(player, location);
         }
-        float w = CARD_W_F * fieldUnitX();
-        float h = CARD_H_F * fieldUnitY();
-        float cx = mapFieldX(cxF);
-        float cy = mapFieldY(cyF);
-        return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
+        return projectZone(cxF, cyF, 1.0f, 1.15f);
     }
 
     private void drawZoneSlots(Canvas canvas) {
@@ -809,21 +873,6 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         canvas.drawRect(x, y, x + w, y + h, innerPaint);
     }
 
-    private void drawPileZone3D(Canvas canvas, int player, boolean flipped) {
-        // 坐标取自 materials.cpp vFieldDeck/vFieldGrave/vFieldRemove/vFieldExtra（MR4，rule=1）
-        drawCardPile(canvas, player, CardLocation.Deck.value(), 0xFF00FF88);
-        drawCardPile(canvas, player, CardLocation.Extra.value(), 0xFF8800AA);
-        drawCardPile(canvas, player, CardLocation.Grave.value(), 0xFFFF8800);
-        drawCardPile(canvas, player, CardLocation.Removed.value(), 0xFFAA0044);
-    }
-
-    private float mapFieldX(float fx) {
-        return fieldLeft + (fx - FIELD_X_MIN) / (FIELD_X_MAX - FIELD_X_MIN) * (fieldRight - fieldLeft);
-    }
-
-    private float mapFieldY(float fy) {
-        return fieldTop + (fy - FIELD_Y_MIN) / (FIELD_Y_MAX - FIELD_Y_MIN) * (fieldBottom - fieldTop);
-    }
 
     private RectF getPileRectLocal(int player, int location) {
         float x1, y1, x2, y2;
@@ -876,7 +925,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
                 return null;
             }
         }
-        return new RectF(mapFieldX(x1), mapFieldY(y1), mapFieldX(x2), mapFieldY(y2));
+        return projectZone((x1 + x2) / 2f, (y1 + y2) / 2f, x2 - x1, y2 - y1);
     }
 
     private void drawCardPile(Canvas canvas, int player, int location, int indicatorColor) {
@@ -1227,17 +1276,6 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private void handleTap(float x, float y) {
         if (cardClickListener == null || field == null) return;
 
-        // 卡片/区域绘制在透视矩阵内，触点需做逆透视变换才能与绘制位置对齐
-        Matrix pm = PerspectiveHelper.createPerspectiveMatrix(
-                fieldCenterX, fieldCenterY, FIELD_PERSPECTIVE_ROT_X, 0, -80);
-        Matrix inv = new Matrix();
-        if (pm.invert(inv)) {
-            float[] pt = {x, y};
-            inv.mapPoints(pt);
-            x = pt[0];
-            y = pt[1];
-        }
-
         if (highlightFieldMask != 0) {
             for (int player = 0; player < 2; player++) {
                 int[] locations = {0x04, 0x08};
@@ -1356,5 +1394,43 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
             Choreographer.getInstance().postFrameCallback(this);
         }
     }
+
+    /**
+     * 按卡码取卡图 Drawable：首次请求时创建离屏 ImageView 并交给
+     * ImageLoader.bindImage（标准取图链：扩展包 zip/ypk → 散装 pics → pics.zip，
+     * 含 unknown 占位与 Glide 缓存），之后直接读取其中的 Drawable。
+     * Glide 加载完成回调 setImageDrawable 时自动触发本视图重绘。
+     */
+    private android.graphics.drawable.Drawable requestCardDrawable(int code) {
+        if (code <= 0 || imageLoader == null) return null;
+        android.widget.ImageView iv = cardViewCache.get(code);
+        if (iv == null) {
+            iv = new OffscreenCardView(getContext());
+            int w = 177, h = 254;
+            iv.measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
+            iv.layout(0, 0, w, h);
+            cardViewCache.put(code, iv);
+            imageLoader.bindImage(iv, code, ImageLoader.Type.small);
+        }
+        return iv.getDrawable();
+    }
+
+    /**
+     * 离屏 ImageView：不进布局树，仅作为 bindImage 的加载目标；
+     * Glide 每次换图（占位图 → 真图）都会走 setImageDrawable，借此驱动重绘
+     */
+    private class OffscreenCardView extends AppCompatImageView {
+        OffscreenCardView(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void setImageDrawable(android.graphics.drawable.Drawable drawable) {
+            super.setImageDrawable(drawable);
+            GameFieldView.this.postInvalidate();
+        }
+    }
+
 
 }
