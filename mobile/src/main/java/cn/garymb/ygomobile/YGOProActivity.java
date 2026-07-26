@@ -48,13 +48,12 @@ import cn.garymb.ygomobile.game.DeckEditorManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
-import cn.garymb.ygomobile.game.GameSidePanelController;
-import cn.garymb.ygomobile.game.GameTopInfoController;
 import cn.garymb.ygomobile.game.ReplayEngine;
 import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
@@ -100,8 +99,7 @@ public class YGOProActivity extends AppCompatActivity implements
     private DraggablePopupHelper mainMenuDragHelper;
 
     private ReplayEngine currentReplayEngine;
-    private GameTopInfoController topInfo;
-    private GameSidePanelController sidePanel;
+    private CardDetailPanel cardDetailPanel;
     private GameFieldController fieldCtl;
 
     private boolean isSelectingSum = false;
@@ -353,11 +351,9 @@ public class YGOProActivity extends AppCompatActivity implements
         etChatInput = findViewById(R.id.et_chat_input);
         setupChatInput();
 
-        topInfo = new GameTopInfoController(this, mainHandler);
-        topInfo.bindViews();
-        sidePanel = new GameSidePanelController(this);
-        sidePanel.bindViews();
-        fieldCtl = new GameFieldController(this);
+        cardDetailPanel = new CardDetailPanel(this);
+        cardDetailPanel.bindViews();
+        fieldCtl = new GameFieldController(this, mainHandler);
         fieldCtl.create();
     }
 
@@ -397,7 +393,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
         TextureLoader.get().init();
 
-        sidePanel.initCardDetail(imageLoader);
+        cardDetailPanel.setImageLoader(imageLoader);
         fieldCtl.init(engine, imageLoader);
     }
 
@@ -688,16 +684,14 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private void hideGameUI() {
         fieldCtl.hide();
-        topInfo.hide();
-        sidePanel.onGameUIHidden();
+        cardDetailPanel.onGameUIHidden();
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
     }
 
     private void showGameUI() {
         hideMainMenu();
         fieldCtl.show();
-        topInfo.show();
-        sidePanel.onGameUIShown();
+        cardDetailPanel.onGameUIShown();
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
     }
 
@@ -846,14 +840,14 @@ public class YGOProActivity extends AppCompatActivity implements
                 runOnUiThread(() -> {
                     switch (state) {
                         case PLAYING:
-                            sidePanel.setPhaseText("▶");
-                            sidePanel.showReplayControls();
+                            cardDetailPanel.setPhaseText("▶");
+                            cardDetailPanel.showReplayControls();
                             break;
                         case PAUSED:
-                            sidePanel.setPhaseText("⏸");
+                            cardDetailPanel.setPhaseText("⏸");
                             break;
                         case FINISHED:
-                            sidePanel.setPhaseText("⏹");
+                            cardDetailPanel.setPhaseText("⏹");
                             hideReplayControls();
                             break;
                     }
@@ -871,21 +865,21 @@ public class YGOProActivity extends AppCompatActivity implements
                     GameField.PlayerField pf = engine.getField().players[player];
                     ReplayReader.ReplayData rd = replayEngine.getReplayData();
                     String name = (rd != null && player < rd.playerNames.size()) ? rd.playerNames.get(player) : "Player " + (player + 1);
-                    topInfo.setPlayerDisplay(player, name, "LP: " + pf.lp);
+                    fieldCtl.setPlayerDisplay(player, name, "LP: " + pf.lp);
                 });
             }
 
             @Override
             public void onReplayPhaseChanged(int phase) {
                 runOnUiThread(() -> {
-                    sidePanel.setPhaseByValue(phase);
-                    topInfo.setTurnText("Turn " + engine.getField().turnCount);
+                    cardDetailPanel.setPhaseByValue(phase);
+                    fieldCtl.setTurnText("Turn " + engine.getField().turnCount);
                 });
             }
 
             @Override
             public void onReplayHintMessage(String hint) {
-                runOnUiThread(() -> topInfo.showHint(hint, 3000));
+                runOnUiThread(() -> fieldCtl.showHint(hint, 3000));
             }
 
             @Override
@@ -900,7 +894,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void hideReplayControls() {
-        sidePanel.hideReplayControls();
+        cardDetailPanel.hideReplayControls();
         currentReplayEngine = null;
     }
 
@@ -926,7 +920,7 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutDeckControl == null) layoutDeckControl = findViewById(R.id.layout_deck_control);
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
         if (deckEditorManager == null) {
-            deckEditorManager = new DeckEditorManager(this, imageLoader, sidePanel.getCardDetailPanel());
+            deckEditorManager = new DeckEditorManager(this, imageLoader, cardDetailPanel);
             deckEditorManager.setListener(new DeckEditorManager.DeckEditorListener() {
                 @Override
                 public void onDeckModified() {
@@ -961,7 +955,7 @@ public class YGOProActivity extends AppCompatActivity implements
             layoutDeckEditor.setVisibility(View.GONE);
         }
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
-        sidePanel.exitDeckEditorMode();
+        cardDetailPanel.exitDeckEditorMode();
 
         // 恢复右侧决斗场区
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
@@ -1037,7 +1031,7 @@ public class YGOProActivity extends AppCompatActivity implements
                 hideMainMenu();
                 showGameUI();
                 if (lanModeDialog != null) lanModeDialog.dismiss();
-                sidePanel.showBottomActions();
+                cardDetailPanel.showBottomActions();
                 isGameStarted = true;
                 break;
             case SIDING:
@@ -1062,7 +1056,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onFieldChanged() {
         fieldCtl.invalidate();
-        runOnUiThread(() -> topInfo.updateCardCountDisplay(engine.getField()));
+        runOnUiThread(() -> fieldCtl.updateCardCountDisplay(engine.getField()));
     }
 
     @Override
@@ -1072,23 +1066,23 @@ public class YGOProActivity extends AppCompatActivity implements
             GameField.PlayerField pf = engine.getField().players[player];
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
             String name = info.name.isEmpty() ? defaultName : info.name;
-            topInfo.setPlayerDisplay(player, name, String.valueOf(pf.lp));
-            topInfo.updateCardCountDisplay(engine.getField());
+            fieldCtl.setPlayerDisplay(player, name, String.valueOf(pf.lp));
+            fieldCtl.updateCardCountDisplay(engine.getField());
         });
     }
 
     @Override
     public void onPhaseChanged(int phase) {
         runOnUiThread(() -> {
-            topInfo.setTurnText(String.valueOf(engine.getField().turnCount));
+            fieldCtl.setTurnText(String.valueOf(engine.getField().turnCount));
             isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
-            sidePanel.updateActionButtonsForPhase(phase, isMyTurn);
+            cardDetailPanel.updateActionButtonsForPhase(phase, isMyTurn);
         });
     }
 
     @Override
     public void onChatReceived(String player, String message) {
-        runOnUiThread(() -> topInfo.appendChat(player, message));
+        runOnUiThread(() -> fieldCtl.appendChat(player, message));
     }
 
     public void toggleChatInput() {
@@ -1177,7 +1171,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onDuelResult(int winner, int reason) {
-        topInfo.stopTimer();
+        fieldCtl.stopTimer();
         runOnUiThread(() -> {
             String result;
             if (winner == 2) {
@@ -1193,7 +1187,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onHintMessage(String hint) {
-        runOnUiThread(() -> topInfo.showHint(hint, 2000));
+        runOnUiThread(() -> fieldCtl.showHint(hint, 2000));
     }
 
     @Override
@@ -1203,7 +1197,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onTimeLimitUpdate(int player, int leftTime) {
-        runOnUiThread(() -> topInfo.onTimeLimitUpdate(player, leftTime, engine.getGameTimeLimit()));
+        runOnUiThread(() -> fieldCtl.onTimeLimitUpdate(player, leftTime, engine.getGameTimeLimit()));
     }
 
     @Override
@@ -2494,7 +2488,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     public void showCardInfoPanel(GameField.ClientCard card) {
-        sidePanel.showCardInfo(card);
+        cardDetailPanel.showCardInfo(card);
     }
 
     private void showSortCardDialog(ByteBuffer data) {
@@ -2617,7 +2611,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     public void showHintMessage(String msg) {
-        topInfo.showHint(msg, 3000);
+        fieldCtl.showHint(msg, 3000);
     }
 
     private interface OnItemPickedListener {
@@ -2667,21 +2661,21 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void closeGameButtons() {
-        sidePanel.closeGameButtons();
+        cardDetailPanel.closeGameButtons();
     }
 
     // === CancelOrFinish (mirrors C++ ClientField::CancelOrFinish) ===
 
     private void showCancelOrFinishButton(String text) {
-        sidePanel.showCancelOrFinishButton(text);
+        cardDetailPanel.showCancelOrFinishButton(text);
     }
 
     private void hideCancelOrFinishButton() {
-        sidePanel.hideCancelOrFinishButton();
+        cardDetailPanel.hideCancelOrFinishButton();
     }
 
     private void updateCancelOrFinishButton(boolean ready, boolean cancelable, boolean hasSelection) {
-        sidePanel.updateCancelOrFinishButton(ready, cancelable, hasSelection);
+        cardDetailPanel.updateCancelOrFinishButton(ready, cancelable, hasSelection);
     }
 
     public void cancelOrFinish() {
