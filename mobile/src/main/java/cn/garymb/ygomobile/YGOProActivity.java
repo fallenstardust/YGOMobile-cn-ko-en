@@ -18,8 +18,11 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -425,7 +428,6 @@ public class YGOProActivity extends AppCompatActivity implements
         ivOpponentAvatar = findViewById(R.id.iv_opponent_avatar);
 
         layoutTopInfo = findViewById(R.id.layout_top_info);
-        layoutLeftButtons = findViewById(R.id.layout_left_buttons);
         layoutCardDetail = findViewById(R.id.layout_card_detail);
         layoutBottomActions = findViewById(R.id.layout_bottom_actions);
         layoutChatMessages = findViewById(R.id.layout_chat_messages);
@@ -462,9 +464,34 @@ public class YGOProActivity extends AppCompatActivity implements
         btnReplayLast = findViewById(R.id.btn_replay_last);
         btnReplayShuffle = findViewById(R.id.btn_replay_shuffle);
         btnReplayQuit = findViewById(R.id.btn_replay_quit);
-
+        etChatInput = findViewById(R.id.et_chat_input);
+        setupChatInput();
         setupButtonListeners();
         setupAvatarImages();
+    }
+
+    private void setupChatInput() {
+        if (etChatInput == null) return;
+        etChatInput.setOnEditorActionListener((v, actionId, event) -> {
+            boolean isSend = actionId == EditorInfo.IME_ACTION_SEND
+                    || actionId == EditorInfo.IME_ACTION_DONE
+                    || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+                    && event.getAction() == KeyEvent.ACTION_DOWN);
+            if (isSend) {
+                sendChatMessage();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void sendChatMessage() {
+        String message = etChatInput.getText().toString().trim();
+        if (message.isEmpty()) return;
+        if (engine != null && engine.getClient() != null) {
+            engine.sendChat(message);
+        }
+        etChatInput.setText("");
     }
 
     private void setupAvatarImages() {
@@ -1451,6 +1478,12 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void toggleChatInput() {
+        if (etChatInput == null) return;
+        etChatInput.requestFocus();
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.showSoftInput(etChatInput, InputMethodManager.SHOW_IMPLICIT);
+        }
     }
 
     @Override

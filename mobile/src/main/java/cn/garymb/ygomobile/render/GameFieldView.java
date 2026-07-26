@@ -47,8 +47,10 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private static final float FIELD_CX_F = (FIELD_X_MIN + FIELD_X_MAX) / 2f;
     private static final float FIELD_W_F = FIELD_X_MAX - FIELD_X_MIN;
     private static final float FIELD_H_F = FIELD_Y_MAX - FIELD_Y_MIN;
-    // |fy| 超过该值视为手卡带（GetCardLocation 手卡 y=±3.84，堆叠区中心最大 ±3.3）
+    // |fy| 超过该值视为手卡带（我方手卡 y=4.0/悬停3.84，我方堆叠区中心最大 3.3）
     private static final float HAND_BAND_Y = 3.7f;
+    // 对方手卡y=-3.4/悬停-3.56，对方堆叠区中心最大 -3.3，故用非对称阈值
+    private static final float OPP_HAND_BAND_Y = 3.35f;
     // 卡面高宽比（177×254）
     private static final float CARD_RATIO = 254f / 177f;
 
@@ -90,6 +92,8 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private final Paint chainPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint overlayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint lpPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    //堆叠区堆身画笔
+    private final Paint pilePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private float fieldWidth, fieldHeight;
     private float zoneWidth, zoneHeight;
@@ -287,11 +291,13 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         fieldTop = h * 0.10f;
         fieldBottom = h * 0.84f;
 
-        // 手卡带（透视外）：我方底部大卡、对方顶部小卡
-        myHandCardH = h * 0.21f;
-        myHandCenterY = h * 0.935f;
-        oppHandCardH = h * 0.105f;
-        oppHandCenterY = h * 0.10f;
+        // 手卡尺寸 = 场上卡尺寸（由场地单元宽度推导），严格 177:254 比例
+        float unitX = (fieldRight - fieldLeft) / FIELD_W_F;
+        float handCardW = CARD_W_F * unitX;
+        myHandCardH = handCardW * CARD_RATIO;
+        oppHandCardH = myHandCardH;
+        myHandCenterY = fieldBottom + myHandCardH * 0.62f;
+        oppHandCenterY = oppHandCardH * 0.52f;
     }
 
     @Override
@@ -376,11 +382,52 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         for (int p = 0; p < 2; p++) {
             for (GameField.ClientCard c : field.players[p].monsterZone) drawClientCard(canvas, c);
             for (GameField.ClientCard c : field.players[p].spellZone) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].deck) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].grave) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].removed) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].extra) drawClientCard(canvas, c);
+            drawPileStack(canvas, field.players[p].deck);
+            drawPileStack(canvas, field.players[p].grave);
+            drawPileStack(canvas, field.players[p].removed);
+            drawPileStack(canvas, field.players[p].extra);
         }
+    }
+
+    /**
+     * 堆叠区绘制：厚度随卡数增长（每张约 1% 卡高，上限 35% 卡高）。
+     * 顶卡抬升lift，下方露出堆身侧面与层线；移动/动画中的卡单独绘制
+     */
+    private void drawPileStack(Canvas canvas, List<GameField.ClientCard> pile) {
+        GameField.ClientCard top = null;
+        int count = 0;
+        for (GameField.ClientCard c : pile) {
+            if (c == null) continue;
+            if (c.is_moving || c.aniFrame > 0) {
+                drawClientCard(canvas, c);
+                continue;
+            }
+            count++;
+            top = c; // 列表尾部即堆顶
+        }
+        if (top == null) return;
+
+        RectF r = projectCard(top.curX, top.curY, top.curZ);
+        float per = Math.max(0.6f, r.height() * 0.01f);
+        float lift = Math.min((count - 1) * per, r.height() * 0.35f);
+
+        if (lift > 0.5f) {
+            pilePaint.setStyle(Paint.Style.FILL);
+            pilePaint.setColor(0xFF141A26);
+            canvas.drawRect(r.left, r.bottom - lift - 1f, r.right, r.bottom, pilePaint);
+            pilePaint.setColor(0xFF2E3B52);
+            pilePaint.setStrokeWidth(1f);
+            int lines = Math.min(count, 10);
+            for (int i = 1; i <= lines; i++) {
+                float yy = r.bottom - lift + lift * i / (float) (lines + 1);
+                canvas.drawLine(r.left + 1f, yy, r.right - 1f, yy, pilePaint);
+            }
+        }
+
+        canvas.save();
+        canvas.translate(0, -lift);
+        drawClientCard(canvas, top);
+        canvas.restore();
     }
 
     private void drawHandCards(Canvas canvas) {
@@ -641,7 +688,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
      * 场内卡线性映射（透视矩阵负责变形），Z 高度换算为向上抬升
      */
     private RectF projectCard(float fx, float fy, float fz) {
-        if (fy >= HAND_BAND_Y) { // 我方手卡：底部大卡
+        if (fy >= HAND_BAND_Y) { // 我方手卡：底部，与场上卡同尺寸
             float ch = myHandCardH;
             float cw = ch / CARD_RATIO;
             float cx = fieldWidth * 0.5f
@@ -649,11 +696,11 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
             float cy = myHandCenterY - fz * ch * 0.06f;
             return new RectF(cx - cw / 2f, cy - ch / 2f, cx + cw / 2f, cy + ch / 2f);
         }
-        if (fy <= -HAND_BAND_Y) { // 对方手卡：顶部小卡
+        if (fy <= -OPP_HAND_BAND_Y) { // 对方手卡：顶部，与场上卡同尺寸
             float ch = oppHandCardH;
             float cw = ch / CARD_RATIO;
             float cx = fieldWidth * 0.5f
-                    + (fx - FIELD_CX_F) / FIELD_W_F * fieldWidth * 0.55f;
+                    + (fx - FIELD_CX_F) / FIELD_W_F * fieldWidth * 0.9f;
             float cy = oppHandCenterY;
             return new RectF(cx - cw / 2f, cy - ch / 2f, cx + cw / 2f, cy + ch / 2f);
         }
@@ -680,11 +727,16 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         boolean showFront = cosX * cosY > 0f;
         float wScale = Math.max(0.04f, Math.abs(cosY));
         float hScale = Math.max(0.04f, Math.abs(cosX));
+        // 手卡带：卡面朝向玩家平贴屏幕，不做 3D 压缩，保持 177:254 原始比例
+        boolean handBand = pcard.curY >= HAND_BAND_Y || pcard.curY <= -OPP_HAND_BAND_Y;if (handBand) {
+            wScale = 1f;
+            hScale = 1f;
+        }
 
         canvas.save();
         canvas.translate(cx, cy);
-        // rZ：对方 π→180°，守备 ∓π/2→∓90°
-        canvas.rotate((float) Math.toDegrees(pcard.curRotZ));
+        // rZ：对方 π→180°，守备∓π/2→∓90°
+        canvas.rotate(handBand ? 0f : (float) Math.toDegrees(pcard.curRotZ));
         canvas.scale(wScale, hScale);
 
         RectF local = new RectF(-dst.width() / 2f, -dst.height() / 2f,

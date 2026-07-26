@@ -327,93 +327,79 @@
                                 android:textSize="11sp" />
                         </ScrollView>
                     </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
 
-            <!-- 左侧功能图标栏 -->
-            <LinearLayout
-                android:id="@+id/layout_left_buttons"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:layout_weight="0.15"
-                android:orientation="vertical">
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0.15"
+                        android:layout_marginStart="2dp"
+                        android:orientation="vertical">
 
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="0.45" />
+                        <ImageButton
+                            android:id="@+id/btn_settings"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/btn_sci_fi_bg"
+                            android:padding="4dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/setting" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="0.55"
-                    android:orientation="vertical">
+                        <ImageButton
+                            android:id="@+id/btn_note"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/btn_sci_fi_bg"
+                            android:padding="4dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_note" />
 
-                    <ImageButton
-                        android:id="@+id/btn_settings"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/btn_sci_fi_bg"
-                        android:padding="4dp"
-                        android:scaleType="centerInside"
-                        android:src="@drawable/setting" />
+                        <ImageButton
+                            android:id="@+id/btn_sound"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/btn_sci_fi_bg"
+                            android:padding="4dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_volume_on" />
 
-                    <ImageButton
-                        android:id="@+id/btn_note"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/btn_sci_fi_bg"
-                        android:padding="4dp"
-                        android:scaleType="centerInside"
-                        android:src="@drawable/ic_note" />
+                        <ImageButton
+                            android:id="@+id/btn_speed"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/btn_sci_fi_bg"
+                            android:padding="4dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_speed" />
 
-                    <ImageButton
-                        android:id="@+id/btn_sound"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/btn_sci_fi_bg"
-                        android:padding="4dp"
-                        android:scaleType="centerInside"
-                        android:src="@drawable/ic_volume_on" />
+                        <ImageButton
+                            android:id="@+id/btn_emote"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/btn_sci_fi_bg"
+                            android:padding="4dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_emoticon" />
 
-                    <ImageButton
-                        android:id="@+id/btn_speed"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/btn_sci_fi_bg"
-                        android:padding="4dp"
-                        android:scaleType="centerInside"
-                        android:src="@drawable/ic_speed" />
-
-                    <ImageButton
-                        android:id="@+id/btn_emote"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_marginBottom="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/btn_sci_fi_bg"
-                        android:padding="4dp"
-                        android:scaleType="centerInside"
-                        android:src="@drawable/ic_emoticon" />
-
-                    <ImageButton
-                        android:id="@+id/btn_chat"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/btn_sci_fi_bg"
-                        android:padding="4dp"
-                        android:scaleType="centerInside"
-                        android:src="@drawable/rename" />
+                        <ImageButton
+                            android:id="@+id/btn_chat"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/btn_sci_fi_bg"
+                            android:padding="4dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/rename" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
@@ -668,7 +654,7 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="8dp"
                     android:background="@drawable/panel_sci_fi_bg"
-                    android:orientation="vertical"
+                    android:orientation="horizontal"
                     android:padding="6dp"
                     android:visibility="visible">
 
@@ -680,7 +666,7 @@
                         android:background="#40000000"
                         android:padding="3dp"
                         android:textColor="@color/white"
-                        android:textSize="12sp"
+                        android:textSize="8sp"
                         android:visibility="visible" />
 
                     <TextView
@@ -737,6 +723,20 @@
                         android:textSize="10sp"
                         android:textStyle="bold" />
                 </FrameLayout>
+
+                <EditText
+                    android:id="@+id/et_chat_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:hint="发送消息..."
+                    android:textColorHint="#80FFFFFF"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:imeOptions="actionSend|flagNoExtractUi"
+                    android:textColor="@color/white"
+                    android:background="@drawable/panel_sci_fi_bg"/>
+
 
             </FrameLayout>
         </LinearLayout>
