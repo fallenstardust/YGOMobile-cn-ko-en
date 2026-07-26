@@ -11,11 +11,14 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.LruCache;
 import android.view.Choreographer;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.ImageView;
 
 import androidx.appcompat.widget.AppCompatImageView;
 
@@ -24,6 +27,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.enums.CardLocation;
 
 public class GameFieldView extends View implements Choreographer.FrameCallback {
@@ -60,15 +64,14 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private static final float PI_F = 3.1415926f;
     // 离屏 ImageView 缓存：每个卡码一个，交给 ImageLoader.bindImage 走标准取图链，
     // 绘制时直接把其中的 Drawable 画上 Canvas
-    private final android.util.LruCache<Integer, android.widget.ImageView> cardViewCache =
-            new android.util.LruCache<Integer, android.widget.ImageView>(80) {
+    private final LruCache<Integer, ImageView> cardViewCache =
+            new LruCache<Integer, ImageView>(80) {
                 @Override
                 protected void entryRemoved(boolean evicted, Integer key,
-                                            android.widget.ImageView oldValue,
-                                            android.widget.ImageView newValue) {
+                                            ImageView oldValue,
+                                            ImageView newValue) {
                     try {
-                        cn.garymb.ygomobile.utils.glide.GlideCompat
-                                .with(getContext()).clear(oldValue);
+                        GlideCompat.with(getContext()).clear(oldValue);
                     } catch (Exception ignored) {
                     }
                 }
@@ -754,7 +757,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
             // 移动中卡码为0时用chain_code 兜底（drawing.cpp L617）
             int code = pcard.code;
             if (code == 0 && pcard.is_moving) code = pcard.chain_code;
-            android.graphics.drawable.Drawable cardDrawable = null;
+            Drawable cardDrawable = null;
             if (code > 0) {
                 cardDrawable = requestCardDrawable(code);
             }
@@ -1453,9 +1456,9 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
      * 含 unknown 占位与 Glide 缓存），之后直接读取其中的 Drawable。
      * Glide 加载完成回调 setImageDrawable 时自动触发本视图重绘。
      */
-    private android.graphics.drawable.Drawable requestCardDrawable(int code) {
+    private Drawable requestCardDrawable(int code) {
         if (code <= 0 || imageLoader == null) return null;
-        android.widget.ImageView iv = cardViewCache.get(code);
+        ImageView iv = cardViewCache.get(code);
         if (iv == null) {
             iv = new OffscreenCardView(getContext());
             int w = 177, h = 254;
@@ -1478,7 +1481,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         }
 
         @Override
-        public void setImageDrawable(android.graphics.drawable.Drawable drawable) {
+        public void setImageDrawable(Drawable drawable) {
             super.setImageDrawable(drawable);
             GameFieldView.this.postInvalidate();
         }

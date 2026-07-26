@@ -686,10 +686,12 @@ public class YGOProActivity extends AppCompatActivity implements
         fieldCtl.hide();
         cardDetailPanel.onGameUIHidden();
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
+        if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
     }
 
     private void showGameUI() {
         hideMainMenu();
+        if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
         fieldCtl.show();
         cardDetailPanel.onGameUIShown();
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
@@ -840,14 +842,14 @@ public class YGOProActivity extends AppCompatActivity implements
                 runOnUiThread(() -> {
                     switch (state) {
                         case PLAYING:
-                            cardDetailPanel.setPhaseText("▶");
+                            fieldCtl.setPhaseText("▶");
                             cardDetailPanel.showReplayControls();
                             break;
                         case PAUSED:
-                            cardDetailPanel.setPhaseText("⏸");
+                            fieldCtl.setPhaseText("⏸");
                             break;
                         case FINISHED:
-                            cardDetailPanel.setPhaseText("⏹");
+                            fieldCtl.setPhaseText("⏹");
                             hideReplayControls();
                             break;
                     }
@@ -872,7 +874,7 @@ public class YGOProActivity extends AppCompatActivity implements
             @Override
             public void onReplayPhaseChanged(int phase) {
                 runOnUiThread(() -> {
-                    cardDetailPanel.setPhaseByValue(phase);
+                    fieldCtl.setPhaseByValue(phase);
                     fieldCtl.setTurnText("Turn " + engine.getField().turnCount);
                 });
             }
@@ -914,11 +916,14 @@ public class YGOProActivity extends AppCompatActivity implements
         }
 
         // 隐藏右侧决斗场区，让卡组编辑器占据其空间
-        if (layoutGameRight == null) layoutGameRight = findViewById(R.id.layout_game_right);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
 
         if (layoutDeckControl == null) layoutDeckControl = findViewById(R.id.layout_deck_control);
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
+
+        // 立刻显示左侧卡片详情面板（默认内容），并切换为卡组编辑器模式
+        cardDetailPanel.enterDeckEditorMode();
+
         if (deckEditorManager == null) {
             deckEditorManager = new DeckEditorManager(this, imageLoader, cardDetailPanel);
             deckEditorManager.setListener(new DeckEditorManager.DeckEditorListener() {
@@ -956,9 +961,6 @@ public class YGOProActivity extends AppCompatActivity implements
         }
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
         cardDetailPanel.exitDeckEditorMode();
-
-        // 恢复右侧决斗场区
-        if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
     }
 
     private void setWindowBackground(String relativePath) {
@@ -1076,7 +1078,7 @@ public class YGOProActivity extends AppCompatActivity implements
         runOnUiThread(() -> {
             fieldCtl.setTurnText(String.valueOf(engine.getField().turnCount));
             isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
-            cardDetailPanel.updateActionButtonsForPhase(phase, isMyTurn);
+            fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
         });
     }
 
@@ -1530,160 +1532,6 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private void showPlaceSelectDialog(boolean isDisfield) {
         fieldCtl.beginPlaceSelect(isDisfield);
-    }
-
-    private void loadAndSendDeckWithSide(File ydkFile) {
-        new Thread(() -> {
-            List<Integer> main = new ArrayList<>();
-            List<Integer> extra = new ArrayList<>();
-            List<Integer> side = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new FileReader(ydkFile))) {
-                String line;
-                int section = 0;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    if (line.isEmpty() || line.startsWith("#") && !line.equalsIgnoreCase("#main")
-                            && !line.equalsIgnoreCase("#extra") && !line.equalsIgnoreCase("!side"))
-                        continue;
-                    if (line.equalsIgnoreCase("#main")) {
-                        section = 1;
-                        continue;
-                    }
-                    if (line.equalsIgnoreCase("#extra")) {
-                        section = 2;
-                        continue;
-                    }
-                    if (line.equalsIgnoreCase("!side")) {
-                        section = 3;
-                        continue;
-                    }
-                    if (line.startsWith("#")) continue;
-                    try {
-                        int code = Integer.parseInt(line);
-                        switch (section) {
-                            case 1:
-                                main.add(code);
-                                break;
-                            case 2:
-                                extra.add(code);
-                                break;
-                            case 3:
-                                side.add(code);
-                                break;
-                        }
-                    } catch (NumberFormatException e) { /* skip */ }
-                }
-            } catch (Exception e) {
-                mainHandler.post(() -> showHintMessage("卡组加载失败"));
-                return;
-            }
-
-            if (side.isEmpty()) {
-                engine.sendDeckUpdate(main, extra, side);
-                mainHandler.post(() -> showHintMessage("卡组已发送 (无副卡组)"));
-                return;
-            }
-
-            final List<Integer> fMain = new ArrayList<>(main);
-            final List<Integer> fExtra = new ArrayList<>(extra);
-            final List<Integer> fSide = new ArrayList<>(side);
-            mainHandler.post(() -> showSideSwapUI(fMain, fExtra, fSide));
-        }, "SideDeckLoad").start();
-    }
-
-    private void showSideSwapUI(List<Integer> main, List<Integer> extra, List<Integer> side) {
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("副卡组替换 (点击交换)");
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (8 * getResources().getDisplayMetrics().density);
-        root.setPadding(pad, pad, pad, pad);
-
-        TextView tvMain = new TextView(this);
-        tvMain.setTextColor(0xFFFFFFFF);
-        tvMain.setTextSize(12);
-        tvMain.setText("Main: " + main.size() + "张");
-        root.addView(tvMain);
-
-        LinearLayout mainRow = new LinearLayout(this);
-        mainRow.setOrientation(LinearLayout.HORIZONTAL);
-        for (int i = 0; i < Math.min(main.size(), 10); i++) {
-            Button btn = new Button(this);
-            btn.setText(getCardDisplayName(main.get(i)).substring(0, Math.min(4, getCardDisplayName(main.get(i)).length())));
-            btn.setTextSize(9);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-            lp.rightMargin = 2;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                int removed = main.remove(idx);
-                side.add(removed);
-                showHintMessage("移出: " + getCardDisplayName(removed));
-                tvMain.setText("Main: " + main.size() + "张 | Side: " + side.size() + "张");
-            });
-            mainRow.addView(btn);
-        }
-        root.addView(mainRow);
-
-        TextView tvSide = new TextView(this);
-        tvSide.setTextColor(0xFFCCCCCC);
-        tvSide.setTextSize(12);
-        tvSide.setText("Side: " + side.size() + "张");
-        root.addView(tvSide);
-
-        LinearLayout sideRow = new LinearLayout(this);
-        sideRow.setOrientation(LinearLayout.HORIZONTAL);
-        for (int i = 0; i < Math.min(side.size(), 10); i++) {
-            Button btn = new Button(this);
-            btn.setText(getCardDisplayName(side.get(i)).substring(0, Math.min(4, getCardDisplayName(side.get(i)).length())));
-            btn.setTextSize(9);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF557733);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-            lp.rightMargin = 2;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                int removed = side.remove(idx);
-                main.add(removed);
-                showHintMessage("加入: " + getCardDisplayName(removed));
-                tvMain.setText("Main: " + main.size() + "张 | Side: " + side.size() + "张");
-            });
-            sideRow.addView(btn);
-        }
-        root.addView(sideRow);
-
-        ScrollView scrollView = new ScrollView(this);
-        scrollView.addView(root);
-        dialog.setContentView(scrollView);
-        dialog.setLeftButtonText("确认发送");
-        dialog.setLeftButtonListener((d, w) -> {
-            engine.sendDeckUpdate(main, extra, side);
-            showHintMessage("副卡组替换完成: " + main.size() + "+" + extra.size() + "+" + side.size());
-            d.dismiss();
-        });
-        dialog.setRightButtonText("跳过");
-        dialog.setRightButtonListener((d, w) -> {
-            d.dismiss();
-            sendSideSkip();
-        });
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
-    private void sendSideSkip() {
-        new Thread(() -> {
-            File deckDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_DECK_PATH);
-            File[] files = deckDir.exists()
-                    ? deckDir.listFiles((dir, name) -> name.endsWith(Constants.YDK_FILE_EX))
-                    : null;
-            if (files != null && files.length > 0) {
-                loadAndSendDeck(files[0]);
-            }
-        }, "SideSkip").start();
     }
 
     private void sendCardSelectResponse(List<CardSelectInfo> cardInfos, boolean[] selected, int count) {

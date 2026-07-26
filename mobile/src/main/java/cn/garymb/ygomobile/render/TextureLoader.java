@@ -39,6 +39,17 @@ public class TextureLoader {
     private volatile ZipFile picsZipFile;
     private volatile Runnable onCardLoadedListener;
 
+    /** 表情图集裁剪缓存，对齐 ImageManager::emoticons */
+    private final Map<String, Bitmap> emoticonCache = new ConcurrentHashMap<>();
+
+    /** 表情键名与 4x4 图集网格顺序，对齐 image_manager.cpp emoticonRects */
+    private static final String[] EMOTICON_KEYS = {
+            "&laugh", "&ridiculous", "&stick_tongue", "&reluctant",
+            "&sweat", "&confused", "&surprised", "&bawl",
+            "&angry", "&rage", "&sneaky", "&obedient",
+            "&good", "&cool", "&despise", "&shy"
+    };
+
     public static TextureLoader get() {
         if (instance == null) {
             synchronized (TextureLoader.class) {
@@ -62,27 +73,82 @@ public class TextureLoader {
     public void init() {
         textureBasePath = AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SKIN_PATH;
         preloadPermanentTextures();
+        preloadEmoticons();
     }
 
+    /**
+     * 与 image_manager.cpp ImageManager::Initial 加载清单对齐：
+     * 场地绘制素材 / LP条/ 手牌背景 / 图标 / 连接标记 / 灵摆刻度 / extra 功能图标
+     */
     private void preloadPermanentTextures() {
         String[] permanentTextures = {
+                // 场地与背景 (tField / tFieldTransparent / tBackGround*)
                 "field2.png", "field3.png",
                 "field-transparent2.png", "field-transparent3.png",
-                "cover.jpg", "cover2.jpg",
                 "bg.jpg", "bg_menu.jpg", "bg_deck.jpg",
+                // 卡背与未知卡图 (tCover / tUnknown)
+                "cover.jpg", "cover2.jpg",
                 "unknown.jpg",
-                "lpbarf.png", "lp3.png",
-                "attack.png", "chain.png", "chaintarget.png",
-                "target.png", "negated.png",
-                "number.png", "act.png",
+                // 场上状态标记 (tAct/tAttack/tChain/tNegated/tNumber/tEquip/tTarget/tChainTarget/tMask)
+                "act.png", "attack.png", "chain.png", "negated.png",
+                "number.png", "equip.png", "target.png", "chaintarget.png",
+                "mask.png",
+                // LP 条 (tLPBar/tLPFrame/tLPBarFrame)
+                "lp3.png", "lpf.png", "lpbarf.png",
+                // 禁限/OT/卡片类型图标 (tLim/tOT/tCardType)
+                "icon_lim.png", "ot.png", "cardtype.png",
+                // 手牌背景 (tHand[0..2])
+                "f1.jpg", "f2.jpg", "f3.jpg",
+                // 攻击合计/选择区域/计时 (tTotalAtk/tSelField/tClock)
+                "totalAtk.png", "selfield.png", "tiktok.png",
+                // 头像 (tAvatar)
                 "me.jpg", "opponent.jpg",
-                "selfield.png", "mask.png",
-                "totalAtk.png", "tiktok.png"
+                // 连接标记 (tSelFieldLinkArrows[1..4,6..9])
+                "link_marker_on_1.png", "link_marker_on_2.png",
+                "link_marker_on_3.png", "link_marker_on_4.png",
+                "link_marker_on_6.png", "link_marker_on_7.png",
+                "link_marker_on_8.png", "link_marker_on_9.png",
+                // extra 功能图标 (tSettings/tLogs/tMute/tPlay/tTalk/tOneX/tDoubleX/tShut/tClose/tEmoticon/tGSC)
+                "extra/tsettings.png", "extra/tlogs.png", "extra/tmute.png",
+                "extra/tplay.png", "extra/ttalk.png", "extra/tonex.png",
+                "extra/tdoublex.png", "extra/tshut.png", "extra/tclose.png",
+                "extra/temoticon.png", "extra/gsc.png"
         };
         for (String name : permanentTextures) {
             Bitmap bmp = loadBitmapFromFile(name);
             if (bmp != null) {
                 permanentCache.put(name, bmp);
+            }
+        }
+        // 灵摆刻度 (tLScale/tRScale[0..13])
+        for (int i = 0; i < 14; i++) {
+            String l = "extra/lscale_" + i + ".png";
+            String r = "extra/rscale_" + i + ".png";
+            Bitmap lb = loadBitmapFromFile(l);
+            if (lb != null) permanentCache.put(l, lb);
+            Bitmap rb = loadBitmapFromFile(r);
+            if (rb != null) permanentCache.put(r, rb);
+        }
+    }
+
+    /**
+     * 裁剪 extra/emoticons.png 4x4 表情图集，对齐 ImageManager 中
+     * emoticonRects 的裁剪逻辑（每格为图集的 1/4 宽 x 1/4 高）
+     */
+    private void preloadEmoticons() {
+        Bitmap sheet = loadBitmapFromFile("extra/emoticons.png");
+        if (sheet == null) return;
+        int cellW = sheet.getWidth() / 4;
+        int cellH = sheet.getHeight() / 4;
+        if (cellW <= 0 || cellH <= 0) return;
+        for (int i = 0; i < EMOTICON_KEYS.length; i++) {
+            int col = i % 4;
+            int row = i / 4;
+            try {
+                Bitmap cell = Bitmap.createBitmap(sheet, col * cellW, row * cellH, cellW, cellH);
+                emoticonCache.put(EMOTICON_KEYS[i], cell);
+            } catch (Exception e) {
+                Log.e(TAG, "crop emoticon failed: " + EMOTICON_KEYS[i], e);
             }
         }
     }
@@ -128,6 +194,17 @@ public class TextureLoader {
         return getTexture("cover.jpg");
     }
 
+    /**
+     * 对齐 ImageManager::tCover[0/1]：己方 cover.jpg，对方 cover2.jpg，缺失时回退 cover.jpg
+     */
+    public Bitmap getCardCover(boolean opponent) {
+        if (opponent) {
+            Bitmap bmp = getTexture("cover2.jpg");
+            if (bmp != null) return bmp;
+        }
+        return getTexture("cover.jpg");
+    }
+
     public Bitmap getUnknownCard() {
         return getTexture("unknown.jpg");
     }
@@ -147,6 +224,108 @@ public class TextureLoader {
 
     public Bitmap getExtraTexture(String name) {
         return getTexture("extra/" + name);
+    }
+
+    // === 与 image_manager.cpp 字段一一对应的语义化 getter，供 GameFieldView 绘制取用 ===
+
+    /** tAct：可发动效果指示 */
+    public Bitmap getActTexture() {
+        return getTexture("act.png");
+    }
+
+    /** tAttack：攻击指示箭头 */
+    public Bitmap getAttackTexture() {
+        return getTexture("attack.png");
+    }
+
+    /** tChain：连锁标记 */
+    public Bitmap getChainTexture() {
+        return getTexture("chain.png");
+    }
+
+    /** tNegated：效果无效标记 */
+    public Bitmap getNegatedTexture() {
+        return getTexture("negated.png");
+    }
+
+    /** tNumber：连锁序号数字条 */
+    public Bitmap getNumberTexture() {
+        return getTexture("number.png");
+    }
+
+    /** tEquip：装备指示 */
+    public Bitmap getEquipTexture() {
+        return getTexture("equip.png");
+    }
+
+    /** tTarget：对象指示 */
+    public Bitmap getTargetTexture() {
+        return getTexture("target.png");
+    }
+
+    /** tChainTarget：连锁对象指示 */
+    public Bitmap getChainTargetTexture() {
+        return getTexture("chaintarget.png");
+    }
+
+    /** tMask：遮罩 */
+    public Bitmap getMaskTexture() {
+        return getTexture("mask.png");
+    }
+
+    /** tLPBar / tLPFrame / tLPBarFrame：LP 条、LP 框 */
+    public Bitmap getLpBar() {
+        return getTexture("lp3.png");
+    }
+
+    public Bitmap getLpFrame() {
+        return getTexture("lpf.png");
+    }
+
+    public Bitmap getLpBarFrame() {
+        return getTexture("lpbarf.png");
+    }
+
+    /** tLim：禁限图标  tOT：OT 图标  tCardType：卡片类型条 */
+    public Bitmap getLimitIcon() {
+        return getTexture("icon_lim.png");
+    }
+
+    public Bitmap getOtIcon() {
+        return getTexture("ot.png");
+    }
+
+    public Bitmap getCardTypeTexture() {
+        return getTexture("cardtype.png");
+    }
+
+    /** tHand[0..2]：猜拳手势f1/f2/f3.jpg，index 取 0-2 */
+    public Bitmap getHandTexture(int index) {
+        if (index < 0 || index > 2) return null;
+        return getTexture("f" + (index + 1) + ".jpg");
+    }
+
+    /** tTotalAtk：攻击合计  tSelField：可选区域高亮  tClock：计时 */
+    public Bitmap getTotalAtkTexture() {
+        return getTexture("totalAtk.png");
+    }
+
+    public Bitmap getSelFieldTexture() {
+        return getTexture("selfield.png");
+    }
+
+    public Bitmap getClockTexture() {
+        return getTexture("tiktok.png");
+    }
+
+    /** tGSC */
+    public Bitmap getGscTexture() {
+        return getTexture("extra/gsc.png");
+    }
+
+    /** emoticons：按键名取裁剪后的表情，如 "&laugh"、"&angry" */
+    public Bitmap getEmoticon(String key) {
+        return emoticonCache.get(key);
     }
 
     private Bitmap loadBitmapFromFile(String relativePath) {
@@ -343,5 +522,11 @@ public class TextureLoader {
             }
         }
         permanentCache.clear();
+        for (Bitmap bmp : emoticonCache.values()) {
+            if (bmp != null && !bmp.isRecycled()) {
+                bmp.recycle();
+            }
+        }
+        emoticonCache.clear();
     }
 }

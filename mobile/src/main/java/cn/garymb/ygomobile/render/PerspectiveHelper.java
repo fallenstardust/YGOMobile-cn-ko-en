@@ -1,7 +1,9 @@
 package cn.garymb.ygomobile.render;
 
 import android.graphics.Camera;
-import android.graphics.Matrix;public class PerspectiveHelper {
+import android.graphics.Matrix;
+
+public class PerspectiveHelper {
 
     private final Camera camera = new Camera();
     private final Matrix matrix = new Matrix();

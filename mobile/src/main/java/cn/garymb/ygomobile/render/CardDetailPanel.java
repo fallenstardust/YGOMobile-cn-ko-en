@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.render;
 
 import android.view.View;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -18,11 +17,10 @@ import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
-import ocgcore.enums.DuelPhase;
 
 /**
  * 左侧卡片详情面板与全部控制按钮的管理类：
- * 卡片详情展示 / 左列功能按钮 / 底部行动按钮 / 阶段按钮 / 录像控制按钮 / 取消或完成按钮 / 卡组操作栏
+ * 卡片详情展示 / 左列功能按钮 / 底部行动按钮 / 录像控制按钮 / 取消或完成按钮 / 卡组操作栏
  */
 public class CardDetailPanel {
 
@@ -39,9 +37,6 @@ public class CardDetailPanel {
     private LinearLayout layoutBottomActions;
     private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
     private Button btnCancelOrFinish;
-
-    private FrameLayout layoutPhaseButtons;
-    private Button btnPhaseCurrent, btnPhaseNext, btnEp;
 
     private LinearLayout layoutReplayControl;
     private Button btnReplayPlay, btnReplayPause, btnReplayNext, btnReplayLast, btnReplayShuffle, btnReplayQuit;
@@ -76,11 +71,6 @@ public class CardDetailPanel {
         btnShowTiming = activity.findViewById(R.id.btn_show_timing);
         btnAvailableTiming = activity.findViewById(R.id.btn_available_timing);
         btnCancelOrFinish = activity.findViewById(R.id.btn_cancel_or_finish);
-
-        layoutPhaseButtons = activity.findViewById(R.id.layout_phase_buttons);
-        btnPhaseCurrent = activity.findViewById(R.id.btn_phase_current);
-        btnPhaseNext = activity.findViewById(R.id.btn_phase_next);
-        btnEp = activity.findViewById(R.id.btn_ep);
 
         layoutReplayControl = activity.findViewById(R.id.layout_replay_control);
         btnReplayPlay = activity.findViewById(R.id.btn_replay_play);
@@ -118,31 +108,6 @@ public class CardDetailPanel {
 
         if (btnCancelOrFinish != null) {
             btnCancelOrFinish.setOnClickListener(v -> activity.cancelOrFinish());
-        }
-
-        if (btnPhaseNext != null) {
-            btnPhaseNext.setOnClickListener(v -> {
-                if (activity.getEngine() == null || activity.getEngine().getClient() == null)
-                    return;
-                String label = btnPhaseNext.getText().toString();
-                if ("BP".equals(label) && activity.getCurrentSelectType() == 11) {
-                    activity.sendResponseInt(6);
-                } else if ("M2".equals(label) && activity.getCurrentSelectType() == 10) {
-                    activity.sendResponseInt(2);
-                }
-            });
-        }
-
-        if (btnEp != null) {
-            btnEp.setOnClickListener(v -> {
-                if (activity.getEngine() == null || activity.getEngine().getClient() == null)
-                    return;
-                if (activity.getCurrentSelectType() == 10) {
-                    activity.sendResponseInt(3);
-                } else if (activity.getCurrentSelectType() == 11) {
-                    activity.sendResponseInt(7);
-                }
-            });
         }
 
         if (btnReplayPlay != null) {
@@ -422,111 +387,8 @@ public class CardDetailPanel {
         }
     }
 
-    // === 阶段按钮 ===
-
-    public void updateActionButtonsForPhase(int phase, boolean isMyTurn) {
-        DuelPhase dp = DuelPhase.valueOf(phase);
-        if (dp == null) return;
-
-        if (layoutPhaseButtons != null) {
-            layoutPhaseButtons.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
-        }
-        if (btnPhaseCurrent == null) return;
-
-        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
-        if (btnEp != null) btnEp.setVisibility(View.GONE);
-
-        switch (dp) {
-            case Draw:
-                btnPhaseCurrent.setText("DP");
-                break;
-            case Standby:
-                btnPhaseCurrent.setText("SP");
-                break;
-            case Main1:
-                btnPhaseCurrent.setText("M1");
-                if (isMyTurn) {
-                    if (btnPhaseNext != null) {
-                        btnPhaseNext.setText("BP");
-                        btnPhaseNext.setVisibility(View.VISIBLE);
-                    }
-                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
-                }
-                break;
-            case BattleStart:
-            case BattleStep:
-            case Damage:
-            case DamageCal:
-            case Battle:
-                btnPhaseCurrent.setText("BP");
-                if (isMyTurn) {
-                    if (btnPhaseNext != null) {
-                        btnPhaseNext.setText("M2");
-                        btnPhaseNext.setVisibility(View.VISIBLE);
-                    }
-                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
-                }
-                break;
-            case Main2:
-                btnPhaseCurrent.setText("M2");
-                if (isMyTurn) {
-                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
-                }
-                break;
-            case End:
-                btnPhaseCurrent.setText("EP");
-                break;
-            default:
-                btnPhaseCurrent.setText(dp.name());
-                break;
-        }
-    }
-
-    /**
-     * 录像回放时仅更新阶段文字，不处理可见性
-     */
-    public void setPhaseByValue(int phase) {
-        DuelPhase dp = DuelPhase.valueOf(phase);
-        if (btnPhaseCurrent == null || dp == null) return;
-        switch (dp) {
-            case Draw:
-                btnPhaseCurrent.setText("DP");
-                break;
-            case Standby:
-                btnPhaseCurrent.setText("SP");
-                break;
-            case Main1:
-                btnPhaseCurrent.setText("M1");
-                break;
-            case BattleStart:
-            case BattleStep:
-            case Battle:
-            case Damage:
-            case DamageCal:
-                btnPhaseCurrent.setText("BP");
-                break;
-            case Main2:
-                btnPhaseCurrent.setText("M2");
-                break;
-            case End:
-                btnPhaseCurrent.setText("EP");
-                break;
-            default:
-                btnPhaseCurrent.setText(dp.name());
-                break;
-        }
-    }
-
-    public void setPhaseText(String text) {
-        if (btnPhaseCurrent != null) btnPhaseCurrent.setText(text);
-    }
-
     public void closeGameButtons() {
         hideCancelOrFinishButton();
-        if (btnPhaseCurrent != null) btnPhaseCurrent.setText("");
-        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
-        if (btnEp != null) btnEp.setVisibility(View.GONE);
-        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
     }
 
@@ -569,7 +431,6 @@ public class CardDetailPanel {
     public void onGameUIHidden() {
         hide();
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
-        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
         hideCancelOrFinishButton();
     }
 

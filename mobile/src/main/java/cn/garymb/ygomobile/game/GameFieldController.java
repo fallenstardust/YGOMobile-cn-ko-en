@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -21,11 +22,13 @@ import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import ocgcore.DataManager;
+import ocgcore.enums.DuelPhase;
 
 /**
  * GameFieldView 管理类：卡片/区域点击与长按、卡片命令菜单、放置区域选择、
  * 高亮、连锁动画、cmdContext 状态；
- * 以及 layout_top_info 区域：双方 LP/名字/手卡数/计时/头像 + 回合数 + 提示信息 + 聊天气泡 + 决斗倒计时
+ * layout_top_info 区域：双方 LP/名字/手卡数/计时/头像 + 回合数 + 提示信息 + 聊天气泡 + 决斗倒计时；
+ * 以及阶段按钮（DP/SP/M1/BP/M2/EP 切换与响应）
  */
 public class GameFieldController implements GameFieldView.OnCardClickListener {
 
@@ -50,6 +53,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private LinearLayout layoutChatMessages;
     private TextView tvChatMessage1, tvChatMessage2;
 
+    private FrameLayout layoutPhaseButtons;
+    private Button btnPhaseCurrent, btnPhaseNext, btnEp;
+
     private final int[] duelTimeLeft = new int[2];
     private int duelTimePlayer = -1;
     private int duelTimeLimit = 0;
@@ -72,6 +78,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     public void create() {
         viewController = new GameFieldViewController(activity);
         bindTopInfoViews();
+        bindPhaseButtons();
     }
 
     private void bindTopInfoViews() {
@@ -101,6 +108,38 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (opAvatar != null) ivOpponentAvatar.setImageBitmap(opAvatar);
     }
 
+    private void bindPhaseButtons() {
+        layoutPhaseButtons = activity.findViewById(R.id.layout_phase_buttons);
+        btnPhaseCurrent = activity.findViewById(R.id.btn_phase_current);
+        btnPhaseNext = activity.findViewById(R.id.btn_phase_next);
+        btnEp = activity.findViewById(R.id.btn_ep);
+
+        if (btnPhaseNext != null) {
+            btnPhaseNext.setOnClickListener(v -> {
+                if (activity.getEngine() == null || activity.getEngine().getClient() == null)
+                    return;
+                String label = btnPhaseNext.getText().toString();
+                if ("BP".equals(label) && activity.getCurrentSelectType() == 11) {
+                    activity.sendResponseInt(6);
+                } else if ("M2".equals(label) && activity.getCurrentSelectType() == 10) {
+                    activity.sendResponseInt(2);
+                }
+            });
+        }
+
+        if (btnEp != null) {
+            btnEp.setOnClickListener(v -> {
+                if (activity.getEngine() == null || activity.getEngine().getClient() == null)
+                    return;
+                if (activity.getCurrentSelectType() == 10) {
+                    activity.sendResponseInt(3);
+                } else if (activity.getCurrentSelectType() == 11) {
+                    activity.sendResponseInt(7);
+                }
+            });
+        }
+    }
+
     public void init(GameEngine engine, ImageLoader imageLoader) {
         this.engine = engine;
         viewController.init(engine.getField(), imageLoader, this);
@@ -115,6 +154,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (viewController != null) viewController.hide();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
+        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
     }
 
     public void invalidate() {
@@ -505,6 +545,115 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             return 0xFFFF0000;
         }
         return 0xFFFFFFFF;
+    }
+
+    // === 阶段按钮 ===
+
+    public void updateActionButtonsForPhase(int phase, boolean isMyTurn) {
+        DuelPhase dp = DuelPhase.valueOf(phase);
+        if (dp == null) return;
+
+        if (layoutPhaseButtons != null) {
+            layoutPhaseButtons.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
+        }
+        if (btnPhaseCurrent == null) return;
+
+        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
+        if (btnEp != null) btnEp.setVisibility(View.GONE);
+
+        switch (dp) {
+            case Draw:
+                btnPhaseCurrent.setText("DP");
+                break;
+            case Standby:
+                btnPhaseCurrent.setText("SP");
+                break;
+            case Main1:
+                btnPhaseCurrent.setText("M1");
+                if (isMyTurn) {
+                    if (btnPhaseNext != null) {
+                        btnPhaseNext.setText("BP");
+                        btnPhaseNext.setVisibility(View.VISIBLE);
+                    }
+                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
+                }
+                break;
+            case BattleStart:
+            case BattleStep:
+            case Damage:
+            case DamageCal:
+            case Battle:
+                btnPhaseCurrent.setText("BP");
+                if (isMyTurn) {
+                    if (btnPhaseNext != null) {
+                        btnPhaseNext.setText("M2");
+                        btnPhaseNext.setVisibility(View.VISIBLE);
+                    }
+                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
+                }
+                break;
+            case Main2:
+                btnPhaseCurrent.setText("M2");
+                if (isMyTurn) {
+                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
+                }
+                break;
+            case End:
+                btnPhaseCurrent.setText("EP");
+                break;
+            default:
+                btnPhaseCurrent.setText(dp.name());
+                break;
+        }
+    }
+
+    /**
+     * 录像回放时仅更新阶段文字，不处理可见性
+     */
+    public void setPhaseByValue(int phase) {
+        DuelPhase dp = DuelPhase.valueOf(phase);
+        if (btnPhaseCurrent == null || dp == null) return;
+        switch (dp) {
+            case Draw:
+                btnPhaseCurrent.setText("DP");
+                break;
+            case Standby:
+                btnPhaseCurrent.setText("SP");
+                break;
+            case Main1:
+                btnPhaseCurrent.setText("M1");
+                break;
+            case BattleStart:
+            case BattleStep:
+            case Battle:
+            case Damage:
+            case DamageCal:
+                btnPhaseCurrent.setText("BP");
+                break;
+            case Main2:
+                btnPhaseCurrent.setText("M2");
+                break;
+            case End:
+                btnPhaseCurrent.setText("EP");
+                break;
+            default:
+                btnPhaseCurrent.setText(dp.name());
+                break;
+        }
+    }
+
+    public void setPhaseText(String text) {
+        if (btnPhaseCurrent != null) btnPhaseCurrent.setText(text);
+    }
+
+    /**
+     * 对局结束时清空并隐藏阶段按钮（配合 CardDetailPanel.closeGameButtons）
+     */
+    public void closePhaseButtons() {
+        if (btnPhaseCurrent != null) btnPhaseCurrent.setText("");
+        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
+        if (btnEp != null) btnEp.setVisibility(View.GONE);
+        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
     }
 
     // === GameFieldView.OnCardClickListener ===

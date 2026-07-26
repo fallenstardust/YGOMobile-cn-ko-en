@@ -722,22 +722,20 @@
                         android:textSize="10sp"
                         android:textStyle="bold" />
                 </FrameLayout>
-
-                <EditText
-                    android:id="@+id/et_chat_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom"
-                    android:hint="发送消息..."
-                    android:textColorHint="#80FFFFFF"
-                    android:inputType="text"
-                    android:maxLines="1"
-                    android:imeOptions="actionSend|flagNoExtractUi"
-                    android:textColor="@color/white"
-                    android:background="@drawable/panel_sci_fi_bg"/>
-
-
             </FrameLayout>
+
+            <EditText
+                android:id="@+id/et_chat_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:hint="发送消息..."
+                android:textColorHint="#80FFFFFF"
+                android:inputType="text"
+                android:maxLines="1"
+                android:imeOptions="actionSend|flagNoExtractUi"
+                android:textColor="@color/white"
+                android:background="@drawable/panel_sci_fi_bg"/>
         </LinearLayout>
     </LinearLayout>
 
