@@ -26,8 +26,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -49,14 +47,14 @@ import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.DeckEditorManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.GameFieldController;
+import cn.garymb.ygomobile.game.GameSidePanelController;
+import cn.garymb.ygomobile.game.GameTopInfoController;
 import cn.garymb.ygomobile.game.ReplayEngine;
 import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.network.YGOProtocol;
-import cn.garymb.ygomobile.render.CardDetailPanel;
-import cn.garymb.ygomobile.render.GameFieldView;
-import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
@@ -68,11 +66,9 @@ import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
-import ocgcore.enums.DuelPhase;
 
 public class YGOProActivity extends AppCompatActivity implements
         GameEngine.EngineListener,
-        GameFieldView.OnCardClickListener,
         LanModeDialog.OnLanModeListener {
 
     private static final String TAG = "YGONativeGame";
@@ -82,31 +78,13 @@ public class YGOProActivity extends AppCompatActivity implements
     private SoundManager soundManager;
     private ImageLoader imageLoader;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private GameFieldViewController fieldViewController;
+
     private DeckEditorManager deckEditorManager;
     private View layoutDeckEditor;
-    private TextView tvPlayerLp, tvPlayerName, tvOpponentLp, tvOpponentName;
-    private TextView tvTurnCounter;
-    private TextView tvPlayerHandCount, tvOpponentHandCount;
-    private TextView tvPlayerTime, tvOpponentTime;
-    private ImageView ivPlayerAvatar, ivOpponentAvatar;
-    private TextView tvHintMessage;
 
-    private LinearLayout layoutTopInfo, layoutLeftButtons;
-    private LinearLayout layoutCardDetail;
-    private LinearLayout layoutBottomActions;
     private LinearLayout layoutDeckControl;
     private LinearLayout layoutGameRight;
-    private LinearLayout layoutChatMessages;
-    private TextView tvChatMessage1, tvChatMessage2;
-    private ImageView ivCardImage;
-    private TextView tvCardName, tvCardAttr, tvCardLevel, tvCardDesc;
-    private CardDetailPanel cardDetailPanel;
-    private ImageButton btnSettings, btnChat, btnSound, btnSpeed, btnEmote, btnNote;
-    private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
-    private Button btnCancelOrFinish;
-    private Button btnPhaseCurrent, btnPhaseNext, btnEp;
-    private FrameLayout layoutPhaseButtons;
+
     private int currentSelectType = -1;
     private DialogPlus currentDialog;
 
@@ -115,29 +93,17 @@ public class YGOProActivity extends AppCompatActivity implements
     private TextView tvVersion;
     private LanModeDialog lanModeDialog;
 
-    private String chatHistory = "";
-    private TextView tvChatLog;
-    private Button btnChain, btnCancel;
-    private LinearLayout layoutChat;
     private EditText etChatInput;
-    private LinearLayout layoutLobby;
-    private TextView tvLobbyStatus;
-    private Button btnLobbyReady, btnLobbyLeave;
 
-    private LinearLayout layoutOpponentInfo;
-    private LinearLayout layoutPlayerInfo;
     private boolean isMyTurn = false;
     private volatile boolean isGameStarted = false;
     private DraggablePopupHelper mainMenuDragHelper;
 
-    private LinearLayout layoutReplayControl;
-    private Button btnReplayPlay, btnReplayPause, btnReplayNext, btnReplayLast, btnReplayShuffle, btnReplayQuit;
     private ReplayEngine currentReplayEngine;
+    private GameTopInfoController topInfo;
+    private GameSidePanelController sidePanel;
+    private GameFieldController fieldCtl;
 
-    private static final int CMD_CONTEXT_IDLE = 1;
-    private static final int CMD_CONTEXT_BATTLE = 2;
-    private int cmdContext = 0;
-    private boolean isPlaceSelecting = false;
     private boolean isSelectingSum = false;
     private int sumSelectValue = 0;
     private int sumSelectMin = 0;
@@ -146,20 +112,6 @@ public class YGOProActivity extends AppCompatActivity implements
     private boolean[] sumSelected;
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
-
-    private final int[] duelTimeLeft = new int[2];
-    private int duelTimePlayer = -1;
-    private int duelTimeLimit = 0;
-    private final Runnable duelTimeTicker = new Runnable() {
-        @Override
-        public void run() {
-            if (duelTimePlayer >= 0 && duelTimeLeft[duelTimePlayer] > 0) {
-                duelTimeLeft[duelTimePlayer]--;
-            }
-            updateTimeDisplay();
-            mainHandler.postDelayed(this, 1000);
-        }
-    };
 
     private static class SumCardInfo {
         int code, controler, location, sequence, opParam, value, index;
@@ -395,79 +347,18 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void initViews() {
-        btnSurrender = findViewById(R.id.btn_surrender);
-        btnIgnoreTiming = findViewById(R.id.btn_ignore_timing);
-        btnShowTiming = findViewById(R.id.btn_show_timing);
-        btnAvailableTiming = findViewById(R.id.btn_available_timing);
-        btnCancelOrFinish = findViewById(R.id.btn_cancel_or_finish);
-
-        btnPhaseCurrent = findViewById(R.id.btn_phase_current);
-        btnPhaseNext = findViewById(R.id.btn_phase_next);
-        btnEp = findViewById(R.id.btn_ep);
-        layoutPhaseButtons = findViewById(R.id.layout_phase_buttons);
-
-
-        ivCardImage = findViewById(R.id.iv_card_image);
-        tvCardName = findViewById(R.id.tv_card_name);
-        tvCardAttr = findViewById(R.id.tv_card_attr);
-        tvCardLevel = findViewById(R.id.tv_card_level);
-        tvCardDesc = findViewById(R.id.tv_card_desc);
-
-        fieldViewController = new GameFieldViewController(this);
-        tvPlayerLp = findViewById(R.id.tv_player_lp);
-        tvPlayerName = findViewById(R.id.tv_player_name);
-        tvOpponentLp = findViewById(R.id.tv_opponent_lp);
-        tvOpponentName = findViewById(R.id.tv_opponent_name);
-        tvTurnCounter = findViewById(R.id.tv_turn_counter);
-        tvPlayerHandCount = findViewById(R.id.tv_player_hand_count);
-        tvOpponentHandCount = findViewById(R.id.tv_opponent_hand_count);
-        tvPlayerTime = findViewById(R.id.tv_player_time);
-        tvOpponentTime = findViewById(R.id.tv_opponent_time);
-        tvHintMessage = findViewById(R.id.tv_hint_message);
-        ivPlayerAvatar = findViewById(R.id.iv_player_avatar);
-        ivOpponentAvatar = findViewById(R.id.iv_opponent_avatar);
-
-        layoutTopInfo = findViewById(R.id.layout_top_info);
-        layoutCardDetail = findViewById(R.id.layout_card_detail);
-        layoutBottomActions = findViewById(R.id.layout_bottom_actions);
-        layoutChatMessages = findViewById(R.id.layout_chat_messages);
-
-        tvChatMessage1 = findViewById(R.id.tv_chat_message_1);
-        tvChatMessage2 = findViewById(R.id.tv_chat_message_2);
-
-        btnSettings = findViewById(R.id.btn_settings);
-        btnChat = findViewById(R.id.btn_chat);
-        btnSound = findViewById(R.id.btn_sound);
-        btnSpeed = findViewById(R.id.btn_speed);
-        btnEmote = findViewById(R.id.btn_emote);
-        btnNote = findViewById(R.id.btn_note);
-
-        btnSurrender = findViewById(R.id.btn_surrender);
-        btnIgnoreTiming = findViewById(R.id.btn_ignore_timing);
-        btnShowTiming = findViewById(R.id.btn_show_timing);
-        btnAvailableTiming = findViewById(R.id.btn_available_timing);
-
-        ivCardImage = findViewById(R.id.iv_card_image);
-        tvCardName = findViewById(R.id.tv_card_name);
-        tvCardAttr = findViewById(R.id.tv_card_attr);
-        tvCardLevel = findViewById(R.id.tv_card_level);
-        tvCardDesc = findViewById(R.id.tv_card_desc);
-
         dialogContainer = findViewById(R.id.dialog_container);
-
-        layoutReplayControl = findViewById(R.id.layout_replay_control);
         layoutDeckControl = findViewById(R.id.layout_deck_control);
-        btnReplayPlay = findViewById(R.id.btn_replay_play);
         layoutGameRight = findViewById(R.id.layout_game_right);
-        btnReplayPause = findViewById(R.id.btn_replay_pause);
-        btnReplayNext = findViewById(R.id.btn_replay_next);
-        btnReplayLast = findViewById(R.id.btn_replay_last);
-        btnReplayShuffle = findViewById(R.id.btn_replay_shuffle);
-        btnReplayQuit = findViewById(R.id.btn_replay_quit);
         etChatInput = findViewById(R.id.et_chat_input);
         setupChatInput();
-        setupButtonListeners();
-        setupAvatarImages();
+
+        topInfo = new GameTopInfoController(this, mainHandler);
+        topInfo.bindViews();
+        sidePanel = new GameSidePanelController(this);
+        sidePanel.bindViews();
+        fieldCtl = new GameFieldController(this);
+        fieldCtl.create();
     }
 
     private void setupChatInput() {
@@ -494,137 +385,20 @@ public class YGOProActivity extends AppCompatActivity implements
         etChatInput.setText("");
     }
 
-    private void setupAvatarImages() {
-        Bitmap myAvatar = TextureLoader.get().getAvatar(true);
-        if (myAvatar != null) ivPlayerAvatar.setImageBitmap(myAvatar);
-        Bitmap opAvatar = TextureLoader.get().getAvatar(false);
-        if (opAvatar != null) ivOpponentAvatar.setImageBitmap(opAvatar);
-    }
-
-    private void setupButtonListeners() {
-        btnSurrender.setOnClickListener(v -> {
-            if (engine != null) engine.sendSurrender();
-        });
-
-        btnIgnoreTiming.setOnClickListener(v -> {
-            sendActionResponse(-1);
-        });
-
-        btnShowTiming.setOnClickListener(v -> {
-        });
-
-        btnAvailableTiming.setOnClickListener(v -> {
-        });
-
-        btnSettings.setOnClickListener(v -> {
-            showSettingsDialog();
-        });
-
-        btnChat.setOnClickListener(v -> {
-            toggleChatInput();
-        });
-
-        btnSound.setOnClickListener(v -> {
-            if (soundManager != null) {
-                SharedPreferences prefs = getSharedPreferences(getPackageName() + ".settings", Context.MODE_PRIVATE);
-                boolean currentSound = prefs.getBoolean("chkEnableSound", true);
-                boolean currentMusic = prefs.getBoolean("chkEnableMusic", true);
-                boolean newMuted = !currentSound && !currentMusic;
-                soundManager.enableSounds(newMuted);
-                soundManager.enableMusic(newMuted);
-                prefs.edit()
-                        .putBoolean("chkEnableSound", newMuted)
-                        .putBoolean("chkEnableMusic", newMuted)
-                        .apply();
-            }
-        });
-
-        btnSpeed.setOnClickListener(v -> {
-        });
-
-        btnEmote.setOnClickListener(v -> {
-        });
-
-        btnNote.setOnClickListener(v -> {
-            showMainMenu();
-        });
-
-        if (btnCancelOrFinish != null) {
-            btnCancelOrFinish.setOnClickListener(v -> cancelOrFinish());
-        }
-
-        if (btnPhaseNext != null) {
-            btnPhaseNext.setOnClickListener(v -> {
-                if (engine == null || engine.getClient() == null) return;
-                String label = btnPhaseNext.getText().toString();
-                if ("BP".equals(label) && currentSelectType == 11) {
-                    sendResponseInt(6);
-                } else if ("M2".equals(label) && currentSelectType == 10) {
-                    sendResponseInt(2);
-                }
-            });
-        }
-
-        if (btnEp != null) {
-            btnEp.setOnClickListener(v -> {
-                if (engine == null || engine.getClient() == null) return;
-                if (currentSelectType == 10) {
-                    sendResponseInt(3);
-                } else if (currentSelectType == 11) {
-                    sendResponseInt(7);
-                }
-            });
-        }
-
-        if (btnReplayPlay != null) {
-            btnReplayPlay.setOnClickListener(v -> {
-                if (currentReplayEngine != null) currentReplayEngine.resume();
-            });
-        }
-        if (btnReplayPause != null) {
-            btnReplayPause.setOnClickListener(v -> {
-                if (currentReplayEngine != null) currentReplayEngine.pause();
-            });
-        }
-        if (btnReplayNext != null) {
-            btnReplayNext.setOnClickListener(v -> {
-                if (currentReplayEngine != null) currentReplayEngine.skipAhead();
-            });
-        }
-        if (btnReplayLast != null) {
-            btnReplayLast.setOnClickListener(v -> {
-                if (currentReplayEngine != null) currentReplayEngine.undo();
-            });
-        }
-        if (btnReplayShuffle != null) {
-            btnReplayShuffle.setOnClickListener(v -> {
-                if (currentReplayEngine != null) currentReplayEngine.swapField();
-            });
-        }
-        if (btnReplayQuit != null) {
-            btnReplayQuit.setOnClickListener(v -> {
-                if (currentReplayEngine != null) currentReplayEngine.stop();
-                hideReplayControls();
-                restoreMainMenu();
-            });
-        }
-    }
-
     private void initEngine() {
         soundManager = new SoundManager(this);
         soundManager.init(0.8, 0.6, true, true);
 
         imageLoader = new ImageLoader(true);
 
-        cardDetailPanel = new CardDetailPanel(findViewById(android.R.id.content), imageLoader);
-
         engine = new GameEngine(soundManager);
         engine.setListener(this);
         engine.setPlayerName(Constants.PlayerName);
 
-        fieldViewController.init(engine.getField(), imageLoader, this);
-
         TextureLoader.get().init();
+
+        sidePanel.initCardDetail(imageLoader);
+        fieldCtl.init(engine, imageLoader);
     }
 
     private void loadData() {
@@ -632,6 +406,41 @@ public class YGOProActivity extends AppCompatActivity implements
             DataManager.get().load(false);
             Log.i(TAG, "DataManager loaded");
         }, "DataLoad").start();
+    }
+
+    // === 供三个UI管理类回调的桥接方法 ===
+
+    public GameEngine getEngine() {
+        return engine;
+    }
+
+    public int getCurrentSelectType() {
+        return currentSelectType;
+    }
+
+    public ReplayEngine getCurrentReplayEngine() {
+        return currentReplayEngine;
+    }
+
+    public void quitReplay() {
+        if (currentReplayEngine != null) currentReplayEngine.stop();
+        hideReplayControls();
+        restoreMainMenu();
+    }
+
+    public void toggleSoundMute() {
+        if (soundManager != null) {
+            SharedPreferences prefs = getSharedPreferences(getPackageName() + ".settings", Context.MODE_PRIVATE);
+            boolean currentSound = prefs.getBoolean("chkEnableSound", true);
+            boolean currentMusic = prefs.getBoolean("chkEnableMusic", true);
+            boolean newMuted = !currentSound && !currentMusic;
+            soundManager.enableSounds(newMuted);
+            soundManager.enableMusic(newMuted);
+            prefs.edit()
+                    .putBoolean("chkEnableSound", newMuted)
+                    .putBoolean("chkEnableMusic", newMuted)
+                    .apply();
+        }
     }
 
     private boolean handleDirectIntent(Intent intent) {
@@ -848,7 +657,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     // === Main Menu ===
 
-    private void showMainMenu() {
+    public void showMainMenu() {
         layoutMainMenu = findViewById(R.id.layout_main_menu);
         tvVersion = findViewById(R.id.tv_version);
         layoutMainMenu.setVisibility(View.VISIBLE);
@@ -878,25 +687,18 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void hideGameUI() {
-        if (fieldViewController != null) fieldViewController.hide();
-        if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
-        if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.GONE);
-        if (cardDetailPanel != null) cardDetailPanel.hide();
-        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
-        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
-        if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
+        fieldCtl.hide();
+        topInfo.hide();
+        sidePanel.onGameUIHidden();
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
-        hideCancelOrFinishButton();
     }
 
     private void showGameUI() {
         hideMainMenu();
-        if (fieldViewController != null) fieldViewController.show();
-        if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.VISIBLE);
-        if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.VISIBLE);
-        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
-        if (cardDetailPanel != null) cardDetailPanel.showDefault();
-        hideCancelOrFinishButton();
+        fieldCtl.show();
+        topInfo.show();
+        sidePanel.onGameUIShown();
+        if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
     }
 
     private void showLanModeDialog() {
@@ -1044,17 +846,14 @@ public class YGOProActivity extends AppCompatActivity implements
                 runOnUiThread(() -> {
                     switch (state) {
                         case PLAYING:
-                            if (btnPhaseCurrent != null) btnPhaseCurrent.setText("▶");
-                            if (layoutBottomActions != null)
-                                layoutBottomActions.setVisibility(View.GONE);
-                            if (layoutReplayControl != null)
-                                layoutReplayControl.setVisibility(View.VISIBLE);
+                            sidePanel.setPhaseText("▶");
+                            sidePanel.showReplayControls();
                             break;
                         case PAUSED:
-                            if (btnPhaseCurrent != null) btnPhaseCurrent.setText("⏸");
+                            sidePanel.setPhaseText("⏸");
                             break;
                         case FINISHED:
-                            if (btnPhaseCurrent != null) btnPhaseCurrent.setText("⏹");
+                            sidePanel.setPhaseText("⏹");
                             hideReplayControls();
                             break;
                     }
@@ -1063,7 +862,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
             @Override
             public void onReplayFieldChanged() {
-                fieldViewController.invalidate();
+                fieldCtl.invalidate();
             }
 
             @Override
@@ -1072,60 +871,21 @@ public class YGOProActivity extends AppCompatActivity implements
                     GameField.PlayerField pf = engine.getField().players[player];
                     ReplayReader.ReplayData rd = replayEngine.getReplayData();
                     String name = (rd != null && player < rd.playerNames.size()) ? rd.playerNames.get(player) : "Player " + (player + 1);
-                    if (player == 0) {
-                        tvPlayerLp.setText("LP: " + pf.lp);
-                        tvPlayerName.setText(name);
-                    } else {
-                        tvOpponentLp.setText("LP: " + pf.lp);
-                        tvOpponentName.setText(name);
-                    }
+                    topInfo.setPlayerDisplay(player, name, "LP: " + pf.lp);
                 });
             }
 
             @Override
             public void onReplayPhaseChanged(int phase) {
                 runOnUiThread(() -> {
-                    ocgcore.enums.DuelPhase dp = ocgcore.enums.DuelPhase.valueOf(phase);
-                    if (btnPhaseCurrent != null && dp != null) {
-                        switch (dp) {
-                            case Draw:
-                                btnPhaseCurrent.setText("DP");
-                                break;
-                            case Standby:
-                                btnPhaseCurrent.setText("SP");
-                                break;
-                            case Main1:
-                                btnPhaseCurrent.setText("M1");
-                                break;
-                            case BattleStart:
-                            case BattleStep:
-                            case Battle:
-                            case Damage:
-                            case DamageCal:
-                                btnPhaseCurrent.setText("BP");
-                                break;
-                            case Main2:
-                                btnPhaseCurrent.setText("M2");
-                                break;
-                            case End:
-                                btnPhaseCurrent.setText("EP");
-                                break;
-                            default:
-                                btnPhaseCurrent.setText(dp.name());
-                                break;
-                        }
-                    }
-                    tvTurnCounter.setText("Turn " + engine.getField().turnCount);
+                    sidePanel.setPhaseByValue(phase);
+                    topInfo.setTurnText("Turn " + engine.getField().turnCount);
                 });
             }
 
             @Override
             public void onReplayHintMessage(String hint) {
-                runOnUiThread(() -> {
-                    tvHintMessage.setText(hint);
-                    tvHintMessage.setVisibility(View.VISIBLE);
-                    mainHandler.postDelayed(() -> tvHintMessage.setVisibility(View.GONE), 3000);
-                });
+                runOnUiThread(() -> topInfo.showHint(hint, 3000));
             }
 
             @Override
@@ -1136,13 +896,11 @@ public class YGOProActivity extends AppCompatActivity implements
                 });
             }
         });
-
         replayEngine.loadAndPlay(replayPath, startTurn);
     }
 
     private void hideReplayControls() {
-        if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
-        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
+        sidePanel.hideReplayControls();
         currentReplayEngine = null;
     }
 
@@ -1160,25 +918,15 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutDeckEditor != null) {
             layoutDeckEditor.setVisibility(View.VISIBLE);
         }
-        // 卡组编辑时显示左侧功能栏，但隐藏note/speed/emote/chat按钮
-        if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.VISIBLE);
-        if (btnNote != null) btnNote.setVisibility(View.INVISIBLE);
-        if (btnSpeed != null) btnSpeed.setVisibility(View.INVISIBLE);
-        if (btnEmote != null) btnEmote.setVisibility(View.INVISIBLE);
-        if (btnChat != null) btnChat.setVisibility(View.INVISIBLE);
 
         // 隐藏右侧决斗场区，让卡组编辑器占据其空间
         if (layoutGameRight == null) layoutGameRight = findViewById(R.id.layout_game_right);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
-        // 复用游戏内的卡片详情面板与卡组操作按钮
-        if (layoutCardDetail != null) layoutCardDetail.setVisibility(View.VISIBLE);
-        if (cardDetailPanel != null) cardDetailPanel.showDefault();
-        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
-        if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
+
         if (layoutDeckControl == null) layoutDeckControl = findViewById(R.id.layout_deck_control);
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
         if (deckEditorManager == null) {
-            deckEditorManager = new DeckEditorManager(this, imageLoader, cardDetailPanel);
+            deckEditorManager = new DeckEditorManager(this, imageLoader, sidePanel.getCardDetailPanel());
             deckEditorManager.setListener(new DeckEditorManager.DeckEditorListener() {
                 @Override
                 public void onDeckModified() {
@@ -1213,13 +961,7 @@ public class YGOProActivity extends AppCompatActivity implements
             layoutDeckEditor.setVisibility(View.GONE);
         }
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
-        if (cardDetailPanel != null) cardDetailPanel.hide();
-        //隐藏左侧功能栏并恢复被隐藏的按钮，供下次决斗使用
-        if (layoutLeftButtons != null) layoutLeftButtons.setVisibility(View.GONE);
-        if (btnNote != null) btnNote.setVisibility(View.VISIBLE);
-        if (btnSpeed != null) btnSpeed.setVisibility(View.VISIBLE);
-        if (btnEmote != null) btnEmote.setVisibility(View.VISIBLE);
-        if (btnChat != null) btnChat.setVisibility(View.VISIBLE);
+        sidePanel.exitDeckEditorMode();
 
         // 恢复右侧决斗场区
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
@@ -1241,7 +983,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
 
-    private void showSettingsDialog() {
+    public void showSettingsDialog() {
         hideMainMenu();
         SettingsDialog dialog = new SettingsDialog(this, () -> applySettingsToEngine());
         dialog.show(layoutMainMenu);
@@ -1295,9 +1037,7 @@ public class YGOProActivity extends AppCompatActivity implements
                 hideMainMenu();
                 showGameUI();
                 if (lanModeDialog != null) lanModeDialog.dismiss();
-                if (layoutLobby != null) layoutLobby.setVisibility(View.GONE);
-                if (layoutChat != null) layoutChat.setVisibility(View.VISIBLE);
-                if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
+                sidePanel.showBottomActions();
                 isGameStarted = true;
                 break;
             case SIDING:
@@ -1321,8 +1061,8 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onFieldChanged() {
-        fieldViewController.invalidate();
-        runOnUiThread(this::updateCardCountDisplay);
+        fieldCtl.invalidate();
+        runOnUiThread(() -> topInfo.updateCardCountDisplay(engine.getField()));
     }
 
     @Override
@@ -1330,154 +1070,28 @@ public class YGOProActivity extends AppCompatActivity implements
         runOnUiThread(() -> {
             GameEngine.PlayerInfo info = engine.playerInfos[player];
             GameField.PlayerField pf = engine.getField().players[player];
-            if (player == 0) {
-                tvPlayerLp.setText(String.valueOf(pf.lp));
-                tvPlayerName.setText(info.name.isEmpty() ? Constants.PlayerName : info.name);
-            } else {
-                tvOpponentLp.setText(String.valueOf(pf.lp));
-                tvOpponentName.setText(info.name.isEmpty() ? "Opponent" : info.name);
-            }
-            updateCardCountDisplay();
+            String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
+            String name = info.name.isEmpty() ? defaultName : info.name;
+            topInfo.setPlayerDisplay(player, name, String.valueOf(pf.lp));
+            topInfo.updateCardCountDisplay(engine.getField());
         });
-    }
-
-    private void updateCardCountDisplay() {
-        GameField field = engine.getField();
-        int[] handCount = new int[2];
-        int[] cardCount = new int[2];
-        for (int p = 0; p < 2; p++) {
-            int c = 0;
-            for (GameField.ClientCard cc : field.players[p].hand) {
-                if (cc != null) c++;
-            }
-            handCount[p] = c;
-            for (GameField.ClientCard cc : field.players[p].monsterZone) {
-                if (cc != null) c++;
-            }
-            for (GameField.ClientCard cc : field.players[p].spellZone) {
-                if (cc != null) c++;
-            }
-            cardCount[p] = c;
-        }
-        int color0, color1;
-        if (cardCount[0] > cardCount[1]) {
-            color0 = 0xFFFFFF00;
-            color1 = 0xFFFF2A00;
-        } else if (cardCount[1] > cardCount[0]) {
-            color1 = 0xFFFFFF00;
-            color0 = 0xFFFF2A00;
-        } else {
-            color0 = 0xFFFFFFFF;
-            color1 = 0xFFFFFFFF;
-        }
-        if (tvPlayerHandCount != null) {
-            tvPlayerHandCount.setText("手卡:" + handCount[0] + " 总:" + cardCount[0]);
-            tvPlayerHandCount.setTextColor(color0);
-        }
-        if (tvOpponentHandCount != null) {
-            tvOpponentHandCount.setText("手卡:" + handCount[1] + " 总:" + cardCount[1]);
-            tvOpponentHandCount.setTextColor(color1);
-        }
     }
 
     @Override
     public void onPhaseChanged(int phase) {
         runOnUiThread(() -> {
-            tvTurnCounter.setText(String.valueOf(engine.getField().turnCount));
+            topInfo.setTurnText(String.valueOf(engine.getField().turnCount));
             isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
-            updateActionButtonsForPhase(phase);
+            sidePanel.updateActionButtonsForPhase(phase, isMyTurn);
         });
-    }
-
-    private void updateActionButtonsForPhase(int phase) {
-        DuelPhase dp = DuelPhase.valueOf(phase);
-        if (dp == null) return;
-
-        if (layoutPhaseButtons != null) {
-            layoutPhaseButtons.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
-        }
-
-        if (btnPhaseCurrent == null) return;
-
-        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
-        if (btnEp != null) btnEp.setVisibility(View.GONE);
-
-        switch (dp) {
-            case Draw:
-                btnPhaseCurrent.setText("DP");
-                break;
-            case Standby:
-                btnPhaseCurrent.setText("SP");
-                break;
-            case Main1:
-                btnPhaseCurrent.setText("M1");
-                if (isMyTurn) {
-                    if (btnPhaseNext != null) {
-                        btnPhaseNext.setText("BP");
-                        btnPhaseNext.setVisibility(View.VISIBLE);
-                    }
-                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
-                }
-                break;
-            case BattleStart:
-            case BattleStep:
-            case Damage:
-            case DamageCal:
-            case Battle:
-                btnPhaseCurrent.setText("BP");
-                if (isMyTurn) {
-                    if (btnPhaseNext != null) {
-                        btnPhaseNext.setText("M2");
-                        btnPhaseNext.setVisibility(View.VISIBLE);
-                    }
-                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
-                }
-                break;
-            case Main2:
-                btnPhaseCurrent.setText("M2");
-                if (isMyTurn) {
-                    if (btnEp != null) btnEp.setVisibility(View.VISIBLE);
-                }
-                break;
-            case End:
-                btnPhaseCurrent.setText("EP");
-                break;
-            default:
-                btnPhaseCurrent.setText(dp.name());
-                break;
-        }
     }
 
     @Override
     public void onChatReceived(String player, String message) {
-        runOnUiThread(() -> appendChat(player, message));
+        runOnUiThread(() -> topInfo.appendChat(player, message));
     }
 
-    private void appendChat(String player, String message) {
-        String chatLine = "[" + player + "] " + message;
-
-        if (tvChatMessage1 != null && tvChatMessage1.getVisibility() == View.GONE) {
-            tvChatMessage1.setText(chatLine);
-            tvChatMessage1.setVisibility(View.VISIBLE);
-        } else if (tvChatMessage2 != null && tvChatMessage2.getVisibility() == View.GONE) {
-            tvChatMessage2.setText(chatLine);
-            tvChatMessage2.setVisibility(View.VISIBLE);
-        } else {
-            if (tvChatMessage1 != null) {
-                tvChatMessage1.setText(tvChatMessage2 != null ? tvChatMessage2.getText() : "");
-            }
-            if (tvChatMessage2 != null) {
-                tvChatMessage2.setText(chatLine);
-                tvChatMessage2.setVisibility(View.VISIBLE);
-            }
-        }
-
-        if (layoutChatMessages != null) {
-            layoutChatMessages.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void toggleChatInput() {
+    public void toggleChatInput() {
         if (etChatInput == null) return;
         etChatInput.requestFocus();
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -1563,8 +1177,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onDuelResult(int winner, int reason) {
-        mainHandler.removeCallbacks(duelTimeTicker);
-        duelTimePlayer = -1;
+        topInfo.stopTimer();
         runOnUiThread(() -> {
             String result;
             if (winner == 2) {
@@ -1580,11 +1193,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onHintMessage(String hint) {
-        runOnUiThread(() -> {
-            tvHintMessage.setText(hint);
-            tvHintMessage.setVisibility(View.VISIBLE);
-            mainHandler.postDelayed(() -> tvHintMessage.setVisibility(View.GONE), 2000);
-        });
+        runOnUiThread(() -> topInfo.showHint(hint, 2000));
     }
 
     @Override
@@ -1594,85 +1203,12 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onTimeLimitUpdate(int player, int leftTime) {
-        runOnUiThread(() -> {
-            if (duelTimeLimit <= 0) {
-                duelTimeLimit = Math.max(engine.getGameTimeLimit(), leftTime);
-            }
-            duelTimePlayer = player;
-            duelTimeLeft[player] = leftTime;
-            mainHandler.removeCallbacks(duelTimeTicker);
-            mainHandler.postDelayed(duelTimeTicker, 1000);
-            updateTimeDisplay();
-        });
-    }
-
-    private void updateTimeDisplay() {
-        if (duelTimeLimit <= 0) return;
-        if (tvPlayerTime != null) {
-            tvPlayerTime.setVisibility(View.VISIBLE);
-            tvPlayerTime.setText("\u23F1 " + formatDuelTime(duelTimeLeft[0]));
-            tvPlayerTime.setTextColor(getTimeColor(0));
-        }
-        if (tvOpponentTime != null) {
-            tvOpponentTime.setVisibility(View.VISIBLE);
-            tvOpponentTime.setText("\u23F1 " + formatDuelTime(duelTimeLeft[1]));
-            tvOpponentTime.setTextColor(getTimeColor(1));
-        }
-    }
-
-    private String formatDuelTime(int sec) {
-        return (sec / 60) + ":" + String.format("%02d", sec % 60);
-    }
-
-    private int getTimeColor(int player) {
-        if (duelTimeLeft[player] > 0 && duelTimeLimit > 0) {
-            if (duelTimeLeft[player] >= duelTimeLimit / 2) return 0xFF00FF00;
-            if (duelTimeLeft[player] >= duelTimeLimit / 3) return 0xFFFFFF00;
-            if (duelTimeLeft[player] >= duelTimeLimit / 6) return 0xFFFF7F00;
-            return 0xFFFF0000;
-        }
-        return 0xFFFFFFFF;
+        runOnUiThread(() -> topInfo.onTimeLimitUpdate(player, leftTime, engine.getGameTimeLimit()));
     }
 
     @Override
     public void onChainAnimation(int code, int controler, int location, int sequence) {
-        runOnUiThread(() -> {
-            fieldViewController.selectCardWithAutoClear(controler, location, sequence, 1500);
-        });
-    }
-
-    // === GameFieldView.OnCardClickListener ===
-
-    @Override
-    public void onCardClick(int player, int location, int sequence) {
-        Log.d(TAG, "Card click: p=" + player + " loc=" + location + " seq=" + sequence);
-        GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
-        if (card != null && card.cmdFlag != 0) {
-            showCardCommandMenu(card, player, location, sequence);
-            return;
-        }
-        if (card != null && card.code > 0) {
-            showCardInfoPanel(card);
-        } else if (card != null) {
-            showCardInfoPanel(card);
-        }
-    }
-
-    @Override
-    public void onZoneClick(int player, int location, int sequence) {
-        Log.d(TAG, "Zone click: p=" + player + " loc=" + location);
-        if (isPlaceSelecting) {
-            handlePlaceSelection(player, location, sequence);
-        }
-    }
-
-    @Override
-    public void onFieldLongPress(int player, int location, int sequence) {
-        Log.d(TAG, "Long press: p=" + player + " loc=" + location + " seq=" + sequence);
-        GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
-        if (card != null && card.code > 0) {
-            showCardInfoPanel(card);
-        }
+        runOnUiThread(() -> fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500));
     }
 
     // === Dialog Methods ===
@@ -1807,7 +1343,6 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showBattleCmdDialog(ByteBuffer data) {
-        cmdContext = CMD_CONTEXT_BATTLE;
         List<String> options = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
 
@@ -1883,7 +1418,6 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showIdleCmdDialog(ByteBuffer data) {
-        cmdContext = CMD_CONTEXT_IDLE;
         List<String> options = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
 
@@ -2000,252 +1534,8 @@ public class YGOProActivity extends AppCompatActivity implements
         dialog.show();
     }
 
-    private void showCardCommandMenu(GameField.ClientCard card, int player, int location, int sequence) {
-        int flag = card.cmdFlag;
-        List<String> options = new ArrayList<>();
-        List<Runnable> actions = new ArrayList<>();
-        String cardName = getCardDisplayName(card.code);
-
-        if ((flag & GameEngine.COMMAND_ACTIVATE) != 0) {
-            List<GameEngine.CmdCardInfo> matches = new ArrayList<>();
-            for (int i = 0; i < engine.activatableCards.size(); i++) {
-                if (engine.activatableCards.get(i).card == card) {
-                    matches.add(engine.activatableCards.get(i));
-                }
-            }
-            if (matches.size() == 1) {
-                GameEngine.CmdCardInfo info = matches.get(0);
-                String descStr = info.desc > 0
-                        ? DataManager.get().getStringManager().getSystemString(info.desc, "发动")
-                        : "发动";
-                options.add("✦ " + descStr);
-                final int idx = info.index;
-                if (cmdContext == CMD_CONTEXT_BATTLE) {
-                    actions.add(() -> sendResponseInt(idx << 16));
-                } else {
-                    actions.add(() -> sendResponseInt((idx << 16) + 5));
-                }
-            } else if (matches.size() > 1) {
-                for (GameEngine.CmdCardInfo info : matches) {
-                    String descStr = info.desc > 0
-                            ? DataManager.get().getStringManager().getSystemString(info.desc, "效果")
-                            : "效果";
-                    options.add("✦ " + descStr);
-                    final int idx = info.index;
-                    if (cmdContext == CMD_CONTEXT_BATTLE) {
-                        actions.add(() -> sendResponseInt(idx << 16));
-                    } else {
-                        actions.add(() -> sendResponseInt((idx << 16) + 5));
-                    }
-                }
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_ATTACK) != 0) {
-            int idx = -1;
-            for (int i = 0; i < engine.attackableCards.size(); i++) {
-                if (engine.attackableCards.get(i).card == card) {
-                    idx = engine.attackableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("⚔ 攻击");
-                final int attackIdx = idx;
-                actions.add(() -> sendResponseInt((attackIdx << 16) + 1));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_SUMMON) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.summonableCards.size(); i++) {
-                if (engine.summonableCards.get(i).card == card) {
-                    idx = engine.summonableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("召唤");
-                final int summonIdx = idx;
-                actions.add(() -> sendResponseInt(summonIdx << 16));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_SPSUMMON) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.spsummonableCards.size(); i++) {
-                if (engine.spsummonableCards.get(i).card == card) {
-                    idx = engine.spsummonableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("特殊召唤");
-                final int spIdx = idx;
-                actions.add(() -> sendResponseInt((spIdx << 16) + 1));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_REPOS) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.reposableCards.size(); i++) {
-                if (engine.reposableCards.get(i).card == card) {
-                    idx = engine.reposableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                String reposText;
-                if ((card.position & 0xA) != 0) {
-                    reposText = "反转";
-                } else if (card.isAttack()) {
-                    reposText = "改为守备";
-                } else {
-                    reposText = "改为攻击";
-                }
-                options.add(reposText);
-                final int reposIdx = idx;
-                actions.add(() -> sendResponseInt((reposIdx << 16) + 2));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_MSET) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.msetableCards.size(); i++) {
-                if (engine.msetableCards.get(i).card == card) {
-                    idx = engine.msetableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("盖放(怪兽)");
-                final int msetIdx = idx;
-                actions.add(() -> sendResponseInt((msetIdx << 16) + 3));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_SSET) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.ssetableCards.size(); i++) {
-                if (engine.ssetableCards.get(i).card == card) {
-                    idx = engine.ssetableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("设置(魔陷)");
-                final int ssetIdx = idx;
-                actions.add(() -> sendResponseInt((ssetIdx << 16) + 4));
-            }
-        }
-
-        options.add("ℹ 查看卡片信息");
-        actions.add(() -> showCardInfoPanel(card));
-
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle(cardName);
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < options.size(); i++) {
-            Button btn = new Button(this);
-            btn.setText(options.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setTextSize(13);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                actions.get(idx).run();
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
-        dialog.show();
-    }
-
     private void showPlaceSelectDialog(boolean isDisfield) {
-        isPlaceSelecting = true;
-        int mask = engine.selectFieldMask;
-        fieldViewController.highlightField(mask);
-        String msg = isDisfield ? "请选择要禁用的区域" : "请选择放置位置";
-        showHintMessage(msg);
-    }
-
-    private void handlePlaceSelection(int player, int location, int sequence) {
-        int bitPos = getZoneBitPos(player, location, sequence);
-        if (bitPos < 0 || (engine.selectFieldMask & (1 << bitPos)) == 0) {
-            showHintMessage("该区域不可选择");
-            return;
-        }
-        isPlaceSelecting = false;
-        fieldViewController.clearHighlight();
-
-        int respPlayer = player;
-        int respLocation;
-        if (location == 0x04) {
-            respLocation = 0x04;
-        } else if (location == 0x08) {
-            respLocation = 0x08;
-        } else {
-            respLocation = location;
-        }
-        int respSeq = sequence;
-
-        if (respPlayer != engine.getClient().selfType) {
-            respPlayer = engine.getClient().selfType;
-        }
-
-        ByteBuffer buf = ByteBuffer.allocate(3);
-        buf.put((byte) respPlayer);
-        buf.put((byte) respLocation);
-        buf.put((byte) respSeq);
-        engine.sendResponse(buf.array());
-    }
-
-    private void showSideDeckPicker(File[] deckFiles) {
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("选择卡组 (副卡组替换)");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < deckFiles.length; i++) {
-            Button btn = new Button(this);
-            btn.setText(deckFiles[i].getName().replace(Constants.YDK_FILE_EX, ""));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int pos = i;
-            btn.setOnClickListener(v -> {
-                loadAndSendDeckWithSide(deckFiles[pos]);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setLeftButtonText("跳过");
-        dialog.setLeftButtonListener((d, w) -> {
-            d.dismiss();
-            sendSideSkip();
-        });
-        dialog.setCancelable(false);
-        dialog.show();
+        fieldCtl.beginPlaceSelect(isDisfield);
     }
 
     private void loadAndSendDeckWithSide(File ydkFile) {
@@ -2402,17 +1692,6 @@ public class YGOProActivity extends AppCompatActivity implements
         }, "SideSkip").start();
     }
 
-    private int getZoneBitPos(int player, int location, int sequence) {
-        int base = (player == engine.getClient().selfType) ? 0 : 16;
-        if (location == 0x04) return base + sequence;
-        if (location == 0x08) {
-            if (sequence < 6) return base + 8 + sequence;
-            if (sequence == 6) return base + 14;
-            if (sequence == 7) return base + 15;
-        }
-        return -1;
-    }
-
     private void sendCardSelectResponse(List<CardSelectInfo> cardInfos, boolean[] selected, int count) {
         ByteBuffer buf = ByteBuffer.allocate(1 + count);
         buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -2425,7 +1704,7 @@ public class YGOProActivity extends AppCompatActivity implements
         engine.sendResponse(buf.array());
     }
 
-    private String getCardDisplayName(int code) {
+    public String getCardDisplayName(int code) {
         if (code <= 0) return "???";
         ocgcore.data.Card card = DataManager.get().getCardManager().getCard(code);
         if (card != null && card.Name != null) return card.Name;
@@ -3214,11 +2493,8 @@ public class YGOProActivity extends AppCompatActivity implements
         showCardInfoPanel(tempCard);
     }
 
-    private void showCardInfoPanel(GameField.ClientCard card) {
-        if (card == null || card.code <= 0) return;
-        if (cardDetailPanel != null) {
-            cardDetailPanel.showCard(card);
-        }
+    public void showCardInfoPanel(GameField.ClientCard card) {
+        sidePanel.showCardInfo(card);
     }
 
     private void showSortCardDialog(ByteBuffer data) {
@@ -3340,10 +2616,8 @@ public class YGOProActivity extends AppCompatActivity implements
         dialog.show();
     }
 
-    private void showHintMessage(String msg) {
-        tvHintMessage.setText(msg);
-        tvHintMessage.setVisibility(View.VISIBLE);
-        mainHandler.postDelayed(() -> tvHintMessage.setVisibility(View.GONE), 3000);
+    public void showHintMessage(String msg) {
+        topInfo.showHint(msg, 3000);
     }
 
     private interface OnItemPickedListener {
@@ -3381,7 +2655,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     // === Response helpers ===
 
-    private void sendResponseInt(int value) {
+    public void sendResponseInt(int value) {
         ByteBuffer buf = ByteBuffer.allocate(4);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         buf.putInt(value);
@@ -3393,43 +2667,24 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void closeGameButtons() {
-        hideCancelOrFinishButton();
-        if (btnPhaseCurrent != null) btnPhaseCurrent.setText("");
-        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
-        if (btnEp != null) btnEp.setVisibility(View.GONE);
-        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
-        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+        sidePanel.closeGameButtons();
     }
 
     // === CancelOrFinish (mirrors C++ ClientField::CancelOrFinish) ===
 
     private void showCancelOrFinishButton(String text) {
-        if (btnCancelOrFinish != null) {
-            btnCancelOrFinish.setText(text);
-            btnCancelOrFinish.setVisibility(View.VISIBLE);
-        }
+        sidePanel.showCancelOrFinishButton(text);
     }
 
     private void hideCancelOrFinishButton() {
-        if (btnCancelOrFinish != null) {
-            btnCancelOrFinish.setVisibility(View.GONE);
-        }
+        sidePanel.hideCancelOrFinishButton();
     }
 
     private void updateCancelOrFinishButton(boolean ready, boolean cancelable, boolean hasSelection) {
-        if (btnCancelOrFinish == null) return;
-        if (ready) {
-            btnCancelOrFinish.setText("完成选择");
-            btnCancelOrFinish.setVisibility(View.VISIBLE);
-        } else if (cancelable && !hasSelection) {
-            btnCancelOrFinish.setText("取消");
-            btnCancelOrFinish.setVisibility(View.VISIBLE);
-        } else {
-            btnCancelOrFinish.setVisibility(View.GONE);
-        }
+        sidePanel.updateCancelOrFinishButton(ready, cancelable, hasSelection);
     }
 
-    private void cancelOrFinish() {
+    public void cancelOrFinish() {
         switch (currentSelectType) {
             case 13:
             case 12: {
@@ -3463,7 +2718,8 @@ public class YGOProActivity extends AppCompatActivity implements
                 }
                 break;
             }
-            case 16: {
+            case 16:
+            case 25: {
                 sendResponseInt(-1);
                 hideCancelOrFinishButton();
                 if (currentDialog != null) currentDialog.dismiss();
@@ -3471,29 +2727,9 @@ public class YGOProActivity extends AppCompatActivity implements
             }
             case 18:
             case 24: {
-                if (isPlaceSelecting) {
-                    int selfType = engine.getClient().selfType;
-                    ByteBuffer buf = ByteBuffer.allocate(3);
-                    buf.put((byte) selfType);
-                    buf.put((byte) 0);
-                    buf.put((byte) 0);
-                    engine.sendResponse(buf.array());
-                    isPlaceSelecting = false;
-                    fieldViewController.clearHighlight();
+                if (fieldCtl.cancelPlaceSelect()) {
                     hideCancelOrFinishButton();
                 }
-                break;
-            }
-            case 25: {
-                sendResponseInt(-1);
-                hideCancelOrFinishButton();
-                if (currentDialog != null) currentDialog.dismiss();
-                break;
-            }
-            case 10:
-            case 11: {
-                hideCancelOrFinishButton();
-                if (currentDialog != null) currentDialog.dismiss();
                 break;
             }
             default: {

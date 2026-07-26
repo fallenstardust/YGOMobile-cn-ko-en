@@ -445,7 +445,6 @@
                         android:id="@+id/iv_player_avatar"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:layout_marginStart="8dp"
                         android:scaleType="fitCenter"
                         android:src="@drawable/avatar" />
 
