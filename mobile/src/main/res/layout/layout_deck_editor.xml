@@ -235,7 +235,7 @@
                 </LinearLayout>
 
                 <!-- 连接标记 -->
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_marginTop="2dp"
@@ -243,21 +243,17 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-
                     <Button
                         android:id="@+id/btn_filter_marks"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:layout_gravity="end"
                         android:layout_weight="1"
                         android:background="@drawable/button3_bg"
                         android:text="连接标记"
                         android:textColor="@color/white"
                         android:textSize="8sp" />
-                </LinearLayout>
+                </FrameLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -455,33 +451,39 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.7"
+            android:weightSum="1"
             android:orientation="vertical">
 
             <!-- 主卡组统计行 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="0.07"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:background="@drawable/panel_sci_fi_bg"
-                    android:text="主卡组:"
-                    android:textColor="@color/white"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tv_main_count_num"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/panel_sci_fi_bg"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="主卡组:"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+
+                    <TextView
+                        android:id="@+id/tv_main_count_num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="60"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -549,49 +551,57 @@
                     android:layout_height="1dp"
                     android:layout_weight="1" />
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:background="#C08A4B" />
-
-                <TextView
-                    android:id="@+id/tv_main_monster_count"
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:background="@drawable/panel_sci_fi_bg">
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:layout_marginStart="10dp"
-                    android:background="#1E9E8F" />
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:background="#C08A4B" />
 
-                <TextView
-                    android:id="@+id/tv_main_spell_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tv_main_monster_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:layout_marginStart="10dp"
-                    android:background="#B44A7D" />
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="10dp"
+                        android:background="#1E9E8F" />
 
-                <TextView
-                    android:id="@+id/tv_main_trap_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tv_main_spell_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="10dp"
+                        android:background="#B44A7D" />
+
+                    <TextView
+                        android:id="@+id/tv_main_trap_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- 主卡组网格 -->
@@ -599,7 +609,7 @@
                 android:id="@+id/cgv_deck_main"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.7"
+                android:layout_weight="0.52"
                 android:background="@drawable/panel_sci_fi_bg"
                 app:line_limit="10"
                 app:line_max_count="15"
@@ -608,179 +618,207 @@
             <!-- 额外卡组统计行 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="0.07"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:background="@drawable/panel_sci_fi_bg"
-                    android:text="额外卡组:"
-                    android:textColor="@color/white"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tv_extra_count_num"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/panel_sci_fi_bg"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="额外卡组:"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+
+                    <TextView
+                        android:id="@+id/tv_extra_count_num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+                </LinearLayout>
 
                 <View
                     android:layout_width="0dp"
                     android:layout_height="1dp"
                     android:layout_weight="1" />
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:background="#A45CC8" />
-
-                <TextView
-                    android:id="@+id/tv_extra_fusion_count"
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:background="@drawable/panel_sci_fi_bg">
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:layout_marginStart="10dp"
-                    android:background="#E8E8E8" />
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:background="#A45CC8" />
 
-                <TextView
-                    android:id="@+id/tv_extra_synchro_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tv_extra_fusion_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:layout_marginStart="10dp"
-                    android:background="#2A2A2A" />
+                    <View
+                        android:layout_width="12dp"
+                        android:layout_height="10dp"
+                        android:layout_marginStart="10dp"
+                        android:background="#E8E8E8" />
 
-                <TextView
-                    android:id="@+id/tv_extra_xyz_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tv_extra_synchro_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:layout_marginStart="10dp"
-                    android:background="#4A90D9" />
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="10dp"
+                        android:background="#2A2A2A" />
 
-                <TextView
-                    android:id="@+id/tv_extra_link_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tv_extra_xyz_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="10dp"
+                        android:background="#4A90D9" />
+
+                    <TextView
+                        android:id="@+id/tv_extra_link_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- 额外卡组网格 -->
+
+            <!-- 副卡组统计行 -->
+
             <cn.garymb.ygomobile.ui.widget.CardGroupView
                 android:id="@+id/cgv_deck_extra"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.15"
+                android:layout_weight="0.13"
                 android:background="@drawable/panel_sci_fi_bg"
                 app:line_limit="10"
                 app:line_max_count="15"
                 app:lines="1" />
 
-            <!-- 副卡组统计行 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="0.07"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
                     android:background="@drawable/panel_sci_fi_bg"
-                    android:text="副卡组:"
-                    android:textColor="@color/white"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tv_side_count_num"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/panel_sci_fi_bg"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="副卡组:"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+
+                    <TextView
+                        android:id="@+id/tv_side_count_num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+                </LinearLayout>
 
                 <View
                     android:layout_width="0dp"
                     android:layout_height="1dp"
                     android:layout_weight="1" />
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:background="#C08A4B" />
-
-                <TextView
-                    android:id="@+id/tv_side_monster_count"
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:background="@drawable/panel_sci_fi_bg">
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:layout_marginStart="10dp"
-                    android:background="#1E9E8F" />
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:background="#C08A4B" />
 
-                <TextView
-                    android:id="@+id/tv_side_spell_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tv_side_monster_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="10dp"
-                    android:layout_marginStart="10dp"
-                    android:background="#B44A7D" />
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="10dp"
+                        android:background="#1E9E8F" />
 
-                <TextView
-                    android:id="@+id/tv_side_trap_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tv_side_spell_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="12dp"
+                        android:layout_marginStart="10dp"
+                        android:background="#B44A7D" />
+
+                    <TextView
+                        android:id="@+id/tv_side_trap_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="15"
+                        android:textColor="@color/white"
+                        android:textSize="8sp" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- 副卡组网格 -->
@@ -788,7 +826,7 @@
                 android:id="@+id/cgv_deck_side"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.15"
+                android:layout_weight="0.13"
                 android:background="@drawable/panel_sci_fi_bg"
                 app:line_limit="10"
                 app:line_max_count="15"
@@ -817,8 +855,8 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="center|left"
                     android:background="@drawable/panel_sci_fi_bg"
+                    android:gravity="center|left"
                     android:text="搜索结果: 0"
                     android:textColor="@color/white"
                     android:textSize="8sp" />
