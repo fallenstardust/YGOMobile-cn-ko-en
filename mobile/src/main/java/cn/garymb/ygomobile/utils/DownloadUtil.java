@@ -9,7 +9,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import cn.garymb.ygomobile.core.IrrlichtBridge;
@@ -41,6 +45,49 @@ public class DownloadUtil {
         okHttpClient = new OkHttpClient();
     }
 
+    // Only the super-pre package uses the chunked download path.
+    // This keeps the change scoped to the CDN-sensitive expansion download.
+    public static boolean shouldUseChunkedDownload(String url) {
+        if (TextUtils.isEmpty(url)) {
+            return false;
+        }
+        String normalizedUrl = url.toLowerCase(Locale.US);
+        return normalizedUrl.contains("ygopro-super-pre") || normalizedUrl.contains("superpre");
+    }
+
+    // Split a file into a small number of byte ranges so the CDN can serve the
+    // download in parallel parts instead of one slow single stream.
+    public static List<ChunkRange> buildChunkRanges(long contentLength, int chunkCount) {
+        List<ChunkRange> ranges = new ArrayList<>();
+        if (contentLength <= 0) {
+            ranges.add(new ChunkRange(0, -1));
+            return ranges;
+        }
+
+        int effectiveChunkCount = Math.max(1, Math.min(chunkCount, 8));
+        long remaining = contentLength;
+        long chunkSize = (contentLength + effectiveChunkCount - 1) / effectiveChunkCount;
+        long start = 0;
+        for (int i = 0; i < effectiveChunkCount; i++) {
+            long size = Math.min(chunkSize, remaining);
+            if (i == effectiveChunkCount - 1) {
+                size = remaining;
+            }
+            if (size <= 0) {
+                break;
+            }
+            long end = start + size - 1;
+            ranges.add(new ChunkRange(start, end));
+            start = end + 1;
+            remaining -= size;
+        }
+
+        if (ranges.isEmpty()) {
+            ranges.add(new ChunkRange(0, -1));
+        }
+        return ranges;
+    }
+
     // 添加 ETag 存储工具方法
     private String getSavedETag(String url) {
         return SharedPreferenceUtil.getString("etag_" + url, "");
@@ -59,6 +106,12 @@ public class DownloadUtil {
      * @param listener     下载过程的监听器，用于接收下载成功、失败和进度更新等事件
      */
     public void download(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
+        // Route super-pre downloads through the chunked path; keep all other downloads on the original flow.
+        if (shouldUseChunkedDownload(url)) {
+            downloadInChunks(url, destFileDir, destFileName, listener);
+            return;
+        }
+
         // 构建带 ETag 的请求
         Request.Builder builder = new Request.Builder().url(url);
 
@@ -176,6 +229,185 @@ public class DownloadUtil {
         });
     }
 
+
+    // Probe the remote file first to learn its size, then request the file by byte ranges.
+    private void downloadInChunks(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
+        Request.Builder builder = new Request.Builder().head().url(url);
+        Request request = builder.build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                downloadSingleFile(url, destFileDir, destFileName, listener);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    if (!response.isSuccessful()) {
+                        downloadSingleFile(url, destFileDir, destFileName, listener);
+                        return;
+                    }
+
+                    String contentLen = response.header("Content-Length");
+                    long contentLength = (contentLen == null || contentLen.isEmpty()) ? 0 : Long.parseLong(contentLen);
+                    if (contentLength <= 0) {
+                        downloadSingleFile(url, destFileDir, destFileName, listener);
+                        return;
+                    }
+
+                    File dir = new File(destFileDir);
+                    if (!dir.exists()) {
+                        dir.mkdirs();
+                    }
+                    File file = new File(dir, destFileName);
+                    if (file.exists()) {
+                        file.delete();
+                    }
+
+                    // Four ranges is a good balance for CDN throughput and keeping the code simple.
+                    List<ChunkRange> ranges = buildChunkRanges(contentLength, 4);
+                    downloadChunksSequentially(url, file, ranges, 0, contentLength, listener);
+                } finally {
+                    IOUtils.close(response.body());
+                }
+            }
+        });
+    }
+
+    // Write each requested byte range into the destination file at the correct offset.
+    private void downloadChunksSequentially(final String url,
+                                           final File file,
+                                           final List<ChunkRange> ranges,
+                                           final int index,
+                                           final long totalLength,
+                                           final OnDownloadListener listener) {
+        if (index >= ranges.size()) {
+            listener.onDownloadSuccess(file);
+            return;
+        }
+
+        final ChunkRange range = ranges.get(index);
+        Request.Builder builder = new Request.Builder().url(url);
+        if (range.end >= 0) {
+            builder.addHeader("Range", "bytes=" + range.start + "-" + range.end);
+        }
+        Request request = builder.build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                listener.onDownloadFailed(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    listener.onDownloadFailed(new Exception("error:" + response.code()));
+                    return;
+                }
+
+                try {
+                    RandomAccessFile raf = new RandomAccessFile(file, "rw");
+                    raf.seek(range.start);
+                    InputStream is = response.body().byteStream();
+                    byte[] buf = new byte[2048];
+                    int len;
+                    long sum = 0;
+                    while ((len = is.read(buf)) != -1) {
+                        raf.write(buf, 0, len);
+                        sum += len;
+                        if (totalLength > 0) {
+                            int progress = (int) ((index * 100 / Math.max(1, ranges.size())) + (sum * 1.0f / Math.max(1, totalLength) * 100 / Math.max(1, ranges.size())));
+                            listener.onDownloading(progress);
+                        }
+                    }
+                    raf.close();
+                    if (range.end >= 0 && file.length() < totalLength) {
+                        downloadChunksSequentially(url, file, ranges, index + 1, totalLength, listener);
+                    } else {
+                        listener.onDownloadSuccess(file);
+                    }
+                } catch (Exception ex) {
+                    listener.onDownloadFailed(ex);
+                } finally {
+                    IOUtils.close(response.body());
+                }
+            }
+        });
+    }
+
+    // Fallback for servers or responses that do not support range requests.
+    private void downloadSingleFile(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
+        Request.Builder builder = new Request.Builder().url(url);
+        Request request = builder.build();
+        Call call = okHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                listener.onDownloadFailed(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    listener.onDownloadFailed(new Exception("error:" + response.code()));
+                    return;
+                }
+
+                String contentLen = response.header("Content-Length");
+                final long contentLength = (contentLen == null || contentLen.isEmpty()) ? 0 : Long.parseLong(contentLen);
+                InputStream is = null;
+                byte[] buf = new byte[2048];
+                int len = 0;
+                FileOutputStream out = null;
+                File dir = new File(destFileDir);
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+                File file = new File(dir, destFileName);
+                boolean saved = false;
+                try {
+                    is = response.body().byteStream();
+                    long total = response.body().contentLength();
+                    if (contentLength > 0 && total != contentLength) {
+                        listener.onDownloadFailed(new Exception("file length[" + total + "] < " + contentLen));
+                    } else {
+                        out = new FileOutputStream(file, false);
+                        long sum = 0;
+                        while ((len = is.read(buf)) != -1) {
+                            out.write(buf, 0, len);
+                            sum += len;
+                            int progress = (int) (sum * 1.0f / total * 100);
+                            listener.onDownloading(progress);
+                        }
+                        out.flush();
+                        saved = true;
+                    }
+                } catch (Exception ex) {
+                    listener.onDownloadFailed(ex);
+                } finally {
+                    IOUtils.close(out);
+                    IOUtils.close(is);
+                }
+                if (saved) {
+                    if (contentLength > 0 && file.length() < contentLength) {
+                        listener.onDownloadFailed(new Exception("file length[" + file.length() + "] < " + contentLen));
+                    } else {
+                        listener.onDownloadSuccess(file);
+                    }
+                }
+            }
+        });
+    }
+
+    public static class ChunkRange {
+        public final long start;
+        public final long end;
+
+        public ChunkRange(long start, long end) {
+            this.start = start;
+            this.end = end;
+        }
+    }
 
     public interface OnDownloadListener {
 
