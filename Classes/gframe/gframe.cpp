@@ -4,6 +4,7 @@
 #include <event2/thread.h>
 #include <clocale>
 #include <memory>
+#include <signal.h>
 
 void ClickButton(irr::gui::IGUIElement* btn) {
 	irr::SEvent event;
