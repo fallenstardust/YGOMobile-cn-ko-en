@@ -25,6 +25,8 @@ import okhttp3.Response;
 
 public class DownloadUtil {
 
+    private static final long SUPERPRE_CHUNK_SIZE_BYTES = 10L * 1024 * 1024;
+    private static final long SUPERPRE_CHUNK_SIZE_BYTES = 10L * 1024 * 1024;
     private static DownloadUtil downloadUtil;
     private final OkHttpClient okHttpClient;
     public static final int TYPE_DOWNLOAD_EXCEPTION = 1;
@@ -55,31 +57,21 @@ public class DownloadUtil {
         return normalizedUrl.contains("ygopro-super-pre") || normalizedUrl.contains("superpre");
     }
 
-    // Split a file into a small number of byte ranges so the CDN can serve the
-    // download in parallel parts instead of one slow single stream.
-    public static List<ChunkRange> buildChunkRanges(long contentLength, int chunkCount) {
+    // Split a file into fixed 10MB byte ranges after a HEAD probe reveals the
+    // total size, so the CDN can serve the download in smaller parts instead of
+    // one slow single stream.
+    public static List<ChunkRange> buildChunkRanges(long contentLength) {
         List<ChunkRange> ranges = new ArrayList<>();
         if (contentLength <= 0) {
             ranges.add(new ChunkRange(0, -1));
             return ranges;
         }
 
-        int effectiveChunkCount = Math.max(1, Math.min(chunkCount, 8));
-        long remaining = contentLength;
-        long chunkSize = (contentLength + effectiveChunkCount - 1) / effectiveChunkCount;
         long start = 0;
-        for (int i = 0; i < effectiveChunkCount; i++) {
-            long size = Math.min(chunkSize, remaining);
-            if (i == effectiveChunkCount - 1) {
-                size = remaining;
-            }
-            if (size <= 0) {
-                break;
-            }
-            long end = start + size - 1;
+        while (start < contentLength) {
+            long end = Math.min(start + SUPERPRE_CHUNK_SIZE_BYTES - 1, contentLength - 1);
             ranges.add(new ChunkRange(start, end));
             start = end + 1;
-            remaining -= size;
         }
 
         if (ranges.isEmpty()) {
@@ -230,7 +222,8 @@ public class DownloadUtil {
     }
 
 
-    // Probe the remote file first to learn its size, then request the file by byte ranges.
+    // Probe the remote file with HEAD first to learn its size, calculate the
+    // 10MB ranges, and then request the file by byte ranges in sequence.
     private void downloadInChunks(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
         Request.Builder builder = new Request.Builder().head().url(url);
         Request request = builder.build();
@@ -264,9 +257,8 @@ public class DownloadUtil {
                         file.delete();
                     }
 
-                    // Four ranges is a good balance for CDN throughput and keeping the code simple.
-                    List<ChunkRange> ranges = buildChunkRanges(contentLength, 4);
-                    downloadChunksSequentially(url, file, ranges, 0, contentLength, listener);
+                    List<ChunkRange> ranges = buildChunkRanges(contentLength);
+                    downloadChunkSequentially(url, file, ranges, 0, contentLength, 0, listener);
                 } finally {
                     IOUtils.close(response.body());
                 }
@@ -275,12 +267,13 @@ public class DownloadUtil {
     }
 
     // Write each requested byte range into the destination file at the correct offset.
-    private void downloadChunksSequentially(final String url,
-                                           final File file,
-                                           final List<ChunkRange> ranges,
-                                           final int index,
-                                           final long totalLength,
-                                           final OnDownloadListener listener) {
+    private void downloadChunkSequentially(final String url,
+                                          final File file,
+                                          final List<ChunkRange> ranges,
+                                          final int index,
+                                          final long totalLength,
+                                          final long downloadedBytesSoFar,
+                                          final OnDownloadListener listener) {
         if (index >= ranges.size()) {
             listener.onDownloadSuccess(file);
             return;
@@ -307,29 +300,32 @@ public class DownloadUtil {
 
                 try {
                     RandomAccessFile raf = new RandomAccessFile(file, "rw");
-                    raf.seek(range.start);
-                    InputStream is = response.body().byteStream();
-                    byte[] buf = new byte[2048];
-                    int len;
-                    long sum = 0;
-                    while ((len = is.read(buf)) != -1) {
-                        raf.write(buf, 0, len);
-                        sum += len;
+                    try {
+                        raf.seek(range.start);
+                        InputStream is = response.body().byteStream();
+                        byte[] buf = new byte[2048];
+                        int len;
+                        long bytesWritten = 0;
+                        while ((len = is.read(buf)) != -1) {
+                            raf.write(buf, 0, len);
+                            bytesWritten += len;
+                        }
+                        long completedBytes = downloadedBytesSoFar + bytesWritten;
                         if (totalLength > 0) {
-                            int progress = (int) ((index * 100 / Math.max(1, ranges.size())) + (sum * 1.0f / Math.max(1, totalLength) * 100 / Math.max(1, ranges.size())));
+                            int progress = (int) (completedBytes * 100L / totalLength);
                             listener.onDownloading(progress);
                         }
-                    }
-                    raf.close();
-                    if (range.end >= 0 && file.length() < totalLength) {
-                        downloadChunksSequentially(url, file, ranges, index + 1, totalLength, listener);
-                    } else {
-                        listener.onDownloadSuccess(file);
+                        if (index + 1 < ranges.size()) {
+                            downloadChunkSequentially(url, file, ranges, index + 1, totalLength, completedBytes, listener);
+                        } else {
+                            listener.onDownloadSuccess(file);
+                        }
+                    } finally {
+                        raf.close();
+                        IOUtils.close(response.body());
                     }
                 } catch (Exception ex) {
                     listener.onDownloadFailed(ex);
-                } finally {
-                    IOUtils.close(response.body());
                 }
             }
         });

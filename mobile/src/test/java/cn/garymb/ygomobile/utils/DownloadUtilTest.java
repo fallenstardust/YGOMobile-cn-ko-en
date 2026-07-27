@@ -18,16 +18,13 @@ public class DownloadUtilTest {
     }
 
     @Test
-    public void buildChunkRangesSplitsContentIntoMultipleRanges() {
-        List<DownloadUtil.ChunkRange> ranges = DownloadUtil.buildChunkRanges(10L, 4);
-        assertEquals(4, ranges.size());
+    public void buildChunkRangesSplitsContentIntoTenMegabyteRanges() {
+        long size = 11L * 1024 * 1024;
+        List<DownloadUtil.ChunkRange> ranges = DownloadUtil.buildChunkRanges(size);
+        assertEquals(2, ranges.size());
         assertEquals(0L, ranges.get(0).start);
-        assertEquals(2L, ranges.get(0).end);
-        assertEquals(3L, ranges.get(1).start);
-        assertEquals(5L, ranges.get(1).end);
-        assertEquals(6L, ranges.get(2).start);
-        assertEquals(8L, ranges.get(2).end);
-        assertEquals(9L, ranges.get(3).start);
-        assertEquals(9L, ranges.get(3).end);
+        assertEquals(10L * 1024 * 1024 - 1, ranges.get(0).end);
+        assertEquals(10L * 1024 * 1024, ranges.get(1).start);
+        assertEquals(size - 1, ranges.get(1).end);
     }
 }
