@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.game;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
@@ -9,9 +10,12 @@ import android.os.Looper;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.GridLayout;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -40,6 +44,8 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.dialogs.DeckSelectorDialog;
+import cn.garymb.ygomobile.ui.dialogs.EffectCategoryPopupWindow;
+import cn.garymb.ygomobile.ui.dialogs.LinkMarkerPopupWindow;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
 import cn.garymb.ygomobile.ui.widget.CardView;
 import ocgcore.DataManager;
@@ -121,11 +127,8 @@ public class DeckEditorManager {
     private ImageTop mImageTop;
     private LimitList mLimitList;
 
-    private PopupWindow linkMarkerPopup;
-    private Button[] linkMarkerButtons;
-    private String[] linkMarkerBtnVals;
-    private int[] linkMarkerEnImgs;
-    private int[] linkMarkerDisImgs;
+    private LinkMarkerPopupWindow linkMarkerPopup;
+    private EffectCategoryPopupWindow effectCategoryPopup;
 
     private String currentDeckCategoryName = "";
     private String currentDeckName = "";
@@ -735,7 +738,9 @@ public class DeckEditorManager {
         if (btnFilterEffect != null) btnFilterEffect.setText("效果分类");
         if (linkMarkerPopup != null && linkMarkerPopup.isShowing()) {
             linkMarkerPopup.dismiss();
-            linkMarkerPopup = null;
+        }
+        if (effectCategoryPopup != null && effectCategoryPopup.isShowing()) {
+            effectCategoryPopup.dismiss();
         }
         startFilter();
     }
@@ -1097,83 +1102,15 @@ public class DeckEditorManager {
         if (linkMarkerPopup != null && linkMarkerPopup.isShowing()) {
             linkMarkerPopup.dismiss();
         }
-
-        View popupView = LayoutInflater.from(activity).inflate(R.layout.item_searcher_linkmarker, null);
-        linkMarkerPopup = new PopupWindow(popupView,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, true);
-        linkMarkerPopup.setBackgroundDrawable(activity.getDrawable(R.drawable.button_bg));
-        linkMarkerPopup.setOutsideTouchable(true);
-
-        linkMarkerBtnVals = new String[]{"0", "0", "0", "0", "0", "0", "0", "0", "0"};
-        linkMarkerButtons = new Button[]{
-                popupView.findViewById(R.id.button_1),
-                popupView.findViewById(R.id.button_2),
-                popupView.findViewById(R.id.button_3),
-                popupView.findViewById(R.id.button_4),
-                popupView.findViewById(R.id.button_5),
-                popupView.findViewById(R.id.button_6),
-                popupView.findViewById(R.id.button_7),
-                popupView.findViewById(R.id.button_8),
-                popupView.findViewById(R.id.button_9)
-        };
-        linkMarkerEnImgs = new int[]{
-                R.drawable.left_bottom_1,
-                R.drawable.bottom_1,
-                R.drawable.right_bottom_1,
-                R.drawable.left_1,
-                0,
-                R.drawable.right_1,
-                R.drawable.left_top_1,
-                R.drawable.top_1,
-                R.drawable.right_top_1,
-        };
-        linkMarkerDisImgs = new int[]{
-                R.drawable.left_bottom_0,
-                R.drawable.bottom_0,
-                R.drawable.right_bottom_0,
-                R.drawable.left_0,
-                0,
-                R.drawable.right_0,
-                R.drawable.left_top_0,
-                R.drawable.top_0,
-                R.drawable.right_top_0,
-        };
-
-        linkMarkerButtons[4].setVisibility(View.VISIBLE);
-        linkMarkerButtons[4].setText("确定");
-        linkMarkerButtons[4].setTextSize(8f);
-        linkMarkerButtons[4].setTextColor(Color.WHITE);
-        linkMarkerButtons[4].setBackground(activity.getDrawable(R.drawable.button3_bg));
-        linkMarkerButtons[4].setOnClickListener(v -> {
-            if (linkMarkerPopup != null && linkMarkerPopup.isShowing()) {
-                linkMarkerPopup.dismiss();
-            }
-        });
-
-        for (int i = 0; i < linkMarkerButtons.length; i++) {
-            if (i == 4) continue;
-            final int index = i;
-            Button button = linkMarkerButtons[index];
-            if (button == null) continue;
-            button.setOnClickListener(btn -> {
-                if ("0".equals(linkMarkerBtnVals[index])) {
-                    btn.setBackgroundResource(linkMarkerEnImgs[index]);
-                    linkMarkerBtnVals[index] = "1";
-                } else {
-                    btn.setBackgroundResource(linkMarkerDisImgs[index]);
-                    linkMarkerBtnVals[index] = "0";
-                }
-                String mLinkStr = linkMarkerBtnVals[8] + linkMarkerBtnVals[7] + linkMarkerBtnVals[6]
-                        + linkMarkerBtnVals[5] + "0"
-                        + linkMarkerBtnVals[3] + linkMarkerBtnVals[2] + linkMarkerBtnVals[1]
-                        + linkMarkerBtnVals[0];
-                filterMarks = Integer.parseInt(mLinkStr, 2);
-                updateFilterMarksDisplay();
-            });
+        if (effectCategoryPopup != null && effectCategoryPopup.isShowing()) {
+            effectCategoryPopup.dismiss();
         }
 
-        linkMarkerPopup.showAsDropDown(btnFilterMarks);
+        linkMarkerPopup = new LinkMarkerPopupWindow(activity, filterMarks, newFilterMarks -> {
+            filterMarks = newFilterMarks;
+            updateFilterMarksDisplay();
+        });
+        linkMarkerPopup.show(btnFilterMarks);
     }
 
     private void updateFilterMarksDisplay() {
@@ -1197,82 +1134,16 @@ public class DeckEditorManager {
         if (linkMarkerPopup != null && linkMarkerPopup.isShowing()) {
             linkMarkerPopup.dismiss();
         }
-
-        CardCategory[] categories = CardCategory.values();
-        int cols = 4;
-        int rows = (int) Math.ceil((double) categories.length / cols);
-
-        android.widget.GridLayout gridLayout = new android.widget.GridLayout(activity);
-        gridLayout.setColumnCount(cols);
-        gridLayout.setPadding(16, 16, 16, 16);
-        gridLayout.setBackgroundColor(Color.DKGRAY);
-
-        final long[] selectedEffect = {filterEffect};
-        final Button[] cateButtons = new Button[categories.length];
-
-        for (int i = 0; i < categories.length; i++) {
-            final int idx = i;
-            Button btn = new Button(activity);
-            btn.setText(categories[i].getLanguageIndex() > 0
-                    ? DataManager.get().getStringManager().getSystemString(categories[i].getLanguageIndex(), categories[i].name())
-                    : categories[i].name());
-            btn.setTextSize(8f);
-            btn.setTextColor(Color.WHITE);
-            boolean isSelected = (selectedEffect[0] & categories[i].value()) != 0;
-            btn.setAlpha(isSelected ?1f : 0.5f);
-            android.widget.GridLayout.LayoutParams params = new android.widget.GridLayout.LayoutParams();
-            params.width = 0;
-            params.height = android.widget.GridLayout.LayoutParams.WRAP_CONTENT;
-            params.setMargins(4, 4, 4, 4);
-            params.columnSpec = android.widget.GridLayout.spec(idx % cols, 1f);
-            params.rowSpec = android.widget.GridLayout.spec(idx / cols);
-            btn.setLayoutParams(params);
-
-            btn.setOnClickListener(v -> {
-                long bitVal = categories[idx].value();
-                if ((selectedEffect[0] & bitVal) != 0) {
-                    selectedEffect[0] &= ~bitVal;
-                    v.setAlpha(0.5f);
-                } else {
-                    selectedEffect[0] |= bitVal;
-                    v.setAlpha(1f);
-                }
-                filterEffect = selectedEffect[0];
-                if (btnFilterEffect != null) {
-                    btnFilterEffect.setText(filterEffect != 0 ? "效果:*" : "效果分类");
-                }
-            });
-            cateButtons[i] = btn;
-            gridLayout.addView(btn);
+        if (effectCategoryPopup != null && effectCategoryPopup.isShowing()) {
+            effectCategoryPopup.dismiss();
         }
 
-        Button btnOk = new Button(activity);
-        btnOk.setText("确定");
-        btnOk.setTextSize(8f);
-        btnOk.setTextColor(Color.WHITE);
-        android.widget.GridLayout.LayoutParams okParams = new android.widget.GridLayout.LayoutParams();
-        okParams.width = 0;
-        okParams.height = android.widget.GridLayout.LayoutParams.WRAP_CONTENT;
-        okParams.columnSpec = android.widget.GridLayout.spec(0, cols);
-        okParams.rowSpec = android.widget.GridLayout.spec(rows);
-        okParams.setMargins(4, 8, 4, 4);
-        btnOk.setLayoutParams(okParams);
-
-        PopupWindow effectPopup = new PopupWindow(gridLayout,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, true);
-        effectPopup.setBackgroundDrawable(new ColorDrawable(Color.DKGRAY));
-        effectPopup.setOutsideTouchable(true);
-
-        btnOk.setOnClickListener(v -> {
-            effectPopup.dismiss();
-            if (linkMarkerPopup == effectPopup) {
-                linkMarkerPopup = null;
+        effectCategoryPopup = new EffectCategoryPopupWindow(activity, filterEffect, newFilterEffect -> {
+            filterEffect = newFilterEffect;
+            if (btnFilterEffect != null) {
+                btnFilterEffect.setText(filterEffect != 0 ? "效果:*" : "效果分类");
             }
         });
-        gridLayout.addView(btnOk);
-
-        linkMarkerPopup = effectPopup;
-        linkMarkerPopup.showAsDropDown(btnFilterEffect);
+        effectCategoryPopup.show(btnFilterEffect);
     }
 }

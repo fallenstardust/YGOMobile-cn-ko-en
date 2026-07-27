@@ -323,7 +323,7 @@
                                     <TextView
                                         android:layout_width="30dp"
                                         android:layout_height="wrap_content"
-                                        android:text="攻击:"
+                                        android:text="ATK:"
                                         android:textColor="@color/white"
                                         android:textSize="8sp" />
 
@@ -344,7 +344,7 @@
                                         android:layout_width="30dp"
                                         android:layout_height="wrap_content"
                                         android:layout_marginStart="1dp"
-                                        android:text="守备:"
+                                        android:text="DEF:"
                                         android:textColor="@color/white"
                                         android:textSize="8sp" />
 
