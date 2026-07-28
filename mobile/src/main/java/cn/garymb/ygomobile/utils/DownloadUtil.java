@@ -49,7 +49,7 @@ public class DownloadUtil {
 
     // Only the super-pre package uses the chunked download path.
     // This keeps the change scoped to the CDN-sensitive expansion download.
-    public static boolean shouldUseChunkedDownload(String url) {
+    public static boolean shouldUseChunkedDownloadForSuperpre(String url) {
         if (TextUtils.isEmpty(url)) {
             return false;
         }
@@ -99,7 +99,8 @@ public class DownloadUtil {
      */
     public void download(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
         // Route super-pre downloads through the chunked path; keep all other downloads on the original flow.
-        if (shouldUseChunkedDownload(url)) {
+        // This is the single entry point where the boolean is evaluated.
+        if (shouldUseChunkedDownloadForSuperpre(url)) {
             downloadInChunks(url, destFileDir, destFileName, listener);
             return;
         }

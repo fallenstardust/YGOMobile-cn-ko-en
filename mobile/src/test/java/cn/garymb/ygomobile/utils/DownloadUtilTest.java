@@ -12,9 +12,9 @@ public class DownloadUtilTest {
 
     @Test
     public void shouldUseChunkedDownloadForSuperpreUrls() {
-        assertTrue(DownloadUtil.shouldUseChunkedDownload("https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk"));
-        assertTrue(DownloadUtil.shouldUseChunkedDownload("https://example.com/superpre/file"));
-        assertFalse(DownloadUtil.shouldUseChunkedDownload("https://example.com/normal/file"));
+        assertTrue(DownloadUtil.shouldUseChunkedDownloadForSuperpre("https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk"));
+        assertTrue(DownloadUtil.shouldUseChunkedDownloadForSuperpre("https://example.com/superpre/file"));
+        assertFalse(DownloadUtil.shouldUseChunkedDownloadForSuperpre("https://example.com/normal/file"));
     }
 
     @Test
