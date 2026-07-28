@@ -72,7 +72,6 @@
                     android:layout_marginEnd="5dp"
                     android:layout_weight="0.75"
                     android:background="@color/ygopro_list_background"
-                    android:hint="输入卡组名称"
                     android:inputType="text"
                     android:paddingStart="4dp"
                     android:textColor="@color/white"
@@ -451,20 +450,20 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.7"
-            android:weightSum="1"
             android:orientation="vertical">
 
             <!-- 主卡组统计行 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0.07"
+                android:layout_height="15dp"
+                android:layout_marginVertical="1dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:paddingHorizontal="8dp"
                     android:background="@drawable/panel_sci_fi_bg"
                     android:gravity="center"
                     android:orientation="horizontal">
@@ -555,8 +554,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
+                    android:paddingHorizontal="8dp"
                     android:gravity="center"
-                    android:background="@drawable/panel_sci_fi_bg">
+                    android:background="@drawable/button_radius_black_transparents">
 
                     <View
                         android:layout_width="10dp"
@@ -609,7 +609,7 @@
                 android:id="@+id/cgv_deck_main"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.52"
+                android:layout_weight="4"
                 android:background="@drawable/panel_sci_fi_bg"
                 app:line_limit="10"
                 app:line_max_count="15"
@@ -618,8 +618,8 @@
             <!-- 额外卡组统计行 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0.07"
+                android:layout_height="15dp"
+                android:layout_marginVertical="1dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -627,6 +627,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center"
+                    android:paddingHorizontal="8dp"
                     android:background="@drawable/panel_sci_fi_bg"
                     android:orientation="horizontal">
 
@@ -655,8 +656,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
+                    android:paddingHorizontal="8dp"
                     android:gravity="center"
-                    android:background="@drawable/panel_sci_fi_bg">
+                    android:background="@drawable/button_radius_black_transparents">
 
                     <View
                         android:layout_width="10dp"
@@ -720,23 +722,21 @@
             </LinearLayout>
 
             <!-- 额外卡组网格 -->
-
-            <!-- 副卡组统计行 -->
-
             <cn.garymb.ygomobile.ui.widget.CardGroupView
                 android:id="@+id/cgv_deck_extra"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.13"
+                android:layout_weight="1"
                 android:background="@drawable/panel_sci_fi_bg"
                 app:line_limit="10"
                 app:line_max_count="15"
                 app:lines="1" />
 
+            <!-- 副卡组统计行 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0.07"
+                android:layout_height="15dp"
+                android:layout_marginVertical="1dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -744,6 +744,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center"
+                    android:paddingHorizontal="8dp"
                     android:background="@drawable/panel_sci_fi_bg"
                     android:orientation="horizontal">
 
@@ -773,6 +774,7 @@
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
                     android:gravity="center"
+                    android:paddingHorizontal="8dp"
                     android:background="@drawable/panel_sci_fi_bg">
 
                     <View
@@ -826,7 +828,7 @@
                 android:id="@+id/cgv_deck_side"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.13"
+                android:layout_weight="1"
                 android:background="@drawable/panel_sci_fi_bg"
                 app:line_limit="10"
                 app:line_max_count="15"
@@ -845,8 +847,7 @@
             <!-- 搜索结果标题 + 排序 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0.07"
+                android:layout_height="15dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -874,9 +875,8 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_deck_search_results"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="match_parent"
                 android:layout_marginTop="2dp"
-                android:layout_weight="0.93"
                 android:background="@drawable/panel_sci_fi_bg" />
         </LinearLayout>
     </LinearLayout>

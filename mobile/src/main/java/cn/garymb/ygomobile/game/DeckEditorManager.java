@@ -2,21 +2,16 @@ package cn.garymb.ygomobile.game;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.SparseArray;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.GridLayout;
-import android.widget.PopupWindow;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,7 +48,6 @@ import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.CardAttribute;
-import ocgcore.enums.CardCategory;
 import ocgcore.enums.CardRace;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
@@ -263,32 +257,63 @@ public class DeckEditorManager {
         cgvMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                int width = cgvMain.getWidth();
-                int height = cgvMain.getHeight();
-                if (width <= 0 || height <= 0) return;
+                int mainWidth = cgvMain.getWidth();
+                int mainHeight = cgvMain.getHeight();
+                if (mainWidth <= 0 || mainHeight <= 0) return;
                 cgvMain.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                applyDeckCardSize(width, height);
+
+                int extraHeight = cgvExtra != null ? cgvExtra.getHeight() : 0;
+                int sideHeight = cgvSide != null ? cgvSide.getHeight() : 0;
+
+                applyDeckCardSize(mainWidth, mainHeight, extraHeight, sideHeight);
             }
         });
     }
 
-    private void applyDeckCardSize(int mainWidth, int mainHeight) {
+    private void applyDeckCardSize(int mainWidth, int mainHeight, int extraHeight, int sideHeight) {
         int availWidth = mainWidth - cgvMain.getPaddingLeft() - cgvMain.getPaddingRight();
-        int availHeight = mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom();
-        if (availWidth <= 0 || availHeight <= 0) return;
+        if (availWidth <= 0) return;
 
         float ratio = (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[1] / (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
+
+        int mainAvail = Math.max(0, mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom());
+        int extraAvail = extraHeight > 0 && cgvExtra != null
+                ? Math.max(0, extraHeight - cgvExtra.getPaddingTop() - cgvExtra.getPaddingBottom()) : 0;
+        int sideAvail = sideHeight > 0 && cgvSide != null
+                ? Math.max(0, sideHeight - cgvSide.getPaddingTop() - cgvSide.getPaddingBottom()) : 0;
+
+        // 三个网格共需 4+1+1=6 行，按总可用高度统一求卡片尺寸
+        int totalAvail = mainAvail + extraAvail + sideAvail;
+        int totalLines = 6;
+
         int widthByColumn = availWidth / Constants.DECK_WIDTH_COUNT;
-        int widthByRow = (int) ((availHeight / 4f) / ratio);
-        int cardWidth = Math.max(1, Math.min(widthByColumn, widthByRow));
-        int cardHeight = Math.round(cardWidth * ratio);
+        int widthByHeight = totalAvail > 0 ? (int) ((totalAvail / (float) totalLines) / ratio) : Integer.MAX_VALUE;
+
+        int cardWidth = Math.max(1, Math.min(widthByColumn, widthByHeight));
+        int cardHeight = Math.max(1, (int) (cardWidth * ratio));
 
         cgvMain.setCardSize(cardWidth, cardHeight);
         cgvExtra.setCardSize(cardWidth, cardHeight);
         cgvSide.setCardSize(cardWidth, cardHeight);
         if (searchAdapter != null) searchAdapter.setCardSize(cardWidth, cardHeight);
 
+        // 将网格高度收缩为正好容纳内容，保证卡片完整显示且铺满网格
+        applyGroupExactHeight(cgvMain, cardHeight * 4);
+        applyGroupExactHeight(cgvExtra, cardHeight);
+        applyGroupExactHeight(cgvSide, cardHeight);
+
         notifyDeckChanged();
+    }
+
+    private void applyGroupExactHeight(CardGroupView view, int contentHeight) {
+        if (view == null) return;
+        ViewGroup.LayoutParams lp = view.getLayoutParams();
+        if (lp == null) return;
+        lp.height = contentHeight + view.getPaddingTop() + view.getPaddingBottom();
+        if (lp instanceof LinearLayout.LayoutParams) {
+            ((LinearLayout.LayoutParams) lp).weight = 0;
+        }
+        view.setLayoutParams(lp);
     }
 
     public void refreshLimitList() {
@@ -390,7 +415,8 @@ public class DeckEditorManager {
         if (btnDelete != null) btnDelete.setOnClickListener(v -> deleteDeck());
         if (btnSave != null) btnSave.setOnClickListener(v -> saveDeck());
         if (btnSaveAs != null) btnSaveAs.setOnClickListener(v -> saveDeckAs());
-        if (btnFilterEffect != null) btnFilterEffect.setOnClickListener(v -> showEffectCategoryPopup());
+        if (btnFilterEffect != null)
+            btnFilterEffect.setOnClickListener(v -> showEffectCategoryPopup());
         if (btnFilterMarks != null) btnFilterMarks.setOnClickListener(v -> showLinkMarkerPopup());
         if (btnFilterSearch != null) btnFilterSearch.setOnClickListener(v -> startFilter());
         if (btnFilterClear != null) btnFilterClear.setOnClickListener(v -> clearSearch());
@@ -655,13 +681,17 @@ public class DeckEditorManager {
         filterRace = (int) getSpinnerItemId(spinnerFilterRace);
 
         int[] atk = parseFilterType(etAttack != null ? etAttack.getText().toString() : "");
-        filterAtkType = atk[0]; filterAtk = atk[1];
+        filterAtkType = atk[0];
+        filterAtk = atk[1];
         int[] def = parseFilterType(etDefense != null ? etDefense.getText().toString() : "");
-        filterDefType = def[0]; filterDef = def[1];
+        filterDefType = def[0];
+        filterDef = def[1];
         int[] lv = parseFilterType(etStar != null ? etStar.getText().toString() : "");
-        filterLvType = lv[0]; filterLv = lv[1];
+        filterLvType = lv[0];
+        filterLv = lv[1];
         int[] scl = parseFilterType(etScale != null ? etScale.getText().toString() : "");
-        filterSclType = scl[0]; filterScl = scl[1];
+        filterSclType = scl[0];
+        filterScl = scl[1];
 
         filterCards();
     }
@@ -681,17 +711,20 @@ public class DeckEditorManager {
             if (!matchesKeywordFilter(card, keyword)) continue;
             if (!matchesLimitFilter(card)) continue;
             if (filterEffect != 0 && (card.Category & filterEffect) == 0) continue;
-            if (filterMarks != 0 && !((card.Defense & filterMarks) == filterMarks && Card.isType(card.Type, CardType.Link))) continue;
+            if (filterMarks != 0 && !((card.Defense & filterMarks) == filterMarks && Card.isType(card.Type, CardType.Link)))
+                continue;
 
             if (filterType == 1) {
                 if (filterAttrib != 0 && card.Attribute != filterAttrib) continue;
                 if (filterRace != 0 && card.Race != filterRace) continue;
-                if (filterAtkType != 0 && !matchesNumericFilter(card.Attack, filterAtkType, filterAtk)) continue;
+                if (filterAtkType != 0 && !matchesNumericFilter(card.Attack, filterAtkType, filterAtk))
+                    continue;
                 if (filterDefType != 0) {
                     if (Card.isType(card.Type, CardType.Link)) continue;
                     if (!matchesNumericFilter(card.Defense, filterDefType, filterDef)) continue;
                 }
-                if (filterLvType != 0 && !matchesNumericFilter(card.getStar(), filterLvType, filterLv)) continue;
+                if (filterLvType != 0 && !matchesNumericFilter(card.getStar(), filterLvType, filterLv))
+                    continue;
                 if (filterSclType != 0) {
                     if (!Card.isType(card.Type, CardType.Pendulum)) continue;
                     if (!matchesNumericFilter(card.LeftScale, filterSclType, filterScl)) continue;
@@ -730,10 +763,14 @@ public class DeckEditorManager {
         filterAttrib = 0;
         filterRace = 0;
         filterLm = 0;
-        filterAtkType = 0; filterAtk = 0;
-        filterDefType = 0; filterDef = 0;
-        filterLvType = 0; filterLv = 0;
-        filterSclType = 0; filterScl = 0;
+        filterAtkType = 0;
+        filterAtk = 0;
+        filterDefType = 0;
+        filterDef = 0;
+        filterLvType = 0;
+        filterLv = 0;
+        filterSclType = 0;
+        filterScl = 0;
         updateFilterMarksDisplay();
         if (btnFilterEffect != null) btnFilterEffect.setText("效果分类");
         if (linkMarkerPopup != null && linkMarkerPopup.isShowing()) {
@@ -855,7 +892,8 @@ public class DeckEditorManager {
         int mainLimit = Constants.DECK_MAIN_MAX;
         boolean isGenesys = mLimitList != null && mLimitList.getCreditLimits() != null;
 
-        if (tvMainCountNum != null) tvMainCountNum.setText(String.valueOf(mainCount));        if (tvExtraCountNum != null) tvExtraCountNum.setText(String.valueOf(extraCount));
+        if (tvMainCountNum != null) tvMainCountNum.setText(String.valueOf(mainCount));
+        if (tvExtraCountNum != null) tvExtraCountNum.setText(String.valueOf(extraCount));
         if (tvSideCountNum != null) tvSideCountNum.setText(String.valueOf(sideCount));
 
         if (tvLimitTotalNum != null) {
@@ -866,7 +904,8 @@ public class DeckEditorManager {
             }
         }
         if (tvCreditNum != null) tvCreditNum.setText(String.valueOf(totalCount));
-        if (tvRemainNum != null) tvRemainNum.setText(String.valueOf(Math.max(0, mainLimit - mainCount)));
+        if (tvRemainNum != null)
+            tvRemainNum.setText(String.valueOf(Math.max(0, mainLimit - mainCount)));
 
         if (tvDeckGenesys != null) {
             tvDeckGenesys.setVisibility(isGenesys ? View.VISIBLE : View.GONE);
@@ -934,17 +973,41 @@ public class DeckEditorManager {
         if (text == null || text.trim().isEmpty()) return new int[]{0, 0};
         text = text.trim();
         if (text.startsWith("=")) {
-            try { return new int[]{1, Integer.parseInt(text.substring(1))}; } catch (NumberFormatException e) { return new int[]{0, 0}; }
+            try {
+                return new int[]{1, Integer.parseInt(text.substring(1))};
+            } catch (NumberFormatException e) {
+                return new int[]{0, 0};
+            }
         } else if (text.startsWith(">=")) {
-            try { return new int[]{3, Integer.parseInt(text.substring(2))}; } catch (NumberFormatException e) { return new int[]{0, 0}; }
+            try {
+                return new int[]{3, Integer.parseInt(text.substring(2))};
+            } catch (NumberFormatException e) {
+                return new int[]{0, 0};
+            }
         } else if (text.startsWith(">")) {
-            try { return new int[]{2, Integer.parseInt(text.substring(1))}; } catch (NumberFormatException e) { return new int[]{0, 0}; }
+            try {
+                return new int[]{2, Integer.parseInt(text.substring(1))};
+            } catch (NumberFormatException e) {
+                return new int[]{0, 0};
+            }
         } else if (text.startsWith("<=")) {
-            try { return new int[]{5, Integer.parseInt(text.substring(2))}; } catch (NumberFormatException e) { return new int[]{0, 0}; }
+            try {
+                return new int[]{5, Integer.parseInt(text.substring(2))};
+            } catch (NumberFormatException e) {
+                return new int[]{0, 0};
+            }
         } else if (text.startsWith("<")) {
-            try { return new int[]{4, Integer.parseInt(text.substring(1))}; } catch (NumberFormatException e) { return new int[]{0, 0}; }
+            try {
+                return new int[]{4, Integer.parseInt(text.substring(1))};
+            } catch (NumberFormatException e) {
+                return new int[]{0, 0};
+            }
         } else {
-            try { return new int[]{1, Integer.parseInt(text)}; } catch (NumberFormatException e) { return new int[]{0, 0}; }
+            try {
+                return new int[]{1, Integer.parseInt(text)};
+            } catch (NumberFormatException e) {
+                return new int[]{0, 0};
+            }
         }
     }
 
@@ -959,13 +1022,20 @@ public class DeckEditorManager {
 
     private boolean matchesNumericFilter(int value, int filterType, int filterValue) {
         switch (filterType) {
-            case 1: return value == filterValue;
-            case 2: return value > filterValue;
-            case 3: return value >= filterValue;
-            case 4: return value < filterValue;
-            case 5: return value <= filterValue;
-            case 6: return value < 0;
-            default: return true;
+            case 1:
+                return value == filterValue;
+            case 2:
+                return value > filterValue;
+            case 3:
+                return value >= filterValue;
+            case 4:
+                return value < filterValue;
+            case 5:
+                return value <= filterValue;
+            case 6:
+                return value < 0;
+            default:
+                return true;
         }
     }
 
@@ -993,14 +1063,22 @@ public class DeckEditorManager {
 
         int ot = card.Ot;
         switch (filterLm) {
-            case 6:  return (ot & 0x1) != 0;
-            case 7:  return (ot & 0x2) != 0;
-            case 8:  return (ot & 0x8) != 0;
-            case 9:  return (ot & 0x4) != 0;
-            case 10: return (ot & 0x1) != 0 && (ot & 0x2) == 0;
-            case 11: return (ot & 0x2) != 0 && (ot & 0x1) == 0;
-            case 12: return (ot & 0x1) != 0 && (ot & 0x2) != 0;
-            default: return true;
+            case 6:
+                return (ot & 0x1) != 0;
+            case 7:
+                return (ot & 0x2) != 0;
+            case 8:
+                return (ot & 0x8) != 0;
+            case 9:
+                return (ot & 0x4) != 0;
+            case 10:
+                return (ot & 0x1) != 0 && (ot & 0x2) == 0;
+            case 11:
+                return (ot & 0x2) != 0 && (ot & 0x1) == 0;
+            case 12:
+                return (ot & 0x1) != 0 && (ot & 0x2) != 0;
+            default:
+                return true;
         }
     }
 
