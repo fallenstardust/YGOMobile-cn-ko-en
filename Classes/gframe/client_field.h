@@ -112,6 +112,7 @@ public:
 	void ClearCommandFlag();
 	void ClearSelect();
 	void ClearChainSelect();
+	void SetCardListLabel(irr::gui::IGUIStaticText* label, ClientCard* pcard, bool selecting_card);
 	void ShowSelectCard(bool buttonok = false, bool is_continuous = false); // caller must hold gMutex
 	void ShowChainCard(); // caller must hold gMutex
 	void ShowLocationCard(); // caller must hold gMutex
@@ -185,5 +186,11 @@ private:
 
 //special cards
 #define CARD_QUESTION		38723936
+
+// TODO: move these (or all) colors to skin config
+#define CARD_LIST_OVERRIDE_TEXT_COLOR		0xff000099 // Blue
+#define CARD_LIST_DEFAULT_BACKGROUND_COLOR	0xff56649f // White
+#define CARD_LIST_OPPONENT_BACKGROUND_COLOR	0xff5a5a5a // Gray
+#define CARD_LIST_SELECTED_BACKGROUND_COLOR	0x6011113d // Yellow
 
 #endif //CLIENT_FIELD_H

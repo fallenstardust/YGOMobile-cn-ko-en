@@ -3,6 +3,7 @@
 
 #include "bufferio.h"
 #include "network.h"
+#include "../ocgcore/ocgapi.h"
 
 namespace ygo {
 
@@ -11,6 +12,7 @@ private:
 	static unsigned char net_server_write[SIZE_NETWORK_BUFFER];
 	static size_t last_sent;
 	static bufferevent* disconnecting_bev;
+	static int WriteBufferEvent(bufferevent* bufev, const void* data, size_t size);
 
 	static bool CanWriteToPlayer(DuelPlayer* dp) {
 		return dp && dp->bev && dp->bev != disconnecting_bev;
@@ -24,8 +26,8 @@ public:
 	static void StopListen();
 	static void StartDuelTimer();
 	static void StopDuelTimer();
-	static void BroadcastEvent(evutil_socket_t fd, short events, void* arg);
-	static void ServerAccept(evconnlistener* listener, evutil_socket_t fd, sockaddr* address, int socklen, void* ctx);
+	static void BroadcastEvent(EventSocket fd, short events, void* arg);
+	static void ServerAccept(evconnlistener* listener, EventSocket fd, sockaddr* address, int socklen, void* ctx);
 	static void ServerAcceptError(evconnlistener *listener, void* ctx);
 	static void ServerEchoRead(bufferevent* bev, void* ctx);
 	static void ServerEchoEvent(bufferevent* bev, short events, void* ctx);
@@ -66,7 +68,7 @@ public:
 
 		// 如果目标玩家存在，则发送数据包
 		if (CanWriteToPlayer(dp))
-			bufferevent_write(dp->bev, net_server_write, 3);
+			WriteBufferEvent(dp->bev, net_server_write, 3);
 	}
 	/**
 	 * @brief 向指定玩家发送数据包
@@ -101,7 +103,7 @@ public:
 
 		// 如果目标玩家存在，则实际发送数据包
 		if (CanWriteToPlayer(dp))
-			bufferevent_write(dp->bev, net_server_write, sizeof(ST) + 3);
+			WriteBufferEvent(dp->bev, net_server_write, sizeof(ST) + 3);
 	}
 	/**
 	 * @brief 发送数据缓冲区到指定玩家
@@ -128,7 +130,7 @@ public:
 		last_sent = len + 3;
 			// 如果目标玩家存在，则通过bufferevent发送数据
 		if (CanWriteToPlayer(dp))
-			bufferevent_write(dp->bev, net_server_write, len + 3);
+			WriteBufferEvent(dp->bev, net_server_write, len + 3);
 	}
 	/**
 	 * @brief 重新发送数据给指定的决斗玩家
@@ -140,7 +142,7 @@ public:
 	static void ReSendToPlayer(DuelPlayer* dp) {
 			// 如果玩家指针有效，则重新发送数据
 		if (CanWriteToPlayer(dp))
-			bufferevent_write(dp->bev, net_server_write, last_sent);
+			WriteBufferEvent(dp->bev, net_server_write, last_sent);
 	}
 };
 
