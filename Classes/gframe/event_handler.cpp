@@ -852,17 +852,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			    		command_card = selectable_cards[id - BUTTON_CARD_0 + mainGame->scrCardList->getPos() / 10];
 				    	if (command_card->is_selected) {
 					    	command_card->is_selected = false;
-						    int i = 0;
-    						while(selected_cards[i] != command_card) i++;
-	    					selected_cards.erase(selected_cards.begin() + i);
-		    				if(command_card->controler)
-			    				mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0xff5a5a5a);
-				    		else mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0xff56649f);
+							auto it = std::find(selected_cards.begin(), selected_cards.end(), command_card);
+							if(it != selected_cards.end())
+								selected_cards.erase(it);
 					    } else {
 						    command_card->is_selected = true;
-    						mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0x6011113d);
     						selected_cards.push_back(command_card);
     					}
+						SetCardListLabel(mainGame->stCardPos[id - BUTTON_CARD_0], command_card, true);
     					int sel = selected_cards.size();
     					if (sel >= select_max) {
     						SetResponseSelectedCards();
@@ -886,13 +883,10 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
     					command_card = selectable_cards[id - BUTTON_CARD_0 + mainGame->scrCardList->getPos() / 10];
     					if (command_card->is_selected) {
     						command_card->is_selected = false;
-    						if(command_card->controler)
-    							mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0xff5a5a5a);
-    						else mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0xff56649f);
     					} else {
     						command_card->is_selected = true;
-	    					mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0x6011113d);
 		    			}
+						SetCardListLabel(mainGame->stCardPos[id - BUTTON_CARD_0], command_card, true);
 			    		selected_cards.push_back(command_card);
 				    	if (selected_cards.size() > 0) {
 					    	SetResponseSelectedCards();
@@ -905,17 +899,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					    command_card = selectable_cards[id - BUTTON_CARD_0 + mainGame->scrCardList->getPos() / 10];
 						if (command_card->is_selected) {
 							command_card->is_selected = false;
-							int i = 0;
-							while(selected_cards[i] != command_card) i++;
-							selected_cards.erase(selected_cards.begin() + i);
-							if(command_card->controler)
-								mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0xff5a5a5a);
-							else mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0xff56649f);
+							auto it = std::find(selected_cards.begin(), selected_cards.end(), command_card);
+							if(it != selected_cards.end())
+								selected_cards.erase(it);
 						} else {
 							command_card->is_selected = true;
-							mainGame->stCardPos[id - BUTTON_CARD_0]->setBackgroundColor(0x6011113d);
 							selected_cards.push_back(command_card);
 						}
+						SetCardListLabel(mainGame->stCardPos[id - BUTTON_CARD_0], command_card, true);
 	    				ShowSelectSum(true);
 		    			break;
 			    	}
@@ -1067,53 +1058,17 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						mainGame->btnFacedownImgInfo[mainGame->btnCardSelect[i]] = {selectable_cards[i + pos]->controler, false};
 						mainGame->btnCardImgInfo.erase(mainGame->btnCardSelect[i]);
 					}
-					// text
-					wchar_t formatBuffer[2048];
 					if(mainGame->dInfo.curMsg == MSG_SORT_CARD) {
+						wchar_t formatBuffer[2048];
 						if(sort_list[pos + i])
 							myswprintf(formatBuffer, L"%d", sort_list[pos + i]);
 						else
 							myswprintf(formatBuffer, L"");
+						mainGame->stCardPos[i]->setText(formatBuffer);
+						mainGame->stCardPos[i]->enableOverrideColor(false);
+						mainGame->stCardPos[i]->setBackgroundColor(CARD_LIST_DEFAULT_BACKGROUND_COLOR);
 					} else {
-						if (select_continuous)
-							myswprintf(formatBuffer, L"%ls", dataManager.unknown_string);
-						else if (cant_check_grave && selectable_cards[i + pos]->location == LOCATION_GRAVE)
-							myswprintf(formatBuffer, L"%ls", dataManager.FormatLocation(selectable_cards[i + pos]->location, 0));
-						else if (selectable_cards[i + pos]->location == LOCATION_OVERLAY)
-							myswprintf(formatBuffer, L"%ls[%d](%d)",
-								dataManager.FormatLocation(selectable_cards[i + pos]->overlayTarget), selectable_cards[i + pos]->overlayTarget->sequence + 1, selectable_cards[i + pos]->sequence + 1);
-						else
-							myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(selectable_cards[i + pos]), selectable_cards[i + pos]->sequence + 1);
-					}
-					mainGame->stCardPos[i]->setText(formatBuffer);
-					// color
-					if(select_continuous)
-						mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
-					else if(selectable_cards[i + pos]->location == LOCATION_OVERLAY) {
-						if(selectable_cards[i + pos]->owner != selectable_cards[i + pos]->overlayTarget->controler)
-							mainGame->stCardPos[i]->setOverrideColor(0xff000099);
-						if(selectable_cards[i + pos]->is_selected)
-							mainGame->stCardPos[i]->setBackgroundColor(0x6011113d);
-						else if(selectable_cards[i + pos]->overlayTarget->controler)
-							mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-						else
-							mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
-					} else if(selectable_cards[i + pos]->location == LOCATION_DECK || selectable_cards[i + pos]->location == LOCATION_EXTRA || selectable_cards[i + pos]->location == LOCATION_REMOVED) {
-						if(selectable_cards[i + pos]->position & POS_FACEDOWN)
-							mainGame->stCardPos[i]->setOverrideColor(0xff000099);
-						if(selectable_cards[i + pos]->is_selected)
-							mainGame->stCardPos[i]->setBackgroundColor(0x6011113d);
-						else if(selectable_cards[i + pos]->controler)
-							mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-						else
-							mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
-					} else {
-						if(selectable_cards[i + pos]->is_selected)
-							mainGame->stCardPos[i]->setBackgroundColor(0x6011113d);
-						else if(selectable_cards[i + pos]->controler)
-							mainGame->stCardPos[i]->setBackgroundColor(0xff5a5a5a);
-						else
-							mainGame->stCardPos[i]->setBackgroundColor(0xff56649f);
+						SetCardListLabel(mainGame->stCardPos[i], selectable_cards[i + pos], true);
 					}
 				}
 				break;
@@ -1122,8 +1077,6 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				int pos = mainGame->scrDisplayList->getPos() / 10;
 				for(int i = 0; i < 5; ++i) {
 					// draw display_cards[i + pos] in btnCardDisplay[i]
-					mainGame->stDisplayPos[i]->enableOverrideColor(false);
-					// image
 					if(display_cards[i + pos]->code) {
 						mainGame->btnCardDisplay[i]->setImage(imageManager.GetTextureButton(display_cards[i + pos]->code));
 						mainGame->btnCardImgInfo[mainGame->btnCardDisplay[i]] = {display_cards[i + pos]->code, false};
@@ -1133,35 +1086,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						mainGame->btnFacedownImgInfo[mainGame->btnCardDisplay[i]] = {display_cards[i + pos]->controler, false};
 						mainGame->btnCardImgInfo.erase(mainGame->btnCardDisplay[i]);
 					}
-					// text
-					wchar_t formatBuffer[2048];
-					if(display_cards[i + pos]->location == LOCATION_OVERLAY)
-						myswprintf(formatBuffer, L"%ls[%d](%d)",
-							dataManager.FormatLocation(display_cards[i + pos]->overlayTarget), display_cards[i + pos]->overlayTarget->sequence + 1, display_cards[i + pos]->sequence + 1);
-					else
-						myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(display_cards[i + pos]), display_cards[i + pos]->sequence + 1);
-					mainGame->stDisplayPos[i]->setText(formatBuffer);
-					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
-						if(display_cards[i + pos]->owner != display_cards[i + pos]->overlayTarget->controler)
-							mainGame->stDisplayPos[i]->setOverrideColor(0xff000099);
-						// BackgroundColor: controller of the xyz monster
-						if(display_cards[i + pos]->overlayTarget->controler)
-							mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
-						else
-							mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
-					} else if(display_cards[i + pos]->location == LOCATION_EXTRA || display_cards[i + pos]->location == LOCATION_REMOVED) {
-						if(display_cards[i + pos]->position & POS_FACEDOWN)
-							mainGame->stDisplayPos[i]->setOverrideColor(0xff000099);
-						if(display_cards[i + pos]->controler)
-							mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
-						else
-							mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
-					} else {
-						if(display_cards[i + pos]->controler)
-							mainGame->stDisplayPos[i]->setBackgroundColor(0xff5a5a5a);
-						else
-							mainGame->stDisplayPos[i]->setBackgroundColor(0xff56649f);
-					}
+					SetCardListLabel(mainGame->stDisplayPos[i], display_cards[i + pos], false);
 				}
 				break;
 			}
