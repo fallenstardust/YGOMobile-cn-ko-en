@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.game;
 
+import android.graphics.Color;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,6 +39,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private LimitList mLimitList;
     private int mCardWidth = -1;
     private int mCardHeight = -1;
+    private int mSelectedPosition = RecyclerView.NO_POSITION;
 
     public DeckCardAdapter(ImageLoader imageLoader, DeckEditorManager editorManager, DeckInfo.Type deckType) {
         this.imageLoader = imageLoader;
@@ -55,6 +57,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         if (newCards != null) {
             cards.addAll(newCards);
         }
+        mSelectedPosition = RecyclerView.NO_POSITION;
         notifyDataSetChanged();
     }
 
@@ -99,12 +102,18 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         imageLoader.bindImage(holder.ivCard, card, ImageLoader.Type.small);
         bindLimitOverlay(holder, card);
         bindCardInfo(holder, card);
+        //选中项加一层holo_blue_bright背景，未选中恢复透明（holder复用安全）
+        holder.itemView.setBackgroundColor(position == mSelectedPosition
+                ? YGOUtil.c(R.color.blackLinght) : Color.TRANSPARENT);
 
         holder.itemView.setOnClickListener(v -> {
+            int pos = holder.getAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+            setSelectedPosition(pos);
             if (deckType == null) {
                 editorManager.onSearchCardClicked(card);
             } else {
-                editorManager.onDeckCardClicked(deckType, holder.getAdapterPosition());
+                editorManager.onDeckCardClicked(deckType, pos);
             }
         });
 
@@ -118,7 +127,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     }
 
     /**
-     * 禁限角标高度为卡图高度的1/4，宽度与高度一致，
+     * 禁限角标高度为卡图高度的0.3，宽度与高度一致，
      * 角标数字与角标同宽高，字号随角标尺寸等比缩放。
      */
     private void applyOverlaySize(@NonNull CardViewHolder holder) {
@@ -218,6 +227,14 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     @Override
     public int getItemCount() {
         return cards.size();
+    }
+
+    private void setSelectedPosition(int position) {
+        if (mSelectedPosition == position) return;
+        int old = mSelectedPosition;
+        mSelectedPosition = position;
+        if (old != RecyclerView.NO_POSITION) notifyItemChanged(old);
+        notifyItemChanged(mSelectedPosition);
     }
 
     static class CardViewHolder extends RecyclerView.ViewHolder {

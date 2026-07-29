@@ -132,7 +132,7 @@
                         android:layout_width="30dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="2dp"
-                        android:text=""
+                        android:text="子类："
                         android:textColor="@color/white"
                         android:textSize="8sp" />
 
@@ -371,7 +371,7 @@
                         android:layout_marginStart="2dp"
                         android:layout_weight="1"
                         android:background="@drawable/button3_bg"
-                        android:text="效果分类"
+                        android:text="效果"
                         android:textColor="@color/white"
                         android:textSize="8sp" />
                 </LinearLayout>
