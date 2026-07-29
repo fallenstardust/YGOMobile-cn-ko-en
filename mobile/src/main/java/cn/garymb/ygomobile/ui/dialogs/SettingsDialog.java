@@ -43,6 +43,20 @@ public class SettingsDialog {
         this.listener = listener;
     }
 
+    private void notifySettingsChanged() {
+        if (listener != null) {
+            listener.onSettingsSaved();
+        }
+    }
+
+    //勾选变化时立即保存并立即生效
+    private void bindInstantSave(AppsSettings appsSettings, CheckBox chk, String key) {
+        chk.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            appsSettings.saveIntSettings(key, isChecked ? 1 : 0);
+            notifySettingsChanged();
+        });
+    }
+
     public void show(View anchorView) {
         AppsSettings appsSettings = AppsSettings.get();
         float density = context.getResources().getDisplayMetrics().density;
@@ -111,36 +125,21 @@ public class SettingsDialog {
                 appsSettings.getGenesysMode() == 1 ? "use_genesys_lflist" : "use_lflist", 1) == 1);
 
         // 勾选状态变化时立即保存
-        chkMAutoPos.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkMAutoPos", isChecked ? 1 : 0));
-        chkSTAutoPos.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkSTAutoPos", isChecked ? 1 : 0));
-        chkRandomPos.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkRandomPos", isChecked ? 1 : 0));
-        chkAutoChain.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkAutoChain", isChecked ? 1 : 0));
-        chkWaitChain.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkWaitChain", isChecked ? 1 : 0));
-        chkDefaultShowChain.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkDefaultShowChain", isChecked ? 1 : 0));
-        chkHideNickName.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkHideNickName", isChecked ? 1 : 0));
-        chkDrawFieldSpell.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkDrawFieldSpell", isChecked ? 1 : 0));
-        chkQuickAnimation.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkQuickAnimation", isChecked ? 1 : 0));
-        chkMuteSpectators.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkMuteSpectators", isChecked ? 1 : 0));
-        chkDisableChatting.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkDisableChatting", isChecked ? 1 : 0));
-        chkAutoSaveReplay.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkAutoSaveReplay", isChecked ? 1 : 0));
-        chkSwitchBGM.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkSwitchBGM", isChecked ? 1 : 0));
-        chkEnableSound.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkEnableSound", isChecked ? 1 : 0));
-        chkEnableMusic.setOnCheckedChangeListener((buttonView, isChecked) ->
-                appsSettings.saveIntSettings("chkEnableMusic", isChecked ? 1 : 0));
+        bindInstantSave(appsSettings, chkMAutoPos, "chkMAutoPos");
+        bindInstantSave(appsSettings, chkSTAutoPos, "chkSTAutoPos");
+        bindInstantSave(appsSettings, chkRandomPos, "chkRandomPos");
+        bindInstantSave(appsSettings, chkAutoChain, "chkAutoChain");
+        bindInstantSave(appsSettings, chkWaitChain, "chkWaitChain");
+        bindInstantSave(appsSettings, chkDefaultShowChain, "chkDefaultShowChain");
+        bindInstantSave(appsSettings, chkHideNickName, "chkHideNickName");
+        bindInstantSave(appsSettings, chkDrawFieldSpell, "chkDrawFieldSpell");
+        bindInstantSave(appsSettings, chkQuickAnimation, "chkQuickAnimation");
+        bindInstantSave(appsSettings, chkMuteSpectators, "chkMuteSpectators");
+        bindInstantSave(appsSettings, chkDisableChatting, "chkDisableChatting");
+        bindInstantSave(appsSettings, chkAutoSaveReplay, "chkAutoSaveReplay");
+        bindInstantSave(appsSettings, chkSwitchBGM, "chkSwitchBGM");
+        bindInstantSave(appsSettings, chkEnableSound, "chkEnableSound");
+        bindInstantSave(appsSettings, chkEnableMusic, "chkEnableMusic");
         seekbarSound.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -153,6 +152,7 @@ public class SettingsDialog {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 appsSettings.saveIntSettings("soundVolume", seekBar.getProgress());
+                notifySettingsChanged();
             }
         });
         seekbarMusic.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -167,6 +167,7 @@ public class SettingsDialog {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 appsSettings.saveIntSettings("musicVolume", seekBar.getProgress());
+                notifySettingsChanged();
             }
         });
 
@@ -252,6 +253,7 @@ public class SettingsDialog {
                 }
                 spinnerBanList.setEnabled(true);
             }
+            notifySettingsChanged();
         });
         
         spinnerBanList.setEnabled(chkBanList.isChecked());
@@ -298,6 +300,7 @@ public class SettingsDialog {
                     }
                 }
             }
+            notifySettingsChanged();
         });
 
         spinnerBanList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -314,6 +317,7 @@ public class SettingsDialog {
                     } else {
                         appsSettings.setLastLimit(selectedLimit);
                     }
+                    notifySettingsChanged();
                 }
             }
 
@@ -341,9 +345,6 @@ public class SettingsDialog {
         draggableHelper.setupDraggablePopup(popupWindow, rootLayout);
 
         btnCancel.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onSettingsSaved();
-            }
             popupWindow.dismiss();
         });
 
