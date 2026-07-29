@@ -26,7 +26,6 @@ import okhttp3.Response;
 public class DownloadUtil {
 
     private static final long SUPERPRE_CHUNK_SIZE_BYTES = 10L * 1024 * 1024;
-    private static final long SUPERPRE_CHUNK_SIZE_BYTES = 10L * 1024 * 1024;
     private static DownloadUtil downloadUtil;
     private final OkHttpClient okHttpClient;
     public static final int TYPE_DOWNLOAD_EXCEPTION = 1;
@@ -259,6 +258,7 @@ public class DownloadUtil {
                     }
 
                     List<ChunkRange> ranges = buildChunkRanges(contentLength);
+                    listener.onDownloading(0);
                     downloadChunkSequentially(url, file, ranges, 0, contentLength, 0, listener);
                 } finally {
                     IOUtils.close(response.body());
