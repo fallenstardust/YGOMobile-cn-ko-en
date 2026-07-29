@@ -100,7 +100,8 @@ public class DeckEditorManager {
     private View rootView;
     private CardDetailPanel cardDetailPanel;
     private TextView tvMainCountNum, tvExtraCountNum, tvSideCountNum, tvSearchResult;
-    private TextView tvLimitTotalNum, tvCreditNum, tvRemainNum, tvDeckGenesys;
+    private View llGenesysScoreboard;
+    private TextView tvCreditLimit, tvCreditCount, tvCreditRemain;
     private TextView tvMainMonsterCount, tvMainSpellCount, tvMainTrapCount;
     private TextView tvExtraFusionCount, tvExtraSynchroCount, tvExtraXyzCount, tvExtraLinkCount;
     private TextView tvSideMonsterCount, tvSideSpellCount, tvSideTrapCount;
@@ -184,10 +185,10 @@ public class DeckEditorManager {
         tvMainCountNum = root.findViewById(R.id.tv_main_count_num);
         tvExtraCountNum = root.findViewById(R.id.tv_extra_count_num);
         tvSideCountNum = root.findViewById(R.id.tv_side_count_num);
-        tvLimitTotalNum = root.findViewById(R.id.tv_limit_total_num);
-        tvCreditNum = root.findViewById(R.id.tv_credit_num);
-        tvRemainNum = root.findViewById(R.id.tv_remain_num);
-        tvDeckGenesys = root.findViewById(R.id.tv_deck_genesys);
+        llGenesysScoreboard = root.findViewById(R.id.ll_genesys_scoreboard);
+        tvCreditLimit = root.findViewById(R.id.tv_credit_limit);
+        tvCreditCount = root.findViewById(R.id.tv_credit_count);
+        tvCreditRemain = root.findViewById(R.id.tv_credit_remain);
         tvMainMonsterCount = root.findViewById(R.id.tv_main_monster_count);
         tvMainSpellCount = root.findViewById(R.id.tv_main_spell_count);
         tvMainTrapCount = root.findViewById(R.id.tv_main_trap_count);
@@ -324,6 +325,8 @@ public class DeckEditorManager {
         if (cgvExtra != null) cgvExtra.updateTopImage(mImageTop, mLimitList);
         if (cgvSide != null) cgvSide.updateTopImage(mImageTop, mLimitList);
         if (searchAdapter != null) searchAdapter.setLimitList(mLimitList);
+        //模式或禁卡表切换后同步刷新起源点数记分板的显隐与数值
+        updateDeckCounts();
     }
 
     private void setupSpinners() {
@@ -889,26 +892,29 @@ public class DeckEditorManager {
         int extraCount = currentDeck.getExtraCount();
         int sideCount = currentDeck.getSideCount();
         int totalCount = mainCount + extraCount + sideCount;
-        int mainLimit = Constants.DECK_MAIN_MAX;
-        boolean isGenesys = mLimitList != null && mLimitList.getCreditLimits() != null;
+        boolean isGenesys = AppsSettings.get().getGenesysMode() == 1
+                && mLimitList != null && mLimitList.getCreditLimits() != null;
 
         if (tvMainCountNum != null) tvMainCountNum.setText(String.valueOf(mainCount));
         if (tvExtraCountNum != null) tvExtraCountNum.setText(String.valueOf(extraCount));
         if (tvSideCountNum != null) tvSideCountNum.setText(String.valueOf(sideCount));
 
-        if (tvLimitTotalNum != null) {
-            if (isGenesys) {
-                tvLimitTotalNum.setText(String.valueOf(mLimitList.getCreditLimits()));
-            } else {
-                tvLimitTotalNum.setText(String.valueOf(mainLimit));
-            }
+        if (llGenesysScoreboard != null) {
+            llGenesysScoreboard.setVisibility(isGenesys ? View.VISIBLE : View.GONE);
         }
-        if (tvCreditNum != null) tvCreditNum.setText(String.valueOf(totalCount));
-        if (tvRemainNum != null)
-            tvRemainNum.setText(String.valueOf(Math.max(0, mainLimit - mainCount)));
-
-        if (tvDeckGenesys != null) {
-            tvDeckGenesys.setVisibility(isGenesys ? View.VISIBLE : View.GONE);
+        if (isGenesys) {
+            int creditLimit = mLimitList.getCreditLimits();
+            int creditCount = getDeckCreditCount();
+            int creditRemain = creditLimit - creditCount;
+            if (tvCreditLimit != null) tvCreditLimit.setText(String.valueOf(creditLimit));
+            if (tvCreditCount != null) {
+                tvCreditCount.setText(String.valueOf(creditCount));
+                tvCreditCount.setTextColor(creditCount > creditLimit ? Color.RED : Color.WHITE);
+            }
+            if (tvCreditRemain != null) {
+                tvCreditRemain.setText(String.valueOf(creditRemain));
+                tvCreditRemain.setTextColor(creditRemain < 0 ? Color.RED : Color.WHITE);
+            }
         }
 
         int mainMonster = 0, mainSpell = 0, mainTrap = 0;
@@ -942,6 +948,29 @@ public class DeckEditorManager {
         if (tvSideMonsterCount != null) tvSideMonsterCount.setText(String.valueOf(sideMonster));
         if (tvSideSpellCount != null) tvSideSpellCount.setText(String.valueOf(sideSpell));
         if (tvSideTrapCount != null) tvSideTrapCount.setText(String.valueOf(sideTrap));
+    }
+
+    /**
+     * 统计当前卡组（主+额外+副）已使用的起源点数合计，
+     * 积分查找与其他模块一致：优先按Code，找不到再按Alias。
+     */
+    private int getDeckCreditCount() {
+        if (mLimitList == null || mLimitList.getCredits() == null) return 0;
+        int total = 0;
+        List<Card> allCards = new ArrayList<>();
+        allCards.addAll(currentDeck.getMainCards());
+        allCards.addAll(currentDeck.getExtraCards());
+        allCards.addAll(currentDeck.getSideCards());
+        for (Card card : allCards) {
+            Integer creditValue = mLimitList.getCredits().get(card.Code);
+            if (creditValue == null && card.Alias > 0) {
+                creditValue = mLimitList.getCredits().get(card.Alias);
+            }
+            if (creditValue != null) {
+                total += creditValue;
+            }
+        }
+        return total;
     }
 
     private void updateSearchResultCount() {

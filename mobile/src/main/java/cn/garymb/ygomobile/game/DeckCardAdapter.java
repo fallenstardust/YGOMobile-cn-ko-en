@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.game;
 
+import android.graphics.Color;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -36,6 +39,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private LimitList mLimitList;
     private int mCardWidth = -1;
     private int mCardHeight = -1;
+    private int mSelectedPosition = RecyclerView.NO_POSITION;
 
     public DeckCardAdapter(ImageLoader imageLoader, DeckEditorManager editorManager, DeckInfo.Type deckType) {
         this.imageLoader = imageLoader;
@@ -53,6 +57,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         if (newCards != null) {
             cards.addAll(newCards);
         }
+        mSelectedPosition = RecyclerView.NO_POSITION;
         notifyDataSetChanged();
     }
 
@@ -81,6 +86,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             lp.height = mCardHeight;
             holder.cardContainer.setLayoutParams(lp);
         }
+        applyOverlaySize(holder);
 
         Card card = cards.get(position);
         if (card == null) {
@@ -96,12 +102,18 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         imageLoader.bindImage(holder.ivCard, card, ImageLoader.Type.small);
         bindLimitOverlay(holder, card);
         bindCardInfo(holder, card);
+        //选中项加一层holo_blue_bright背景，未选中恢复透明（holder复用安全）
+        holder.itemView.setBackgroundColor(position == mSelectedPosition
+                ? YGOUtil.c(R.color.blackLinght) : Color.TRANSPARENT);
 
         holder.itemView.setOnClickListener(v -> {
+            int pos = holder.getAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+            setSelectedPosition(pos);
             if (deckType == null) {
                 editorManager.onSearchCardClicked(card);
             } else {
-                editorManager.onDeckCardClicked(deckType, holder.getAdapterPosition());
+                editorManager.onDeckCardClicked(deckType, pos);
             }
         });
 
@@ -112,6 +124,33 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             }
             return false;
         });
+    }
+
+    /**
+     * 禁限角标高度为卡图高度的0.3，宽度与高度一致，
+     * 角标数字与角标同宽高，字号随角标尺寸等比缩放。
+     */
+    private void applyOverlaySize(@NonNull CardViewHolder holder) {
+        int cardHeight = holder.cardContainer.getLayoutParams().height;
+        if (cardHeight <= 0) return;
+        int overlaySize = Math.max(1, Math.round(cardHeight * Constants.CARD_LIMIT_OVERLAY_RATIO));
+        holder.overlaySize = overlaySize;
+
+        ViewGroup.LayoutParams ivLp = holder.ivLimitTop.getLayoutParams();
+        ivLp.width = overlaySize;
+        ivLp.height = overlaySize;
+        holder.ivLimitTop.setLayoutParams(ivLp);
+
+        ViewGroup.LayoutParams tvLp = holder.tvLimitNum.getLayoutParams();
+        tvLp.width = overlaySize;
+        tvLp.height = overlaySize;
+        holder.tvLimitNum.setLayoutParams(tvLp);
+    }
+
+    private void setLimitNumTextSize(@NonNull CardViewHolder holder, float scale) {
+        if (holder.overlaySize > 0) {
+            holder.tvLimitNum.setTextSize(TypedValue.COMPLEX_UNIT_PX, holder.overlaySize * scale);
+        }
     }
 
     private void bindCardInfo(@NonNull CardViewHolder holder, Card card) {
@@ -151,18 +190,21 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             holder.tvLimitNum.setVisibility(View.VISIBLE);
             holder.tvLimitNum.setText("");
             holder.tvLimitNum.setTextColor(YGOUtil.c(R.color.white));
+            setLimitNumTextSize(holder, 0.6f);
         } else if (mLimitList.check(card, LimitType.Limit)) {
             holder.ivLimitTop.setVisibility(View.VISIBLE);
             holder.ivLimitTop.setImageBitmap(mImageTop.limit);
             holder.tvLimitNum.setVisibility(View.VISIBLE);
             holder.tvLimitNum.setText("1");
             holder.tvLimitNum.setTextColor(YGOUtil.c(R.color.yellow));
+            setLimitNumTextSize(holder, 0.6f);
         } else if (mLimitList.check(card, LimitType.SemiLimit)) {
             holder.ivLimitTop.setVisibility(View.VISIBLE);
             holder.ivLimitTop.setImageBitmap(mImageTop.semiLimit);
             holder.tvLimitNum.setVisibility(View.VISIBLE);
             holder.tvLimitNum.setText("2");
             holder.tvLimitNum.setTextColor(YGOUtil.c(R.color.yellow));
+            setLimitNumTextSize(holder, 0.6f);
         } else if (mLimitList.check(card, LimitType.GeneSys)) {
             Integer creditValue = 0;
             if (mLimitList.getCredits() != null) {
@@ -173,7 +215,9 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             holder.tvLimitNum.setVisibility(View.VISIBLE);
             holder.tvLimitNum.setText(creditValue != null ? creditValue.toString() : "0");
             holder.tvLimitNum.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
-            holder.tvLimitNum.setTextSize((creditValue != null && creditValue > -10 && creditValue < 100) ? 8 : 6);
+            //两位数以内用标准比例，更多位数缩小字号保证放得下
+            setLimitNumTextSize(holder,
+                    (creditValue != null && creditValue > -10 && creditValue < 100) ? 0.6f : 0.45f);
         } else {
             holder.ivLimitTop.setVisibility(View.GONE);
             holder.tvLimitNum.setVisibility(View.GONE);
@@ -185,6 +229,14 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         return cards.size();
     }
 
+    private void setSelectedPosition(int position) {
+        if (mSelectedPosition == position) return;
+        int old = mSelectedPosition;
+        mSelectedPosition = position;
+        if (old != RecyclerView.NO_POSITION) notifyItemChanged(old);
+        notifyItemChanged(mSelectedPosition);
+    }
+
     static class CardViewHolder extends RecyclerView.ViewHolder {
         ViewGroup cardContainer;
         ImageView ivCard;
@@ -193,6 +245,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         TextView tvName;
         TextView tvInfo;
         TextView tvAtkDef;
+        int overlaySize;
 
         CardViewHolder(@NonNull View itemView) {
             super(itemView);

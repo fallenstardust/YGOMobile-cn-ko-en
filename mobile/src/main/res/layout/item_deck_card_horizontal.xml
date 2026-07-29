@@ -24,14 +24,14 @@
             android:id="@+id/iv_deck_card_limit_top"
             android:layout_width="@dimen/right_size2"
             android:layout_height="@dimen/right_size2"
-            android:layout_gravity="top|end"
+            android:layout_gravity="top|start"
             android:visibility="gone" />
 
         <TextView
             android:id="@+id/tv_deck_limit_num"
             android:layout_width="@dimen/right_size2"
             android:layout_height="@dimen/right_size2"
-            android:layout_gravity="top|end"
+            android:layout_gravity="top|start"
             android:gravity="center"
             android:textSize="8sp"
             android:textStyle="bold"

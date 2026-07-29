@@ -995,9 +995,9 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void applySettingsToEngine() {
-        SharedPreferences prefs = getSharedPreferences(getPackageName() + ".settings", Context.MODE_PRIVATE);
-        boolean enableSound = prefs.getBoolean("chkEnableSound", true);
-        boolean enableMusic = prefs.getBoolean("chkEnableMusic", true);
+        AppsSettings appsSettings = AppsSettings.get();
+        boolean enableSound = appsSettings.getIntSettings("chkEnableSound", 1) == 1;
+        boolean enableMusic = appsSettings.getIntSettings("chkEnableMusic", 1) == 1;
         if (soundManager != null) {
             soundManager.enableSounds(enableSound);
             soundManager.enableMusic(enableMusic);

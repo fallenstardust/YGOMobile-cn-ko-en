@@ -43,6 +43,20 @@ public class SettingsDialog {
         this.listener = listener;
     }
 
+    private void notifySettingsChanged() {
+        if (listener != null) {
+            listener.onSettingsSaved();
+        }
+    }
+
+    //勾选变化时立即保存并立即生效
+    private void bindInstantSave(AppsSettings appsSettings, CheckBox chk, String key) {
+        chk.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            appsSettings.saveIntSettings(key, isChecked ? 1 : 0);
+            notifySettingsChanged();
+        });
+    }
+
     public void show(View anchorView) {
         AppsSettings appsSettings = AppsSettings.get();
         float density = context.getResources().getDisplayMetrics().density;
@@ -106,7 +120,56 @@ public class SettingsDialog {
         seekbarSound.setProgress(appsSettings.getIntSettings("soundVolume", 50));
         chkEnableMusic.setChecked(appsSettings.getIntSettings("chkEnableMusic", 1) == 1);
         seekbarMusic.setProgress(appsSettings.getIntSettings("musicVolume", 50));
-        chkBanList.setChecked(appsSettings.getIntSettings("chkBanList", 0) == 1);
+        // 禁卡表开关按当前模式读取use_lflist/use_genesys_lflist，默认值为1
+        chkBanList.setChecked(appsSettings.getIntSettings(
+                appsSettings.getGenesysMode() == 1 ? "use_genesys_lflist" : "use_lflist", 1) == 1);
+
+        // 勾选状态变化时立即保存
+        bindInstantSave(appsSettings, chkMAutoPos, "chkMAutoPos");
+        bindInstantSave(appsSettings, chkSTAutoPos, "chkSTAutoPos");
+        bindInstantSave(appsSettings, chkRandomPos, "chkRandomPos");
+        bindInstantSave(appsSettings, chkAutoChain, "chkAutoChain");
+        bindInstantSave(appsSettings, chkWaitChain, "chkWaitChain");
+        bindInstantSave(appsSettings, chkDefaultShowChain, "chkDefaultShowChain");
+        bindInstantSave(appsSettings, chkHideNickName, "chkHideNickName");
+        bindInstantSave(appsSettings, chkDrawFieldSpell, "chkDrawFieldSpell");
+        bindInstantSave(appsSettings, chkQuickAnimation, "chkQuickAnimation");
+        bindInstantSave(appsSettings, chkMuteSpectators, "chkMuteSpectators");
+        bindInstantSave(appsSettings, chkDisableChatting, "chkDisableChatting");
+        bindInstantSave(appsSettings, chkAutoSaveReplay, "chkAutoSaveReplay");
+        bindInstantSave(appsSettings, chkSwitchBGM, "chkSwitchBGM");
+        bindInstantSave(appsSettings, chkEnableSound, "chkEnableSound");
+        bindInstantSave(appsSettings, chkEnableMusic, "chkEnableMusic");
+        seekbarSound.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                appsSettings.saveIntSettings("soundVolume", seekBar.getProgress());
+                notifySettingsChanged();
+            }
+        });
+        seekbarMusic.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                appsSettings.saveIntSettings("musicVolume", seekBar.getProgress());
+                notifySettingsChanged();
+            }
+        });
 
         LimitManager limitManager = DataManager.get().getLimitManager();
         List<String> currentBanListNames = new ArrayList<>();
@@ -125,8 +188,8 @@ public class SettingsDialog {
         banListAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerBanList.setAdapter(banListAdapter);
 
-        boolean isBanListEnabled = appsSettings.getIntSettings("chkBanList", 0) == 1;
-        String lastLimit;
+        //初始化时只读取保存值，不写入
+        boolean isBanListEnabled = chkBanList.isChecked();
         if (!isBanListEnabled) {
             int naIndex = currentBanListNames.indexOf("N/A");
             if (naIndex >= 0) {
@@ -134,13 +197,8 @@ public class SettingsDialog {
             } else {
                 spinnerBanList.setSelection(0);
             }
-            if (isGenesysMode) {
-                appsSettings.setLastGenesysLimit("N/A");
-            } else {
-                appsSettings.setLastLimit("N/A");
-            }
         } else {
-            lastLimit = isGenesysMode ? appsSettings.getLastGenesysLimit() : appsSettings.getLastLimit();
+            String lastLimit = isGenesysMode ? appsSettings.getLastGenesysLimit() : appsSettings.getLastLimit();
             int lastLimitIndex = currentBanListNames.indexOf(lastLimit);
             if (lastLimitIndex >= 0) {
                 spinnerBanList.setSelection(lastLimitIndex);
@@ -154,6 +212,7 @@ public class SettingsDialog {
 
         chkGenesysMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
             isCurrentlyGenesys[0] = isChecked;
+            appsSettings.setGenesysMode(isChecked ? 1 : 0);
             
             List<String> newBanListNames = new ArrayList<>();
             if (limitManager != null) {
@@ -169,20 +228,21 @@ public class SettingsDialog {
                     android.R.layout.simple_spinner_item, newBanListNames);
             newAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerBanList.setAdapter(newAdapter);
-            
-            if (!chkBanList.isChecked()) {
-                int naIndex = -1;
-                for (int i = 0; i < newBanListNames.size(); i++) {
-                    if ("N/A".equals(newBanListNames.get(i))) {
-                        naIndex = i;
-                        break;
-                    }
-                }
+
+            //切换模式后按对应键重新读取禁卡表开关状态（对齐game.cpp两个独立开关）
+            boolean banEnabled = appsSettings.getIntSettings(
+                    isChecked ? "use_genesys_lflist" : "use_lflist", 1) == 1;
+            if (chkBanList.isChecked() != banEnabled) {
+                //状态不同时通过setChecked触发chkBanList监听器完成spinner联动
+                chkBanList.setChecked(banEnabled);
+            } else if (!banEnabled) {
+                int naIndex = newBanListNames.indexOf("N/A");
                 if (naIndex >= 0) {
                     spinnerBanList.setSelection(naIndex);
                 } else {
                     spinnerBanList.setSelection(0);
                 }
+                spinnerBanList.setEnabled(false);
             } else {
                 String savedLimit = isChecked ? appsSettings.getLastGenesysLimit() : appsSettings.getLastLimit();
                 int newIndex = newBanListNames.indexOf(savedLimit);
@@ -191,66 +251,65 @@ public class SettingsDialog {
                 } else {
                     spinnerBanList.setSelection(0);
                 }
+                spinnerBanList.setEnabled(true);
             }
+            notifySettingsChanged();
         });
         
         spinnerBanList.setEnabled(chkBanList.isChecked());
         chkBanList.setEnabled(true);
 
         chkBanList.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            //对齐game.cpp：按当前模式保存到use_lflist/use_genesys_lflist
+            appsSettings.saveIntSettings(
+                    isCurrentlyGenesys[0] ? "use_genesys_lflist" : "use_lflist", isChecked ? 1 : 0);
             spinnerBanList.setEnabled(isChecked);
             if (!isChecked) {
-                int naIndex = -1;
-                for (int i = 0; i < banListData[0].size(); i++) {
-                    if ("N/A".equals(banListData[0].get(i))) {
-                        naIndex = i;
-                        break;
-                    }
-                }
+                //仅显示N/A，不覆盖已保存的禁卡表名（对齐game.cpp关闭时不写last_limit_list_name）
+                int naIndex = banListData[0].indexOf("N/A");
                 if (naIndex >= 0) {
                     spinnerBanList.setSelection(naIndex);
                 }
-                if (isCurrentlyGenesys[0]) {
-                    appsSettings.setLastGenesysLimit("N/A");
-                } else {
-                    appsSettings.setLastLimit("N/A");
-                }
             } else {
-                int firstNonNaIndex = -1;
-                for (int i = 0; i < banListData[0].size(); i++) {
-                    String item = banListData[0].get(i);
-                    if (!"N/A".equals(item)) {
-                        firstNonNaIndex = i;
-                        break;
+                //重新启用时优先恢复保存的禁卡表，不存在则选第一个非N/A项
+                String savedLimit = isCurrentlyGenesys[0] ? appsSettings.getLastGenesysLimit() : appsSettings.getLastLimit();
+                int targetIndex = -1;
+                if (savedLimit != null && !"N/A".equals(savedLimit)) {
+                    targetIndex = banListData[0].indexOf(savedLimit);
+                }
+                if (targetIndex < 0) {
+                    for (int i = 0; i < banListData[0].size(); i++) {
+                        if (!"N/A".equals(banListData[0].get(i))) {
+                            targetIndex = i;
+                            break;
+                        }
                     }
                 }
-                
-                if (firstNonNaIndex >= 0) {
-                    spinnerBanList.setSelection(firstNonNaIndex);
-                    String selectedLimit = banListData[0].get(firstNonNaIndex);
+                if (targetIndex >= 0) {
+                    spinnerBanList.setSelection(targetIndex);
+                    String selectedLimit = banListData[0].get(targetIndex);
                     if (isCurrentlyGenesys[0]) {
                         appsSettings.setLastGenesysLimit(selectedLimit);
                     } else {
                         appsSettings.setLastLimit(selectedLimit);
                     }
                 } else {
-                    int naIndex = -1;
-                    for (int i = 0; i < banListData[0].size(); i++) {
-                        if ("N/A".equals(banListData[0].get(i))) {
-                            naIndex = i;
-                            break;
-                        }
-                    }
+                    int naIndex = banListData[0].indexOf("N/A");
                     if (naIndex >= 0) {
                         spinnerBanList.setSelection(naIndex);
                     }
                 }
             }
+            notifySettingsChanged();
         });
 
         spinnerBanList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                //开关关闭时不保存，避免初始化/切换adapter自动触发时把N/A写入保存值
+                if (!chkBanList.isChecked()) {
+                    return;
+                }
                 String selectedLimit = (String) parent.getItemAtPosition(position);
                 if (selectedLimit != null && !selectedLimit.isEmpty()) {
                     if (isCurrentlyGenesys[0]) {
@@ -258,6 +317,7 @@ public class SettingsDialog {
                     } else {
                         appsSettings.setLastLimit(selectedLimit);
                     }
+                    notifySettingsChanged();
                 }
             }
 
@@ -285,28 +345,6 @@ public class SettingsDialog {
         draggableHelper.setupDraggablePopup(popupWindow, rootLayout);
 
         btnCancel.setOnClickListener(v -> {
-            appsSettings.saveIntSettings("chkMAutoPos", chkMAutoPos.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkSTAutoPos", chkSTAutoPos.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkRandomPos", chkRandomPos.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkAutoChain", chkAutoChain.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkWaitChain", chkWaitChain.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkDefaultShowChain", chkDefaultShowChain.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkHideNickName", chkHideNickName.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkDrawFieldSpell", chkDrawFieldSpell.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkQuickAnimation", chkQuickAnimation.isChecked() ? 1 : 0);
-            appsSettings.setGenesysMode(chkGenesysMode.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkMuteSpectators", chkMuteSpectators.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkDisableChatting", chkDisableChatting.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkAutoSaveReplay", chkAutoSaveReplay.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkSwitchBGM", chkSwitchBGM.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("chkEnableSound", chkEnableSound.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("soundVolume", seekbarSound.getProgress());
-            appsSettings.saveIntSettings("chkEnableMusic", chkEnableMusic.isChecked() ? 1 : 0);
-            appsSettings.saveIntSettings("musicVolume", seekbarMusic.getProgress());
-
-            if (listener != null) {
-                listener.onSettingsSaved();
-            }
             popupWindow.dismiss();
         });
 
