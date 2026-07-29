@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -123,7 +124,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private void applyOverlaySize(@NonNull CardViewHolder holder) {
         int cardHeight = holder.cardContainer.getLayoutParams().height;
         if (cardHeight <= 0) return;
-        int overlaySize = Math.max(1, cardHeight / 4);
+        int overlaySize = Math.max(1, Math.round(cardHeight * Constants.CARD_LIMIT_OVERLAY_RATIO));
         holder.overlaySize = overlaySize;
 
         ViewGroup.LayoutParams ivLp = holder.ivLimitTop.getLayoutParams();

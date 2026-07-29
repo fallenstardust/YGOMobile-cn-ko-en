@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
@@ -84,7 +85,7 @@ public class CardView extends FrameLayout {
         int p = (int) getResources().getDimension(R.dimen.card_padding);
         int imageHeight = h - 2 * p;
         if (imageHeight <= 0) return;
-        int size = Math.max(1, imageHeight / 4);
+        int size = Math.max(1, Math.round(imageHeight * Constants.CARD_LIMIT_OVERLAY_RATIO));
         if (size == mOverlaySize) return;
         mOverlaySize = size;
         //onSizeChanged处于布局流程中，直接改LayoutParams可能不生效，布局完成后再应用
