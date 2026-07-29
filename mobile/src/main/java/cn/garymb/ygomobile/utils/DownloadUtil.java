@@ -97,13 +97,6 @@ public class DownloadUtil {
      * @param listener     下载过程的监听器，用于接收下载成功、失败和进度更新等事件
      */
     public void download(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
-        // Route super-pre downloads through the chunked path; keep all other downloads on the original flow.
-        // This is the single entry point where the boolean is evaluated.
-        if (shouldUseChunkedDownloadForSuperpre(url)) {
-            downloadInChunks(url, destFileDir, destFileName, listener);
-            return;
-        }
-
         // 构建带 ETag 的请求
         Request.Builder builder = new Request.Builder().url(url);
 
@@ -221,6 +214,10 @@ public class DownloadUtil {
         });
     }
 
+
+    public void downloadSuperpre(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
+        downloadInChunks(url, destFileDir, destFileName, listener);
+    }
 
     // Probe the remote file with HEAD first to learn its size, calculate the
     // 10MB ranges, and then request the file by byte ranges in sequence.
