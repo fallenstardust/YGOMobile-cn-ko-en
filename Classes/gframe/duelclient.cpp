@@ -13,6 +13,10 @@
 #include "game.h"
 #include "deck_manager.h"
 #include "replay.h"
+#include "mysocket.h"
+#include <event2/event.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/android_tools.h>
 #endif
@@ -65,6 +69,9 @@ unsigned char DuelClient::duel_client_write[SIZE_NETWORK_BUFFER]{};
 unsigned char DuelClient::selftype = 0;
 std::vector<HostPacket> DuelClient::hosts;
 
+int DuelClient::WriteBufferEvent(bufferevent* bufev, const void* data, size_t size) {
+	return bufferevent_write(bufev, data, size);
+}
 /**
  * @brief 启动客户端连接到指定的服务器
  * @param ip 服务器IP地址（网络字节序）
@@ -126,7 +133,7 @@ bool DuelClient::StartClient(unsigned int ip, unsigned short port, bool create_g
  * @param events 发生的事件类型
  * @param arg 传递给回调函数的用户数据指针
  */
-void DuelClient::ConnectTimeout(evutil_socket_t fd, short events, void* arg) {
+void DuelClient::ConnectTimeout(EventSocket fd, short events, void* arg) {
 	// 如果连接状态为0x7（已完成状态），则直接返回不进行任何处理
 	if(connect_state & CONNECT_STATE_JOINED)
 		return;
@@ -222,7 +229,7 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 		bool create_game = (intptr_t)ctx;
 
 		// 如果不是创建游戏而是加入已有房间，则发送主机名等地址相关信息到服务器
-		if (!create_game) {
+		if(!create_game) {
 			uint16_t hostname_buf[LEN_HOSTNAME];
 			auto hostname_len = BufferIO::CopyCharArray(mainGame->ebJoinHost->getText(), hostname_buf);
 			auto hostname_msglen = (hostname_len + 1) * sizeof(uint16_t);
@@ -238,9 +245,9 @@ void DuelClient::ClientEvent(bufferevent* bev, short events, void* ctx) {
 		SendPacketToServer(CTOS_PLAYER_INFO, cspi);
 
 		// 根据是否创建游戏分别构造并发送对应的数据包
-		if (create_game) {
+		if(create_game) {
 			CTOS_CreateGame cscg;
-			if (mainGame->bot_mode) {
+			if(mainGame->bot_mode) {
 				// 设置机器人模式下的默认配置
 				BufferIO::CopyCharArray(L"Bot Game", cscg.name);
 				BufferIO::CopyCharArray(L"", cscg.pass);
@@ -4578,7 +4585,7 @@ void DuelClient::BeginRefreshHost() {
 	hosts.clear();
 	std::vector<unsigned int> local_addresses;
 	char hname[256]{};
-	if(gethostname(hname, sizeof(hname) - 1) != SOCKET_ERROR) {
+	if(gethostname(hname, sizeof(hname) - 1) != SOCKET_RESULT_ERROR) {
 		evutil_addrinfo hints{};
 		hints.ai_family = AF_INET;
 		hints.ai_socktype = SOCK_DGRAM;
@@ -4613,8 +4620,8 @@ void DuelClient::BeginRefreshHost() {
 		return;
 	}
 	// 创建UDP套接字用于接收主机响应
-	SOCKET reply = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if(reply == INVALID_SOCKET) {
+	Socket reply = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if(reply == INVALID_SOCKET_HANDLE) {
 		event_base_free(broadev);
 		EndRefreshHost();
 		return;
@@ -4624,8 +4631,8 @@ void DuelClient::BeginRefreshHost() {
 	reply_addr.sin_family = AF_INET;
 	reply_addr.sin_port = htons(7921);         // 监听端口7921
 	reply_addr.sin_addr.s_addr = 0;            // 绑定到所有接口
-	if(bind(reply, (sockaddr*)&reply_addr, sizeof(reply_addr)) == SOCKET_ERROR) {
-		closesocket(reply);
+	if(bind(reply, (sockaddr*)&reply_addr, sizeof(reply_addr)) == SOCKET_RESULT_ERROR) {
+		CloseSocket(reply);
 		event_base_free(broadev);
 		EndRefreshHost();
 		return;
@@ -4639,18 +4646,17 @@ void DuelClient::BeginRefreshHost() {
 			event_free(resp_event);
 			resp_event = nullptr;
 		}
-		closesocket(reply);
+		CloseSocket(reply);
 		event_base_free(broadev);
 		EndRefreshHost();
 		return;
 	}
 	std::thread(RefreshThread, broadev).detach();
 
-	// 准备发送广播请求的数据包
-	SOCKADDR_IN local;
+	sockaddr_in local;
 	local.sin_family = AF_INET;
 	local.sin_port = htons(7922);              // 发送源端口7922
-	SOCKADDR_IN sockTo;
+	sockaddr_in sockTo;
 	sockTo.sin_addr.s_addr = htonl(INADDR_BROADCAST);  // 广播地址
 	sockTo.sin_family = AF_INET;
 	sockTo.sin_port = htons(7920);             // 目标端口7920
@@ -4661,17 +4667,17 @@ void DuelClient::BeginRefreshHost() {
 #ifdef _IRR_ANDROID_PLATFORM_
 	// Android平台发送单次广播请求
 	local.sin_addr.s_addr = ipaddr;
-	SOCKET sSend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sSend == INVALID_SOCKET)
+	Socket sSend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sSend == INVALID_SOCKET_HANDLE)
 		return;
-	int opt = TRUE;
+	int opt = 1;
 	setsockopt(sSend, SOL_SOCKET, SO_BROADCAST, (const char*) &opt, sizeof opt);
-	if (bind(sSend, (sockaddr*) &local, sizeof(sockaddr)) == SOCKET_ERROR) {
-		closesocket(sSend);
+	if (bind(sSend, (sockaddr*) &local, sizeof(sockaddr)) == SOCKET_RESULT_ERROR) {
+		CloseSocket(sSend);
 		return;
 	}
 	sendto(sSend, (const char*) &hReq, sizeof(HostRequest), 0, (sockaddr*) &sockTo, sizeof(sockaddr));
-	closesocket(sSend);
+	CloseSocket(sSend);
 
 #endif
 }
@@ -4688,16 +4694,15 @@ int DuelClient::RefreshThread(event_base* broadev) {
 	event_base_dispatch(broadev);
 
 	// 获取事件关联的套接字描述符并关闭连接
-	evutil_socket_t fd;
+	EventSocket fd;
 	event_get_assignment(resp_event, 0, &fd, 0, 0, 0);
 	evutil_closesocket(fd);
 
 	// 释放事件和事件基础结构体资源
 	event_free(resp_event);
+	resp_event = nullptr;
 	event_base_free(broadev);
-
-	// 更新刷新状态标志
-	is_refreshing = false;
+	EndRefreshHost();
 	return 0;
 }
 
@@ -4711,7 +4716,7 @@ int DuelClient::RefreshThread(event_base* broadev) {
  * @param events 发生的事件类型（EV_TIMEOUT 或 EV_READ）
  * @param arg 指向 event_base 的指针，用于控制事件循环
  */
-void DuelClient::BroadcastReply(evutil_socket_t fd, short events, void * arg) {
+void DuelClient::BroadcastReply(EventSocket fd, short events, void * arg) {
 	// 处理超时事件：关闭套接字并退出事件循环
 	if(events & EV_TIMEOUT) {
 		event_base_loopbreak((event_base*)arg);

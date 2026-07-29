@@ -3,8 +3,14 @@
 #include "single_duel.h"
 #include "tag_duel.h"
 #include "game.h"
+#include "deck_manager.h"
+#include "mysocket.h"
 #include <thread>
 #include <unordered_map>
+#include <event2/event.h>
+#include <event2/listener.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
 
 namespace ygo {
 
@@ -19,7 +25,7 @@ namespace{
 	bool broadcast_enabled{};
 	unsigned char net_server_read[SIZE_NETWORK_BUFFER]{};
 
-	void DuelTimer(evutil_socket_t, short, void* arg) {
+	void DuelTimer(EventSocket, short, void* arg) {
 		static_cast<DuelMode*>(arg)->TimerTick();
 	}
 }
@@ -27,6 +33,10 @@ namespace{
 unsigned char NetServer::net_server_write[SIZE_NETWORK_BUFFER]{};
 size_t NetServer::last_sent{};
 bufferevent* NetServer::disconnecting_bev = nullptr;
+
+int NetServer::WriteBufferEvent(bufferevent* bufev, const void* data, size_t size) {
+	return bufferevent_write(bufev, data, size);
+}
 
 bool NetServer::StartServer(unsigned short port, unsigned int ip, unsigned short* out_actual_port, bool enable_broadcast) {
 	if(net_evbase)
@@ -56,7 +66,7 @@ bool NetServer::StartServer(unsigned short port, unsigned int ip, unsigned short
 	sockaddr_in bound_addr;
 	std::memset(&bound_addr, 0, sizeof bound_addr);
 	socklen_t bound_addr_len = sizeof bound_addr;
-	if(getsockname(evconnlistener_get_fd(listener), (sockaddr*)&bound_addr, &bound_addr_len) == SOCKET_ERROR) {
+	if(getsockname(evconnlistener_get_fd(listener), (sockaddr*)&bound_addr, &bound_addr_len) == SOCKET_RESULT_ERROR) {
 		evconnlistener_free(listener);
 		listener = nullptr;
 		event_base_free(net_evbase);
@@ -88,10 +98,10 @@ bool NetServer::StartBroadcast() {
 		return false;
 
 	// 创建UDP套接字用于广播通信
-	SOCKET udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	Socket udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	// 设置套接字选项：允许广播和地址复用
-	int opt = TRUE;
+	int opt = 1;
 	setsockopt(udp, SOL_SOCKET, SO_BROADCAST, (const char*)&opt, sizeof opt);
 	setsockopt(udp, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof opt);
 
@@ -103,8 +113,8 @@ bool NetServer::StartBroadcast() {
 	addr.sin_addr.s_addr = 0;
 
 	// 绑定套接字到指定地址和端口
-	if(bind(udp, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
-		closesocket(udp);
+	if(bind(udp, (sockaddr*)&addr, sizeof(addr)) == SOCKET_RESULT_ERROR) {
+		CloseSocket(udp);
 		return false;
 	}
 
@@ -153,7 +163,7 @@ void NetServer::StopBroadcast() {
 	event_del(broadcast_ev);
 
 	// 获取广播事件关联的套接字描述符
-	evutil_socket_t fd;
+	EventSocket fd;
 	event_get_assignment(broadcast_ev, 0, &fd, 0, 0, 0);
 
 	// 关闭广播套接字
@@ -185,7 +195,7 @@ void NetServer::StopDuelTimer() {
 	if(duel_etimer)
 		event_del(duel_etimer);
 }
-void NetServer::BroadcastEvent(evutil_socket_t fd, short events, void* arg) {
+void NetServer::BroadcastEvent(EventSocket fd, short events, void* arg) {
 	// 接收广播数据包
 	sockaddr_in bc_addr;
 	socklen_t sz = sizeof(sockaddr_in);
@@ -201,7 +211,7 @@ void NetServer::BroadcastEvent(evutil_socket_t fd, short events, void* arg) {
 
 	// 验证数据包标识符，如果匹配则发送服务器信息响应
 	if(pHR->identifier == NETWORK_CLIENT_ID) {
-		SOCKADDR_IN sockTo;
+		sockaddr_in sockTo;
 		sockTo.sin_addr.s_addr = bc_addr.sin_addr.s_addr;
 		sockTo.sin_family = AF_INET;
 		sockTo.sin_port = htons(7921);
@@ -226,7 +236,7 @@ void NetServer::BroadcastEvent(evutil_socket_t fd, short events, void* arg) {
  * @param socklen 地址信息长度
  * @param ctx 用户自定义上下文数据指针
  */
-void NetServer::ServerAccept(evconnlistener* listener, evutil_socket_t fd, sockaddr* address, int socklen, void* ctx) {
+void NetServer::ServerAccept(evconnlistener* listener, EventSocket fd, sockaddr* address, int socklen, void* ctx) {
 	// 创建新的缓冲事件，用于处理网络I/O操作
 	bufferevent* bev = bufferevent_socket_new(net_evbase, fd, BEV_OPT_CLOSE_ON_FREE);
 
@@ -344,7 +354,7 @@ void NetServer::ServerThread() {
 
 	// 关闭并释放广播事件资源
 	if(broadcast_ev) {
-		evutil_socket_t fd;
+		EventSocket fd;
 		event_get_assignment(broadcast_ev, 0, &fd, 0, 0, 0);
 		evutil_closesocket(fd);
 		event_free(broadcast_ev);

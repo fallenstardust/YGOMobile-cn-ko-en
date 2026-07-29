@@ -41,7 +41,7 @@ task buildYgoCore(type: Exec) {
     group = 'ygo'
     description = '使用 ndk-build 编译 libYGOMobile.so'
     workingDir file('jni')
-    commandLine "${android.ndkDirectory}/${ndkBuildCmd}", '-j4'
+    commandLine "${android.ndkDirectory}/${ndkBuildCmd}", '-j'
 }
 
 // 清理内核构建产物: ndk-build clean

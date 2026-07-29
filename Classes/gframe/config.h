@@ -1,10 +1,13 @@
 #ifndef YGOPRO_CONFIG_H
 #define YGOPRO_CONFIG_H
 
-#define _IRR_STATIC_LIB_
 #define IRR_COMPILE_WITH_DX9_DEV_PACK
 
 #include <cerrno>
+#include <cstdio>
+#include <string>
+
+#include "../ocgcore/ocgapi.h"
 
 #define _IRR_ANDROID_PLATFORM_
 
@@ -12,14 +15,15 @@
 #include <android_native_app_glue.h>
 #include <android/android_tools.h>
 #include <android/xstring.h>
+#include <strings.h>
 
 #define mywcscat wcscat_x
+#define mywcsncasecmp wcsncasecmp_x
+#define mystrncasecmp strncasecmp
 #include "os.h"
 #include <android/bufferio_android.h>
 #include <android/CustomShaderConstantSetCallBack.h>
 #endif
-
-#define socklen_t int
 
 #ifndef TEXT
 #ifdef UNICODE
@@ -28,31 +32,6 @@
 #define TEXT(x) x
 #endif // UNICODE
 #endif
-
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-
-#define SD_BOTH 2
-#define SOCKET int
-#define closesocket close
-#define INVALID_SOCKET -1
-#define SOCKET_ERROR -1
-#define SOCKADDR_IN sockaddr_in
-#define SOCKADDR sockaddr
-#define SOCKET_ERRNO() (errno)
-
-#define mywcsncasecmp wcsncasecmp
-#define mystrncasecmp strncasecmp
-
-#include <cstdio>
-#include <string>
-#include "bufferio.h"
-#include "mysignal.h"
-#include "../ocgcore/ocgapi.h"
 
 template<size_t N, typename... TR>
 inline int myswprintf(wchar_t(&buf)[N], const wchar_t* fmt, TR... args) {
@@ -73,4 +52,4 @@ using namespace irr::os;
 
 constexpr uint16_t PRO_VERSION = 0x1362;
 
-#endif
+#endif // YGOPRO_CONFIG_H
