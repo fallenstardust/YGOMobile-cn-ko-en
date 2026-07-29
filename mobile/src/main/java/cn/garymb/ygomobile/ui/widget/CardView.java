@@ -25,6 +25,8 @@ public class CardView extends FrameLayout {
     private final ImageView mCardView, mTopImage;
     private final TextView mLimitNum;
     private Card mCard;
+    private int mOverlaySize;
+    private float mLimitNumScale = 0.6f;
 
     public CardView(Context context) {
         this(context, null);
@@ -72,6 +74,44 @@ public class CardView extends FrameLayout {
         addView(mLimitNum, lp3);
     }
 
+    /**
+     * 角标尺寸随卡片实际尺寸自适应：
+     * 高度为卡图（去除上下padding后）高度的1/4，宽高一致，字号等比缩放。
+     */
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        int p = (int) getResources().getDimension(R.dimen.card_padding);
+        int imageHeight = h - 2 * p;
+        if (imageHeight <= 0) return;
+        int size = Math.max(1, imageHeight / 4);
+        if (size == mOverlaySize) return;
+        mOverlaySize = size;
+        //onSizeChanged处于布局流程中，直接改LayoutParams可能不生效，布局完成后再应用
+        post(this::applyOverlaySize);
+    }
+
+    private void applyOverlaySize() {
+        LayoutParams lp2 = (LayoutParams) mTopImage.getLayoutParams();
+        lp2.width = mOverlaySize;
+        lp2.height = mOverlaySize;
+        mTopImage.setLayoutParams(lp2);
+
+        LayoutParams lp3 = (LayoutParams) mLimitNum.getLayoutParams();
+        lp3.width = mOverlaySize;
+        lp3.height = mOverlaySize;
+        mLimitNum.setLayoutParams(lp3);
+
+        setLimitNumTextSize(mLimitNumScale);
+    }
+
+    private void setLimitNumTextSize(float scale) {
+        mLimitNumScale = scale;
+        if (mOverlaySize > 0) {
+            mLimitNum.setTextSize(TypedValue.COMPLEX_UNIT_PX, mOverlaySize * scale);
+        }
+    }
+
     @Override
     public void setSelected(boolean selected) {
         super.setSelected(selected);
@@ -95,16 +135,17 @@ public class CardView extends FrameLayout {
                     mTopImage.setImageBitmap(imageTop.forbidden);
                     mLimitNum.setText("");
                     mLimitNum.setTextColor(YGOUtil.c(R.color.white));
+                    setLimitNumTextSize(0.6f);
                 } else if (limitList.check(mCard, LimitType.Limit)) {
                     mTopImage.setImageBitmap(imageTop.limit);
                     mLimitNum.setText("1");
                     mLimitNum.setTextColor(YGOUtil.c(R.color.yellow));
-                    mLimitNum.setTextSize(TypedValue.COMPLEX_UNIT_SP, 8);
+                    setLimitNumTextSize(0.6f);
                 } else if (limitList.check(mCard, LimitType.SemiLimit)) {
                     mTopImage.setImageBitmap(imageTop.semiLimit);
                     mLimitNum.setText("2");
                     mLimitNum.setTextColor(YGOUtil.c(R.color.yellow));
-                    mLimitNum.setTextSize(TypedValue.COMPLEX_UNIT_SP, 8);
+                    setLimitNumTextSize(0.6f);
                 } else if (limitList.check(mCard, LimitType.GeneSys)) {
                     Integer creditValue = 0;
                     if (limitList.getCredits() != null) {
@@ -114,8 +155,7 @@ public class CardView extends FrameLayout {
                         mTopImage.setImageBitmap(imageTop.credits);
                         mLimitNum.setText(creditValue.toString());
                         mLimitNum.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
-                        mLimitNum.setTextSize(TypedValue.COMPLEX_UNIT_SP,
-                                (creditValue > -10 && creditValue < 100) ? 8 : 6);
+                        setLimitNumTextSize((creditValue > -10 && creditValue < 100) ? 0.6f : 0.45f);
                     } else {
                         mTopImage.setVisibility(View.GONE);
                         mLimitNum.setVisibility(View.GONE);

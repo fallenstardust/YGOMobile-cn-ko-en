@@ -453,7 +453,7 @@
             android:orientation="vertical">
 
             <!-- 主卡组统计行 -->
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="15dp"
                 android:layout_marginVertical="1dp"
@@ -465,6 +465,7 @@
                     android:layout_height="match_parent"
                     android:paddingHorizontal="8dp"
                     android:background="@drawable/panel_sci_fi_bg"
+                    android:layout_gravity="left|center"
                     android:gravity="center"
                     android:orientation="horizontal">
 
@@ -484,79 +485,119 @@
                         android:textSize="8sp" />
                 </LinearLayout>
 
-                <TextView
+                <LinearLayout
+                    android:id="@+id/ll_genesys_scoreboard"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:text="限"
-                    android:textColor="@color/white"
-                    android:textSize="8sp" />
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="8dp"
+                    android:background="@drawable/panel_sci_fi_bg"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tv_limit_total_num"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="100"
-                    android:textColor="@color/white"
-                    android:textSize="8sp" />
+                    <TextView
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginEnd="1dp"
+                        android:background="@drawable/radius_background"
+                        android:gravity="center"
+                        android:text="限"
+                        android:textColor="@color/black"
+                        android:textSize="6sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="计"
-                    android:textColor="@color/white"
-                    android:textSize="8sp" />
+                    <TextView
+                        android:id="@+id/tv_credit_limit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginEnd="1dp"
+                        android:background="@drawable/button_radius_black_transparents"
+                        android:gravity="center"
+                        android:text="\?\?\?"
+                        android:textColor="@color/white"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tv_credit_num"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="8sp" />
+                    <TextView
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginEnd="1dp"
+                        android:background="@drawable/radius_background"
+                        android:gravity="center"
+                        android:text="计"
+                        android:textColor="@color/black"
+                        android:textSize="6sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="余"
-                    android:textColor="@color/white"
-                    android:textSize="8sp" />
+                    <TextView
+                        android:id="@+id/tv_credit_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginEnd="1dp"
+                        android:background="@drawable/button_radius_black_transparents"
+                        android:gravity="center"
+                        android:text="\?\?\?"
+                        android:textColor="@color/white"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tv_remain_num"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="@color/white"
-                    android:textSize="8sp" />
+                    <TextView
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginEnd="1dp"
+                        android:background="@drawable/radius_background"
+                        android:gravity="center"
+                        android:text="余"
+                        android:textColor="@color/black"
+                        android:textSize="6sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tv_deck_genesys"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:background="@drawable/selected"
-                    android:paddingHorizontal="4dp"
-                    android:paddingVertical="2dp"
-                    android:text="GENESYS"
-                    android:textColor="@color/white"
-                    android:textSize="8sp"
-                    android:visibility="gone" />
+                    <TextView
+                        android:id="@+id/tv_credit_remain"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginEnd="1dp"
+                        android:background="@drawable/button_radius_black_transparents"
+                        android:gravity="center"
+                        android:text="\?\?\?"
+                        android:textColor="@color/white"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="10dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginEnd="1dp"
+                        android:background="@drawable/selected"
+                        android:gravity="center"
+                        android:text="  GENESYS  "
+                        android:textColor="@color/white"
+                        android:textSize="6sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
                     android:paddingHorizontal="8dp"
+                    android:layout_gravity="right|center"
                     android:gravity="center"
-                    android:background="@drawable/button_radius_black_transparents">
+                    android:background="@drawable/panel_sci_fi_bg">
 
                     <View
                         android:layout_width="10dp"
@@ -602,7 +643,7 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
                 </LinearLayout>
-            </LinearLayout>
+            </FrameLayout>
 
             <!-- 主卡组网格 -->
             <cn.garymb.ygomobile.ui.widget.CardGroupView
@@ -616,7 +657,7 @@
                 app:lines="4" />
 
             <!-- 额外卡组统计行 -->
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="15dp"
                 android:layout_marginVertical="1dp"
@@ -627,6 +668,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center"
+                    android:layout_gravity="left|center"
                     android:paddingHorizontal="8dp"
                     android:background="@drawable/panel_sci_fi_bg"
                     android:orientation="horizontal">
@@ -647,18 +689,14 @@
                         android:textSize="8sp" />
                 </LinearLayout>
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
                     android:paddingHorizontal="8dp"
+                    android:layout_gravity="right|center"
                     android:gravity="center"
-                    android:background="@drawable/button_radius_black_transparents">
+                    android:background="@drawable/panel_sci_fi_bg">
 
                     <View
                         android:layout_width="10dp"
@@ -719,7 +757,7 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
                 </LinearLayout>
-            </LinearLayout>
+            </FrameLayout>
 
             <!-- 额外卡组网格 -->
             <cn.garymb.ygomobile.ui.widget.CardGroupView
@@ -733,7 +771,7 @@
                 app:lines="1" />
 
             <!-- 副卡组统计行 -->
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="15dp"
                 android:layout_marginVertical="1dp"
@@ -743,6 +781,7 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:layout_gravity="left|center"
                     android:gravity="center"
                     android:paddingHorizontal="8dp"
                     android:background="@drawable/panel_sci_fi_bg"
@@ -764,15 +803,11 @@
                         android:textSize="8sp" />
                 </LinearLayout>
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
+                    android:layout_gravity="right|center"
                     android:gravity="center"
                     android:paddingHorizontal="8dp"
                     android:background="@drawable/panel_sci_fi_bg">
@@ -821,7 +856,7 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
                 </LinearLayout>
-            </LinearLayout>
+            </FrameLayout>
 
             <!-- 副卡组网格 -->
             <cn.garymb.ygomobile.ui.widget.CardGroupView
