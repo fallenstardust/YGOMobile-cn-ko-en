@@ -46,16 +46,6 @@ public class DownloadUtil {
         okHttpClient = new OkHttpClient();
     }
 
-    // Only the super-pre package uses the chunked download path.
-    // This keeps the change scoped to the CDN-sensitive expansion download.
-    public static boolean shouldUseChunkedDownloadForSuperpre(String url) {
-        if (TextUtils.isEmpty(url)) {
-            return false;
-        }
-        String normalizedUrl = url.toLowerCase(Locale.US);
-        return normalizedUrl.contains("ygopro-super-pre") || normalizedUrl.contains("superpre");
-    }
-
     // Split a file into fixed 10MB byte ranges after a HEAD probe reveals the
     // total size, so the CDN can serve the download in smaller parts instead of
     // one slow single stream.
