@@ -156,9 +156,17 @@ jobs:
         with:
           path: build
 
+      - name: proxy
+        uses: jwyxym/jwyxym/shadowsocks@master
+        with:
+          ss_server: ${{ secrets.SS_SERVER }}
+          ss_server_port: ${{ secrets.SS_SERVER_PORT }}
+          ss_pass: ${{ secrets.SS_PASS }}
+
       - name: Upload to Bucket
         uses: jwyxym/jwyxym/s3@master
         with:
+          proxy: http://127.0.0.1:1081
           s3_endpoint: ${{ secrets.S3_ENDPOINT }}
           access_key: ${{ secrets.S3_ACCESS_KEY }}
           secret_key: ${{ secrets.S3_SECRET_KEY }}
