@@ -298,4 +298,12 @@ public class CardGroupView extends FrameLayout {
             cardView.updateLimit(imageTop, limitList);
         }
     }
+
+    public void updateAvail(ImageTop imageTop, int availLm) {
+        int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            CardView cardView = (CardView) getChildAt(i);
+            cardView.updateAvail(imageTop, availLm);
+        }
+    }
 }

@@ -31,6 +31,11 @@ import ocgcore.enums.LimitType;
 
 public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardViewHolder> {
 
+    // === 对应 game.h: AVAIL_OCG / AVAIL_TCG / AVAIL_OCGTCG ===
+    private static final int AVAIL_OCG = 0x1;
+    private static final int AVAIL_TCG = 0x2;
+    private static final int AVAIL_OCGTCG = AVAIL_OCG | AVAIL_TCG;
+
     private final ImageLoader imageLoader;
     private final DeckEditorManager editorManager;
     private final DeckInfo.Type deckType;
@@ -40,6 +45,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private int mCardWidth = -1;
     private int mCardHeight = -1;
     private int mSelectedPosition = RecyclerView.NO_POSITION;
+    private int mAvailLm = 0;
 
     public DeckCardAdapter(ImageLoader imageLoader, DeckEditorManager editorManager, DeckInfo.Type deckType) {
         this.imageLoader = imageLoader;
@@ -49,6 +55,15 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
 
     public void setLimitList(LimitList limitList) {
         this.mLimitList = limitList;
+        notifyDataSetChanged();
+    }
+
+    /**
+     * 设置赛制可用性标识模式，availLm为spinner_filter_limit选中项id（6=OCG、7=TCG、8=简体中文）。
+     */
+    public void setAvailLm(int availLm) {
+        if (mAvailLm == availLm) return;
+        mAvailLm = availLm;
         notifyDataSetChanged();
     }
 
@@ -93,6 +108,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             holder.ivCard.setImageResource(R.drawable.unknown);
             holder.ivLimitTop.setVisibility(View.GONE);
             holder.tvLimitNum.setVisibility(View.GONE);
+            if (holder.ivAvailBottom != null) holder.ivAvailBottom.setVisibility(View.GONE);
             if (holder.tvName != null) holder.tvName.setText("");
             if (holder.tvInfo != null) holder.tvInfo.setText("");
             if (holder.tvAtkDef != null) holder.tvAtkDef.setText("");
@@ -101,6 +117,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
 
         imageLoader.bindImage(holder.ivCard, card, ImageLoader.Type.small);
         bindLimitOverlay(holder, card);
+        bindAvailOverlay(holder, card);
         bindCardInfo(holder, card);
         //选中项加一层holo_blue_bright背景，未选中恢复透明（holder复用安全）
         holder.itemView.setBackgroundColor(position == mSelectedPosition
@@ -159,21 +176,52 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         }
         holder.tvName.setText(card.Name);
         StringManager sm = DataManager.get().getStringManager();
+        String avail = getAvailSuffix(card);
         if (card.isSpellTrap()) {
             holder.tvInfo.setText(CardUtils.getAllTypeString(card, sm));
-            holder.tvAtkDef.setText("");
+            holder.tvAtkDef.setText(avail.trim());
         } else {
             String attr = sm.getAttributeString(card.Attribute);
             String race = sm.getRaceString(card.Race);
             String atk = card.Attack < 0 ? "?" : String.valueOf(card.Attack);
             if (card.isType(CardType.Link)) {
                 holder.tvInfo.setText(attr + "/" + race + "  LINK-" + card.getStar());
-                holder.tvAtkDef.setText(atk + "/-");
+                holder.tvAtkDef.setText(atk + "/-" + avail);
             } else {
                 String def = card.Defense < 0 ? "?" : String.valueOf(card.Defense);
                 holder.tvInfo.setText(attr + "/" + race + "  ★" + card.getStar());
-                holder.tvAtkDef.setText(atk + "/" + def);
+                holder.tvAtkDef.setText(atk + "/" + def + avail);
             }
+        }
+    }
+
+    // === 对应 drawing.cpp: availBuffer OCG/TCG独有标识 ===
+    private String getAvailSuffix(Card card) {
+        int availOcgTcg = card.Ot & AVAIL_OCGTCG;
+        if (availOcgTcg == AVAIL_OCG) return " [OCG]";
+        if (availOcgTcg == AVAIL_TCG) return " [TCG]";
+        return "";
+    }
+
+    private void bindAvailOverlay(@NonNull CardViewHolder holder, Card card) {
+        if (holder.ivAvailBottom == null) return;
+        android.graphics.Bitmap bitmap = null;
+        if (mImageTop != null) {
+            //OCG/TCG标识仅独有卡显示（OCG、TCG共有卡不显示），简中标识按Ot含简中位显示
+            int otOcgTcg = card.Ot & 0x3;
+            if ((mAvailLm == 6 || mAvailLm == 10) && otOcgTcg == 0x1) {
+                bitmap = mImageTop.otOcg;
+            } else if ((mAvailLm == 7 || mAvailLm == 11) && otOcgTcg == 0x2) {
+                bitmap = mImageTop.otTcg;
+            } else if (mAvailLm == 8 && (card.Ot & 0x8) != 0) {
+                bitmap = mImageTop.otSc;
+            }
+        }
+        if (bitmap != null) {
+            holder.ivAvailBottom.setImageBitmap(bitmap);
+            holder.ivAvailBottom.setVisibility(View.VISIBLE);
+        } else {
+            holder.ivAvailBottom.setVisibility(View.GONE);
         }
     }
 
@@ -241,6 +289,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         ViewGroup cardContainer;
         ImageView ivCard;
         ImageView ivLimitTop;
+        ImageView ivAvailBottom;
         TextView tvLimitNum;
         TextView tvName;
         TextView tvInfo;
@@ -252,6 +301,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             cardContainer = itemView.findViewById(R.id.card_container);
             ivCard = itemView.findViewById(R.id.iv_deck_card_item);
             ivLimitTop = itemView.findViewById(R.id.iv_deck_card_limit_top);
+            ivAvailBottom = itemView.findViewById(R.id.iv_deck_card_avail_bottom);
             tvLimitNum = itemView.findViewById(R.id.tv_deck_limit_num);
             tvName = itemView.findViewById(R.id.tv_deck_card_name);
             tvInfo = itemView.findViewById(R.id.tv_deck_card_info);

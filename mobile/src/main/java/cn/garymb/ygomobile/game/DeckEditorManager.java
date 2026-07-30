@@ -396,7 +396,21 @@ public class DeckEditorManager {
         limitAdapter.setColor(Color.WHITE);
         limitAdapter.setTextSize(8f);
         limitAdapter.set(limitItems);
-        if (spinnerFilterLimit != null) spinnerFilterLimit.setAdapter(limitAdapter);
+        if (spinnerFilterLimit != null) {
+            spinnerFilterLimit.setAdapter(limitAdapter);
+            //选中OCG/TCG/简体中文时，在卡组网格与搜索结果item底部显示对应赛制标识
+            spinnerFilterLimit.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                    applyAvailDisplay(getSpinnerItemId(spinnerFilterLimit));
+                }
+
+                @Override
+                public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                    applyAvailDisplay(0);
+                }
+            });
+        }
 
         List<SimpleSpinnerItem> sortItems = new ArrayList<>();
         sortItems.add(new SimpleSpinnerItem(0, "星数↑"));
@@ -970,6 +984,7 @@ public class DeckEditorManager {
             groupView.addCard(card);
         }
         groupView.updateTopImage(mImageTop, mLimitList);
+        groupView.updateAvail(mImageTop, availLm);
         int count = groupView.getChildCount();
         for (int i = 0; i < count; i++) {
             CardView cardView = (CardView) groupView.getChildAt(i);
@@ -1347,5 +1362,17 @@ public class DeckEditorManager {
             }
         });
         effectCategoryPopup.show(btnFilterEffect);
+    }
+
+    //当前赛制标识显示模式（spinner_filter_limit选中项id：6=OCG、7=TCG、8=简体中文，其余不显示）
+    private int availLm = 0;
+
+    private void applyAvailDisplay(int lm) {
+        if (availLm == lm) return;
+        availLm = lm;
+        if (cgvMain != null) cgvMain.updateAvail(mImageTop, availLm);
+        if (cgvExtra != null) cgvExtra.updateAvail(mImageTop, availLm);
+        if (cgvSide != null) cgvSide.updateAvail(mImageTop, availLm);
+        if (searchAdapter != null) searchAdapter.setAvailLm(availLm);
     }
 }

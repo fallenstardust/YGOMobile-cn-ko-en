@@ -36,6 +36,14 @@
             android:textSize="8sp"
             android:textStyle="bold"
             android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/iv_deck_card_avail_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="5dp"
+            android:layout_gravity="bottom|center"
+            android:visibility="gone" />
     </FrameLayout>
 
     <LinearLayout

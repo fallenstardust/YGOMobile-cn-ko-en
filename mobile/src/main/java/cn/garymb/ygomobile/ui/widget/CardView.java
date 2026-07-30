@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -24,6 +25,7 @@ import ocgcore.enums.LimitType;
 
 public class CardView extends FrameLayout {
     private final ImageView mCardView, mTopImage;
+    private final ImageView mAvailImage;
     private final TextView mLimitNum;
     private Card mCard;
     private int mOverlaySize;
@@ -41,6 +43,7 @@ public class CardView extends FrameLayout {
         super(context);
         mCardView = new ImageView(context);
         mTopImage = new ImageView(context);
+        mAvailImage = new ImageView(context);
         mLimitNum = new TextView(context);
         initCountView(Math.round(width / 9.0f * 4.0f));
     }
@@ -49,6 +52,7 @@ public class CardView extends FrameLayout {
         super(context, attrs, defStyleAttr);
         mCardView = new ImageView(context);
         mTopImage = new ImageView(context);
+        mAvailImage = new ImageView(context);
         mLimitNum = new TextView(context);
         initCountView((int) getResources().getDimension(R.dimen.right_size2));
     }
@@ -73,6 +77,15 @@ public class CardView extends FrameLayout {
         mLimitNum.setTextColor(Color.WHITE);
         mLimitNum.setVisibility(View.GONE);
         addView(mLimitNum, lp3);
+
+        //底部赛制可用性标识，与item_deck_card_horizontal.xml的iv_deck_card_avail_bottom对应
+        LayoutParams lp4 = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        lp4.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        lp4.setMargins(p, p, p, p);
+        mAvailImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        mAvailImage.setAdjustViewBounds(true);
+        mAvailImage.setVisibility(View.GONE);
+        addView(mAvailImage, lp4);
     }
 
     /**
@@ -175,6 +188,30 @@ public class CardView extends FrameLayout {
         }
     }
 
+    /**
+     * 底部赛制可用性标识：
+     * availLm为spinner_filter_limit选中项id（6=OCG、7=TCG、8=简体中文、10=OCG独有、11=TCG独有），
+     * OCG/TCG标识仅独有卡显示（OCG、TCG共有卡不显示），简中标识按Ot含简中位显示。
+     */
+    public void updateAvail(ImageTop imageTop, int availLm) {
+        Bitmap bitmap = null;
+        if (mCard != null && imageTop != null) {
+            int otOcgTcg = mCard.Ot & 0x3;
+            if ((availLm == 6 || availLm == 10) && otOcgTcg == 0x1) {
+                bitmap = imageTop.otOcg;
+            } else if ((availLm == 7 || availLm == 11) && otOcgTcg == 0x2) {
+                bitmap = imageTop.otTcg;
+            } else if (availLm == 8 && (mCard.Ot & 0x8) != 0) {
+                bitmap = imageTop.otSc;
+            }
+        }
+        if (bitmap != null) {
+            mAvailImage.setImageBitmap(bitmap);
+            mAvailImage.setVisibility(View.VISIBLE);
+        } else {
+            mAvailImage.setVisibility(View.GONE);
+        }
+    }
 
     public void showCard(ImageLoader imageLoader, Card cardInfo) {
         if (mCard != null && mCard.equals(cardInfo)) return;
