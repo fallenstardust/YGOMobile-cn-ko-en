@@ -341,15 +341,24 @@ public class DeckEditorManager {
         typeAdapter.setColor(Color.WHITE);
         typeAdapter.setTextSize(8f);
         typeAdapter.set(typeItems);
-        if (spinnerFilterType != null) spinnerFilterType.setAdapter(typeAdapter);
+        if (spinnerFilterType != null) {
+            spinnerFilterType.setAdapter(typeAdapter);
+            //主类型切换时按C++ COMBOBOX_MAINTYPE重建子类选项
+            spinnerFilterType.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                    updateType2Spinner(position);
+                }
 
-        List<SimpleSpinnerItem> type2Items = new ArrayList<>();
-        type2Items.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
-        SimpleSpinnerAdapter type2Adapter = new SimpleSpinnerAdapter(activity);
-        type2Adapter.setColor(Color.WHITE);
-        type2Adapter.setTextSize(8f);
-        type2Adapter.set(type2Items);
-        if (spinnerFilterType2 != null) spinnerFilterType2.setAdapter(type2Adapter);
+                @Override
+                public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                    updateType2Spinner(0);
+                }
+            });
+        }
+
+        // 子类spinner_filter_type2初始只含（N/A），随主类型动态重建
+        updateType2Spinner(spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0);
 
         List<SimpleSpinnerItem> attrItems = new ArrayList<>();
         attrItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
@@ -391,7 +400,7 @@ public class DeckEditorManager {
         limitItems.add(new SimpleSpinnerItem(9, sm.getSystemString(1484, "自定义")));
         limitItems.add(new SimpleSpinnerItem(10, sm.getSystemString(1487, "OCG独有")));
         limitItems.add(new SimpleSpinnerItem(11, sm.getSystemString(1488, "TCG独有")));
-        limitItems.add(new SimpleSpinnerItem(12, sm.getSystemString(1485, "无独有")));
+        limitItems.add(new SimpleSpinnerItem(12, sm.getSystemString(1485, "无独有卡")));
         SimpleSpinnerAdapter limitAdapter = new SimpleSpinnerAdapter(activity);
         limitAdapter.setColor(Color.WHITE);
         limitAdapter.setTextSize(8f);
@@ -437,6 +446,64 @@ public class DeckEditorManager {
         if (btnFilterMarks != null) btnFilterMarks.setOnClickListener(v -> showLinkMarkerPopup());
         if (btnFilterSearch != null) btnFilterSearch.setOnClickListener(v -> startFilter());
         if (btnFilterClear != null) btnFilterClear.setOnClickListener(v -> clearSearch());
+    }
+
+    /**
+     * 按主类型（0=全部、1=怪兽、2=魔法、3=陷阱）重建子类spinner_filter_type2选项，
+     * 选项文本取自StringManager，value为对应类型位组合，对齐C++ deck_con.cpp的COMBOBOX_MAINTYPE。
+     */
+    private void updateType2Spinner(int typePos) {
+        if (spinnerFilterType2 == null) return;
+        StringManager sm = DataManager.get().getStringManager();
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        items.add(new SimpleSpinnerItem(0, sm.getSystemString(1080, "（N/A）")));
+        long m = CardType.Monster.getId();
+        switch (typePos) {
+            case 1:
+                items.add(new SimpleSpinnerItem(m | CardType.Normal.getId(), sm.getSystemString(1054, "通常")));
+                items.add(new SimpleSpinnerItem(m | CardType.Effect.getId(), sm.getSystemString(1055, "效果")));
+                items.add(new SimpleSpinnerItem(m | CardType.Fusion.getId(), sm.getSystemString(1056, "融合")));
+                items.add(new SimpleSpinnerItem(m | CardType.Ritual.getId(), sm.getSystemString(1057, "仪式")));
+                items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId(), sm.getSystemString(1063, "同调")));
+                items.add(new SimpleSpinnerItem(m | CardType.Xyz.getId(), sm.getSystemString(1073, "超量")));
+                items.add(new SimpleSpinnerItem(m | CardType.Pendulum.getId(), sm.getSystemString(1074, "灵摆")));
+                items.add(new SimpleSpinnerItem(m | CardType.Link.getId(), sm.getSystemString(1076, "连接")));
+                items.add(new SimpleSpinnerItem(m | CardType.Sp_Summon.getId(), sm.getSystemString(1075, "特殊召唤")));
+                items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Tuner.getId(),
+                        sm.getSystemString(1054, "通常") + "|" + sm.getSystemString(1062, "调整")));
+                items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Pendulum.getId(),
+                        sm.getSystemString(1054, "通常") + "|" + sm.getSystemString(1074, "灵摆")));
+                items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId() | CardType.Tuner.getId(),
+                        sm.getSystemString(1063, "同调") + "|" + sm.getSystemString(1062, "调整")));
+                items.add(new SimpleSpinnerItem(m | CardType.Tuner.getId(), sm.getSystemString(1062, "调整")));
+                items.add(new SimpleSpinnerItem(m | CardType.Gemini.getId(), sm.getSystemString(1061, "二重")));
+                items.add(new SimpleSpinnerItem(m | CardType.Union.getId(), sm.getSystemString(1060, "同盟")));
+                items.add(new SimpleSpinnerItem(m | CardType.Spirit.getId(), sm.getSystemString(1059, "灵魂")));
+                items.add(new SimpleSpinnerItem(m | CardType.Flip.getId(), sm.getSystemString(1071, "反转")));
+                items.add(new SimpleSpinnerItem(m | CardType.Toon.getId(), sm.getSystemString(1072, "卡通")));
+                break;
+            case 2:
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId(), sm.getSystemString(1054, "通常")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.QuickPlay.getId(), sm.getSystemString(1066, "速攻")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Continuous.getId(), sm.getSystemString(1067, "永续")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Ritual.getId(), sm.getSystemString(1057, "仪式")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Equip.getId(), sm.getSystemString(1068, "装备")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Field.getId(), sm.getSystemString(1069, "场地")));
+                break;
+            case 3:
+                items.add(new SimpleSpinnerItem(CardType.Trap.getId(), sm.getSystemString(1054, "通常")));
+                items.add(new SimpleSpinnerItem(CardType.Trap.getId() | CardType.Continuous.getId(), sm.getSystemString(1067, "永续")));
+                items.add(new SimpleSpinnerItem(CardType.Trap.getId() | CardType.Counter.getId(), sm.getSystemString(1070, "反击")));
+                break;
+            default:
+                break;
+        }
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(activity);
+        adapter.setColor(Color.WHITE);
+        adapter.setTextSize(8f);
+        adapter.set(items);
+        spinnerFilterType2.setAdapter(adapter);
+        spinnerFilterType2.setSelection(0);
     }
 
     private void setupDeckSelectorDialog() {
@@ -725,6 +792,7 @@ public class DeckEditorManager {
             if (Card.isType(card.Type, CardType.Token)) continue;
 
             if (!matchesTypeFilter(card)) continue;
+            if (!matchesType2Filter(card)) continue;
             if (!matchesKeywordFilter(card, keyword)) continue;
             if (!matchesLimitFilter(card)) continue;
             if (filterEffect != 0 && (card.Category & filterEffect) == 0) continue;
@@ -1099,6 +1167,20 @@ public class DeckEditorManager {
             default:
                 return true;
         }
+    }
+
+    // === 对应 deck_con.cpp: filter_type2 匹配 ===
+    private boolean matchesType2Filter(Card card) {
+        if (filterType2 == 0) return true;
+        if (filterType == 1) {
+            //怪兽：filter_type2的所有位都需匹配
+            return (card.Type & filterType2) == filterType2;
+        }
+        if (filterType == 2 || filterType == 3) {
+            //魔法/陷阱：精确匹配整个type
+            return card.Type == filterType2;
+        }
+        return true;
     }
 
     private boolean matchesKeywordFilter(Card card, String keyword) {
