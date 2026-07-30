@@ -112,6 +112,7 @@ public class YGOProActivity extends AppCompatActivity implements
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
     private FullScreenUtils mFullScreenUtils;
+    private String currentBgPath;
 
     private static class SumCardInfo {
         int code, controler, location, sequence, opParam, value, index;
@@ -652,6 +653,7 @@ public class YGOProActivity extends AppCompatActivity implements
     // === Main Menu ===
 
     public void showMainMenu() {
+        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
         layoutMainMenu = findViewById(R.id.layout_main_menu);
         tvVersion = findViewById(R.id.tv_version);
         layoutMainMenu.setVisibility(View.VISIBLE);
@@ -675,6 +677,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void restoreMainMenu() {
+        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
         if (layoutMainMenu != null) {
             layoutMainMenu.setVisibility(View.VISIBLE);
         }
@@ -688,6 +691,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showGameUI() {
+        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG);
         hideMainMenu();
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
         fieldCtl.show();
@@ -898,6 +902,7 @@ public class YGOProActivity extends AppCompatActivity implements
         currentReplayEngine = null;
     }
 
+
     private void showDeckEditDialog() {
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
         hideMainMenu();
@@ -963,12 +968,16 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private void setWindowBackground(String relativePath) {
         String path = AppsSettings.get().getResourcePath() + "/" + relativePath;
+        if (TextUtils.equals(path, currentBgPath)) {
+            return;
+        }
         File file = new File(path);
         if (file.exists()) {
             try {
                 Bitmap bitmap = BitmapFactory.decodeFile(path);
                 if (bitmap != null) {
                     getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), bitmap));
+                    currentBgPath = path;
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load background: " + relativePath, e);
