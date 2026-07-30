@@ -9,7 +9,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import cn.garymb.ygomobile.core.IrrlichtBridge;
@@ -21,6 +25,7 @@ import okhttp3.Response;
 
 public class DownloadUtil {
 
+    private static final long SUPERPRE_CHUNK_SIZE_BYTES = 10L * 1024 * 1024;
     private static DownloadUtil downloadUtil;
     private final OkHttpClient okHttpClient;
     public static final int TYPE_DOWNLOAD_EXCEPTION = 1;
@@ -39,6 +44,29 @@ public class DownloadUtil {
 
     public DownloadUtil() {
         okHttpClient = new OkHttpClient();
+    }
+
+    // Split a file into fixed 10MB byte ranges after a HEAD probe reveals the
+    // total size, so the CDN can serve the download in smaller parts instead of
+    // one slow single stream.
+    public static List<ChunkRange> buildChunkRanges(long contentLength) {
+        List<ChunkRange> ranges = new ArrayList<>();
+        if (contentLength <= 0) {
+            ranges.add(new ChunkRange(0, -1));
+            return ranges;
+        }
+
+        long start = 0;
+        while (start < contentLength) {
+            long end = Math.min(start + SUPERPRE_CHUNK_SIZE_BYTES - 1, contentLength - 1);
+            ranges.add(new ChunkRange(start, end));
+            start = end + 1;
+        }
+
+        if (ranges.isEmpty()) {
+            ranges.add(new ChunkRange(0, -1));
+        }
+        return ranges;
     }
 
     // 添加 ETag 存储工具方法
@@ -176,6 +204,194 @@ public class DownloadUtil {
         });
     }
 
+
+    public void downloadSuperpre(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
+        downloadInChunks(url, destFileDir, destFileName, listener);
+    }
+
+    // Probe the remote file with HEAD first to learn its size, calculate the
+    // 10MB ranges, and then request the file by byte ranges in sequence.
+    private void downloadInChunks(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
+        Request.Builder builder = new Request.Builder().head().url(url);
+        Request request = builder.build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                downloadSingleFile(url, destFileDir, destFileName, listener);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    if (!response.isSuccessful()) {
+                        downloadSingleFile(url, destFileDir, destFileName, listener);
+                        return;
+                    }
+
+                    String contentLen = response.header("Content-Length");
+                    long contentLength = (contentLen == null || contentLen.isEmpty()) ? 0 : Long.parseLong(contentLen);
+                    if (contentLength <= 0) {
+                        downloadSingleFile(url, destFileDir, destFileName, listener);
+                        return;
+                    }
+
+                    File dir = new File(destFileDir);
+                    if (!dir.exists()) {
+                        dir.mkdirs();
+                    }
+                    File file = new File(dir, destFileName);
+                    if (file.exists()) {
+                        file.delete();
+                    }
+
+                    List<ChunkRange> ranges = buildChunkRanges(contentLength);
+                    listener.onDownloading(0);
+                    downloadChunkSequentially(url, file, ranges, 0, contentLength, 0, listener);
+                } finally {
+                    IOUtils.close(response.body());
+                }
+            }
+        });
+    }
+
+    // Write each requested byte range into the destination file at the correct offset.
+    private void downloadChunkSequentially(final String url,
+                                          final File file,
+                                          final List<ChunkRange> ranges,
+                                          final int index,
+                                          final long totalLength,
+                                          final long downloadedBytesSoFar,
+                                          final OnDownloadListener listener) {
+        if (index >= ranges.size()) {
+            listener.onDownloadSuccess(file);
+            return;
+        }
+
+        final ChunkRange range = ranges.get(index);
+        Request.Builder builder = new Request.Builder().url(url);
+        if (range.end >= 0) {
+            builder.addHeader("Range", "bytes=" + range.start + "-" + range.end);
+        }
+        Request request = builder.build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                listener.onDownloadFailed(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    listener.onDownloadFailed(new Exception("error:" + response.code()));
+                    return;
+                }
+
+                try {
+                    RandomAccessFile raf = new RandomAccessFile(file, "rw");
+                    try {
+                        raf.seek(range.start);
+                        InputStream is = response.body().byteStream();
+                        byte[] buf = new byte[2048];
+                        int len;
+                        long bytesWritten = 0;
+                        while ((len = is.read(buf)) != -1) {
+                            raf.write(buf, 0, len);
+                            bytesWritten += len;
+                        }
+                        long completedBytes = downloadedBytesSoFar + bytesWritten;
+                        if (totalLength > 0) {
+                            int progress = (int) (completedBytes * 100L / totalLength);
+                            listener.onDownloading(progress);
+                        }
+                        if (index + 1 < ranges.size()) {
+                            downloadChunkSequentially(url, file, ranges, index + 1, totalLength, completedBytes, listener);
+                        } else {
+                            listener.onDownloadSuccess(file);
+                        }
+                    } finally {
+                        raf.close();
+                        IOUtils.close(response.body());
+                    }
+                } catch (Exception ex) {
+                    listener.onDownloadFailed(ex);
+                }
+            }
+        });
+    }
+
+    // Fallback for servers or responses that do not support range requests.
+    private void downloadSingleFile(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
+        Request.Builder builder = new Request.Builder().url(url);
+        Request request = builder.build();
+        Call call = okHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                listener.onDownloadFailed(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    listener.onDownloadFailed(new Exception("error:" + response.code()));
+                    return;
+                }
+
+                String contentLen = response.header("Content-Length");
+                final long contentLength = (contentLen == null || contentLen.isEmpty()) ? 0 : Long.parseLong(contentLen);
+                InputStream is = null;
+                byte[] buf = new byte[2048];
+                int len = 0;
+                FileOutputStream out = null;
+                File dir = new File(destFileDir);
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+                File file = new File(dir, destFileName);
+                boolean saved = false;
+                try {
+                    is = response.body().byteStream();
+                    long total = response.body().contentLength();
+                    if (contentLength > 0 && total != contentLength) {
+                        listener.onDownloadFailed(new Exception("file length[" + total + "] < " + contentLen));
+                    } else {
+                        out = new FileOutputStream(file, false);
+                        long sum = 0;
+                        while ((len = is.read(buf)) != -1) {
+                            out.write(buf, 0, len);
+                            sum += len;
+                            int progress = (int) (sum * 1.0f / total * 100);
+                            listener.onDownloading(progress);
+                        }
+                        out.flush();
+                        saved = true;
+                    }
+                } catch (Exception ex) {
+                    listener.onDownloadFailed(ex);
+                } finally {
+                    IOUtils.close(out);
+                    IOUtils.close(is);
+                }
+                if (saved) {
+                    if (contentLength > 0 && file.length() < contentLength) {
+                        listener.onDownloadFailed(new Exception("file length[" + file.length() + "] < " + contentLen));
+                    } else {
+                        listener.onDownloadSuccess(file);
+                    }
+                }
+            }
+        });
+    }
+
+    public static class ChunkRange {
+        public final long start;
+        public final long end;
+
+        public ChunkRange(long start, long end) {
+            this.start = start;
+            this.end = end;
+        }
+    }
 
     public interface OnDownloadListener {
 
