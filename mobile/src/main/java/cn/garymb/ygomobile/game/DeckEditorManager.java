@@ -402,7 +402,7 @@ public class DeckEditorManager {
         sortItems.add(new SimpleSpinnerItem(0, "星数↑"));
         sortItems.add(new SimpleSpinnerItem(1, "攻击↑"));
         sortItems.add(new SimpleSpinnerItem(2, "守备↑"));
-        sortItems.add(new SimpleSpinnerItem(3, "名称"));
+        sortItems.add(new SimpleSpinnerItem(3, "名称↓"));
         SimpleSpinnerAdapter sortAdapter = new SimpleSpinnerAdapter(activity);
         sortAdapter.setColor(Color.WHITE);
         sortAdapter.setTextSize(8f);
@@ -742,6 +742,9 @@ public class DeckEditorManager {
         if (searchAdapter != null) {
             searchAdapter.setCards(searchResults);
         }
+        if (rvSearchResults != null) {
+            rvSearchResults.scrollToPosition(0);
+        }
         if (listener != null) {
             listener.onSearchResultsUpdated(searchResults.size());
         }
@@ -782,32 +785,124 @@ public class DeckEditorManager {
         if (effectCategoryPopup != null && effectCategoryPopup.isShowing()) {
             effectCategoryPopup.dismiss();
         }
-        startFilter();
+        //清空按钮同时清除搜索结果列表所有item
+        searchResults.clear();
+        updateSearchResultCount();
+        if (searchAdapter != null) {
+            searchAdapter.setCards(searchResults);
+        }
+        if (listener != null) {
+            listener.onSearchResultsUpdated(0);
+        }
     }
 
     // === 对应 deck_con.cpp: SortList ===
     public void sortSearchResults() {
         int sortSel = spinnerSortType != null ? spinnerSortType.getSelectedItemPosition() : 0;
-        Comparator<Card> comparator;
+        Comparator<Card> comparator = (a, b) -> {
+            int classA = getCardClassRank(a);
+            int classB = getCardClassRank(b);
+            if (classA != classB) return Integer.compare(classA, classB);
+            int cmp;
+            if (classA == 0) {
+                //怪兽卡内部按spinner_sort_type选择的类型排序
+                cmp = compareMonsterBySortType(a, b, sortSel);
+            } else {
+                //魔法陷阱：先按子类型，名称模式按名称，其余按卡号
+                cmp = Integer.compare(getCardSubTypeRank(a, classA), getCardSubTypeRank(b, classB));
+                if (cmp == 0 && sortSel == 3) {
+                    cmp = compareCardName(a, b);
+                }
+            }
+            if (cmp != 0) return cmp;
+            return Integer.compare(a.Code, b.Code);
+        };
+        Collections.sort(searchResults, comparator);
+    }
+
+    //大类排序：怪兽(0) < 魔法(1) < 陷阱(2)
+    private int getCardClassRank(Card card) {
+        if (Card.isType(card.Type, CardType.Monster)) return 0;
+        if (Card.isType(card.Type, CardType.Spell)) return 1;
+        if (Card.isType(card.Type, CardType.Trap)) return 2;
+        return 3;
+    }
+
+    /**
+     * 子类排序：
+     * 怪兽：通常→效果→仪式→融合→同调→超量→连接
+     * 魔法：通常→仪式→速攻→永续→装备→场地
+     * 陷阱：通常→永续→反击
+     */
+    private int getCardSubTypeRank(Card card, int classRank) {
+        if (classRank == 0) {
+            if (Card.isType(card.Type, CardType.Link)) return 6;
+            if (Card.isType(card.Type, CardType.Xyz)) return 5;
+            if (Card.isType(card.Type, CardType.Synchro)) return 4;
+            if (Card.isType(card.Type, CardType.Fusion)) return 3;
+            if (Card.isType(card.Type, CardType.Ritual)) return 2;
+            if (Card.isType(card.Type, CardType.Normal)) return 0;
+            return 1;
+        }
+        if (classRank == 1) {
+            if (Card.isType(card.Type, CardType.Ritual)) return 1;
+            if (Card.isType(card.Type, CardType.QuickPlay)) return 2;
+            if (Card.isType(card.Type, CardType.Continuous)) return 3;
+            if (Card.isType(card.Type, CardType.Equip)) return 4;
+            if (Card.isType(card.Type, CardType.Field)) return 5;
+            return 0;
+        }
+        if (classRank == 2) {
+            if (Card.isType(card.Type, CardType.Continuous)) return 1;
+            if (Card.isType(card.Type, CardType.Counter)) return 2;
+            return 0;
+        }
+        return 0;
+    }
+
+    // === 对应 data_manager.cpp: deck_sort_lv / deck_sort_atk / deck_sort_def ===
+    private int compareMonsterBySortType(Card a, Card b, int sortSel) {
+        int subA = getCardSubTypeRank(a, 0);
+        int subB = getCardSubTypeRank(b, 0);
+        int cmp;
         switch (sortSel) {
             case 1:
-                comparator = (a, b) -> Integer.compare(a.Attack, b.Attack);
-                break;
+                //攻击：攻↓ → 守↓ → 星↓ → 子类型
+                cmp = Integer.compare(b.Attack, a.Attack);
+                if (cmp != 0) return cmp;
+                cmp = Integer.compare(b.Defense, a.Defense);
+                if (cmp != 0) return cmp;
+                cmp = Integer.compare(b.Level & 0xff, a.Level & 0xff);
+                if (cmp != 0) return cmp;
+                return Integer.compare(subA, subB);
             case 2:
-                comparator = (a, b) -> Integer.compare(a.Defense, b.Defense);
-                break;
+                //守备：守↓ → 攻↓ → 星↓ → 子类型
+                cmp = Integer.compare(b.Defense, a.Defense);
+                if (cmp != 0) return cmp;
+                cmp = Integer.compare(b.Attack, a.Attack);
+                if (cmp != 0) return cmp;
+                cmp = Integer.compare(b.Level & 0xff, a.Level & 0xff);
+                if (cmp != 0) return cmp;
+                return Integer.compare(subA, subB);
             case 3:
-                comparator = (a, b) -> {
-                    String na = a.Name != null ? a.Name : "";
-                    String nb = b.Name != null ? b.Name : "";
-                    return na.compareTo(nb);
-                };
-                break;
+                //名称：按卡名
+                return compareCardName(a, b);
             default:
-                comparator = (a, b) -> Integer.compare(a.Level & 0xff, b.Level & 0xff);
-                break;
+                //星数：子类型 → 星↓ → 攻↓ → 守↓
+                cmp = Integer.compare(subA, subB);
+                if (cmp != 0) return cmp;
+                cmp = Integer.compare(b.Level & 0xff, a.Level & 0xff);
+                if (cmp != 0) return cmp;
+                cmp = Integer.compare(b.Attack, a.Attack);
+                if (cmp != 0) return cmp;
+                return Integer.compare(b.Defense, a.Defense);
         }
-        Collections.sort(searchResults, comparator);
+    }
+
+    private int compareCardName(Card a, Card b) {
+        String na = a.Name != null ? a.Name : "";
+        String nb = b.Name != null ? b.Name : "";
+        return na.compareTo(nb);
     }
 
     // === 对应 deck_con.cpp: RefreshReadonly ===
