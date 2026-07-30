@@ -62,6 +62,7 @@ import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.FullScreenUtils;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -110,6 +111,7 @@ public class YGOProActivity extends AppCompatActivity implements
     private boolean[] sumSelected;
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
+    private FullScreenUtils mFullScreenUtils;
 
     private static class SumCardInfo {
         int code, controler, location, sequence, opParam, value, index;
@@ -329,19 +331,15 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void setupFullScreen() {
-        getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        if (mFullScreenUtils == null) {
+            mFullScreenUtils = new FullScreenUtils(this, AppsSettings.get().isImmerSiveMode());
+            mFullScreenUtils.onCreate();
+        }
+        mFullScreenUtils.fullscreen();
     }
 
     private void initViews() {
