@@ -175,7 +175,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         mServerListAdapter = new ServerListAdapter(getContext());
         LayoutInflater infla = LayoutInflater.from(getContext());
         //添加服务器
-        View footView = infla.inflate(R.layout.item_ic_add, null);
+        View footView = infla.inflate(R.layout.item_home_ic_add, null);
         TextView add_server = footView.findViewById(R.id.add_server);
         add_server.setOnClickListener(this);
 
@@ -240,12 +240,25 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         tv_banner_loading.setOnClickListener(this);
         xb_banner.setOnItemClickListener((banner, model, v, position) -> {
             String newsUrl = mcNewsList.get(position).getNews_url();
+            
+            // 检查URL是否有效
+            if (newsUrl == null || newsUrl.isEmpty()) {
+                YGOUtil.showTextToast(R.string.loading_failed);
+                return;
+            }
+            
             if (newsUrl.startsWith(MyCard.MYCARD_POST_URL)) {
                 WebActivity.open(getContext(), getString(R.string.McNews), newsUrl);
             } else {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse(newsUrl));
-                startActivity(intent);
+                
+                // 检查是否有可以处理该Intent的Activity
+                if (intent.resolveActivity(getContext().getPackageManager()) != null) {
+                    startActivity(intent);
+                } else {
+                    YGOUtil.showTextToast(R.string.loading_failed);
+                }
             }
 
         });

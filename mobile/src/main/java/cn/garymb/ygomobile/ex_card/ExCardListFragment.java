@@ -69,8 +69,10 @@ public class ExCardListFragment extends Fragment {
     public void onStop() {
         super.onStop();
         LogUtil.i(TAG, "excard fragment on stop");
-        if (EventBus.getDefault().isRegistered(this))//加上判断
+        if (EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
+        
+        handler.removeCallbacksAndMessages(null);
     }
 
     public void initView(View layoutView) {
@@ -148,7 +150,7 @@ public class ExCardListFragment extends Fragment {
         ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
         EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
 
-        DownloadUtil.get().download(fileUrl, path, file.getName(), new DownloadUtil.OnDownloadListener() {
+        DownloadUtil.get().downloadSuperpre(fileUrl, path, file.getName(), new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
                 Message message = new Message();
@@ -193,6 +195,11 @@ public class ExCardListFragment extends Fragment {
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
+            
+            if (!isAdded() || context == null) {
+                return;
+            }
+            
             switch (msg.what) {
                 case DownloadUtil.TYPE_DOWNLOAD_ING:
                     textDownload.setText(msg.arg1 + "%");
@@ -211,7 +218,7 @@ public class ExCardListFragment extends Fragment {
 //                    break;
                 case DownloadUtil.TYPE_DOWNLOAD_OK:
                     downloadState = DownloadState.NO_DOWNLOAD;
-                    AddServer(getActivity(), context.getString(R.string.Pre_Server_Name), context.getString(R.string.tip_superpre_desc),
+                    AddServer(context, context.getString(R.string.Pre_Server_Name), context.getString(R.string.tip_superpre_desc),
                             Constants.URL_Mycard_Super_Pre_Server, Constants.PORT_Mycard_Super_Pre_Server, "Knight of Hanoi");
                     //changeDownloadButton();在下载完成后，通过EventBus通知下载完成（加入用户点击下载后临时切出本fragment，又在下载完成后切回，通过eventbus能保证按钮样式正确更新
                     /* 注意，要先更新版本号 */

@@ -52,9 +52,10 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
-import cn.garymb.ygomobile.ui.mycard.DeckWinRateFragment;
+import cn.garymb.ygomobile.ui.mycard.arena.DeckWinRateFragment;
 import cn.garymb.ygomobile.ui.mycard.MyCardWebFragment;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
+import cn.garymb.ygomobile.ui.mycard.arena.MycardDuelArenaFragment;
 import cn.garymb.ygomobile.ui.mycard.mcchat.MycardChatFragment;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.settings.SettingFragment;
@@ -90,8 +91,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public MycardFragment fragment_mycard;
     public SettingFragment fragment_settings;
     public MycardChatFragment fragment_mycard_chatting_room;
-    public DeckWinRateFragment fragment_deck_win_rate;
     public MyCardWebFragment fragment_mycard_web;
+    public MycardDuelArenaFragment fragment_duel_arena;
     long exitLasttime = 0;
     private CardLoader cardLoader;
     private ImageLoader imageLoader;
@@ -183,13 +184,13 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         fragment_settings = new SettingFragment();
 
         fragment_mycard_chatting_room = new MycardChatFragment();
-        fragment_deck_win_rate = new DeckWinRateFragment();
+        fragment_duel_arena = new MycardDuelArenaFragment();
         fragment_mycard_web = new MyCardWebFragment();
 
         mFragment = fragment_home;
         getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                        R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                        R.anim.push_in, R.anim.push_out)
                 .add(R.id.fragment_content, fragment_home).commit();
         getSupportActionBar().hide();
     }
@@ -279,20 +280,20 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public void switchSettingFragment() {
         bottomNavigationBar.setFirstSelectedPosition(4).initialise();
         getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                        R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                        R.anim.push_in, R.anim.push_out)
                 .hide(mFragment).commit();
         if (fragment_settings.isAdded()) {
             if (fragment_settings.isHidden()) {
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                        .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                R.anim.push_in, R.anim.push_out)
                         .show(fragment_settings).commit();
             }
         } else {
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                    .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                            R.anim.push_in, R.anim.push_out)
                     .add(R.id.fragment_content, fragment_settings).commit();
         }
 
@@ -302,34 +303,34 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     public void switchFragment(Fragment fragment, int page, boolean replace) {
         if (fragment_settings != null && fragment_settings.isAdded() && !fragment_settings.isHidden())
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                    .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                            R.anim.push_in, R.anim.push_out)
                     .hide(fragment_settings).commit();
         bottomNavigationBar.setFirstSelectedPosition(page).initialise();
         if (mFragment.isHidden())
             getSupportFragmentManager().beginTransaction()
-                    .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                            R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                    .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                            R.anim.push_in, R.anim.push_out)
                     .show(mFragment).commit();
         if (mFragment != fragment) {
             if (!fragment.isAdded()) {
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                        .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                R.anim.push_in, R.anim.push_out)
                         .hide(mFragment)
                         .add(R.id.fragment_content, fragment).commit();
             } else {
                 if (replace) {
                     getSupportFragmentManager().beginTransaction()
-                            .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                    R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                            .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                    R.anim.push_in, R.anim.push_out)
                             .hide(mFragment).detach(fragment).attach(fragment)
                             .show(fragment)
                             .commit();
                 } else {
                     getSupportFragmentManager().beginTransaction()
-                            .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                    R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                            .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                    R.anim.push_in, R.anim.push_out)
                             .hide(mFragment).show(fragment).commit();
                 }
             }
@@ -337,8 +338,8 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         } else {
             if (replace) {
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(R.anim.mechanical_expand_in, R.anim.mechanical_collapse_out,
-                                R.anim.mechanical_slide_in, R.anim.mechanical_slide_out)
+                        .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                                R.anim.push_in, R.anim.push_out)
                         .hide(mFragment).detach(fragment).attach(fragment)
                         .show(fragment)
                         .commit();

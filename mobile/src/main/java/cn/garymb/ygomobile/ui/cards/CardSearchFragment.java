@@ -329,7 +329,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             if (mDialog == null) {
                 mDialog = new DialogPlus(getContext());
                 mDialog.setView(mCardDetail.getView());
-                mDialog.hideButton();
+                mDialog.hideButton(true);
                 mDialog.hideTitleBar();
                 mDialog.setOnGestureListener(new AOnGestureListener() {
                     @Override

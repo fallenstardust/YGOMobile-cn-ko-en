@@ -2,7 +2,7 @@
 #include "deck_manager.h"
 #include "data_manager.h"
 #include "game.h"
-#include "myfilesystem.h"
+#include "file_system.h"
 #include "network.h"
 
 namespace ygo {
@@ -31,7 +31,7 @@ void DeckManager::LoadLFListSingle(const char* path) {
     // 以只读模式打开指定路径的文件
     FILE* fp = myfopen(path, "r");
     // 定义字符缓冲区，用于存储从文件读取的单行内容
-    char linebuf[256]{};
+    char linebuf[1024]{};
     // 定义宽字符缓冲区，用于存储转换后的字符串
     wchar_t strBuffer[256]{};
     // 检查文件是否成功打开
@@ -576,7 +576,7 @@ void DeckManager::SaveDeck(const Deck& deck, std::stringstream& deckStream) {
  * @param file 保存的目标文件路径
  * @return 保存成功返回true，失败返回false
  */
-bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
+bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file, bool requestNewId) {
 	// 检查并创建deck目录
 	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
 		return false;
@@ -586,6 +586,16 @@ bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
 	if(!fp)
 		return false;
 
+	// 如果需要获取新deckId，清除缓存中的旧deckId/userId注释行
+	if (requestNewId) {
+		deckComments.erase(
+			std::remove_if(deckComments.begin(), deckComments.end(), [](const std::wstring& comment) {
+				return comment.length() >= 2 && comment[0] == L'#' && comment[1] == L'#';
+			}),
+			deckComments.end()
+		);
+	}
+
 	// 将卡组数据序列化到字符串流中
 	std::stringstream deckStream;
 	SaveDeck(deck, deckStream);
@@ -593,10 +603,41 @@ bool DeckManager::SaveDeck(const Deck& deck, const wchar_t* file) {
 	// 将序列化的数据写入文件
 	std::fputs(deckStream.str().c_str(), fp);
 	std::fclose(fp);
+
+	// 保存成功后，同步更新在线备份
+	if (mainGame != nullptr && mainGame->appMain != nullptr && file != nullptr) {
+		// 将宽字符路径转换为 UTF-8
+		char utf8_path[512];
+		BufferIO::EncodeUTF8(file, utf8_path);
+
+		if (requestNewId) {
+			// 新建/另存为/复制：请求新的 deckId 并和 userId 一起保存到文件
+			irr::android::requestNewDeckIdAndSync(mainGame->appMain, utf8_path);
+		} else {
+			// 普通保存：维持现有 deckId 不变
+			irr::android::syncSaveDeck(mainGame->appMain, utf8_path);
+		}
+	}
+
 	return true;
 }
 bool DeckManager::DeleteDeck(const wchar_t* file) {
-	return FileSystem::RemoveFile(file);
+	bool result = false;
+
+	// 先同步删除在线卡组（此时文件还存在，可以读取 deckId）
+	if (file != nullptr) {
+		char utf8_path[512];
+		BufferIO::EncodeUTF8(file, utf8_path);
+
+		if (mainGame != nullptr && mainGame->appMain != nullptr) {
+			irr::android::deleteDeckSync(mainGame->appMain, utf8_path);
+		}
+	}
+
+	// 再删除本地文件
+	result = FileSystem::RemoveFile(file);
+
+	return result;
 }
 bool DeckManager::CreateCategory(const wchar_t* name) {
 	if(!FileSystem::IsDirExists(L"./deck") && !FileSystem::MakeDir(L"./deck"))
@@ -616,6 +657,20 @@ bool DeckManager::RenameCategory(const wchar_t* oldname, const wchar_t* newname)
 	wchar_t newlocalname[256];
 	myswprintf(oldlocalname, L"./deck/%ls", oldname);
 	myswprintf(newlocalname, L"./deck/%ls", newname);
+
+	// 在重命名本地文件夹之前，先同步更新在线备份中该分类的名称
+	if (mainGame != nullptr && mainGame->appMain != nullptr && oldname != nullptr && newname != nullptr) {
+		// 将宽字符分类名转换为 UTF-8
+		char utf8_old_category[256];
+		char utf8_new_category[256];
+		BufferIO::EncodeUTF8(oldname, utf8_old_category);
+		BufferIO::EncodeUTF8(newname, utf8_new_category);
+
+		// 调用 Android JNI 方法同步重命名该分类下的在线卡组
+		irr::android::renameCategoryDecksSync(mainGame->appMain, utf8_old_category, utf8_new_category);
+	}
+
+	// 重命名本地文件夹
 	return FileSystem::Rename(oldlocalname, newlocalname);
 }
 bool DeckManager::DeleteCategory(const wchar_t* name) {
@@ -623,6 +678,18 @@ bool DeckManager::DeleteCategory(const wchar_t* name) {
 	myswprintf(localname, L"./deck/%ls", name);
 	if(!FileSystem::IsDirExists(localname))
 		return false;
+
+	// 在删除本地文件夹之前，先同步删除在线备份中该分类下的所有卡组
+	if (mainGame != nullptr && mainGame->appMain != nullptr && name != nullptr) {
+		// 将宽字符分类名转换为 UTF-8
+		char utf8_category[256];
+		BufferIO::EncodeUTF8(name, utf8_category);
+
+		// 调用 Android JNI 方法同步删除该分类下的在线卡组
+		irr::android::deleteCategoryDecksSync(mainGame->appMain, utf8_category);
+	}
+
+	// 删除本地文件夹及其所有内容
 	return FileSystem::DeleteDir(localname);
 }
 bool DeckManager::SaveDeckArray(const DeckArray& deck, const wchar_t* name) {

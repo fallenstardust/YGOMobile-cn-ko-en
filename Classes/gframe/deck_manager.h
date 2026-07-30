@@ -62,7 +62,7 @@ public:
 	static void GetDeckFile(wchar_t* ret, irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
 	static FILE* OpenDeckFile(const wchar_t* file, const char* mode);
 	static irr::io::IReadFile* OpenDeckReader(const wchar_t* file);
-	static bool SaveDeck(const Deck& deck, const wchar_t* file);
+	static bool SaveDeck(const Deck& deck, const wchar_t* file, bool requestNewId = true);
 	static void SaveDeck(const Deck& deck, std::stringstream& deckStream);
 	static bool DeleteDeck(const wchar_t* file);
 	static bool CreateCategory(const wchar_t* name);

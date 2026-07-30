@@ -28,7 +28,7 @@ inline bool check_playerid(int32_t playerid) {
 #define FALSE 0
 
 #define SIZE_MESSAGE_BUFFER 0x2000u
-#define SIZE_RETURN_VALUE 512u
+#define SIZE_RETURN_VALUE 256u
 #define SIZE_AI_NAME 128u
 #define SIZE_HINT_MSG	1024u
 
@@ -72,6 +72,7 @@ inline bool check_playerid(int32_t playerid) {
 #define POS_FACEDOWN			0xa
 #define POS_ATTACK				0x3
 #define POS_DEFENSE				0xc
+#define POS_REVEAL				0x80
 //Flip effect flags
 #define NO_FLIP_EFFECT			0x10000
 

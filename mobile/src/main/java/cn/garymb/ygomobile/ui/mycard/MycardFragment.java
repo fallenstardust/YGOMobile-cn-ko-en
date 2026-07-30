@@ -2,12 +2,15 @@ package cn.garymb.ygomobile.ui.mycard;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -15,7 +18,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -39,16 +41,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
-import com.feihua.dialogutils.util.DialogUtils;
 import com.google.android.material.tabs.TabLayout;
 import com.king.view.circleprogressview.CircleProgressView;
 import com.ourygo.lib.duelassistant.util.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -57,38 +56,39 @@ import cn.garymb.ygomobile.adapter.DuelRoomBQAdapter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.adapter.McNewsAdapter;
-import cn.garymb.ygomobile.ui.mycard.bean.McNews;
-import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
-import cn.garymb.ygomobile.ui.mycard.watchDuel.WaitingDuelManagement;
-import cn.garymb.ygomobile.ui.widget.DeckPieChartView;
+import cn.garymb.ygomobile.ui.mycard.adapter.UserDuelDetailAdapter;
+import cn.garymb.ygomobile.ui.mycard.arena.MycardDuelArenaFragment;
 import cn.garymb.ygomobile.ui.mycard.base.OnDuelRoomListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnJoinChatListener;
 import cn.garymb.ygomobile.ui.mycard.base.OnMcMatchListener;
 import cn.garymb.ygomobile.ui.mycard.bean.DuelRoom;
 import cn.garymb.ygomobile.ui.mycard.bean.McDuelInfo;
+import cn.garymb.ygomobile.ui.mycard.bean.McNews;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
+import cn.garymb.ygomobile.ui.mycard.bean.MyCardPieChart;
 import cn.garymb.ygomobile.ui.mycard.bean.YGOServer;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatListener;
 import cn.garymb.ygomobile.ui.mycard.mcchat.ChatMessage;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.ServiceManagement;
 import cn.garymb.ygomobile.ui.mycard.mcchat.management.UserManagement;
+import cn.garymb.ygomobile.ui.mycard.watchDuel.WaitingDuelManagement;
 import cn.garymb.ygomobile.ui.mycard.watchDuel.WatchDuelManagement;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.ui.widget.DeckPieChartView;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.HandlerUtil;
-import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
-import okhttp3.Call;
 
 public class MycardFragment extends BaseFragemnt implements View.OnClickListener, MyCard.MyCardListener, OnJoinChatListener, ChatListener, OnDuelRoomListener {
     private static final int FILECHOOSER_RESULTCODE = 10;
@@ -123,6 +123,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     private CircleProgressView funCpvRank, matchCpvRank;
     private McDuelInfo currentMcDuelInfo;
+    private LinearLayout ll_user_data;
+    private UserDuelDetailAdapter duelDetailAdapter;
+
     private SwipeRefreshLayout srl_update;
     private RecyclerView rv_list;
     private WatchDuelManagement duelManagement;
@@ -180,11 +183,33 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     }
                     break;
                 case QUERY_DUEL_INFO_OK:
-                    currentMcDuelInfo = (McDuelInfo) msg.obj;
+                    McDuelInfo newMcDuelInfo = (McDuelInfo) msg.obj;
+                    if (currentMcDuelInfo != null && newMcDuelInfo != null) {
+                        StringBuilder diffMsg = new StringBuilder();
+                        Integer oldDp = currentMcDuelInfo.getDp();
+                        Integer newDp = newMcDuelInfo.getDp();
+                        Integer oldExp = currentMcDuelInfo.getExp();
+                        Integer newExp = newMcDuelInfo.getExp();
+                        if (oldDp != null && newDp != null && !oldDp.equals(newDp)) {
+                            int dpDiff = newDp - oldDp;
+                            diffMsg.append("D.P ").append(dpDiff > 0 ? "+" : "").append(dpDiff);
+                        }
+                        if (oldExp != null && newExp != null && !oldExp.equals(newExp)) {
+                            int expDiff = newExp - oldExp;
+                            if (diffMsg.length() > 0) {
+                                diffMsg.append("  ");
+                            }
+                            diffMsg.append("EXP ").append(expDiff > 0 ? "+" : "").append(expDiff);
+                        }
+                        if (diffMsg.length() > 0) {
+                            YGOUtil.showTextToast(Gravity.TOP, diffMsg.toString(), Toast.LENGTH_LONG);
+                        }
+                    }
+                    currentMcDuelInfo = newMcDuelInfo;
                     updateFunRank(currentMcDuelInfo);
                     updateMatchRank(currentMcDuelInfo);
                     if (currentMcDuelInfo != null) {
-                        tv_dp_title.setText("D.P：" + currentMcDuelInfo.getDp());
+                        tv_dp_title.setText("D.P: " + currentMcDuelInfo.getDp() + "\nEXP: " + currentMcDuelInfo.getExp());
                     }
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
@@ -193,7 +218,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     Log.e("MCFragment", "查询决斗信息失败: " + msg.obj);
                     pb_loading.setVisibility(View.GONE);
                     iv_refresh.setVisibility(View.VISIBLE);
-                    YGOUtil.show("战绩加载失败: " + msg.obj.toString());
+                    YGOUtil.show(YGOUtil.s(R.string.loading_failed) +": " + msg.obj.toString());
                     break;
                 case MC_MATCH_ATHLETIC_OK:
                 case MC_MATCH_ENTERTAIN_OK:
@@ -220,7 +245,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     if (srl_mcNews != null) {
                         srl_mcNews.setRefreshing(false);
                     }
-                    YGOUtil.show("资讯加载失败: " + msg.obj.toString());
+                    YGOUtil.show(YGOUtil.s(R.string.loading_failed) + ": " + msg.obj.toString());
                     break;
             }
         }
@@ -428,6 +453,11 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         ll_athletic = view.findViewById(R.id.ll_athletic);
         ll_entertain = view.findViewById(R.id.ll_entertain);
 
+        ll_user_data = view.findViewById(R.id.ll_user_data);
+        ll_user_data.setOnClickListener(v -> {
+            showUserDuelDetailDialog();
+        });
+
         ll_athletic.setOnClickListener(this);
         ll_entertain.setOnClickListener(this);
         iv_refresh.setOnClickListener(v -> {
@@ -450,6 +480,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         duelRoomBQAdapter.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
+                // 游戏运行中则直接打开游戏，不加入房间
+
+                if (YGOStarter.isGameRunning(getActivity())) {
+                    YGOStarter.startGame(getActivity(), null);
+                    return;
+                }
+
                 DuelRoom duelRoom = duelRoomBQAdapter.getItem(position);
 
                 if (mMcUser == null || !isUserLoggedIn()) {
@@ -501,7 +538,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         if (activity != null) {
                             activity.runOnUiThread(() -> {
                                 if (!finalValid) {
-                                    YGOUtil.show("未知房间，请更新软件后进入");
+                                    YGOUtil.show(R.string.unknown_room);
                                     return;
                                 }
 
@@ -515,7 +552,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         Activity activity = getActivity();
                         if (activity != null) {
                             activity.runOnUiThread(() -> {
-                                YGOUtil.show("进入失败: " + e.getMessage());
+                                YGOUtil.show(YGOUtil.s(R.string.start_game_error) + e.getMessage());
                             });
                         }
                     }
@@ -550,7 +587,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     private void updateTitle() {
         if (getActivity() != null && duelRoomBQAdapter != null) {
             int size = duelRoomBQAdapter.getData().size();
-            String title = "观战（" + size + "）";
+            String title = YGOUtil.s(R.string.watch_duel) + "（" + size + "）";
 
             if (getActivity() instanceof androidx.appcompat.app.AppCompatActivity) {
                 androidx.appcompat.app.AppCompatActivity appCompatActivity = (androidx.appcompat.app.AppCompatActivity) getActivity();
@@ -559,6 +596,29 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 }
             }
         }
+    }
+
+    private void showUserDuelDetailDialog() {
+        if (currentMcDuelInfo == null || mMcUser == null) {
+            YGOUtil.showTextToast(R.string.loading);
+            return;
+        }
+
+        String username = mMcUser.getUsername();
+        if (TextUtils.isEmpty(username)) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+
+        DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle(username);
+        dialog.setContentView(R.layout.dialog_mycard_user_duel_detail);
+
+        duelDetailAdapter = new UserDuelDetailAdapter(getContext(), dialog.getContentView());
+        duelDetailAdapter.setUsername(username);
+        duelDetailAdapter.bindDuelInfo(currentMcDuelInfo, username);
+
+        dialog.show();
     }
 
     private void queryDuelInfo() {
@@ -715,12 +775,46 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
         });
     }
+
+    private void showDuelArena() {
+        if (homeActivity.fragment_duel_arena == null) {
+            homeActivity.fragment_duel_arena = new MycardDuelArenaFragment();
+        }
+
+        boolean isAdded = homeActivity.fragment_duel_arena.isAdded();
+
+        androidx.fragment.app.FragmentTransaction transaction = getChildFragmentManager().beginTransaction()
+                .setCustomAnimations(R.anim.push_in, R.anim.push_out,
+                        R.anim.push_in, R.anim.push_out);
+
+        if (isAdded) {
+            transaction.show(homeActivity.fragment_duel_arena);
+        } else {
+            transaction.add(R.id.fragment_duel_arena_content, homeActivity.fragment_duel_arena);
+        }
+
+        transaction.addToBackStack(null).commit();
+
+        View mainContentView = getView().findViewById(R.id.ll_main_ui);
+        if (mainContentView != null) {
+            mainContentView.setVisibility(View.GONE);
+        }
+    }
+
+    private void joinMyCardWindbot(YGOServer server, String windbotName) {
+        if (server == null || TextUtils.isEmpty(windbotName)) {
+            return;
+        }
+        server.setPlayerName(mMcUser.getUsername());
+        YGOUtil.joinGame(getActivity(), server, "AI#" + windbotName);
+    }
+
     private void initPieChartViews(View view) {
         pieChartView = view.findViewById(R.id.pie_chart_view);
         tvEmpty = view.findViewById(R.id.tv_empty);
         swToggleCardImage = view.findViewById(R.id.sw_toggle_card_image);
 
-        pieChartView.setOnClickListener(v -> {switchDeckWinRateFragment();});
+        pieChartView.setOnClickListener(this);
 
         // 设置 Switch 开关的监听器，用于切换卡图显示模式
         swToggleCardImage.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -744,7 +838,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
                 getActivity().runOnUiThread(() -> {
                     if (exception != null) {
-                        YGOUtil.show("加载卡组数据失败: " + exception);
+                        YGOUtil.show(YGOUtil.s(R.string.loading_failed) + ": " + exception);
                         tvEmpty.setVisibility(View.VISIBLE);
                         return;
                     }
@@ -836,26 +930,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
     @Override
     public void onResume() {
         YGOStarter.onResumed(getActivity());
+        queryDuelInfo();
         super.onResume();
-    }
-
-    private boolean hasVisibleChildFragment() {
-        if (homeActivity.fragment_mycard_chatting_room != null &&
-                homeActivity.fragment_mycard_chatting_room.isAdded() &&
-                homeActivity.fragment_mycard_chatting_room.isVisible()) {
-            return true;
-        }
-        if (homeActivity.fragment_deck_win_rate != null &&
-                homeActivity.fragment_deck_win_rate.isAdded() &&
-                homeActivity.fragment_deck_win_rate.isVisible()) {
-            return true;
-        }
-        if (homeActivity.fragment_mycard_web != null &&
-                homeActivity.fragment_mycard_web.isAdded() &&
-                homeActivity.fragment_mycard_web.isVisible()) {
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -910,9 +986,9 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     @Override
     public boolean onBackPressed() {
-        if (homeActivity.fragment_mycard_chatting_room != null && 
-            homeActivity.fragment_mycard_chatting_room.isAdded() && 
-            homeActivity.fragment_mycard_chatting_room.isVisible()) {
+        if (homeActivity.fragment_mycard_chatting_room != null &&
+                homeActivity.fragment_mycard_chatting_room.isAdded() &&
+                homeActivity.fragment_mycard_chatting_room.isVisible()) {
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(R.anim.in_from_bottom, R.anim.out_to_top,
                             R.anim.in_from_bottom, R.anim.out_to_top)
@@ -921,41 +997,55 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             rl_chat.setVisibility(View.VISIBLE);
             return true;
         }
-        
-        if (homeActivity.fragment_deck_win_rate != null && 
-            homeActivity.fragment_deck_win_rate.isAdded() && 
-            homeActivity.fragment_deck_win_rate.isVisible()) {
+
+        if (homeActivity.fragment_duel_arena != null &&
+                homeActivity.fragment_duel_arena.isAdded() &&
+                homeActivity.fragment_duel_arena.isVisible()) {
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                             android.R.anim.fade_in, android.R.anim.fade_out)
-                    .hide(homeActivity.fragment_deck_win_rate)
+                    .hide(homeActivity.fragment_duel_arena)
                     .commit();
             if (ll_main_ui != null) {
                 ll_main_ui.setVisibility(View.VISIBLE);
             }
-            // 恢复所有按钮状态
             updateToolBarButtonState(null);
             return true;
         }
-        
-        if (homeActivity.fragment_mycard_web != null && 
-            homeActivity.fragment_mycard_web.isAdded() && 
-            homeActivity.fragment_mycard_web.isVisible()) {
-            getChildFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                            android.R.anim.fade_in, android.R.anim.fade_out)
-                    .remove(homeActivity.fragment_mycard_web)
-                    .commit();
-            homeActivity.fragment_mycard_web = null;
-            if (ll_main_ui != null) {
-                ll_main_ui.setVisibility(View.VISIBLE);
+
+        if (homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible()) {
+            if (homeActivity.fragment_mycard_web.onBackPressed()) {
+                return true;
             }
-            // 恢复所有按钮状态
-            updateToolBarButtonState(null);
+
+            removeMycardWebFragment();
+
             return true;
         }
         
         return false;
+    }
+
+    /**
+     * 移除 MyCardWebFragment 并恢复主界面
+     */
+    private void removeMycardWebFragment() {
+        if (homeActivity.fragment_mycard_web == null) {
+            return;
+        }
+        getChildFragmentManager().beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                        android.R.anim.fade_in, android.R.anim.fade_out)
+                .remove(homeActivity.fragment_mycard_web)
+                .commit();
+        homeActivity.fragment_mycard_web = null;
+        if (ll_main_ui != null) {
+            ll_main_ui.setVisibility(View.VISIBLE);
+        }
+        // 恢复所有按钮状态
+        updateToolBarButtonState(null);
     }
 
     /**
@@ -1019,6 +1109,10 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             case R.id.btn_register:
                 switchRegisterWithWebView();
                 break;
+            case R.id.pie_chart_view:
+                showDuelArena();
+                //switchDuelArenaWithWebView();
+                break;
         }
     }
 
@@ -1053,13 +1147,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         } else {
             // 如果未显示，则打开用户资料页面
             // 如果 DeckWinRateFragment 正在显示，先隐藏它
-            if (homeActivity.fragment_deck_win_rate != null &&
-                    homeActivity.fragment_deck_win_rate.isAdded() &&
-                    homeActivity.fragment_deck_win_rate.isVisible()) {
+            if (homeActivity.fragment_duel_arena != null &&
+                    homeActivity.fragment_duel_arena.isAdded() &&
+                    homeActivity.fragment_duel_arena.isVisible()) {
                 getChildFragmentManager().beginTransaction()
                         .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                 android.R.anim.fade_in, android.R.anim.fade_out)
-                        .hide(homeActivity.fragment_deck_win_rate)
+                        .hide(homeActivity.fragment_duel_arena)
                         .commit();
             }
 
@@ -1108,13 +1202,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         } else {
             // 如果未显示，则打开它
             // 如果 DeckWinRateFragment 正在显示，先隐藏它
-            if (homeActivity.fragment_deck_win_rate != null &&
-                    homeActivity.fragment_deck_win_rate.isAdded() &&
-                    homeActivity.fragment_deck_win_rate.isVisible()) {
+            if (homeActivity.fragment_duel_arena != null &&
+                    homeActivity.fragment_duel_arena.isAdded() &&
+                    homeActivity.fragment_duel_arena.isVisible()) {
                 getChildFragmentManager().beginTransaction()
                         .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                                 android.R.anim.fade_in, android.R.anim.fade_out)
-                        .hide(homeActivity.fragment_deck_win_rate)
+                        .hide(homeActivity.fragment_duel_arena)
                         .commit();
             }
 
@@ -1179,66 +1273,42 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         }
     }
 
-    private void switchDeckWinRateFragment() {
-        if (homeActivity == null) {
-            return;
-        }
 
-        // 判断 DeckWinRateFragment 是否已经显示
-        boolean isShowing = homeActivity.fragment_deck_win_rate != null &&
-                homeActivity.fragment_deck_win_rate.isAdded() &&
-                homeActivity.fragment_deck_win_rate.isVisible();
+    private void switchDuelArenaWithWebView() {
+        // 判断 MyCardWebFragment 是否已经显示
+        boolean isShowing = homeActivity.fragment_mycard_web != null &&
+                homeActivity.fragment_mycard_web.isAdded() &&
+                homeActivity.fragment_mycard_web.isVisible();
 
         if (isShowing) {
-            // 如果正在显示，则隐藏它
+            // 如果正在显示，则移除它
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                             android.R.anim.fade_in, android.R.anim.fade_out)
-                    .hide(homeActivity.fragment_deck_win_rate)
+                    .remove(homeActivity.fragment_mycard_web)
                     .commit();
-            
-            if (ll_main_ui != null) {
-                ll_main_ui.setVisibility(View.VISIBLE);
+            homeActivity.fragment_mycard_web = null;
+
+            if (ll_dialog_login != null) {
+                ll_dialog_login.setVisibility(View.VISIBLE);
             }
-            
-            // 恢复所有按钮状态
-            updateToolBarButtonState(null);
         } else {
-            // 如果未显示，则打开它
-            
-            // 如果 MyCardWebFragment 正在显示，先隐藏它
-            if (homeActivity.fragment_mycard_web != null &&
-                    homeActivity.fragment_mycard_web.isAdded() &&
-                    homeActivity.fragment_mycard_web.isVisible()) {
-                getChildFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
-                        .hide(homeActivity.fragment_mycard_web)
-                        .commit();
-                Log.d("MycardFragment", "隐藏 MyCardWebFragment");
-            }
+            // 如果未显示，则打开注册页面
+            // 创建并显示注册页面的 Web Fragment
+            homeActivity.fragment_mycard_web = MyCardWebFragment.newInstance(
+                    MyCard.getArenaUrl(),
+                    YGOUtil.s(R.string.register)
+            );
 
-            if (homeActivity.fragment_deck_win_rate == null) {
-                homeActivity.fragment_deck_win_rate = new DeckWinRateFragment();
-            }
+            getChildFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
+                            android.R.anim.fade_in, android.R.anim.fade_out)
+                    .add(R.id.fragment_web_content, homeActivity.fragment_mycard_web)
+                    .commit();
 
-            if (ll_main_ui != null) {
-                ll_main_ui.setVisibility(View.GONE);
-            }
+            // 更新按钮状态，将萌卡论坛按钮设置为激活（关闭）状态
+            updateToolBarButtonState(btn_mycard_bbs);
 
-            if (!homeActivity.fragment_deck_win_rate.isAdded()) {
-                getChildFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
-                        .add(R.id.fragment_deck_win_rate_content, homeActivity.fragment_deck_win_rate)
-                        .commit();
-            } else {
-                getChildFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
-                                android.R.anim.fade_in, android.R.anim.fade_out)
-                        .show(homeActivity.fragment_deck_win_rate)
-                        .commit();
-            }
         }
     }
 
@@ -1274,6 +1344,14 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 textView.setText(originalTextResId);
             }
         }
+    }
+
+    /**
+     * 供子Fragment调用，更新工具栏按钮状态
+     * @param activeButton 当前激活的按钮View，传null表示所有按钮都恢复为原始状态
+     */
+    public void updateToolBarButtonStatePublic(View activeButton) {
+        updateToolBarButtonState(activeButton);
     }
     private void initMcNewsView(View view) {
         srl_mcNews = view.findViewById(R.id.srl_mcNews);
@@ -1348,13 +1426,13 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             updateToolBarButtonState(null);
         }
 
-        if (homeActivity.fragment_deck_win_rate != null &&
-                homeActivity.fragment_deck_win_rate.isAdded() &&
-                homeActivity.fragment_deck_win_rate.isVisible()) {
+        if (homeActivity.fragment_duel_arena != null &&
+                homeActivity.fragment_duel_arena.isAdded() &&
+                homeActivity.fragment_duel_arena.isVisible()) {
             getChildFragmentManager().beginTransaction()
                     .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out,
                             android.R.anim.fade_in, android.R.anim.fade_out)
-                    .hide(homeActivity.fragment_deck_win_rate)
+                    .hide(homeActivity.fragment_duel_arena)
                     .commit();
         }
 
@@ -1598,7 +1676,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         rv_waiting_list.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         waitingRoomAdapter = new DuelRoomBQAdapter(requireContext(), new ArrayList<DuelRoom>());
-        waitingRoomAdapter.setHideVsText(true);
+        waitingRoomAdapter.setShowRoomName(true);
         rv_waiting_list.setAdapter(waitingRoomAdapter);
 
         waitingDuelManagement = WaitingDuelManagement.getInstance();
@@ -1638,6 +1716,12 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         waitingRoomAdapter.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
+                // 游戏运行中则直接打开游戏，不加入房间
+                if (YGOStarter.isGameRunning(getActivity())) {
+                    YGOStarter.startGame(getActivity(), null);
+                    return;
+                }
+
                 DuelRoom duelRoom = waitingRoomAdapter.getItem(position);
 
                 if (mMcUser == null || !isUserLoggedIn()) {
@@ -1657,7 +1741,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                             throw new Exception("获取u16Secret失败");
                         }
 
-                        Log.e("WaitingDuel", "u16SecretStr: " + u16SecretStr);
+                        Log.i("WaitingDuel", "u16SecretStr: " + u16SecretStr);
 
                         String password = YGOUtil.getWatchDuelPassword(duelRoom.getId(), mMcUser.getExternal_id(), u16SecretStr);
                         Log.e("WaitingDuel password", "password: " + password);
@@ -1695,7 +1779,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         if (activity != null) {
                             activity.runOnUiThread(() -> {
                                 if (!finalValid) {
-                                    YGOUtil.show("未知房间，请更新软件后进入");
+                                    YGOUtil.show(R.string.unknown_room);
                                     return;
                                 }
 
@@ -1709,7 +1793,7 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                         Activity activity = getActivity();
                         if (activity != null) {
                             activity.runOnUiThread(() -> {
-                                YGOUtil.show("进入失败: " + e.getMessage());
+                                YGOUtil.show(YGOUtil.s(R.string.start_game_error) + e.getMessage());
                             });
                         }
                     }
@@ -1765,11 +1849,20 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
 
     private void showCreateRoomDialog(List<YGOServer> servers) {
         DialogPlus dialog = new DialogPlus(requireContext());
-        dialog.setContentView(R.layout.dialog_custom_mode_select);
+        dialog.setContentView(R.layout.dialog_mycard_custom_mode_select_with_tabs);
         dialog.setTitle(R.string.create_custom_room);
 
         TextView serverLabel = dialog.findViewById(R.id.tv_create_room_server);
         Spinner serverSpinner = dialog.findViewById(R.id.spinner_create_room_server);
+
+        TabLayout tabLayout = dialog.findViewById(R.id.tl_room_n_bot);
+        View tabRoomSettings = dialog.findViewById(R.id.tab_room_settings);
+        View tabAiList = dialog.findViewById(R.id.tab_ai_list);
+        View tabJoinPrivateRoom = dialog.findViewById(R.id.tab_join_private_room);
+        EditText etPrivateRoomPassword = dialog.findViewById(R.id.et_private_room_password);
+        ListView lvAiList = dialog.findViewById(R.id.lv_ai_list);
+        TextView tvAiEmpty = dialog.findViewById(R.id.tv_ai_empty);
+
         EditText titleEdit = dialog.findViewById(R.id.et_custom_room_title);
         TextView titleCount = dialog.findViewById(R.id.tv_custom_room_title_count);
         Spinner ruleSpinner = dialog.findViewById(R.id.spinner_custom_room_rule);
@@ -1779,12 +1872,25 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
         EditText startHandEdit = dialog.findViewById(R.id.et_custom_room_start_hand);
         EditText drawCountEdit = dialog.findViewById(R.id.et_custom_room_draw_count);
         CheckBox privateBox = dialog.findViewById(R.id.cb_custom_room_private);
+
+        CheckBox autoDeathBox = dialog.findViewById(R.id.cb_custom_room_auto_death);
         CheckBox noCheckDeckBox = dialog.findViewById(R.id.cb_custom_room_no_check_deck);
         CheckBox noShuffleDeckBox = dialog.findViewById(R.id.cb_custom_room_no_shuffle_deck);
-        CheckBox autoDeathBox = dialog.findViewById(R.id.cb_custom_room_auto_death);
+        noCheckDeckBox.setText(mStringManager.getSystemString(1229, ""));
+        noShuffleDeckBox.setText(mStringManager.getSystemString(1230, ""));
+
+        TextView tv_custom_room_start_LP = dialog.findViewById(R.id.tv_custom_room_start_LP);
+        TextView tv_custom_room_start_hand = dialog.findViewById(R.id.tv_custom_room_start_hand);
+        TextView tv_custom_room_draw_count = dialog.findViewById(R.id.tv_custom_room_draw_count);
+        TextView tv_custom_room_rule = dialog.findViewById(R.id.tv_custom_room_rule);
+        tv_custom_room_start_LP.setText(mStringManager.getSystemString(1231, ""));
+        tv_custom_room_start_hand.setText(mStringManager.getSystemString(1232, ""));
+        tv_custom_room_draw_count.setText(mStringManager.getSystemString(1233, ""));
+        tv_custom_room_rule.setText(mStringManager.getSystemString(1236, ""));
+
 
         titleEdit.setFilters(new InputFilter[]{new InputFilter.LengthFilter(12)});
-        titleEdit.setText(mMcUser.getUsername() + "的房间");
+        titleEdit.setText(mMcUser.getUsername() + YGOUtil.s(R.string.s_room));
         titleCount.setText(titleEdit.getText().length() + " / 12");
         titleEdit.addTextChangedListener(new TextWatcher() {
             @Override
@@ -1801,37 +1907,73 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
             }
         });
 
-        setSpinnerValues(serverSpinner, getServerNames(servers));
-        setSpinnerValues(ruleSpinner, new String[]{
-                mStringManager.getSystemString(1481, ""),
-                mStringManager.getSystemString(1482, ""),
-                mStringManager.getSystemString(1483, ""),
-                mStringManager.getSystemString(1484, ""),
-                mStringManager.getSystemString(1485, ""),
-                mStringManager.getSystemString(1486, ""),
-        });
-        setSpinnerValues(modeSpinner, new String[]{
-                mStringManager.getSystemString(1244, ""),
-                mStringManager.getSystemString(1245, ""),
-                mStringManager.getSystemString(1246, "")
-        });
-        setSpinnerValues(duelRuleSpinner, new String[]{
-                mStringManager.getSystemString(1260, ""),
-                mStringManager.getSystemString(1261, ""),
-                mStringManager.getSystemString(1262, ""),
-                mStringManager.getSystemString(1263, ""),
-                mStringManager.getSystemString(1264, "")
-        });
-        modeSpinner.setSelection(DuelRoom.MODE_MATCH);
-        duelRuleSpinner.setSelection(4);
+        setupServerSpinner(serverSpinner, servers);
+        setupRuleSpinner(ruleSpinner);
+        setupModeSpinner(modeSpinner);
+        setupDuelRuleSpinner(duelRuleSpinner);
 
         int defaultServerIndex = getDefaultServerIndex(servers);
         serverSpinner.setSelection(defaultServerIndex);
         serverLabel.setText(YGOUtil.s(R.string.server_area) + " " + servers.get(defaultServerIndex).getName());
+
+        List<String> currentAiList = new ArrayList<>();
+        ArrayAdapter<String> aiAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, currentAiList);
+        lvAiList.setAdapter(aiAdapter);
+
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.settings_game).setIcon(R.drawable.setting));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.mycard_ai_battle).setIcon(R.drawable.bot));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.mycard_join_private_room).setIcon(R.drawable.ic_search));
+
+        int[] currentTab = {0};
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                currentTab[0] = tab.getPosition();
+                if (tab.getPosition() == 0) {
+                    tabRoomSettings.setVisibility(View.VISIBLE);
+                    tabAiList.setVisibility(View.GONE);
+                    tabJoinPrivateRoom.setVisibility(View.GONE);
+                    dialog.hideButton(false);
+                } else if (tab.getPosition() == 1) {
+                    tabRoomSettings.setVisibility(View.GONE);
+                    tabAiList.setVisibility(View.VISIBLE);
+                    tabJoinPrivateRoom.setVisibility(View.GONE);
+                    dialog.hideButton(true);
+                } else {
+                    tabRoomSettings.setVisibility(View.GONE);
+                    tabAiList.setVisibility(View.GONE);
+                    tabJoinPrivateRoom.setVisibility(View.VISIBLE);
+                    dialog.hideButton(false);
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+
         serverSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 serverLabel.setText(YGOUtil.s(R.string.server_area) + " " + servers.get(position).getName());
+
+                YGOServer selectedServer = servers.get(position);
+                currentAiList.clear();
+                if (selectedServer.getWindbot() != null && !selectedServer.getWindbot().isEmpty()) {
+                    currentAiList.add(getString(R.string.random));
+                    currentAiList.addAll(selectedServer.getWindbot());
+                    tvAiEmpty.setVisibility(View.GONE);
+                    lvAiList.setVisibility(View.VISIBLE);
+                } else {
+                    tvAiEmpty.setVisibility(View.VISIBLE);
+                    lvAiList.setVisibility(View.GONE);
+                }
+                aiAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -1857,33 +1999,59 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 titleCount.setVisibility(View.GONE);
             } else {
                 titleEdit.setEnabled(true);
-                titleEdit.setText(mMcUser.getUsername() + "的房间");
+                titleEdit.setText(mMcUser.getUsername() + YGOUtil.s(R.string.s_room));
                 titleCount.setVisibility(View.VISIBLE);
             }
         });
 
-        dialog.setLeftButtonListener((dlg, s) -> {
-            boolean privateRoom = privateBox.isChecked();
-            String title = titleEdit.getText().toString().trim();
-            if (!privateRoom && TextUtils.isEmpty(title)) {
-                YGOUtil.show("请输入房间标题");
-                return;
+        lvAiList.setOnItemClickListener((parent, view, position, id) -> {
+            if (position >= 0 && position < currentAiList.size()) {
+                String selectedAi = currentAiList.get(position);
+                YGOServer selectedServer = servers.get(serverSpinner.getSelectedItemPosition());
+                if (position == 0 && currentAiList.size() > 1) {
+                    int randomIndex = 1 + (int) (Math.random() * (currentAiList.size() - 1));
+                    selectedAi = currentAiList.get(randomIndex);
+                }
+
+                dialog.dismiss();
+                joinMyCardWindbot(selectedServer, selectedAi);
             }
-
-            DuelRoom.OptionsBean options = new DuelRoom.OptionsBean();
-            options.setRule(ruleSpinner.getSelectedItemPosition());
-            options.setMode(modeSpinner.getSelectedItemPosition());
-            options.setDuel_rule(duelRuleSpinner.getSelectedItemPosition() + 1);
-            options.setStart_lp(readInt(startLpEdit, 1, 65535, modeSpinner.getSelectedItemPosition() == DuelRoom.MODE_TAG ? 16000 : 8000));
-            options.setStart_hand(readInt(startHandEdit, 0, 16, 5));
-            options.setDraw_count(readInt(drawCountEdit, 0, 16, 1));
-            options.setNo_check_deck(noCheckDeckBox.isChecked());
-            options.setNo_shuffle_deck(noShuffleDeckBox.isChecked());
-            options.setAuto_death(autoDeathBox.isChecked());
-
-            YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
-            createCustomRoom(dialog, server, options, title, privateRoom);
         });
+
+        dialog.setLeftButtonListener((dlg, s) -> {
+            if (currentTab[0] == 2) {
+                String privatePassword = etPrivateRoomPassword.getText().toString().trim();
+                if (TextUtils.isEmpty(privatePassword)) {
+                    YGOUtil.show(R.string.mycard_private_room_password);
+                    return;
+                }
+                YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
+                joinPrivateCustomRoom(server, privatePassword);
+                dialog.dismiss();
+            } else {
+                boolean privateRoom = privateBox.isChecked();
+                String title = titleEdit.getText().toString().trim();
+                if (!privateRoom && TextUtils.isEmpty(title)) {
+                    YGOUtil.show(R.string.input_room_name);
+                    return;
+                }
+
+                DuelRoom.OptionsBean options = new DuelRoom.OptionsBean();
+                options.setRule(ruleSpinner.getSelectedItemPosition());
+                options.setMode(modeSpinner.getSelectedItemPosition());
+                options.setDuel_rule(duelRuleSpinner.getSelectedItemPosition() + 1);
+                options.setStart_lp(readInt(startLpEdit, 1, 65535, modeSpinner.getSelectedItemPosition() == DuelRoom.MODE_TAG ? 16000 : 8000));
+                options.setStart_hand(readInt(startHandEdit, 0, 16, 5));
+                options.setDraw_count(readInt(drawCountEdit, 0, 16, 1));
+                options.setNo_check_deck(noCheckDeckBox.isChecked());
+                options.setNo_shuffle_deck(noShuffleDeckBox.isChecked());
+                options.setAuto_death(autoDeathBox.isChecked());
+
+                YGOServer server = servers.get(serverSpinner.getSelectedItemPosition());
+                createCustomRoom(dialog, server, options, title, privateRoom);
+            }
+        });
+        dialog.setLeftButtonText(R.string.create_custom_room);
 
         dialog.show();
     }
@@ -1909,7 +2077,8 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                     server.setPlayerName(mMcUser.getUsername());
                     YGOUtil.joinGame(activity, server, password);
                     if (privateRoom) {
-                        YGOUtil.show("房间密码是 " + hostPassword);
+                        YGOUtil.copyMessage(activity, hostPassword);
+                        YGOUtil.show(YGOUtil.s(R.string.mycard_private_room_copied) + hostPassword);
                     }
                 });
             } catch (Exception e) {
@@ -1917,25 +2086,152 @@ public class MycardFragment extends BaseFragemnt implements View.OnClickListener
                 Activity activity = getActivity();
                 if (activity != null) {
                     activity.runOnUiThread(() -> {
-                        YGOUtil.show("创建房间失败: " + e.getMessage());
+                        YGOUtil.show(YGOUtil.s(R.string.create_room_failed) + e.getMessage());
                     });
                 }
             }
         }).start();
     }
 
-    private void setSpinnerValues(Spinner spinner, String[] values) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, values);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    private void showJoinPrivateRoomDialog(DialogPlus parentDialog, YGOServer server) {
+        EditText input = new EditText(requireContext());
+        input.setSingleLine(true);
+        input.setHint(R.string.mycard_private_room_password);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        int padding = YGOUtil.dp2px(20);
+        input.setPadding(padding, 0, padding, 0);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.mycard_join_private_room)
+                .setView(input)
+                .setNegativeButton(R.string.Cancel, null)
+                .setPositiveButton(R.string.quick_join, (dialog, which) -> {
+                    String privatePassword = input.getText().toString().trim();
+                    if (TextUtils.isEmpty(privatePassword)) {
+                        YGOUtil.show(R.string.mycard_private_room_password);
+                        return;
+                    }
+                    parentDialog.dismiss();
+                    joinPrivateCustomRoom(server, privatePassword);
+                })
+                .show();
+    }
+
+    private void joinPrivateCustomRoom(YGOServer server, String privatePassword) {
+        if (!isUserLoggedIn()) {
+            YGOUtil.showTextToast(R.string.login_mycard);
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                String token = SharedPreferenceUtil.getServerToken();
+                if (TextUtils.isEmpty(token)) {
+                    throw new IOException("token not found");
+                }
+
+                int u16Secret = MyCard.getUserU16Secret(token);
+                String password = MyCard.createPrivateRoomJoinPassword(privatePassword, u16Secret);
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+
+                activity.runOnUiThread(() -> {
+                    server.setPlayerName(mMcUser.getUsername());
+                    YGOUtil.joinGame(activity, server, password);
+                });
+            } catch (Exception e) {
+                Log.e("MyCard", "加入私密房间失败: " + e);
+                Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> YGOUtil.show(YGOUtil.s(R.string.start_game_error) + e.getMessage()));
+                }
+            }
+        }).start();
+    }
+
+    private void setupServerSpinner(Spinner spinner, List<YGOServer> servers) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        for (int i = 0; i < servers.size(); i++) {
+            YGOServer server = servers.get(i);
+            String displayName = getServerDisplayName(server);
+            items.add(new SimpleSpinnerItem(i, displayName));
+        }
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
+        adapter.setColor(Color.WHITE);
+        adapter.set(items);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
         spinner.setAdapter(adapter);
+    }
+
+    private void setupRuleSpinner(Spinner spinner) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        int[] ruleIds = {1481, 1482, 1483, 1484, 1485, 1486};
+
+        for (int i = 0; i < ruleIds.length; i++) {
+            String text = mStringManager.getSystemString(ruleIds[i], "");
+            items.add(new SimpleSpinnerItem(i, text));
+        }
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
+        adapter.setColor(Color.WHITE);
+        adapter.set(items);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
+        spinner.setAdapter(adapter);
+    }
+
+    private void setupModeSpinner(Spinner spinner) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        int[] modeIds = {1244, 1245, 1246};
+
+        for (int i = 0; i < modeIds.length; i++) {
+            String text = mStringManager.getSystemString(modeIds[i], "");
+            items.add(new SimpleSpinnerItem(i, text));
+        }
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
+        adapter.setColor(Color.WHITE);
+        adapter.set(items);
+        spinner.setSelection(DuelRoom.MODE_MATCH);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
+        spinner.setAdapter(adapter);
+    }
+
+    private void setupDuelRuleSpinner(Spinner spinner) {
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        int[] duelRuleIds = {1260, 1261, 1262, 1263, 1264};
+
+        for (int i = 0; i < duelRuleIds.length; i++) {
+            String text = mStringManager.getSystemString(duelRuleIds[i], "");
+            items.add(new SimpleSpinnerItem(i, text));
+        }
+
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(requireContext());
+        adapter.setColor(Color.WHITE);
+        adapter.set(items);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
+        spinner.setAdapter(adapter);
+        spinner.setSelection(4);
     }
 
     private String[] getServerNames(List<YGOServer> servers) {
         String[] names = new String[servers.size()];
         for (int i = 0; i < servers.size(); i++) {
-            names[i] = servers.get(i).getName();
+            names[i] = getServerDisplayName(servers.get(i));
         }
         return names;
+    }
+
+    private String getServerDisplayName(YGOServer server) {
+        if (server == null) {
+            return "";
+        }
+        if (!TextUtils.isEmpty(server.getName())) {
+            return server.getName();
+        }
+        return server.getServerAddr() + ":" + server.getPort();
     }
 
     private int getDefaultServerIndex(List<YGOServer> servers) {

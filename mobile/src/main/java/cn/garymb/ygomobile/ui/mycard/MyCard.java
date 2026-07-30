@@ -64,7 +64,12 @@ public class MyCard {
     public static final String MC_MAIN_URL = "https://mycard.world/mobile/ygopro/lobby";
 
     public static final String MYCARD_NEWS_URL = "https://sapi.moecube.com:444/apps.json";
+    // 单玩家查询接口 可选添加param 例如：?username=暗星（查询特定玩家的数值）
     public static final String MYCARD_USER_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/user";
+    // 前100名玩家排名接口 可选添加param 例如：?o=pt、exp（不同字段从高到低排序）、
+    public static final String MYCARD_USERS_DUEL_URL = "https://sapi.moecube.com:444/ygopro/arena/users";
+    // 单玩家对局历史接口 可选添加param 例如：?username=暗星（查询特定玩家的竞技历史记录，默认最近15条）、&type=1&page_num=100（历史条数）
+    public static final String MYCARD_USER_HISTORY_URL = "https://sapi.moecube.com:444/ygopro/arena/history";
     public static final String URL_MC_WATCH_DUEL_FUN = "wss://tiramisu.moecube.com:7923/?filter=started";
     public static final String URL_MC_WATCH_DUEL_MATCH = "wss://tiramisu.moecube.com:8923/?filter=started";
     public static final String URL_MC_JOIN_DUEL_MATCH = "wss://tiramisu.moecube.com:17923/?filter=waiting";
@@ -99,9 +104,18 @@ public class MyCard {
     public static final String URL_MC_SIGN_UP = "https://accounts.moecube.com/signup";
     public static final String URL_MC_LOGOUT = "https://accounts.moecube.com/signin";
     public static final String URL_MC_USER_PROFILE = "https://accounts.moecube.com/profiles";
+    // 查询单个玩家数据接口，需要添加param 例如：?username=暗星
     public static final String URL_MC_AUTH_USER = "https://sapi.moecube.com:444/accounts/authUser";
-    public static final String URL_MC_ATHLETIC_RATE = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type?source=mycard-athletic";
+    // 每个卡组各自胜率分析接口 需要添加param 例如：
+    // 时间范围：type=day（今日）、week（最近7天）、halfmonth（最近15天）、month（最近1月）、season（当前禁卡表）；
+    // 数据来源：source=mycard-athletic（萌卡竞技）、mycard-entertain（萌卡娱乐）、233-athletic（233服竞技）、233-entertain（233服娱乐）
     public static final String URL_DECK_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/deck/type";
+    // 获取怪兽、魔法、陷阱、额外卡组、副卡组使用率前100每个卡片分析接口 需要添加param，例如：
+    // 时间范围：type=day（今日）、week（最近7天）、halfmonth（最近15天）、month（最近1月）、season（当前禁卡表）；
+    // 数据来源：source=mycard-athletic（萌卡竞技）、mycard-entertain（萌卡娱乐）、233-athletic（233服竞技）、233-entertain（233服娱乐）
+    public static final String URL_CARD_TYPE_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/single/type";
+    // 获取卡组之间的胜率分析接口 需要添加param，例如：source=mycard-athletic（萌卡竞技）、mycard-entertain（萌卡娱乐）
+    public static final String URL_DECK_MATCHUP_ANALYTICS = "https://sapi.moecube.com:444/ygopro/analytics/matchup/type";
     public static final int MATCH_TYPE_ATHLETIC = 0;
     public static final int MATCH_TYPE_ENTERTAIN = 1;
 
@@ -242,12 +256,10 @@ public class MyCard {
             throw new IOException("token not found");
         }
 
-        String url = "https://sapi.moecube.com:444/accounts/authUser";
-
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", "Bearer " + token);
 
-        Response response = OkhttpUtil.synchronousGet(url, null, headers);
+        Response response = OkhttpUtil.synchronousGet(URL_MC_AUTH_USER, null, headers);
         String responseBody = response.body().string();
 
         if (!response.isSuccessful()) {
@@ -351,6 +363,28 @@ public class MyCard {
         return Base64.encodeToString(optionsBuffer, Base64.NO_WRAP) + suffix;
     }
 
+    public static String createPrivateRoomJoinPassword(String roomPassword, int u16Secret) {
+        byte[] optionsBuffer = new byte[6];
+        optionsBuffer[1] = (byte) (5 << 4);
+
+        int checksum = 0;
+        for (int i = 1; i < optionsBuffer.length; i++) {
+            checksum -= optionsBuffer[i] & 0xff;
+        }
+        optionsBuffer[0] = (byte) (checksum & 0xff);
+
+        int secret = (u16Secret % 65535) + 1;
+        for (int i = 0; i < optionsBuffer.length; i += 2) {
+            int value = (optionsBuffer[i] & 0xff) | ((optionsBuffer[i + 1] & 0xff) << 8);
+            value ^= secret;
+            optionsBuffer[i] = (byte) (value & 0xff);
+            optionsBuffer[i + 1] = (byte) ((value >> 8) & 0xff);
+        }
+
+        String suffix = roomPassword == null ? "" : roomPassword.replaceFirst("\\s", "\ufeff");
+        return Base64.encodeToString(optionsBuffer, Base64.NO_WRAP) + suffix;
+    }
+
     private static int intValue(Integer value, int defaultValue) {
         return value == null ? defaultValue : value;
     }
@@ -403,7 +437,7 @@ public class MyCard {
         return hexString.toString();
     }
 
-    public String getArenaUrl() {
+    public static String getArenaUrl() {
         return mArenaUrl;
     }
 

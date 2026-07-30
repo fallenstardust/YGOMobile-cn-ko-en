@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textSize="8sp"
+    android:textColor="@color/white"
+    android:gravity="center"
+    android:padding="4dp"
+    android:layout_margin="1dp"
+    android:background="@drawable/button_radius_black_transparents"
+    android:maxLines="2"
+    android:minHeight="@dimen/label_width_50dp"/>

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -159,23 +160,17 @@ public class DeckUtil {
      */
     public static String getDeckTypeName(String deckPath) {
         File file = new File(deckPath);
-        if (file.exists()) {
-            String name = file.getParentFile().getName();
-            String lastName = file.getParentFile().getParentFile().getName();
-            if (name.equals("pack") || name.equals("cacheDeck")) {
-                //卡包
-                return YGOUtil.s(R.string.category_pack);
-            } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
-                //ai卡组
-                return YGOUtil.s(R.string.category_windbot_deck);
-            } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
-                //如果是deck并且上一个目录是ygocore的话，保证不会把名字为deck的卡包识别为未分类
-                return YGOUtil.s(R.string.category_Uncategorized);
-            } else {
-                return name;
-            }
+        String name = file.getParentFile().getName();
+        String lastName = file.getParentFile().getParentFile().getName();
+        if (name.equals("pack") || name.equals("cacheDeck")) {
+            return YGOUtil.s(R.string.category_pack);
+        } else if (name.equals("Decks") && lastName.equals(Constants.WINDBOT_PATH)) {
+            return YGOUtil.s(R.string.category_windbot_deck);
+        } else if (name.equals("deck") && lastName.equals(Constants.PREF_DEF_GAME_DIR)) {
+            return YGOUtil.s(R.string.category_Uncategorized);
+        } else {
+            return name;
         }
-        return null;
     }
 
     //获取扩展卡的列表
@@ -195,7 +190,13 @@ public class DeckUtil {
             if (file.isFile()) {
                 ZipFile zipFile = null;
                 try {
-                    zipFile = new ZipFile(file.getAbsoluteFile(), StandardCharsets.UTF_8);
+                    try {
+                        zipFile = new ZipFile(file.getAbsoluteFile(), StandardCharsets.UTF_8);
+                        zipFile.entries().hasMoreElements();
+                    } catch (IllegalArgumentException e) {
+                        IOUtils.close(zipFile);
+                        zipFile = new ZipFile(file.getAbsoluteFile(), Charset.forName("GBK"));
+                    }
                     Enumeration<?> entries = zipFile.entries();
                     while (entries.hasMoreElements()) {
                         ZipEntry entry = (ZipEntry) entries.nextElement();
@@ -206,6 +207,8 @@ public class DeckUtil {
                             deckList.add(new DeckFile(IOUtils.asFile(inputStream, appsSettings.getCacheDeckDir() + "/" + name)));
                         }
                     }
+                } catch (IllegalArgumentException e) {
+                    LogUtil.e(TAG, "无法解压文件，编码不兼容: " + file.getAbsolutePath());
                 } finally {
                     IOUtils.close(zipFile);
                 }
@@ -281,6 +284,11 @@ public class DeckUtil {
 
     //读取file指定的ydk文件，返回其内包含的deckId。如果不包含deckId，返回null
     public static String getDeckId(File file) {
+        if (file == null || !file.exists() || !file.isFile()) {
+            LogUtil.w(TAG, "文件不存在或不是有效文件: " + (file != null ? file.getAbsolutePath() : "null"));
+            return null;
+        }
+        
         String deckId = null;
         Integer userId = null;
         FileInputStream inputStream = null;

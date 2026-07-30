@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:background="@drawable/list_item_bg"
     android:orientation="horizontal"
-    android:paddingBottom="10dp">
+    android:layout_marginVertical="2dp">
     <!--    set the layout_height in the linear layout to “wrap_content”
     so it doesn’t only show one TextView per page.-->
 

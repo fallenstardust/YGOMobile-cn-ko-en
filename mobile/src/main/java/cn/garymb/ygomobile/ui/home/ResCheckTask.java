@@ -47,6 +47,7 @@ import cn.garymb.ygomobile.utils.SystemUtils;
 import libwindbot.windbot.WindBot;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
+import ocgcore.LimitManager;
 
 public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     public static final int ERROR_NONE = 0;
@@ -532,9 +533,62 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         if (!systemfile.exists()) {
             IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_SYSTEM_PATH, toPath, false);
         }
+        
+        // 在更新禁卡表之前，先保存旧的内置禁卡表列表的第一个名称和最后使用的禁卡表名称
+        String oldBuiltInFirstLimitName = null;
+        String lastUsedLimit = null;
+        if (needsUpdate) {
+            
+            // 获取旧的内置禁卡表（通过临时读取当前的 CORE_LIMIT_PATH 文件）
+            File currentBuiltInFile = new File(mSettings.getResourcePath(), Constants.CORE_LIMIT_PATH);
+            if (currentBuiltInFile.exists()) {
+                try {
+                    LimitManager tempOldBuiltInManager = new LimitManager();
+                    tempOldBuiltInManager.loadFile(currentBuiltInFile);
+                    
+                    if (!tempOldBuiltInManager.getLimitNames().isEmpty()) {
+                        oldBuiltInFirstLimitName = tempOldBuiltInManager.getLimitNames().get(0);
+                    }
+                    tempOldBuiltInManager.close();
+                } catch (Exception e) {
+                    LogUtil.e(TAG, "Error reading old built-in limit list", e);
+                }
+            }
+            
+            lastUsedLimit = AppsSettings.get().getLastLimit();
+        }
+        
         IOUtils.copyFilesFromAssets(mContext, getDatapath("conf") + "/" + CORE_LIMIT_PATH, toPath, needsUpdate);
         IOUtils.copyFilesFromAssets(mContext, assetStringPath, toPath, needsUpdate);
         IOUtils.copyFilesFromAssets(mContext, assetBotPath, toPath, needsUpdate);
+        
+        // 如果更新了禁卡表，检查并调整最后使用的禁卡表
+        if (needsUpdate && oldBuiltInFirstLimitName != null && lastUsedLimit != null) {
+            // 判断最后使用的禁卡表是否是内置的第一个禁卡表
+            if (oldBuiltInFirstLimitName.equals(lastUsedLimit)) {
+                // 读取新的内置禁卡表文件，获取新的第一个禁卡表名称
+                try {
+                    File newBuiltInFile = new File(mSettings.getResourcePath(), Constants.CORE_LIMIT_PATH);
+                    if (newBuiltInFile.exists()) {
+                        LimitManager tempNewBuiltInManager = new LimitManager();
+                        tempNewBuiltInManager.loadFile(newBuiltInFile);
+                        
+                        if (!tempNewBuiltInManager.getLimitNames().isEmpty()) {
+                            String newBuiltInFirstLimitName = tempNewBuiltInManager.getLimitNames().get(0);
+                            
+                            // 将最后使用的禁卡表更新为新的内置第一个禁卡表
+                            AppsSettings.get().setLastLimit(newBuiltInFirstLimitName);
+                        }
+                        
+                        tempNewBuiltInManager.close();
+                    }
+                } catch (Exception e) {
+                    LogUtil.e(TAG, "Error updating limit list preference", e);
+                }
+            }
+            // 如果最后使用的禁卡表不是内置的第一个，则保持不变（不做任何操作）
+        }
+        
         //替换换行符
         fixString(stringfile.getAbsolutePath());
         fixString(botfile.getAbsolutePath());

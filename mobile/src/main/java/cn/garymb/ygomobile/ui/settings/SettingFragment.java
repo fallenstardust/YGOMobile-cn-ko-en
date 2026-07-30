@@ -166,6 +166,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
         bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
         bind(PREF_USER_PRIVACY_POLICY, YGOUtil.s(R.string.about_user_privacy_policy));
+        isInit = false;
     }
 
     @Override

@@ -39,10 +39,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         View v = null;
         switch (p2) {
             case CHAT:
-                v = LayoutInflater.from(p1.getContext()).inflate(R.layout.item_chat, p1, false);
+                v = LayoutInflater.from(p1.getContext()).inflate(R.layout.item_mycard_chat, p1, false);
                 break;
             case CHAT_ME:
-                v = LayoutInflater.from(p1.getContext()).inflate(R.layout.item_chat_me, p1, false);
+                v = LayoutInflater.from(p1.getContext()).inflate(R.layout.item_mycard_chat_me, p1, false);
                 break;
         }
         ViewHolder viewHolder = new ViewHolder(v, p2);

@@ -81,6 +81,7 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
+import cn.garymb.ygomobile.bean.events.DeckDeleteEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
@@ -218,7 +219,26 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 初始化抽屉布局和列表视图
         mDrawerLayout = layoutView.findViewById(R.id.drawer_layout);
+        mDrawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(@NonNull View drawerView, float slideOffset) {}
+
+            @Override
+            public void onDrawerOpened(@NonNull View drawerView) {
+                updateUndoRedoButtonVisibility();
+            }
+
+            @Override
+            public void onDrawerClosed(@NonNull View drawerView) {
+                updateUndoRedoButtonVisibility();
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {}
+        });
+
         mListView = layoutView.findViewById(R.id.list_cards);
+
 
         // 设置卡片列表适配器并启用滑动删除功能
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
@@ -813,6 +833,26 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         refreshDeckCreditCount();
     }
 
+    private void updateUndoRedoButtonVisibility() {
+        if (btnUndo == null || btnRedo == null) return;
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)
+                || mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY);
+        if (drawerOpen) {
+            btnUndo.setVisibility(View.INVISIBLE);
+            btnRedo.setVisibility(View.INVISIBLE);
+        } else {
+            // 抽屉关闭时，根据原有逻辑恢复按钮状态
+            if (deckHistory.size() > 1 && !isPackMode) {
+                btnUndo.setVisibility(canUndo() ? View.VISIBLE : View.INVISIBLE);
+                btnRedo.setVisibility(canRedo() ? View.VISIBLE : View.INVISIBLE);
+            } else {
+                btnUndo.setVisibility(View.INVISIBLE);
+                btnRedo.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
+
     /**
      * 刷新卡组信用分显示
      * <p>
@@ -1037,7 +1077,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             if (mDialog == null) {
                 mDialog = new DialogPlus(getContext());
                 mDialog.setView(mCardDetail.getView());
-                mDialog.hideButton();
+                mDialog.hideButton(true);
                 mDialog.hideTitleBar();
 
                 // 设置手势监听器，支持左右滑动切换卡片
@@ -1878,6 +1918,27 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         if (deck == null)
             return;
         String currentDeckPath = deck.getAbsolutePath();
+
+        for (DeckFile deckFile : deckFileList) {
+            String deckId = deckFile.getDeckId();
+            for (MyOnlineDeckDetail onlineDeck : originalData) {
+                boolean matched = false;
+                if (deckId != null && !deckId.isEmpty()
+                        && deckId.equals(onlineDeck.getDeckId())) {
+                    matched = true;
+                } else if (deckFile.getName() != null && deckFile.getTypeName() != null
+                        && deckFile.getName().equals(onlineDeck.getDeckName())
+                        && deckFile.getTypeName().equals(onlineDeck.getDeckType())) {
+                    matched = true;
+                }
+                if (matched) {
+                    onlineDeck.setDelete(true);
+                    break;
+                }
+            }
+        }
+        EventBus.getDefault().post(new DeckDeleteEvent());
+
         for (DeckFile deckFile : deckFileList) {
             LogUtil.w(TAG, "要删除的卡组：" + "\n卡组分类: " + deckFile.getTypeName() + "\n卡组名称：" + deckFile.getFileName() + "\n卡组id: " + deckFile.getDeckId());
             if (TextUtils.equals(deckFile.getPath(), currentDeckPath)) {
@@ -1891,12 +1952,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 } else {
                     setCurDeck(new DeckInfo(), false);
                 }
-                // 对于当前卡组，也应该删除在线卡组
                 DeckSquareApiUtil.deleteDecks(List.of(deckFile));
                 return;
             }
         }
-        // 删除在线的同名卡组们
         DeckSquareApiUtil.deleteDecks(deckFileList);
         YGOUtil.showTextToast(R.string.done);
     }

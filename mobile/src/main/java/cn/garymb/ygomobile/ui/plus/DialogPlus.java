@@ -80,9 +80,9 @@ public class DialogPlus extends Dialog {
         return mGestureDetector.onTouchEvent(event);
     }
 
-    public DialogPlus hideButton() {
+    public DialogPlus hideButton(boolean hide) {
         if (mButtonLayout != null) {
-            mButtonLayout.setVisibility(View.GONE);
+            mButtonLayout.setVisibility(hide ? View.GONE : View.VISIBLE);
         }
         return this;
     }
@@ -163,7 +163,7 @@ public class DialogPlus extends Dialog {
         dialog.setCancelable(cancelable);
         dialog.setCanceledOnTouchOutside(cancelable);
         dialog.setOnCancelListener(cancelListener);
-        dialog.hideButton();
+        dialog.hideButton(true);
         dialog.showProgressBar();
 //        dialog.getWindow().setType(TYPE_KEYGUARD);
         dialog.show();

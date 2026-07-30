@@ -9,8 +9,8 @@ android {
         minSdkVersion 25
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 312013008
-        versionName "3.13.4fix1"
+        versionCode 312013011
+        versionName "3.13.6"
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "21.3.6528147"
@@ -147,4 +147,6 @@ dependencies {
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
     // WebSocket 客户端库
     implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+    // MPAndroidChart 折线图库
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 }

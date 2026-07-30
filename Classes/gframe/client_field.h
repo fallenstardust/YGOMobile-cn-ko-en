@@ -6,6 +6,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <memory>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
 #endif
@@ -100,6 +101,8 @@ public:
 	~ClientField() override;
 	void Clear();
 	void Initial(int player, int deckc, int extrac, int sidec = 0);
+	ClientCard* CreateCard();
+	void DestroyCard(ClientCard* pcard);
 	void ResetSequence(std::vector<ClientCard*>& list, bool reset_height);
 	ClientCard* GetCard(int controler, int location, int sequence, int sub_seq = 0);
 	void AddCard(ClientCard* pcard, int controler, int location, int sequence);
@@ -109,6 +112,7 @@ public:
 	void ClearCommandFlag();
 	void ClearSelect();
 	void ClearChainSelect();
+	void SetCardListLabel(irr::gui::IGUIStaticText* label, ClientCard* pcard, bool selecting_card);
 	void ShowSelectCard(bool buttonok = false, bool is_continuous = false); // caller must hold gMutex
 	void ShowChainCard(); // caller must hold gMutex
 	void ShowLocationCard(); // caller must hold gMutex
@@ -173,11 +177,20 @@ public:
 	void SetResponseSelectedCards() const;
 	void SetResponseSelectedOption() const;
 	void CancelOrFinish();
+
+private:
+	std::vector<std::unique_ptr<ClientCard>> cards_;
 };
 
 }
 
 //special cards
 #define CARD_QUESTION		38723936
+
+// TODO: move these (or all) colors to skin config
+#define CARD_LIST_OVERRIDE_TEXT_COLOR		0xff000099 // Blue
+#define CARD_LIST_DEFAULT_BACKGROUND_COLOR	0xff56649f // White
+#define CARD_LIST_OPPONENT_BACKGROUND_COLOR	0xff5a5a5a // Gray
+#define CARD_LIST_SELECTED_BACKGROUND_COLOR	0x6011113d // Yellow
 
 #endif //CLIENT_FIELD_H

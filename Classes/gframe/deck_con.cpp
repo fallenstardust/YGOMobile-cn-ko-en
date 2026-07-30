@@ -4,7 +4,7 @@
 #include "deck_con.h"
 #include "data_manager.h"
 #include "deck_manager.h"
-#include "myfilesystem.h"
+#include "file_system.h"
 #include "image_manager.h"
 #include "game.h"
 #include "duelclient.h"
@@ -100,29 +100,17 @@ void DeckBuilder::Initialize() {
 	mainGame->btnSideReload->setVisible(false);
     if (mainGame->gameConf.enable_genesys_mode) {
         if (mainGame->gameConf.use_genesys_lflist) {
-            if (mainGame->gameConf.default_genesys_lflist >= 0 && mainGame->gameConf.default_genesys_lflist < (int)deckManager._genesys_lfList.size()) {
-                filterList = &deckManager._genesys_lfList[mainGame->gameConf.default_genesys_lflist];
-            } else {
-                mainGame->gameConf.default_genesys_lflist = 0;
-                filterList = &deckManager._genesys_lfList.front();
-            }
+            filterList = &deckManager._genesys_lfList[mainGame->gameConf.default_genesys_lflist];
         } else {
             filterList = &deckManager._genesys_lfList.back();
         }
-    } else{
+    } else {
         if (mainGame->gameConf.use_lflist) {
-            if (mainGame->gameConf.default_lflist >= 0 && mainGame->gameConf.default_lflist < (int)deckManager._lfList.size()) {
-                filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
-            }
-            else {
-                mainGame->gameConf.default_lflist = 0;
-                filterList = &deckManager._lfList.front();
-            }
-        } else {
-            filterList = &deckManager._lfList.back();
-        }
-    }
-
+			filterList = &deckManager._lfList[mainGame->gameConf.default_lflist];
+		} else {
+			filterList = &deckManager._lfList.back();
+		}
+	}
 	ClearSearch();
 	mouse_pos.set(0, 0);
 	hovered_code = 0;
@@ -277,7 +265,7 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					break;
 				wchar_t filepath[256];
 				get_deck_file(filepath);
-				if(deckManager.SaveDeck(deckManager.current_deck, filepath)) {
+				if(deckManager.SaveDeck(deckManager.current_deck, filepath, false)) {
 					mainGame->stACMessage->setText(dataManager.GetSysString(1335));
 					mainGame->PopupElement(mainGame->wACMessage, 20);
 					is_modified = false;
@@ -642,23 +630,30 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					}
 					break;
 				}
-				case BUTTON_RENAME_DECK: {
-					int catesel = mainGame->lstCategories->getSelected();
-					int decksel = mainGame->lstDecks->getSelected();
-					const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
-					wchar_t oldfilepath[256];
-					get_deck_file(oldfilepath);
-					const wchar_t* newdeckname = mainGame->ebDMName->getText();
-					wchar_t newfilepath[256];
-					if(catesel == 2) {
-						myswprintf(newfilepath, L"./deck/%ls.ydk", newdeckname);
-					} else {
-						myswprintf(newfilepath, L"./deck/%ls/%ls.ydk", catename, newdeckname);
-					}
-					bool res = false;
-					if(!FileSystem::IsFileExists(newfilepath)) {
-						res = FileSystem::Rename(oldfilepath, newfilepath);
-					}
+                case BUTTON_RENAME_DECK: {
+                    int catesel = mainGame->lstCategories->getSelected();
+                    int decksel = mainGame->lstDecks->getSelected();
+                    const wchar_t* catename = mainGame->lstCategories->getListItem(catesel);
+                    wchar_t oldfilepath[256];
+                    get_deck_file(oldfilepath);
+                    const wchar_t* newdeckname = mainGame->ebDMName->getText();
+                    wchar_t newfilepath[256];
+                    if(catesel == 2) {
+                        myswprintf(newfilepath, L"./deck/%ls.ydk", newdeckname);
+                    } else {
+                        myswprintf(newfilepath, L"./deck/%ls/%ls.ydk", catename, newdeckname);
+                    }
+                    bool res = false;
+                    if(!FileSystem::IsFileExists(newfilepath)) {
+                        res = FileSystem::Rename(oldfilepath, newfilepath);
+                        if(res && mainGame != nullptr && mainGame->appMain != nullptr) {
+                            char utf8_path[512];
+                            BufferIO::EncodeUTF8(newfilepath, utf8_path);
+                            char utf8_name[256];
+                            BufferIO::EncodeUTF8(newdeckname, utf8_name);
+                            irr::android::syncRenameDeck(mainGame->appMain, utf8_path, utf8_name);
+                        }
+                    }
 					RefreshDeckList(true);
 					ChangeCategory(catesel);
 					for(int i = 0; i < (int)mainGame->lstDecks->getItemCount(); i++) {
@@ -718,6 +713,13 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 					}
 					bool res = false;
 					if(!FileSystem::IsFileExists(newfilepath)) {
+                        if(mainGame != nullptr && mainGame->appMain != nullptr) {
+                            char utf8_old_path[512];
+                            char utf8_new_path[512];
+                            BufferIO::EncodeUTF8(oldfilepath, utf8_old_path);
+                            BufferIO::EncodeUTF8(newfilepath, utf8_new_path);
+                            irr::android::syncMoveDeck(mainGame->appMain, utf8_old_path, utf8_new_path);
+                        }
 						res = FileSystem::Rename(oldfilepath, newfilepath);
 					}
 					mainGame->lstCategories->setSelected(newcatename);
@@ -1728,9 +1730,12 @@ void DeckBuilder::FilterCards() {
             // filter_lm == 8 表示只显示自定义卡
             if(filter_lm == 8 && !(data.ot & AVAIL_CUSTOM))
                 continue;
-
-            // filter_lm == 9 表示只显示同时属于OCG和TCG的卡片（无独有卡）
-            if(filter_lm == 9 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
+			if(filter_lm == 9 && (!(data.ot & AVAIL_OCG) || (data.ot & AVAIL_TCG)))
+				continue;
+			if(filter_lm == 10 && (!(data.ot & AVAIL_TCG) || (data.ot & AVAIL_OCG)))
+				continue;
+            // filter_lm == 11 表示只显示同时属于OCG和TCG的卡片（无独有卡）
+            if(filter_lm == 11 && ((data.ot & AVAIL_OCGTCG) != AVAIL_OCGTCG))
                 continue;
         }
 
@@ -1834,6 +1839,7 @@ void DeckBuilder::SortList() {
 			++left;
 		}
 	}
+	std::sort(results.begin(), left, DataManager::deck_sort_id);
 	switch(mainGame->cbSortType->getSelected()) {
 	case 0:
 		std::sort(left, results.end(), DataManager::deck_sort_lv);

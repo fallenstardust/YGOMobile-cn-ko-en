@@ -17,7 +17,9 @@ import java.io.IOException;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareMyDeckBinding;
+import cn.garymb.ygomobile.bean.events.DeckDeleteEvent;
 import cn.garymb.ygomobile.ui.activities.WebActivity;
+import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginResponse;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.bean.McUser;
@@ -31,13 +33,17 @@ import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 //打开页面后，先扫描本地的卡组，读取其是否包含deckId，是的话代表平台上可能有
 //之后读取平台上的卡组，与本地卡组列表做比较。
 
 public class DeckSquareMyDeckFragment extends Fragment {
     private static final String TAG = "DeckSquareMyDeckFragment";
     private FragmentDeckSquareMyDeckBinding binding;
-    private MyDeckListAdapter deckListAdapter;
+    private MyOnlineDeckListAdapter deckListAdapter;
     private String keyWord;
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
@@ -57,14 +63,27 @@ public class DeckSquareMyDeckFragment extends Fragment {
             binding.llMainUi.setVisibility(View.VISIBLE);
             binding.llDialogLogin.setVisibility(View.GONE);
             binding.tvMycardUserName.setText(SharedPreferenceUtil.getMyCardUserName());
-            GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);//刷新头像图片
+            GlideCompat.with(getActivity()).load(ChatMessage.getAvatarUrl(SharedPreferenceUtil.getMyCardUserName())).into(binding.myDeckAvatar);
+        }
+
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
         }
 
         binding.btnLogin.setOnClickListener(v -> attemptLogin());
         binding.btnRegister.setOnClickListener(v -> WebActivity.open(getContext(), getString(R.string.register), MyCard.URL_MC_SIGN_UP));
-        deckListAdapter = new MyDeckListAdapter(R.layout.item_my_deck, onDeckMenuListener, mDialogListener);
-        GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 3);
-        binding.listMyDeckInfo.setLayoutManager(linearLayoutManager);
+        deckListAdapter = new MyOnlineDeckListAdapter(onDeckMenuListener, mDialogListener);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 3);
+        gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                if (position < deckListAdapter.getData().size()) {
+                    return deckListAdapter.getData().get(position).getItemType() == DeckListItem.TYPE_SECTION_HEADER ? 3 : 1;
+                }
+                return 1;
+            }
+        });
+        binding.listMyDeckInfo.setLayoutManager(gridLayoutManager);
         binding.listMyDeckInfo.setAdapter(deckListAdapter);
         deckListAdapter.loadData();
 
@@ -124,6 +143,13 @@ public class DeckSquareMyDeckFragment extends Fragment {
 
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onDeckDeleted(DeckDeleteEvent event) {
+        if (deckListAdapter != null) {
+            deckListAdapter.rebuildGroupedList(DeckManagerFragment.getOriginalData());
+        }
+    }
+
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -132,6 +158,9 @@ public class DeckSquareMyDeckFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
         binding = null;
     }
 

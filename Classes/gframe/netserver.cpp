@@ -3,8 +3,14 @@
 #include "single_duel.h"
 #include "tag_duel.h"
 #include "game.h"
+#include "deck_manager.h"
+#include "mysocket.h"
 #include <thread>
 #include <unordered_map>
+#include <event2/event.h>
+#include <event2/listener.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
 
 namespace ygo {
 
@@ -12,24 +18,27 @@ namespace{
 	std::unordered_map<bufferevent*, DuelPlayer> users{};
 	unsigned short server_port{};
 	event_base* net_evbase{};
-	event* broadcast_ev {};
+	event* broadcast_ev{};
+	event* duel_etimer{};
 	evconnlistener* listener{};
 	DuelMode* duel_mode{};
+	bool broadcast_enabled{};
 	unsigned char net_server_read[SIZE_NETWORK_BUFFER]{};
+
+	void DuelTimer(EventSocket, short, void* arg) {
+		static_cast<DuelMode*>(arg)->TimerTick();
+	}
 }
 
 unsigned char NetServer::net_server_write[SIZE_NETWORK_BUFFER]{};
 size_t NetServer::last_sent{};
+bufferevent* NetServer::disconnecting_bev = nullptr;
 
-/**
- * @brief 启动网络服务器
- * @param port 服务器监听的端口号
- * @return 启动成功返回true，失败返回false
- *
- * 该函数初始化网络事件基础结构，创建监听套接字，并启动服务器线程来处理网络事件。
- */
-bool NetServer::StartServer(unsigned short port) {
-	// 检查服务器是否已经启动
+int NetServer::WriteBufferEvent(bufferevent* bufev, const void* data, size_t size) {
+	return bufferevent_write(bufev, data, size);
+}
+
+bool NetServer::StartServer(unsigned short port, unsigned int ip, unsigned short* out_actual_port, bool enable_broadcast) {
 	if(net_evbase)
 		return false;
 
@@ -41,9 +50,8 @@ bool NetServer::StartServer(unsigned short port) {
 	// 初始化服务器地址结构
 	sockaddr_in sin;
 	std::memset(&sin, 0, sizeof sin);
-	server_port = port;
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	sin.sin_addr.s_addr = htonl(ip);
 	sin.sin_port = htons(port);
 
 	// 创建监听器并绑定到指定端口
@@ -55,8 +63,20 @@ bool NetServer::StartServer(unsigned short port) {
 		net_evbase = nullptr;
 		return false;
 	}
-
-	// 设置监听器错误回调函数
+	sockaddr_in bound_addr;
+	std::memset(&bound_addr, 0, sizeof bound_addr);
+	socklen_t bound_addr_len = sizeof bound_addr;
+	if(getsockname(evconnlistener_get_fd(listener), (sockaddr*)&bound_addr, &bound_addr_len) == SOCKET_RESULT_ERROR) {
+		evconnlistener_free(listener);
+		listener = nullptr;
+		event_base_free(net_evbase);
+		net_evbase = nullptr;
+		return false;
+	}
+	server_port = ntohs(bound_addr.sin_port);
+	if(out_actual_port)
+		*out_actual_port = server_port;
+	broadcast_enabled = enable_broadcast;
 	evconnlistener_set_error_cb(listener, ServerAcceptError);
 
 	// 启动服务器事件处理线程
@@ -74,14 +94,14 @@ bool NetServer::StartServer(unsigned short port) {
  */
 bool NetServer::StartBroadcast() {
 	// 检查事件基础对象是否存在
-	if(!net_evbase)
+	if(!net_evbase || !broadcast_enabled)
 		return false;
 
 	// 创建UDP套接字用于广播通信
-	SOCKET udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	Socket udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	// 设置套接字选项：允许广播和地址复用
-	int opt = TRUE;
+	int opt = 1;
 	setsockopt(udp, SOL_SOCKET, SO_BROADCAST, (const char*)&opt, sizeof opt);
 	setsockopt(udp, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof opt);
 
@@ -93,8 +113,8 @@ bool NetServer::StartBroadcast() {
 	addr.sin_addr.s_addr = 0;
 
 	// 绑定套接字到指定地址和端口
-	if(bind(udp, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
-		closesocket(udp);
+	if(bind(udp, (sockaddr*)&addr, sizeof(addr)) == SOCKET_RESULT_ERROR) {
+		CloseSocket(udp);
 		return false;
 	}
 
@@ -143,7 +163,7 @@ void NetServer::StopBroadcast() {
 	event_del(broadcast_ev);
 
 	// 获取广播事件关联的套接字描述符
-	evutil_socket_t fd;
+	EventSocket fd;
 	event_get_assignment(broadcast_ev, 0, &fd, 0, 0, 0);
 
 	// 关闭广播套接字
@@ -165,13 +185,17 @@ void NetServer::StopListen() {
 	// 停止广播服务
 	StopBroadcast();
 }
-/**
- * @brief 广播事件处理函数，用于处理网络广播消息并响应客户端请求
- * @param fd 套接字文件描述符
- * @param events 事件类型
- * @param arg 用户自定义参数
- */
-void NetServer::BroadcastEvent(evutil_socket_t fd, short events, void* arg) {
+void NetServer::StartDuelTimer() {
+	if(!duel_etimer)
+		return;
+	timeval timeout = { 1, 0 };
+	event_add(duel_etimer, &timeout);
+}
+void NetServer::StopDuelTimer() {
+	if(duel_etimer)
+		event_del(duel_etimer);
+}
+void NetServer::BroadcastEvent(EventSocket fd, short events, void* arg) {
 	// 接收广播数据包
 	sockaddr_in bc_addr;
 	socklen_t sz = sizeof(sockaddr_in);
@@ -187,7 +211,7 @@ void NetServer::BroadcastEvent(evutil_socket_t fd, short events, void* arg) {
 
 	// 验证数据包标识符，如果匹配则发送服务器信息响应
 	if(pHR->identifier == NETWORK_CLIENT_ID) {
-		SOCKADDR_IN sockTo;
+		sockaddr_in sockTo;
 		sockTo.sin_addr.s_addr = bc_addr.sin_addr.s_addr;
 		sockTo.sin_family = AF_INET;
 		sockTo.sin_port = htons(7921);
@@ -212,7 +236,7 @@ void NetServer::BroadcastEvent(evutil_socket_t fd, short events, void* arg) {
  * @param socklen 地址信息长度
  * @param ctx 用户自定义上下文数据指针
  */
-void NetServer::ServerAccept(evconnlistener* listener, evutil_socket_t fd, sockaddr* address, int socklen, void* ctx) {
+void NetServer::ServerAccept(evconnlistener* listener, EventSocket fd, sockaddr* address, int socklen, void* ctx) {
 	// 创建新的缓冲事件，用于处理网络I/O操作
 	bufferevent* bev = bufferevent_socket_new(net_evbase, fd, BEV_OPT_CLOSE_ON_FREE);
 
@@ -295,11 +319,14 @@ void NetServer::ServerEchoEvent(bufferevent* bev, short events, void* ctx) {
 		DuelPlayer* dp = &users[bev];
 		// 获取玩家所在的游戏模式对象
 		DuelMode* dm = dp->game;
+		auto* prev_disconnect = disconnecting_bev;
+		disconnecting_bev = bev;
 		// 根据玩家是否在游戏中的状态，执行不同的断开处理逻辑
 		if(dm)
 			dm->LeaveGame(dp);
 		else
 			DisconnectPlayer(dp);
+		disconnecting_bev = prev_disconnect;
 	}
 }
 /**
@@ -310,7 +337,7 @@ void NetServer::ServerEchoEvent(bufferevent* bev, short events, void* ctx) {
  *
  * @return int 返回0表示正常退出
  */
-int NetServer::ServerThread() {
+void NetServer::ServerThread() {
 	// 启动事件循环，处理网络IO事件
 	event_base_dispatch(net_evbase);
 
@@ -327,25 +354,22 @@ int NetServer::ServerThread() {
 
 	// 关闭并释放广播事件资源
 	if(broadcast_ev) {
-		evutil_socket_t fd;
+		EventSocket fd;
 		event_get_assignment(broadcast_ev, 0, &fd, 0, 0, 0);
 		evutil_closesocket(fd);
 		event_free(broadcast_ev);
 		broadcast_ev = nullptr;
 	}
-
-	// 清理决斗模式相关资源
-	if(duel_mode) {
-		event_free(duel_mode->etimer);
+	if(duel_etimer)
+		event_free(duel_etimer);
+	duel_etimer = nullptr;
+	if(duel_mode)
 		delete duel_mode;
-	}
 	duel_mode = nullptr;
 
 	// 释放事件基础结构
 	event_base_free(net_evbase);
 	net_evbase = nullptr;
-
-	return 0;
 }
 /**
  * @brief 断开指定玩家的网络连接
@@ -359,12 +383,17 @@ void NetServer::DisconnectPlayer(DuelPlayer* dp) {
 	// 查找玩家对应的缓冲事件是否存在于用户列表中
 	auto bit = users.find(dp->bev);
 	if(bit != users.end()) {
+		if(dp->game) {
+			dp->game->OnPlayerDisconnected(dp);
+			dp->game = nullptr;
+		}
 		// 强制刷新输出缓冲区，确保所有数据都发送完毕
 		bufferevent_flush(dp->bev, EV_WRITE, BEV_FLUSH);
 		// 禁用缓冲事件的读取功能
 		bufferevent_disable(dp->bev, EV_READ);
 		// 释放缓冲事件资源
 		bufferevent_free(dp->bev);
+		dp->bev = nullptr;
 		// 从用户列表中移除该玩家
 		users.erase(bit);
 	}
@@ -522,19 +551,16 @@ void NetServer::HandleCTOSPacket(DuelPlayer* dp, unsigned char* data, size_t len
 		// 根据游戏模式创建相应的决斗实例
 		if (pkt->info.mode == MODE_SINGLE) {
 			duel_mode = new SingleDuel(false);
-			duel_mode->etimer = event_new(net_evbase, 0, EV_TIMEOUT | EV_PERSIST, SingleDuel::SingleTimer, duel_mode);
 		}
 		else if (pkt->info.mode == MODE_MATCH) {
 			duel_mode = new SingleDuel(true);
-			duel_mode->etimer = event_new(net_evbase, 0, EV_TIMEOUT | EV_PERSIST, SingleDuel::SingleTimer, duel_mode);
 		}
 		else if (pkt->info.mode == MODE_TAG) {
 			duel_mode = new TagDuel();
-			duel_mode->etimer = event_new(net_evbase, 0, EV_TIMEOUT | EV_PERSIST, TagDuel::TagTimer, duel_mode);
 		}
 		else
 			return;
-
+		duel_etimer = event_new(net_evbase, -1, EV_PERSIST, DuelTimer, duel_mode);
 #ifdef _IRR_ANDROID_PLATFORM_
         HostInfo tmp;
         memcpy(&tmp, &pkt->info, sizeof(struct HostInfo));

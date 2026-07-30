@@ -79,9 +79,13 @@
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">게임 아바타</string>
     <string name="tip_credit_max">%d 상한선 초과</string>
+    <string name="mycard_server_load_failed">MyCard 환경 불러오기 실패:</string>
+    <string name="mycard_join_private_room">비밀 방 입장</string>
+    <string name="mycard_private_room">비밀 방</string>
+    <string name="mycard_private_room_password">비밀 방 비밀번호 입력</string>
+    <string name="mycard_private_room_copied">비밀 방 비밀번호 복사 완료：</string>
+    <string name="private_room_env_tip">비밀 방 비밀번호 입력 전 선택한 환경이 일치하는지 확인하세요</string>
     <string name="title_rank_start">랭크 매칭</string>
-    <string name="settings_author" translatable="false">菜菜、암성\n浙ICP备2023031884号-2A
-</string>
     <string name="restart_app">앱을 다시 시작하십시오!</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
@@ -432,7 +436,6 @@
     <string name="match_start">랭크 매칭</string>
     <string name="watch_duel">관전</string>
     <string name="waiting_message">매칭 대기 중입니다. 잠시 기다려 주세요...</string>
-    <string name="deck_win_rate">덱 승률</string>
     <string name="mycard_bbs">몽카드 포럼</string>
     <string name="tips_click_to_arena">원그래프 클릭 시 상세보기</string>
     <string name="single_duel">싱글 모드</string>
@@ -451,4 +454,51 @@
     <string name="input_room_name">방 이름 입력</string>
     <string name="server_area">서버 구역:</string>
     <string name="allowed_cards">허용 카드:</string>
+    <string name="s_room">의 방</string>
+    <string name="random">랜덤</string>
+    <string name="mycard_ai_battle">MyCard AI 배틀</string>
+    <string name="mycard_select_environment">"환경 선택: "</string>
+    <string name="mycard_select_ai">AI 선택</string>
+    <string name="mycard_ai_empty">MyCard AI를 사용할 수 없습니다.</string>
+    <string name="duel_record">듀얼 기록</string>
+    <string name="stat_win">승</string>
+    <string name="stat_lose">패</string>
+    <string name="stat_draw">무승부</string>
+    <string name="stat_all">전체</string>
+    <string name="unit_minute">분</string>
+    <string name="unit_match_count">회</string>
+    <string name="show_all">전체 보기</string>
+    <string name="no_duel_history">듀얼 기록 없음</string>
+    <string name="no_opponent_found">상대 매칭 실패</string>
+    <string name="match_failed">매칭 오류</string>
+    <string name="sort_exp">EXP 순 정렬</string>
+    <string name="disconnect">연결 끊김</string>
+    <string name="interrupt">중단</string>
+    <string name="time_today">오늘</string>
+    <string name="time_7day">최근 7일</string>
+    <string name="time_15day">최근 15일</string>
+    <string name="time_1month">최근 한 달</string>
+    <string name="current_banlist">현재 금지 카드 리스트</string>
+    <string name="tag_mycard_athletic">MyCard 경쟁전</string>
+    <string name="tag_mycard_entertain">MyCard 캐주얼</string>
+    <string name="tag_233_athletic">233 경쟁전</string>
+    <string name="tag_233_entertain">233 캐주얼</string>
+    <string name="cat_monster">몬스터</string>
+    <string name="cat_spell">마법</string>
+    <string name="cat_trap">함정</string>
+    <string name="cat_extra">엑스트라</string>
+    <string name="cat_side">사이드</string>
+    <string name="stat_usage_count">사용 횟수:</string>
+    <string name="stat_user_count">사용자 수:</string>
+    <string name="play_3">3장 투입：</string>
+    <string name="play_2">2장 투입：</string>
+    <string name="play_1">1장 투입：</string>
+    <string name="winrate_first">선공 승률</string>
+    <string name="winrate_second">후공 승률</string>
+    <string name="winrate_total">종합 승률</string>
+    <string name="deck_ranking">덱 순위</string>
+    <string name="deck_winrate">덱 승률</string>
+    <string name="duel_ranking">듀얼 순위</string>
+    <string name="card_ranking">카드 순위</string>
+    <string name="deck_dist_pie_analysis">덱 분포 원형 차트 분석</string>
 </resources>

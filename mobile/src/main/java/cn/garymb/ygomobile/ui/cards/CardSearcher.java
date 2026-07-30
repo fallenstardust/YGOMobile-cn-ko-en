@@ -973,7 +973,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = categoryButtons[i];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
             // 设置图标
-            button.setCompoundDrawablesWithIntrinsicBounds(null, categoryIcon[i], null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(categoryIcon[i], null, null, null);
 
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
             button.setText(mStringManager.getCategoryString(categories[i].value()));
@@ -1031,7 +1031,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = cardTypeButtons[index];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
             // 设置图标
-            button.setCompoundDrawablesWithIntrinsicBounds(null, cardTypeIcon[index], null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(cardTypeIcon[index], null, null, null);
 
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
             button.setText(mStringManager.getTypeString(typeIds[index]));
@@ -1342,7 +1342,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = raceButtons[index];
             button.setCompoundDrawablePadding(4); // 图标和文字间距
             // 设置图标
-            button.setCompoundDrawablesWithIntrinsicBounds(null, raceIcons[index], null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(raceIcons[index], null, null, null);
 
             // 定义说明文字(从strings.conf提取以便随着语言切换而变化)
             button.setText(mStringManager.getRaceString(raceId));
@@ -1440,7 +1440,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = monsterTypeButtons[index];
             button.setText(mStringManager.getTypeString(monsterTypeIds[i]));
             // 设置图标
-            button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(TypeIcon[index], null, null, null);
             button.setOnClickListener(v -> {
                 if (monsterTypeList == null) {
                     monsterTypeList = new ArrayList<>();
@@ -1506,7 +1506,7 @@ public class CardSearcher implements View.OnClickListener {
             Button button = exclude_typeButtons[index];
             button.setText(mStringManager.getTypeString(monsterTypeIds[i]));
             // 设置图标
-            button.setCompoundDrawablesWithIntrinsicBounds(null, TypeIcon[index], null, null);
+            button.setCompoundDrawablesWithIntrinsicBounds(TypeIcon[index], null, null, null);
             button.setOnClickListener(v -> {
                 if (excludeTypeList == null) {
                     excludeTypeList = new ArrayList<>();

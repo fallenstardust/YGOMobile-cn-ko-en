@@ -173,7 +173,10 @@ using chain_list = std::list<chain>;
 using instant_f_list = std::map<effect*, chain>;
 using chain_array = std::vector<chain>;
 using processor_list = std::list<processor_unit>;
-using delayed_effect_collection = std::set<std::pair<effect*, tevent>>;
+struct delayed_effect_sort {
+	bool operator()(const std::pair<effect*, tevent>& lhs, const std::pair<effect*, tevent>& rhs) const;
+};
+using delayed_effect_collection = std::set<std::pair<effect*, tevent>, delayed_effect_sort>;
 using activity_map = std::unordered_map<int32_t, std::pair<int32_t, uint32_t>>;	// (counter_id, (counter_filter, count[1]|count[0]))
 struct processor {
 	struct chain_limit_t {

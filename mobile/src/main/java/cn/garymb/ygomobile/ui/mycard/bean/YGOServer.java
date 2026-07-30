@@ -9,6 +9,8 @@ import com.google.gson.annotations.SerializedName;
 import com.ourygo.lib.duelassistant.util.DARecord;
 import com.ourygo.lib.duelassistant.util.UrlUtil;
 
+import java.util.List;
+
 import net.kk.xml.annotations.XmlElement;
 
 import cn.garymb.ygomobile.Constants;
@@ -42,6 +44,7 @@ public class YGOServer extends ServerInfo {
     private Boolean hidden;
     private Boolean custom;
     private Boolean replay;
+    private List<String> windbot;
 
     private transient String password;
 
@@ -110,6 +113,14 @@ public class YGOServer extends ServerInfo {
 
     public void setReplay(Boolean replay) {
         this.replay = replay;
+    }
+
+    public List<String> getWindbot() {
+        return windbot;
+    }
+
+    public void setWindbot(List<String> windbot) {
+        this.windbot = windbot;
     }
 
     public int getOpponentType() {

@@ -15,6 +15,7 @@ import okhttp3.Response;
 
 public class MyCardPieChart extends ArrayList<MyCardPieChart.Item> {
     public static final String TYPE_DAY = "day";
+    public static final String TYPE_MONTH = "month";
     public static final String SOURCE_MYCARD_ATHLETIC = "mycard-athletic";
 
     public static void getDeckTypeAnalytics(String type, String source, OnMyCardPieChartListener listener) {
