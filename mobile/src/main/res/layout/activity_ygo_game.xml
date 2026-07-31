@@ -320,8 +320,7 @@
                             <TextView
                                 android:id="@+id/tv_card_desc"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/tip_card_info_diff"
+                                android:layout_height="match_parent"
                                 android:textColor="@color/white"
                                 android:textSize="11sp" />
                         </ScrollView>
@@ -411,6 +410,7 @@
             android:layout_height="match_parent"
             android:layout_weight="0.7"
             android:visibility="gone" />
+
         <!-- 右侧区域（垂直）：顶部玩家信息 + 决斗场 -->
         <LinearLayout
             android:id="@+id/layout_game_right"

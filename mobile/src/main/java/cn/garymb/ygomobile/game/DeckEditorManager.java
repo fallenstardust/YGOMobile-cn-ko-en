@@ -116,6 +116,7 @@ public class DeckEditorManager {
     private Spinner spinnerFilterType;
     private Spinner spinnerFilterType2, spinnerFilterAttribute, spinnerFilterRace, spinnerFilterLimit;
     private Spinner spinnerSortType;
+    private SimpleSpinnerAdapter attrAdapter, raceAdapter;
     private EditText etAttack, etDefense, etStar, etScale, etKeyword;
     private EditText etDeckName;
     private Button btnSave, btnSaveAs, btnShuffle, btnSort, btnClear, btnDelete, btnExit;
@@ -341,7 +342,7 @@ public class DeckEditorManager {
         StringManager sm = DataManager.get().getStringManager();
 
         List<SimpleSpinnerItem> typeItems = new ArrayList<>();
-        typeItems.add(new SimpleSpinnerItem(0, "全部"));
+        typeItems.add(new SimpleSpinnerItem(0, "(无)"));
         typeItems.add(new SimpleSpinnerItem(1, "怪兽"));
         typeItems.add(new SimpleSpinnerItem(2, "魔法"));
         typeItems.add(new SimpleSpinnerItem(3, "陷阱"));
@@ -369,13 +370,28 @@ public class DeckEditorManager {
         // 子类spinner_filter_type2初始只含（N/A），随主类型动态重建
         updateType2Spinner(spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0);
 
+        //子类型选中"连接"时单独禁用守备力输入框（连接怪兽无守备力）
+        if (spinnerFilterType2 != null) {
+            spinnerFilterType2.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                    updateDefenseEditState();
+                }
+
+                @Override
+                public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                    updateDefenseEditState();
+                }
+            });
+        }
+
         List<SimpleSpinnerItem> attrItems = new ArrayList<>();
         attrItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
         for (CardAttribute attr : CardAttribute.values()) {
             attrItems.add(new SimpleSpinnerItem(attr.getId(),
                     sm.getSystemString(attr.getLanguageIndex(), attr.name())));
         }
-        SimpleSpinnerAdapter attrAdapter = new SimpleSpinnerAdapter(activity);
+        attrAdapter = new SimpleSpinnerAdapter(activity);
         attrAdapter.setColor(Color.WHITE);
         attrAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         attrAdapter.setTextSize(8f);
@@ -388,12 +404,14 @@ public class DeckEditorManager {
             raceItems.add(new SimpleSpinnerItem(race.value(),
                     sm.getSystemString(race.getLanguageIndex(), race.name())));
         }
-        SimpleSpinnerAdapter raceAdapter = new SimpleSpinnerAdapter(activity);
+        raceAdapter = new SimpleSpinnerAdapter(activity);
         raceAdapter.setColor(Color.WHITE);
         raceAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         raceAdapter.setTextSize(8f);
         raceAdapter.set(raceItems);
         if (spinnerFilterRace != null) spinnerFilterRace.setAdapter(raceAdapter);
+        // 子类spinner_filter_type2初始只含（N/A），随主类型动态重建（需在属性/种族adapter创建后调用）
+        updateType2Spinner(spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0);
 
         List<SimpleSpinnerItem> limitItems = new ArrayList<>();
         limitItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
@@ -468,6 +486,7 @@ public class DeckEditorManager {
      */
     private void updateType2Spinner(int typePos) {
         if (spinnerFilterType2 == null) return;
+        boolean enabled = typePos != 0;
         StringManager sm = DataManager.get().getStringManager();
         List<SimpleSpinnerItem> items = new ArrayList<>();
         items.add(new SimpleSpinnerItem(0, sm.getSystemString(1080, "（N/A）")));
@@ -514,13 +533,61 @@ public class DeckEditorManager {
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(activity);
         adapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
-        adapter.setColor(Color.WHITE);
+        adapter.setColor(enabled ? Color.WHITE : Color.GRAY);
         adapter.setTextSize(8f);
         adapter.set(items);
         spinnerFilterType2.setAdapter(adapter);
         spinnerFilterType2.setSelection(0);
-        //主类型未选择具体类型（全部）时禁用子类spinner，选择怪兽/魔法/陷阱后才启用
-        spinnerFilterType2.setEnabled(typePos != 0);
+        //主类型选（无）时禁用子类spinner；属性/种族spinner及星数/刻度/ATK/DEF输入框仅在主类型为怪兽时启用
+        boolean monsterEnabled = typePos == 1;
+        setSpinnerEnabled(spinnerFilterType2, null, enabled);
+        setSpinnerEnabled(spinnerFilterAttribute, attrAdapter, monsterEnabled);
+        setSpinnerEnabled(spinnerFilterRace, raceAdapter, monsterEnabled);
+        setEditTextEnabled(etStar, monsterEnabled);
+        setEditTextEnabled(etScale, monsterEnabled);
+        setEditTextEnabled(etAttack, monsterEnabled);
+        updateDefenseEditState();
+    }
+
+    /**
+     * 启用/禁用spinner：禁用时选项文字变灰、背景drawable整体染成灰白色，并重置选中项为（无）
+     */
+    private void setSpinnerEnabled(Spinner spinner, SimpleSpinnerAdapter adapter, boolean enabled) {
+        if (spinner == null) return;
+        spinner.setEnabled(enabled);
+        if (!enabled) {
+            spinner.setSelection(0);
+        }
+        if (adapter != null) {
+            adapter.setColor(enabled ? Color.WHITE : Color.GRAY);
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * 启用/禁用EditText：禁用时清空内容并将文字变灰
+     */
+    private void setEditTextEnabled(android.widget.EditText et, boolean enabled) {
+        if (et == null) return;
+        et.setEnabled(enabled);
+        if (!enabled) {
+            et.setText("");
+        }
+        et.setBackgroundColor(YGOUtil.c(enabled ? R.color.ygopro_list_background : R.color.item_bg));
+    }
+
+    /**
+     * 守备力输入框状态：主类型非怪兽时禁用；主类型为怪兽但子类型为连接时也禁用（连接怪兽无守备力）
+     */
+    private void updateDefenseEditState() {
+        boolean monster = spinnerFilterType != null && spinnerFilterType.getSelectedItemPosition() == 1;
+        if (!monster) {
+            setEditTextEnabled(etDefense, false);
+            return;
+        }
+        long value = SimpleSpinnerAdapter.getSelect(spinnerFilterType2);
+        boolean isLink = (value & CardType.Link.getId()) != 0;
+        setEditTextEnabled(etDefense, !isLink);
     }
 
     private void setupDeckSelectorDialog() {
@@ -877,7 +944,7 @@ public class DeckEditorManager {
         filterSclType = 0;
         filterScl = 0;
         updateFilterMarksDisplay();
-        if (btnFilterEffect != null) btnFilterEffect.setText("效果分类");
+        updateFilterEffectDisplay();
         if (linkMarkerPopup != null && linkMarkerPopup.isShowing()) {
             linkMarkerPopup.dismiss();
         }
@@ -1442,8 +1509,10 @@ public class DeckEditorManager {
                 }
             }
             btnFilterMarks.setText(sb.toString());
+            btnFilterMarks.setBackground(activity.getDrawable(R.drawable.sbutton_p));
         } else {
             btnFilterMarks.setText("连接标记");
+            btnFilterMarks.setBackground(activity.getDrawable(R.drawable.button3_bg));
         }
     }
 
@@ -1457,11 +1526,24 @@ public class DeckEditorManager {
 
         effectCategoryPopup = new EffectCategoryPopupWindow(activity, filterEffect, newFilterEffect -> {
             filterEffect = newFilterEffect;
-            if (btnFilterEffect != null) {
-                btnFilterEffect.setText(filterEffect != 0 ? "效果:*" : "效果分类");
-            }
+            updateFilterEffectDisplay();
         });
         effectCategoryPopup.show(btnFilterEffect);
+    }
+
+    /**
+     * 效果分类按钮显示状态：弹窗内有checkbox被勾选（filterEffect!=0）时背景常亮为按下态，
+     * 无勾选时恢复默认selector背景
+     */
+    private void updateFilterEffectDisplay() {
+        if (btnFilterEffect == null) return;
+        if (filterEffect != 0) {
+            btnFilterEffect.setText("效果:*");
+            btnFilterEffect.setBackgroundResource(R.drawable.sbutton_p);
+        } else {
+            btnFilterEffect.setText("效果分类");
+            btnFilterEffect.setBackgroundResource(R.drawable.button3_bg);
+        }
     }
 
     //当前赛制标识显示模式（spinner_filter_limit选中项id：6=OCG、7=TCG、8=简体中文，其余不显示）
