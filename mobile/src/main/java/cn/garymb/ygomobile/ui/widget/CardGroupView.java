@@ -210,6 +210,21 @@ public class CardGroupView extends FrameLayout {
     }
     //endregion
 
+    /**
+     * 按落点坐标计算拖放插入下标：行=y/卡高，列=x/水平步进，
+     * 结果限制在[0, 当前卡片数]内，末尾表示追加。
+     */
+    public int getIndexByPosition(float x, float y) {
+        int count = getChildCount();
+        if (count == 0 || mCardHeight <= 0) return 0;
+        float stepX = computeStepX();
+        int line = (int) ((y - getPaddingTop()) / mCardHeight);
+        line = Math.max(0, Math.min(line, mMaxLines - 1));
+        int col = stepX > 0 ? Math.round((x - getPaddingLeft()) / stepX) : 0;
+        col = Math.max(0, Math.min(col, mLineLimit - 1));
+        return Math.max(0, Math.min(line * mLineLimit + col, count));
+    }
+
     private void onCardAdd(CardView cardView, int index) {
         refreshLayoutParams(getChildCount());
     }

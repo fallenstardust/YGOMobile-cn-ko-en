@@ -141,6 +141,10 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             }
             return false;
         });
+
+        if (deckType == null) {
+            holder.itemView.setOnTouchListener(editorManager.createSearchDragTouchListener(card));
+        }
     }
 
     /**

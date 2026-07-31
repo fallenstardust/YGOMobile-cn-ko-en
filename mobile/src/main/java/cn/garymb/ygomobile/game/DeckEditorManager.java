@@ -2,11 +2,16 @@ package cn.garymb.ygomobile.game;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ClipData;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.SparseArray;
+import android.view.DragEvent;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
@@ -131,6 +136,7 @@ public class DeckEditorManager {
     private String currentDeckFilePath = "";
 
     private DeckSelectorDialog deckSelectorDialog;
+    private int touchSlop;
 
     public DeckEditorManager(Activity activity, ImageLoader imageLoader, CardDetailPanel cardDetailPanel) {
         this.activity = activity;
@@ -149,6 +155,7 @@ public class DeckEditorManager {
         this.rootView = rootView;
         bindViews(rootView);
         setupRecyclerViews();
+        setupDragAndDrop();
         setupSpinners();
         setupButtons();
         setupDeckSelectorDialog();
@@ -407,7 +414,8 @@ public class DeckEditorManager {
         limitItems.add(new SimpleSpinnerItem(12, sm.getSystemString(1485, "无独有卡")));
         SimpleSpinnerAdapter limitAdapter = new SimpleSpinnerAdapter(activity);
         limitAdapter.setColor(Color.WHITE);
-        limitAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));;
+        limitAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
+        ;
         limitAdapter.setTextSize(8f);
         limitAdapter.set(limitItems);
         if (spinnerFilterLimit != null) {
@@ -1071,6 +1079,7 @@ public class DeckEditorManager {
                 onDeckCardLongClicked(type, index);
                 return true;
             });
+            cardView.setOnTouchListener(new CardDragTouchListener(type, index, cardView.getCard(), false));
         }
     }
 
@@ -1466,4 +1475,160 @@ public class DeckEditorManager {
         if (cgvSide != null) cgvSide.updateAvail(mImageTop, availLm);
         if (searchAdapter != null) searchAdapter.setAvailLm(availLm);
     }
+    // === 拖放：网格内换位、跨网格移动、搜索结果拖入、拖回搜索区删除 ===
+
+    private static class DragInfo {
+        final DeckInfo.Type source;
+        final int index;
+        final Card card;
+
+        DragInfo(DeckInfo.Type source, int index, Card card) {
+            this.source = source;
+            this.index = index;
+            this.card = card;
+        }
+    }
+
+    private void setupDragAndDrop() {
+        touchSlop = ViewConfiguration.get(activity).getScaledTouchSlop();
+        View.OnDragListener dropListener = this::onDragEvent;
+        if (cgvMain != null) cgvMain.setOnDragListener(dropListener);
+        if (cgvExtra != null) cgvExtra.setOnDragListener(dropListener);
+        if (cgvSide != null) cgvSide.setOnDragListener(dropListener);
+        if (rvSearchResults != null) rvSearchResults.setOnDragListener(dropListener);
+    }
+
+    private boolean onDragEvent(View v, DragEvent event) {
+        switch (event.getAction()) {
+            case DragEvent.ACTION_DRAG_STARTED:
+                return event.getLocalState() instanceof DragInfo;
+            case DragEvent.ACTION_DROP:
+                return handleDrop(v, event);
+            default:
+                return true;
+        }
+    }
+
+    private boolean handleDrop(View target, DragEvent event) {
+        Object state = event.getLocalState();
+        if (!(state instanceof DragInfo) || isReadonly) return false;
+        DragInfo info = (DragInfo) state;
+
+        //卡组网格拖到搜索结果区：删除该卡
+        if (target == rvSearchResults) {
+            if (info.source == DeckInfo.Type.Main) popMain(info.index);
+            else if (info.source == DeckInfo.Type.Extra) popExtra(info.index);
+            else if (info.source == DeckInfo.Type.Side) popSide(info.index);
+            return info.source != null;
+        }
+
+        if (!(target instanceof CardGroupView)) return false;
+        DeckInfo.Type targetType;
+        if (target == cgvMain) targetType = DeckInfo.Type.Main;
+        else if (target == cgvExtra) targetType = DeckInfo.Type.Extra;
+        else targetType = DeckInfo.Type.Side;
+
+        int dropIndex = ((CardGroupView) target).getIndexByPosition(event.getX(), event.getY());
+
+        //搜索结果拖入网格：按落点插入
+        if (info.source == null) {
+            return pushToDeck(targetType, info.card, dropIndex);
+        }
+        return moveCard(info.source, info.index, targetType, dropIndex);
+    }
+
+    private boolean pushToDeck(DeckInfo.Type type, Card card, int seq) {
+        if (type == DeckInfo.Type.Main) return pushMain(card, seq);
+        if (type == DeckInfo.Type.Extra) return pushExtra(card, seq);
+        return pushSide(card, seq);
+    }
+
+    private List<Card> getDeckList(DeckInfo.Type type) {
+        if (type == DeckInfo.Type.Main) return currentDeck.mainCards;
+        if (type == DeckInfo.Type.Extra) return currentDeck.extraCards;
+        return currentDeck.sideCards;
+    }
+
+    private boolean moveCard(DeckInfo.Type from, int fromIndex, DeckInfo.Type to, int toIndex) {
+        List<Card> fromList = getDeckList(from);
+        if (fromIndex < 0 || fromIndex >= fromList.size()) return false;
+
+        if (from == to) {
+            Card card = fromList.remove(fromIndex);
+            int insert = Math.max(0, Math.min(toIndex, fromList.size()));
+            fromList.add(insert, card);
+            if (insert == fromIndex) return true;
+            isModified = true;
+            notifyDeckChanged();
+            return true;
+        }
+
+        //跨网格：先移出再push（复用类型/数量/禁限校验），失败则还原
+        Card card = fromList.remove(fromIndex);
+        boolean ok = pushToDeck(to, card, toIndex);
+        if (!ok) {
+            fromList.add(fromIndex, card);
+        }
+        return ok;
+    }
+
+    private void startCardDrag(View view, DeckInfo.Type source, int index, Card card) {
+        if (card == null) return;
+        DragInfo info = new DragInfo(source, index, card);
+        ClipData clip = ClipData.newPlainText("card", String.valueOf(card.Code));
+        View.DragShadowBuilder shadow = new View.DragShadowBuilder(view);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            view.startDragAndDrop(clip, shadow, info, 0);
+        } else {
+            view.startDrag(clip, shadow, info, 0);
+        }
+    }
+
+    /**
+     * 按下后移动超过touchSlop即开始拖动；返回false保证点击/长按仍可触发。
+     * 搜索结果item仅横向拖动触发，避免与列表纵向滚动冲突。
+     */
+    private class CardDragTouchListener implements View.OnTouchListener {
+        private final DeckInfo.Type source;
+        private final int index;
+        private final Card card;
+        private final boolean horizontalOnly;
+        private float downX, downY;
+
+        CardDragTouchListener(DeckInfo.Type source, int index, Card card, boolean horizontalOnly) {
+            this.source = source;
+            this.index = index;
+            this.card = card;
+            this.horizontalOnly = horizontalOnly;
+        }
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    downX = event.getX();
+                    downY = event.getY();
+                    return false;
+                case MotionEvent.ACTION_MOVE:
+                    if (isReadonly || card == null) return false;
+                    float dx = event.getX() - downX;
+                    float dy = event.getY() - downY;
+                    boolean triggered = horizontalOnly
+                            ? Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy)
+                            : Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop;
+                    if (triggered) {
+                        startCardDrag(v, source, index, card);
+                        return true;
+                    }
+                    return false;
+                default:
+                    return false;
+            }
+        }
+    }
+
+    public View.OnTouchListener createSearchDragTouchListener(Card card) {
+        return new CardDragTouchListener(null, -1, card, true);
+    }
+
 }
