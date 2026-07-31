@@ -134,16 +134,12 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             }
         });
 
-        holder.itemView.setOnLongClickListener(v -> {
-            if (deckType != null) {
-                editorManager.onDeckCardLongClicked(deckType, holder.getAdapterPosition());
-                return true;
-            }
-            return false;
-        });
-
         if (deckType == null) {
-            holder.itemView.setOnTouchListener(editorManager.createSearchDragTouchListener(card));
+            //整个item可横向拖动触发拖拽，但拖拽阴影统一用卡图生成
+            holder.itemView.setOnTouchListener(editorManager.createSearchDragTouchListener(card, holder.ivCard));
+            //卡图作为拖拽把手：任意方向拖动即可触发拖拽；点击卡图仍等同点击整个item
+            holder.ivCard.setOnTouchListener(editorManager.createSearchImageDragTouchListener(card));
+            holder.ivCard.setOnClickListener(v -> holder.itemView.performClick());
         }
     }
 
