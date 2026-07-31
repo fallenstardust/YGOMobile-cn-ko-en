@@ -7,45 +7,50 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_marginBottom="10dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <TextView
-            android:layout_width="70dp"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.2"
+            android:gravity="center|start"
             android:text="@string/server_user"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_nickname"
             android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_weight="0.6"
             android:background="@color/ygopro_list_background"
             android:gravity="center"
             android:paddingHorizontal="10dp"
+            android:inputType="text"
             android:textColor="@color/white"
             android:textColorHint="#888888" />
 
         <Button
             android:id="@+id/btn_create_host"
-            android:layout_width="110dp"
-            android:layout_height="40dp"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.2"
             android:layout_marginStart="10dp"
             android:background="@drawable/button3_bg"
             android:text="局域网建主"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
     </LinearLayout>
 
     <ListView
         android:id="@+id/lv_host_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="5"
         android:background="@color/ygopro_list_background"
         android:divider="#33FFFFFF"
         android:dividerHeight="1dp"
@@ -53,75 +58,82 @@
 
     <Button
         android:id="@+id/btn_refresh_lan"
-        android:layout_width="110dp"
-        android:layout_height="40dp"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_gravity="center_horizontal|bottom"
         android:layout_marginVertical="5dp"
         android:background="@drawable/button3_bg"
         android:text="刷新局域网"
         android:textColor="@color/white"
-        android:textSize="12sp" />
+        android:textSize="10sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_gravity="center_horizontal|bottom"
         android:gravity="center_vertical"
         android:layout_marginBottom="5dp"
         android:orientation="horizontal">
 
         <TextView
-            android:layout_width="70dp"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.2"
+            android:gravity="center|start"
             android:text="@string/server_ip"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_host_ip"
             android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_weight="0.45"
             android:background="@color/ygopro_list_background"
             android:gravity="center"
             android:inputType="text"
-            android:paddingHorizontal="10dp"
             android:textColor="@color/white"
             android:textColorHint="@color/blackLight" />
 
         <EditText
             android:id="@+id/et_host_port"
-            android:layout_width="70dp"
-            android:layout_height="40dp"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.15"
             android:background="@color/ygopro_list_background"
             android:gravity="center"
             android:inputType="number"
-            android:paddingHorizontal="10dp"
+            android:layout_marginStart="5dp"
             android:textColor="@color/white"
             android:textColorHint="@color/blackLight" />
 
         <Button
             android:id="@+id/btn_join_game"
-            android:layout_width="110dp"
-            android:layout_height="40dp"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.2"
             android:layout_marginStart="10dp"
             android:background="@drawable/button3_bg"
             android:text="@string/join_game"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_gravity="center_horizontal|bottom"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <TextView
-            android:layout_width="70dp"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.2"
+            android:gravity="center|start"
             android:text="@string/server_room_name"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -129,23 +141,24 @@
         <EditText
             android:id="@+id/et_room_password"
             android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_weight="0.6"
             android:background="@color/ygopro_list_background"
             android:gravity="center"
-            android:paddingHorizontal="10dp"
+            android:paddingEnd="10dp"
+            android:inputType="text"
             android:textColor="@color/white"
             android:textColorHint="@color/blackLight" />
 
         <Button
             android:id="@+id/btn_exit_lan"
-            android:layout_width="110dp"
-            android:layout_height="40dp"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.2"
             android:layout_marginStart="10dp"
             android:background="@drawable/button3_bg"
             android:text="@string/quit"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
     </LinearLayout>
-
 </LinearLayout>
