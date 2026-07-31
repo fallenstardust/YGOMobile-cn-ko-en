@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 底色 + 0.5dp白色外框线 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ygopro_list_background" />
+            <stroke
+                android:width="0.3dp"
+                android:color="@color/colorMain" />
+        </shape>
+    </item>
+
+    <!-- 右侧仿Spinner矩形框（高度占满，宽为高的1/4） -->
+    <item
+        android:width="6dp"
+        android:gravity="right|fill_vertical">
+        <vector
+            android:width="6dp"
+            android:height="24dp"
+            android:viewportWidth="6"
+            android:viewportHeight="24">
+
+            <!-- 外层矩形框（描边，上下各留1缝隙，宽=高/4，内部填充navy） -->
+            <path
+                android:pathData="M0.4,1.15 L5.6,1.15 L5.6,22.85 L0.4,22.85 Z"
+                android:strokeWidth="0.3"
+                android:strokeColor="@color/colorMain"
+                android:fillColor="@color/colorNavy" />
+
+            <!-- 内嵌等边三角形（边长2.9，与框内边留1缝隙，居中） -->
+            <path
+                android:fillColor="@android:color/holo_blue_bright"
+                android:pathData="M1.55,10.74 L4.45,10.74 L3,13.26 Z" />
+
+        </vector>
+    </item>
+
+</layer-list>

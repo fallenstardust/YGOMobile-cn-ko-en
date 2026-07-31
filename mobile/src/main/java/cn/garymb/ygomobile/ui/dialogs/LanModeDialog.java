@@ -32,6 +32,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.adapters.HostListAdapter;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 
@@ -874,6 +875,7 @@ public class LanModeDialog {
 
         SimpleSpinnerAdapter banlistAdapter = new SimpleSpinnerAdapter(context);
         banlistAdapter.setColor(Color.WHITE);
+        banlistAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         banlistAdapter.set(banlistItems);
         spinnerBanlist.setAdapter(banlistAdapter);
 
@@ -897,6 +899,7 @@ public class LanModeDialog {
 
         SimpleSpinnerAdapter ruleAdapter = new SimpleSpinnerAdapter(context);
         ruleAdapter.setColor(Color.WHITE);
+        ruleAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         ruleAdapter.set(ruleItems);
         spinnerRule.setAdapter(ruleAdapter);
         spinnerRule.setSelection(1);
@@ -908,6 +911,7 @@ public class LanModeDialog {
 
         SimpleSpinnerAdapter cardAllowedAdapter = new SimpleSpinnerAdapter(context);
         cardAllowedAdapter.setColor(Color.WHITE);
+        cardAllowedAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         cardAllowedAdapter.set(cardAllowedItems);
         spinnerCardAllowed.setAdapter(cardAllowedAdapter);
         spinnerCardAllowed.setSelection(0);
@@ -919,6 +923,7 @@ public class LanModeDialog {
 
         SimpleSpinnerAdapter duelModeAdapter = new SimpleSpinnerAdapter(context);
         duelModeAdapter.setColor(Color.WHITE);
+        duelModeAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         duelModeAdapter.set(duelModeItems);
         spinnerDuelMode.setAdapter(duelModeAdapter);
         spinnerDuelMode.setSelection(0);

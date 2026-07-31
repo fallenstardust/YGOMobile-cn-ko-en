@@ -13,6 +13,7 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.ReplayEngine;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -285,7 +286,7 @@ public class CardDetailPanel {
         StringManager sm = DataManager.get().getStringManager();
         StringBuilder sb = new StringBuilder();
 
-        String typeStr = sm.getTypeString(cardData.Type);
+        String typeStr = CardUtils.getAllTypeString(cardData, sm).replace("/", "|");
         sb.append("[").append(typeStr).append("]");
 
         if (cardData.isType(CardType.Monster)) {

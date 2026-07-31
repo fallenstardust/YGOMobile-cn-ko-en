@@ -43,6 +43,7 @@ import cn.garymb.ygomobile.ui.dialogs.EffectCategoryPopupWindow;
 import cn.garymb.ygomobile.ui.dialogs.LinkMarkerPopupWindow;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
 import cn.garymb.ygomobile.ui.widget.CardView;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -339,6 +340,7 @@ public class DeckEditorManager {
         typeItems.add(new SimpleSpinnerItem(3, "陷阱"));
         SimpleSpinnerAdapter typeAdapter = new SimpleSpinnerAdapter(activity);
         typeAdapter.setColor(Color.WHITE);
+        typeAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         typeAdapter.setTextSize(8f);
         typeAdapter.set(typeItems);
         if (spinnerFilterType != null) {
@@ -368,6 +370,7 @@ public class DeckEditorManager {
         }
         SimpleSpinnerAdapter attrAdapter = new SimpleSpinnerAdapter(activity);
         attrAdapter.setColor(Color.WHITE);
+        attrAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         attrAdapter.setTextSize(8f);
         attrAdapter.set(attrItems);
         if (spinnerFilterAttribute != null) spinnerFilterAttribute.setAdapter(attrAdapter);
@@ -380,6 +383,7 @@ public class DeckEditorManager {
         }
         SimpleSpinnerAdapter raceAdapter = new SimpleSpinnerAdapter(activity);
         raceAdapter.setColor(Color.WHITE);
+        raceAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         raceAdapter.setTextSize(8f);
         raceAdapter.set(raceItems);
         if (spinnerFilterRace != null) spinnerFilterRace.setAdapter(raceAdapter);
@@ -403,6 +407,7 @@ public class DeckEditorManager {
         limitItems.add(new SimpleSpinnerItem(12, sm.getSystemString(1485, "无独有卡")));
         SimpleSpinnerAdapter limitAdapter = new SimpleSpinnerAdapter(activity);
         limitAdapter.setColor(Color.WHITE);
+        limitAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));;
         limitAdapter.setTextSize(8f);
         limitAdapter.set(limitItems);
         if (spinnerFilterLimit != null) {
@@ -428,6 +433,7 @@ public class DeckEditorManager {
         sortItems.add(new SimpleSpinnerItem(3, "名称↓"));
         SimpleSpinnerAdapter sortAdapter = new SimpleSpinnerAdapter(activity);
         sortAdapter.setColor(Color.WHITE);
+        sortAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         sortAdapter.setTextSize(8f);
         sortAdapter.set(sortItems);
         if (spinnerSortType != null) spinnerSortType.setAdapter(sortAdapter);
@@ -499,11 +505,14 @@ public class DeckEditorManager {
                 break;
         }
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(activity);
+        adapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         adapter.setColor(Color.WHITE);
         adapter.setTextSize(8f);
         adapter.set(items);
         spinnerFilterType2.setAdapter(adapter);
         spinnerFilterType2.setSelection(0);
+        //主类型未选择具体类型（全部）时禁用子类spinner，选择怪兽/魔法/陷阱后才启用
+        spinnerFilterType2.setEnabled(typePos != 0);
     }
 
     private void setupDeckSelectorDialog() {
