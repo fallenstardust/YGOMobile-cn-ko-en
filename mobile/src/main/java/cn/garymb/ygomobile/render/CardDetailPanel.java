@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.render;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -8,6 +10,9 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.io.File;
+
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.ReplayEngine;
@@ -44,6 +49,7 @@ public class CardDetailPanel {
     private LinearLayout layoutDeckControl;
 
     private int currentCardCode = -1;
+    private Bitmap coverBitmap;
 
     public CardDetailPanel(YGOProActivity activity) {
         this.activity = activity;
@@ -159,10 +165,15 @@ public class CardDetailPanel {
             layout.setVisibility(View.VISIBLE);
         }
         if (ivCardImage != null) {
-            ivCardImage.setImageResource(R.drawable.unknown);
+            Bitmap cover = getCoverBitmap();
+            if (cover != null) {
+                ivCardImage.setImageBitmap(cover);
+            } else {
+                ivCardImage.setImageResource(R.drawable.unknown);
+            }
         }
         if (tvCardName != null) {
-            tvCardName.setText("???");
+            tvCardName.setText("");
         }
         if (tvCardSetname != null) {
             tvCardSetname.setText("");
@@ -188,7 +199,7 @@ public class CardDetailPanel {
         int code = clientCard.code;
         Card cardData = DataManager.get().getCardManager().getCard(code);
         if (cardData == null) {
-            showDefault();
+            showUnknownCard();
             return;
         }
 
@@ -211,7 +222,7 @@ public class CardDetailPanel {
 
     public void showCard(Card card) {
         if (card == null || card.getCode() <= 0) {
-            showDefault();
+            showUnknownCard();
             return;
         }
 
@@ -242,6 +253,36 @@ public class CardDetailPanel {
 
     public boolean isShowing() {
         return layout != null && layout.getVisibility() == View.VISIBLE;
+    }
+
+    private void showUnknownCard() {
+        currentCardCode = -1;
+        if (layout != null) {
+            layout.setVisibility(View.VISIBLE);
+        }
+        if (ivCardImage != null) {
+            ivCardImage.setImageResource(R.drawable.unknown);
+        }
+        if (tvCardName != null) {
+            tvCardName.setText("???");
+        }
+        if (tvCardSetname != null) {
+            tvCardSetname.setText("");
+            tvCardSetname.setVisibility(View.GONE);
+        }
+        if (tvCardAttr != null) {
+            tvCardAttr.setText("");
+        }
+        if (tvCardLevel != null) {
+            tvCardLevel.setText("");
+            tvCardLevel.setVisibility(View.GONE);
+        }
+        if (tvCardDesc != null) {
+            tvCardDesc.setText(R.string.tip_card_info_diff);
+        }
+        if (svCardDesc != null) {
+            svCardDesc.fullScroll(ScrollView.FOCUS_UP);
+        }
     }
 
     public int getCurrentCardCode() {
@@ -471,5 +512,15 @@ public class CardDetailPanel {
     public void hideReplayControls() {
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
+    }
+
+    private Bitmap getCoverBitmap() {
+        if (coverBitmap == null || coverBitmap.isRecycled()) {
+            File coverFile = new File(AppsSettings.get().getCoreSkinPath(), "cover.jpg");
+            if (coverFile.exists()) {
+                coverBitmap = BitmapFactory.decodeFile(coverFile.getAbsolutePath());
+            }
+        }
+        return coverBitmap;
     }
 }
