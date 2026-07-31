@@ -173,3 +173,12 @@ jobs:
           bucket: ${{ secrets.S3_BUCKET }}
           file_name: YGOMobile.apk
           file_path: ./build/YGOMobile.apk/YGOMobile.apk
+
+      - name: cdn
+        uses: jwyxym/jwyxym/edgeone-cache@master
+        with:
+          proxy: http://127.0.0.1:1081
+          secret_id: ${{ secrets.EDGE_ID }}
+          secret_key: ${{ secrets.EDGE_KEY }}
+          zone_id: ${{ secrets.EDGE_ZONE_ID }}
+          url_target: ${{ secrets.EDGE_URL }}
