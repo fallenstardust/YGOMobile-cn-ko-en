@@ -12,9 +12,9 @@
         <Preference
             android:key="pref_key_change_log"
             android:title="@string/settings_about_change_log" />
-        <Preference
+        <!--<Preference
             android:key="pref_key_join_qq"
-            android:title="@string/Join_QQ" />
+            android:title="@string/Join_QQ" />-->
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_category_diy">
