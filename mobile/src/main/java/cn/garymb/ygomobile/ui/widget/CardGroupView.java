@@ -153,60 +153,38 @@ public class CardGroupView extends FrameLayout {
     private void refreshLayoutParams(int index, int count) {
         mLineLimit = (int) Math.max(mOrgLineLimit, Math.ceil((float) count / (float) mMaxLines));
         if (mPausePadding) return;
-        float stepX = computeStepX();
+        int p = 0;
+        if (mLineLimit > mOrgLineLimit) {
+            p = -(int) Math.ceil((double) ((mLineLimit - mOrgLineLimit) * mCardWidth) / (float) (mLineLimit - 1));
+        }
         int childcount = getChildCount();
         for (int i = index; i < childcount && count > 0; i++, count--) {
             View view = getChildAt(i);
             LayoutParams lp = (LayoutParams) view.getLayoutParams();
             if (lp == null) {
-                lp = getLayoutParamsAt(i, stepX);
+                lp = getLayoutParamsAt(i, 0);
             } else {
-                fillLayoutParams(i, lp, stepX);
+                fillLayoutParams(i, lp, p);
             }
             view.setLayoutParams(lp);
         }
     }
 
-    /**
-     * 按网格实际可用宽度计算相邻卡片的水平步进：
-     * 首张贴左、末张贴右，一行mLineLimit张均匀分布铺满整行。
-     * 宽度未知（尚未布局）时回退原有逻辑。
-     */
-    private float computeStepX() {
-        int availWidth = getWidth() - getPaddingLeft() - getPaddingRight();
-        if (availWidth > mCardWidth && mLineLimit > 1) {
-            return (availWidth - mCardWidth) / (float) (mLineLimit - 1);
-        }
-        if (mLineLimit > mOrgLineLimit) {
-            return mCardWidth - (float) ((mLineLimit - mOrgLineLimit) * mCardWidth) / (mLineLimit - 1);
-        }
-        return mCardWidth;
-    }
-
-    private void fillLayoutParams(int index, LayoutParams layoutParams, float stepX) {
+    private void fillLayoutParams(int index, LayoutParams layoutParams, int p) {
         int line = getLineByIndex(index);
         int x = getLineStartByIndex(index);
         layoutParams.topMargin = line * mCardHeight;
-        layoutParams.leftMargin = Math.round(x * stepX);
+        layoutParams.leftMargin = x * (mCardWidth + p);
     }
 
     private LayoutParams getLayoutParamsAt(int index) {
-        return getLayoutParamsAt(index, computeStepX());
+        return getLayoutParamsAt(index, 0);
     }
 
-    private LayoutParams getLayoutParamsAt(int index, float stepX) {
+    private LayoutParams getLayoutParamsAt(int index, int p) {
         LayoutParams layoutParams = new LayoutParams(mCardWidth, mCardHeight);
-        fillLayoutParams(index, layoutParams, stepX);
+        fillLayoutParams(index, layoutParams, p);
         return layoutParams;
-    }
-
-    //网格宽度确定或变化后，按新宽度重新均匀分布
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        if (w != oldw && getChildCount() > 0) {
-            post(this::refreshLayout);
-        }
     }
     //endregion
 

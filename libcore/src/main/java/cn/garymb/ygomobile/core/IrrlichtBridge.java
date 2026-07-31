@@ -79,10 +79,6 @@ public final class IrrlichtBridge {
 
     private static native void nativeSetInputFix(long handle, int x, int y);
 
-    private static native boolean nativeStartGameServer(int port);
-
-    private static native void nativeStopGameServer();
-
     private static final boolean DEBUG = false;
 
     public static void setArgs(Intent intent, String[] args) {
@@ -132,14 +128,6 @@ public final class IrrlichtBridge {
 
     public static void joinGame(ByteBuffer options, int length) {
         nativeJoinGame(sNativeHandle, options, length);
-    }
-
-    public static boolean startGameServer(int port) {
-        return nativeStartGameServer(port);
-    }
-
-    public static void stopGameServer() {
-        nativeStopGameServer();
     }
 
     public interface IrrlichtApplication {

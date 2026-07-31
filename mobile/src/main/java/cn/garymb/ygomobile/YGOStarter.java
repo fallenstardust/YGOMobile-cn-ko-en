@@ -177,13 +177,7 @@ public class YGOStarter {
             showLoadingBg(activity);
             Log.e(TAG, "设置背景后" + System.currentTimeMillis());
         }
-        Class<?> targetActivity;
-        if (AppsSettings.get().isNativeGameMode()) {
-            targetActivity = YGOProActivity.class;
-        } else {
-            targetActivity = YGOMobileActivity.class;
-        }
-        Intent intent = new Intent(activity, targetActivity);
+        Intent intent = new Intent(activity, YGOMobileActivity.class);
         if (options != null) {
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());

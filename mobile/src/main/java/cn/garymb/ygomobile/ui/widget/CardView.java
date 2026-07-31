@@ -1,33 +1,26 @@
 package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.TypedValue;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
-import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.LimitType;
 
 public class CardView extends FrameLayout {
     private final ImageView mCardView, mTopImage;
-    private final TextView mLimitNum;
     private Card mCard;
-    private int mOverlaySize;
-    private float mLimitNumScale = 0.6f;
 
     public CardView(Context context) {
         this(context, null);
@@ -41,7 +34,6 @@ public class CardView extends FrameLayout {
         super(context);
         mCardView = new ImageView(context);
         mTopImage = new ImageView(context);
-        mLimitNum = new TextView(context);
         initCountView(Math.round(width / 9.0f * 4.0f));
     }
 
@@ -49,7 +41,6 @@ public class CardView extends FrameLayout {
         super(context, attrs, defStyleAttr);
         mCardView = new ImageView(context);
         mTopImage = new ImageView(context);
-        mLimitNum = new TextView(context);
         initCountView((int) getResources().getDimension(R.dimen.right_size2));
     }
 
@@ -60,57 +51,10 @@ public class CardView extends FrameLayout {
         int p = (int) getResources().getDimension(R.dimen.card_padding);
         lp.setMargins(p, p, p, p);
         addView(mCardView, lp);
-
         LayoutParams lp2 = new LayoutParams(w, w);
         lp2.gravity = Gravity.LEFT | Gravity.TOP;
         mTopImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
         addView(mTopImage, lp2);
-
-        LayoutParams lp3 = new LayoutParams(w, w);
-        lp3.gravity = Gravity.LEFT | Gravity.TOP;
-        mLimitNum.setGravity(Gravity.CENTER);
-        mLimitNum.setTextSize(TypedValue.COMPLEX_UNIT_SP, 8);
-        mLimitNum.setTextColor(Color.WHITE);
-        mLimitNum.setVisibility(View.GONE);
-        addView(mLimitNum, lp3);
-    }
-
-    /**
-     * 角标尺寸随卡片实际尺寸自适应：
-     * 高度为卡图（去除上下padding后）高度的1/4，宽高一致，字号等比缩放。
-     */
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        int p = (int) getResources().getDimension(R.dimen.card_padding);
-        int imageHeight = h - 2 * p;
-        if (imageHeight <= 0) return;
-        int size = Math.max(1, Math.round(imageHeight * Constants.CARD_LIMIT_OVERLAY_RATIO));
-        if (size == mOverlaySize) return;
-        mOverlaySize = size;
-        //onSizeChanged处于布局流程中，直接改LayoutParams可能不生效，布局完成后再应用
-        post(this::applyOverlaySize);
-    }
-
-    private void applyOverlaySize() {
-        LayoutParams lp2 = (LayoutParams) mTopImage.getLayoutParams();
-        lp2.width = mOverlaySize;
-        lp2.height = mOverlaySize;
-        mTopImage.setLayoutParams(lp2);
-
-        LayoutParams lp3 = (LayoutParams) mLimitNum.getLayoutParams();
-        lp3.width = mOverlaySize;
-        lp3.height = mOverlaySize;
-        mLimitNum.setLayoutParams(lp3);
-
-        setLimitNumTextSize(mLimitNumScale);
-    }
-
-    private void setLimitNumTextSize(float scale) {
-        mLimitNumScale = scale;
-        if (mOverlaySize > 0) {
-            mLimitNum.setTextSize(TypedValue.COMPLEX_UNIT_PX, mOverlaySize * scale);
-        }
     }
 
     @Override
@@ -130,48 +74,35 @@ public class CardView extends FrameLayout {
     public void updateLimit(ImageTop imageTop, LimitList limitList) {
         if (mCard != null && imageTop != null) {
             mTopImage.setVisibility(View.VISIBLE);
-            mLimitNum.setVisibility(View.VISIBLE);
             if (limitList != null) {
                 if (limitList.check(mCard, LimitType.Forbidden)) {
                     mTopImage.setImageBitmap(imageTop.forbidden);
-                    mLimitNum.setText("");
-                    mLimitNum.setTextColor(YGOUtil.c(R.color.white));
-                    setLimitNumTextSize(0.6f);
                 } else if (limitList.check(mCard, LimitType.Limit)) {
                     mTopImage.setImageBitmap(imageTop.limit);
-                    mLimitNum.setText("1");
-                    mLimitNum.setTextColor(YGOUtil.c(R.color.yellow));
-                    setLimitNumTextSize(0.6f);
                 } else if (limitList.check(mCard, LimitType.SemiLimit)) {
                     mTopImage.setImageBitmap(imageTop.semiLimit);
-                    mLimitNum.setText("2");
-                    mLimitNum.setTextColor(YGOUtil.c(R.color.yellow));
-                    setLimitNumTextSize(0.6f);
                 } else if (limitList.check(mCard, LimitType.GeneSys)) {
+                    // 根据credits中的信用分值设置对应的图标
+                    // 获取卡牌的信用分值
                     Integer creditValue = 0;
                     if (limitList.getCredits() != null) {
-                        creditValue = limitList.getCredits().get(mCard.getCode());
+                        creditValue = limitList.getCredits().get(mCard.getCode());//使用getCode而不是getGameCode，因为getCode判断较为宽松，适合规则上视为同名卡但效果不同的卡
+                        Log.d("cc", "CreditValue: " + creditValue);
                     }
+                    // 根据信用分值设置对应的图标索引
                     if (creditValue != null && creditValue > 0) {
-                        mTopImage.setImageBitmap(imageTop.credits);
-                        mLimitNum.setText(creditValue.toString());
-                        mLimitNum.setTextColor(YGOUtil.c(R.color.holo_blue_bright));
-                        setLimitNumTextSize((creditValue > -10 && creditValue < 100) ? 0.6f : 0.45f);
+                        mTopImage.setImageBitmap(imageTop.credits); // 索引从0开始
                     } else {
                         mTopImage.setVisibility(View.GONE);
-                        mLimitNum.setVisibility(View.GONE);
                     }
                 } else {
                     mTopImage.setVisibility(View.GONE);
-                    mLimitNum.setVisibility(View.GONE);
                 }
             } else {
                 mTopImage.setVisibility(View.GONE);
-                mLimitNum.setVisibility(View.GONE);
             }
         } else {
             mTopImage.setVisibility(View.GONE);
-            mLimitNum.setVisibility(View.GONE);
         }
     }
 
@@ -183,7 +114,6 @@ public class CardView extends FrameLayout {
             imageLoader.bindImage(mCardView, cardInfo, ImageLoader.Type.small);
         } else {
             mTopImage.setVisibility(View.GONE);
-            mLimitNum.setVisibility(View.GONE);
             mCardView.setImageBitmap(null);
         }
     }

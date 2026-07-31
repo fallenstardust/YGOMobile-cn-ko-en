@@ -149,6 +149,4 @@ dependencies {
     implementation 'org.java-websocket:Java-WebSocket:1.5.3'
     // MPAndroidChart 折线图库
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
-    // LZMA decompression for replay files
-    implementation 'org.tukaani:xz:1.9'
 }

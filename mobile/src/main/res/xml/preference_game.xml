@@ -115,13 +115,6 @@
             android:key="pref_key_game_lab_pendulum_scale"
             android:persistent="true"
             android:title="@string/settings_game_lab_pendulum_scale" />
-
-        <CheckBoxPreference
-            android:key="pref_key_native_game_mode"
-            android:persistent="true"
-            android:summary="@string/settings_native_game_mode_summary"
-            android:title="@string/settings_native_game_mode" />
-
         <!--<CheckBoxPreference
             android:key="pref_settings_deck_manager_v2"
             android:persistent="true"
