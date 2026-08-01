@@ -43,7 +43,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginEnd="5dp"
                     android:layout_weight="0.75"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/btn_sci_fi_bg"
                     android:text="卡组管理"
                     android:textColor="@color/white"
                     android:textSize="8sp" />
@@ -62,7 +62,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="2dp"
                 android:layout_weight="1"
                 android:orientation="horizontal">
 
@@ -72,7 +72,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginEnd="5dp"
                     android:layout_weight="0.75"
-                    android:background="@color/ygopro_list_background"
+                    android:background="@drawable/ygopro_base_background"
                     android:inputType="text"
                     android:paddingStart="4dp"
                     android:textColor="@color/white"
@@ -130,7 +130,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.3"
-                        android:background="@drawable/spinner_ygopro" />
+                        android:background="@drawable/ygopro_spinner" />
 
                     <TextView
                         android:id="@+id/tv_label_type2"
@@ -148,7 +148,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.3"
-                        android:background="@drawable/spinner_ygopro" />
+                        android:background="@drawable/ygopro_spinner" />
                 </LinearLayout>
 
                 <!-- 属性 + 攻击 -->
@@ -175,7 +175,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.3"
-                        android:background="@drawable/spinner_ygopro" />
+                        android:background="@drawable/ygopro_spinner" />
 
                     <TextView
                         android:id="@+id/tv_label_race"
@@ -193,7 +193,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.3"
-                        android:background="@drawable/spinner_ygopro" />
+                        android:background="@drawable/ygopro_spinner" />
 
                 </LinearLayout>
 
@@ -221,7 +221,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.3"
-                        android:background="@color/ygopro_list_background"
+                        android:background="@drawable/ygopro_base_background"
                         android:inputType="number"
                         android:textColor="@color/white"
                         android:textSize="8sp" />
@@ -242,7 +242,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.3"
-                        android:background="@color/ygopro_list_background"
+                        android:background="@drawable/ygopro_base_background"
                         android:inputType="number"
                         android:paddingStart="4dp"
                         android:textColor="@color/white"
@@ -325,7 +325,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0.8"
-                                android:background="@drawable/spinner_ygopro" />
+                                android:background="@drawable/ygopro_spinner" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -351,7 +351,7 @@
                                         android:layout_width="0dp"
                                         android:layout_height="match_parent"
                                         android:layout_weight="0.3"
-                                        android:background="@color/ygopro_list_background"
+                                        android:background="@drawable/ygopro_base_background"
                                         android:inputType="number"
                                         android:paddingStart="4dp"
                                         android:textColor="@color/white"
@@ -374,7 +374,7 @@
                                         android:layout_height="match_parent"
                                         android:layout_marginStart="2dp"
                                         android:layout_weight="0.3"
-                                        android:background="@color/ygopro_list_background"
+                                        android:background="@drawable/ygopro_base_background"
                                         android:inputType="number"
                                         android:paddingStart="4dp"
                                         android:textColor="@color/white"
@@ -406,7 +406,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.8"
-                        android:background="@color/ygopro_list_background"
+                        android:background="@drawable/ygopro_base_background"
                         android:inputType="text"
                         android:paddingStart="4dp"
                         android:textColor="@color/white"
@@ -473,7 +473,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:paddingHorizontal="8dp"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/ygopro_deck_background"
                     android:layout_gravity="left|center"
                     android:gravity="center"
                     android:orientation="horizontal">
@@ -500,7 +500,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:paddingHorizontal="8dp"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/ygopro_deck_background"
                     android:layout_gravity="center"
                     android:gravity="center"
                     android:orientation="horizontal">
@@ -611,12 +611,13 @@
                     android:paddingHorizontal="8dp"
                     android:layout_gravity="right|center"
                     android:gravity="center"
-                    android:background="@drawable/panel_sci_fi_bg">
+                    android:background="@drawable/ygopro_deck_background">
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_main_monster_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
-                        android:background="#C08A4B" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_main_monster_count"
@@ -627,11 +628,12 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_main_spell_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
                         android:layout_marginStart="10dp"
-                        android:background="#1E9E8F" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_main_spell_count"
@@ -642,11 +644,12 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_main_trap_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
                         android:layout_marginStart="10dp"
-                        android:background="#B44A7D" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_main_trap_count"
@@ -665,7 +668,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="4"
-                android:background="@drawable/panel_sci_fi_bg"
+                android:background="@drawable/ygopro_deck_background"
                 app:line_limit="10"
                 app:line_max_count="15"
                 app:lines="4" />
@@ -685,7 +688,7 @@
                     android:gravity="center"
                     android:layout_gravity="left|center"
                     android:paddingHorizontal="8dp"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/ygopro_deck_background"
                     android:orientation="horizontal">
 
                     <TextView
@@ -712,12 +715,13 @@
                     android:paddingHorizontal="8dp"
                     android:layout_gravity="right|center"
                     android:gravity="center"
-                    android:background="@drawable/panel_sci_fi_bg">
+                    android:background="@drawable/ygopro_deck_background">
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_extra_fusion_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
-                        android:background="#A45CC8" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_extra_fusion_count"
@@ -728,11 +732,12 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_extra_synchro_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
                         android:layout_marginStart="10dp"
-                        android:background="#E8E8E8" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_extra_synchro_count"
@@ -743,11 +748,12 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_extra_xyz_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
                         android:layout_marginStart="10dp"
-                        android:background="#2A2A2A" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_extra_xyz_count"
@@ -758,11 +764,12 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_extra_link_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
                         android:layout_marginStart="10dp"
-                        android:background="#4A90D9" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_extra_link_count"
@@ -781,7 +788,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:background="@drawable/panel_sci_fi_bg"
+                android:background="@drawable/ygopro_deck_background"
                 app:line_limit="10"
                 app:line_max_count="15"
                 app:lines="1" />
@@ -801,7 +808,7 @@
                     android:layout_gravity="left|center"
                     android:gravity="center"
                     android:paddingHorizontal="8dp"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/ygopro_deck_background"
                     android:orientation="horizontal">
 
                     <TextView
@@ -828,12 +835,13 @@
                     android:layout_gravity="right|center"
                     android:gravity="center"
                     android:paddingHorizontal="8dp"
-                    android:background="@drawable/panel_sci_fi_bg">
+                    android:background="@drawable/ygopro_deck_background">
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_side_monster_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
-                        android:background="#C08A4B" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_side_monster_count"
@@ -844,11 +852,12 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_side_spell_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
                         android:layout_marginStart="10dp"
-                        android:background="#1E9E8F" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_side_spell_count"
@@ -859,11 +868,12 @@
                         android:textColor="@color/white"
                         android:textSize="8sp" />
 
-                    <View
+                    <ImageView
+                        android:id="@+id/iv_side_trap_type"
                         android:layout_width="10dp"
                         android:layout_height="12dp"
                         android:layout_marginStart="10dp"
-                        android:background="#B44A7D" />
+                        android:scaleType="fitXY" />
 
                     <TextView
                         android:id="@+id/tv_side_trap_count"
@@ -882,7 +892,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:background="@drawable/panel_sci_fi_bg"
+                android:background="@drawable/ygopro_deck_background"
                 app:line_limit="10"
                 app:line_max_count="15"
                 app:lines="1" />
@@ -909,7 +919,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/ygopro_deck_background"
                     android:gravity="center|left"
                     android:text="搜索结果: 0"
                     android:textColor="@color/white"
@@ -921,7 +931,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="2dp"
                     android:layout_weight="1"
-                    android:background="@drawable/spinner_ygopro" />
+                    android:background="@drawable/ygopro_spinner" />
             </LinearLayout>
 
             <!-- 搜索结果列表 -->
@@ -930,7 +940,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="2dp"
-                android:background="@drawable/panel_sci_fi_bg" />
+                android:background="@drawable/ygopro_deck_background" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

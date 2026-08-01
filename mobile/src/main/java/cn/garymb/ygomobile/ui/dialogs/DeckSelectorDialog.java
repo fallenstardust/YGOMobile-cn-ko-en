@@ -32,6 +32,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.DeckSelectorUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class DeckSelectorDialog {
 
@@ -217,7 +218,7 @@ public class DeckSelectorDialog {
     public void setOperationButtonsEnabled(boolean enabled) {
         for (Button btn : operationButtons) {
             btn.setEnabled(enabled);
-            btn.setTextColor(enabled ? Color.WHITE : 0x88FFFFFF);
+            btn.setTextColor(YGOUtil.c(enabled ? R.color.white : R.color.item_bg));
         }
     }
 
@@ -729,7 +730,7 @@ public class DeckSelectorDialog {
     // ==================== 适配器 ====================
 
     private static class CategoryListAdapter extends BaseAdapter {
-        private static final int SELECTED_BG_COLOR = 0x5587CEEB;
+        private static final int SELECTED_BG_COLOR = YGOUtil.c(R.color.colorMain);
         private Context context;
         private List<DeckSelectorUtil.DeckCategory> categories;
         private int selectedPosition = -1;
@@ -765,8 +766,9 @@ public class DeckSelectorDialog {
                 holder = (ViewHolder) convertView.getTag();
             }
             holder.textView.setText(categories.get(position).categoryName);
+            holder.textView.setTextSize(8);
             holder.textView.setBackgroundColor(position == selectedPosition ? SELECTED_BG_COLOR : Color.TRANSPARENT);
-            holder.textView.setTextColor(0xFFFFFFFF);
+            holder.textView.setTextColor(YGOUtil.c(position == selectedPosition ? R.color.colorNavy : R.color.white));
             return convertView;
         }
 
@@ -774,7 +776,7 @@ public class DeckSelectorDialog {
     }
 
     private static class DeckListAdapter extends BaseAdapter {
-        private static final int SELECTED_BG_COLOR = 0x5587CEEB;
+        private static final int SELECTED_BG_COLOR = YGOUtil.c(R.color.colorMain);
         private Context context;
         private List<DeckSelectorUtil.DeckItem> decks;
         private int selectedPosition = -1;
@@ -805,8 +807,9 @@ public class DeckSelectorDialog {
                 holder = (ViewHolder) convertView.getTag();
             }
             holder.textView.setText(decks.get(position).toString());
+            holder.textView.setTextSize(8);
             holder.textView.setBackgroundColor(position == selectedPosition ? SELECTED_BG_COLOR : Color.TRANSPARENT);
-            holder.textView.setTextColor(0xFF87CEEB);
+            holder.textView.setTextColor(YGOUtil.c(position == selectedPosition ? R.color.colorNavy : R.color.white));
             return convertView;
         }
 

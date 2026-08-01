@@ -3,26 +3,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/window3"
-    android:orientation="horizontal"
-    android:padding="16dp">
+    android:orientation="horizontal">
 
     <ListView
         android:id="@+id/lv_categories"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="0.6"
-        android:background="#1A3A4A"
-        android:divider="#3A5A6B"
+        android:background="@drawable/ygopro_base_background"
         android:dividerHeight="1dp" />
 
     <ListView
         android:id="@+id/lv_decks"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_marginHorizontal="10dp"
+        android:layout_marginHorizontal="5dp"
         android:layout_weight="1"
-        android:background="#1A3A4A"
-        android:divider="#3A5A6B"
+        android:background="@drawable/ygopro_base_background"
         android:dividerHeight="1dp" />
 
     <LinearLayout
@@ -64,12 +61,6 @@
             android:textColor="@color/white"
             android:textSize="10sp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="4dp"
-            android:background="#4A6A7B" />
-
         <Button
             android:id="@+id/btn_new_deck"
             android:layout_width="match_parent"
@@ -103,12 +94,6 @@
             android:textColor="@color/white"
             android:textSize="10sp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="4dp"
-            android:background="#4A6A7B" />
-
         <Button
             android:id="@+id/btn_move_to_category"
             android:layout_width="match_parent"
@@ -130,12 +115,6 @@
             android:text="复制到分类"
             android:textColor="@color/white"
             android:textSize="10sp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="4dp"
-            android:background="#4A6A7B" />
 
         <Button
             android:id="@+id/btn_confirm_deck"

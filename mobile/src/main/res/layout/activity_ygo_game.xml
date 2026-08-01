@@ -276,7 +276,7 @@
                             android:id="@+id/tv_card_name"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/panel_sci_fi_bg"
+                            android:background="@drawable/ygopro_deck_background"
                             android:gravity="center"
                             android:padding="2dp"
                             android:text="Unknown[999999999]"
@@ -436,7 +436,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/ygopro_deck_background"
                     android:orientation="horizontal"
                     android:padding="6dp">
 
@@ -543,7 +543,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/ygopro_deck_background"
                     android:orientation="horizontal"
                     android:padding="6dp">
 
@@ -625,7 +625,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:background="@drawable/panel_sci_fi_bg"
+                android:background="@drawable/ygopro_deck_background"
                 android:padding="3dp"
                 android:text="请选择要特殊召唤的怪兽（9-9）"
                 android:textColor="@color/white"
@@ -651,7 +651,7 @@
                     android:layout_gravity="end|top"
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="8dp"
-                    android:background="@drawable/panel_sci_fi_bg"
+                    android:background="@drawable/ygopro_deck_background"
                     android:orientation="horizontal"
                     android:padding="6dp"
                     android:visibility="visible">
@@ -734,7 +734,7 @@
                 android:maxLines="1"
                 android:imeOptions="actionSend|flagNoExtractUi"
                 android:textColor="@color/white"
-                android:background="@drawable/panel_sci_fi_bg"/>
+                android:background="@drawable/ygopro_deck_background"/>
         </LinearLayout>
     </LinearLayout>
 

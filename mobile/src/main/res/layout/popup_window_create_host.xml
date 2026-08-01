@@ -21,14 +21,14 @@
             android:gravity="left|center"
             android:text="禁限卡表："
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <Spinner
             android:id="@+id/spinner_banlist"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
-            android:background="@drawable/spinner_ygopro" />
+            android:background="@drawable/ygopro_spinner" />
 
         <TextView
             android:layout_width="0dp"
@@ -38,14 +38,14 @@
             android:gravity="left|center"
             android:text="规则："
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <Spinner
             android:id="@+id/spinner_rule"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
-            android:background="@drawable/spinner_ygopro" />
+            android:background="@drawable/ygopro_spinner" />
     </LinearLayout>
 
     <LinearLayout
@@ -63,14 +63,14 @@
             android:gravity="left|center"
             android:text="卡片允许："
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <Spinner
             android:id="@+id/spinner_card_allowed"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
-            android:background="@drawable/spinner_ygopro" />
+            android:background="@drawable/ygopro_spinner" />
 
         <TextView
             android:layout_width="0dp"
@@ -80,14 +80,14 @@
             android:gravity="left|center"
             android:text="初始基本分："
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_start_lp"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
-            android:background="@color/ygopro_list_background"
+            android:background="@drawable/ygopro_base_background"
             android:gravity="center"
             android:inputType="number"
             android:text="8000"
@@ -109,14 +109,14 @@
             android:gravity="left|center"
             android:text="决斗模式："
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <Spinner
             android:id="@+id/spinner_duel_mode"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
-            android:background="@drawable/spinner_ygopro" />
+            android:background="@drawable/ygopro_spinner" />
 
         <TextView
             android:layout_width="0dp"
@@ -126,14 +126,14 @@
             android:gravity="left|center"
             android:text="初始手卡数："
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_start_hand"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
-            android:background="@color/ygopro_list_background"
+            android:background="@drawable/ygopro_base_background"
             android:gravity="center"
             android:inputType="number"
             android:text="5"
@@ -155,14 +155,14 @@
             android:gravity="left|center"
             android:text="每回合时间："
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_time_limit"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
-            android:background="@color/ygopro_list_background"
+            android:background="@drawable/ygopro_base_background"
             android:gravity="center"
             android:inputType="number"
             android:text="180"
@@ -176,14 +176,14 @@
             android:gravity="left|center"
             android:text="每回合抽卡："
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_draw_count"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.3"
-            android:background="@color/ygopro_list_background"
+            android:background="@drawable/ygopro_base_background"
             android:gravity="center"
             android:inputType="number"
             android:text="1"
@@ -204,7 +204,7 @@
             android:layout_marginEnd="20dp"
             android:text="不检查卡组"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <CheckBox
             android:id="@+id/chk_no_shuffle_deck"
@@ -212,7 +212,7 @@
             android:layout_height="match_parent"
             android:text="不洗切卡组"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -230,7 +230,7 @@
             android:gravity="left|center"
             android:text="@string/server_ip"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_host_name"
@@ -238,7 +238,7 @@
             android:layout_height="match_parent"
             android:layout_marginRight="10dp"
             android:layout_weight="0.6"
-            android:background="@color/ygopro_list_background"
+            android:background="@drawable/ygopro_base_background"
             android:gravity="center"
             android:textColor="@color/white" />
 
@@ -251,7 +251,7 @@
             android:background="@drawable/button3_bg"
             android:text="@string/ok"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -268,7 +268,7 @@
             android:gravity="left|center"
             android:text="@string/server_room_pwd"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_host_password"
@@ -276,7 +276,7 @@
             android:layout_height="match_parent"
             android:layout_marginRight="10dp"
             android:layout_weight="0.6"
-            android:background="@color/ygopro_list_background"
+            android:background="@drawable/ygopro_base_background"
             android:gravity="center"
             android:textColor="@color/white" />
 
@@ -289,7 +289,7 @@
             android:background="@drawable/button3_bg"
             android:text="@string/quit"
             android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:textSize="10sp" />
     </LinearLayout>
 
 </LinearLayout>

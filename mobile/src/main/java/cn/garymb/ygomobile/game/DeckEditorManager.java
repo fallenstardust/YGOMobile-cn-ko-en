@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -37,6 +38,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
+import cn.garymb.ygomobile.ui.cards.deck.CardTypeImage;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.dialogs.DeckSelectorDialog;
@@ -130,7 +132,13 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private Button btnDeckManager;
 
     private DeckCardAdapter searchAdapter;
+
     private ImageTop mImageTop;
+    private CardTypeImage mCardTypeImage;
+    private ImageView ivMainMonsterType, ivMainSpellType, ivMainTrapType;
+    private ImageView ivExtraFusionType, ivExtraSynchroType, ivExtraXyzType, ivExtraLinkType;
+    private ImageView ivSideMonsterType, ivSideSpellType, ivSideTrapType;
+
     private LimitList mLimitList;
 
     private LinkMarkerPopupWindow linkMarkerPopup;
@@ -236,6 +244,18 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         cgvSide = root.findViewById(R.id.cgv_deck_side);
         layoutExtraStats = root.findViewById(R.id.layout_extra_stats);
         layoutSideStats = root.findViewById(R.id.layout_side_stats);
+
+        ivMainMonsterType = root.findViewById(R.id.iv_main_monster_type);
+        ivMainSpellType = root.findViewById(R.id.iv_main_spell_type);
+        ivMainTrapType = root.findViewById(R.id.iv_main_trap_type);
+        ivExtraFusionType = root.findViewById(R.id.iv_extra_fusion_type);
+        ivExtraSynchroType = root.findViewById(R.id.iv_extra_synchro_type);
+        ivExtraXyzType = root.findViewById(R.id.iv_extra_xyz_type);
+        ivExtraLinkType = root.findViewById(R.id.iv_extra_link_type);
+        ivSideMonsterType = root.findViewById(R.id.iv_side_monster_type);
+        ivSideSpellType = root.findViewById(R.id.iv_side_spell_type);
+        ivSideTrapType = root.findViewById(R.id.iv_side_trap_type);
+
         rvSearchResults = root.findViewById(R.id.rv_deck_search_results);
         btnDeckManager = root.findViewById(R.id.btn_deck_manager);
         etDeckName = root.findViewById(R.id.et_deck_name);
@@ -288,6 +308,19 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                 ? cardLoader.getGenesysLimitList()
                 : cardLoader.getLimitList();
         mImageTop = new ImageTop(activity);
+        mCardTypeImage = new CardTypeImage(activity);
+
+        if (mCardTypeImage == null) return;
+        if (ivMainMonsterType != null) ivMainMonsterType.setImageBitmap(mCardTypeImage.monster);
+        if (ivMainSpellType != null) ivMainSpellType.setImageBitmap(mCardTypeImage.spell);
+        if (ivMainTrapType != null) ivMainTrapType.setImageBitmap(mCardTypeImage.trap);
+        if (ivExtraFusionType != null) ivExtraFusionType.setImageBitmap(mCardTypeImage.fusion);
+        if (ivExtraSynchroType != null) ivExtraSynchroType.setImageBitmap(mCardTypeImage.synchro);
+        if (ivExtraXyzType != null) ivExtraXyzType.setImageBitmap(mCardTypeImage.xyz);
+        if (ivExtraLinkType != null) ivExtraLinkType.setImageBitmap(mCardTypeImage.link);
+        if (ivSideMonsterType != null) ivSideMonsterType.setImageBitmap(mCardTypeImage.monster);
+        if (ivSideSpellType != null) ivSideSpellType.setImageBitmap(mCardTypeImage.spell);
+        if (ivSideTrapType != null) ivSideTrapType.setImageBitmap(mCardTypeImage.trap);
 
         cgvMain.setImageLoader(imageLoader);
         cgvMain.setLineLimit(4, 10, 15);
@@ -531,7 +564,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         SimpleSpinnerAdapter limitAdapter = new SimpleSpinnerAdapter(activity);
         limitAdapter.setColor(Color.WHITE);
         limitAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
-        ;
+
         limitAdapter.setTextSize(8f);
         limitAdapter.set(limitItems);
         if (spinnerFilterLimit != null) {
@@ -671,7 +704,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (!enabled) {
             et.setText("");
         }
-        et.setBackgroundColor(YGOUtil.c(enabled ? R.color.ygopro_list_background : R.color.item_bg));
+        et.setBackground(activity.getDrawable(enabled ? R.drawable.ygopro_base_background : R.drawable.ygopro_unable_background));
+
     }
 
     /**

@@ -9,8 +9,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ImageButton;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -100,7 +100,7 @@ public class SettingsDialog {
         CheckBox chkEnableMusic = rootLayout.findViewById(R.id.chkEnableMusic);
         chkEnableMusic.setText(stringManager.getSystemString(1280, ""));
         SeekBar seekbarMusic = rootLayout.findViewById(R.id.seekbar_music);
-        Button btnCancel = rootLayout.findViewById(R.id.btn_cancel);
+        ImageButton btnCancel = rootLayout.findViewById(R.id.btn_cancel);
 
         chkMAutoPos.setChecked(appsSettings.getIntSettings("chkMAutoPos", 0) == 1);
         chkSTAutoPos.setChecked(appsSettings.getIntSettings("chkSTAutoPos", 0) == 1);

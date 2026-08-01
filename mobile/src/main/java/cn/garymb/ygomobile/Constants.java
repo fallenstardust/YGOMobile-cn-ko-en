@@ -77,6 +77,7 @@ public interface Constants {
     String ASSETS_PATH = "data/";
     String ASSET_SERVER_LIST = "serverlist.xml";
     String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/icon_lim.png";
+    String ASSET_CARDTYPE_PNG = ASSETS_PATH + "textures/cardtype.png";
     String ASSET_ATTR_RACE = ASSETS_PATH + "textures/extra/attribute_race/";
     String ASSET_COVER = ASSETS_PATH + "textures/extra/covers/";
     String DEFAULT_FONT_NAME = "ygo.ttf";
