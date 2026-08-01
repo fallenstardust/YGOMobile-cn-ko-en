@@ -2,14 +2,10 @@ package cn.garymb.ygomobile.game;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ClipData;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.SparseArray;
-import android.view.DragEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -58,7 +54,7 @@ import ocgcore.enums.CardRace;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
-public class DeckEditorManager {
+public class DeckEditorManager implements CardDragHelper.DropHandler {
     private static final String TAG = "DeckEditorManager";
 
     public interface DeckEditorListener {
@@ -138,6 +134,7 @@ public class DeckEditorManager {
 
     private DeckSelectorDialog deckSelectorDialog;
     private int touchSlop;
+    private final CardDragHelper dragHelper;
 
     public DeckEditorManager(Activity activity, ImageLoader imageLoader, CardDetailPanel cardDetailPanel) {
         this.activity = activity;
@@ -146,6 +143,7 @@ public class DeckEditorManager {
         this.cardLoader = new CardLoader();
         this.currentDeck = new DeckInfo();
         this.searchResults = new ArrayList<>();
+        this.dragHelper = new CardDragHelper(activity, this);
     }
 
     public void setListener(DeckEditorListener listener) {
@@ -252,7 +250,7 @@ public class DeckEditorManager {
         setupDeckCardSize();
 
         rvSearchResults.setLayoutManager(new LinearLayoutManager(activity));
-        searchAdapter = new DeckCardAdapter(imageLoader, this, null);
+        searchAdapter = new DeckCardAdapter(imageLoader, this, null, dragHelper);
         searchAdapter.setLimitList(mLimitList);
         rvSearchResults.setAdapter(searchAdapter);
     }
@@ -688,6 +686,8 @@ public class DeckEditorManager {
     public boolean pushSide(Card card, int seq) {
         if (card == null) return false;
         if (currentDeck.getSideCount() >= Constants.DECK_SIDE_MAX) return false;
+        //与主/额外一致的禁限校验：主+额外+副中同code/alias数量已达禁限表上限、或GeneSys点数将超限时禁止投入副卡组
+        if (!checkLimit(card)) return false;
         boolean result;
         if (seq >= 0 && seq <= currentDeck.sideCards.size()) {
             result = currentDeck.addSideCards(seq, card);
@@ -732,20 +732,45 @@ public class DeckEditorManager {
     public boolean checkLimit(Card card) {
         if (card == null) return false;
         int limitCode = (card.Alias > 0) ? card.Alias : card.Code;
+
+        //禁限卡表决定最大投入数：禁止0/限制1/准限制2，其余默认3
+        int limit = 3;
+        if (mLimitList != null) {
+            if (mLimitList.check(card, LimitType.Forbidden)) limit = 0;
+            else if (mLimitList.check(card, LimitType.Limit)) limit = 1;
+            else if (mLimitList.check(card, LimitType.SemiLimit)) limit = 2;
+        }
+
+        //统计主+额外+副中同code/alias的已有数量，已达上限则投入会超限
         int count = 0;
         for (Card c : currentDeck.mainCards) {
-            int cCode = (c.Alias > 0) ? c.Alias : c.Code;
-            if (cCode == limitCode) count++;
+            if (((c.Alias > 0) ? c.Alias : c.Code) == limitCode) count++;
         }
         for (Card c : currentDeck.extraCards) {
-            int cCode = (c.Alias > 0) ? c.Alias : c.Code;
-            if (cCode == limitCode) count++;
+            if (((c.Alias > 0) ? c.Alias : c.Code) == limitCode) count++;
         }
         for (Card c : currentDeck.sideCards) {
-            int cCode = (c.Alias > 0) ? c.Alias : c.Code;
-            if (cCode == limitCode) count++;
+            if (((c.Alias > 0) ? c.Alias : c.Code) == limitCode) count++;
         }
-        return count < 3;
+        if (count >= limit) return false;
+
+        //GeneSys模式：全卡组（主+额外+副）起源点数合计加上新卡不得超上限
+        if (mLimitList != null && mLimitList.getCreditLimits() != null) {
+            if (getDeckCreditCount() + getCardCredit(card) > mLimitList.getCreditLimits()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    //GeneSys模式单卡起源点数：优先按Code，找不到再按Alias（与getDeckCreditCount口径一致）
+    private int getCardCredit(Card card) {
+        if (card == null || mLimitList == null || mLimitList.getCredits() == null) return 0;
+        Integer credit = mLimitList.getCredits().get(card.Code);
+        if (credit == null && card.Alias > 0) {
+            credit = mLimitList.getCredits().get(card.Alias);
+        }
+        return credit != null ? credit : 0;
     }
 
     // === 对应 deck_con.cpp: BUTTON_SHUFFLE_DECK ===
@@ -1092,15 +1117,6 @@ public class DeckEditorManager {
     public void onSearchCardClicked(Card card) {
         if (card == null || isReadonly) return;
         showCardInfo(card);
-        if (Card.isExtraCard(card.Type)) {
-            if (!pushExtra(card, -1)) {
-                pushSide(card, -1);
-            }
-        } else {
-            if (!pushMain(card, -1)) {
-                pushSide(card, -1);
-            }
-        }
     }
 
     public void onDeckCardClicked(DeckInfo.Type type, int position) {
@@ -1135,7 +1151,9 @@ public class DeckEditorManager {
             CardView cardView = (CardView) groupView.getChildAt(i);
             final int index = i;
             cardView.setOnClickListener(v -> onDeckCardClicked(type, index));
-            cardView.setOnTouchListener(new CardDragTouchListener(type, index, cardView.getCard(), false));
+            if (searchAdapter != null) {
+                cardView.setOnTouchListener(searchAdapter.createDragTouchListener(type, index, cardView.getCard(), touchSlop, isReadonly));
+            }
         }
     }
 
@@ -1214,13 +1232,7 @@ public class DeckEditorManager {
         allCards.addAll(currentDeck.getExtraCards());
         allCards.addAll(currentDeck.getSideCards());
         for (Card card : allCards) {
-            Integer creditValue = mLimitList.getCredits().get(card.Code);
-            if (creditValue == null && card.Alias > 0) {
-                creditValue = mLimitList.getCredits().get(card.Alias);
-            }
-            if (creditValue != null) {
-                total += creditValue;
-            }
+            total += getCardCredit(card);
         }
         return total;
     }
@@ -1548,81 +1560,61 @@ public class DeckEditorManager {
     }
     // === 拖放：网格内换位、跨网格移动、搜索结果拖入、拖回搜索区删除 ===
 
-    private static class DragInfo {
-        final DeckInfo.Type source;
-        final int index;
-        final Card card;
-
-        DragInfo(DeckInfo.Type source, int index, Card card) {
-            this.source = source;
-            this.index = index;
-            this.card = card;
-        }
-    }
-
-    //当前正在拖拽中、已从原网格移除的卡（拖拽落空时用于还原）
-    private DragInfo activeDragInfo;
-
     private void setupDragAndDrop() {
         touchSlop = ViewConfiguration.get(activity).getScaledTouchSlop();
-        View.OnDragListener dropListener = this::onDragEvent;
-        if (cgvMain != null) cgvMain.setOnDragListener(dropListener);
-        if (cgvExtra != null) cgvExtra.setOnDragListener(dropListener);
-        if (cgvSide != null) cgvSide.setOnDragListener(dropListener);
-        if (rvSearchResults != null) rvSearchResults.setOnDragListener(dropListener);
+        if (searchAdapter != null) searchAdapter.setDragState(touchSlop, isReadonly);
+        dragHelper.addDropTarget(cgvMain);
+        dragHelper.addDropTarget(cgvExtra);
+        dragHelper.addDropTarget(cgvSide);
+        dragHelper.addDropTarget(rvSearchResults);
     }
 
-    private boolean onDragEvent(View v, DragEvent event) {
-        switch (event.getAction()) {
-            case DragEvent.ACTION_DRAG_STARTED:
-                return event.getLocalState() instanceof DragInfo;
-            case DragEvent.ACTION_DROP:
-                return handleDrop(v, event);
-            case DragEvent.ACTION_DRAG_ENDED:
-                restoreDragCardIfNeeded(event);
-                return true;
-            default:
-                return true;
-        }
-    }
+    /**
+     * 应用内自定义拖拽的落点回调：按落点目标完成卡片的移动/新增/删除。
+     * 来自卡组网格的卡先移出原位再插入落点（复用类型/数量/禁限校验），校验失败还原原位。
+     */
+    @Override
+    public void onCardDrop(View target, DeckInfo.Type source, int index, Card card, float rawX, float rawY) {
+        if (card == null || isReadonly) return;
 
-    //拖拽结束但未被任何目标接收时，把拖拽开始时移除的卡还原到原位置
-    private void restoreDragCardIfNeeded(DragEvent event) {
-        DragInfo info = activeDragInfo;
-        if (info == null) return;
-        activeDragInfo = null;
-        if (!event.getResult()) {
-            List<Card> list = getDeckList(info.source);
-            int insert = Math.max(0, Math.min(info.index, list.size()));
-            list.add(insert, info.card);
-            notifyDeckChanged();
-        }
-    }
-
-    private boolean handleDrop(View target, DragEvent event) {
-        Object state = event.getLocalState();
-        if (!(state instanceof DragInfo) || isReadonly) return false;
-        DragInfo info = (DragInfo) state;
-
-        //卡组网格拖到搜索结果区：卡在拖拽开始时已被移除，直接确认删除
+        //卡组网格拖到搜索结果区：删除卡片
         if (target == rvSearchResults) {
-            if (info.source != null) {
-                isModified = true;
-                return true;
+            if (source != null) {
+                List<Card> list = getDeckList(source);
+                if (index >= 0 && index < list.size()) {
+                    list.remove(index);
+                    isModified = true;
+                    notifyDeckChanged();
+                }
             }
-            return false;
+            return;
         }
 
-        if (!(target instanceof CardGroupView)) return false;
+        if (!(target instanceof CardGroupView)) return;
         DeckInfo.Type targetType;
         if (target == cgvMain) targetType = DeckInfo.Type.Main;
         else if (target == cgvExtra) targetType = DeckInfo.Type.Extra;
         else targetType = DeckInfo.Type.Side;
 
-        int dropIndex = ((CardGroupView) target).getIndexByPosition(event.getX(), event.getY());
+        int[] loc = new int[2];
+        target.getLocationOnScreen(loc);
+        int dropIndex = ((CardGroupView) target).getIndexByPosition(rawX - loc[0], rawY - loc[1]);
 
-        //卡已在拖拽开始时移出原网格，统一按落点插入（复用类型/数量/禁限校验），失败由DRAG_ENDED还原
-        return pushToDeck(targetType, info.card, dropIndex);
+        if (source != null) {
+            List<Card> sourceList = getDeckList(source);
+            if (index < 0 || index >= sourceList.size()) return;
+            Card moved = sourceList.remove(index);
+            //同列表换位时，移除原卡后插入下标需修正
+            int insert = (source == targetType && index < dropIndex) ? dropIndex - 1 : dropIndex;
+            if (!pushToDeck(targetType, moved, insert)) {
+                sourceList.add(Math.min(index, sourceList.size()), moved);
+                notifyDeckChanged();
+            }
+            return;
+        }
+
+        //搜索结果拖入：直接插入目标网格
+        pushToDeck(targetType, card, dropIndex);
     }
 
     private boolean pushToDeck(DeckInfo.Type type, Card card, int seq) {
@@ -1635,99 +1627,6 @@ public class DeckEditorManager {
         if (type == DeckInfo.Type.Main) return currentDeck.mainCards;
         if (type == DeckInfo.Type.Extra) return currentDeck.extraCards;
         return currentDeck.sideCards;
-    }
-
-    private void startCardDrag(View view, DeckInfo.Type source, int index, Card card) {
-        if (card == null) return;
-        DragInfo info = new DragInfo(source, index, card);
-        ClipData clip = ClipData.newPlainText("card", String.valueOf(card.Code));
-        View.DragShadowBuilder shadow = new View.DragShadowBuilder(view);
-        boolean started;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            started = view.startDragAndDrop(clip, shadow, info, 0);
-        } else {
-            started = view.startDrag(clip, shadow, info, 0);
-        }
-        //拖拽开始即从原位置移除卡item（"拿起"卡片），拖拽落空时在DRAG_ENDED还原
-        if (started && source != null) {
-            List<Card> list = getDeckList(source);
-            if (index >= 0 && index < list.size()) {
-                list.remove(index);
-                activeDragInfo = info;
-                notifyDeckChanged();
-            }
-        }
-    }
-
-    /**
-     * 按下后移动超过touchSlop即开始拖动；返回false保证点击/长按仍可触发。
-     * 搜索结果item整体仅横向拖动触发，避免与列表纵向滚动冲突；
-     * 卡图把手（disallowIntercept=true）任意方向均可触发。
-     * shadowView不为null时，拖拽阴影用shadowView（卡图）生成而非触发拖拽的view。
-     */
-    private class CardDragTouchListener implements View.OnTouchListener {
-        private final DeckInfo.Type source;
-        private final int index;
-        private final Card card;
-        private final boolean horizontalOnly;
-        private final boolean disallowIntercept;
-        private final View shadowView;
-        private float downX, downY;
-
-        CardDragTouchListener(DeckInfo.Type source, int index, Card card, boolean horizontalOnly) {
-            this(source, index, card, horizontalOnly, false, null);
-        }
-
-        CardDragTouchListener(DeckInfo.Type source, int index, Card card, boolean horizontalOnly, boolean disallowIntercept) {
-            this(source, index, card, horizontalOnly, disallowIntercept, null);
-        }
-
-        CardDragTouchListener(DeckInfo.Type source, int index, Card card, boolean horizontalOnly, boolean disallowIntercept, View shadowView) {
-            this.source = source;
-            this.index = index;
-            this.card = card;
-            this.horizontalOnly = horizontalOnly;
-            this.disallowIntercept = disallowIntercept;
-            this.shadowView = shadowView;
-        }
-
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    downX = event.getX();
-                    downY = event.getY();
-                    if (disallowIntercept && v.getParent() != null) {
-                        v.getParent().requestDisallowInterceptTouchEvent(true);
-                    }
-                    return false;
-                case MotionEvent.ACTION_MOVE:
-                    if (isReadonly || card == null) return false;
-                    float dx = event.getX() - downX;
-                    float dy = event.getY() - downY;
-                    boolean triggered = horizontalOnly
-                            ? Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy)
-                            : Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop;
-                    if (triggered) {
-                        startCardDrag(shadowView != null ? shadowView : v, source, index, card);
-                        return true;
-                    }
-                    return false;
-                default:
-                    return false;
-            }
-        }
-    }
-
-    public View.OnTouchListener createSearchDragTouchListener(Card card, View shadowView) {
-        return new CardDragTouchListener(null, -1, card, true, false, shadowView);
-    }
-
-    /**
-     * 卡图作为拖拽把手：任意方向拖动即触发拖拽，并阻止列表拦截滚动
-     */
-    public View.OnTouchListener createSearchImageDragTouchListener(Card card) {
-        return new CardDragTouchListener(null, -1, card, false, true);
     }
 
 }

@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.game;
 import android.graphics.Color;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -19,7 +20,6 @@ import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
-
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -39,6 +39,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private final ImageLoader imageLoader;
     private final DeckEditorManager editorManager;
     private final DeckInfo.Type deckType;
+    private final CardDragHelper dragHelper;
     private final List<Card> cards = new ArrayList<>();
     private ImageTop mImageTop;
     private LimitList mLimitList;
@@ -46,11 +47,14 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private int mCardHeight = -1;
     private int mSelectedPosition = RecyclerView.NO_POSITION;
     private int mAvailLm = 0;
+    private int mTouchSlop;
+    private boolean mReadonly;
 
-    public DeckCardAdapter(ImageLoader imageLoader, DeckEditorManager editorManager, DeckInfo.Type deckType) {
+    public DeckCardAdapter(ImageLoader imageLoader, DeckEditorManager editorManager, DeckInfo.Type deckType, CardDragHelper dragHelper) {
         this.imageLoader = imageLoader;
         this.editorManager = editorManager;
         this.deckType = deckType;
+        this.dragHelper = dragHelper;
     }
 
     public void setLimitList(LimitList limitList) {
@@ -80,6 +84,14 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         mCardWidth = width;
         mCardHeight = height;
         notifyDataSetChanged();
+    }
+
+    /**
+     * 设置拖拽触发所需的触摸阈值与只读状态，由DeckEditorManager在setupDragAndDrop时调用
+     */
+    public void setDragState(int touchSlop, boolean readonly) {
+        mTouchSlop = touchSlop;
+        mReadonly = readonly;
     }
 
     @NonNull
@@ -136,9 +148,9 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
 
         if (deckType == null) {
             //整个item可横向拖动触发拖拽，但拖拽阴影统一用卡图生成
-            holder.itemView.setOnTouchListener(editorManager.createSearchDragTouchListener(card, holder.ivCard));
+            holder.itemView.setOnTouchListener(createSearchDragTouchListener(card, holder.ivCard, mTouchSlop, mReadonly));
             //卡图作为拖拽把手：任意方向拖动即可触发拖拽；点击卡图仍等同点击整个item
-            holder.ivCard.setOnTouchListener(editorManager.createSearchImageDragTouchListener(card));
+            holder.ivCard.setOnTouchListener(createSearchImageDragTouchListener(card, mTouchSlop, mReadonly));
             holder.ivCard.setOnClickListener(v -> holder.itemView.performClick());
         }
     }
@@ -283,6 +295,102 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         mSelectedPosition = position;
         if (old != RecyclerView.NO_POSITION) notifyItemChanged(old);
         notifyItemChanged(mSelectedPosition);
+    }
+
+    /**
+     * 按下后移动超过touchSlop即开始拖动；返回false保证点击/长按仍可触发。
+     * 搜索结果item整体仅横向拖动触发，避免与列表纵向滚动冲突；
+     * 卡图把手（disallowIntercept=true）任意方向均可触发。
+     * shadowView不为null时，拖拽阴影用shadowView（卡图）生成而非触发拖拽的view。
+     * 拖拽触发后事件转交CardDragHelper，实现应用内自定义拖拽（规避系统拖拽被OEM浮窗拦截）。
+     */
+    private static class CardDragTouchListener implements View.OnTouchListener {
+        private final DeckInfo.Type source;
+        private final int index;
+        private final Card card;
+        private final boolean horizontalOnly;
+        private final boolean disallowIntercept;
+        private final View shadowView;
+        private final int touchSlop;
+        private final boolean readonly;
+        private final CardDragHelper dragHelper;
+        private float downX, downY;
+
+        CardDragTouchListener(DeckInfo.Type source, int index, Card card, boolean horizontalOnly,
+                              boolean disallowIntercept, View shadowView,
+                              int touchSlop, boolean readonly, CardDragHelper dragHelper) {
+            this.source = source;
+            this.index = index;
+            this.card = card;
+            this.horizontalOnly = horizontalOnly;
+            this.disallowIntercept = disallowIntercept;
+            this.shadowView = shadowView;
+            this.touchSlop = touchSlop;
+            this.readonly = readonly;
+            this.dragHelper = dragHelper;
+        }
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            //拖拽进行中：后续触摸事件全部转交拖拽助手
+            if (dragHelper.isDragging()) {
+                return dragHelper.onTouchEvent(event);
+            }
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    downX = event.getX();
+                    downY = event.getY();
+                    if (disallowIntercept && v.getParent() != null) {
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    return false;
+                case MotionEvent.ACTION_MOVE:
+                    if (readonly || card == null) return false;
+                    float dx = event.getX() - downX;
+                    float dy = event.getY() - downY;
+                    boolean triggered = horizontalOnly
+                            ? Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy)
+                            : Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop;
+                    if (triggered) {
+                        //禁止父级（尤其RecyclerView）拦截后续事件，保证拖拽期间持续收到MOVE/UP
+                        if (v.getParent() != null) {
+                            v.getParent().requestDisallowInterceptTouchEvent(true);
+                        }
+                        dragHelper.startDrag(shadowView != null ? shadowView : v, source, index, card, event);
+                        return true;
+                    }
+                    return false;
+                default:
+                    return false;
+            }
+        }
+    }
+
+    /**
+     * 供DeckEditorManager调用：卡组网格卡片任意方向拖动触发拖拽
+     */
+    public View.OnTouchListener createDragTouchListener(DeckInfo.Type source, int index, Card card,
+                                                        int touchSlop, boolean readonly) {
+        return new CardDragTouchListener(source, index, card, false, false, null,
+                touchSlop, readonly, dragHelper);
+    }
+
+    /**
+     * 搜索结果item整体仅横向拖动触发，避免与列表纵向滚动冲突；拖拽阴影用shadowView（卡图）生成
+     */
+    public View.OnTouchListener createSearchDragTouchListener(Card card, View shadowView,
+                                                              int touchSlop, boolean readonly) {
+        return new CardDragTouchListener(null, -1, card, true, false, shadowView,
+                touchSlop, readonly, dragHelper);
+    }
+
+    /**
+     * 卡图作为拖拽把手：任意方向拖动即触发拖拽，并阻止列表拦截滚动
+     */
+    public View.OnTouchListener createSearchImageDragTouchListener(Card card,
+                                                                   int touchSlop, boolean readonly) {
+        return new CardDragTouchListener(null, -1, card, false, true, null,
+                touchSlop, readonly, dragHelper);
     }
 
     static class CardViewHolder extends RecyclerView.ViewHolder {
