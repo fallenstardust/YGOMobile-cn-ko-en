@@ -56,6 +56,9 @@ public class DeckSelectorDialog {
     private String localDeckDirPath;
     private String aiDeckDirPath;
 
+    //是否显示"卡包展示"分类（ygocore/pack）：卡组编辑器调用时为true，玩家等待界面默认false
+    private boolean includePackCategory = false;
+
     private final List<Button> operationButtons = new ArrayList<>();
 
     private static class CategoryInfo {
@@ -73,6 +76,8 @@ public class DeckSelectorDialog {
     public interface OnDeckSelectedListener {
         void onDeckSelected(String deckPath, String deckName, String categoryName);
         void onCancelled();
+        //点击卡组item即触发（用于卡组编辑器即时加载）；默认空实现，玩家等待界面等无需处理
+        default void onDeckItemClicked(String deckPath, String deckName, String categoryName) {}
     }
 
     public DeckSelectorDialog(Context context) {
@@ -81,6 +86,14 @@ public class DeckSelectorDialog {
 
     public void setOnDeckSelectedListener(OnDeckSelectedListener listener) {
         this.listener = listener;
+    }
+
+    /**
+     * 设置是否显示"卡包展示"分类（路径ygocore/pack）。
+     * 卡组编辑器调用时设为true；玩家等待界面保持默认false不显示。
+     */
+    public void setIncludePackCategory(boolean include) {
+        this.includePackCategory = include;
     }
 
     public void show(View anchorView) {
@@ -143,6 +156,12 @@ public class DeckSelectorDialog {
                     DeckSelectorUtil.DeckItem deck = category.deckList.get(position);
                     selectedDeckPath[0] = deck.deckPath;
                     selectedDeckName[0] = deck.deckName;
+                    //点击即加载：通知调用方立即加载该卡组
+                    if (listener != null) {
+                        String categoryName = selectedCategoryPos[0] < displayCategoryNames.size()
+                                ? displayCategoryNames.get(selectedCategoryPos[0]) : "";
+                        listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
+                    }
                 }
             }
         });
@@ -231,6 +250,21 @@ public class DeckSelectorDialog {
             systemFlags.add(c.categoryName.equals("未分类卡组"));
             internalNames.add(c.categoryName);
             displayNames.add(c.categoryName.equals("未分类卡组") ? uncatAiName : c.categoryName);
+        }
+
+        //卡包展示分类（ygocore/pack）：仅卡组编辑器调用时显示，玩家等待界面不显示
+        if (includePackCategory) {
+            String packDirPath = AppsSettings.get().getPackDeckDir();
+            String packName = context.getString(R.string.category_pack);
+            DeckSelectorUtil.DeckCategory packCategory =
+                    DeckSelectorUtil.loadSingleCategory(new File(packDirPath), packName);
+            if (!packCategory.deckList.isEmpty()) {
+                rawCategories.add(packCategory);
+                baseDirs.add(packDirPath);
+                systemFlags.add(true);
+                internalNames.add(packName);
+                displayNames.add(packName);
+            }
         }
 
         Integer[] indices = new Integer[rawCategories.size()];

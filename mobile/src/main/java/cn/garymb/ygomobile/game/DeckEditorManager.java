@@ -80,6 +80,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private final Random random = new Random();
     private boolean isModified = false;
     private boolean isReadonly = false;
+    //当前加载的是否为卡包展示卡组（ygocore/pack）：隐藏额外/副卡组，主网格铺满
+    private boolean isPackMode = false;
     private int prevDeck = 0;
 
     private int filterType = 0;
@@ -107,7 +109,13 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private TextView tvMainMonsterCount, tvMainSpellCount, tvMainTrapCount;
     private TextView tvExtraFusionCount, tvExtraSynchroCount, tvExtraXyzCount, tvExtraLinkCount;
     private TextView tvSideMonsterCount, tvSideSpellCount, tvSideTrapCount;
+    //筛选面板与卡组分区标题标签：文字取自StringManager的systemString，对齐C++ GetSysString索引
+    private TextView tvLabelDeck, tvLabelType, tvLabelAttribute, tvLabelRace;
+    private TextView tvLabelStar, tvLabelScale, tvLabelLimit, tvLabelAttack, tvLabelDefense, tvLabelKeyword;
+    private TextView tvLabelMainDeck, tvLabelExtraDeck, tvLabelSideDeck;
+    private String searchResultPrefix = "搜索结果:";
     private CardGroupView cgvMain, cgvExtra, cgvSide;
+    private View layoutExtraStats, layoutSideStats;
     private RecyclerView rvSearchResults;
     private Spinner spinnerFilterType;
     private Spinner spinnerFilterType2, spinnerFilterAttribute, spinnerFilterRace, spinnerFilterLimit;
@@ -153,6 +161,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     public void initialize(View rootView) {
         this.rootView = rootView;
         bindViews(rootView);
+        setupLabels();
         setupRecyclerViews();
         setupDragAndDrop();
         setupSpinners();
@@ -207,9 +216,26 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         tvSideSpellCount = root.findViewById(R.id.tv_side_spell_count);
         tvSideTrapCount = root.findViewById(R.id.tv_side_trap_count);
         tvSearchResult = root.findViewById(R.id.tv_deck_search_result);
+
+        tvLabelDeck = root.findViewById(R.id.tv_label_deck);
+        tvLabelType = root.findViewById(R.id.tv_label_type);
+        tvLabelAttribute = root.findViewById(R.id.tv_label_attribute);
+        tvLabelRace = root.findViewById(R.id.tv_label_race);
+        tvLabelStar = root.findViewById(R.id.tv_label_star);
+        tvLabelScale = root.findViewById(R.id.tv_label_scale);
+        tvLabelLimit = root.findViewById(R.id.tv_label_limit);
+        tvLabelAttack = root.findViewById(R.id.tv_label_attack);
+        tvLabelDefense = root.findViewById(R.id.tv_label_defense);
+        tvLabelKeyword = root.findViewById(R.id.tv_label_keyword);
+        tvLabelMainDeck = root.findViewById(R.id.tv_label_main_deck);
+        tvLabelExtraDeck = root.findViewById(R.id.tv_label_extra_deck);
+        tvLabelSideDeck = root.findViewById(R.id.tv_label_side_deck);
+
         cgvMain = root.findViewById(R.id.cgv_deck_main);
         cgvExtra = root.findViewById(R.id.cgv_deck_extra);
         cgvSide = root.findViewById(R.id.cgv_deck_side);
+        layoutExtraStats = root.findViewById(R.id.layout_extra_stats);
+        layoutSideStats = root.findViewById(R.id.layout_side_stats);
         rvSearchResults = root.findViewById(R.id.rv_deck_search_results);
         btnDeckManager = root.findViewById(R.id.btn_deck_manager);
         etDeckName = root.findViewById(R.id.et_deck_name);
@@ -232,6 +258,31 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         btnFilterClear = root.findViewById(R.id.btn_filter_clear);
     }
 
+    /**
+     * 初始化各标签TextView的本地化文字，取自StringManager的systemString，
+     * 索引对齐C++端game.cpp（筛选面板）与drawing.cpp（卡组标题）的GetSysString。
+     * 注："子类"标签C++端无对应label、起源记分板"限/计/余/GENESYS"在C++端为图片绘制，
+     * 均无文字systemString索引，故保留布局中的硬编码文字。
+     */
+    private void setupLabels() {
+        StringManager sm = DataManager.get().getStringManager();
+        if (tvLabelDeck != null) tvLabelDeck.setText(sm.getSystemString(1300, "卡组:"));
+        if (tvLabelType != null) tvLabelType.setText(sm.getSystemString(1311, "种类:"));
+        if (tvLabelAttribute != null) tvLabelAttribute.setText(sm.getSystemString(1319, "属性:"));
+        if (tvLabelRace != null) tvLabelRace.setText(sm.getSystemString(1321, "种族:"));
+        if (tvLabelStar != null) tvLabelStar.setText(sm.getSystemString(1324, "星数:"));
+        if (tvLabelScale != null) tvLabelScale.setText(sm.getSystemString(1336, "刻度:"));
+        if (tvLabelLimit != null) tvLabelLimit.setText(sm.getSystemString(1315, "禁限:"));
+        if (tvLabelAttack != null) tvLabelAttack.setText(sm.getSystemString(1322, "攻击:"));
+        if (tvLabelDefense != null) tvLabelDefense.setText(sm.getSystemString(1323, "守备:"));
+        if (tvLabelKeyword != null) tvLabelKeyword.setText(sm.getSystemString(1325, "关键字:"));
+        if (tvLabelMainDeck != null)
+            tvLabelMainDeck.setText(sm.getSystemString(isPackMode ? 1477 : 1330, "主卡组:"));
+        if (tvLabelExtraDeck != null) tvLabelExtraDeck.setText(sm.getSystemString(1331, "额外卡组:"));
+        if (tvLabelSideDeck != null) tvLabelSideDeck.setText(sm.getSystemString(1332, "副卡组:"));
+        searchResultPrefix = sm.getSystemString(1333, "搜索结果:");
+    }
+
     private void setupRecyclerViews() {
         mLimitList = AppsSettings.get().getGenesysMode() == 1
                 ? cardLoader.getGenesysLimitList()
@@ -247,7 +298,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         cgvSide.setImageLoader(imageLoader);
         cgvSide.setLineLimit(1, 10, 15);
 
-        setupDeckCardSize();
+        requestDeckCardSizeUpdate();
 
         rvSearchResults.setLayoutManager(new LinearLayoutManager(activity));
         searchAdapter = new DeckCardAdapter(imageLoader, this, null, dragHelper);
@@ -256,11 +307,11 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     /**
-     * 根据主卡组区域的实际测量宽高动态计算卡片尺寸，
-     * 保证一行能放下 {@link Constants#DECK_WIDTH_COUNT} 张，且主卡组 4 行能完整显示，
-     * 三个卡组区域使用同一尺寸。
+     * 根据主卡组区域的实际测量宽高动态计算卡片尺寸：
+     * 普通模式保证一行放下 {@link Constants#DECK_WIDTH_COUNT} 张且主卡组4行完整显示；
+     * 卡包展示模式主网格铺满可用高度，行数随高度动态计算（不再限制4行/60张）。
      */
-    private void setupDeckCardSize() {
+    private void requestDeckCardSizeUpdate() {
         if (cgvMain == null) return;
         cgvMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -284,6 +335,19 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
         float ratio = (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[1] / (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
 
+        if (isPackMode) {
+            //卡包展示：主网格铺满可用高度，行数随高度动态计算，不再限制最多4行/60张
+            int mainAvail = Math.max(0, mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom());
+            int cardWidth = Math.max(1, availWidth / Constants.DECK_WIDTH_COUNT);
+            int cardHeight = Math.max(1, (int) (cardWidth * ratio));
+            int rows = Math.max(1, mainAvail / cardHeight);
+            cgvMain.setCardSize(cardWidth, cardHeight);
+            cgvMain.setLineLimit(rows, Constants.DECK_WIDTH_COUNT, Constants.DECK_WIDTH_COUNT);
+            if (searchAdapter != null) searchAdapter.setCardSize(cardWidth, cardHeight);
+            notifyDeckChanged();
+            return;
+        }
+
         int mainAvail = Math.max(0, mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom());
         int extraAvail = extraHeight > 0 && cgvExtra != null
                 ? Math.max(0, extraHeight - cgvExtra.getPaddingTop() - cgvExtra.getPaddingBottom()) : 0;
@@ -305,6 +369,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         cgvSide.setCardSize(cardWidth, cardHeight);
         if (searchAdapter != null) searchAdapter.setCardSize(cardWidth, cardHeight);
 
+        //普通模式恢复主网格4行限制（卡包模式会改成按高度动态行数）
+        cgvMain.setLineLimit(4, 10, 15);
+
         // 将网格高度收缩为正好容纳内容，保证卡片完整显示且铺满网格
         applyGroupExactHeight(cgvMain, cardHeight * 4);
         applyGroupExactHeight(cgvExtra, cardHeight);
@@ -322,6 +389,39 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             ((LinearLayout.LayoutParams) lp).weight = 0;
         }
         view.setLayoutParams(lp);
+    }
+
+    /**
+     * 切换卡包展示模式：卡包卡组（ygocore/pack）隐藏额外/副卡组的统计行与网格，
+     * 主卡组网格铺满剩余高度，行数与最大数量随高度动态计算（不再限制4行/60张）。
+     */
+    private void applyPackMode(boolean packMode) {
+        if (isPackMode == packMode) return;
+        isPackMode = packMode;
+        if (tvLabelMainDeck != null) {
+            StringManager sm = DataManager.get().getStringManager();
+            tvLabelMainDeck.setText(sm.getSystemString(packMode ? 1477 : 1330, "主卡组:"));
+        }
+        int vis = packMode ? View.GONE : View.VISIBLE;
+        if (layoutExtraStats != null) layoutExtraStats.setVisibility(vis);
+        if (cgvExtra != null) cgvExtra.setVisibility(vis);
+        if (layoutSideStats != null) layoutSideStats.setVisibility(vis);
+        if (cgvSide != null) cgvSide.setVisibility(vis);
+        if (packMode) {
+            setMainGridFillHeight();
+        }
+        requestDeckCardSizeUpdate();
+    }
+
+    //卡包模式下主卡组网格铺满剩余高度（height=0dp + weight=1），普通模式由applyGroupExactHeight恢复定高
+    private void setMainGridFillHeight() {
+        if (cgvMain == null) return;
+        ViewGroup.LayoutParams lp = cgvMain.getLayoutParams();
+        if (lp instanceof LinearLayout.LayoutParams) {
+            lp.height = 0;
+            ((LinearLayout.LayoutParams) lp).weight = 1;
+            cgvMain.setLayoutParams(lp);
+        }
     }
 
     public void refreshLimitList() {
@@ -590,16 +690,17 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     private void setupDeckSelectorDialog() {
         deckSelectorDialog = new DeckSelectorDialog(activity);
+        deckSelectorDialog.setIncludePackCategory(true);
         deckSelectorDialog.setOnDeckSelectedListener(new DeckSelectorDialog.OnDeckSelectedListener() {
             @Override
             public void onDeckSelected(String deckPath, String deckName, String categoryName) {
-                currentDeckFilePath = deckPath;
-                currentDeckCategoryName = categoryName;
-                currentDeckName = deckName;
-                loadDeckFromPath(deckPath);
-                updateDeckManagerButtonText();
-                AppsSettings.get().saveSettings("lastcategory", categoryName);
-                AppsSettings.get().saveSettings("lastdeck", deckName);
+                applySelectedDeck(deckPath, deckName, categoryName);
+            }
+
+            @Override
+            public void onDeckItemClicked(String deckPath, String deckName, String categoryName) {
+                //点击卡组item即在编辑器中立即加载该卡组
+                applySelectedDeck(deckPath, deckName, categoryName);
             }
 
             @Override
@@ -610,6 +711,17 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (btnDeckManager != null) {
             btnDeckManager.setOnClickListener(v -> showDeckSelectorDialog());
         }
+    }
+
+    //应用选中的卡组：加载、刷新按钮文本并记录最后分类/卡组（点击item与确认共用）
+    private void applySelectedDeck(String deckPath, String deckName, String categoryName) {
+        currentDeckFilePath = deckPath;
+        currentDeckCategoryName = categoryName;
+        currentDeckName = deckName;
+        loadDeckFromPath(deckPath);
+        updateDeckManagerButtonText();
+        AppsSettings.get().saveSettings("lastcategory", categoryName);
+        AppsSettings.get().saveSettings("lastdeck", deckName);
     }
 
     private void updateDeckManagerButtonText() {
@@ -630,17 +742,27 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     private void loadDeckFromPath(String deckPath) {
         File deckFile = new File(deckPath);
+        boolean loaded = false;
         if (deckFile.exists()) {
-            DeckInfo loaded = DeckLoader.readDeck(cardLoader, deckFile);
-            if (loaded != null) {
-                currentDeck.update(loaded);
+            DeckInfo loadedDeck = DeckLoader.readDeck(cardLoader, deckFile);
+            if (loadedDeck != null) {
+                currentDeck.update(loadedDeck);
                 currentDeck.source = deckFile;
-                notifyDeckChanged();
                 isModified = false;
+                loaded = true;
             }
         }
         String aiDeckDir = AppsSettings.get().getAiDeckDir();
         isReadonly = deckPath.startsWith(aiDeckDir);
+        if (loaded) {
+            //卡包展示卡组（ygocore/pack）切换为铺满模式，其余卡组恢复普通三段布局
+            boolean packMode = deckPath.startsWith(AppsSettings.get().getPackDeckDir());
+            if (isPackMode != packMode) {
+                applyPackMode(packMode);
+            } else {
+                notifyDeckChanged();
+            }
+        }
         refreshReadonly();
     }
 
@@ -1237,7 +1359,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     private void updateSearchResultCount() {
         if (tvSearchResult != null)
-            tvSearchResult.setText("搜索结果: " + searchResults.size());
+            tvSearchResult.setText(searchResultPrefix + " " + searchResults.size());
     }
 
     private boolean matchesTypeFilter(Card card) {
@@ -1477,6 +1599,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private void showDeckSelectorDialog() {
         if (deckSelectorDialog == null) {
             deckSelectorDialog = new DeckSelectorDialog(activity);
+            deckSelectorDialog.setIncludePackCategory(true);
         }
         deckSelectorDialog.show(btnDeckManager);
     }

@@ -23,6 +23,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tv_label_deck"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="2dp"
@@ -115,6 +116,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_label_type"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.2"
@@ -131,6 +133,7 @@
                         android:background="@drawable/spinner_ygopro" />
 
                     <TextView
+                        android:id="@+id/tv_label_type2"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.2"
@@ -158,6 +161,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_label_attribute"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.2"
@@ -174,6 +178,7 @@
                         android:background="@drawable/spinner_ygopro" />
 
                     <TextView
+                        android:id="@+id/tv_label_race"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.2"
@@ -202,6 +207,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_label_star"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.2"
@@ -221,6 +227,7 @@
                         android:textSize="8sp" />
 
                     <TextView
+                        android:id="@+id/tv_label_scale"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.2"
@@ -304,6 +311,7 @@
                             android:orientation="horizontal">
 
                             <TextView
+                                android:id="@+id/tv_label_limit"
                                 android:layout_width="0dp"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0.2"
@@ -329,6 +337,7 @@
                             android:orientation="horizontal">
 
                             <TextView
+                                android:id="@+id/tv_label_attack"
                                 android:layout_width="0dp"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0.2"
@@ -349,6 +358,7 @@
                                         android:textSize="8sp" />
 
                                     <TextView
+                                        android:id="@+id/tv_label_defense"
                                         android:layout_width="0dp"
                                         android:layout_height="match_parent"
                                         android:layout_marginStart="2dp"
@@ -382,6 +392,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_label_keyword"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.2"
@@ -468,6 +479,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_label_main_deck"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="主卡组:"
@@ -494,6 +506,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_label_credit_limit"
                         android:layout_width="10dp"
                         android:layout_height="10dp"
                         android:layout_gravity="center"
@@ -521,6 +534,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tv_label_credit_count"
                         android:layout_width="10dp"
                         android:layout_height="10dp"
                         android:layout_gravity="center"
@@ -548,6 +562,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tv_label_credit_remain"
                         android:layout_width="10dp"
                         android:layout_height="10dp"
                         android:layout_gravity="center"
@@ -575,6 +590,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tv_label_genesys"
                         android:layout_width="wrap_content"
                         android:layout_height="10dp"
                         android:layout_gravity="center"
@@ -656,6 +672,7 @@
 
             <!-- 额外卡组统计行 -->
             <FrameLayout
+                android:id="@+id/layout_extra_stats"
                 android:layout_width="match_parent"
                 android:layout_height="15dp"
                 android:layout_marginVertical="1dp"
@@ -672,6 +689,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_label_extra_deck"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="额外卡组:"
@@ -770,6 +788,7 @@
 
             <!-- 副卡组统计行 -->
             <FrameLayout
+                android:id="@+id/layout_side_stats"
                 android:layout_width="match_parent"
                 android:layout_height="15dp"
                 android:layout_marginVertical="1dp"
@@ -786,6 +805,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_label_side_deck"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="副卡组:"

@@ -108,6 +108,20 @@ public class DeckSelectorUtil {
     }
 
     /**
+     * 将指定目录下的ydk文件直接加载为单个分类（不递归子目录），
+     * 用于"卡包展示"这类"目录即分类"的场景
+     *
+     * @param dir          目录
+     * @param categoryName 分类显示名
+     * @return 卡组分类
+     */
+    public static DeckCategory loadSingleCategory(File dir, String categoryName) {
+        DeckCategory category = new DeckCategory(categoryName);
+        loadDecksFromDirectory(dir, category.deckList);
+        return category;
+    }
+
+    /**
      * 从指定目录加载所有ydk文件
      *
      * @param dir       目录
