@@ -221,19 +221,20 @@ public class CardDetailPanel {
     }
 
     public void showCard(Card card) {
-        if (card == null || card.getCode() <= 0) {
+        if (card == null || card.Code <= 0) {
             showUnknownCard();
             return;
         }
 
-        int code = card.getCode();
-        currentCardCode = code;
+        //卡图使用card.Code对应的文件名id（异画卡显示自己的卡图，不受RealCode影响）
+        int imageCode = card.Code;
+        currentCardCode = imageCode;
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
         }
 
-        bindCardImage(code);
-        bindCardName(card, code);
+        bindCardImage(imageCode);
+        bindCardNameByGameCode(card);
         bindCardSetname(card);
         bindCardAttr(card);
         bindCardLevel(card);
@@ -300,6 +301,17 @@ public class CardDetailPanel {
         String name = cardData.Name;
         if (name == null || name.isEmpty()) name = "Unknown Card";
         tvCardName.setText(name + "[" + code + "]");
+    }
+
+    //卡名根据getGameCode()判断显示（规则同名卡显示本家卡名），卡图仍使用card.Code
+    private void bindCardNameByGameCode(Card cardData) {
+        if (tvCardName == null) return;
+        int gameCode = cardData.getGameCode();
+        Card gameCard = DataManager.get().getCardManager().getCard(gameCode);
+        String name = (gameCard != null && gameCard.Name != null && !gameCard.Name.isEmpty())
+                ? gameCard.Name : cardData.Name;
+        if (name == null || name.isEmpty()) name = "Unknown Card";
+        tvCardName.setText(name + "[" + gameCode + "]");
     }
 
     private void bindCardSetname(Card cardData) {

@@ -686,7 +686,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     public boolean pushSide(Card card, int seq) {
         if (card == null) return false;
         if (currentDeck.getSideCount() >= Constants.DECK_SIDE_MAX) return false;
-        //与主/额外一致的禁限校验：主+额外+副中同code/alias数量已达禁限表上限、或GeneSys点数将超限时禁止投入副卡组
+        //与主/额外一致的禁限校验：主+额外+副中规则同名（getGameCode）数量已达禁限表上限、或GeneSys点数将超限时禁止投入副卡组
         if (!checkLimit(card)) return false;
         boolean result;
         if (seq >= 0 && seq <= currentDeck.sideCards.size()) {
@@ -731,26 +731,27 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     // === 对应 deck_con.cpp: check_limit ===
     public boolean checkLimit(Card card) {
         if (card == null) return false;
-        int limitCode = (card.Alias > 0) ? card.Alias : card.Code;
+        //规则同名卡code作为禁限与点数判断的统一口径（对应C++的get_duel_code）
+        int gameCode = card.getGameCode();
 
         //禁限卡表决定最大投入数：禁止0/限制1/准限制2，其余默认3
         int limit = 3;
         if (mLimitList != null) {
-            if (mLimitList.check(card, LimitType.Forbidden)) limit = 0;
-            else if (mLimitList.check(card, LimitType.Limit)) limit = 1;
-            else if (mLimitList.check(card, LimitType.SemiLimit)) limit = 2;
+            if (mLimitList.check(gameCode, gameCode, LimitType.Forbidden)) limit = 0;
+            else if (mLimitList.check(gameCode, gameCode, LimitType.Limit)) limit = 1;
+            else if (mLimitList.check(gameCode, gameCode, LimitType.SemiLimit)) limit = 2;
         }
 
-        //统计主+额外+副中同code/alias的已有数量，已达上限则投入会超限
+        //统计主+额外+副中规则同名（getGameCode相同）的已有数量，已达上限则投入会超限
         int count = 0;
         for (Card c : currentDeck.mainCards) {
-            if (((c.Alias > 0) ? c.Alias : c.Code) == limitCode) count++;
+            if (c.getGameCode() == gameCode) count++;
         }
         for (Card c : currentDeck.extraCards) {
-            if (((c.Alias > 0) ? c.Alias : c.Code) == limitCode) count++;
+            if (c.getGameCode() == gameCode) count++;
         }
         for (Card c : currentDeck.sideCards) {
-            if (((c.Alias > 0) ? c.Alias : c.Code) == limitCode) count++;
+            if (c.getGameCode() == gameCode) count++;
         }
         if (count >= limit) return false;
 
@@ -763,13 +764,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         return true;
     }
 
-    //GeneSys模式单卡起源点数：优先按Code，找不到再按Alias（与getDeckCreditCount口径一致）
+    //GeneSys模式单卡起源点数：按规则同名卡code（getGameCode）查询，与禁限判断口径一致
     private int getCardCredit(Card card) {
         if (card == null || mLimitList == null || mLimitList.getCredits() == null) return 0;
-        Integer credit = mLimitList.getCredits().get(card.Code);
-        if (credit == null && card.Alias > 0) {
-            credit = mLimitList.getCredits().get(card.Alias);
-        }
+        Integer credit = mLimitList.getCredits().get(card.getGameCode());
         return credit != null ? credit : 0;
     }
 
