@@ -265,13 +265,14 @@ public class DeckSelectorDialog {
         int priority = ci.sortPriority;
         boolean isPackOrAi = (priority <= 1);
         boolean isUncategorized = (priority == 2);
+        boolean hasDeck = !selectedDeckPath[0].isEmpty();
 
         setButtonEnabled(btnRenameCategory, !isPackOrAi && !isUncategorized);
         setButtonEnabled(btnDeleteCategory, !isPackOrAi && !isUncategorized);
         setButtonEnabled(btnNewDeck, !isPackOrAi);
-        setButtonEnabled(btnRenameDeck, !isPackOrAi);
-        setButtonEnabled(btnDeleteDeck, !isPackOrAi);
-        setButtonEnabled(btnMoveToCategory, !isPackOrAi);
+        setButtonEnabled(btnRenameDeck, !isPackOrAi && hasDeck);
+        setButtonEnabled(btnDeleteDeck, !isPackOrAi && hasDeck);
+        setButtonEnabled(btnMoveToCategory, !isPackOrAi && hasDeck);
     }
 
     private void setButtonEnabled(Button btn, boolean enabled) {
@@ -468,11 +469,55 @@ public class DeckSelectorDialog {
                         ? displayCategoryNames.get(catIndex) : "";
                 listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
             }
+        } else {
+            selectedDeckPos[0] = -1;
+            selectedDeckPath[0] = "";
+            selectedDeckName[0] = "";
         }
 
         final int idx = catIndex;
         lvCategories.post(() -> lvCategories.setSelection(idx));
         lvDecks.post(() -> lvDecks.setSelection(0));
+        updateButtonStates();
+    }
+
+    private void selectCategoryAndDeck(String categoryName, String ydkFileName) {
+        int catIndex = -1;
+        for (int i = 0; i < displayCategoryNames.size(); i++) {
+            if (displayCategoryNames.get(i).equals(categoryName)) {
+                catIndex = i;
+                break;
+            }
+        }
+        if (catIndex < 0) return;
+
+        selectedCategoryPos[0] = catIndex;
+        categoryAdapter.setSelectedPosition(catIndex);
+        updateDeckList();
+
+        DeckSelectorUtil.DeckCategory category = displayCategories.get(catIndex);
+        int deckIndex = -1;
+        for (int i = 0; i < category.deckList.size(); i++) {
+            if (category.deckList.get(i).deckPath.endsWith(ydkFileName)) {
+                deckIndex = i;
+                break;
+            }
+        }
+        if (deckIndex >= 0) {
+            selectedDeckPos[0] = deckIndex;
+            DeckSelectorUtil.DeckItem deck = category.deckList.get(deckIndex);
+            selectedDeckPath[0] = deck.deckPath;
+            selectedDeckName[0] = deck.deckName;
+            if (currentDeckAdapter != null) currentDeckAdapter.setSelectedPosition(deckIndex);
+            if (listener != null) {
+                listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
+            }
+        }
+
+        final int catIdx = catIndex;
+        final int deckIdx = deckIndex >= 0 ? deckIndex : 0;
+        lvCategories.post(() -> lvCategories.setSelection(catIdx));
+        lvDecks.post(() -> lvDecks.setSelection(deckIdx));
         updateButtonStates();
     }
 
@@ -553,7 +598,12 @@ public class DeckSelectorDialog {
             if (oldDir.renameTo(newDir)) {
                 Toast.makeText(context, "重命名成功", Toast.LENGTH_SHORT).show();
                 d.dismiss();
+                String newCatName = newName;
                 reloadAndRefresh();
+                int newCatIndex = displayCategoryNames.indexOf(newCatName);
+                if (newCatIndex >= 0) {
+                    selectCategoryAndFirstDeck(newCatIndex);
+                }
             } else {
                 Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
             }
@@ -631,7 +681,10 @@ public class DeckSelectorDialog {
                     }
                     Toast.makeText(context, "创建成功", Toast.LENGTH_SHORT).show();
                     d.dismiss();
+                    String ydkFileName = deckFile.getName();
+                    String catName = ci.category.categoryName;
                     reloadAndRefresh();
+                    selectCategoryAndDeck(catName, ydkFileName);
                 } else {
                     Toast.makeText(context, "创建失败", Toast.LENGTH_SHORT).show();
                 }
@@ -676,7 +729,11 @@ public class DeckSelectorDialog {
             if (oldFile.renameTo(newFile)) {
                 Toast.makeText(context, "重命名成功", Toast.LENGTH_SHORT).show();
                 d.dismiss();
+                CategoryInfo ci = getSelectedCategoryInfo();
+                String catName = ci != null ? ci.category.categoryName : "";
+                String ydkFileName = newFile.getName();
                 reloadAndRefresh();
+                selectCategoryAndDeck(catName, ydkFileName);
             } else {
                 Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
             }
@@ -726,7 +783,7 @@ public class DeckSelectorDialog {
         List<String> otherNames = new ArrayList<>();
         List<CategoryInfo> otherInfos = new ArrayList<>();
         for (int i = 0; i < catInfos.size(); i++) {
-            if (i != selectedCategoryPos[0]) {
+            if (i != selectedCategoryPos[0] && catInfos.get(i).sortPriority > 1) {
                 otherNames.add(displayCategoryNames.get(i));
                 otherInfos.add(catInfos.get(i));
             }
@@ -752,12 +809,15 @@ public class DeckSelectorDialog {
             String targetDir = target.isSystem ? target.baseDirPath
                     : target.baseDirPath + "/" + target.category.categoryName;
             File src = new File(selectedDeckPath[0]);
-            File dest = new File(targetDir, src.getName());
+            String ydkFileName = src.getName();
+            String targetCatName = target.category.categoryName;
+            File dest = new File(targetDir, ydkFileName);
             new File(targetDir).mkdirs();
             if (src.renameTo(dest)) {
                 Toast.makeText(context, "移动成功", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
                 reloadAndRefresh();
+                selectCategoryAndDeck(targetCatName, ydkFileName);
             } else {
                 Toast.makeText(context, "移动失败", Toast.LENGTH_SHORT).show();
             }
@@ -776,7 +836,7 @@ public class DeckSelectorDialog {
         List<String> otherNames = new ArrayList<>();
         List<CategoryInfo> otherInfos = new ArrayList<>();
         for (int i = 0; i < catInfos.size(); i++) {
-            if (i != selectedCategoryPos[0]) {
+            if (i != selectedCategoryPos[0] && catInfos.get(i).sortPriority > 1) {
                 otherNames.add(displayCategoryNames.get(i));
                 otherInfos.add(catInfos.get(i));
             }
@@ -802,12 +862,15 @@ public class DeckSelectorDialog {
             String targetDir = target.isSystem ? target.baseDirPath
                     : target.baseDirPath + "/" + target.category.categoryName;
             File src = new File(selectedDeckPath[0]);
-            File dest = new File(targetDir, src.getName());
+            String ydkFileName = src.getName();
+            String targetCatName = target.category.categoryName;
+            File dest = new File(targetDir, ydkFileName);
             new File(targetDir).mkdirs();
             if (copyFile(src, dest)) {
                 Toast.makeText(context, "复制成功", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
                 reloadAndRefresh();
+                selectCategoryAndDeck(targetCatName, ydkFileName);
             } else {
                 Toast.makeText(context, "复制失败", Toast.LENGTH_SHORT).show();
             }

@@ -73,10 +73,7 @@ public class DeckSelectorUtil {
                 // 子文件夹作为分类
                 DeckCategory category = new DeckCategory(file.getName());
                 loadDecksFromDirectory(file, category.deckList);
-
-                if (!category.deckList.isEmpty()) {
-                    categories.add(category);
-                }
+                categories.add(category);
             } else if (file.getName().toLowerCase().endsWith(".ydk")) {
                 // 根目录的ydk文件归为未分类
                 String deckName = file.getName().replace(".ydk", "");
@@ -84,23 +81,15 @@ public class DeckSelectorUtil {
             }
         }
 
-        // 如果有未分类卡组，添加到列表最前面
-        if (!uncategorized.deckList.isEmpty()) {
-            Collections.sort(uncategorized.deckList, (a, b) ->
-                a.deckName.compareToIgnoreCase(b.deckName));
-            categories.add(0, uncategorized);
-        }
+        // 未分类卡组始终添加到列表最前面（即使为空也显示）
+        Collections.sort(uncategorized.deckList, (a, b) ->
+            a.deckName.compareToIgnoreCase(b.deckName));
+        categories.add(0, uncategorized);
 
-        // 按分类名排序（除了"未分类卡组"始终在最前）
+        // 按分类名排序（"未分类卡组"始终在最前）
         if (categories.size() > 1) {
-            List<DeckCategory> sorted = new ArrayList<>();
-            sorted.add(categories.get(0)); // 保持"未分类卡组"在最前
-
             List<DeckCategory> rest = categories.subList(1, categories.size());
             rest.sort((a, b) -> a.categoryName.compareToIgnoreCase(b.categoryName));
-            sorted.addAll(rest);
-
-            categories = sorted;
         }
 
         Log.i(TAG, "Loaded " + categories.size() + " deck categories from " + rootDir.getAbsolutePath());
