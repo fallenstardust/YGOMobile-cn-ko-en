@@ -49,7 +49,15 @@ public class DeckSelectorDialog {
 
     private CategoryListAdapter categoryAdapter;
     private DeckListAdapter currentDeckAdapter;
+    private ListView lvCategories;
     private ListView lvDecks;
+
+    private Button btnRenameCategory;
+    private Button btnDeleteCategory;
+    private Button btnNewDeck;
+    private Button btnRenameDeck;
+    private Button btnDeleteDeck;
+    private Button btnMoveToCategory;
 
     private final int[] selectedCategoryPos = {-1};
     private final int[] selectedDeckPos = {-1};
@@ -115,16 +123,16 @@ public class DeckSelectorDialog {
 
         View contentView = LayoutInflater.from(context).inflate(R.layout.popup_window_deck_selector, null);
 
-        ListView lvCategories = contentView.findViewById(R.id.lv_categories);
+        lvCategories = contentView.findViewById(R.id.lv_categories);
         lvDecks = contentView.findViewById(R.id.lv_decks);
         Button btnConfirm = contentView.findViewById(R.id.btn_confirm_deck);
         Button btnNewCategory = contentView.findViewById(R.id.btn_new_category);
-        Button btnRenameCategory = contentView.findViewById(R.id.btn_rename_category);
-        Button btnDeleteCategory = contentView.findViewById(R.id.btn_delete_category);
-        Button btnNewDeck = contentView.findViewById(R.id.btn_new_deck);
-        Button btnRenameDeck = contentView.findViewById(R.id.btn_rename_deck);
-        Button btnDeleteDeck = contentView.findViewById(R.id.btn_delete_deck);
-        Button btnMoveToCategory = contentView.findViewById(R.id.btn_move_to_category);
+        btnRenameCategory = contentView.findViewById(R.id.btn_rename_category);
+        btnDeleteCategory = contentView.findViewById(R.id.btn_delete_category);
+        btnNewDeck = contentView.findViewById(R.id.btn_new_deck);
+        btnRenameDeck = contentView.findViewById(R.id.btn_rename_deck);
+        btnDeleteDeck = contentView.findViewById(R.id.btn_delete_deck);
+        btnMoveToCategory = contentView.findViewById(R.id.btn_move_to_category);
         Button btnCopyToCategory = contentView.findViewById(R.id.btn_copy_to_category);
 
         operationButtons.clear();
@@ -163,6 +171,7 @@ public class DeckSelectorDialog {
                 selectedDeckPath[0] = "";
                 selectedDeckName[0] = "";
             }
+            updateButtonStates();
         });
 
         lvDecks.setOnItemClickListener((parent, view, position, id) -> {
@@ -239,6 +248,36 @@ public class DeckSelectorDialog {
             btn.setEnabled(enabled);
             btn.setTextColor(YGOUtil.c(enabled ? R.color.white : R.color.item_bg));
         }
+    }
+
+    private void updateButtonStates() {
+        if (selectedCategoryPos[0] < 0 || selectedCategoryPos[0] >= catInfos.size()) {
+            setButtonEnabled(btnRenameCategory, false);
+            setButtonEnabled(btnDeleteCategory, false);
+            setButtonEnabled(btnNewDeck, false);
+            setButtonEnabled(btnRenameDeck, false);
+            setButtonEnabled(btnDeleteDeck, false);
+            setButtonEnabled(btnMoveToCategory, false);
+            return;
+        }
+
+        CategoryInfo ci = catInfos.get(selectedCategoryPos[0]);
+        int priority = ci.sortPriority;
+        boolean isPackOrAi = (priority <= 1);
+        boolean isUncategorized = (priority == 2);
+
+        setButtonEnabled(btnRenameCategory, !isPackOrAi && !isUncategorized);
+        setButtonEnabled(btnDeleteCategory, !isPackOrAi && !isUncategorized);
+        setButtonEnabled(btnNewDeck, !isPackOrAi);
+        setButtonEnabled(btnRenameDeck, !isPackOrAi);
+        setButtonEnabled(btnDeleteDeck, !isPackOrAi);
+        setButtonEnabled(btnMoveToCategory, !isPackOrAi);
+    }
+
+    private void setButtonEnabled(Button btn, boolean enabled) {
+        if (btn == null) return;
+        btn.setEnabled(enabled);
+        btn.setTextColor(YGOUtil.c(enabled ? R.color.white : R.color.item_bg));
     }
 
     // ==================== 数据构建 ====================
@@ -386,6 +425,7 @@ public class DeckSelectorDialog {
             lvCategories.post(() -> lvCategories.setSelection(catIdx));
             lvDecks.post(() -> lvDecks.setSelection(deckIdx));
         }
+        updateButtonStates();
     }
 
     private void updateDeckList() {
@@ -394,6 +434,46 @@ public class DeckSelectorDialog {
             currentDeckAdapter = new DeckListAdapter(context, category.deckList);
             lvDecks.setAdapter(currentDeckAdapter);
         }
+    }
+
+    private void selectUncategorizedCategory() {
+        String uncatName = context.getString(R.string.category_Uncategorized);
+        int uncatIndex = -1;
+        for (int i = 0; i < displayCategoryNames.size(); i++) {
+            if (displayCategoryNames.get(i).equals(uncatName)) {
+                uncatIndex = i;
+                break;
+            }
+        }
+        if (uncatIndex < 0) return;
+        selectCategoryAndFirstDeck(uncatIndex);
+    }
+
+    private void selectCategoryAndFirstDeck(int catIndex) {
+        if (catIndex < 0 || catIndex >= displayCategories.size()) return;
+
+        selectedCategoryPos[0] = catIndex;
+        categoryAdapter.setSelectedPosition(catIndex);
+        updateDeckList();
+
+        DeckSelectorUtil.DeckCategory category = displayCategories.get(catIndex);
+        if (!category.deckList.isEmpty()) {
+            selectedDeckPos[0] = 0;
+            DeckSelectorUtil.DeckItem deck = category.deckList.get(0);
+            selectedDeckPath[0] = deck.deckPath;
+            selectedDeckName[0] = deck.deckName;
+            if (currentDeckAdapter != null) currentDeckAdapter.setSelectedPosition(0);
+            if (listener != null) {
+                String categoryName = catIndex < displayCategoryNames.size()
+                        ? displayCategoryNames.get(catIndex) : "";
+                listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
+            }
+        }
+
+        final int idx = catIndex;
+        lvCategories.post(() -> lvCategories.setSelection(idx));
+        lvDecks.post(() -> lvDecks.setSelection(0));
+        updateButtonStates();
     }
 
     // ==================== 分类操作 ====================
@@ -506,6 +586,7 @@ public class DeckSelectorDialog {
                 Toast.makeText(context, "删除成功", Toast.LENGTH_SHORT).show();
                 d.dismiss();
                 reloadAndRefresh();
+                selectUncategorizedCategory();
             } else {
                 Toast.makeText(context, "删除失败", Toast.LENGTH_SHORT).show();
             }
@@ -619,10 +700,12 @@ public class DeckSelectorDialog {
         dialog.setLeftButtonText("删除");
         dialog.setLeftButtonListener((d, w) -> {
             File file = new File(selectedDeckPath[0]);
+            int savedCatPos = selectedCategoryPos[0];
             if (file.delete()) {
                 Toast.makeText(context, "删除成功", Toast.LENGTH_SHORT).show();
                 d.dismiss();
                 reloadAndRefresh();
+                selectCategoryAndFirstDeck(savedCatPos);
             } else {
                 Toast.makeText(context, "删除失败", Toast.LENGTH_SHORT).show();
             }
