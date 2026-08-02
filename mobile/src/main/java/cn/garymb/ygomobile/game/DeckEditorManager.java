@@ -496,6 +496,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (packMode) {
             setMainGridFillHeight();
         }
+        if (searchAdapter != null) searchAdapter.setDragState(touchSlop, isReadonly || isPackMode);
         requestDeckCardSizeUpdate();
     }
 
@@ -842,8 +843,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         String aiDeckDir = AppsSettings.get().getAiDeckDir();
         isReadonly = deckPath.startsWith(aiDeckDir);
         if (loaded) {
-            //卡包展示卡组（ygocore/pack）切换为铺满模式，其余卡组恢复普通三段布局
-            boolean packMode = deckPath.startsWith(AppsSettings.get().getPackDeckDir());
+            String packDir = AppsSettings.get().getPackDeckDir();
+            String cacheDeckDir = AppsSettings.get().getCacheDeckDir();
+            boolean packMode = deckPath.startsWith(packDir)
+                    || deckPath.startsWith(cacheDeckDir);
             if (isPackMode != packMode) {
                 applyPackMode(packMode);
             } else {
@@ -1351,12 +1354,26 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     // === 对应 deck_con.cpp: RefreshReadonly ===
     public void refreshReadonly() {
-        if (btnSave != null) btnSave.setEnabled(!isReadonly);
-        if (btnSaveAs != null) btnSaveAs.setEnabled(!isReadonly);
-        if (btnClear != null) btnClear.setEnabled(!isReadonly);
-        if (btnShuffle != null) btnShuffle.setEnabled(!isReadonly);
-        if (btnSort != null) btnSort.setEnabled(!isReadonly);
-        if (btnDelete != null) btnDelete.setEnabled(!isReadonly);
+        boolean disabled = isReadonly || isPackMode;
+        int textColor = disabled ? Color.GRAY : Color.WHITE;
+        if (btnSave != null) btnSave.setEnabled(!disabled);
+        if (btnSaveAs != null) btnSaveAs.setEnabled(!disabled);
+        if (btnClear != null) {
+            btnClear.setEnabled(!disabled);
+            btnClear.setTextColor(textColor);
+        }
+        if (btnShuffle != null) {
+            btnShuffle.setEnabled(!disabled);
+            btnShuffle.setTextColor(textColor);
+        }
+        if (btnSort != null) {
+            btnSort.setEnabled(!disabled);
+            btnSort.setTextColor(textColor);
+        }
+        if (btnDelete != null) {
+            btnDelete.setEnabled(!disabled);
+            btnDelete.setTextColor(textColor);
+        }
     }
 
     public void showCardInfo(Card card) {
@@ -1405,7 +1422,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             final int index = i;
             cardView.setOnClickListener(v -> onDeckCardClicked(type, index));
             if (searchAdapter != null) {
-                cardView.setOnTouchListener(searchAdapter.createDragTouchListener(type, index, cardView.getCard(), touchSlop, isReadonly));
+                cardView.setOnTouchListener(searchAdapter.createDragTouchListener(type, index, cardView.getCard(), touchSlop, isReadonly || isPackMode));
             }
         }
     }
@@ -1665,6 +1682,17 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         String lastDeckName = settings.getLastDeckName();
         String lastCategory = settings.getLastCategory();
 
+        String savedPath = AppsSettings.get().getSettings("lastdeckpath");
+        if (savedPath != null && !savedPath.isEmpty()) {
+            if (new File(savedPath).exists()) {
+                currentDeckCategoryName = lastCategory != null ? lastCategory : "";
+                currentDeckName = lastDeckName != null ? lastDeckName : "";
+                loadDeckFromPath(savedPath);
+                updateDeckManagerButtonText();
+                return;
+            }
+        }
+
         if (lastDeckPath != null && !lastDeckPath.isEmpty()) {
             File deckFile = new File(lastDeckPath);
             if (deckFile.exists()) {
@@ -1692,6 +1720,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             AppsSettings.get().saveSettings("lastcategory", currentDeckCategoryName);
         }
         if (currentDeckFilePath != null && !currentDeckFilePath.isEmpty()) {
+            AppsSettings.get().saveSettings("lastdeckpath", currentDeckFilePath);
             String deckName = new File(currentDeckFilePath).getName().replace(".ydk", "");
             AppsSettings.get().saveSettings("lastdeck", deckName);
         }
@@ -1816,7 +1845,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     private void setupDragAndDrop() {
         touchSlop = ViewConfiguration.get(activity).getScaledTouchSlop();
-        if (searchAdapter != null) searchAdapter.setDragState(touchSlop, isReadonly);
+        if (searchAdapter != null) searchAdapter.setDragState(touchSlop, isReadonly || isPackMode);
         dragHelper.addDropTarget(cgvMain);
         dragHelper.addDropTarget(cgvExtra);
         dragHelper.addDropTarget(cgvSide);

@@ -27,10 +27,12 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.DeckSelectorUtil;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
@@ -265,8 +267,25 @@ public class DeckSelectorDialog {
         if (includePackCategory) {
             String packDirPath = AppsSettings.get().getPackDeckDir();
             String packName = context.getString(R.string.category_pack);
-            DeckSelectorUtil.DeckCategory packCategory =
-                    DeckSelectorUtil.loadSingleCategory(new File(packDirPath), packName);
+            DeckSelectorUtil.DeckCategory packCategory = new DeckSelectorUtil.DeckCategory(packName);
+            try {
+                List<DeckFile> deckFiles = DeckUtil.getExpansionsDeckList();
+                for (DeckFile df : deckFiles) {
+                    packCategory.deckList.add(new DeckSelectorUtil.DeckItem(df.getName(), df.getPath()));
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+            // 追加ygocore/pack目录的ydk文件，不与压缩包部分混合排序
+            File packDir = new File(packDirPath);
+            File[] packYdks = packDir.listFiles(f -> f.isFile() && f.getName().toLowerCase().endsWith(".ydk"));
+            if (packYdks != null) {
+                java.util.Arrays.sort(packYdks, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                for (File f : packYdks) {
+                    String name = f.getName().replace(".ydk", "");
+                    packCategory.deckList.add(new DeckSelectorUtil.DeckItem(name, f.getAbsolutePath()));
+                }
+            }
             if (!packCategory.deckList.isEmpty()) {
                 rawCategories.add(packCategory);
                 baseDirs.add(packDirPath);
