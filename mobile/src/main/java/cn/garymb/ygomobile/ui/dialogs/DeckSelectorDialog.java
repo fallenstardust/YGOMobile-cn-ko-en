@@ -144,11 +144,25 @@ public class DeckSelectorDialog {
 
         lvCategories.setOnItemClickListener((parent, view, position, id) -> {
             selectedCategoryPos[0] = position;
-            selectedDeckPos[0] = -1;
-            selectedDeckPath[0] = "";
-            selectedDeckName[0] = "";
             categoryAdapter.setSelectedPosition(position);
             updateDeckList();
+            DeckSelectorUtil.DeckCategory category = displayCategories.get(position);
+            if (!category.deckList.isEmpty()) {
+                selectedDeckPos[0] = 0;
+                DeckSelectorUtil.DeckItem deck = category.deckList.get(0);
+                selectedDeckPath[0] = deck.deckPath;
+                selectedDeckName[0] = deck.deckName;
+                if (currentDeckAdapter != null) currentDeckAdapter.setSelectedPosition(0);
+                if (listener != null) {
+                    String categoryName = position < displayCategoryNames.size()
+                            ? displayCategoryNames.get(position) : "";
+                    listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
+                }
+            } else {
+                selectedDeckPos[0] = -1;
+                selectedDeckPath[0] = "";
+                selectedDeckName[0] = "";
+            }
         });
 
         lvDecks.setOnItemClickListener((parent, view, position, id) -> {

@@ -130,7 +130,7 @@ public class CardView extends FrameLayout {
     public void setSelected(boolean selected) {
         super.setSelected(selected);
         if (selected) {
-            setBackgroundResource(R.drawable.selected);
+            setBackgroundResource(R.color.white);
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 setBackground(null);

@@ -46,6 +46,7 @@ import cn.garymb.ygomobile.ui.dialogs.EffectCategoryPopupWindow;
 import cn.garymb.ygomobile.ui.dialogs.LinkMarkerPopupWindow;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
 import cn.garymb.ygomobile.ui.widget.CardView;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -1390,10 +1391,20 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     public void onDeckCardClicked(DeckInfo.Type type, int position) {
+        if (cgvMain != null) cgvMain.clearSelection();
+        if (cgvExtra != null) cgvExtra.clearSelection();
+        if (cgvSide != null) cgvSide.clearSelection();
         Card card = null;
-        if (type == DeckInfo.Type.Main) card = currentDeck.getMainCard(position);
-        else if (type == DeckInfo.Type.Extra) card = currentDeck.getExtraCard(position);
-        else if (type == DeckInfo.Type.Side) card = currentDeck.getSideCard(position);
+        if (type == DeckInfo.Type.Main) {
+            card = currentDeck.getMainCard(position);
+            if (cgvMain != null) cgvMain.setSelectedIndex(position);
+        } else if (type == DeckInfo.Type.Extra) {
+            card = currentDeck.getExtraCard(position);
+            if (cgvExtra != null) cgvExtra.setSelectedIndex(position);
+        } else if (type == DeckInfo.Type.Side) {
+            card = currentDeck.getSideCard(position);
+            if (cgvSide != null) cgvSide.setSelectedIndex(position);
+        }
         if (card != null) showCardInfo(card);
     }
 
@@ -1682,8 +1693,18 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         String lastDeckName = settings.getLastDeckName();
         String lastCategory = settings.getLastCategory();
 
-        String savedPath = AppsSettings.get().getSettings("lastdeckpath");
+        String savedPath = settings.getSettings("lastdeckpath");
         if (savedPath != null && !savedPath.isEmpty()) {
+            if (!new File(savedPath).exists()) {
+                String cacheDeckDir = settings.getCacheDeckDir();
+                if (cacheDeckDir != null && savedPath.startsWith(cacheDeckDir)) {
+                    try {
+                        DeckUtil.getExpansionsDeckList();
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
+            }
             if (new File(savedPath).exists()) {
                 currentDeckCategoryName = lastCategory != null ? lastCategory : "";
                 currentDeckName = lastDeckName != null ? lastDeckName : "";

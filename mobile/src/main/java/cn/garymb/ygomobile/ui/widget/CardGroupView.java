@@ -321,4 +321,27 @@ public class CardGroupView extends FrameLayout {
             cardView.updateAvail(imageTop, availLm);
         }
     }
+
+    /**
+     * 设置指定位置卡片为选中态（显示白色矩形线框），其余卡片取消选中。
+     * @param index 选中的卡片下标，-1 表示全部取消
+     */
+    public void setSelectedIndex(int index) {
+        int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            CardView cardView = (CardView) getChildAt(i);
+            cardView.setSelected(i == index);
+        }
+    }
+
+    /**
+     * 取消所有卡片的选中态
+     */
+    public void clearSelection() {
+        int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            CardView cardView = (CardView) getChildAt(i);
+            cardView.setSelected(false);
+        }
+    }
 }
