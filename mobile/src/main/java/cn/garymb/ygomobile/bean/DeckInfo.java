@@ -210,6 +210,11 @@ public class DeckInfo {
         return sideCount;
     }
 
+    public void syncCounts() {
+        mainCount = mainCards.size();
+        extraCount = extraCards.size();
+        sideCount = sideCards.size();
+    }
 
     public Card getMainCard(int index) {
         if (index >= 0 && index < getMainCount()) {

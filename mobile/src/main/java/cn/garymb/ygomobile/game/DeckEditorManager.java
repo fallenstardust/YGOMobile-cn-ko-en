@@ -1439,6 +1439,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     private void updateDeckCounts() {
+        currentDeck.syncCounts();
         int mainCount = currentDeck.getMainCount();
         int extraCount = currentDeck.getExtraCount();
         int sideCount = currentDeck.getSideCount();
