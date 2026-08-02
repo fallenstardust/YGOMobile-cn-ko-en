@@ -951,6 +951,13 @@ public class YGOProActivity extends AppCompatActivity implements
                 @Override
                 public void onSearchResultsUpdated(int count) {
                 }
+
+                @Override
+                public void onSideDeckFinished(List<Integer> main, List<Integer> extra, List<Integer> side) {
+                    if (engine != null) {
+                        engine.sendDeckUpdate(main, extra, side);
+                    }
+                }
             });
         }
         if (layoutDeckEditor != null) {
@@ -1044,7 +1051,10 @@ public class YGOProActivity extends AppCompatActivity implements
                 isGameStarted = true;
                 break;
             case SIDING:
-                showSideSelectDialog();
+                showDeckEditorView();              // 打开卡组编辑器
+                if (deckEditorManager != null) {
+                    deckEditorManager.enterSideMode();  // 记录替换前张数并允许编辑
+                }
                 break;
             case DUEL_END:
                 closeGameButtons();

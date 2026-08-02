@@ -69,6 +69,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         void onCardSelected(Card card);
 
         void onSearchResultsUpdated(int count);
+
+        //副卡组替换完成：把替换后的卡组发给服务器（对应C++ DuelClient::SendUpdateDeck）
+        void onSideDeckFinished(List<Integer> main, List<Integer> extra, List<Integer> side);
     }
 
     private final Activity activity;
@@ -84,6 +87,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private boolean isReadonly = false;
     //当前加载的是否为卡包展示卡组（ygocore/pack）：隐藏额外/副卡组，主网格铺满
     private boolean isPackMode = false;
+    //副卡组替换模式状态：对应C++ is_siding 与 pre_mainc/pre_extrac/pre_sidec
+    private boolean isSiding = false;
+    private int preMainCount = 0, preExtraCount = 0, preSideCount = 0;
     private int prevDeck = 0;
 
     private int filterType = 0;
@@ -118,6 +124,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private String searchResultPrefix = "搜索结果:";
     private CardGroupView cgvMain, cgvExtra, cgvSide;
     private View layoutExtraStats, layoutSideStats;
+    private View layoutDeckInfoPanel, layoutFilterPanel;
     private RecyclerView rvSearchResults;
     private Spinner spinnerFilterType;
     private Spinner spinnerFilterType2, spinnerFilterAttribute, spinnerFilterRace, spinnerFilterLimit;
@@ -130,6 +137,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private Button btnFilterSearch, btnFilterClear;
     private Button btnFilterMarks;
     private Button btnDeckManager;
+
+    //副卡组替换模式按钮：对应C++ btnSideOK/btnSideShuffle/btnSideSort/btnSideReload
+    private Button btnSideFinish, btnSideShuffle, btnSideSort, btnSideReset;
 
     private DeckCardAdapter searchAdapter;
 
@@ -244,6 +254,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         cgvSide = root.findViewById(R.id.cgv_deck_side);
         layoutExtraStats = root.findViewById(R.id.layout_extra_stats);
         layoutSideStats = root.findViewById(R.id.layout_side_stats);
+        layoutDeckInfoPanel = root.findViewById(R.id.layout_deck_info_panel);
+        layoutFilterPanel = root.findViewById(R.id.layout_filter_panel);
 
         ivMainMonsterType = root.findViewById(R.id.iv_main_monster_type);
         ivMainSpellType = root.findViewById(R.id.iv_main_spell_type);
@@ -276,6 +288,12 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         btnFilterMarks = root.findViewById(R.id.btn_filter_marks);
         btnFilterSearch = root.findViewById(R.id.btn_filter_search);
         btnFilterClear = root.findViewById(R.id.btn_filter_clear);
+
+        btnSideFinish = root.findViewById(R.id.btn_side_finish);
+        btnSideShuffle = root.findViewById(R.id.btn_side_shuffle);
+        btnSideSort = root.findViewById(R.id.btn_side_sort);
+        btnSideReset = root.findViewById(R.id.btn_side_reset);
+
     }
 
     /**
@@ -286,6 +304,24 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
      */
     private void setupLabels() {
         StringManager sm = DataManager.get().getStringManager();
+
+        if (btnSideFinish != null) {
+            btnSideFinish.setText(sm.getSystemString(1334, "副卡组替换完成"));
+            btnSideFinish.setOnClickListener(v -> sideFinish());
+        }
+        if (btnSideShuffle != null) {
+            btnSideShuffle.setText(sm.getSystemString(1307, "打乱"));
+            btnSideShuffle.setOnClickListener(v -> shuffleDeck());
+        }
+        if (btnSideSort != null) {
+            btnSideSort.setText(sm.getSystemString(1305, "排序"));
+            btnSideSort.setOnClickListener(v -> sortDeck());
+        }
+        if (btnSideReset != null) {
+            btnSideReset.setText(sm.getSystemString(1309, "重置"));
+            btnSideReset.setOnClickListener(v -> sideReset());
+        }
+
         if (tvLabelDeck != null) tvLabelDeck.setText(sm.getSystemString(1300, "卡组:"));
         if (tvLabelType != null) tvLabelType.setText(sm.getSystemString(1311, "种类:"));
         if (tvLabelAttribute != null) tvLabelAttribute.setText(sm.getSystemString(1319, "属性:"));
@@ -941,6 +977,52 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         currentDeck.sortAll();
         isModified = true;
         notifyDeckChanged();
+    }
+
+    // === 对应 duelclient.cpp: STOC_CHANGE_SIDE 进入副卡组替换模式 ===
+    public void enterSideMode() {
+        isSiding = true;
+        isReadonly = false;
+        preMainCount = currentDeck.mainCards.size();
+        preExtraCount = currentDeck.extraCards.size();
+        preSideCount = currentDeck.sideCards.size();
+        refreshReadonly();
+        //对齐C++：副卡组模式下隐藏卡组信息面板与筛选面板，只保留副卡组操作按钮
+        if (layoutDeckInfoPanel != null) layoutDeckInfoPanel.setVisibility(View.GONE);
+        if (layoutFilterPanel != null) layoutFilterPanel.setVisibility(View.GONE);
+    }
+
+    //副卡组替换完成/取消后退出副卡组模式
+    public void exitSideMode() {
+        isSiding = false;
+        if (layoutDeckInfoPanel != null) layoutDeckInfoPanel.setVisibility(View.VISIBLE);
+        if (layoutFilterPanel != null) layoutFilterPanel.setVisibility(View.VISIBLE);
+    }
+
+    // === 对应 deck_con.cpp: BUTTON_SIDE_OK ===
+    public void sideFinish() {
+        if (!isSiding) return;
+        //副卡组替换不能改变主/额外/副各分区张数，否则提示1410
+        if (currentDeck.mainCards.size() != preMainCount
+                || currentDeck.extraCards.size() != preExtraCount
+                || currentDeck.sideCards.size() != preSideCount) {
+            showToast(DataManager.get().getStringManager().getSystemString(1410, "副卡组替换不能改变卡组张数"));
+            return;
+        }
+        List<Integer> main = new ArrayList<>();
+        List<Integer> extra = new ArrayList<>();
+        List<Integer> side = new ArrayList<>();
+        for (Card c : currentDeck.mainCards) main.add(c.Code);
+        for (Card c : currentDeck.extraCards) extra.add(c.Code);
+        for (Card c : currentDeck.sideCards) side.add(c.Code);
+        if (listener != null) listener.onSideDeckFinished(main, extra, side);
+    }
+
+    // === 对应 deck_con.cpp: BUTTON_SIDE_RELOAD ===
+    public void sideReset() {
+        if (currentDeckFilePath != null && !currentDeckFilePath.isEmpty()) {
+            loadDeckFromPath(currentDeckFilePath);
+        }
     }
 
     // === 对应 deck_con.cpp: BUTTON_CLEAR_DECK ===

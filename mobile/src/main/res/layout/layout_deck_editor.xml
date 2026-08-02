@@ -15,6 +15,7 @@
 
         <!-- 左侧：卡组信息面板 -->
         <LinearLayout
+            android:id="@+id/layout_deck_info_panel"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.4"
@@ -93,6 +94,7 @@
 
         <!-- 右侧：筛选面板 -->
         <LinearLayout
+            android:id="@+id/layout_filter_panel"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="5dp"
@@ -444,6 +446,64 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
+
+        <!-- 副卡组 按钮面板 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.4"
+            android:gravity="center_vertical"
+            android:visibility="gone"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="3">
+
+                <Button
+                    android:id="@+id/btn_side_finish"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/button3_bg"
+                    android:text="副卡组替换完成"
+                    android:textSize="12sp" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_side_shuffle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/button3_bg"
+                    android:text="打乱"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btn_side_sort"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:background="@drawable/button3_bg"
+                    android:text="排序"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btn_side_reset"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/button3_bg"
+                    android:text="重置"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <!-- ================= 主体区域：卡组网格 + 搜索结果 ================= -->
@@ -500,7 +560,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:paddingHorizontal="8dp"
-                    android:background="@drawable/ygopro_deck_background"
+                    android:background="@drawable/btn_sci_fi_bg"
                     android:layout_gravity="center"
                     android:gravity="center"
                     android:orientation="horizontal">
