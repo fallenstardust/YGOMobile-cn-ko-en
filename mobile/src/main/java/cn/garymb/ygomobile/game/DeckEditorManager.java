@@ -92,6 +92,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private int preMainCount = 0, preExtraCount = 0, preSideCount = 0;
     private int prevDeck = 0;
 
+    private int savedNormalCardWidth = 0;
+    private int savedNormalCardHeight = 0;
+
     private int filterType = 0;
     private int filterType2 = 0;
     private int filterAttrib = 0;
@@ -403,27 +406,40 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (availWidth <= 0) return;
 
         float ratio = (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[1] / (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
+        int mainAvail = Math.max(0, mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom());
 
         if (isPackMode) {
-            //卡包展示：主网格铺满可用高度，行数随高度动态计算，不再限制最多4行/60张
-            int mainAvail = Math.max(0, mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom());
-            int cardWidth = Math.max(1, availWidth / Constants.DECK_WIDTH_COUNT);
-            int cardHeight = Math.max(1, (int) (cardWidth * ratio));
+            int cardWidth, cardHeight;
+            if (savedNormalCardWidth > 0 && savedNormalCardHeight > 0) {
+                cardWidth = savedNormalCardWidth;
+                cardHeight = savedNormalCardHeight;
+            } else {
+                int extraAvail = extraHeight > 0 && cgvExtra != null
+                        ? Math.max(0, extraHeight - cgvExtra.getPaddingTop() - cgvExtra.getPaddingBottom()) : 0;
+                int sideAvail = sideHeight > 0 && cgvSide != null
+                        ? Math.max(0, sideHeight - cgvSide.getPaddingTop() - cgvSide.getPaddingBottom()) : 0;
+                int totalAvail = mainAvail + extraAvail + sideAvail;
+                int widthByColumn = availWidth / Constants.DECK_WIDTH_COUNT;
+                int widthByHeight = totalAvail > 0 ? (int) ((totalAvail / 6f) / ratio) : Integer.MAX_VALUE;
+                cardWidth = Math.max(1, Math.min(widthByColumn, widthByHeight));
+                cardHeight = Math.max(1, (int) (cardWidth * ratio));
+            }
+
             int rows = Math.max(1, mainAvail / cardHeight);
             cgvMain.setCardSize(cardWidth, cardHeight);
-            cgvMain.setLineLimit(rows, Constants.DECK_WIDTH_COUNT, Constants.DECK_WIDTH_COUNT);
+            if (cgvExtra != null) cgvExtra.setCardSize(cardWidth, cardHeight);
+            if (cgvSide != null) cgvSide.setCardSize(cardWidth, cardHeight);
             if (searchAdapter != null) searchAdapter.setCardSize(cardWidth, cardHeight);
+            cgvMain.setLineLimit(rows, Constants.DECK_WIDTH_COUNT, Constants.DECK_WIDTH_MAX_COUNT);
             notifyDeckChanged();
             return;
         }
 
-        int mainAvail = Math.max(0, mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom());
         int extraAvail = extraHeight > 0 && cgvExtra != null
                 ? Math.max(0, extraHeight - cgvExtra.getPaddingTop() - cgvExtra.getPaddingBottom()) : 0;
         int sideAvail = sideHeight > 0 && cgvSide != null
                 ? Math.max(0, sideHeight - cgvSide.getPaddingTop() - cgvSide.getPaddingBottom()) : 0;
 
-        // 三个网格共需 4+1+1=6 行，按总可用高度统一求卡片尺寸
         int totalAvail = mainAvail + extraAvail + sideAvail;
         int totalLines = 6;
 
@@ -433,15 +449,16 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         int cardWidth = Math.max(1, Math.min(widthByColumn, widthByHeight));
         int cardHeight = Math.max(1, (int) (cardWidth * ratio));
 
+        savedNormalCardWidth = cardWidth;
+        savedNormalCardHeight = cardHeight;
+
         cgvMain.setCardSize(cardWidth, cardHeight);
         cgvExtra.setCardSize(cardWidth, cardHeight);
         cgvSide.setCardSize(cardWidth, cardHeight);
         if (searchAdapter != null) searchAdapter.setCardSize(cardWidth, cardHeight);
 
-        //普通模式恢复主网格4行限制（卡包模式会改成按高度动态行数）
         cgvMain.setLineLimit(4, 10, 15);
 
-        // 将网格高度收缩为正好容纳内容，保证卡片完整显示且铺满网格
         applyGroupExactHeight(cgvMain, cardHeight * 4);
         applyGroupExactHeight(cgvExtra, cardHeight);
         applyGroupExactHeight(cgvSide, cardHeight);
@@ -840,11 +857,11 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     public boolean pushMain(Card card, int seq) {
         if (card == null) return false;
         if (Card.isExtraCard(card.Type)) return false;
-        if (currentDeck.getMainCount() >= Constants.DECK_MAIN_MAX) return false;
+        if (!isPackMode && currentDeck.getMainCount() >= Constants.DECK_MAIN_MAX) return false;
         if (!checkLimit(card)) return false;
         boolean result;
         if (seq >= 0 && seq <= currentDeck.mainCards.size()) {
-            result = currentDeck.addMainCards(seq, card, false);
+            result = currentDeck.addMainCards(seq, card, isPackMode);
         } else {
             result = currentDeck.addMainCards(card);
         }

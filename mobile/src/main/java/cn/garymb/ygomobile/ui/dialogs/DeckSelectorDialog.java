@@ -66,11 +66,14 @@ public class DeckSelectorDialog {
         DeckSelectorUtil.DeckCategory category;
         String baseDirPath;
         boolean isSystem;
+        int sortPriority;
 
-        CategoryInfo(DeckSelectorUtil.DeckCategory category, String baseDirPath, boolean isSystem) {
+        CategoryInfo(DeckSelectorUtil.DeckCategory category, String baseDirPath,
+                     boolean isSystem, int sortPriority) {
             this.category = category;
             this.baseDirPath = baseDirPath;
             this.isSystem = isSystem;
+            this.sortPriority = sortPriority;
         }
     }
 
@@ -234,23 +237,28 @@ public class DeckSelectorDialog {
         List<Boolean> systemFlags = new ArrayList<>();
         List<String> internalNames = new ArrayList<>();
         List<String> displayNames = new ArrayList<>();
+        List<Integer> sortPriorities = new ArrayList<>();
 
         File localDeckDir = new File(localDeckDirPath);
         for (DeckSelectorUtil.DeckCategory c : DeckSelectorUtil.loadDeckCategories(localDeckDir)) {
             rawCategories.add(c);
             baseDirs.add(localDeckDirPath);
-            systemFlags.add(c.categoryName.equals("未分类卡组"));
+            boolean isUncat = c.categoryName.equals("未分类卡组");
+            systemFlags.add(isUncat);
             internalNames.add(c.categoryName);
-            displayNames.add(c.categoryName.equals("未分类卡组") ? uncatLocalName : c.categoryName);
+            displayNames.add(isUncat ? uncatLocalName : c.categoryName);
+            sortPriorities.add(isUncat ? 2 : 3);
         }
 
         File aiDeckDir = new File(aiDeckDirPath);
         for (DeckSelectorUtil.DeckCategory c : DeckSelectorUtil.loadDeckCategories(aiDeckDir)) {
             rawCategories.add(c);
             baseDirs.add(aiDeckDirPath);
-            systemFlags.add(c.categoryName.equals("未分类卡组"));
+            boolean isUncat = c.categoryName.equals("未分类卡组");
+            systemFlags.add(isUncat);
             internalNames.add(c.categoryName);
-            displayNames.add(c.categoryName.equals("未分类卡组") ? uncatAiName : c.categoryName);
+            displayNames.add(isUncat ? uncatAiName : c.categoryName);
+            sortPriorities.add(isUncat ? 1 : 3);
         }
 
         //卡包展示分类（ygocore/pack）：仅卡组编辑器调用时显示，玩家等待界面不显示
@@ -265,15 +273,16 @@ public class DeckSelectorDialog {
                 systemFlags.add(true);
                 internalNames.add(packName);
                 displayNames.add(packName);
+                sortPriorities.add(0);
             }
         }
 
         Integer[] indices = new Integer[rawCategories.size()];
         for (int i = 0; i < indices.length; i++) indices[i] = i;
         java.util.Arrays.sort(indices, (a, b) -> {
-            boolean aSys = systemFlags.get(a);
-            boolean bSys = systemFlags.get(b);
-            if (aSys != bSys) return aSys ? -1 : 1;
+            int pa = sortPriorities.get(a);
+            int pb = sortPriorities.get(b);
+            if (pa != pb) return Integer.compare(pa, pb);
             return displayNames.get(a).compareToIgnoreCase(displayNames.get(b));
         });
 
@@ -282,7 +291,8 @@ public class DeckSelectorDialog {
             cat.categoryName = displayNames.get(idx);
             displayCategories.add(cat);
             displayCategoryNames.add(displayNames.get(idx));
-            catInfos.add(new CategoryInfo(cat, baseDirs.get(idx), systemFlags.get(idx)));
+            catInfos.add(new CategoryInfo(cat, baseDirs.get(idx),
+                    systemFlags.get(idx), sortPriorities.get(idx)));
         }
     }
 
