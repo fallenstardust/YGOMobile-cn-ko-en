@@ -180,7 +180,7 @@ public class YesOrNoDialog {
                     LinearLayout.LayoutParams.WRAP_CONTENT);
             btnOk.setOnClickListener(v -> {
                 if (positiveListener != null) positiveListener.onClick(v);
-                else dismiss();
+                dismiss();
             });
             btnArea.addView(btnOk, btnLp);
         } else {
@@ -191,7 +191,7 @@ public class YesOrNoDialog {
             yesLp.setMarginEnd(btnMargin);
             btnYes.setOnClickListener(v -> {
                 if (positiveListener != null) positiveListener.onClick(v);
-                else dismiss();
+                dismiss();
             });
             btnArea.addView(btnYes, yesLp);
 
@@ -202,7 +202,7 @@ public class YesOrNoDialog {
                     LinearLayout.LayoutParams.WRAP_CONTENT);
             btnNo.setOnClickListener(v -> {
                 if (negativeListener != null) negativeListener.onClick(v);
-                else dismiss();
+                dismiss();
             });
             btnArea.addView(btnNo, noLp);
         }
@@ -227,7 +227,8 @@ public class YesOrNoDialog {
         });
 
         draggableHelper = new DraggablePopupHelper(context, "game_dialog_" + title);
-        draggableHelper.setupDraggablePopup(popupWindow, root, titleBar);
+        draggableHelper.setupDraggablePopup(popupWindow, root, dialogWidth,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
     }
 
     private Button makeButton(String text, int minWidth) {

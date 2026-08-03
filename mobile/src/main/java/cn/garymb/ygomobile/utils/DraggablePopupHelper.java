@@ -151,6 +151,7 @@ public class DraggablePopupHelper {
         private float grabDX, grabDY, downX, downY;
         private boolean dragging;
         private boolean touchOnScrollable;
+        private boolean childConsumedDown;
 
         DragFrameLayout(Context context, SharedPreferences prefs, String dialogId) {
             super(context);
@@ -160,7 +161,14 @@ public class DraggablePopupHelper {
         }
 
         private boolean isTouchOnScrollableView(float x, float y) {
-            return findScrollableChild(this, x, y) != null;
+            if (getChildCount() == 0) return false;
+            View contentView = getChildAt(0);
+            if (!(contentView instanceof ViewGroup)) return false;
+            float cx = x - contentView.getLeft() + contentView.getScrollX();
+            float cy = y - contentView.getTop() + contentView.getScrollY();
+            if (cx < 0 || cy < 0 || cx >= contentView.getWidth() || cy >= contentView.getHeight())
+                return false;
+            return findScrollableChild((ViewGroup) contentView, cx, cy) != null;
         }
 
         private View findScrollableChild(ViewGroup parent, float x, float y) {
@@ -249,31 +257,45 @@ public class DraggablePopupHelper {
 
         @Override
         public boolean dispatchTouchEvent(MotionEvent ev) {
-            if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-                touchOnScrollable = isTouchOnScrollableView(ev.getX(), ev.getY());
-            }
+            switch (ev.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    touchOnScrollable = isTouchOnScrollableView(ev.getX(), ev.getY());
+                    if (touchOnScrollable) {
+                        childConsumedDown = false;
+                        return super.dispatchTouchEvent(ev);
+                    }
+                    handleDrag(ev);
+                    boolean result = super.dispatchTouchEvent(ev);
+                    childConsumedDown = result;
+                    return result || true;
 
-            if (!touchOnScrollable) {
-                handleDrag(ev);
-            }
+                case MotionEvent.ACTION_MOVE:
+                    if (!touchOnScrollable) {
+                        handleDrag(ev);
+                        if (dragging) {
+                            if (childConsumedDown) {
+                                MotionEvent cancel = MotionEvent.obtain(ev);
+                                cancel.setAction(MotionEvent.ACTION_CANCEL);
+                                super.dispatchTouchEvent(cancel);
+                                cancel.recycle();
+                            }
+                            return true;
+                        }
+                    }
+                    return super.dispatchTouchEvent(ev);
 
-            if (!touchOnScrollable
-                    && ev.getAction() == MotionEvent.ACTION_MOVE && dragging) {
-                MotionEvent cancel = MotionEvent.obtain(ev);
-                cancel.setAction(MotionEvent.ACTION_CANCEL);
-                super.dispatchTouchEvent(cancel);
-                cancel.recycle();
-                return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (!touchOnScrollable) {
+                        handleDrag(ev);
+                    }
+                    boolean upResult = super.dispatchTouchEvent(ev);
+                    dragging = false;
+                    touchOnScrollable = false;
+                    childConsumedDown = false;
+                    return childConsumedDown ? upResult : (upResult || true);
             }
-
-            boolean result = super.dispatchTouchEvent(ev);
-
-            if (ev.getAction() == MotionEvent.ACTION_UP
-                    || ev.getAction() == MotionEvent.ACTION_CANCEL) {
-                dragging = false;
-                touchOnScrollable = false;
-            }
-            return result;
+            return super.dispatchTouchEvent(ev);
         }
     }
 
