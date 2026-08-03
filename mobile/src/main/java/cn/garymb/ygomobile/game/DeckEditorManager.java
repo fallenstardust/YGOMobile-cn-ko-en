@@ -307,8 +307,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
 
     private void setupRecyclerViews() {
-        mLimitList = AppsSettings.get().getGenesysMode() == 1
-                ? cardLoader.getGenesysLimitList() : cardLoader.getLimitList();
+        mLimitList = isBanListActive()
+                ? (AppsSettings.get().getGenesysMode() == 1
+                   ? cardLoader.getGenesysLimitList() : cardLoader.getLimitList())
+                : null;
         mImageTop = new ImageTop(activity);
         mCardTypeImage = new CardTypeImage(activity);
         if (mCardTypeImage != null) {
@@ -458,15 +460,31 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     public void refreshLimitList() {
-        mLimitList = AppsSettings.get().getGenesysMode() == 1
-                ? cardLoader.getGenesysLimitList()
-                : cardLoader.getLimitList();
+        mLimitList = isBanListActive()
+                ? (AppsSettings.get().getGenesysMode() == 1
+                   ? cardLoader.getGenesysLimitList()
+                   : cardLoader.getLimitList())
+                : null;
         if (cgvMain != null) cgvMain.updateTopImage(mImageTop, mLimitList);
         if (cgvExtra != null) cgvExtra.updateTopImage(mImageTop, mLimitList);
         if (cgvSide != null) cgvSide.updateTopImage(mImageTop, mLimitList);
         if (searchAdapter != null) searchAdapter.setLimitList(mLimitList);
         //模式或禁卡表切换后同步刷新起源点数记分板的显隐与数值
         updateDeckCounts();
+    }
+
+    /**
+     * 禁限卡表是否生效：对应模式的开关开启（use_lflist/use_genesys_lflist）
+     * 且所选禁卡表名不是N/A。未生效时不做checkLimit校验、不显示禁限角标与GeneSys记分板。
+     */
+    private boolean isBanListActive() {
+        AppsSettings settings = AppsSettings.get();
+        boolean genesys = settings.getGenesysMode() == 1;
+        boolean enabled = settings.getIntSettings(
+                genesys ? "use_genesys_lflist" : "use_lflist", 1) == 1;
+        if (!enabled) return false;
+        String name = genesys ? settings.getLastGenesysLimit() : settings.getLastLimit();
+        return name != null && !name.isEmpty() && !"N/A".equals(name);
     }
 
     private void setupSpinners() {
@@ -840,6 +858,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     // === 对应 deck_con.cpp: check_limit ===
     public boolean checkLimit(Card card) {
         if (card == null) return false;
+        //禁限卡表未启用（关闭或选N/A）：跳过所有禁限数量与GeneSys点数校验
+        if (mLimitList == null) return true;
         int gameCode = card.getGameCode();
         int limit = 3;
         if (mLimitList != null) {
@@ -1708,9 +1728,18 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             List<Card> sourceList = getDeckList(source);
             if (index < 0 || index >= sourceList.size()) return;
             Card moved = sourceList.remove(index);
-            //同列表换位时，移除原卡后插入下标需修正
-            int insert = (source == targetType && index < dropIndex) ? dropIndex - 1 : dropIndex;
-            if (!pushToDeck(targetType, moved, insert)) {
+
+            if (source == targetType) {
+                int insert = (index < dropIndex) ? dropIndex - 1 : dropIndex;
+                insert = Math.max(0, Math.min(insert, sourceList.size()));
+                sourceList.add(insert, moved);
+                isModified = true;
+                notifyDeckChanged();
+                return;
+            }
+
+            currentDeck.syncCounts();
+            if (!moveToDeck(targetType, moved, dropIndex)) {
                 sourceList.add(Math.min(index, sourceList.size()), moved);
                 notifyDeckChanged();
             }
@@ -1719,6 +1748,29 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
         //搜索结果拖入：直接插入目标网格
         pushToDeck(targetType, card, dropIndex);
+    }
+
+    /**
+     * 跨卡组移动：跳过checkLimit禁限/分数校验，仅校验卡片类型兼容性和目标卡组容量。
+     * 卡片已在卡组中（非新增），移动不改变全局同名卡总数和GeneSys总分。
+     */
+    private boolean moveToDeck(DeckInfo.Type type, Card card, int seq) {
+        if (card == null) return false;
+        if (type == DeckInfo.Type.Main && Card.isExtraCard(card.Type)) return false;
+        if (type == DeckInfo.Type.Extra && !Card.isExtraCard(card.Type)) return false;
+        if (type == DeckInfo.Type.Main && !isPackMode
+                && currentDeck.getMainCount() >= Constants.DECK_MAIN_MAX) return false;
+        if (type == DeckInfo.Type.Extra
+                && currentDeck.getExtraCount() >= Constants.DECK_EXTRA_MAX) return false;
+        if (type == DeckInfo.Type.Side
+                && currentDeck.getSideCount() >= Constants.DECK_SIDE_MAX) return false;
+        List<Card> list = getDeckList(type);
+        int insert = Math.max(0, Math.min(seq, list.size()));
+        list.add(insert, card);
+        currentDeck.syncCounts();
+        isModified = true;
+        notifyDeckChanged();
+        return true;
     }
 
     private boolean pushToDeck(DeckInfo.Type type, Card card, int seq) {

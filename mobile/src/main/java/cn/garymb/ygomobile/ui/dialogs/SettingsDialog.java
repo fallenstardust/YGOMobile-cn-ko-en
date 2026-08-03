@@ -8,7 +8,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.PopupWindow;
@@ -21,7 +20,10 @@ import java.util.List;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -36,11 +38,30 @@ public class SettingsDialog {
         void onSettingsSaved();
     }
 
+    public interface OnDismissListener {
+        void onDismiss();
+    }
+
     private OnSettingsSaveListener listener;
+    private OnDismissListener dismissListener;
 
     public SettingsDialog(Context context, OnSettingsSaveListener listener) {
         this.context = context;
         this.listener = listener;
+    }
+
+    public SettingsDialog setOnDismissListener(OnDismissListener listener) {
+        this.dismissListener = listener;
+        if (popupWindow != null) {
+            popupWindow.setOnDismissListener(this::notifyDismissed);
+        }
+        return this;
+    }
+
+    private void notifyDismissed() {
+        if (dismissListener != null) {
+            dismissListener.onDismiss();
+        }
     }
 
     private void notifySettingsChanged() {
@@ -183,9 +204,7 @@ public class SettingsDialog {
             }
         }
         
-        ArrayAdapter<String> banListAdapter = new ArrayAdapter<>(context,
-                android.R.layout.simple_spinner_item, currentBanListNames);
-        banListAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        SimpleSpinnerAdapter banListAdapter = createBanListAdapter(currentBanListNames);
         spinnerBanList.setAdapter(banListAdapter);
 
         //初始化时只读取保存值，不写入
@@ -206,6 +225,7 @@ public class SettingsDialog {
                 spinnerBanList.setSelection(0);
             }
         }
+        setBanListSpinnerColor(spinnerBanList, isBanListEnabled);
 
         final List<String>[] banListData = new List[]{currentBanListNames};
         final boolean[] isCurrentlyGenesys = new boolean[]{isGenesysMode};
@@ -224,9 +244,7 @@ public class SettingsDialog {
             }
             
             banListData[0] = newBanListNames;
-            ArrayAdapter<String> newAdapter = new ArrayAdapter<>(context,
-                    android.R.layout.simple_spinner_item, newBanListNames);
-            newAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            SimpleSpinnerAdapter newAdapter = createBanListAdapter(newBanListNames);
             spinnerBanList.setAdapter(newAdapter);
 
             //切换模式后按对应键重新读取禁卡表开关状态（对齐game.cpp两个独立开关）
@@ -243,6 +261,7 @@ public class SettingsDialog {
                     spinnerBanList.setSelection(0);
                 }
                 spinnerBanList.setEnabled(false);
+                setBanListSpinnerColor(spinnerBanList, false);
             } else {
                 String savedLimit = isChecked ? appsSettings.getLastGenesysLimit() : appsSettings.getLastLimit();
                 int newIndex = newBanListNames.indexOf(savedLimit);
@@ -252,6 +271,7 @@ public class SettingsDialog {
                     spinnerBanList.setSelection(0);
                 }
                 spinnerBanList.setEnabled(true);
+                setBanListSpinnerColor(spinnerBanList, true);
             }
             notifySettingsChanged();
         });
@@ -264,6 +284,7 @@ public class SettingsDialog {
             appsSettings.saveIntSettings(
                     isCurrentlyGenesys[0] ? "use_genesys_lflist" : "use_lflist", isChecked ? 1 : 0);
             spinnerBanList.setEnabled(isChecked);
+            setBanListSpinnerColor(spinnerBanList, isChecked);
             if (!isChecked) {
                 //仅显示N/A，不覆盖已保存的禁卡表名（对齐game.cpp关闭时不写last_limit_list_name）
                 int naIndex = banListData[0].indexOf("N/A");
@@ -306,11 +327,12 @@ public class SettingsDialog {
         spinnerBanList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                //开关关闭时不保存，避免初始化/切换adapter自动触发时把N/A写入保存值
                 if (!chkBanList.isChecked()) {
                     return;
                 }
-                String selectedLimit = (String) parent.getItemAtPosition(position);
+                Object item = parent.getItemAtPosition(position);
+                String selectedLimit = (item instanceof SimpleSpinnerItem)
+                        ? ((SimpleSpinnerItem) item).text : null;
                 if (selectedLimit != null && !selectedLimit.isEmpty()) {
                     if (isCurrentlyGenesys[0]) {
                         appsSettings.setLastGenesysLimit(selectedLimit);
@@ -340,6 +362,7 @@ public class SettingsDialog {
             return false;
         });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+        popupWindow.setOnDismissListener(this::notifyDismissed);
 
         draggableHelper = new DraggablePopupHelper(context, "settings_dialog");
         draggableHelper.setupDraggablePopup(popupWindow, rootLayout, popupWidth, popupHeight);
@@ -358,9 +381,24 @@ public class SettingsDialog {
         }
     }
 
-    public void setOnDismissListener(PopupWindow.OnDismissListener listener) {
-        if (popupWindow != null) {
-            popupWindow.setOnDismissListener(listener);
+    private SimpleSpinnerAdapter createBanListAdapter(List<String> names) {
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(context);
+        adapter.setColor(Color.WHITE);
+        adapter.setTextSize(9f);
+        adapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        for (int i = 0; i < names.size(); i++) {
+            items.add(new SimpleSpinnerItem(i, names.get(i)));
+        }
+        adapter.set(items);
+        return adapter;
+    }
+
+    private void setBanListSpinnerColor(Spinner spinner, boolean enabled) {
+        if (spinner.getAdapter() instanceof SimpleSpinnerAdapter) {
+            SimpleSpinnerAdapter adapter = (SimpleSpinnerAdapter) spinner.getAdapter();
+            adapter.setColor(enabled ? Color.WHITE : Color.GRAY);
+            adapter.notifyDataSetChanged();
         }
     }
 }
