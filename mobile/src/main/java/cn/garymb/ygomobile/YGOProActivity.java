@@ -87,7 +87,7 @@ public class YGOProActivity extends AppCompatActivity implements
     private LinearLayout layoutGameRight;
 
     private int currentSelectType = -1;
-    private DialogPlus currentDialog;
+    private YesOrNoDialog currentDialog;
 
     private FrameLayout dialogContainer;
     private RelativeLayout layoutMainMenu;
@@ -324,11 +324,8 @@ public class YGOProActivity extends AppCompatActivity implements
             message += "\n卡片: " + cardName + " (" + cardCode + ")";
         }
 
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle(title);
-        dialog.setMessage(message);
-        dialog.setRightButtonText("确定");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setTitle(title).setMessage(message);
         dialog.show();
     }
 
@@ -1231,15 +1228,19 @@ public class YGOProActivity extends AppCompatActivity implements
         return getResources().getIdentifier(name, type, getPackageName());
     }
 
-    private void showHandSelectDialog() {
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("猜拳");
-        dialog.setMessage("请选择石头、剪刀或布");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
+    private View inflateSelectLayout() {
+        View contentView = getLayoutInflater().inflate(R.layout.dialog_game_select, null);
         contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
         contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
         contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        return contentView;
+    }
+
+    private void showHandSelectDialog() {
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setTitle("猜拳");
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
         String[] choices = {"石头", "剪刀", "布"};
         for (int i = 0; i < choices.length; i++) {
@@ -1263,22 +1264,18 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showTPSelectDialog() {
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("先攻选择");
-        dialog.setMessage("是否选择先攻？");
-        dialog.setLeftButtonText("先攻");
-        dialog.setLeftButtonListener((d, w) -> {
-            engine.sendTPResult(true);
-            d.dismiss();
-        });
-        dialog.setRightButtonText("后攻");
-        dialog.setRightButtonListener((d, w) -> {
-            engine.sendTPResult(false);
-            d.dismiss();
-        });
-        dialog.setCancelable(false);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setTitle("先攻选择")
+                .setMessage("是否选择先攻？")
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText("先攻")
+                .setNegativeButtonText("后攻")
+                .setPositiveButton(v -> engine.sendTPResult(true))
+                .setNegativeButton(v -> engine.sendTPResult(false))
+                .setCancelable(false);
         dialog.show();
     }
+
 
     private void showYesNoDialog(ByteBuffer data) {
         int descId = 0;
@@ -1324,13 +1321,10 @@ public class YGOProActivity extends AppCompatActivity implements
             options.add(str);
         }
 
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("请选择");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
         for (int i = 0; i < options.size(); i++) {
             Button btn = new Button(this);
@@ -1393,13 +1387,10 @@ public class YGOProActivity extends AppCompatActivity implements
             return;
         }
 
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("战斗阶段");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         for (int i = 0; i < options.size(); i++) {
@@ -1504,13 +1495,10 @@ public class YGOProActivity extends AppCompatActivity implements
             return;
         }
 
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("主要阶段");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         for (int i = 0; i < options.size(); i++) {
@@ -1650,13 +1638,10 @@ public class YGOProActivity extends AppCompatActivity implements
         }
 
         final File[] finalDeckFiles = deckFiles;
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("选择卡组");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         for (int i = 0; i < deckNames.size(); i++) {
@@ -1678,12 +1663,10 @@ public class YGOProActivity extends AppCompatActivity implements
             layoutOptions.addView(btn);
         }
 
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> {
-            d.dismiss();
-            engine.disconnect();
-        });
-        dialog.setCancelable(false);
+        dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
+                .setPositiveButtonText("取消")
+                .setPositiveButton(v -> engine.disconnect())
+                .setCancelable(false);
         dialog.show();
     }
 
@@ -1798,14 +1781,11 @@ public class YGOProActivity extends AppCompatActivity implements
             }
         }
 
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         currentDialog = dialog;
         dialog.setTitle("连锁选择");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         for (int i = 0; i < chainOptions.size(); i++) {
@@ -1825,20 +1805,20 @@ public class YGOProActivity extends AppCompatActivity implements
             layoutOptions.addView(btn);
         }
 
-        dialog.setRightButtonText("不连锁");
-        dialog.setRightButtonListener((d, w) -> {
-            sendResponseInt(-1);
-            hideCancelOrFinishButton();
-            d.dismiss();
-        });
+        dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
+                .setPositiveButtonText("不连锁")
+                .setPositiveButton(v -> {
+                    sendResponseInt(-1);
+                    hideCancelOrFinishButton();
+                })
+                .setCancelable(false)
+                .setOnDismissListener(() -> {
+                    hideCancelOrFinishButton();
+                    currentDialog = null;
+                });
         if (!hasForced) {
             showCancelOrFinishButton("不连锁");
         }
-        dialog.setOnDismissListener(d -> {
-            hideCancelOrFinishButton();
-            currentDialog = null;
-        });
-        dialog.setCancelable(false);
         dialog.show();
     }
 
@@ -1872,14 +1852,11 @@ public class YGOProActivity extends AppCompatActivity implements
 
         boolean[] selected = new boolean[cardInfos.size()];
 
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         currentDialog = dialog;
         dialog.setTitle("选择卡片 (" + min + "-" + max + ")");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         TextView tvCount = new TextView(this);
@@ -1923,22 +1900,22 @@ public class YGOProActivity extends AppCompatActivity implements
 
         if (cancelable) {
             showCancelOrFinishButton("取消");
-            dialog.setRightButtonText("取消");
-            dialog.setRightButtonListener((d, w) -> {
-                ByteBuffer buf = ByteBuffer.allocate(1);
-                buf.put((byte) 0);
-                engine.sendResponse(buf.array());
-                hideCancelOrFinishButton();
-                d.dismiss();
-            });
+            dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
+                    .setPositiveButtonText("取消")
+                    .setPositiveButton(v -> {
+                        ByteBuffer buf = ByteBuffer.allocate(1);
+                        buf.put((byte) 0);
+                        engine.sendResponse(buf.array());
+                        hideCancelOrFinishButton();
+                    });
         } else if (min <= max) {
             showCancelOrFinishButton("完成选择");
         }
-        dialog.setOnDismissListener(d -> {
-            hideCancelOrFinishButton();
-            currentDialog = null;
-        });
-        dialog.setCancelable(false);
+        dialog.setCancelable(false)
+                .setOnDismissListener(() -> {
+                    hideCancelOrFinishButton();
+                    currentDialog = null;
+                });
         dialog.show();
     }
 
@@ -1970,14 +1947,10 @@ public class YGOProActivity extends AppCompatActivity implements
         int count = data.get() & 0xFF;
         int descId = data.remaining() >= 4 ? data.getInt() : 0;
 
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("选择指示物数量");
-        dialog.setMessage("请选择要放置的指示物数量 (1-" + count + ")");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         for (int i = 1; i <= count; i++) {
@@ -1999,6 +1972,7 @@ public class YGOProActivity extends AppCompatActivity implements
         dialog.setCancelable(false);
         dialog.show();
     }
+
 
     private void showSumSelectDialog(ByteBuffer data) {
         if (data == null || data.remaining() < 7) {
@@ -2061,13 +2035,10 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showSumSelectUI(int mustCount) {
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("选择卡片 (总和=" + sumSelectValue + ")");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         TextView tvSum = new TextView(this);
@@ -2122,11 +2093,9 @@ public class YGOProActivity extends AppCompatActivity implements
         }
 
         if (sumSelectMin == 0) {
-            dialog.setRightButtonText("取消");
-            dialog.setRightButtonListener((d, w) -> {
-                sendResponseInt(0);
-                d.dismiss();
-            });
+            dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
+                    .setPositiveButtonText("取消")
+                    .setPositiveButton(v -> sendResponseInt(0));
         }
         dialog.setCancelable(false);
         dialog.show();
@@ -2150,13 +2119,10 @@ public class YGOProActivity extends AppCompatActivity implements
         String[] races = {"战士", "魔法师", "炎", "水", "雷", "岩石", "植物", "兽",
                 "兽战士", "恐龙", "昆虫", "爬虫", "海龙", "鱼", "机械", "超能",
                 "幻神兽", "创造神", "龙"};
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("选择种族");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         for (int i = 0; i < races.length; i++) {
@@ -2181,13 +2147,10 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private void showAnnounceAttribDialog() {
         String[] attribs = {"光", "暗", "水", "炎", "地", "风", "神"};
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("选择属性");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         for (int i = 0; i < attribs.length; i++) {
@@ -2211,7 +2174,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showAnnounceCardDialog(ByteBuffer data) {
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("宣言卡片");
 
         LinearLayout root = new LinearLayout(this);
@@ -2286,19 +2249,17 @@ public class YGOProActivity extends AppCompatActivity implements
         ScrollView scrollView = new ScrollView(this);
         scrollView.addView(root);
         dialog.setContentView(scrollView);
-        dialog.setLeftButtonText("确认");
-        dialog.setLeftButtonListener((d, w) -> {
-            if (selectedCode[0] > 0) {
-                sendResponseInt(selectedCode[0]);
-            }
-            d.dismiss();
-        });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> {
-            sendResponseInt(0);
-            d.dismiss();
-        });
-        dialog.setCancelable(false);
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText("确认")
+                .setNegativeButtonText("取消")
+                .setPositiveButton(v -> {
+                    if (selectedCode[0] > 0) {
+                        sendResponseInt(selectedCode[0]);
+                    }
+                })
+                .setNegativeButton(v -> sendResponseInt(0))
+                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                .setCancelable(false);
         dialog.show();
     }
 
@@ -2317,13 +2278,10 @@ public class YGOProActivity extends AppCompatActivity implements
             return;
         }
 
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("选择数字");
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
 
         for (int i = 0; i < numbers.size(); i++) {
@@ -2344,13 +2302,6 @@ public class YGOProActivity extends AppCompatActivity implements
         }
         dialog.setCancelable(false);
         dialog.show();
-    }
-
-    private void showCardInfoDialog(int cardCode) {
-        GameField.ClientCard tempCard = new GameField.ClientCard();
-        tempCard.code = cardCode;
-        tempCard.position = 0x1;
-        showCardInfoPanel(tempCard);
     }
 
     public void showCardInfoPanel(GameField.ClientCard card) {
@@ -2449,30 +2400,23 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showResultDialog(String result) {
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("决斗结果");
-        dialog.setMessage(result);
-        dialog.setLeftButtonText("确定");
-        dialog.setLeftButtonListener((d, w) -> {
-            d.dismiss();
-            finish();
-        });
-        dialog.setCancelable(false);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setTitle("决斗结果")
+                .setMessage(result)
+                .setPositiveButton(v -> finish())
+                .setCancelable(false);
         dialog.show();
     }
 
     private void showDuelEndDialog() {
-        DialogPlus dialog = new DialogPlus(this);
-        dialog.setTitle("决斗结束");
-        dialog.setMessage("本次决斗已结束");
-        dialog.setLeftButtonText("确定");
-        dialog.setLeftButtonListener((d, w) -> {
-            d.dismiss();
-            finish();
-        });
-        dialog.setRightButtonText("继续等待");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
-        dialog.setCancelable(false);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setTitle("决斗结束")
+                .setMessage("本次决斗已结束")
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText("确定")
+                .setNegativeButtonText("继续等待")
+                .setPositiveButton(v -> finish())
+                .setCancelable(false);
         dialog.show();
     }
 
@@ -2485,13 +2429,10 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showListDialog(String title, String[] items, OnItemPickedListener listener) {
-        DialogPlus dialog = new DialogPlus(this);
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle(title);
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
+        View contentView = inflateSelectLayout();
+        dialog.setContentView(contentView);
         LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
         for (int i = 0; i < items.length; i++) {
             Button btn = new Button(this);
@@ -2651,28 +2592,28 @@ public class YGOProActivity extends AppCompatActivity implements
                     restoreMainMenu();
                     return;
                 }
-                DialogPlus dialog = new DialogPlus(YGOProActivity.this);
-                dialog.setTitle("退出决斗");
-                dialog.setMessage("确定要退出当前决斗吗？");
-                dialog.setLeftButtonText("确定");
-                dialog.setLeftButtonListener((d, w) -> {
-                    if (engine != null) {
-                        if (engine.getState() == GameEngine.GameState.DUELING) {
-                            engine.sendSurrender();
-                        } else {
-                            engine.disconnect();
-                        }
-                    }
-                    d.dismiss();
-                    setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
-                });
-                dialog.setRightButtonText("取消");
-                dialog.setRightButtonListener((d, w) -> d.dismiss());
+                YesOrNoDialog dialog = new YesOrNoDialog(YGOProActivity.this);
+                dialog.setTitle("退出决斗")
+                        .setMessage("确定要退出当前决斗吗？")
+                        .setType(YesOrNoDialog.TYPE_YES_NO)
+                        .setPositiveButtonText("确定")
+                        .setNegativeButtonText("取消")
+                        .setPositiveButton(v -> {
+                            if (engine != null) {
+                                if (engine.getState() == GameEngine.GameState.DUELING) {
+                                    engine.sendSurrender();
+                                } else {
+                                    engine.disconnect();
+                                }
+                            }
+                            setEnabled(false);
+                            getOnBackPressedDispatcher().onBackPressed();
+                        });
                 dialog.show();
             }
         });
     }
+
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {

@@ -163,7 +163,7 @@ public class LanModeDialog {
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
-        popupWindow.setFocusable(false);
+        popupWindow.setFocusable(true);
         popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         popupWindow.setTouchInterceptor((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
