@@ -174,7 +174,7 @@ public class LanModeDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "lan_mode_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, customView);
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
 
         loadLastDeckInfo(btnPwDeckSelect);
 

@@ -96,7 +96,7 @@ public class ReplayModeDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "replay_mode_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, customView);
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
 
         // 初始状态下禁用所有按钮（除了退出按钮）和EditText
         updateControlsState(false);

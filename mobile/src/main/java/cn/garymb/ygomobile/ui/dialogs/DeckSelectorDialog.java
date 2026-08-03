@@ -233,7 +233,7 @@ public class DeckSelectorDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "deck_selector_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, contentView);
+        draggableHelper.setupDraggablePopup(popupWindow, contentView, popupWidth, popupHeight);
         draggableHelper.showPopup(popupWindow, anchorView, Gravity.CENTER, (int) (100 * density), (int) (-20 * density));
     }
 

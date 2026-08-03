@@ -342,7 +342,7 @@ public class SettingsDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "settings_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, rootLayout);
+        draggableHelper.setupDraggablePopup(popupWindow, rootLayout, popupWidth, popupHeight);
 
         btnCancel.setOnClickListener(v -> {
             popupWindow.dismiss();

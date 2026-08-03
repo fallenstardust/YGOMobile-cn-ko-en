@@ -55,6 +55,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.TextureLoader;
+import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
@@ -1288,28 +1289,28 @@ public class YGOProActivity extends AppCompatActivity implements
                 ? DataManager.get().getStringManager().getSystemString(descId, "是否发动效果？")
                 : "是否发动效果？";
 
-        DialogPlus dialog = new DialogPlus(this);
-        currentDialog = dialog;
-        dialog.setTitle("确认");
-        dialog.setMessage(desc);
-        dialog.setLeftButtonText("是");
-        dialog.setLeftButtonListener((d, w) -> {
-            sendResponseInt(1);
-            hideCancelOrFinishButton();
-            d.dismiss();
-        });
-        dialog.setRightButtonText("否");
-        dialog.setRightButtonListener((d, w) -> {
-            sendResponseInt(0);
-            hideCancelOrFinishButton();
-            d.dismiss();
-        });
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setTitle("确认")
+                .setMessage(desc)
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText("是")
+                .setNegativeButtonText("否")
+                .setPositiveButton(v -> {
+                    sendResponseInt(1);
+                    hideCancelOrFinishButton();
+                    dialog.dismiss();
+                })
+                .setNegativeButton(v -> {
+                    sendResponseInt(0);
+                    hideCancelOrFinishButton();
+                    dialog.dismiss();
+                })
+                .setCancelable(false)
+                .setOnDismissListener(() -> {
+                    hideCancelOrFinishButton();
+                    currentDialog = null;  // 若需要保留引用可调整
+                });
         showCancelOrFinishButton("否");
-        dialog.setOnDismissListener((d) -> {
-            hideCancelOrFinishButton();
-            currentDialog = null;
-        });
-        dialog.setCancelable(false);
         dialog.show();
     }
 

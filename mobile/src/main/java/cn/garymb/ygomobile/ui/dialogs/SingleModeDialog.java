@@ -209,7 +209,7 @@ public class SingleModeDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "single_mode_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, customView);
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
 
         btnStartBotDuel.setOnClickListener(v -> {
             if (currentMode[0] == 0) {

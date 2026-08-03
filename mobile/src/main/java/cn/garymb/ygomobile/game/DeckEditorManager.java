@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.game;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,6 +40,7 @@ import cn.garymb.ygomobile.ui.cards.deck.CardTypeImage;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.dialogs.DeckSelectorDialog;
+import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.ui.dialogs.EffectCategoryPopupWindow;
 import cn.garymb.ygomobile.ui.dialogs.LinkMarkerPopupWindow;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
@@ -71,7 +70,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
         void onSearchResultsUpdated(int count);
 
-        //副卡组替换完成：把替换后的卡组发给服务器（对应C++ DuelClient::SendUpdateDeck）
         void onSideDeckFinished(List<Integer> main, List<Integer> extra, List<Integer> side);
     }
 
@@ -80,22 +78,16 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final CardLoader cardLoader;
     private DeckEditorListener listener;
-
     private final DeckInfo currentDeck;
     private final List<Card> searchResults;
     private final Random random = new Random();
     private boolean isModified = false;
     private boolean isReadonly = false;
-    //当前加载的是否为卡包展示卡组（ygocore/pack）：隐藏额外/副卡组，主网格铺满
     private boolean isPackMode = false;
-    //副卡组替换模式状态：对应C++ is_siding 与 pre_mainc/pre_extrac/pre_sidec
     private boolean isSiding = false;
     private int preMainCount = 0, preExtraCount = 0, preSideCount = 0;
-    private int prevDeck = 0;
-
     private int savedNormalCardWidth = 0;
     private int savedNormalCardHeight = 0;
-
     private int filterType = 0;
     private int filterType2 = 0;
     private int filterAttrib = 0;
@@ -112,7 +104,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private long filterEffect = 0;
     private int filterMarks = 0;
     private int sortType = 0;
-
     private View rootView;
     private CardDetailPanel cardDetailPanel;
     private TextView tvMainCountNum, tvExtraCountNum, tvSideCountNum, tvSearchResult;
@@ -121,7 +112,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private TextView tvMainMonsterCount, tvMainSpellCount, tvMainTrapCount;
     private TextView tvExtraFusionCount, tvExtraSynchroCount, tvExtraXyzCount, tvExtraLinkCount;
     private TextView tvSideMonsterCount, tvSideSpellCount, tvSideTrapCount;
-    //筛选面板与卡组分区标题标签：文字取自StringManager的systemString，对齐C++ GetSysString索引
     private TextView tvLabelDeck, tvLabelType, tvLabelAttribute, tvLabelRace;
     private TextView tvLabelStar, tvLabelScale, tvLabelLimit, tvLabelAttack, tvLabelDefense, tvLabelKeyword;
     private TextView tvLabelMainDeck, tvLabelExtraDeck, tvLabelSideDeck;
@@ -137,34 +127,24 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private EditText etAttack, etDefense, etStar, etScale, etKeyword;
     private EditText etDeckName;
     private Button btnSave, btnSaveAs, btnShuffle, btnSort, btnClear, btnDelete, btnExit;
-    private Button btnFilterEffect;
-    private Button btnFilterSearch, btnFilterClear;
-    private Button btnFilterMarks;
-    private Button btnDeckManager;
-
-    //副卡组替换模式按钮：对应C++ btnSideOK/btnSideShuffle/btnSideSort/btnSideReload
+    private Button btnFilterEffect, btnFilterSearch, btnFilterClear, btnFilterMarks, btnDeckManager;
     private Button btnSideFinish, btnSideShuffle, btnSideSort, btnSideReset;
-
     private DeckCardAdapter searchAdapter;
-
     private ImageTop mImageTop;
     private CardTypeImage mCardTypeImage;
     private ImageView ivMainMonsterType, ivMainSpellType, ivMainTrapType;
     private ImageView ivExtraFusionType, ivExtraSynchroType, ivExtraXyzType, ivExtraLinkType;
     private ImageView ivSideMonsterType, ivSideSpellType, ivSideTrapType;
-
     private LimitList mLimitList;
-
     private LinkMarkerPopupWindow linkMarkerPopup;
     private EffectCategoryPopupWindow effectCategoryPopup;
-
     private String currentDeckCategoryName = "";
     private String currentDeckName = "";
     private String currentDeckFilePath = "";
-
     private DeckSelectorDialog deckSelectorDialog;
     private int touchSlop;
     private final CardDragHelper dragHelper;
+    private int availLm = 0;
 
     public DeckEditorManager(Activity activity, ImageLoader imageLoader, CardDetailPanel cardDetailPanel) {
         this.activity = activity;
@@ -196,9 +176,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     public void terminate() {
         if (isModified && !isReadonly) {
-            showConfirmDialog("此操作将放弃对当前卡组的修改，是否继续？", () -> {
-                doTerminate();
-            });
+            showConfirmDialog("此操作将放弃对当前卡组的修改，是否继续？", this::doTerminate);
         } else {
             doTerminate();
         }
@@ -206,20 +184,15 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     private void doTerminate() {
         saveLastCategoryAndDeck();
-        if (listener != null) {
-            listener.onExitEditor();
-        }
+        if (listener != null) listener.onExitEditor();
     }
 
     private void bindViews(View root) {
-        // 卡片详情面板委托给 CardDetailPanel，不再重复绑定
-        // 卡组操作按钮复用 activity_ygo_game.xml 的 layout_deck_control
         btnShuffle = activity.findViewById(R.id.btn_deck_shuffle);
         btnSort = activity.findViewById(R.id.btn_deck_sort);
         btnClear = activity.findViewById(R.id.btn_deck_clear);
         btnDelete = activity.findViewById(R.id.btn_deck_delete);
         btnExit = activity.findViewById(R.id.btn_deck_exit);
-        // 以下为卡组编辑器自身布局 (layout_deck_editor.xml)
         tvMainCountNum = root.findViewById(R.id.tv_main_count_num);
         tvExtraCountNum = root.findViewById(R.id.tv_extra_count_num);
         tvSideCountNum = root.findViewById(R.id.tv_side_count_num);
@@ -238,7 +211,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         tvSideSpellCount = root.findViewById(R.id.tv_side_spell_count);
         tvSideTrapCount = root.findViewById(R.id.tv_side_trap_count);
         tvSearchResult = root.findViewById(R.id.tv_deck_search_result);
-
         tvLabelDeck = root.findViewById(R.id.tv_label_deck);
         tvLabelType = root.findViewById(R.id.tv_label_type);
         tvLabelAttribute = root.findViewById(R.id.tv_label_attribute);
@@ -252,7 +224,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         tvLabelMainDeck = root.findViewById(R.id.tv_label_main_deck);
         tvLabelExtraDeck = root.findViewById(R.id.tv_label_extra_deck);
         tvLabelSideDeck = root.findViewById(R.id.tv_label_side_deck);
-
         cgvMain = root.findViewById(R.id.cgv_deck_main);
         cgvExtra = root.findViewById(R.id.cgv_deck_extra);
         cgvSide = root.findViewById(R.id.cgv_deck_side);
@@ -260,7 +231,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         layoutSideStats = root.findViewById(R.id.layout_side_stats);
         layoutDeckInfoPanel = root.findViewById(R.id.layout_deck_info_panel);
         layoutFilterPanel = root.findViewById(R.id.layout_filter_panel);
-
         ivMainMonsterType = root.findViewById(R.id.iv_main_monster_type);
         ivMainSpellType = root.findViewById(R.id.iv_main_spell_type);
         ivMainTrapType = root.findViewById(R.id.iv_main_trap_type);
@@ -271,7 +241,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         ivSideMonsterType = root.findViewById(R.id.iv_side_monster_type);
         ivSideSpellType = root.findViewById(R.id.iv_side_spell_type);
         ivSideTrapType = root.findViewById(R.id.iv_side_trap_type);
-
         rvSearchResults = root.findViewById(R.id.rv_deck_search_results);
         btnDeckManager = root.findViewById(R.id.btn_deck_manager);
         etDeckName = root.findViewById(R.id.et_deck_name);
@@ -292,23 +261,14 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         btnFilterMarks = root.findViewById(R.id.btn_filter_marks);
         btnFilterSearch = root.findViewById(R.id.btn_filter_search);
         btnFilterClear = root.findViewById(R.id.btn_filter_clear);
-
         btnSideFinish = root.findViewById(R.id.btn_side_finish);
         btnSideShuffle = root.findViewById(R.id.btn_side_shuffle);
         btnSideSort = root.findViewById(R.id.btn_side_sort);
         btnSideReset = root.findViewById(R.id.btn_side_reset);
-
     }
 
-    /**
-     * 初始化各标签TextView的本地化文字，取自StringManager的systemString，
-     * 索引对齐C++端game.cpp（筛选面板）与drawing.cpp（卡组标题）的GetSysString。
-     * 注："子类"标签C++端无对应label、起源记分板"限/计/余/GENESYS"在C++端为图片绘制，
-     * 均无文字systemString索引，故保留布局中的硬编码文字。
-     */
     private void setupLabels() {
         StringManager sm = DataManager.get().getStringManager();
-
         if (btnSideFinish != null) {
             btnSideFinish.setText(sm.getSystemString(1334, "副卡组替换完成"));
             btnSideFinish.setOnClickListener(v -> sideFinish());
@@ -325,58 +285,59 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             btnSideReset.setText(sm.getSystemString(1309, "重置"));
             btnSideReset.setOnClickListener(v -> sideReset());
         }
-
-        if (tvLabelDeck != null) tvLabelDeck.setText(sm.getSystemString(1300, "卡组:"));
-        if (tvLabelType != null) tvLabelType.setText(sm.getSystemString(1311, "种类:"));
-        if (tvLabelAttribute != null) tvLabelAttribute.setText(sm.getSystemString(1319, "属性:"));
-        if (tvLabelRace != null) tvLabelRace.setText(sm.getSystemString(1321, "种族:"));
-        if (tvLabelStar != null) tvLabelStar.setText(sm.getSystemString(1324, "星数:"));
-        if (tvLabelScale != null) tvLabelScale.setText(sm.getSystemString(1336, "刻度:"));
-        if (tvLabelLimit != null) tvLabelLimit.setText(sm.getSystemString(1315, "禁限:"));
-        if (tvLabelAttack != null) tvLabelAttack.setText(sm.getSystemString(1322, "攻击:"));
-        if (tvLabelDefense != null) tvLabelDefense.setText(sm.getSystemString(1323, "守备:"));
-        if (tvLabelKeyword != null) tvLabelKeyword.setText(sm.getSystemString(1325, "关键字:"));
-        if (tvLabelMainDeck != null)
-            tvLabelMainDeck.setText(sm.getSystemString(isPackMode ? 1477 : 1330, "主卡组:"));
-        if (tvLabelExtraDeck != null) tvLabelExtraDeck.setText(sm.getSystemString(1331, "额外卡组:"));
-        if (tvLabelSideDeck != null) tvLabelSideDeck.setText(sm.getSystemString(1332, "副卡组:"));
+        setSystemLabel(tvLabelDeck, sm, 1300, "卡组:");
+        setSystemLabel(tvLabelType, sm, 1311, "种类:");
+        setSystemLabel(tvLabelAttribute, sm, 1319, "属性:");
+        setSystemLabel(tvLabelRace, sm, 1321, "种族:");
+        setSystemLabel(tvLabelStar, sm, 1324, "星数:");
+        setSystemLabel(tvLabelScale, sm, 1336, "刻度:");
+        setSystemLabel(tvLabelLimit, sm, 1315, "禁限:");
+        setSystemLabel(tvLabelAttack, sm, 1322, "攻击:");
+        setSystemLabel(tvLabelDefense, sm, 1323, "守备:");
+        setSystemLabel(tvLabelKeyword, sm, 1325, "关键字:");
+        setSystemLabel(tvLabelMainDeck, sm, isPackMode ? 1477 : 1330, "主卡组:");
+        setSystemLabel(tvLabelExtraDeck, sm, 1331, "额外卡组:");
+        setSystemLabel(tvLabelSideDeck, sm, 1332, "副卡组:");
         searchResultPrefix = sm.getSystemString(1333, "搜索结果:");
     }
 
+    private void setSystemLabel(TextView tv, StringManager sm, int index, String def) {
+        if (tv != null) tv.setText(sm.getSystemString(index, def));
+    }
+
+
     private void setupRecyclerViews() {
         mLimitList = AppsSettings.get().getGenesysMode() == 1
-                ? cardLoader.getGenesysLimitList()
-                : cardLoader.getLimitList();
+                ? cardLoader.getGenesysLimitList() : cardLoader.getLimitList();
         mImageTop = new ImageTop(activity);
         mCardTypeImage = new CardTypeImage(activity);
-
-        if (mCardTypeImage == null) return;
-        if (ivMainMonsterType != null) ivMainMonsterType.setImageBitmap(mCardTypeImage.monster);
-        if (ivMainSpellType != null) ivMainSpellType.setImageBitmap(mCardTypeImage.spell);
-        if (ivMainTrapType != null) ivMainTrapType.setImageBitmap(mCardTypeImage.trap);
-        if (ivExtraFusionType != null) ivExtraFusionType.setImageBitmap(mCardTypeImage.fusion);
-        if (ivExtraSynchroType != null) ivExtraSynchroType.setImageBitmap(mCardTypeImage.synchro);
-        if (ivExtraXyzType != null) ivExtraXyzType.setImageBitmap(mCardTypeImage.xyz);
-        if (ivExtraLinkType != null) ivExtraLinkType.setImageBitmap(mCardTypeImage.link);
-        if (ivSideMonsterType != null) ivSideMonsterType.setImageBitmap(mCardTypeImage.monster);
-        if (ivSideSpellType != null) ivSideSpellType.setImageBitmap(mCardTypeImage.spell);
-        if (ivSideTrapType != null) ivSideTrapType.setImageBitmap(mCardTypeImage.trap);
-
+        if (mCardTypeImage != null) {
+            setBitmapIfNotNull(ivMainMonsterType, mCardTypeImage.monster);
+            setBitmapIfNotNull(ivMainSpellType, mCardTypeImage.spell);
+            setBitmapIfNotNull(ivMainTrapType, mCardTypeImage.trap);
+            setBitmapIfNotNull(ivExtraFusionType, mCardTypeImage.fusion);
+            setBitmapIfNotNull(ivExtraSynchroType, mCardTypeImage.synchro);
+            setBitmapIfNotNull(ivExtraXyzType, mCardTypeImage.xyz);
+            setBitmapIfNotNull(ivExtraLinkType, mCardTypeImage.link);
+            setBitmapIfNotNull(ivSideMonsterType, mCardTypeImage.monster);
+            setBitmapIfNotNull(ivSideSpellType, mCardTypeImage.spell);
+            setBitmapIfNotNull(ivSideTrapType, mCardTypeImage.trap);
+        }
         cgvMain.setImageLoader(imageLoader);
         cgvMain.setLineLimit(4, 10, 15);
-
         cgvExtra.setImageLoader(imageLoader);
         cgvExtra.setLineLimit(1, 10, 15);
-
         cgvSide.setImageLoader(imageLoader);
         cgvSide.setLineLimit(1, 10, 15);
-
         requestDeckCardSizeUpdate();
-
         rvSearchResults.setLayoutManager(new LinearLayoutManager(activity));
         searchAdapter = new DeckCardAdapter(imageLoader, this, null, dragHelper);
         searchAdapter.setLimitList(mLimitList);
         rvSearchResults.setAdapter(searchAdapter);
+    }
+
+    private void setBitmapIfNotNull(ImageView iv, android.graphics.Bitmap bm) {
+        if (iv != null) iv.setImageBitmap(bm);
     }
 
     /**
@@ -405,66 +366,50 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private void applyDeckCardSize(int mainWidth, int mainHeight, int extraHeight, int sideHeight) {
         int availWidth = mainWidth - cgvMain.getPaddingLeft() - cgvMain.getPaddingRight();
         if (availWidth <= 0) return;
-
         float ratio = (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[1] / (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
         int mainAvail = Math.max(0, mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom());
-
+        int extraAvail = extraHeight > 0 && cgvExtra != null
+                ? Math.max(0, extraHeight - cgvExtra.getPaddingTop() - cgvExtra.getPaddingBottom()) : 0;
+        int sideAvail = sideHeight > 0 && cgvSide != null
+                ? Math.max(0, sideHeight - cgvSide.getPaddingTop() - cgvSide.getPaddingBottom()) : 0;
         if (isPackMode) {
             int cardWidth, cardHeight;
             if (savedNormalCardWidth > 0 && savedNormalCardHeight > 0) {
                 cardWidth = savedNormalCardWidth;
                 cardHeight = savedNormalCardHeight;
             } else {
-                int extraAvail = extraHeight > 0 && cgvExtra != null
-                        ? Math.max(0, extraHeight - cgvExtra.getPaddingTop() - cgvExtra.getPaddingBottom()) : 0;
-                int sideAvail = sideHeight > 0 && cgvSide != null
-                        ? Math.max(0, sideHeight - cgvSide.getPaddingTop() - cgvSide.getPaddingBottom()) : 0;
                 int totalAvail = mainAvail + extraAvail + sideAvail;
-                int widthByColumn = availWidth / Constants.DECK_WIDTH_COUNT;
-                int widthByHeight = totalAvail > 0 ? (int) ((totalAvail / 6f) / ratio) : Integer.MAX_VALUE;
-                cardWidth = Math.max(1, Math.min(widthByColumn, widthByHeight));
+                int wByCol = availWidth / Constants.DECK_WIDTH_COUNT;
+                int wByH = totalAvail > 0 ? (int) ((totalAvail / 6f) / ratio) : Integer.MAX_VALUE;
+                cardWidth = Math.max(1, Math.min(wByCol, wByH));
                 cardHeight = Math.max(1, (int) (cardWidth * ratio));
             }
-
             int rows = Math.max(1, mainAvail / cardHeight);
-            cgvMain.setCardSize(cardWidth, cardHeight);
-            if (cgvExtra != null) cgvExtra.setCardSize(cardWidth, cardHeight);
-            if (cgvSide != null) cgvSide.setCardSize(cardWidth, cardHeight);
-            if (searchAdapter != null) searchAdapter.setCardSize(cardWidth, cardHeight);
+            applyCardSizeToAll(cardWidth, cardHeight);
             cgvMain.setLineLimit(rows, Constants.DECK_WIDTH_COUNT, Constants.DECK_WIDTH_MAX_COUNT);
             notifyDeckChanged();
             return;
         }
-
-        int extraAvail = extraHeight > 0 && cgvExtra != null
-                ? Math.max(0, extraHeight - cgvExtra.getPaddingTop() - cgvExtra.getPaddingBottom()) : 0;
-        int sideAvail = sideHeight > 0 && cgvSide != null
-                ? Math.max(0, sideHeight - cgvSide.getPaddingTop() - cgvSide.getPaddingBottom()) : 0;
-
         int totalAvail = mainAvail + extraAvail + sideAvail;
-        int totalLines = 6;
-
-        int widthByColumn = availWidth / Constants.DECK_WIDTH_COUNT;
-        int widthByHeight = totalAvail > 0 ? (int) ((totalAvail / (float) totalLines) / ratio) : Integer.MAX_VALUE;
-
-        int cardWidth = Math.max(1, Math.min(widthByColumn, widthByHeight));
+        int wByCol = availWidth / Constants.DECK_WIDTH_COUNT;
+        int wByH = totalAvail > 0 ? (int) ((totalAvail / 6f) / ratio) : Integer.MAX_VALUE;
+        int cardWidth = Math.max(1, Math.min(wByCol, wByH));
         int cardHeight = Math.max(1, (int) (cardWidth * ratio));
-
         savedNormalCardWidth = cardWidth;
         savedNormalCardHeight = cardHeight;
-
-        cgvMain.setCardSize(cardWidth, cardHeight);
-        cgvExtra.setCardSize(cardWidth, cardHeight);
-        cgvSide.setCardSize(cardWidth, cardHeight);
-        if (searchAdapter != null) searchAdapter.setCardSize(cardWidth, cardHeight);
-
+        applyCardSizeToAll(cardWidth, cardHeight);
         cgvMain.setLineLimit(4, 10, 15);
-
         applyGroupExactHeight(cgvMain, cardHeight * 4);
         applyGroupExactHeight(cgvExtra, cardHeight);
         applyGroupExactHeight(cgvSide, cardHeight);
-
         notifyDeckChanged();
+    }
+
+    private void applyCardSizeToAll(int w, int h) {
+        cgvMain.setCardSize(w, h);
+        cgvExtra.setCardSize(w, h);
+        cgvSide.setCardSize(w, h);
+        if (searchAdapter != null) searchAdapter.setCardSize(w, h);
     }
 
     private void applyGroupExactHeight(CardGroupView view, int contentHeight) {
@@ -526,89 +471,59 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     private void setupSpinners() {
         StringManager sm = DataManager.get().getStringManager();
-
+        int dropBg = YGOUtil.c(R.color.ygopro_list_background);
         List<SimpleSpinnerItem> typeItems = new ArrayList<>();
         typeItems.add(new SimpleSpinnerItem(0, "(无)"));
         typeItems.add(new SimpleSpinnerItem(1, "怪兽"));
         typeItems.add(new SimpleSpinnerItem(2, "魔法"));
         typeItems.add(new SimpleSpinnerItem(3, "陷阱"));
-        SimpleSpinnerAdapter typeAdapter = new SimpleSpinnerAdapter(activity);
-        typeAdapter.setColor(Color.WHITE);
-        typeAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
-        typeAdapter.setTextSize(8f);
-        typeAdapter.set(typeItems);
         if (spinnerFilterType != null) {
-            spinnerFilterType.setAdapter(typeAdapter);
-            //主类型切换时按C++ COMBOBOX_MAINTYPE重建子类选项
+            spinnerFilterType.setAdapter(createSpinnerAdapter(typeItems, Color.WHITE, dropBg));
             spinnerFilterType.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                    updateType2Spinner(position);
+                public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+                    updateType2Spinner(pos);
                 }
 
                 @Override
-                public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                public void onNothingSelected(android.widget.AdapterView<?> p) {
                     updateType2Spinner(0);
                 }
             });
         }
-
-        // 子类spinner_filter_type2初始只含（N/A），随主类型动态重建
         updateType2Spinner(spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0);
-
-        //子类型选中"连接"时单独禁用守备力输入框（连接怪兽无守备力）
         if (spinnerFilterType2 != null) {
             spinnerFilterType2.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
                     updateDefenseEditState();
                 }
 
                 @Override
-                public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                public void onNothingSelected(android.widget.AdapterView<?> p) {
                     updateDefenseEditState();
                 }
             });
         }
-
         List<SimpleSpinnerItem> attrItems = new ArrayList<>();
         attrItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
-        for (CardAttribute attr : CardAttribute.values()) {
-            attrItems.add(new SimpleSpinnerItem(attr.getId(),
-                    sm.getSystemString(attr.getLanguageIndex(), attr.name())));
-        }
-        attrAdapter = new SimpleSpinnerAdapter(activity);
-        attrAdapter.setColor(Color.WHITE);
-        attrAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
-        attrAdapter.setTextSize(8f);
-        attrAdapter.set(attrItems);
+        for (CardAttribute attr : CardAttribute.values())
+            attrItems.add(new SimpleSpinnerItem(attr.getId(), sm.getSystemString(attr.getLanguageIndex(), attr.name())));
+        attrAdapter = createSpinnerAdapter(attrItems, Color.WHITE, dropBg);
         if (spinnerFilterAttribute != null) spinnerFilterAttribute.setAdapter(attrAdapter);
-
         List<SimpleSpinnerItem> raceItems = new ArrayList<>();
         raceItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
-        for (CardRace race : CardRace.values()) {
-            raceItems.add(new SimpleSpinnerItem(race.value(),
-                    sm.getSystemString(race.getLanguageIndex(), race.name())));
-        }
-        raceAdapter = new SimpleSpinnerAdapter(activity);
-        raceAdapter.setColor(Color.WHITE);
-        raceAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
-        raceAdapter.setTextSize(8f);
-        raceAdapter.set(raceItems);
+        for (CardRace race : CardRace.values())
+            raceItems.add(new SimpleSpinnerItem(race.value(), sm.getSystemString(race.getLanguageIndex(), race.name())));
+        raceAdapter = createSpinnerAdapter(raceItems, Color.WHITE, dropBg);
         if (spinnerFilterRace != null) spinnerFilterRace.setAdapter(raceAdapter);
-        // 子类spinner_filter_type2初始只含（N/A），随主类型动态重建（需在属性/种族adapter创建后调用）
         updateType2Spinner(spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0);
-
         List<SimpleSpinnerItem> limitItems = new ArrayList<>();
         limitItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
-        limitItems.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(),
-                sm.getSystemString(LimitType.Forbidden.getLanguageIndex(), LimitType.Forbidden.name())));
-        limitItems.add(new SimpleSpinnerItem(LimitType.Limit.getId(),
-                sm.getSystemString(LimitType.Limit.getLanguageIndex(), LimitType.Limit.name())));
-        limitItems.add(new SimpleSpinnerItem(LimitType.SemiLimit.getId(),
-                sm.getSystemString(LimitType.SemiLimit.getLanguageIndex(), LimitType.SemiLimit.name())));
-        limitItems.add(new SimpleSpinnerItem(LimitType.GeneSys.getId(),
-                sm.getSystemString(LimitType.GeneSys.getLanguageIndex(), LimitType.GeneSys.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), sm.getSystemString(LimitType.Forbidden.getLanguageIndex(), LimitType.Forbidden.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.Limit.getId(), sm.getSystemString(LimitType.Limit.getLanguageIndex(), LimitType.Limit.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.SemiLimit.getId(), sm.getSystemString(LimitType.SemiLimit.getLanguageIndex(), LimitType.SemiLimit.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.GeneSys.getId(), sm.getSystemString(LimitType.GeneSys.getLanguageIndex(), LimitType.GeneSys.name())));
         limitItems.add(new SimpleSpinnerItem(6, sm.getSystemString(1481, "OCG")));
         limitItems.add(new SimpleSpinnerItem(7, sm.getSystemString(1482, "TCG")));
         limitItems.add(new SimpleSpinnerItem(8, sm.getSystemString(1483, "简体中文")));
@@ -616,54 +531,54 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         limitItems.add(new SimpleSpinnerItem(10, sm.getSystemString(1487, "OCG独有")));
         limitItems.add(new SimpleSpinnerItem(11, sm.getSystemString(1488, "TCG独有")));
         limitItems.add(new SimpleSpinnerItem(12, sm.getSystemString(1485, "无独有卡")));
-        SimpleSpinnerAdapter limitAdapter = new SimpleSpinnerAdapter(activity);
-        limitAdapter.setColor(Color.WHITE);
-        limitAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
-
-        limitAdapter.setTextSize(8f);
-        limitAdapter.set(limitItems);
         if (spinnerFilterLimit != null) {
-            spinnerFilterLimit.setAdapter(limitAdapter);
-            //选中OCG/TCG/简体中文时，在卡组网格与搜索结果item底部显示对应赛制标识
+            spinnerFilterLimit.setAdapter(createSpinnerAdapter(limitItems, Color.WHITE, dropBg));
             spinnerFilterLimit.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                    applyAvailDisplay(getSpinnerItemId(spinnerFilterLimit));
+                public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+                    applyAvailDisplay((int) SimpleSpinnerAdapter.getSelect(spinnerFilterLimit));
                 }
 
                 @Override
-                public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                public void onNothingSelected(android.widget.AdapterView<?> p) {
                     applyAvailDisplay(0);
                 }
             });
         }
-
         List<SimpleSpinnerItem> sortItems = new ArrayList<>();
         sortItems.add(new SimpleSpinnerItem(0, "星数↑"));
         sortItems.add(new SimpleSpinnerItem(1, "攻击↑"));
         sortItems.add(new SimpleSpinnerItem(2, "守备↑"));
         sortItems.add(new SimpleSpinnerItem(3, "名称↓"));
-        SimpleSpinnerAdapter sortAdapter = new SimpleSpinnerAdapter(activity);
-        sortAdapter.setColor(Color.WHITE);
-        sortAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
-        sortAdapter.setTextSize(8f);
-        sortAdapter.set(sortItems);
-        if (spinnerSortType != null) spinnerSortType.setAdapter(sortAdapter);
+        if (spinnerSortType != null)
+            spinnerSortType.setAdapter(createSpinnerAdapter(sortItems, Color.WHITE, dropBg));
+    }
+
+    private SimpleSpinnerAdapter createSpinnerAdapter(List<SimpleSpinnerItem> items, int color, int dropBg) {
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(activity);
+        adapter.setColor(color);
+        adapter.setDropDownBackgroundColor(dropBg);
+        adapter.setTextSize(8f);
+        adapter.set(items);
+        return adapter;
     }
 
     private void setupButtons() {
-        if (btnExit != null) btnExit.setOnClickListener(v -> terminate());
-        if (btnShuffle != null) btnShuffle.setOnClickListener(v -> shuffleDeck());
-        if (btnSort != null) btnSort.setOnClickListener(v -> sortDeck());
-        if (btnClear != null) btnClear.setOnClickListener(v -> clearDeck());
-        if (btnDelete != null) btnDelete.setOnClickListener(v -> deleteDeck());
-        if (btnSave != null) btnSave.setOnClickListener(v -> saveDeck());
-        if (btnSaveAs != null) btnSaveAs.setOnClickListener(v -> saveDeckAs());
-        if (btnFilterEffect != null)
-            btnFilterEffect.setOnClickListener(v -> showEffectCategoryPopup());
-        if (btnFilterMarks != null) btnFilterMarks.setOnClickListener(v -> showLinkMarkerPopup());
-        if (btnFilterSearch != null) btnFilterSearch.setOnClickListener(v -> startFilter());
-        if (btnFilterClear != null) btnFilterClear.setOnClickListener(v -> clearSearch());
+        setClickListener(btnExit, v -> terminate());
+        setClickListener(btnShuffle, v -> shuffleDeck());
+        setClickListener(btnSort, v -> sortDeck());
+        setClickListener(btnClear, v -> clearDeck());
+        setClickListener(btnDelete, v -> deleteDeck());
+        setClickListener(btnSave, v -> saveDeck());
+        setClickListener(btnSaveAs, v -> saveDeckAs());
+        setClickListener(btnFilterEffect, v -> showEffectCategoryPopup());
+        setClickListener(btnFilterMarks, v -> showLinkMarkerPopup());
+        setClickListener(btnFilterSearch, v -> startFilter());
+        setClickListener(btnFilterClear, v -> clearSearch());
+    }
+
+    private void setClickListener(Button btn, View.OnClickListener l) {
+        if (btn != null) btn.setOnClickListener(l);
     }
 
     /**
@@ -679,27 +594,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         long m = CardType.Monster.getId();
         switch (typePos) {
             case 1:
-                items.add(new SimpleSpinnerItem(m | CardType.Normal.getId(), sm.getSystemString(1054, "通常")));
-                items.add(new SimpleSpinnerItem(m | CardType.Effect.getId(), sm.getSystemString(1055, "效果")));
-                items.add(new SimpleSpinnerItem(m | CardType.Fusion.getId(), sm.getSystemString(1056, "融合")));
-                items.add(new SimpleSpinnerItem(m | CardType.Ritual.getId(), sm.getSystemString(1057, "仪式")));
-                items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId(), sm.getSystemString(1063, "同调")));
-                items.add(new SimpleSpinnerItem(m | CardType.Xyz.getId(), sm.getSystemString(1073, "超量")));
-                items.add(new SimpleSpinnerItem(m | CardType.Pendulum.getId(), sm.getSystemString(1074, "灵摆")));
-                items.add(new SimpleSpinnerItem(m | CardType.Link.getId(), sm.getSystemString(1076, "连接")));
-                items.add(new SimpleSpinnerItem(m | CardType.Sp_Summon.getId(), sm.getSystemString(1075, "特殊召唤")));
-                items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Tuner.getId(),
-                        sm.getSystemString(1054, "通常") + "|" + sm.getSystemString(1062, "调整")));
-                items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Pendulum.getId(),
-                        sm.getSystemString(1054, "通常") + "|" + sm.getSystemString(1074, "灵摆")));
-                items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId() | CardType.Tuner.getId(),
-                        sm.getSystemString(1063, "同调") + "|" + sm.getSystemString(1062, "调整")));
-                items.add(new SimpleSpinnerItem(m | CardType.Tuner.getId(), sm.getSystemString(1062, "调整")));
-                items.add(new SimpleSpinnerItem(m | CardType.Gemini.getId(), sm.getSystemString(1061, "二重")));
-                items.add(new SimpleSpinnerItem(m | CardType.Union.getId(), sm.getSystemString(1060, "同盟")));
-                items.add(new SimpleSpinnerItem(m | CardType.Spirit.getId(), sm.getSystemString(1059, "灵魂")));
-                items.add(new SimpleSpinnerItem(m | CardType.Flip.getId(), sm.getSystemString(1071, "反转")));
-                items.add(new SimpleSpinnerItem(m | CardType.Toon.getId(), sm.getSystemString(1072, "卡通")));
+                addSpinnerItems(items, sm, m);
                 break;
             case 2:
                 items.add(new SimpleSpinnerItem(CardType.Spell.getId(), sm.getSystemString(1054, "通常")));
@@ -724,7 +619,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         adapter.set(items);
         spinnerFilterType2.setAdapter(adapter);
         spinnerFilterType2.setSelection(0);
-        //主类型选（无）时禁用子类spinner；属性/种族spinner及星数/刻度/ATK/DEF输入框仅在主类型为怪兽时启用
         boolean monsterEnabled = typePos == 1;
         setSpinnerEnabled(spinnerFilterType2, null, enabled);
         setSpinnerEnabled(spinnerFilterAttribute, attrAdapter, monsterEnabled);
@@ -734,6 +628,28 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         setEditTextEnabled(etAttack, monsterEnabled);
         updateDefenseEditState();
     }
+
+    private void addSpinnerItems(List<SimpleSpinnerItem> items, StringManager sm, long m) {
+        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId(), sm.getSystemString(1054, "通常")));
+        items.add(new SimpleSpinnerItem(m | CardType.Effect.getId(), sm.getSystemString(1055, "效果")));
+        items.add(new SimpleSpinnerItem(m | CardType.Fusion.getId(), sm.getSystemString(1056, "融合")));
+        items.add(new SimpleSpinnerItem(m | CardType.Ritual.getId(), sm.getSystemString(1057, "仪式")));
+        items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId(), sm.getSystemString(1063, "同调")));
+        items.add(new SimpleSpinnerItem(m | CardType.Xyz.getId(), sm.getSystemString(1073, "超量")));
+        items.add(new SimpleSpinnerItem(m | CardType.Pendulum.getId(), sm.getSystemString(1074, "灵摆")));
+        items.add(new SimpleSpinnerItem(m | CardType.Link.getId(), sm.getSystemString(1076, "连接")));
+        items.add(new SimpleSpinnerItem(m | CardType.Sp_Summon.getId(), sm.getSystemString(1075, "特殊召唤")));
+        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Tuner.getId(), sm.getSystemString(1054, "通常") + "|" + sm.getSystemString(1062, "调整")));
+        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Pendulum.getId(), sm.getSystemString(1054, "通常") + "|" + sm.getSystemString(1074, "灵摆")));
+        items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId() | CardType.Tuner.getId(), sm.getSystemString(1063, "同调") + "|" + sm.getSystemString(1062, "调整")));
+        items.add(new SimpleSpinnerItem(m | CardType.Tuner.getId(), sm.getSystemString(1062, "调整")));
+        items.add(new SimpleSpinnerItem(m | CardType.Gemini.getId(), sm.getSystemString(1061, "二重")));
+        items.add(new SimpleSpinnerItem(m | CardType.Union.getId(), sm.getSystemString(1060, "同盟")));
+        items.add(new SimpleSpinnerItem(m | CardType.Spirit.getId(), sm.getSystemString(1059, "灵魂")));
+        items.add(new SimpleSpinnerItem(m | CardType.Flip.getId(), sm.getSystemString(1071, "反转")));
+        items.add(new SimpleSpinnerItem(m | CardType.Toon.getId(), sm.getSystemString(1072, "卡通")));
+    }
+
 
     /**
      * 启用/禁用spinner：禁用时选项文字变灰、背景drawable整体染成灰白色，并重置选中项为（无）
@@ -782,23 +698,23 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         deckSelectorDialog.setIncludePackCategory(true);
         deckSelectorDialog.setOnDeckSelectedListener(new DeckSelectorDialog.OnDeckSelectedListener() {
             @Override
-            public void onDeckSelected(String deckPath, String deckName, String categoryName) {
-                applySelectedDeck(deckPath, deckName, categoryName);
+            public void onDeckSelected(String p, String n, String c) {
+                applySelectedDeck(p, n, c);
             }
 
             @Override
-            public void onDeckItemClicked(String deckPath, String deckName, String categoryName) {
-                //点击卡组item即在编辑器中立即加载该卡组
-                applySelectedDeck(deckPath, deckName, categoryName);
+            public void onDeckItemClicked(String p, String n, String c) {
+                applySelectedDeck(p, n, c);
             }
 
             @Override
             public void onCancelled() {
             }
         });
-
         if (btnDeckManager != null) {
-            btnDeckManager.setOnClickListener(v -> showDeckSelectorDialog());
+            btnDeckManager.setOnClickListener(v -> {
+                if (deckSelectorDialog != null) deckSelectorDialog.show(btnDeckManager);
+            });
         }
     }
 
@@ -859,16 +775,11 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     // === 对应 deck_con.cpp: push_main ===
     public boolean pushMain(Card card, int seq) {
-        if (card == null) return false;
-        if (Card.isExtraCard(card.Type)) return false;
+        if (card == null || Card.isExtraCard(card.Type)) return false;
         if (!isPackMode && currentDeck.getMainCount() >= Constants.DECK_MAIN_MAX) return false;
         if (!checkLimit(card)) return false;
-        boolean result;
-        if (seq >= 0 && seq <= currentDeck.mainCards.size()) {
-            result = currentDeck.addMainCards(seq, card, isPackMode);
-        } else {
-            result = currentDeck.addMainCards(card);
-        }
+        boolean result = (seq >= 0 && seq <= currentDeck.mainCards.size())
+                ? currentDeck.addMainCards(seq, card, isPackMode) : currentDeck.addMainCards(card);
         if (result) {
             isModified = true;
             notifyDeckChanged();
@@ -876,18 +787,12 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         return result;
     }
 
-    // === 对应 deck_con.cpp: push_extra ===
     public boolean pushExtra(Card card, int seq) {
-        if (card == null) return false;
-        if (!Card.isExtraCard(card.Type)) return false;
+        if (card == null || !Card.isExtraCard(card.Type)) return false;
         if (currentDeck.getExtraCount() >= Constants.DECK_EXTRA_MAX) return false;
         if (!checkLimit(card)) return false;
-        boolean result;
-        if (seq >= 0 && seq <= currentDeck.extraCards.size()) {
-            result = currentDeck.addExtraCards(seq, card);
-        } else {
-            result = currentDeck.addExtraCards(card);
-        }
+        boolean result = (seq >= 0 && seq <= currentDeck.extraCards.size())
+                ? currentDeck.addExtraCards(seq, card) : currentDeck.addExtraCards(card);
         if (result) {
             isModified = true;
             notifyDeckChanged();
@@ -895,18 +800,12 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         return result;
     }
 
-    // === 对应 deck_con.cpp: push_side ===
     public boolean pushSide(Card card, int seq) {
         if (card == null) return false;
         if (currentDeck.getSideCount() >= Constants.DECK_SIDE_MAX) return false;
-        //与主/额外一致的禁限校验：主+额外+副中规则同名（getGameCode）数量已达禁限表上限、或GeneSys点数将超限时禁止投入副卡组
         if (!checkLimit(card)) return false;
-        boolean result;
-        if (seq >= 0 && seq <= currentDeck.sideCards.size()) {
-            result = currentDeck.addSideCards(seq, card);
-        } else {
-            result = currentDeck.addSideCards(card);
-        }
+        boolean result = (seq >= 0 && seq <= currentDeck.sideCards.size())
+                ? currentDeck.addSideCards(seq, card) : currentDeck.addSideCards(card);
         if (result) {
             isModified = true;
             notifyDeckChanged();
@@ -914,7 +813,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         return result;
     }
 
-    // === 对应 deck_con.cpp: pop_main ===
     public void popMain(int seq) {
         if (seq >= 0 && seq < currentDeck.mainCards.size()) {
             currentDeck.removeMain(seq);
@@ -923,7 +821,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         }
     }
 
-    // === 对应 deck_con.cpp: pop_extra ===
     public void popExtra(int seq) {
         if (seq >= 0 && seq < currentDeck.extraCards.size()) {
             currentDeck.removeExtra(seq);
@@ -932,7 +829,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         }
     }
 
-    // === 对应 deck_con.cpp: pop_side ===
     public void popSide(int seq) {
         if (seq >= 0 && seq < currentDeck.sideCards.size()) {
             currentDeck.removeSide(seq);
@@ -944,35 +840,24 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     // === 对应 deck_con.cpp: check_limit ===
     public boolean checkLimit(Card card) {
         if (card == null) return false;
-        //规则同名卡code作为禁限与点数判断的统一口径（对应C++的get_duel_code）
         int gameCode = card.getGameCode();
-
-        //禁限卡表决定最大投入数：禁止0/限制1/准限制2，其余默认3
         int limit = 3;
         if (mLimitList != null) {
             if (mLimitList.check(gameCode, gameCode, LimitType.Forbidden)) limit = 0;
             else if (mLimitList.check(gameCode, gameCode, LimitType.Limit)) limit = 1;
             else if (mLimitList.check(gameCode, gameCode, LimitType.SemiLimit)) limit = 2;
         }
-
-        //统计主+额外+副中规则同名（getGameCode相同）的已有数量，已达上限则投入会超限
         int count = 0;
-        for (Card c : currentDeck.mainCards) {
-            if (c.getGameCode() == gameCode) count++;
-        }
-        for (Card c : currentDeck.extraCards) {
-            if (c.getGameCode() == gameCode) count++;
-        }
-        for (Card c : currentDeck.sideCards) {
-            if (c.getGameCode() == gameCode) count++;
-        }
+        for (Card c : currentDeck.mainCards) if (c.getGameCode() == gameCode) count++;
+        for (Card c : currentDeck.extraCards) if (c.getGameCode() == gameCode) count++;
+        for (Card c : currentDeck.sideCards) if (c.getGameCode() == gameCode) count++;
         if (count >= limit) return false;
-
-        //GeneSys模式：全卡组（主+额外+副）起源点数合计加上新卡不得超上限
         if (mLimitList != null && mLimitList.getCreditLimits() != null) {
-            if (getDeckCreditCount() + getCardCredit(card) > mLimitList.getCreditLimits()) {
-                return false;
-            }
+            int totalCredit = 0;
+            for (Card c : currentDeck.mainCards) totalCredit += getCardCredit(c);
+            for (Card c : currentDeck.extraCards) totalCredit += getCardCredit(c);
+            for (Card c : currentDeck.sideCards) totalCredit += getCardCredit(c);
+            if (totalCredit + getCardCredit(card) > mLimitList.getCreditLimits()) return false;
         }
         return true;
     }
@@ -1023,11 +908,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     // === 对应 deck_con.cpp: BUTTON_SIDE_OK ===
     public void sideFinish() {
         if (!isSiding) return;
-        //副卡组替换不能改变主/额外/副各分区张数，否则提示1410
         if (currentDeck.mainCards.size() != preMainCount
                 || currentDeck.extraCards.size() != preExtraCount
                 || currentDeck.sideCards.size() != preSideCount) {
-            showToast(DataManager.get().getStringManager().getSystemString(1410, "副卡组替换不能改变卡组张数"));
+            YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1410, "副卡组替换不能改变卡组张数"));
             return;
         }
         List<Integer> main = new ArrayList<>();
@@ -1076,37 +960,35 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                 notifyDeckChanged();
                 isModified = false;
                 updateDeckManagerButtonText();
-                showToast("卡组已删除");
+                YGOUtil.showTextToast("卡组已删除");
             }
         });
     }
 
-    // === 对应 deck_con.cpp: BUTTON_SAVE_DECK ===
     public void saveDeck() {
         if (isReadonly) return;
         if (currentDeckFilePath == null || currentDeckFilePath.isEmpty()) {
-            showToast("请先选择或另存卡组");
+            YGOUtil.showTextToast("请先选择或另存卡组");
             return;
         }
         File deckFile = new File(currentDeckFilePath);
         boolean result = DeckUtils.save(currentDeck, deckFile);
         if (result) {
             isModified = false;
-            showToast("卡组已保存");
+            YGOUtil.showTextToast("卡组已保存");
             if (listener != null) listener.onDeckSaved();
         }
     }
 
-    // === 对应 deck_con.cpp: BUTTON_SAVE_DECK_AS ===
     public void saveDeckAs() {
         if (isReadonly) return;
         if (etDeckName == null) return;
         String name = etDeckName.getText().toString().trim();
         if (name.isEmpty()) {
-            showToast("请输入卡组名称");
+            YGOUtil.showTextToast("请输入卡组名称");
             return;
         }
-        File deckFile = getDeckFile(name);
+        File deckFile = new File(AppsSettings.get().getDeckDir(), name + ".ydk");
         boolean result = DeckUtils.save(currentDeck, deckFile);
         if (result) {
             currentDeckFilePath = deckFile.getAbsolutePath();
@@ -1117,7 +999,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             updateDeckManagerButtonText();
             AppsSettings.get().saveSettings("lastcategory", uncatName);
             AppsSettings.get().saveSettings("lastdeck", name);
-            showToast("卡组已保存为: " + name);
+            YGOUtil.showTextToast("卡组已保存为: " + name);
             if (listener != null) listener.onDeckSaved();
         }
     }
@@ -1125,11 +1007,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     // === 对应 deck_con.cpp: StartFilter / FilterCards ===
     public void startFilter() {
         filterType = spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0;
-        filterType2 = (int) getSpinnerItemId(spinnerFilterType2);
-        filterLm = (int) getSpinnerItemId(spinnerFilterLimit);
-        filterAttrib = (int) getSpinnerItemId(spinnerFilterAttribute);
-        filterRace = (int) getSpinnerItemId(spinnerFilterRace);
-
+        filterType2 = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterType2);
+        filterLm = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterLimit);
+        filterAttrib = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterAttribute);
+        filterRace = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterRace);
         int[] atk = parseFilterType(etAttack != null ? etAttack.getText().toString() : "");
         filterAtkType = atk[0];
         filterAtk = atk[1];
@@ -1142,60 +1023,50 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         int[] scl = parseFilterType(etScale != null ? etScale.getText().toString() : "");
         filterSclType = scl[0];
         filterScl = scl[1];
-
         filterCards();
     }
 
-    // === 对应 deck_con.cpp: FilterCards ===
     public void filterCards() {
         searchResults.clear();
         String keyword = etKeyword != null ? etKeyword.getText().toString().trim().toLowerCase() : "";
-
-        SparseArray<Card> allCards = getAllCardDatabase();
+        SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
         for (int i = 0; i < allCards.size(); i++) {
             Card card = allCards.valueAt(i);
-            if (card == null) continue;
-            if (Card.isType(card.Type, CardType.Token)) continue;
-
-            if (!matchesTypeFilter(card)) continue;
-            if (!matchesType2Filter(card)) continue;
-            if (!matchesKeywordFilter(card, keyword)) continue;
-            if (!matchesLimitFilter(card)) continue;
-            if (filterEffect != 0 && (card.Category & filterEffect) == 0) continue;
-            if (filterMarks != 0 && !((card.Defense & filterMarks) == filterMarks && Card.isType(card.Type, CardType.Link)))
-                continue;
-
-            if (filterType == 1) {
-                if (filterAttrib != 0 && card.Attribute != filterAttrib) continue;
-                if (filterRace != 0 && card.Race != filterRace) continue;
-                if (filterAtkType != 0 && !matchesNumericFilter(card.Attack, filterAtkType, filterAtk))
-                    continue;
-                if (filterDefType != 0) {
-                    if (Card.isType(card.Type, CardType.Link)) continue;
-                    if (!matchesNumericFilter(card.Defense, filterDefType, filterDef)) continue;
-                }
-                if (filterLvType != 0 && !matchesNumericFilter(card.getStar(), filterLvType, filterLv))
-                    continue;
-                if (filterSclType != 0) {
-                    if (!Card.isType(card.Type, CardType.Pendulum)) continue;
-                    if (!matchesNumericFilter(card.LeftScale, filterSclType, filterScl)) continue;
-                }
-            }
-
+            if (card == null || Card.isType(card.Type, CardType.Token)) continue;
+            if (!matchesAllFilters(card, keyword)) continue;
             searchResults.add(card);
         }
-
         sortSearchResults();
-        updateSearchResultCount();
-        if (searchAdapter != null) {
-            searchAdapter.setCards(searchResults);
+        if (tvSearchResult != null)
+            tvSearchResult.setText(searchResultPrefix + " " + searchResults.size());
+        if (searchAdapter != null) searchAdapter.setCards(searchResults);
+        if (rvSearchResults != null) rvSearchResults.scrollToPosition(0);
+        if (listener != null) listener.onSearchResultsUpdated(searchResults.size());
+    }
+
+    private boolean matchesAllFilters(Card card, String keyword) {
+        if (!matchesTypeFilter(card) || !matchesType2Filter(card)) return false;
+        if (!matchesKeywordFilter(card, keyword) || !matchesLimitFilter(card)) return false;
+        if (filterEffect != 0 && (card.Category & filterEffect) == 0) return false;
+        if (filterMarks != 0 && !((card.Defense & filterMarks) == filterMarks && Card.isType(card.Type, CardType.Link)))
+            return false;
+        if (filterType == 1) {
+            if (filterAttrib != 0 && card.Attribute != filterAttrib) return false;
+            if (filterRace != 0 && card.Race != filterRace) return false;
+            if (filterAtkType != 0 && !matchesNumericFilter(card.Attack, filterAtkType, filterAtk))
+                return false;
+            if (filterDefType != 0) {
+                if (Card.isType(card.Type, CardType.Link)) return false;
+                if (!matchesNumericFilter(card.Defense, filterDefType, filterDef)) return false;
+            }
+            if (filterLvType != 0 && !matchesNumericFilter(card.getStar(), filterLvType, filterLv))
+                return false;
+            if (filterSclType != 0) {
+                if (!Card.isType(card.Type, CardType.Pendulum)) return false;
+                if (!matchesNumericFilter(card.LeftScale, filterSclType, filterScl)) return false;
+            }
         }
-        if (rvSearchResults != null) {
-            rvSearchResults.scrollToPosition(0);
-        }
-        if (listener != null) {
-            listener.onSearchResultsUpdated(searchResults.size());
-        }
+        return true;
     }
 
     // === 对应 deck_con.cpp: ClearSearch ===
@@ -1205,11 +1076,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (spinnerFilterAttribute != null) spinnerFilterAttribute.setSelection(0);
         if (spinnerFilterRace != null) spinnerFilterRace.setSelection(0);
         if (spinnerFilterLimit != null) spinnerFilterLimit.setSelection(0);
-        if (etAttack != null) etAttack.setText("");
-        if (etDefense != null) etDefense.setText("");
-        if (etStar != null) etStar.setText("");
-        if (etScale != null) etScale.setText("");
-        if (etKeyword != null) etKeyword.setText("");
+        clearEditTexts();
         filterEffect = 0;
         filterMarks = 0;
         filterType = 0;
@@ -1227,53 +1094,42 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         filterScl = 0;
         updateFilterMarksDisplay();
         updateFilterEffectDisplay();
-        if (linkMarkerPopup != null && linkMarkerPopup.isShowing()) {
-            linkMarkerPopup.dismiss();
-        }
-        if (effectCategoryPopup != null && effectCategoryPopup.isShowing()) {
+        if (linkMarkerPopup != null && linkMarkerPopup.isShowing()) linkMarkerPopup.dismiss();
+        if (effectCategoryPopup != null && effectCategoryPopup.isShowing())
             effectCategoryPopup.dismiss();
-        }
-        //清空按钮同时清除搜索结果列表所有item
         searchResults.clear();
-        updateSearchResultCount();
-        if (searchAdapter != null) {
-            searchAdapter.setCards(searchResults);
-        }
-        if (listener != null) {
-            listener.onSearchResultsUpdated(0);
-        }
+        if (tvSearchResult != null) tvSearchResult.setText(searchResultPrefix + " 0");
+        if (searchAdapter != null) searchAdapter.setCards(searchResults);
+        if (listener != null) listener.onSearchResultsUpdated(0);
+    }
+
+    private void clearEditTexts() {
+        if (etAttack != null) etAttack.setText("");
+        if (etDefense != null) etDefense.setText("");
+        if (etStar != null) etStar.setText("");
+        if (etScale != null) etScale.setText("");
+        if (etKeyword != null) etKeyword.setText("");
     }
 
     // === 对应 deck_con.cpp: SortList ===
     public void sortSearchResults() {
         int sortSel = spinnerSortType != null ? spinnerSortType.getSelectedItemPosition() : 0;
         Comparator<Card> comparator = (a, b) -> {
-            int classA = getCardClassRank(a);
-            int classB = getCardClassRank(b);
+            int classA = getCardClassRank(a), classB = getCardClassRank(b);
             if (classA != classB) return Integer.compare(classA, classB);
-            int cmp;
-            if (classA == 0) {
-                //怪兽卡内部按spinner_sort_type选择的类型排序
-                cmp = compareMonsterBySortType(a, b, sortSel);
-            } else {
-                //魔法陷阱：先按子类型，名称模式按名称，其余按卡号
-                cmp = Integer.compare(getCardSubTypeRank(a, classA), getCardSubTypeRank(b, classB));
-                if (cmp == 0 && sortSel == 3) {
-                    cmp = compareCardName(a, b);
-                }
+            int cmp = (classA == 0) ? compareMonsterBySortType(a, b, sortSel)
+                    : Integer.compare(getCardSubTypeRank(a, classA), getCardSubTypeRank(b, classB));
+            if (cmp == 0 && classA != 0 && sortSel == 3) {
+                String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";
+                cmp = na.compareTo(nb);
             }
-            if (cmp != 0) return cmp;
-            return Integer.compare(a.Code, b.Code);
+            return cmp != 0 ? cmp : Integer.compare(a.Code, b.Code);
         };
         Collections.sort(searchResults, comparator);
     }
 
-    //大类排序：怪兽(0) < 魔法(1) < 陷阱(2)
     private int getCardClassRank(Card card) {
-        if (Card.isType(card.Type, CardType.Monster)) return 0;
-        if (Card.isType(card.Type, CardType.Spell)) return 1;
-        if (Card.isType(card.Type, CardType.Trap)) return 2;
-        return 3;
+        return Card.isType(card.Type, CardType.Monster) ? 0 : Card.isType(card.Type, CardType.Spell) ? 1 : Card.isType(card.Type, CardType.Trap) ? 2 : 3;
     }
 
     /**
@@ -1310,41 +1166,26 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     // === 对应 data_manager.cpp: deck_sort_lv / deck_sort_atk / deck_sort_def ===
     private int compareMonsterBySortType(Card a, Card b, int sortSel) {
-        int subA = getCardSubTypeRank(a, 0);
-        int subB = getCardSubTypeRank(b, 0);
-        int cmp;
-        switch (sortSel) {
-            case 1:
-                //攻击：攻↓ → 守↓ → 星↓ → 子类型
-                cmp = Integer.compare(b.Attack, a.Attack);
-                if (cmp != 0) return cmp;
-                cmp = Integer.compare(b.Defense, a.Defense);
-                if (cmp != 0) return cmp;
-                cmp = Integer.compare(b.Level & 0xff, a.Level & 0xff);
-                if (cmp != 0) return cmp;
-                return Integer.compare(subA, subB);
-            case 2:
-                //守备：守↓ → 攻↓ → 星↓ → 子类型
-                cmp = Integer.compare(b.Defense, a.Defense);
-                if (cmp != 0) return cmp;
-                cmp = Integer.compare(b.Attack, a.Attack);
-                if (cmp != 0) return cmp;
-                cmp = Integer.compare(b.Level & 0xff, a.Level & 0xff);
-                if (cmp != 0) return cmp;
-                return Integer.compare(subA, subB);
-            case 3:
-                //名称：按卡名
-                return compareCardName(a, b);
-            default:
-                //星数：子类型 → 星↓ → 攻↓ → 守↓
-                cmp = Integer.compare(subA, subB);
-                if (cmp != 0) return cmp;
-                cmp = Integer.compare(b.Level & 0xff, a.Level & 0xff);
-                if (cmp != 0) return cmp;
-                cmp = Integer.compare(b.Attack, a.Attack);
-                if (cmp != 0) return cmp;
-                return Integer.compare(b.Defense, a.Defense);
+        int subA = getCardSubTypeRank(a, 0), subB = getCardSubTypeRank(b, 0);
+        if (sortSel == 3) {
+            String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";
+            return na.compareTo(nb);
         }
+        int priA = (sortSel == 1) ? b.Attack : (sortSel == 2) ? b.Defense : subA;
+        int priB = (sortSel == 1) ? a.Attack : (sortSel == 2) ? a.Defense : subB;
+        int cmp = Integer.compare(priA, priB);
+        if (cmp != 0) return cmp;
+        int secA = (sortSel == 1) ? b.Defense : (sortSel == 2) ? b.Attack : (b.Level & 0xff);
+        int secB = (sortSel == 1) ? a.Defense : (sortSel == 2) ? a.Attack : (a.Level & 0xff);
+        cmp = Integer.compare(secA, secB);
+        if (cmp != 0) return cmp;
+        int terA = (sortSel <= 2) ? (b.Level & 0xff) : b.Attack;
+        int terB = (sortSel <= 2) ? (a.Level & 0xff) : a.Attack;
+        cmp = Integer.compare(terA, terB);
+        if (cmp != 0) return cmp;
+        int qA = (sortSel <= 2) ? subA : b.Defense;
+        int qB = (sortSel <= 2) ? subB : a.Defense;
+        return Integer.compare(qA, qB);
     }
 
     private int compareCardName(Card a, Card b) {
@@ -1359,21 +1200,16 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         int textColor = disabled ? Color.GRAY : Color.WHITE;
         if (btnSave != null) btnSave.setEnabled(!disabled);
         if (btnSaveAs != null) btnSaveAs.setEnabled(!disabled);
-        if (btnClear != null) {
-            btnClear.setEnabled(!disabled);
-            btnClear.setTextColor(textColor);
-        }
-        if (btnShuffle != null) {
-            btnShuffle.setEnabled(!disabled);
-            btnShuffle.setTextColor(textColor);
-        }
-        if (btnSort != null) {
-            btnSort.setEnabled(!disabled);
-            btnSort.setTextColor(textColor);
-        }
-        if (btnDelete != null) {
-            btnDelete.setEnabled(!disabled);
-            btnDelete.setTextColor(textColor);
+        setBtnState(btnClear, disabled, textColor);
+        setBtnState(btnShuffle, disabled, textColor);
+        setBtnState(btnSort, disabled, textColor);
+        setBtnState(btnDelete, disabled, textColor);
+    }
+
+    private void setBtnState(Button btn, boolean disabled, int textColor) {
+        if (btn != null) {
+            btn.setEnabled(!disabled);
+            btn.setTextColor(textColor);
         }
     }
 
@@ -1421,10 +1257,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private void refreshCardGroupView(CardGroupView groupView, List<Card> cards, DeckInfo.Type type) {
         if (groupView == null) return;
         groupView.removeAllCards();
-        for (int i = 0; i < cards.size(); i++) {
-            Card card = cards.get(i);
-            groupView.addCard(card);
-        }
+        for (int i = 0; i < cards.size(); i++) groupView.addCard(cards.get(i));
         groupView.updateTopImage(mImageTop, mLimitList);
         groupView.updateAvail(mImageTop, availLm);
         int count = groupView.getChildCount();
@@ -1443,20 +1276,19 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         int mainCount = currentDeck.getMainCount();
         int extraCount = currentDeck.getExtraCount();
         int sideCount = currentDeck.getSideCount();
-        int totalCount = mainCount + extraCount + sideCount;
         boolean isGenesys = AppsSettings.get().getGenesysMode() == 1
                 && mLimitList != null && mLimitList.getCreditLimits() != null;
-
         if (tvMainCountNum != null) tvMainCountNum.setText(String.valueOf(mainCount));
         if (tvExtraCountNum != null) tvExtraCountNum.setText(String.valueOf(extraCount));
         if (tvSideCountNum != null) tvSideCountNum.setText(String.valueOf(sideCount));
-
-        if (llGenesysScoreboard != null) {
+        if (llGenesysScoreboard != null)
             llGenesysScoreboard.setVisibility(isGenesys ? View.VISIBLE : View.GONE);
-        }
         if (isGenesys) {
             int creditLimit = mLimitList.getCreditLimits();
-            int creditCount = getDeckCreditCount();
+            int creditCount = 0;
+            for (Card c : currentDeck.getMainCards()) creditCount += getCardCredit(c);
+            for (Card c : currentDeck.getExtraCards()) creditCount += getCardCredit(c);
+            for (Card c : currentDeck.getSideCards()) creditCount += getCardCredit(c);
             int creditRemain = creditLimit - creditCount;
             if (tvCreditLimit != null) tvCreditLimit.setText(String.valueOf(creditLimit));
             if (tvCreditCount != null) {
@@ -1468,38 +1300,43 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                 tvCreditRemain.setTextColor(creditRemain < 0 ? Color.RED : Color.WHITE);
             }
         }
+        int[] mainC = countByType(currentDeck.getMainCards(), false);
+        setTextIfNotNull(tvMainMonsterCount, mainC[0]);
+        setTextIfNotNull(tvMainSpellCount, mainC[1]);
+        setTextIfNotNull(tvMainTrapCount, mainC[2]);
+        int[] extraC = countByType(currentDeck.getExtraCards(), true);
+        setTextIfNotNull(tvExtraFusionCount, extraC[0]);
+        setTextIfNotNull(tvExtraSynchroCount, extraC[1]);
+        setTextIfNotNull(tvExtraXyzCount, extraC[2]);
+        setTextIfNotNull(tvExtraLinkCount, extraC[3]);
+        int[] sideC = countByType(currentDeck.getSideCards(), false);
+        setTextIfNotNull(tvSideMonsterCount, sideC[0]);
+        setTextIfNotNull(tvSideSpellCount, sideC[1]);
+        setTextIfNotNull(tvSideTrapCount, sideC[2]);
+    }
 
-        int mainMonster = 0, mainSpell = 0, mainTrap = 0;
-        for (Card card : currentDeck.getMainCards()) {
-            if (Card.isType(card.Type, CardType.Monster)) mainMonster++;
-            else if (Card.isType(card.Type, CardType.Spell)) mainSpell++;
-            else if (Card.isType(card.Type, CardType.Trap)) mainTrap++;
+    private int[] countByType(List<Card> cards, boolean isExtra) {
+        if (isExtra) {
+            int fu = 0, sy = 0, xy = 0, li = 0;
+            for (Card c : cards) {
+                if (Card.isType(c.Type, CardType.Fusion)) fu++;
+                else if (Card.isType(c.Type, CardType.Synchro)) sy++;
+                else if (Card.isType(c.Type, CardType.Xyz)) xy++;
+                else if (Card.isType(c.Type, CardType.Link)) li++;
+            }
+            return new int[]{fu, sy, xy, li};
         }
-        if (tvMainMonsterCount != null) tvMainMonsterCount.setText(String.valueOf(mainMonster));
-        if (tvMainSpellCount != null) tvMainSpellCount.setText(String.valueOf(mainSpell));
-        if (tvMainTrapCount != null) tvMainTrapCount.setText(String.valueOf(mainTrap));
+        int mo = 0, sp = 0, tr = 0;
+        for (Card c : cards) {
+            if (Card.isType(c.Type, CardType.Monster)) mo++;
+            else if (Card.isType(c.Type, CardType.Spell)) sp++;
+            else if (Card.isType(c.Type, CardType.Trap)) tr++;
+        }
+        return new int[]{mo, sp, tr};
+    }
 
-        int fusion = 0, synchro = 0, xyz = 0, link = 0;
-        for (Card card : currentDeck.getExtraCards()) {
-            if (Card.isType(card.Type, CardType.Fusion)) fusion++;
-            else if (Card.isType(card.Type, CardType.Synchro)) synchro++;
-            else if (Card.isType(card.Type, CardType.Xyz)) xyz++;
-            else if (Card.isType(card.Type, CardType.Link)) link++;
-        }
-        if (tvExtraFusionCount != null) tvExtraFusionCount.setText(String.valueOf(fusion));
-        if (tvExtraSynchroCount != null) tvExtraSynchroCount.setText(String.valueOf(synchro));
-        if (tvExtraXyzCount != null) tvExtraXyzCount.setText(String.valueOf(xyz));
-        if (tvExtraLinkCount != null) tvExtraLinkCount.setText(String.valueOf(link));
-
-        int sideMonster = 0, sideSpell = 0, sideTrap = 0;
-        for (Card card : currentDeck.getSideCards()) {
-            if (Card.isType(card.Type, CardType.Monster)) sideMonster++;
-            else if (Card.isType(card.Type, CardType.Spell)) sideSpell++;
-            else if (Card.isType(card.Type, CardType.Trap)) sideTrap++;
-        }
-        if (tvSideMonsterCount != null) tvSideMonsterCount.setText(String.valueOf(sideMonster));
-        if (tvSideSpellCount != null) tvSideSpellCount.setText(String.valueOf(sideSpell));
-        if (tvSideTrapCount != null) tvSideTrapCount.setText(String.valueOf(sideTrap));
+    private void setTextIfNotNull(TextView tv, int val) {
+        if (tv != null) tv.setText(String.valueOf(val));
     }
 
     /**
@@ -1559,44 +1396,42 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     private int[] parseFilterType(String text) {
-        if (text == null || text.trim().isEmpty()) return new int[]{0, 0};
-        text = text.trim();
-        if (text.startsWith("=")) {
-            try {
-                return new int[]{1, Integer.parseInt(text.substring(1))};
-            } catch (NumberFormatException e) {
-                return new int[]{0, 0};
+        if (text == null || (text = text.trim()).isEmpty()) return new int[]{0, 0};
+        String op = "";
+        for (String s : new String[]{">=", "<=", ">", "<", "="}) {
+            if (text.startsWith(s)) {
+                op = s;
+                break;
             }
-        } else if (text.startsWith(">=")) {
-            try {
-                return new int[]{3, Integer.parseInt(text.substring(2))};
-            } catch (NumberFormatException e) {
-                return new int[]{0, 0};
-            }
-        } else if (text.startsWith(">")) {
-            try {
-                return new int[]{2, Integer.parseInt(text.substring(1))};
-            } catch (NumberFormatException e) {
-                return new int[]{0, 0};
-            }
-        } else if (text.startsWith("<=")) {
-            try {
-                return new int[]{5, Integer.parseInt(text.substring(2))};
-            } catch (NumberFormatException e) {
-                return new int[]{0, 0};
-            }
-        } else if (text.startsWith("<")) {
-            try {
-                return new int[]{4, Integer.parseInt(text.substring(1))};
-            } catch (NumberFormatException e) {
-                return new int[]{0, 0};
-            }
-        } else {
-            try {
-                return new int[]{1, Integer.parseInt(text)};
-            } catch (NumberFormatException e) {
-                return new int[]{0, 0};
-            }
+        }
+        String numStr = op.isEmpty() ? text : text.substring(op.length());
+        int type = parseOp(op);
+        int val = parseNum(numStr);
+        return val >= 0 ? new int[]{type, val} : new int[]{0, 0};
+    }
+
+    private int parseOp(String op) {
+        switch (op) {
+            case "=":
+                return 1;
+            case ">":
+                return 2;
+            case ">=":
+                return 3;
+            case "<":
+                return 4;
+            case "<=":
+                return 5;
+            default:
+                return 1;
+        }
+    }
+
+    private int parseNum(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return -1;
         }
     }
 
@@ -1671,23 +1506,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         }
     }
 
-    private SparseArray<Card> getAllCardDatabase() {
-        return DataManager.get().getCardManager().getAllCards();
-    }
-
-    private void loadDeckByName(String name) {
-        File deckFile = getDeckFile(name);
-        if (deckFile != null && deckFile.exists()) {
-            DeckInfo loaded = DeckLoader.readDeck(cardLoader, deckFile);
-            if (loaded != null) {
-                currentDeck.update(loaded);
-                currentDeck.source = deckFile;
-                notifyDeckChanged();
-                isModified = false;
-            }
-        }
-    }
-
     private void loadLastDeck() {
         AppsSettings settings = AppsSettings.get();
         String lastDeckPath = settings.getLastDeckPath();
@@ -1727,7 +1545,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         }
 
         if (lastDeckName != null && !lastDeckName.isEmpty()) {
-            File deckFile = getDeckFile(lastDeckName);
+            File deckFile = new File(AppsSettings.get().getDeckDir(), lastDeckName + ".ydk");
             if (deckFile.exists()) {
                 currentDeckCategoryName = lastCategory != null ? lastCategory : "";
                 currentDeckName = lastDeckName;
@@ -1748,28 +1566,19 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         }
     }
 
-    private File getDeckDir() {
-        return new File(AppsSettings.get().getResourcePath(), "deck");
-    }
-
-    private File getDeckFile(String name) {
-        File dir = getDeckDir();
-        if (dir == null) dir = new File(AppsSettings.get().getResourcePath(), "deck");
-        return new File(dir, name + ".ydk");
-    }
-
     private void showConfirmDialog(String message, Runnable onConfirm) {
         mainHandler.post(() -> {
-            new AlertDialog.Builder(activity)
+            new YesOrNoDialog(activity)
+                    .setTitle("确认")
                     .setMessage(message)
-                    .setPositiveButton("是", (d, w) -> onConfirm.run())
-                    .setNegativeButton("否", null)
-                    .show();
+                    .setType(YesOrNoDialog.TYPE_YES_NO)
+                    .setPositiveButtonText("是")
+                    .setNegativeButtonText("否")
+                    .setPositiveButton(v -> {
+                        onConfirm.run();
+                    })
+                    .show(rootView);
         });
-    }
-
-    private void showToast(String msg) {
-        mainHandler.post(() -> Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show());
     }
 
     public DeckInfo getCurrentDeck() {
@@ -1778,14 +1587,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     public boolean isModified() {
         return isModified;
-    }
-
-    private void showDeckSelectorDialog() {
-        if (deckSelectorDialog == null) {
-            deckSelectorDialog = new DeckSelectorDialog(activity);
-            deckSelectorDialog.setIncludePackCategory(true);
-        }
-        deckSelectorDialog.show(btnDeckManager);
     }
 
     private void showLinkMarkerPopup() {
@@ -1853,8 +1654,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     //当前赛制标识显示模式（spinner_filter_limit选中项id：6=OCG、7=TCG、8=简体中文，其余不显示）
-    private int availLm = 0;
-
     private void applyAvailDisplay(int lm) {
         if (availLm == lm) return;
         availLm = lm;
