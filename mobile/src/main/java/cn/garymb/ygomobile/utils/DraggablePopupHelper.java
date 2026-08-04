@@ -14,6 +14,7 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.HorizontalScrollView;
+import android.widget.SeekBar;
 
 import androidx.core.view.ScrollingView;
 import androidx.core.widget.NestedScrollView;
@@ -206,7 +207,8 @@ public class DraggablePopupHelper {
                     || v instanceof ScrollView
                     || v instanceof HorizontalScrollView
                     || v instanceof NestedScrollView
-                    || v instanceof ScrollingView;
+                    || v instanceof ScrollingView
+                    || v instanceof SeekBar;
         }
 
         private void handleDrag(MotionEvent ev) {
