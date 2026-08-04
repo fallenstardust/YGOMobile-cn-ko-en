@@ -5,13 +5,13 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
@@ -118,124 +118,51 @@ public class YesOrNoDialog {
         float density = context.getResources().getDisplayMetrics().density;
         int dialogWidth = (int) (280 * density);
 
-        LinearLayout root = new LinearLayout(context);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackground(context.getDrawable(R.drawable.sdialogl));
+        LinearLayout root = (LinearLayout) LayoutInflater.from(context)
+                .inflate(R.layout.dialog_yes_or_no, null);
 
-        // ── Title bar (drag handle) ──────────────────────────────
-        LinearLayout titleBar = new LinearLayout(context);
-        titleBar.setOrientation(LinearLayout.HORIZONTAL);
-        titleBar.setGravity(Gravity.CENTER_VERTICAL);
-        int titleHeight = (int) (44 * density);
-        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, titleHeight);
-        titleBar.setLayoutParams(titleLp);
-        int titlePadH = (int) (12 * density);
-        titleBar.setPadding(titlePadH, 0, titlePadH, 0);
-
-        TextView tvTitle = new TextView(context);
-        tvTitle.setText(title);
-        tvTitle.setTextColor(context.getColor(R.color.item_title));
-        tvTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        tvTitle.setSingleLine(true);
-        LinearLayout.LayoutParams titleTextLp = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        tvTitle.setLayoutParams(titleTextLp);
-        titleBar.addView(tvTitle);
-
-        TextView dragHint = new TextView(context);
-        dragHint.setText("⋮⋮");
-        dragHint.setTextColor(0x66FFFFFF);
-        dragHint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        dragHint.setPadding((int) (4 * density), 0, 0, 0);
-        titleBar.addView(dragHint);
-
-        root.addView(titleBar);
-
-        // ── Divider ──────────────────────────────────────────────
-        View divider = new View(context);
-        divider.setBackgroundColor(0x33FFFFFF);
-        root.addView(divider, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 1));
+        ScrollView scrollView = root.findViewById(R.id.yes_no_scroll);
+        TextView tvMessage = root.findViewById(R.id.tv_yes_no_message);
+        FrameLayout customContainer = root.findViewById(R.id.yes_no_custom_content);
+        LinearLayout buttonArea = root.findViewById(R.id.yes_no_button_area);
+        Button btnPositive = root.findViewById(R.id.btn_yes_no_positive);
+        Button btnNegative = root.findViewById(R.id.btn_yes_no_negative);
 
         // ── Content area ─────────────────────────────────────────
         if (customContentView != null) {
-            LinearLayout.LayoutParams contentLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
-            int contentMarginV = (int) (8 * density);
-            contentLp.setMargins(0, contentMarginV, 0, contentMarginV);
-            root.addView(customContentView, contentLp);
+            scrollView.setVisibility(View.GONE);
+            customContainer.setVisibility(View.VISIBLE);
+            customContainer.addView(customContentView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
         } else {
-            ScrollView scrollView = new ScrollView(context);
-            scrollView.setVerticalScrollBarEnabled(false);
-            LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
-            int msgMarginV = (int) (8 * density);
-            scrollLp.setMargins(0, msgMarginV, 0, msgMarginV);
-            scrollView.setLayoutParams(scrollLp);
-
-            TextView tvMessage = new TextView(context);
             tvMessage.setText(message);
-            tvMessage.setTextColor(Color.WHITE);
-            tvMessage.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-            int msgPadH = (int) (14 * density);
-            int msgPadV = (int) (4 * density);
-            tvMessage.setPadding(msgPadH, msgPadV, msgPadH, msgPadV);
-            scrollView.addView(tvMessage);
-            root.addView(scrollView);
         }
 
         // ── Button area ──────────────────────────────────────────
         boolean needsButtons = customContentView == null || positiveListener != null
                 || negativeListener != null || type == TYPE_YES_NO;
-        if (needsButtons) {
-            LinearLayout btnArea = new LinearLayout(context);
-            btnArea.setOrientation(LinearLayout.HORIZONTAL);
-            btnArea.setGravity(Gravity.CENTER);
-            int btnAreaH = (int) (44 * density);
-            LinearLayout.LayoutParams btnAreaLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, btnAreaH);
-            btnAreaLp.setMargins(0, (int) (4 * density), 0, (int) (8 * density));
-            btnArea.setLayoutParams(btnAreaLp);
-
-            int btnMinW = (int) (90 * density);
-            int btnMargin = (int) (16 * density);
-
-            if (type == TYPE_MESSAGE) {
-                Button btnOk = makeButton(positiveText, btnMinW);
-                LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT);
-                btnOk.setOnClickListener(v -> {
-                    if (positiveListener != null) positiveListener.onClick(v);
-                    dismiss();
-                });
-                btnArea.addView(btnOk, btnLp);
+        if (!needsButtons) {
+            buttonArea.setVisibility(View.GONE);
+        } else {
+            btnPositive.setText(positiveText);
+            btnNegative.setText(negativeText);
+            if (type == TYPE_YES_NO) {
+                btnNegative.setVisibility(View.VISIBLE);
             } else {
-                Button btnYes = makeButton(positiveText, btnMinW);
-                LinearLayout.LayoutParams yesLp = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT);
-                yesLp.setMarginEnd(btnMargin);
-                btnYes.setOnClickListener(v -> {
-                    if (positiveListener != null) positiveListener.onClick(v);
-                    dismiss();
-                });
-                btnArea.addView(btnYes, yesLp);
-
-                Button btnNo = makeButton(negativeText, btnMinW);
-                btnNo.setBackground(context.getDrawable(R.drawable.button3_bg));
-                LinearLayout.LayoutParams noLp = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT);
-                btnNo.setOnClickListener(v -> {
-                    if (negativeListener != null) negativeListener.onClick(v);
-                    dismiss();
-                });
-                btnArea.addView(btnNo, noLp);
+                btnNegative.setVisibility(View.GONE);
+                LinearLayout.LayoutParams positiveLp =
+                        (LinearLayout.LayoutParams) btnPositive.getLayoutParams();
+                positiveLp.setMarginEnd(0);
             }
-
-            root.addView(btnArea);
+            btnPositive.setOnClickListener(v -> {
+                if (positiveListener != null) positiveListener.onClick(v);
+                dismiss();
+            });
+            btnNegative.setOnClickListener(v -> {
+                if (negativeListener != null) negativeListener.onClick(v);
+                dismiss();
+            });
         }
 
         contentView = root;
@@ -259,20 +186,6 @@ public class YesOrNoDialog {
         draggableHelper = new DraggablePopupHelper(context, "game_dialog_" + title);
         draggableHelper.setupDraggablePopup(popupWindow, root, dialogWidth,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-    }
-
-    private Button makeButton(String text, int minWidth) {
-        Button btn = new Button(context);
-        btn.setText(text);
-        btn.setTextColor(Color.WHITE);
-        btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
-        btn.setMinimumWidth(minWidth);
-        btn.setMinHeight(0);
-        int padV = (int) (6 * context.getResources().getDisplayMetrics().density);
-        btn.setPadding((int) (14 * context.getResources().getDisplayMetrics().density), padV,
-                (int) (14 * context.getResources().getDisplayMetrics().density), padV);
-        btn.setBackground(context.getDrawable(R.drawable.button3_bg));
-        return btn;
     }
 
     public void show() {

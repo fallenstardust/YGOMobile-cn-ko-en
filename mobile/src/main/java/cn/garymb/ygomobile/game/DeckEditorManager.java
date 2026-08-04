@@ -176,7 +176,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     public void terminate() {
         if (isModified && !isReadonly) {
-            showConfirmDialog("此操作将放弃对当前卡组的修改，是否继续？", this::doTerminate);
+            showConfirmDialog(DataManager.get().getStringManager().getSystemString(1356, "此操作将放弃对当前卡组的修改，是否继续？"), this::doTerminate);
         } else {
             doTerminate();
         }
@@ -491,10 +491,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         StringManager sm = DataManager.get().getStringManager();
         int dropBg = YGOUtil.c(R.color.ygopro_list_background);
         List<SimpleSpinnerItem> typeItems = new ArrayList<>();
-        typeItems.add(new SimpleSpinnerItem(0, "(无)"));
-        typeItems.add(new SimpleSpinnerItem(1, "怪兽"));
-        typeItems.add(new SimpleSpinnerItem(2, "魔法"));
-        typeItems.add(new SimpleSpinnerItem(3, "陷阱"));
+        typeItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
+        typeItems.add(new SimpleSpinnerItem(1, sm.getSystemString(1312, "怪兽")));
+        typeItems.add(new SimpleSpinnerItem(2, sm.getSystemString(1313, "魔法")));
+        typeItems.add(new SimpleSpinnerItem(3, sm.getSystemString(1314, "陷阱")));
         if (spinnerFilterType != null) {
             spinnerFilterType.setAdapter(createSpinnerAdapter(typeItems, Color.WHITE, dropBg));
             spinnerFilterType.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
@@ -564,10 +564,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             });
         }
         List<SimpleSpinnerItem> sortItems = new ArrayList<>();
-        sortItems.add(new SimpleSpinnerItem(0, "星数↑"));
-        sortItems.add(new SimpleSpinnerItem(1, "攻击↑"));
-        sortItems.add(new SimpleSpinnerItem(2, "守备↑"));
-        sortItems.add(new SimpleSpinnerItem(3, "名称↓"));
+        sortItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1370, "星数↑")));
+        sortItems.add(new SimpleSpinnerItem(1, sm.getSystemString(1371, "攻击↑")));
+        sortItems.add(new SimpleSpinnerItem(2, sm.getSystemString(1372, "守备↑")));
+        sortItems.add(new SimpleSpinnerItem(3, sm.getSystemString(1373, "名称↓")));
         if (spinnerSortType != null)
             spinnerSortType.setAdapter(createSpinnerAdapter(sortItems, Color.WHITE, dropBg));
     }
@@ -582,6 +582,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     private void setupButtons() {
+        StringManager sm = DataManager.get().getStringManager();
+        if (btnSave != null) btnSave.setText(sm.getSystemString(1302, "保存"));
+        if (btnSaveAs != null) btnSaveAs.setText(sm.getSystemString(1303, "另存"));
         setClickListener(btnExit, v -> terminate());
         setClickListener(btnShuffle, v -> shuffleDeck());
         setClickListener(btnSort, v -> sortDeck());
@@ -731,7 +734,12 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         });
         if (btnDeckManager != null) {
             btnDeckManager.setOnClickListener(v -> {
-                if (deckSelectorDialog != null) deckSelectorDialog.show(btnDeckManager);
+                if (isModified && !isReadonly) {
+                    showConfirmDialog("此操作将放弃对当前卡组的修改，是否继续？",
+                            () -> { if (deckSelectorDialog != null) deckSelectorDialog.show(btnDeckManager); });
+                } else {
+                    if (deckSelectorDialog != null) deckSelectorDialog.show(btnDeckManager);
+                }
             });
         }
     }
@@ -758,7 +766,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                     btnDeckManager.setText(currentDeckName);
                 }
             } else {
-                btnDeckManager.setText("卡组管理");
+                btnDeckManager.setText(DataManager.get().getStringManager().getSystemString(1460, "卡组管理"));
             }
         }
     }
@@ -953,7 +961,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     // === 对应 deck_con.cpp: BUTTON_CLEAR_DECK ===
     public void clearDeck() {
         if (isReadonly) return;
-        showConfirmDialog("是否清空正在编辑的卡组？", () -> {
+        showConfirmDialog(DataManager.get().getStringManager().getSystemString(1339, "是否清空正在编辑的卡组？"), () -> {
             currentDeck.mainCards.clear();
             currentDeck.extraCards.clear();
             currentDeck.sideCards.clear();
@@ -968,7 +976,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (currentDeckFilePath == null || currentDeckFilePath.isEmpty()) return;
         String deckName = currentDeckName != null && !currentDeckName.isEmpty()
                 ? currentDeckName : new File(currentDeckFilePath).getName().replace(".ydk", "");
-        showConfirmDialog(deckName + "\n是否删除这个卡组？", () -> {
+        showConfirmDialog(deckName + "\n" + DataManager.get().getStringManager().getSystemString(1337, "是否删除这个卡组？"), () -> {
             File deckFile = new File(currentDeckFilePath);
             if (deckFile.exists()) {
                 deckFile.delete();
@@ -980,7 +988,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                 notifyDeckChanged();
                 isModified = false;
                 updateDeckManagerButtonText();
-                YGOUtil.showTextToast("卡组已删除");
+                YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1338, "删除成功"));
             }
         });
     }
@@ -995,7 +1003,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         boolean result = DeckUtils.save(currentDeck, deckFile);
         if (result) {
             isModified = false;
-            YGOUtil.showTextToast("卡组已保存");
+            YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1335, "保存成功"));
             if (listener != null) listener.onDeckSaved();
         }
     }
@@ -1545,6 +1553,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                 }
             }
             if (new File(savedPath).exists()) {
+                currentDeckFilePath = savedPath;
                 currentDeckCategoryName = lastCategory != null ? lastCategory : "";
                 currentDeckName = lastDeckName != null ? lastDeckName : "";
                 loadDeckFromPath(savedPath);
@@ -1556,6 +1565,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (lastDeckPath != null && !lastDeckPath.isEmpty()) {
             File deckFile = new File(lastDeckPath);
             if (deckFile.exists()) {
+                currentDeckFilePath = lastDeckPath;
                 currentDeckCategoryName = lastCategory != null ? lastCategory : "";
                 currentDeckName = lastDeckName != null ? lastDeckName : "";
                 loadDeckFromPath(lastDeckPath);
@@ -1567,9 +1577,25 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (lastDeckName != null && !lastDeckName.isEmpty()) {
             File deckFile = new File(AppsSettings.get().getDeckDir(), lastDeckName + ".ydk");
             if (deckFile.exists()) {
+                currentDeckFilePath = deckFile.getAbsolutePath();
                 currentDeckCategoryName = lastCategory != null ? lastCategory : "";
                 currentDeckName = lastDeckName;
                 loadDeckFromPath(deckFile.getAbsolutePath());
+                updateDeckManagerButtonText();
+                return;
+            }
+        }
+
+        File deckDir = new File(settings.getDeckDir());
+        if (deckDir.exists() && deckDir.isDirectory()) {
+            File[] files = deckDir.listFiles((dir, name) -> name.endsWith(".ydk"));
+            if (files != null && files.length > 0) {
+                java.util.Arrays.sort(files);
+                File first = files[0];
+                currentDeckFilePath = first.getAbsolutePath();
+                currentDeckCategoryName = "";
+                currentDeckName = first.getName().replace(".ydk", "");
+                loadDeckFromPath(first.getAbsolutePath());
                 updateDeckManagerButtonText();
             }
         }
@@ -1638,7 +1664,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             btnFilterMarks.setText(sb.toString());
             btnFilterMarks.setBackground(activity.getDrawable(R.drawable.sbutton_p));
         } else {
-            btnFilterMarks.setText("连接标记");
+            btnFilterMarks.setText(DataManager.get().getStringManager().getSystemString(1474, "连接标记"));
             btnFilterMarks.setBackground(activity.getDrawable(R.drawable.button3_bg));
         }
     }

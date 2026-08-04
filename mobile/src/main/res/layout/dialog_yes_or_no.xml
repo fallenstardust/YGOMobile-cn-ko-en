@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/yes_no_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/sdialogl"
+    android:orientation="vertical">
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="5dp"
+        android:layout_weight="1">
+
+        <!-- Default message content -->
+        <ScrollView
+            android:id="@+id/yes_no_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <TextView
+                android:id="@+id/tv_yes_no_message"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical|start"
+                android:textColor="@color/white"
+                android:textSize="11sp" />
+        </ScrollView>
+
+        <!-- Custom content placeholder -->
+        <FrameLayout
+            android:id="@+id/yes_no_custom_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Button area -->
+    <LinearLayout
+        android:id="@+id/yes_no_button_area"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_yes_no_positive"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/button3_bg"
+            android:minWidth="90dp"
+            android:minHeight="30dp"
+            android:text="是"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btn_yes_no_negative"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button3_bg"
+            android:minWidth="90dp"
+            android:minHeight="30dp"
+            android:text="否"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+    </LinearLayout>
+</LinearLayout>
