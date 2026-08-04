@@ -45,6 +45,8 @@ public class YesOrNoDialog {
     private View customContentView;
     private int softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING;
     private DraggablePopupHelper draggableHelper;
+    private int messageBgColor = 0;
+    private int messageGravity = -1;
 
     public interface OnDismissListener {
         void onDismiss();
@@ -114,6 +116,16 @@ public class YesOrNoDialog {
         return this;
     }
 
+    public YesOrNoDialog setMessageBackgroundColor(int color) {
+        this.messageBgColor = color;
+        return this;
+    }
+
+    public YesOrNoDialog setMessageGravity(int gravity) {
+        this.messageGravity = gravity;
+        return this;
+    }
+
     private void build() {
         float density = context.getResources().getDisplayMetrics().density;
         int dialogWidth = (int) (280 * density);
@@ -121,12 +133,20 @@ public class YesOrNoDialog {
         LinearLayout root = (LinearLayout) LayoutInflater.from(context)
                 .inflate(R.layout.dialog_yes_or_no, null);
 
+        TextView tvTitle = root.findViewById(R.id.tv_yes_no_title);
         ScrollView scrollView = root.findViewById(R.id.yes_no_scroll);
         TextView tvMessage = root.findViewById(R.id.tv_yes_no_message);
         FrameLayout customContainer = root.findViewById(R.id.yes_no_custom_content);
         LinearLayout buttonArea = root.findViewById(R.id.yes_no_button_area);
         Button btnPositive = root.findViewById(R.id.btn_yes_no_positive);
         Button btnNegative = root.findViewById(R.id.btn_yes_no_negative);
+
+        if (title != null && !title.isEmpty()) {
+            tvTitle.setVisibility(View.VISIBLE);
+            tvTitle.setText(title);
+        } else {
+            tvTitle.setVisibility(View.GONE);
+        }
 
         // ── Content area ─────────────────────────────────────────
         if (customContentView != null) {
@@ -137,6 +157,12 @@ public class YesOrNoDialog {
                     FrameLayout.LayoutParams.MATCH_PARENT));
         } else {
             tvMessage.setText(message);
+            if (messageBgColor != 0) {
+                tvMessage.setBackgroundColor(messageBgColor);
+            }
+            if (messageGravity != -1) {
+                tvMessage.setGravity(messageGravity);
+            }
         }
 
         // ── Button area ──────────────────────────────────────────

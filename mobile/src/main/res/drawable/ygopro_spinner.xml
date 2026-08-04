@@ -8,7 +8,7 @@
             <corners android:radius="2dp" />
             <stroke
                 android:width="0.3dp"
-                android:color="@color/holo_blue_light" />
+                android:color="@color/ygopro_line_color" />
         </shape>
     </item>
 
@@ -26,12 +26,12 @@
             <path
                 android:pathData="M1.4,1.15 L4.6,1.15 A1,1 0 0,1 5.6,2.15 L5.6,21.85 A1,1 0 0,1 4.6,22.85 L1.4,22.85 A1,1 0 0,1 0.4,21.85 L0.4,2.15 A1,1 0 0,1 1.4,1.15 Z"
                 android:strokeWidth="0.3"
-                android:strokeColor="@color/colorMain"
+                android:strokeColor="@color/ygopro_line_color"
                 android:fillColor="@color/colorNavy" />
 
             <!-- 内嵌等边三角形（边长2.9，与框内边留1缝隙，居中） -->
             <path
-                android:fillColor="@color/colorMain"
+                android:fillColor="@color/ygopro_line_color"
                 android:pathData="M1.55,10.74 L4.45,10.74 L3,13.26 Z" />
 
         </vector>

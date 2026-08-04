@@ -1713,11 +1713,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private void showConfirmDialog(String message, Runnable onConfirm) {
         mainHandler.post(() -> {
             new YesOrNoDialog(activity)
-                    .setTitle("确认")
                     .setMessage(message)
                     .setType(YesOrNoDialog.TYPE_YES_NO)
-                    .setPositiveButtonText("是")
-                    .setNegativeButtonText("否")
+                    .setPositiveButtonText(mStringManager.getSystemString(1213, "是"))
+                    .setNegativeButtonText(mStringManager.getSystemString(1214, "否"))
                     .setPositiveButton(v -> {
                         onConfirm.run();
                     })

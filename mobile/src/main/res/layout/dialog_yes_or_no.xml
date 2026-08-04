@@ -4,7 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/sdialogl"
+    android:paddingHorizontal="20dp"
     android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_yes_no_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical|start"
+        android:textColor="@color/white"
+        android:text="标题"
+        android:textSize="11sp" />
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,7 +37,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center_vertical|start"
                 android:textColor="@color/white"
-                android:textSize="11sp" />
+                android:textSize="12sp" />
         </ScrollView>
 
         <!-- Custom content placeholder -->

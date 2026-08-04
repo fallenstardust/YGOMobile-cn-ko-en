@@ -535,10 +535,12 @@ public class DeckSelectorDialog {
 
         EditText editText = new EditText(context);
         editText.setGravity(Gravity.CENTER);
+        editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
 
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         dialog.setTitle(mStringManager.getSystemString(1469, "请输入分类名:"));
+        dialog.setContentView(editText);
         dialog.setType(YesOrNoDialog.TYPE_YES_NO);
         dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
         dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
@@ -580,6 +582,7 @@ public class DeckSelectorDialog {
 
         EditText editText = new EditText(context);
         editText.setGravity(Gravity.CENTER);
+        editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
         editText.setText(ci.category.categoryName);
 
@@ -629,7 +632,10 @@ public class DeckSelectorDialog {
         }
 
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setMessage(mStringManager.getSystemString(1470, "确实要删除此分类和分类下全部卡组吗？"));
+        dialog.setTitle(mStringManager.getSystemString(1470, "确实要删除此分类和分类下全部卡组吗？"));
+        dialog.setMessage(ci.category.categoryName);
+        dialog.setMessageBackgroundColor(YGOUtil.c(R.color.colorNavy));
+        dialog.setMessageGravity(Gravity.CENTER);
         dialog.setType(YesOrNoDialog.TYPE_YES_NO);
         dialog.setPositiveButtonText(mStringManager.getSystemString(1308, "删除"));
         dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
@@ -654,10 +660,12 @@ public class DeckSelectorDialog {
         CategoryInfo ci = getSelectedCategoryInfo();
         EditText editText = new EditText(context);
         editText.setGravity(Gravity.CENTER);
+        editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
 
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         dialog.setTitle(mStringManager.getSystemString(1471, "请输入卡组名:"));
+        dialog.setContentView(editText);
         dialog.setType(YesOrNoDialog.TYPE_YES_NO);
         dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
         dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
@@ -700,6 +708,7 @@ public class DeckSelectorDialog {
 
         EditText editText = new EditText(context);
         editText.setGravity(Gravity.CENTER);
+        editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
         editText.setText(selectedDeckName[0]);
 
@@ -742,8 +751,14 @@ public class DeckSelectorDialog {
             return;
         }
 
+        CategoryInfo ci = getSelectedCategoryInfo();
+        String catName = ci != null ? ci.category.categoryName : "";
+
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setMessage(mStringManager.getSystemString(1337, "是否删除这个卡组？"));
+        dialog.setTitle(mStringManager.getSystemString(1337, "是否删除这个卡组？"));
+        dialog.setMessage(catName + "|" + selectedDeckName[0]);
+        dialog.setMessageBackgroundColor(YGOUtil.c(R.color.colorNavy));
+        dialog.setMessageGravity(Gravity.CENTER);
         dialog.setType(YesOrNoDialog.TYPE_YES_NO);
         dialog.setPositiveButtonText(mStringManager.getSystemString(1308, "删除"));
         dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
