@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -535,14 +536,14 @@ public class GameMessageParser {
                 int len = buf.getShort() & 0xFFFF;
                 byte[] nameBytes = new byte[len];
                 buf.get(nameBytes);
-                handler.onAiName(new String(nameBytes, java.nio.charset.StandardCharsets.UTF_16LE));
+                handler.onAiName(new String(nameBytes, StandardCharsets.UTF_16LE));
                 break;
             }
             case ShowHint: {
                 int len = buf.getShort() & 0xFFFF;
                 byte[] hintBytes = new byte[len];
                 buf.get(hintBytes);
-                handler.onShowHint(new String(hintBytes, java.nio.charset.StandardCharsets.UTF_16LE));
+                handler.onShowHint(new String(hintBytes, StandardCharsets.UTF_16LE));
                 break;
             }
             case MatchKill:
@@ -552,7 +553,7 @@ public class GameMessageParser {
                 int len = buf.getShort() & 0xFFFF;
                 byte[] msgBytes = new byte[len];
                 buf.get(msgBytes);
-                handler.onCustomMsg(new String(msgBytes, java.nio.charset.StandardCharsets.UTF_16LE));
+                handler.onCustomMsg(new String(msgBytes, StandardCharsets.UTF_16LE));
                 break;
             }
             case DuelWinner:

@@ -354,7 +354,7 @@
                                         android:layout_height="match_parent"
                                         android:layout_weight="0.3"
                                         android:background="@drawable/ygopro_base_background"
-                                        android:inputType="number"
+                                        android:inputType="text"
                                         android:paddingStart="4dp"
                                         android:textColor="@color/white"
                                         android:textSize="8sp" />
@@ -377,7 +377,7 @@
                                         android:layout_marginStart="2dp"
                                         android:layout_weight="0.3"
                                         android:background="@drawable/ygopro_base_background"
-                                        android:inputType="number"
+                                        android:inputType="text"
                                         android:paddingStart="4dp"
                                         android:textColor="@color/white"
                                         android:textSize="8sp" />
@@ -410,9 +410,10 @@
                         android:layout_weight="0.8"
                         android:background="@drawable/ygopro_base_background"
                         android:inputType="text"
+                        android:singleLine="true"
+                        android:imeOptions="actionSearch"
                         android:paddingStart="4dp"
                         android:textColor="@color/white"
-                        android:textColorHint="#888888"
                         android:textSize="9sp" />
                 </LinearLayout>
 

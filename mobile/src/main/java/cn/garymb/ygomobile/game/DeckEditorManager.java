@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -21,10 +23,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -40,9 +44,9 @@ import cn.garymb.ygomobile.ui.cards.deck.CardTypeImage;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.dialogs.DeckSelectorDialog;
-import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.ui.dialogs.EffectCategoryPopupWindow;
 import cn.garymb.ygomobile.ui.dialogs.LinkMarkerPopupWindow;
+import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
 import cn.garymb.ygomobile.ui.widget.CardView;
 import cn.garymb.ygomobile.utils.DeckUtil;
@@ -145,6 +149,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private int touchSlop;
     private final CardDragHelper dragHelper;
     private int availLm = 0;
+    private Runnable pendingKeywordSearch;
+    private final AtomicInteger searchGeneration = new AtomicInteger(0);
 
     public DeckEditorManager(Activity activity, ImageLoader imageLoader, CardDetailPanel cardDetailPanel) {
         this.activity = activity;
@@ -596,6 +602,34 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         setClickListener(btnFilterMarks, v -> showLinkMarkerPopup());
         setClickListener(btnFilterSearch, v -> startFilter());
         setClickListener(btnFilterClear, v -> clearSearch());
+        setupKeywordInput();
+    }
+
+    private void setupKeywordInput() {
+        if (etKeyword == null) return;
+        etKeyword.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+                startFilter();
+                return true;
+            }
+            return false;
+        });
+        etKeyword.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (pendingKeywordSearch != null) mainHandler.removeCallbacks(pendingKeywordSearch);
+                pendingKeywordSearch = () -> startFilter();
+                mainHandler.postDelayed(pendingKeywordSearch, 300);
+            }
+        });
     }
 
     private void setClickListener(Button btn, View.OnClickListener l) {
@@ -736,7 +770,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             btnDeckManager.setOnClickListener(v -> {
                 if (isModified && !isReadonly) {
                     showConfirmDialog("此操作将放弃对当前卡组的修改，是否继续？",
-                            () -> { if (deckSelectorDialog != null) deckSelectorDialog.show(btnDeckManager); });
+                            () -> {
+                                if (deckSelectorDialog != null)
+                                    deckSelectorDialog.show(btnDeckManager);
+                            });
                 } else {
                     if (deckSelectorDialog != null) deckSelectorDialog.show(btnDeckManager);
                 }
@@ -1034,6 +1071,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     // === 对应 deck_con.cpp: StartFilter / FilterCards ===
     public void startFilter() {
+        if (pendingKeywordSearch != null) {
+            mainHandler.removeCallbacks(pendingKeywordSearch);
+            pendingKeywordSearch = null;
+        }
         filterType = spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0;
         filterType2 = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterType2);
         filterLm = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterLimit);
@@ -1051,20 +1092,32 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         int[] scl = parseFilterType(etScale != null ? etScale.getText().toString() : "");
         filterSclType = scl[0];
         filterScl = scl[1];
-        filterCards();
+        executeFilterAsync();
     }
 
-    public void filterCards() {
+    private void executeFilterAsync() {
+        if (tvSearchResult != null) tvSearchResult.setText(searchResultPrefix + " ...");
+        int gen = searchGeneration.incrementAndGet();
+        List<String> keywordTerms = parseKeywordTerms();
+        new Thread(() -> {
+            List<Card> results = new ArrayList<>();
+            SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
+            for (int i = 0; i < allCards.size(); i++) {
+                if (searchGeneration.get() != gen) return;
+                Card card = allCards.valueAt(i);
+                if (card == null || Card.isType(card.Type, CardType.Token)) continue;
+                if (!matchesAllFilters(card, keywordTerms)) continue;
+                results.add(card);
+            }
+            Collections.sort(results, buildSortComparator());
+            mainHandler.post(() -> applySearchResults(gen, results));
+        }).start();
+    }
+
+    private void applySearchResults(int gen, List<Card> results) {
+        if (searchGeneration.get() != gen) return;
         searchResults.clear();
-        String keyword = etKeyword != null ? etKeyword.getText().toString().trim().toLowerCase() : "";
-        SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
-        for (int i = 0; i < allCards.size(); i++) {
-            Card card = allCards.valueAt(i);
-            if (card == null || Card.isType(card.Type, CardType.Token)) continue;
-            if (!matchesAllFilters(card, keyword)) continue;
-            searchResults.add(card);
-        }
-        sortSearchResults();
+        searchResults.addAll(results);
         if (tvSearchResult != null)
             tvSearchResult.setText(searchResultPrefix + " " + searchResults.size());
         if (searchAdapter != null) searchAdapter.setCards(searchResults);
@@ -1072,9 +1125,25 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (listener != null) listener.onSearchResultsUpdated(searchResults.size());
     }
 
-    private boolean matchesAllFilters(Card card, String keyword) {
+    private Comparator<Card> buildSortComparator() {
+        int sortSel = spinnerSortType != null ? spinnerSortType.getSelectedItemPosition() : 0;
+        return (a, b) -> {
+            int classA = getCardClassRank(a), classB = getCardClassRank(b);
+            if (classA != classB) return Integer.compare(classA, classB);
+            int cmp = (classA == 0) ? compareMonsterBySortType(a, b, sortSel)
+                    : Integer.compare(getCardSubTypeRank(a, classA), getCardSubTypeRank(b, classB));
+            if (cmp == 0 && classA != 0 && sortSel == 3) {
+                String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";
+                cmp = na.compareTo(nb);
+            }
+            return cmp != 0 ? cmp : Integer.compare(a.Code, b.Code);
+        };
+    }
+
+    private boolean matchesAllFilters(Card card, List<String> keywordTerms) {
         if (!matchesTypeFilter(card) || !matchesType2Filter(card)) return false;
-        if (!matchesKeywordFilter(card, keyword) || !matchesLimitFilter(card)) return false;
+        if (!matchesKeywordFilter(card, keywordTerms) || !matchesLimitFilter(card)) return false;
+
         if (filterEffect != 0 && (card.Category & filterEffect) == 0) return false;
         if (filterMarks != 0 && !((card.Defense & filterMarks) == filterMarks && Card.isType(card.Type, CardType.Link)))
             return false;
@@ -1132,6 +1201,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     private void clearEditTexts() {
+        if (pendingKeywordSearch != null) {
+            mainHandler.removeCallbacks(pendingKeywordSearch);
+            pendingKeywordSearch = null;
+        }
         if (etAttack != null) etAttack.setText("");
         if (etDefense != null) etDefense.setText("");
         if (etStar != null) etStar.setText("");
@@ -1141,19 +1214,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     // === 对应 deck_con.cpp: SortList ===
     public void sortSearchResults() {
-        int sortSel = spinnerSortType != null ? spinnerSortType.getSelectedItemPosition() : 0;
-        Comparator<Card> comparator = (a, b) -> {
-            int classA = getCardClassRank(a), classB = getCardClassRank(b);
-            if (classA != classB) return Integer.compare(classA, classB);
-            int cmp = (classA == 0) ? compareMonsterBySortType(a, b, sortSel)
-                    : Integer.compare(getCardSubTypeRank(a, classA), getCardSubTypeRank(b, classB));
-            if (cmp == 0 && classA != 0 && sortSel == 3) {
-                String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";
-                cmp = na.compareTo(nb);
-            }
-            return cmp != 0 ? cmp : Integer.compare(a.Code, b.Code);
-        };
-        Collections.sort(searchResults, comparator);
+        Collections.sort(searchResults, buildSortComparator());
     }
 
     private int getCardClassRank(Card card) {
@@ -1416,11 +1477,48 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         return true;
     }
 
-    private boolean matchesKeywordFilter(Card card, String keyword) {
-        if (keyword.isEmpty()) return true;
-        if (card.Name != null && card.Name.toLowerCase().contains(keyword)) return true;
-        if (card.Desc != null && card.Desc.toLowerCase().contains(keyword)) return true;
-        return String.valueOf(card.Code).equals(keyword);
+    private boolean matchesKeywordFilter(Card card, List<String> terms) {
+        if (terms.isEmpty()) return true;
+        StringManager sm = DataManager.get().getStringManager();
+        for (String term : terms) {
+            boolean exclude = term.startsWith("-") && term.length() > 1;
+            String body = exclude ? term.substring(1) : term;
+            boolean matched = false;
+            if (body.startsWith("@") && body.length() > 1) {
+                String setName = body.substring(1);
+                long setcode = sm.getSetCode(setName, true);
+                if (setcode != 0 && card.isSetCode(setcode)) matched = true;
+            } else {
+                String searchText = body.isEmpty() ? term : body;
+                if (card.Name != null && card.Name.toLowerCase().contains(searchText)) matched = true;
+                if (card.Desc != null && card.Desc.toLowerCase().contains(searchText)) matched = true;
+                if (String.valueOf(card.Code).equals(searchText)) matched = true;
+            }
+            if (exclude && matched) return false;
+            if (!exclude && !matched) return false;
+        }
+        return true;
+    }
+
+    private List<String> parseKeywordTerms() {
+        String raw = etKeyword != null ? etKeyword.getText().toString().trim() : "";
+        List<String> terms = new ArrayList<>();
+        if (raw.isEmpty()) return terms;
+        raw = raw.toLowerCase();
+        StringBuilder current = new StringBuilder();
+        for (int i = 0; i < raw.length(); i++) {
+            char c = raw.charAt(i);
+            if (c == ' ') {
+                if (current.length() > 0) {
+                    terms.add(current.toString());
+                    current.setLength(0);
+                }
+            } else {
+                current.append(c);
+            }
+        }
+        if (current.length() > 0) terms.add(current.toString());
+        return terms;
     }
 
     private int[] parseFilterType(String text) {
@@ -1590,7 +1688,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (deckDir.exists() && deckDir.isDirectory()) {
             File[] files = deckDir.listFiles((dir, name) -> name.endsWith(".ydk"));
             if (files != null && files.length > 0) {
-                java.util.Arrays.sort(files);
+                Arrays.sort(files);
                 File first = files[0];
                 currentDeckFilePath = first.getAbsolutePath();
                 currentDeckCategoryName = "";

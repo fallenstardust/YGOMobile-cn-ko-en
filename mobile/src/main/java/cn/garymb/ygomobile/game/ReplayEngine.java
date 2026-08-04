@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -697,7 +698,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     byte[] aiBytes = new byte[aiLen];
                     buf.get(aiBytes);
                     buf.get();
-                    onAiName(new String(aiBytes, java.nio.charset.StandardCharsets.UTF_8));
+                    onAiName(new String(aiBytes, StandardCharsets.UTF_8));
                     break;
                 }
                 case 164: { // MSG_SHOW_HINT
@@ -706,7 +707,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     byte[] shBytes = new byte[shLen];
                     buf.get(shBytes);
                     buf.get();
-                    onShowHint(new String(shBytes, java.nio.charset.StandardCharsets.UTF_8));
+                    onShowHint(new String(shBytes, StandardCharsets.UTF_8));
                     break;
                 }
 

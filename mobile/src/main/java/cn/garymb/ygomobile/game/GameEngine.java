@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.game;
 
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -370,7 +371,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
             mainHandler.post(() -> {
                 try {
-                    android.content.Intent intent = new android.content.Intent();
+                    Intent intent = new android.content.Intent();
                     intent.putExtra("args", windbotArgs);
                     intent.setAction("RUN_WINDBOT");
                     cn.garymb.ygomobile.GameApplication.get().sendBroadcast(intent);

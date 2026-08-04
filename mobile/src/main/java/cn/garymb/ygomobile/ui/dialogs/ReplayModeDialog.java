@@ -20,6 +20,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -393,7 +394,7 @@ public class ReplayModeDialog {
 
         StringBuilder sb = new StringBuilder();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String dateStr = sdf.format(new java.util.Date(replayFile.lastModified()));
+        String dateStr = sdf.format(new Date(replayFile.lastModified()));
         sb.append(dateStr).append("\n");
 
         if (!data.playerNames.isEmpty()) {
