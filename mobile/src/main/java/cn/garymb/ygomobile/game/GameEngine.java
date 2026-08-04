@@ -11,6 +11,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.GameApplication;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.engine.LuaScriptEngine;
@@ -371,10 +372,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
             mainHandler.post(() -> {
                 try {
-                    Intent intent = new android.content.Intent();
+                    Intent intent = new Intent();
                     intent.putExtra("args", windbotArgs);
                     intent.setAction("RUN_WINDBOT");
-                    cn.garymb.ygomobile.GameApplication.get().sendBroadcast(intent);
+                    GameApplication.get().sendBroadcast(intent);
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to launch WindBot", e);
                     if (listener != null) listener.onHintMessage("启动AI失败: " + e.getMessage());
@@ -412,10 +413,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             Log.i(TAG, "Launching WindBot: " + windbotArgs);
             mainHandler.post(() -> {
                 try {
-                    android.content.Intent intent = new android.content.Intent();
+                    Intent intent = new android.content.Intent();
                     intent.putExtra("args", windbotArgs);
                     intent.setAction("RUN_WINDBOT");
-                    cn.garymb.ygomobile.GameApplication.get().sendBroadcast(intent);
+                    GameApplication.get().sendBroadcast(intent);
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to launch WindBot", e);
                     if (listener != null) listener.onHintMessage("启动AI失败: " + e.getMessage());

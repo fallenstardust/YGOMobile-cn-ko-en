@@ -50,6 +50,8 @@ public class CardDetailPanel {
 
     private int currentCardCode = -1;
     private Bitmap coverBitmap;
+    private StringManager mStringManager = DataManager.get().getStringManager();
+
 
     public CardDetailPanel(YGOProActivity activity) {
         this.activity = activity;
@@ -316,14 +318,14 @@ public class CardDetailPanel {
 
     private void bindCardSetname(Card cardData) {
         if (tvCardSetname == null) return;
-        StringManager sm = DataManager.get().getStringManager();
+        mStringManager = DataManager.get().getStringManager();
         long[] setCodes = cardData.getSetCode();
         StringBuilder sb = new StringBuilder();
         boolean hasSet = false;
         for (long sc : setCodes) {
             if (sc == 0) continue;
             if (hasSet) sb.append("|");
-            sb.append(sm.getSetName(sc));
+            sb.append(mStringManager.getSetName(sc));
             hasSet = true;
         }
         if (hasSet) {
@@ -336,15 +338,15 @@ public class CardDetailPanel {
 
     private void bindCardAttr(Card cardData) {
         if (tvCardAttr == null) return;
-        StringManager sm = DataManager.get().getStringManager();
+        mStringManager = DataManager.get().getStringManager();
         StringBuilder sb = new StringBuilder();
 
-        String typeStr = CardUtils.getAllTypeString(cardData, sm).replace("/", "|");
+        String typeStr = CardUtils.getAllTypeString(cardData, mStringManager).replace("/", "|");
         sb.append("[").append(typeStr).append("]");
 
         if (cardData.isType(CardType.Monster)) {
-            String raceStr = sm.getRaceString(cardData.Race);
-            String attrStr = sm.getAttributeString(cardData.Attribute);
+            String raceStr = mStringManager.getRaceString(cardData.Race);
+            String attrStr = mStringManager.getAttributeString(cardData.Attribute);
             sb.append(" ").append(raceStr).append("/").append(attrStr);
         }
 

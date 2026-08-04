@@ -16,7 +16,6 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,11 +29,12 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.DeckSelectorUtil;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
 
 public class DeckSelectorDialog {
 
@@ -72,6 +72,8 @@ public class DeckSelectorDialog {
 
     private final List<Button> operationButtons = new ArrayList<>();
 
+    private final StringManager mStringManager = DataManager.get().getStringManager();
+
     private static class CategoryInfo {
         DeckSelectorUtil.DeckCategory category;
         String baseDirPath;
@@ -89,9 +91,12 @@ public class DeckSelectorDialog {
 
     public interface OnDeckSelectedListener {
         void onDeckSelected(String deckPath, String deckName, String categoryName);
+
         void onCancelled();
+
         //点击卡组item即触发（用于卡组编辑器即时加载）；默认空实现，玩家等待界面等无需处理
-        default void onDeckItemClicked(String deckPath, String deckName, String categoryName) {}
+        default void onDeckItemClicked(String deckPath, String deckName, String categoryName) {
+        }
     }
 
     public DeckSelectorDialog(Context context) {
@@ -197,7 +202,7 @@ public class DeckSelectorDialog {
 
         btnConfirm.setOnClickListener(v -> {
             if (selectedDeckPath[0].isEmpty()) {
-                Toast.makeText(context, "请先选择一个卡组", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("请先选择一个卡组", Gravity.CENTER);
                 return;
             }
             String categoryName = "";
@@ -213,13 +218,13 @@ public class DeckSelectorDialog {
         btnNewCategory.setOnClickListener(v -> doNewCategory());
         btnRenameCategory.setOnClickListener(v -> doRenameCategory());
         btnDeleteCategory.setOnClickListener(v -> doDeleteCategory());
-        btnNewDeck.setOnClickListener(v -> doNewDeck());
+        btnNewDeck.setOnClickListener(v -> doCreateDeck());
         btnRenameDeck.setOnClickListener(v -> doRenameDeck());
         btnDeleteDeck.setOnClickListener(v -> doDeleteDeck());
         btnMoveToCategory.setOnClickListener(v -> doMoveToCategory());
         btnCopyToCategory.setOnClickListener(v -> doCopyToCategory());
 
-        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density*0.7);
+        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density * 0.7);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(contentView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -415,7 +420,8 @@ public class DeckSelectorDialog {
             }
             if (lastDeckIndex >= 0) {
                 selectedDeckPos[0] = lastDeckIndex;
-                if (currentDeckAdapter != null) currentDeckAdapter.setSelectedPosition(lastDeckIndex);
+                if (currentDeckAdapter != null)
+                    currentDeckAdapter.setSelectedPosition(lastDeckIndex);
                 DeckSelectorUtil.DeckItem deck = category.deckList.get(lastDeckIndex);
                 selectedDeckPath[0] = deck.deckPath;
                 selectedDeckName[0] = deck.deckName;
@@ -531,33 +537,31 @@ public class DeckSelectorDialog {
         editText.setGravity(Gravity.CENTER);
         editText.setSingleLine();
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("新建分类");
-        dialog.setContentView(editText);
-        dialog.setLeftButtonText("确定");
-        dialog.setLeftButtonListener((d, w) -> {
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1469, "请输入分类名:"));
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
+        dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
+        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
+        dialog.setPositiveButton(v -> {
             String name = editText.getText().toString().trim();
             if (name.isEmpty()) {
-                Toast.makeText(context, "请输入分类名称", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("请输入分类名称", Gravity.CENTER);
                 return;
             }
             for (CategoryInfo ci : catInfos) {
                 if (ci.category.categoryName.equals(name)) {
-                    Toast.makeText(context, "分类已存在", Toast.LENGTH_SHORT).show();
+                    YGOUtil.show("分类已存在", Gravity.CENTER);
                     return;
                 }
             }
             File folder = new File(localDeckDirPath, name);
             if (folder.mkdirs()) {
-                Toast.makeText(context, "创建成功", Toast.LENGTH_SHORT).show();
-                d.dismiss();
+                YGOUtil.show("创建成功", Gravity.CENTER);
                 reloadAndRefresh();
             } else {
-                Toast.makeText(context, "创建失败", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("创建失败", Gravity.CENTER);
             }
         });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
         dialog.show();
     }
 
@@ -566,11 +570,11 @@ public class DeckSelectorDialog {
         if (activity == null) return;
         CategoryInfo ci = getSelectedCategoryInfo();
         if (ci == null) {
-            Toast.makeText(context, "请先选择一个分类", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("请先选择一个分类", Gravity.CENTER);
             return;
         }
         if (ci.isSystem) {
-            Toast.makeText(context, "系统分类不可重命名", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("系统分类不可重命名", Gravity.CENTER);
             return;
         }
 
@@ -579,37 +583,35 @@ public class DeckSelectorDialog {
         editText.setSingleLine();
         editText.setText(ci.category.categoryName);
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("重命名分类");
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1469, "请输入分类名:"));
         dialog.setContentView(editText);
-        dialog.setLeftButtonText("确定");
-        dialog.setLeftButtonListener((d, w) -> {
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
+        dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
+        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
+        dialog.setPositiveButton(v -> {
             String newName = editText.getText().toString().trim();
             if (newName.isEmpty()) {
-                Toast.makeText(context, "请输入新名称", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("请输入新名称", Gravity.CENTER);
                 return;
             }
             File oldDir = new File(ci.baseDirPath, ci.category.categoryName);
             File newDir = new File(ci.baseDirPath, newName);
             if (newDir.exists()) {
-                Toast.makeText(context, "目标分类已存在", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("目标分类已存在", Gravity.CENTER);
                 return;
             }
             if (oldDir.renameTo(newDir)) {
-                Toast.makeText(context, "重命名成功", Toast.LENGTH_SHORT).show();
-                d.dismiss();
-                String newCatName = newName;
+                YGOUtil.show("重命名成功", Gravity.CENTER);
                 reloadAndRefresh();
-                int newCatIndex = displayCategoryNames.indexOf(newCatName);
+                int newCatIndex = displayCategoryNames.indexOf(newName);
                 if (newCatIndex >= 0) {
                     selectCategoryAndFirstDeck(newCatIndex);
                 }
             } else {
-                Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("重命名失败", Gravity.CENTER);
             }
         });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
         dialog.show();
     }
 
@@ -618,57 +620,51 @@ public class DeckSelectorDialog {
         if (activity == null) return;
         CategoryInfo ci = getSelectedCategoryInfo();
         if (ci == null) {
-            Toast.makeText(context, "请先选择一个分类", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("请先选择一个分类", Gravity.CENTER);
             return;
         }
         if (ci.isSystem) {
-            Toast.makeText(context, "系统分类不可删除", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("系统分类不可删除", Gravity.CENTER);
             return;
         }
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("删除分类");
-        dialog.setMessage("确定要删除分类\"" + ci.category.categoryName + "\"及其所有卡组吗？");
-        dialog.setLeftButtonText("删除");
-        dialog.setLeftButtonListener((d, w) -> {
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setMessage(mStringManager.getSystemString(1470, "确实要删除此分类和分类下全部卡组吗？"));
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
+        dialog.setPositiveButtonText(mStringManager.getSystemString(1308, "删除"));
+        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
+        dialog.setPositiveButton(v -> {
             File dir = new File(ci.baseDirPath, ci.category.categoryName);
             if (deleteFolderRecursive(dir)) {
-                Toast.makeText(context, "删除成功", Toast.LENGTH_SHORT).show();
-                d.dismiss();
+                YGOUtil.show(mStringManager.getSystemString(1338, "删除成功"), Gravity.CENTER);
                 reloadAndRefresh();
                 selectUncategorizedCategory();
             } else {
-                Toast.makeText(context, "删除失败", Toast.LENGTH_SHORT).show();
+                YGOUtil.show(mStringManager.getSystemString(1476, "删除失败"), Gravity.CENTER);
             }
         });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
         dialog.show();
     }
 
     // ==================== 卡组操作 ====================
 
-    private void doNewDeck() {
+    private void doCreateDeck() {
         Activity activity = getActivity();
         if (activity == null) return;
         CategoryInfo ci = getSelectedCategoryInfo();
-        if (ci == null) {
-            Toast.makeText(context, "请先选择一个分类", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         EditText editText = new EditText(context);
         editText.setGravity(Gravity.CENTER);
         editText.setSingleLine();
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("新建卡组");
-        dialog.setContentView(editText);
-        dialog.setLeftButtonText("确定");
-        dialog.setLeftButtonListener((d, w) -> {
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1471, "请输入卡组名:"));
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
+        dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
+        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
+        dialog.setPositiveButton(v -> {
             String name = editText.getText().toString().trim();
             if (name.isEmpty()) {
-                Toast.makeText(context, "请输入卡组名称", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("请输入卡组名称", Gravity.CENTER);
                 return;
             }
             String dirPath = ci.isSystem ? ci.baseDirPath : ci.baseDirPath + "/" + ci.category.categoryName;
@@ -679,21 +675,18 @@ public class DeckSelectorDialog {
                     try (FileOutputStream fos = new FileOutputStream(deckFile)) {
                         fos.write("#created by YGOMobile\n#main\n#extra\n!side\n".getBytes());
                     }
-                    Toast.makeText(context, "创建成功", Toast.LENGTH_SHORT).show();
-                    d.dismiss();
+                    YGOUtil.show("创建成功", Gravity.CENTER);
                     String ydkFileName = deckFile.getName();
                     String catName = ci.category.categoryName;
                     reloadAndRefresh();
                     selectCategoryAndDeck(catName, ydkFileName);
                 } else {
-                    Toast.makeText(context, "创建失败", Toast.LENGTH_SHORT).show();
+                    YGOUtil.show("创建失败", Gravity.CENTER);
                 }
             } catch (IOException e) {
-                Toast.makeText(context, "创建失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                YGOUtil.show("创建失败: " + e.getMessage(), Gravity.CENTER);
             }
         });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
         dialog.show();
     }
 
@@ -701,7 +694,7 @@ public class DeckSelectorDialog {
         Activity activity = getActivity();
         if (activity == null) return;
         if (selectedDeckPath[0].isEmpty()) {
-            Toast.makeText(context, "请先选择一个卡组", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("请先选择一个卡组", Gravity.CENTER);
             return;
         }
 
@@ -710,36 +703,34 @@ public class DeckSelectorDialog {
         editText.setSingleLine();
         editText.setText(selectedDeckName[0]);
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("重命名卡组");
-        dialog.setContentView(editText);
-        dialog.setLeftButtonText("确定");
-        dialog.setLeftButtonListener((d, w) -> {
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1471, "请输入卡组名:"));
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
+        dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
+        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
+        dialog.setPositiveButton(v -> {
             String newName = editText.getText().toString().trim();
             if (newName.isEmpty()) {
-                Toast.makeText(context, "请输入新名称", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("请输入新名称", Gravity.CENTER);
                 return;
             }
             File oldFile = new File(selectedDeckPath[0]);
             File newFile = new File(oldFile.getParent(), newName + ".ydk");
             if (newFile.exists()) {
-                Toast.makeText(context, "目标卡组已存在", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("目标卡组已存在", Gravity.CENTER);
                 return;
             }
             if (oldFile.renameTo(newFile)) {
-                Toast.makeText(context, "重命名成功", Toast.LENGTH_SHORT).show();
-                d.dismiss();
+                YGOUtil.show("重命名成功", Gravity.CENTER);
                 CategoryInfo ci = getSelectedCategoryInfo();
                 String catName = ci != null ? ci.category.categoryName : "";
                 String ydkFileName = newFile.getName();
                 reloadAndRefresh();
                 selectCategoryAndDeck(catName, ydkFileName);
             } else {
-                Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("重命名失败", Gravity.CENTER);
             }
         });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
         dialog.show();
     }
 
@@ -747,28 +738,26 @@ public class DeckSelectorDialog {
         Activity activity = getActivity();
         if (activity == null) return;
         if (selectedDeckPath[0].isEmpty()) {
-            Toast.makeText(context, "请先选择一个卡组", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("请先选择一个卡组", Gravity.CENTER);
             return;
         }
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("删除卡组");
-        dialog.setMessage("确定要删除卡组\"" + selectedDeckName[0] + "\"吗？");
-        dialog.setLeftButtonText("删除");
-        dialog.setLeftButtonListener((d, w) -> {
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setMessage(mStringManager.getSystemString(1337, "是否删除这个卡组？"));
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
+        dialog.setPositiveButtonText(mStringManager.getSystemString(1308, "删除"));
+        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
+        dialog.setPositiveButton(v -> {
             File file = new File(selectedDeckPath[0]);
             int savedCatPos = selectedCategoryPos[0];
             if (file.delete()) {
-                Toast.makeText(context, "删除成功", Toast.LENGTH_SHORT).show();
-                d.dismiss();
+                YGOUtil.show(mStringManager.getSystemString(1338, "删除成功"), Gravity.CENTER);
                 reloadAndRefresh();
                 selectCategoryAndFirstDeck(savedCatPos);
             } else {
-                Toast.makeText(context, "删除失败", Toast.LENGTH_SHORT).show();
+                YGOUtil.show(mStringManager.getSystemString(1476, "删除失败"), Gravity.CENTER);
             }
         });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
         dialog.show();
     }
 
@@ -776,7 +765,7 @@ public class DeckSelectorDialog {
         Activity activity = getActivity();
         if (activity == null) return;
         if (selectedDeckPath[0].isEmpty()) {
-            Toast.makeText(context, "请先选择一个卡组", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("请先选择一个卡组", Gravity.CENTER);
             return;
         }
 
@@ -789,21 +778,24 @@ public class DeckSelectorDialog {
             }
         }
         if (otherNames.isEmpty()) {
-            Toast.makeText(context, "没有其他分类", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("没有其他分类", Gravity.CENTER);
             return;
         }
 
         SimpleListAdapter adapter = new SimpleListAdapter(context);
         adapter.set(otherNames);
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("移动到分类");
         ListView listView = new ListView(context);
         listView.setBackgroundColor(0xFF1A3A4A);
         listView.setDivider(new android.graphics.drawable.ColorDrawable(0xFF3A5A6B));
         listView.setDividerHeight(1);
-        dialog.setContentView(listView);
         listView.setAdapter(adapter);
+
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1472, "请选择要移动到的分类:"));
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
+        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
+        dialog.setContentView(listView);
         listView.setOnItemClickListener((parent, view, pos, id) -> {
             CategoryInfo target = otherInfos.get(pos);
             String targetDir = target.isSystem ? target.baseDirPath
@@ -812,14 +804,18 @@ public class DeckSelectorDialog {
             String ydkFileName = src.getName();
             String targetCatName = target.category.categoryName;
             File dest = new File(targetDir, ydkFileName);
+            if (dest.exists()) {
+                YGOUtil.show(mStringManager.getSystemString(1475, "已存在同名卡组"), Gravity.CENTER);
+                return;
+            }
             new File(targetDir).mkdirs();
             if (src.renameTo(dest)) {
-                Toast.makeText(context, "移动成功", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("移动成功", Gravity.CENTER);
                 dialog.dismiss();
                 reloadAndRefresh();
                 selectCategoryAndDeck(targetCatName, ydkFileName);
             } else {
-                Toast.makeText(context, "移动失败", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("移动失败", Gravity.CENTER);
             }
         });
         dialog.show();
@@ -829,7 +825,7 @@ public class DeckSelectorDialog {
         Activity activity = getActivity();
         if (activity == null) return;
         if (selectedDeckPath[0].isEmpty()) {
-            Toast.makeText(context, "请先选择一个卡组", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("请先选择一个卡组", Gravity.CENTER);
             return;
         }
 
@@ -842,21 +838,24 @@ public class DeckSelectorDialog {
             }
         }
         if (otherNames.isEmpty()) {
-            Toast.makeText(context, "没有其他分类", Toast.LENGTH_SHORT).show();
+            YGOUtil.show("没有其他分类", Gravity.CENTER);
             return;
         }
 
         SimpleListAdapter adapter = new SimpleListAdapter(context);
         adapter.set(otherNames);
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle("复制到分类");
         ListView listView = new ListView(context);
         listView.setBackgroundColor(0xFF1A3A4A);
         listView.setDivider(new android.graphics.drawable.ColorDrawable(0xFF3A5A6B));
         listView.setDividerHeight(1);
-        dialog.setContentView(listView);
         listView.setAdapter(adapter);
+
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1473, "请选择要复制到的分类:"));
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
+        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
+        dialog.setContentView(listView);
         listView.setOnItemClickListener((parent, view, pos, id) -> {
             CategoryInfo target = otherInfos.get(pos);
             String targetDir = target.isSystem ? target.baseDirPath
@@ -865,14 +864,18 @@ public class DeckSelectorDialog {
             String ydkFileName = src.getName();
             String targetCatName = target.category.categoryName;
             File dest = new File(targetDir, ydkFileName);
+            if (dest.exists()) {
+                YGOUtil.show(mStringManager.getSystemString(1475, "已存在同名卡组"), Gravity.CENTER);
+                return;
+            }
             new File(targetDir).mkdirs();
             if (copyFile(src, dest)) {
-                Toast.makeText(context, "复制成功", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("复制成功", Gravity.CENTER);
                 dialog.dismiss();
                 reloadAndRefresh();
                 selectCategoryAndDeck(targetCatName, ydkFileName);
             } else {
-                Toast.makeText(context, "复制失败", Toast.LENGTH_SHORT).show();
+                YGOUtil.show("复制失败", Gravity.CENTER);
             }
         });
         dialog.show();
@@ -939,9 +942,20 @@ public class DeckSelectorDialog {
             notifyDataSetChanged();
         }
 
-        @Override public int getCount() { return categories.size(); }
-        @Override public Object getItem(int position) { return categories.get(position); }
-        @Override public long getItemId(int position) { return position; }
+        @Override
+        public int getCount() {
+            return categories.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return categories.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -961,7 +975,9 @@ public class DeckSelectorDialog {
             return convertView;
         }
 
-        private static class ViewHolder { TextView textView; }
+        private static class ViewHolder {
+            TextView textView;
+        }
     }
 
     private static class DeckListAdapter extends BaseAdapter {
@@ -980,9 +996,20 @@ public class DeckSelectorDialog {
             notifyDataSetChanged();
         }
 
-        @Override public int getCount() { return decks.size(); }
-        @Override public Object getItem(int position) { return decks.get(position); }
-        @Override public long getItemId(int position) { return position; }
+        @Override
+        public int getCount() {
+            return decks.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return decks.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -1002,6 +1029,8 @@ public class DeckSelectorDialog {
             return convertView;
         }
 
-        private static class ViewHolder { TextView textView; }
+        private static class ViewHolder {
+            TextView textView;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.game;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
@@ -11,6 +12,8 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -151,6 +154,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private int availLm = 0;
     private Runnable pendingKeywordSearch;
     private final AtomicInteger searchGeneration = new AtomicInteger(0);
+    private final StringManager mStringManager = DataManager.get().getStringManager();
 
     public DeckEditorManager(Activity activity, ImageLoader imageLoader, CardDetailPanel cardDetailPanel) {
         this.activity = activity;
@@ -274,41 +278,40 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     private void setupLabels() {
-        StringManager sm = DataManager.get().getStringManager();
         if (btnSideFinish != null) {
-            btnSideFinish.setText(sm.getSystemString(1334, "副卡组替换完成"));
+            btnSideFinish.setText(mStringManager.getSystemString(1334, "副卡组替换完成"));
             btnSideFinish.setOnClickListener(v -> sideFinish());
         }
         if (btnSideShuffle != null) {
-            btnSideShuffle.setText(sm.getSystemString(1307, "打乱"));
+            btnSideShuffle.setText(mStringManager.getSystemString(1307, "打乱"));
             btnSideShuffle.setOnClickListener(v -> shuffleDeck());
         }
         if (btnSideSort != null) {
-            btnSideSort.setText(sm.getSystemString(1305, "排序"));
+            btnSideSort.setText(mStringManager.getSystemString(1305, "排序"));
             btnSideSort.setOnClickListener(v -> sortDeck());
         }
         if (btnSideReset != null) {
-            btnSideReset.setText(sm.getSystemString(1309, "重置"));
+            btnSideReset.setText(mStringManager.getSystemString(1309, "重置"));
             btnSideReset.setOnClickListener(v -> sideReset());
         }
-        setSystemLabel(tvLabelDeck, sm, 1300, "卡组:");
-        setSystemLabel(tvLabelType, sm, 1311, "种类:");
-        setSystemLabel(tvLabelAttribute, sm, 1319, "属性:");
-        setSystemLabel(tvLabelRace, sm, 1321, "种族:");
-        setSystemLabel(tvLabelStar, sm, 1324, "星数:");
-        setSystemLabel(tvLabelScale, sm, 1336, "刻度:");
-        setSystemLabel(tvLabelLimit, sm, 1315, "禁限:");
-        setSystemLabel(tvLabelAttack, sm, 1322, "攻击:");
-        setSystemLabel(tvLabelDefense, sm, 1323, "守备:");
-        setSystemLabel(tvLabelKeyword, sm, 1325, "关键字:");
-        setSystemLabel(tvLabelMainDeck, sm, isPackMode ? 1477 : 1330, "主卡组:");
-        setSystemLabel(tvLabelExtraDeck, sm, 1331, "额外卡组:");
-        setSystemLabel(tvLabelSideDeck, sm, 1332, "副卡组:");
-        searchResultPrefix = sm.getSystemString(1333, "搜索结果:");
+        setSystemLabel(tvLabelDeck, 1300, "卡组:");
+        setSystemLabel(tvLabelType, 1311, "种类:");
+        setSystemLabel(tvLabelAttribute, 1319, "属性:");
+        setSystemLabel(tvLabelRace, 1321, "种族:");
+        setSystemLabel(tvLabelStar, 1324, "星数:");
+        setSystemLabel(tvLabelScale, 1336, "刻度:");
+        setSystemLabel(tvLabelLimit, 1315, "禁限:");
+        setSystemLabel(tvLabelAttack, 1322, "攻击:");
+        setSystemLabel(tvLabelDefense, 1323, "守备:");
+        setSystemLabel(tvLabelKeyword, 1325, "关键字:");
+        setSystemLabel(tvLabelMainDeck, 1330, "主卡组:");
+        setSystemLabel(tvLabelExtraDeck, 1331, "额外卡组:");
+        setSystemLabel(tvLabelSideDeck, 1332, "副卡组:");
+        searchResultPrefix = mStringManager.getSystemString(1333, "搜索结果:");
     }
 
-    private void setSystemLabel(TextView tv, StringManager sm, int index, String def) {
-        if (tv != null) tv.setText(sm.getSystemString(index, def));
+    private void setSystemLabel(TextView tv, int index, String def) {
+        if (tv != null) tv.setText(mStringManager.getSystemString(index, def));
     }
 
 
@@ -344,7 +347,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         rvSearchResults.setAdapter(searchAdapter);
     }
 
-    private void setBitmapIfNotNull(ImageView iv, android.graphics.Bitmap bm) {
+    private void setBitmapIfNotNull(ImageView iv, Bitmap bm) {
         if (iv != null) iv.setImageBitmap(bm);
     }
 
@@ -439,8 +442,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (isPackMode == packMode) return;
         isPackMode = packMode;
         if (tvLabelMainDeck != null) {
-            StringManager sm = DataManager.get().getStringManager();
-            tvLabelMainDeck.setText(sm.getSystemString(packMode ? 1477 : 1330, "主卡组:"));
+            tvLabelMainDeck.setText(mStringManager.getSystemString(packMode ? 1477 : 1330, "主卡组:"));
         }
         int vis = packMode ? View.GONE : View.VISIBLE;
         if (layoutExtraStats != null) layoutExtraStats.setVisibility(vis);
@@ -494,86 +496,85 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     private void setupSpinners() {
-        StringManager sm = DataManager.get().getStringManager();
         int dropBg = YGOUtil.c(R.color.ygopro_list_background);
         List<SimpleSpinnerItem> typeItems = new ArrayList<>();
-        typeItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
-        typeItems.add(new SimpleSpinnerItem(1, sm.getSystemString(1312, "怪兽")));
-        typeItems.add(new SimpleSpinnerItem(2, sm.getSystemString(1313, "魔法")));
-        typeItems.add(new SimpleSpinnerItem(3, sm.getSystemString(1314, "陷阱")));
+        typeItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1310, "（无）")));
+        typeItems.add(new SimpleSpinnerItem(1, mStringManager.getSystemString(1312, "怪兽")));
+        typeItems.add(new SimpleSpinnerItem(2, mStringManager.getSystemString(1313, "魔法")));
+        typeItems.add(new SimpleSpinnerItem(3, mStringManager.getSystemString(1314, "陷阱")));
         if (spinnerFilterType != null) {
             spinnerFilterType.setAdapter(createSpinnerAdapter(typeItems, Color.WHITE, dropBg));
-            spinnerFilterType.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            spinnerFilterType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+                public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                     updateType2Spinner(pos);
                 }
 
                 @Override
-                public void onNothingSelected(android.widget.AdapterView<?> p) {
+                public void onNothingSelected(AdapterView<?> p) {
                     updateType2Spinner(0);
                 }
             });
         }
         updateType2Spinner(spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0);
         if (spinnerFilterType2 != null) {
-            spinnerFilterType2.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            spinnerFilterType2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+                public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                     updateDefenseEditState();
                 }
 
                 @Override
-                public void onNothingSelected(android.widget.AdapterView<?> p) {
+                public void onNothingSelected(AdapterView<?> p) {
                     updateDefenseEditState();
                 }
             });
         }
         List<SimpleSpinnerItem> attrItems = new ArrayList<>();
-        attrItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
+        attrItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1310, "（无）")));
         for (CardAttribute attr : CardAttribute.values())
-            attrItems.add(new SimpleSpinnerItem(attr.getId(), sm.getSystemString(attr.getLanguageIndex(), attr.name())));
+            attrItems.add(new SimpleSpinnerItem(attr.getId(), mStringManager.getSystemString(attr.getLanguageIndex(), attr.name())));
         attrAdapter = createSpinnerAdapter(attrItems, Color.WHITE, dropBg);
         if (spinnerFilterAttribute != null) spinnerFilterAttribute.setAdapter(attrAdapter);
         List<SimpleSpinnerItem> raceItems = new ArrayList<>();
-        raceItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
+        raceItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1310, "（无）")));
         for (CardRace race : CardRace.values())
-            raceItems.add(new SimpleSpinnerItem(race.value(), sm.getSystemString(race.getLanguageIndex(), race.name())));
+            raceItems.add(new SimpleSpinnerItem(race.value(), mStringManager.getSystemString(race.getLanguageIndex(), race.name())));
         raceAdapter = createSpinnerAdapter(raceItems, Color.WHITE, dropBg);
         if (spinnerFilterRace != null) spinnerFilterRace.setAdapter(raceAdapter);
         updateType2Spinner(spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0);
         List<SimpleSpinnerItem> limitItems = new ArrayList<>();
-        limitItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1310, "（无）")));
-        limitItems.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), sm.getSystemString(LimitType.Forbidden.getLanguageIndex(), LimitType.Forbidden.name())));
-        limitItems.add(new SimpleSpinnerItem(LimitType.Limit.getId(), sm.getSystemString(LimitType.Limit.getLanguageIndex(), LimitType.Limit.name())));
-        limitItems.add(new SimpleSpinnerItem(LimitType.SemiLimit.getId(), sm.getSystemString(LimitType.SemiLimit.getLanguageIndex(), LimitType.SemiLimit.name())));
-        limitItems.add(new SimpleSpinnerItem(LimitType.GeneSys.getId(), sm.getSystemString(LimitType.GeneSys.getLanguageIndex(), LimitType.GeneSys.name())));
-        limitItems.add(new SimpleSpinnerItem(6, sm.getSystemString(1481, "OCG")));
-        limitItems.add(new SimpleSpinnerItem(7, sm.getSystemString(1482, "TCG")));
-        limitItems.add(new SimpleSpinnerItem(8, sm.getSystemString(1483, "简体中文")));
-        limitItems.add(new SimpleSpinnerItem(9, sm.getSystemString(1484, "自定义")));
-        limitItems.add(new SimpleSpinnerItem(10, sm.getSystemString(1487, "OCG独有")));
-        limitItems.add(new SimpleSpinnerItem(11, sm.getSystemString(1488, "TCG独有")));
-        limitItems.add(new SimpleSpinnerItem(12, sm.getSystemString(1485, "无独有卡")));
+        limitItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1310, "（无）")));
+        limitItems.add(new SimpleSpinnerItem(LimitType.Forbidden.getId(), mStringManager.getSystemString(LimitType.Forbidden.getLanguageIndex(), LimitType.Forbidden.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.Limit.getId(), mStringManager.getSystemString(LimitType.Limit.getLanguageIndex(), LimitType.Limit.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.SemiLimit.getId(), mStringManager.getSystemString(LimitType.SemiLimit.getLanguageIndex(), LimitType.SemiLimit.name())));
+        limitItems.add(new SimpleSpinnerItem(LimitType.GeneSys.getId(), mStringManager.getSystemString(LimitType.GeneSys.getLanguageIndex(), LimitType.GeneSys.name())));
+        limitItems.add(new SimpleSpinnerItem(6, mStringManager.getSystemString(1481, "OCG")));
+        limitItems.add(new SimpleSpinnerItem(7, mStringManager.getSystemString(1482, "TCG")));
+        limitItems.add(new SimpleSpinnerItem(8, mStringManager.getSystemString(1483, "简体中文")));
+        limitItems.add(new SimpleSpinnerItem(9, mStringManager.getSystemString(1484, "自定义")));
+        limitItems.add(new SimpleSpinnerItem(10, mStringManager.getSystemString(1487, "OCG独有")));
+        limitItems.add(new SimpleSpinnerItem(11, mStringManager.getSystemString(1488, "TCG独有")));
+        limitItems.add(new SimpleSpinnerItem(12, mStringManager.getSystemString(1485, "无独有卡")));
         if (spinnerFilterLimit != null) {
             spinnerFilterLimit.setAdapter(createSpinnerAdapter(limitItems, Color.WHITE, dropBg));
-            spinnerFilterLimit.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            spinnerFilterLimit.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+                public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                     applyAvailDisplay((int) SimpleSpinnerAdapter.getSelect(spinnerFilterLimit));
                 }
 
                 @Override
-                public void onNothingSelected(android.widget.AdapterView<?> p) {
+                public void onNothingSelected(AdapterView<?> p) {
                     applyAvailDisplay(0);
                 }
             });
         }
         List<SimpleSpinnerItem> sortItems = new ArrayList<>();
-        sortItems.add(new SimpleSpinnerItem(0, sm.getSystemString(1370, "星数↑")));
-        sortItems.add(new SimpleSpinnerItem(1, sm.getSystemString(1371, "攻击↑")));
-        sortItems.add(new SimpleSpinnerItem(2, sm.getSystemString(1372, "守备↑")));
-        sortItems.add(new SimpleSpinnerItem(3, sm.getSystemString(1373, "名称↓")));
+        sortItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1370, "星数↑")));
+        sortItems.add(new SimpleSpinnerItem(1, mStringManager.getSystemString(1371, "攻击↑")));
+        sortItems.add(new SimpleSpinnerItem(2, mStringManager.getSystemString(1372, "守备↑")));
+        sortItems.add(new SimpleSpinnerItem(3, mStringManager.getSystemString(1373, "名称↓")));
         if (spinnerSortType != null)
             spinnerSortType.setAdapter(createSpinnerAdapter(sortItems, Color.WHITE, dropBg));
     }
@@ -588,9 +589,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     private void setupButtons() {
-        StringManager sm = DataManager.get().getStringManager();
-        if (btnSave != null) btnSave.setText(sm.getSystemString(1302, "保存"));
-        if (btnSaveAs != null) btnSaveAs.setText(sm.getSystemString(1303, "另存"));
+        if (btnSave != null) btnSave.setText(mStringManager.getSystemString(1302, "保存"));
+        if (btnSaveAs != null) btnSaveAs.setText(mStringManager.getSystemString(1303, "另存"));
         setClickListener(btnExit, v -> terminate());
         setClickListener(btnShuffle, v -> shuffleDeck());
         setClickListener(btnSort, v -> sortDeck());
@@ -608,7 +608,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private void setupKeywordInput() {
         if (etKeyword == null) return;
         etKeyword.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 startFilter();
                 return true;
             }
@@ -643,26 +643,25 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private void updateType2Spinner(int typePos) {
         if (spinnerFilterType2 == null) return;
         boolean enabled = typePos != 0;
-        StringManager sm = DataManager.get().getStringManager();
         List<SimpleSpinnerItem> items = new ArrayList<>();
-        items.add(new SimpleSpinnerItem(0, sm.getSystemString(1080, "（N/A）")));
+        items.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1080, "（N/A）")));
         long m = CardType.Monster.getId();
         switch (typePos) {
             case 1:
-                addSpinnerItems(items, sm, m);
+                addSpinnerItems(items, m);
                 break;
             case 2:
-                items.add(new SimpleSpinnerItem(CardType.Spell.getId(), sm.getSystemString(1054, "通常")));
-                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.QuickPlay.getId(), sm.getSystemString(1066, "速攻")));
-                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Continuous.getId(), sm.getSystemString(1067, "永续")));
-                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Ritual.getId(), sm.getSystemString(1057, "仪式")));
-                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Equip.getId(), sm.getSystemString(1068, "装备")));
-                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Field.getId(), sm.getSystemString(1069, "场地")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId(), mStringManager.getSystemString(1054, "通常")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.QuickPlay.getId(), mStringManager.getSystemString(1066, "速攻")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Continuous.getId(), mStringManager.getSystemString(1067, "永续")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Ritual.getId(), mStringManager.getSystemString(1057, "仪式")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Equip.getId(), mStringManager.getSystemString(1068, "装备")));
+                items.add(new SimpleSpinnerItem(CardType.Spell.getId() | CardType.Field.getId(), mStringManager.getSystemString(1069, "场地")));
                 break;
             case 3:
-                items.add(new SimpleSpinnerItem(CardType.Trap.getId(), sm.getSystemString(1054, "通常")));
-                items.add(new SimpleSpinnerItem(CardType.Trap.getId() | CardType.Continuous.getId(), sm.getSystemString(1067, "永续")));
-                items.add(new SimpleSpinnerItem(CardType.Trap.getId() | CardType.Counter.getId(), sm.getSystemString(1070, "反击")));
+                items.add(new SimpleSpinnerItem(CardType.Trap.getId(), mStringManager.getSystemString(1054, "通常")));
+                items.add(new SimpleSpinnerItem(CardType.Trap.getId() | CardType.Continuous.getId(), mStringManager.getSystemString(1067, "永续")));
+                items.add(new SimpleSpinnerItem(CardType.Trap.getId() | CardType.Counter.getId(), mStringManager.getSystemString(1070, "反击")));
                 break;
             default:
                 break;
@@ -684,25 +683,25 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         updateDefenseEditState();
     }
 
-    private void addSpinnerItems(List<SimpleSpinnerItem> items, StringManager sm, long m) {
-        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId(), sm.getSystemString(1054, "通常")));
-        items.add(new SimpleSpinnerItem(m | CardType.Effect.getId(), sm.getSystemString(1055, "效果")));
-        items.add(new SimpleSpinnerItem(m | CardType.Fusion.getId(), sm.getSystemString(1056, "融合")));
-        items.add(new SimpleSpinnerItem(m | CardType.Ritual.getId(), sm.getSystemString(1057, "仪式")));
-        items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId(), sm.getSystemString(1063, "同调")));
-        items.add(new SimpleSpinnerItem(m | CardType.Xyz.getId(), sm.getSystemString(1073, "超量")));
-        items.add(new SimpleSpinnerItem(m | CardType.Pendulum.getId(), sm.getSystemString(1074, "灵摆")));
-        items.add(new SimpleSpinnerItem(m | CardType.Link.getId(), sm.getSystemString(1076, "连接")));
-        items.add(new SimpleSpinnerItem(m | CardType.Sp_Summon.getId(), sm.getSystemString(1075, "特殊召唤")));
-        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Tuner.getId(), sm.getSystemString(1054, "通常") + "|" + sm.getSystemString(1062, "调整")));
-        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Pendulum.getId(), sm.getSystemString(1054, "通常") + "|" + sm.getSystemString(1074, "灵摆")));
-        items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId() | CardType.Tuner.getId(), sm.getSystemString(1063, "同调") + "|" + sm.getSystemString(1062, "调整")));
-        items.add(new SimpleSpinnerItem(m | CardType.Tuner.getId(), sm.getSystemString(1062, "调整")));
-        items.add(new SimpleSpinnerItem(m | CardType.Gemini.getId(), sm.getSystemString(1061, "二重")));
-        items.add(new SimpleSpinnerItem(m | CardType.Union.getId(), sm.getSystemString(1060, "同盟")));
-        items.add(new SimpleSpinnerItem(m | CardType.Spirit.getId(), sm.getSystemString(1059, "灵魂")));
-        items.add(new SimpleSpinnerItem(m | CardType.Flip.getId(), sm.getSystemString(1071, "反转")));
-        items.add(new SimpleSpinnerItem(m | CardType.Toon.getId(), sm.getSystemString(1072, "卡通")));
+    private void addSpinnerItems(List<SimpleSpinnerItem> items, long m) {
+        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId(), mStringManager.getSystemString(1054, "通常")));
+        items.add(new SimpleSpinnerItem(m | CardType.Effect.getId(), mStringManager.getSystemString(1055, "效果")));
+        items.add(new SimpleSpinnerItem(m | CardType.Fusion.getId(), mStringManager.getSystemString(1056, "融合")));
+        items.add(new SimpleSpinnerItem(m | CardType.Ritual.getId(), mStringManager.getSystemString(1057, "仪式")));
+        items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId(), mStringManager.getSystemString(1063, "同调")));
+        items.add(new SimpleSpinnerItem(m | CardType.Xyz.getId(), mStringManager.getSystemString(1073, "超量")));
+        items.add(new SimpleSpinnerItem(m | CardType.Pendulum.getId(), mStringManager.getSystemString(1074, "灵摆")));
+        items.add(new SimpleSpinnerItem(m | CardType.Link.getId(), mStringManager.getSystemString(1076, "连接")));
+        items.add(new SimpleSpinnerItem(m | CardType.Sp_Summon.getId(), mStringManager.getSystemString(1075, "特殊召唤")));
+        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Tuner.getId(), mStringManager.getSystemString(1054, "通常") + "|" + mStringManager.getSystemString(1062, "调整")));
+        items.add(new SimpleSpinnerItem(m | CardType.Normal.getId() | CardType.Pendulum.getId(), mStringManager.getSystemString(1054, "通常") + "|" + mStringManager.getSystemString(1074, "灵摆")));
+        items.add(new SimpleSpinnerItem(m | CardType.Synchro.getId() | CardType.Tuner.getId(), mStringManager.getSystemString(1063, "同调") + "|" + mStringManager.getSystemString(1062, "调整")));
+        items.add(new SimpleSpinnerItem(m | CardType.Tuner.getId(), mStringManager.getSystemString(1062, "调整")));
+        items.add(new SimpleSpinnerItem(m | CardType.Gemini.getId(), mStringManager.getSystemString(1061, "二重")));
+        items.add(new SimpleSpinnerItem(m | CardType.Union.getId(), mStringManager.getSystemString(1060, "同盟")));
+        items.add(new SimpleSpinnerItem(m | CardType.Spirit.getId(), mStringManager.getSystemString(1059, "灵魂")));
+        items.add(new SimpleSpinnerItem(m | CardType.Flip.getId(), mStringManager.getSystemString(1071, "反转")));
+        items.add(new SimpleSpinnerItem(m | CardType.Toon.getId(), mStringManager.getSystemString(1072, "卡通")));
     }
 
 
@@ -724,7 +723,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     /**
      * 启用/禁用EditText：禁用时清空内容并将文字变灰
      */
-    private void setEditTextEnabled(android.widget.EditText et, boolean enabled) {
+    private void setEditTextEnabled(EditText et, boolean enabled) {
         if (et == null) return;
         et.setEnabled(enabled);
         if (!enabled) {
@@ -803,7 +802,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                     btnDeckManager.setText(currentDeckName);
                 }
             } else {
-                btnDeckManager.setText(DataManager.get().getStringManager().getSystemString(1460, "卡组管理"));
+                btnDeckManager.setText(mStringManager.getSystemString(1460, "卡组管理"));
             }
         }
     }
@@ -976,7 +975,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (currentDeck.mainCards.size() != preMainCount
                 || currentDeck.extraCards.size() != preExtraCount
                 || currentDeck.sideCards.size() != preSideCount) {
-            YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1410, "副卡组替换不能改变卡组张数"));
+            YGOUtil.showTextToast(mStringManager.getSystemString(1410, "副卡组替换不能改变卡组张数"));
             return;
         }
         List<Integer> main = new ArrayList<>();
@@ -998,7 +997,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     // === 对应 deck_con.cpp: BUTTON_CLEAR_DECK ===
     public void clearDeck() {
         if (isReadonly) return;
-        showConfirmDialog(DataManager.get().getStringManager().getSystemString(1339, "是否清空正在编辑的卡组？"), () -> {
+        showConfirmDialog(mStringManager.getSystemString(1339, "是否清空正在编辑的卡组？"), () -> {
             currentDeck.mainCards.clear();
             currentDeck.extraCards.clear();
             currentDeck.sideCards.clear();
@@ -1479,19 +1478,20 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     private boolean matchesKeywordFilter(Card card, List<String> terms) {
         if (terms.isEmpty()) return true;
-        StringManager sm = DataManager.get().getStringManager();
         for (String term : terms) {
             boolean exclude = term.startsWith("-") && term.length() > 1;
             String body = exclude ? term.substring(1) : term;
             boolean matched = false;
             if (body.startsWith("@") && body.length() > 1) {
                 String setName = body.substring(1);
-                long setcode = sm.getSetCode(setName, true);
+                long setcode = mStringManager.getSetCode(setName, true);
                 if (setcode != 0 && card.isSetCode(setcode)) matched = true;
             } else {
                 String searchText = body.isEmpty() ? term : body;
-                if (card.Name != null && card.Name.toLowerCase().contains(searchText)) matched = true;
-                if (card.Desc != null && card.Desc.toLowerCase().contains(searchText)) matched = true;
+                if (card.Name != null && card.Name.toLowerCase().contains(searchText))
+                    matched = true;
+                if (card.Desc != null && card.Desc.toLowerCase().contains(searchText))
+                    matched = true;
                 if (String.valueOf(card.Code).equals(searchText)) matched = true;
             }
             if (exclude && matched) return false;
