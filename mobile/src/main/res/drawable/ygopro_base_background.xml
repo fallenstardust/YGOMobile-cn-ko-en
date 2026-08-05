@@ -4,7 +4,7 @@
     <solid android:color="@color/ygopro_list_background" />
     <corners android:radius="2dp" />
     <stroke
-        android:width="0.5dp"
+        android:width="0.3dp"
         android:color="@color/ygopro_line_color" />
     <padding
         android:left="1dp"

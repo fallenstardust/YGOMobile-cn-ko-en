@@ -714,6 +714,7 @@ public class DeckSelectorDialog {
 
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         dialog.setTitle(mStringManager.getSystemString(1471, "请输入卡组名:"));
+        dialog.setContentView(editText);
         dialog.setType(YesOrNoDialog.TYPE_YES_NO);
         dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
         dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));

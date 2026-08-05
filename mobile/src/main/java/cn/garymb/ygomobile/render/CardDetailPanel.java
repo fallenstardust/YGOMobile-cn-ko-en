@@ -188,7 +188,7 @@ public class CardDetailPanel {
             tvCardLevel.setText("");
         }
         if (tvCardDesc != null) {
-            tvCardDesc.setText("点击场上的卡片查看详细信息");
+            tvCardDesc.setText("");
         }
     }
 
