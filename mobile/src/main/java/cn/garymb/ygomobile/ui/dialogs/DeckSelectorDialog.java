@@ -754,10 +754,11 @@ public class DeckSelectorDialog {
 
         CategoryInfo ci = getSelectedCategoryInfo();
         String catName = ci != null ? ci.category.categoryName : "";
+        boolean isUncategorized = ci != null && ci.sortPriority <= 2;
 
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         dialog.setTitle(mStringManager.getSystemString(1337, "是否删除这个卡组？"));
-        dialog.setMessage(catName + "|" + selectedDeckName[0]);
+        dialog.setMessage(isUncategorized ? selectedDeckName[0] : catName + "|" + selectedDeckName[0]);
         dialog.setMessageBackgroundColor(YGOUtil.c(R.color.colorNavy));
         dialog.setMessageGravity(Gravity.CENTER);
         dialog.setType(YesOrNoDialog.TYPE_YES_NO);
