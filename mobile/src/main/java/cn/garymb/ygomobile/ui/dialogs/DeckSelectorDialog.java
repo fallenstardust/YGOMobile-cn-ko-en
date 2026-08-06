@@ -69,6 +69,7 @@ public class DeckSelectorDialog {
 
     //是否显示"卡包展示"分类（ygocore/pack）：卡组编辑器调用时为true，玩家等待界面默认false
     private boolean includePackCategory = false;
+    private boolean disableOperationButtons = false;
 
     private final List<Button> operationButtons = new ArrayList<>();
 
@@ -113,6 +114,10 @@ public class DeckSelectorDialog {
      */
     public void setIncludePackCategory(boolean include) {
         this.includePackCategory = include;
+    }
+
+    public void setDisableOperationButtons(boolean disable) {
+        this.disableOperationButtons = disable;
     }
 
     public void show(View anchorView) {
@@ -240,6 +245,10 @@ public class DeckSelectorDialog {
         draggableHelper = new DraggablePopupHelper(context, "deck_selector_dialog");
         draggableHelper.setupDraggablePopup(popupWindow, contentView, popupWidth, popupHeight);
         draggableHelper.showPopup(popupWindow, anchorView, Gravity.CENTER, (int) (100 * density), (int) (-20 * density));
+
+        if (disableOperationButtons) {
+            setOperationButtonsEnabled(false);
+        }
     }
 
     public void dismiss() {
@@ -256,6 +265,10 @@ public class DeckSelectorDialog {
     }
 
     private void updateButtonStates() {
+        if (disableOperationButtons) {
+            setOperationButtonsEnabled(false);
+            return;
+        }
         if (selectedCategoryPos[0] < 0 || selectedCategoryPos[0] >= catInfos.size()) {
             setButtonEnabled(btnRenameCategory, false);
             setButtonEnabled(btnDeleteCategory, false);
@@ -939,7 +952,7 @@ public class DeckSelectorDialog {
     // ==================== 适配器 ====================
 
     private static class CategoryListAdapter extends BaseAdapter {
-        private static final int SELECTED_BG_COLOR = YGOUtil.c(R.color.colorMain);
+        private static final int SELECTED_BG_COLOR = YGOUtil.c(R.color.ygopro_line_color);
         private Context context;
         private List<DeckSelectorUtil.DeckCategory> categories;
         private int selectedPosition = -1;
@@ -998,7 +1011,7 @@ public class DeckSelectorDialog {
     }
 
     private static class DeckListAdapter extends BaseAdapter {
-        private static final int SELECTED_BG_COLOR = YGOUtil.c(R.color.colorMain);
+        private static final int SELECTED_BG_COLOR = YGOUtil.c(R.color.ygopro_line_color);
         private Context context;
         private List<DeckSelectorUtil.DeckItem> decks;
         private int selectedPosition = -1;

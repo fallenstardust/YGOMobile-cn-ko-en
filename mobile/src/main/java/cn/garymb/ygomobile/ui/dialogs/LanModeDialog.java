@@ -179,6 +179,7 @@ public class LanModeDialog {
         loadLastDeckInfo(btnPwDeckSelect);
 
         deckSelectorDialog = new DeckSelectorDialog(context);
+        deckSelectorDialog.setDisableOperationButtons(true);
         deckSelectorDialog.setOnDeckSelectedListener(new DeckSelectorDialog.OnDeckSelectedListener() {
             @Override
             public void onDeckSelected(String deckPath, String deckName, String categoryName) {
@@ -198,7 +199,6 @@ public class LanModeDialog {
         btnPwDeckSelect.setOnClickListener(v -> {
             if (deckSelectorDialog != null) {
                 deckSelectorDialog.show(btnPwDeckSelect);
-                deckSelectorDialog.setOperationButtonsEnabled(false);
             }
         });
 

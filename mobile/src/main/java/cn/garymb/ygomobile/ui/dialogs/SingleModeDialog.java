@@ -25,20 +25,26 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
-import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.utils.BotUtil;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
 
 public class SingleModeDialog {
 
     private Context context;
     private PopupWindow popupWindow;
     private DraggablePopupHelper draggableHelper;
+    private final StringManager mStringManager = DataManager.get().getStringManager();
 
     public interface OnSingleModeListener {
         void onStartBotDuel(String botCommand, String deckFile,
                             int duelRule, boolean noCheckDeck, boolean noShuffleDeck);
+
         void onStartSingleMode(String luaFilePath);
     }
 
@@ -69,10 +75,13 @@ public class SingleModeDialog {
         Button btnStartBotDuel = customView.findViewById(R.id.btn_start_bot_duel);
         Button btnExitBot = customView.findViewById(R.id.btn_exit_bot);
 
-        String[] rules = {"大师规则（2020）", "新大师规则", "大师规则3"};
-        ArrayAdapter<String> ruleAdapter = new ArrayAdapter<>(context,
-                android.R.layout.simple_spinner_item, rules);
-        ruleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        List<SimpleSpinnerItem> ruleItems = new ArrayList<>();
+        ruleItems.add(new SimpleSpinnerItem(5, mStringManager.getSystemString(1264, "大师规则（2020）")));
+        ruleItems.add(new SimpleSpinnerItem(4, mStringManager.getSystemString(1263, "新大师规则")));
+        ruleItems.add(new SimpleSpinnerItem(3, mStringManager.getSystemString(1262, "大师规则3")));
+
+        SimpleSpinnerAdapter ruleAdapter = new SimpleSpinnerAdapter(context);
+        ruleAdapter.set(ruleItems);
         spinnerRule.setAdapter(ruleAdapter);
         spinnerRule.setSelection(0);
 
@@ -93,12 +102,12 @@ public class SingleModeDialog {
         final SimpleListAdapter puzzleAdapter = new SimpleListAdapter(context);
         puzzleAdapter.set(puzzleNames);
 
-        tabLayoutMode.addTab(tabLayoutMode.newTab().setText("人机模式(双方无禁)"));
-        tabLayoutMode.addTab(tabLayoutMode.newTab().setText("残局模式(含教学局)"));
+        tabLayoutMode.addTab(tabLayoutMode.newTab().setText(mStringManager.getSystemString(1380, "人机模式(双方无禁)")));
+        tabLayoutMode.addTab(tabLayoutMode.newTab().setText(mStringManager.getSystemString(1381, "残局模式(含教学局)")));
 
         lvBotList.setAdapter(botAdapter);
-        tvBotDesc.setText("请选择一个AI查看信息");
-        btnSelectDeck.setVisibility(View.GONE);
+        tvBotDesc.setText(mStringManager.getSystemString(1382, "请选择一个AI查看信息"));
+        btnSelectDeck.setVisibility(View.INVISIBLE);
         btnStartBotDuel.setEnabled(false);
         btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
         spinnerRule.setVisibility(View.VISIBLE);
@@ -110,6 +119,7 @@ public class SingleModeDialog {
 
         btnSelectDeck.setOnClickListener(v -> {
             DeckSelectorDialog deckDialog = new DeckSelectorDialog(context);
+            deckDialog.setDisableOperationButtons(true);
             deckDialog.setOnDeckSelectedListener(new DeckSelectorDialog.OnDeckSelectedListener() {
 
                 @Override
@@ -138,7 +148,7 @@ public class SingleModeDialog {
                 if (position >= 0 && position < botList.size()) {
                     BotUtil.BotInfo bot = botList.get(position);
                     tvBotDesc.setText(bot.description != null ? bot.description : "");
-                    btnSelectDeck.setVisibility(bot.supportsDeckSelection ? View.VISIBLE : View.GONE);
+                    btnSelectDeck.setVisibility(bot.supportsDeckSelection ? View.VISIBLE : View.INVISIBLE);
                 }
             } else {
                 puzzleAdapter.setSelectedPosition(position);
@@ -162,7 +172,7 @@ public class SingleModeDialog {
                     botAdapter.setSelectedPosition(-1);
                     puzzleAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText("请选择一个AI查看信息");
-                    btnSelectDeck.setVisibility(View.GONE);
+                    btnSelectDeck.setVisibility(View.INVISIBLE);
                     btnStartBotDuel.setEnabled(false);
                     btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
                     spinnerRule.setVisibility(View.VISIBLE);
@@ -174,10 +184,10 @@ public class SingleModeDialog {
                     puzzleAdapter.setSelectedPosition(-1);
                     botAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText("选择一个残局开始挑战。");
-                    btnSelectDeck.setVisibility(View.GONE);
+                    btnSelectDeck.setVisibility(View.INVISIBLE);
                     btnStartBotDuel.setEnabled(false);
                     btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
-                    spinnerRule.setVisibility(View.GONE);
+                    spinnerRule.setVisibility(View.INVISIBLE);
                     chkAiOnlyScissors.setVisibility(View.GONE);
                     chkNoCheckDeck.setVisibility(View.GONE);
                     chkNoShuffleDeck.setVisibility(View.GONE);
@@ -214,7 +224,7 @@ public class SingleModeDialog {
         btnStartBotDuel.setOnClickListener(v -> {
             if (currentMode[0] == 0) {
                 if (selectedPosition[0] >= botList.size()) {
-                    Toast.makeText(context, "无效的AI选择", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, mStringManager.getSystemString(1421, "无效的AI选择"), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -227,8 +237,7 @@ public class SingleModeDialog {
                 // 仅支持自选卡组(SELECT_DECKFILE)的 AI 才把所选卡组作为 P2 卡组传出，
                 // 其余 AI 使用其在bot.conf 中通过 Deck= 指定的内置卡组。
                 String deckFile = selectedBot.supportsDeckSelection ? selectedDeckPath : "";
-                // spinnerRule: 0=大师规则(2020)->5, 1=新大师规则->4, 2=大师规则3->3
-                int duelRule = 5 - spinnerRule.getSelectedItemPosition();
+                int duelRule = (int) SimpleSpinnerAdapter.getSelect(spinnerRule);
                 boolean noCheckDeck = chkNoCheckDeck.isChecked();
                 boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
 
@@ -238,7 +247,7 @@ public class SingleModeDialog {
                 }
             } else {
                 if (selectedPosition[0] >= puzzleList.size()) {
-                    Toast.makeText(context, "无效的残局选择", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, mStringManager.getSystemString(1421, "无效的残局选择"), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -274,7 +283,7 @@ public class SingleModeDialog {
                 btnSelectDeck.setText(selectedDeckName);
             }
         } else {
-            btnSelectDeck.setText("选择卡组");
+            btnSelectDeck.setText(mStringManager.getSystemString(1254, "选择卡组"));
         }
     }
 

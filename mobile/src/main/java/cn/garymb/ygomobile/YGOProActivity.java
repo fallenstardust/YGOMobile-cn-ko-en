@@ -85,7 +85,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private LinearLayout layoutDeckControl;
     private LinearLayout layoutGameRight;
-
+    private View layoutGameContent;
     private int currentSelectType = -1;
     private YesOrNoDialog currentDialog;
 
@@ -345,6 +345,8 @@ public class YGOProActivity extends AppCompatActivity implements
         dialogContainer = findViewById(R.id.dialog_container);
         layoutDeckControl = findViewById(R.id.layout_deck_control);
         layoutGameRight = findViewById(R.id.layout_game_right);
+        layoutGameContent = findViewById(R.id.layout_game_content);
+        if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
         etChatInput = findViewById(R.id.et_chat_input);
         setupChatInput();
 
@@ -352,6 +354,8 @@ public class YGOProActivity extends AppCompatActivity implements
         cardDetailPanel.bindViews();
         fieldCtl = new GameFieldController(this, mainHandler);
         fieldCtl.create();
+
+        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
     }
 
     private void setupChatInput() {
@@ -651,7 +655,6 @@ public class YGOProActivity extends AppCompatActivity implements
     // === Main Menu ===
 
     public void showMainMenu() {
-        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
         layoutMainMenu = findViewById(R.id.layout_main_menu);
         tvVersion = findViewById(R.id.tv_version);
         layoutMainMenu.setVisibility(View.VISIBLE);
@@ -691,7 +694,9 @@ public class YGOProActivity extends AppCompatActivity implements
     private void showGameUI() {
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG);
         hideMainMenu();
+        if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
+
         fieldCtl.show();
         cardDetailPanel.onGameUIShown();
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
@@ -909,6 +914,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showDeckEditorView() {
+        if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
         if (layoutDeckEditor == null) {
             layoutDeckEditor = findViewById(R.id.layout_deck_editor);
         }
