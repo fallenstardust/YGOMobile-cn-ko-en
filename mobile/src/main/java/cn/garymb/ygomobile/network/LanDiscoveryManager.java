@@ -14,7 +14,6 @@ import java.net.NetworkInterface;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -31,7 +30,6 @@ public class LanDiscoveryManager implements YGOProtocol {
     private static final int BROADCAST_SEND_PORT = 7920;
     private static final int BROADCAST_RECV_PORT = 7921;
     private static final int DISCOVERY_TIMEOUT_MS = 3000;
-    private static final int PRO_VERSION = 0x1362;
     private static final int DEFAULT_DUEL_RULE = 5;
 
     public static class HostEntry {

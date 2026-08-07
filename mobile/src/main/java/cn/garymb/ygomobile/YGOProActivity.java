@@ -586,10 +586,6 @@ public class YGOProActivity extends AppCompatActivity implements
         return soundManager;
     }
 
-    public int getProVersion() {
-        return PRO_VERSION;
-    }
-
     public void hideGameUI() {
         fieldCtl.hide();
         cardDetailPanel.onGameUIHidden();

@@ -84,9 +84,9 @@ public class MainMenuDialog {
     }
 
     private String getVersionText() {
-        int v1 = (activity.getProVersion() & 0xf000) >> 12;
-        int v2 = (activity.getProVersion() & 0x0ff0) >> 4;
-        int v3 = activity.getProVersion() & 0x000f;
+        int v1 = (Constants.PRO_VERSION & 0xf000) >> 12;
+        int v2 = (Constants.PRO_VERSION & 0x0ff0) >> 4;
+        int v3 = Constants.PRO_VERSION & 0x000f;
         return String.format("YGOPro Version:%X.0%X.%X", v1, v2, v3);
     }
 }
