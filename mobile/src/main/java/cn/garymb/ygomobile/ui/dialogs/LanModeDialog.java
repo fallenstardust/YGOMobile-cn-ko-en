@@ -24,8 +24,11 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
@@ -1211,5 +1214,59 @@ public class LanModeDialog {
         if (btnPwStartGame != null && isHost) {
             btnPwStartGame.setVisibility(View.VISIBLE);
         }
+    }
+
+    // === 静态入口：由 YGOProActivity 调用 ===
+
+    public static void showLanModeDialog(YGOProActivity activity) {
+        activity.getMainMenuDialog().hideMainMenu();
+        LanModeDialog dialog = new LanModeDialog(activity, activity);
+        activity.setLanModeDialog(dialog);
+        dialog.show(activity.getDialogContainer());
+        dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+    }
+
+    public static void showPlayerWaitingForDirectJoin(YGOProActivity activity, YGOGameOptions options) {
+        activity.hideGameUI();
+        String name = Constants.PlayerName;
+        if (options != null && options.mUserName != null && !options.mUserName.isEmpty()) {
+            name = options.mUserName;
+        }
+        final String playerName = name;
+        View anchor = activity.getDialogContainer();
+        anchor.post(() -> {
+            if (activity.isFinishing() || activity.isDestroyed()) return;
+            LanModeDialog dialog = new LanModeDialog(activity, activity);
+            activity.setLanModeDialog(dialog);
+            dialog.show(anchor);
+            dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+            if (options != null) {
+                dialog.preFillConnectionFields(
+                        options.mUserName,
+                        options.mServerAddr,
+                        String.valueOf(options.mPort),
+                        options.mRoomName
+                );
+            }
+            dialog.showPlayerWaiting();
+            dialog.setPlayerName(0, playerName);
+            activity.getSoundManager().playBGM(SoundManager.BGM.DUEL);
+        });
+    }
+
+    public static void showPlayerWaitingForBotHost(YGOProActivity activity) {
+        activity.hideGameUI();
+        final String playerName = Constants.PlayerName;
+        View anchor = activity.getDialogContainer();
+        anchor.post(() -> {
+            if (activity.isFinishing() || activity.isDestroyed()) return;
+            LanModeDialog dialog = new LanModeDialog(activity, activity);
+            activity.setLanModeDialog(dialog);
+            dialog.show(anchor);
+            dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+            dialog.showPlayerWaiting();
+            dialog.setPlayerName(0, playerName);
+            activity.getSoundManager().playBGM(SoundManager.BGM.DUEL);
+        });
     }
 }

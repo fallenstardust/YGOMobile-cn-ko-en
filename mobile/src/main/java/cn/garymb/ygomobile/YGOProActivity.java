@@ -27,7 +27,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -55,11 +54,12 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.TextureLoader;
-import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.MainMenuDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
@@ -90,15 +90,13 @@ public class YGOProActivity extends AppCompatActivity implements
     private YesOrNoDialog currentDialog;
 
     private FrameLayout dialogContainer;
-    private RelativeLayout layoutMainMenu;
-    private TextView tvVersion;
+    private MainMenuDialog mainMenuDialog;
     private LanModeDialog lanModeDialog;
 
     private EditText etChatInput;
 
     private boolean isMyTurn = false;
     private volatile boolean isGameStarted = false;
-    private DraggablePopupHelper mainMenuDragHelper;
 
     private ReplayEngine currentReplayEngine;
     private CardDetailPanel cardDetailPanel;
@@ -142,7 +140,7 @@ public class YGOProActivity extends AppCompatActivity implements
         setupBackPressedHandler();
 
         if (!handleDirectIntent(getIntent())) {
-            showMainMenu();
+            getMainMenuDialog().showMainMenu();
         }
     }
 
@@ -420,9 +418,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     public void quitReplay() {
-        if (currentReplayEngine != null) currentReplayEngine.stop();
-        hideReplayControls();
-        restoreMainMenu();
+        ReplayModeDialog.quitReplay(this);
     }
 
     public void toggleSoundMute() {
@@ -448,7 +444,7 @@ public class YGOProActivity extends AppCompatActivity implements
             long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
             if (System.currentTimeMillis() - time < YGOGameOptions.TIME_OUT) {
                 joinFromOptions(options);
-                showPlayerWaitingForDirectJoin(options);
+                LanModeDialog.showPlayerWaitingForDirectJoin(this, options);
                 return true;
             }
         }
@@ -465,7 +461,7 @@ public class YGOProActivity extends AppCompatActivity implements
             engine.connectToServer(host, port, false,
                     room != null ? room : "", "",
                     0, 0, 5, 8000, 5, 1, 0, false, false);
-            showPlayerWaitingForDirectJoin(null);
+            LanModeDialog.showPlayerWaitingForDirectJoin(this, null);
             return true;
         }
 
@@ -475,7 +471,7 @@ public class YGOProActivity extends AppCompatActivity implements
                     "Bot Game", "",
                     5, 0, 5, 8000, 5, 1, 0, true, false);
             engine.startBotDuel("127.0.0.1", 7911, "WindBot", "");
-            hideMainMenu();
+            getMainMenuDialog().hideMainMenu();
             return true;
         }
 
@@ -502,8 +498,8 @@ public class YGOProActivity extends AppCompatActivity implements
                 if (replayName != null) {
                     File replayFile = new File(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_REPLAY_PATH, replayName);
                     if (replayFile.exists()) {
-                        hideMainMenu();
-                        startReplayPlayback(replayFile.getAbsolutePath(), 1);
+                        getMainMenuDialog().hideMainMenu();
+                        ReplayModeDialog.startReplayPlayback(this, replayFile.getAbsolutePath(), 1);
                         return true;
                     }
                 } else {
@@ -519,7 +515,7 @@ public class YGOProActivity extends AppCompatActivity implements
                 if (singleName != null) {
                     File singleFile = new File(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SINGLE_PATH, singleName);
                     if (singleFile.exists()) {
-                        hideMainMenu();
+                        getMainMenuDialog().hideMainMenu();
                         engine.startSingleMode(singleFile.getAbsolutePath());
                         return true;
                     }
@@ -532,45 +528,18 @@ public class YGOProActivity extends AppCompatActivity implements
         }
 
         if (showReplayDialog) {
-            initMainMenuIfNeeded();
             directEnterMode = 1;
-            layoutMainMenu.post(() -> showReplayModeDialog());
+            dialogContainer.post(() -> ReplayModeDialog.showReplayModeDialog(this));
             return true;
         }
 
         if (showSingleDialog) {
-            initMainMenuIfNeeded();
             directEnterMode = 2;
-            layoutMainMenu.post(() -> showSingleModeDialog());
+            dialogContainer.post(() -> SingleModeDialog.showSingleModeDialog(this));
             return true;
         }
 
         return false;
-    }
-
-    private void initMainMenuIfNeeded() {
-        if (layoutMainMenu == null) {
-            layoutMainMenu = findViewById(R.id.layout_main_menu);
-            tvVersion = findViewById(R.id.tv_version);
-            bindMainMenuButtons();
-        }
-    }
-
-    private void bindMainMenuButtons() {
-        int v1 = (PRO_VERSION & 0xf000) >> 12;
-        int v2 = (PRO_VERSION & 0x0ff0) >> 4;
-        int v3 = PRO_VERSION & 0x000f;
-        tvVersion.setText(String.format("YGOPro Version:%X.0%X.%X", v1, v2, v3));
-
-        findViewById(R.id.btn_menu_lan).setOnClickListener(v -> showLanModeDialog());
-        findViewById(R.id.btn_menu_single).setOnClickListener(v -> showSingleModeDialog());
-        findViewById(R.id.btn_menu_replay).setOnClickListener(v -> showReplayModeDialog());
-        findViewById(R.id.btn_menu_deck).setOnClickListener(v -> showDeckEditDialog());
-        findViewById(R.id.btn_menu_settings).setOnClickListener(v -> showSettingsDialog());
-        findViewById(R.id.btn_menu_exit).setOnClickListener(v -> {
-            soundManager.stopBGM();
-            finish();
-        });
     }
 
     private void joinFromOptions(YGOGameOptions options) {
@@ -584,129 +553,60 @@ public class YGOProActivity extends AppCompatActivity implements
                 0, 0, 5, 8000, 5, 1, 0, false, false);
     }
 
-    private void showPlayerWaitingForDirectJoin(YGOGameOptions options) {
-        if (layoutMainMenu == null) {
-            layoutMainMenu = findViewById(R.id.layout_main_menu);
-            tvVersion = findViewById(R.id.tv_version);
-            bindMainMenuButtons();
-        }
-
-        hideGameUI();
-
-        String name = Constants.PlayerName;
-        if (options != null && options.mUserName != null && !options.mUserName.isEmpty()) {
-            name = options.mUserName;
-        }
-        final String playerName = name;
-
-        layoutMainMenu.post(() -> {
-            if (isFinishing() || isDestroyed()) return;
-
-            lanModeDialog = new LanModeDialog(this, this);
-            lanModeDialog.show(layoutMainMenu);
-            lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
-
-            if (options != null) {
-                lanModeDialog.preFillConnectionFields(
-                        options.mUserName,
-                        options.mServerAddr,
-                        String.valueOf(options.mPort),
-                        options.mRoomName
-                );
-            }
-
-            lanModeDialog.showPlayerWaiting();
-            lanModeDialog.setPlayerName(0, playerName);
-
-            soundManager.playBGM(SoundManager.BGM.DUEL);
-        });
-    }
-
-    /**
-     * 人机对战：以“主机”身份进入 LAN 的 player waiting 页面。
-     * 主机权限（开始/踢人按钮）由服务器回调 onTypeChange 自动开启，
-     * 房间信息由 onJoinGame 回调填充，WindBot 加入后会通过 onPlayerEnter 显示在房间中。
-     */
-    private void showPlayerWaitingForBotHost() {
-        if (layoutMainMenu == null) {
-            layoutMainMenu = findViewById(R.id.layout_main_menu);
-            tvVersion = findViewById(R.id.tv_version);
-            bindMainMenuButtons();
-        }
-
-        hideGameUI();
-
-        final String playerName = Constants.PlayerName;
-
-        layoutMainMenu.post(() -> {
-            if (isFinishing() || isDestroyed()) return;
-
-            lanModeDialog = new LanModeDialog(this, this);
-            lanModeDialog.show(layoutMainMenu);
-            lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
-
-            lanModeDialog.showPlayerWaiting();
-            lanModeDialog.setPlayerName(0, playerName);
-
-            soundManager.playBGM(SoundManager.BGM.DUEL);
-        });
-    }
-
     // === Main Menu ===
 
-    public void showMainMenu() {
-        layoutMainMenu = findViewById(R.id.layout_main_menu);
-        tvVersion = findViewById(R.id.tv_version);
-        layoutMainMenu.setVisibility(View.VISIBLE);
-
-        mainMenuDragHelper = new DraggablePopupHelper(this, "main_menu");
-        mainMenuDragHelper.setupDraggableView(layoutMainMenu);
-        mainMenuDragHelper.applySavedPositionToView(layoutMainMenu);
-
-        hideGameUI();
-        bindMainMenuButtons();
-
-        soundManager.playBGM(SoundManager.BGM.MENU);
-        applySettingsToEngine();
-    }
-
-    private void hideMainMenu() {
-        if (layoutMainMenu != null) {
-            layoutMainMenu.setVisibility(View.GONE);
+    public MainMenuDialog getMainMenuDialog() {
+        if (mainMenuDialog == null) {
+            mainMenuDialog = new MainMenuDialog(this);
         }
-        soundManager.playBGM(SoundManager.BGM.DUEL);
+        return mainMenuDialog;
     }
 
-    private void restoreMainMenu() {
-        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
-        if (layoutMainMenu != null) {
-            layoutMainMenu.setVisibility(View.VISIBLE);
-        }
+    public GameFieldController getFieldCtl() {
+        return fieldCtl;
     }
 
-    private void hideGameUI() {
+    public CardDetailPanel getCardDetailPanel() {
+        return cardDetailPanel;
+    }
+
+    public void setCurrentReplayEngine(ReplayEngine engine) {
+        currentReplayEngine = engine;
+    }
+
+    public View getDialogContainer() {
+        return dialogContainer;
+    }
+
+    public void setLanModeDialog(LanModeDialog dialog) {
+        lanModeDialog = dialog;
+    }
+
+    public SoundManager getSoundManager() {
+        return soundManager;
+    }
+
+    public int getProVersion() {
+        return PRO_VERSION;
+    }
+
+    public void hideGameUI() {
         fieldCtl.hide();
         cardDetailPanel.onGameUIHidden();
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
+        if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
     }
 
     private void showGameUI() {
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG);
-        hideMainMenu();
+        getMainMenuDialog().hideMainMenu();
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
 
         fieldCtl.show();
         cardDetailPanel.onGameUIShown();
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
-    }
-
-    private void showLanModeDialog() {
-        hideMainMenu();
-        lanModeDialog = new LanModeDialog(this, this);
-        lanModeDialog.show(layoutMainMenu);
-        lanModeDialog.setOnDismissListener(() -> restoreMainMenu());
     }
 
     @Override
@@ -765,7 +665,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onPlayerWaitingExit() {
         if (engine != null) engine.disconnect();
-        restoreMainMenu();
+        getMainMenuDialog().restoreMainMenu();
     }
 
     @Override
@@ -789,126 +689,14 @@ public class YGOProActivity extends AppCompatActivity implements
         }
     }
 
-    private void showSingleModeDialog() {
-        hideMainMenu();
-        File botConfFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH);
-        List<BotUtil.BotInfo> botList = parseBotConfig(botConfFile);
-
-        File singleDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_SINGLE_PATH);
-        List<PuzzleUtil.PuzzleInfo> puzzleList = loadPuzzleFiles(singleDir);
-
-        SingleModeDialog dialog = new SingleModeDialog(this, new SingleModeDialog.OnSingleModeListener() {
-            @Override
-            public void onStartBotDuel(String botCommand, String deckFile,
-                                       int duelRule, boolean noCheckDeck, boolean noShuffleDeck) {
-                engine.setBotMode(true);
-                engine.setPlayerName(Constants.PlayerName);
-                // 1. 建立局域网主机：参数对齐 duelclient.cpp 中 bot_mode 的 CTOS_CreateGame
-                //    rule=5(放开卡池) mode=0(单局) lflist=0 LP=8000 起手=5 抽卡=1 无时限；
-                //    duel_rule / no_check_deck / no_shuffle_deck 取自人机对战面板设置
-                engine.startLocalServerWithSettings(0, 5, 0, duelRule,
-                        noCheckDeck, noShuffleDeck,
-                        8000, 5, 1, 0,
-                        "Bot Game", "");
-                // 2. 切换进入 LAN 界面的 player waiting 页面（作为主机）
-                showPlayerWaitingForBotHost();
-                // 3. 启动 WindBot 连接本地主机并加入；deckFile 为 P2 指定卡组
-                engine.launchWindBot("127.0.0.1", 7911, botCommand, deckFile);
-            }
-
-            @Override
-            public void onStartSingleMode(String luaFilePath) {
-                engine.startSingleMode(luaFilePath);
-            }
-        });
-        dialog.show(layoutMainMenu, botList, puzzleList);
-        dialog.setOnDismissListener(() -> restoreMainMenu());
-    }
-
-    private void showReplayModeDialog() {
-        hideMainMenu();
-        File replayDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_REPLAY_PATH);
-        ReplayModeDialog dialog = new ReplayModeDialog(this, (replayPath, startTurn) -> {
-            startReplayPlayback(replayPath, startTurn);
-        });
-        dialog.show(layoutMainMenu, replayDir);
-        dialog.setOnDismissListener(() -> restoreMainMenu());
-    }
-
-    private void startReplayPlayback(String replayPath, int startTurn) {
-        if (engine == null) return;
-        ReplayEngine replayEngine = new ReplayEngine(engine.getField(), soundManager);
-        engine.setReplayEngine(replayEngine);
-        currentReplayEngine = replayEngine;
-
-        replayEngine.setListener(new ReplayEngine.ReplayListener() {
-            @Override
-            public void onReplayStateChanged(ReplayEngine.ReplayState state) {
-                runOnUiThread(() -> {
-                    switch (state) {
-                        case PLAYING:
-                            fieldCtl.setPhaseText("▶");
-                            cardDetailPanel.showReplayControls();
-                            break;
-                        case PAUSED:
-                            fieldCtl.setPhaseText("⏸");
-                            break;
-                        case FINISHED:
-                            fieldCtl.setPhaseText("⏹");
-                            hideReplayControls();
-                            break;
-                    }
-                });
-            }
-
-            @Override
-            public void onReplayFieldChanged() {
-                fieldCtl.invalidate();
-            }
-
-            @Override
-            public void onReplayPlayerInfoUpdated(int player) {
-                runOnUiThread(() -> {
-                    GameField.PlayerField pf = engine.getField().players[player];
-                    ReplayReader.ReplayData rd = replayEngine.getReplayData();
-                    String name = (rd != null && player < rd.playerNames.size()) ? rd.playerNames.get(player) : "Player " + (player + 1);
-                    fieldCtl.setPlayerDisplay(player, name, "LP: " + pf.lp);
-                });
-            }
-
-            @Override
-            public void onReplayPhaseChanged(int phase) {
-                runOnUiThread(() -> {
-                    fieldCtl.setPhaseByValue(phase);
-                    fieldCtl.setTurnText("Turn " + engine.getField().turnCount);
-                });
-            }
-
-            @Override
-            public void onReplayHintMessage(String hint) {
-                runOnUiThread(() -> fieldCtl.showHint(hint, 3000));
-            }
-
-            @Override
-            public void onReplayFinished(String result) {
-                runOnUiThread(() -> {
-                    hideReplayControls();
-                    showResultDialog(result);
-                });
-            }
-        });
-        replayEngine.loadAndPlay(replayPath, startTurn);
-    }
-
     private void hideReplayControls() {
         cardDetailPanel.hideReplayControls();
         currentReplayEngine = null;
     }
 
-
-    private void showDeckEditDialog() {
+    public void showDeckEditDialog() {
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
-        hideMainMenu();
+        getMainMenuDialog().hideMainMenu();
         hideGameUI();
         showDeckEditorView();
     }
@@ -945,7 +733,7 @@ public class YGOProActivity extends AppCompatActivity implements
                 @Override
                 public void onExitEditor() {
                     hideDeckEditorView();
-                    restoreMainMenu();
+                    getMainMenuDialog().restoreMainMenu();
                 }
 
                 @Override
@@ -977,7 +765,7 @@ public class YGOProActivity extends AppCompatActivity implements
         cardDetailPanel.exitDeckEditorMode();
     }
 
-    private void setWindowBackground(String relativePath) {
+    public void setWindowBackground(String relativePath) {
         String path = AppsSettings.get().getResourcePath() + "/" + relativePath;
         if (TextUtils.equals(path, currentBgPath)) {
             return;
@@ -998,21 +786,21 @@ public class YGOProActivity extends AppCompatActivity implements
 
 
     public void showSettingsDialog() {
-        hideMainMenu();
+        getMainMenuDialog().hideMainMenu();
         SettingsDialog dialog = new SettingsDialog(this, () -> applySettingsToEngine());
-        dialog.show(layoutMainMenu);
+        dialog.show(dialogContainer);
         dialog.setOnDismissListener(() -> {
             boolean deckEditorShowing = layoutDeckEditor != null
                     && layoutDeckEditor.getVisibility() == View.VISIBLE;
             boolean gameRightShowing = layoutGameRight != null
                     && layoutGameRight.getVisibility() == View.VISIBLE;
             if (!deckEditorShowing && !gameRightShowing) {
-                restoreMainMenu();
+                getMainMenuDialog().restoreMainMenu();
             }
         });
     }
 
-    private void applySettingsToEngine() {
+    public void applySettingsToEngine() {
         AppsSettings appsSettings = AppsSettings.get();
         boolean enableSound = appsSettings.getIntSettings("chkEnableSound", 1) == 1;
         boolean enableMusic = appsSettings.getIntSettings("chkEnableMusic", 1) == 1;
@@ -1035,7 +823,7 @@ public class YGOProActivity extends AppCompatActivity implements
                 if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
                     // Already showing player waiting via LanModeDialog, do nothing
                 } else {
-                    hideMainMenu();
+                    getMainMenuDialog().hideMainMenu();
                 }
                 break;
             case DECK_SELECT:
@@ -1048,7 +836,7 @@ public class YGOProActivity extends AppCompatActivity implements
                 showTPSelectDialog();
                 break;
             case DUELING:
-                hideMainMenu();
+                getMainMenuDialog().hideMainMenu();
                 showGameUI();
                 if (lanModeDialog != null) lanModeDialog.dismiss();
                 cardDetailPanel.showBottomActions();
@@ -2405,7 +2193,7 @@ public class YGOProActivity extends AppCompatActivity implements
         }
     }
 
-    private void showResultDialog(String result) {
+    public void showResultDialog(String result) {
         YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("决斗结果")
                 .setMessage(result)
@@ -2589,13 +2377,13 @@ public class YGOProActivity extends AppCompatActivity implements
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (layoutMainMenu != null && layoutMainMenu.getVisibility() == View.VISIBLE) {
+                if (mainMenuDialog != null && mainMenuDialog.isShowing()) {
                     soundManager.stopBGM();
                     finish();
                     return;
                 }
                 if (!isGameStarted) {
-                    restoreMainMenu();
+                    getMainMenuDialog().restoreMainMenu();
                     return;
                 }
                 YesOrNoDialog dialog = new YesOrNoDialog(YGOProActivity.this);

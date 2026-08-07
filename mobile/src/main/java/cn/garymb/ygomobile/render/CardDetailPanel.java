@@ -113,7 +113,7 @@ public class CardDetailPanel {
         });
         btnEmote.setOnClickListener(v -> {
         });
-        btnNote.setOnClickListener(v -> activity.showMainMenu());
+        btnNote.setOnClickListener(v -> activity.getMainMenuDialog().showMainMenu());
 
         if (btnCancelOrFinish != null) {
             btnCancelOrFinish.setOnClickListener(v -> activity.cancelOrFinish());

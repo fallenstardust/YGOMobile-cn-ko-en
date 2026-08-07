@@ -18,11 +18,14 @@ import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
@@ -297,5 +300,44 @@ public class SingleModeDialog {
         if (popupWindow != null) {
             popupWindow.setOnDismissListener(listener);
         }
+    }
+
+    // === 静态入口：由 YGOProActivity 调用 ===
+
+    public static void showSingleModeDialog(YGOProActivity activity) {
+        activity.getMainMenuDialog().hideMainMenu();
+        File botConfFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH);
+        List<BotUtil.BotInfo> botList = BotUtil.parseBotConfig(botConfFile);
+
+        File singleDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_SINGLE_PATH);
+        List<PuzzleUtil.PuzzleInfo> puzzleList = PuzzleUtil.loadPuzzleFiles(singleDir);
+
+        SingleModeDialog dialog = new SingleModeDialog(activity, new SingleModeDialog.OnSingleModeListener() {
+            @Override
+            public void onStartBotDuel(String botCommand, String deckFile,
+                                       int duelRule, boolean noCheckDeck, boolean noShuffleDeck) {
+                GameEngine engine = activity.getEngine();
+                engine.setBotMode(true);
+                engine.setPlayerName(Constants.PlayerName);
+                // 1. 建立局域网主机：参数对齐 duelclient.cpp 中 bot_mode 的 CTOS_CreateGame
+                //    rule=5(放开卡池) mode=0(单局) lflist=0 LP=8000 起手=5 抽卡=1 无时限；
+                //    duel_rule / no_check_deck / no_shuffle_deck 取自人机对战面板设置
+                engine.startLocalServerWithSettings(0, 5, 0, duelRule,
+                        noCheckDeck, noShuffleDeck,
+                        8000, 5, 1, 0,
+                        "Bot Game", "");
+                // 2. 切换进入 LAN 界面的 player waiting 页面（作为主机）
+                LanModeDialog.showPlayerWaitingForBotHost(activity);
+                // 3. 启动 WindBot 连接本地主机并加入；deckFile 为 P2 指定卡组
+                engine.launchWindBot("127.0.0.1", 7911, botCommand, deckFile);
+            }
+
+            @Override
+            public void onStartSingleMode(String luaFilePath) {
+                activity.getEngine().startSingleMode(luaFilePath);
+            }
+        });
+        dialog.show(activity.getDialogContainer(), botList, puzzleList);
+        dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
     }
 }

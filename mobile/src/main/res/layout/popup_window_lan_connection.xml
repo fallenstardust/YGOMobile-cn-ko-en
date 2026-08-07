@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/window2"
-    android:padding="20dp">
+    android:padding="15dp">
 
     <include
         layout="@layout/popup_window_lan_main"

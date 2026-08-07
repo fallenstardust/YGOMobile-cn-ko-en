@@ -25,380 +25,380 @@
                 android:orientation="vertical"
                 android:padding="1dp">
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="0.45">
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="0.45">
 
-                    <ImageView
-                        android:id="@+id/iv_card_image"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_alignParentStart="true"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/unknown" />
+                        <ImageView
+                            android:id="@+id/iv_card_image"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_alignParentStart="true"
+                            android:adjustViewBounds="true"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/unknown" />
 
-                    <!-- 时点按钮（投降/时点控制） -->
-                    <LinearLayout
-                        android:id="@+id/layout_bottom_actions"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="2dp"
-                        android:layout_toEndOf="@id/iv_card_image"
-                        android:orientation="vertical"
-                        android:visibility="visible">
+                        <!-- 时点按钮（投降/时点控制） -->
+                        <LinearLayout
+                            android:id="@+id/layout_bottom_actions"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="2dp"
+                            android:layout_toEndOf="@id/iv_card_image"
+                            android:orientation="vertical"
+                            android:visibility="visible">
 
-                        <Button
-                            android:id="@+id/btn_surrender"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1.2"
-                            android:background="@drawable/button3_bg"
-                            android:text="投降"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_surrender"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1.2"
+                                android:background="@drawable/button3_bg"
+                                android:text="投降"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_ignore_timing"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="忽略时点"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_ignore_timing"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="忽略时点"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_show_timing"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="显示时点"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_show_timing"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="显示时点"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_available_timing"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="可用时点"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_available_timing"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="可用时点"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_shuffle_hand"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_weight="1.2"
-                            android:background="@drawable/button3_bg"
-                            android:text="洗切手卡"
-                            android:textColor="@color/white"
-                            android:textSize="10sp"
-                            android:visibility="invisible" />
+                            <Button
+                                android:id="@+id/btn_shuffle_hand"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1.2"
+                                android:background="@drawable/button3_bg"
+                                android:text="洗切手卡"
+                                android:textColor="@color/white"
+                                android:textSize="10sp"
+                                android:visibility="invisible" />
 
-                        <Button
-                            android:id="@+id/btn_cancel_or_finish"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_weight="1.2"
-                            android:background="@drawable/button3_bg"
-                            android:text="完成选择"
-                            android:textColor="@color/white"
-                            android:textSize="10sp"
-                            android:visibility="gone" />
+                            <Button
+                                android:id="@+id/btn_cancel_or_finish"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1.2"
+                                android:background="@drawable/button3_bg"
+                                android:text="完成选择"
+                                android:textColor="@color/white"
+                                android:textSize="10sp"
+                                android:visibility="gone" />
 
-                    </LinearLayout>
-                    <!-- 录像控制按钮 -->
-                    <LinearLayout
-                        android:id="@+id/layout_replay_control"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="2dp"
-                        android:layout_toEndOf="@id/iv_card_image"
-                        android:orientation="vertical"
-                        android:visibility="gone">
+                        </LinearLayout>
+                        <!-- 录像控制按钮 -->
+                        <LinearLayout
+                            android:id="@+id/layout_replay_control"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="2dp"
+                            android:layout_toEndOf="@id/iv_card_image"
+                            android:orientation="vertical"
+                            android:visibility="gone">
 
-                        <Button
-                            android:id="@+id/btn_replay_play"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="播放"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_replay_play"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="播放"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_replay_pause"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="暂停"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_replay_pause"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="暂停"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_replay_next"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="下一步"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_replay_next"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="下一步"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_replay_last"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="上一步"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_replay_last"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="上一步"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_replay_shuffle"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="切换视角"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_replay_shuffle"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="切换视角"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_replay_quit"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="退出"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
-                    </LinearLayout>
-                    <!-- 卡组操作按钮 -->
-                    <LinearLayout
-                        android:id="@+id/layout_deck_control"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="2dp"
-                        android:layout_toEndOf="@id/iv_card_image"
-                        android:orientation="vertical"
-                        android:visibility="gone">
+                            <Button
+                                android:id="@+id/btn_replay_quit"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="退出"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                        <!-- 卡组操作按钮 -->
+                        <LinearLayout
+                            android:id="@+id/layout_deck_control"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="2dp"
+                            android:layout_toEndOf="@id/iv_card_image"
+                            android:orientation="vertical"
+                            android:visibility="gone">
 
-                        <Button
-                            android:id="@+id/btn_deck_exit"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="@string/quit"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_deck_exit"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="@string/quit"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_deck_shuffle"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="@string/unsort"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_deck_shuffle"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="@string/unsort"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_deck_sort"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="@string/sort"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_deck_sort"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="@string/sort"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_deck_clear"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="@string/clear_deck"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
+                            <Button
+                                android:id="@+id/btn_deck_clear"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="@string/clear_deck"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
 
-                        <Button
-                            android:id="@+id/btn_deck_delete"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/button3_bg"
-                            android:text="@string/delete"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
-                    </LinearLayout>
-                </RelativeLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="0.55"
-                    android:orientation="horizontal">
+                            <Button
+                                android:id="@+id/btn_deck_delete"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="@string/delete"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </RelativeLayout>
 
                     <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginTop="2dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/window3"
-                        android:orientation="vertical">
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="0.55"
+                        android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/tv_card_name"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/btn_sci_fi_bg"
-                            android:gravity="center"
-                            android:padding="2dp"
-                            android:text="Unknown[999999999]"
-                            android:textColor="@color/white"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tv_card_attr"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
                             android:layout_marginTop="2dp"
-                            android:text="[怪兽|效果] 种族/属性"
-                            android:textColor="@color/holo_green_bright"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:id="@+id/tv_card_level"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="[★13] 5000/5000"
-                            android:textColor="@color/yellow"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:id="@+id/tv_card_setname"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="字段：????"
-                            android:textColor="@color/holo_orange_bright"
-                            android:textSize="10sp"
-                            android:visibility="visible" />
-
-                        <ScrollView
-                            android:id="@+id/sv_card_desc"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginTop="6dp"
-                            android:layout_weight="1">
+                            android:layout_weight="1"
+                            android:background="@drawable/window3"
+                            android:orientation="vertical">
 
                             <TextView
-                                android:id="@+id/tv_card_desc"
+                                android:id="@+id/tv_card_name"
                                 android:layout_width="match_parent"
-                                android:layout_height="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/btn_sci_fi_bg"
+                                android:gravity="center"
+                                android:padding="2dp"
+                                android:text="Unknown[999999999]"
                                 android:textColor="@color/white"
-                                android:textSize="11sp" />
-                        </ScrollView>
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_card_attr"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="[怪兽|效果] 种族/属性"
+                                android:textColor="@color/holo_green_bright"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/tv_card_level"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="[★13] 5000/5000"
+                                android:textColor="@color/yellow"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/tv_card_setname"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="字段：????"
+                                android:textColor="@color/holo_orange_bright"
+                                android:textSize="10sp"
+                                android:visibility="visible" />
+
+                            <ScrollView
+                                android:id="@+id/sv_card_desc"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginTop="6dp"
+                                android:layout_weight="1">
+
+                                <TextView
+                                    android:id="@+id/tv_card_desc"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:textColor="@color/white"
+                                    android:textSize="11sp" />
+                            </ScrollView>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="0.15"
+                            android:layout_marginStart="2dp"
+                            android:orientation="vertical">
+
+                            <ImageButton
+                                android:id="@+id/btn_settings"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="5dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_sci_fi_bg"
+                                android:padding="4dp"
+                                android:scaleType="centerInside"
+                                android:src="@drawable/setting" />
+
+                            <ImageButton
+                                android:id="@+id/btn_note"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="5dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_sci_fi_bg"
+                                android:padding="4dp"
+                                android:scaleType="centerInside"
+                                android:src="@drawable/ic_note" />
+
+                            <ImageButton
+                                android:id="@+id/btn_sound"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="5dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_sci_fi_bg"
+                                android:padding="4dp"
+                                android:scaleType="centerInside"
+                                android:src="@drawable/ic_volume_on" />
+
+                            <ImageButton
+                                android:id="@+id/btn_speed"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="5dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_sci_fi_bg"
+                                android:padding="4dp"
+                                android:scaleType="centerInside"
+                                android:src="@drawable/ic_speed" />
+
+                            <ImageButton
+                                android:id="@+id/btn_emote"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="5dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_sci_fi_bg"
+                                android:padding="4dp"
+                                android:scaleType="centerInside"
+                                android:src="@drawable/ic_emoticon" />
+
+                            <ImageButton
+                                android:id="@+id/btn_chat"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/btn_sci_fi_bg"
+                                android:padding="4dp"
+                                android:scaleType="centerInside"
+                                android:src="@drawable/rename" />
+                        </LinearLayout>
                     </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="0.15"
-                        android:layout_marginStart="2dp"
-                        android:orientation="vertical">
-
-                        <ImageButton
-                            android:id="@+id/btn_settings"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="5dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_sci_fi_bg"
-                            android:padding="4dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/setting" />
-
-                        <ImageButton
-                            android:id="@+id/btn_note"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="5dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_sci_fi_bg"
-                            android:padding="4dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/ic_note" />
-
-                        <ImageButton
-                            android:id="@+id/btn_sound"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="5dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_sci_fi_bg"
-                            android:padding="4dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/ic_volume_on" />
-
-                        <ImageButton
-                            android:id="@+id/btn_speed"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="5dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_sci_fi_bg"
-                            android:padding="4dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/ic_speed" />
-
-                        <ImageButton
-                            android:id="@+id/btn_emote"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_marginBottom="5dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_sci_fi_bg"
-                            android:padding="4dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/ic_emoticon" />
-
-                        <ImageButton
-                            android:id="@+id/btn_chat"
-                            android:layout_width="match_parent"
-                            android:layout_height="0dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/btn_sci_fi_bg"
-                            android:padding="4dp"
-                            android:scaleType="centerInside"
-                            android:src="@drawable/rename" />
-                    </LinearLayout>
-                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
@@ -525,9 +525,9 @@
                         android:id="@+id/tv_turn_counter"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:background="@drawable/turn_counter_bg"
+                        android:background="@drawable/button_radius_black_transparents"
                         android:gravity="center"
-                        android:shadowColor="#FF00E5FF"
+                        android:shadowColor="@color/holo_blue_bright"
                         android:shadowDx="0"
                         android:shadowDy="0"
                         android:shadowRadius="6"
@@ -629,7 +629,7 @@
                 android:padding="3dp"
                 android:text="请选择要特殊召唤的怪兽（9-9）"
                 android:textColor="@color/white"
-                android:textSize="12sp" />
+                android:textSize="10sp" />
 
             <!-- 决斗场区域（填充剩余空间） -->
             <FrameLayout
@@ -675,7 +675,7 @@
                         android:background="#40000000"
                         android:padding="3dp"
                         android:textColor="@color/white"
-                        android:textSize="12sp"
+                        android:textSize="8sp"
                         android:visibility="visible" />
                 </LinearLayout>
 
@@ -728,9 +728,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:hint="发送消息..."
-                android:textColorHint="#80FFFFFF"
                 android:inputType="text"
+                android:textSize="9sp"
                 android:maxLines="1"
                 android:imeOptions="actionSend|flagNoExtractUi"
                 android:textColor="@color/white"
@@ -745,177 +744,4 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <!-- 主菜单覆盖层 -->
-    <RelativeLayout
-        android:id="@+id/layout_main_menu"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone">
-
-        <LinearLayout
-            android:id="@+id/layout_menu_buttons"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:id="@+id/btn_menu_lan"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
-                android:background="@drawable/stitlebar"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tv_version"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:text="YGOPro Version:1.036.2"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="@string/server_list"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btn_menu_single"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
-                android:background="@drawable/stitlebar"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="@string/action_game"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btn_menu_replay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
-                android:background="@drawable/stitlebar"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="@string/replay"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btn_menu_deck"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
-                android:background="@drawable/stitlebar"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="@string/deck_manager"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btn_menu_settings"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
-                android:background="@drawable/stitlebar"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="@string/settings_game"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btn_menu_exit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/stitlebar"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="@string/quit"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-    </RelativeLayout>
 </FrameLayout>

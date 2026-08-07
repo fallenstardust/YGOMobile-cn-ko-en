@@ -24,9 +24,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ReplayEngine;
 import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.activities.ShareFileActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
@@ -442,5 +447,93 @@ public class ReplayModeDialog {
         if (popupWindow != null) {
             popupWindow.setOnDismissListener(listener);
         }
+    }
+
+    // === 静态入口：由 YGOProActivity 调用 ===
+
+    public static void showReplayModeDialog(YGOProActivity activity) {
+        activity.getMainMenuDialog().hideMainMenu();
+        File replayDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_REPLAY_PATH);
+        ReplayModeDialog dialog = new ReplayModeDialog(activity, (replayPath, startTurn) -> {
+            ReplayModeDialog.startReplayPlayback(activity, replayPath, startTurn);
+        });
+        dialog.show(activity.getDialogContainer(), replayDir);
+        dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+    }
+
+    public static void startReplayPlayback(YGOProActivity activity, String replayPath, int startTurn) {
+        if (activity.getEngine() == null) return;
+        ReplayEngine replayEngine = new ReplayEngine(activity.getEngine().getField(), activity.getSoundManager());
+        activity.getEngine().setReplayEngine(replayEngine);
+        activity.setCurrentReplayEngine(replayEngine);
+
+        replayEngine.setListener(new ReplayEngine.ReplayListener() {
+            @Override
+            public void onReplayStateChanged(ReplayEngine.ReplayState state) {
+                activity.runOnUiThread(() -> {
+                    switch (state) {
+                        case PLAYING:
+                            activity.getFieldCtl().setPhaseText("▶");
+                            activity.getCardDetailPanel().showReplayControls();
+                            break;
+                        case PAUSED:
+                            activity.getFieldCtl().setPhaseText("⏸");
+                            break;
+                        case FINISHED:
+                            activity.getFieldCtl().setPhaseText("⏹");
+                            hideReplayControls(activity);
+                            break;
+                    }
+                });
+            }
+
+            @Override
+            public void onReplayFieldChanged() {
+                activity.getFieldCtl().invalidate();
+            }
+
+            @Override
+            public void onReplayPlayerInfoUpdated(int player) {
+                activity.runOnUiThread(() -> {
+                    GameField.PlayerField pf = activity.getEngine().getField().players[player];
+                    ReplayReader.ReplayData rd = replayEngine.getReplayData();
+                    String name = (rd != null && player < rd.playerNames.size()) ? rd.playerNames.get(player) : "Player " + (player + 1);
+                    activity.getFieldCtl().setPlayerDisplay(player, name, "LP: " + pf.lp);
+                });
+            }
+
+            @Override
+            public void onReplayPhaseChanged(int phase) {
+                activity.runOnUiThread(() -> {
+                    activity.getFieldCtl().setPhaseByValue(phase);
+                    activity.getFieldCtl().setTurnText("Turn " + activity.getEngine().getField().turnCount);
+                });
+            }
+
+            @Override
+            public void onReplayHintMessage(String hint) {
+                activity.runOnUiThread(() -> activity.getFieldCtl().showHint(hint, 3000));
+            }
+
+            @Override
+            public void onReplayFinished(String result) {
+                activity.runOnUiThread(() -> {
+                    hideReplayControls(activity);
+                    activity.showResultDialog(result);
+                });
+            }
+        });
+        replayEngine.loadAndPlay(replayPath, startTurn);
+    }
+
+    public static void hideReplayControls(YGOProActivity activity) {
+        activity.getCardDetailPanel().hideReplayControls();
+        activity.setCurrentReplayEngine(null);
+    }
+
+    public static void quitReplay(YGOProActivity activity) {
+        if (activity.getCurrentReplayEngine() != null) activity.getCurrentReplayEngine().stop();
+        hideReplayControls(activity);
+        activity.getMainMenuDialog().restoreMainMenu();
     }
 }
