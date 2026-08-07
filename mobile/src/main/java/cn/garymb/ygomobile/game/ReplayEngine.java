@@ -920,7 +920,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onSelectSum(ByteBuffer data) {}
     @Override public void onSelectDisfield(int player, int count, int fieldMask) {}
     @Override public void onSortCard(ByteBuffer data) {}
+    @Override public void onSelectUnselectCard(ByteBuffer data) {}
     @Override public void onConfirmDecktop(int player, int count, ByteBuffer data) {}
+
     @Override public void onConfirmCards(int player, int count, ByteBuffer data) {}
     @Override public void onShuffleDeck(int player) { soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); notifyField(); }
     @Override public void onShuffleHand(int player) { soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); notifyField(); }

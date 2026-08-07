@@ -966,13 +966,22 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
+    public void onSelectUnselectCard(ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(26, data);
+        });
+    }
+
+    @Override
     public void onConfirmDecktop(int player, int count, ByteBuffer data) {
         Log.d(TAG, "ConfirmDecktop: player=" + player + " count=" + count);
     }
 
     @Override
     public void onConfirmCards(int player, int count, ByteBuffer data) {
-        Log.d(TAG, "ConfirmCards: player=" + player + " count=" + count);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(27, data);
+        });
     }
 
     @Override

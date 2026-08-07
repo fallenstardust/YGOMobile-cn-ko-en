@@ -41,6 +41,10 @@ public class CardDisplayDialog {
         }
     }
 
+    public interface OnCardClick {
+        void onCardClick(CardItem item);
+    }
+
     public interface OnDismissListener {
         void onDismiss();
     }
@@ -64,6 +68,7 @@ public class CardDisplayDialog {
     private final ImageView[] ivCards = new ImageView[SLOT_COUNT];
 
     private OnDismissListener dismissListener;
+    private OnCardClick cardClickListener;
 
     public CardDisplayDialog(Context context, ImageLoader imageLoader) {
         this.context = context;
@@ -83,6 +88,11 @@ public class CardDisplayDialog {
 
     public CardDisplayDialog setOnDismissListener(OnDismissListener listener) {
         this.dismissListener = listener;
+        return this;
+    }
+
+    public CardDisplayDialog setCardClickListener(OnCardClick listener) {
+        this.cardClickListener = listener;
         return this;
     }
 
@@ -123,6 +133,15 @@ public class CardDisplayDialog {
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
+        for (int i = 0; i < SLOT_COUNT; i++) {
+            final int slot = i;
+            slotViews[i].setOnClickListener(v -> {
+                int index = pageOffset + slot;
+                if (index < cards.size() && cardClickListener != null) {
+                    cardClickListener.onCardClick(cards.get(index));
+                }
+            });
+        }
         sbPage.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
