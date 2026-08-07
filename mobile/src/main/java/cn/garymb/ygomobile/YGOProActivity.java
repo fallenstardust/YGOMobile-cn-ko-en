@@ -88,10 +88,6 @@ public class YGOProActivity extends AppCompatActivity implements
     private LinearLayout layoutDeckControl;
     private LinearLayout layoutGameRight;
     private View layoutGameContent;
-    private int currentSelectType = -1;
-    private YesOrNoDialog currentDialog;
-    private CardSelectDialog cardSelectDialog;
-    private CardDisplayDialog cardDisplayDialog;
 
     private FrameLayout dialogContainer;
     private MainMenuDialog mainMenuDialog;
@@ -393,7 +389,7 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     public int getCurrentSelectType() {
-        return currentSelectType;
+        return cardDetailPanel.getSelectType();
     }
 
     public ReplayEngine getCurrentReplayEngine() {
@@ -828,7 +824,7 @@ public class YGOProActivity extends AppCompatActivity implements
                 }
                 break;
             case DUEL_END:
-                closeGameButtons();
+                cardDetailPanel.closeGameButtons();
                 showDuelEndDialog();
                 break;
             case DISCONNECTED:
@@ -887,7 +883,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onSelectRequired(int selectType, ByteBuffer data) {
         runOnUiThread(() -> {
-            currentSelectType = selectType;
+            cardDetailPanel.setSelectType(selectType);
             switch (selectType) {
                 case 0:
                     showHandSelectDialog();
@@ -1073,20 +1069,20 @@ public class YGOProActivity extends AppCompatActivity implements
                 .setNegativeButtonText("否")
                 .setPositiveButton(v -> {
                     sendResponseInt(1);
-                    hideCancelOrFinishButton();
+                    cardDetailPanel.hideCancelOrFinishButton();
                     dialog.dismiss();
                 })
                 .setNegativeButton(v -> {
                     sendResponseInt(0);
-                    hideCancelOrFinishButton();
+                    cardDetailPanel.hideCancelOrFinishButton();
                     dialog.dismiss();
                 })
                 .setCancelable(false)
                 .setOnDismissListener(() -> {
-                    hideCancelOrFinishButton();
-                    currentDialog = null;  // 若需要保留引用可调整
+                    cardDetailPanel.hideCancelOrFinishButton();
+                    cardDetailPanel.setCurrentDialog(null);  // 若需要保留引用可调整
                 });
-        showCancelOrFinishButton("否");
+        cardDetailPanel.showCancelOrFinishButton("否");
         dialog.show();
     }
 
@@ -1549,7 +1545,7 @@ public class YGOProActivity extends AppCompatActivity implements
         }
 
         YesOrNoDialog dialog = new YesOrNoDialog(this);
-        currentDialog = dialog;
+        cardDetailPanel.setCurrentDialog(dialog);
         dialog.setTitle("连锁选择");
         View contentView = inflateSelectLayout();
         dialog.setContentView(contentView);
@@ -1576,15 +1572,15 @@ public class YGOProActivity extends AppCompatActivity implements
                 .setPositiveButtonText("不连锁")
                 .setPositiveButton(v -> {
                     sendResponseInt(-1);
-                    hideCancelOrFinishButton();
+                    cardDetailPanel.hideCancelOrFinishButton();
                 })
                 .setCancelable(false)
                 .setOnDismissListener(() -> {
-                    hideCancelOrFinishButton();
-                    currentDialog = null;
+                    cardDetailPanel.hideCancelOrFinishButton();
+                    cardDetailPanel.setCurrentDialog(null);
                 });
         if (!hasForced) {
-            showCancelOrFinishButton("不连锁");
+            cardDetailPanel.showCancelOrFinishButton("不连锁");
         }
         dialog.show();
     }
@@ -1615,7 +1611,7 @@ public class YGOProActivity extends AppCompatActivity implements
         }
         final List<CardSelectDialog.CardItem> cardInfos = items;
         CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardSelectDialog = dialog;
+        cardDetailPanel.setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_SELECT)
                 .setTitle("选择卡片 (" + min + "-" + max + ")")
                 .setCards(items)
@@ -1634,8 +1630,8 @@ public class YGOProActivity extends AppCompatActivity implements
                     }
                 })
                 .setOnDismissListener(() -> {
-                    hideCancelOrFinishButton();
-                    cardSelectDialog = null;
+                    cardDetailPanel.hideCancelOrFinishButton();
+                    cardDetailPanel.setCardSelectDialog(null);
                 })
                 .show();
     }
@@ -1666,7 +1662,7 @@ public class YGOProActivity extends AppCompatActivity implements
         }
         final List<CardSelectDialog.CardItem> cardInfos = items;
         CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardSelectDialog = dialog;
+        cardDetailPanel.setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_SELECT)
                 .setTitle("解放选择 (" + min + "-" + max + ")")
                 .setCards(items)
@@ -1686,8 +1682,8 @@ public class YGOProActivity extends AppCompatActivity implements
                     }
                 })
                 .setOnDismissListener(() -> {
-                    hideCancelOrFinishButton();
-                    cardSelectDialog = null;
+                    cardDetailPanel.hideCancelOrFinishButton();
+                    cardDetailPanel.setCardSelectDialog(null);
                 })
                 .show();
     }
@@ -1787,7 +1783,7 @@ public class YGOProActivity extends AppCompatActivity implements
         final List<CardSelectDialog.CardItem> cardInfos = items;
         final int fMustCount = mustCount;
         CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardSelectDialog = dialog;
+        cardDetailPanel.setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_SUM)
                 .setTitle("素材选择 (总和" + (selectMode == 0 ? "=" : ">=") + sumVal + ")")
                 .setCards(items)
@@ -1808,8 +1804,8 @@ public class YGOProActivity extends AppCompatActivity implements
                     }
                 })
                 .setOnDismissListener(() -> {
-                    hideCancelOrFinishButton();
-                    cardSelectDialog = null;
+                    cardDetailPanel.hideCancelOrFinishButton();
+                    cardDetailPanel.setCardSelectDialog(null);
                 })
                 .show();
     }
@@ -2050,7 +2046,7 @@ public class YGOProActivity extends AppCompatActivity implements
             return;
         }
         CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardSelectDialog = dialog;
+        cardDetailPanel.setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_SORT)
                 .setTitle("卡片排序 (按顺序点击)")
                 .setCards(items)
@@ -2066,8 +2062,8 @@ public class YGOProActivity extends AppCompatActivity implements
                     }
                 })
                 .setOnDismissListener(() -> {
-                    hideCancelOrFinishButton();
-                    cardSelectDialog = null;
+                    cardDetailPanel.hideCancelOrFinishButton();
+                    cardDetailPanel.setCardSelectDialog(null);
                 })
                 .show();
     }
@@ -2115,7 +2111,7 @@ public class YGOProActivity extends AppCompatActivity implements
         }
         final List<CardSelectDialog.CardItem> cardInfos = items;
         CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardSelectDialog = dialog;
+        cardDetailPanel.setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_UNSELECT)
                 .setTitle("选择卡片 (" + min + "-" + max + ")")
                 .setCards(items)
@@ -2143,8 +2139,8 @@ public class YGOProActivity extends AppCompatActivity implements
                     }
                 })
                 .setOnDismissListener(() -> {
-                    hideCancelOrFinishButton();
-                    cardSelectDialog = null;
+                    cardDetailPanel.hideCancelOrFinishButton();
+                    cardDetailPanel.setCardSelectDialog(null);
                 })
                 .show();
     }
@@ -2153,7 +2149,7 @@ public class YGOProActivity extends AppCompatActivity implements
         // duelclient.cpp L2519-2560：player skip_panel count + n×[code4 ctrl1 loc1 seq1]
         // 纯展示：OK 仅关闭（无响应数据），对齐 C++ BUTTON_CARD_SEL_OK 的 actionSignal.Set()
         if (data == null) {
-            hideCancelOrFinishButton();
+            cardDetailPanel.hideCancelOrFinishButton();
             return;
         }
         int count = data.remaining() / 7;
@@ -2166,17 +2162,17 @@ public class YGOProActivity extends AppCompatActivity implements
             items.add(new CardDisplayDialog.CardItem(code, ctrl, loc, seq, 0));
         }
         if (items.isEmpty()) {
-            hideCancelOrFinishButton();
+            cardDetailPanel.hideCancelOrFinishButton();
             return;
         }
         CardDisplayDialog dialog = new CardDisplayDialog(this, imageLoader);
-        cardDisplayDialog = dialog;
+        cardDetailPanel.setCardDisplayDialog(dialog);
         dialog.setTitle("确认 " + items.size() + " 张卡片")
                 .setCards(items)
                 .setCardClickListener(this::showCardInfoFromItem)
                 .setOnDismissListener(() -> {
-                    hideCancelOrFinishButton();
-                    cardDisplayDialog = null;
+                    cardDetailPanel.hideCancelOrFinishButton();
+                    cardDetailPanel.setCardDisplayDialog(null);
                 })
                 .show();
     }
@@ -2254,104 +2250,6 @@ public class YGOProActivity extends AppCompatActivity implements
         buf.putInt(value);
         engine.sendResponse(buf.array());
     }
-
-    private void sendActionResponse(int action) {
-        sendResponseInt(action);
-    }
-
-    private void closeGameButtons() {
-        cardDetailPanel.closeGameButtons();
-    }
-
-    // === CancelOrFinish (mirrors C++ ClientField::CancelOrFinish) ===
-
-    private void showCancelOrFinishButton(String text) {
-        cardDetailPanel.showCancelOrFinishButton(text);
-    }
-
-    private void hideCancelOrFinishButton() {
-        cardDetailPanel.hideCancelOrFinishButton();
-    }
-
-    private void updateCancelOrFinishButton(boolean ready, boolean cancelable, boolean hasSelection) {
-        cardDetailPanel.updateCancelOrFinishButton(ready, cancelable, hasSelection);
-    }
-
-    public void cancelOrFinish() {
-        switch (currentSelectType) {
-            case 13:
-            case 12: {
-                sendResponseInt(0);
-                hideCancelOrFinishButton();
-                if (currentDialog != null) currentDialog.dismiss();
-                break;
-            }
-            case 15:
-            case 20: {
-                if (cardSelectDialog != null) {
-                    if (cardSelectDialog.getSelectedCount() >= cardSelectDialog.getMinSelect()) {
-                        cardSelectDialog.confirm();
-                    } else if (cardSelectDialog.isCancelable() && cardSelectDialog.getSelectedCount() == 0) {
-                        sendResponseInt(-1);
-                        hideCancelOrFinishButton();
-                        cardSelectDialog.dismiss();
-                    }
-                }
-                break;
-            }
-            case 23: {
-                if (cardSelectDialog != null && cardSelectDialog.isReady()) {
-                    cardSelectDialog.confirm();
-                }
-                break;
-            }
-            case 26: {
-                // event_handler.cpp L968-971：UNSELECT 的完成/取消按钮 = 发送 -1
-                sendResponseInt(-1);
-                hideCancelOrFinishButton();
-                if (cardSelectDialog != null) cardSelectDialog.dismiss();
-                break;
-            }
-            case 27: {
-                hideCancelOrFinishButton();
-                if (cardDisplayDialog != null) cardDisplayDialog.dismiss();
-                break;
-            }
-            case 16:
-            case 25: {
-                sendResponseInt(-1);
-                hideCancelOrFinishButton();
-                if (currentDialog != null) currentDialog.dismiss();
-                break;
-            }
-            case 18:
-            case 24: {
-                if (fieldCtl.cancelPlaceSelect()) {
-                    hideCancelOrFinishButton();
-                }
-                break;
-            }
-            default: {
-                hideCancelOrFinishButton();
-                if (currentDialog != null) currentDialog.dismiss();
-                break;
-            }
-        }
-        currentSelectType = -1;
-    }
-
-    private void sendSelectedCardsResponse() {
-        GameField field = engine.getField();
-        int len = field.selectedCards.size();
-        if (len > 255) len = 255;
-        byte[] respbuf = new byte[len + 1];
-        respbuf[0] = (byte) len;
-        for (int i = 0; i < len; i++) {
-            respbuf[i + 1] = (byte) field.selectedCards.get(i).select_seq;
-        }
-        engine.sendResponse(respbuf);
-    }
-
 
     // === Lifecycle ===
 

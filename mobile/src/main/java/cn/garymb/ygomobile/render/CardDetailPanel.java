@@ -15,9 +15,13 @@ import java.io.File;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.ReplayEngine;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
+import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
+import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.CardUtils;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -52,6 +56,11 @@ public class CardDetailPanel {
     private Bitmap coverBitmap;
     private StringManager mStringManager = DataManager.get().getStringManager();
 
+    // 选择上下文（cancelOrFinish 决策所需，由 YGOProActivity 注册同步）
+    private int currentSelectType = -1;
+    private YesOrNoDialog currentDialog;
+    private CardSelectDialog cardSelectDialog;
+    private CardDisplayDialog cardDisplayDialog;
 
     public CardDetailPanel(YGOProActivity activity) {
         this.activity = activity;
@@ -116,7 +125,7 @@ public class CardDetailPanel {
         btnNote.setOnClickListener(v -> activity.getMainMenuDialog().showMainMenu());
 
         if (btnCancelOrFinish != null) {
-            btnCancelOrFinish.setOnClickListener(v -> activity.cancelOrFinish());
+            btnCancelOrFinish.setOnClickListener(v -> cancelOrFinish());
         }
 
         if (btnReplayPlay != null) {
@@ -450,6 +459,27 @@ public class CardDetailPanel {
 
     // === 取消或完成按钮 (对应 C++ ClientField::CancelOrFinish) ===
 
+    // 选择上下文注册（由 YGOProActivity 在创建/关闭选择对话框时同步）
+    public void setSelectType(int selectType) {
+        this.currentSelectType = selectType;
+    }
+
+    public int getSelectType() {
+        return currentSelectType;
+    }
+
+    public void setCurrentDialog(YesOrNoDialog dialog) {
+        this.currentDialog = dialog;
+    }
+
+    public void setCardSelectDialog(CardSelectDialog dialog) {
+        this.cardSelectDialog = dialog;
+    }
+
+    public void setCardDisplayDialog(CardDisplayDialog dialog) {
+        this.cardDisplayDialog = dialog;
+    }
+
     public void showCancelOrFinishButton(String text) {
         if (btnCancelOrFinish != null) {
             btnCancelOrFinish.setText(text);
@@ -474,6 +504,71 @@ public class CardDetailPanel {
         } else {
             btnCancelOrFinish.setVisibility(View.GONE);
         }
+    }
+
+    // 对齐 C++ ClientField::CancelOrFinish：按当前选择类型执行完成/取消
+    public void cancelOrFinish() {
+        switch (currentSelectType) {
+            case 13:
+            case 12: {
+                activity.sendResponseInt(0);
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
+            case 15:
+            case 20: {
+                if (cardSelectDialog != null) {
+                    if (cardSelectDialog.getSelectedCount() >= cardSelectDialog.getMinSelect()) {
+                        cardSelectDialog.confirm();
+                    } else if (cardSelectDialog.isCancelable() && cardSelectDialog.getSelectedCount() == 0) {
+                        activity.sendResponseInt(-1);
+                        hideCancelOrFinishButton();
+                        cardSelectDialog.dismiss();
+                    }
+                }
+                break;
+            }
+            case 23: {
+                if (cardSelectDialog != null && cardSelectDialog.isReady()) {
+                    cardSelectDialog.confirm();
+                }
+                break;
+            }
+            case 26: {
+                // event_handler.cpp L968-971：UNSELECT 的完成/取消按钮 = 发送 -1
+                activity.sendResponseInt(-1);
+                hideCancelOrFinishButton();
+                if (cardSelectDialog != null) cardSelectDialog.dismiss();
+                break;
+            }
+            case 27: {
+                hideCancelOrFinishButton();
+                if (cardDisplayDialog != null) cardDisplayDialog.dismiss();
+                break;
+            }
+            case 16:
+            case 25: {
+                activity.sendResponseInt(-1);
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
+            case 18:
+            case 24: {
+                GameFieldController fieldCtl = activity.getFieldCtl();
+                if (fieldCtl != null && fieldCtl.cancelPlaceSelect()) {
+                    hideCancelOrFinishButton();
+                }
+                break;
+            }
+            default: {
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
+        }
+        currentSelectType = -1;
     }
 
     // === 整体可见性 ===
