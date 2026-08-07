@@ -11,6 +11,8 @@ android {
         targetSdkVersion 29
         versionCode 312013011
         versionName "3.13.6"
+        // 主程序协议版本号（十六进制），供 Constants.PRO_VERSION 使用
+        buildConfigField 'int', 'PRO_VERSION', '0x1362'
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "21.3.6528147"
@@ -72,6 +74,7 @@ android {
     namespace 'cn.garymb.ygomobile.lite'
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
     //    buildToolsVersion '28.0.3'
 }

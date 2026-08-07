@@ -7,6 +7,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 
 public interface Constants {
     boolean DEBUG = BuildConfig.DEBUG;
+    int PRO_VERSION = BuildConfig.PRO_VERSION;
     String PREF_START = "game_pref_";
     String PREF_LAST_GENESYS_MODE = "pref_last_genesys_mode";
     int PREF_DEF_LAST_GENESYS_MODE = 0;//0代表传统禁限模式，1代表Genesys模式

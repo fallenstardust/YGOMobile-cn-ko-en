@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile;
 
+import static cn.garymb.ygomobile.Constants.PRO_VERSION;
 import static cn.garymb.ygomobile.utils.BotUtil.parseBotConfig;
 import static cn.garymb.ygomobile.utils.PuzzleUtil.loadPuzzleFiles;
 
@@ -73,7 +74,6 @@ public class YGOProActivity extends AppCompatActivity implements
         LanModeDialog.OnLanModeListener {
 
     private static final String TAG = "YGONativeGame";
-    private static final int PRO_VERSION = 0x1362;
 
     private GameEngine engine;
     private SoundManager soundManager;

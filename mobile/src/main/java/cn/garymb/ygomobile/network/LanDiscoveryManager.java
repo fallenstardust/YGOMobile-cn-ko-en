@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameApplication;
 
 public class LanDiscoveryManager implements YGOProtocol {
@@ -277,7 +278,7 @@ public class LanDiscoveryManager implements YGOProtocol {
         }
 
         int version = buf.getShort() & 0xFFFF;
-        if (version != PRO_VERSION) {
+        if (version != Constants.PRO_VERSION) {
             Log.w(TAG, "Version mismatch: " + String.format("0x%04X", version));
             return null;
         }
