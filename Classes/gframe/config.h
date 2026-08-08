@@ -46,10 +46,8 @@ inline T myclamp(T v, T lo, T hi) {
 	return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
-#include <irrlicht.h>
 using namespace irr::io;
 using namespace irr::os;
-
 constexpr uint16_t PRO_VERSION = 0x1362;
 
 #endif // YGOPRO_CONFIG_H

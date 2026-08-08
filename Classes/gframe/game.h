@@ -2,7 +2,6 @@
 #define GAME_H
 
 #include "config.h"
-#include "CGUITTFont.h"
 #include "mysignal.h"
 #include "client_field.h"
 #include "deck_con.h"
@@ -13,7 +12,14 @@
 #include <list>
 #include <mutex>
 #include <functional>
+#include <irrlicht.h>
 #include "sound_manager.h"
+
+namespace irr {
+	namespace gui {
+		class CGUITTFont;
+	}
+}
 
 namespace ygo {
 
@@ -174,6 +180,8 @@ public:
 	bool Initialize(ANDROID_APP app, irr::android::InitOptions *options);
 	void MainLoop();
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
+	void FixFontGlitch();
+	irr::core::dimension2d<irr::u32> GetGUIFontDimension(const wchar_t* text) const;
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
 	void LoadExpansions();
@@ -233,7 +241,7 @@ public:
     void DrawBubbleHeptagonBorder(const irr::core::recti& rect, irr::video::SColor color, int borderWidth) const;
     virtual std::wstring OnReceiveChatMessage(const std::wstring& msg, bool isFromMe);
     virtual std::wstring AppendCardNames(const std::wstring& msg);
-	
+
 	int LocalPlayer(int player) const;
 	int OppositePlayer(int player);
 	int ChatLocalPlayer(int player);
