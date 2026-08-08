@@ -126,103 +126,21 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onPlayerEnter(String name, int pos) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
-                lanModeDialog.removeObserver(name);
-                lanModeDialog.setPlayerName(pos, name);
-                lanModeDialog.refreshPlayerDisplay();
-            }
+            if (lanModeDialog != null) lanModeDialog.handlePlayerEnter(name, pos);
         });
     }
 
     @Override
     public void onPlayerChange(int status) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
-                int pos = (status >> 4) & 0x0F;
-                int state = status & 0x0F;
-
-                if (state < 8) {
-                    String oldName = "";
-                    switch (pos) {
-                        case 0:
-                            oldName = lanModeDialog.getPlayerName(0);
-                            break;
-                        case 1:
-                            oldName = lanModeDialog.getPlayerName(1);
-                            break;
-                        case 2:
-                            oldName = lanModeDialog.getPlayerName(2);
-                            break;
-                        case 3:
-                            oldName = lanModeDialog.getPlayerName(3);
-                            break;
-                    }
-
-                    lanModeDialog.movePlayer(pos, state);
-
-                    if (!oldName.isEmpty() && state >= 4) {
-                        lanModeDialog.addObserver(oldName);
-                    }
-                    if (pos >= 4 && !oldName.isEmpty() && state < 4) {
-                        lanModeDialog.removeObserver(oldName);
-                    }
-                } else if (state == 0x8) {
-                    String observerName = "";
-                    switch (pos) {
-                        case 0:
-                            observerName = lanModeDialog.getPlayerName(0);
-                            break;
-                        case 1:
-                            observerName = lanModeDialog.getPlayerName(1);
-                            break;
-                        case 2:
-                            observerName = lanModeDialog.getPlayerName(2);
-                            break;
-                        case 3:
-                            observerName = lanModeDialog.getPlayerName(3);
-                            break;
-                    }
-                    lanModeDialog.clearPlayerPos(pos);
-                    if (!observerName.isEmpty()) {
-                        lanModeDialog.addObserver(observerName);
-                    }
-                } else if (state == 0x9) {
-                    lanModeDialog.setPlayerReady(pos, true);
-                } else if (state == 0xa) {
-                    lanModeDialog.setPlayerReady(pos, false);
-                } else if (state == 0xb) {
-                    String leavingName = "";
-                    switch (pos) {
-                        case 0:
-                            leavingName = lanModeDialog.getPlayerName(0);
-                            break;
-                        case 1:
-                            leavingName = lanModeDialog.getPlayerName(1);
-                            break;
-                        case 2:
-                            leavingName = lanModeDialog.getPlayerName(2);
-                            break;
-                        case 3:
-                            leavingName = lanModeDialog.getPlayerName(3);
-                            break;
-                    }
-                    lanModeDialog.clearPlayerPos(pos);
-                    if (!leavingName.isEmpty()) {
-                        lanModeDialog.removeObserver(leavingName);
-                    }
-                }
-                lanModeDialog.refreshPlayerDisplay();
-            }
+            if (lanModeDialog != null) lanModeDialog.handlePlayerChange(status);
         });
     }
 
     @Override
     public void onWatchChange(int watchCount) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
-                lanModeDialog.updateWatchCount(watchCount);
-                lanModeDialog.refreshPlayerDisplay();
-            }
+            if (lanModeDialog != null) lanModeDialog.handleWatchChange(watchCount);
         });
     }
 
@@ -231,79 +149,26 @@ public class YGOProActivity extends AppCompatActivity implements
                            int noCheckDeck, int noShuffleDeck,
                            int startLp, int startHand, int drawCount, int timeLimit) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
-                lanModeDialog.updateRoomInfo(lflist, rule, mode, duelRule,
-                        noCheckDeck, noShuffleDeck,
-                        startLp, startHand, drawCount, timeLimit);
-            }
+            if (lanModeDialog != null) lanModeDialog.handleJoinGame(lflist, rule, mode, duelRule,
+                    noCheckDeck, noShuffleDeck, startLp, startHand, drawCount, timeLimit);
         });
     }
 
     @Override
     public void onTypeChange(int type) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
-                int selfType = type & 0x0F;
-                boolean isHost = ((type >> 4) & 0x0F) != 0;
+            if (lanModeDialog != null) {
                 boolean isTag = engine.getGameMode() == 2;
-                lanModeDialog.updateTypeChange(selfType, isTag, isHost);
-                lanModeDialog.refreshPlayerDisplay();
+                lanModeDialog.handleTypeChange(type, isTag);
             }
         });
     }
 
     @Override
     public void onDeckError(int errorType, int cardCode) {
-        String errorDesc;
-        switch (errorType) {
-            case YGOProtocol.DECKERROR_LFLIST:
-                errorDesc = "禁限卡表违规";
-                break;
-            case YGOProtocol.DECKERROR_OCGONLY:
-                errorDesc = "仅限OCG卡片";
-                break;
-            case YGOProtocol.DECKERROR_TCGONLY:
-                errorDesc = "仅限TCG卡片";
-                break;
-            case YGOProtocol.DECKERROR_UNKNOWNCARD:
-                errorDesc = "未知卡片";
-                break;
-            case YGOProtocol.DECKERROR_CARDCOUNT:
-                errorDesc = "卡片数量超限";
-                break;
-            case YGOProtocol.DECKERROR_MAINCOUNT:
-                errorDesc = "主卡组数量不符(" + cardCode + "张)";
-                break;
-            case YGOProtocol.DECKERROR_EXTRACOUNT:
-                errorDesc = "额外卡组数量超限(" + cardCode + "张)";
-                break;
-            case YGOProtocol.DECKERROR_SIDECOUNT:
-                errorDesc = "副卡组数量超限(" + cardCode + "张)";
-                break;
-            case YGOProtocol.DECKERROR_NOTAVAIL:
-                errorDesc = "卡片不可用";
-                break;
-            default:
-                errorDesc = "未知卡组错误(type=" + errorType + ")";
-                break;
-        }
-
-        String cardName = "";
-        if (cardCode > 0 && errorType != YGOProtocol.DECKERROR_MAINCOUNT
-                && errorType != YGOProtocol.DECKERROR_EXTRACOUNT
-                && errorType != YGOProtocol.DECKERROR_SIDECOUNT) {
-            cardName = getCardDisplayName(cardCode);
-        }
-
-        String title = "卡组验证失败";
-        String message = errorDesc;
-        if (!cardName.isEmpty()) {
-            message += "\n卡片: " + cardName + " (" + cardCode + ")";
-        }
-
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle(title).setMessage(message);
-        dialog.show();
+        runOnUiThread(() -> {
+            if (lanModeDialog != null) lanModeDialog.handleDeckError(errorType, cardCode);
+        });
     }
 
     private void setupFullScreen() {
@@ -559,6 +424,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     public void setLanModeDialog(LanModeDialog dialog) {
         lanModeDialog = dialog;
+        lanModeDialog.setCardNameResolver(this::getCardDisplayName);
     }
 
     public SoundManager getSoundManager() {

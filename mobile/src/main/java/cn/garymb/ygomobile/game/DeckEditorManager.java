@@ -25,6 +25,7 @@ import java.util.Random;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckInfo;
+import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
@@ -697,6 +698,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (currentDeckFilePath == null || currentDeckFilePath.isEmpty()) return;
         String deckName = currentDeckName != null && !currentDeckName.isEmpty()
                 ? currentDeckName : new File(currentDeckFilePath).getName().replace(".ydk", "");
+        String deletedCategory = currentDeckCategoryName;
         showConfirmDialog(deckName + "\n" + DataManager.get().getStringManager().getSystemString(1337, "是否删除这个卡组？"), () -> {
             File deckFile = new File(currentDeckFilePath);
             if (deckFile.exists()) {
@@ -708,7 +710,31 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                 currentDeck.sideCards.clear();
                 notifyDeckChanged();
                 isModified = false;
-                updateDeckManagerButtonText();
+
+                // 自动加载同分类第一个卡组，若分类已空则回退到未分类
+                List<DeckFile> allDecks = DeckUtil.getDeckAllList();
+                DeckFile targetDeck = null;
+                for (DeckFile df : allDecks) {
+                    if (df.getTypeName().equals(deletedCategory)) {
+                        targetDeck = df;
+                        break;
+                    }
+                }
+                if (targetDeck == null) {
+                    String uncatName = activity.getString(R.string.category_Uncategorized);
+                    for (DeckFile df : allDecks) {
+                        if (df.getTypeName().equals(uncatName)) {
+                            targetDeck = df;
+                            break;
+                        }
+                    }
+                }
+                if (targetDeck != null) {
+                    applySelectedDeck(targetDeck.getPath(), targetDeck.getName(), targetDeck.getTypeName());
+                } else {
+                    updateDeckManagerButtonText();
+                }
+
                 YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1338, "删除成功"));
             }
         });

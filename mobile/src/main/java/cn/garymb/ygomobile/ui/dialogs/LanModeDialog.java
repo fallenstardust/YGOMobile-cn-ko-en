@@ -34,6 +34,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.adapters.HostListAdapter;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
+import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -1214,6 +1215,132 @@ public class LanModeDialog {
         if (btnPwStartGame != null && isHost) {
             btnPwStartGame.setVisibility(View.VISIBLE);
         }
+    }
+
+    public void handlePlayerEnter(String name, int pos) {
+        if (!isPlayerWaitingVisible()) return;
+        removeObserver(name);
+        setPlayerName(pos, name);
+        refreshPlayerDisplay();
+    }
+
+    public void handlePlayerChange(int status) {
+        if (!isPlayerWaitingVisible()) return;
+        int pos = (status >> 4) & 0x0F;
+        int state = status & 0x0F;
+
+        if (state < 8) {
+            String oldName = getPlayerName(pos);
+            movePlayer(pos, state);
+            if (!oldName.isEmpty() && state >= 4) {
+                addObserver(oldName);
+            }
+            if (pos >= 4 && !oldName.isEmpty() && state < 4) {
+                removeObserver(oldName);
+            }
+        } else if (state == 0x8) {
+            String observerName = getPlayerName(pos);
+            clearPlayerPos(pos);
+            if (!observerName.isEmpty()) {
+                addObserver(observerName);
+            }
+        } else if (state == 0x9) {
+            setPlayerReady(pos, true);
+        } else if (state == 0xa) {
+            setPlayerReady(pos, false);
+        } else if (state == 0xb) {
+            String leavingName = getPlayerName(pos);
+            clearPlayerPos(pos);
+            if (!leavingName.isEmpty()) {
+                removeObserver(leavingName);
+            }
+        }
+        refreshPlayerDisplay();
+    }
+
+    public void handleWatchChange(int watchCount) {
+        if (!isPlayerWaitingVisible()) return;
+        updateWatchCount(watchCount);
+        refreshPlayerDisplay();
+    }
+
+    public void handleJoinGame(int lflist, int rule, int mode, int duelRule,
+                               int noCheckDeck, int noShuffleDeck,
+                               int startLp, int startHand, int drawCount, int timeLimit) {
+        if (!isPlayerWaitingVisible()) return;
+        updateRoomInfo(lflist, rule, mode, duelRule,
+                noCheckDeck, noShuffleDeck,
+                startLp, startHand, drawCount, timeLimit);
+    }
+
+    public void handleTypeChange(int type, boolean isTag) {
+        if (!isPlayerWaitingVisible()) return;
+        int selfType = type & 0x0F;
+        boolean isHost = ((type >> 4) & 0x0F) != 0;
+        updateTypeChange(selfType, isTag, isHost);
+    }
+
+    public void handleDeckError(int errorType, int cardCode) {
+        String errorDesc;
+        switch (errorType) {
+            case YGOProtocol.DECKERROR_LFLIST:
+                errorDesc = "禁限卡表违规";
+                break;
+            case YGOProtocol.DECKERROR_OCGONLY:
+                errorDesc = "仅限OCG卡片";
+                break;
+            case YGOProtocol.DECKERROR_TCGONLY:
+                errorDesc = "仅限TCG卡片";
+                break;
+            case YGOProtocol.DECKERROR_UNKNOWNCARD:
+                errorDesc = "未知卡片";
+                break;
+            case YGOProtocol.DECKERROR_CARDCOUNT:
+                errorDesc = "卡片数量超限";
+                break;
+            case YGOProtocol.DECKERROR_MAINCOUNT:
+                errorDesc = "主卡组数量不符(" + cardCode + "张)";
+                break;
+            case YGOProtocol.DECKERROR_EXTRACOUNT:
+                errorDesc = "额外卡组数量超限(" + cardCode + "张)";
+                break;
+            case YGOProtocol.DECKERROR_SIDECOUNT:
+                errorDesc = "副卡组数量超限(" + cardCode + "张)";
+                break;
+            case YGOProtocol.DECKERROR_NOTAVAIL:
+                errorDesc = "卡片不可用";
+                break;
+            default:
+                errorDesc = "未知卡组错误(type=" + errorType + ")";
+                break;
+        }
+
+        String cardName = "";
+        if (cardCode > 0 && errorType != YGOProtocol.DECKERROR_MAINCOUNT
+                && errorType != YGOProtocol.DECKERROR_EXTRACOUNT
+                && errorType != YGOProtocol.DECKERROR_SIDECOUNT) {
+            cardName = cardNameResolver != null ? cardNameResolver.resolve(cardCode) : "";
+        }
+
+        String title = "卡组验证失败";
+        String message = errorDesc;
+        if (!cardName.isEmpty()) {
+            message += "\n卡片: " + cardName + " (" + cardCode + ")";
+        }
+
+        YesOrNoDialog dialog = new YesOrNoDialog(context);
+        dialog.setTitle(title).setMessage(message);
+        dialog.show();
+    }
+
+    public interface CardNameResolver {
+        String resolve(int cardCode);
+    }
+
+    private CardNameResolver cardNameResolver;
+
+    public void setCardNameResolver(CardNameResolver resolver) {
+        this.cardNameResolver = resolver;
     }
 
     // === 静态入口：由 YGOProActivity 调用 ===
