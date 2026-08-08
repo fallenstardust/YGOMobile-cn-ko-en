@@ -182,6 +182,7 @@ public:
 	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
 	void FixFontGlitch();
 	irr::core::dimension2d<irr::u32> GetGUIFontDimension(const wchar_t* text) const;
+	irr::s32 GetGUIFontKerningHeight() const;
 	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
 	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
 	void LoadExpansions();

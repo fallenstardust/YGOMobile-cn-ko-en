@@ -2365,8 +2365,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     eventElement == mainGame->wSinglePlay ||
                     eventElement == mainGame->wLanWindow) {
                     if (mainGame->wEmoticon->isVisible()) mainGame->HideElement(mainGame->wEmoticon);
-                    mainGame->textFont->setTransparency(true);
-					mainGame->guiFont->setTransparency(true);
+                    mainGame->FixFontGlitch();
                     mainGame->ClearChatMsg();
 
                     break;
@@ -2393,7 +2392,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                    is_dragging_cardtext = false;
 	                    break;
 	                }
-	                int step = mainGame->guiFont->getDimension(L"A").Height + mainGame->guiFont->getKerningHeight();
+	                int step = mainGame->GetGUIFontDimension(L"A").Height + mainGame->GetGUIFontKerningHeight();
 	                int pos = dragging_tab_start_pos + (dragging_tab_start_y - event.MouseInput.Y) / step;
 	                int max = mainGame->scrCardText->getMax();
 	                if(pos < 0) pos = 0;

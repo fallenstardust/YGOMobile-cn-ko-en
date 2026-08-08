@@ -1713,6 +1713,9 @@ void Game::FixFontGlitch() {
 irr::core::dimension2d<irr::u32> Game::GetGUIFontDimension(const wchar_t* text) const {
 	return guiFont->getDimension(text);
 }
+    irr::s32 Game::GetGUIFontKerningHeight() const {
+        return guiFont->getKerningHeight();
+    }
 void Game::InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text) {
 	std::wstring format_text;
 	format_text = SetStaticText(pControl, cWidth, font, text);
