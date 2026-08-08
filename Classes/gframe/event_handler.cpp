@@ -33,46 +33,46 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
 			// 处理猜拳选择的3个按钮的点击事件
-            case BUTTON_HAND1:
-            case BUTTON_HAND2:
-            case BUTTON_HAND3: {
+			case BUTTON_HAND1:
+			case BUTTON_HAND2:
+			case BUTTON_HAND3: {
                 // 隐藏手势选择窗口
-                mainGame->wHand->setVisible(false);
+				mainGame->wHand->setVisible(false);
                 // 判断当前消息是否为猜拳(MSG_ROCK_PAPER_SCISSORS)
-                if(mainGame->dInfo.curMsg == MSG_ROCK_PAPER_SCISSORS) {
+				if(mainGame->dInfo.curMsg == MSG_ROCK_PAPER_SCISSORS) {
                     // 设置响应值为按钮索引+1(1=石头,2=布,3=剪刀)
-                    DuelClient::SetResponseI(id - BUTTON_HAND1 + 1);
+					DuelClient::SetResponseI(id - BUTTON_HAND1 + 1);
                     // 发送响应给服务器
-                    DuelClient::SendResponse();
-                } else {
+					DuelClient::SendResponse();
+				} else {
                     // 清空提示信息文本
-                    mainGame->stHintMsg->setText(L"");
+					mainGame->stHintMsg->setText(L"");
                     // 显示提示信息窗口
-                    mainGame->stHintMsg->setVisible(true);
+					mainGame->stHintMsg->setVisible(true);
                     // 创建手势结果数据包
-                    CTOS_HandResult cshr;
+					CTOS_HandResult cshr;
                     // 设置手势结果为按钮索引+1
-                    cshr.res = id - BUTTON_HAND1 + 1;
+					cshr.res = id - BUTTON_HAND1 + 1;
                     // 发送手势结果数据包到服务器
-                    DuelClient::SendPacketToServer(CTOS_HAND_RESULT, cshr);
-                }
-                break;
-            }
+					DuelClient::SendPacketToServer(CTOS_HAND_RESULT, cshr);
+				}
+				break;
+			}
             // 处理先后攻选择按钮的点击事件
-            case BUTTON_FIRST:
-            case BUTTON_SECOND: {
+			case BUTTON_FIRST:
+			case BUTTON_SECOND: {
                 // 播放按钮点击音效
                 mainGame->soundManager->PlaySoundEffect(SoundManager::SFX::BUTTON);
                 // 隐藏先后手选择窗口
-                mainGame->HideElement(mainGame->wFTSelect);
+				mainGame->HideElement(mainGame->wFTSelect);
                 // 创建先后手选择结果数据包
-                CTOS_TPResult cstr;
+				CTOS_TPResult cstr;
                 // 设置选择结果(BUTTON_SECOND-BUTTON_FIRST=1表示先手，BUTTON_SECOND-BUTTON_SECOND=0表示后手)
-                cstr.res = BUTTON_SECOND - id;
+				cstr.res = BUTTON_SECOND - id;
                 // 发送先后手选择结果数据包到服务器
-                DuelClient::SendPacketToServer(CTOS_TP_RESULT, cstr);
-                break;
-            }
+				DuelClient::SendPacketToServer(CTOS_TP_RESULT, cstr);
+				break;
+			}
 			case BUTTON_REPLAY_START: {
 				if(!mainGame->dInfo.isReplay)
 					break;
@@ -1601,7 +1601,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					should_show_tip = true;
 					myswprintf(formatBuffer, dataManager.GetSysString(1700), mainGame->btnCancelOrFinish->getText());
 					mainGame->stTip->setText(formatBuffer);
-					irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(formatBuffer) + irr::core::dimension2d<unsigned int>(10, 10);
+					irr::core::dimension2d<unsigned int> dtip = mainGame->GetGUIFontDimension(formatBuffer) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
 					mainGame->stTip->setRelativePosition(irr::core::recti(x - 10 * mainGame->xScale - dtip.Width, y - 10 * mainGame->yScale - dtip.Height, x - 10 * mainGame->xScale, y - 10 * mainGame->yScale));
 				}
 				mainGame->stTip->setVisible(should_show_tip);
@@ -1736,7 +1736,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 								str.append(formatBuffer);
 							}
 							should_show_tip = true;
-							irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
+							irr::core::dimension2d<unsigned int> dtip = mainGame->GetGUIFontDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
 							mainGame->stTip->setRelativePosition(irr::core::recti(x - 10 * mainGame->xScale - dtip.Width, y - 10 * mainGame->yScale - dtip.Height, x - 10 * mainGame->xScale, y - 10 * mainGame->yScale));
 							mainGame->stTip->setText(str.c_str());
 						}
@@ -1775,7 +1775,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						str.append(formatBuffer);
 					}
 					should_show_tip = true;
-					irr::core::dimension2d<unsigned int> dtip = mainGame->guiFont->getDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
+					irr::core::dimension2d<unsigned int> dtip = mainGame->GetGUIFontDimension(str.c_str()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
 					mainGame->stTip->setRelativePosition(irr::core::recti(x - 10 * mainGame->xScale - dtip.Width, y + 10 * mainGame->yScale, x - 10 * mainGame->xScale, y + 10 * mainGame->yScale + dtip.Height));
 					mainGame->stTip->setText(str.c_str());
 				}
@@ -2252,8 +2252,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		case irr::KEY_KEY_R: {
 			if(mainGame->gameConf.control_mode == 0
 				&& !event.KeyInput.PressedDown && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
-				mainGame->textFont->setTransparency(true);
-				mainGame->guiFont->setTransparency(true);
+				mainGame->FixFontGlitch();
 			}
 			return true;
 			break;
@@ -2261,8 +2260,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 		case irr::KEY_F9: {
 			if(mainGame->gameConf.control_mode == 1
 				&& !event.KeyInput.PressedDown && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
-				mainGame->textFont->setTransparency(true);
-				mainGame->guiFont->setTransparency(true);
+				mainGame->FixFontGlitch();
 			}
 			return true;
 			break;
@@ -2367,8 +2365,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
                     eventElement == mainGame->wSinglePlay ||
                     eventElement == mainGame->wLanWindow) {
                     if (mainGame->wEmoticon->isVisible()) mainGame->HideElement(mainGame->wEmoticon);
-                    mainGame->textFont->setTransparency(true);
-					mainGame->guiFont->setTransparency(true);
+                    mainGame->FixFontGlitch();
                     mainGame->ClearChatMsg();
 
                     break;
@@ -2395,7 +2392,7 @@ bool ClientField::OnCommonEvent(const irr::SEvent& event) {
 	                    is_dragging_cardtext = false;
 	                    break;
 	                }
-	                int step = mainGame->guiFont->getDimension(L"A").Height + mainGame->guiFont->getKerningHeight();
+	                int step = mainGame->GetGUIFontDimension(L"A").Height + mainGame->GetGUIFontKerningHeight();
 	                int pos = dragging_tab_start_pos + (dragging_tab_start_y - event.MouseInput.Y) / step;
 	                int max = mainGame->scrCardText->getMax();
 	                if(pos < 0) pos = 0;
@@ -2955,7 +2952,7 @@ void ClientField::ShowCardInfoInList(ClientCard* pcard, irr::gui::IGUIElement* e
 		irr::s32 x = (ePos.UpperLeftCorner.X + ePos.LowerRightCorner.X) / 2;
 		irr::s32 y = ePos.LowerRightCorner.Y;
 		mainGame->SetStaticText(mainGame->stCardListTip, 320 * mainGame->xScale, mainGame->guiFont, str.c_str());
-		irr::core::dimension2d<unsigned int> dTip = mainGame->guiFont->getDimension(mainGame->stCardListTip->getText()) + irr::core::dimension2d<unsigned int>(10, 10);
+		irr::core::dimension2d<unsigned int> dTip = mainGame->GetGUIFontDimension(mainGame->stCardListTip->getText()) + irr::core::dimension2d<unsigned int>(10 * mainGame->xScale, 10 * mainGame->yScale);
 		irr::s32 w = dTip.Width / 2;
 		if(x - w < 10 * mainGame->xScale)
 			x = w + 10 * mainGame->xScale;
