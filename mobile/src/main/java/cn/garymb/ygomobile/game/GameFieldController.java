@@ -17,6 +17,7 @@ import java.util.List;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.render.DuelFieldManager;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
@@ -25,10 +26,11 @@ import ocgcore.DataManager;
 import ocgcore.enums.DuelPhase;
 
 /**
- * GameFieldView 管理类：卡片/区域点击与长按、卡片命令菜单、放置区域选择、
+ * 决斗场管理类：卡片/区域点击与长按、卡片命令菜单、放置区域选择、
  * 高亮、连锁动画、cmdContext 状态；
  * layout_top_info 区域：双方 LP/名字/手卡数/计时/头像 + 回合数 + 提示信息 + 聊天气泡 + 决斗倒计时；
  * 以及阶段按钮（DP/SP/M1/BP/M2/EP 切换与响应）
+ * 以及 DuelFieldManager 驱动的 XML 区域视图（怪兽区/魔陷区/堆叠区）
  */
 public class GameFieldController implements GameFieldView.OnCardClickListener {
 
@@ -39,6 +41,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private final YGOProActivity activity;
     private final Handler mainHandler;
     private GameFieldViewController viewController;
+    private DuelFieldManager duelFieldManager;
     private GameEngine engine;
     private int cmdContext = 0;
     private boolean isPlaceSelecting = false;
@@ -77,8 +80,10 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     public void create() {
         viewController = new GameFieldViewController(activity);
+        duelFieldManager = new DuelFieldManager(activity);
         bindTopInfoViews();
         bindPhaseButtons();
+        duelFieldManager.setOnZoneClickListener(this::onZoneClick);
     }
 
     private void bindTopInfoViews() {
@@ -159,6 +164,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     public void invalidate() {
         viewController.invalidate();
+        if (engine != null && duelFieldManager != null) {
+            duelFieldManager.updateFromField(engine.getField());
+        }
     }
 
     public void selectCardWithAutoClear(int controler, int location, int sequence, int durationMs) {
@@ -175,13 +183,13 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         isPlaceSelecting = true;
         int mask = engine.selectFieldMask;
         viewController.highlightField(mask);
+        // 同步高亮到 DuelFieldManager 区域视图
+        int selfType = engine.getClient().selfType;
+        duelFieldManager.applyHighlightMask(mask, selfType);
         String msg = isDisfield ? "请选择要禁用的区域" : "请选择放置位置";
         showHint(msg, 3000);
     }
 
-    /**
-     * 对应 cancelOrFinish 中 case 18/24：正在选位时发送取消响应。返回是否处理
-     */
     public boolean cancelPlaceSelect() {
         if (!isPlaceSelecting) return false;
         int selfType = engine.getClient().selfType;
@@ -192,7 +200,35 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         engine.sendResponse(buf.array());
         isPlaceSelecting = false;
         viewController.clearHighlight();
+        duelFieldManager.clearAllHighlights();
         return true;
+    }
+
+    // === 区域点击处理（来自 DuelFieldManager） ===
+
+    private void onZoneClick(int player, int location, int sequence) {
+        if (engine == null) return;
+        GameField field = engine.getField();
+        if (isPlaceSelecting) {
+            handlePlaceSelection(player, location, sequence);
+            return;
+        }
+        GameField.ClientCard card = field.getCard(player, location, sequence);
+        if (card != null && card.cmdFlag != 0) {
+            showCardCommandMenu(card);
+            return;
+        }
+        // 堆叠区点击：查看卡片信息
+        boolean isPile = (location == 0x01 || location == 0x10
+                || location == 0x20 || location == 0x40);
+        if (isPile && card != null && card.code > 0) {
+            activity.showCardInfoPanel(card);
+            return;
+        }
+        // 场上卡片点击：查看信息
+        if (card != null && card.code > 0) {
+            activity.showCardInfoPanel(card);
+        }
     }
 
     private void handlePlaceSelection(int player, int location, int sequence) {
@@ -203,6 +239,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
         isPlaceSelecting = false;
         viewController.clearHighlight();
+        duelFieldManager.clearAllHighlights();
 
         int respPlayer = player;
         int respLocation;

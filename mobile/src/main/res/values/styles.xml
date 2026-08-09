@@ -177,4 +177,32 @@
         <item name="android:windowExitAnimation">@anim/popup_close</item>
     </style>
 
+    <!-- 决斗场区域槽位：怪兽区/魔陷区/额外怪兽区（横向等宽，254×254 正方形比例） -->
+    <style name="ZoneSlot">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:background">@drawable/zone_slot_bg</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">#99FFFFFF</item>
+        <item name="android:textSize">8sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:minWidth">44dp</item>
+        <item name="android:minHeight">44dp</item>
+    </style>
+
+    <!-- 决斗场堆叠区：卡组/墓地/除外/额外卡组/场地魔法区（纵向等分） -->
+    <style name="PileZone">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:background">@drawable/zone_slot_bg</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">#99FFFFFF</item>
+        <item name="android:textSize">8sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
 </resources>

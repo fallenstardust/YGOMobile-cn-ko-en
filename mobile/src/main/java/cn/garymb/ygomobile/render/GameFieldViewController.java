@@ -4,54 +4,47 @@ import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.LinearLayout;
 
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 
+/**
+ * 决斗场容器控制器：布局模式（rotationX=60° 透视 LinearLayout），
+ * 不再承载 Canvas 卡片渲染，仅管理容器显隐；绘制/选中/高亮接口暂为空实现
+ */
 public class GameFieldViewController {
 
-    private final GameFieldView gameFieldView;
+    private final LinearLayout duelFieldLayout;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public GameFieldViewController(Activity activity) {
-        gameFieldView = activity.findViewById(R.id.game_field_view);
+        duelFieldLayout = activity.findViewById(R.id.layout_duel_field);
     }
 
     public void init(GameField field, ImageLoader imageLoader, GameFieldView.OnCardClickListener listener) {
-        if (gameFieldView != null) {
-            gameFieldView.setField(field);
-            gameFieldView.setImageLoader(imageLoader);
-            gameFieldView.setCardClickListener(listener);
-        }
+        // 布局容器模式：卡片渲染已移交 XML 布局，无需 Canvas 绑定
     }
 
     public void show() {
-        if (gameFieldView != null) {
-            gameFieldView.setVisibility(View.VISIBLE);
+        if (duelFieldLayout != null) {
+            duelFieldLayout.setVisibility(View.VISIBLE);
         }
     }
 
     public void hide() {
-        if (gameFieldView != null) {
-            gameFieldView.setVisibility(View.GONE);
+        if (duelFieldLayout != null) {
+            duelFieldLayout.setVisibility(View.GONE);
         }
     }
 
     public void invalidate() {
-        if (gameFieldView != null) {
-            mainHandler.post(() -> {
-                gameFieldView.invalidate();
-                gameFieldView.startAnimationLoop();
-            });
-        }
+        // 布局容器模式：无需 Canvas 重绘
     }
 
     public void highlightField(int mask) {
-        if (gameFieldView != null) {
-            gameFieldView.setHighlightFieldMask(mask);
-            gameFieldView.invalidate();
-        }
+        // 布局容器模式：暂不实现区域高亮
     }
 
     public void clearHighlight() {
@@ -59,23 +52,18 @@ public class GameFieldViewController {
     }
 
     public void selectCard(int controler, int location, int sequence) {
-        if (gameFieldView != null) {
-            gameFieldView.setSelectedCard(controler, location, sequence);
-        }
+        // 布局容器模式：暂不实现卡片选中
     }
 
     public void clearSelection() {
-        if (gameFieldView != null) {
-            gameFieldView.clearSelection();
-        }
+        // 布局容器模式：暂不实现
     }
 
     public void selectCardWithAutoClear(int controler, int location, int sequence, long clearDelayMs) {
-        selectCard(controler, location, sequence);
-        mainHandler.postDelayed(this::clearSelection, clearDelayMs);
+        // 布局容器模式：暂不实现
     }
 
-    public GameFieldView getView() {
-        return gameFieldView;
+    public LinearLayout getView() {
+        return duelFieldLayout;
     }
 }

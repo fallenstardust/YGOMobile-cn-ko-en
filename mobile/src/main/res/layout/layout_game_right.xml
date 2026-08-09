@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 右侧区域（垂直）：顶部玩家信息 + 决斗场 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_game_right"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- 顶部玩家信息区（常驻显示） -->
+    <LinearLayout
+        android:id="@+id/layout_top_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="4dp">
+
+        <!-- 我方信息面板（左上） -->
+        <LinearLayout
+            android:id="@+id/layout_player_panel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/ygopro_deck_background"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <ImageView
+                android:id="@+id/iv_player_avatar"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/avatar" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_player_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="left"
+                    android:shadowColor="#FF00E5FF"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="4"
+                    android:text="Player"
+                    android:textColor="#AAFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_player_lp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:shadowColor="#FF00FF88"
+                        android:shadowDx="0"
+                        android:shadowDy="0"
+                        android:shadowRadius="3"
+                        android:text="8000"
+                        android:textColor="#00FF88"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_player_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="8dp"
+                        android:text=""
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tv_player_hand_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="12dp"
+                        android:text="手卡:5"
+                        android:textColor="#88CCFF"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 中央回合计数器 -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp">
+
+            <TextView
+                android:id="@+id/tv_turn_counter"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:background="@drawable/button_radius_black_transparents"
+                android:gravity="center"
+                android:shadowColor="@color/holo_blue_bright"
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="6"
+                android:text="5"
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- 对手信息面板（右上） -->
+        <LinearLayout
+            android:id="@+id/layout_opponent_panel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/ygopro_deck_background"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_opponent_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:shadowColor="#FF00E5FF"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="4"
+                    android:text="Opponent"
+                    android:textColor="#AAFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_opponent_hand_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="手卡:5"
+                        android:textColor="#88CCFF"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tv_opponent_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginEnd="8dp"
+                        android:text=""
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tv_opponent_lp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:shadowColor="#FFFF8800"
+                        android:shadowDx="0"
+                        android:shadowDy="0"
+                        android:shadowRadius="3"
+                        android:text="8000"
+                        android:textColor="#FFD700"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/iv_opponent_avatar"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/avatar" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 决斗场区域（填充剩余空间） -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <!-- 聊天消息区域 -->
+        <FrameLayout
+            android:id="@+id/layout_chat_messages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|top"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <TextView
+                android:id="@+id/tv_chat_message_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:background="#40000000"
+                android:text="player1:聊天玩家1或者3说的话"
+                android:textColor="@color/white"
+                android:textSize="8sp"
+                android:visibility="visible" />
+
+            <!-- 提示信息 -->
+            <TextView
+                android:id="@+id/tv_hint_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|top"
+                android:background="@drawable/ygopro_deck_background"
+                android:padding="3dp"
+                android:text="请选择要特殊召唤的怪兽（9-9）"
+                android:textColor="@color/white"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/tv_chat_message_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:background="#40000000"
+                android:text="player2:聊天玩家2或者4说的话"
+                android:textColor="@color/white"
+                android:textSize="8sp"
+                android:visibility="visible" />
+        </FrameLayout>
+
+        <!-- 决斗场（LinearLayout 绕X轴向前倾斜45°，统一7列权重系统对齐区域纵列） -->
+        <LinearLayout
+            android:id="@+id/layout_duel_field"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:background="@drawable/dialogcube"
+            android:clipChildren="false"
+            android:orientation="vertical"
+            android:rotationX="45"
+            android:visibility="visible">
+
+            <!-- 统一7列权重系统：col_left(1.1) | col_0(1) | col_1(1) | col_2(1) | col_3(1) | col_4(1) | col_right(1.1) -->
+            <!-- 列中心对应 GameFieldView 虚拟 X：col_0≈1.75(M0), col_1≈2.85(M1), col_2≈3.95(M2), col_3≈5.05(M3), col_4≈6.15(M4) -->
+            <!-- 外层垂直权重 2:1:2（对方:中轴:我方），使怪兽区/魔陷区/额外怪兽区视觉上接近 254×254 正方形 -->
+
+            <!-- 对方半场（屏幕上方，Y<0，横向镜像：seq 大在左） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="2"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- 列左：DECK(上) / GRAVE(中) / BANISH(下) -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/zone_p1_deck"
+                        style="@style/PileZone"
+                        android:text="DECK" />
+
+                    <TextView
+                        android:id="@+id/zone_p1_grave"
+                        style="@style/PileZone"
+                        android:text="GRAVE" />
+
+                    <TextView
+                        android:id="@+id/zone_p1_banish"
+                        style="@style/PileZone"
+                        android:text="BANISH" />
+                </LinearLayout>
+
+                <!-- 中列：魔陷区行(上) + 怪兽区行(下)，5列等宽对应 M0~M4 纵列 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="5"
+                    android:baselineAligned="false"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <TextView android:id="@+id/zone_p1_s4" style="@style/ZoneSlot" android:text="S4" />
+                        <TextView android:id="@+id/zone_p1_s3" style="@style/ZoneSlot" android:text="S3" />
+                        <TextView android:id="@+id/zone_p1_s2" style="@style/ZoneSlot" android:text="S2" />
+                        <TextView android:id="@+id/zone_p1_s1" style="@style/ZoneSlot" android:text="S1" />
+                        <TextView android:id="@+id/zone_p1_s0" style="@style/ZoneSlot" android:text="S0" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <TextView android:id="@+id/zone_p1_m4" style="@style/ZoneSlot" android:text="M4" />
+                        <TextView android:id="@+id/zone_p1_m3" style="@style/ZoneSlot" android:text="M3" />
+                        <TextView android:id="@+id/zone_p1_m2" style="@style/ZoneSlot" android:text="M2" />
+                        <TextView android:id="@+id/zone_p1_m1" style="@style/ZoneSlot" android:text="M1" />
+                        <TextView android:id="@+id/zone_p1_m0" style="@style/ZoneSlot" android:text="M0" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 列右：EXTRA(上) / FIELD(下) -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/zone_p1_extra"
+                        style="@style/PileZone"
+                        android:text="EXTRA" />
+
+                    <TextView
+                        android:id="@+id/zone_p1_field"
+                        style="@style/PileZone"
+                        android:text="FIELD" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 中轴：额外怪兽区 ×2，与 M1(col_1)/M3(col_3) 纵列对齐 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.1" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/zone_p0_m5"
+                    style="@style/ZoneSlot"
+                    android:text="EMZ1" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/zone_p0_m6"
+                    style="@style/ZoneSlot"
+                    android:text="EMZ2" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.1" />
+            </LinearLayout>
+
+            <!-- 我方半场（屏幕下方，Y>0） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="2"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- 列左：FIELD(上) / EXTRA(下) -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/zone_p0_field"
+                        style="@style/PileZone"
+                        android:text="FIELD" />
+
+                    <TextView
+                        android:id="@+id/zone_p0_extra"
+                        style="@style/PileZone"
+                        android:text="EXTRA" />
+                </LinearLayout>
+
+                <!-- 中列：怪兽区行(上) + 魔陷区行(下)，5列等宽 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="5"
+                    android:baselineAligned="false"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <TextView android:id="@+id/zone_p0_m0" style="@style/ZoneSlot" android:text="M0" />
+                        <TextView android:id="@+id/zone_p0_m1" style="@style/ZoneSlot" android:text="M1" />
+                        <TextView android:id="@+id/zone_p0_m2" style="@style/ZoneSlot" android:text="M2" />
+                        <TextView android:id="@+id/zone_p0_m3" style="@style/ZoneSlot" android:text="M3" />
+                        <TextView android:id="@+id/zone_p0_m4" style="@style/ZoneSlot" android:text="M4" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <TextView android:id="@+id/zone_p0_s0" style="@style/ZoneSlot" android:text="S0" />
+                        <TextView android:id="@+id/zone_p0_s1" style="@style/ZoneSlot" android:text="S1" />
+                        <TextView android:id="@+id/zone_p0_s2" style="@style/ZoneSlot" android:text="S2" />
+                        <TextView android:id="@+id/zone_p0_s3" style="@style/ZoneSlot" android:text="S3" />
+                        <TextView android:id="@+id/zone_p0_s4" style="@style/ZoneSlot" android:text="S4" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 列右：BANISH(上) / GRAVE(中) / DECK(下) — BANISH 在 GRAVE 正上方 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/zone_p0_banish"
+                        style="@style/PileZone"
+                        android:text="BANISH" />
+
+                    <TextView
+                        android:id="@+id/zone_p0_grave"
+                        style="@style/PileZone"
+                        android:text="GRAVE" />
+
+                    <TextView
+                        android:id="@+id/zone_p0_deck"
+                        style="@style/PileZone"
+                        android:text="DECK" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 阶段按钮组（决斗场中轴位置横向3个，与决斗场同角度向前倾斜45°） -->
+        <LinearLayout
+            android:id="@+id/layout_phase_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:rotationX="45"
+            android:visibility="visible">
+
+            <Button
+                android:id="@+id/btn_phase_current"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:background="@drawable/button2_bg"
+                android:text="DP"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_phase_next"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="100dp"
+                android:background="@drawable/button2_bg"
+                android:text="BP"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_ep"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:background="@drawable/button2_bg"
+                android:text="EP"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <EditText
+        android:id="@+id/et_chat_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:inputType="text"
+        android:textSize="10sp"
+        android:maxLines="1"
+        android:imeOptions="actionSend|flagNoExtractUi"
+        android:textColor="@color/white"
+        android:background="@drawable/ygopro_deck_background" />
+</LinearLayout>
