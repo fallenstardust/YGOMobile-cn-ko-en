@@ -619,39 +619,18 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- 提示信息 -->
-            <TextView
-                android:id="@+id/tv_hint_message"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:background="@drawable/ygopro_deck_background"
-                android:padding="3dp"
-                android:text="请选择要特殊召唤的怪兽（9-9）"
-                android:textColor="@color/white"
-                android:textSize="10sp" />
-
             <!-- 决斗场区域（填充剩余空间） -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1">
 
-                <cn.garymb.ygomobile.render.GameFieldView
-                    android:id="@+id/game_field_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:visibility="visible" />
-
                 <!-- 聊天消息区域 -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/layout_chat_messages"
-                    android:layout_width="200dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end|top"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/ygopro_deck_background"
+                    android:layout_gravity="center|top"
                     android:orientation="horizontal"
                     android:padding="6dp"
                     android:visibility="visible">
@@ -662,10 +641,22 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="start"
                         android:background="#40000000"
-                        android:padding="3dp"
+                        android:text="player1:聊天玩家1或者3说的话"
                         android:textColor="@color/white"
                         android:textSize="8sp"
                         android:visibility="visible" />
+
+                    <!-- 提示信息 -->
+                    <TextView
+                        android:id="@+id/tv_hint_message"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center|top"
+                        android:background="@drawable/ygopro_deck_background"
+                        android:padding="3dp"
+                        android:text="请选择要特殊召唤的怪兽（9-9）"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
 
                     <TextView
                         android:id="@+id/tv_chat_message_2"
@@ -673,54 +664,64 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="end"
                         android:background="#40000000"
-                        android:padding="3dp"
+                        android:text="player2:聊天玩家2或者4说的话"
                         android:textColor="@color/white"
                         android:textSize="8sp"
                         android:visibility="visible" />
-                </LinearLayout>
+                </FrameLayout>
+
+                <cn.garymb.ygomobile.render.GameFieldView
+                    android:id="@+id/game_field_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipChildren="false"
+                    android:visibility="visible">
+                </cn.garymb.ygomobile.render.GameFieldView>
 
                 <!-- 阶段按钮组（决斗场中轴位置横向3个） -->
-                <FrameLayout
+                <LinearLayout
                     android:id="@+id/layout_phase_buttons"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
+                    android:gravity="center"
                     android:orientation="horizontal"
                     android:visibility="visible">
 
                     <Button
                         android:id="@+id/btn_phase_current"
-                        android:layout_width="60dp"
-                        android:layout_height="30dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_gravity="left"
                         android:background="@drawable/button3_bg"
                         android:text="DP"
                         android:textColor="@color/white"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
 
                     <Button
                         android:id="@+id/btn_phase_next"
-                        android:layout_width="60dp"
-                        android:layout_height="30dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_gravity="center"
+                        android:layout_marginHorizontal="300dp"
                         android:background="@drawable/button3_bg"
                         android:text="BP"
                         android:textColor="@color/white"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
 
                     <Button
                         android:id="@+id/btn_ep"
-                        android:layout_width="60dp"
-                        android:layout_height="30dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_gravity="right"
                         android:background="@drawable/button3_bg"
                         android:text="EP"
                         android:textColor="@color/white"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
-                </FrameLayout>
+                </LinearLayout>
             </FrameLayout>
 
             <EditText
@@ -729,7 +730,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
                 android:inputType="text"
-                android:textSize="9sp"
+                android:textSize="10sp"
                 android:maxLines="1"
                 android:imeOptions="actionSend|flagNoExtractUi"
                 android:textColor="@color/white"

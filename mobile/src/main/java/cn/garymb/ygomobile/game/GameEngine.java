@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import java.io.File;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -615,7 +616,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onGameMsg(int msgType, ByteBuffer data) {
         data.order(ByteOrder.LITTLE_ENDIAN);
-        GameMessageParser.parse(msgType, data, this);
+        try {
+            GameMessageParser.parse(msgType, data, this);
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, "Failed to parse game message type=" + msgType + ", remaining=" + data.remaining(), e);
+        }
     }
 
     @Override
@@ -1120,7 +1125,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onFieldDisabled(int ctrl, int loc, int seq) {
+    public void onFieldDisabled(int disabledMask) {
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });

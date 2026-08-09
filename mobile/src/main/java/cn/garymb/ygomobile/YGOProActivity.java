@@ -1,9 +1,5 @@
 package cn.garymb.ygomobile;
 
-import static cn.garymb.ygomobile.Constants.PRO_VERSION;
-import static cn.garymb.ygomobile.utils.BotUtil.parseBotConfig;
-import static cn.garymb.ygomobile.utils.PuzzleUtil.loadPuzzleFiles;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -49,10 +45,8 @@ import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.ReplayEngine;
-import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
@@ -63,11 +57,8 @@ import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
-import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
-import cn.garymb.ygomobile.utils.PuzzleUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 
@@ -530,19 +521,10 @@ public class YGOProActivity extends AppCompatActivity implements
         }
     }
 
-    private void hideReplayControls() {
-        cardDetailPanel.hideReplayControls();
-        currentReplayEngine = null;
-    }
-
-    public void showDeckEditDialog() {
+    public void showDeckEditorView() {
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
         getMainMenuDialog().hideMainMenu();
         hideGameUI();
-        showDeckEditorView();
-    }
-
-    private void showDeckEditorView() {
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
         if (layoutDeckEditor == null) {
             layoutDeckEditor = findViewById(R.id.layout_deck_editor);

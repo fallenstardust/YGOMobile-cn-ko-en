@@ -970,7 +970,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         field.addCard(c2c, c2l, c2s, c1);
         notifyField();
     }
-    @Override public void onFieldDisabled(int ctrl, int loc, int seq) {}
+    @Override public void onFieldDisabled(int disabledMask) {}
     @Override public void onSummoning(int code, int ctrl, int loc, int seq) { soundManager.playSoundEffect(SoundManager.SFX.SUMMON); }
     @Override public void onSummoned() { notifyField(); }
     @Override public void onSpSummoning(int code, int ctrl, int loc, int seq) { soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON); }

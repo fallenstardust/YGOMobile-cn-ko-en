@@ -60,7 +60,7 @@ public class GameMessageParser {
                          int oldPos, int newPos);
         void onSet(int code, int controler, int location, int sequence);
         void onSwap(int c1_ctrl, int c1_loc, int c1_seq, int c2_ctrl, int c2_loc, int c2_seq);
-        void onFieldDisabled(int controler, int location, int sequence);
+        void onFieldDisabled(int disabledMask);
         void onSummoning(int code, int controler, int location, int sequence);
         void onSummoned();
         void onSpSummoning(int code, int controler, int location, int sequence);
@@ -244,6 +244,7 @@ public class GameMessageParser {
                 break;
             case DeckTop: {
                 int player = buf.get() & 0xFF;
+                buf.get(); // seq
                 int code = buf.getInt();
                 handler.onDeckTop(player, code);
                 break;
@@ -283,6 +284,7 @@ public class GameMessageParser {
                 int ctrl = buf.get() & 0xFF;
                 int loc = buf.get() & 0xFF;
                 int seq = buf.get() & 0xFF;
+                buf.get(); // position
                 handler.onSet(code, ctrl, loc, seq);
                 break;
             }
@@ -291,18 +293,18 @@ public class GameMessageParser {
                 int c1ctrl = buf.get() & 0xFF;
                 int c1loc = buf.get() & 0xFF;
                 int c1seq = buf.get() & 0xFF;
+                buf.get(); // position
                 int c2code = buf.getInt();
                 int c2ctrl = buf.get() & 0xFF;
                 int c2loc = buf.get() & 0xFF;
                 int c2seq = buf.get() & 0xFF;
+                buf.get(); // position
                 handler.onSwap(c1ctrl, c1loc, c1seq, c2ctrl, c2loc, c2seq);
                 break;
             }
             case FieldDisabled: {
-                int ctrl = buf.get() & 0xFF;
-                int loc = buf.get() & 0xFF;
-                int seq = buf.get() & 0xFF;
-                handler.onFieldDisabled(ctrl, loc, seq);
+                int disabledMask = buf.getInt();
+                handler.onFieldDisabled(disabledMask);
                 break;
             }
             case Summoning: {
@@ -310,28 +312,25 @@ public class GameMessageParser {
                 int ctrl = buf.get() & 0xFF;
                 int loc = buf.get() & 0xFF;
                 int seq = buf.get() & 0xFF;
+                buf.get(); // position
                 handler.onSummoning(code, ctrl, loc, seq);
                 break;
             }
-            case Summoned:
-                handler.onSummoned();
-                break;
             case SpSummoning: {
                 int code = buf.getInt();
                 int ctrl = buf.get() & 0xFF;
                 int loc = buf.get() & 0xFF;
                 int seq = buf.get() & 0xFF;
+                buf.get(); // position
                 handler.onSpSummoning(code, ctrl, loc, seq);
                 break;
             }
-            case SpSummoned:
-                handler.onSpSummoned();
-                break;
             case FlipSummoning: {
                 int code = buf.getInt();
                 int ctrl = buf.get() & 0xFF;
                 int loc = buf.get() & 0xFF;
                 int seq = buf.get() & 0xFF;
+                buf.get(); // position
                 handler.onFlipSummoning(code, ctrl, loc, seq);
                 break;
             }
@@ -394,26 +393,22 @@ public class GameMessageParser {
                 break;
             }
             case Equip: {
-                int eqCode = buf.getInt();
                 int eqCtrl = buf.get() & 0xFF;
                 int eqLoc = buf.get() & 0xFF;
                 int eqSeq = buf.get() & 0xFF;
+                buf.get(); // position
                 int tCtrl = buf.get() & 0xFF;
                 int tLoc = buf.get() & 0xFF;
                 int tSeq = buf.get() & 0xFF;
-                handler.onEquip(eqCode, eqCtrl, eqLoc, eqSeq, tCtrl, tLoc, tSeq);
-                break;
-            }
-            case LpUpdate: {
-                int player = buf.get() & 0xFF;
-                int lp = buf.getInt();
-                handler.onLpUpdate(player, lp);
+                buf.get(); // position
+                handler.onEquip(0, eqCtrl, eqLoc, eqSeq, tCtrl, tLoc, tSeq);
                 break;
             }
             case Unequip: {
                 int ctrl = buf.get() & 0xFF;
                 int loc = buf.get() & 0xFF;
                 int seq = buf.get() & 0xFF;
+                buf.get(); // position
                 handler.onUnequip(ctrl, loc, seq);
                 break;
             }
@@ -422,9 +417,11 @@ public class GameMessageParser {
                 int c1ctrl = buf.get() & 0xFF;
                 int c1loc = buf.get() & 0xFF;
                 int c1seq = buf.get() & 0xFF;
+                buf.get(); // position
                 int c2ctrl = buf.get() & 0xFF;
                 int c2loc = buf.get() & 0xFF;
                 int c2seq = buf.get() & 0xFF;
+                buf.get(); // position
                 if (msg == GameMessage.CardTarget)
                     handler.onCardTarget(c1ctrl, c1loc, c1seq, c2ctrl, c2loc, c2seq);
                 else
@@ -459,18 +456,33 @@ public class GameMessageParser {
                 int aCtrl = buf.get() & 0xFF;
                 int aLoc = buf.get() & 0xFF;
                 int aSeq = buf.get() & 0xFF;
+                buf.get(); // position
                 int dCtrl = buf.get() & 0xFF;
                 int dLoc = buf.get() & 0xFF;
                 int dSeq = buf.get() & 0xFF;
+                buf.get(); // position
                 handler.onAttack(aCtrl, aLoc, aSeq, dCtrl, dLoc, dSeq);
                 break;
             }
             case Battle: {
+                buf.get(); buf.get(); buf.get(); buf.get(); // attacker ctrl/loc/seq/pos
                 int atkAtk = buf.getInt();
-                boolean atkPos = (buf.get() & 0xFF) != 0;
+                buf.getInt(); // attacker defense
+                int atkPos = buf.get() & 0xFF;
+                buf.get(); buf.get(); buf.get(); buf.get(); // defender ctrl/loc/seq/pos
                 int defAtk = buf.getInt();
-                boolean defPos = (buf.get() & 0xFF) != 0;
-                handler.onBattle(atkAtk, atkPos, defAtk, defPos);
+                buf.getInt(); // defender defense
+                int defPos = buf.get() & 0xFF;
+                handler.onBattle(atkAtk, (atkPos & 0x9) != 0, defAtk, (defPos & 0x9) != 0);
+                break;
+            }
+            case MissedEffect: {
+                int ctrl = buf.get() & 0xFF;
+                int loc = buf.get() & 0xFF;
+                int seq = buf.get() & 0xFF;
+                buf.get(); // position
+                int code = buf.getInt();
+                handler.onMissedEffect(code, ctrl, loc, seq, 0);
                 break;
             }
             case AttackDisabled:
@@ -482,15 +494,6 @@ public class GameMessageParser {
             case DamageStepEnd:
                 handler.onDamageStepEnd();
                 break;
-            case MissedEffect: {
-                int code = buf.getInt();
-                int ctrl = buf.get() & 0xFF;
-                int loc = buf.get() & 0xFF;
-                int seq = buf.get() & 0xFF;
-                int effectId = buf.getInt();
-                handler.onMissedEffect(code, ctrl, loc, seq, effectId);
-                break;
-            }
             case TossCoin: {
                 int player = buf.get() & 0xFF;
                 int count = buf.get() & 0xFF;

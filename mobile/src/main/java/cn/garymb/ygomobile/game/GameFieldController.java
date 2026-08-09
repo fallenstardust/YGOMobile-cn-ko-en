@@ -50,10 +50,10 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private TextView tvPlayerTime, tvOpponentTime;
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
     private TextView tvHintMessage;
-    private LinearLayout layoutChatMessages;
+    private FrameLayout layoutChatMessages;
     private TextView tvChatMessage1, tvChatMessage2;
 
-    private FrameLayout layoutPhaseButtons;
+    private LinearLayout layoutPhaseButtons;
     private Button btnPhaseCurrent, btnPhaseNext, btnEp;
 
     private final int[] duelTimeLeft = new int[2];

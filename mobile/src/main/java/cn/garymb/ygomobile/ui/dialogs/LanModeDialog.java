@@ -1211,12 +1211,6 @@ public class LanModeDialog {
         btnPwStartGame.setTextColor(Color.WHITE);
     }
 
-    private void updateStartButtonVisibility() {
-        if (btnPwStartGame != null && isHost) {
-            btnPwStartGame.setVisibility(View.VISIBLE);
-        }
-    }
-
     public void handlePlayerEnter(String name, int pos) {
         if (!isPlayerWaitingVisible()) return;
         removeObserver(name);
@@ -1264,13 +1258,9 @@ public class LanModeDialog {
         refreshPlayerDisplay();
     }
 
-    public void handleJoinGame(int lflist, int rule, int mode, int duelRule,
-                               int noCheckDeck, int noShuffleDeck,
-                               int startLp, int startHand, int drawCount, int timeLimit) {
+    public void handleJoinGame(int lflist, int rule, int mode, int duelRule, int noCheckDeck, int noShuffleDeck, int startLp, int startHand, int drawCount, int timeLimit) {
         if (!isPlayerWaitingVisible()) return;
-        updateRoomInfo(lflist, rule, mode, duelRule,
-                noCheckDeck, noShuffleDeck,
-                startLp, startHand, drawCount, timeLimit);
+        updateRoomInfo(lflist, rule, mode, duelRule, noCheckDeck, noShuffleDeck, startLp, startHand, drawCount, timeLimit);
     }
 
     public void handleTypeChange(int type, boolean isTag) {

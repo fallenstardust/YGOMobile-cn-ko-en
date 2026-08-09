@@ -75,7 +75,7 @@ public class MainMenuDialog {
         root.findViewById(R.id.btn_menu_lan).setOnClickListener(v -> LanModeDialog.showLanModeDialog(activity));
         root.findViewById(R.id.btn_menu_single).setOnClickListener(v -> SingleModeDialog.showSingleModeDialog(activity));
         root.findViewById(R.id.btn_menu_replay).setOnClickListener(v -> ReplayModeDialog.showReplayModeDialog(activity));
-        root.findViewById(R.id.btn_menu_deck).setOnClickListener(v -> activity.showDeckEditDialog());
+        root.findViewById(R.id.btn_menu_deck).setOnClickListener(v -> activity.showDeckEditorView());
         root.findViewById(R.id.btn_menu_settings).setOnClickListener(v -> activity.showSettingsDialog());
         root.findViewById(R.id.btn_menu_exit).setOnClickListener(v -> {
             activity.getSoundManager().stopBGM();
