@@ -23,7 +23,7 @@ public final class YGOServer {
     ) {
         String path = AppsSettings.get().getResourcePath();
         String cmd = String.format(
-            "7911 -1 5 0 F %s %s %d %d %d 0 0, %s",
+            "7911 -1 5 0 F %s %s %d %d %d 0 0 %s",
             noChk ? 'T' : 'F',
             noShuffle ? 'T' : 'F',
             lp, hand, draw, path);
