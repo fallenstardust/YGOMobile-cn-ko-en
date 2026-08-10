@@ -192,8 +192,16 @@ public class LimitManager implements Closeable {
         LimitList naGenesys = new LimitList("N/A");
         naGenesys.setLfHash(0);
         mGenesys_LimitLists.put("N/A", naGenesys);
-
-        ++mCount;
+        // N/A作为"无禁限"选项追加到名称列表末尾（供下拉菜单选择，不影响getTopLimit默认禁卡表）
+        if (!mLimitNames.contains("N/A")) {
+            mLimitNames.add("N/A");
+        }
+        if (!mGenesys_LimitNames.contains("N/A")) {
+            mGenesys_LimitNames.add("N/A");
+        }
+        // 计数与名称列表保持一致，避免数量与列表长度不一致导致越界
+        mCount = mLimitNames.size();
+        mGenesys_Count = mGenesys_LimitNames.size();
         return expansion_zip_rs1 && expansion_rs2 && default_res3;
     }
 

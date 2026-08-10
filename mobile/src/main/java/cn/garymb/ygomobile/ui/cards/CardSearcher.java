@@ -497,7 +497,7 @@ public class CardSearcher implements View.OnClickListener {
         // 添加默认选项"选择禁卡表"
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
         // 遍历所有禁卡表
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < limits.size(); i++) {
             // 计算选项索引（从1开始）
             int j = i + 1;
             // 获取禁卡表名称
@@ -570,7 +570,7 @@ public class CardSearcher implements View.OnClickListener {
         // 添加默认选项"禁卡表"
         items.add(new SimpleSpinnerItem(0, getString(R.string.label_limitlist)));
         // 遍历所有禁卡表
-        for (int i = 0; i < genesys_count; i++) {
+        for (int i = 0; i < genesys_limit_names.size(); i++) {
             // 计算选项索引（从1开始）
             int j = i + 1;
             // 获取禁卡表名称

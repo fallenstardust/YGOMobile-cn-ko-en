@@ -875,6 +875,8 @@ public class LanModeDialog {
                 limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
 
         for (String limitName : limitNames) {
+            // 名称列表已包含N/A，跳过以免与手动添加的N/A重复
+            if ("N/A".equals(limitName)) continue;
             banlistItems.add(new SimpleSpinnerItem(banlistItems.size(), limitName));
         }
 
