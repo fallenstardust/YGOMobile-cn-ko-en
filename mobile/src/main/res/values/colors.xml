@@ -43,4 +43,5 @@
     <color name="FallGreen">#1A3A4A</color>
     <color name="ygopro_list_background">#0A5C5C</color>
     <color name="ygopro_line_color">#FFA2D8F4</color>
+    <color name="ygopro_background_color">#aa11113d</color>
 </resources>

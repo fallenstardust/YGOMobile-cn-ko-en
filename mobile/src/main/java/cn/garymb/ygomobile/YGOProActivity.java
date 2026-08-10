@@ -53,6 +53,7 @@ import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
 import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.MainMenuDialog;
+import cn.garymb.ygomobile.ui.dialogs.RPSDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
@@ -83,6 +84,8 @@ public class YGOProActivity extends AppCompatActivity implements
     private FrameLayout dialogContainer;
     private MainMenuDialog mainMenuDialog;
     private LanModeDialog lanModeDialog;
+    private RPSDialog handSelectDialog;
+    private YesOrNoDialog tpSelectDialog;
 
     private EditText etChatInput;
 
@@ -441,6 +444,16 @@ public class YGOProActivity extends AppCompatActivity implements
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
     }
 
+    private void enterDuelingUI() {
+        getMainMenuDialog().hideMainMenu();
+        showGameUI();
+        if (lanModeDialog != null) {
+            lanModeDialog.setOnDismissListener(null);
+            lanModeDialog.dismiss();
+        }
+        isGameStarted = true;
+    }
+
     @Override
     public void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
                                       int startLP, int startHand, int drawCount, int timeLimit,
@@ -497,7 +510,6 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onPlayerWaitingExit() {
         if (engine != null) engine.disconnect();
-        getMainMenuDialog().restoreMainMenu();
     }
 
     @Override
@@ -653,17 +665,16 @@ public class YGOProActivity extends AppCompatActivity implements
                 showDeckSelectDialog();
                 break;
             case HAND_SELECT:
+                enterDuelingUI();
                 showHandSelectDialog();
                 break;
             case TP_SELECT:
+                enterDuelingUI();
                 showTPSelectDialog();
                 break;
             case DUELING:
-                getMainMenuDialog().hideMainMenu();
-                showGameUI();
-                if (lanModeDialog != null) lanModeDialog.dismiss();
+                enterDuelingUI();
                 cardDetailPanel.showBottomActions();
-                isGameStarted = true;
                 break;
             case SIDING:
                 showDeckEditorView();              // 打开卡组编辑器
@@ -860,34 +871,22 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void showHandSelectDialog() {
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("猜拳");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-        String[] choices = {"石头", "剪刀", "布"};
-        for (int i = 0; i < choices.length; i++) {
-            Button btn = new Button(this);
-            btn.setText(choices[i]);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF006688);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 8;
-            btn.setLayoutParams(lp);
-            final int result = i + 1;
-            btn.setOnClickListener(v -> {
-                engine.sendHandResult(result);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
+        if (handSelectDialog != null && handSelectDialog.isShowing()) return;
+        RPSDialog dialog = new RPSDialog(this);
+        handSelectDialog = dialog;
+        dialog.setTitle("猜拳决定先手")
+                .setCancelable(false)
+                .setOnResultListener(result -> {
+                    engine.sendHandResult(result);
+                    dialog.dismiss();
+                });
         dialog.show();
     }
 
     private void showTPSelectDialog() {
+        if (tpSelectDialog != null && tpSelectDialog.isShowing()) return;
         YesOrNoDialog dialog = new YesOrNoDialog(this);
+        tpSelectDialog = dialog;
         dialog.setTitle("先攻选择")
                 .setMessage("是否选择先攻？")
                 .setType(YesOrNoDialog.TYPE_YES_NO)

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 右侧区域（垂直）：顶部玩家信息 + 决斗场 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/layout_game_right"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -29,8 +30,8 @@
 
             <ImageView
                 android:id="@+id/iv_player_avatar"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/avatar" />
 
@@ -52,7 +53,7 @@
                     android:shadowRadius="4"
                     android:text="Player"
                     android:textColor="#AAFFFF"
-                    android:textSize="14sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -72,7 +73,7 @@
                         android:shadowRadius="3"
                         android:text="8000"
                         android:textColor="#00FF88"
-                        android:textSize="18sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -83,7 +84,7 @@
                         android:layout_marginStart="8dp"
                         android:text=""
                         android:textColor="#FFFFFF"
-                        android:textSize="12sp"
+                        android:textSize="10sp"
                         android:textStyle="bold"
                         android:visibility="gone" />
 
@@ -94,7 +95,7 @@
                         android:layout_marginEnd="12dp"
                         android:text="手卡:5"
                         android:textColor="#88CCFF"
-                        android:textSize="12sp" />
+                        android:textSize="10sp" />
 
                 </LinearLayout>
             </LinearLayout>
@@ -151,7 +152,7 @@
                     android:shadowRadius="4"
                     android:text="Opponent"
                     android:textColor="#AAFFFF"
-                    android:textSize="14sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -167,7 +168,7 @@
                         android:layout_marginStart="12dp"
                         android:text="手卡:5"
                         android:textColor="#88CCFF"
-                        android:textSize="12sp" />
+                        android:textSize="10sp" />
 
                     <TextView
                         android:id="@+id/tv_opponent_time"
@@ -177,7 +178,7 @@
                         android:layout_marginEnd="8dp"
                         android:text=""
                         android:textColor="#FFFFFF"
-                        android:textSize="12sp"
+                        android:textSize="10sp"
                         android:textStyle="bold"
                         android:visibility="gone" />
 
@@ -191,96 +192,92 @@
                         android:shadowRadius="3"
                         android:text="8000"
                         android:textColor="#FFD700"
-                        android:textSize="18sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
 
             <ImageView
                 android:id="@+id/iv_opponent_avatar"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/avatar" />
         </LinearLayout>
     </LinearLayout>
 
     <!-- 决斗场区域（填充剩余空间） -->
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <!-- 聊天消息区域 -->
+        <!-- 决斗场容器（占满剩余空间：聊天消息 + 决斗场 + 阶段按钮） -->
         <FrameLayout
-            android:id="@+id/layout_chat_messages"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|top"
-            android:orientation="horizontal"
-            android:visibility="visible">
-
-            <TextView
-                android:id="@+id/tv_chat_message_1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
-                android:background="#40000000"
-                android:text="player1:聊天玩家1或者3说的话"
-                android:textColor="@color/white"
-                android:textSize="8sp"
-                android:visibility="visible" />
-
-            <!-- 提示信息 -->
-            <TextView
-                android:id="@+id/tv_hint_message"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center|top"
-                android:background="@drawable/ygopro_deck_background"
-                android:padding="3dp"
-                android:text="请选择要特殊召唤的怪兽（9-9）"
-                android:textColor="@color/white"
-                android:textSize="10sp" />
-
-            <TextView
-                android:id="@+id/tv_chat_message_2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:background="#40000000"
-                android:text="player2:聊天玩家2或者4说的话"
-                android:textColor="@color/white"
-                android:textSize="8sp"
-                android:visibility="visible" />
-        </FrameLayout>
-
-        <!-- 决斗场（LinearLayout 绕X轴向前倾斜45°，统一7列权重系统对齐区域纵列） -->
-        <LinearLayout
-            android:id="@+id/layout_duel_field"
+            android:id="@+id/layout_duel_area"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:background="@drawable/dialogcube"
-            android:clipChildren="false"
-            android:orientation="vertical"
-            android:rotationX="45"
-            android:visibility="visible">
+            android:layout_weight="1"
+            android:clipChildren="false">
 
-            <!-- 统一7列权重系统：col_left(1.1) | col_0(1) | col_1(1) | col_2(1) | col_3(1) | col_4(1) | col_right(1.1) -->
-            <!-- 列中心对应 GameFieldView 虚拟 X：col_0≈1.75(M0), col_1≈2.85(M1), col_2≈3.95(M2), col_3≈5.05(M3), col_4≈6.15(M4) -->
-            <!-- 外层垂直权重 2:1:2（对方:中轴:我方），使怪兽区/魔陷区/额外怪兽区视觉上接近 254×254 正方形 -->
-
-            <!-- 对方半场（屏幕上方，Y<0，横向镜像：seq 大在左） -->
-            <LinearLayout
+            <!-- 聊天消息区域 -->
+            <FrameLayout
+                android:id="@+id/layout_chat_messages"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="2"
-                android:baselineAligned="false"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|top"
+                android:orientation="horizontal"
+                android:visibility="visible">
 
-                <!-- 列左：DECK(上) / GRAVE(中) / BANISH(下) -->
+                <TextView
+                    android:id="@+id/tv_chat_message_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:background="#40000000"
+                    android:text="player1:聊天玩家1或者3说的话"
+                    android:textColor="@color/white"
+                    android:textSize="8sp"
+                    android:visibility="visible" />
+
+                <!-- 提示信息 -->
+                <TextView
+                    android:id="@+id/tv_hint_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|top"
+                    android:background="@drawable/ygopro_deck_background"
+                    android:padding="3dp"
+                    android:text="请选择要特殊召唤的怪兽（9-9）"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/tv_chat_message_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:background="#40000000"
+                    android:text="player2:聊天玩家2或者4说的话"
+                    android:textColor="@color/white"
+                    android:textSize="8sp"
+                    android:visibility="visible" />
+            </FrameLayout>
+
+            <!-- 决斗场（平面矩形：左右各5个堆叠区 + 中央 上5魔陷/5怪兽/2EMZ/5怪兽/5魔陷） -->
+            <LinearLayout
+                android:id="@+id/layout_duel_field"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:background="@drawable/dialogcube"
+                android:clipChildren="false"
+                android:orientation="horizontal"
+                android:visibility="visible">
+
+                <!-- 左列：对方堆叠区 DECK / GRAVE / BANISH / EXTRA / FIELD -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -301,51 +298,6 @@
                         android:id="@+id/zone_p1_banish"
                         style="@style/PileZone"
                         android:text="BANISH" />
-                </LinearLayout>
-
-                <!-- 中列：魔陷区行(上) + 怪兽区行(下)，5列等宽对应 M0~M4 纵列 -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="5"
-                    android:baselineAligned="false"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:baselineAligned="false"
-                        android:orientation="horizontal">
-
-                        <TextView android:id="@+id/zone_p1_s4" style="@style/ZoneSlot" android:text="S4" />
-                        <TextView android:id="@+id/zone_p1_s3" style="@style/ZoneSlot" android:text="S3" />
-                        <TextView android:id="@+id/zone_p1_s2" style="@style/ZoneSlot" android:text="S2" />
-                        <TextView android:id="@+id/zone_p1_s1" style="@style/ZoneSlot" android:text="S1" />
-                        <TextView android:id="@+id/zone_p1_s0" style="@style/ZoneSlot" android:text="S0" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:baselineAligned="false"
-                        android:orientation="horizontal">
-
-                        <TextView android:id="@+id/zone_p1_m4" style="@style/ZoneSlot" android:text="M4" />
-                        <TextView android:id="@+id/zone_p1_m3" style="@style/ZoneSlot" android:text="M3" />
-                        <TextView android:id="@+id/zone_p1_m2" style="@style/ZoneSlot" android:text="M2" />
-                        <TextView android:id="@+id/zone_p1_m1" style="@style/ZoneSlot" android:text="M1" />
-                        <TextView android:id="@+id/zone_p1_m0" style="@style/ZoneSlot" android:text="M0" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- 列右：EXTRA(上) / FIELD(下) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1.1"
-                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/zone_p1_extra"
@@ -357,79 +309,8 @@
                         style="@style/PileZone"
                         android:text="FIELD" />
                 </LinearLayout>
-            </LinearLayout>
 
-            <!-- 中轴：额外怪兽区 ×2，与 M1(col_1)/M3(col_3) 纵列对齐 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:baselineAligned="false"
-                android:orientation="horizontal">
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1.1" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/zone_p0_m5"
-                    style="@style/ZoneSlot"
-                    android:text="EMZ1" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/zone_p0_m6"
-                    style="@style/ZoneSlot"
-                    android:text="EMZ2" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1.1" />
-            </LinearLayout>
-
-            <!-- 我方半场（屏幕下方，Y>0） -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="2"
-                android:baselineAligned="false"
-                android:orientation="horizontal">
-
-                <!-- 列左：FIELD(上) / EXTRA(下) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1.1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/zone_p0_field"
-                        style="@style/PileZone"
-                        android:text="FIELD" />
-
-                    <TextView
-                        android:id="@+id/zone_p0_extra"
-                        style="@style/PileZone"
-                        android:text="EXTRA" />
-                </LinearLayout>
-
-                <!-- 中列：怪兽区行(上) + 魔陷区行(下)，5列等宽 -->
+                <!-- 中列：对方魔陷区/怪兽区 + 额外怪兽区 + 我方怪兽区/魔陷区，5行等分，槽位统一为相同大小的正方形 -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -437,36 +318,334 @@
                     android:baselineAligned="false"
                     android:orientation="vertical">
 
-                    <LinearLayout
+                    <!-- 对方魔陷区（最上排5，横向镜像：seq 大在左） -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:baselineAligned="false"
-                        android:orientation="horizontal">
+                        android:layout_weight="1">
 
-                        <TextView android:id="@+id/zone_p0_m0" style="@style/ZoneSlot" android:text="M0" />
-                        <TextView android:id="@+id/zone_p0_m1" style="@style/ZoneSlot" android:text="M1" />
-                        <TextView android:id="@+id/zone_p0_m2" style="@style/ZoneSlot" android:text="M2" />
-                        <TextView android:id="@+id/zone_p0_m3" style="@style/ZoneSlot" android:text="M3" />
-                        <TextView android:id="@+id/zone_p0_m4" style="@style/ZoneSlot" android:text="M4" />
-                    </LinearLayout>
+                        <TextView
+                            android:id="@+id/zone_p1_s4"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S4"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p1_s3"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
 
-                    <LinearLayout
+                        <TextView
+                            android:id="@+id/zone_p1_s3"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S3"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p1_s4"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p1_s2"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p1_s2"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S2"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p1_s3"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p1_s1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p1_s1"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S1"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p1_s2"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p1_s0"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p1_s0"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S0"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p1_s1"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <!-- 对方怪兽区（上排5，横向镜像：seq 大在左） -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:baselineAligned="false"
-                        android:orientation="horizontal">
+                        android:layout_weight="1">
 
-                        <TextView android:id="@+id/zone_p0_s0" style="@style/ZoneSlot" android:text="S0" />
-                        <TextView android:id="@+id/zone_p0_s1" style="@style/ZoneSlot" android:text="S1" />
-                        <TextView android:id="@+id/zone_p0_s2" style="@style/ZoneSlot" android:text="S2" />
-                        <TextView android:id="@+id/zone_p0_s3" style="@style/ZoneSlot" android:text="S3" />
-                        <TextView android:id="@+id/zone_p0_s4" style="@style/ZoneSlot" android:text="S4" />
-                    </LinearLayout>
+                        <TextView
+                            android:id="@+id/zone_p1_m4"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M4"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p1_m3"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p1_m3"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M3"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p1_m4"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p1_m2"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p1_m2"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M2"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p1_m3"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p1_m1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p1_m1"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M1"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p1_m2"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p1_m0"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p1_m0"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M0"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p1_m1"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <!-- 中轴：额外怪兽区 ×2（EMZ1 对齐 M1 列、EMZ2 对齐 M3 列，正方形与怪兽槽位相同） -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1">
+
+                        <Space
+                            android:id="@+id/emz_col_0"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_m5"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_m5"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="EMZ1"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/emz_col_0"
+                            app:layout_constraintRight_toLeftOf="@id/emz_col_1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <Space
+                            android:id="@+id/emz_col_1"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_m5"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_m6"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_m6"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="EMZ2"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/emz_col_1"
+                            app:layout_constraintRight_toLeftOf="@id/emz_col_2"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <Space
+                            android:id="@+id/emz_col_2"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_m6"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <!-- 我方怪兽区（下排5） -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:id="@+id/zone_p0_m0"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M0"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_m1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_m1"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M1"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_m0"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_m2"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_m2"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M2"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_m1"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_m3"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_m3"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M3"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_m2"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_m4"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_m4"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="M4"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_m3"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <!-- 我方魔陷区（最下排5） -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:id="@+id/zone_p0_s0"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S0"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_s1"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_s1"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S1"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_s0"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_s2"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_s2"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S2"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_s1"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_s3"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_s3"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S3"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_s2"
+                            app:layout_constraintRight_toLeftOf="@id/zone_p0_s4"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+
+                        <TextView
+                            android:id="@+id/zone_p0_s4"
+                            style="@style/ZoneSlot"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:text="S4"
+                            app:layout_constraintDimensionRatio="1:1"
+                            app:layout_constraintLeft_toRightOf="@id/zone_p0_s3"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </LinearLayout>
 
-                <!-- 列右：BANISH(上) / GRAVE(中) / DECK(下) — BANISH 在 GRAVE 正上方 -->
+                <!-- 右列：我方堆叠区 DECK / GRAVE / BANISH / EXTRA / FIELD -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -474,9 +653,9 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/zone_p0_banish"
+                        android:id="@+id/zone_p0_deck"
                         style="@style/PileZone"
-                        android:text="BANISH" />
+                        android:text="DECK" />
 
                     <TextView
                         android:id="@+id/zone_p0_grave"
@@ -484,59 +663,69 @@
                         android:text="GRAVE" />
 
                     <TextView
-                        android:id="@+id/zone_p0_deck"
+                        android:id="@+id/zone_p0_banish"
                         style="@style/PileZone"
-                        android:text="DECK" />
+                        android:text="BANISH" />
+
+                    <TextView
+                        android:id="@+id/zone_p0_extra"
+                        style="@style/PileZone"
+                        android:text="EXTRA" />
+
+                    <TextView
+                        android:id="@+id/zone_p0_field"
+                        style="@style/PileZone"
+                        android:text="FIELD" />
                 </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
 
-        <!-- 阶段按钮组（决斗场中轴位置横向3个，与决斗场同角度向前倾斜45°） -->
-        <LinearLayout
-            android:id="@+id/layout_phase_buttons"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:rotationX="45"
-            android:visibility="visible">
-
-            <Button
-                android:id="@+id/btn_phase_current"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="left"
-                android:background="@drawable/button2_bg"
-                android:text="DP"
-                android:textColor="@color/white"
-                android:textSize="9sp"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/btn_phase_next"
-                android:layout_width="wrap_content"
+            <!-- 阶段按钮组（决斗场中轴位置横向3个，平面显示） -->
+            <LinearLayout
+                android:id="@+id/layout_phase_buttons"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginHorizontal="100dp"
-                android:background="@drawable/button2_bg"
-                android:text="BP"
-                android:textColor="@color/white"
-                android:textSize="9sp"
-                android:textStyle="bold" />
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:visibility="visible">
 
-            <Button
-                android:id="@+id/btn_ep"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:background="@drawable/button2_bg"
-                android:text="EP"
-                android:textColor="@color/white"
-                android:textSize="9sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </FrameLayout>
+                <Button
+                    android:id="@+id/btn_phase_current"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="left"
+                    android:background="@drawable/button2_bg"
+                    android:text="DP"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_phase_next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginHorizontal="150dp"
+                    android:background="@drawable/button2_bg"
+                    android:text="BP"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_ep"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:background="@drawable/button2_bg"
+                    android:text="EP"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </FrameLayout>
+
+    </LinearLayout>
 
     <EditText
         android:id="@+id/et_chat_input"

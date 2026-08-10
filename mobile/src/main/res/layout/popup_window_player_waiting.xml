@@ -60,7 +60,7 @@
                     android:id="@+id/chk_player1_ready"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.1"/>
+                    android:layout_weight="0.15"/>
             </LinearLayout>
 
             <LinearLayout
@@ -94,7 +94,7 @@
                     android:id="@+id/chk_player2_ready"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.1"/>
+                    android:layout_weight="0.15"/>
             </LinearLayout>
 
             <FrameLayout
@@ -163,7 +163,7 @@
                         android:id="@+id/chk_player3_ready"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="0.1"/>
+                        android:layout_weight="0.15"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -197,7 +197,7 @@
                         android:id="@+id/chk_player4_ready"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="0.1"/>
+                        android:layout_weight="0.15"/>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
