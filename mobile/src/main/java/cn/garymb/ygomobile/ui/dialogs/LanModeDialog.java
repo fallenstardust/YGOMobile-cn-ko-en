@@ -521,6 +521,7 @@ public class LanModeDialog {
             chkPwPlayer4Ready.setOnCheckedChangeListener(null);
         }
         isSelfReady = false;
+        updateDeckSelectButtonState();
         selfPos = 0;
         if (btnPwReady != null) {
             btnPwReady.setEnabled(true);
@@ -587,6 +588,7 @@ public class LanModeDialog {
                     btnPwReady.setPressed(ready);
                     btnPwReady.setBackground(ready ? context.getDrawable(R.drawable.sbutton_p) : context.getDrawable(R.drawable.sbutton));
                 }
+                updateDeckSelectButtonState();
             }
             checkboxes[pos].setChecked(ready);
         }
@@ -748,17 +750,16 @@ public class LanModeDialog {
     }
 
     /**
-     * lflist 是与 parseBanlistIndex 对应的索引：0 表示 N/A，k 表示禁卡表列表的第 k-1 项。
+     * 与 native 服务端一致：lflist 为禁卡表内容哈希（N/A 为 0）
      */
     private String getBanlistName(int lflist) {
-        if (lflist <= 0) return "N/A";
+        if (lflist == 0) return "N/A";
         LimitManager limitManager = DataManager.get().getLimitManager();
         boolean isGenesysMode = AppsSettings.get().getGenesysMode() == 1;
-        List<String> limitNames = isGenesysMode ?
-                limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
-        int idx = lflist - 1;
-        if (idx >= 0 && idx < limitNames.size()) return limitNames.get(idx);
-        return "N/A";
+        String name = isGenesysMode
+                ? limitManager.getGenesysLimitNameByHash(lflist)
+                : limitManager.getLimitNameByHash(lflist);
+        return name != null ? name : "N/A";
     }
 
     /**
@@ -955,6 +956,13 @@ public class LanModeDialog {
         }
     }
 
+    private void updateDeckSelectButtonState() {
+        if (btnPwDeckSelect != null) {
+            btnPwDeckSelect.setEnabled(!isSelfReady);
+            btnPwDeckSelect.setTextColor(isSelfReady ? Color.GRAY : Color.WHITE);
+        }
+    }
+
     private void setupSelfReadyInteraction() {
         CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
         for (int i = 0; i < checkboxes.length; i++) {
@@ -966,21 +974,20 @@ public class LanModeDialog {
         if (btnPwReady != null) {
             btnPwReady.setOnClickListener(v -> {
                 if (!isSelfReady) {
-                    if (currentDeckPath == null || currentDeckPath.isEmpty()) {
-                        Toast.makeText(context, "请先选择卡组", Toast.LENGTH_SHORT).show();
+                    if (!sendDeckIfLoaded()) {
+                        Toast.makeText(context, "卡组无效，请重新选择卡组", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    sendDeckIfLoaded();
                     isSelfReady = true;
-                    setSelfCheckboxChecked(true);
                     btnPwReady.setText("取消准备");
                     btnPwReady.setPressed(true);
+                    updateDeckSelectButtonState();
                     if (listener != null) listener.onPlayerWaitingReady();
                 } else {
                     isSelfReady = false;
-                    setSelfCheckboxChecked(false);
                     btnPwReady.setText("点击准备");
                     btnPwReady.setPressed(false);
+                    updateDeckSelectButtonState();
                     if (listener != null) listener.onPlayerWaitingNotReady();
                 }
             });
@@ -1005,15 +1012,14 @@ public class LanModeDialog {
                 checkboxes[i].setOnCheckedChangeListener((buttonView, isChecked) -> {
                     if (pos != selfPos) return;
                     if (isChecked) {
-                        if (currentDeckPath == null || currentDeckPath.isEmpty()) {
-                            Toast.makeText(context, "请先选择卡组", Toast.LENGTH_SHORT).show();
+                        if (!sendDeckIfLoaded()) {
+                            Toast.makeText(context, "卡组无效，请重新选择卡组", Toast.LENGTH_SHORT).show();
                             buttonView.setChecked(false);
                             isSelfReady = false;
                             btnPwReady.setText("点击准备");
                             btnPwReady.setPressed(false);
                             return;
                         }
-                        sendDeckIfLoaded();
                         isSelfReady = true;
                         btnPwReady.setText("取消准备");
                         btnPwReady.setPressed(true);
@@ -1033,10 +1039,10 @@ public class LanModeDialog {
         }
     }
 
-    private void sendDeckIfLoaded() {
-        if (currentDeckPath == null || currentDeckPath.isEmpty()) return;
+    private boolean sendDeckIfLoaded() {
+        if (currentDeckPath == null || currentDeckPath.isEmpty()) return false;
         File ydkFile = new File(currentDeckPath);
-        if (!ydkFile.exists()) return;
+        if (!ydkFile.exists()) return false;
 
         List<Integer> main = new ArrayList<>();
         List<Integer> extra = new ArrayList<>();
@@ -1072,24 +1078,24 @@ public class LanModeDialog {
             }
         } catch (Exception e) {
             Toast.makeText(context, "卡组加载失败", Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
+
+        if (main.isEmpty()) return false;
 
         if (listener != null) {
             listener.onPlayerWaitingDeckUpdate(main, extra, side);
         }
+        return true;
     }
 
     public static int parseBanlistIndex(String banlist) {
         if (banlist == null || banlist.equals("N/A")) return 0;
         LimitManager limitManager = DataManager.get().getLimitManager();
         boolean isGenesysMode = AppsSettings.get().getGenesysMode() == 1;
-        List<String> limitNames = isGenesysMode ?
-                limitManager.getGenesysLimitNames() : limitManager.getLimitNames();
-        for (int i = 0; i < limitNames.size(); i++) {
-            if (limitNames.get(i).equals(banlist)) return i + 1;
-        }
-        return 0;
+        return isGenesysMode
+                ? limitManager.getGenesysLimitHash(banlist)
+                : limitManager.getLimitHash(banlist);
     }
 
     public static int parseRuleIndex(String rule) {

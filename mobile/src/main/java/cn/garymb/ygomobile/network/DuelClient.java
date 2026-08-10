@@ -278,9 +278,8 @@ public class DuelClient implements YGOProtocol {
         if (buf.remaining() < 1) return;
         int typeVal = buf.get() & 0xFF;
         selfType = typeVal & 0xf;
-        boolean isHost = ((typeVal >> 4) & 0xf) != 0;
         if (listener != null) {
-            listener.onTypeChange(selfType);
+            listener.onTypeChange(typeVal);
         }
     }
 

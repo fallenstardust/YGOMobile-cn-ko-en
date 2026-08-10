@@ -206,7 +206,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     // === 区域点击处理（来自 DuelFieldManager） ===
 
-    private void onZoneClick(int player, int location, int sequence) {
+    @Override
+    public void onZoneClick(int player, int location, int sequence) {
         if (engine == null) return;
         GameField field = engine.getField();
         if (isPlaceSelecting) {
@@ -705,14 +706,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
         if (card != null) {
             activity.showCardInfoPanel(card);
-        }
-    }
-
-    @Override
-    public void onZoneClick(int player, int location, int sequence) {
-        Log.d(TAG, "Zone click: p=" + player + " loc=" + location);
-        if (isPlaceSelecting) {
-            handlePlaceSelection(player, location, sequence);
         }
     }
 
