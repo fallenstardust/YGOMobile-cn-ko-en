@@ -231,10 +231,11 @@ public class DuelFieldManager {
 
     /**
      * 根据 selectFieldMask 高亮/恢复区域
+     * selectFieldMask 已归一化：bit 0-15 = 我方区域，bit 16-31 = 对方区域
      */
-    public void applyHighlightMask(int mask, int selfType) {
+    public void applyHighlightMask(int mask) {
         for (int p = 0; p < 2; p++) {
-            int base = (p == selfType) ? 0 : 16;
+            int base = p * 16;
             // 怪物区 0-6
             for (int seq = 0; seq < 7; seq++) {
                 int bit = base + seq;

@@ -790,7 +790,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onStart(int playerType, int duelRule, int lp0, int lp1,
                         int deck0, int extra0, int deck1, int extra1) {
         field.clear();
-        duelIsFirst = (playerType & 0xf) == 0;
+        duelIsFirst = (playerType & 1) == 0;
         int p0 = localPlayer(0);
         int p1 = localPlayer(1);
         playerInfos[p0].lp = lp0;

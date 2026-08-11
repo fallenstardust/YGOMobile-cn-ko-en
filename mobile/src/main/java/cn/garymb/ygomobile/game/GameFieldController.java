@@ -184,8 +184,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         int mask = engine.selectFieldMask;
         viewController.highlightField(mask);
         // 同步高亮到 DuelFieldManager 区域视图
-        int selfType = engine.getClient().selfType;
-        duelFieldManager.applyHighlightMask(mask, selfType);
+        duelFieldManager.applyHighlightMask(mask);
         String msg = isDisfield ? "请选择要禁用的区域" : "请选择放置位置";
         showHint(msg, 3000);
     }
@@ -242,7 +241,10 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         viewController.clearHighlight();
         duelFieldManager.clearAllHighlights();
 
-        int respPlayer = player;
+        // player 为本地方位索引(0=我方,1=对方)，协议响应需转换为服务端 player 索引
+        int respPlayer = (player == 0)
+                ? engine.getClient().selfType
+                : (1 - engine.getClient().selfType);
         int respLocation;
         if (location == 0x04) {
             respLocation = 0x04;
@@ -253,10 +255,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
         int respSeq = sequence;
 
-        if (respPlayer != engine.getClient().selfType) {
-            respPlayer = engine.getClient().selfType;
-        }
-
         ByteBuffer buf = ByteBuffer.allocate(3);
         buf.put((byte) respPlayer);
         buf.put((byte) respLocation);
@@ -265,7 +263,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     }
 
     private int getZoneBitPos(int player, int location, int sequence) {
-        int base = (player == engine.getClient().selfType) ? 0 : 16;
+        // player 为本地方位索引(0=我方,1=对方)，mask 已归一化：0-15=我方, 16-31=对方
+        int base = (player == 0) ? 0 : 16;
         if (location == 0x04) return base + sequence;
         if (location == 0x08) {
             if (sequence < 6) return base + 8 + sequence;
