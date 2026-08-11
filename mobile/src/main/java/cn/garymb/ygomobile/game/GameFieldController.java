@@ -56,7 +56,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private FrameLayout layoutChatMessages;
     private TextView tvChatMessage1, tvChatMessage2;
 
-    private LinearLayout layoutPhaseButtons;
     private Button btnPhaseCurrent, btnPhaseNext, btnEp;
 
     private final int[] duelTimeLeft = new int[2];
@@ -114,7 +113,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     }
 
     private void bindPhaseButtons() {
-        layoutPhaseButtons = activity.findViewById(R.id.layout_phase_buttons);
         btnPhaseCurrent = activity.findViewById(R.id.btn_phase_current);
         btnPhaseNext = activity.findViewById(R.id.btn_phase_next);
         btnEp = activity.findViewById(R.id.btn_ep);
@@ -159,7 +157,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (viewController != null) viewController.hide();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
-        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
+        if (btnPhaseCurrent != null) btnPhaseCurrent.setVisibility(View.GONE);
+        if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
+        if (btnEp != null) btnEp.setVisibility(View.GONE);
     }
 
     public void invalidate() {
@@ -591,8 +591,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         DuelPhase dp = DuelPhase.valueOf(phase);
         if (dp == null) return;
 
-        if (layoutPhaseButtons != null) {
-            layoutPhaseButtons.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
+        if (btnPhaseCurrent != null) {
+            btnPhaseCurrent.setVisibility(isMyTurn ? View.VISIBLE : View.GONE);
         }
         if (btnPhaseCurrent == null) return;
 
@@ -688,10 +688,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      * 对局结束时清空并隐藏阶段按钮（配合 CardDetailPanel.closeGameButtons）
      */
     public void closePhaseButtons() {
-        if (btnPhaseCurrent != null) btnPhaseCurrent.setText("");
+        if (btnPhaseCurrent != null) {
+            btnPhaseCurrent.setText("");
+            btnPhaseCurrent.setVisibility(View.GONE);
+        }
         if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
         if (btnEp != null) btnEp.setVisibility(View.GONE);
-        if (layoutPhaseButtons != null) layoutPhaseButtons.setVisibility(View.GONE);
     }
 
     // === GameFieldView.OnCardClickListener ===

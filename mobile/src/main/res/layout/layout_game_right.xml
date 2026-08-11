@@ -268,11 +268,10 @@
             <!-- 决斗场（平面矩形：左右各5个堆叠区 + 中央 上5魔陷/5怪兽/2EMZ/5怪兽/5魔陷） -->
             <LinearLayout
                 android:id="@+id/layout_duel_field"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:background="@drawable/dialogcube"
                 android:clipChildren="false"
                 android:orientation="horizontal"
                 android:visibility="visible">
@@ -281,7 +280,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1.1"
+                    android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
@@ -300,14 +299,14 @@
                         android:text="BANISH" />
 
                     <TextView
-                        android:id="@+id/zone_p1_extra"
-                        style="@style/PileZone"
-                        android:text="EXTRA" />
-
-                    <TextView
-                        android:id="@+id/zone_p1_field"
+                        android:id="@+id/zone_p0_field"
                         style="@style/PileZone"
                         android:text="FIELD" />
+
+                    <TextView
+                        android:id="@+id/zone_p0_extra"
+                        style="@style/PileZone"
+                        android:text="EXTRA" />
                 </LinearLayout>
 
                 <!-- 中列：对方魔陷区/怪兽区 + 额外怪兽区 + 我方怪兽区/魔陷区，5行等分，槽位统一为相同大小的正方形 -->
@@ -315,12 +314,13 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="5"
+                    android:gravity="center"
                     android:baselineAligned="false"
                     android:orientation="vertical">
 
                     <!-- 对方魔陷区（最上排5，横向镜像：seq 大在左） -->
                     <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="0dp"
                         android:layout_weight="1">
 
@@ -387,7 +387,7 @@
 
                     <!-- 对方怪兽区（上排5，横向镜像：seq 大在左） -->
                     <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="0dp"
                         android:layout_weight="1">
 
@@ -452,20 +452,31 @@
                             app:layout_constraintBottom_toBottomOf="parent" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                    <!-- 中轴：额外怪兽区 ×2（EMZ1 对齐 M1 列、EMZ2 对齐 M3 列，正方形与怪兽槽位相同） -->
+                    <!-- 中轴：额外怪兽区 ×2（EMZ1 对齐 M1 列、EMZ2 对齐 M3 列，正方形与怪兽槽位相同）
+                         阶段按钮 DP/BP/EP 占用 M0/M2/M4 列，与 EMZ 同行；按钮宽=槽位宽，高=槽位一半 -->
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
+                        android:layout_gravity="center"
                         android:layout_weight="1">
 
-                        <Space
-                            android:id="@+id/emz_col_0"
+                        <Button
+                            android:id="@+id/btn_phase_current"
                             android:layout_width="0dp"
                             android:layout_height="0dp"
+                            android:background="@drawable/button2_bg"
+                            android:minHeight="0dp"
+                            android:minWidth="0dp"
+                            android:padding="0dp"
+                            android:text="DP"
+                            android:textColor="@color/white"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintDimensionRatio="W,2:1"
                             app:layout_constraintLeft_toLeftOf="parent"
                             app:layout_constraintRight_toLeftOf="@id/zone_p0_m5"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent" />
+                            app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
                             android:id="@+id/zone_p0_m5"
@@ -473,20 +484,29 @@
                             android:layout_width="0dp"
                             android:layout_height="0dp"
                             android:text="EMZ1"
+                            app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintDimensionRatio="1:1"
-                            app:layout_constraintLeft_toRightOf="@id/emz_col_0"
-                            app:layout_constraintRight_toLeftOf="@id/emz_col_1"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent" />
+                            app:layout_constraintLeft_toRightOf="@id/btn_phase_current"
+                            app:layout_constraintRight_toLeftOf="@id/btn_phase_next"
+                            app:layout_constraintTop_toTopOf="parent" />
 
-                        <Space
-                            android:id="@+id/emz_col_1"
+                        <Button
+                            android:id="@+id/btn_phase_next"
                             android:layout_width="0dp"
                             android:layout_height="0dp"
+                            android:background="@drawable/button2_bg"
+                            android:minHeight="0dp"
+                            android:minWidth="0dp"
+                            android:padding="0dp"
+                            android:text="BP"
+                            android:textColor="@color/white"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintDimensionRatio="W,2:1"
                             app:layout_constraintLeft_toRightOf="@id/zone_p0_m5"
                             app:layout_constraintRight_toLeftOf="@id/zone_p0_m6"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent" />
+                            app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
                             android:id="@+id/zone_p0_m6"
@@ -494,25 +514,34 @@
                             android:layout_width="0dp"
                             android:layout_height="0dp"
                             android:text="EMZ2"
+                            app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintDimensionRatio="1:1"
-                            app:layout_constraintLeft_toRightOf="@id/emz_col_1"
-                            app:layout_constraintRight_toLeftOf="@id/emz_col_2"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent" />
+                            app:layout_constraintLeft_toRightOf="@id/btn_phase_next"
+                            app:layout_constraintRight_toLeftOf="@id/btn_ep"
+                            app:layout_constraintTop_toTopOf="parent" />
 
-                        <Space
-                            android:id="@+id/emz_col_2"
+                        <Button
+                            android:id="@+id/btn_ep"
                             android:layout_width="0dp"
                             android:layout_height="0dp"
+                            android:background="@drawable/button2_bg"
+                            android:minHeight="0dp"
+                            android:minWidth="0dp"
+                            android:padding="0dp"
+                            android:text="EP"
+                            android:textColor="@color/white"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintDimensionRatio="W,2:1"
                             app:layout_constraintLeft_toRightOf="@id/zone_p0_m6"
                             app:layout_constraintRight_toRightOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent" />
+                            app:layout_constraintTop_toTopOf="parent" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                     <!-- 我方怪兽区（下排5） -->
                     <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="0dp"
                         android:layout_weight="1">
 
@@ -579,7 +608,7 @@
 
                     <!-- 我方魔陷区（最下排5） -->
                     <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="0dp"
                         android:layout_weight="1">
 
@@ -649,18 +678,18 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1.1"
+                    android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/zone_p0_deck"
+                        android:id="@+id/zone_p1_extra"
                         style="@style/PileZone"
-                        android:text="DECK" />
+                        android:text="EXTRA" />
 
                     <TextView
-                        android:id="@+id/zone_p0_grave"
+                        android:id="@+id/zone_p1_field"
                         style="@style/PileZone"
-                        android:text="GRAVE" />
+                        android:text="FIELD" />
 
                     <TextView
                         android:id="@+id/zone_p0_banish"
@@ -668,61 +697,17 @@
                         android:text="BANISH" />
 
                     <TextView
-                        android:id="@+id/zone_p0_extra"
+                        android:id="@+id/zone_p0_grave"
                         style="@style/PileZone"
-                        android:text="EXTRA" />
-
+                        android:text="GRAVE" />
                     <TextView
-                        android:id="@+id/zone_p0_field"
+                        android:id="@+id/zone_p0_deck"
                         style="@style/PileZone"
-                        android:text="FIELD" />
+                        android:text="DECK" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- 阶段按钮组（决斗场中轴位置横向3个，平面显示） -->
-            <LinearLayout
-                android:id="@+id/layout_phase_buttons"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:visibility="visible">
-
-                <Button
-                    android:id="@+id/btn_phase_current"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="left"
-                    android:background="@drawable/button2_bg"
-                    android:text="DP"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/btn_phase_next"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginHorizontal="150dp"
-                    android:background="@drawable/button2_bg"
-                    android:text="BP"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/btn_ep"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="right"
-                    android:background="@drawable/button2_bg"
-                    android:text="EP"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+            <!-- 阶段按钮已移入 EMZ 行，随布局中列整体渲染，此处不再单独放置 -->
         </FrameLayout>
 
     </LinearLayout>
