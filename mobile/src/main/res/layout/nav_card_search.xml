@@ -1404,11 +1404,12 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp">
 
-            <androidx.appcompat.widget.AppCompatEditText
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
                 android:id="@+id/edt_word1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
+                android:completionThreshold="1"
                 android:hint="@string/hit_keyword1"
                 android:imeOptions="actionSearch"
                 android:inputType="textNoSuggestions"
@@ -1416,6 +1417,7 @@
                 android:singleLine="true"
                 android:textColorHint="@color/gold" />
         </com.google.android.material.textfield.TextInputLayout>
+
 
         <LinearLayout
             android:layout_width="match_parent"

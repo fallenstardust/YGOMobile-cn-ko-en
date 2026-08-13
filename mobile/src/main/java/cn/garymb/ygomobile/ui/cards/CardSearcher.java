@@ -18,6 +18,8 @@ import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -49,6 +51,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.SearchableListDialog;
 import cn.garymb.ygomobile.utils.BitmapUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -66,7 +69,7 @@ import ocgcore.enums.LimitType;
 public class CardSearcher implements View.OnClickListener {
     private static final String TAG = "CardSearcher";
     final String[] BtnVals = new String[9];
-    private final EditText keyWord;
+    private final AutoCompleteTextView keyWord;
     private final CheckBox chk_multi_keyword;
 
     private final Switch genesys_Switch;
@@ -327,7 +330,33 @@ public class CardSearcher implements View.OnClickListener {
                 }
             }
         });
+
         keyWord.setOnEditorActionListener(searchListener);
+        // 关键字输入框：同时支持输入与下拉显示搜索历史记录
+        keyWord.setThreshold(1);
+        // 点击历史记录项：自动填入关键词并搜索
+        //keyWord.setOnItemClickListener((parent, v, position, id) -> search());
+        // 点击输入框：直接弹出历史记录下拉列表（已聚焦时再次点按也生效）
+        keyWord.setOnClickListener(v -> showKeywordDropdown());
+        // 获得焦点：弹出历史记录下拉列表
+        keyWord.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                showKeywordDropdown();
+            }
+        });
+        // 清空输入内容时恢复显示全部历史记录
+        keyWord.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable s) {
+                if (s.length() == 0 && keyWord.isPopupShowing()) {
+                    refreshKeywordHistory();
+                }
+            }
+        });
+        // 初始加载搜索历史记录
+        refreshKeywordHistory();
+
         chk_multi_keyword.setChecked(mSettings.getKeyWordsSplit() != 0);
         chk_multi_keyword.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -1890,7 +1919,7 @@ public class CardSearcher implements View.OnClickListener {
         if (TextUtils.isEmpty(message)) {
             message = "";
         }
-        keyWord.setText(message);
+        keyWord.setText(message, false);
         search();
     }
 
@@ -1899,9 +1928,13 @@ public class CardSearcher implements View.OnClickListener {
     }
     private void search() {
         if (mICardSearcher != null) {
+            keyWord.dismissDropDown();
+            String keyword = text(keyWord);
+            if (!TextUtils.isEmpty(keyword)) {
+                SharedPreferenceUtil.addKeywordHistory(keyword);
+            }
             int limitType = genesys_Switch.isChecked() ? getIntSelect(genesys_limitSpinner) : getIntSelect(limitSpinner);
             String limitName = genesys_Switch.isChecked() ? getSelectText(genesys_limitListSpinner) : getSelectText(limitListSpinner);
-            String keyword = text(keyWord);
             CardSearchInfo searchInfo = new CardSearchInfo.Builder()
                     .ot(otList)
                     .limitName(limitName)
@@ -1990,6 +2023,24 @@ public class CardSearcher implements View.OnClickListener {
         btnLastSearch.setVisibility(searchIndex > 0 ? View.VISIBLE : View.INVISIBLE);
         btnNextSearch.setVisibility(searchIndex >= 0 && searchIndex < searchHistory.size() - 1 ? View.VISIBLE : View.INVISIBLE);
     }
+
+    /**
+     * 刷新历史数据：重建 adapter 并重新设置（空输入=显示全部历史）
+     */
+    private boolean refreshKeywordHistory() {
+        List<String> history = SharedPreferenceUtil.getKeywordHistory();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(mContext,
+                android.R.layout.simple_list_item_1, history);
+        keyWord.setAdapter(adapter);
+        return !history.isEmpty();
+    }
+
+    private void showKeywordDropdown() {
+        if (refreshKeywordHistory()) {
+            keyWord.showDropDown();
+        }
+    }
+
     private void applySearchInfo(CardSearchInfo info) {
         if (info == null) {
             return;
@@ -1997,7 +2048,9 @@ public class CardSearcher implements View.OnClickListener {
         // 先重置所有条件
         resetAll();
         // 关键词
-        keyWord.setText(info.getKeyWord() != null ? info.getKeyWord().getValue() : "");
+        String keywordValue = info.getKeyWord() != null ? info.getKeyWord().getValue() : "";
+        keyWord.setText(keywordValue, false);
+        keyWord.dismissDropDown();
         // 恢复genesys模式开关（根据禁卡表名称判断）
         boolean genesysMode = false;
         if (!TextUtils.isEmpty(info.getLimitName())) {
