@@ -9,6 +9,13 @@ import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.text.TextUtils;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
@@ -22,6 +29,44 @@ public class SharedPreferenceUtil {
     public static final int DECK_EDIT_TYPE_OURYGO_EZ = 2;
 
     private static final String USER_UNIQUE_ID_KEY = "user_unique_id";
+    private static final String KEYWORD_HISTORY_KEY = "search_keyword_history";
+    private static final int MAX_KEYWORD_HISTORY = 10;
+
+    /**
+     * 获取搜索关键词历史记录（最近10条，按时间倒序）
+     */
+    public static List<String> getKeywordHistory() {
+        List<String> list = new ArrayList<>();
+        String data = getShareRecord().getString(KEYWORD_HISTORY_KEY, "[]");
+        try {
+            JSONArray arr = new JSONArray(data);
+            for (int i = 0; i < arr.length(); i++) {
+                list.add(arr.getString(i));
+            }
+        } catch (JSONException ignored) {
+        }
+        return list;
+    }
+
+    /**
+     * 添加一条搜索关键词记录（去重+移到最后，最多10条）
+     */
+    public static void addKeywordHistory(String keyword) {
+        if (TextUtils.isEmpty(keyword)) return;
+        List<String> history = getKeywordHistory();
+        // 如果已存在则移除旧位置（移到最前面）
+        history.remove(keyword);
+        history.add(0, keyword);
+        // 限制最多10条
+        while (history.size() > MAX_KEYWORD_HISTORY) {
+            history.remove(history.size() - 1);
+        }
+        JSONArray arr = new JSONArray();
+        for (String s : history) {
+            arr.put(s);
+        }
+        getShareRecord().edit().putString(KEYWORD_HISTORY_KEY, arr.toString()).commit();
+    }
 
     //获取存放路径的share
     public static SharedPreferences getSharePath() {
