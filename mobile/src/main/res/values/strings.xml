@@ -58,6 +58,8 @@
     <string name="settings_game_screen_orientation">Lock screen in duel</string>
     <string name="settings_game_font_antialias">Font antialias</string>
     <string name="settings_game_lab_pendulum_scale">Pendulum Scale Images</string>
+    <string name="settings_native_game_mode">Native UI Game Mode</string>
+    <string name="settings_native_game_mode_summary">Use Android native UI instead of Irrlicht engine (experimental)</string>
     <string name="settings_game_font_antialias_summary">Disable this option can increase the frame rate</string>
     <string name="settings_about_author_pref">Author</string>
     <string name="settings_about_version_pref">Version</string>
