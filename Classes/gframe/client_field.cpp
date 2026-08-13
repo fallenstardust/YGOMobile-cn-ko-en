@@ -598,7 +598,7 @@ void ClientField::ShowSelectOption(int select_hint) {
 	bool quickmode = true;
 	mainGame->gMutex.lock();
 	for(auto option : select_options) {
-		if(mainGame->guiFont->getDimension(dataManager.GetDesc(option)).Width > 370 * mainGame->xScale) {
+		if(mainGame->GetGUIFontDimension(dataManager.GetDesc(option)).Width > 370 * mainGame->xScale) {
 			quickmode = false;
 			break;
 		}

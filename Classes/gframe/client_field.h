@@ -7,9 +7,18 @@
 #include <set>
 #include <map>
 #include <memory>
+#include <IEventReceiver.h>
+#include <vector3d.h>
+
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
 #endif
+
+namespace irr {
+	namespace gui {
+		class IGUIStaticText;
+	}
+}
 
 namespace ygo {
 
