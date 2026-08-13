@@ -1452,25 +1452,56 @@
             android:layout_marginTop="30dp"
             android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btn_reset"
-                android:layout_width="wrap_content"
+            <ImageButton
+                android:id="@+id/btn_last_search"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="0.15"
                 android:layout_gravity="center_vertical"
                 android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
+                android:layout_marginRight="2dp"
+                android:gravity="center"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/undo"
+                android:background="@drawable/rotate"/>
+
+            <ImageButton
+                android:id="@+id/btn_next_search"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="0.15"
+                android:layout_gravity="center_vertical"
+                android:layout_marginHorizontal="2dp"
+                android:gravity="center"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                android:background="@drawable/rotate"
+                android:scaleX="-1"
+                android:src="@drawable/undo"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btn_reset"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="0.2"
+                android:layout_gravity="center_vertical"
+                android:layout_marginHorizontal="5dp"
                 android:background="@drawable/button_bg"
-                android:text="@string/reset" />
+                android:text="@string/reset"
+                android:textSize="10sp"/>
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btn_search"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="0.5"
                 android:layout_gravity="center_vertical"
-                android:layout_marginLeft="20dp"
+                android:layout_marginLeft="2dp"
                 android:layout_marginRight="10dp"
                 android:background="@drawable/button_bg"
-                android:text="@string/search" />
+                android:text="@string/search"
+                android:textSize="10sp"/>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
