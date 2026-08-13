@@ -130,22 +130,46 @@ public class CardSearchInfo implements ICardFilter {
         return atk_or_def_logic ? "true" : "false";
     }
 
+    public boolean isTypeLogic() {
+        return type_logic;
+    }
+
+    public boolean isSetcodeLogic() {
+        return setcode_logic;
+    }
+
+    public boolean isEqualLogic() {
+        return equal_logic;
+    }
+
+    public boolean isSumLogic() {
+        return sum_logic;
+    }
+
+    public boolean isAtkOrDefLogic() {
+        return atk_or_def_logic;
+    }
+
     public static class Builder {
         private final CardSearchInfo searchInfo = new CardSearchInfo();
 
         public CardSearchInfo build() {
-            searchInfo.ot = searchInfo.ot != null ? searchInfo.ot : new ArrayList<>();
-            searchInfo.cardtypes = searchInfo.cardtypes != null ? searchInfo.cardtypes : new ArrayList<>();
-            searchInfo.spelltraptypes = searchInfo.spelltraptypes != null ? searchInfo.spelltraptypes : new ArrayList<>();
-            searchInfo.attribute = searchInfo.attribute != null ? searchInfo.attribute : new ArrayList<>();
-            searchInfo.level = searchInfo.level != null ? searchInfo.level : new ArrayList<>();
-            searchInfo.pscale = searchInfo.pscale != null ? searchInfo.pscale : new ArrayList<>();
-            searchInfo.race = searchInfo.race != null ? searchInfo.race : new ArrayList<>();
-            searchInfo.category = searchInfo.category != null ? searchInfo.category : new ArrayList<>();
-            searchInfo.monstertypes = searchInfo.monstertypes != null ? searchInfo.monstertypes : new ArrayList<>();
-            searchInfo.except_types = searchInfo.except_types != null ? searchInfo.except_types : new ArrayList<>();
-            searchInfo.setcode = searchInfo.setcode != null ? searchInfo.setcode : new ArrayList<>();
+            searchInfo.ot = copyList(searchInfo.ot);
+            searchInfo.cardtypes = copyList(searchInfo.cardtypes);
+            searchInfo.spelltraptypes = copyList(searchInfo.spelltraptypes);
+            searchInfo.attribute = copyList(searchInfo.attribute);
+            searchInfo.level = copyList(searchInfo.level);
+            searchInfo.pscale = copyList(searchInfo.pscale);
+            searchInfo.race = copyList(searchInfo.race);
+            searchInfo.category = copyList(searchInfo.category);
+            searchInfo.monstertypes = copyList(searchInfo.monstertypes);
+            searchInfo.except_types = copyList(searchInfo.except_types);
+            searchInfo.setcode = copyList(searchInfo.setcode);
             return searchInfo;
+        }
+
+        private static <T> List<T> copyList(List<T> list) {
+            return list != null ? new ArrayList<>(list) : new ArrayList<>();
         }
 
         public Builder limitType(int limit) {
