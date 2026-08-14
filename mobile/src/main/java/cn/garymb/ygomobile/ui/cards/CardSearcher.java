@@ -165,8 +165,8 @@ public class CardSearcher implements View.OnClickListener {
     private Boolean isEqual;
     private boolean isUpdating = false; // 防止两个文本框相互触发更新造成无限循环
 
-    private final Button searchButton;
-    private final Button resetButton;
+    private final ImageButton searchButton;
+    private final ImageButton resetButton;
     private final ImageButton btnLastSearch;
     private final ImageButton btnNextSearch;
     private final List<CardSearchInfo> searchHistory = new ArrayList<>();
@@ -1884,6 +1884,11 @@ public class CardSearcher implements View.OnClickListener {
     public void onClick(View v) {
         if (v.getId() == R.id.btn_search) {
             hideFavorites(true);
+            // 如果搜索历史不为空，跳转到最后一条之后，以便显示"上一次搜索"按钮
+            if (!searchHistory.isEmpty()) {
+                searchIndex = searchHistory.size();
+                updateSearchNavButtons();
+            }
         } else if (v.getId() == R.id.btn_reset) {
             resetAll();
         } else if (v.getId() == myFavButton.getId()) {
@@ -1969,8 +1974,18 @@ public class CardSearcher implements View.OnClickListener {
             mICardSearcher.search(searchInfo);
         }
         if (record && !isDefaultSearch(searchInfo)) {
-            searchHistory.add(searchInfo);
-            searchIndex = searchHistory.size() - 1;
+            // 检查是否已经存在相同的搜索条件
+            int sameIndex = findSameSearchInfo(searchHistory, searchInfo);
+            if (sameIndex >= 0) {
+                // 找到相同的搜索条件，将其设为最后一条
+                searchHistory.remove(sameIndex);
+                searchHistory.add(searchInfo);
+                searchIndex = searchHistory.size() - 1;
+            } else {
+                // 没有相同条件，正常追加
+                searchHistory.add(searchInfo);
+                searchIndex = searchHistory.size() - 1;
+            }
         }
         updateSearchNavButtons();
     }
@@ -2022,6 +2037,152 @@ public class CardSearcher implements View.OnClickListener {
     private void updateSearchNavButtons() {
         btnLastSearch.setVisibility(searchIndex > 0 ? View.VISIBLE : View.INVISIBLE);
         btnNextSearch.setVisibility(searchIndex >= 0 && searchIndex < searchHistory.size() - 1 ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    /**
+     * 查找搜索历史中与给定 searchInfo 完全相同的条目索引
+     * @param searchInfo 新的搜索条件
+     * @return 如果找到返回索引，否则返回 -1
+     */
+    private int findSameSearchInfo(List<CardSearchInfo> history, CardSearchInfo searchInfo) {
+        if (searchInfo == null || history == null || history.isEmpty()) {
+            return -1;
+        }
+
+        for (int i = 0; i < history.size(); i++) {
+            CardSearchInfo existing = history.get(i);
+            if (isSameSearchInfo(existing, searchInfo)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 判断两个 CardSearchInfo 是否完全相同（所有字段都相等）
+     */
+    private boolean isSameSearchInfo(CardSearchInfo info1, CardSearchInfo info2) {
+        if (info1 == null || info2 == null) {
+            return false;
+        }
+        if (info1 == info2) {
+            return true; // 同一个对象引用
+        }
+
+        // 比较关键词
+        String keyword1 = info1.getKeyWord() != null ? info1.getKeyWord().getValue() : "";
+        String keyword2 = info2.getKeyWord() != null ? info2.getKeyWord().getValue() : "";
+        if (!TextUtils.equals(keyword1, keyword2)) {
+            return false;
+        }
+
+        // 比较 OT
+        if (!listEquals(info1.getOt(), info2.getOt())) {
+            return false;
+        }
+
+        // 比较类别
+        if (!listEquals(info1.getCategory(), info2.getCategory())) {
+            return false;
+        }
+
+        // 比较卡片类型
+        if (!listEquals(info1.getCardTypes(), info2.getCardTypes())) {
+            return false;
+        }
+
+        // 比较魔陷类型
+        if (!listEquals(info1.getSpellTrapTypes(), info2.getSpellTrapTypes())) {
+            return false;
+        }
+
+        // 比较属性
+        if (!listEquals(info1.getAttribute(), info2.getAttribute())) {
+            return false;
+        }
+
+        // 比较等级
+        if (!listEquals(info1.getLevel(), info2.getLevel())) {
+            return false;
+        }
+
+        // 比较种族
+        if (!listEquals(info1.getRace(), info2.getRace())) {
+            return false;
+        }
+
+        // 比较怪兽种类
+        if (!listEquals(info1.getMonsterType(), info2.getMonsterType())) {
+            return false;
+        }
+
+        // 比较排除类型
+        if (!listEquals(info1.getExceptTypes(), info2.getExceptTypes())) {
+            return false;
+        }
+
+        // 比较字段
+        if (!listEquals(info1.getSetcode(), info2.getSetcode())) {
+            return false;
+        }
+
+        // 比较灵摆刻度
+        if (!listEquals(info1.getPscale(), info2.getPscale())) {
+            return false;
+        }
+
+        // 比较攻击力、守备力
+        if (!TextUtils.equals(info1.getAtk(), info2.getAtk())) {
+            return false;
+        }
+        if (!TextUtils.equals(info1.getDef(), info2.getDef())) {
+            return false;
+        }
+
+        // 比较链接值
+        if (info1.getLinkKey() != info2.getLinkKey()) {
+            return false;
+        }
+
+        // 比较禁卡表
+        if (info1.getLimitType() != info2.getLimitType()) {
+            return false;
+        }
+        if (!TextUtils.equals(info1.getLimitName(), info2.getLimitName())) {
+            return false;
+        }
+
+        // 比较各种逻辑开关
+        if (info1.isTypeLogic() != info2.isTypeLogic()) {
+            return false;
+        }
+        if (info1.isSetcodeLogic() != info2.isSetcodeLogic()) {
+            return false;
+        }
+        if (info1.isEqualLogic() != info2.isEqualLogic()) {
+            return false;
+        }
+        if (info1.isSumLogic() != info2.isSumLogic()) {
+            return false;
+        }
+        if (info1.isAtkOrDefLogic() != info2.isAtkOrDefLogic()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean listEquals(List<?> l1, List<?> l2) {
+        if (l1 == null && l2 == null) {
+            return true;
+        }
+        if (l1 == null || l2 == null) {
+            return false;
+        }
+        if (l1.size() != l2.size()) {
+            return false;
+        }
+        return l1.equals(l2);
     }
 
     /**
