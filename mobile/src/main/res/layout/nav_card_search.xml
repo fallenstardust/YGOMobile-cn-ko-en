@@ -1396,13 +1396,12 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
         android:orientation="vertical">
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp">
+            android:layout_height="wrap_content">
 
             <androidx.appcompat.widget.AppCompatAutoCompleteTextView
                 android:id="@+id/edt_word1"
@@ -1422,8 +1421,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="@dimen/label_width_small"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
             android:orientation="horizontal">
 
             <CheckBox
@@ -1444,6 +1441,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/selected_dark"
                 android:text="@string/my_favorites"
+                android:textSize="9sp"
                 android:textColor="@color/selector_text_color_white_gold"
                 android:visibility="visible" />
         </LinearLayout>
@@ -1460,8 +1458,6 @@
                 android:layout_height="40dp"
                 android:layout_weight="0.15"
                 android:layout_gravity="center_vertical"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="2dp"
                 android:gravity="center"
                 android:padding="14dp"
                 android:scaleType="fitCenter"
@@ -1482,28 +1478,28 @@
                 android:scaleX="-1"
                 android:src="@drawable/undo"/>
 
-            <androidx.appcompat.widget.AppCompatButton
+            <ImageButton
                 android:id="@+id/btn_reset"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="0.2"
                 android:layout_gravity="center_vertical"
                 android:layout_marginHorizontal="5dp"
-                android:background="@drawable/button_bg"
-                android:text="@string/reset"
-                android:textSize="10sp"/>
+                android:gravity="center"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_refresh"
+                android:background="@drawable/button_bg" />
 
-            <androidx.appcompat.widget.AppCompatButton
+            <ImageButton
                 android:id="@+id/btn_search"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="0.5"
                 android:layout_gravity="center_vertical"
-                android:layout_marginLeft="2dp"
-                android:layout_marginRight="10dp"
-                android:background="@drawable/button_bg"
-                android:text="@string/search"
-                android:textSize="10sp"/>
+                android:gravity="center"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_search_white"
+                android:background="@drawable/button_bg" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
