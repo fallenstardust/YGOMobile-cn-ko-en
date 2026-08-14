@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ public class CardGroupView extends FrameLayout {
     private int mCardHeight = Constants.CORE_SKIN_CARD_SMALL_SIZE[1];
     private boolean mPausePadding;
     private ImageLoader mImageLoader;
+    private Bitmap mCardBack;
 
     public void setImageLoader(ImageLoader imageLoader) {
         mImageLoader = imageLoader;
@@ -343,5 +345,29 @@ public class CardGroupView extends FrameLayout {
             CardView cardView = (CardView) getChildAt(i);
             cardView.setSelected(false);
         }
+    }
+
+    /**
+     * 设置卡背图片，addCardBack 添加的占位卡使用该图片显示
+     */
+    public void setCardBackImage(Bitmap bitmap) {
+        mCardBack = bitmap;
+    }
+
+    /**
+     * 添加一张卡背占位卡（对方手卡等不可见卡片）
+     */
+    public boolean addCardBack() {
+        int count = getChildCount();
+        if (count >= getMaxCardCount()) {
+            return false;
+        }
+        if (!mPausePadding) {
+            refreshLayoutParams(count + 1);
+        }
+        CardView cardView = new CardView(getContext());
+        cardView.setCardBackImage(mCardBack);
+        addView(cardView, count);
+        return true;
     }
 }

@@ -57,6 +57,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private TextView tvChatMessage1, tvChatMessage2;
 
     private Button btnPhaseCurrent, btnPhaseNext, btnEp;
+    private FrameLayout layoutOppHandArea, layoutMyHandArea;
 
     private final int[] duelTimeLeft = new int[2];
     private int duelTimePlayer = -1;
@@ -83,6 +84,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         bindTopInfoViews();
         bindPhaseButtons();
         duelFieldManager.setOnZoneClickListener(this::onZoneClick);
+        layoutOppHandArea = activity.findViewById(R.id.layout_opp_hand_area);
+        layoutMyHandArea = activity.findViewById(R.id.layout_my_hand_area);
     }
 
     private void bindTopInfoViews() {
@@ -146,11 +149,14 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     public void init(GameEngine engine, ImageLoader imageLoader) {
         this.engine = engine;
         viewController.init(engine.getField(), imageLoader, this);
+        duelFieldManager.setImageLoader(imageLoader);
     }
 
     public void show() {
         if (viewController != null) viewController.show();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.VISIBLE);
+        if (layoutOppHandArea != null) layoutOppHandArea.setVisibility(View.VISIBLE);
+        if (layoutMyHandArea != null) layoutMyHandArea.setVisibility(View.VISIBLE);
     }
 
     public void hide() {
@@ -160,6 +166,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (btnPhaseCurrent != null) btnPhaseCurrent.setVisibility(View.GONE);
         if (btnPhaseNext != null) btnPhaseNext.setVisibility(View.GONE);
         if (btnEp != null) btnEp.setVisibility(View.GONE);
+        if (layoutOppHandArea != null) layoutOppHandArea.setVisibility(View.GONE);
+        if (layoutMyHandArea != null) layoutMyHandArea.setVisibility(View.GONE);
     }
 
     public void invalidate() {

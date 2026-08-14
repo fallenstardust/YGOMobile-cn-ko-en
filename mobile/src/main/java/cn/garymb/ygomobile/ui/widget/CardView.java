@@ -30,6 +30,7 @@ public class CardView extends FrameLayout {
     private Card mCard;
     private int mOverlaySize;
     private float mLimitNumScale = 0.6f;
+    private Bitmap mCardBack;
 
     public CardView(Context context) {
         this(context, null);
@@ -213,9 +214,22 @@ public class CardView extends FrameLayout {
         }
     }
 
+    /**
+     * 设置卡背图片：显示卡背模式，与 showCard 互斥（下次 showCard 自动切回正面）
+     */
+    public void setCardBackImage(Bitmap bitmap) {
+        mCardBack = bitmap;
+        if (bitmap != null) {
+            mTopImage.setVisibility(View.GONE);
+            mLimitNum.setVisibility(View.GONE);
+            mCardView.setImageBitmap(bitmap);
+        }
+    }
+
     public void showCard(ImageLoader imageLoader, Card cardInfo) {
-        if (mCard != null && mCard.equals(cardInfo)) return;
+        if (mCard != null && mCard.equals(cardInfo) && mCardBack == null) return;
         mCard = cardInfo;
+        mCardBack = null;
         if (cardInfo != null && imageLoader != null) {
             imageLoader.bindImage(mCardView, cardInfo, ImageLoader.Type.small);
         } else {
