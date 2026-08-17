@@ -11,11 +11,13 @@ android {
         targetSdkVersion 29
         versionCode 312013013
         versionName "3.13.7"
+        // 主程序协议版本号（十六进制），供 Constants.PRO_VERSION 使用
+        buildConfigField 'int', 'PRO_VERSION', '0x1362'
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "21.3.6528147"
         ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a", "x86"
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
     }
     compileOptions {
@@ -72,6 +74,7 @@ android {
     namespace 'cn.garymb.ygomobile.lite'
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
     //    buildToolsVersion '28.0.3'
 }
@@ -149,4 +152,6 @@ dependencies {
     implementation 'org.java-websocket:Java-WebSocket:1.5.3'
     // MPAndroidChart 折线图库
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    // LZMA decompression for replay files
+    implementation 'org.tukaani:xz:1.9'
 }

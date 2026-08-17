@@ -68,3 +68,4 @@ output-metadata.json
 /mobile/assets/data/*.zip
 
 /mobile/cn/release/baselineProfiles/
+/mobile/libs

@@ -307,9 +307,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         copyKorData(true);
                     } else if (language.equals(languageEnum.Spanish.name)) {
                         copyEsData(true);
-                    } else if (language.equals(languageEnum.Japanese)) {
+                    } else if (language.equals(languageEnum.Japanese.name)) {
                         copyJpData(true);
-                    } else if (language.equals(languageEnum.Portuguese)) {
+                    } else if (language.equals(languageEnum.Portuguese.name)) {
                         copyPtData(true);
                     } else {
                         copyEnData(true);
@@ -625,7 +625,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             String action = intent.getAction();
             if (action.equals("RUN_WINDBOT")) {
                 String args = intent.getStringExtra("args");
-                WindBot.runAndroid(args);
+                try {
+                    WindBot.runAndroid(args);
+                } catch (Throwable e) {
+                    LogUtil.e(TAG, "WindBot.runAndroid error: " + e.getMessage(), e);
+                }
             }
         }
     }

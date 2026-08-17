@@ -55,6 +55,8 @@
     <string name="settings_game_screen_orientation">游戏横屏锁定</string>
     <string name="settings_game_font_antialias">字体抗锯齿</string>
     <string name="settings_game_lab_pendulum_scale">灵摆数字图片</string>
+    <string name="settings_native_game_mode">原生UI游戏模式</string>
+    <string name="settings_native_game_mode_summary">使用Android原生UI替代Irrlicht引擎（实验性功能）</string>
     <string name="settings_game_font_antialias_summary">禁用字体抗锯齿可以提升帧数</string>
     <string name="settings_about_author_pref">作者</string>
     <string name="settings_about_version_pref">版本</string>

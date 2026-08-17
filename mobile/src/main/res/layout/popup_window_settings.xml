@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/window2"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:background="@color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_failed" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="10"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <CheckBox
+                android:id="@+id/chkMAutoPos"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="自动选择怪兽卡片位置"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkSTAutoPos"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="自动选择魔陷卡片位置"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkRandomPos"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginLeft="10dp"
+                android:text="随机选择位置"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkAutoChain"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="自动发动并排序必发效果"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkWaitChain"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="没有可连锁的卡时延迟回应"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkDefaultShowChain"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="开局默认显示所有时点"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkHideNickName"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="隐藏玩家昵称"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkDrawFieldSpell"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="显示场地背景"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkQuickAnimation"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="只有连锁1也显示连锁动画"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <CheckBox
+                android:id="@+id/chkGenesysMode"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="启用起源点数模式"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/chkBanList"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="禁限卡表"
+                    android:textColor="@color/white"
+                    android:textSize="9sp" />
+
+                <Spinner
+                    android:id="@+id/spinner_banlist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:background="@drawable/ygopro_spinner" />
+            </LinearLayout>
+
+            <CheckBox
+                android:id="@+id/chkMuteSpectators"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="忽略观战者发言"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkDisableChatting"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="不提示保留对卡组的修改"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkAutoSaveReplay"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="自动保存录像"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkSwitchBGM"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="按场景切换音乐"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/chkEnableSound"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="开启音效"
+                    android:textColor="@color/white"
+                    android:textSize="9sp" />
+
+                <SeekBar
+                    android:id="@+id/seekbar_sound"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="2dp"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="50"
+                    android:progressDrawable="@drawable/ygopro_base_background"
+                    android:thumb="@drawable/ic_radius_bg" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/chkEnableMusic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="开启音乐"
+                    android:textColor="@color/white"
+                    android:textSize="9sp" />
+
+                <SeekBar
+                    android:id="@+id/seekbar_music"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="2dp"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="50"
+                    android:progressDrawable="@drawable/ygopro_base_background"
+                    android:thumb="@drawable/ic_radius_bg" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

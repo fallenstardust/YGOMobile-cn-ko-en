@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/card_display_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/sdialogl"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+
+    <TextView
+        android:id="@+id/tv_card_display_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="卡片确认"
+        android:textColor="@color/white"
+        android:textSize="11sp" />
+
+    <LinearLayout
+        android:id="@+id/layout_display_slots"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/slot_display_0"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_display_pos_0"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#335577"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="8sp" />
+
+            <ImageView
+                android:id="@+id/iv_display_0"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="2dp"
+                android:background="#222222"
+                android:scaleType="fitCenter"
+                android:src="@drawable/unknown" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/slot_display_1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_display_pos_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#335577"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="8sp" />
+
+            <ImageView
+                android:id="@+id/iv_display_1"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="2dp"
+                android:background="#222222"
+                android:scaleType="fitCenter"
+                android:src="@drawable/unknown" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/slot_display_2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_display_pos_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#335577"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="8sp" />
+
+            <ImageView
+                android:id="@+id/iv_display_2"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="2dp"
+                android:background="#222222"
+                android:scaleType="fitCenter"
+                android:src="@drawable/unknown" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/slot_display_3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_display_pos_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#335577"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="8sp" />
+
+            <ImageView
+                android:id="@+id/iv_display_3"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="2dp"
+                android:background="#222222"
+                android:scaleType="fitCenter"
+                android:src="@drawable/unknown" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/slot_display_4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_display_pos_4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#335577"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="8sp" />
+
+            <ImageView
+                android:id="@+id/iv_display_4"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="2dp"
+                android:background="#222222"
+                android:scaleType="fitCenter"
+                android:src="@drawable/unknown" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <SeekBar
+        android:id="@+id/sb_display_page"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:max="0" />
+
+    <Button
+        android:id="@+id/btn_card_display_ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/button3_bg"
+        android:minWidth="90dp"
+        android:minHeight="30dp"
+        android:text="确定"
+        android:textColor="@color/white"
+        android:textSize="10sp" />
+</LinearLayout>

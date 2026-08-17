@@ -68,6 +68,23 @@ jobs:
         zip -r scripts.zip script
         mv *.zip mobile/assets/data/
 
+    - name: Prepare So
+      run: |
+        cd mobile/libs
+        mkdir x86
+        mkdir x86_64
+        mkdir arm64-v8a
+        mkdir armeabi-v7a
+
+        cd x86
+        wget https://github.com/MDPro2/ygopro/releases/download/release-latest/libygoserver-ygomobile-x86.so -O libygoserver.so
+        cd ../x86_64
+        wget https://github.com/MDPro2/ygopro/releases/download/release-latest/libygoserver-ygomobile-x86_64.so -O libygoserver.so
+        cd ../arm64-v8a
+        wget https://github.com/MDPro2/ygopro/releases/download/release-latest/libygoserver-ygomobile-arm64-v8a.so -O libygoserver.so
+        cd ../armeabi-v7a
+        wget https://github.com/MDPro2/ygopro/releases/download/release-latest/libygoserver-ygomobile-armeabi-v7a.so -O libygoserver.so
+
     - name: Prepare DB
       run: |
         git clone https://github.com/mycard/ygopro-database.git --depth 1 ygopro-database
