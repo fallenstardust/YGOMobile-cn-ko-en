@@ -1,0 +1,61 @@
+{
+  "welcome": [
+    "¿Jugarás Yu-Gi-Oh! conmigo para siempre?"
+  ],
+  "deckerror": [
+    "¿Te perderás junto conmigo? (Revisa {0} y cards.cdb)."
+  ],
+  "duelstart": [
+    "It's MyGO!!!",
+    "Dato curioso: MyGO también tiene un arquetipo en Yu-Gi-Oh!."
+  ],
+  "newturn": [
+    "¿Has encontrado alguna piedra bonita? Gu-gu-ga-ga!",
+    "¿Podría ser este el destino dispuesto por los dioses?",
+    "Yo… ya no puedo escapar……"
+  ],
+  "endturn": [
+    "Voy a seguir adelante de todas formas.",
+    "¿Qué, dices que soy mala en Yu-Gi-Oh!? ¿Y qué?",
+    "¡Simplemente me gusta la vanidad!"
+  ],
+  "directattack": [
+    "Por favor, sin {0} todo se desmorona.",
+    "Soy yo quien ha llevado a {0} hasta este punto."
+  ],
+  "attack": [
+    "¡{0} actúa con mucha superioridad!",
+    "¿Qué es lo normal o lo que se da por sentado?",
+    "¿Por qué… por qué dices cosas tan crueles?"
+  ],
+  "ondirectattack": [
+    "Estoy dispuesta a hacer todo lo que pueda.",
+    "Solo es {0}…… puedo continuar.",
+    "Nunca he disfrutado este duelo……"
+  ],
+  "facedownmonstername": "Niño perdido desconocido",
+  "activate": [
+    "¿Por qué interpretas {0}?",
+    "¡Necesito a {0}!",
+    "Por favor no te enfades con {0}.",
+    "¿Qué haré si solo queda esta carta?",
+    "¡Solo puedes pensar en {0}!"
+  ],
+  "summon": [
+    "¡Cómo se atreve ese tipo a ignorar a {0}!",
+    "Si {0} puede hacerlo, {0} está dispuesto a hacer cualquier cosa.",
+    "¿Realmente corre sangre humana por el cuerpo de {0}?",
+    "Soporte Xiang: Gracias por dedicar tu valioso tiempo a {0}."
+  ],
+  "setmonster": [
+    "¡Ahora es el momento de colocar la carta boca abajo!"
+  ],
+  "chaining": [
+    "¿Por qué interpretas {0}?",
+    "{0} tiene un aroma profundo, me gusta mucho.",
+    "¡Soy la única que está de tu lado, {0}!",
+    "¡Increíble, te quiero {0}!",
+    "{0}...",
+    "{0} no es bueno para la salud."
+  ]
+}

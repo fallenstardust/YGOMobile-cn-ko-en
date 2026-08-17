@@ -1,0 +1,61 @@
+{
+  "welcome": [
+    "Você vai jogar Yu-Gi-Oh! comigo para sempre?"
+  ],
+  "deckerror": [
+    "Você vai se perder comigo? (Verifique {0} e cards.cdb)."
+  ],
+  "duelstart": [
+    "It's MyGO!!!",
+    "Curiosidade: MyGO também tem um arquétipo em Yu-Gi-Oh!."
+  ],
+  "newturn": [
+    "Achou alguma pedra legal? Gu-gu-ga-ga!",
+    "Será que esse é o destino traçado pelos deuses?",
+    "Eu… não consigo mais fugir……"
+  ],
+  "endturn": [
+    "Eu vou continuar seguindo em frente.",
+    "O quê, você diz que sou ruim de Yu-Gi-Oh!? E daí?",
+    "Eu simplesmente amo vaidade, e daí!"
+  ],
+  "directattack": [
+    "Por favor, sem {0} tudo desaba.",
+    "Fui eu quem levou {0} a essa situação."
+  ],
+  "attack": [
+    "{0} realmente se acha muito superior!",
+    "O que é normal e o que é óbvio, afinal?",
+    "Por que… por que fala coisas tão maldosas?"
+  ],
+  "ondirectattack": [
+    "Estou disposta a fazer tudo que estiver ao meu alcance.",
+    "É apenas {0}…… eu consigo continuar.",
+    "Nunca achei esse duelo divertido……"
+  ],
+  "facedownmonstername": "Criança perdida desconhecida",
+  "activate": [
+    "Por que você está executando {0}?",
+    "Eu preciso de {0}!",
+    "Por favor, não fique bravo com {0}.",
+    "O que faço com apenas essa carta restante?",
+    "Você só consegue pensar em {0}, não é!"
+  ],
+  "summon": [
+    "Como aquele cara ousa ignorar {0}!",
+    "Se {0} conseguir fazer, {0} está disposto a fazer qualquer coisa.",
+    "Realmente corre sangue humano dentro de {0}?",
+    "Atendente Xiang: Obrigado por dedicar seu tempo precioso a {0}."
+  ],
+  "setmonster": [
+    "Agora é a hora de colocar a carta virada para baixo!"
+  ],
+  "chaining": [
+    "Por que você está executando {0}?",
+    "{0} tem um aroma rico, gosto muito.",
+    "Eu sou a única do seu lado, {0}!",
+    "Incrível, amo você {0}!",
+    "{0}...",
+    "{0} não faz bem à saúde."
+  ]
+}
