@@ -34,6 +34,9 @@ import com.tencent.smtt.export.external.TbsCoreSettings;
 import com.tencent.smtt.sdk.QbSdk;
 
 import org.greenrobot.eventbus.EventBus;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -41,6 +44,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -81,6 +85,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
     private static final int TYPE_DOWNLOAD_GENESYS_LFLIST_ING = 3;
     private static final int TYPE_DOWNLOAD_GENESYS_LFLIST_FAILED = 4;
     public static String Version;
+    public static String Update_time;
     public static String Cache_link;
     public static String Cache_pre_release_code;
     public static List<Integer> pre_code_list = new ArrayList<>();
@@ -213,27 +218,7 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_GET_VERSION_OK:
-                    String verCodeTxt = msg.obj.toString();
-                    if (verCodeTxt.contains(ID1) && verCodeTxt.contains(ID2) && verCodeTxt.contains(ID3)) {
-                        Version = verCodeTxt.substring(verCodeTxt.indexOf(ID1) + ID1.length(), verCodeTxt.indexOf(";"));//截取版本号
-                        Cache_link = verCodeTxt.substring(verCodeTxt.indexOf(ID2) + ID2.length(), verCodeTxt.indexOf("$"));//截取下载地址
-                        Cache_pre_release_code = verCodeTxt.substring(verCodeTxt.indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
-                        if (!TextUtils.isEmpty(Cache_pre_release_code)) {
-                            arrangeCodeList(Cache_pre_release_code);//转换成两个数组
-                        }
-                        if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
-                            DialogPlus dialog = new DialogPlus(getActivity());
-                            dialog.setMessage(R.string.Found_Update);
-                            dialog.setLeftButtonText(R.string.download_home);
-                            dialog.setLeftButtonListener((dlg, s) -> {
-                                Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setData(Uri.parse(Cache_link));
-                                startActivity(intent);
-                                dialog.dismiss();
-                            });
-                            dialog.show();
-                        }
-                    }
+                    parseVersionJson(msg.obj.toString());
                     break;
                 case TYPE_GET_VERSION_FAILED:
                     ++FailedCount;
@@ -497,6 +482,48 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         } catch (Exception e) {
             Log.e(Constants.TAG, e + "");
         } finally {
+        }
+    }
+
+    private void parseVersionJson(String jsonStr) {
+        try {
+            JSONObject json = new JSONObject(jsonStr);
+            Version = json.optString("versionname");
+            Update_time = json.optString("update_time");
+            JSONArray downloadLink = json.optJSONArray("download_link");
+            if (downloadLink != null && downloadLink.length() > 0) {
+                Cache_link = downloadLink.optString(0);
+            }
+            JSONObject preReleaseCode = json.optJSONObject("pre_release_code");
+            if (preReleaseCode != null && preReleaseCode.length() > 0) {
+                StringBuilder sb = new StringBuilder();
+                Iterator<String> keys = preReleaseCode.keys();
+                while (keys.hasNext()) {
+                    String preCode = keys.next();
+                    sb.append(preCode).append(" ").append(preReleaseCode.optString(preCode)).append("\n");
+                }
+                Cache_pre_release_code = sb.toString();
+            }
+            if (!TextUtils.isEmpty(Cache_pre_release_code)) {
+                pre_code_list.clear();
+                released_code_list.clear();
+                arrangeCodeList(Cache_pre_release_code);
+            }
+            if (!TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)
+                    && Version.compareTo(BuildConfig.VERSION_NAME) > 0) {
+                DialogPlus dialog = new DialogPlus(getActivity());
+                dialog.setMessage(R.string.Found_Update);
+                dialog.setLeftButtonText(R.string.download_home);
+                dialog.setLeftButtonListener((dlg, s) -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(Cache_link));
+                    startActivity(intent);
+                    dialog.dismiss();
+                });
+                dialog.show();
+            }
+        } catch (JSONException e) {
+            Log.e(Constants.TAG, "parse version json error: " + e);
         }
     }
 

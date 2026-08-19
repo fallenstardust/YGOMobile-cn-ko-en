@@ -174,7 +174,7 @@ public interface Constants {
     String URL_DONATE = "https://ifdian.net/a/ygomobile";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
-    String URL_HOME_VERSION = "https://ygom.top/ver_code.txt";
+    String URL_HOME_VERSION = "https://ygom.top/ver_code.json";
     String URL_HOME_VERSION_ALT = "https://cdn02.moecube.com:444/ygom-site/ver_code.txt";
     String URL_BILIBILI_DYNAMIC = "https://m.bilibili.com/space/16033444/";
     String ID1 = "[versionname]";
