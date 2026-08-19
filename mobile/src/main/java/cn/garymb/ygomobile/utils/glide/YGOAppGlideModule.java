@@ -17,6 +17,10 @@ import com.bumptech.glide.module.AppGlideModule;
 import com.bumptech.glide.request.RequestOptions;
 
 import java.io.File;
+import java.nio.ByteBuffer;
+
+import cn.garymb.ygomobile.loader.CardImageModel;
+import cn.garymb.ygomobile.loader.CardImageModelLoader;
 
 @Keep
 @GlideModule
@@ -33,5 +37,6 @@ public class YGOAppGlideModule extends AppGlideModule {
     @Override
     public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
         super.registerComponents(context, glide, registry);
+        registry.prepend(CardImageModel.class, ByteBuffer.class, new CardImageModelLoader.Factory());
     }
 }
