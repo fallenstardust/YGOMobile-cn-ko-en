@@ -445,6 +445,15 @@ public class CardSearcher implements View.OnClickListener {
         }
     }
 
+    /**
+     * 仅复位收藏按钮的状态与外观（回到默认状态），不触发任何回调与搜索
+     */
+    private void resetFavoriteState() {
+        mShowFavorite = false;
+        myFavButton.setSelected(false);
+        myFavButton.setBackground(mContext.getDrawable(R.drawable.selected_dark));
+    }
+
     public void initItems() {
         initCategoryButtons();
         initTypeButtons();
@@ -1883,7 +1892,7 @@ public class CardSearcher implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btn_search) {
-            hideFavorites(true);
+            search();
             // 如果搜索历史不为空，跳转到最后一条之后，以便显示"上一次搜索"按钮
             if (!searchHistory.isEmpty()) {
                 searchIndex = searchHistory.size();
@@ -1970,6 +1979,9 @@ public class CardSearcher implements View.OnClickListener {
     }
 
     private void performSearch(CardSearchInfo searchInfo, boolean record) {
+        // 任何普通搜索都将收藏按钮复位为默认状态，
+        // 之后点击收藏按钮可重新进入按下状态并显示收藏卡片列表
+        resetFavoriteState();
         if (mICardSearcher != null) {
             mICardSearcher.search(searchInfo);
         }
