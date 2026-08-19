@@ -221,6 +221,18 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         }
     }
 
+    public boolean hasIdleCommands() {
+        return !summonableCards.isEmpty() || !spsummonableCards.isEmpty()
+                || !reposableCards.isEmpty() || !msetableCards.isEmpty()
+                || !ssetableCards.isEmpty() || !activatableCards.isEmpty()
+                || showBP || showEP || showShuffle;
+    }
+
+    public boolean hasBattleCommands() {
+        return !attackableCards.isEmpty() || !activatableCards.isEmpty()
+                || showM2 || showEP;
+    }
+
     public void setPlayerName(String name) {
         this.playerName = name;
     }
@@ -904,11 +916,15 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectPlace(int player, int count, int fieldMask) {
+        clearCommandFlags();
         selectFieldPlayer = player;
         selectFieldCount = count;
         selectFieldMask = ~fieldMask;
-        if (player != client.selfType) {
-            selectFieldMask = ((selectFieldMask >> 16) | (selectFieldMask << 16));
+        // fieldMask 相对选择方：低 16 位 = 选择方自己的半场。
+        // 只有选择方与我不同半场时才交换高低 16 位，保证低 16 位始终是我方半场（下半区）。
+        // 用 localPlayer(与卡牌渲染同一套映射)判断“选择方是否为对方”，player&1 取边以兼容 tag(0/2 先攻,1/3 后攻)。
+        if (localPlayer(player & 1) == 1) {
+            selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
         }
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(18, null);
@@ -952,11 +968,12 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectDisfield(int player, int count, int fieldMask) {
+        clearCommandFlags();
         selectFieldPlayer = player;
         selectFieldCount = count;
         selectFieldMask = ~fieldMask;
-        if (player != client.selfType) {
-            selectFieldMask = ((selectFieldMask >> 16) | (selectFieldMask << 16));
+        if (localPlayer(player & 1) == 1) {
+            selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
         }
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(24, null);
@@ -1552,7 +1569,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 flag = 1;
                 code &= 0x7fffffff;
             }
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_ACTIVATE;
                 activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));
@@ -1565,7 +1582,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int diratt = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_ATTACK;
                 attackableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1586,7 +1603,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_SUMMON;
                 summonableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1599,7 +1616,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_SPSUMMON;
                 if (card.code == 0 && code != 0) card.code = code;
@@ -1613,7 +1630,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_REPOS;
                 reposableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1626,7 +1643,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_MSET;
                 msetableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1639,7 +1656,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_SSET;
                 ssetableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1658,7 +1675,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 flag = 1;
                 code &= 0x7fffffff;
             }
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_ACTIVATE;
                 activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));

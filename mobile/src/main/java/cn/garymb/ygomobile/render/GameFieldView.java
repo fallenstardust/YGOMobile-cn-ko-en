@@ -15,6 +15,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.LruCache;
 import android.view.Choreographer;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -62,6 +63,10 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private static final float CARD_W_F = 0.8f;
     private static final float CARD_H_F = 1.16f;
     private static final float PI_F = 3.1415926f;
+    // 手牌点击抬升动画：抬升幅度（占卡高比例）与时长
+    private static final float HAND_LIFT_RATIO = 0.06f;
+    private static final long HAND_LIFT_DURATION_MS = 140;
+
     // 离屏 ImageView 缓存：每个卡码一个，交给 ImageLoader.bindImage 走标准取图链，
     // 绘制时直接把其中的 Drawable 画上 Canvas
     private final LruCache<Integer, ImageView> cardViewCache =
@@ -86,6 +91,10 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private GameField field;
     private ImageLoader imageLoader;
     private float oppHandCenterY, oppHandCardH;
+    // 透视矩阵及其逆矩阵：场上格子/堆叠区在矩阵内绘制，触摸命中需先逆变换回场地平面坐标
+    private final Matrix perspectiveMatrixCache = new Matrix();
+    private final Matrix inversePerspective = new Matrix();
+    private boolean hasInversePerspective = false;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint selectedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -110,6 +119,13 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private int selectedLocation = -1;
     private int selectedSequence = -1;
     private int highlightFieldMask = 0;
+    // 手牌点击抬升动画状态（抬起中的卡 / 回落中的卡）
+    private GameField.ClientCard handLiftCard;
+    private float handLiftFrom;
+    private long handLiftStartMs;
+    private GameField.ClientCard handDropCard;
+    private float handDropFrom;
+    private long handDropStartMs;
 
     private int displayLp0 = 8000;
     private int displayLp1 = 8000;
@@ -120,6 +136,8 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private List<CardAnimState> animatingCards = new ArrayList<>();
 
     private OnCardClickListener cardClickListener;
+    // 手势识别：单击触发 handleTap，长按触发 handleLongPress，onDown 消费手势
+    private GestureDetector gestureDetector;
 
     private SciFiRenderer sciFiRenderer;
     private long animTimeMs = 0;
@@ -199,6 +217,26 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         lpPaint.setShadowLayer(3, 1, 1, Color.BLACK);
 
         setLayerType(LAYER_TYPE_SOFTWARE, null);
+
+        gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                // 必须消费 ACTION_DOWN：否则父容器会接管手势，
+                // ACTION_UP 不会派发到本 View，导致点击卡片无响应
+                return true;
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                handleTap(e.getX() - offsetX, e.getY() - offsetY);
+                return true;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                handleLongPress(e.getX() - offsetX, e.getY() - offsetY);
+            }
+        });
     }
 
     public void setField(GameField field) {
@@ -257,6 +295,9 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         this.selectedPlayer = player;
         this.selectedLocation = location;
         this.selectedSequence = sequence;
+        if (location == CardLocation.Hand.value() && field != null) {
+            startHandLift(field.getCard(player, location, sequence));
+        }
         invalidate();
     }
 
@@ -266,6 +307,59 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         selectedSequence = -1;
         highlightFieldMask = 0;
         invalidate();
+    }
+
+    // === 手牌点击抬升动画 ===
+    private void startHandLift(GameField.ClientCard card) {
+        if (card == null || card == handLiftCard) return;
+        // 若该卡正在回落，从当前进度接续抬起
+        float resume = (card == handDropCard) ? handDropProgress() : 0f;
+        if (handDropCard == card) handDropCard = null;
+        startHandDrop(handLiftCard);
+        handLiftCard = card;
+        handLiftFrom = resume;
+        handLiftStartMs = System.currentTimeMillis();
+    }
+
+    private void startHandDrop(GameField.ClientCard card) {
+        if (card == null) return;
+        float cur = handLiftProgress(card);
+        if (card == handLiftCard) handLiftCard = null;
+        if (cur <= 0.01f) return;
+        handDropCard = card;
+        handDropFrom = cur;
+        handDropStartMs = System.currentTimeMillis();
+    }
+
+    private float handLiftProgress(GameField.ClientCard card) {
+        if (card == null) return 0f;
+        if (card == handLiftCard) {
+            float t = liftClamp01(System.currentTimeMillis() - handLiftStartMs);
+            return handLiftFrom + (1f - handLiftFrom) * easeOutQuad(t);
+        }
+        if (card == handDropCard) return handDropProgress();
+        return 0f;
+    }
+
+    private float handDropProgress() {
+        float t = liftClamp01(System.currentTimeMillis() - handDropStartMs);
+        return handDropFrom * (1f - easeOutQuad(t));
+    }
+
+    private boolean isHandLiftAnimating() {
+        long now = System.currentTimeMillis();
+        if (handLiftCard != null && now - handLiftStartMs < HAND_LIFT_DURATION_MS) return true;
+        return handDropCard != null && now - handDropStartMs < HAND_LIFT_DURATION_MS;
+    }
+
+    private float liftClamp01(long elapsed) {
+        if (elapsed <= 0) return 0f;
+        if (elapsed >= HAND_LIFT_DURATION_MS) return 1f;
+        return elapsed / (float) HAND_LIFT_DURATION_MS;
+    }
+
+    private float easeOutQuad(float t) {
+        return 1f - (1f - t) * (1f - t);
     }
 
     @Override
@@ -326,6 +420,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     }
 
     private boolean hasActiveAnimations() {
+        if (isHandLiftAnimating()) return true;
         for (int p = 0; p < 2; p++) {
             if (hasListAnimation(field.players[p].deck)) return true;
             if (hasListAnimation(field.players[p].hand)) return true;
@@ -353,6 +448,8 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         canvas.save();
         Matrix perspectiveMatrix = PerspectiveHelper.createPerspectiveMatrix(
                 fieldCenterX, fieldCenterY, FIELD_PERSPECTIVE_ROT_X, 0, -80);
+        perspectiveMatrixCache.set(perspectiveMatrix);
+        hasInversePerspective = perspectiveMatrixCache.invert(inversePerspective);
         canvas.concat(perspectiveMatrix);
 
         drawFieldBoard(canvas);
@@ -362,6 +459,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         drawMonsterStatuses(canvas);
         drawSelection(canvas);
         drawCmdHighlights(canvas);
+        drawFieldHighlight(canvas);
 
         canvas.restore();
 
@@ -435,7 +533,16 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
 
     private void drawHandCards(Canvas canvas) {
         for (int p = 1; p >= 0; p--) {
-            for (GameField.ClientCard c : field.players[p].hand) drawClientCard(canvas, c);
+            for (GameField.ClientCard c : field.players[p].hand) {
+                if (c != null && handLiftProgress(c) > 0f) continue;
+                drawClientCard(canvas, c);
+            }
+        }
+        // 抬升/回落中的手牌最后绘制，使其覆盖在相邻手牌之上
+        for (int p = 1; p >= 0; p--) {
+            for (GameField.ClientCard c : field.players[p].hand) {
+                if (c != null && handLiftProgress(c) > 0f) drawClientCard(canvas, c);
+            }
         }
     }
 
@@ -720,6 +827,11 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         if (pcard == null) return;
 
         RectF dst = projectCard(pcard.curX, pcard.curY, pcard.curZ);
+        // 手牌点击抬升：在取中心点前整体向上偏移（与 handleTap 命中偏移一致）
+        float lift = handLiftProgress(pcard);
+        if (lift > 0f && (pcard.curY >= HAND_BAND_Y || pcard.curY <= -OPP_HAND_BAND_Y)) {
+            dst.offset(0, -dst.height() * HAND_LIFT_RATIO * lift);
+        }
         float cx = dst.centerX();
         float cy = dst.centerY();
 
@@ -1319,17 +1431,25 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-            float x = event.getX() - offsetX;
-            float y = event.getY() - offsetY;
-            handleTap(x, y);
-            return true;
+        // 交给 GestureDetector 处理：onDown 返回 true 消费手势，
+        // 保证后续 UP/CANCEL 事件能送达（此前 DOWN 返回 false 导致手势被父级截获）
+        if (gestureDetector != null) {
+            gestureDetector.onTouchEvent(event);
         }
-        return super.onTouchEvent(event);
+        return true;
     }
 
     private void handleTap(float x, float y) {
         if (cardClickListener == null || field == null) return;
+
+        // 高亮区域在透视矩阵内绘制：触摸点先逆变换到场地平面坐标再判定
+        float fx = x, fy = y;
+        if (hasInversePerspective) {
+            float[] pt = {x, y};
+            inversePerspective.mapPoints(pt);
+            fx = pt[0];
+            fy = pt[1];
+        }
 
         if (highlightFieldMask != 0) {
             for (int player = 0; player < 2; player++) {
@@ -1338,7 +1458,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
                     int maxZones = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
                     for (int i = 0; i < maxZones; i++) {
                         RectF r = getZoneRect(player, loc, i);
-                        if (r != null && r.contains(x, y)) {
+                        if (r != null && r.contains(fx, fy)) {
                             int bitPos = getZoneBitPos(player, loc, i);
                             if (bitPos >= 0 && (highlightFieldMask & (1 << bitPos)) != 0) {
                                 cardClickListener.onZoneClick(player, loc, i);
@@ -1350,57 +1470,75 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
             }
         }
 
+        int[] hit = hitCard(x, y);
+        if (hit != null) {
+            setSelectedCard(hit[0], hit[1], hit[2]);
+            cardClickListener.onCardClick(hit[0], hit[1], hit[2]);
+        } else {
+            clearSelection();
+        }
+    }
+
+    private void handleLongPress(float x, float y) {
+        if (cardClickListener == null || field == null) return;
+        int[] hit = hitCard(x, y);
+        if (hit != null) {
+            cardClickListener.onFieldLongPress(hit[0], hit[1], hit[2]);
+        }
+    }
+
+    /**
+     * 点击/长按共用的卡片命中判定：依次怪兽/魔陷区 → 手牌 → 堆叠区。
+     * 区域/堆叠区在透视矩阵内绘制，用逆变换后的坐标判定；
+     * 手牌在透视外绘制，用原始坐标判定。
+     *
+     * @return {player, location, sequence}，未命中返回 null
+     */
+    private int[] hitCard(float x, float y) {
+        float fx = x, fy = y;
+        if (hasInversePerspective) {
+            float[] pt = {x, y};
+            inversePerspective.mapPoints(pt);
+            fx = pt[0];
+            fy = pt[1];
+        }
         for (int player = 0; player < 2; player++) {
             for (int loc : new int[]{0x04, 0x08}) {
                 int maxZones = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
                 for (int i = 0; i < maxZones; i++) {
                     RectF r = getZoneRect(player, loc, i);
-                    if (r != null && r.contains(x, y)) {
-                        GameField.ClientCard card = field.getCard(player, loc, i);
-                        if (card != null) {
-                            setSelectedCard(player, loc, i);
-                            cardClickListener.onCardClick(player, loc, i);
-                            return;
-                        }
+                    if (r != null && r.contains(fx, fy) && field.getCard(player, loc, i) != null) {
+                        return new int[]{player, loc, i};
                     }
                 }
             }
 
-            boolean flipped = (player == 1);
             List<GameField.ClientCard> hand = field.players[player].hand;
             for (int i = hand.size() - 1; i >= 0; i--) {
                 GameField.ClientCard card = hand.get(i);
                 if (card == null) continue;
                 RectF hr = projectCard(card.curX, card.curY, card.curZ);
+                float lift = handLiftProgress(card);
+                if (lift > 0f) hr.offset(0, -hr.height() * HAND_LIFT_RATIO * lift);
                 if (hr.contains(x, y)) {
-                    setSelectedCard(player, 0x02, i);
-                    cardClickListener.onCardClick(player, 0x02, i);
-                    return;
+                    return new int[]{player, CardLocation.Hand.value(), i};
                 }
             }
 
-            if (checkPileTap(player, x, y, CardLocation.Deck.value())) return;
-            if (checkPileTap(player, x, y, CardLocation.Extra.value())) return;
-            if (checkPileTap(player, x, y, CardLocation.Grave.value())) return;
-            if (checkPileTap(player, x, y, CardLocation.Removed.value())) return;
-        }
-        clearSelection();
-    }
-
-    private boolean checkPileTap(int player, float x, float y, int location) {
-        // handleTap 的坐标已是场地局部坐标，必须用不带 offset 的矩形
-        RectF r = getPileRectLocal(player, location);
-        if (r != null && r.contains(x, y)) {
-            int count = field.getCardCount(player, location);
-            if (count > 0) {
-                int seq = count - 1;
-                setSelectedCard(player, location, seq);
-                cardClickListener.onCardClick(player, location, seq);
-                return true;
+            for (int loc : new int[]{CardLocation.Deck.value(), CardLocation.Extra.value(),
+                    CardLocation.Grave.value(), CardLocation.Removed.value()}) {
+                RectF r = getPileRectLocal(player, loc);
+                if (r != null && r.contains(fx, fy)) {
+                    int count = field.getCardCount(player, loc);
+                    if (count > 0) {
+                        return new int[]{player, loc, count - 1};
+                    }
+                }
             }
         }
-        return false;
+        return null;
     }
+
 
     private RectF getPileRect(int player, int location) {
         RectF r = getPileRectLocal(player, location);

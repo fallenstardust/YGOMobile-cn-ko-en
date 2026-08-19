@@ -257,13 +257,14 @@
         </FrameLayout>
 
 
-        <!-- 对方手卡区域（决斗场上方，卡背显示） -->
+        <!-- 对方手卡区域（旧版 XML 渲染，已由 GameFieldView 取代，隐藏保留） -->
         <FrameLayout
             android:id="@+id/layout_opp_hand_area"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipChildren="false"
-            android:gravity="center">
+            android:gravity="center"
+            android:visibility="gone">
 
             <cn.garymb.ygomobile.ui.widget.CardGroupView
                 android:id="@+id/zone_p1_hand"
@@ -274,7 +275,74 @@
                 app:lines="1" />
         </FrameLayout>
 
-        <!-- 决斗场（平面矩形：左右各5个堆叠区 + 中央 上5魔陷/5怪兽/2EMZ/5怪兽/5魔陷） -->
+        <!-- 决斗场区域：GameFieldView 3D 渲染（场地/区域/场上卡/堆叠区/双方手卡） -->
+        <FrameLayout
+            android:id="@+id/layout_duel_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <cn.garymb.ygomobile.render.GameFieldView
+                android:id="@+id/game_field_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- 阶段按钮覆盖层（DP/BP/EP，从旧版场地中轴行迁移至此） -->
+            <LinearLayout
+                android:id="@+id/layout_phase_buttons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_phase_current"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/button2_bg"
+                    android:minWidth="40dp"
+                    android:minHeight="0dp"
+                    android:padding="2dp"
+                    android:text="DP"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_phase_next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/button2_bg"
+                    android:minWidth="40dp"
+                    android:minHeight="0dp"
+                    android:padding="2dp"
+                    android:text="BP"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/btn_ep"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/button2_bg"
+                    android:minWidth="40dp"
+                    android:minHeight="0dp"
+                    android:padding="2dp"
+                    android:text="EP"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- 决斗场（旧版 XML 槽位渲染，已由 GameFieldView 取代，隐藏保留） -->
         <LinearLayout
             android:id="@+id/layout_duel_field"
             android:layout_width="wrap_content"
@@ -284,7 +352,7 @@
             android:gravity="center"
             android:clipChildren="false"
             android:orientation="horizontal"
-            android:visibility="visible">
+            android:visibility="gone">
 
             <!-- 左列：对方堆叠区 DECK / GRAVE / BANISH / EXTRA / FIELD -->
             <LinearLayout
@@ -469,31 +537,12 @@
                         app:layout_constraintTop_toTopOf="parent" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <!-- 中轴：额外怪兽区 ×2（EMZ1 对齐 M1 列、EMZ2 对齐 M3 列，正方形与怪兽槽位相同）
-                     阶段按钮 DP/BP/EP 占用 M0/M2/M4 列，与 EMZ 同行；按钮宽=槽位宽，高=槽位一半 -->
+                <!-- 中轴：额外怪兽区 ×2（阶段按钮已迁移至 layout_duel_container 覆盖层） -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_gravity="center"
                     android:layout_weight="1">
-
-                    <Button
-                        android:id="@+id/btn_phase_current"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:background="@drawable/button2_bg"
-                        android:minWidth="0dp"
-                        android:minHeight="0dp"
-                        android:padding="0dp"
-                        android:text="DP"
-                        android:textColor="@color/white"
-                        android:textSize="9sp"
-                        android:textStyle="bold"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintDimensionRatio="W,2:1"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintRight_toLeftOf="@id/zone_p0_m5"
-                        app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
                         android:id="@+id/zone_p0_m5"
@@ -503,25 +552,7 @@
                         android:text="EMZ1"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintDimensionRatio="1:1"
-                        app:layout_constraintLeft_toRightOf="@id/btn_phase_current"
-                        app:layout_constraintRight_toLeftOf="@id/btn_phase_next"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <Button
-                        android:id="@+id/btn_phase_next"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:background="@drawable/button2_bg"
-                        android:minWidth="0dp"
-                        android:minHeight="0dp"
-                        android:padding="0dp"
-                        android:text="BP"
-                        android:textColor="@color/white"
-                        android:textSize="9sp"
-                        android:textStyle="bold"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintDimensionRatio="W,2:1"
-                        app:layout_constraintLeft_toRightOf="@id/zone_p0_m5"
+                        app:layout_constraintLeft_toLeftOf="parent"
                         app:layout_constraintRight_toLeftOf="@id/zone_p0_m6"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -533,25 +564,7 @@
                         android:text="EMZ2"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintDimensionRatio="1:1"
-                        app:layout_constraintLeft_toRightOf="@id/btn_phase_next"
-                        app:layout_constraintRight_toLeftOf="@id/btn_ep"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <Button
-                        android:id="@+id/btn_ep"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:background="@drawable/button2_bg"
-                        android:minWidth="0dp"
-                        android:minHeight="0dp"
-                        android:padding="0dp"
-                        android:text="EP"
-                        android:textColor="@color/white"
-                        android:textSize="9sp"
-                        android:textStyle="bold"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintDimensionRatio="W,2:1"
-                        app:layout_constraintLeft_toRightOf="@id/zone_p0_m6"
+                        app:layout_constraintLeft_toRightOf="@id/zone_p0_m5"
                         app:layout_constraintRight_toRightOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
@@ -732,13 +745,14 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 我方手卡区域（决斗场下方，正面显示） -->
+        <!-- 我方手卡区域（旧版 XML 渲染，已由 GameFieldView 取代，隐藏保留） -->
         <FrameLayout
             android:id="@+id/layout_my_hand_area"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipChildren="false"
-            android:gravity="center">
+            android:gravity="center"
+            android:visibility="gone">
 
             <cn.garymb.ygomobile.ui.widget.CardGroupView
                 android:id="@+id/zone_p0_hand"
