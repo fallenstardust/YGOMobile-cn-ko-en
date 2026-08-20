@@ -120,13 +120,13 @@ public class TextureLoader {
                 permanentCache.put(name, bmp);
             }
         }
-        // 灵摆刻度 (tLScale/tRScale[0..13])
+        // 灵摆刻度 (tLScale/tRScale[0..13])，含透明通道，必须 ARGB_8888
         for (int i = 0; i < 14; i++) {
             String l = "extra/lscale_" + i + ".png";
             String r = "extra/rscale_" + i + ".png";
-            Bitmap lb = loadBitmapFromFile(l);
+            Bitmap lb = loadBitmapFromFile(l, Bitmap.Config.ARGB_8888);
             if (lb != null) permanentCache.put(l, lb);
-            Bitmap rb = loadBitmapFromFile(r);
+            Bitmap rb = loadBitmapFromFile(r, Bitmap.Config.ARGB_8888);
             if (rb != null) permanentCache.put(r, rb);
         }
     }
@@ -218,8 +218,15 @@ public class TextureLoader {
     }
 
     public Bitmap getScaleTexture(boolean isLeft, int value) {
-        String prefix = isLeft ? "lscale_" : "rscale_";
-        return getTexture(prefix + value + ".png");
+        if (value < 0 || value > 13) return null;
+        String name = "extra/" + (isLeft ? "lscale_" : "rscale_") + value + ".png";
+        Bitmap bmp = permanentCache.get(name);
+        if (bmp != null) return bmp;
+        bmp = bitmapCache.get(name);
+        if (bmp != null) return bmp;
+        bmp = loadBitmapFromFile(name, Bitmap.Config.ARGB_8888);
+        if (bmp != null) bitmapCache.put(name, bmp);
+        return bmp;
     }
 
     public Bitmap getExtraTexture(String name) {
@@ -329,12 +336,16 @@ public class TextureLoader {
     }
 
     private Bitmap loadBitmapFromFile(String relativePath) {
+        return loadBitmapFromFile(relativePath, Bitmap.Config.RGB_565);
+    }
+
+    private Bitmap loadBitmapFromFile(String relativePath, Bitmap.Config config) {
         File file = new File(textureBasePath, relativePath);
         if (file.exists()) {
             FileInputStream fis = null;
             try {
                 BitmapFactory.Options opts = new BitmapFactory.Options();
-                opts.inPreferredConfig = Bitmap.Config.RGB_565;
+                opts.inPreferredConfig = config;
                 fis = new FileInputStream(file);
                 return BitmapFactory.decodeStream(fis, null, opts);
             } catch (Exception e) {

@@ -95,6 +95,8 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private final Matrix perspectiveMatrixCache = new Matrix();
     private final Matrix inversePerspective = new Matrix();
     private boolean hasInversePerspective = false;
+    // 投影计算用矩阵元素缓存
+    private final float[] matrixValues = new float[9];
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint selectedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -103,6 +105,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private final Paint cmdPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint chainPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint overlayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint scaleOverlayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint lpPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     //堆叠区堆身画笔
     private final Paint pilePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -391,10 +394,12 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         // 手卡尺寸 = 场上卡尺寸（由场地单元宽度推导），严格 177:254 比例
         float unitX = (fieldRight - fieldLeft) / FIELD_W_F;
         float handCardW = CARD_W_F * unitX;
-        myHandCardH = handCardW * CARD_RATIO;
-        oppHandCardH = myHandCardH;
-        myHandCenterY = fieldBottom + myHandCardH * 0.62f;
-        oppHandCenterY = oppHandCardH * 0.52f;
+        // 3D 透视近大远小：我方手卡（底部、近）略大于场上卡，对方手卡（顶部、远）缩小；
+        // 整体缩小并抬高，避免遮挡魔法陷阱区域
+        myHandCardH = handCardW * CARD_RATIO * 0.92f;
+        oppHandCardH = handCardW * CARD_RATIO * 0.75f;
+        myHandCenterY = fieldBottom + myHandCardH * 0.28f;
+        oppHandCenterY = oppHandCardH * 0.40f;
     }
 
     @Override
@@ -648,7 +653,9 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         }
     }
 
-    /** LP 条：lp≥maxLP 时分层——整条底色为上一层颜色，再叠加当前层比例（5 色循环） */
+    /**
+     * LP 条：lp≥maxLP 时分层——整条底色为上一层颜色，再叠加当前层比例（5 色循环）
+     */
     private void drawLpBar(Canvas canvas, int lp, int maxLP, float l, float t, float r, float b, boolean ltr) {
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setColor(0xFF101820);
@@ -714,7 +721,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG);
         tp.setTypeface(Typeface.DEFAULT_BOLD);
         tp.setShadowLayer(2, 1, 1, Color.BLACK);
-        tp.setTextSize(r.width() * 0.26f);
+        tp.setTextSize(r.width() * 0.18f);
         float baseY = r.bottom + tp.getTextSize();
         float cx = r.centerX();
 
@@ -816,8 +823,9 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         }
         float cx = mapFieldX(fx);
         float cy = mapFieldY(fy) - fz * fieldUnitY() * 0.5f;
+        // 场上卡保持卡面等比（宽由场地单元推导，高 = 宽 × 254/177），横置时对调仍等比
         float w = CARD_W_F * fieldUnitX();
-        float h = CARD_H_F * fieldUnitY();
+        float h = w * CARD_RATIO;
         return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
     }
 
@@ -827,7 +835,6 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         if (pcard == null) return;
 
         RectF dst = projectCard(pcard.curX, pcard.curY, pcard.curZ);
-        // 手牌点击抬升：在取中心点前整体向上偏移（与 handleTap 命中偏移一致）
         float lift = handLiftProgress(pcard);
         if (lift > 0f && (pcard.curY >= HAND_BAND_Y || pcard.curY <= -OPP_HAND_BAND_Y)) {
             dst.offset(0, -dst.height() * HAND_LIFT_RATIO * lift);
@@ -835,27 +842,33 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         float cx = dst.centerX();
         float cy = dst.centerY();
 
-        // m22 = cos(rX)·cos(rY)：>0 正面可见（drawing.cpp 判定），
-        // |cos| 作为翻转/倾斜时的压缩比，形成翻面动画
         float cosX = (float) Math.cos(pcard.curRotX);
         float cosY = (float) Math.cos(pcard.curRotY);
         boolean showFront = cosX * cosY > 0f;
         float wScale = Math.max(0.04f, Math.abs(cosY));
         float hScale = Math.max(0.04f, Math.abs(cosX));
-        // 手卡带：卡面朝向玩家平贴屏幕，不做 3D 压缩，保持 177:254 原始比例
-        boolean handBand = pcard.curY >= HAND_BAND_Y || pcard.curY <= -OPP_HAND_BAND_Y;if (handBand) {
+        boolean handBand = pcard.curY >= HAND_BAND_Y || pcard.curY <= -OPP_HAND_BAND_Y;
+        if (handBand) {
             wScale = 1f;
             hScale = 1f;
         }
 
+        boolean isDefense = (pcard.location & 0x04) != 0
+                && Math.abs(Math.abs(pcard.curRotZ) - PI_F / 2f) < 0.2f;
+        float drawW = dst.width();
+        float drawH = dst.height();
+        if (isDefense) {
+            float tmp = drawW;
+            drawW = drawH;
+            drawH = tmp;
+        }
+
         canvas.save();
         canvas.translate(cx, cy);
-        // rZ：对方 π→180°，守备∓π/2→∓90°
         canvas.rotate(handBand ? 0f : (float) Math.toDegrees(pcard.curRotZ));
         canvas.scale(wScale, hScale);
 
-        RectF local = new RectF(-dst.width() / 2f, -dst.height() / 2f,
-                dst.width() / 2f, dst.height() / 2f);
+        RectF local = new RectF(-drawW / 2f, -drawH / 2f, drawW / 2f, drawH / 2f);
 
         int alpha = (int) Math.max(0, Math.min(255, pcard.curAlpha));
         Paint cardPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -866,7 +879,6 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         }
 
         if (showFront) {
-            // 移动中卡码为0时用chain_code 兜底（drawing.cpp L617）
             int code = pcard.code;
             if (code == 0 && pcard.is_moving) code = pcard.chain_code;
             Drawable cardDrawable = null;
@@ -895,7 +907,7 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
                 }
             }
         } else {
-            Bitmap coverBmp = TextureLoader.get().getCardCover();
+            Bitmap coverBmp = TextureLoader.get().getCardCover(pcard.owner != 0);
             if (coverBmp != null) {
                 canvas.drawBitmap(coverBmp, null, local, cardPaint);
             } else {
@@ -909,7 +921,6 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
                     local.width(), local.height(), 0xFF4A3728);
         }
 
-        // 移动中跳过装饰（drawing.cpp：if(pcard->is_moving) return;）
         if (!pcard.is_moving) {
             drawCardDecorations(canvas, pcard, local);
         }
@@ -942,21 +953,53 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
             mk.setAlpha((int) (pulse * 255));
             canvas.drawRect(r.left - 1, r.top - 1, r.right + 1, r.bottom + 1, mk);
         }
-        if (pcard.isMonster() && pcard.isFaceUp() && (pcard.location & 0x04) != 0) {
-            textPaint.setTextSize(r.width() * 0.18f);
-            textPaint.setColor(Color.WHITE);
-            String atkDef = pcard.atkString + "/" + pcard.defString;
-            float tw = textPaint.measureText(atkDef);
-            Paint bg = new Paint();
-            bg.setColor(0x80000000);
-            canvas.drawRect(-tw / 2f - 2, r.bottom - r.width() * 0.22f,
-                    tw / 2f + 2, r.bottom, bg);
-            canvas.drawText(atkDef, -tw / 2f, r.bottom - 3, textPaint);
-        }
+        drawPendulumScaleOverlay(canvas, pcard, r);
         if (pcard.overlayed != null && !pcard.overlayed.isEmpty()) {
             sciFiRenderer.drawCountBadge(canvas,
                     r.right - r.width() * 0.15f, r.bottom - r.height() * 0.1f,
                     "×" + pcard.overlayed.size(), 0xCC4444CC);
+        }
+    }
+
+    /**
+     * 灵摆区（szone sequence 6=左 / 7=右）卡片：按刻度值在卡面居中覆盖一层
+     * 灵摆刻度贴图（textures/extra/lscale|rscale_0~13.png，贴图自带风格化刻度数字），
+     * 对齐 ygopro tLScale/tRScale 行为
+     */
+    /**
+     * 灵摆区（szone sequence 6=左 / 7=右）卡片：
+     * 卡面叠加 textureloader 的 lscale/rscale 刻度贴图，
+     * 并在左上角（左刻度）/右上角（右刻度）显示通讯下发的刻度值
+     */
+    private void drawPendulumScaleOverlay(Canvas canvas, GameField.ClientCard pcard, RectF r) {
+        if (pcard.code == 0 || pcard.location != 0x08) return;
+        if (pcard.sequence != 6 && pcard.sequence != 7) return;
+        if (!pcard.isFaceUp()) return;
+        boolean left = pcard.sequence == 6;
+        int scale = Math.max(0, Math.min(13, left ? pcard.lScale : pcard.rScale));
+        Bitmap bmp = TextureLoader.get().getScaleTexture(left, scale);
+        scaleOverlayPaint.setAlpha((int) Math.max(0, Math.min(255, pcard.curAlpha)));
+        if (bmp != null && !bmp.isRecycled()) {
+            float w = r.width() * 0.92f;
+            float h = w * bmp.getHeight() / (float) bmp.getWidth();
+            float maxH = r.height() * 0.92f;
+            if (h > maxH) {
+                h = maxH;
+                w = h * bmp.getWidth() / (float) bmp.getHeight();
+            }
+            canvas.drawBitmap(bmp, null, new RectF(-w / 2f, -h / 2f, w / 2f, h / 2f), scaleOverlayPaint);
+        }
+        // 角标刻度值：左卡左上角、右卡右上角
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTextSize(r.width() * 0.2f);
+        textPaint.setColor(0xFF40E0FF);
+        textPaint.setShadowLayer(3, 1, 1, Color.BLACK);
+        if (left) {
+            canvas.drawText(String.valueOf(pcard.lScale),
+                    r.left + r.width() * 0.24f, r.top + r.width() * 0.18f, textPaint);
+        } else {
+            canvas.drawText(String.valueOf(pcard.rScale),
+                    r.right - r.width() * 0.24f, r.top + r.width() * 0.18f, textPaint);
         }
     }
 
@@ -973,12 +1016,15 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
                 cyF = sequence < 5 ? -1.4f : 0f;
             }
         } else if (location == 0x08) {
+            // 与 GameField.szoneCX/CY 保持一致：seq5 场地魔法区，seq6/7 左右灵摆区
             if (player == 0) {
-                cxF = sequence < 5 ? 1.75f + 1.1f * sequence : 0.6f;
-                cyF = sequence < 5 ? 2.6f : 2.0f;
+                cxF = sequence < 5 ? 1.75f + 1.1f * sequence
+                        : (sequence == 5 ? 0.6f : (sequence == 6 ? 0.6f : 8.3f));
+                cyF = sequence < 5 ? 2.6f : (sequence == 5 ? 2.0f : 0.7f);
             } else {
-                cxF = sequence < 5 ? 6.15f - 1.1f * sequence : 7.3f;
-                cyF = sequence < 5 ? -2.6f : -2.0f;
+                cxF = sequence < 5 ? 6.15f - 1.1f * sequence
+                        : (sequence == 5 ? 7.3f : (sequence == 6 ? 7.3f : -0.4f));
+                cyF = sequence < 5 ? -2.6f : (sequence == 5 ? -2.0f : -0.7f);
             }
         } else {
             return getPileRectLocal(player, location);
@@ -1284,21 +1330,6 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
             canvas.drawRect(x - 2, y - 2, x + w + 2, y + h + 2, selGlow);
         }
 
-        if (card.isMonster() && card.isFaceUp()) {
-            textPaint.setTextSize(w * 0.18f);
-            textPaint.setColor(Color.WHITE);
-            String atkDef = card.atkString + "/" + card.defString;
-
-            Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            bgPaint.setColor(0x80000000);
-            float textW = textPaint.measureText(atkDef);
-            canvas.drawRect(x + w / 2f - textW / 2f - 2, y + h - w * 0.22f,
-                    x + w / 2f + textW / 2f + 2, y + h, bgPaint);
-            canvas.drawText(atkDef,
-                    x + w / 2f - textW / 2f,
-                    y + h - 3, textPaint);
-        }
-
         if (card.overlayCards != null && !card.overlayCards.isEmpty()) {
             sciFiRenderer.drawCountBadge(canvas,
                     x + w - w * 0.15f, y + h - h * 0.1f,
@@ -1390,6 +1421,42 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         return getZoneRectLocalF(player, location, sequence);
     }
 
+    /**
+     * 将场地空间矩形用正向透视矩阵投影到屏幕坐标（手动透视除法，
+     * 与 Canvas.concat 渲染路径一致），命中判定直接使用屏幕触摸坐标。
+     */
+    private RectF projectRectToScreen(RectF r) {
+        perspectiveMatrixCache.getValues(matrixValues);
+        float m0 = matrixValues[0], m1 = matrixValues[1], m2 = matrixValues[2];
+        float m3 = matrixValues[3], m4 = matrixValues[4], m5 = matrixValues[5];
+        float m6 = matrixValues[6], m7 = matrixValues[7], m8 = matrixValues[8];
+        float x0 = r.left, y0 = r.top, x1 = r.right, y1 = r.bottom;
+
+        float w0 = m6 * x0 + m7 * y0 + m8;
+        float w1 = m6 * x1 + m7 * y0 + m8;
+        float w2 = m6 * x1 + m7 * y1 + m8;
+        float w3 = m6 * x0 + m7 * y1 + m8;
+        if (Math.abs(w0) < 1e-6f || Math.abs(w1) < 1e-6f
+                || Math.abs(w2) < 1e-6f || Math.abs(w3) < 1e-6f) {
+            return null;
+        }
+
+        float sx0 = (m0 * x0 + m1 * y0 + m2) / w0;
+        float sy0 = (m3 * x0 + m4 * y0 + m5) / w0;
+        float sx1 = (m0 * x1 + m1 * y0 + m2) / w1;
+        float sy1 = (m3 * x1 + m4 * y0 + m5) / w1;
+        float sx2 = (m0 * x1 + m1 * y1 + m2) / w2;
+        float sy2 = (m3 * x1 + m4 * y1 + m5) / w2;
+        float sx3 = (m0 * x0 + m1 * y1 + m2) / w3;
+        float sy3 = (m3 * x0 + m4 * y1 + m5) / w3;
+
+        float minX = Math.min(Math.min(sx0, sx1), Math.min(sx2, sx3));
+        float maxX = Math.max(Math.max(sx0, sx1), Math.max(sx2, sx3));
+        float minY = Math.min(Math.min(sy0, sy1), Math.min(sy2, sy3));
+        float maxY = Math.max(Math.max(sy0, sy1), Math.max(sy2, sy3));
+        return new RectF(minX, minY, maxX, maxY);
+    }
+
     private RectF getCardRect(int player, int location, int sequence) {
         RectF r = getZoneRect(player, location, sequence);
         if (r != null) {
@@ -1442,15 +1509,8 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     private void handleTap(float x, float y) {
         if (cardClickListener == null || field == null) return;
 
-        // 高亮区域在透视矩阵内绘制：触摸点先逆变换到场地平面坐标再判定
-        float fx = x, fy = y;
-        if (hasInversePerspective) {
-            float[] pt = {x, y};
-            inversePerspective.mapPoints(pt);
-            fx = pt[0];
-            fy = pt[1];
-        }
-
+        // 高亮区域由正向透视矩阵绘制到屏幕：用屏幕触摸坐标直接与投影后的区域矩形判定，
+        // 不依赖逆矩阵（避免设备上 invert/mapPoints 对透视矩阵行为不一致导致脱靶）
         if (highlightFieldMask != 0) {
             for (int player = 0; player < 2; player++) {
                 int[] locations = {0x04, 0x08};
@@ -1458,7 +1518,9 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
                     int maxZones = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
                     for (int i = 0; i < maxZones; i++) {
                         RectF r = getZoneRect(player, loc, i);
-                        if (r != null && r.contains(fx, fy)) {
+                        if (r == null) continue;
+                        RectF sr = projectRectToScreen(r);
+                        if (sr != null && sr.contains(x, y)) {
                             int bitPos = getZoneBitPos(player, loc, i);
                             if (bitPos >= 0 && (highlightFieldMask & (1 << bitPos)) != 0) {
                                 cardClickListener.onZoneClick(player, loc, i);
@@ -1489,25 +1551,20 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
 
     /**
      * 点击/长按共用的卡片命中判定：依次怪兽/魔陷区 → 手牌 → 堆叠区。
-     * 区域/堆叠区在透视矩阵内绘制，用逆变换后的坐标判定；
+     * 区域/堆叠区在透视矩阵内绘制，用正向投影后的矩形与屏幕坐标判定；
      * 手牌在透视外绘制，用原始坐标判定。
      *
      * @return {player, location, sequence}，未命中返回 null
      */
     private int[] hitCard(float x, float y) {
-        float fx = x, fy = y;
-        if (hasInversePerspective) {
-            float[] pt = {x, y};
-            inversePerspective.mapPoints(pt);
-            fx = pt[0];
-            fy = pt[1];
-        }
         for (int player = 0; player < 2; player++) {
             for (int loc : new int[]{0x04, 0x08}) {
                 int maxZones = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
                 for (int i = 0; i < maxZones; i++) {
                     RectF r = getZoneRect(player, loc, i);
-                    if (r != null && r.contains(fx, fy) && field.getCard(player, loc, i) != null) {
+                    if (r == null) continue;
+                    RectF sr = projectRectToScreen(r);
+                    if (sr != null && sr.contains(x, y) && field.getCard(player, loc, i) != null) {
                         return new int[]{player, loc, i};
                     }
                 }
@@ -1528,7 +1585,9 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
             for (int loc : new int[]{CardLocation.Deck.value(), CardLocation.Extra.value(),
                     CardLocation.Grave.value(), CardLocation.Removed.value()}) {
                 RectF r = getPileRectLocal(player, loc);
-                if (r != null && r.contains(fx, fy)) {
+                if (r == null) continue;
+                RectF sr = projectRectToScreen(r);
+                if (sr != null && sr.contains(x, y)) {
                     int count = field.getCardCount(player, loc);
                     if (count > 0) {
                         return new int[]{player, loc, count - 1};

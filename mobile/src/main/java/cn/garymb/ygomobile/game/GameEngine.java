@@ -1089,7 +1089,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         card.position = position;
         field.removeCard(oldCtrl, oldLoc, oldSeq);
         field.addCard(newCtrl, newLoc, newSeq, card);
-        field.moveCardAnimated(card, 8); if (newLoc == CardLocation.Removed.value()) {
+        field.moveCardAnimated(card, 8);
+        // 手卡增删后重排双方手卡（数量变化 → 间距变化）
+        if (oldLoc == CardLocation.Hand.value() || newLoc == CardLocation.Hand.value()) {
+            field.updateHandLayout(0, 10);
+            field.updateHandLayout(1, 10);
+        }
+        if (newLoc == CardLocation.Removed.value()) {
             soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
         } else if (newLoc == CardLocation.Grave.value()) {
             soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);

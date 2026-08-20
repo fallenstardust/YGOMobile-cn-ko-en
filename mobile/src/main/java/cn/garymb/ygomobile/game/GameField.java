@@ -118,6 +118,13 @@ public class GameField {
         public int aniFrame;
         public float curAlpha = 255;
         public float dAlpha;
+        // 动画插值起点/终点与总帧数（缓动轨迹）
+        public float animFromX, animFromY, animFromZ;
+        public float animToX, animToY, animToZ;
+        public float animFromRotX, animFromRotY, animFromRotZ;
+        public float animToRotX, animToRotY, animToRotZ;
+        public float animFromAlpha, animToAlpha;
+        public int animTotalFrame;
 
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
@@ -847,7 +854,9 @@ public class GameField {
 
     public void fadeCard(ClientCard pcard, int alpha, int frame) {
         if (pcard == null) return;
-        pcard.dAlpha = ((float) alpha - pcard.curAlpha) / frame;
+        pcard.animFromAlpha = pcard.curAlpha;
+        pcard.animToAlpha = alpha;
+        pcard.animTotalFrame = frame;
         pcard.is_fading = true;
         pcard.aniFrame = frame;
     }
@@ -915,8 +924,9 @@ public class GameField {
                 int count = getCardCount(controler, 0x02);
                 if (count <= 0) count = 1;
                 if (controler == 0) {
-                    if (count <= 6) t[0] = (5.5f - 0.8f * count) / 2f + 1.55f + sequence * 0.8f;
-                    else t[0] = 1.9f + sequence * 4.0f / (count - 1);
+                    // 10 张以内相邻手卡正好相接（不重叠平铺），超过 10 张按固定跨度压缩重叠
+                    if (count <= 10) t[0] = (5.5f - 0.8f * count) / 2f + 1.55f + sequence * 0.8f;
+                    else t[0] = 0.3f + sequence * 7.2f / (count - 1);
                     if (pcard.is_hovered) {
                         t[1] = 3.84f;
                         t[2] = 0.656f + 0.001f * sequence;
@@ -932,8 +942,8 @@ public class GameField {
                         t[4] = PI;
                     }
                 } else {
-                    if (count <= 6) t[0] = 6.25f - (5.5f - 0.8f * count) / 2f - sequence * 0.8f;
-                    else t[0] = 5.9f - sequence * 4.0f / (count - 1);
+                    if (count <= 10) t[0] = 6.25f - (5.5f - 0.8f * count) / 2f - sequence * 0.8f;
+                    else t[0] = 7.5f - sequence * 7.2f / (count - 1);
                     if (pcard.is_hovered) {
                         t[1] = -3.56f;
                         t[2] = 0.656f - 0.001f * sequence;
@@ -1042,26 +1052,47 @@ public class GameField {
     private void updateListAnimation(List<ClientCard> list) {
         for (ClientCard pcard : list) {
             if (pcard == null || pcard.aniFrame <= 0) continue;
-            // Game::DrawCard 每帧推进：位移+旋转+透明度共用一次 aniFrame--
+            // 缓动插值：按剩余帧比例计算进度，easeInOutCubic 平滑起止，替代原线性累加
             if (pcard.is_moving) {
-                pcard.curX += pcard.dPosX;
-                pcard.curY += pcard.dPosY;
-                pcard.curZ += pcard.dPosZ;
-                pcard.curRotX += pcard.dRotX;
-                pcard.curRotY += pcard.dRotY;
-                pcard.curRotZ += pcard.dRotZ;
+                int total = Math.max(1, pcard.animTotalFrame);
+                float t = Math.min(1f, Math.max(0f, 1f - pcard.aniFrame / (float) total));
+                float e = easeInOutCubic(t);
+                pcard.curX = pcard.animFromX + (pcard.animToX - pcard.animFromX) * e;
+                pcard.curY = pcard.animFromY + (pcard.animToY - pcard.animFromY) * e;
+                pcard.curZ = pcard.animFromZ + (pcard.animToZ - pcard.animFromZ) * e;
+                pcard.curRotX = pcard.animFromRotX + (pcard.animToRotX - pcard.animFromRotX) * e;
+                pcard.curRotY = pcard.animFromRotY + (pcard.animToRotY - pcard.animFromRotY) * e;
+                pcard.curRotZ = pcard.animFromRotZ + (pcard.animToRotZ - pcard.animFromRotZ) * e;
             }
             if (pcard.is_fading) {
-                pcard.curAlpha += pcard.dAlpha;
+                int total = Math.max(1, pcard.animTotalFrame);
+                float t = Math.min(1f, Math.max(0f, 1f - pcard.aniFrame / (float) total));
+                pcard.curAlpha = pcard.animFromAlpha
+                        + (pcard.animToAlpha - pcard.animFromAlpha) * easeInOutCubic(t);
             }
-            pcard.aniFrame--;
+            pcard.aniFrame -= animationSpeed;
             if (pcard.aniFrame <= 0) {
                 pcard.aniFrame = 0;
+                if (pcard.is_moving) {
+                    pcard.curX = pcard.animToX;
+                    pcard.curY = pcard.animToY;
+                    pcard.curZ = pcard.animToZ;
+                    pcard.curRotX = pcard.animToRotX;
+                    pcard.curRotY = pcard.animToRotY;
+                    pcard.curRotZ = pcard.animToRotZ;
+                }
+                if (pcard.is_fading) {
+                    pcard.curAlpha = pcard.animToAlpha;
+                }
                 pcard.is_moving = false;
                 pcard.is_fading = false;
                 pcard.chain_code = 0;
             }
         }
+    }
+
+    private static float easeInOutCubic(float t) {
+        return t < 0.5f ? 4f * t * t * t : 1f - (float) Math.pow(-2f * t + 2f, 3) / 2f;
     }
 
     public void refreshAllCards() {
@@ -1130,31 +1161,63 @@ public class GameField {
     public void moveCardAnimated(ClientCard pcard, int frame) {
         if (pcard == null || frame <= 0) return;
         float[] loc = getCardLocation(pcard);
-        float transX = loc[0], transY = loc[1], transZ = loc[2];
-        float rotX = loc[3], rotY = loc[4], rotZ = loc[5];
 
-        pcard.dPosX = (transX - pcard.curX) / frame;
-        pcard.dPosY = (transY - pcard.curY) / frame;
-        pcard.dPosZ = (transZ - pcard.curZ) / frame;
+        pcard.animFromX = pcard.curX;
+        pcard.animFromY = pcard.curY;
+        pcard.animFromZ = pcard.curZ;
+        pcard.animToX = loc[0];
+        pcard.animToY = loc[1];
+        pcard.animToZ = loc[2];
 
-        float diff;
-        diff = rotX - pcard.curRotX;
-        while (diff < 0) diff += (float) (Math.PI * 2);
-        while (diff > Math.PI * 2) diff -= (float) (Math.PI * 2);
-        pcard.dRotX = (diff < Math.PI) ? diff / frame : -(float) (Math.PI * 2 - diff) / frame;
+        pcard.animFromRotX = pcard.curRotX;
+        pcard.animFromRotY = pcard.curRotY;
+        pcard.animFromRotZ = pcard.curRotZ;
+        pcard.animToRotX = normalizeAngleTarget(pcard.curRotX, loc[3]);
+        pcard.animToRotY = normalizeAngleTarget(pcard.curRotY, loc[4]);
+        pcard.animToRotZ = normalizeAngleTarget(pcard.curRotZ, loc[5]);
 
-        diff = rotY - pcard.curRotY;
-        while (diff < 0) diff += (float) (Math.PI * 2);
-        while (diff > Math.PI * 2) diff -= (float) (Math.PI * 2);
-        pcard.dRotY = (diff < Math.PI) ? diff / frame : -(float) (Math.PI * 2 - diff) / frame;
-
-        diff = rotZ - pcard.curRotZ;
-        while (diff < 0) diff += (float) (Math.PI * 2);
-        while (diff > Math.PI * 2) diff -= (float) (Math.PI * 2);
-        pcard.dRotZ = (diff < Math.PI) ? diff / frame : -(float) (Math.PI * 2 - diff) / frame;
-
+        pcard.animTotalFrame = frame;
         pcard.is_moving = true;
         pcard.aniFrame = frame;
+    }
+
+    /** 将目标角度归一化到起点 ±π 内，保证旋转走最短路径 */
+    private static float normalizeAngleTarget(float from, float to) {
+        float diff = (to - from) % (float) (Math.PI * 2);
+        if (diff > Math.PI) diff -= (float) (Math.PI * 2);
+        if (diff < -Math.PI) diff += (float) (Math.PI * 2);
+        return from + diff;
+    }
+
+    // 动画速度倍率：1 为原速，2 即 2 倍速
+    public float animationSpeed = 1f;
+
+    public void setAnimationSpeed(float speed) {
+        animationSpeed = Math.max(0.25f, speed);
+    }
+
+    /**
+     * 手卡数量变化后重排该方手卡：其余卡用 frame 帧动画移到新间距位置；
+     * 正在移动的卡不打断（保持自己的动画，目标位置已与新布局一致）
+     */
+    public void updateHandLayout(int controler, int frame) {
+        List<ClientCard> hand = players[controler].hand;
+        for (ClientCard c : hand) {
+            if (c == null) continue;
+            float[] loc = getCardLocation(c);
+            if (c.is_moving) continue;
+            if (frame > 0 && (Math.abs(loc[0] - c.curX) > 0.001f
+                    || Math.abs(loc[1] - c.curY) > 0.001f)) {
+                moveCardAnimated(c, frame);
+            } else {
+                c.curX = loc[0];
+                c.curY = loc[1];
+                c.curZ = loc[2];
+                c.curRotX = loc[3];
+                c.curRotY = loc[4];
+                c.curRotZ = loc[5];
+            }
+        }
     }
 
     public void clearCommandFlag() {
