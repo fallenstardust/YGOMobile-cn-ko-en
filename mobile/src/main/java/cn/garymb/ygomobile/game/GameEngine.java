@@ -19,6 +19,7 @@ import cn.garymb.ygomobile.engine.LuaScriptEngine;
 import cn.garymb.ygomobile.network.DuelClient;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.render.TextureLoader;
 import ocgcore.enums.CardLocation;
 
 public class GameEngine implements DuelClient.ClientListener, GameMessageParser.MessageHandler {
@@ -525,6 +526,18 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public void sendDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
         client.sendUpdateDeck(main, extra, side);
+        // 预读本方卡组全部卡图（TextureLoader 后台解码 + LRU 缓存、内部去重），
+        // 对局开始后我方抽卡/召唤直接带图，消除灰色占位闪现
+        try {
+            TextureLoader tl = TextureLoader.get();
+            for (List<Integer> deck : new List[]{main, extra, side}) {
+                if (deck == null) continue;
+                for (Integer code : deck) {
+                    if (code != null && code > 0) tl.getCardBitmap(code & 0xFFFFFFFFL);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     public void sendResponse(byte[] responseData) {
@@ -802,6 +815,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onStart(int playerType, int duelRule, int lp0, int lp1,
                         int deck0, int extra0, int deck1, int extra1) {
         field.clear();
+        field.dInfo.duelRule = duelRule;
         duelIsFirst = (playerType & 1) == 0;
         int p0 = localPlayer(0);
         int p1 = localPlayer(1);

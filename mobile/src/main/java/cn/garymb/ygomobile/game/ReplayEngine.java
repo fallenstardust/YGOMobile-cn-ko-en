@@ -881,6 +881,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onStart(int playerType, int duelRule, int lp0, int lp1,
                                   int deck0, int extra0, int deck1, int extra1) {
         field.clear();
+        field.dInfo.duelRule = duelRule;
         field.players[0].lp = lp0;
         field.players[1].lp = lp1;
         field.initial(0, deck0, extra0, 0);

@@ -719,6 +719,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             return;
         }
         if (card != null) {
+            // 手卡确认由 GameFieldView 场内动画完成（抬高/翻面+虚线框），不弹卡面展示
+            if (location == 0x02) return;
             activity.showCardInfoPanel(card);
         }
     }

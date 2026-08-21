@@ -3,9 +3,9 @@ package cn.garymb.ygomobile.render;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
@@ -16,7 +16,6 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -32,13 +31,14 @@ import java.util.concurrent.Executors;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.loader.ImageLoader;
 
 /**
  * 决斗场渲染视图（路线 B：OpenGL ES 3.0 真 3D 透视）。
  * <p>
- * 世界坐标系直接采用 gframe 场地坐标：X∈[-0.8,8.7]，Y∈[-3.9,3.9]（+Y 朝向我方），Z 为高度。
+ * 世界坐标系直接采用 gframe 场地坐标：X∈[-1.25,9.15]（与 field3.png 4:3 版面锁定横向放大），Y∈[-3.9,3.9]（+Y 朝向我方），Z 为高度。
  * 棋盘/区域槽/堆叠区/双方手卡/场上卡全部在同一透视相机内绘制，近大远小由 GPU 完成；
  * 卡片位置与旋转直接取 {@link GameField.ClientCard} 的 curX/curY/curZ/curRot*，
  * 与 ClientField::GetCardLocation 数值完全一致。
@@ -57,50 +57,92 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         void onFieldLongPress(int player, int location, int sequence);
     }
 
-    // === 场地坐标常量（materials.cpp）===
-    private static final float FIELD_X_MIN = -0.8f;
-    private static final float FIELD_X_MAX = 8.7f;
+    // === 场地坐标常量（与 field3.png 版面锁定：宽 10.4 = 7.8×880/660，贴图内格子恰为正方形）===
+    private static final float FIELD_CENTER_X = 3.95f;
+    private static final float X_SCALE = 1.217f / 1.1f;
+    private static final float FIELD_X_MIN = -1.25f;
+    private static final float FIELD_X_MAX = 9.15f;
     private static final float FIELD_Y_MIN = -3.9f;
     private static final float FIELD_Y_MAX = 3.9f;
-    // 卡片世界尺寸（场地单位，177:254 等比）
+    // 卡片世界尺寸：严格 177:254 比例
     private static final float CARD_W = 0.8f;
-    private static final float CARD_H = 1.16f;
-    // 区域槽尺寸
-    private static final float ZONE_W = 1.0f;
-    private static final float ZONE_H = 1.15f;
-    private static final float PILE_W = 0.8f;
-    private static final float PILE_H = 1.2f;
+    private static final float CARD_H = 0.8f * 254f / 177f;
+    // 区域槽尺寸：254×254 规格正方形（field3.png 锁定后边长 1.217），怪兽/魔陷/额外怪兽/堆叠区共用
+    private static final float ZONE_W = 1.217f;
+    private static final float ZONE_H = 1.217f;
+    private static final float PILE_W = 1.217f;
+    private static final float PILE_H = 1.217f;
 
-    // === 相机（可按设备效果微调）===
-    private static final float EYE_X = 3.95f, EYE_Y = 8.4f, EYE_Z = 6.2f;
-    private static final float LOOK_X = 3.95f, LOOK_Y = 0.2f, LOOK_Z = 0f;
+    /**
+     * 与 GameField.fx 一致：以场地中心为轴的 254×254 规格横向缩放（绘制/拾取共用，保证命中不偏）
+     */
+    private static float fx(float x) {
+        return FIELD_CENTER_X + (x - FIELD_CENTER_X) * X_SCALE;
+    }
+
+    /**
+     * 空间 X 镜像：引擎场地坐标约定 +X→屏幕右（layout_game_right：zone_p0_m0 最左、DECK 右列），
+     * 而 +Y 侧相机天然把 +X 映射到屏幕左，故绘制时翻转所有几何的 X（拾取仍用真实坐标），
+     * 复现桌面版方位。
+     */
+    private static float mirrorX(float x) {
+        return FIELD_X_MIN + FIELD_X_MAX - x;
+    }
+
+    // === 相机参数（俯仰角可由设置调整，默认俯视 60°）===
+    public static final float DEFAULT_CAMERA_ELEVATION = 60f;
+    public static final float MIN_CAMERA_ELEVATION = 35f;
+    public static final float MAX_CAMERA_ELEVATION = 75f;
+    private static final String PREF_CAMERA_ELEVATION = "camera_elevation";
+    // 视点到注视点距离：与俯仰角共同决定相机位置（越高越俯视）
+    private static final float CAMERA_DISTANCE = 7.6f;
+    private static final float CAM_X = 3.95f;
+    private static final float CAM_LOOK_Y = 0.3f;
+    // 纵向取景锚点：对方手卡上缘贴上缘；下锚点取场地近端，我方手卡后移后底边略高于视图底边
+    private static final float ANCHOR_TOP_Y = -3.8f, ANCHOR_TOP_Z = 0.95f;
+    private static final float ANCHOR_BOTTOM_Y = 3.9f, ANCHOR_BOTTOM_Z = -0.1f;
+    // 我方手卡相对决斗场向后平移量：使手卡底边略高于视图底边
+    private static final float HAND_SELF_Y_SHIFT = 0.7f;
+    // 选中手卡抬高量
+    private static final float HAND_LIFT = 0.3f;
+    // 对方手卡确认：翻面展示时长与洗切动画时长
+    private static final long OPP_REVEAL_MS = 2500L;
+    private static final long SHUFFLE_MS = 700L;
+    // 场地视觉倍率：1.0=场地近端左右边缘精确贴合 GameFieldView 左右缘（field3.png 满幅不裁切）
+    private static final float FIELD_ZOOM = 1.0f;
+    private volatile float cameraElevationDeg = DEFAULT_CAMERA_ELEVATION;
+    private volatile boolean cameraDirty = false;
 
     // === 着色器（ES 3.0 / GLSL 300 es）===
     private static final String VS =
             "#version 300 es\n" +
-            "layout(location=0) in vec2 aPos;\n" +
-            "layout(location=1) in vec2 aUV;\n" +
-            "uniform mat4 uMVP;\n" +
-            "out vec2 vUV;\n" +
-            "void main(){ vUV=aUV; gl_Position=uMVP*vec4(aPos,0.0,1.0); }\n";
+                    "layout(location=0) in vec2 aPos;\n" +
+                    "layout(location=1) in vec2 aUV;\n" +
+                    "uniform mat4 uMVP;\n" +
+                    "uniform float uFlipU;\n" +
+                    "uniform float uFlipV;\n" +
+                    "out vec2 vUV;\n" +
+                    "void main(){ vUV=vec2(mix(aUV.x,1.0-aUV.x,uFlipU),mix(aUV.y,1.0-aUV.y,uFlipV)); gl_Position=uMVP*vec4(aPos,0.0,1.0); }\n";
 
     private static final String FS_TEX =
             "#version 300 es\n" +
-            "precision mediump float;\n" +
-            "in vec2 vUV;\n" +
-            "uniform sampler2D uTex;\n" +
-            "uniform vec4 uTint;\n" +
-            "out vec4 fragColor;\n" +
-            "void main(){ fragColor=texture(uTex,vUV)*uTint; }\n";
+                    "precision mediump float;\n" +
+                    "in vec2 vUV;\n" +
+                    "uniform sampler2D uTex;\n" +
+                    "uniform vec4 uTint;\n" +
+                    "out vec4 fragColor;\n" +
+                    "void main(){ fragColor=texture(uTex,vUV)*uTint; }\n";
 
     private static final String FS_COLOR =
             "#version 300 es\n" +
-            "precision mediump float;\n" +
-            "uniform vec4 uColor;\n" +
-            "out vec4 fragColor;\n" +
-            "void main(){ fragColor=uColor; }\n";
+                    "precision mediump float;\n" +
+                    "uniform vec4 uColor;\n" +
+                    "out vec4 fragColor;\n" +
+                    "void main(){ fragColor=uColor; }\n";
 
-    // 单位矩形（XY 平面，法线 +Z；uv 保证 Bitmap 顶部对应卡片顶部）
+    // 单位矩形（XY 平面，法线 +Z；v=0 在局部 -Y 边即 Bitmap 顶部；u 为标准布局。
+    // 场地卡 uFlipU=1 抵消相机 +X→屏幕左 镜像；手卡 billboard 局部+Y=屏幕上方，
+    // 需 uFlipU=0 + uFlipV=1 恢复正向贴图）
     private static final float[] QUAD = {
             -0.5f, -0.5f, 0f, 0f,
             0.5f, -0.5f, 1f, 0f,
@@ -124,11 +166,14 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     // === GL 资源 ===
     private int texProg, colorProg;
-    private int texLocMVP, texLocTint, texLocTex;
+    private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV;
     private int colorLocMVP, colorLocColor;
     private int vao;
     private final HashMap<Long, Integer> textures = new HashMap<>();
     private final Set<Long> requested = Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>());
+    // 解码失败重试状态（仅 GL 线程访问）：上次请求时间 + 已尝试次数
+    private final HashMap<Long, Long> texRetryTime = new HashMap<>();
+    private final HashMap<Long, Integer> texRetries = new HashMap<>();
     private final ConcurrentLinkedQueue<PendingUpload> pendingUploads = new ConcurrentLinkedQueue<>();
     private ExecutorService texExecutor = Executors.newSingleThreadExecutor();
 
@@ -139,6 +184,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private final float[] mMVP = new float[16];
     private final float[] mModel = new float[16];
     private final float[] mModelTmp = new float[16];
+    // 相机姿态矩阵（view 旋转部分的转置）：手卡 billboard 平行屏幕用
+    private final float[] mCamRot = new float[16];
     private final Object camLock = new Object();
     private final float[] pickInvVP = new float[16];
     private volatile int viewW = 1, viewH = 1;
@@ -150,10 +197,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private static class PendingUpload {
         final long key;
         final Bitmap bitmap;
+        // 位图所有权：true=本任务独占副本（上传后需 recycle），false=TextureLoader 共享缓存（禁止 recycle）
+        final boolean owned;
 
-        PendingUpload(long key, Bitmap bitmap) {
+        PendingUpload(long key, Bitmap bitmap, boolean owned) {
             this.key = key;
             this.bitmap = bitmap;
+            this.owned = owned;
         }
     }
 
@@ -170,10 +220,21 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private void init() {
         setEGLContextClientVersion(3);
         setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        // 透明背景：GL Surface 置顶合成，透明像素处透出窗口背景（bg.jpg）与 HUD
+        setZOrderOnTop(true);
+        getHolder().setFormat(PixelFormat.TRANSLUCENT);
         setRenderer(this);
         setRenderMode(RENDERMODE_CONTINUOUSLY);
         try {
             setPreserveEGLContextOnPause(true);
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            cameraElevationDeg = AppsSettings.get().getIntSettings(
+                    PREF_CAMERA_ELEVATION, Math.round(DEFAULT_CAMERA_ELEVATION));
+            cameraElevationDeg = Math.max(MIN_CAMERA_ELEVATION,
+                    Math.min(MAX_CAMERA_ELEVATION, cameraElevationDeg));
         } catch (Throwable ignored) {
         }
 
@@ -230,13 +291,35 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         requestRender();
     }
 
-    /** 连续渲染模式自带动画循环，保留接口仅为兼容 */
+    /**
+     * 连续渲染模式自带动画循环，保留接口仅为兼容
+     */
     public void startAnimationLoop() {
     }
 
-    /** 动画倍率：1=原速，2=2 倍速（时间驱动，任意刷新率下速度一致） */
+    /**
+     * 动画倍率：1=原速，2=2 倍速（时间驱动，任意刷新率下速度一致）
+     */
     public void setAnimationSpeed(float multiplier) {
         animSpeedMultiplier = Math.max(0.25f, multiplier);
+    }
+
+    /**
+     * 视角参数：俯仰角（度，35~75），越大越接近正俯视；持久化到设置并即时生效
+     */
+    public void setCameraElevation(float degrees) {
+        float v = Math.max(MIN_CAMERA_ELEVATION, Math.min(MAX_CAMERA_ELEVATION, degrees));
+        cameraElevationDeg = v;
+        try {
+            AppsSettings.get().saveIntSettings(PREF_CAMERA_ELEVATION, Math.round(v));
+        } catch (Throwable ignored) {
+        }
+        cameraDirty = true;
+        requestRender();
+    }
+
+    public float getCameraElevation() {
+        return cameraElevationDeg;
     }
 
     // 以下接口在 GL 版中无对应渲染对象，保留空实现确保调用方编译通过
@@ -262,7 +345,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES30.glClearColor(0.02f, 0.03f, 0.08f, 1f);
+        GLES30.glClearColor(0f, 0f, 0f, 0f);
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
         GLES30.glDisable(GLES30.GL_CULL_FACE);
 
@@ -271,6 +354,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         texLocMVP = GLES30.glGetUniformLocation(texProg, "uMVP");
         texLocTint = GLES30.glGetUniformLocation(texProg, "uTint");
         texLocTex = GLES30.glGetUniformLocation(texProg, "uTex");
+        texLocFlipU = GLES30.glGetUniformLocation(texProg, "uFlipU");
+        texLocFlipV = GLES30.glGetUniformLocation(texProg, "uFlipV");
         colorLocMVP = GLES30.glGetUniformLocation(colorProg, "uMVP");
         colorLocColor = GLES30.glGetUniformLocation(colorProg, "uColor");
 
@@ -293,6 +378,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         // 上下文（重新）创建：纹理缓存全部失效，重新按需加载
         textures.clear();
         requested.clear();
+        texRetryTime.clear();
+        texRetries.clear();
     }
 
     @Override
@@ -300,21 +387,99 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         viewW = w;
         viewH = h;
         GLES30.glViewport(0, 0, w, h);
+        updateCamera();
+    }
 
-        // 自适应视场角：窄屏（竖屏）时自动加大垂直 FOV，保证场地宽度完整入镜
-        float aspect = (float) w / Math.max(1, h);
-        float halfTan = (float) Math.tan(Math.toRadians(26.0));
-        float need = 0.52f / Math.max(0.25f, aspect);
-        if (need > halfTan) halfTan = need;
+    /**
+     * 由俯仰角参数重建相机：eye 按(俯仰角, 距离)球面布置；注视方向取
+     * “对方手卡上缘/己方手卡下缘”两锚点方向的角平分线，FOV 取两锚点夹角；
+     * 视点距离迭代求解，使场地近端左右边缘尽量贴合屏幕左右缘（场地宽度与
+     * GameFieldView 实际宽度一致），竖屏/超宽屏受几何限制时取最优近似。
+     * 拾取矩阵与手卡 billboard 姿态同步重建。
+     */
+    private void updateCamera() {
+        int w = viewW, h = viewH;
+        if (w <= 1 || h <= 1) return;
+        float aspect = (float) w / h;
+        float th = (float) Math.toRadians(cameraElevationDeg);
+        float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
+
+        float D = CAMERA_DISTANCE;
+        float eyeY = 0, eyeZ = 0, dY = 0, dZ = -1, fovy = 60f;
+        for (int i = 0; i < 6; i++) {
+            eyeY = CAM_LOOK_Y + cth * D;
+            eyeZ = sth * D;
+            float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
+            float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
+            float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
+            float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
+            if (l1 < 1e-4f || l2 < 1e-4f) break;
+            float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
+            float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
+            fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
+            float tanH = (float) Math.tan(Math.toRadians(fovy * 0.5f)) * aspect;
+            float by = d1y + d2y, bz = d1z + d2z;
+            float bl = (float) Math.sqrt(by * by + bz * bz);
+            if (bl < 1e-4f) break;
+            dY = by / bl;
+            dZ = bz / bl;
+            // 场地近端(y=FIELD_Y_MAX)沿视线深度 depth(D)=K+b*D 为线性，令 半宽*ZOOM/depth==tanH 解出 D
+            float K = (FIELD_Y_MAX - CAM_LOOK_Y) * dY;
+            float b = -(cth * dY + sth * dZ);
+            if (b > 1e-4f && tanH > 1e-4f) {
+                D = ((FIELD_X_MAX - FIELD_X_MIN) * 0.5f * FIELD_ZOOM / tanH - K) / b;
+                D = Math.max(4.2f, Math.min(14f, D));
+            }
+        }
+        eyeY = CAM_LOOK_Y + cth * D;
+        eyeZ = sth * D;
+        float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
+        float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
+        float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
+        float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
+        if (l1 < 1e-4f || l2 < 1e-4f) return;
+        float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
+        float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
+        fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
+        float halfTan = (float) Math.tan(Math.toRadians(fovy * 0.5f));
+        float by = d1y + d2y, bz = d1z + d2z;
+        float bl = (float) Math.sqrt(by * by + bz * bz);
+        if (bl < 1e-4f) return;
+        dY = by / bl;
+        dZ = bz / bl;
+        // 横向兜底：场地按 ZOOM 倍宽度入镜（更近的视觉）
+        float depthNear = (FIELD_Y_MAX - eyeY) * dY + (0f - eyeZ) * dZ;
+        float needH = (FIELD_X_MAX - FIELD_X_MIN) * 0.5f * FIELD_ZOOM / Math.max(0.5f, depthNear);
+        if (needH / aspect > halfTan) halfTan = needH / aspect;
         if (halfTan > 1.6f) halfTan = 1.6f;
-        float fovy = (float) Math.toDegrees(2.0 * Math.atan(halfTan));
+        fovy = (float) Math.toDegrees(2.0 * Math.atan(halfTan));
+
         Matrix.perspectiveM(mProj, 0, fovy, aspect, 0.5f, 100f);
-        Matrix.setLookAtM(mView, 0, EYE_X, EYE_Y, EYE_Z, LOOK_X, LOOK_Y, LOOK_Z, 0f, 0f, 1f);
+        Matrix.setLookAtM(mView, 0, CAM_X, eyeY, eyeZ,
+                CAM_X, eyeY + dY, eyeZ + dZ, 0f, 0f, 1f);
         Matrix.multiplyMM(mVP, 0, mProj, 0, mView, 0);
 
         synchronized (camLock) {
             Matrix.invertM(pickInvVP, 0, mVP, 0);
         }
+
+        // 手卡 billboard 姿态：view 旋转部分的转置（列=相机 right/up/backward 轴）
+        mCamRot[0] = mView[0];
+        mCamRot[1] = mView[4];
+        mCamRot[2] = mView[8];
+        mCamRot[3] = 0f;
+        mCamRot[4] = mView[1];
+        mCamRot[5] = mView[5];
+        mCamRot[6] = mView[9];
+        mCamRot[7] = 0f;
+        mCamRot[8] = mView[2];
+        mCamRot[9] = mView[6];
+        mCamRot[10] = mView[10];
+        mCamRot[11] = 0f;
+        mCamRot[12] = 0f;
+        mCamRot[13] = 0f;
+        mCamRot[14] = 0f;
+        mCamRot[15] = 1f;
     }
 
     @Override
@@ -324,6 +489,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         lastFrameNs = now;
         if (dt > 0.1f) dt = 0.1f;
         animTimeMs = System.currentTimeMillis();
+
+        if (cameraDirty) {
+            cameraDirty = false;
+            updateCamera();
+        }
 
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
         try {
@@ -344,14 +514,12 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
         if (f == null) return;
 
-        // 不透明底盘
-        GLES30.glDisable(GLES30.GL_BLEND);
-        GLES30.glDepthMask(true);
-        drawBoard();
-
-        // 半透明：槽位/卡片/高亮
         GLES30.glEnable(GLES30.GL_BLEND);
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+        try {
+            drawFieldBoard(f);
+        } catch (Throwable ignored) {
+        }
         drawZoneSlots();
         try {
             drawFieldCards(f);
@@ -364,18 +532,44 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     // ==================== 绘制 ====================
 
-    private void drawBoard() {
-        // 外围底板
-        drawFlatQuad((FIELD_X_MIN + FIELD_X_MAX) / 2f, (FIELD_Y_MIN + FIELD_Y_MAX) / 2f, 0f,
-                FIELD_X_MAX - FIELD_X_MIN + 3.2f, FIELD_Y_MAX - FIELD_Y_MIN + 2.4f,
-                0.03f, 0.05f, 0.10f, 1f);
-        // 场地内区
-        drawFlatQuad((FIELD_X_MIN + FIELD_X_MAX) / 2f, 0f, 0.001f,
-                FIELD_X_MAX - FIELD_X_MIN, FIELD_Y_MAX - FIELD_Y_MIN,
-                0.05f, 0.09f, 0.16f, 1f);
-        // 中线
-        drawFlatQuad((FIELD_X_MIN + FIELD_X_MAX) / 2f, 0f, 0.002f,
-                FIELD_X_MAX - FIELD_X_MIN, 0.04f, 0f, 0.78f, 0.94f, 0.25f);
+    /**
+     * 场地底板：对齐 gframe drawing.cpp L326/L369 ——
+     * rule=(duel_rule>=4)?1:0 选 field3/field2；显示场地魔法卡时改用 field-transparent 版。
+     * 其余区域保持透明，透出窗口背景。
+     */
+    private void drawFieldBoard(GameField f) {
+        int rule = (f.dInfo.duelRule >= 4) ? 1 : 0;
+        boolean transparent = fieldSpellDisplayed(f);
+        int tex = obtainFieldTexture(rule, transparent);
+        float w = FIELD_X_MAX - FIELD_X_MIN;
+        float h = FIELD_Y_MAX - FIELD_Y_MIN;
+        float cx = mirrorX((FIELD_X_MIN + FIELD_X_MAX) / 2f);
+        if (tex > 0) {
+            Matrix.setIdentityM(mModel, 0);
+            Matrix.translateM(mModel, 0, cx, 0f, 0f);
+            Matrix.scaleM(mModel, 0, w, h, 1f);
+            drawQuadTex(mModel, tex, 1f);
+        } else {
+            // 贴图加载完成前的兜底：半透明底色，不遮挡窗口背景
+            drawFlatQuad(cx, 0f, 0f, w, h, 0.05f, 0.09f, 0.16f, 0.55f);
+        }
+    }
+
+    /**
+     * gframe drawField 语义：任一方场地魔法区(szone seq5)存在正面场地卡时，用 transparent 版底图
+     */
+    private static boolean fieldSpellDisplayed(GameField f) {
+        try {
+            for (int p = 0; p < 2; p++) {
+                List<GameField.ClientCard> sz = f.players[p].spellZone;
+                if (sz.size() > 5) {
+                    GameField.ClientCard c = sz.get(5);
+                    if (c != null && c.isFaceUp() && c.code != 0) return true;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
     }
 
     private void drawZoneSlots() {
@@ -383,16 +577,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         for (int p = 0; p < 2; p++) {
             for (int i = 0; i < 7; i++) {
                 float[] c = zoneCenter(p, 0x04, i);
-                drawFlatQuad(c[0], c[1], 0.004f, ZONE_W, ZONE_H, 0f, 0.78f, 0.94f, pulse);
+                drawFlatQuad(mirrorX(c[0]), c[1], 0.004f, ZONE_W, ZONE_H, 0f, 0.78f, 0.94f, pulse);
             }
             for (int i = 0; i <= 5; i++) {
                 float[] c = zoneCenter(p, 0x08, i);
-                drawFlatQuad(c[0], c[1], 0.004f, ZONE_W, ZONE_H, 0f, 0.78f, 0.94f, pulse);
+                drawFlatQuad(mirrorX(c[0]), c[1], 0.004f, ZONE_W, ZONE_H, 0f, 0.78f, 0.94f, pulse);
             }
             for (int loc : new int[]{0x01, 0x10, 0x20, 0x40}) {
                 float[] c = pileCenter(p, loc);
                 if (c == null) continue;
-                drawFlatQuad(c[0], c[1], 0.004f, PILE_W, PILE_H, 0f, 0.78f, 0.94f, pulse);
+                drawFlatQuad(mirrorX(c[0]), c[1], 0.004f, PILE_W, PILE_H, 0f, 0.78f, 0.94f, pulse);
             }
         }
     }
@@ -413,7 +607,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     private void drawZoneGlow(int player, int loc, int seq, float alpha) {
         float[] c = zoneCenter(player, loc, seq);
-        drawFlatQuad(c[0], c[1], 0.03f, ZONE_W, ZONE_H, 0f, 1f, 0.39f, alpha);
+        drawFlatQuad(mirrorX(c[0]), c[1], 0.03f, ZONE_W, ZONE_H, 0f, 1f, 0.39f, alpha);
     }
 
     private void drawFieldCards(GameField f) {
@@ -432,7 +626,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         drawCardList(f.overlayCards);
     }
 
-    /** 线程安全遍历：索引式 + 全量兜底，网络线程并发增删时最多丢一帧 */
+    /**
+     * 线程安全遍历：索引式 + 全量兜底，网络线程并发增删时最多丢一帧
+     */
     private void drawCardList(List<GameField.ClientCard> list) {
         if (list == null) return;
         try {
@@ -460,7 +656,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     break;
                 }
             }
-            int skip = Math.max(0, n - 24); // 堆叠区只画最上面 24 张
+            int skip = Math.max(0, n - 20); // 堆叠区绘制最上 20 层呈现厚度，z 间距已在 GameField 封顶
             for (int i = 0, s = pile.size(); i < s; i++) {
                 GameField.ClientCard c;
                 try {
@@ -476,21 +672,64 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
     }
 
-    /** 双面卡片：背面 cover + 正面卡图；位置/旋转直接来自 getCardLocation 动画值 */
+    /**
+     * 双面卡片：背面 cover + 正面卡图。
+     * 位置取 getCardLocation 动画值并做 X 镜像；旋转按 Y→X→Z 合成、Y/Z 轴取反
+     * （空间镜像使绕 Y/Z 旋转反向），保证 gframe 各位置的面朝：
+     * 对方暗手牌（rotX+rotY=π）cover 朝相机、守备/盖放/堆叠区朝向均正确。
+     */
     private void drawCard(GameField.ClientCard c) {
         if (c == null) return;
         float alpha = Math.max(0f, Math.min(1f, c.curAlpha / 255f));
         if (alpha <= 0.01f) return;
 
-        Matrix.setIdentityM(mModel, 0);
-        Matrix.translateM(mModel, 0, c.curX, c.curY, c.curZ);
-        Matrix.rotateM(mModel, 0, (float) Math.toDegrees(c.curRotX), 1f, 0f, 0f);
-        Matrix.rotateM(mModel, 0, (float) Math.toDegrees(c.curRotY), 0f, 1f, 0f);
-        Matrix.rotateM(mModel, 0, (float) Math.toDegrees(c.curRotZ), 0f, 0f, 1f);
-        Matrix.scaleM(mModel, 0, CARD_W, CARD_H, 1f);
+        boolean isHand = c.location == 0x02;
+        if (isHand) {
+            // 手卡平行屏幕：姿态取相机旋转；我方手卡后移、选中抬高
+            Matrix.setIdentityM(mModel, 0);
+            Matrix.translateM(mModel, 0, mirrorX(c.curX), handY(c), c.curZ + handLiftZ(c));
+            Matrix.multiplyMM(mModelTmp, 0, mModel, 0, mCamRot, 0);
+            System.arraycopy(mModelTmp, 0, mModel, 0, 16);
+            Matrix.scaleM(mModel, 0, CARD_W, CARD_H, 1f);
+        } else {
+            // 堆叠区各层加确定性微错位，侧面露出卡边呈现厚度
+            boolean isPile = c.location == 0x01 || c.location == 0x10
+                    || c.location == 0x20 || c.location == 0x40;
+            float jx = isPile ? ((c.sequence % 3) - 1) * 0.012f : 0f;
+            float jy = isPile ? (((c.sequence / 3) % 3) - 1) * 0.012f : 0f;
+            Matrix.setIdentityM(mModel, 0);
+            Matrix.translateM(mModel, 0, mirrorX(c.curX) + jx, c.curY + jy, c.curZ);
+            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(-c.curRotY), 0f, 1f, 0f);
+            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(c.curRotX), 1f, 0f, 0f);
+            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(-c.curRotZ), 0f, 0f, 1f);
+            Matrix.scaleM(mModel, 0, CARD_W, CARD_H, 1f);
+        }
 
         int glow = pickGlowColor(c);
         if (glow != 0) drawGlow(glow, alpha);
+
+        int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
+        if (isHand) {
+            if (code > 0 && (c.controler == 0 || c.isFaceUp())) {
+                int tex = obtainTexture(code, pendulumMode(c), pendulumScale(c));
+                if (tex > 0) {
+                    drawQuadTex(mModel, tex, alpha, 0f, 1f);
+                } else {
+                    drawQuadColor(mModel, 0.35f, 0.35f, 0.40f, alpha);
+                }
+            } else {
+                // 对方手卡：卡背正对相机
+                System.arraycopy(mModel, 0, mModelTmp, 0, 16);
+                Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, 0.002f);
+                int coverTex = obtainCover(true);
+                if (coverTex > 0) {
+                    drawQuadTex(mModelTmp, coverTex, alpha, 0f, 1f);
+                } else {
+                    drawQuadColor(mModelTmp, 0.24f, 0.18f, 0.13f, alpha);
+                }
+            }
+            return;
+        }
 
         // 背面（cover），沿卡片局部 -Z 微偏移避免共面闪烁
         System.arraycopy(mModel, 0, mModelTmp, 0, 16);
@@ -503,9 +742,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             drawQuadColor(mModelTmp, 0.24f, 0.18f, 0.13f, alpha);
         }
 
-        // 正面
-        int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
-        if (c.isFaceUp() && code > 0) {
+        // 正面（手牌区 position 不含 POS_FACEUP 位，code>0 时同样按正面渲染）
+        boolean faceUp = c.isFaceUp() || c.location == 0x02;
+        if (faceUp && code > 0) {
             int tex = obtainTexture(code, pendulumMode(c), pendulumScale(c));
             if (tex > 0) {
                 drawQuadTex(mModel, tex, alpha);
@@ -518,13 +757,24 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     private int pickGlowColor(GameField.ClientCard c) {
-        if (c.controler == selectedPlayer && c.location == selectedLocation
-                && c.sequence == selectedSequence) return 0xFFFFFF00;
+        if (isSelectedCard(c)) return 0xFFFFFF00;
         if (c.is_selected) return 0xFFFFFF00;
         if (c.is_highlighting) return 0xFF00FFFF;
         if (c.is_showequip || c.is_showtarget || c.is_showchaintarget) return 0xFFFF4444;
         if (c.is_selectable) return 0xFFFFD700;
         return 0;
+    }
+
+    private boolean isSelectedCard(GameField.ClientCard c) {
+        return c.controler == selectedPlayer && c.location == selectedLocation
+                && c.sequence == selectedSequence;
+    }
+
+    /**
+     * 我方手卡后移 HAND_SELF_Y_SHIFT，对方手卡保持原位
+     */
+    private static float handY(GameField.ClientCard c) {
+        return c.curY - (c.controler == 0 ? HAND_SELF_Y_SHIFT : 0f);
     }
 
     private void drawGlow(int color, float cardAlpha) {
@@ -545,14 +795,24 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     private void drawQuadTex(float[] model, int texId, float alpha) {
+        drawQuadTex(model, texId, alpha, 1f, 0f);
+    }
+
+    private void drawQuadTex(float[] model, int texId, float alpha, float flipU, float flipV) {
         if (texId <= 0) return;
         GLES30.glUseProgram(texProg);
         Matrix.multiplyMM(mMVP, 0, mVP, 0, model, 0);
         GLES30.glUniformMatrix4fv(texLocMVP, 1, false, mMVP, 0);
         GLES30.glUniform4f(texLocTint, 1f, 1f, 1f, alpha);
+        GLES30.glUniform1f(texLocFlipU, flipU);
+        GLES30.glUniform1f(texLocFlipV, flipV);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texId);
         GLES30.glUniform1i(texLocTex, 0);
+        glBindQuadVao();
+    }
+
+    private void glBindQuadVao() {
         GLES30.glBindVertexArray(vao);
         GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
         GLES30.glBindVertexArray(0);
@@ -563,9 +823,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         Matrix.multiplyMM(mMVP, 0, mVP, 0, model, 0);
         GLES30.glUniformMatrix4fv(colorLocMVP, 1, false, mMVP, 0);
         GLES30.glUniform4f(colorLocColor, r, g, b, a);
-        GLES30.glBindVertexArray(vao);
-        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
-        GLES30.glBindVertexArray(0);
+        glBindQuadVao();
     }
 
     // ==================== 纹理（多线程：工作线程解码 → GL 线程上传）====================
@@ -574,11 +832,30 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return ((long) mode << 48) | ((long) scale << 40) | (code & 0xFFFFFFFFL);
     }
 
-    private int obtainTexture(int code, int mode, int scale) {
-        long key = texKey(code, mode, scale);
+    private static long fieldTexKey(int rule, boolean transparent) {
+        return -10L - (long) rule * 2L - (transparent ? 1L : 0L);
+    }
+
+    private int obtainFieldTexture(int rule, boolean transparent) {
+        long key = fieldTexKey(rule, transparent);
         Integer id = textures.get(key);
         if (id != null) return id;
-        requestTexture(key, code, mode, scale);
+        if (!requested.add(key)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getFieldTexture(rule, transparent);
+                    if (src != null && !src.isRecycled())
+                        b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                // b==null（文件缺失）时不上传：requested 保留，之后走颜色兜底、不重复请求
+                if (b != null) pendingUploads.offer(new PendingUpload(key, b, true));
+            });
+        } catch (Throwable t) {
+            requested.remove(key);
+        }
         return -1;
     }
 
@@ -592,11 +869,12 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                 Bitmap b = null;
                 try {
                     Bitmap src = TextureLoader.get().getCardCover(opponent);
-                    if (src != null && !src.isRecycled()) b = src.copy(Bitmap.Config.ARGB_8888, false);
+                    if (src != null && !src.isRecycled())
+                        b = src.copy(Bitmap.Config.ARGB_8888, false);
                 } catch (Throwable ignored) {
                 }
                 if (b == null) b = makeSolidBitmap(opponent ? 0xFF3A2820 : 0xFF28303A);
-                pendingUploads.offer(new PendingUpload(key, b));
+                pendingUploads.offer(new PendingUpload(key, b, true));
             });
         } catch (Throwable t) {
             requested.remove(key);
@@ -604,22 +882,68 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return -1;
     }
 
-    private void requestTexture(final long key, final int code, final int mode, final int scale) {
+    /**
+     * 卡图纹理统一入口（TextureLoader 全源解码 + LRU 缓存）：
+     * ① GL 纹理缓存命中 → 直接返回；
+     * ② TextureLoader 位图缓存命中（已被预读/之前解码过）→ GL 线程同步上传，零占位帧；
+     * ③ 均未命中 → 触发 TextureLoader 异步解码，限频等待，连续 3 次落空才永久回退 unknown
+     */
+    private int obtainTexture(int code, int mode, int scale) {
+        long key = texKey(code, mode, scale);
+        Integer id = textures.get(key);
+        if (id != null) return id;
+        try {
+            Bitmap cached = TextureLoader.get().getCardBitmap(code & 0xFFFFFFFFL);
+            if (cached != null && !cached.isRecycled()) {
+                Bitmap base = cached;
+                Bitmap bmp = (mode == 0) ? base : compositePendulum(base, mode == 1, scale);
+                if (bmp != null) {
+                    int newId = uploadBitmap(bmp);
+                    if (newId > 0) {
+                        if (bmp != base) bmp.recycle();
+                        textures.put(key, newId);
+                        return newId;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        long now = animTimeMs;
+        Long last = texRetryTime.get(key);
+        if (last != null && now - last < 2000L) return -1;
+        texRetryTime.put(key, now);
+        int attempts = texRetries.containsKey(key) ? texRetries.get(key) + 1 : 1;
+        texRetries.put(key, attempts);
+        requestTexture(key, code, mode, scale, attempts >= 3);
+        return -1;
+    }
+
+    /**
+     * 兜底任务：卡图解码已统一收口到 TextureLoader.getCardBitmap（内部全源查找 + 去重），
+     * 本任务只负责在重试窗口后检查结果；lastChance=true 仍缺失时才上传 unknown 终止重试。
+     */
+    private void requestTexture(final long key, final int code, final int mode,
+                                final int scale, final boolean lastChance) {
         if (!requested.add(key)) return;
-        final ImageLoader il = imageLoader;
         try {
             texExecutor().execute(() -> {
                 Bitmap bmp = null;
+                boolean owned = false;
                 try {
-                    if (il != null) {
-                        Bitmap base = decodeCardArt(il, code);
-                        if (base != null) {
-                            bmp = (mode == 0) ? base : compositePendulum(base, mode == 1, scale);
+                    Bitmap base = TextureLoader.get().getCardBitmap(code & 0xFFFFFFFFL);
+                    if (base != null && !base.isRecycled()) {
+                        if (mode == 0) {
+                            bmp = base;          // 共享缓存位图：上传但不回收
+                        } else {
+                            bmp = compositePendulum(base, mode == 1, scale);
+                            owned = (bmp != base); // 合成副本才归本任务所有
                         }
                     }
                 } catch (Throwable ignored) {
                 }
-                if (bmp == null) {
+                if (bmp != null) {
+                    pendingUploads.offer(new PendingUpload(key, bmp, owned));
+                } else if (lastChance) {
                     Bitmap u = null;
                     try {
                         u = TextureLoader.get().getUnknownCard();
@@ -628,15 +952,20 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     bmp = (u != null && !u.isRecycled())
                             ? u.copy(Bitmap.Config.ARGB_8888, false)
                             : makeSolidBitmap(0xFF555560);
+                    pendingUploads.offer(new PendingUpload(key, bmp, true));
+                } else {
+                    // 尚未到最后一次：释放请求标记，等限频窗口过后重试
+                    requested.remove(key);
                 }
-                pendingUploads.offer(new PendingUpload(key, bmp));
             });
         } catch (Throwable t) {
             requested.remove(key);
         }
     }
 
-    /** 线程池被 shutdown 后（视图 detach 过）懒重建，避免 RejectedExecutionException 炸 GL 线程 */
+    /**
+     * 线程池被 shutdown 后（视图 detach 过）懒重建，避免 RejectedExecutionException 炸 GL 线程
+     */
     private synchronized ExecutorService texExecutor() {
         if (texExecutor == null || texExecutor.isShutdown()) {
             texExecutor = Executors.newSingleThreadExecutor();
@@ -644,16 +973,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return texExecutor;
     }
 
-    private static Bitmap decodeCardArt(ImageLoader il, int code) {
-        File f = il.getImageFile(code);
-        if (f != null && f.exists()) {
-            Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath());
-            if (b != null) return b;
-        }
-        return null;
-    }
-
-    /** 灵摆刻度合成：卡图上叠加 lscale/rscale 贴图 + 角标刻度值（与 Canvas 版行为一致） */
+    /**
+     * 灵摆刻度合成：卡图上叠加 lscale/rscale 贴图 + 角标刻度值（与 Canvas 版行为一致）
+     */
     private static Bitmap compositePendulum(Bitmap base, boolean left, int scale) {
         Bitmap bmp = base.isMutable() ? base : base.copy(Bitmap.Config.ARGB_8888, true);
         Canvas cv = new Canvas(bmp);
@@ -699,18 +1021,33 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         PendingUpload up;
         while ((up = pendingUploads.poll()) != null) {
             if (up.bitmap == null || up.bitmap.isRecycled()) continue;
-            int[] ids = new int[1];
-            GLES30.glGenTextures(1, ids, 0);
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, ids[0]);
-            GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, up.bitmap, 0);
-            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
-            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
-            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
-            textures.put(up.key, ids[0]);
-            up.bitmap.recycle();
+            int id = uploadBitmap(up.bitmap);
+            if (id > 0) textures.put(up.key, id);
+            if (up.owned && !up.bitmap.isRecycled()) up.bitmap.recycle();
         }
+    }
+
+    /**
+     * Bitmap → GL 纹理（GL 线程专用）：快路径同步上传与 drainUploads 共用
+     */
+    private int uploadBitmap(Bitmap bmp) {
+        Bitmap src = bmp;
+        // RGB_565 奇数宽位图 rowBytes 有 4 字节对齐填充，按 packed 行长上传会逐行错位形成斜向错切；
+        // 统一转 ARGB_8888（rowBytes=width*4 恒对齐）兜底，正常路径解码已是 ARGB_8888 不触发
+        if (src.getConfig() == Bitmap.Config.RGB_565 && (src.getRowBytes() != src.getWidth() * 2)) {
+            src = src.copy(Bitmap.Config.ARGB_8888, false);
+        }
+        int[] ids = new int[1];
+        GLES30.glGenTextures(1, ids, 0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, ids[0]);
+        GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, src, 0);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+        if (src != bmp) src.recycle();
+        return ids[0];
     }
 
     // ==================== 触摸拾取（射线反投影）====================
@@ -772,6 +1109,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             if (mask != 0) {
                 float[] g = new float[2];
                 if (planeHit(ray, 0.02f, g)) {
+                    // 绘制做了 X 镜像，命中点镜像还原后才能与真实 zone 坐标比较
+                    g[0] = mirrorX(g[0]);
                     for (int p = 0; p < 2; p++) {
                         for (int loc : new int[]{0x04, 0x08}) {
                             int max = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
@@ -814,13 +1153,15 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
     }
 
-    /** 命中顺序与 Canvas 版一致：每方 怪兽/魔陷区 → 手牌 → 堆叠区 */
+    /**
+     * 命中顺序与 Canvas 版一致：每方 怪兽/魔陷区 → 手牌 → 堆叠区
+     */
     private int[] hitCard(float[] ray, GameField f) {
         try {
             float[] g = new float[2];
             boolean gOk = planeHit(ray, 0.02f, g);
-            float[] hp = new float[2];
-            boolean hOk = planeHit(ray, 0.45f, hp);
+            // 绘制做了 X 镜像：命中点镜像还原到真实场地坐标后再与卡数据比较
+            if (gOk) g[0] = mirrorX(g[0]);
 
             for (int p = 0; p < 2; p++) {
                 if (gOk) {
@@ -833,19 +1174,23 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                         }
                     }
                 }
-                if (hOk) {
-                    List<GameField.ClientCard> hand = f.players[p].hand;
-                    for (int i = hand.size() - 1; i >= 0; i--) {
-                        GameField.ClientCard c;
-                        try {
-                            c = hand.get(i);
-                        } catch (Throwable e) {
-                            continue;
-                        }
-                        if (c == null) continue;
-                        if (Math.abs(hp[0] - c.curX) <= 0.45f && Math.abs(hp[1] - c.curY) <= 0.9f) {
-                            return new int[]{p, 0x02, i};
-                        }
+                // 手卡平行屏幕：按各卡所在 y 平面求交（抬高沿相机 up 轴，需计入其 y/z 分量）
+                List<GameField.ClientCard> hand = f.players[p].hand;
+                for (int i = hand.size() - 1; i >= 0; i--) {
+                    GameField.ClientCard c;
+                    try {
+                        c = hand.get(i);
+                    } catch (Throwable e) {
+                        continue;
+                    }
+                    if (c == null) continue;
+                    float lift = handLift(c);
+                    float[] hz = new float[2];
+                    if (!planeHitY(ray, handY(c) + mCamRot[5] * lift, hz)) continue;
+                    hz[0] = mirrorX(hz[0]);
+                    if (Math.abs(hz[0] - c.curX) <= 0.45f
+                            && Math.abs(hz[1] - (c.curZ + mCamRot[6] * lift)) <= 0.75f) {
+                        return new int[]{p, 0x02, i};
                     }
                 }
                 if (gOk) {
@@ -864,43 +1209,52 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return null;
     }
 
+    private static boolean planeHitY(float[] ray, float yPlane, float[] outXZ) {
+        if (Math.abs(ray[4]) < 1e-6f) return false;
+        float t = (yPlane - ray[1]) / ray[4];
+        if (t < 0) return false;
+        outXZ[0] = ray[0] + ray[3] * t;
+        outXZ[1] = ray[2] + ray[5] * t;
+        return true;
+    }
+
     // ==================== 场地几何（与 GameField/旧版 getZoneRectLocalF 一致）====================
 
     private static float[] zoneCenter(int player, int loc, int seq) {
         if (loc == 0x04) {
             if (player == 0) {
-                float cx = seq < 5 ? 1.75f + 1.1f * seq : (seq == 5 ? 2.85f : 5.05f);
+                float cx = fx(seq < 5 ? 1.75f + 1.1f * seq : (seq == 5 ? 2.85f : 5.05f));
                 float cy = seq < 5 ? 1.4f : 0f;
                 return new float[]{cx, cy};
             }
-            float cx = seq < 5 ? 6.15f - 1.1f * seq : (seq == 5 ? 5.05f : 2.85f);
+            float cx = fx(seq < 5 ? 6.15f - 1.1f * seq : (seq == 5 ? 5.05f : 2.85f));
             float cy = seq < 5 ? -1.4f : 0f;
             return new float[]{cx, cy};
         }
         if (player == 0) {
-            float cx = seq < 5 ? 1.75f + 1.1f * seq
-                    : (seq == 5 ? 0.6f : (seq == 6 ? 0.6f : 8.3f));
-            float cy = seq < 5 ? 2.6f : (seq == 5 ? 2.0f : 0.7f);
+            float cx = fx(seq < 5 ? 1.75f + 1.1f * seq
+                    : (seq == 5 ? 0.6f : (seq == 6 ? 0.6f : 8.3f)));
+            float cy = seq < 5 ? 2.56f : (seq == 5 ? 2.0f : 0.7f);
             return new float[]{cx, cy};
         }
-        float cx = seq < 5 ? 6.15f - 1.1f * seq
-                : (seq == 5 ? 7.3f : (seq == 6 ? 7.3f : -0.4f));
-        float cy = seq < 5 ? -2.6f : (seq == 5 ? -2.0f : -0.7f);
+        float cx = fx(seq < 5 ? 6.15f - 1.1f * seq
+                : (seq == 5 ? 7.3f : (seq == 6 ? 7.3f : -0.4f)));
+        float cy = seq < 5 ? -2.56f : (seq == 5 ? -2.0f : -0.7f);
         return new float[]{cx, cy};
     }
 
     private static float[] pileCenter(int player, int loc) {
         if (player == 0) {
-            if (loc == 0x01) return new float[]{7.3f, 3.3f};
-            if (loc == 0x10) return new float[]{7.3f, 2.0f};
-            if (loc == 0x20) return new float[]{7.3f, 0.7f};
-            if (loc == 0x40) return new float[]{0.6f, 3.3f};
+            if (loc == 0x01) return new float[]{fx(7.3f), 3.3f};
+            if (loc == 0x10) return new float[]{fx(7.3f), 2.0f};
+            if (loc == 0x20) return new float[]{fx(7.3f), 0.7f};
+            if (loc == 0x40) return new float[]{fx(0.6f), 3.3f};
             return null;
         }
-        if (loc == 0x01) return new float[]{0.6f, -3.3f};
-        if (loc == 0x10) return new float[]{0.6f, -2.0f};
-        if (loc == 0x20) return new float[]{0.6f, -0.7f};
-        if (loc == 0x40) return new float[]{7.3f, -3.3f};
+        if (loc == 0x01) return new float[]{fx(0.6f), -3.3f};
+        if (loc == 0x10) return new float[]{fx(0.6f), -2.0f};
+        if (loc == 0x20) return new float[]{fx(0.6f), -0.7f};
+        if (loc == 0x40) return new float[]{fx(7.3f), -3.3f};
         return null;
     }
 
@@ -962,7 +1316,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return p;
     }
 
-    /** 请求屏幕最高刷新率显示模式（高刷屏跑满 90/120/144Hz 的前提） */
+    /**
+     * 请求屏幕最高刷新率显示模式（高刷屏跑满 90/120/144Hz 的前提）
+     */
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();

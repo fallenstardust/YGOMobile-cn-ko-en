@@ -7,26 +7,25 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.util.LruCache;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.loader.ImageLoader;
 
 public class TextureLoader {
     private static final String TAG = "TextureLoader";
     private static final int CACHE_SIZE = 32 * 1024 * 1024;
     private static final int CARD_DECODE_MAX_W = 256;
+    // 卡面标准比例 177:254，解码后偏离超过 2% 时中心裁剪矫正，防止非标准图源拉伸扭曲
+    private static final float CARD_ASPECT = 177f / 254f;
 
     private static TextureLoader instance;
     private final LruCache<String, Bitmap> bitmapCache;
@@ -35,8 +34,6 @@ public class TextureLoader {
 
     private final ExecutorService cardDecodeExecutor = Executors.newSingleThreadExecutor();
     private final Set<Long> pendingCards = ConcurrentHashMap.newKeySet();
-    private final Map<String, ZipFile> cardZipCache = new ConcurrentHashMap<>();
-    private volatile ZipFile picsZipFile;
     private volatile Runnable onCardLoadedListener;
 
     /** 表情图集裁剪缓存，对齐 ImageManager::emoticons */
@@ -179,6 +176,38 @@ public class TextureLoader {
         }
     }
 
+    /**
+     * 对齐 gframe drawing.cpp L326/L369：rule=(duel_rule>=4)?1:0，
+     * rule=1→field3/field-transparent3，rule=0→field2/field-transparent2，缺失时回退另一版本。
+     * transparent 版含 alpha 通道，必须按 ARGB_8888 解码（getTexture 默认 RGB_565 会丢透明通道）。
+     */
+    public Bitmap getFieldTexture(int rule, boolean transparent) {
+        String first, second;
+        if (transparent) {
+            first = rule >= 1 ? "field-transparent3.png" : "field-transparent2.png";
+            second = rule >= 1 ? "field-transparent2.png" : "field-transparent3.png";
+        } else {
+            first = rule >= 1 ? "field3.png" : "field2.png";
+            second = rule >= 1 ? "field2.png" : "field3.png";
+        }
+        Bitmap bmp = getFieldBitmapArgb(first);
+        if (bmp == null) bmp = getFieldBitmapArgb(second);
+        return bmp;
+    }
+
+    private Bitmap getFieldBitmapArgb(String name) {
+        return getBitmapArgb(name);
+    }
+
+    /** ARGB_8888 解码缓存：rowBytes=width*4 恒对齐，杜绝 RGB_565 奇数宽行填充造成的斜向错切 */
+    private Bitmap getBitmapArgb(String name) {
+        Bitmap bmp = bitmapCache.get(name);
+        if (bmp != null) return bmp;
+        bmp = loadBitmapFromFile(name, Bitmap.Config.ARGB_8888);
+        if (bmp != null) bitmapCache.put(name, bmp);
+        return bmp;
+    }
+
     public Bitmap getBackgroundTexture(String type) {
         switch (type) {
             case "menu":
@@ -191,22 +220,23 @@ public class TextureLoader {
     }
 
     public Bitmap getCardCover() {
-        return getTexture("cover.jpg");
+        return getBitmapArgb("cover.jpg");
     }
 
     /**
-     * 对齐 ImageManager::tCover[0/1]：己方 cover.jpg，对方 cover2.jpg，缺失时回退 cover.jpg
+     * 对齐 ImageManager::tCover[0/1]：己方 cover.jpg，对方 cover2.jpg，缺失时回退 cover.jpg。
+     * 卡背为177奇数宽，RGB_565行对齐填充会导致GL上传斜向错切，故按 ARGB_8888 解码。
      */
     public Bitmap getCardCover(boolean opponent) {
         if (opponent) {
-            Bitmap bmp = getTexture("cover2.jpg");
+            Bitmap bmp = getBitmapArgb("cover2.jpg");
             if (bmp != null) return bmp;
         }
-        return getTexture("cover.jpg");
+        return getBitmapArgb("cover.jpg");
     }
 
     public Bitmap getUnknownCard() {
-        return getTexture("unknown.jpg");
+        return getBitmapArgb("unknown.jpg");
     }
 
     public Bitmap getAvatar(boolean isMe) {
@@ -365,8 +395,9 @@ public class TextureLoader {
     }
 
     /**
-     * 按卡码取卡图。命中缓存立即返回；未命中则异步解码（散装 pics、
-     * expansions/pics、pics.zip、扩展包 zip/ypk），完成后触发回调重绘。
+     * 按卡码取卡图。命中缓存立即返回；未命中则异步解码，完成后触发回调重绘。
+     * 数据源与 ImageLoader.bindImage 完全同源（findCardImageData 全源查找），
+     * 解码配置对齐 Glide 默认 ARGB_8888，手卡/场上卡共用同一 256px 降采样，尺寸一致。
      */
     public Bitmap getCardBitmap(long code) {
         if (code <= 0) return null;
@@ -390,97 +421,25 @@ public class TextureLoader {
         return null;
     }
 
+    /** 卡图解码：直接走 ImageLoader 全源字节（与 bindImage 同源），ARGB_8888 + 256px 降采样 */
     private Bitmap decodeCardBitmap(long code) {
-        String res = AppsSettings.get().getResourcePath();
-        // 1. 散装 pics / expansions/pics（.jpg/.png）
-        for (String ex : Constants.IMAGE_EX) {
-            File f = new File(res, Constants.CORE_IMAGE_PATH + "/" + code + ex);
-            if (f.exists()) return decodeFileSampled(f);
-            File fe = new File(res, Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code + ex);
-            if (fe.exists()) return decodeFileSampled(fe);
+        byte[] data;
+        try {
+            data = ImageLoader.findCardImageData(code);
+        } catch (Throwable t) {
+            return null;
         }
-        // 2. 扩展包 zip/ypk
-        File[] expansions = AppsSettings.get().getExpansionFiles();
-        if (expansions != null) {
-            for (File file : expansions) {
-                if (!file.isFile()) continue;
-                ZipFile zip = openCachedZip(file);
-                if (zip == null) continue;
-                Bitmap bmp = decodeFromZip(zip, code);
-                if (bmp != null) return bmp;
-            }
-        }
-        // 3. pics.zip
-        if (picsZipFile == null) {
-            File zf = new File(res, Constants.CORE_PICS_ZIP);
-            if (zf.exists()) {
-                try {
-                    picsZipFile = new ZipFile(zf);
-                } catch (IOException e) {
-                    Log.e(TAG, "open pics.zip failed", e);
-                }
-            }
-        }
-        if (picsZipFile != null) {
-            return decodeFromZip(picsZipFile, code);
-        }
-        return null;
-    }
-
-    private ZipFile openCachedZip(File file) {
-        ZipFile zip = cardZipCache.get(file.getAbsolutePath());
-        if (zip == null) {
-            try {
-                zip = new ZipFile(file);
-                cardZipCache.put(file.getAbsolutePath(), zip);
-            } catch (Throwable e) {
-                return null;
-            }
-        }
-        return zip;
-    }
-
-    private Bitmap decodeFromZip(ZipFile zip, long code) {
-        for (String ex : Constants.IMAGE_EX) {
-            ZipEntry entry = zip.getEntry(Constants.CORE_IMAGE_PATH + "/" + code + ex);
-            if (entry == null) continue;
-            InputStream is = null;
-            try {
-                is = zip.getInputStream(entry);
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                byte[] buf = new byte[8192];
-                int n;
-                while ((n = is.read(buf)) > 0) bos.write(buf, 0, n);
-                byte[] data = bos.toByteArray();
-                BitmapFactory.Options opts = new BitmapFactory.Options();
-                opts.inJustDecodeBounds = true;
-                BitmapFactory.decodeByteArray(data, 0, data.length, opts);
-                opts.inSampleSize = sampleSizeFor(opts.outWidth);
-                opts.inJustDecodeBounds = false;
-                opts.inPreferredConfig = Bitmap.Config.RGB_565;
-                return BitmapFactory.decodeByteArray(data, 0, data.length, opts);
-            } catch (Exception e) {
-                Log.e(TAG, "decode card in zip failed: " + code, e);
-            } finally {
-                if (is != null) {
-                    try { is.close(); } catch (IOException ignored) { }
-                }
-            }
-        }
-        return null;
-    }
-
-    private Bitmap decodeFileSampled(File file) {
+        if (data == null || data.length == 0) return null;
         try {
             BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
+            BitmapFactory.decodeByteArray(data, 0, data.length, opts);
             opts.inSampleSize = sampleSizeFor(opts.outWidth);
             opts.inJustDecodeBounds = false;
-            opts.inPreferredConfig = Bitmap.Config.RGB_565;
-            return BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
-        } catch (Exception e) {
-            Log.e(TAG, "decode card file failed: " + file, e);
+            opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            return ensureCardAspect(BitmapFactory.decodeByteArray(data, 0, data.length, opts));
+        } catch (Throwable t) {
+            Log.e(TAG, "decode card failed: " + code, t);
             return null;
         }
     }
@@ -489,6 +448,24 @@ public class TextureLoader {
         int sample = 1;
         while (srcWidth / (sample * 2) >= CARD_DECODE_MAX_W) sample *= 2;
         return sample;
+    }
+
+    /** 非标准比例图源（方形纯画图等）中心裁剪为 177:254，保证贴到卡面不扭曲 */
+    private Bitmap ensureCardAspect(Bitmap bmp) {
+        if (bmp == null) return null;
+        int w = bmp.getWidth(), h = bmp.getHeight();
+        if (w <= 0 || h <= 0) return bmp;
+        if (Math.abs(w - h * CARD_ASPECT) / (h * CARD_ASPECT) < 0.02f) return bmp;
+        int tw = w;
+        int th = Math.round(w / CARD_ASPECT);
+        if (th > h) {
+            th = h;
+            tw = Math.round(h * CARD_ASPECT);
+        }
+        if (tw <= 0 || th <= 0 || tw > w || th > h) return bmp;
+        Bitmap cropped = Bitmap.createBitmap(bmp, (w - tw) / 2, (h - th) / 2, tw, th);
+        if (cropped != bmp) bmp.recycle();
+        return cropped;
     }
 
     public Bitmap loadBitmapScaled(String relativePath, int targetWidth, int targetHeight) {

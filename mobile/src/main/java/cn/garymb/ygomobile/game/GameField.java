@@ -421,6 +421,7 @@ public class GameField {
     /** DuelInfo 等价物（game.h dInfo 中 HUD 相关字段） */
     public static class DuelInfo {
         public int startLp = 8000;
+        public int duelRule;                       // 通讯下发的 master rule（1-5），场地贴图按 >=4 分流
         public int[] lp = {8000, 8000};          // 显示值（LP 动画的中间值）
         public int timeLimit;// 秒，0=无限时
         public int[] timeLeft = new int[2];
@@ -863,9 +864,17 @@ public class GameField {
 
     // === ClientField::GetCardLocation 忠实移植（MR4，rule=1；坐标真值来自 materials.cpp）===
 
+    /** 区域规格：怪兽/魔陷区宽 290px、高 254px，格子间 2px 间隔 → 横向间距 292px；
+     *  X 坐标以场地中心 3.95 为轴按 (292px世界长)/1.1 放大，决斗场更宽且与 field3.png 拉伸适配 */
+    private static final float X_SCALE = (292f * 0.8f / 177f) / 1.1f;
+
+    private static float fx(float x) {
+        return 3.95f + (x - 3.95f) * X_SCALE;
+    }
+
     private static float mzoneCX(int c, int s) {
-        if (c == 0) return s < 5 ? 1.75f + 1.1f * s : (s == 5 ? 2.85f : 5.05f);
-        return s < 5 ? 6.15f - 1.1f * s : (s == 5 ? 5.05f : 2.85f);
+        if (c == 0) return fx(s < 5 ? 1.75f + 1.1f * s : (s == 5 ? 2.85f : 5.05f));
+        return fx(s < 5 ? 6.15f - 1.1f * s : (s == 5 ? 5.05f : 2.85f));
     }
 
     private static float mzoneCY(int c, int s) {
@@ -875,24 +884,24 @@ public class GameField {
 
     private static float szoneCX(int c, int s) {
         if (c == 0) {
-            if (s < 5) return 1.75f + 1.1f * s;
-            if (s == 5) return 0.6f;
-            if (s == 6) return 0.6f;
-            return 8.3f;
+            if (s < 5) return fx(1.75f + 1.1f * s);
+            if (s == 5) return fx(0.6f);
+            if (s == 6) return fx(0.6f);
+            return fx(8.3f);
         }
-        if (s < 5) return 6.15f - 1.1f * s;
-        if (s == 5) return 7.3f;
-        if (s == 6) return 7.3f;
-        return -0.4f;
+        if (s < 5) return fx(6.15f - 1.1f * s);
+        if (s == 5) return fx(7.3f);
+        if (s == 6) return fx(7.3f);
+        return fx(-0.4f);
     }
 
     private static float szoneCY(int c, int s) {
         if (c == 0) {
-            if (s < 5) return 2.6f;
+            if (s < 5) return 2.56f;
             if (s == 5) return 2.0f;
             return 0.7f;
         }
-        if (s < 5) return -2.6f;
+        if (s < 5) return -2.56f;
         if (s == 5) return -2.0f;
         return -0.7f;
     }
@@ -911,9 +920,9 @@ public class GameField {
 
         switch (location) {
             case 0x01: { // LOCATION_DECK
-                t[0] = controler == 0 ? 7.3f : 0.6f;
+                t[0] = fx(controler == 0 ? 7.3f : 0.6f);
                 t[1] = controler == 0 ? 3.3f : -3.3f;
-                t[2] = 0.01f + 0.01f * sequence;
+                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
                 boolean back = (deckReversed == pcard.is_reversed);
                 t[4] = back ? PI : 0f;
                 t[5] = controler == 0 ? 0f : PI;
@@ -923,10 +932,9 @@ public class GameField {
             case 0x02: { // LOCATION_HAND
                 int count = getCardCount(controler, 0x02);
                 if (count <= 0) count = 1;
+                float spacing = handSpacing(count);
                 if (controler == 0) {
-                    // 10 张以内相邻手卡正好相接（不重叠平铺），超过 10 张按固定跨度压缩重叠
-                    if (count <= 10) t[0] = (5.5f - 0.8f * count) / 2f + 1.55f + sequence * 0.8f;
-                    else t[0] = 0.3f + sequence * 7.2f / (count - 1);
+                    t[0] = 3.95f - spacing * (count - 1) / 2f + sequence * spacing;
                     if (pcard.is_hovered) {
                         t[1] = 3.84f;
                         t[2] = 0.656f + 0.001f * sequence;
@@ -942,8 +950,7 @@ public class GameField {
                         t[4] = PI;
                     }
                 } else {
-                    if (count <= 10) t[0] = 6.25f - (5.5f - 0.8f * count) / 2f - sequence * 0.8f;
-                    else t[0] = 7.5f - sequence * 7.2f / (count - 1);
+                    t[0] = 3.95f + spacing * (count - 1) / 2f - sequence * spacing;
                     if (pcard.is_hovered) {
                         t[1] = -3.56f;
                         t[2] = 0.656f - 0.001f * sequence;
@@ -993,24 +1000,24 @@ public class GameField {
                 break;
             }
             case 0x10: { // LOCATION_GRAVE
-                t[0] = controler == 0 ? 7.3f : 0.6f;
+                t[0] = fx(controler == 0 ? 7.3f : 0.6f);
                 t[1] = controler == 0 ? 2.0f : -2.0f;
-                t[2] = 0.01f + 0.01f * sequence;
+                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
                 t[5] = controler == 0 ? 0f : PI;
                 break;
             }
             case 0x20: { // LOCATION_REMOVED
-                t[0] = controler == 0 ? 7.3f : 0.6f;
+                t[0] = fx(controler == 0 ? 7.3f : 0.6f);
                 t[1] = controler == 0 ? 0.7f : -0.7f;
-                t[2] = 0.01f + 0.01f * sequence;
+                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
                 t[4] = faceup ? 0f : PI;
                 t[5] = controler == 0 ? 0f : PI;
                 break;
             }
             case 0x40: { // LOCATION_EXTRA
-                t[0] = controler == 0 ? 0.6f : 7.3f;
+                t[0] = fx(controler == 0 ? 0.6f : 7.3f);
                 t[1] = controler == 0 ? 3.3f : -3.3f;
-                t[2] = 0.01f + 0.01f * sequence;
+                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
                 t[4] = faceup ? 0f : PI;
                 t[5] = controler == 0 ? 0f : PI;
                 break;
@@ -1034,6 +1041,12 @@ public class GameField {
             }
         }
         return t;
+    }
+
+    /** 手卡间距：小于7张保留些许间距(0.95>卡宽0.8)，大于等于7张开始层叠，越多越密 */
+    private static float handSpacing(int count) {
+        if (count < 7) return 0.95f;
+        return Math.max(0.55f, Math.min(0.72f, 5.0f / count));
     }
 
     public void updateCardAnimation(int frame) {
