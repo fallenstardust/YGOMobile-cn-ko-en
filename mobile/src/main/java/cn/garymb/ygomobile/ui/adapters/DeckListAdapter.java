@@ -59,9 +59,13 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                if (isSelect && position == selectPosition)
+                //多选模式下不拦截，保证任意卡组（含自动选中项）都能点击勾选/取消
+                if (isSelect && !isManySelect && position == selectPosition)
                     return;
-                selectPosition = position;
+                //多选点击不覆盖当前卡组的选中位置，保证退出多选后原卡组选中态恢复
+                if (!isManySelect) {
+                    selectPosition = position;
+                }
                 notifyDataSetChanged();
                 if (onItemSelectListener != null)
                     onItemSelectListener.onItemSelect(position, data.get(position).getObject());
@@ -214,8 +218,9 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         isManySelect = manySelect;
         if (!isManySelect) {
             selectList.clear();
-            notifyDataSetChanged();
         }
+        //进入或退出多选都整体刷新，确保未被勾选的项（如进入多选前高亮的当前卡组）及时取消高亮
+        notifyDataSetChanged();
     }
 
     public void addManySelect(T t) {

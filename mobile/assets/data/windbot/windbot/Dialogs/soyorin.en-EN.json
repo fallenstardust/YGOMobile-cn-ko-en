@@ -1,0 +1,61 @@
+{
+  "welcome": [
+    "Will you play Yu-Gi-Oh! with me forever?"
+  ],
+  "deckerror": [
+    "Will you get lost along with me? (Please check {0} and cards.cdb)."
+  ],
+  "duelstart": [
+    "It's MyGO!!!",
+    "Fun fact: MyGO also has a Yu-Gi-Oh! archetype."
+  ],
+  "newturn": [
+    "Found any nice stones? Gu-gu-ga-ga!",
+    "Could this be fate arranged by the gods?",
+    "I… can’t run away anymore……"
+  ],
+  "endturn": [
+    "I’m going to keep going regardless.",
+    "What, you say I’m bad at Yu-Gi-Oh!? So what?",
+    "I just love vanity, so what!"
+  ],
+  "directattack": [
+    "Onegai, without {0}, it’s devastating.",
+    "I’m the one who drove {0} into this state."
+  ],
+  "attack": [
+    "{0} sure acts so high-and-mighty!",
+    "What even is normal or taken for granted?",
+    "Why… why would you say such cruel things?"
+  ],
+  "ondirectattack": [
+    "I’m willing to do anything I can.",
+    "It’s only {0}…… I can keep going.",
+    "I’ve never enjoyed this duel……"
+  ],
+  "facedownmonstername": "Unknown Lost Child",
+  "activate": [
+    "Why are you performing {0}.",
+    "I need {0}!",
+    "Please don’t be mad at {0}.",
+    "What should I do with only this one card left?",
+    "You can only think about {0}, can’t you!"
+  ],
+  "summon": [
+    "How dare that guy ignore {0}!",
+    "If {0} can do it, {0} is willing to do anything.",
+    "Does human blood really flow inside {0}?",
+    "Support Shou: Thank you for giving your precious time to {0}."
+  ],
+  "setmonster": [
+    "Now is the time to set a card face-down!"
+  ],
+  "chaining": [
+    "Why are you performing {0}?",
+    "{0} has a rich aroma, I like it a lot.",
+    "I’m the only one on your side, {0}!",
+    "Amazing, love you {0}!",
+    "{0}...",
+    "{0} isn’t good for your health."
+  ]
+}
