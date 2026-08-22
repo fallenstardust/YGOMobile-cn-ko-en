@@ -1333,8 +1333,14 @@ void Game::DrawSpec() {
         switch(showcard) {
         case 1: { // 展示正在激活的效果：从上往下逐渐揭开遮罩
             driver->draw2DImage(showimg, irr::core::recti(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale, 150 * yScale, 660 * xScale + (CARD_IMG_WIDTH / 2) * yScale, (150 + CARD_IMG_HEIGHT) * yScale), irr::core::recti(0, 0, orisize.Width, orisize.Height), 0, 0, true);
-            driver->draw2DImage(imageManager.tMask, irr::core::recti(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale, 150 * yScale, 660 * xScale - (CARD_IMG_WIDTH / 2) * yScale + (showcarddif > CARD_IMG_WIDTH ? CARD_IMG_WIDTH : showcarddif) * yScale, (150 + CARD_IMG_HEIGHT) * yScale),
-                                irr::core::recti(CARD_IMG_HEIGHT - showcarddif, 0, CARD_IMG_HEIGHT - (showcarddif > CARD_IMG_WIDTH ? showcarddif - CARD_IMG_WIDTH : 0), CARD_IMG_HEIGHT), 0, 0, true);
+			if(imageManager.tMask) {
+				const irr::core::dimension2du maskSize = imageManager.tMask->getOriginalSize();
+				const irr::f32 maskScale = static_cast<irr::f32>(maskSize.Width) / CARD_IMG_HEIGHT;
+				const irr::s32 maskLeft = static_cast<irr::s32>((CARD_IMG_HEIGHT - showcarddif) * maskScale);
+				const irr::s32 maskRight = static_cast<irr::s32>((CARD_IMG_HEIGHT - (showcarddif > CARD_IMG_WIDTH ? showcarddif - CARD_IMG_WIDTH : 0)) * maskScale);
+				driver->draw2DImage(imageManager.tMask, irr::core::recti(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale, 150 * yScale, 660 * xScale - (CARD_IMG_WIDTH / 2) * yScale + (showcarddif > CARD_IMG_WIDTH ? CARD_IMG_WIDTH : showcarddif) * yScale, (150 + CARD_IMG_HEIGHT) * yScale),
+									irr::core::recti(maskLeft, 0, maskRight, maskSize.Height), 0, 0, true);
+			}
             showcarddif += 15;
             if(showcarddif >= CARD_IMG_HEIGHT) {
                 showcard = 2;
@@ -1344,8 +1350,12 @@ void Game::DrawSpec() {
         }
         case 2: { // 遮罩继续向右展开直到完全消失
             driver->draw2DImage(showimg, irr::core::recti(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale, 150 * yScale, 660 * xScale + (CARD_IMG_WIDTH / 2) * yScale, (150 + CARD_IMG_HEIGHT) * yScale), irr::core::recti(0, 0, orisize.Width, orisize.Height), 0, 0, true);
-            driver->draw2DImage(imageManager.tMask, irr::core::recti(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale + showcarddif * yScale, 150 * yScale, 660 * xScale + (CARD_IMG_WIDTH / 2) * yScale, (150 + CARD_IMG_HEIGHT) * yScale),
-                                irr::core::recti(0, 0, CARD_IMG_WIDTH - showcarddif, CARD_IMG_HEIGHT), 0, 0, true);
+			if(imageManager.tMask) {
+				const irr::core::dimension2du maskSize = imageManager.tMask->getOriginalSize();
+				const irr::f32 maskScale = static_cast<irr::f32>(maskSize.Width) / CARD_IMG_HEIGHT;
+				driver->draw2DImage(imageManager.tMask, irr::core::recti(660 * xScale - (CARD_IMG_WIDTH / 2) * yScale + showcarddif * yScale, 150 * yScale, 660 * xScale + (CARD_IMG_WIDTH / 2) * yScale, (150 + CARD_IMG_HEIGHT) * yScale),
+									irr::core::recti(0, 0, static_cast<irr::s32>((CARD_IMG_WIDTH - showcarddif) * maskScale), maskSize.Height), 0, 0, true);
+			}
             showcarddif += 15;
             if(showcarddif >= CARD_IMG_WIDTH) {
                 showcard = 0;
