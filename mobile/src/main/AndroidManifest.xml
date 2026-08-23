@@ -154,6 +154,20 @@
         <activity
             android:name="cn.garymb.ygomobile.ui.activities.PermissionsActivity"
             android:theme="@style/TranslucentTheme" />
+        <activity
+            android:name="cn.garymb.ygomobile.ui.activities.ResourceShareActivity"
+            android:exported="true"
+            android:theme="@style/TranslucentTheme"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="ygomobile.intent.action.SHARE_RESOURCE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="ygomobile.intent.action.SAVE_DECK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
 
         <!--   android:screenOrientation="landscape"-->
