@@ -26,9 +26,15 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -38,6 +44,7 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.GameTopInfoManager;
 import cn.garymb.ygomobile.game.ReplayEngine;
+import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -47,12 +54,14 @@ import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.MainMenuDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
 import ocgcore.DataManager;
+import ocgcore.StringManager;
 import ocgcore.data.Card;
 
 public class YGOProActivity extends AppCompatActivity implements
@@ -97,6 +106,12 @@ public class YGOProActivity extends AppCompatActivity implements
     private String lastJoinHost = "";
     private int lastJoinPort = 0;
     private String lastJoinRoomName = "";
+
+    // 决斗结束后通讯发来的待保存录像队列（STOC_REPLAY 可能发来多个）
+    private final List<byte[]> pendingReplays = new ArrayList<>();
+    private boolean duelEndHandling = false;
+    private YesOrNoDialog resultDialog;
+    private ReplaySaveDialog replaySaveDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -476,6 +491,12 @@ public class YGOProActivity extends AppCompatActivity implements
     private void returnToLanMain(String toastMsg) {
         if (isFinishing() || isDestroyed()) return;
         isGameStarted = false;
+        duelEndHandling = false;
+        pendingReplays.clear();
+        if (replaySaveDialog != null) {
+            replaySaveDialog.dismiss();
+            replaySaveDialog = null;
+        }
         if (topInfoManager != null) topInfoManager.stopTimer();
         if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
         hideGameUI();
@@ -715,6 +736,7 @@ public class YGOProActivity extends AppCompatActivity implements
         Log.i(TAG, "State: " + newState);
         switch (newState) {
             case LOBBY:
+                duelEndHandling = false;
                 if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
                     // Already showing player waiting via LanModeDialog, do nothing
                 } else {
@@ -736,6 +758,8 @@ public class YGOProActivity extends AppCompatActivity implements
             case DUELING:
                 enterDuelingUI();
                 cardDetailPanel.showBottomActions();
+                pendingReplays.clear();
+                duelEndHandling = false;
                 break;
             case SIDING:
                 showDeckEditorView();              // 打开卡组编辑器
@@ -745,10 +769,17 @@ public class YGOProActivity extends AppCompatActivity implements
                 break;
             case DUEL_END:
                 cardDetailPanel.closeGameButtons();
+                duelEndHandling = true;
+                if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
+                if (resultDialog != null) {
+                    resultDialog.dismiss();
+                    resultDialog = null;
+                }
                 if (engine != null) engine.disconnect();
-                returnToLanMain("本次决斗已结束");
+                showDuelEndDialog();
                 break;
             case DISCONNECTED:
+                if (duelEndHandling) break; // 决斗结束流程已接管返回逻辑，避免重复
                 returnToLanMain(isGameStarted ? "与服务器连接已断开" : null);
                 break;
         }
@@ -901,6 +932,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onReplayData(byte[] data) {
         Log.i(TAG, "Replay data received, size=" + data.length);
+        runOnUiThread(() -> pendingReplays.add(data));
     }
 
     @Override
@@ -957,16 +989,125 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     public void showResultDialog(String result, boolean exitOnConfirm) {
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("决斗结果")
+        if (resultDialog != null) resultDialog.dismiss();
+        resultDialog = new YesOrNoDialog(this);
+        resultDialog.setTitle("决斗结果")
                 .setMessage(result)
                 .setPositiveButton(v -> {
                     if (exitOnConfirm) {
                         finish();
                     }
                 })
+                .setOnDismissListener(() -> resultDialog = null)
+                .setCancelable(false);
+        resultDialog.show();
+    }
+
+    /**
+     * 决斗结束提示框：仅显示「确定」按钮（TYPE_MESSAGE），
+     * 点击确定后自动隐藏本框并开始处理通讯发来的录像队列
+     */
+    private void showDuelEndDialog() {
+        if (isFinishing() || isDestroyed()) return;
+        StringManager sm = DataManager.get().getStringManager();
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setMessage(sm.getSystemString(1500, "决斗结束。"))
+                .setType(YesOrNoDialog.TYPE_MESSAGE)
+                .setPositiveButtonText(sm.getSystemString(1211, "确定"))
+                .setPositiveButton(v -> processPendingReplays())
                 .setCancelable(false);
         dialog.show();
+    }
+
+    /**
+     * 逐个处理通讯发来的录像：有待保存项则弹出录像保存对话框，
+     * 全部处理完毕（保存或取消跳过）后才隐藏决斗 UI 并重新显示 LanModeDialog
+     */
+    private void processPendingReplays() {
+        if (isFinishing() || isDestroyed()) {
+            pendingReplays.clear();
+            return;
+        }
+        if (pendingReplays.isEmpty()) {
+            returnToLanMain(null);
+            return;
+        }
+        final byte[] replayData = pendingReplays.remove(0);
+        replaySaveDialog = new ReplaySaveDialog(this);
+        replaySaveDialog.setDefaultName(getReplayDefaultName(replayData))
+                .setOnReplayActionListener(new ReplaySaveDialog.OnReplayActionListener() {
+                    @Override
+                    public void onSave(String fileName) {
+                        saveReplayFile(replayData, fileName);
+                        mainHandler.post(() -> processPendingReplays());
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        // 跳过当前录像，检查通讯是否还发来了其它录像文件
+                        mainHandler.post(() -> processPendingReplays());
+                    }
+                });
+        replaySaveDialog.show();
+    }
+
+    /**
+     * 从通讯发来的录像数据中解析默认文件名，
+     * 与 gframe duelclient.cpp STOC_REPLAY 一致：录像开始时间 %Y-%m-%d %H-%M-%S
+     */
+    private String getReplayDefaultName(byte[] data) {
+        try {
+            if (data == null || data.length < 24) return "_LastReplay";
+            ByteBuffer buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+            int id = buf.getInt();
+            if (id != ReplayReader.REPLAY_ID_YRP1 && id != ReplayReader.REPLAY_ID_YRP2) {
+                return "_LastReplay";
+            }
+            buf.getInt(); // version
+            int flag = buf.getInt();
+            int seed = buf.getInt();
+            buf.getInt(); // datasize
+            int startTime = buf.getInt();
+            long ts = ((flag & ReplayReader.REPLAY_UNIFORM) != 0)
+                    ? Integer.toUnsignedLong(startTime)
+                    : Integer.toUnsignedLong(seed);
+            return new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US)
+                    .format(new Date(ts * 1000L));
+        } catch (Exception e) {
+            return "_LastReplay";
+        }
+    }
+
+    private void saveReplayFile(byte[] data, String fileName) {
+        String safeName = sanitizeReplayName(fileName);
+        try {
+            File dir = new File(AppsSettings.get().getReplayDir());
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, safeName + Constants.YRP_FILE_EX);
+            FileOutputStream fos = new FileOutputStream(file);
+            try {
+                fos.write(data);
+                fos.flush();
+            } finally {
+                fos.close();
+            }
+            Log.i(TAG, "Replay saved: " + file.getAbsolutePath());
+            Toast.makeText(this, DataManager.get().getStringManager()
+                    .getSystemString(1335, "保存成功"), Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save replay", e);
+            Toast.makeText(this, "录像保存失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String sanitizeReplayName(String name) {
+        String n = (name == null) ? "" : name.trim();
+        if (n.toLowerCase(Locale.US).endsWith(Constants.YRP_FILE_EX)) {
+            n = n.substring(0, n.length() - Constants.YRP_FILE_EX.length());
+        }
+        n = n.replaceAll("[\\\\/:*?\"<>|]", "").trim();
+        if (n.isEmpty()) n = "_LastReplay";
+        return n;
     }
 
     public void showHintMessage(String msg) {

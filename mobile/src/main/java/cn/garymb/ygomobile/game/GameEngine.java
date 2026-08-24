@@ -642,6 +642,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
+    public void onReplay(byte[] data) {
+        Log.i(TAG, "Replay data received from server, size=" + data.length);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onReplayData(data);
+        });
+    }
+
+    @Override
     public void onGameMsg(int msgType, ByteBuffer data) {
         data.order(ByteOrder.LITTLE_ENDIAN);
         try {
