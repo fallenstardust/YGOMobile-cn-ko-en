@@ -4,6 +4,7 @@
     android:id="@+id/layout_game_right"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipChildren="false"
     android:orientation="vertical">
 
     <!-- 顶部玩家信息区（常驻显示） -->
@@ -24,13 +25,12 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/ygopro_deck_background"
-            android:orientation="horizontal"
-            android:padding="6dp">
+            android:orientation="horizontal">
 
             <ImageView
                 android:id="@+id/iv_player_avatar"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/avatar" />
 
@@ -46,6 +46,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="left"
+                    android:layout_marginStart="5dp"
                     android:shadowColor="#FF00E5FF"
                     android:shadowDx="0"
                     android:shadowDy="0"
@@ -104,13 +105,12 @@
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp">
+            android:layout_marginHorizontal="12dp">
 
             <TextView
                 android:id="@+id/tv_turn_counter"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:background="@drawable/button_radius_black_transparents"
                 android:gravity="center"
                 android:shadowColor="@color/holo_blue_bright"
@@ -130,8 +130,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/ygopro_deck_background"
-            android:orientation="horizontal"
-            android:padding="6dp">
+            android:orientation="horizontal">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -145,6 +144,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right"
+                    android:layout_marginEnd="5dp"
                     android:shadowColor="#FF00E5FF"
                     android:shadowDx="0"
                     android:shadowDy="0"
@@ -198,8 +198,8 @@
 
             <ImageView
                 android:id="@+id/iv_opponent_avatar"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/avatar" />
         </LinearLayout>
@@ -209,7 +209,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:clipChildren="false"
         android:orientation="vertical">
 
         <!-- 聊天消息区域 -->
@@ -239,10 +239,9 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center|top"
                 android:background="@drawable/ygopro_deck_background"
-                android:padding="3dp"
                 android:text="请选择要特殊召唤的怪兽（9-9）"
                 android:textColor="@color/white"
-                android:textSize="10sp" />
+                android:textSize="8sp" />
 
             <TextView
                 android:id="@+id/tv_chat_message_2"
@@ -769,10 +768,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:layout_weight="1"
         android:background="@drawable/ygopro_deck_background"
         android:imeOptions="actionSend|flagNoExtractUi"
         android:inputType="text"
         android:maxLines="1"
         android:textColor="@color/white"
-        android:textSize="10sp" />
+        android:textSize="9sp" />
 </LinearLayout>

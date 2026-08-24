@@ -47,6 +47,8 @@ public class ShowDialogUtil {
     private final Handler mainHandler;
 
     private RPSDialog handSelectDialog;
+    private boolean rpsResultShown;
+    private int lastHandSent;
     private YesOrNoDialog tpSelectDialog;
 
     public ShowDialogUtil(YGOProActivity activity, ImageLoader imageLoader, Handler mainHandler) {
@@ -103,20 +105,41 @@ public class ShowDialogUtil {
     // === 猜拳 / 先后攻 ===
 
     public void showHandSelectDialog() {
+        if (rpsResultShown) {
+            // 猜拳已分出胜负（非平局）：不再显示 RPSDialog；
+            // 若服务器仍下发 MSG_SELECT_HAND，自动复用上次出的手势应答，避免协议等待卡死
+            if (lastHandSent >= RPSDialog.HAND_SCISSORS && lastHandSent <= RPSDialog.HAND_PAPER
+                    && engine() != null) {
+                engine().sendHandResult(lastHandSent);
+            }
+            return;
+        }
         if (handSelectDialog != null && handSelectDialog.isShowing()) return;
         RPSDialog dialog = new RPSDialog(activity);
         handSelectDialog = dialog;
-        dialog.setTitle("猜拳决定先手")
-                .setCancelable(false)
+        dialog.setCancelable(false)
                 .setOnResultListener(result -> {
-                    engine().sendHandResult(result);
+                    lastHandSent = result;
+                    // 先隐藏弹窗再发送协议：即使发送过程出现异常，弹窗也已在点击瞬间关闭
                     dialog.dismiss();
+                    engine().sendHandResult(result);
                 });
         dialog.show();
     }
 
-    /** STOC_HAND_RESULT：播放猜拳结果动画（本方手势自底上升、对方手势倒置自顶下降） */
+    /** 新对局进入猜拳阶段时重置结果抑制状态（由 YGOProActivity onStateChanged(HAND_SELECT) 调用） */
+    public void resetRpsResultState() {
+        rpsResultShown = false;
+        lastHandSent = 0;
+    }
+
+    /** STOC_HAND_RESULT：播放猜拳结果动画（本方手势自底上升、对方手势倒置自 layout_game_right 顶部下降） */
     public void onHandResult(int myHand, int oppHand) {
+        // 仅分出胜负（非平局）时抑制后续 RPSDialog 显示；
+        // 平局（手势相同）不置位，服务器重发 MSG_SELECT_HAND 时仍弹窗供玩家再次出拳
+        if (myHand != oppHand) {
+            rpsResultShown = true;
+        }
         if (handSelectDialog != null) {
             handSelectDialog.playResultAnimation(myHand, oppHand);
         }
@@ -1120,16 +1143,22 @@ public class ShowDialogUtil {
         dialog.show();
     }
 
-    public void showDuelEndDialog() {
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("决斗结束")
-                .setMessage("本次决斗已结束")
-                .setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("确定")
-                .setNegativeButtonText("继续等待")
-                .setPositiveButton(v -> activity.finish())
-                .setCancelable(false);
-        dialog.show();
+    /**
+     * 连接断开 / 决斗结束时统一关闭所有可能残留的选择类对话框，
+     * 避免遗留弹窗遮挡重新显示的局域网主界面（由 YGOProActivity returnToLanMain 调用）
+     */
+    public void dismissOpenGameDialogs() {
+        if (handSelectDialog != null) {
+            handSelectDialog.dismiss();
+            handSelectDialog = null;
+        }
+        if (tpSelectDialog != null) {
+            tpSelectDialog.dismiss();
+            tpSelectDialog = null;
+        }
+        rpsResultShown = false;
+        lastHandSent = 0;
+        panel().dismissOpenDialogs();
     }
 
     // === 通用列表对话框 ===

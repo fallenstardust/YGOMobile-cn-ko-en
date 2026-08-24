@@ -585,6 +585,21 @@ public class CardDetailPanel {
         hideCancelOrFinishButton();
     }
 
+    /**
+     * 统一关闭当前打开的选择/确认/展示对话框（断线或决斗结束时清理），
+     * 避免残留弹窗遮挡重新显示的局域网主界面
+     */
+    public void dismissOpenDialogs() {
+        if (currentDialog != null) currentDialog.dismiss();
+        if (cardSelectDialog != null) cardSelectDialog.dismiss();
+        if (cardDisplayDialog != null) cardDisplayDialog.dismiss();
+        currentDialog = null;
+        cardSelectDialog = null;
+        cardDisplayDialog = null;
+        currentSelectType = -1;
+        hideCancelOrFinishButton();
+    }
+
     public void showBottomActions() {
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
     }

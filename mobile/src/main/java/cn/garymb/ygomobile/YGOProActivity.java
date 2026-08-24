@@ -20,6 +20,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
@@ -35,10 +36,12 @@ import cn.garymb.ygomobile.game.DeckEditorManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
+import cn.garymb.ygomobile.game.GameTopInfoManager;
 import cn.garymb.ygomobile.game.ReplayEngine;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
@@ -82,11 +85,18 @@ public class YGOProActivity extends AppCompatActivity implements
     private ReplayEngine currentReplayEngine;
     private CardDetailPanel cardDetailPanel;
     private GameFieldController fieldCtl;
+    private GameTopInfoManager topInfoManager;
     private ShowDialogUtil dialogUtil;
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
     private FullScreenUtils mFullScreenUtils;
     private String currentBgPath;
+
+    // 最近一次加入/创建房间的连接信息：断线或决斗结束返回局域网主界面时回显
+    private String lastJoinNickname = "";
+    private String lastJoinHost = "";
+    private int lastJoinPort = 0;
+    private String lastJoinRoomName = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,7 +186,9 @@ public class YGOProActivity extends AppCompatActivity implements
 
         cardDetailPanel = new CardDetailPanel(this);
         cardDetailPanel.bindViews();
-        fieldCtl = new GameFieldController(this, mainHandler);
+        topInfoManager = new GameTopInfoManager(this, mainHandler);
+        topInfoManager.initViews();
+        fieldCtl = new GameFieldController(this, mainHandler, topInfoManager);
         fieldCtl.create();
 
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
@@ -284,6 +296,7 @@ public class YGOProActivity extends AppCompatActivity implements
         if (!TextUtils.isEmpty(host)) {
             int port = intent.getIntExtra("port", 7911);
             String room = intent.getStringExtra("room");
+            saveLastConnectionInfo(Constants.PlayerName, host, port, room);
             engine.connectToServer(host, port, false,
                     room != null ? room : "", "",
                     0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -374,6 +387,7 @@ public class YGOProActivity extends AppCompatActivity implements
         String room = options.mRoomName != null ? options.mRoomName : "";
         String user = options.mUserName != null ? options.mUserName : Constants.PlayerName;
         String password = options.mRoomName != null ? options.mRoomName : "";
+        saveLastConnectionInfo(user, host, port, room);
         engine.setPlayerName(user);
         engine.connectToServer(host, port, false, room, password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -390,6 +404,10 @@ public class YGOProActivity extends AppCompatActivity implements
 
     public GameFieldController getFieldCtl() {
         return fieldCtl;
+    }
+
+    public GameTopInfoManager getTopInfoManager() {
+        return topInfoManager;
     }
 
     public ShowDialogUtil getDialogUtil() {
@@ -449,6 +467,49 @@ public class YGOProActivity extends AppCompatActivity implements
         isGameStarted = true;
     }
 
+    /**
+     * 连接断开 / 决斗结束时调用：不退出 Activity，
+     * 隐藏左侧卡片详情面板(layout_card_detail_panel)与右侧决斗场区(layout_game_right)，
+     * 重新显示 LanModeDialog 的 lan main 布局，并回显加入游戏时填写的
+     * username、host、port、roomname 等信息；无连接信息时回退主菜单
+     */
+    private void returnToLanMain(String toastMsg) {
+        if (isFinishing() || isDestroyed()) return;
+        isGameStarted = false;
+        if (topInfoManager != null) topInfoManager.stopTimer();
+        if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
+        hideGameUI();
+        if (layoutDeckEditor != null) layoutDeckEditor.setVisibility(View.GONE);
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
+        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
+
+        if (TextUtils.isEmpty(lastJoinHost)) {
+            getMainMenuDialog().restoreMainMenu();
+        } else if (lanModeDialog != null && lanModeDialog.isShowing()) {
+            lanModeDialog.showLanMain();
+            lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
+                    String.valueOf(lastJoinPort), lastJoinRoomName);
+        } else {
+            LanModeDialog dialog = new LanModeDialog(this, this);
+            setLanModeDialog(dialog);
+            dialog.show(dialogContainer);
+            dialog.setOnDismissListener(() -> getMainMenuDialog().restoreMainMenu());
+            dialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
+                    String.valueOf(lastJoinPort), lastJoinRoomName);
+            dialog.showLanMain();
+        }
+        if (toastMsg != null && !toastMsg.isEmpty()) {
+            Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveLastConnectionInfo(String nickname, String host, int port, String roomName) {
+        lastJoinNickname = nickname != null ? nickname : "";
+        lastJoinHost = host != null ? host : "";
+        lastJoinPort = port;
+        lastJoinRoomName = roomName != null ? roomName : "";
+    }
+
     @Override
     public void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
                                       int startLP, int startHand, int drawCount, int timeLimit,
@@ -456,6 +517,9 @@ public class YGOProActivity extends AppCompatActivity implements
                                       String hostName, String password, String nickname) {
         String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
         String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+
+        String localIp = LanDiscoveryManager.getLocalIpAddress();
+        saveLastConnectionInfo(userName, localIp != null ? localIp : "127.0.0.1", 7911, roomName);
 
         engine.setPlayerName(userName);
         engine.startLocalServerWithSettings(lflist, ruleIdx, modeIdx, duelRule,
@@ -473,6 +537,7 @@ public class YGOProActivity extends AppCompatActivity implements
             portNum = 7911;
         }
         String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+        saveLastConnectionInfo(userName, ip, portNum, password);
         engine.setPlayerName(userName);
         engine.connectToServer(ip, portNum, false, "", password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -661,6 +726,7 @@ public class YGOProActivity extends AppCompatActivity implements
                 break;
             case HAND_SELECT:
                 enterDuelingUI();
+                getDialogUtil().resetRpsResultState();
                 getDialogUtil().showHandSelectDialog();
                 break;
             case TP_SELECT:
@@ -679,16 +745,11 @@ public class YGOProActivity extends AppCompatActivity implements
                 break;
             case DUEL_END:
                 cardDetailPanel.closeGameButtons();
-                getDialogUtil().showDuelEndDialog();
+                if (engine != null) engine.disconnect();
+                returnToLanMain("本次决斗已结束");
                 break;
             case DISCONNECTED:
-                if (!isFinishing()) {
-                    runOnUiThread(() -> {
-                        if (lanModeDialog != null) {
-                            lanModeDialog.showLanMain();
-                        }
-                    });
-                }
+                returnToLanMain(isGameStarted ? "与服务器连接已断开" : null);
                 break;
         }
     }
@@ -696,7 +757,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onFieldChanged() {
         fieldCtl.invalidate();
-        runOnUiThread(() -> fieldCtl.updateCardCountDisplay(engine.getField()));
+        runOnUiThread(() -> topInfoManager.updateCardCountDisplay(engine.getField()));
     }
 
     @Override
@@ -706,16 +767,16 @@ public class YGOProActivity extends AppCompatActivity implements
             GameField.PlayerField pf = engine.getField().players[player];
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
             String name = info.name.isEmpty() ? defaultName : info.name;
-            fieldCtl.setPlayerDisplay(player, name, String.valueOf(pf.lp));
-            fieldCtl.updateCardCountDisplay(engine.getField());
+            topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
+            topInfoManager.updateCardCountDisplay(engine.getField());
         });
     }
 
     @Override
     public void onPhaseChanged(int phase) {
         runOnUiThread(() -> {
-            fieldCtl.setTurnText(String.valueOf(engine.getField().turnCount));
             isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
+            topInfoManager.updateTurn(engine.getField().turnCount, isMyTurn);
             fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
         });
     }
@@ -818,7 +879,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onDuelResult(int winner, int reason) {
-        fieldCtl.stopTimer();
+        topInfoManager.stopTimer();
         runOnUiThread(() -> {
             String result;
             if (winner == 2) {
@@ -828,7 +889,7 @@ public class YGOProActivity extends AppCompatActivity implements
             } else {
                 result = "😢 你输了";
             }
-            showResultDialog(result);
+            showResultDialog(result, false);
         });
     }
 
@@ -844,7 +905,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onTimeLimitUpdate(int player, int leftTime) {
-        runOnUiThread(() -> fieldCtl.onTimeLimitUpdate(player, leftTime, engine.getGameTimeLimit()));
+        runOnUiThread(() -> topInfoManager.onTimeLimitUpdate(player, leftTime, engine.getGameTimeLimit()));
     }
 
     @Override
@@ -892,10 +953,18 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     public void showResultDialog(String result) {
+        showResultDialog(result, true);
+    }
+
+    public void showResultDialog(String result, boolean exitOnConfirm) {
         YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle("决斗结果")
                 .setMessage(result)
-                .setPositiveButton(v -> finish())
+                .setPositiveButton(v -> {
+                    if (exitOnConfirm) {
+                        finish();
+                    }
+                })
                 .setCancelable(false);
         dialog.show();
     }
@@ -925,6 +994,9 @@ public class YGOProActivity extends AppCompatActivity implements
     protected void onDestroy() {
         super.onDestroy();
         DraggablePopupHelper.resetAllPositions(this);
+        if (topInfoManager != null) {
+            topInfoManager.stopTimer();
+        }
         if (engine != null) {
             engine.release();
         }

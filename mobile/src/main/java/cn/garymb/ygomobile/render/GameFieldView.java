@@ -685,9 +685,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
         boolean isHand = c.location == 0x02;
         if (isHand) {
-            // 手卡平行屏幕：姿态取相机旋转；我方手卡后移、选中抬高
+            // 手卡平行屏幕：姿态取相机旋转；我方手卡后移、选中抬高（沿相机 up 轴，Y/Z 分量与命中检测一致）
             Matrix.setIdentityM(mModel, 0);
-            Matrix.translateM(mModel, 0, mirrorX(c.curX), handY(c), c.curZ + handLiftZ(c));
+            Matrix.translateM(mModel, 0, mirrorX(c.curX),
+                    handY(c) + mCamRot[5] * handLift(c), c.curZ + handLiftZ(c));
             Matrix.multiplyMM(mModelTmp, 0, mModel, 0, mCamRot, 0);
             System.arraycopy(mModelTmp, 0, mModel, 0, 16);
             Matrix.scaleM(mModel, 0, CARD_W, CARD_H, 1f);
@@ -775,6 +776,20 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
      */
     private static float handY(GameField.ClientCard c) {
         return c.curY - (c.controler == 0 ? HAND_SELF_Y_SHIFT : 0f);
+    }
+
+    /**
+     * 选中手卡抬升量：未选中为 0，选中为 HAND_LIFT（沿相机 up 轴抬升，绘制/命中共用）
+     */
+    private float handLift(GameField.ClientCard c) {
+        return isSelectedCard(c) ? HAND_LIFT : 0f;
+    }
+
+    /**
+     * 选中手卡抬升的 Z 分量：沿相机 up 轴抬升，Z 分量 = mCamRot[6] × 抬升量
+     */
+    private float handLiftZ(GameField.ClientCard c) {
+        return mCamRot[6] * handLift(c);
     }
 
     private void drawGlow(int color, float cardAlpha) {

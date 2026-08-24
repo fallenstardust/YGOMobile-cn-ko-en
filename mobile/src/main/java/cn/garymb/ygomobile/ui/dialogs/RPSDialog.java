@@ -40,6 +40,13 @@ public class RPSDialog {
     private static final long FADE_MS = 200;
 
     /**
+     * 双方停止线相对 layout_game_right 半高中心线的偏移：
+     * 我方顶边停在（半高 − 10px），对方底边停在（半高 + 10px），
+     * 两图相对边之间形成固定 20px 间隙
+     */
+    private static final float STOP_GAP_HALF_PX = 10f;
+
+    /**
      * 位移速度曲线（参考 drawing.cpp 短帧快动画设计）：
      * 前 50% 时间为较快匀速段（走完 70% 路程），后 50% 时间平方减速直至停止，
      * 分段点处位移连续（0.5 → 0.7）
@@ -58,13 +65,11 @@ public class RPSDialog {
     private OnResultListener resultListener;
     private boolean cancelable = true;
     private boolean showing;
+    /** 猜拳结果动画专用覆盖层（PopupWindow 层位于 GameFieldView 的 GL Surface 之上） */
+    private PopupWindow animWindow;
 
     public RPSDialog(Context context) {
         this.context = context;
-    }
-
-    public RPSDialog setTitle(String title) {
-        return this;
     }
 
     public RPSDialog setCancelable(boolean cancelable) {
@@ -112,22 +117,22 @@ public class RPSDialog {
         });
         popupWindow.setOnDismissListener(() -> showing = false);
         Activity activity = (Activity) context;
-        View gameRight = activity.findViewById(R.id.layout_game_right);
-        if (gameRight != null && gameRight.getWidth() > 0) {
+        View game_field_view = activity.findViewById(R.id.game_field_view);
+        if (game_field_view != null && game_field_view.getWidth() > 0) {
             // 已布局完成：直接按 layout_game_right 实际宽度定位
-            showAlignedToField(gameRight);
+            showAlignedToField(game_field_view);
             showing = true;
-        } else if (gameRight != null) {
+        } else if (game_field_view != null) {
             // 决斗 UI 刚切为可见（enterDuelingUI 同帧），此时宽度为 0，
             // 必须等布局完成后再显示，否则会退化为按整个窗口居中
             showing = true;
-            gameRight.getViewTreeObserver().addOnGlobalLayoutListener(
+            game_field_view.getViewTreeObserver().addOnGlobalLayoutListener(
                     new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            gameRight.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            game_field_view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                             if (!showing) return; // 等待期间已被 dismiss 取消
-                            showAlignedToField(gameRight);
+                            showAlignedToField(game_field_view);
                         }
                     });
         } else {
@@ -165,6 +170,7 @@ public class RPSDialog {
     }
 
     public void dismiss() {
+        dismissAnimWindow();
         try {
             if (popupWindow != null && popupWindow.isShowing()) popupWindow.dismiss();
         } catch (Exception ignored) {
@@ -174,65 +180,95 @@ public class RPSDialog {
 
     /**
      * 猜拳结果动画：
-     * 我方手势图底边从 GameFieldView 中央底边开始向上移动，图片顶部触碰中轴线时停止；
-     * 对方手势图倒置（rotation 180°）从 GameFieldView 顶边开始向下移动，图片顶部触碰中轴线时停止；
-     * 停留 HOLD_MS 后两图淡出移除。后续继续猜拳（平局）或先后攻对话框由服务器消息自动驱动。
+     * GameFieldView 是 setZOrderOnTop(true) 的 GLSurfaceView，GL 曲面合成在 Activity 窗口之上，
+     * 加在布局里的普通 ImageView 会被场地纹理遮挡，因此两图放进全屏透明、不拦截触摸的
+     * PopupWindow（与 RPSDialog 同层，稳定显示在 GL 曲面之上），布局直接使用窗口坐标。
+     * 我方手势图从场地中央底边开始向上移动，顶边停在 layout_game_right 高度一半 − 10px；
+     * 对方手势图倒置（rotation 180°）从 layout_game_right 顶部开始向下移动，底边停在
+     * layout_game_right 高度一半 + 10px；两图相对边之间保持 20px 间隙。
+     * 停留 HOLD_MS 后两图淡出移除并关闭覆盖层。平局（手势相同）时重新显示 RPSDialog 供玩家再出；
+     * 分出胜负（手势不同）后不再显示 RPSDialog，由 ShowDialogUtil 按结果抑制。
      */
     public void playResultAnimation(int myHand, int oppHand) {
         if (!(context instanceof Activity)) return;
         Activity activity = (Activity) context;
-        ViewGroup container = activity.findViewById(R.id.layout_duel_container);
+        View gameRight = activity.findViewById(R.id.layout_game_right);
         View fieldView = activity.findViewById(R.id.game_field_view);
-        if (container == null || fieldView == null
+        if (gameRight == null || fieldView == null
+                || gameRight.getWidth() <= 0 || gameRight.getHeight() <= 0
                 || fieldView.getWidth() <= 0 || fieldView.getHeight() <= 0) return;
 
-        final int fieldW = fieldView.getWidth();
-        final int fieldH = fieldView.getHeight();
+        // 中止上一次未完成的动画（平局连续出拳时可能出现重叠）
+        dismissAnimWindow();
+
+        // 手势位图为 64×64 方形解码，视图同取方形，避免 FIT_CENTER 产生上下透明留白，
+        // 使图案边缘与计算边缘一致，两图间隙即为真实的 20px
         final int imgW = dp2px(60);
-        final int imgH = dp2px(78);
-        final int centerX = (fieldW - imgW) / 2;
+        final int imgH = dp2px(60);
 
-        // 会合线 = layout_game_right 高度的一半再减 10px。
-        // 动画图添加在 layout_duel_container 中，需将 gameRight 的窗口坐标换算到容器坐标系
-        View gameRight = activity.findViewById(R.id.layout_game_right);
-        float axis;
-        if (gameRight != null && gameRight.getHeight() > 0) {
-            int[] grLoc = new int[2];
-            gameRight.getLocationInWindow(grLoc);
-            int[] ctLoc = new int[2];
-            container.getLocationInWindow(ctLoc);
-            axis = grLoc[1] + gameRight.getHeight() / 2f - ctLoc[1] - 10f;
-        } else {
-            // 兜底：gameRight 不可用时退用场地自身中轴线减 10px
-            axis = fieldH / 2f - 10f;
-        }
+        // 覆盖层铺满窗口，图片布局直接使用窗口坐标（getLocationInWindow）
+        int[] grLoc = new int[2];
+        gameRight.getLocationInWindow(grLoc);
+        int[] fLoc = new int[2];
+        fieldView.getLocationInWindow(fLoc);
 
+        final int grLeft = grLoc[0];
+        final int grTop = grLoc[1];
+        // 中心线 = layout_game_right 高度一半（窗口坐标）；
+        // 我方顶边停止线 = 中心线 − 10px，对方底边停止线 = 中心线 + 10px → 两图间 20px 间隙
+        final float midY = grTop + gameRight.getHeight() / 2f;
+        final float myStopTop = midY - STOP_GAP_HALF_PX;
+        final float oppStopBottom = midY + STOP_GAP_HALF_PX;
+        final int centerX = grLeft + (gameRight.getWidth() - imgW) / 2;
+        // 我方起点：场地中央底边（图片底边与场地底边齐平）
+        final int myStartTop = fLoc[1] + fieldView.getHeight() - imgH;
+        // 对方起点：layout_game_right 顶部
+        final int oppStartTop = grTop;
+
+        FrameLayout overlay = new FrameLayout(context);
         ImageView myIv = createHandImage(myHand);
         FrameLayout.LayoutParams myLp = new FrameLayout.LayoutParams(imgW, imgH);
         myLp.leftMargin = centerX;
-        myLp.topMargin = fieldH - imgH;
-        container.addView(myIv, myLp);
+        myLp.topMargin = myStartTop;
+        overlay.addView(myIv, myLp);
 
         ImageView oppIv = createHandImage(oppHand);
         oppIv.setRotation(180f);
         FrameLayout.LayoutParams oppLp = new FrameLayout.LayoutParams(imgW, imgH);
         oppLp.leftMargin = centerX;
-        oppLp.topMargin = 0;
-        container.addView(oppIv, oppLp);
+        oppLp.topMargin = oppStartTop;
+        overlay.addView(oppIv, oppLp);
 
-        // 我方：自底边上升，顶边停在会合线（gameRightH/2 − 10px）
-        myIv.animate().translationY(axis - (fieldH - imgH)).setDuration(MOVE_MS)
+        PopupWindow window = new PopupWindow(overlay,
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        // 不抢焦点、不拦截触摸：动画纯展示，触摸事件穿透到下层游戏 UI
+        window.setFocusable(false);
+        window.setOutsideTouchable(false);
+        window.setTouchable(false);
+        animWindow = window;
+        window.showAtLocation(activity.getWindow().getDecorView(), Gravity.NO_GRAVITY, 0, 0);
+
+        // 我方：自底边上升，顶边停在（layout_game_right 半高 − 10px）
+        myIv.animate().translationY(myStopTop - myStartTop).setDuration(MOVE_MS)
                 .setInterpolator(MOVE_INTERPOLATOR).start();
-        // 对方：倒置图自顶边下降，底边（倒置后的视觉"顶部"）停在会合线
-        oppIv.animate().translationY(axis - imgH).setDuration(MOVE_MS)
+        // 对方：倒置图自 layout_game_right 顶部下降，底边停在（layout_game_right 半高 + 10px）
+        oppIv.animate().translationY(oppStopBottom - oppStartTop - imgH).setDuration(MOVE_MS)
                 .setInterpolator(MOVE_INTERPOLATOR)
-                .withEndAction(() -> container.postDelayed(() -> {
-                    myIv.animate().alpha(0f).setDuration(FADE_MS)
-                            .withEndAction(() -> container.removeView(myIv)).start();
+                .withEndAction(() -> overlay.postDelayed(() -> {
+                    myIv.animate().alpha(0f).setDuration(FADE_MS).start();
                     oppIv.animate().alpha(0f).setDuration(FADE_MS)
-                            .withEndAction(() -> container.removeView(oppIv)).start();
+                            .withEndAction(this::dismissAnimWindow).start();
                 }, HOLD_MS))
                 .start();
+    }
+
+    private void dismissAnimWindow() {
+        try {
+            if (animWindow != null && animWindow.isShowing()) animWindow.dismiss();
+        } catch (Exception ignored) {
+        }
+        animWindow = null;
     }
 
     private ImageView createHandImage(int hand) {
@@ -252,8 +288,9 @@ public class RPSDialog {
                     return true;
                 case MotionEvent.ACTION_UP:
                     v.setAlpha(1f);
+                    // 点击瞬间立即隐藏弹窗，再回调结果（不依赖回调内部是否执行成功）
+                    dismiss();
                     if (resultListener != null) resultListener.onResult(hand);
-                    v.post(this::dismiss);
                     return true;
                 case MotionEvent.ACTION_CANCEL:
                     v.setAlpha(1f);

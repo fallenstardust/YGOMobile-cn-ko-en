@@ -498,7 +498,7 @@ public class ReplayModeDialog {
                     GameField.PlayerField pf = activity.getEngine().getField().players[player];
                     ReplayReader.ReplayData rd = replayEngine.getReplayData();
                     String name = (rd != null && player < rd.playerNames.size()) ? rd.playerNames.get(player) : "Player " + (player + 1);
-                    activity.getFieldCtl().setPlayerDisplay(player, name, "LP: " + pf.lp);
+                    activity.getTopInfoManager().setPlayerDisplay(player, name, "LP: " + pf.lp);
                 });
             }
 
@@ -506,7 +506,7 @@ public class ReplayModeDialog {
             public void onReplayPhaseChanged(int phase) {
                 activity.runOnUiThread(() -> {
                     activity.getFieldCtl().setPhaseByValue(phase);
-                    activity.getFieldCtl().setTurnText("Turn " + activity.getEngine().getField().turnCount);
+                    activity.getTopInfoManager().setTurnText("Turn " + activity.getEngine().getField().turnCount);
                 });
             }
 

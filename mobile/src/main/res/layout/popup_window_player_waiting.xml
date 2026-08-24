@@ -246,7 +246,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:background="@drawable/button3_bg"
+                android:background="@drawable/ygopro_deck_background"
                 android:gravity="center"
                 android:text="@string/select_deck"
                 android:textColor="@color/white"
