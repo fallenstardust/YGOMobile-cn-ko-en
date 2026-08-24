@@ -783,8 +783,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 hintText = "请选择";
                 break;
             case 3:
-                hintText = "等待对方操作";
-                break;
+                // HINT_SELECTMSG：保存下一条选择对话框标题的 sys 字符串索引，
+                // 消费语义与 gframe select_hint 一致（duelclient.cpp L1458-1461）
+                field.selectHint = data;
+                return;
             case 5:
                 hintText = "当前连锁: " + data;
                 break;

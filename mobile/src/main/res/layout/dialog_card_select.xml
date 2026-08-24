@@ -17,16 +17,6 @@
         android:textColor="@color/white"
         android:textSize="11sp" />
 
-    <TextView
-        android:id="@+id/tv_card_select_count"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:gravity="center"
-        android:text="已选: 0/0"
-        android:textColor="#FFFF00"
-        android:textSize="9sp" />
-
     <LinearLayout
         android:id="@+id/layout_card_slots"
         android:layout_width="match_parent"
@@ -176,7 +166,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:max="0" />
+        android:max="0"
+        android:progressDrawable="@drawable/ygopro_base_background"
+        android:thumb="@drawable/ic_radius_bg" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -189,7 +181,6 @@
             android:id="@+id/btn_card_select_ok"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="20dp"
             android:background="@drawable/button3_bg"
             android:minWidth="90dp"
             android:minHeight="30dp"
@@ -197,16 +188,5 @@
             android:textColor="@color/white"
             android:textSize="10sp" />
 
-        <Button
-            android:id="@+id/btn_card_select_cancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/button3_bg"
-            android:minWidth="90dp"
-            android:minHeight="30dp"
-            android:text="取消"
-            android:textColor="@color/white"
-            android:textSize="10sp"
-            android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>
