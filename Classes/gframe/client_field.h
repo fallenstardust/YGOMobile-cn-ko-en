@@ -196,8 +196,8 @@ private:
 
 // TODO: move these (or all) colors to skin config
 #define CARD_LIST_OVERRIDE_TEXT_COLOR		0xff000099 // Blue
-#define CARD_LIST_DEFAULT_BACKGROUND_COLOR	0x6011113d // Navy
+#define CARD_LIST_DEFAULT_BACKGROUND_COLOR	0xff2196F3 // mainBlue
 #define CARD_LIST_OPPONENT_BACKGROUND_COLOR	0xff5a5a5a // Gray
-#define CARD_LIST_SELECTED_BACKGROUND_COLOR	0xffffffff // White
+#define CARD_LIST_SELECTED_BACKGROUND_COLOR	0x6011113d // Navy
 
 #endif //CLIENT_FIELD_H
