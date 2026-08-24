@@ -2,12 +2,12 @@ package cn.garymb.ygomobile;
 
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_DECK;
 import static cn.garymb.ygomobile.Constants.ACTION_OPEN_GAME;
+import static cn.garymb.ygomobile.Constants.ACTION_SHARE_RESOURCE;
 import static cn.garymb.ygomobile.Constants.CORE_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
 import static cn.garymb.ygomobile.Constants.ARG_OPEN_DECK_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_REPLAY_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SINGLE_PATH;
-import static cn.garymb.ygomobile.Constants.QUERY_NAME;
 import static cn.garymb.ygomobile.Constants.REQUEST_SETTINGS_CODE;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.Constants.YPK_FILE_EX;
@@ -34,6 +34,7 @@ import java.util.Locale;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.activities.ResourceShareActivity;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -88,6 +89,12 @@ public class GameUriManager {
                 YGOUtil.showTextToast(activity.getString(R.string.start_game_error));
                 activity.finish();
             }
+        } else if (ACTION_SHARE_RESOURCE.equals(intent.getAction())) {
+            // 启动ResourceShareActivity处理资源分享
+            Intent shareIntent = new Intent(intent);
+            shareIntent.setClass(getActivity(), ResourceShareActivity.class);
+            getActivity().startActivity(shareIntent);
+            activity.finish();
         } else {
             return false;
         }
