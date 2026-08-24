@@ -74,6 +74,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         void onTypeChange(int type);
 
         void onDeckError(int errorType, int cardCode);
+
+        /** 猜拳结果（STOC_HAND_RESULT），均为本方视角的手势常量（1=剪刀 2=石头 3=布） */
+        void onHandResult(int myHand, int oppHand);
     }
 
     private GameState state = GameState.IDLE;
@@ -667,6 +670,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onHandResult(int res1, int res2) {
         Log.i(TAG, "Hand result: " + res1 + " vs " + res2);
+        // STOC_HAND_RESULT 按服务器视角下发 player0/player1 手势，转换为本方视角
+        int self = client.selfType;
+        final int myHand = (self == 1) ? res2 : res1;
+        final int oppHand = (self == 1) ? res1 : res2;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHandResult(myHand, oppHand);
+        });
     }
 
     @Override

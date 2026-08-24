@@ -115,6 +115,13 @@ public class ShowDialogUtil {
         dialog.show();
     }
 
+    /** STOC_HAND_RESULT：播放猜拳结果动画（本方手势自底上升、对方手势倒置自顶下降） */
+    public void onHandResult(int myHand, int oppHand) {
+        if (handSelectDialog != null) {
+            handSelectDialog.playResultAnimation(myHand, oppHand);
+        }
+    }
+
     public void showTPSelectDialog() {
         if (tpSelectDialog != null && tpSelectDialog.isShowing()) return;
         YesOrNoDialog dialog = new YesOrNoDialog(activity);

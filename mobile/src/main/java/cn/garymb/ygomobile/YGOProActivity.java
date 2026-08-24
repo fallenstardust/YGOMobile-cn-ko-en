@@ -852,6 +852,11 @@ public class YGOProActivity extends AppCompatActivity implements
         runOnUiThread(() -> fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500));
     }
 
+    @Override
+    public void onHandResult(int myHand, int oppHand) {
+        runOnUiThread(() -> getDialogUtil().onHandResult(myHand, oppHand));
+    }
+
     public String getCardDisplayName(int code) {
         if (code <= 0) return "???";
         ocgcore.data.Card card = DataManager.get().getCardManager().getCard(code);
