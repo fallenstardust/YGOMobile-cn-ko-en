@@ -25,6 +25,11 @@ public class CardDisplayDialog {
 
     public static final int SLOT_COUNT = 5;
 
+    // 卡图宽高比 177:254：ImageView 高度 = 宽度 × CARD_ASPECT
+    private static final float CARD_ASPECT = 254f / 177f;
+    // 对话框宽度取 layout_game_right 实际宽度的四分之三
+    private static final float DIALOG_WIDTH_RATIO = 0.75f;
+
     public static class CardItem {
         public final int code;
         public final int controler;
@@ -120,7 +125,7 @@ public class CardDisplayDialog {
 
         tvTitle.setText(title);
         popupWindow = new PopupWindow(root,
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
         popupWindow.setFocusable(true);
@@ -130,8 +135,10 @@ public class CardDisplayDialog {
         });
 
         draggableHelper = new DraggablePopupHelper(context, "card_display");
+        int dialogWidth = resolveDialogWidth();
+        applyCardImageSize(dialogWidth);
         draggableHelper.setupDraggablePopup(popupWindow, root,
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
 
         for (int i = 0; i < SLOT_COUNT; i++) {
             final int slot = i;
@@ -160,6 +167,52 @@ public class CardDisplayDialog {
             }
         });
         btnOk.setOnClickListener(v -> dismiss());
+    }
+
+    /**
+     * 对话框宽度 = layout_game_right 实际宽度 × 3/4；
+     * 取不到时依次降级为窗口 decorView 宽度、屏幕宽度
+     */
+    private int resolveDialogWidth() {
+        int w = 0;
+        if (context instanceof android.app.Activity) {
+            android.app.Activity act = (android.app.Activity) context;
+            if (!act.isFinishing() && !act.isDestroyed()) {
+                View gameRight = act.findViewById(R.id.layout_game_right);
+                if (gameRight != null) {
+                    w = gameRight.getWidth();
+                }
+                if (w <= 0) {
+                    w = act.getWindow().getDecorView().getWidth();
+                }
+            }
+        }
+        if (w <= 0) {
+            w = context.getResources().getDisplayMetrics().widthPixels;
+        }
+        return Math.round(w * DIALOG_WIDTH_RATIO);
+    }
+
+    /**
+     * 按对话框宽度反推每张卡宽（扣除根内边距 16dp×2 与每槽水平外边距 4dp×2），
+     * 高度按 177:254 卡图比例计算，保证 ImageView 宽高与卡片比例一致
+     */
+    private void applyCardImageSize(int dialogWidthPx) {
+        int containerW = dialogWidthPx - 2 * dp2px(16);
+        int cardW = (containerW - SLOT_COUNT * 2 * dp2px(4)) / SLOT_COUNT;
+        if (cardW <= 0) return;
+        int cardH = Math.round(cardW * CARD_ASPECT);
+        for (ImageView iv : ivCards) {
+            ViewGroup.LayoutParams lp = iv.getLayoutParams();
+            if (lp != null) {
+                lp.height = cardH;
+                iv.setLayoutParams(lp);
+            }
+        }
+    }
+
+    private int dp2px(float dp) {
+        return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private void refreshSlots() {

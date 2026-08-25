@@ -19,6 +19,7 @@ import cn.garymb.ygomobile.engine.LuaScriptEngine;
 import cn.garymb.ygomobile.network.DuelClient;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.render.TextureLoader;
 import ocgcore.enums.CardLocation;
 
 public class GameEngine implements DuelClient.ClientListener, GameMessageParser.MessageHandler {
@@ -73,6 +74,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         void onTypeChange(int type);
 
         void onDeckError(int errorType, int cardCode);
+
+        /** 猜拳结果（STOC_HAND_RESULT），均为本方视角的手势常量（1=剪刀 2=石头 3=布） */
+        void onHandResult(int myHand, int oppHand);
     }
 
     private GameState state = GameState.IDLE;
@@ -219,6 +223,18 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 if (c != null) c.clearCmdFlag();
             }
         }
+    }
+
+    public boolean hasIdleCommands() {
+        return !summonableCards.isEmpty() || !spsummonableCards.isEmpty()
+                || !reposableCards.isEmpty() || !msetableCards.isEmpty()
+                || !ssetableCards.isEmpty() || !activatableCards.isEmpty()
+                || showBP || showEP || showShuffle;
+    }
+
+    public boolean hasBattleCommands() {
+        return !attackableCards.isEmpty() || !activatableCards.isEmpty()
+                || showM2 || showEP;
     }
 
     public void setPlayerName(String name) {
@@ -513,6 +529,18 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public void sendDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
         client.sendUpdateDeck(main, extra, side);
+        // 预读本方卡组全部卡图（TextureLoader 后台解码 + LRU 缓存、内部去重），
+        // 对局开始后我方抽卡/召唤直接带图，消除灰色占位闪现
+        try {
+            TextureLoader tl = TextureLoader.get();
+            for (List<Integer> deck : new List[]{main, extra, side}) {
+                if (deck == null) continue;
+                for (Integer code : deck) {
+                    if (code != null && code > 0) tl.getCardBitmap(code & 0xFFFFFFFFL);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     public void sendResponse(byte[] responseData) {
@@ -614,6 +642,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
+    public void onReplay(byte[] data) {
+        Log.i(TAG, "Replay data received from server, size=" + data.length);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onReplayData(data);
+        });
+    }
+
+    @Override
     public void onGameMsg(int msgType, ByteBuffer data) {
         data.order(ByteOrder.LITTLE_ENDIAN);
         try {
@@ -642,6 +678,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onHandResult(int res1, int res2) {
         Log.i(TAG, "Hand result: " + res1 + " vs " + res2);
+        // STOC_HAND_RESULT 按服务器视角下发 player0/player1 手势，转换为本方视角
+        int self = client.selfType;
+        final int myHand = (self == 1) ? res2 : res1;
+        final int oppHand = (self == 1) ? res1 : res2;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHandResult(myHand, oppHand);
+        });
     }
 
     @Override
@@ -758,8 +801,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 hintText = "请选择";
                 break;
             case 3:
-                hintText = "等待对方操作";
-                break;
+                // HINT_SELECTMSG：保存下一条选择对话框标题的 sys 字符串索引，
+                // 消费语义与 gframe select_hint 一致（duelclient.cpp L1458-1461）
+                field.selectHint = data;
+                return;
             case 5:
                 hintText = "当前连锁: " + data;
                 break;
@@ -790,6 +835,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onStart(int playerType, int duelRule, int lp0, int lp1,
                         int deck0, int extra0, int deck1, int extra1) {
         field.clear();
+        field.dInfo.duelRule = duelRule;
         duelIsFirst = (playerType & 1) == 0;
         int p0 = localPlayer(0);
         int p1 = localPlayer(1);
@@ -904,11 +950,15 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectPlace(int player, int count, int fieldMask) {
+        clearCommandFlags();
         selectFieldPlayer = player;
         selectFieldCount = count;
         selectFieldMask = ~fieldMask;
-        if (player != client.selfType) {
-            selectFieldMask = ((selectFieldMask >> 16) | (selectFieldMask << 16));
+        // fieldMask 相对选择方：低 16 位 = 选择方自己的半场。
+        // 只有选择方与我不同半场时才交换高低 16 位，保证低 16 位始终是我方半场（下半区）。
+        // 用 localPlayer(与卡牌渲染同一套映射)判断“选择方是否为对方”，player&1 取边以兼容 tag(0/2 先攻,1/3 后攻)。
+        if (localPlayer(player & 1) == 1) {
+            selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
         }
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(18, null);
@@ -952,11 +1002,12 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectDisfield(int player, int count, int fieldMask) {
+        clearCommandFlags();
         selectFieldPlayer = player;
         selectFieldCount = count;
         selectFieldMask = ~fieldMask;
-        if (player != client.selfType) {
-            selectFieldMask = ((selectFieldMask >> 16) | (selectFieldMask << 16));
+        if (localPlayer(player & 1) == 1) {
+            selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
         }
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(24, null);
@@ -1072,7 +1123,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         card.position = position;
         field.removeCard(oldCtrl, oldLoc, oldSeq);
         field.addCard(newCtrl, newLoc, newSeq, card);
-        field.moveCardAnimated(card, 8); if (newLoc == CardLocation.Removed.value()) {
+        field.moveCardAnimated(card, 8);
+        // 手卡增删后重排双方手卡（数量变化 → 间距变化）
+        if (oldLoc == CardLocation.Hand.value() || newLoc == CardLocation.Hand.value()) {
+            field.updateHandLayout(0, 10);
+            field.updateHandLayout(1, 10);
+        }
+        if (newLoc == CardLocation.Removed.value()) {
             soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
         } else if (newLoc == CardLocation.Grave.value()) {
             soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);
@@ -1552,7 +1609,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 flag = 1;
                 code &= 0x7fffffff;
             }
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_ACTIVATE;
                 activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));
@@ -1565,7 +1622,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int diratt = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_ATTACK;
                 attackableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1586,7 +1643,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_SUMMON;
                 summonableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1599,7 +1656,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_SPSUMMON;
                 if (card.code == 0 && code != 0) card.code = code;
@@ -1613,7 +1670,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_REPOS;
                 reposableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1626,7 +1683,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_MSET;
                 msetableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1639,7 +1696,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_SSET;
                 ssetableCards.add(new CmdCardInfo(card, code, 0, 0, i));
@@ -1658,7 +1715,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 flag = 1;
                 code &= 0x7fffffff;
             }
-            GameField.ClientCard card = field.getCard(con, loc, seq);
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_ACTIVATE;
                 activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));

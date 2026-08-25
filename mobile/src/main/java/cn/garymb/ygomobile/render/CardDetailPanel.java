@@ -585,6 +585,21 @@ public class CardDetailPanel {
         hideCancelOrFinishButton();
     }
 
+    /**
+     * 统一关闭当前打开的选择/确认/展示对话框（断线或决斗结束时清理），
+     * 避免残留弹窗遮挡重新显示的局域网主界面
+     */
+    public void dismissOpenDialogs() {
+        if (currentDialog != null) currentDialog.dismiss();
+        if (cardSelectDialog != null) cardSelectDialog.dismiss();
+        if (cardDisplayDialog != null) cardDisplayDialog.dismiss();
+        currentDialog = null;
+        cardSelectDialog = null;
+        cardDisplayDialog = null;
+        currentSelectType = -1;
+        hideCancelOrFinishButton();
+    }
+
     public void showBottomActions() {
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
     }
@@ -609,6 +624,16 @@ public class CardDetailPanel {
         if (btnSpeed != null) btnSpeed.setVisibility(View.VISIBLE);
         if (btnEmote != null) btnEmote.setVisibility(View.VISIBLE);
         if (btnChat != null) btnChat.setVisibility(View.VISIBLE);
+    }
+
+    /** 副卡组替换模式下隐藏卡组编辑控制栏（洗牌/排序/清空/删除/退出按钮区） */
+    public void hideDeckControl() {
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
+    }
+
+    /** 退出副卡组替换模式后恢复卡组编辑控制栏 */
+    public void showDeckControl() {
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
     }
 
     // === 录像控制条 ===

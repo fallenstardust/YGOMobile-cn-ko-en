@@ -10,33 +10,31 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -44,23 +42,26 @@ import cn.garymb.ygomobile.game.DeckEditorManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
+import cn.garymb.ygomobile.game.GameTopInfoManager;
 import cn.garymb.ygomobile.game.ReplayEngine;
+import cn.garymb.ygomobile.game.ReplayReader;
+import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.TextureLoader;
-import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
-import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.MainMenuDialog;
-import cn.garymb.ygomobile.ui.dialogs.RPSDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
 import ocgcore.DataManager;
+import ocgcore.StringManager;
 import ocgcore.data.Card;
 
 public class YGOProActivity extends AppCompatActivity implements
@@ -84,8 +85,6 @@ public class YGOProActivity extends AppCompatActivity implements
     private FrameLayout dialogContainer;
     private MainMenuDialog mainMenuDialog;
     private LanModeDialog lanModeDialog;
-    private RPSDialog handSelectDialog;
-    private YesOrNoDialog tpSelectDialog;
 
     private EditText etChatInput;
 
@@ -95,10 +94,24 @@ public class YGOProActivity extends AppCompatActivity implements
     private ReplayEngine currentReplayEngine;
     private CardDetailPanel cardDetailPanel;
     private GameFieldController fieldCtl;
+    private GameTopInfoManager topInfoManager;
+    private ShowDialogUtil dialogUtil;
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
     private FullScreenUtils mFullScreenUtils;
     private String currentBgPath;
+
+    // 最近一次加入/创建房间的连接信息：断线或决斗结束返回局域网主界面时回显
+    private String lastJoinNickname = "";
+    private String lastJoinHost = "";
+    private int lastJoinPort = 0;
+    private String lastJoinRoomName = "";
+
+    // 决斗结束后通讯发来的待保存录像队列（STOC_REPLAY 可能发来多个）
+    private final List<byte[]> pendingReplays = new ArrayList<>();
+    private boolean duelEndHandling = false;
+    private YesOrNoDialog resultDialog;
+    private ReplaySaveDialog replaySaveDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,7 +201,9 @@ public class YGOProActivity extends AppCompatActivity implements
 
         cardDetailPanel = new CardDetailPanel(this);
         cardDetailPanel.bindViews();
-        fieldCtl = new GameFieldController(this, mainHandler);
+        topInfoManager = new GameTopInfoManager(this, mainHandler);
+        topInfoManager.initViews();
+        fieldCtl = new GameFieldController(this, mainHandler, topInfoManager);
         fieldCtl.create();
 
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
@@ -296,6 +311,7 @@ public class YGOProActivity extends AppCompatActivity implements
         if (!TextUtils.isEmpty(host)) {
             int port = intent.getIntExtra("port", 7911);
             String room = intent.getStringExtra("room");
+            saveLastConnectionInfo(Constants.PlayerName, host, port, room);
             engine.connectToServer(host, port, false,
                     room != null ? room : "", "",
                     0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -386,6 +402,7 @@ public class YGOProActivity extends AppCompatActivity implements
         String room = options.mRoomName != null ? options.mRoomName : "";
         String user = options.mUserName != null ? options.mUserName : Constants.PlayerName;
         String password = options.mRoomName != null ? options.mRoomName : "";
+        saveLastConnectionInfo(user, host, port, room);
         engine.setPlayerName(user);
         engine.connectToServer(host, port, false, room, password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -402,6 +419,17 @@ public class YGOProActivity extends AppCompatActivity implements
 
     public GameFieldController getFieldCtl() {
         return fieldCtl;
+    }
+
+    public GameTopInfoManager getTopInfoManager() {
+        return topInfoManager;
+    }
+
+    public ShowDialogUtil getDialogUtil() {
+        if (dialogUtil == null) {
+            dialogUtil = new ShowDialogUtil(this, imageLoader, mainHandler);
+        }
+        return dialogUtil;
     }
 
     public CardDetailPanel getCardDetailPanel() {
@@ -454,6 +482,55 @@ public class YGOProActivity extends AppCompatActivity implements
         isGameStarted = true;
     }
 
+    /**
+     * 连接断开 / 决斗结束时调用：不退出 Activity，
+     * 隐藏左侧卡片详情面板(layout_card_detail_panel)与右侧决斗场区(layout_game_right)，
+     * 重新显示 LanModeDialog 的 lan main 布局，并回显加入游戏时填写的
+     * username、host、port、roomname 等信息；无连接信息时回退主菜单
+     */
+    private void returnToLanMain(String toastMsg) {
+        if (isFinishing() || isDestroyed()) return;
+        isGameStarted = false;
+        duelEndHandling = false;
+        pendingReplays.clear();
+        if (replaySaveDialog != null) {
+            replaySaveDialog.dismiss();
+            replaySaveDialog = null;
+        }
+        if (topInfoManager != null) topInfoManager.stopTimer();
+        if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
+        hideGameUI();
+        if (layoutDeckEditor != null) layoutDeckEditor.setVisibility(View.GONE);
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
+        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
+
+        if (TextUtils.isEmpty(lastJoinHost)) {
+            getMainMenuDialog().restoreMainMenu();
+        } else if (lanModeDialog != null && lanModeDialog.isShowing()) {
+            lanModeDialog.showLanMain();
+            lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
+                    String.valueOf(lastJoinPort), lastJoinRoomName);
+        } else {
+            LanModeDialog dialog = new LanModeDialog(this, this);
+            setLanModeDialog(dialog);
+            dialog.show(dialogContainer);
+            dialog.setOnDismissListener(() -> getMainMenuDialog().restoreMainMenu());
+            dialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
+                    String.valueOf(lastJoinPort), lastJoinRoomName);
+            dialog.showLanMain();
+        }
+        if (toastMsg != null && !toastMsg.isEmpty()) {
+            Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveLastConnectionInfo(String nickname, String host, int port, String roomName) {
+        lastJoinNickname = nickname != null ? nickname : "";
+        lastJoinHost = host != null ? host : "";
+        lastJoinPort = port;
+        lastJoinRoomName = roomName != null ? roomName : "";
+    }
+
     @Override
     public void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
                                       int startLP, int startHand, int drawCount, int timeLimit,
@@ -461,6 +538,9 @@ public class YGOProActivity extends AppCompatActivity implements
                                       String hostName, String password, String nickname) {
         String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
         String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+
+        String localIp = LanDiscoveryManager.getLocalIpAddress();
+        saveLastConnectionInfo(userName, localIp != null ? localIp : "127.0.0.1", 7911, roomName);
 
         engine.setPlayerName(userName);
         engine.startLocalServerWithSettings(lflist, ruleIdx, modeIdx, duelRule,
@@ -478,6 +558,7 @@ public class YGOProActivity extends AppCompatActivity implements
             portNum = 7911;
         }
         String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+        saveLastConnectionInfo(userName, ip, portNum, password);
         engine.setPlayerName(userName);
         engine.connectToServer(ip, portNum, false, "", password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -584,6 +665,12 @@ public class YGOProActivity extends AppCompatActivity implements
                     if (engine != null) {
                         engine.sendDeckUpdate(main, extra, side);
                     }
+                    // 副卡组替换完成：退出副卡组模式并隐藏整个卡组编辑器布局，
+                    // 等待下次 STOC_CHANGE_SIDE 进入副卡组替换模式时再显示
+                    if (deckEditorManager != null) {
+                        deckEditorManager.exitSideMode();
+                    }
+                    hideDeckEditorView();
                 }
             });
         }
@@ -655,6 +742,7 @@ public class YGOProActivity extends AppCompatActivity implements
         Log.i(TAG, "State: " + newState);
         switch (newState) {
             case LOBBY:
+                duelEndHandling = false;
                 if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
                     // Already showing player waiting via LanModeDialog, do nothing
                 } else {
@@ -662,19 +750,22 @@ public class YGOProActivity extends AppCompatActivity implements
                 }
                 break;
             case DECK_SELECT:
-                showDeckSelectDialog();
+                getDialogUtil().showDeckSelectDialog();
                 break;
             case HAND_SELECT:
                 enterDuelingUI();
-                showHandSelectDialog();
+                getDialogUtil().resetRpsResultState();
+                getDialogUtil().showHandSelectDialog();
                 break;
             case TP_SELECT:
                 enterDuelingUI();
-                showTPSelectDialog();
+                getDialogUtil().showTPSelectDialog();
                 break;
             case DUELING:
                 enterDuelingUI();
                 cardDetailPanel.showBottomActions();
+                pendingReplays.clear();
+                duelEndHandling = false;
                 break;
             case SIDING:
                 showDeckEditorView();              // 打开卡组编辑器
@@ -684,16 +775,18 @@ public class YGOProActivity extends AppCompatActivity implements
                 break;
             case DUEL_END:
                 cardDetailPanel.closeGameButtons();
+                duelEndHandling = true;
+                if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
+                if (resultDialog != null) {
+                    resultDialog.dismiss();
+                    resultDialog = null;
+                }
+                if (engine != null) engine.disconnect();
                 showDuelEndDialog();
                 break;
             case DISCONNECTED:
-                if (!isFinishing()) {
-                    runOnUiThread(() -> {
-                        if (lanModeDialog != null) {
-                            lanModeDialog.showLanMain();
-                        }
-                    });
-                }
+                if (duelEndHandling) break; // 决斗结束流程已接管返回逻辑，避免重复
+                returnToLanMain(isGameStarted ? "与服务器连接已断开" : null);
                 break;
         }
     }
@@ -701,7 +794,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onFieldChanged() {
         fieldCtl.invalidate();
-        runOnUiThread(() -> fieldCtl.updateCardCountDisplay(engine.getField()));
+        runOnUiThread(() -> topInfoManager.updateCardCountDisplay(engine.getField()));
     }
 
     @Override
@@ -711,16 +804,16 @@ public class YGOProActivity extends AppCompatActivity implements
             GameField.PlayerField pf = engine.getField().players[player];
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
             String name = info.name.isEmpty() ? defaultName : info.name;
-            fieldCtl.setPlayerDisplay(player, name, String.valueOf(pf.lp));
-            fieldCtl.updateCardCountDisplay(engine.getField());
+            topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
+            topInfoManager.updateCardCountDisplay(engine.getField());
         });
     }
 
     @Override
     public void onPhaseChanged(int phase) {
         runOnUiThread(() -> {
-            fieldCtl.setTurnText(String.valueOf(engine.getField().turnCount));
             isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
+            topInfoManager.updateTurn(engine.getField().turnCount, isMyTurn);
             fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
         });
     }
@@ -743,75 +836,76 @@ public class YGOProActivity extends AppCompatActivity implements
     public void onSelectRequired(int selectType, ByteBuffer data) {
         runOnUiThread(() -> {
             cardDetailPanel.setSelectType(selectType);
+            ShowDialogUtil showDialogUtil = getDialogUtil();
             switch (selectType) {
                 case 0:
-                    showHandSelectDialog();
+                    showDialogUtil.showHandSelectDialog();
                     break;
                 case 1:
-                    showTPSelectDialog();
+                    showDialogUtil.showTPSelectDialog();
                     break;
                 case 10:
-                    showBattleCmdDialog(data);
+                    showDialogUtil.showBattleCmdDialog(data);
                     break;
                 case 11:
-                    showIdleCmdDialog(data);
+                    showDialogUtil.showIdleCmdDialog(data);
                     break;
                 case 12:
-                    showEffectYnDialog(data);
+                    showDialogUtil.showEffectYnDialog(data);
                     break;
                 case 13:
-                    showYesNoDialog(data);
+                    showDialogUtil.showYesNoDialog(data);
                     break;
                 case 14:
-                    showOptionDialog(data);
+                    showDialogUtil.showOptionDialog(data);
                     break;
                 case 15:
-                    showCardSelectDialog(data);
+                    showDialogUtil.showCardSelectDialog(data);
                     break;
                 case 16:
-                    showChainSelectDialog(data);
+                    showDialogUtil.showChainSelectDialog(data);
                     break;
                 case 18:
-                    showPlaceSelectDialog(false);
+                    showDialogUtil.showPlaceSelectDialog(false);
                     break;
                 case 19:
-                    showPositionSelectDialog();
+                    showDialogUtil.showPositionSelectDialog();
                     break;
                 case 20:
-                    showTributeSelectDialog(data);
+                    showDialogUtil.showTributeSelectDialog(data);
                     break;
                 case 21:
-                    showSortChainDialog(data);
+                    showDialogUtil.showSortChainDialog(data);
                     break;
                 case 22:
-                    showCounterSelectDialog(data);
+                    showDialogUtil.showCounterSelectDialog(data);
                     break;
                 case 23:
-                    showSumSelectDialog(data);
+                    showDialogUtil.showSumSelectDialog(data);
                     break;
                 case 24:
-                    showPlaceSelectDialog(true);
+                    showDialogUtil.showPlaceSelectDialog(true);
                     break;
                 case 25:
-                    showSortCardDialog(data);
+                    showDialogUtil.showSortCardDialog(data);
                     break;
                 case 26:
-                    showUnselectCardDialog(data);
+                    showDialogUtil.showUnselectCardDialog(data);
                     break;
                 case 27:
-                    showConfirmCardsDialog(data);
+                    showDialogUtil.showConfirmCardsDialog(data);
                     break;
                 case 140:
-                    showAnnounceRaceDialog();
+                    showDialogUtil.showAnnounceRaceDialog();
                     break;
                 case 141:
-                    showAnnounceAttribDialog();
+                    showDialogUtil.showAnnounceAttribDialog();
                     break;
                 case 142:
-                    showAnnounceCardDialog(data);
+                    showDialogUtil.showAnnounceCardDialog(data);
                     break;
                 case 143:
-                    showAnnounceNumberDialog(data);
+                    showDialogUtil.showAnnounceNumberDialog(data);
                     break;
                 default:
                     Log.w(TAG, "Unhandled select type: " + selectType);
@@ -822,7 +916,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onDuelResult(int winner, int reason) {
-        fieldCtl.stopTimer();
+        topInfoManager.stopTimer();
         runOnUiThread(() -> {
             String result;
             if (winner == 2) {
@@ -832,7 +926,7 @@ public class YGOProActivity extends AppCompatActivity implements
             } else {
                 result = "😢 你输了";
             }
-            showResultDialog(result);
+            showResultDialog(result, false);
         });
     }
 
@@ -844,11 +938,12 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onReplayData(byte[] data) {
         Log.i(TAG, "Replay data received, size=" + data.length);
+        runOnUiThread(() -> pendingReplays.add(data));
     }
 
     @Override
     public void onTimeLimitUpdate(int player, int leftTime) {
-        runOnUiThread(() -> fieldCtl.onTimeLimitUpdate(player, leftTime, engine.getGameTimeLimit()));
+        runOnUiThread(() -> topInfoManager.onTimeLimitUpdate(player, leftTime, engine.getGameTimeLimit()));
     }
 
     @Override
@@ -856,323 +951,9 @@ public class YGOProActivity extends AppCompatActivity implements
         runOnUiThread(() -> fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500));
     }
 
-    // === Dialog Methods ===
-
-    private int getResId(String name, String type) {
-        return getResources().getIdentifier(name, type, getPackageName());
-    }
-
-    private View inflateSelectLayout() {
-        View contentView = getLayoutInflater().inflate(R.layout.dialog_game_select, null);
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
-        return contentView;
-    }
-
-    private void showHandSelectDialog() {
-        if (handSelectDialog != null && handSelectDialog.isShowing()) return;
-        RPSDialog dialog = new RPSDialog(this);
-        handSelectDialog = dialog;
-        dialog.setTitle("猜拳决定先手")
-                .setCancelable(false)
-                .setOnResultListener(result -> {
-                    engine.sendHandResult(result);
-                    dialog.dismiss();
-                });
-        dialog.show();
-    }
-
-    private void showTPSelectDialog() {
-        if (tpSelectDialog != null && tpSelectDialog.isShowing()) return;
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        tpSelectDialog = dialog;
-        dialog.setTitle("先攻选择")
-                .setMessage("是否选择先攻？")
-                .setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("先攻")
-                .setNegativeButtonText("后攻")
-                .setPositiveButton(v -> engine.sendTPResult(true))
-                .setNegativeButton(v -> engine.sendTPResult(false))
-                .setCancelable(false);
-        dialog.show();
-    }
-
-
-    private void showYesNoDialog(ByteBuffer data) {
-        int descId = 0;
-        if (data != null && data.remaining() >= 4) {
-            descId = data.getInt();
-        }
-        String desc = descId > 0
-                ? DataManager.get().getStringManager().getSystemString(descId, "是否发动效果？")
-                : "是否发动效果？";
-
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("确认")
-                .setMessage(desc)
-                .setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("是")
-                .setNegativeButtonText("否")
-                .setPositiveButton(v -> {
-                    sendResponseInt(1);
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    dialog.dismiss();
-                })
-                .setNegativeButton(v -> {
-                    sendResponseInt(0);
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    dialog.dismiss();
-                })
-                .setCancelable(false)
-                .setOnDismissListener(() -> {
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    cardDetailPanel.setCurrentDialog(null);  // 若需要保留引用可调整
-                });
-        cardDetailPanel.showCancelOrFinishButton("否");
-        dialog.show();
-    }
-
-    private void showOptionDialog(ByteBuffer data) {
-        if (data == null) return;
-        int count = data.get() & 0xFF;
-        List<String> options = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            int descId = data.getInt();
-            String str = DataManager.get().getStringManager().getSystemString(descId, "Option " + (i + 1));
-            options.add(str);
-        }
-
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("请选择");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-        for (int i = 0; i < options.size(); i++) {
-            Button btn = new Button(this);
-            btn.setText(options.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF006688);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 8;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                sendResponseInt(idx);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
-    private void showEffectYnDialog(ByteBuffer data) {
-        showYesNoDialog(data);
-    }
-
-    private void showBattleCmdDialog(ByteBuffer data) {
-        List<String> options = new ArrayList<>();
-        List<Runnable> actions = new ArrayList<>();
-
-        for (int i = 0; i < engine.attackableCards.size(); i++) {
-            GameEngine.CmdCardInfo info = engine.attackableCards.get(i);
-            String cardName = getCardDisplayName(info.code);
-            options.add("⚔ " + cardName);
-            final int idx = i;
-            actions.add(() -> sendResponseInt((idx << 16) + 1));
-        }
-
-        for (int i = 0; i < engine.activatableCards.size(); i++) {
-            GameEngine.CmdCardInfo info = engine.activatableCards.get(i);
-            String cardName = getCardDisplayName(info.code);
-            String descStr = info.desc > 0
-                    ? DataManager.get().getStringManager().getSystemString(info.desc, "效果")
-                    : "发动";
-            options.add("✦ " + cardName + " - " + descStr);
-            final int idx = i;
-            actions.add(() -> sendResponseInt(idx << 16));
-        }
-
-        if (engine.showM2) {
-            options.add("▶ 进入Main2");
-            actions.add(() -> sendResponseInt(2));
-        }
-        if (engine.showEP) {
-            options.add("▶ 结束阶段");
-            actions.add(() -> sendResponseInt(3));
-        }
-
-        if (options.isEmpty()) {
-            sendResponseInt(3);
-            return;
-        }
-
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("战斗阶段");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < options.size(); i++) {
-            Button btn = new Button(this);
-            btn.setText(options.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setTextSize(12);
-            btn.setSingleLine(false);
-            String opt = options.get(i);
-            if (opt.startsWith("⚔")) {
-                btn.setBackgroundColor(0xFF883333);
-            } else if (opt.startsWith("✦")) {
-                btn.setBackgroundColor(0xFF886633);
-            } else {
-                btn.setBackgroundColor(0xFF335577);
-            }
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                actions.get(idx).run();
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
-    private void showIdleCmdDialog(ByteBuffer data) {
-        List<String> options = new ArrayList<>();
-        List<Runnable> actions = new ArrayList<>();
-
-        for (int i = 0; i < engine.summonableCards.size(); i++) {
-            GameEngine.CmdCardInfo info = engine.summonableCards.get(i);
-            String cardName = getCardDisplayName(info.code);
-            options.add("召唤: " + cardName);
-            final int idx = i;
-            actions.add(() -> sendResponseInt(idx << 16));
-        }
-
-        for (int i = 0; i < engine.spsummonableCards.size(); i++) {
-            GameEngine.CmdCardInfo info = engine.spsummonableCards.get(i);
-            String cardName = getCardDisplayName(info.code);
-            options.add("特殊召唤: " + cardName);
-            final int idx = i;
-            actions.add(() -> sendResponseInt((idx << 16) + 1));
-        }
-
-        for (int i = 0; i < engine.reposableCards.size(); i++) {
-            GameEngine.CmdCardInfo info = engine.reposableCards.get(i);
-            String cardName = getCardDisplayName(info.code);
-            options.add("切换表示: " + cardName);
-            final int idx = i;
-            actions.add(() -> sendResponseInt((idx << 16) + 2));
-        }
-
-        for (int i = 0; i < engine.msetableCards.size(); i++) {
-            GameEngine.CmdCardInfo info = engine.msetableCards.get(i);
-            String cardName = getCardDisplayName(info.code);
-            options.add("盖放(怪兽): " + cardName);
-            final int idx = i;
-            actions.add(() -> sendResponseInt((idx << 16) + 3));
-        }
-
-        for (int i = 0; i < engine.ssetableCards.size(); i++) {
-            GameEngine.CmdCardInfo info = engine.ssetableCards.get(i);
-            String cardName = getCardDisplayName(info.code);
-            options.add("设置(魔陷): " + cardName);
-            final int idx = i;
-            actions.add(() -> sendResponseInt((idx << 16) + 4));
-        }
-
-        for (int i = 0; i < engine.activatableCards.size(); i++) {
-            GameEngine.CmdCardInfo info = engine.activatableCards.get(i);
-            String cardName = getCardDisplayName(info.code);
-            String descStr = info.desc > 0
-                    ? DataManager.get().getStringManager().getSystemString(info.desc, "效果")
-                    : "发动";
-            options.add("发动: " + cardName + " - " + descStr);
-            final int idx = i;
-            actions.add(() -> sendResponseInt((idx << 16) + 5));
-        }
-
-        if (engine.showBP) {
-            options.add("▶ 进入战斗阶段");
-            actions.add(() -> sendResponseInt(6));
-        }
-        if (engine.showEP) {
-            options.add("▶ 结束阶段");
-            actions.add(() -> sendResponseInt(7));
-        }
-        if (engine.showShuffle) {
-            options.add("🔀 洗牌");
-            actions.add(() -> sendResponseInt(8));
-        }
-
-        if (options.isEmpty()) {
-            sendResponseInt(7);
-            return;
-        }
-
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("主要阶段");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < options.size(); i++) {
-            Button btn = new Button(this);
-            btn.setText(options.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setTextSize(12);
-            btn.setSingleLine(false);
-            String opt = options.get(i);
-            if (opt.startsWith("召唤")) {
-                btn.setBackgroundColor(0xFF338833);
-            } else if (opt.startsWith("特殊召唤")) {
-                btn.setBackgroundColor(0xFF338888);
-            } else if (opt.startsWith("切换表示")) {
-                btn.setBackgroundColor(0xFF555588);
-            } else if (opt.startsWith("盖放") || opt.startsWith("设置")) {
-                btn.setBackgroundColor(0xFF555555);
-            } else if (opt.startsWith("发动")) {
-                btn.setBackgroundColor(0xFF886633);
-            } else {
-                btn.setBackgroundColor(0xFF335577);
-            }
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                actions.get(idx).run();
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
-    private void showPlaceSelectDialog(boolean isDisfield) {
-        fieldCtl.beginPlaceSelect(isDisfield);
-    }
-
-    private void sendCardSelectResponse(List<CardSelectDialog.CardItem> cardInfos, List<Integer> selectedIndices) {
-        // C++ SetResponseSelectedCards：respbuf[0]=len，其后按点击顺序填充 select_seq
-        ByteBuffer buf = ByteBuffer.allocate(1 + selectedIndices.size());
-        buf.order(ByteOrder.LITTLE_ENDIAN);
-        buf.put((byte) selectedIndices.size());
-        for (int idx : selectedIndices) {
-            if (idx >= 0 && idx < cardInfos.size()) {
-                buf.put((byte) cardInfos.get(idx).selectSeq);
-            }
-        }
-        engine.sendResponse(buf.array());
+    @Override
+    public void onHandResult(int myHand, int oppHand) {
+        runOnUiThread(() -> getDialogUtil().onHandResult(myHand, oppHand));
     }
 
     public String getCardDisplayName(int code) {
@@ -1205,888 +986,138 @@ public class YGOProActivity extends AppCompatActivity implements
         }
     }
 
-    private void showPositionSelectDialog() {
-        showListDialog("选择表示形式", new String[]{
-                "表侧攻击表示", "里侧攻击表示",
-                "表侧守备表示", "里侧守备表示"
-        }, which -> {
-            int pos;
-            switch (which) {
-                case 0:
-                    pos = 0x1;
-                    break;
-                case 1:
-                    pos = 0x2;
-                    break;
-                case 2:
-                    pos = 0x4;
-                    break;
-                case 3:
-                    pos = 0x8;
-                    break;
-                default:
-                    pos = 0x1;
-                    break;
-            }
-            sendResponseInt(pos);
-        });
-    }
-
-    private void showDeckSelectDialog() {
-        File deckDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_DECK_PATH);
-        File[] deckFiles = deckDir.exists()
-                ? deckDir.listFiles((dir, name) -> name.endsWith(Constants.YDK_FILE_EX))
-                : null;
-
-        List<String> deckNames = new ArrayList<>();
-        if (deckFiles != null && deckFiles.length > 0) {
-            for (File f : deckFiles) {
-                deckNames.add(f.getName().replace(Constants.YDK_FILE_EX, ""));
-            }
-        } else {
-            deckNames.add("（暂无卡组文件）");
-        }
-
-        final File[] finalDeckFiles = deckFiles;
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("选择卡组");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < deckNames.size(); i++) {
-            Button btn = new Button(this);
-            btn.setText(deckNames.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int pos = i;
-            btn.setOnClickListener(v -> {
-                if (finalDeckFiles != null && pos < finalDeckFiles.length) {
-                    loadAndSendDeck(finalDeckFiles[pos]);
-                }
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-
-        dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
-                .setPositiveButtonText("取消")
-                .setPositiveButton(v -> engine.disconnect())
-                .setCancelable(false);
-        dialog.show();
-    }
-
-    private void loadAndSendDeck(File ydkFile) {
-        new Thread(() -> {
-            List<Integer> main = new ArrayList<>();
-            List<Integer> extra = new ArrayList<>();
-            List<Integer> side = new ArrayList<>();
-
-            try (BufferedReader reader = new BufferedReader(new FileReader(ydkFile))) {
-                String line;
-                int section = 0;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    if (line.isEmpty() || line.startsWith("#")) continue;
-                    if (line.equalsIgnoreCase("#main")) {
-                        section = 1;
-                        continue;
-                    }
-                    if (line.equalsIgnoreCase("#extra")) {
-                        section = 2;
-                        continue;
-                    }
-                    if (line.equalsIgnoreCase("!side")) {
-                        section = 3;
-                        continue;
-                    }
-                    try {
-                        int code = Integer.parseInt(line);
-                        switch (section) {
-                            case 1:
-                                main.add(code);
-                                break;
-                            case 2:
-                                extra.add(code);
-                                break;
-                            case 3:
-                                side.add(code);
-                                break;
-                        }
-                    } catch (NumberFormatException e) { /* skip */ }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to load deck: " + ydkFile.getName(), e);
-                mainHandler.post(() -> showHintMessage("卡组加载失败"));
-                return;
-            }
-
-            engine.sendDeckUpdate(main, extra, side);
-            mainHandler.post(() -> {
-                showHintMessage("卡组已发送: " + main.size() + "+" + extra.size() + "+" + side.size());
-            });
-        }, "DeckLoad").start();
-    }
-
-    private void showSideSelectDialog() {
-        showHintMessage("副卡组替换 - 请在大厅中选择卡组");
-    }
-
-    private void showChainSelectDialog(ByteBuffer data) {
-        if (data == null || data.remaining() < 2) {
-            sendResponseInt(-1);
-            return;
-        }
-        int count = data.get() & 0xFF;
-        int specount = data.get() & 0xFF;
-        if (data.remaining() < 8) {
-            sendResponseInt(-1);
-            return;
-        }
-        int hint0 = data.getInt();
-        int hint1 = data.getInt();
-
-        List<String> chainOptions = new ArrayList<>();
-        List<Integer> chainFlags = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 14; i++) {
-            int flag = data.get() & 0xFF;
-            int forced = data.get() & 0xFF;
-            flag |= forced << 8;
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            int subSeq = data.get() & 0xFF;
-            int desc = data.getInt();
-
-            String cardName = getCardDisplayName(code);
-            String descStr = desc > 0 ? DataManager.get().getStringManager().getSystemString(desc, "效果") : "效果";
-            chainOptions.add(cardName + " - " + descStr);
-            chainFlags.add(flag);
-        }
-
-        if (chainOptions.isEmpty()) {
-            sendResponseInt(-1);
-            return;
-        }
-
-        boolean hasForced = false;
-        for (int f : chainFlags) {
-            if ((f & 0x100) != 0) {
-                hasForced = true;
-                break;
-            }
-        }
-
-        if (hasForced) {
-            for (int i = 0; i < chainFlags.size(); i++) {
-                if ((chainFlags.get(i) & 0x100) != 0) {
-                    sendResponseInt(i);
-                    return;
-                }
-            }
-        }
-
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        cardDetailPanel.setCurrentDialog(dialog);
-        dialog.setTitle("连锁选择");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < chainOptions.size(); i++) {
-            Button btn = new Button(this);
-            btn.setText(chainOptions.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor((chainFlags.get(i) & 0x100) != 0 ? 0xFFAA3333 : 0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                sendResponseInt(idx);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-
-        dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
-                .setPositiveButtonText("不连锁")
-                .setPositiveButton(v -> {
-                    sendResponseInt(-1);
-                    cardDetailPanel.hideCancelOrFinishButton();
-                })
-                .setCancelable(false)
-                .setOnDismissListener(() -> {
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    cardDetailPanel.setCurrentDialog(null);
-                });
-        if (!hasForced) {
-            cardDetailPanel.showCancelOrFinishButton("不连锁");
-        }
-        dialog.show();
-    }
-
-    private void showCardSelectDialog(ByteBuffer data) {
-        // duelclient.cpp L1923-1984：player(1) cancelable(1) min(1) max(1) count(1) + n×[code4 ctrl1 loc1 seq1 subseq1]
-        if (data == null || data.remaining() < 5) {
-            sendResponseInt(0);
-            return;
-        }
-        int player = data.get() & 0xFF;
-        int cancelable = data.get() & 0xFF;
-        int min = data.get() & 0xFF;
-        int max = data.get() & 0xFF;
-        int count = data.get() & 0xFF;
-        List<CardSelectDialog.CardItem> items = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 8; i++) {
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            int subSeq = data.get() & 0xFF;
-            items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, subSeq, i));
-        }
-        if (items.isEmpty()) {
-            sendResponseInt(0);
-            return;
-        }
-        final List<CardSelectDialog.CardItem> cardInfos = items;
-        CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardDetailPanel.setCardSelectDialog(dialog);
-        dialog.setMode(CardSelectDialog.MODE_SELECT)
-                .setTitle("选择卡片 (" + min + "-" + max + ")")
-                .setCards(items)
-                .setSelectRange(min, max)
-                .setCancelable(cancelable != 0)
-                .setLocalPlayer(engine.getClient().selfType)
-                .setListener(new CardSelectDialog.OnCardSelectListener() {
-                    @Override
-                    public void onCardsSelected(List<Integer> selectedIndices) {
-                        sendCardSelectResponse(cardInfos, selectedIndices);
-                    }
-
-                    @Override
-                    public void onCancel() {
-                        sendResponseInt(-1);
-                    }
-                })
-                .setOnDismissListener(() -> {
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    cardDetailPanel.setCardSelectDialog(null);
-                })
-                .show();
-    }
-
-    private void showTributeSelectDialog(ByteBuffer data) {
-        // duelclient.cpp L2300-2342：player(1) cancelable(1) min(1) max(1) count(1) + n×[code4 ctrl1 loc1 seq1 t1]
-        if (data == null || data.remaining() < 5) {
-            sendResponseInt(0);
-            return;
-        }
-        int player = data.get() & 0xFF;
-        int cancelable = data.get() & 0xFF;
-        int min = data.get() & 0xFF;
-        int max = data.get() & 0xFF;
-        int count = data.get() & 0xFF;
-        List<CardSelectDialog.CardItem> items = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 8; i++) {
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            int tributeValue = data.get() & 0xFF;
-            items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, 0, i, tributeValue));
-        }
-        if (items.isEmpty()) {
-            sendResponseInt(0);
-            return;
-        }
-        final List<CardSelectDialog.CardItem> cardInfos = items;
-        CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardDetailPanel.setCardSelectDialog(dialog);
-        dialog.setMode(CardSelectDialog.MODE_SELECT)
-                .setTitle("解放选择 (" + min + "-" + max + ")")
-                .setCards(items)
-                .setSelectRange(min, max)
-                .setCancelable(cancelable != 0)
-                .setValueVisible(true)
-                .setLocalPlayer(engine.getClient().selfType)
-                .setListener(new CardSelectDialog.OnCardSelectListener() {
-                    @Override
-                    public void onCardsSelected(List<Integer> selectedIndices) {
-                        sendCardSelectResponse(cardInfos, selectedIndices);
-                    }
-
-                    @Override
-                    public void onCancel() {
-                        sendResponseInt(-1);
-                    }
-                })
-                .setOnDismissListener(() -> {
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    cardDetailPanel.setCardSelectDialog(null);
-                })
-                .show();
-    }
-
-    private void showSortChainDialog(ByteBuffer data) {
-        if (data == null || data.remaining() < 1) {
-            sendResponseInt(0);
-            return;
-        }
-        int count = data.get() & 0xFF;
-        if (count <= 1) {
-            sendResponseInt(0);
-            return;
-        }
-        showHintMessage("连锁排序: 自动排序");
-        sendResponseInt(0);
-    }
-
-    private void showCounterSelectDialog(ByteBuffer data) {
-        if (data == null || data.remaining() < 5) {
-            sendResponseInt(0);
-            return;
-        }
-        int player = data.get() & 0xFF;
-        int counterType = data.getShort() & 0xFFFF;
-        int count = data.get() & 0xFF;
-        int descId = data.remaining() >= 4 ? data.getInt() : 0;
-
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("选择指示物数量");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 1; i <= count; i++) {
-            Button btn = new Button(this);
-            btn.setText(String.valueOf(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int val = i;
-            btn.setOnClickListener(v -> {
-                sendResponseInt(val);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
-
-    private void showSumSelectDialog(ByteBuffer data) {
-        // duelclient.cpp L2370-2414 + playerop.cpp L661-688：
-        // select_mode(1) player(1) sumval(4) min(1) max(1) must_count(1)
-        // + must×[code4 ctrl1 loc1 seq1 opParam4]（11字节/条，无subSeq）
-        // + count(1) + n×[code4 ctrl1 loc1 seq1 opParam4]
-        if (data == null || data.remaining() < 9) {
-            sendResponseInt(0);
-            return;
-        }
-        int selectMode = data.get() & 0xFF;
-        int player = data.get() & 0xFF;
-        int sumVal = data.getInt();
-        int min = data.get() & 0xFF;
-        int max = data.get() & 0xFF;
-        int mustCount = data.get() & 0xFF;
-        List<CardSelectDialog.CardItem> mustCards = new ArrayList<>();
-        for (int i = 0; i < mustCount && data.remaining() >= 11; i++) {
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            int opParam = data.getInt();
-            mustCards.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, 0, 0, opParam));
-        }
-        int count = data.remaining() >= 1 ? (data.get() & 0xFF) : 0;
-        List<CardSelectDialog.CardItem> items = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 11; i++) {
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            int opParam = data.getInt();
-            items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, 0, i, opParam));
-        }
-        if (items.isEmpty()) {
-            // 无可选卡：直接发送 must 占位（对齐 C++ ShowSelectSum 自动提交）
-            byte[] resp = new byte[1 + mustCount];
-            resp[0] = (byte) mustCount;
-            engine.sendResponse(resp);
-            return;
-        }
-        final List<CardSelectDialog.CardItem> cardInfos = items;
-        final int fMustCount = mustCount;
-        CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardDetailPanel.setCardSelectDialog(dialog);
-        dialog.setMode(CardSelectDialog.MODE_SUM)
-                .setTitle("素材选择 (总和" + (selectMode == 0 ? "=" : ">=") + sumVal + ")")
-                .setCards(items)
-                .setMustCards(mustCards)
-                .setSelectRange(min, max)
-                .setSumValue(sumVal, selectMode)
-                .setValueVisible(true)
-                .setLocalPlayer(engine.getClient().selfType)
-                .setListener(new CardSelectDialog.OnCardSelectListener() {
-                    @Override
-                    public void onCardsSelected(List<Integer> selectedIndices) {
-                        sendSumResponse(selectedIndices, fMustCount);
-                    }
-
-                    @Override
-                    public void onCancel() {
-                        sendResponseInt(-1);
-                    }
-                })
-                .setOnDismissListener(() -> {
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    cardDetailPanel.setCardSelectDialog(null);
-                })
-                .show();
-    }
-
-    private void sendSumResponse(List<Integer> selectedIndices, int mustCount) {
-        // playerop.cpp L697-712：总数 ∈ [min+mcount, max+mcount]；
-        // 前 mcount 个值核心忽略（must 占位），其后为可选卡在可选列表中的 index
-        ByteBuffer buf = ByteBuffer.allocate(1 + mustCount + selectedIndices.size());
-        buf.order(ByteOrder.LITTLE_ENDIAN);
-        buf.put((byte) (mustCount + selectedIndices.size()));
-        for (int i = 0; i < mustCount; i++) {
-            buf.put((byte) 0);
-        }
-        for (int idx : selectedIndices) {
-            buf.put((byte) idx);
-        }
-        engine.sendResponse(buf.array());
-    }
-
-    private void showAnnounceRaceDialog() {
-        String[] races = {"战士", "魔法师", "炎", "水", "雷", "岩石", "植物", "兽",
-                "兽战士", "恐龙", "昆虫", "爬虫", "海龙", "鱼", "机械", "超能",
-                "幻神兽", "创造神", "龙"};
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("选择种族");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < races.length; i++) {
-            Button btn = new Button(this);
-            btn.setText(races[i]);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int raceBit = 1 << i;
-            btn.setOnClickListener(v -> {
-                sendResponseInt(raceBit);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
-    private void showAnnounceAttribDialog() {
-        String[] attribs = {"光", "暗", "水", "炎", "地", "风", "神"};
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("选择属性");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < attribs.length; i++) {
-            Button btn = new Button(this);
-            btn.setText(attribs[i]);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int attrBit = 1 << i;
-            btn.setOnClickListener(v -> {
-                sendResponseInt(attrBit);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
-    private void showAnnounceCardDialog(ByteBuffer data) {
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("宣言卡片");
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (10 * getResources().getDisplayMetrics().density);
-        root.setPadding(pad, pad, pad, pad);
-
-        EditText input = new EditText(this);
-        input.setHint("输入卡片名称搜索...");
-        input.setTextColor(0xFFFFFFFF);
-        input.setHintTextColor(0xFF888888);
-        input.setSingleLine(true);
-        root.addView(input);
-
-        LinearLayout resultLayout = new LinearLayout(this);
-        resultLayout.setOrientation(LinearLayout.VERTICAL);
-        root.addView(resultLayout);
-
-        final int[] selectedCode = {0};
-        final TextView tvSelected = new TextView(this);
-        tvSelected.setTextColor(0xFFFFFF00);
-        tvSelected.setTextSize(13);
-        tvSelected.setText("未选择卡片");
-        root.addView(tvSelected);
-
-        input.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                resultLayout.removeAllViews();
-                String query = s.toString().trim();
-                if (query.length() < 2) return;
-                SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
-                List<Card> results = new ArrayList<>();
-                for (int i = 0; i < allCards.size(); i++) {
-                    Card c = allCards.valueAt(i);
-                    if (c.containsName(query)) {
-                        results.add(c);
-                        if (results.size() >= 10) break;
-                    }
-                }
-                int limit = Math.min(results.size(), 10);
-                for (int i = 0; i < limit; i++) {
-                    Card c = results.get(i);
-                    Button btn = new Button(YGOProActivity.this);
-                    btn.setText(c.Name + " [" + c.Code + "]");
-                    btn.setTextColor(0xFFFFFFFF);
-                    btn.setBackgroundColor(0xFF335577);
-                    btn.setTextSize(12);
-                    btn.setSingleLine(true);
-                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                    lp.bottomMargin = 2;
-                    btn.setLayoutParams(lp);
-                    final int code = c.Code;
-                    btn.setOnClickListener(v -> {
-                        selectedCode[0] = code;
-                        tvSelected.setText("已选择: " + c.Name);
-                    });
-                    resultLayout.addView(btn);
-                }
-            }
-        });
-
-        ScrollView scrollView = new ScrollView(this);
-        scrollView.addView(root);
-        dialog.setContentView(scrollView);
-        dialog.setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("确认")
-                .setNegativeButtonText("取消")
-                .setPositiveButton(v -> {
-                    if (selectedCode[0] > 0) {
-                        sendResponseInt(selectedCode[0]);
-                    }
-                })
-                .setNegativeButton(v -> sendResponseInt(0))
-                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                .setCancelable(false);
-        dialog.show();
-    }
-
-    private void showAnnounceNumberDialog(ByteBuffer data) {
-        if (data == null || data.remaining() < 1) {
-            sendResponseInt(0);
-            return;
-        }
-        int count = data.get() & 0xFF;
-        List<Integer> numbers = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            numbers.add(data.getInt());
-        }
-        if (numbers.isEmpty()) {
-            sendResponseInt(0);
-            return;
-        }
-
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("选择数字");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < numbers.size(); i++) {
-            Button btn = new Button(this);
-            btn.setText(String.valueOf(numbers.get(i)));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int val = numbers.get(i);
-            btn.setOnClickListener(v -> {
-                sendResponseInt(val);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
     public void showCardInfoPanel(GameField.ClientCard card) {
         cardDetailPanel.showCardInfo(card);
     }
 
-    private void showSortCardDialog(ByteBuffer data) {
-        // duelclient.cpp L2416-2442：player(1) count(1) + n×[code4 ctrl1 loc1 seq1]（7字节/条，无subSeq）
-        if (data == null || data.remaining() < 2) {
-            return;
-        }
-        int player = data.get() & 0xFF;
-        int count = data.get() & 0xFF;
-        if (count <= 1) {
-            byte[] resp = new byte[count];
-            for (int i = 0; i < count; i++) resp[i] = (byte) i;
-            engine.sendResponse(resp);
-            return;
-        }
-        List<CardSelectDialog.CardItem> items = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 7; i++) {
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, 0, i));
-        }
-        if (items.size() < count) {
-            byte[] resp = new byte[items.size()];
-            for (int i = 0; i < resp.length; i++) resp[i] = (byte) i;
-            engine.sendResponse(resp);
-            return;
-        }
-        CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardDetailPanel.setCardSelectDialog(dialog);
-        dialog.setMode(CardSelectDialog.MODE_SORT)
-                .setTitle("卡片排序 (按顺序点击)")
-                .setCards(items)
-                .setListener(new CardSelectDialog.OnCardSelectListener() {
-                    @Override
-                    public void onSorted(int[] respBuf) {
-                        // playerop.cpp L776-788：响应 = 排列（0..n-1 无重复）
-                        byte[] resp = new byte[respBuf.length];
-                        for (int i = 0; i < respBuf.length; i++) {
-                            resp[i] = (byte) respBuf[i];
-                        }
-                        engine.sendResponse(resp);
-                    }
-                })
-                .setOnDismissListener(() -> {
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    cardDetailPanel.setCardSelectDialog(null);
-                })
-                .show();
+    public void showResultDialog(String result) {
+        showResultDialog(result, true);
     }
 
-    private void showUnselectCardDialog(ByteBuffer data) {
-        // duelclient.cpp L1986-2080：player(1) finishable(1) cancelable(1) min(1) max(1)
-        // count1(1) + count1×[code4 ctrl1 loc1 seq1 subseq1] + count2(1) + count2×[code4 ctrl1 loc1 seq1 subseq1]
-        // 点击任意卡立即提交 [1, seq]；finishable 时 OK=发送-1；cancelable 时取消=发送-1
-        if (data == null || data.remaining() < 6) {
-            sendResponseInt(-1);
+    public void showResultDialog(String result, boolean exitOnConfirm) {
+        if (resultDialog != null) resultDialog.dismiss();
+        resultDialog = new YesOrNoDialog(this);
+        resultDialog.setTitle("决斗结果")
+                .setMessage(result)
+                .setPositiveButton(v -> {
+                    if (exitOnConfirm) {
+                        finish();
+                    }
+                })
+                .setOnDismissListener(() -> resultDialog = null)
+                .setCancelable(false);
+        resultDialog.show();
+    }
+
+    /**
+     * 决斗结束提示框：仅显示「确定」按钮（TYPE_MESSAGE），
+     * 点击确定后自动隐藏本框并开始处理通讯发来的录像队列
+     */
+    private void showDuelEndDialog() {
+        if (isFinishing() || isDestroyed()) return;
+        StringManager sm = DataManager.get().getStringManager();
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setMessage(sm.getSystemString(1500, "决斗结束。"))
+                .setType(YesOrNoDialog.TYPE_MESSAGE)
+                .setPositiveButtonText(sm.getSystemString(1211, "确定"))
+                .setPositiveButton(v -> processPendingReplays())
+                .setCancelable(false);
+        dialog.show();
+    }
+
+    /**
+     * 逐个处理通讯发来的录像：有待保存项则弹出录像保存对话框，
+     * 全部处理完毕（保存或取消跳过）后才隐藏决斗 UI 并重新显示 LanModeDialog
+     */
+    private void processPendingReplays() {
+        if (isFinishing() || isDestroyed()) {
+            pendingReplays.clear();
             return;
         }
-        int player = data.get() & 0xFF;
-        boolean finishable = (data.get() & 0xFF) != 0;
-        boolean cancelable = (data.get() & 0xFF) != 0;
-        int min = data.get() & 0xFF;
-        int max = data.get() & 0xFF;
-        int count1 = data.get() & 0xFF;
-        List<CardSelectDialog.CardItem> items = new ArrayList<>();
-        int seqIndex = 0;
-        for (int i = 0; i < count1 && data.remaining() >= 8; i++) {
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            int subSeq = data.get() & 0xFF;
-            items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, subSeq, seqIndex++));
-        }
-        int count2 = data.remaining() >= 1 ? (data.get() & 0xFF) : 0;
-        for (int i = 0; i < count2 && data.remaining() >= 8; i++) {
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            int subSeq = data.get() & 0xFF;
-            items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, subSeq, seqIndex++));
-        }
-        if (items.isEmpty()) {
-            sendResponseInt(-1);
+        if (pendingReplays.isEmpty()) {
+            returnToLanMain(null);
             return;
         }
-        boolean[] preSelected = new boolean[items.size()];
-        for (int i = count1; i < items.size(); i++) {
-            preSelected[i] = true;
-        }
-        final List<CardSelectDialog.CardItem> cardInfos = items;
-        CardSelectDialog dialog = new CardSelectDialog(this, imageLoader);
-        cardDetailPanel.setCardSelectDialog(dialog);
-        dialog.setMode(CardSelectDialog.MODE_UNSELECT)
-                .setTitle("选择卡片 (" + min + "-" + max + ")")
-                .setCards(items)
-                .setPreSelected(preSelected)
-                .setSelectRange(min, max)
-                .setCancelable(cancelable)
-                .setFinishable(finishable)
-                .setLocalPlayer(engine.getClient().selfType)
-                .setListener(new CardSelectDialog.OnCardSelectListener() {
+        final byte[] replayData = pendingReplays.remove(0);
+        replaySaveDialog = new ReplaySaveDialog(this);
+        replaySaveDialog.setDefaultName(getReplayDefaultName(replayData))
+                .setOnReplayActionListener(new ReplaySaveDialog.OnReplayActionListener() {
                     @Override
-                    public void onCardClicked(int index) {
-                        // event_handler.cpp L882-896：点击即提交 [1, select_seq]
-                        ByteBuffer buf = ByteBuffer.allocate(2);
-                        buf.order(ByteOrder.LITTLE_ENDIAN);
-                        buf.put((byte) 1);
-                        if (index >= 0 && index < cardInfos.size()) {
-                            buf.put((byte) cardInfos.get(index).selectSeq);
-                        }
-                        engine.sendResponse(buf.array());
+                    public void onSave(String fileName) {
+                        saveReplayFile(replayData, fileName);
+                        mainHandler.post(() -> processPendingReplays());
                     }
 
                     @Override
                     public void onCancel() {
-                        sendResponseInt(-1);
+                        // 跳过当前录像，检查通讯是否还发来了其它录像文件
+                        mainHandler.post(() -> processPendingReplays());
                     }
-                })
-                .setOnDismissListener(() -> {
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    cardDetailPanel.setCardSelectDialog(null);
-                })
-                .show();
+                });
+        replaySaveDialog.show();
     }
 
-    private void showConfirmCardsDialog(ByteBuffer data) {
-        // duelclient.cpp L2519-2560：player skip_panel count + n×[code4 ctrl1 loc1 seq1]
-        // 纯展示：OK 仅关闭（无响应数据），对齐 C++ BUTTON_CARD_SEL_OK 的 actionSignal.Set()
-        if (data == null) {
-            cardDetailPanel.hideCancelOrFinishButton();
-            return;
+    /**
+     * 从通讯发来的录像数据中解析默认文件名，
+     * 与 gframe duelclient.cpp STOC_REPLAY 一致：录像开始时间 %Y-%m-%d %H-%M-%S
+     */
+    private String getReplayDefaultName(byte[] data) {
+        try {
+            if (data == null || data.length < 24) return "_LastReplay";
+            ByteBuffer buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+            int id = buf.getInt();
+            if (id != ReplayReader.REPLAY_ID_YRP1 && id != ReplayReader.REPLAY_ID_YRP2) {
+                return "_LastReplay";
+            }
+            buf.getInt(); // version
+            int flag = buf.getInt();
+            int seed = buf.getInt();
+            buf.getInt(); // datasize
+            int startTime = buf.getInt();
+            long ts = ((flag & ReplayReader.REPLAY_UNIFORM) != 0)
+                    ? Integer.toUnsignedLong(startTime)
+                    : Integer.toUnsignedLong(seed);
+            return new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US)
+                    .format(new Date(ts * 1000L));
+        } catch (Exception e) {
+            return "_LastReplay";
         }
-        int count = data.remaining() / 7;
-        List<CardDisplayDialog.CardItem> items = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 7; i++) {
-            int code = data.getInt();
-            int ctrl = data.get() & 0xFF;
-            int loc = data.get() & 0xFF;
-            int seq = data.get() & 0xFF;
-            items.add(new CardDisplayDialog.CardItem(code, ctrl, loc, seq, 0));
+    }
+
+    private void saveReplayFile(byte[] data, String fileName) {
+        String safeName = sanitizeReplayName(fileName);
+        try {
+            File dir = new File(AppsSettings.get().getReplayDir());
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, safeName + Constants.YRP_FILE_EX);
+            FileOutputStream fos = new FileOutputStream(file);
+            try {
+                fos.write(data);
+                fos.flush();
+            } finally {
+                fos.close();
+            }
+            Log.i(TAG, "Replay saved: " + file.getAbsolutePath());
+            Toast.makeText(this, DataManager.get().getStringManager()
+                    .getSystemString(1335, "保存成功"), Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save replay", e);
+            Toast.makeText(this, "录像保存失败", Toast.LENGTH_SHORT).show();
         }
-        if (items.isEmpty()) {
-            cardDetailPanel.hideCancelOrFinishButton();
-            return;
+    }
+
+    private String sanitizeReplayName(String name) {
+        String n = (name == null) ? "" : name.trim();
+        if (n.toLowerCase(Locale.US).endsWith(Constants.YRP_FILE_EX)) {
+            n = n.substring(0, n.length() - Constants.YRP_FILE_EX.length());
         }
-        CardDisplayDialog dialog = new CardDisplayDialog(this, imageLoader);
-        cardDetailPanel.setCardDisplayDialog(dialog);
-        dialog.setTitle("确认 " + items.size() + " 张卡片")
-                .setCards(items)
-                .setCardClickListener(this::showCardInfoFromItem)
-                .setOnDismissListener(() -> {
-                    cardDetailPanel.hideCancelOrFinishButton();
-                    cardDetailPanel.setCardDisplayDialog(null);
-                })
-                .show();
-    }
-
-    private void showCardInfoFromItem(CardDisplayDialog.CardItem item) {
-        GameField.ClientCard card = new GameField.ClientCard();
-        card.code = item.code;
-        card.controler = (item.controler == engine.getClient().selfType) ? 0 : 1;
-        card.location = item.location;
-        card.sequence = item.sequence;
-        card.position = 0x1;
-        showCardInfoPanel(card);
-    }
-
-    public void showResultDialog(String result) {
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("决斗结果")
-                .setMessage(result)
-                .setPositiveButton(v -> finish())
-                .setCancelable(false);
-        dialog.show();
-    }
-
-    private void showDuelEndDialog() {
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle("决斗结束")
-                .setMessage("本次决斗已结束")
-                .setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("确定")
-                .setNegativeButtonText("继续等待")
-                .setPositiveButton(v -> finish())
-                .setCancelable(false);
-        dialog.show();
+        n = n.replaceAll("[\\\\/:*?\"<>|]", "").trim();
+        if (n.isEmpty()) n = "_LastReplay";
+        return n;
     }
 
     public void showHintMessage(String msg) {
         fieldCtl.showHint(msg, 3000);
-    }
-
-    private interface OnItemPickedListener {
-        void onPicked(int which);
-    }
-
-    private void showListDialog(String title, String[] items, OnItemPickedListener listener) {
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setTitle(title);
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-        for (int i = 0; i < items.length; i++) {
-            Button btn = new Button(this);
-            btn.setText(items[i]);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF006688);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 8;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                if (listener != null) listener.onPicked(idx);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
     }
 
     // === Response helpers ===
@@ -2110,6 +1141,9 @@ public class YGOProActivity extends AppCompatActivity implements
     protected void onDestroy() {
         super.onDestroy();
         DraggablePopupHelper.resetAllPositions(this);
+        if (topInfoManager != null) {
+            topInfoManager.stopTimer();
+        }
         if (engine != null) {
             engine.release();
         }

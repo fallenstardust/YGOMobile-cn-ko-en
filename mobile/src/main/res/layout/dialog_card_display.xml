@@ -166,7 +166,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:max="0" />
+        android:max="0"
+        android:progressDrawable="@drawable/ygopro_base_background"
+        android:thumb="@drawable/ic_radius_bg"/>
 
     <Button
         android:id="@+id/btn_card_display_ok"
@@ -175,9 +177,9 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="6dp"
         android:background="@drawable/button3_bg"
-        android:minWidth="90dp"
+        android:minWidth="100dp"
         android:minHeight="30dp"
-        android:text="确定"
+        android:text="@string/ok"
         android:textColor="@color/white"
         android:textSize="10sp" />
 </LinearLayout>

@@ -845,6 +845,10 @@ public class LanModeDialog {
         return layoutPlayerWaiting != null && layoutPlayerWaiting.getVisibility() == View.VISIBLE;
     }
 
+    public boolean isShowing() {
+        return popupWindow != null && popupWindow.isShowing();
+    }
+
     public void preFillConnectionFields(String nickname, String hostIp, String port, String roomPassword) {
         if (layoutLanMain == null) return;
         EditText etNickname = layoutLanMain.findViewById(R.id.et_nickname);

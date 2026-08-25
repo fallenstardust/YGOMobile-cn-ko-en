@@ -92,6 +92,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private CardGroupView cgvMain, cgvExtra, cgvSide;
     private View layoutExtraStats, layoutSideStats;
     private View layoutDeckInfoPanel, layoutFilterPanel;
+    private View llSideController, layoutDeckRightPanel;
     private EditText etDeckName;
     private Button btnSave, btnSaveAs, btnShuffle, btnSort, btnClear, btnDelete, btnExit;
     private Button btnDeckManager;
@@ -208,6 +209,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         layoutSideStats = root.findViewById(R.id.layout_side_stats);
         layoutDeckInfoPanel = root.findViewById(R.id.layout_deck_info_panel);
         layoutFilterPanel = root.findViewById(R.id.layout_filter_panel);
+        llSideController = root.findViewById(R.id.ll_side_controller);
+        layoutDeckRightPanel = root.findViewById(R.id.layout_deck_right_panel);
         ivMainMonsterType = root.findViewById(R.id.iv_main_monster_type);
         ivMainSpellType = root.findViewById(R.id.iv_main_spell_type);
         ivMainTrapType = root.findViewById(R.id.iv_main_trap_type);
@@ -646,6 +649,11 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         //对齐C++：副卡组模式下隐藏卡组信息面板与筛选面板，只保留副卡组操作按钮
         if (layoutDeckInfoPanel != null) layoutDeckInfoPanel.setVisibility(View.GONE);
         if (layoutFilterPanel != null) layoutFilterPanel.setVisibility(View.GONE);
+        //显示副卡组控制器（完成/打乱/排序/重置），隐藏右侧搜索结果面板
+        if (llSideController != null) llSideController.setVisibility(View.VISIBLE);
+        if (layoutDeckRightPanel != null) layoutDeckRightPanel.setVisibility(View.INVISIBLE);
+        //隐藏卡片详情面板中的卡组编辑控制栏
+        if (cardDetailPanel != null) cardDetailPanel.hideDeckControl();
     }
 
     //副卡组替换完成/取消后退出副卡组模式
@@ -653,6 +661,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         isSiding = false;
         if (layoutDeckInfoPanel != null) layoutDeckInfoPanel.setVisibility(View.VISIBLE);
         if (layoutFilterPanel != null) layoutFilterPanel.setVisibility(View.VISIBLE);
+        if (llSideController != null) llSideController.setVisibility(View.GONE);
+        if (layoutDeckRightPanel != null) layoutDeckRightPanel.setVisibility(View.VISIBLE);
+        if (cardDetailPanel != null) cardDetailPanel.showDeckControl();
     }
 
     // === 对应 deck_con.cpp: BUTTON_SIDE_OK ===

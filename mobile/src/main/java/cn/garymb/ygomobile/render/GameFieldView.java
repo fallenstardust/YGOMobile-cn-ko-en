@@ -1,152 +1,53 @@
 package cn.garymb.ygomobile.render;
 
-import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.LinearGradient;
-import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
+import android.graphics.PixelFormat;
+import android.opengl.GLES30;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLUtils;
+import android.opengl.Matrix;
 import android.util.AttributeSet;
-import android.util.LruCache;
-import android.view.Choreographer;
+import android.view.Display;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.ImageView;
+import android.view.WindowManager;
 
-import androidx.appcompat.widget.AppCompatImageView;
-
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.utils.glide.GlideCompat;
-import ocgcore.enums.CardLocation;
 
-public class GameFieldView extends View implements Choreographer.FrameCallback {
+/**
+ * 决斗场渲染视图（路线 B：OpenGL ES 3.0 真 3D 透视）。
+ * <p>
+ * 世界坐标系直接采用 gframe 场地坐标：X∈[-1.25,9.15]（与 field3.png 4:3 版面锁定横向放大），Y∈[-3.9,3.9]（+Y 朝向我方），Z 为高度。
+ * 棋盘/区域槽/堆叠区/双方手卡/场上卡全部在同一透视相机内绘制，近大远小由 GPU 完成；
+ * 卡片位置与旋转直接取 {@link GameField.ClientCard} 的 curX/curY/curZ/curRot*，
+ * 与 ClientField::GetCardLocation 数值完全一致。
+ * <p>
+ * 公开 API 与原 Canvas 版保持一致，调用方（GameFieldViewController/GameFieldController/布局 XML）无需修改。
+ */
+public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Renderer {
+
     private static final String TAG = "GameFieldView";
-
-    private static final float FIELD_ASPECT_RATIO = 16f / 9f;
-    private static final int ZONE_ROWS = 8;
-    private static final int ZONE_COLS = 8;
-
-    private static final float FIELD_PERSPECTIVE_ROT_X = 25f;
-    private static final float HAND_CARD_FAN_ANGLE = 3f;
-    private static final float HAND_CARD_OVERLAP_RATIO = 0.65f;
-    private static final float PILE_OFFSET_Z = 0.8f;
-    private static final float CARD_ELEVATION = 4f;
-
-    // gframe 场地坐标范围（materials.cpp：X -0.8~8.7，Y -3.9~3.9，+Y 朝向我方）
-    private static final float FIELD_X_MIN = -0.8f;
-    private static final float FIELD_X_MAX = 8.7f;
-    private static final float FIELD_Y_MIN = -3.9f;
-    private static final float FIELD_Y_MAX = 3.9f;
-    private static final float FIELD_CX_F = (FIELD_X_MIN + FIELD_X_MAX) / 2f;
-    private static final float FIELD_W_F = FIELD_X_MAX - FIELD_X_MIN;
-    private static final float FIELD_H_F = FIELD_Y_MAX - FIELD_Y_MIN;
-    // |fy| 超过该值视为手卡带（我方手卡 y=4.0/悬停3.84，我方堆叠区中心最大 3.3）
-    private static final float HAND_BAND_Y = 3.7f;
-    // 对方手卡y=-3.4/悬停-3.56，对方堆叠区中心最大 -3.3，故用非对称阈值
-    private static final float OPP_HAND_BAND_Y = 3.35f;
-    // 卡面高宽比（177×254）
-    private static final float CARD_RATIO = 254f / 177f;
-
-    // 卡片在场地坐标系中的尺寸（gframe 格子 1.1×1.2，卡面略小于格子）
-    private static final float CARD_W_F = 0.8f;
-    private static final float CARD_H_F = 1.16f;
-    private static final float PI_F = 3.1415926f;
-    // 离屏 ImageView 缓存：每个卡码一个，交给 ImageLoader.bindImage 走标准取图链，
-    // 绘制时直接把其中的 Drawable 画上 Canvas
-    private final LruCache<Integer, ImageView> cardViewCache =
-            new LruCache<Integer, ImageView>(80) {
-                @Override
-                protected void entryRemoved(boolean evicted, Integer key,
-                                            ImageView oldValue,
-                                            ImageView newValue) {
-                    try {
-                        GlideCompat.with(getContext()).clear(oldValue);
-                    } catch (Exception ignored) {
-                    }
-                }
-            };
-    // 梯形透视参数（按目标截图标定：上窄下宽、近大远小）
-    private float trapCenterX;
-    private float trapTopY, trapBottomY;
-    private float trapTopHalfW, trapBottomHalfW;
-    // 手卡带（我方底部大卡、对方顶部小卡）
-    private float myHandCenterY, myHandCardH;
-
-    private GameField field;
-    private ImageLoader imageLoader;
-    private float oppHandCenterY, oppHandCardH;
-    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint selectedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint dimPaint = new Paint();
-    private final Paint highlightPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint cmdPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint chainPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint overlayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint lpPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    //堆叠区堆身画笔
-    private final Paint pilePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-
-    private float fieldWidth, fieldHeight;
-    private float zoneWidth, zoneHeight;
-    private float cardWidth, cardHeight;
-    private float offsetX, offsetY;
-
-    private float fieldCenterX, fieldCenterY;
-    private float fieldTop, fieldBottom, fieldLeft, fieldRight;
-
-    private int selectedPlayer = -1;
-    private int selectedLocation = -1;
-    private int selectedSequence = -1;
-    private int highlightFieldMask = 0;
-
-    private int displayLp0 = 8000;
-    private int displayLp1 = 8000;
-    private ValueAnimator lpAnimator0;
-    private ValueAnimator lpAnimator1;
-
-    private List<ChainLine> chainLines = new ArrayList<>();
-    private List<CardAnimState> animatingCards = new ArrayList<>();
-
-    private OnCardClickListener cardClickListener;
-
-    private SciFiRenderer sciFiRenderer;
-    private long animTimeMs = 0;
-
-    private boolean animationRunning = false;
-
-    private static class ChainLine {
-        float x1, y1, x2, y2;
-        int color;
-
-        ChainLine(float x1, float y1, float x2, float y2, int color) {
-            this.x1 = x1;
-            this.y1 = y1;
-            this.x2 = x2;
-            this.y2 = y2;
-            this.color = color;
-        }
-    }
-
-    public static class CardAnimState {
-        public int player, location, sequence;
-        public float translateX, translateY;
-        public float rotation;
-        public float alpha;
-        public long startTime, duration;
-        public boolean finished;
-    }
 
     public interface OnCardClickListener {
         void onCardClick(int player, int location, int sequence);
@@ -154,6 +55,156 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         void onZoneClick(int player, int location, int sequence);
 
         void onFieldLongPress(int player, int location, int sequence);
+    }
+
+    // === 场地坐标常量（与 field3.png 版面锁定：宽 10.4 = 7.8×880/660，贴图内格子恰为正方形）===
+    private static final float FIELD_CENTER_X = 3.95f;
+    private static final float X_SCALE = 1.217f / 1.1f;
+    private static final float FIELD_X_MIN = -1.25f;
+    private static final float FIELD_X_MAX = 9.15f;
+    private static final float FIELD_Y_MIN = -3.9f;
+    private static final float FIELD_Y_MAX = 3.9f;
+    // 卡片世界尺寸：严格 177:254 比例
+    private static final float CARD_W = 0.8f;
+    private static final float CARD_H = 0.8f * 254f / 177f;
+    // 区域槽尺寸：254×254 规格正方形（field3.png 锁定后边长 1.217），怪兽/魔陷/额外怪兽/堆叠区共用
+    private static final float ZONE_W = 1.217f;
+    private static final float ZONE_H = 1.217f;
+    private static final float PILE_W = 1.217f;
+    private static final float PILE_H = 1.217f;
+
+    /**
+     * 与 GameField.fx 一致：以场地中心为轴的 254×254 规格横向缩放（绘制/拾取共用，保证命中不偏）
+     */
+    private static float fx(float x) {
+        return FIELD_CENTER_X + (x - FIELD_CENTER_X) * X_SCALE;
+    }
+
+    /**
+     * 空间 X 镜像：引擎场地坐标约定 +X→屏幕右（layout_game_right：zone_p0_m0 最左、DECK 右列），
+     * 而 +Y 侧相机天然把 +X 映射到屏幕左，故绘制时翻转所有几何的 X（拾取仍用真实坐标），
+     * 复现桌面版方位。
+     */
+    private static float mirrorX(float x) {
+        return FIELD_X_MIN + FIELD_X_MAX - x;
+    }
+
+    // === 相机参数（俯仰角可由设置调整，默认俯视 60°）===
+    public static final float DEFAULT_CAMERA_ELEVATION = 60f;
+    public static final float MIN_CAMERA_ELEVATION = 35f;
+    public static final float MAX_CAMERA_ELEVATION = 75f;
+    private static final String PREF_CAMERA_ELEVATION = "camera_elevation";
+    // 视点到注视点距离：与俯仰角共同决定相机位置（越高越俯视）
+    private static final float CAMERA_DISTANCE = 7.6f;
+    private static final float CAM_X = 3.95f;
+    private static final float CAM_LOOK_Y = 0.3f;
+    // 纵向取景锚点：对方手卡上缘贴上缘；下锚点取场地近端，我方手卡后移后底边略高于视图底边
+    private static final float ANCHOR_TOP_Y = -3.8f, ANCHOR_TOP_Z = 0.95f;
+    private static final float ANCHOR_BOTTOM_Y = 3.9f, ANCHOR_BOTTOM_Z = -0.1f;
+    // 我方手卡相对决斗场向后平移量：使手卡底边略高于视图底边
+    private static final float HAND_SELF_Y_SHIFT = 0.7f;
+    // 选中手卡抬高量
+    private static final float HAND_LIFT = 0.3f;
+    // 对方手卡确认：翻面展示时长与洗切动画时长
+    private static final long OPP_REVEAL_MS = 2500L;
+    private static final long SHUFFLE_MS = 700L;
+    // 场地视觉倍率：1.0=场地近端左右边缘精确贴合 GameFieldView 左右缘（field3.png 满幅不裁切）
+    private static final float FIELD_ZOOM = 1.0f;
+    private volatile float cameraElevationDeg = DEFAULT_CAMERA_ELEVATION;
+    private volatile boolean cameraDirty = false;
+
+    // === 着色器（ES 3.0 / GLSL 300 es）===
+    private static final String VS =
+            "#version 300 es\n" +
+                    "layout(location=0) in vec2 aPos;\n" +
+                    "layout(location=1) in vec2 aUV;\n" +
+                    "uniform mat4 uMVP;\n" +
+                    "uniform float uFlipU;\n" +
+                    "uniform float uFlipV;\n" +
+                    "out vec2 vUV;\n" +
+                    "void main(){ vUV=vec2(mix(aUV.x,1.0-aUV.x,uFlipU),mix(aUV.y,1.0-aUV.y,uFlipV)); gl_Position=uMVP*vec4(aPos,0.0,1.0); }\n";
+
+    private static final String FS_TEX =
+            "#version 300 es\n" +
+                    "precision mediump float;\n" +
+                    "in vec2 vUV;\n" +
+                    "uniform sampler2D uTex;\n" +
+                    "uniform vec4 uTint;\n" +
+                    "out vec4 fragColor;\n" +
+                    "void main(){ fragColor=texture(uTex,vUV)*uTint; }\n";
+
+    private static final String FS_COLOR =
+            "#version 300 es\n" +
+                    "precision mediump float;\n" +
+                    "uniform vec4 uColor;\n" +
+                    "out vec4 fragColor;\n" +
+                    "void main(){ fragColor=uColor; }\n";
+
+    // 单位矩形（XY 平面，法线 +Z；v=0 在局部 -Y 边即 Bitmap 顶部；u 为标准布局。
+    // 场地卡 uFlipU=1 抵消相机 +X→屏幕左 镜像；手卡 billboard 局部+Y=屏幕上方，
+    // 需 uFlipU=0 + uFlipV=1 恢复正向贴图）
+    private static final float[] QUAD = {
+            -0.5f, -0.5f, 0f, 0f,
+            0.5f, -0.5f, 1f, 0f,
+            -0.5f, 0.5f, 0f, 1f,
+            0.5f, 0.5f, 1f, 1f,
+    };
+
+    private static final long COVER_SELF_KEY = -1L;
+    private static final long COVER_OPP_KEY = -2L;
+
+    // === 业务状态（公开 API 写入，GL 线程读取）===
+    private volatile GameField field;
+    private volatile ImageLoader imageLoader;
+    private volatile OnCardClickListener cardClickListener;
+    private volatile int highlightFieldMask = 0;
+    private volatile int selectedPlayer = -1;
+    private volatile int selectedLocation = -1;
+    private volatile int selectedSequence = -1;
+    // 动画倍率：1=原速，2=2 倍速（时间驱动，帧率无关）
+    private volatile float animSpeedMultiplier = 1f;
+
+    // === GL 资源 ===
+    private int texProg, colorProg;
+    private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV;
+    private int colorLocMVP, colorLocColor;
+    private int vao;
+    private final HashMap<Long, Integer> textures = new HashMap<>();
+    private final Set<Long> requested = Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>());
+    // 解码失败重试状态（仅 GL 线程访问）：上次请求时间 + 已尝试次数
+    private final HashMap<Long, Long> texRetryTime = new HashMap<>();
+    private final HashMap<Long, Integer> texRetries = new HashMap<>();
+    private final ConcurrentLinkedQueue<PendingUpload> pendingUploads = new ConcurrentLinkedQueue<>();
+    private ExecutorService texExecutor = Executors.newSingleThreadExecutor();
+
+    // === 矩阵与相机缓存 ===
+    private final float[] mProj = new float[16];
+    private final float[] mView = new float[16];
+    private final float[] mVP = new float[16];
+    private final float[] mMVP = new float[16];
+    private final float[] mModel = new float[16];
+    private final float[] mModelTmp = new float[16];
+    // 相机姿态矩阵（view 旋转部分的转置）：手卡 billboard 平行屏幕用
+    private final float[] mCamRot = new float[16];
+    private final Object camLock = new Object();
+    private final float[] pickInvVP = new float[16];
+    private volatile int viewW = 1, viewH = 1;
+
+    private long lastFrameNs = 0;
+    private long animTimeMs = 0;
+    private GestureDetector gestureDetector;
+
+    private static class PendingUpload {
+        final long key;
+        final Bitmap bitmap;
+        // 位图所有权：true=本任务独占副本（上传后需 recycle），false=TextureLoader 共享缓存（禁止 recycle）
+        final boolean owned;
+
+        PendingUpload(long key, Bitmap bitmap, boolean owned) {
+            this.key = key;
+            this.bitmap = bitmap;
+            this.owned = owned;
+        }
     }
 
     public GameFieldView(Context context) {
@@ -167,43 +218,50 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
     }
 
     private void init() {
-        sciFiRenderer = new SciFiRenderer();
+        setEGLContextClientVersion(3);
+        setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        // 透明背景：GL Surface 置顶合成，透明像素处透出窗口背景（bg.jpg）与 HUD
+        setZOrderOnTop(true);
+        getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        setRenderer(this);
+        setRenderMode(RENDERMODE_CONTINUOUSLY);
+        try {
+            setPreserveEGLContextOnPause(true);
+        } catch (Throwable ignored) {
+        }
 
-        textPaint.setColor(Color.WHITE);
-        textPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        textPaint.setShadowLayer(2, 1, 1, Color.BLACK);
+        try {
+            cameraElevationDeg = AppsSettings.get().getIntSettings(
+                    PREF_CAMERA_ELEVATION, Math.round(DEFAULT_CAMERA_ELEVATION));
+            cameraElevationDeg = Math.max(MIN_CAMERA_ELEVATION,
+                    Math.min(MAX_CAMERA_ELEVATION, cameraElevationDeg));
+        } catch (Throwable ignored) {
+        }
 
-        selectedPaint.setColor(Color.YELLOW);
-        selectedPaint.setStyle(Paint.Style.STROKE);
-        selectedPaint.setStrokeWidth(3);
+        gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
 
-        dimPaint.setColor(Color.argb(128, 0, 0, 0));
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                handleTap(e.getX(), e.getY());
+                return true;
+            }
 
-        highlightPaint.setColor(Color.argb(80, 0, 255, 100));
-        highlightPaint.setStyle(Paint.Style.FILL);
-
-        cmdPaint.setColor(Color.argb(100, 255, 255, 0));
-        cmdPaint.setStyle(Paint.Style.STROKE);
-        cmdPaint.setStrokeWidth(2);
-
-        chainPaint.setColor(Color.argb(200, 255, 100, 100));
-        chainPaint.setStyle(Paint.Style.STROKE);
-        chainPaint.setStrokeWidth(3);
-
-        overlayPaint.setColor(Color.argb(180, 100, 100, 255));
-        overlayPaint.setTextSize(10);
-
-        lpPaint.setColor(Color.WHITE);
-        lpPaint.setTextSize(20);
-        lpPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        lpPaint.setShadowLayer(3, 1, 1, Color.BLACK);
-
-        setLayerType(LAYER_TYPE_SOFTWARE, null);
+            @Override
+            public void onLongPress(MotionEvent e) {
+                handleLongPress(e.getX(), e.getY());
+            }
+        });
     }
+
+    // ==================== 公开 API（与原 Canvas 版兼容）====================
 
     public void setField(GameField field) {
         this.field = field;
-        invalidate();
+        requestRender();
     }
 
     public void setImageLoader(ImageLoader imageLoader) {
@@ -216,1200 +274,1011 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
 
     public void setHighlightFieldMask(int mask) {
         this.highlightFieldMask = mask;
-        invalidate();
-    }
-
-    public void addChainLine(float x1, float y1, float x2, float y2, int color) {
-        chainLines.add(new ChainLine(x1, y1, x2, y2, color));
-        invalidate();
-    }
-
-    public void clearChainLines() {
-        chainLines.clear();
-        invalidate();
-    }
-
-    public void animateLpChange(int player, int fromLp, int toLp) {
-        if (player == 0) {
-            if (lpAnimator0 != null && lpAnimator0.isRunning()) lpAnimator0.cancel();
-            lpAnimator0 = ValueAnimator.ofInt(fromLp, toLp);
-            lpAnimator0.setDuration(800);
-            lpAnimator0.setInterpolator(new AccelerateDecelerateInterpolator());
-            lpAnimator0.addUpdateListener(a -> {
-                displayLp0 = (int) a.getAnimatedValue();
-                invalidate();
-            });
-            lpAnimator0.start();
-        } else {
-            if (lpAnimator1 != null && lpAnimator1.isRunning()) lpAnimator1.cancel();
-            lpAnimator1 = ValueAnimator.ofInt(fromLp, toLp);
-            lpAnimator1.setDuration(800);
-            lpAnimator1.setInterpolator(new AccelerateDecelerateInterpolator());
-            lpAnimator1.addUpdateListener(a -> {
-                displayLp1 = (int) a.getAnimatedValue();
-                invalidate();
-            });
-            lpAnimator1.start();
-        }
+        requestRender();
     }
 
     public void setSelectedCard(int player, int location, int sequence) {
-        this.selectedPlayer = player;
-        this.selectedLocation = location;
-        this.selectedSequence = sequence;
-        invalidate();
+        selectedPlayer = player;
+        selectedLocation = location;
+        selectedSequence = sequence;
+        requestRender();
     }
 
     public void clearSelection() {
         selectedPlayer = -1;
         selectedLocation = -1;
         selectedSequence = -1;
-        highlightFieldMask = 0;
-        invalidate();
+        requestRender();
+    }
+
+    /**
+     * 连续渲染模式自带动画循环，保留接口仅为兼容
+     */
+    public void startAnimationLoop() {
+    }
+
+    /**
+     * 动画倍率：1=原速，2=2 倍速（时间驱动，任意刷新率下速度一致）
+     */
+    public void setAnimationSpeed(float multiplier) {
+        animSpeedMultiplier = Math.max(0.25f, multiplier);
+    }
+
+    /**
+     * 视角参数：俯仰角（度，35~75），越大越接近正俯视；持久化到设置并即时生效
+     */
+    public void setCameraElevation(float degrees) {
+        float v = Math.max(MIN_CAMERA_ELEVATION, Math.min(MAX_CAMERA_ELEVATION, degrees));
+        cameraElevationDeg = v;
+        try {
+            AppsSettings.get().saveIntSettings(PREF_CAMERA_ELEVATION, Math.round(v));
+        } catch (Throwable ignored) {
+        }
+        cameraDirty = true;
+        requestRender();
+    }
+
+    public float getCameraElevation() {
+        return cameraElevationDeg;
+    }
+
+    // 以下接口在 GL 版中无对应渲染对象，保留空实现确保调用方编译通过
+    public void addChainLine(float x1, float y1, float x2, float y2, int color) {
+    }
+
+    public void clearChainLines() {
+    }
+
+    public void animateLpChange(int player, int fromLp, int toLp) {
+    }
+
+    public void syncDisplayLp() {
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        calculateDimensions(w, h);
+    public void invalidate() {
+        super.invalidate();
+        requestRender();
     }
 
-    private void calculateDimensions(int w, int h) {
-        fieldWidth = w;
-        fieldHeight = h;
-        offsetX = 0;
-        offsetY = 0;
+    // ==================== GLSurfaceView.Renderer ====================
 
-        zoneWidth = fieldWidth / ZONE_COLS;
-        zoneHeight = fieldHeight / ZONE_ROWS;
-        cardWidth = zoneWidth * 0.82f;
-        cardHeight = cardWidth * CARD_RATIO;
+    @Override
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        GLES30.glClearColor(0f, 0f, 0f, 0f);
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+        GLES30.glDisable(GLES30.GL_CULL_FACE);
 
-        fieldCenterX = fieldWidth / 2f;
-        fieldCenterY = fieldHeight / 2f;
+        texProg = createProgram(VS, FS_TEX);
+        colorProg = createProgram(VS, FS_COLOR);
+        texLocMVP = GLES30.glGetUniformLocation(texProg, "uMVP");
+        texLocTint = GLES30.glGetUniformLocation(texProg, "uTint");
+        texLocTex = GLES30.glGetUniformLocation(texProg, "uTex");
+        texLocFlipU = GLES30.glGetUniformLocation(texProg, "uFlipU");
+        texLocFlipV = GLES30.glGetUniformLocation(texProg, "uFlipV");
+        colorLocMVP = GLES30.glGetUniformLocation(colorProg, "uMVP");
+        colorLocColor = GLES30.glGetUniformLocation(colorProg, "uColor");
 
-        // 场地平面（线性矩形，透视矩阵负责变形为斜向梯形）
-        fieldLeft = w * 0.08f;
-        fieldRight = w * 0.92f;
-        fieldTop = h * 0.10f;
-        fieldBottom = h * 0.84f;
+        FloatBuffer fb = ByteBuffer.allocateDirect(QUAD.length * 4)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        fb.put(QUAD).position(0);
+        int[] vaos = new int[1], vbos = new int[1];
+        GLES30.glGenVertexArrays(1, vaos, 0);
+        vao = vaos[0];
+        GLES30.glGenBuffers(1, vbos, 0);
+        GLES30.glBindVertexArray(vao);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbos[0]);
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, fb.capacity() * 4, fb, GLES30.GL_STATIC_DRAW);
+        GLES30.glEnableVertexAttribArray(0);
+        GLES30.glVertexAttribPointer(0, 2, GLES30.GL_FLOAT, false, 16, 0);
+        GLES30.glEnableVertexAttribArray(1);
+        GLES30.glVertexAttribPointer(1, 2, GLES30.GL_FLOAT, false, 16, 8);
+        GLES30.glBindVertexArray(0);
 
-        // 手卡尺寸 = 场上卡尺寸（由场地单元宽度推导），严格 177:254 比例
-        float unitX = (fieldRight - fieldLeft) / FIELD_W_F;
-        float handCardW = CARD_W_F * unitX;
-        myHandCardH = handCardW * CARD_RATIO;
-        oppHandCardH = myHandCardH;
-        myHandCenterY = fieldBottom + myHandCardH * 0.62f;
-        oppHandCenterY = oppHandCardH * 0.52f;
+        // 上下文（重新）创建：纹理缓存全部失效，重新按需加载
+        textures.clear();
+        requested.clear();
+        texRetryTime.clear();
+        texRetries.clear();
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        if (field == null) return;
+    public void onSurfaceChanged(GL10 gl, int w, int h) {
+        viewW = w;
+        viewH = h;
+        GLES30.glViewport(0, 0, w, h);
+        updateCamera();
+    }
 
+    /**
+     * 由俯仰角参数重建相机：eye 按(俯仰角, 距离)球面布置；注视方向取
+     * “对方手卡上缘/己方手卡下缘”两锚点方向的角平分线，FOV 取两锚点夹角；
+     * 视点距离迭代求解，使场地近端左右边缘尽量贴合屏幕左右缘（场地宽度与
+     * GameFieldView 实际宽度一致），竖屏/超宽屏受几何限制时取最优近似。
+     * 拾取矩阵与手卡 billboard 姿态同步重建。
+     */
+    private void updateCamera() {
+        int w = viewW, h = viewH;
+        if (w <= 1 || h <= 1) return;
+        float aspect = (float) w / h;
+        float th = (float) Math.toRadians(cameraElevationDeg);
+        float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
+
+        float D = CAMERA_DISTANCE;
+        float eyeY = 0, eyeZ = 0, dY = 0, dZ = -1, fovy = 60f;
+        for (int i = 0; i < 6; i++) {
+            eyeY = CAM_LOOK_Y + cth * D;
+            eyeZ = sth * D;
+            float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
+            float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
+            float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
+            float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
+            if (l1 < 1e-4f || l2 < 1e-4f) break;
+            float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
+            float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
+            fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
+            float tanH = (float) Math.tan(Math.toRadians(fovy * 0.5f)) * aspect;
+            float by = d1y + d2y, bz = d1z + d2z;
+            float bl = (float) Math.sqrt(by * by + bz * bz);
+            if (bl < 1e-4f) break;
+            dY = by / bl;
+            dZ = bz / bl;
+            // 场地近端(y=FIELD_Y_MAX)沿视线深度 depth(D)=K+b*D 为线性，令 半宽*ZOOM/depth==tanH 解出 D
+            float K = (FIELD_Y_MAX - CAM_LOOK_Y) * dY;
+            float b = -(cth * dY + sth * dZ);
+            if (b > 1e-4f && tanH > 1e-4f) {
+                D = ((FIELD_X_MAX - FIELD_X_MIN) * 0.5f * FIELD_ZOOM / tanH - K) / b;
+                D = Math.max(4.2f, Math.min(14f, D));
+            }
+        }
+        eyeY = CAM_LOOK_Y + cth * D;
+        eyeZ = sth * D;
+        float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
+        float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
+        float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
+        float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
+        if (l1 < 1e-4f || l2 < 1e-4f) return;
+        float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
+        float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
+        fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
+        float halfTan = (float) Math.tan(Math.toRadians(fovy * 0.5f));
+        float by = d1y + d2y, bz = d1z + d2z;
+        float bl = (float) Math.sqrt(by * by + bz * bz);
+        if (bl < 1e-4f) return;
+        dY = by / bl;
+        dZ = bz / bl;
+        // 横向兜底：场地按 ZOOM 倍宽度入镜（更近的视觉）
+        float depthNear = (FIELD_Y_MAX - eyeY) * dY + (0f - eyeZ) * dZ;
+        float needH = (FIELD_X_MAX - FIELD_X_MIN) * 0.5f * FIELD_ZOOM / Math.max(0.5f, depthNear);
+        if (needH / aspect > halfTan) halfTan = needH / aspect;
+        if (halfTan > 1.6f) halfTan = 1.6f;
+        fovy = (float) Math.toDegrees(2.0 * Math.atan(halfTan));
+
+        Matrix.perspectiveM(mProj, 0, fovy, aspect, 0.5f, 100f);
+        Matrix.setLookAtM(mView, 0, CAM_X, eyeY, eyeZ,
+                CAM_X, eyeY + dY, eyeZ + dZ, 0f, 0f, 1f);
+        Matrix.multiplyMM(mVP, 0, mProj, 0, mView, 0);
+
+        synchronized (camLock) {
+            Matrix.invertM(pickInvVP, 0, mVP, 0);
+        }
+
+        // 手卡 billboard 姿态：view 旋转部分的转置（列=相机 right/up/backward 轴）
+        mCamRot[0] = mView[0];
+        mCamRot[1] = mView[4];
+        mCamRot[2] = mView[8];
+        mCamRot[3] = 0f;
+        mCamRot[4] = mView[1];
+        mCamRot[5] = mView[5];
+        mCamRot[6] = mView[9];
+        mCamRot[7] = 0f;
+        mCamRot[8] = mView[2];
+        mCamRot[9] = mView[6];
+        mCamRot[10] = mView[10];
+        mCamRot[11] = 0f;
+        mCamRot[12] = 0f;
+        mCamRot[13] = 0f;
+        mCamRot[14] = 0f;
+        mCamRot[15] = 1f;
+    }
+
+    @Override
+    public void onDrawFrame(GL10 gl) {
+        long now = System.nanoTime();
+        float dt = lastFrameNs == 0 ? 1f / 60f : (now - lastFrameNs) / 1e9f;
+        lastFrameNs = now;
+        if (dt > 0.1f) dt = 0.1f;
         animTimeMs = System.currentTimeMillis();
 
-        field.updateCardAnimation(1);
+        if (cameraDirty) {
+            cameraDirty = false;
+            updateCamera();
+        }
 
-        canvas.save();
-        canvas.translate(offsetX, offsetY);
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
+        try {
+            drainUploads();
+        } catch (Throwable ignored) {
+        }
 
-        drawStarfieldBackground(canvas);
-        drawFieldWithPerspective(canvas);
+        GameField f = field;
+        if (f != null) {
+            // 引擎回调在网络线程结构性增删卡列表，GL 线程并发读取偶发 CME/IOOBE；
+            // 全部吞掉保证渲染线程永不崩溃（本帧跳过，下一帧自动恢复）
+            try {
+                // 时间驱动动画：帧率越高推进越细，速度恒定；animationSpeed 即本帧推进量
+                f.animationSpeed = dt * 60f * animSpeedMultiplier;
+                f.updateCardAnimation(1);
+            } catch (Throwable ignored) {
+            }
+        }
+        if (f == null) return;
 
-        canvas.restore();
+        GLES30.glEnable(GLES30.GL_BLEND);
+        GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+        try {
+            drawFieldBoard(f);
+        } catch (Throwable ignored) {
+        }
+        drawZoneSlots();
+        try {
+            drawFieldCards(f);
+        } catch (Throwable ignored) {
+        }
+        GLES30.glDepthMask(false);
+        drawHighlights();
+        GLES30.glDepthMask(true);
+    }
 
-        if (hasActiveAnimations()) {
-            postInvalidateOnAnimation();
+    // ==================== 绘制 ====================
+
+    /**
+     * 场地底板：对齐 gframe drawing.cpp L326/L369 ——
+     * rule=(duel_rule>=4)?1:0 选 field3/field2；显示场地魔法卡时改用 field-transparent 版。
+     * 其余区域保持透明，透出窗口背景。
+     */
+    private void drawFieldBoard(GameField f) {
+        int rule = (f.dInfo.duelRule >= 4) ? 1 : 0;
+        boolean transparent = fieldSpellDisplayed(f);
+        int tex = obtainFieldTexture(rule, transparent);
+        float w = FIELD_X_MAX - FIELD_X_MIN;
+        float h = FIELD_Y_MAX - FIELD_Y_MIN;
+        float cx = mirrorX((FIELD_X_MIN + FIELD_X_MAX) / 2f);
+        if (tex > 0) {
+            Matrix.setIdentityM(mModel, 0);
+            Matrix.translateM(mModel, 0, cx, 0f, 0f);
+            Matrix.scaleM(mModel, 0, w, h, 1f);
+            drawQuadTex(mModel, tex, 1f);
+        } else {
+            // 贴图加载完成前的兜底：半透明底色，不遮挡窗口背景
+            drawFlatQuad(cx, 0f, 0f, w, h, 0.05f, 0.09f, 0.16f, 0.55f);
         }
     }
 
-    private boolean hasActiveAnimations() {
-        for (int p = 0; p < 2; p++) {
-            if (hasListAnimation(field.players[p].deck)) return true;
-            if (hasListAnimation(field.players[p].hand)) return true;
-            if (hasListAnimation(field.players[p].monsterZone)) return true;
-            if (hasListAnimation(field.players[p].spellZone)) return true;
-            if (hasListAnimation(field.players[p].grave)) return true;
-            if (hasListAnimation(field.players[p].removed)) return true;
-            if (hasListAnimation(field.players[p].extra)) return true;
-        }
-        return hasListAnimation(field.overlayCards);
-    }
-
-    private boolean hasListAnimation(List<GameField.ClientCard> list) {
-        for (GameField.ClientCard c : list) {
-            if (c != null && (c.is_moving || c.is_fading)) return true;
+    /**
+     * gframe drawField 语义：任一方场地魔法区(szone seq5)存在正面场地卡时，用 transparent 版底图
+     */
+    private static boolean fieldSpellDisplayed(GameField f) {
+        try {
+            for (int p = 0; p < 2; p++) {
+                List<GameField.ClientCard> sz = f.players[p].spellZone;
+                if (sz.size() > 5) {
+                    GameField.ClientCard c = sz.get(5);
+                    if (c != null && c.isFaceUp() && c.code != 0) return true;
+                }
+            }
+        } catch (Throwable ignored) {
         }
         return false;
     }
 
-    private void drawStarfieldBackground(Canvas canvas) {
-        sciFiRenderer.drawStarfieldBackground(canvas, fieldWidth, fieldHeight, animTimeMs);
-    }
-
-    private void drawFieldWithPerspective(Canvas canvas) {
-        canvas.save();
-        Matrix perspectiveMatrix = PerspectiveHelper.createPerspectiveMatrix(
-                fieldCenterX, fieldCenterY, FIELD_PERSPECTIVE_ROT_X, 0, -80);
-        canvas.concat(perspectiveMatrix);
-
-        drawFieldBoard(canvas);
-        drawZoneSlots(canvas);
-        drawFieldCards(canvas);
-        drawPileBadges(canvas);
-        drawMonsterStatuses(canvas);
-        drawSelection(canvas);
-        drawCmdHighlights(canvas);
-
-        canvas.restore();
-
-        // 手卡面向玩家，不做透视变形（原型图行为）
-        drawHandCards(canvas);
-        drawChainLines(canvas);
-    }
-
-    private void drawFieldCards(Canvas canvas) {
-        for (GameField.ClientCard c : field.overlayCards) {
-            if (c == null) continue;
-            GameField.ClientCard ol = c.overlayTarget;
-            if (c.aniFrame > 0) {
-                drawClientCard(canvas, c);
-            } else if (ol != null && ol.location == 0x04) {
-                if (c.sequence < GameField.MAX_LAYER_COUNT) drawClientCard(canvas, c);
-            } else {
-                drawClientCard(canvas, c);
-            }
-        }
-        for (int p = 0; p < 2; p++) {
-            for (GameField.ClientCard c : field.players[p].monsterZone) drawClientCard(canvas, c);
-            for (GameField.ClientCard c : field.players[p].spellZone) drawClientCard(canvas, c);
-            drawPileStack(canvas, field.players[p].deck);
-            drawPileStack(canvas, field.players[p].grave);
-            drawPileStack(canvas, field.players[p].removed);
-            drawPileStack(canvas, field.players[p].extra);
-        }
-    }
-
-    /**
-     * 堆叠区绘制：厚度随卡数增长（每张约 1% 卡高，上限 35% 卡高）。
-     * 顶卡抬升lift，下方露出堆身侧面与层线；移动/动画中的卡单独绘制
-     */
-    private void drawPileStack(Canvas canvas, List<GameField.ClientCard> pile) {
-        GameField.ClientCard top = null;
-        int count = 0;
-        for (GameField.ClientCard c : pile) {
-            if (c == null) continue;
-            if (c.is_moving || c.aniFrame > 0) {
-                drawClientCard(canvas, c);
-                continue;
-            }
-            count++;
-            top = c; // 列表尾部即堆顶
-        }
-        if (top == null) return;
-
-        RectF r = projectCard(top.curX, top.curY, top.curZ);
-        float per = Math.max(0.6f, r.height() * 0.01f);
-        float lift = Math.min((count - 1) * per, r.height() * 0.35f);
-
-        if (lift > 0.5f) {
-            pilePaint.setStyle(Paint.Style.FILL);
-            pilePaint.setColor(0xFF141A26);
-            canvas.drawRect(r.left, r.bottom - lift - 1f, r.right, r.bottom, pilePaint);
-            pilePaint.setColor(0xFF2E3B52);
-            pilePaint.setStrokeWidth(1f);
-            int lines = Math.min(count, 10);
-            for (int i = 1; i <= lines; i++) {
-                float yy = r.bottom - lift + lift * i / (float) (lines + 1);
-                canvas.drawLine(r.left + 1f, yy, r.right - 1f, yy, pilePaint);
-            }
-        }
-
-        canvas.save();
-        canvas.translate(0, -lift);
-        drawClientCard(canvas, top);
-        canvas.restore();
-    }
-
-    private void drawHandCards(Canvas canvas) {
-        for (int p = 1; p >= 0; p--) {
-            for (GameField.ClientCard c : field.players[p].hand) drawClientCard(canvas, c);
-        }
-    }
-
-    // === Game::DrawMisc 的 2D 移植（1024×640 虚拟坐标，等价 C++ Resize） ===
-
-    private static final int[] LP_BAR_COLORS = {
-            0xFF00E676, 0xFF40C4FF, 0xFFFFD740, 0xFFE040FB, 0xFFFF6E40
-    };
-
-    private float rx(float v) {
-        return v / 1024f * fieldWidth;
-    }
-
-    private float ry(float v) {
-        return v / 640f * fieldHeight;
-    }
-
-    private void drawDuelHud(Canvas canvas) {
-        GameField.DuelInfo di = field.dInfo;
-        int maxLP = field.isTag ? Math.max(di.startLp / 2, 1) : di.startLp;
-        if (maxLP <= 0) maxLP = 8000;
-
-        // LP 条（drawing.cpp L935-971：P0 左→右填充，P1 右→左镜像，5 色分层循环）
-        drawLpBar(canvas, di.lp[0], maxLP, rx(390), ry(14), rx(625), ry(40), true);
-        drawLpBar(canvas, di.lp[1], maxLP, rx(695), ry(14), rx(930), ry(40), false);
-
-        // 回合方 LP 条边框高亮（L995-1001：回合玩家彩色，非回合玩家灰色）
-        Paint frame = new Paint(Paint.ANTI_ALIAS_FLAG);
-        frame.setStyle(Paint.Style.STROKE);
-        frame.setStrokeWidth(Math.max(2f, ry(3)));
-        boolean p0turn = field.currentPlayer == 0;
-        frame.setColor(p0turn ? 0xFF00E5FF : 0xFF555F6A);
-        canvas.drawRect(rx(388), ry(12), rx(627), ry(42), frame);
-        frame.setColor(p0turn ? 0xFF555F6A : 0xFFFF5252);
-        canvas.drawRect(rx(693), ry(12), rx(932), ry(42), frame);
-
-        // LP 数值（L1026-1027）
-        Paint num = new Paint(Paint.ANTI_ALIAS_FLAG);
-        num.setColor(Color.WHITE);
-        num.setTypeface(Typeface.DEFAULT_BOLD);
-        num.setShadowLayer(3, 1, 1, Color.BLACK);
-        num.setTextSize(ry(19));
-        num.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText(String.valueOf(di.lp[0]), rx(507), ry(35), num);
-        canvas.drawText(String.valueOf(di.lp[1]), rx(812), ry(35), num);
-
-        // 回合数（L1050-1055：灰白渐变矩形 + 数字）
-        Paint grad = new Paint();
-        grad.setShader(new LinearGradient(0, ry(10), 0, ry(30),
-                0x00000000, 0xFFFFFFFF, Shader.TileMode.CLAMP));
-        canvas.drawRect(rx(632), ry(10), rx(688), ry(30), grad);
-        grad.setShader(new LinearGradient(0, ry(30), 0, ry(50),
-                0xFFFFFFFF, 0x00000000, Shader.TileMode.CLAMP));
-        canvas.drawRect(rx(632), ry(30), rx(688), ry(50), grad);
-        Paint turn = new Paint(Paint.ANTI_ALIAS_FLAG);
-        turn.setTypeface(Typeface.DEFAULT_BOLD);
-        turn.setTextSize(ry(26));
-        turn.setTextAlign(Paint.Align.CENTER);
-        turn.setColor(0x8000FFFF);
-        canvas.drawText(String.valueOf(field.turnCount), rx(661), ry(39), turn);
-        turn.setColor(0x80000000);
-        canvas.drawText(String.valueOf(field.turnCount), rx(660), ry(38), turn);
-
-        // 计时 + 卡数（L1004-1023）
-        Paint info = new Paint(Paint.ANTI_ALIAS_FLAG);
-        info.setTypeface(Typeface.DEFAULT_BOLD);
-        info.setShadowLayer(2, 1, 1, Color.BLACK);
-        info.setTextSize(ry(16));
-        info.setTextAlign(Paint.Align.CENTER);
-        if (di.timeLimit > 0) {
-            drawClockIcon(canvas, rx(586), ry(59), ry(9));
-            drawClockIcon(canvas, rx(704), ry(59), ry(9));
-            info.setColor(di.timeColor[0]);
-            canvas.drawText(String.valueOf(di.timeLeft[0]), rx(610), ry(64), info);
-            info.setColor(di.timeColor[1]);
-            canvas.drawText(String.valueOf(di.timeLeft[1]), rx(728), ry(64), info);
-
-            drawMiniCover(canvas, rx(537), ry(51), rx(550), ry(70));
-            drawMiniCover(canvas, rx(745), ry(51), rx(758), ry(70));
-            info.setColor(di.cardCountColor[0]);
-            canvas.drawText(String.valueOf(di.cardCount[0]), rx(562), ry(64), info);
-            info.setColor(di.cardCountColor[1]);
-            canvas.drawText(String.valueOf(di.cardCount[1]), rx(769), ry(64), info);
-        } else {
-            drawMiniCover(canvas, rx(588), ry(48), rx(601), ry(68));
-            drawMiniCover(canvas, rx(697), ry(48), rx(710), ry(68));
-            info.setColor(di.cardCountColor[0]);
-            canvas.drawText(String.valueOf(di.cardCount[0]), rx(612), ry(64), info);
-            info.setColor(di.cardCountColor[1]);
-            canvas.drawText(String.valueOf(di.cardCount[1]), rx(722), ry(64), info);
-        }
-
-        // LP 变化浮动文字（L982-988：P0 在下半场、P1 在上半场，随 lpccolor 淡出）
-        if (field.lpcstring != null && !field.lpcstring.isEmpty()) {
-            Paint lpc = new Paint(Paint.ANTI_ALIAS_FLAG);
-            lpc.setTypeface(Typeface.DEFAULT_BOLD);
-            lpc.setTextSize(ry(42));
-            lpc.setTextAlign(Paint.Align.CENTER);
-            lpc.setShadowLayer(4, 2, 2, field.lpccolor & 0xFF000000 | 0x00FFFFFF);
-            lpc.setColor(field.lpccolor);
-            float cy = field.lpplayer == 0 ? ry(495) : ry(185);
-            canvas.drawText(field.lpcstring, rx(660), cy, lpc);
-        }
-    }
-
-    /** LP 条：lp≥maxLP 时分层——整条底色为上一层颜色，再叠加当前层比例（5 色循环） */
-    private void drawLpBar(Canvas canvas, int lp, int maxLP, float l, float t, float r, float b, boolean ltr) {
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(0xFF101820);
-        canvas.drawRect(l, t, r, b, p);
-        if (lp <= 0) return;
-        if (lp >= maxLP) {
-            int layerCount = lp / maxLP;
-            int partialLP = lp % maxLP;
-            p.setColor(LP_BAR_COLORS[(layerCount - 1) % 5]);
-            canvas.drawRect(l, t, r, b, p);
-            if (partialLP > 0) {
-                p.setColor(LP_BAR_COLORS[layerCount % 5]);
-                float w = (r - l) * partialLP / maxLP;
-                if (ltr) canvas.drawRect(l, t, l + w, b, p);
-                else canvas.drawRect(r - w, t, r, b, p);
-            }
-        } else {
-            p.setColor(LP_BAR_COLORS[0]);
-            float w = (r - l) * lp / maxLP;
-            if (ltr) canvas.drawRect(l, t, l + w, b, p);
-            else canvas.drawRect(r - w, t, r, b, p);
-        }
-    }
-
-    private void drawClockIcon(Canvas canvas, float cx, float cy, float radius) {
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(Math.max(1.5f, radius * 0.16f));
-        p.setColor(0xFFDDDDDD);
-        canvas.drawCircle(cx, cy, radius, p);
-        canvas.drawLine(cx, cy, cx, cy - radius * 0.6f, p);
-        canvas.drawLine(cx, cy, cx + radius * 0.45f, cy, p);
-    }
-
-    private void drawMiniCover(Canvas canvas, float l, float t, float r, float b) {
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(0xFF3A2820);
-        canvas.drawRect(l, t, r, b, p);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(1.5f);
-        p.setColor(0xFF8A6C50);
-        canvas.drawRect(l, t, r, b, p);
-    }
-
-    // === Game::DrawStatus 的移植（drawing.cpp L1057-1085 / L1198-1222） ===
-
-    private void drawMonsterStatuses(Canvas canvas) {
-        for (int p = 0; p < 2; p++) {
-            for (GameField.ClientCard c : field.players[p].monsterZone) {
-                if (c == null || c.is_moving) continue;
-                if (p == 0) {
-                    if (c.code == 0) continue;// 我方：code!=0 即画
-                } else {
-                    if ((c.position & GameField.POS_FACEUP) == 0) continue; // 对方：仅表侧
-                }
-                drawCardStatus(canvas, c);
-            }
-        }
-    }
-
-    private void drawCardStatus(Canvas canvas, GameField.ClientCard c) {
-        RectF r = projectCard(c.curX, c.curY, c.curZ);
-        Paint tp = new Paint(Paint.ANTI_ALIAS_FLAG);
-        tp.setTypeface(Typeface.DEFAULT_BOLD);
-        tp.setShadowLayer(2, 1, 1, Color.BLACK);
-        tp.setTextSize(r.width() * 0.26f);
-        float baseY = r.bottom + tp.getTextSize();
-        float cx = r.centerX();
-
-        String atk = (c.atkString != null && !c.atkString.isEmpty())
-                ? c.atkString : String.valueOf(c.attack);
-        int atkColor = c.attack > c.baseAttack ? 0xFFFFFF00
-                : c.attack < c.baseAttack ? 0xFFFF2090 : 0xFFFFFFFF;
-
-        // 分隔符 "/"
-        tp.setTextAlign(Paint.Align.CENTER);
-        tp.setColor(0xFFFFFFFF);
-        canvas.drawText("/", cx, baseY, tp);
-
-        // 攻击力（右对齐到分隔符左侧）
-        tp.setTextAlign(Paint.Align.RIGHT);
-        tp.setColor(atkColor);
-        canvas.drawText(atk, cx - tp.getTextSize() * 0.25f, baseY, tp);
-
-        tp.setTextAlign(Paint.Align.LEFT);
-        if (c.isLink()) {
-            // 连接怪：只画连接数（青色）
-            String lk = (c.linkString != null && !c.linkString.isEmpty())
-                    ? c.linkString : ("L" + c.link);
-            tp.setColor(0xFF99FFFF);
-            canvas.drawText(lk, cx + tp.getTextSize() * 0.25f, baseY, tp);
-        } else {
-            // 防御力
-            String def = (c.defString != null && !c.defString.isEmpty())
-                    ? c.defString : String.valueOf(c.defense);
-            tp.setColor(c.defense > c.baseDefense ? 0xFFFFFF00
-                    : c.defense < c.baseDefense ? 0xFFFF2090 : 0xFFFFFFFF);
-            canvas.drawText(def, cx + tp.getTextSize() * 0.25f, baseY, tp);
-
-            // 等级/阶级：XYZ 紫、调整黄、其他白
-            String lv = (c.lvString != null && !c.lvString.isEmpty())
-                    ? c.lvString : ("★" + (c.isXyz() ? c.rank : c.level));
-            tp.setColor(c.isXyz() ? 0xFFFF80FF
-                    : (c.type & 0x1000) != 0 ? 0xFFFFFF00 : 0xFFFFFFFF);
-            canvas.drawText(lv, r.left, r.top - tp.getTextSize() * 0.3f, tp);
-        }
-    }
-
-    /**
-     * 场地底板：发光面板 + 网格（位于透视矩阵内，由矩阵变形出斜向梯形）
-     */
-    private void drawFieldBoard(Canvas canvas) {
-        RectF board = new RectF(fieldLeft, fieldTop, fieldRight, fieldBottom);
-        sciFiRenderer.drawGlowingPanel(canvas, board, 12f);
-        sciFiRenderer.drawFieldGrid(canvas, fieldLeft, fieldTop, fieldRight, fieldBottom,
-                ZONE_COLS, ZONE_ROWS, animTimeMs);
-    }
-
-    // === 场地坐标 →屏幕线性映射（透视由画布矩阵完成） ===
-
-    private float mapFieldX(float fx) {
-        return fieldLeft + (fx - FIELD_X_MIN) / FIELD_W_F * (fieldRight - fieldLeft);
-    }
-
-    private float mapFieldY(float fy) {
-        return fieldTop + (fy - FIELD_Y_MIN) / FIELD_H_F * (fieldBottom - fieldTop);
-    }
-
-    private float fieldUnitX() {
-        return (fieldRight - fieldLeft) / FIELD_W_F;
-    }
-
-    private float fieldUnitY() {
-        return (fieldBottom - fieldTop) / FIELD_H_F;
-    }
-
-    private RectF projectZone(float cxF, float cyF, float wF, float hF) {
-        float cx = mapFieldX(cxF);
-        float cy = mapFieldY(cyF);
-        float w = wF * fieldUnitX();
-        float h = hF * fieldUnitY();
-        return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
-    }
-
-    /**
-     * 卡片投影：手卡带（|fy|>3.7）映射到透视外的手卡行；
-     * 场内卡线性映射（透视矩阵负责变形），Z 高度换算为向上抬升
-     */
-    private RectF projectCard(float fx, float fy, float fz) {
-        if (fy >= HAND_BAND_Y) { // 我方手卡：底部，与场上卡同尺寸
-            float ch = myHandCardH;
-            float cw = ch / CARD_RATIO;
-            float cx = fieldWidth * 0.5f
-                    + (fx - FIELD_CX_F) / FIELD_W_F * fieldWidth * 0.9f;
-            float cy = myHandCenterY - fz * ch * 0.06f;
-            return new RectF(cx - cw / 2f, cy - ch / 2f, cx + cw / 2f, cy + ch / 2f);
-        }
-        if (fy <= -OPP_HAND_BAND_Y) { // 对方手卡：顶部，与场上卡同尺寸
-            float ch = oppHandCardH;
-            float cw = ch / CARD_RATIO;
-            float cx = fieldWidth * 0.5f
-                    + (fx - FIELD_CX_F) / FIELD_W_F * fieldWidth * 0.9f;
-            float cy = oppHandCenterY;
-            return new RectF(cx - cw / 2f, cy - ch / 2f, cx + cw / 2f, cy + ch / 2f);
-        }
-        float cx = mapFieldX(fx);
-        float cy = mapFieldY(fy) - fz * fieldUnitY() * 0.5f;
-        float w = CARD_W_F * fieldUnitX();
-        float h = CARD_H_F * fieldUnitY();
-        return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
-    }
-
-    // === Game::DrawCard 的 2D 等效实现 ===
-
-    private void drawClientCard(Canvas canvas, GameField.ClientCard pcard) {
-        if (pcard == null) return;
-
-        RectF dst = projectCard(pcard.curX, pcard.curY, pcard.curZ);
-        float cx = dst.centerX();
-        float cy = dst.centerY();
-
-        // m22 = cos(rX)·cos(rY)：>0 正面可见（drawing.cpp 判定），
-        // |cos| 作为翻转/倾斜时的压缩比，形成翻面动画
-        float cosX = (float) Math.cos(pcard.curRotX);
-        float cosY = (float) Math.cos(pcard.curRotY);
-        boolean showFront = cosX * cosY > 0f;
-        float wScale = Math.max(0.04f, Math.abs(cosY));
-        float hScale = Math.max(0.04f, Math.abs(cosX));
-        // 手卡带：卡面朝向玩家平贴屏幕，不做 3D 压缩，保持 177:254 原始比例
-        boolean handBand = pcard.curY >= HAND_BAND_Y || pcard.curY <= -OPP_HAND_BAND_Y;if (handBand) {
-            wScale = 1f;
-            hScale = 1f;
-        }
-
-        canvas.save();
-        canvas.translate(cx, cy);
-        // rZ：对方 π→180°，守备∓π/2→∓90°
-        canvas.rotate(handBand ? 0f : (float) Math.toDegrees(pcard.curRotZ));
-        canvas.scale(wScale, hScale);
-
-        RectF local = new RectF(-dst.width() / 2f, -dst.height() / 2f,
-                dst.width() / 2f, dst.height() / 2f);
-
-        int alpha = (int) Math.max(0, Math.min(255, pcard.curAlpha));
-        Paint cardPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        cardPaint.setAlpha(alpha);
-
-        if (!pcard.is_moving) {
-            sciFiRenderer.drawCardShadow(canvas, local.left, local.top, local.width(), local.height());
-        }
-
-        if (showFront) {
-            // 移动中卡码为0时用chain_code 兜底（drawing.cpp L617）
-            int code = pcard.code;
-            if (code == 0 && pcard.is_moving) code = pcard.chain_code;
-            Drawable cardDrawable = null;
-            if (code > 0) {
-                cardDrawable = requestCardDrawable(code);
-            }
-            if (cardDrawable != null) {
-                cardDrawable.setBounds((int) local.left, (int) local.top,
-                        (int) local.right, (int) local.bottom);
-                cardDrawable.setAlpha(alpha);
-                cardDrawable.draw(canvas);
-                cardDrawable.setAlpha(255);
-                int borderColor = sciFiRenderer.getCardBorderColor(pcard.type, true);
-                sciFiRenderer.drawCardBevel(canvas, local.left, local.top,
-                        local.width(), local.height(), borderColor);
-            } else {
-                Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
-                bg.setShader(new LinearGradient(local.left, local.top, local.left, local.bottom,
-                        0xFF2A1A0A, 0xFF1A0A00, Shader.TileMode.CLAMP));
-                bg.setAlpha(alpha);
-                canvas.drawRect(local, bg);
-                if (code > 0) {
-                    textPaint.setTextSize(local.width() * 0.22f);
-                    String s = String.valueOf(code);
-                    canvas.drawText(s, -textPaint.measureText(s) / 2f, 0, textPaint);
-                }
-            }
-        } else {
-            Bitmap coverBmp = TextureLoader.get().getCardCover();
-            if (coverBmp != null) {
-                canvas.drawBitmap(coverBmp, null, local, cardPaint);
-            } else {
-                Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
-                bg.setShader(new LinearGradient(local.left, local.top, local.right, local.bottom,
-                        0xFF3A2820, 0xFF1A1008, Shader.TileMode.CLAMP));
-                bg.setAlpha(alpha);
-                canvas.drawRect(local, bg);
-            }
-            sciFiRenderer.drawCardBevel(canvas, local.left, local.top,
-                    local.width(), local.height(), 0xFF4A3728);
-        }
-
-        // 移动中跳过装饰（drawing.cpp：if(pcard->is_moving) return;）
-        if (!pcard.is_moving) {
-            drawCardDecorations(canvas, pcard, local);
-        }
-        canvas.restore();
-    }
-
-    private void drawCardDecorations(Canvas canvas, GameField.ClientCard pcard, RectF r) {
-        if (pcard.is_selectable) {
-            Paint sel = new Paint(Paint.ANTI_ALIAS_FLAG);
-            sel.setStyle(Paint.Style.STROKE);
-            sel.setStrokeWidth(3f);
-            float pulse = pcard.is_selected ? 1f
-                    : (float) (0.5 + 0.5 * Math.sin(animTimeMs * 0.005));
-            sel.setColor(Color.argb((int) (pulse * 255), 255, 255, 0));
-            canvas.drawRect(r.left - 2, r.top - 2, r.right + 2, r.bottom + 2, sel);
-        }
-        if (pcard.is_highlighting) {
-            Paint hl = new Paint(Paint.ANTI_ALIAS_FLAG);
-            hl.setStyle(Paint.Style.STROKE);
-            hl.setStrokeWidth(3f);
-            hl.setColor(0xFF00FFFF);
-            canvas.drawRect(r.left - 2, r.top - 2, r.right + 2, r.bottom + 2, hl);
-        }
-        if (pcard.is_showequip || pcard.is_showtarget || pcard.is_showchaintarget) {
-            Paint mk = new Paint(Paint.ANTI_ALIAS_FLAG);
-            mk.setStyle(Paint.Style.STROKE);
-            mk.setStrokeWidth(2f);
-            mk.setColor(0xFFFF4444);
-            float pulse = (float) (0.5 + 0.5 * Math.sin(animTimeMs * 0.006));
-            mk.setAlpha((int) (pulse * 255));
-            canvas.drawRect(r.left - 1, r.top - 1, r.right + 1, r.bottom + 1, mk);
-        }
-        if (pcard.isMonster() && pcard.isFaceUp() && (pcard.location & 0x04) != 0) {
-            textPaint.setTextSize(r.width() * 0.18f);
-            textPaint.setColor(Color.WHITE);
-            String atkDef = pcard.atkString + "/" + pcard.defString;
-            float tw = textPaint.measureText(atkDef);
-            Paint bg = new Paint();
-            bg.setColor(0x80000000);
-            canvas.drawRect(-tw / 2f - 2, r.bottom - r.width() * 0.22f,
-                    tw / 2f + 2, r.bottom, bg);
-            canvas.drawText(atkDef, -tw / 2f, r.bottom - 3, textPaint);
-        }
-        if (pcard.overlayed != null && !pcard.overlayed.isEmpty()) {
-            sciFiRenderer.drawCountBadge(canvas,
-                    r.right - r.width() * 0.15f, r.bottom - r.height() * 0.1f,
-                    "×" + pcard.overlayed.size(), 0xCC4444CC);
-        }
-    }
-
-    // === 区域框（materials.cpp 顶点）===
-
-    private RectF getZoneRectLocalF(int player, int location, int sequence) {
-        float cxF, cyF;
-        if (location == 0x04) {
-            if (player == 0) {
-                cxF = sequence < 5 ? 1.75f + 1.1f * sequence : (sequence == 5 ? 2.85f : 5.05f);
-                cyF = sequence < 5 ? 1.4f : 0f;
-            } else {
-                cxF = sequence < 5 ? 6.15f - 1.1f * sequence : (sequence == 5 ? 5.05f : 2.85f);
-                cyF = sequence < 5 ? -1.4f : 0f;
-            }
-        } else if (location == 0x08) {
-            if (player == 0) {
-                cxF = sequence < 5 ? 1.75f + 1.1f * sequence : 0.6f;
-                cyF = sequence < 5 ? 2.6f : 2.0f;
-            } else {
-                cxF = sequence < 5 ? 6.15f - 1.1f * sequence : 7.3f;
-                cyF = sequence < 5 ? -2.6f : -2.0f;
-            }
-        } else {
-            return getPileRectLocal(player, location);
-        }
-        return projectZone(cxF, cyF, 1.0f, 1.15f);
-    }
-
-    private void drawZoneSlots(Canvas canvas) {
+    private void drawZoneSlots() {
+        float pulse = 0.10f + 0.08f * (float) Math.sin(animTimeMs * 0.002);
         for (int p = 0; p < 2; p++) {
             for (int i = 0; i < 7; i++) {
-                RectF r = getZoneRectLocalF(p, 0x04, i);
-                if (r != null) drawZoneSlot(canvas, r.left, r.top, r.width(), r.height());
+                float[] c = zoneCenter(p, 0x04, i);
+                drawFlatQuad(mirrorX(c[0]), c[1], 0.004f, ZONE_W, ZONE_H, 0f, 0.78f, 0.94f, pulse);
             }
             for (int i = 0; i <= 5; i++) {
-                RectF r = getZoneRectLocalF(p, 0x08, i);
-                if (r != null) drawZoneSlot(canvas, r.left, r.top, r.width(), r.height());
+                float[] c = zoneCenter(p, 0x08, i);
+                drawFlatQuad(mirrorX(c[0]), c[1], 0.004f, ZONE_W, ZONE_H, 0f, 0.78f, 0.94f, pulse);
             }
             for (int loc : new int[]{0x01, 0x10, 0x20, 0x40}) {
-                RectF r = getPileRectLocal(p, loc);
-                if (r != null) drawZoneSlot(canvas, r.left, r.top, r.width(), r.height());
+                float[] c = pileCenter(p, loc);
+                if (c == null) continue;
+                drawFlatQuad(mirrorX(c[0]), c[1], 0.004f, PILE_W, PILE_H, 0f, 0.78f, 0.94f, pulse);
             }
         }
     }
 
-    private void drawPileBadges(Canvas canvas) {
-        int[][] pileColors = {
-                {0x01, 0xFF00FF88}, {0x10, 0xFFFF8800},
-                {0x20, 0xFFAA0044}, {0x40, 0xFF8800AA}};
-        for (int p = 0; p < 2; p++) {
-            for (int[] pc : pileColors) {
-                RectF r = getPileRectLocal(p, pc[0]);
-                if (r == null) continue;
-                int count = field.getCardCount(p, pc[0]);
-                if (count > 0) {
-                    sciFiRenderer.drawCountBadge(canvas, r.centerX(), r.centerY(),
-                            String.valueOf(count), pc[1]);
-                }
-                Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-                labelPaint.setColor(0xAA00E5FF);
-                labelPaint.setTextSize(r.width() * 0.2f);
-                labelPaint.setTextAlign(Paint.Align.CENTER);
-                float labelY = (p == 0) ? r.bottom + r.width() * 0.25f : r.top - r.width() * 0.1f;
-                canvas.drawText(getPileLabel(pc[0]), r.centerX(), labelY, labelPaint);
-            }
-        }
-    }
-
-    private void drawZoneSlot(Canvas canvas, float x, float y, float w, float h) {
-        Paint slotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        slotPaint.setStyle(Paint.Style.STROKE);
-        slotPaint.setStrokeWidth(1f);
-        float pulse = (float) (0.15 + 0.1 * Math.sin(animTimeMs * 0.002));
-        slotPaint.setColor(Color.argb((int) (pulse * 255), 0, 200, 240));
-        canvas.drawRect(x, y, x + w, y + h, slotPaint);
-
-        Paint innerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        innerPaint.setStyle(Paint.Style.FILL);
-        innerPaint.setColor(0x0800E5FF);
-        canvas.drawRect(x, y, x + w, y + h, innerPaint);
-    }
-
-
-    private RectF getPileRectLocal(int player, int location) {
-        float x1, y1, x2, y2;
-        if (player == 0) {
-            if (location == CardLocation.Deck.value()) {
-                x1 = 6.9f;
-                y1 = 2.7f;
-                x2 = 7.7f;
-                y2 = 3.9f;
-            } else if (location == CardLocation.Grave.value()) {
-                x1 = 6.9f;
-                y1 = 1.4f;
-                x2 = 7.7f;
-                y2 = 2.6f;
-            } else if (location == CardLocation.Removed.value()) {
-                x1 = 6.9f;
-                y1 = 0.1f;
-                x2 = 7.7f;
-                y2 = 1.3f;
-            } else if (location == CardLocation.Extra.value()) {
-                x1 = 0.2f;
-                y1 = 2.7f;
-                x2 = 1.0f;
-                y2 = 3.9f;
-            } else {
-                return null;
-            }
-        } else {
-            if (location == CardLocation.Deck.value()) {
-                x1 = 0.2f;
-                y1 = -3.9f;
-                x2 = 1.0f;
-                y2 = -2.7f;
-            } else if (location == CardLocation.Grave.value()) {
-                x1 = 0.2f;
-                y1 = -2.6f;
-                x2 = 1.0f;
-                y2 = -1.4f;
-            } else if (location == CardLocation.Removed.value()) {
-                x1 = 0.2f;
-                y1 = -1.3f;
-                x2 = 1.0f;
-                y2 = -0.1f;
-            } else if (location == CardLocation.Extra.value()) {
-                x1 = 6.9f;
-                y1 = -3.9f;
-                x2 = 7.7f;
-                y2 = -2.7f;
-            } else {
-                return null;
-            }
-        }
-        return projectZone((x1 + x2) / 2f, (y1 + y2) / 2f, x2 - x1, y2 - y1);
-    }
-
-    private void drawCardPile(Canvas canvas, int player, int location, int indicatorColor) {
-        RectF r = getPileRectLocal(player, location);
-        if (r == null) return;
-
-        float x = r.left;
-        float y = r.top;
-        float pileW = r.width();
-        float pileH = r.height();
-
-        drawZoneSlot(canvas, x, y, pileW, pileH);
-
-        int count = field.getCardCount(player, location);
-        if (count > 0) {
-            // 模拟 client_field GetCardLocation 中 Z = 0.01f + 0.01f * sequence 的堆叠抬升
-            int maxVisible = Math.min(count, 5);
-            float lift = pileH * 0.012f;
-            for (int i = 0; i < maxVisible; i++) {
-                float dx = i * lift;
-                float dy = -i * lift;
-                Bitmap coverBmp = TextureLoader.get().getCardCover();
-                if (coverBmp != null) {
-                    Paint coverPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-                    coverPaint.setAlpha(200 - i * 20);
-                    sciFiRenderer.drawCardShadow(canvas, x + dx, y + dy, pileW, pileH);
-                    canvas.drawBitmap(coverBmp, null,
-                            new RectF(x + dx, y + dy, x + pileW + dx, y + pileH + dy),
-                            coverPaint);
-                }
-            }
-
-            sciFiRenderer.drawCountBadge(canvas,
-                    x + pileW / 2f, y + pileH / 2f,
-                    String.valueOf(count), indicatorColor);
-        }
-
-        Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        labelPaint.setColor(0xAA00E5FF);
-        labelPaint.setTextSize(pileW * 0.2f);
-        labelPaint.setTextAlign(Paint.Align.CENTER);
-        String label = getPileLabel(location);
-        float labelY = (player == 0) ? y + pileH + pileW * 0.25f : y - pileW * 0.1f;
-        canvas.drawText(label, x + pileW / 2f, labelY, labelPaint);
-    }
-
-    private String getPileLabel(int location) {
-        if (location == CardLocation.Deck.value()) return "DECK";
-        if (location == CardLocation.Grave.value()) return "GRAVE";
-        if (location == CardLocation.Removed.value()) return "BANISH";
-        if (location == CardLocation.Extra.value()) return "EXTRA";
-        return "";
-    }
-
-    private void drawHandCards3D(Canvas canvas, int player, boolean flipped) {
-        List<GameField.ClientCard> hand = field.players[player].hand;
-        int handCount = 0;
-        for (GameField.ClientCard card : hand) {
-            if (card != null) handCount++;
-        }
-        if (handCount == 0) return;
-
-        float handCardW = cardWidth * 1.1f;
-        float handCardH = cardHeight * 1.1f;
-        float spacing = handCardW * HAND_CARD_OVERLAP_RATIO;
-        float totalHandWidth = handCount * spacing;
-        if (totalHandWidth > fieldWidth * 0.8f) {
-            spacing = (fieldWidth * 0.8f) / handCount;
-            totalHandWidth = fieldWidth * 0.8f;
-        }
-        float startX = (fieldWidth - totalHandWidth) / 2f;
-
-        float handY;
-        if (flipped) {
-            handY = fieldTop - handCardH * 0.5f;
-        } else {
-            handY = fieldBottom - handCardH * 0.3f;
-        }
-
-        int idx = 0;
-        for (int i = 0; i < hand.size(); i++) {
-            GameField.ClientCard card = hand.get(i);
-            if (card == null) continue;
-
-            float x = startX + idx * spacing;
-            float y = handY;
-
-            float centerOffset = (idx - (handCount - 1) / 2f);
-            float fanAngle = centerOffset * HAND_CARD_FAN_ANGLE;
-            float liftY = -Math.abs(centerOffset) * 1.5f;
-            float elevZ = CARD_ELEVATION + Math.abs(centerOffset) * 0.5f;
-
-            if (card.is_selectable) {
-                liftY -= 8f;
-                elevZ += 4f;
-            }
-
-            canvas.save();
-            float pivotX = x + handCardW / 2f;
-            float pivotY = y + handCardH;
-            canvas.rotate(fanAngle, pivotX, pivotY);
-
-            drawCard3D(canvas, card, x, y + liftY, handCardW, handCardH, flipped, elevZ);
-
-            canvas.restore();
-            idx++;
-        }
-    }
-
-    private void drawCard3D(Canvas canvas, GameField.ClientCard card,
-                            float x, float y, float w, float h, boolean flipped, float elevation) {
-        canvas.save();
-
-        sciFiRenderer.drawCardShadow(canvas, x, y, w, h);
-
-        float cx = x + w / 2f;
-        float cy = y + h / 2f;
-
-        if (flipped) {
-            canvas.rotate(180, cx, cy);
-        }
-
-        boolean isDef = !card.isAttack();
-        if (isDef) {
-            canvas.rotate(90, cx, cy);
-            float temp = w;
-            w = h;
-            h = temp;
-            x = cx - w / 2f;
-            y = cy - h / 2f;
-        }
-
-        RectF dst = new RectF(x, y, x + w, y + h);
-
-        if (card.isFaceUp() && card.code > 0 && imageLoader != null) {
-            java.io.File imgFile = imageLoader.getImageFile(card.code);
-            if (imgFile != null) {
-                Bitmap cardBmp = TextureLoader.get().loadBitmapScaled(
-                        "../pics/" + card.code + ".jpg", (int) w, (int) h);
-                if (cardBmp != null) {
-                    canvas.drawBitmap(cardBmp, null, dst, paint);
-                    int borderColor = sciFiRenderer.getCardBorderColor(card.type, true);
-                    sciFiRenderer.drawCardBevel(canvas, x, y, w, h, borderColor);
-                    drawCardOverlayInfo(canvas, card, x, y, w, h);
-                    canvas.restore();
-                    return;
-                }
-            }
-        }
-
-        if (card.isFaceUp()) {
-            Paint cardBg = new Paint(Paint.ANTI_ALIAS_FLAG);
-            cardBg.setShader(new LinearGradient(x, y, x, y + h,
-                    0xFF2A1A0A, 0xFF1A0A00, Shader.TileMode.CLAMP));
-            canvas.drawRect(dst, cardBg);
-            textPaint.setTextSize(w * 0.25f);
-            String codeStr = String.valueOf(card.code);
-            canvas.drawText(codeStr,
-                    x + w / 2f - textPaint.measureText(codeStr) / 2f,
-                    y + h / 2f, textPaint);
-            int borderColor = sciFiRenderer.getCardBorderColor(card.type, true);
-            sciFiRenderer.drawCardBevel(canvas, x, y, w, h, borderColor);
-        } else {
-            Bitmap coverBmp = TextureLoader.get().getCardCover();
-            if (coverBmp != null) {
-                canvas.drawBitmap(coverBmp, null, dst, paint);
-            } else {
-                Paint coverBg = new Paint(Paint.ANTI_ALIAS_FLAG);
-                coverBg.setShader(new LinearGradient(x, y, x + w, y + h,
-                        0xFF3A2820, 0xFF1A1008, Shader.TileMode.CLAMP));
-                canvas.drawRect(dst, coverBg);
-            }
-            sciFiRenderer.drawCardBevel(canvas, x, y, w, h, 0xFF4A3728);
-        }
-
-        drawCardOverlayInfo(canvas, card, x, y, w, h);
-        canvas.restore();
-    }
-
-    private void drawCardOverlayInfo(Canvas canvas, GameField.ClientCard card,
-                                     float x, float y, float w, float h) {
-        if (card.is_selectable) {
-            Paint selGlow = new Paint(Paint.ANTI_ALIAS_FLAG);
-            selGlow.setStyle(Paint.Style.STROKE);
-            selGlow.setStrokeWidth(3f);
-            float pulse = (float) (0.5 + 0.5 * Math.sin(animTimeMs * 0.005));
-            selGlow.setColor(Color.argb((int) (pulse * 255), 255, 255, 0));
-            selGlow.setShadowLayer(6, 0, 0, 0xFFFF0000);
-            canvas.drawRect(x - 2, y - 2, x + w + 2, y + h + 2, selGlow);
-        }
-
-        if (card.isMonster() && card.isFaceUp()) {
-            textPaint.setTextSize(w * 0.18f);
-            textPaint.setColor(Color.WHITE);
-            String atkDef = card.atkString + "/" + card.defString;
-
-            Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            bgPaint.setColor(0x80000000);
-            float textW = textPaint.measureText(atkDef);
-            canvas.drawRect(x + w / 2f - textW / 2f - 2, y + h - w * 0.22f,
-                    x + w / 2f + textW / 2f + 2, y + h, bgPaint);
-            canvas.drawText(atkDef,
-                    x + w / 2f - textW / 2f,
-                    y + h - 3, textPaint);
-        }
-
-        if (card.overlayCards != null && !card.overlayCards.isEmpty()) {
-            sciFiRenderer.drawCountBadge(canvas,
-                    x + w - w * 0.15f, y + h - h * 0.1f,
-                    "×" + card.overlayCards.size(), 0xCC4444CC);
-        }
-
-        if (card.equipCard != null) {
-            Paint equipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            equipPaint.setColor(0xCCCCFF00);
-            equipPaint.setTextSize(w * 0.25f);
-            canvas.drawText("⚔", x + 2, y + w * 0.25f, equipPaint);
-        }
-
-        if (card.is_showequip || card.is_showtarget || card.is_showchaintarget) {
-            Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            markerPaint.setStyle(Paint.Style.STROKE);
-            markerPaint.setStrokeWidth(2f);
-            markerPaint.setColor(0xFFFF4444);
-            float pulse = (float) (0.5 + 0.5 * Math.sin(animTimeMs * 0.006));
-            markerPaint.setAlpha((int) (pulse * 255));
-            canvas.drawRect(x - 1, y - 1, x + w + 1, y + h + 1, markerPaint);
-        }
-    }
-
-    private void drawCmdHighlights(Canvas canvas) {
-        if (field == null) return;
-        for (int p = 0; p < 2; p++) {
-            for (int i = 0; i < GameField.MAX_MONSTER_ZONE; i++) {
-                GameField.ClientCard card = field.getCard(p, 0x04, i);
-                if (card != null && card.cmdFlag != 0) {
-                    RectF r = getZoneRect(p, 0x04, i);
-                    if (r != null) {
-                        cmdPaint.setColor(getCmdColor(card.cmdFlag));
-                        canvas.drawRect(r, cmdPaint);
-                    }
-                }
-            }
-            for (int i = 0; i < GameField.MAX_SPELL_ZONE; i++) {
-                GameField.ClientCard card = field.getCard(p, 0x08, i);
-                if (card != null && card.cmdFlag != 0) {
-                    RectF r = getZoneRect(p, 0x08, i);
-                    if (r != null) {
-                        cmdPaint.setColor(getCmdColor(card.cmdFlag));
-                        canvas.drawRect(r, cmdPaint);
-                    }
-                }
-            }
-        }
-    }
-
-    private int getCmdColor(int flag) {
-        if ((flag & 0x0040) != 0) return Color.argb(100, 255, 50, 50);
-        if ((flag & 0x0001) != 0) return Color.argb(100, 255, 200, 50);
-        if ((flag & 0x0004) != 0) return Color.argb(100, 50, 200, 255);
-        if ((flag & 0x0002) != 0) return Color.argb(100, 50, 255, 100);
-        return Color.argb(80, 255, 255, 100);
-    }
-
-    private void drawChainLines(Canvas canvas) {
-        for (ChainLine line : chainLines) {
-            chainPaint.setColor(line.color);
-            canvas.drawLine(line.x1, line.y1, line.x2, line.y2, chainPaint);
-            float angle = (float) Math.atan2(line.y2 - line.y1, line.x2 - line.x1);
-            float arrowLen = 8;
-            canvas.drawLine(line.x2, line.y2,
-                    line.x2 - arrowLen * (float) Math.cos(angle - 0.4f),
-                    line.y2 - arrowLen * (float) Math.sin(angle - 0.4f), chainPaint);
-            canvas.drawLine(line.x2, line.y2,
-                    line.x2 - arrowLen * (float) Math.cos(angle + 0.4f),
-                    line.y2 - arrowLen * (float) Math.sin(angle + 0.4f), chainPaint);
-        }
-    }
-
-    private void drawSelection(Canvas canvas) {
-        if (selectedPlayer < 0 || selectedLocation < 0 || selectedSequence < 0) return;
-
-        RectF cardRect = getCardRect(selectedPlayer, selectedLocation, selectedSequence);
-        if (cardRect != null) {
-            Paint selPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            selPaint.setStyle(Paint.Style.STROKE);
-            selPaint.setStrokeWidth(3f);
-            selPaint.setColor(0xFFFFFF00);
-            selPaint.setShadowLayer(8, 0, 0, 0xFFFF0000);
-            canvas.drawRect(cardRect, selPaint);
-        }
-    }
-
-    private RectF getZoneRect(int player, int location, int sequence) {
-        return getZoneRectLocalF(player, location, sequence);
-    }
-
-    private RectF getCardRect(int player, int location, int sequence) {
-        RectF r = getZoneRect(player, location, sequence);
-        if (r != null) {
-            r.offset(offsetX, offsetY);
-        }
-        return r;
-    }
-
-    private void drawFieldHighlight(Canvas canvas) {
-        if (highlightFieldMask == 0) return;
+    private void drawHighlights() {
         int mask = highlightFieldMask;
-
+        if (mask == 0) return;
+        float a = 0.30f + 0.12f * (float) Math.sin(animTimeMs * 0.005);
         for (int i = 0; i < 7; i++) {
-            if ((mask & (1 << i)) != 0) {
-                RectF r = getZoneRect(0, 0x04, i);
-                if (r != null) sciFiRenderer.drawZoneHighlight(canvas, r, 0x00FF64, animTimeMs);
-            }
+            if ((mask & (1 << i)) != 0) drawZoneGlow(0, 0x04, i, a);
+            if ((mask & (1 << (16 + i))) != 0) drawZoneGlow(1, 0x04, i, a);
         }
         for (int i = 0; i < 6; i++) {
-            if ((mask & (1 << (8 + i))) != 0) {
-                RectF r = getZoneRect(0, 0x08, i);
-                if (r != null) sciFiRenderer.drawZoneHighlight(canvas, r, 0x00FF64, animTimeMs);
-            }
-        }
-
-        for (int i = 0; i < 7; i++) {
-            if ((mask & (1 << (16 + i))) != 0) {
-                RectF r = getZoneRect(1, 0x04, i);
-                if (r != null) sciFiRenderer.drawZoneHighlight(canvas, r, 0x00FF64, animTimeMs);
-            }
-        }
-        for (int i = 0; i < 6; i++) {
-            if ((mask & (1 << (24 + i))) != 0) {
-                RectF r = getZoneRect(1, 0x08, i);
-                if (r != null) sciFiRenderer.drawZoneHighlight(canvas, r, 0x00FF64, animTimeMs);
-            }
+            if ((mask & (1 << (8 + i))) != 0) drawZoneGlow(0, 0x08, i, a);
+            if ((mask & (1 << (24 + i))) != 0) drawZoneGlow(1, 0x08, i, a);
         }
     }
+
+    private void drawZoneGlow(int player, int loc, int seq, float alpha) {
+        float[] c = zoneCenter(player, loc, seq);
+        drawFlatQuad(mirrorX(c[0]), c[1], 0.03f, ZONE_W, ZONE_H, 0f, 1f, 0.39f, alpha);
+    }
+
+    private void drawFieldCards(GameField f) {
+        for (int p = 0; p < 2; p++) {
+            drawCardList(f.players[p].monsterZone);
+            drawCardList(f.players[p].spellZone);
+            drawPile(f.players[p].deck);
+            drawPile(f.players[p].grave);
+            drawPile(f.players[p].removed);
+            drawPile(f.players[p].extra);
+        }
+        // 手卡最后绘制（半透明排序靠上）
+        for (int p = 1; p >= 0; p--) {
+            drawCardList(f.players[p].hand);
+        }
+        drawCardList(f.overlayCards);
+    }
+
+    /**
+     * 线程安全遍历：索引式 + 全量兜底，网络线程并发增删时最多丢一帧
+     */
+    private void drawCardList(List<GameField.ClientCard> list) {
+        if (list == null) return;
+        try {
+            for (int i = 0, n = list.size(); i < n; i++) {
+                GameField.ClientCard c;
+                try {
+                    c = list.get(i);
+                } catch (Throwable e) {
+                    continue;
+                }
+                drawCard(c);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void drawPile(List<GameField.ClientCard> pile) {
+        if (pile == null) return;
+        try {
+            int n = 0;
+            for (int i = 0, s = pile.size(); i < s; i++) {
+                try {
+                    if (pile.get(i) != null) n++;
+                } catch (Throwable e) {
+                    break;
+                }
+            }
+            int skip = Math.max(0, n - 20); // 堆叠区绘制最上 20 层呈现厚度，z 间距已在 GameField 封顶
+            for (int i = 0, s = pile.size(); i < s; i++) {
+                GameField.ClientCard c;
+                try {
+                    c = pile.get(i);
+                } catch (Throwable e) {
+                    continue;
+                }
+                if (c == null) continue;
+                if (skip-- > 0) continue;
+                drawCard(c);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 双面卡片：背面 cover + 正面卡图。
+     * 位置取 getCardLocation 动画值并做 X 镜像；旋转按 Y→X→Z 合成、Y/Z 轴取反
+     * （空间镜像使绕 Y/Z 旋转反向），保证 gframe 各位置的面朝：
+     * 对方暗手牌（rotX+rotY=π）cover 朝相机、守备/盖放/堆叠区朝向均正确。
+     */
+    private void drawCard(GameField.ClientCard c) {
+        if (c == null) return;
+        float alpha = Math.max(0f, Math.min(1f, c.curAlpha / 255f));
+        if (alpha <= 0.01f) return;
+
+        boolean isHand = c.location == 0x02;
+        if (isHand) {
+            // 手卡平行屏幕：姿态取相机旋转；我方手卡后移、选中抬高（沿相机 up 轴，Y/Z 分量与命中检测一致）
+            Matrix.setIdentityM(mModel, 0);
+            Matrix.translateM(mModel, 0, mirrorX(c.curX),
+                    handY(c) + mCamRot[5] * handLift(c), c.curZ + handLiftZ(c));
+            Matrix.multiplyMM(mModelTmp, 0, mModel, 0, mCamRot, 0);
+            System.arraycopy(mModelTmp, 0, mModel, 0, 16);
+            Matrix.scaleM(mModel, 0, CARD_W, CARD_H, 1f);
+        } else {
+            // 堆叠区各层加确定性微错位，侧面露出卡边呈现厚度
+            boolean isPile = c.location == 0x01 || c.location == 0x10
+                    || c.location == 0x20 || c.location == 0x40;
+            float jx = isPile ? ((c.sequence % 3) - 1) * 0.012f : 0f;
+            float jy = isPile ? (((c.sequence / 3) % 3) - 1) * 0.012f : 0f;
+            Matrix.setIdentityM(mModel, 0);
+            Matrix.translateM(mModel, 0, mirrorX(c.curX) + jx, c.curY + jy, c.curZ);
+            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(-c.curRotY), 0f, 1f, 0f);
+            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(c.curRotX), 1f, 0f, 0f);
+            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(-c.curRotZ), 0f, 0f, 1f);
+            Matrix.scaleM(mModel, 0, CARD_W, CARD_H, 1f);
+        }
+
+        int glow = pickGlowColor(c);
+        if (glow != 0) drawGlow(glow, alpha);
+
+        int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
+        if (isHand) {
+            if (code > 0 && (c.controler == 0 || c.isFaceUp())) {
+                int tex = obtainTexture(code, pendulumMode(c), pendulumScale(c));
+                if (tex > 0) {
+                    drawQuadTex(mModel, tex, alpha, 0f, 1f);
+                } else {
+                    drawQuadColor(mModel, 0.35f, 0.35f, 0.40f, alpha);
+                }
+            } else {
+                // 对方手卡：卡背正对相机
+                System.arraycopy(mModel, 0, mModelTmp, 0, 16);
+                Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, 0.002f);
+                int coverTex = obtainCover(true);
+                if (coverTex > 0) {
+                    drawQuadTex(mModelTmp, coverTex, alpha, 0f, 1f);
+                } else {
+                    drawQuadColor(mModelTmp, 0.24f, 0.18f, 0.13f, alpha);
+                }
+            }
+            return;
+        }
+
+        // 背面（cover），沿卡片局部 -Z 微偏移避免共面闪烁
+        System.arraycopy(mModel, 0, mModelTmp, 0, 16);
+        Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, -0.002f);
+        Matrix.rotateM(mModelTmp, 0, 180f, 0f, 1f, 0f);
+        int coverTex = obtainCover(c.owner != 0);
+        if (coverTex > 0) {
+            drawQuadTex(mModelTmp, coverTex, alpha);
+        } else {
+            drawQuadColor(mModelTmp, 0.24f, 0.18f, 0.13f, alpha);
+        }
+
+        // 正面（手牌区 position 不含 POS_FACEUP 位，code>0 时同样按正面渲染）
+        boolean faceUp = c.isFaceUp() || c.location == 0x02;
+        if (faceUp && code > 0) {
+            int tex = obtainTexture(code, pendulumMode(c), pendulumScale(c));
+            if (tex > 0) {
+                drawQuadTex(mModel, tex, alpha);
+            } else {
+                drawQuadColor(mModel, 0.35f, 0.35f, 0.40f, alpha);
+            }
+        } else {
+            drawQuadColor(mModel, 0.16f, 0.12f, 0.10f, alpha);
+        }
+    }
+
+    private int pickGlowColor(GameField.ClientCard c) {
+        if (isSelectedCard(c)) return 0xFFFFFF00;
+        if (c.is_selected) return 0xFFFFFF00;
+        if (c.is_highlighting) return 0xFF00FFFF;
+        if (c.is_showequip || c.is_showtarget || c.is_showchaintarget) return 0xFFFF4444;
+        if (c.is_selectable) return 0xFFFFD700;
+        return 0;
+    }
+
+    private boolean isSelectedCard(GameField.ClientCard c) {
+        return c.controler == selectedPlayer && c.location == selectedLocation
+                && c.sequence == selectedSequence;
+    }
+
+    /**
+     * 我方手卡后移 HAND_SELF_Y_SHIFT，对方手卡保持原位
+     */
+    private static float handY(GameField.ClientCard c) {
+        return c.curY - (c.controler == 0 ? HAND_SELF_Y_SHIFT : 0f);
+    }
+
+    /**
+     * 选中手卡抬升量：未选中为 0，选中为 HAND_LIFT（沿相机 up 轴抬升，绘制/命中共用）
+     */
+    private float handLift(GameField.ClientCard c) {
+        return isSelectedCard(c) ? HAND_LIFT : 0f;
+    }
+
+    /**
+     * 选中手卡抬升的 Z 分量：沿相机 up 轴抬升，Z 分量 = mCamRot[6] × 抬升量
+     */
+    private float handLiftZ(GameField.ClientCard c) {
+        return mCamRot[6] * handLift(c);
+    }
+
+    private void drawGlow(int color, float cardAlpha) {
+        System.arraycopy(mModel, 0, mModelTmp, 0, 16);
+        Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, -0.004f);
+        Matrix.scaleM(mModelTmp, 0, mModelTmp, 0, 1.10f, 1.10f, 1f);
+        float a = cardAlpha * (0.55f + 0.30f * (float) Math.sin(animTimeMs * 0.005));
+        drawQuadColor(mModelTmp, ((color >> 16) & 0xFF) / 255f,
+                ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f, a);
+    }
+
+    private void drawFlatQuad(float cx, float cy, float z, float w, float h,
+                              float r, float g, float b, float a) {
+        Matrix.setIdentityM(mModel, 0);
+        Matrix.translateM(mModel, 0, cx, cy, z);
+        Matrix.scaleM(mModel, 0, w, h, 1f);
+        drawQuadColor(mModel, r, g, b, a);
+    }
+
+    private void drawQuadTex(float[] model, int texId, float alpha) {
+        drawQuadTex(model, texId, alpha, 1f, 0f);
+    }
+
+    private void drawQuadTex(float[] model, int texId, float alpha, float flipU, float flipV) {
+        if (texId <= 0) return;
+        GLES30.glUseProgram(texProg);
+        Matrix.multiplyMM(mMVP, 0, mVP, 0, model, 0);
+        GLES30.glUniformMatrix4fv(texLocMVP, 1, false, mMVP, 0);
+        GLES30.glUniform4f(texLocTint, 1f, 1f, 1f, alpha);
+        GLES30.glUniform1f(texLocFlipU, flipU);
+        GLES30.glUniform1f(texLocFlipV, flipV);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texId);
+        GLES30.glUniform1i(texLocTex, 0);
+        glBindQuadVao();
+    }
+
+    private void glBindQuadVao() {
+        GLES30.glBindVertexArray(vao);
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
+        GLES30.glBindVertexArray(0);
+    }
+
+    private void drawQuadColor(float[] model, float r, float g, float b, float a) {
+        GLES30.glUseProgram(colorProg);
+        Matrix.multiplyMM(mMVP, 0, mVP, 0, model, 0);
+        GLES30.glUniformMatrix4fv(colorLocMVP, 1, false, mMVP, 0);
+        GLES30.glUniform4f(colorLocColor, r, g, b, a);
+        glBindQuadVao();
+    }
+
+    // ==================== 纹理（多线程：工作线程解码 → GL 线程上传）====================
+
+    private static long texKey(int code, int mode, int scale) {
+        return ((long) mode << 48) | ((long) scale << 40) | (code & 0xFFFFFFFFL);
+    }
+
+    private static long fieldTexKey(int rule, boolean transparent) {
+        return -10L - (long) rule * 2L - (transparent ? 1L : 0L);
+    }
+
+    private int obtainFieldTexture(int rule, boolean transparent) {
+        long key = fieldTexKey(rule, transparent);
+        Integer id = textures.get(key);
+        if (id != null) return id;
+        if (!requested.add(key)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getFieldTexture(rule, transparent);
+                    if (src != null && !src.isRecycled())
+                        b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                // b==null（文件缺失）时不上传：requested 保留，之后走颜色兜底、不重复请求
+                if (b != null) pendingUploads.offer(new PendingUpload(key, b, true));
+            });
+        } catch (Throwable t) {
+            requested.remove(key);
+        }
+        return -1;
+    }
+
+    private int obtainCover(boolean opponent) {
+        long key = opponent ? COVER_OPP_KEY : COVER_SELF_KEY;
+        Integer id = textures.get(key);
+        if (id != null) return id;
+        if (!requested.add(key)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getCardCover(opponent);
+                    if (src != null && !src.isRecycled())
+                        b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                if (b == null) b = makeSolidBitmap(opponent ? 0xFF3A2820 : 0xFF28303A);
+                pendingUploads.offer(new PendingUpload(key, b, true));
+            });
+        } catch (Throwable t) {
+            requested.remove(key);
+        }
+        return -1;
+    }
+
+    /**
+     * 卡图纹理统一入口（TextureLoader 全源解码 + LRU 缓存）：
+     * ① GL 纹理缓存命中 → 直接返回；
+     * ② TextureLoader 位图缓存命中（已被预读/之前解码过）→ GL 线程同步上传，零占位帧；
+     * ③ 均未命中 → 触发 TextureLoader 异步解码，限频等待，连续 3 次落空才永久回退 unknown
+     */
+    private int obtainTexture(int code, int mode, int scale) {
+        long key = texKey(code, mode, scale);
+        Integer id = textures.get(key);
+        if (id != null) return id;
+        try {
+            Bitmap cached = TextureLoader.get().getCardBitmap(code & 0xFFFFFFFFL);
+            if (cached != null && !cached.isRecycled()) {
+                Bitmap base = cached;
+                Bitmap bmp = (mode == 0) ? base : compositePendulum(base, mode == 1, scale);
+                if (bmp != null) {
+                    int newId = uploadBitmap(bmp);
+                    if (newId > 0) {
+                        if (bmp != base) bmp.recycle();
+                        textures.put(key, newId);
+                        return newId;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        long now = animTimeMs;
+        Long last = texRetryTime.get(key);
+        if (last != null && now - last < 2000L) return -1;
+        texRetryTime.put(key, now);
+        int attempts = texRetries.containsKey(key) ? texRetries.get(key) + 1 : 1;
+        texRetries.put(key, attempts);
+        requestTexture(key, code, mode, scale, attempts >= 3);
+        return -1;
+    }
+
+    /**
+     * 兜底任务：卡图解码已统一收口到 TextureLoader.getCardBitmap（内部全源查找 + 去重），
+     * 本任务只负责在重试窗口后检查结果；lastChance=true 仍缺失时才上传 unknown 终止重试。
+     */
+    private void requestTexture(final long key, final int code, final int mode,
+                                final int scale, final boolean lastChance) {
+        if (!requested.add(key)) return;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap bmp = null;
+                boolean owned = false;
+                try {
+                    Bitmap base = TextureLoader.get().getCardBitmap(code & 0xFFFFFFFFL);
+                    if (base != null && !base.isRecycled()) {
+                        if (mode == 0) {
+                            bmp = base;          // 共享缓存位图：上传但不回收
+                        } else {
+                            bmp = compositePendulum(base, mode == 1, scale);
+                            owned = (bmp != base); // 合成副本才归本任务所有
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+                if (bmp != null) {
+                    pendingUploads.offer(new PendingUpload(key, bmp, owned));
+                } else if (lastChance) {
+                    Bitmap u = null;
+                    try {
+                        u = TextureLoader.get().getUnknownCard();
+                    } catch (Throwable ignored) {
+                    }
+                    bmp = (u != null && !u.isRecycled())
+                            ? u.copy(Bitmap.Config.ARGB_8888, false)
+                            : makeSolidBitmap(0xFF555560);
+                    pendingUploads.offer(new PendingUpload(key, bmp, true));
+                } else {
+                    // 尚未到最后一次：释放请求标记，等限频窗口过后重试
+                    requested.remove(key);
+                }
+            });
+        } catch (Throwable t) {
+            requested.remove(key);
+        }
+    }
+
+    /**
+     * 线程池被 shutdown 后（视图 detach 过）懒重建，避免 RejectedExecutionException 炸 GL 线程
+     */
+    private synchronized ExecutorService texExecutor() {
+        if (texExecutor == null || texExecutor.isShutdown()) {
+            texExecutor = Executors.newSingleThreadExecutor();
+        }
+        return texExecutor;
+    }
+
+    /**
+     * 灵摆刻度合成：卡图上叠加 lscale/rscale 贴图 + 角标刻度值（与 Canvas 版行为一致）
+     */
+    private static Bitmap compositePendulum(Bitmap base, boolean left, int scale) {
+        Bitmap bmp = base.isMutable() ? base : base.copy(Bitmap.Config.ARGB_8888, true);
+        Canvas cv = new Canvas(bmp);
+        Bitmap s = null;
+        try {
+            s = TextureLoader.get().getScaleTexture(left, scale);
+        } catch (Throwable ignored) {
+        }
+        if (s != null && !s.isRecycled()) {
+            float w = bmp.getWidth() * 0.92f;
+            float h = w * s.getHeight() / (float) s.getWidth();
+            float maxH = bmp.getHeight() * 0.92f;
+            if (h > maxH) {
+                h = maxH;
+                w = h * s.getWidth() / (float) s.getHeight();
+            }
+            cv.drawBitmap(s, null, new android.graphics.Rect(
+                    (int) ((bmp.getWidth() - w) / 2f), (int) ((bmp.getHeight() - h) / 2f),
+                    (int) ((bmp.getWidth() + w) / 2f), (int) ((bmp.getHeight() + h) / 2f)), null);
+        }
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setTextSize(bmp.getWidth() * 0.2f);
+        p.setColor(0xFF40E0FF);
+        p.setFakeBoldText(true);
+        p.setShadowLayer(3f, 1f, 1f, 0xFF000000);
+        if (left) {
+            p.setTextAlign(Paint.Align.LEFT);
+            cv.drawText(String.valueOf(scale), bmp.getWidth() * 0.12f, bmp.getHeight() * 0.13f, p);
+        } else {
+            p.setTextAlign(Paint.Align.RIGHT);
+            cv.drawText(String.valueOf(scale), bmp.getWidth() * 0.88f, bmp.getHeight() * 0.13f, p);
+        }
+        return bmp;
+    }
+
+    private static Bitmap makeSolidBitmap(int color) {
+        Bitmap b = Bitmap.createBitmap(64, 92, Bitmap.Config.ARGB_8888);
+        b.eraseColor(color);
+        return b;
+    }
+
+    private void drainUploads() {
+        PendingUpload up;
+        while ((up = pendingUploads.poll()) != null) {
+            if (up.bitmap == null || up.bitmap.isRecycled()) continue;
+            int id = uploadBitmap(up.bitmap);
+            if (id > 0) textures.put(up.key, id);
+            if (up.owned && !up.bitmap.isRecycled()) up.bitmap.recycle();
+        }
+    }
+
+    /**
+     * Bitmap → GL 纹理（GL 线程专用）：快路径同步上传与 drainUploads 共用
+     */
+    private int uploadBitmap(Bitmap bmp) {
+        Bitmap src = bmp;
+        // RGB_565 奇数宽位图 rowBytes 有 4 字节对齐填充，按 packed 行长上传会逐行错位形成斜向错切；
+        // 统一转 ARGB_8888（rowBytes=width*4 恒对齐）兜底，正常路径解码已是 ARGB_8888 不触发
+        if (src.getConfig() == Bitmap.Config.RGB_565 && (src.getRowBytes() != src.getWidth() * 2)) {
+            src = src.copy(Bitmap.Config.ARGB_8888, false);
+        }
+        int[] ids = new int[1];
+        GLES30.glGenTextures(1, ids, 0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, ids[0]);
+        GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, src, 0);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+        if (src != bmp) src.recycle();
+        return ids[0];
+    }
+
+    // ==================== 触摸拾取（射线反投影）====================
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-            float x = event.getX() - offsetX;
-            float y = event.getY() - offsetY;
-            handleTap(x, y);
-            return true;
+        if (gestureDetector != null) {
+            gestureDetector.onTouchEvent(event);
         }
-        return super.onTouchEvent(event);
+        return true;
+    }
+
+    private float[] buildRay(float sx, float sy) {
+        float[] inv = new float[16];
+        int w, h;
+        synchronized (camLock) {
+            System.arraycopy(pickInvVP, 0, inv, 0, 16);
+            w = viewW;
+            h = viewH;
+        }
+        float nx = 2f * sx / w - 1f;
+        float ny = 1f - 2f * sy / h;
+        float[] p0 = unproject(inv, nx, ny, -1f);
+        float[] p1 = unproject(inv, nx, ny, 1f);
+        if (p0 == null || p1 == null) return null;
+        float dx = p1[0] - p0[0], dy = p1[1] - p0[1], dz = p1[2] - p0[2];
+        float len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len < 1e-6f) return null;
+        return new float[]{p0[0], p0[1], p0[2], dx / len, dy / len, dz / len};
+    }
+
+    private static float[] unproject(float[] inv, float nx, float ny, float nz) {
+        float[] v = {nx, ny, nz, 1f};
+        float[] o = new float[4];
+        Matrix.multiplyMV(o, 0, inv, 0, v, 0);
+        if (Math.abs(o[3]) < 1e-6f) return null;
+        return new float[]{o[0] / o[3], o[1] / o[3], o[2] / o[3]};
+    }
+
+    private static boolean planeHit(float[] ray, float zPlane, float[] out) {
+        if (Math.abs(ray[5]) < 1e-6f) return false;
+        float t = (zPlane - ray[2]) / ray[5];
+        if (t < 0) return false;
+        out[0] = ray[0] + ray[3] * t;
+        out[1] = ray[1] + ray[4] * t;
+        return true;
     }
 
     private void handleTap(float x, float y) {
-        if (cardClickListener == null || field == null) return;
+        OnCardClickListener listener = cardClickListener;
+        GameField f = field;
+        if (listener == null || f == null) return;
+        float[] ray = buildRay(x, y);
+        if (ray == null) return;
 
-        if (highlightFieldMask != 0) {
-            for (int player = 0; player < 2; player++) {
-                int[] locations = {0x04, 0x08};
-                for (int loc : locations) {
-                    int maxZones = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
-                    for (int i = 0; i < maxZones; i++) {
-                        RectF r = getZoneRect(player, loc, i);
-                        if (r != null && r.contains(x, y)) {
-                            int bitPos = getZoneBitPos(player, loc, i);
-                            if (bitPos >= 0 && (highlightFieldMask & (1 << bitPos)) != 0) {
-                                cardClickListener.onZoneClick(player, loc, i);
-                                return;
+        try {
+            // 高亮选区优先（与 Canvas 版 handleTap 语义一致）
+            int mask = highlightFieldMask;
+            if (mask != 0) {
+                float[] g = new float[2];
+                if (planeHit(ray, 0.02f, g)) {
+                    // 绘制做了 X 镜像，命中点镜像还原后才能与真实 zone 坐标比较
+                    g[0] = mirrorX(g[0]);
+                    for (int p = 0; p < 2; p++) {
+                        for (int loc : new int[]{0x04, 0x08}) {
+                            int max = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
+                            for (int i = 0; i < max; i++) {
+                                if (!zoneContains(p, loc, i, g[0], g[1])) continue;
+                                int bit = zoneBitPos(p, loc, i);
+                                if (bit >= 0 && (mask & (1 << bit)) != 0) {
+                                    listener.onZoneClick(p, loc, i);
+                                    return;
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        for (int player = 0; player < 2; player++) {
-            for (int loc : new int[]{0x04, 0x08}) {
-                int maxZones = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
-                for (int i = 0; i < maxZones; i++) {
-                    RectF r = getZoneRect(player, loc, i);
-                    if (r != null && r.contains(x, y)) {
-                        GameField.ClientCard card = field.getCard(player, loc, i);
-                        if (card != null) {
-                            setSelectedCard(player, loc, i);
-                            cardClickListener.onCardClick(player, loc, i);
-                            return;
+            int[] hit = hitCard(ray, f);
+            if (hit != null) {
+                setSelectedCard(hit[0], hit[1], hit[2]);
+                listener.onCardClick(hit[0], hit[1], hit[2]);
+            } else {
+                clearSelection();
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void handleLongPress(float x, float y) {
+        OnCardClickListener listener = cardClickListener;
+        GameField f = field;
+        if (listener == null || f == null) return;
+        float[] ray = buildRay(x, y);
+        if (ray == null) return;
+        try {
+            int[] hit = hitCard(ray, f);
+            if (hit != null) {
+                listener.onFieldLongPress(hit[0], hit[1], hit[2]);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 命中顺序与 Canvas 版一致：每方 怪兽/魔陷区 → 手牌 → 堆叠区
+     */
+    private int[] hitCard(float[] ray, GameField f) {
+        try {
+            float[] g = new float[2];
+            boolean gOk = planeHit(ray, 0.02f, g);
+            // 绘制做了 X 镜像：命中点镜像还原到真实场地坐标后再与卡数据比较
+            if (gOk) g[0] = mirrorX(g[0]);
+
+            for (int p = 0; p < 2; p++) {
+                if (gOk) {
+                    for (int loc : new int[]{0x04, 0x08}) {
+                        int max = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
+                        for (int i = 0; i < max; i++) {
+                            if (zoneContains(p, loc, i, g[0], g[1]) && f.getCard(p, loc, i) != null) {
+                                return new int[]{p, loc, i};
+                            }
+                        }
+                    }
+                }
+                // 手卡平行屏幕：按各卡所在 y 平面求交（抬高沿相机 up 轴，需计入其 y/z 分量）
+                List<GameField.ClientCard> hand = f.players[p].hand;
+                for (int i = hand.size() - 1; i >= 0; i--) {
+                    GameField.ClientCard c;
+                    try {
+                        c = hand.get(i);
+                    } catch (Throwable e) {
+                        continue;
+                    }
+                    if (c == null) continue;
+                    float lift = handLift(c);
+                    float[] hz = new float[2];
+                    if (!planeHitY(ray, handY(c) + mCamRot[5] * lift, hz)) continue;
+                    hz[0] = mirrorX(hz[0]);
+                    if (Math.abs(hz[0] - c.curX) <= 0.45f
+                            && Math.abs(hz[1] - (c.curZ + mCamRot[6] * lift)) <= 0.75f) {
+                        return new int[]{p, 0x02, i};
+                    }
+                }
+                if (gOk) {
+                    for (int loc : new int[]{0x01, 0x40, 0x10, 0x20}) {
+                        float[] c = pileCenter(p, loc);
+                        if (c == null) continue;
+                        if (Math.abs(g[0] - c[0]) <= PILE_W / 2f && Math.abs(g[1] - c[1]) <= PILE_H / 2f) {
+                            int count = f.getCardCount(p, loc);
+                            if (count > 0) return new int[]{p, loc, count - 1};
                         }
                     }
                 }
             }
-
-            boolean flipped = (player == 1);
-            List<GameField.ClientCard> hand = field.players[player].hand;
-            for (int i = hand.size() - 1; i >= 0; i--) {
-                GameField.ClientCard card = hand.get(i);
-                if (card == null) continue;
-                RectF hr = projectCard(card.curX, card.curY, card.curZ);
-                if (hr.contains(x, y)) {
-                    setSelectedCard(player, 0x02, i);
-                    cardClickListener.onCardClick(player, 0x02, i);
-                    return;
-                }
-            }
-
-            if (checkPileTap(player, x, y, CardLocation.Deck.value())) return;
-            if (checkPileTap(player, x, y, CardLocation.Extra.value())) return;
-            if (checkPileTap(player, x, y, CardLocation.Grave.value())) return;
-            if (checkPileTap(player, x, y, CardLocation.Removed.value())) return;
+        } catch (Throwable ignored) {
         }
-        clearSelection();
+        return null;
     }
 
-    private boolean checkPileTap(int player, float x, float y, int location) {
-        // handleTap 的坐标已是场地局部坐标，必须用不带 offset 的矩形
-        RectF r = getPileRectLocal(player, location);
-        if (r != null && r.contains(x, y)) {
-            int count = field.getCardCount(player, location);
-            if (count > 0) {
-                int seq = count - 1;
-                setSelectedCard(player, location, seq);
-                cardClickListener.onCardClick(player, location, seq);
-                return true;
+    private static boolean planeHitY(float[] ray, float yPlane, float[] outXZ) {
+        if (Math.abs(ray[4]) < 1e-6f) return false;
+        float t = (yPlane - ray[1]) / ray[4];
+        if (t < 0) return false;
+        outXZ[0] = ray[0] + ray[3] * t;
+        outXZ[1] = ray[2] + ray[5] * t;
+        return true;
+    }
+
+    // ==================== 场地几何（与 GameField/旧版 getZoneRectLocalF 一致）====================
+
+    private static float[] zoneCenter(int player, int loc, int seq) {
+        if (loc == 0x04) {
+            if (player == 0) {
+                float cx = fx(seq < 5 ? 1.75f + 1.1f * seq : (seq == 5 ? 2.85f : 5.05f));
+                float cy = seq < 5 ? 1.4f : 0f;
+                return new float[]{cx, cy};
             }
+            float cx = fx(seq < 5 ? 6.15f - 1.1f * seq : (seq == 5 ? 5.05f : 2.85f));
+            float cy = seq < 5 ? -1.4f : 0f;
+            return new float[]{cx, cy};
         }
-        return false;
+        if (player == 0) {
+            float cx = fx(seq < 5 ? 1.75f + 1.1f * seq
+                    : (seq == 5 ? 0.6f : (seq == 6 ? 0.6f : 8.3f)));
+            float cy = seq < 5 ? 2.56f : (seq == 5 ? 2.0f : 0.7f);
+            return new float[]{cx, cy};
+        }
+        float cx = fx(seq < 5 ? 6.15f - 1.1f * seq
+                : (seq == 5 ? 7.3f : (seq == 6 ? 7.3f : -0.4f)));
+        float cy = seq < 5 ? -2.56f : (seq == 5 ? -2.0f : -0.7f);
+        return new float[]{cx, cy};
     }
 
-    private RectF getPileRect(int player, int location) {
-        RectF r = getPileRectLocal(player, location);
-        if (r == null) return null;
-        r.offset(offsetX, offsetY);
-        return r;
+    private static float[] pileCenter(int player, int loc) {
+        if (player == 0) {
+            if (loc == 0x01) return new float[]{fx(7.3f), 3.3f};
+            if (loc == 0x10) return new float[]{fx(7.3f), 2.0f};
+            if (loc == 0x20) return new float[]{fx(7.3f), 0.7f};
+            if (loc == 0x40) return new float[]{fx(0.6f), 3.3f};
+            return null;
+        }
+        if (loc == 0x01) return new float[]{fx(0.6f), -3.3f};
+        if (loc == 0x10) return new float[]{fx(0.6f), -2.0f};
+        if (loc == 0x20) return new float[]{fx(0.6f), -0.7f};
+        if (loc == 0x40) return new float[]{fx(7.3f), -3.3f};
+        return null;
     }
 
-    private int getZoneBitPos(int player, int location, int sequence) {
+    private static boolean zoneContains(int player, int loc, int seq, float x, float y) {
+        float[] c = zoneCenter(player, loc, seq);
+        return Math.abs(x - c[0]) <= ZONE_W / 2f && Math.abs(y - c[1]) <= ZONE_H / 2f;
+    }
+
+    private static int zoneBitPos(int player, int location, int sequence) {
         int base = (player == 0) ? 0 : 16;
         if (location == 0x04) return base + sequence;
         if (location == 0x08) {
@@ -1420,72 +1289,81 @@ public class GameFieldView extends View implements Choreographer.FrameCallback {
         return -1;
     }
 
-    public void syncDisplayLp() {
-        if (field == null) return;
-        if (lpAnimator0 != null && lpAnimator0.isRunning()) {
-            lpAnimator0.cancel();
+    private static int pendulumMode(GameField.ClientCard c) {
+        if (c.location == 0x08 && (c.sequence == 6 || c.sequence == 7) && c.isFaceUp() && c.code != 0) {
+            return c.sequence == 6 ? 1 : 2;
         }
-        if (lpAnimator1 != null && lpAnimator1.isRunning()) {
-            lpAnimator1.cancel();
+        return 0;
+    }
+
+    private static int pendulumScale(GameField.ClientCard c) {
+        return Math.max(0, Math.min(13, c.sequence == 6 ? c.lScale : c.rScale));
+    }
+
+    // ==================== 着色器工具 / 高刷新率 / 生命周期 ====================
+
+    private static int loadShader(int type, String src) {
+        int s = GLES30.glCreateShader(type);
+        GLES30.glShaderSource(s, src);
+        GLES30.glCompileShader(s);
+        int[] st = new int[1];
+        GLES30.glGetShaderiv(s, GLES30.GL_COMPILE_STATUS, st, 0);
+        if (st[0] == 0) {
+            String log = GLES30.glGetShaderInfoLog(s);
+            GLES30.glDeleteShader(s);
+            throw new RuntimeException("Shader compile failed: " + log);
         }
-        displayLp0 = field.players[0].lp;
-        displayLp1 = field.players[1].lp;
-        invalidate();
+        return s;
+    }
+
+    private static int createProgram(String vs, String fs) {
+        int p = GLES30.glCreateProgram();
+        GLES30.glAttachShader(p, loadShader(GLES30.GL_VERTEX_SHADER, vs));
+        GLES30.glAttachShader(p, loadShader(GLES30.GL_FRAGMENT_SHADER, fs));
+        GLES30.glLinkProgram(p);
+        int[] st = new int[1];
+        GLES30.glGetProgramiv(p, GLES30.GL_LINK_STATUS, st, 0);
+        if (st[0] == 0) {
+            String log = GLES30.glGetProgramInfoLog(p);
+            GLES30.glDeleteProgram(p);
+            throw new RuntimeException("Program link failed: " + log);
+        }
+        return p;
+    }
+
+    /**
+     * 请求屏幕最高刷新率显示模式（高刷屏跑满 90/120/144Hz 的前提）
+     */
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        requestHighRefreshRate();
+    }
+
+    private void requestHighRefreshRate() {
+        try {
+            Context ctx = getContext();
+            if (!(ctx instanceof Activity)) return;
+            Activity act = (Activity) ctx;
+            Display display = act.getWindowManager().getDefaultDisplay();
+            Display.Mode[] modes = display.getSupportedModes();
+            Display.Mode best = null;
+            for (Display.Mode m : modes) {
+                if (best == null || m.getRefreshRate() > best.getRefreshRate()) best = m;
+            }
+            if (best == null) return;
+            WindowManager.LayoutParams lp = act.getWindow().getAttributes();
+            if (lp.preferredDisplayModeId != best.getModeId()) {
+                lp.preferredDisplayModeId = best.getModeId();
+                act.getWindow().setAttributes(lp);
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override
-    public void doFrame(long frameTimeNanos) {
-        if (field != null && hasActiveAnimations()) {
-            invalidate();
-            Choreographer.getInstance().postFrameCallback(this);
-        } else {
-            animationRunning = false;
-        }
+    protected void onDetachedFromWindow() {
+        texExecutor.shutdownNow();
+        super.onDetachedFromWindow();
     }
-
-    public void startAnimationLoop() {
-        if (!animationRunning) {
-            animationRunning = true;
-            Choreographer.getInstance().postFrameCallback(this);
-        }
-    }
-
-    /**
-     * 按卡码取卡图 Drawable：首次请求时创建离屏 ImageView 并交给
-     * ImageLoader.bindImage（标准取图链：扩展包 zip/ypk → 散装 pics → pics.zip，
-     * 含 unknown 占位与 Glide 缓存），之后直接读取其中的 Drawable。
-     * Glide 加载完成回调 setImageDrawable 时自动触发本视图重绘。
-     */
-    private Drawable requestCardDrawable(int code) {
-        if (code <= 0 || imageLoader == null) return null;
-        ImageView iv = cardViewCache.get(code);
-        if (iv == null) {
-            iv = new OffscreenCardView(getContext());
-            int w = 177, h = 254;
-            iv.measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
-            iv.layout(0, 0, w, h);
-            cardViewCache.put(code, iv);
-            imageLoader.bindImage(iv, code, ImageLoader.Type.small);
-        }
-        return iv.getDrawable();
-    }
-
-    /**
-     * 离屏 ImageView：不进布局树，仅作为 bindImage 的加载目标；
-     * Glide 每次换图（占位图 → 真图）都会走 setImageDrawable，借此驱动重绘
-     */
-    private class OffscreenCardView extends AppCompatImageView {
-        OffscreenCardView(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void setImageDrawable(Drawable drawable) {
-            super.setImageDrawable(drawable);
-            GameFieldView.this.postInvalidate();
-        }
-    }
-
-
 }

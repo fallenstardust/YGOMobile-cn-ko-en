@@ -108,11 +108,12 @@ public class ImageLoader implements Closeable {
 
     /**
      * 按卡号查找并读取卡图数据。
-     * 该方法由CardImageFetcher在Glide后台线程调用，请勿在主线程调用。
+     * 该方法由CardImageFetcher在Glide后台线程调用，请勿在主线程调用；
+     * 亦供TextureLoader后台解码线程复用，保证GL卡图与bindImage同源同字节。
      * 查找顺序与原逻辑一致：expansions下的zip/ypk -> pics/expansions/pics文件夹 -> pics.zip
      */
     @Nullable
-    static byte[] findCardImageData(long code) {
+    public static byte[] findCardImageData(long code) {
         String name = Constants.CORE_IMAGE_PATH + "/" + code;
         String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
         //1.zips(包括ypk)

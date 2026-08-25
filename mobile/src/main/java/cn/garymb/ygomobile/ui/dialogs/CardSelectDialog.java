@@ -36,6 +36,11 @@ public class CardSelectDialog {
     private static final int COLOR_SELECTED = 0xFF00AA44;
     private static final int COLOR_OPPONENT = 0xFFAA4444;
 
+    // 卡图宽高比 177:254：ImageView 高度 = 宽度 × CARD_ASPECT
+    private static final float CARD_ASPECT = 254f / 177f;
+    // 对话框宽度取 layout_game_right 实际宽度的四分之三
+    private static final float DIALOG_WIDTH_RATIO = 0.75f;
+
     public static class CardItem {
         public final int code;
         public final int controler;
@@ -115,10 +120,8 @@ public class CardSelectDialog {
     private int sortCounter = 0;
 
     private TextView tvTitle;
-    private TextView tvCount;
     private SeekBar sbPage;
     private Button btnOk;
-    private Button btnCancel;
     private final View[] slotViews = new View[SLOT_COUNT];
     private final TextView[] tvPositions = new TextView[SLOT_COUNT];
     private final ImageView[] ivCards = new ImageView[SLOT_COUNT];
@@ -258,10 +261,8 @@ public class CardSelectDialog {
     private void build() {
         View root = LayoutInflater.from(context).inflate(R.layout.dialog_card_select, null);
         tvTitle = root.findViewById(R.id.tv_card_select_title);
-        tvCount = root.findViewById(R.id.tv_card_select_count);
         sbPage = root.findViewById(R.id.sb_card_page);
         btnOk = root.findViewById(R.id.btn_card_select_ok);
-        btnCancel = root.findViewById(R.id.btn_card_select_cancel);
 
         slotViews[0] = root.findViewById(R.id.slot_card_0);
         tvPositions[0] = root.findViewById(R.id.tv_card_pos_0);
@@ -281,7 +282,7 @@ public class CardSelectDialog {
 
         tvTitle.setText(title);
         popupWindow = new PopupWindow(root,
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
         popupWindow.setFocusable(true);
@@ -291,8 +292,10 @@ public class CardSelectDialog {
         });
 
         draggableHelper = new DraggablePopupHelper(context, "card_select");
+        int dialogWidth = resolveDialogWidth();
+        applyCardImageSize(dialogWidth);
         draggableHelper.setupDraggablePopup(popupWindow, root,
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
 
         for (int i = 0; i < SLOT_COUNT; i++) {
             final int slot = i;
@@ -316,10 +319,64 @@ public class CardSelectDialog {
             }
         });
         btnOk.setOnClickListener(v -> confirm());
-        btnCancel.setOnClickListener(v -> {
-            if (listener != null) listener.onCancel();
-            dismiss();
-        });
+    }
+
+    /**
+     * 对话框宽度 = layout_game_right 实际宽度 × 3/4；
+     * 取不到时依次降级为窗口 decorView 宽度、屏幕宽度
+     */
+    private int resolveDialogWidth() {
+        int w = 0;
+        if (context instanceof android.app.Activity) {
+            android.app.Activity act = (android.app.Activity) context;
+            if (!act.isFinishing() && !act.isDestroyed()) {
+                View gameRight = act.findViewById(R.id.layout_game_right);
+                if (gameRight != null) {
+                    w = gameRight.getWidth();
+                }
+                if (w <= 0) {
+                    w = act.getWindow().getDecorView().getWidth();
+                }
+            }
+        }
+        if (w <= 0) {
+            w = context.getResources().getDisplayMetrics().widthPixels;
+        }
+        return Math.round(w * DIALOG_WIDTH_RATIO);
+    }
+
+    /**
+     * 按对话框宽度反推每张卡宽（扣除根内边距 16dp×2 与每槽水平外边距 4dp×2），
+     * 高度按 177:254 卡图比例计算，保证 ImageView 宽高与卡片比例一致
+     */
+    private void applyCardImageSize(int dialogWidthPx) {
+        int containerW = dialogWidthPx - 2 * dp2px(16);
+        int cardW = (containerW - SLOT_COUNT * 2 * dp2px(4)) / SLOT_COUNT;
+        if (cardW <= 0) return;
+        int cardH = Math.round(cardW * CARD_ASPECT);
+        for (ImageView iv : ivCards) {
+            ViewGroup.LayoutParams lp = iv.getLayoutParams();
+            if (lp != null) {
+                lp.height = cardH;
+                iv.setLayoutParams(lp);
+            }
+        }
+    }
+
+    private int dp2px(float dp) {
+        return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    /**
+     * 标题与选择状态共用同一个 title TextView：基础标题 + 已选数量/进度后缀
+     */
+    private void updateTitle(String statusText) {
+        if (tvTitle == null) return;
+        if (statusText == null || statusText.isEmpty()) {
+            tvTitle.setText(title);
+        } else {
+            tvTitle.setText(title + "  " + statusText);
+        }
     }
 
     private void onSlotClicked(int slot) {
@@ -356,7 +413,7 @@ public class CardSelectDialog {
                         return;
                     }
                 }
-                tvCount.setText("点击顺序: " + sortCounter + "/" + cards.size());
+                updateTitle("点击顺序: " + sortCounter + "/" + cards.size());
                 break;
             }
             case MODE_SUM: {
@@ -373,6 +430,7 @@ public class CardSelectDialog {
                     clickOrder.add(realIdx);
                 }
                 updateSlotView(slot, index);
+                if (listener != null) listener.onCardClicked(index);
                 updateSumState();
                 break;
             }
@@ -385,16 +443,13 @@ public class CardSelectDialog {
                     clickOrder.add(index);
                 }
                 updateSlotView(slot, index);
+                if (listener != null) listener.onCardClicked(index);
                 int sel = getSelectedCount();
-                tvCount.setText("已选: " + sel + "/" + maxSelect);
+                updateTitle("已选: " + sel + "/" + maxSelect);
                 if (sel >= maxSelect) {
                     confirm();
-                } else if (sel >= minSelect) {
-                    btnOk.setVisibility(View.VISIBLE);
-                    btnCancel.setVisibility(View.GONE);
                 } else {
-                    btnOk.setVisibility(View.GONE);
-                    btnCancel.setVisibility(cancelable && sel == 0 ? View.VISIBLE : View.GONE);
+                    btnOk.setVisibility(sel >= minSelect ? View.VISIBLE : View.GONE);
                 }
                 break;
             }
@@ -409,12 +464,11 @@ public class CardSelectDialog {
         boolean countOk = optCount >= minSelect && optCount <= maxSelect;
         boolean sumOk = checkSumValue();
         boolean ready = countOk && sumOk;
-        tvCount.setText(sumText());
+        updateTitle(sumText());
         if (ready && optCount >= maxSelect) {
             confirm();
         } else {
             btnOk.setVisibility(ready ? View.VISIBLE : View.GONE);
-            btnCancel.setVisibility(cancelable && optCount == 0 ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -575,28 +629,22 @@ public class CardSelectDialog {
             switch (mode) {
                 case MODE_SORT:
                     btnOk.setVisibility(View.GONE);
-                    btnCancel.setVisibility(View.GONE);
-                    tvCount.setText("点击顺序: 0/" + cards.size());
+                    updateTitle("点击顺序: 0/" + cards.size());
                     break;
                 case MODE_UNSELECT:
+                    btnOk.setVisibility(finishable ? View.VISIBLE : View.GONE);
                     if (finishable) {
-                        btnOk.setVisibility(View.VISIBLE);
-                        btnCancel.setVisibility(View.GONE);
                         btnOk.setText("完成");
-                    } else {
-                        btnOk.setVisibility(View.GONE);
-                        btnCancel.setVisibility(cancelable ? View.VISIBLE : View.GONE);
                     }
-                    tvCount.setText("已选: " + getSelectedCount() + "/" + maxSelect);
+                    updateTitle("已选: " + getSelectedCount() + "/" + maxSelect);
                     break;
                 case MODE_SUM:
                     updateSumState();
                     break;
                 default:
                     int sel = getSelectedCount();
-                    tvCount.setText("已选: " + sel + "/" + maxSelect);
+                    updateTitle("已选: " + sel + "/" + maxSelect);
                     btnOk.setVisibility(sel >= minSelect ? View.VISIBLE : View.GONE);
-                    btnCancel.setVisibility(cancelable && sel == 0 ? View.VISIBLE : View.GONE);
                     break;
             }
             try {

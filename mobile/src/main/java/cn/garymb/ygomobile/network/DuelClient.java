@@ -41,6 +41,7 @@ public class DuelClient implements YGOProtocol {
         void onWatchChange(int watchCount);
         void onDuelStart();
         void onDuelEnd();
+        void onReplay(byte[] data);
         void onGameMsg(int msgType, ByteBuffer data);
         void onHandSelect();
         void onTPSelect();
@@ -220,6 +221,14 @@ public class DuelClient implements YGOProtocol {
                 case STOC_DUEL_END:
                     listener.onDuelEnd();
                     break;
+                case STOC_REPLAY: {
+                    // 包体即完整的 .yrp 录像文件字节流（ExtendedReplayHeader + 数据）
+                    if (buf.remaining() < 24) break;
+                    byte[] replayData = new byte[buf.remaining()];
+                    buf.get(replayData);
+                    listener.onReplay(replayData);
+                    break;
+                }
                 case STOC_CHANGE_SIDE:
                     listener.onChangeSide();
                     break;
