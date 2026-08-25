@@ -665,6 +665,12 @@ public class YGOProActivity extends AppCompatActivity implements
                     if (engine != null) {
                         engine.sendDeckUpdate(main, extra, side);
                     }
+                    // 副卡组替换完成：退出副卡组模式并隐藏整个卡组编辑器布局，
+                    // 等待下次 STOC_CHANGE_SIDE 进入副卡组替换模式时再显示
+                    if (deckEditorManager != null) {
+                        deckEditorManager.exitSideMode();
+                    }
+                    hideDeckEditorView();
                 }
             });
         }

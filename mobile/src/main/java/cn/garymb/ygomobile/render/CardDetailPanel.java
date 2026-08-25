@@ -626,6 +626,16 @@ public class CardDetailPanel {
         if (btnChat != null) btnChat.setVisibility(View.VISIBLE);
     }
 
+    /** 副卡组替换模式下隐藏卡组编辑控制栏（洗牌/排序/清空/删除/退出按钮区） */
+    public void hideDeckControl() {
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
+    }
+
+    /** 退出副卡组替换模式后恢复卡组编辑控制栏 */
+    public void showDeckControl() {
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
+    }
+
     // === 录像控制条 ===
 
     public void showReplayControls() {
