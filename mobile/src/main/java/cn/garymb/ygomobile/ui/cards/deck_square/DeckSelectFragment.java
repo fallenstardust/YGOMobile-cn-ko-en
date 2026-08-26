@@ -176,16 +176,10 @@ public class DeckSelectFragment extends Fragment {
         resultListAdapter.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {
             @Override
             public void onItemSelect(int position, DeckFile item) {
-                binding.rvResultList.setVisibility(View.GONE);
-                binding.llMainUi.setVisibility(View.VISIBLE);
-                binding.inputDeckName.getEditableText().clear();
-                //dismiss();
+                //点击搜索结果加载卡组时只隐藏对话框，不重置搜索界面，保留搜索状态供下次恢复显示
                 mDialogListener.onDismiss();
                 onDeckMenuListener.onDeckSelect(item);
             }
-        });
-        binding.ivSearchDeckName.setOnClickListener(v -> {
-            searchDeck();
         });
 
         binding.inputDeckName.setOnEditorActionListener((v, actionId, event) -> {
@@ -198,19 +192,25 @@ public class DeckSelectFragment extends Fragment {
             return false;
         });
 
+        //点击清除按钮：清空输入内容，隐藏搜索结果列表，重新显示卡组分类列表和卡组列表
+        binding.ivClearDeckName.setOnClickListener(v -> {
+            binding.inputDeckName.getEditableText().clear();
+            binding.rvResultList.setVisibility(View.GONE);
+            binding.llMainUi.setVisibility(View.VISIBLE);
+        });
+
         binding.inputDeckName.addTextChangedListener(new TextWatcher() {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // 输入中监听
+                // 输入中监听：有输入内容时显示清除按钮和搜索图标，内容为空时隐藏
                 if (s.toString().isEmpty()) {
-                    binding.llMainUi.setVisibility(View.VISIBLE);
-                    binding.rvResultList.setVisibility(View.GONE);
-                    binding.ivSearchDeckName.setVisibility(View.GONE);
+                    binding.ivClearDeckName.setVisibility(View.GONE);
                 } else {
-                    binding.ivSearchDeckName.setVisibility(View.VISIBLE);
+                    binding.ivClearDeckName.setVisibility(View.VISIBLE);
                 }
-
+                //输入内容变化时即时根据关键词搜索卡组
+                searchDeck(false);
             }
 
             @Override
@@ -547,8 +547,19 @@ public class DeckSelectFragment extends Fragment {
      * 根据et_input_deck_name的当前值，在allDeckList中搜索卡组
      */
     private void searchDeck() {
+        searchDeck(true);
+    }
+
+    /**
+     * 根据et_input_deck_name的当前值，在allDeckList中搜索卡组
+     *
+     * @param clearFocus 是否清除输入框焦点。打字过程中即时搜索时不清除焦点，避免打断输入
+     */
+    private void searchDeck(boolean clearFocus) {
         resultList.clear();
-        binding.inputDeckName.clearFocus();
+        if (clearFocus) {
+            binding.inputDeckName.clearFocus();
+        }
         String keyword = binding.inputDeckName.getText().toString();
         if (keyword.isEmpty()) {
             binding.llMainUi.setVisibility(View.VISIBLE);
