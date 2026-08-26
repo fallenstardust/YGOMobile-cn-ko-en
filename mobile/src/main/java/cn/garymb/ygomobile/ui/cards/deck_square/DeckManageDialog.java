@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
 
+import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,8 +9,10 @@ import android.view.ViewGroup;
 import android.view.Window;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -21,11 +24,56 @@ import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
 
 public class DeckManageDialog extends DialogFragment implements YGODeckDialogUtil.OnDeckDialogListener {
 
+    //所有入口统一使用同一个tag，保证任何入口都能复用同一个被隐藏的对话框实例
+    public static final String DIALOG_TAG = "pagerDialog";
+
     private int initialTabPosition = 0;
     private String searchKeyword = null;
 
+    private ViewPager2 viewPager;
+
+    /**
+     * 打开卡组管理对话框：若该对话框之前已打开过且只是被隐藏，则直接恢复显示；否则创建新的对话框
+     */
+    public static void showDeckManageDialog(FragmentManager manager, YGODeckDialogUtil.OnDeckMenuListener listener, int initialTabPosition, String searchKeyword) {
+        DeckManageDialog dialog = (DeckManageDialog) manager.findFragmentByTag(DIALOG_TAG);
+        if (dialog != null && dialog.isAdded() && dialog.getDialog() != null) {
+            dialog.restore(initialTabPosition, searchKeyword);
+            return;
+        }
+        new DeckManageDialog(listener, initialTabPosition, searchKeyword).show(manager, DIALOG_TAG);
+    }
+
+    /**
+     * 恢复显示被隐藏的对话框，不重新构筑布局；
+     * 若调用方指定了新的页签/搜索关键词（如从战绩页带卡组名打开），则在现有实例上切换到该状态
+     */
+    private void restore(int tabPosition, String keyword) {
+        Dialog dialog = getDialog();
+        if (dialog == null) {
+            return;
+        }
+        dialog.show();
+        if (keyword != null && !keyword.isEmpty()) {
+            searchKeyword = keyword;
+            for (Fragment fragment : getChildFragmentManager().getFragments()) {
+                if (fragment instanceof DeckSquareFragment) {
+                    ((DeckSquareFragment) fragment).searchDeck(keyword);
+                    break;
+                }
+            }
+        }
+        if (viewPager != null && tabPosition > 0 && tabPosition < 3) {
+            viewPager.setCurrentItem(tabPosition, false);
+        }
+    }
+
     public void onDismiss() {
-        dismiss();
+        // 只隐藏对话框而不销毁，保留内部状态，下次打开时直接恢复显示
+        Dialog dialog = getDialog();
+        if (dialog != null) {
+            dialog.hide();
+        }
     }
 
     public void onShow() {
@@ -48,6 +96,18 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
         return searchKeyword;
     }
 
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        return new Dialog(requireContext(), getTheme()) {
+            @Override
+            public void onBackPressed() {
+                // 返回键只隐藏对话框窗口而不销毁，保留当前页签、搜索关键词等状态
+                hide();
+            }
+        };
+    }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dialog_deck_manager, container, false);
@@ -58,7 +118,7 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        ViewPager2 viewPager = view.findViewById(R.id.deck_view_pager);
+        viewPager = view.findViewById(R.id.deck_view_pager);
         TabLayout tabLayout = view.findViewById(R.id.deck_manager_tab_layout);
         viewPager.setUserInputEnabled(true);
         

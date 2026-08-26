@@ -91,8 +91,8 @@ public class DeckWinRateFragment extends BaseFragemnt {
 
         homeActivity.switchFragment(deckManagerFragment, 2, false);
 
-        DeckManageDialog dialog = new DeckManageDialog(deckManagerFragment, 1, deckName);
-        dialog.show(activity.getSupportFragmentManager(), "deck_manage_dialog");
+        DeckManageDialog.showDeckManageDialog(
+                activity.getSupportFragmentManager(), deckManagerFragment, 1, deckName);
     }
 
     private void loadData() {
