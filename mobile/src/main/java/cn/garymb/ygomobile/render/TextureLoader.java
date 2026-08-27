@@ -323,6 +323,49 @@ public class TextureLoader {
         return getTexture("lpbarf.png");
     }
 
+    /**
+     * lpbarf.png LP 框行裁剪（drawing.cpp L996-1003）：
+     * 305x280 图集共 4 行 70px，row0=我方回合彩色、row1=我方非回合灰色、
+     * row2=对方非回合灰色、row3=对方回合彩色
+     */
+    public Bitmap getLpBarFrameRow(int row) {
+        if (row < 0 || row > 3) return null;
+        String key = "lpbarf_row_" + row;
+        Bitmap cached = permanentCache.get(key);
+        if (cached != null) return cached;
+        Bitmap sheet = getLpBarFrame();
+        if (sheet == null || sheet.getWidth() <= 0 || sheet.getHeight() < (row + 1) * 70) return null;
+        try {
+            Bitmap bmp = Bitmap.createBitmap(sheet, 0, row * 70, sheet.getWidth(), 70);
+            if (bmp != null) permanentCache.put(key, bmp);
+            return bmp;
+        } catch (Exception e) {
+            Log.e(TAG, "crop lpbarf failed: row " + row, e);
+            return null;
+        }
+    }
+
+    /**
+     * lp3.png 血条颜色行裁剪（drawing.cpp L936-972）：
+     * 每行 60px 共 5 种颜色，LP 超过初始上限时按层数循环换色
+     */
+    public Bitmap getLpBarColorRow(int index) {
+        int row = ((index % 5) + 5) % 5;
+        String key = "lp3_row_" + row;
+        Bitmap cached = permanentCache.get(key);
+        if (cached != null) return cached;
+        Bitmap sheet = getLpBar();
+        if (sheet == null || sheet.getWidth() <= 0 || sheet.getHeight() < (row + 1) * 60) return null;
+        try {
+            Bitmap bmp = Bitmap.createBitmap(sheet, 0, row * 60, sheet.getWidth(), 60);
+            if (bmp != null) permanentCache.put(key, bmp);
+            return bmp;
+        } catch (Exception e) {
+            Log.e(TAG, "crop lp3 failed: row " + row, e);
+            return null;
+        }
+    }
+
     /** tLim：禁限图标  tOT：OT 图标  tCardType：卡片类型条 */
     public Bitmap getLimitIcon() {
         return getTexture("icon_lim.png");

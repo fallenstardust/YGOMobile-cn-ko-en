@@ -498,7 +498,8 @@ public class ReplayModeDialog {
                     GameField.PlayerField pf = activity.getEngine().getField().players[player];
                     ReplayReader.ReplayData rd = replayEngine.getReplayData();
                     String name = (rd != null && player < rd.playerNames.size()) ? rd.playerNames.get(player) : "Player " + (player + 1);
-                    activity.getTopInfoManager().setPlayerDisplay(player, name, "LP: " + pf.lp);
+                    activity.getTopInfoManager().setPlayerDisplay(player, name, String.valueOf(pf.lp));
+                    activity.getTopInfoManager().updateLpBars(activity.getEngine().getField());
                 });
             }
 

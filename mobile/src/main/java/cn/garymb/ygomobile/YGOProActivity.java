@@ -805,6 +805,7 @@ public class YGOProActivity extends AppCompatActivity implements
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
             String name = info.name.isEmpty() ? defaultName : info.name;
             topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
+            topInfoManager.updateLpBars(engine.getField());
             topInfoManager.updateCardCountDisplay(engine.getField());
         });
     }
