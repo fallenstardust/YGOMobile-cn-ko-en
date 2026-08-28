@@ -7,6 +7,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.FrameLayout;
@@ -422,6 +423,52 @@ public class DraggablePopupHelper {
 
     public void showPopup(PopupWindow popupWindow, View anchorView) {
         showPopup(popupWindow, anchorView, Gravity.CENTER, 0, 0);
+    }
+
+    /**
+     * 将经 setupDraggablePopup 包装为全窗口的 popup 内容，从「整个窗口居中」改为
+     * 「按指定区域宽高居中」（如 layout_game_right）：
+     * 包装层（DragFrameLayout）铺满窗口，内部对话框以 Gravity.CENTER 居中，
+     * 通过非对称 margin 把内容中心平移「区域中心 - 窗口中心」的偏移量即可。
+     * 若区域尚未布局完成（宽高为 0），通过 OnGlobalLayoutListener 等待布局后再应用，
+     * 避免退化为按整个窗口居中。
+     */
+    public static void centerPopupInRegion(PopupWindow popupWindow, View region) {
+        if (popupWindow == null || region == null) return;
+        if (region.getWidth() <= 0 || region.getHeight() <= 0) {
+            region.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            region.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            centerPopupInRegion(popupWindow, region);
+                        }
+                    });
+            return;
+        }
+        View wrapper = popupWindow.getContentView();
+        if (!(wrapper instanceof ViewGroup)) return;
+        ViewGroup wrapperGroup = (ViewGroup) wrapper;
+        if (wrapperGroup.getChildCount() == 0) return;
+        View content = wrapperGroup.getChildAt(0);
+        ViewGroup.LayoutParams raw = content.getLayoutParams();
+        if (!(raw instanceof FrameLayout.LayoutParams)) return;
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) raw;
+
+        View window = region.getRootView();
+        int winW = window.getWidth();
+        int winH = window.getHeight();
+        if (winW <= 0 || winH <= 0) return;
+        int[] regionLoc = new int[2];
+        region.getLocationInWindow(regionLoc);
+        int[] winLoc = new int[2];
+        window.getLocationInWindow(winLoc);
+        // CENTER gravity 下 leftMargin/topMargin 将内容整体平移该偏移量
+        lp.leftMargin = (regionLoc[0] + region.getWidth() / 2) - (winLoc[0] + winW / 2);
+        lp.rightMargin = 0;
+        lp.topMargin = (regionLoc[1] + region.getHeight() / 2) - (winLoc[1] + winH / 2);
+        lp.bottomMargin = 0;
+        content.setLayoutParams(lp);
     }
 
     public void showPopup(PopupWindow popupWindow, View anchorView, int gravity, int xOffset, int yOffset) {
