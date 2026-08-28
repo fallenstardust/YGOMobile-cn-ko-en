@@ -3,6 +3,8 @@ package cn.garymb.ygomobile.ui.cards.deck_square;
 import android.util.Log;
 import android.widget.ImageView;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
@@ -11,7 +13,6 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.OnlineDeckDetail;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.SquareDeckResponse;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -20,6 +21,13 @@ import cn.garymb.ygomobile.utils.LogUtil;
 public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, BaseViewHolder> {
     private static final String TAG = DeckSquareListAdapter.class.getSimpleName();
     private ImageLoader imageLoader;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private Integer lastPage = 1;
+    private Integer lastSize = 30;
+    private String lastKeyWord = "";
+    private Boolean lastSortLike = false;
+    private Boolean lastSortRank = false;
+    private String lastContributor = "";
 
     public DeckSquareListAdapter(int layoutResId) {
         super(layoutResId);
@@ -27,12 +35,27 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
         imageLoader = new ImageLoader();
     }
 
+    public void setSwipeRefreshLayout(SwipeRefreshLayout swipeRefreshLayout) {
+        this.swipeRefreshLayout = swipeRefreshLayout;
+    }
+
     public void loadData() {
         loadData(1, 30, "", false, false, "");
     }
 
+    //下拉刷新时按最近一次查询条件重新加载
+    public void reload() {
+        loadData(lastPage, lastSize, lastKeyWord, lastSortLike, lastSortRank, lastContributor);
+    }
+
     public void loadData(Integer page, Integer size, String keyWord, Boolean sortLike, Boolean sortRank, String contributor) {
-        final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
+        lastPage = page;
+        lastSize = size;
+        lastKeyWord = keyWord;
+        lastSortLike = sortLike;
+        lastSortRank = sortRank;
+        lastContributor = contributor;
+        setRefreshing(true);
         VUiKit.defer().when(() -> {
             SquareDeckResponse result = DeckSquareApiUtil.getSquareDecks(new GetSquareDeckCondition(page, size, keyWord, sortLike, sortRank, contributor));
             if (result == null) {
@@ -43,13 +66,7 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
 
         }).fail((e) -> {
             Log.e(TAG, e + "");
-            if (dialog_read_ex.isShowing()) {//关闭异常
-                try {
-                    dialog_read_ex.dismiss();
-                } catch (Exception ex) {
-
-                }
-            }
+            setRefreshing(false);
             LogUtil.i(TAG, "Get square deck fail");
 
         }).done((result) -> {
@@ -59,14 +76,15 @@ public class DeckSquareListAdapter extends BaseQuickAdapter<OnlineDeckDetail, Ba
                 addData(result);
                 notifyDataSetChanged();
             }
-            if (dialog_read_ex.isShowing()) {
-                try {
-                    dialog_read_ex.dismiss();
-                } catch (Exception ex) {
-                }
-            }
+            setRefreshing(false);
         });
 
+    }
+
+    private void setRefreshing(boolean refreshing) {
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing() != refreshing) {
+            swipeRefreshLayout.setRefreshing(refreshing);
+        }
     }
 
     @Override
