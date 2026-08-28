@@ -85,6 +85,9 @@ public class DeckSquareMyDeckFragment extends Fragment {
         });
         binding.listMyDeckInfo.setLayoutManager(gridLayoutManager);
         binding.listMyDeckInfo.setAdapter(deckListAdapter);
+        deckListAdapter.setSwipeRefreshLayout(binding.srlRefresh);
+        binding.srlRefresh.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
+        binding.srlRefresh.setOnRefreshListener(() -> deckListAdapter.loadData(true));
         deckListAdapter.loadData();
 
         //其实仅仅是清除掉本机的token

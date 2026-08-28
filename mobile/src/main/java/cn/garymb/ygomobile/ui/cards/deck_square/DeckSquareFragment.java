@@ -20,6 +20,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.lite.databinding.FragmentDeckSquareBinding;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.YGODeckDialogUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class DeckSquareFragment extends Fragment {
     private static final String TAG = DeckSquareFragment.class.getSimpleName();
@@ -45,6 +46,9 @@ public class DeckSquareFragment extends Fragment {
         GridLayoutManager linearLayoutManager = new GridLayoutManager(getContext(), 3);
         binding.listDeckInfo.setLayoutManager(linearLayoutManager);
         binding.listDeckInfo.setAdapter(deckSquareListAdapter);
+        deckSquareListAdapter.setSwipeRefreshLayout(binding.srlRefresh);
+        binding.srlRefresh.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
+        binding.srlRefresh.setOnRefreshListener(() -> deckSquareListAdapter.reload());
         deckSquareListAdapter.loadData();
         binding.etGoToPage.setText("1");
         sortLike = false;
