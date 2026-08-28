@@ -96,4 +96,25 @@ public class GameFieldViewController {
     public GameFieldView getView() {
         return fieldView;
     }
+
+    /** 场地中轴锚点屏幕坐标（阶段按钮行定位用），相机未就绪返回 null */
+    public float[] projectFieldMidline() {
+        return fieldView != null ? fieldView.projectFieldMidline() : null;
+    }
+
+    public void setOnCameraChangedListener(Runnable listener) {
+        if (fieldView != null) fieldView.setOnCameraChangedListener(listener);
+    }
+
+    public void setPhaseButtonListener(GameFieldView.OnPhaseButtonListener listener) {
+        if (fieldView != null) fieldView.setPhaseButtonListener(listener);
+    }
+
+    /** 场内阶段按钮显示状态全量下发（当前阶段/下一阶段/结束阶段） */
+    public void setPhaseDisplay(boolean currentVisible, String currentLabel,
+                                String nextLabel, boolean epVisible) {
+        if (fieldView != null) {
+            fieldView.setPhaseDisplay(currentVisible, currentLabel, nextLabel, epVisible);
+        }
+    }
 }

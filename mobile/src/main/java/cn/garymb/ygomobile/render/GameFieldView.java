@@ -57,6 +57,15 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         void onFieldLongPress(int player, int location, int sequence);
     }
 
+    /**
+     * 场内绘制的阶段按钮点击回调（当前阶段按钮仅作指示，不产生回调）
+     */
+    public interface OnPhaseButtonListener {
+        void onPhaseNextClicked();
+
+        void onPhaseEpClicked();
+    }
+
     // === 场地坐标常量（与 field3.png 版面锁定：宽 10.4 = 7.8×880/660，贴图内格子恰为正方形）===
     private static final float FIELD_CENTER_X = 3.95f;
     private static final float X_SCALE = 1.217f / 1.1f;
@@ -164,6 +173,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     // 动画倍率：1=原速，2=2 倍速（时间驱动，帧率无关）
     private volatile float animSpeedMultiplier = 1f;
 
+    // === 阶段按钮（场内绘制：主线程写状态，GL 线程读取绘制/命中）===
+    private volatile OnPhaseButtonListener phaseButtonListener;
+    private volatile boolean phaseCurrentVisible = false;
+    private volatile String phaseCurrentLabel = "";
+    private volatile String phaseNextLabel = "";
+    private volatile boolean phaseEpVisible = false;
+
     // === GL 资源 ===
     private int texProg, colorProg;
     private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV;
@@ -176,6 +192,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private final HashMap<Long, Integer> texRetries = new HashMap<>();
     private final ConcurrentLinkedQueue<PendingUpload> pendingUploads = new ConcurrentLinkedQueue<>();
     private ExecutorService texExecutor = Executors.newSingleThreadExecutor();
+    // 阶段按钮标签文字纹理键（仅 GL 线程访问，负值递减，与卡图/场地/卡背键域不冲突）
+    private final HashMap<String, Long> phaseLabelKeys = new HashMap<>();
+    private long phaseLabelKeySeq = -1000L;
 
     // === 矩阵与相机缓存 ===
     private final float[] mProj = new float[16];
@@ -184,11 +203,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private final float[] mMVP = new float[16];
     private final float[] mModel = new float[16];
     private final float[] mModelTmp = new float[16];
+
+    // 阶段按钮屏幕像素正交投影（按钮平行屏幕，与透视相机解耦）
+    private final float[] mOrthoVP = new float[16];
     // 相机姿态矩阵（view 旋转部分的转置）：手卡 billboard 平行屏幕用
     private final float[] mCamRot = new float[16];
     private final Object camLock = new Object();
     private final float[] pickInvVP = new float[16];
     private volatile int viewW = 1, viewH = 1;
+    // 相机重建通知（GL 线程重建相机后，覆盖层需重新锚定阶段按钮位置）
+    private volatile Runnable onCameraChangedListener;
 
     private long lastFrameNs = 0;
     private long animTimeMs = 0;
@@ -298,6 +322,62 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
+     * 相机/表面重建监听：阶段按钮覆盖层据此重新锚定（GL 线程触发，回调经 post 切回主线程）
+     */
+    public void setOnCameraChangedListener(Runnable listener) {
+        this.onCameraChangedListener = listener;
+    }
+
+    /**
+     * 场地中轴（双方怪兽区之间，世界坐标 (FIELD_CENTER_X, 0, 0)，X 镜像对中轴无影响）
+     * 投影到屏幕像素坐标（相对本 View 左上角），供阶段按钮行锚定；相机未就绪返回 null
+     */
+    public float[] projectFieldMidline() {
+        return projectWorldPoint(FIELD_CENTER_X, 0f, 0f);
+    }
+
+    /**
+     * 世界坐标（绘制空间：x 需为镜像后坐标，与 drawCard/drawZoneSlots 传入 mVP 前一致）
+     * 投影到屏幕像素坐标；相机未就绪返回 null。camLock 保护，任意线程可调用
+     */
+    public float[] projectWorldPoint(float x, float y, float z) {
+        float[] vp = new float[16];
+        int w, h;
+        synchronized (camLock) {
+            System.arraycopy(mVP, 0, vp, 0, 16);
+            w = viewW;
+            h = viewH;
+        }
+        if (w <= 1 || h <= 1) return null;
+        float[] v = {x, y, z, 1f};
+        float[] o = new float[4];
+        Matrix.multiplyMV(o, 0, vp, 0, v, 0);
+        if (Math.abs(o[3]) < 1e-6f) return null;
+        float nx = o[0] / o[3], ny = o[1] / o[3];
+        return new float[]{(nx + 1f) * 0.5f * w, (1f - ny) * 0.5f * h};
+    }
+
+    /**
+     * 场内阶段按钮点击监听（下一阶段/结束阶段；当前阶段按钮仅指示不可点击）
+     */
+    public void setPhaseButtonListener(OnPhaseButtonListener listener) {
+        this.phaseButtonListener = listener;
+    }
+
+    /**
+     * 场内阶段按钮显示状态（一次全量下发）：
+     * 当前阶段按钮（常按下样式、不可点击）+ 下一阶段按钮（空文本=隐藏）+ 结束阶段按钮显隐
+     */
+    public void setPhaseDisplay(boolean currentVisible, String currentLabel,
+                                String nextLabel, boolean epVisible) {
+        phaseCurrentVisible = currentVisible;
+        phaseCurrentLabel = currentLabel == null ? "" : currentLabel;
+        phaseNextLabel = nextLabel == null ? "" : nextLabel;
+        phaseEpVisible = epVisible;
+        requestRender();
+    }
+
+    /**
      * 动画倍率：1=原速，2=2 倍速（时间驱动，任意刷新率下速度一致）
      */
     public void setAnimationSpeed(float multiplier) {
@@ -380,6 +460,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         requested.clear();
         texRetryTime.clear();
         texRetries.clear();
+        phaseLabelKeys.clear();
     }
 
     @Override
@@ -480,6 +561,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         mCamRot[13] = 0f;
         mCamRot[14] = 0f;
         mCamRot[15] = 1f;
+
+        // 相机重建完成：通知覆盖层重新定位阶段按钮（post 到主线程执行）
+        Runnable camListener = onCameraChangedListener;
+        if (camListener != null) post(camListener);
     }
 
     @Override
@@ -527,6 +612,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
         GLES30.glDepthMask(false);
         drawHighlights();
+        drawPhaseButtons();
         GLES30.glDepthMask(true);
     }
 
@@ -841,6 +927,197 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         glBindQuadVao();
     }
 
+    // 阶段按钮屏幕尺寸（dp）：按钮平行屏幕，与两个额外怪兽区错开摆放（左/中/右三个锚点）
+    private static final float PHASE_BTN_W_DP = 32f;
+    private static final float PHASE_BTN_H_DP = 18f;
+    // Deleted:private static final float PHASE_BTN_GAP_DP = 16f;
+    private static final int PHASE_CURRENT = 0, PHASE_NEXT = 1, PHASE_EP = 2;
+
+    /**
+     * 阶段按钮布局（避免遮挡额外怪兽区）：
+     * 当前阶段按钮 → 左侧额外怪兽区左缘外侧；下一阶段按钮 → 两个额外怪兽区正中（场地中轴）；
+     * 结束阶段按钮 → 右侧额外怪兽区右缘外侧。按钮像素宽按中轴行像素比例折算世界半宽定位，
+     * 并封顶于两额外怪兽区内侧空隙，确保不压任何场上格子。
+     * 绘制（GL 线程）与点击命中（主线程）共用同一确定性布局，保证所见即所点
+     */
+    private float[][] phaseRects(boolean curVisible, boolean nextVisible, boolean epVisible) {
+        float[][] out = new float[3][];
+        float d = getResources().getDisplayMetrics().density;
+        // 两个额外怪兽区（怪兽区 seq5/6，绘制空间已镜像：seq5 呈现在屏幕左、seq6 在屏幕右）
+        float emzL = mirrorX(zoneCenter(0, 0x04, 5)[0]);
+        float emzR = mirrorX(zoneCenter(0, 0x04, 6)[0]);
+        // 中轴行像素比例：中轴左右各 0.5 世界单位采样
+        float[] s0 = projectWorldPoint(FIELD_CENTER_X - 0.5f, 0f, 0f);
+        float[] s1 = projectWorldPoint(FIELD_CENTER_X + 0.5f, 0f, 0f);
+        if (s0 == null || s1 == null) return out;
+        float pxPerWorld = Math.abs(s1[0] - s0[0]);
+        if (pxPerWorld < 1e-3f) return out;
+        // 两额外怪兽区内侧空隙的像素宽：下一阶段按钮宽度封顶于此
+        float[] eL = projectWorldPoint(emzL - ZONE_W / 2f, 0f, 0f);
+        float[] eR = projectWorldPoint(emzR + ZONE_W / 2f, 0f, 0f);
+        float gapPx = (eL != null && eR != null) ? Math.abs(eL[0] - eR[0]) : Float.MAX_VALUE;
+        float bw = Math.min(PHASE_BTN_W_DP * d, Math.max(24f, gapPx - 10f));
+        float bh = PHASE_BTN_H_DP * d;
+        float halfW = bw / pxPerWorld / 2f;
+        float margin = 0.12f;
+        if (curVisible) {
+            // 左侧额外怪兽区左缘再向外（屏幕更左 = 绘制空间 x 更大）
+            float ax = emzL + ZONE_W / 2f + margin + halfW;
+            ax = Math.min(ax, FIELD_X_MAX - 0.1f - halfW);
+            float[] s = projectWorldPoint(ax, 0f, 0f);
+            if (s != null) out[PHASE_CURRENT] = new float[]{s[0], s[1], bw, bh};
+        }
+        if (nextVisible) {
+            float[] s = projectWorldPoint(FIELD_CENTER_X, 0f, 0f);
+            if (s != null) out[PHASE_NEXT] = new float[]{s[0], s[1], bw, bh};
+        }
+        if (epVisible) {
+            // 右侧额外怪兽区右缘再向外（屏幕更右 = 绘制空间 x 更小）
+            float ax = emzR - ZONE_W / 2f - margin - halfW;
+            ax = Math.max(ax, FIELD_X_MIN + 0.1f + halfW);
+            float[] s = projectWorldPoint(ax, 0f, 0f);
+            if (s != null) out[PHASE_EP] = new float[]{s[0], s[1], bw, bh};
+        }
+        return out;
+    }
+
+    /**
+     * 阶段按钮点击命中（优先于卡片/区域拾取）：当前阶段按钮无回调但吞掉点击，避免误触场地
+     */
+    private boolean handlePhaseButtonTap(float x, float y) {
+        OnPhaseButtonListener l = phaseButtonListener;
+        if (l == null) return false;
+        String cur = phaseCurrentLabel, next = phaseNextLabel;
+        boolean curV = phaseCurrentVisible && !cur.isEmpty();
+        boolean nextV = !next.isEmpty();
+        boolean epV = phaseEpVisible;
+        if (!curV && !nextV && !epV) return false;
+        float[] anchor = projectFieldMidline();
+        if (anchor == null) return false;
+        float[][] rects = phaseRects(curV, nextV, epV);
+        if (rects[PHASE_NEXT] != null && inPhaseRect(rects[PHASE_NEXT], x, y)) {
+            l.onPhaseNextClicked();
+            return true;
+        }
+        if (rects[PHASE_EP] != null && inPhaseRect(rects[PHASE_EP], x, y)) {
+            l.onPhaseEpClicked();
+            return true;
+        }
+        return rects[PHASE_CURRENT] != null && inPhaseRect(rects[PHASE_CURRENT], x, y);
+    }
+
+    private static boolean inPhaseRect(float[] rect, float x, float y) {
+        return Math.abs(x - rect[0]) <= rect[2] / 2f && Math.abs(y - rect[1]) <= rect[3] / 2f;
+    }
+
+    /**
+     * 阶段按钮绘制：三个按钮分别锚定 左额外怪兽区外侧 / 场地中轴 / 右额外怪兽区外侧，
+     * 在屏幕像素正交空间内绘制底板与文字纹理（平行屏幕、固定像素尺寸，不受透视影响），
+     * 置于全部场地内容之上（关闭深度测试）
+     */
+    private void drawPhaseButtons() {
+        int w = viewW, h = viewH;
+        if (w <= 1 || h <= 1) return;
+        String cur = phaseCurrentLabel, next = phaseNextLabel;
+        boolean curV = phaseCurrentVisible && !cur.isEmpty();
+        boolean nextV = !next.isEmpty();
+        boolean epV = phaseEpVisible;
+        if (!curV && !nextV && !epV) return;
+        float[][] rects = phaseRects(curV, nextV, epV);
+        if (rects[PHASE_CURRENT] == null && rects[PHASE_NEXT] == null && rects[PHASE_EP] == null)
+            return;
+        // 屏幕像素正交投影：y 向下与触摸坐标一致，quad 顶点布局下贴图无需翻转
+        Matrix.orthoM(mOrthoVP, 0, 0f, w, h, 0f, -1f, 1f);
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST);
+        drawPhaseButton(rects[PHASE_CURRENT], cur, true);
+        drawPhaseButton(rects[PHASE_NEXT], next, false);
+        drawPhaseButton(rects[PHASE_EP], "EP", false);
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+    }
+
+    /**
+     * 单个阶段按钮：描边 + 底板（当前阶段按钮恒按按下态配色）+ 标签文字
+     */
+    private void drawPhaseButton(float[] rect, String label, boolean pressed) {
+        if (rect == null || label == null || label.isEmpty()) return;
+        float cx = rect[0], cy = rect[1], bw = rect[2], bh = rect[3];
+        drawScreenQuadColor(cx, cy, bw + 3f, bh + 3f, 0.04f, 0.08f, 0.12f, 0.92f);
+        if (pressed) {
+            drawScreenQuadColor(cx, cy, bw, bh, 0.15f, 0.22f, 0.32f, 0.94f);
+        } else {
+            drawScreenQuadColor(cx, cy, bw, bh, 0.30f, 0.44f, 0.58f, 0.90f);
+        }
+        int tex = obtainPhaseLabelTexture(label);
+        if (tex > 0) {
+            // 标签位图固定 256×80：按 3.2:1 铺展，宽度封顶按钮内宽（短文字两侧留透明区）
+            float tw = Math.min(bh * 3.2f, bw * 0.96f);
+            drawScreenQuadTex(cx, cy, tw, tw / 3.2f, tex, 1f);
+        }
+    }
+
+    private void drawScreenQuadColor(float cx, float cy, float w, float h,
+                                     float r, float g, float b, float a) {
+        GLES30.glUseProgram(colorProg);
+        Matrix.setIdentityM(mModel, 0);
+        Matrix.translateM(mModel, 0, cx, cy, 0f);
+        Matrix.scaleM(mModel, 0, w, h, 1f);
+        Matrix.multiplyMM(mMVP, 0, mOrthoVP, 0, mModel, 0);
+        GLES30.glUniformMatrix4fv(colorLocMVP, 1, false, mMVP, 0);
+        GLES30.glUniform4f(colorLocColor, r, g, b, a);
+        glBindQuadVao();
+    }
+
+    private void drawScreenQuadTex(float cx, float cy, float w, float h, int texId, float alpha) {
+        if (texId <= 0) return;
+        GLES30.glUseProgram(texProg);
+        Matrix.setIdentityM(mModel, 0);
+        Matrix.translateM(mModel, 0, cx, cy, 0f);
+        Matrix.scaleM(mModel, 0, w, h, 1f);
+        Matrix.multiplyMM(mMVP, 0, mOrthoVP, 0, mModel, 0);
+        GLES30.glUniformMatrix4fv(texLocMVP, 1, false, mMVP, 0);
+        GLES30.glUniform4f(texLocTint, 1f, 1f, 1f, alpha);
+        GLES30.glUniform1f(texLocFlipU, 0f);
+        GLES30.glUniform1f(texLocFlipV, 0f);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texId);
+        GLES30.glUniform1i(texLocTex, 0);
+        glBindQuadVao();
+    }
+
+    /**
+     * 阶段标签文字纹理（仅 GL 线程调用）：首次出现时 Canvas 生成位图入队，
+     * 下一帧 drainUploads 上传；上传完成前仅绘制底板兜底
+     */
+    private int obtainPhaseLabelTexture(String text) {
+        Long key = phaseLabelKeys.get(text);
+        if (key == null) {
+            key = phaseLabelKeySeq--;
+            phaseLabelKeys.put(text, key);
+            try {
+                pendingUploads.offer(new PendingUpload(key, makePhaseLabelBitmap(text), true));
+            } catch (Throwable ignored) {
+            }
+        }
+        Integer id = textures.get(key);
+        return id != null ? id : -1;
+    }
+
+    private static Bitmap makePhaseLabelBitmap(String text) {
+        int w = 256, h = 80;
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas cv = new Canvas(bmp);
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setTextSize(54f);
+        p.setFakeBoldText(true);
+        float tw = p.measureText(text);
+        if (tw > w * 0.9f) p.setTextSize(54f * (w * 0.9f) / tw);
+        p.setColor(0xFFFFFFFF);
+        p.setTextAlign(Paint.Align.CENTER);
+        p.setShadowLayer(3f, 1f, 1f, 0xC0000000);
+        cv.drawText(text, w / 2f, h / 2f - (p.ascent() + p.descent()) / 2f, p);
+        return bmp;
+    }
+
     // ==================== 纹理（多线程：工作线程解码 → GL 线程上传）====================
 
     private static long texKey(int code, int mode, int scale) {
@@ -1112,6 +1389,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     private void handleTap(float x, float y) {
+        // 场内阶段按钮命中优先（当前阶段按钮也吞掉点击）
+        if (handlePhaseButtonTap(x, y)) return;
         OnCardClickListener listener = cardClickListener;
         GameField f = field;
         if (listener == null || f == null) return;

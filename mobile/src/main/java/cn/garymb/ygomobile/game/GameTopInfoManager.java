@@ -138,6 +138,31 @@ public class GameTopInfoManager {
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * layout_game_right 显示时第一时间的初始化（猜拳前可见的初始状态）：
+     * - 头像：从 TextureLoader 加载 me.jpg / opponent.jpg（此时 init() 已完成）
+     * - 玩家名称：优先通讯下发的 playerInfos（STOC_PLAYER_ENTER），缺省回退默认名
+     * - 房间血量设定：以房间初始 LP（STOC_JOIN_GAME）渲染双方满血条与数字
+     */
+    public void prepareForDisplay() {
+        show();
+        setupAvatarImages();
+        reset();
+        GameEngine engine = activity.getEngine();
+        int startLp = engine != null ? engine.getGameStartLp() : 0;
+        if (startLp <= 0) startLp = DEFAULT_MAX_LP;
+        String myName = cn.garymb.ygomobile.Constants.PlayerName;
+        String oppName = "Opponent";
+        if (engine != null) {
+            if (!engine.playerInfos[0].name.isEmpty()) myName = engine.playerInfos[0].name;
+            if (!engine.playerInfos[1].name.isEmpty()) oppName = engine.playerInfos[1].name;
+        }
+        setPlayerDisplay(0, myName, String.valueOf(startLp));
+        setPlayerDisplay(1, oppName, String.valueOf(startLp));
+        updateLpBar(startLp, startLp, ivPlayerLpBar, ivPlayerLpBarLayer, Gravity.START);
+        updateLpBar(startLp, startLp, ivOpponentLpBar, ivOpponentLpBarLayer, Gravity.END);
+    }
+
     public void hide() {
         stopTimer();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);

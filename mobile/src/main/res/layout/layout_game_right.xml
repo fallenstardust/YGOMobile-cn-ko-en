@@ -32,7 +32,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="5dp"
-                    android:scaleType="fitCenter"
+                    android:scaleType="fitXY"
                     android:src="@drawable/avatar" />
 
                 <!-- LP 血条（drawing.cpp L936-973 tLPBar，我方自左向右填充；每 8000 一节，超出部分叠加下一节颜色层） -->
@@ -80,7 +80,6 @@
                     android:layout_height="0dp"
                     android:layout_marginStart="5dp"
                     android:layout_weight="1"
-                    android:ellipsize="end"
                     android:gravity="center"
                     android:maxLines="1"
                     android:shadowColor="#FF00E5FF"
@@ -88,22 +87,21 @@
                     android:shadowDy="0"
                     android:shadowRadius="4"
                     android:text="Knight of Hanoi"
-                    android:textColor="#AAFFFF"
+                    android:textColor="@color/white"
                     android:textSize="10sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/tv_player_lp_number"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="top"
                         android:layout_weight="1"
-                        android:ellipsize="end"
                         android:gravity="center"
                         android:maxLines="1"
                         android:shadowColor="@color/black"
@@ -118,7 +116,6 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="right"
                         android:layout_weight="1"
                         android:gravity="right|center_vertical"
                         android:orientation="horizontal">
@@ -161,8 +158,8 @@
             android:id="@+id/tv_turn_counter"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
             android:layout_marginHorizontal="2dp"
+            android:layout_weight="1"
             android:background="@drawable/veil_mid_vertical"
             android:gravity="center"
             android:shadowColor="@color/white"
@@ -200,7 +197,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="fitXY"
-                        android:src="@drawable/ygopro_selected_background"/>
+                        android:src="@drawable/ygopro_selected_background" />
 
                     <ImageView
                         android:id="@+id/iv_opponent_lp_bar_layer"
@@ -215,7 +212,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="5dp"
-                    android:scaleType="fitCenter"
+                    android:scaleType="fitXY"
                     android:src="@drawable/avatar" />
             </LinearLayout>
 
@@ -257,12 +254,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
+                    android:gravity="center"
                     android:orientation="horizontal">
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="left"
                         android:layout_weight="1"
                         android:gravity="left|bottom"
                         android:orientation="horizontal">
@@ -301,9 +298,7 @@
                         android:id="@+id/tv_opponent_lp_number"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="top"
                         android:layout_weight="1"
-                        android:ellipsize="end"
                         android:gravity="center"
                         android:maxLines="1"
                         android:shadowColor="@color/black"
@@ -384,53 +379,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
-            <!-- 阶段按钮覆盖层（DP/BP/EP，从旧版场地中轴行迁移至此） -->
-            <LinearLayout
-                android:id="@+id/layout_phase_buttons"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btn_phase_current"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/button2_bg"
-                    android:minWidth="40dp"
-                    android:minHeight="0dp"
-                    android:text="DP"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/btn_phase_next"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/button2_bg"
-                    android:layout_marginHorizontal="60dp"
-                    android:minWidth="40dp"
-                    android:minHeight="0dp"
-                    android:text="BP"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/btn_ep"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/button2_bg"
-                    android:minWidth="40dp"
-                    android:minHeight="0dp"
-                    android:text="EP"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
         </FrameLayout>
     </LinearLayout>
 

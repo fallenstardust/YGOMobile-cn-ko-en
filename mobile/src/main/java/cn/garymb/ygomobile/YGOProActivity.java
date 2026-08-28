@@ -112,6 +112,15 @@ public class YGOProActivity extends AppCompatActivity implements
     private boolean duelEndHandling = false;
     private YesOrNoDialog resultDialog;
     private ReplaySaveDialog replaySaveDialog;
+    // STOC_REPLAY 紧随 STOC_DUEL_END 下发：录像处理延迟到该窗口内无新数据到达再启动，
+    // 避免在录像数据尚未收齐时就走到「决斗结束」弹窗
+    private static final long REPLAY_ARRIVAL_WAIT_MS = 800;
+    private final Runnable duelEndReplayProcessor = new Runnable() {
+        @Override
+        public void run() {
+            processPendingReplays();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -467,6 +476,9 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
 
+        // layout_game_right 显示第一时间初始化顶部信息：头像/玩家名称/房间血量（猜拳前可见）
+        if (topInfoManager != null) topInfoManager.prepareForDisplay();
+
         fieldCtl.show();
         cardDetailPanel.onGameUIShown();
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
@@ -782,7 +794,8 @@ public class YGOProActivity extends AppCompatActivity implements
                     resultDialog = null;
                 }
                 if (engine != null) engine.disconnect();
-                showDuelEndDialog();
+                // 顺序：先处理通讯发来的录像（保存/取消），全部完成后再弹「决斗结束」对话框
+                scheduleReplayProcessing();
                 break;
             case DISCONNECTED:
                 if (duelEndHandling) break; // 决斗结束流程已接管返回逻辑，避免重复
@@ -836,6 +849,9 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onSelectRequired(int selectType, ByteBuffer data) {
         runOnUiThread(() -> {
+            // 结束阶段按钮仅在通讯允许进入 EP 时有效：
+            // 空闲指令(11)/战斗指令(10) 路径内会按指令可用性重新启用；其余请求一律隐藏
+            fieldCtl.setEpButtonAllowed(selectType == 10 || selectType == 11);
             cardDetailPanel.setSelectType(selectType);
             ShowDialogUtil showDialogUtil = getDialogUtil();
             switch (selectType) {
@@ -939,7 +955,13 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onReplayData(byte[] data) {
         Log.i(TAG, "Replay data received, size=" + data.length);
-        runOnUiThread(() -> pendingReplays.add(data));
+        runOnUiThread(() -> {
+            pendingReplays.add(data);
+            // 决斗结束流程中通讯仍在补发录像：重置等待窗口，确保队列收全后再开始处理
+            if (duelEndHandling) {
+                scheduleReplayProcessing();
+            }
+        });
     }
 
     @Override
@@ -1011,8 +1033,9 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     /**
-     * 决斗结束提示框：仅显示「确定」按钮（TYPE_MESSAGE），
-     * 点击确定后自动隐藏本框并开始处理通讯发来的录像队列
+     * 决斗结束提示框：仅显示「确定」按钮（TYPE_MESSAGE）。
+     * 弹窗时机已调整为：通讯发来的录像全部确认保存或取消之后（见 processPendingReplays），
+     * 点击确定后隐藏决斗 UI 并重新显示 LanModeDialog
      */
     private void showDuelEndDialog() {
         if (isFinishing() || isDestroyed()) return;
@@ -1021,27 +1044,40 @@ public class YGOProActivity extends AppCompatActivity implements
         dialog.setMessage(sm.getSystemString(1500, "决斗结束。"))
                 .setType(YesOrNoDialog.TYPE_MESSAGE)
                 .setPositiveButtonText(sm.getSystemString(1211, "确定"))
-                .setPositiveButton(v -> processPendingReplays())
+                .setPositiveButton(v -> returnToLanMain(null))
+                .setCenterInView(layoutGameRight)
                 .setCancelable(false);
         dialog.show();
     }
 
     /**
-     * 逐个处理通讯发来的录像：有待保存项则弹出录像保存对话框，
-     * 全部处理完毕（保存或取消跳过）后才隐藏决斗 UI 并重新显示 LanModeDialog
+     * 延迟启动录像处理：先取消上一次调度，窗口内若有新录像到达（onReplayData）会再次重置，
+     * 直到通讯不再发送录像才真正开始逐个弹出录像保存对话框
+     */
+    private void scheduleReplayProcessing() {
+        mainHandler.removeCallbacks(duelEndReplayProcessor);
+        mainHandler.postDelayed(duelEndReplayProcessor, REPLAY_ARRIVAL_WAIT_MS);
+    }
+
+    /**
+     * 逐个处理通讯发来的录像：有待保存项则弹出录像保存对话框；
+     * 全部处理完毕（保存或取消跳过）后才弹出「决斗结束」对话框
      */
     private void processPendingReplays() {
+        // 防止延迟调度与队列内递归调用重叠执行
+        mainHandler.removeCallbacks(duelEndReplayProcessor);
         if (isFinishing() || isDestroyed()) {
             pendingReplays.clear();
             return;
         }
         if (pendingReplays.isEmpty()) {
-            returnToLanMain(null);
+            showDuelEndDialog();
             return;
         }
         final byte[] replayData = pendingReplays.remove(0);
         replaySaveDialog = new ReplaySaveDialog(this);
         replaySaveDialog.setDefaultName(getReplayDefaultName(replayData))
+                .setCenterInView(layoutGameRight)
                 .setOnReplayActionListener(new ReplaySaveDialog.OnReplayActionListener() {
                     @Override
                     public void onSave(String fileName) {
@@ -1141,6 +1177,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mainHandler.removeCallbacks(duelEndReplayProcessor);
         DraggablePopupHelper.resetAllPositions(this);
         if (topInfoManager != null) {
             topInfoManager.stopTimer();
