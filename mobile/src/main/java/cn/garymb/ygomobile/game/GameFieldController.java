@@ -183,9 +183,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     public boolean cancelPlaceSelect() {
         if (!isPlaceSelecting) return false;
-        int selfType = engine.getClient().selfType;
+        // 协议应答需要协议侧玩家索引：localPlayer 为对合映射，
+        // localPlayer(0) 即我方对应的协议索引（先攻=0/后攻=1），
+        // selfType 是座位号，换座场景下不能直接使用
         ByteBuffer buf = ByteBuffer.allocate(3);
-        buf.put((byte) selfType);
+        buf.put((byte) engine.localPlayer(0));
         buf.put((byte) 0);
         buf.put((byte) 0);
         engine.sendResponse(buf.array());
@@ -231,10 +233,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         isPlaceSelecting = false;
         viewController.clearHighlight();
 
-        // player 为本地方位索引(0=我方,1=对方)，协议响应需转换为服务端 player 索引
-        int respPlayer = (player == 0)
-                ? engine.getClient().selfType
-                : (1 - engine.getClient().selfType);
+        // player 为本地方位索引(0=我方,1=对方)，协议响应需转换为协议侧玩家索引
+        //（localPlayer 为对合映射：本地索引 → 协议索引）
+        int respPlayer = engine.localPlayer(player & 1);
         int respLocation;
         if (location == 0x04) {
             respLocation = 0x04;

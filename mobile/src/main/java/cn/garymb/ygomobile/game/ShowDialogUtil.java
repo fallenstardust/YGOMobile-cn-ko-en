@@ -29,6 +29,8 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
 import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
+import cn.garymb.ygomobile.ui.dialogs.FirstOrSecondDialog;
+import cn.garymb.ygomobile.ui.dialogs.PosSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.RPSDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import ocgcore.DataManager;
@@ -49,7 +51,8 @@ public class ShowDialogUtil {
     private RPSDialog handSelectDialog;
     private boolean rpsResultShown;
     private int lastHandSent;
-    private YesOrNoDialog tpSelectDialog;
+    private FirstOrSecondDialog tpSelectDialog;
+    private PosSelectDialog posSelectDialog;
 
     public ShowDialogUtil(YGOProActivity activity, ImageLoader imageLoader, Handler mainHandler) {
         this.activity = activity;
@@ -147,16 +150,13 @@ public class ShowDialogUtil {
 
     public void showTPSelectDialog() {
         if (tpSelectDialog != null && tpSelectDialog.isShowing()) return;
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        FirstOrSecondDialog dialog = new FirstOrSecondDialog(activity);
         tpSelectDialog = dialog;
-        dialog.setTitle("先攻选择")
-                .setMessage("是否选择先攻？")
-                .setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("先攻")
-                .setNegativeButtonText("后攻")
-                .setPositiveButton(v -> engine().sendTPResult(true))
-                .setNegativeButton(v -> engine().sendTPResult(false))
-                .setCancelable(false);
+        dialog.setOnSelectListener(first -> {
+            // FirstOrSecondDialog 已在点击瞬间关闭，这里发送 CTOS_TP_RESULT（1=先攻 0=后攻）；
+            // 服务端 SingleDuel::TPResult 可能按结果换座，MSG_START 的 playertype 决定我方先后攻身份
+            engine().sendTPResult(first);
+        });
         dialog.show();
     }
 
@@ -253,31 +253,32 @@ public class ShowDialogUtil {
         fieldCtl().beginPlaceSelect(isDisfield);
     }
 
-    public void showPositionSelectDialog() {
-        showListDialog("选择表示形式", new String[]{
-                "表侧攻击表示", "里侧攻击表示",
-                "表侧守备表示", "里侧守备表示"
-        }, which -> {
-            int pos;
-            switch (which) {
-                case 0:
-                    pos = 0x1;
-                    break;
-                case 1:
-                    pos = 0x2;
-                    break;
-                case 2:
-                    pos = 0x4;
-                    break;
-                case 3:
-                    pos = 0x8;
-                    break;
-                default:
-                    pos = 0x1;
-                    break;
-            }
-            sendResponseInt(pos);
-        });
+    /**
+     * MSG_SELECT_POSITION：data 为 GameEngine 打包的 code(4) + positions(4)。
+     * 标题取系统字符串 561（对齐 game.cpp wPosSelect 的 GetSysString(561)）；
+     * 选择后发送 CTOS_RESPONSE，core 按所选形式把卡放上场并下发场地更新同步状态。
+     */
+    public void showPositionSelectDialog(ByteBuffer data) {
+        if (data == null || data.remaining() < 8) return;
+        int code = data.getInt();
+        int positions = data.getInt() & 0x0F;
+        // 单一形式兜底（正常路径已在 GameEngine.onSelectPosition 拦截自动应答）
+        if (positions == 0x1 || positions == 0x2 || positions == 0x4 || positions == 0x8) {
+            sendResponseInt(positions);
+            return;
+        }
+        if (positions == 0) return;
+        if (posSelectDialog != null && posSelectDialog.isShowing()) return;
+        PosSelectDialog dialog = new PosSelectDialog(activity, imageLoader);
+        posSelectDialog = dialog;
+        dialog.setTitle(DataManager.get().getStringManager()
+                        .getSystemString(561, "选择表示形式"))
+                .setOnPositionSelectedListener(pos -> {
+                    // 先隐藏弹窗再发送协议：core 随后将卡按所选形式放上场并同步场地状态
+                    dialog.dismiss();
+                    sendResponseInt(pos);
+                });
+        dialog.show(code, positions);
     }
 
     // === 卡组选择 / SIDE ===
@@ -532,7 +533,8 @@ public class ShowDialogUtil {
                 .setCards(items)
                 .setSelectRange(min, max)
                 .setCancelable(cancelable != 0)
-                .setLocalPlayer(engine().getClient().selfType)
+                // 我方协议索引：localPlayer 为对合映射，localPlayer(0) = 我方对应的协议玩家（先攻=0/后攻=1）
+                .setLocalPlayer(engine().localPlayer(0))
                 .setListener(new CardSelectDialog.OnCardSelectListener() {
                     @Override
                     public void onCardClicked(int index) {
@@ -592,7 +594,7 @@ public class ShowDialogUtil {
                 .setSelectRange(min, max)
                 .setCancelable(cancelable != 0)
                 .setValueVisible(true)
-                .setLocalPlayer(engine().getClient().selfType)
+                .setLocalPlayer(engine().localPlayer(0))
                 .setListener(new CardSelectDialog.OnCardSelectListener() {
                     @Override
                     public void onCardClicked(int index) {
@@ -706,7 +708,7 @@ public class ShowDialogUtil {
                 .setSelectRange(min, max)
                 .setSumValue(sumVal, selectMode)
                 .setValueVisible(true)
-                .setLocalPlayer(engine().getClient().selfType)
+                .setLocalPlayer(engine().localPlayer(0))
                 .setListener(new CardSelectDialog.OnCardSelectListener() {
                     @Override
                     public void onCardClicked(int index) {
@@ -1056,7 +1058,7 @@ public class ShowDialogUtil {
                 .setSelectRange(min, max)
                 .setCancelable(cancelable)
                 .setFinishable(finishable)
-                .setLocalPlayer(engine().getClient().selfType)
+                .setLocalPlayer(engine().localPlayer(0))
                 .setListener(new CardSelectDialog.OnCardSelectListener() {
                     @Override
                     public void onCardClicked(int index) {
@@ -1125,7 +1127,7 @@ public class ShowDialogUtil {
     public void showCardInfoFromItem(CardDisplayDialog.CardItem item) {
         GameField.ClientCard card = new GameField.ClientCard();
         card.code = item.code;
-        card.controler = (item.controler == engine().getClient().selfType) ? 0 : 1;
+        card.controler = (item.controler == engine().localPlayer(0)) ? 0 : 1;
         card.location = item.location;
         card.sequence = item.sequence;
         card.position = 0x1;

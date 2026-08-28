@@ -47,6 +47,7 @@ public class GameTopInfoManager {
     private LinearLayout layoutTopInfo;
     private FrameLayout layoutPlayerPanel, layoutOpponentPanel;
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
+    private ImageView ivPlayerCardBack, ivOpponentCardBack;
     private ImageView ivPlayerLpFrame, ivOpponentLpFrame;
     private ImageView ivPlayerLpBar, ivPlayerLpBarLayer, ivOpponentLpBar, ivOpponentLpBarLayer;
     private TextView tvPlayerName, tvPlayerTime, tvPlayerCardCount;
@@ -116,8 +117,11 @@ public class GameTopInfoManager {
         tvPlayerLpNumber = activity.findViewById(R.id.tv_player_lp_number);
         tvOpponentLpNumber = activity.findViewById(R.id.tv_opponent_lp_number);
         tvTurnCounter = activity.findViewById(R.id.tv_turn_counter);
+        ivPlayerCardBack = activity.findViewById(R.id.iv_player_card_back);
+        ivOpponentCardBack = activity.findViewById(R.id.iv_opponent_card_back);
 
         setupAvatarImages();
+        setupCardBackImages();
         reset();
     }
 
@@ -147,6 +151,7 @@ public class GameTopInfoManager {
     public void prepareForDisplay() {
         show();
         setupAvatarImages();
+        setupCardBackImages();
         reset();
         GameEngine engine = activity.getEngine();
         int startLp = engine != null ? engine.getGameStartLp() : 0;
@@ -154,8 +159,18 @@ public class GameTopInfoManager {
         String myName = cn.garymb.ygomobile.Constants.PlayerName;
         String oppName = "Opponent";
         if (engine != null) {
-            if (!engine.playerInfos[0].name.isEmpty()) myName = engine.playerInfos[0].name;
-            if (!engine.playerInfos[1].name.isEmpty()) oppName = engine.playerInfos[1].name;
+            // playerInfos 按座位号存储：我方取 selfType 座位、对方取另一座位（1v1），
+            // 先后攻交换只影响协议玩家索引，不影响座位与名称的对应
+            int selfSeat = engine.getClient().selfType;
+            int oppSeat = selfSeat ^ 1;
+            if (selfSeat >= 0 && selfSeat < engine.playerInfos.length
+                    && !engine.playerInfos[selfSeat].name.isEmpty()) {
+                myName = engine.playerInfos[selfSeat].name;
+            }
+            if (oppSeat >= 0 && oppSeat < engine.playerInfos.length
+                    && !engine.playerInfos[oppSeat].name.isEmpty()) {
+                oppName = engine.playerInfos[oppSeat].name;
+            }
         }
         setPlayerDisplay(0, myName, String.valueOf(startLp));
         setPlayerDisplay(1, oppName, String.valueOf(startLp));
@@ -174,6 +189,14 @@ public class GameTopInfoManager {
         if (myAvatar != null && ivPlayerAvatar != null) ivPlayerAvatar.setImageBitmap(myAvatar);
         Bitmap opAvatar = TextureLoader.get().getAvatar(false);
         if (opAvatar != null && ivOpponentAvatar != null) ivOpponentAvatar.setImageBitmap(opAvatar);
+    }
+
+    /** 双方卡背图标（对齐 ImageManager::tCover[0/1]：我方 cover.jpg，对方 cover2.jpg） */
+    private void setupCardBackImages() {
+        Bitmap myCover = TextureLoader.get().getCardCover(false);
+        if (myCover != null && ivPlayerCardBack != null) ivPlayerCardBack.setImageBitmap(myCover);
+        Bitmap opCover = TextureLoader.get().getCardCover(true);
+        if (opCover != null && ivOpponentCardBack != null) ivOpponentCardBack.setImageBitmap(opCover);
     }
 
     // === 玩家名称 / LP（drawing.cpp L1027-1050） ===

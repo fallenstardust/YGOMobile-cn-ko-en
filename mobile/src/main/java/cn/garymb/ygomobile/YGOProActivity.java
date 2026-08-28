@@ -813,10 +813,15 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onPlayerInfoUpdated(int player) {
         runOnUiThread(() -> {
-            GameEngine.PlayerInfo info = engine.playerInfos[player];
+            // player 为本地视角索引（0=我方）；playerInfos 按座位号存储（STOC_HS_PLAYER_ENTER），
+            // 我方名称取 selfType 座位、对方取另一座位（1v1），越界座位回退默认名
+            int selfSeat = engine.getClient().selfType;
+            int seat = (player == 0) ? selfSeat : (selfSeat ^ 1);
+            GameEngine.PlayerInfo info = (seat >= 0 && seat < engine.playerInfos.length)
+                    ? engine.playerInfos[seat] : null;
             GameField.PlayerField pf = engine.getField().players[player];
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
-            String name = info.name.isEmpty() ? defaultName : info.name;
+            String name = (info == null || info.name.isEmpty()) ? defaultName : info.name;
             topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
             topInfoManager.updateLpBars(engine.getField());
             topInfoManager.updateCardCountDisplay(engine.getField());
@@ -826,7 +831,10 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onPhaseChanged(int phase) {
         runOnUiThread(() -> {
-            isMyTurn = (engine.getField().currentPlayer == engine.getClient().selfType);
+            // currentPlayer 为本地视角索引（MSG_NEW_TURN 已做 localPlayer 转换）：
+            // 不管我方是先攻还是后攻，我方回合恒为 0；
+            // selfType 是座位号，不能与协议侧回合索引直接比较
+            isMyTurn = (engine.getField().currentPlayer == 0);
             topInfoManager.updateTurn(engine.getField().turnCount, isMyTurn);
             fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
         });
@@ -886,7 +894,7 @@ public class YGOProActivity extends AppCompatActivity implements
                     showDialogUtil.showPlaceSelectDialog(false);
                     break;
                 case 19:
-                    showDialogUtil.showPositionSelectDialog();
+                    showDialogUtil.showPositionSelectDialog(data);
                     break;
                 case 20:
                     showDialogUtil.showTributeSelectDialog(data);
@@ -938,7 +946,7 @@ public class YGOProActivity extends AppCompatActivity implements
             String result;
             if (winner == 2) {
                 result = "平局";
-            } else if (winner == engine.getClient().selfType) {
+            } else if (engine.isSelfSide(winner)) {
                 result = "🎉 你赢了！";
             } else {
                 result = "😢 你输了";

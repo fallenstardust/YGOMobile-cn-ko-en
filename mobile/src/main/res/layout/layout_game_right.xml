@@ -120,13 +120,13 @@
                         android:gravity="right|center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
-                            android:layout_width="8sp"
+                        <ImageView
+                            android:id="@+id/iv_player_card_back"
+                            android:layout_width="wrap_content"
                             android:layout_height="10sp"
-                            android:background="@drawable/ic_related"
-                            android:text=" "
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
+                            android:adjustViewBounds="true"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/ic_related" />
 
                         <TextView
                             android:id="@+id/tv_player_card_count"
@@ -234,12 +234,12 @@
                 <TextView
                     android:id="@+id/tv_opponent_name"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
                     android:layout_gravity="end"
                     android:layout_marginEnd="5dp"
                     android:layout_weight="1"
                     android:ellipsize="end"
-                    android:gravity="center_vertical"
+                    android:gravity="center"
                     android:maxLines="1"
                     android:shadowColor="#FF00E5FF"
                     android:shadowDx="0"
@@ -254,14 +254,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:gravity="center"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:gravity="left|bottom"
+                        android:gravity="left|center_vertical"
                         android:orientation="horizontal">
 
                         <TextView
@@ -275,13 +275,13 @@
                             android:textSize="10sp"
                             android:visibility="visible" />
 
-                        <TextView
-                            android:layout_width="8sp"
+                        <ImageView
+                            android:id="@+id/iv_opponent_card_back"
+                            android:layout_width="wrap_content"
                             android:layout_height="10sp"
-                            android:background="@drawable/unknown"
-                            android:text=" "
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
+                            android:adjustViewBounds="true"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/unknown" />
 
                         <TextView
                             android:id="@+id/tv_opponent_card_count"
