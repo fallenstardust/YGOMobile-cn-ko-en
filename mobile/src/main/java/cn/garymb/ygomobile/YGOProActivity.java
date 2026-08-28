@@ -79,7 +79,7 @@ public class YGOProActivity extends AppCompatActivity implements
     private View layoutDeckEditor;
 
     private LinearLayout layoutDeckControl;
-    private LinearLayout layoutGameRight;
+    private FrameLayout layoutGameRight;
     private View layoutGameContent;
 
     private FrameLayout dialogContainer;

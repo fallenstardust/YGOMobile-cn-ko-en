@@ -30,6 +30,7 @@ import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
 import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.FirstOrSecondDialog;
+import cn.garymb.ygomobile.ui.dialogs.OptionDialog;
 import cn.garymb.ygomobile.ui.dialogs.PosSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.RPSDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
@@ -53,6 +54,7 @@ public class ShowDialogUtil {
     private int lastHandSent;
     private FirstOrSecondDialog tpSelectDialog;
     private PosSelectDialog posSelectDialog;
+    private OptionDialog optionDialog;
 
     public ShowDialogUtil(YGOProActivity activity, ImageLoader imageLoader, Handler mainHandler) {
         this.activity = activity;
@@ -163,76 +165,111 @@ public class ShowDialogUtil {
     // === 是/否 / 选项 / 效果确认 ===
 
     public void showYesNoDialog(ByteBuffer data) {
+        // duelclient.cpp L1902-1910：player(1) + desc(4)，desc 走 GetDesc（系统字符串或卡片脚本提示文字）
         int descId = 0;
-        if (data != null && data.remaining() >= 4) {
+        if (data != null && data.remaining() >= 5) {
+            data.get(); // selecting_player
             descId = data.getInt();
         }
-        String desc = descId > 0
-                ? DataManager.get().getStringManager().getSystemString(descId, "是否发动效果？")
-                : "是否发动效果？";
+        showYesNoQuery(DataManager.get().getDesc(descId, "是否发动效果？"));
+    }
 
+    /**
+     * MSG_SELECT_OPTION（duelclient.cpp L1912-1920）：player(1) + count(1) + count×desc(4)。
+     * 选项经 DataManager.getDesc 解析：<=0x7ff 为系统字符串，否则 卡号*16+n
+     * 取 cdb 缓存进 Card.Stras 的脚本提示文字（str1~str16）；
+     * 标题对齐 client_field.cpp ShowSelectOption：GetDesc(select_hint)，无则 sys555。
+     * 点击选项发送 CTOS_RESPONSE（int32 索引，playerop.cpp select_option 校验范围）。
+     */
+    public void showOptionDialog(ByteBuffer data) {
+        if (data == null || data.remaining() < 2) {
+            return;
+        }
+        data.get(); // selecting_player
+        int count = data.get() & 0xFF;
+        List<String> options = new ArrayList<>();
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            int descId = data.getInt();
+            options.add(DataManager.get().getDesc(descId, "Option " + (i + 1)));
+        }
+        if (options.isEmpty()) {
+            // 无可解析选项时兜底应答 0，避免通讯挂起（core 侧会校验索引合法性）
+            sendResponseInt(0);
+            return;
+        }
+        if (optionDialog != null && optionDialog.isShowing()) return;
+        OptionDialog dialog = new OptionDialog(activity);
+        optionDialog = dialog;
+        dialog.setTitle(optionTitleText())
+                .setOptions(options)
+                .setOnOptionSelectedListener(this::sendResponseInt)
+                .setOnDismissListener(() -> optionDialog = null);
+        dialog.show();
+    }
+
+    /** 选项弹窗标题：GetDesc(select_hint)，无则兜底 sys555 "Select an option."（client_field.cpp L643-646），消费后清零 */
+    private String optionTitleText() {
+        GameField f = engine() != null ? engine().getField() : null;
+        int hint = (f != null) ? f.selectHint : 0;
+        if (f != null) f.selectHint = 0;
+        return DataManager.get().getDesc(hint > 0 ? hint : 555, "请选择一项");
+    }
+
+    public void showEffectYnDialog(ByteBuffer data) {
+        // duelclient.cpp L1868-1901：player(1) code(4) c(1) l(1) s(1) flag(1) desc(4)
+        if (data == null || data.remaining() < 13) {
+            showYesNoQuery("是否发动效果？");
+            return;
+        }
+        data.get(); // selecting_player
+        int code = data.getInt();
+        data.position(data.position() + 4); // c, l, s, flag
+        int desc = data.getInt();
+        String cardName = activity.getCardDisplayName(code);
+        String message;
+        if (desc != 0) {
+            String raw = DataManager.get().getDesc(desc, "");
+            if (raw.contains("%s")) {
+                // 对齐 C++ myswprintf(GetSysString(desc), GetName(code))
+                try {
+                    message = String.format(raw, cardName);
+                } catch (Exception e) {
+                    message = raw;
+                }
+            } else if (!raw.isEmpty()) {
+                message = raw;
+            } else {
+                message = "是否发动「" + cardName + "」的效果？";
+            }
+        } else {
+            message = "是否发动「" + cardName + "」的效果？";
+        }
+        showYesNoQuery(message);
+    }
+
+    /** 是/否确认弹窗公共构建：是=1 否=0（MSG_SELECT_YESNO / MSG_SELECT_EFFECTYN 应答） */
+    private void showYesNoQuery(String message) {
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         dialog.setTitle("确认")
-                .setMessage(desc)
+                .setMessage(message)
                 .setType(YesOrNoDialog.TYPE_YES_NO)
                 .setPositiveButtonText("是")
                 .setNegativeButtonText("否")
                 .setPositiveButton(v -> {
                     sendResponseInt(1);
                     panel().hideCancelOrFinishButton();
-                    dialog.dismiss();
                 })
                 .setNegativeButton(v -> {
                     sendResponseInt(0);
                     panel().hideCancelOrFinishButton();
-                    dialog.dismiss();
                 })
                 .setCancelable(false)
                 .setOnDismissListener(() -> {
                     panel().hideCancelOrFinishButton();
-                    panel().setCurrentDialog(null);  // 若需要保留引用可调整
+                    panel().setCurrentDialog(null);
                 });
         panel().showCancelOrFinishButton("否");
         dialog.show();
-    }
-
-    public void showOptionDialog(ByteBuffer data) {
-        if (data == null) return;
-        int count = data.get() & 0xFF;
-        List<String> options = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            int descId = data.getInt();
-            String str = DataManager.get().getStringManager().getSystemString(descId, "Option " + (i + 1));
-            options.add(str);
-        }
-
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("请选择");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-        for (int i = 0; i < options.size(); i++) {
-            Button btn = new Button(activity);
-            btn.setText(options.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF006688);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 8;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                sendResponseInt(idx);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
-        dialog.show();
-    }
-
-    public void showEffectYnDialog(ByteBuffer data) {
-        showYesNoDialog(data);
     }
 
     // === 场上命令 / 位置 / 表示形式 ===
@@ -417,7 +454,8 @@ public class ShowDialogUtil {
             int desc = data.getInt();
 
             String cardName = activity.getCardDisplayName(code);
-            String descStr = desc > 0 ? DataManager.get().getStringManager().getSystemString(desc, "效果") : "效果";
+            // 连锁描述同样可能为卡片脚本提示文字（卡号*16+n），统一走 getDesc
+            String descStr = desc > 0 ? DataManager.get().getDesc(desc, "效果") : "效果";
             chainOptions.add(cardName + " - " + descStr);
             chainFlags.add(flag);
         }

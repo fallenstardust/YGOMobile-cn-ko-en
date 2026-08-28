@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 选项选择弹窗（效仿 gframe game.cpp L828-851 wOptions）：
+     标题文字（select_hint / sys555）+ 可滚动选项按钮列表（效仿 btnOption + scrOption），
+     点击选项直接关闭弹窗并发送通讯响应 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/option_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/sdialogl"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingVertical="10dp">
+
+    <!-- 标题：GetDesc(select_hint)，无则 sys555 "Select an option."（client_field.cpp L643-646） -->
+    <TextView
+        android:id="@+id/tv_option_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:textSize="11sp" />
+
+    <!-- 选项列表（效仿 wOptions 的 btnOption + scrOption 滚动） -->
+    <ScrollView
+        android:id="@+id/scroll_option"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:maxHeight="300dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/layout_option_items"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+</LinearLayout>
