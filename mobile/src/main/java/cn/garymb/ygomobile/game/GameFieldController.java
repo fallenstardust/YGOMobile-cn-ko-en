@@ -3,9 +3,7 @@ package cn.garymb.ygomobile.game;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.nio.ByteBuffer;
@@ -17,7 +15,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.ui.dialogs.CmdMenuDialog;
 import ocgcore.DataManager;
 import ocgcore.enums.DuelPhase;
 
@@ -42,6 +40,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private GameEngine engine;
     private int cmdContext = 0;
     private boolean isPlaceSelecting = false;
+    private CmdMenuDialog cmdMenuDialog;
 
     private TextView tvHintMessage;
     private FrameLayout layoutChatMessages;
@@ -126,6 +125,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (viewController != null) viewController.hide();
         if (topInfoManager != null) topInfoManager.hide();
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
+        if (cmdMenuDialog != null) cmdMenuDialog.dismiss();
         phaseCurrentVisible = false;
         phaseNextLabel = "";
         phaseEpVisible = false;
@@ -199,7 +199,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     // === 区域点击处理（来自 DuelFieldManager） ===
 
     @Override
-    public void onZoneClick(int player, int location, int sequence) {
+    public void onZoneClick(int player, int location, int sequence, float tapX, float tapY) {
         if (engine == null) return;
         GameField field = engine.getField();
         if (isPlaceSelecting) {
@@ -208,7 +208,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
         GameField.ClientCard card = field.getCard(player, location, sequence);
         if (card != null && card.cmdFlag != 0) {
-            showCardCommandMenu(card);
+            showCardCommandMenu(card, tapX, tapY);
             return;
         }
         // 堆叠区点击：查看卡片信息
@@ -267,7 +267,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     // === 卡片命令菜单 ===
 
-    private void showCardCommandMenu(GameField.ClientCard card) {
+    private void showCardCommandMenu(GameField.ClientCard card, float tapX, float tapY) {
         int flag = card.cmdFlag;
         List<String> options = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
@@ -409,36 +409,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         options.add("ℹ 查看卡片信息");
         actions.add(() -> activity.showCardInfoPanel(card));
 
-        DialogPlus dialog = new DialogPlus(activity);
-        dialog.setTitle(cardName);
-        dialog.setContentView(R.layout.dialog_game_select);
-        View contentView = dialog.getContentView();
-        contentView.findViewById(R.id.tv_select_title).setVisibility(View.GONE);
-        contentView.findViewById(R.id.tv_select_hint).setVisibility(View.GONE);
-        contentView.findViewById(R.id.layout_select_buttons).setVisibility(View.GONE);
-        LinearLayout layoutOptions = contentView.findViewById(R.id.layout_options);
-
-        for (int i = 0; i < options.size(); i++) {
-            Button btn = new Button(activity);
-            btn.setText(options.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setTextSize(13);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                actions.get(idx).run();
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
+        if (cmdMenuDialog == null) {
+            cmdMenuDialog = new CmdMenuDialog(activity);
         }
-
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
-        dialog.show();
+        cmdMenuDialog.setTitle(cardName);
+        cmdMenuDialog.setItems(options, actions);
+        cmdMenuDialog.show(viewController != null ? viewController.getView() : null, tapX, tapY);
     }
 
     // === 提示信息 ===
@@ -583,12 +559,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     // === GameFieldView.OnCardClickListener ===
 
     @Override
-    public void onCardClick(int player, int location, int sequence) {
+    public void onCardClick(int player, int location, int sequence, float tapX, float tapY) {
         Log.d(TAG, "Card click: p=" + player + " loc=" + location + " seq=" + sequence);
         if (engine == null) return;
         GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
         if (card != null && card.cmdFlag != 0) {
-            showCardCommandMenu(card);
+            showCardCommandMenu(card, tapX, tapY);
             return;
         }
         if (card != null) {

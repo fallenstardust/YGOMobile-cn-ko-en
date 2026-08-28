@@ -178,7 +178,7 @@ public class ShowDialogUtil {
      * MSG_SELECT_OPTION（duelclient.cpp L1912-1920）：player(1) + count(1) + count×desc(4)。
      * 选项经 DataManager.getDesc 解析：<=0x7ff 为系统字符串，否则 卡号*16+n
      * 取 cdb 缓存进 Card.Stras 的脚本提示文字（str1~str16）；
-     * 标题对齐 client_field.cpp ShowSelectOption：GetDesc(select_hint)，无则 sys555。
+     * 标题取系统字符串 555（"Select an option."）。
      * 点击选项发送 CTOS_RESPONSE（int32 索引，playerop.cpp select_option 校验范围）。
      */
     public void showOptionDialog(ByteBuffer data) {
@@ -207,12 +207,11 @@ public class ShowDialogUtil {
         dialog.show();
     }
 
-    /** 选项弹窗标题：GetDesc(select_hint)，无则兜底 sys555 "Select an option."（client_field.cpp L643-646），消费后清零 */
+    /** 选项弹窗标题：系统字符串 555（strings.conf "!system 555 Select an option."）；消费 selectHint 避免残留影响后续选卡标题 */
     private String optionTitleText() {
         GameField f = engine() != null ? engine().getField() : null;
-        int hint = (f != null) ? f.selectHint : 0;
         if (f != null) f.selectHint = 0;
-        return DataManager.get().getDesc(hint > 0 ? hint : 555, "请选择一项");
+        return DataManager.get().getStringManager().getSystemString(555, "请选择一项");
     }
 
     public void showEffectYnDialog(ByteBuffer data) {

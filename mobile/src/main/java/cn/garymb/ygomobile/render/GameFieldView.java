@@ -50,9 +50,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private static final String TAG = "GameFieldView";
 
     public interface OnCardClickListener {
-        void onCardClick(int player, int location, int sequence);
+        void onCardClick(int player, int location, int sequence, float tapX, float tapY);
 
-        void onZoneClick(int player, int location, int sequence);
+        void onZoneClick(int player, int location, int sequence, float tapX, float tapY);
 
         void onFieldLongPress(int player, int location, int sequence);
     }
@@ -1412,7 +1412,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                                 if (!zoneContains(p, loc, i, g[0], g[1])) continue;
                                 int bit = zoneBitPos(p, loc, i);
                                 if (bit >= 0 && (mask & (1 << bit)) != 0) {
-                                    listener.onZoneClick(p, loc, i);
+                                    listener.onZoneClick(p, loc, i, x, y);
                                     return;
                                 }
                             }
@@ -1424,7 +1424,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             int[] hit = hitCard(ray, f);
             if (hit != null) {
                 setSelectedCard(hit[0], hit[1], hit[2]);
-                listener.onCardClick(hit[0], hit[1], hit[2]);
+                listener.onCardClick(hit[0], hit[1], hit[2], x, y);
             } else {
                 clearSelection();
             }

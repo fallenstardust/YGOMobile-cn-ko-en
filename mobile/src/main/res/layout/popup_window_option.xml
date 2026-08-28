@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 选项选择弹窗（效仿 gframe game.cpp L828-851 wOptions）：
-     标题文字（select_hint / sys555）+ 可滚动选项按钮列表（效仿 btnOption + scrOption），
+     标题文字（系统字符串 555）+ 可滚动选项按钮列表（效仿 btnOption + scrOption），
      点击选项直接关闭弹窗并发送通讯响应 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/option_root"
@@ -12,7 +12,7 @@
     android:paddingHorizontal="20dp"
     android:paddingVertical="10dp">
 
-    <!-- 标题：GetDesc(select_hint)，无则 sys555 "Select an option."（client_field.cpp L643-646） -->
+    <!-- 标题：StringManager.getSystemString(555) "Select an option." -->
     <TextView
         android:id="@+id/tv_option_title"
         android:layout_width="match_parent"
