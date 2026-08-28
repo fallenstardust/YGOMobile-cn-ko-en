@@ -9,6 +9,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.chad.library.adapter.base.BaseMultiItemQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
@@ -26,7 +28,6 @@ import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyDeckResponse;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.MyOnlineDeckDetail;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -39,6 +40,7 @@ public class MyOnlineDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListI
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
     private ImageLoader imageLoader;
     private String currentKeyword = "";
+    private SwipeRefreshLayout swipeRefreshLayout;
     private final LinkedHashMap<String, Boolean> sectionExpandedMap = new LinkedHashMap<>();
 
     public MyOnlineDeckListAdapter(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
@@ -50,25 +52,29 @@ public class MyOnlineDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListI
         this.mDialogListener = mDialogListener;
     }
 
+    public void setSwipeRefreshLayout(SwipeRefreshLayout swipeRefreshLayout) {
+        this.swipeRefreshLayout = swipeRefreshLayout;
+    }
+
     public void loadData() {
+        loadData(false);
+    }
+
+    public void loadData(boolean forceRefresh) {
         LoginToken loginToken = DeckSquareApiUtil.getLoginData();
         if (loginToken == null) {
+            setRefreshing(false);
             return;
         }
-        if (DeckManagerFragment.getOriginalData().isEmpty()) {
-            final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_online_deck));
+        if (forceRefresh || DeckManagerFragment.getOriginalData().isEmpty()) {
+            setRefreshing(true);
             VUiKit.defer().when(() -> {
                 MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
                 if (result == null) return null;
                 else return result.getData();
             }).fail((e) -> {
                 Log.e(TAG, e + "");
-                if (dialog_read_ex.isShowing()) {
-                    try {
-                        dialog_read_ex.dismiss();
-                    } catch (Exception ex) {
-                    }
-                }
+                setRefreshing(false);
                 LogUtil.i(TAG, "load mycard from server failed:" + e);
             }).done((serverDecks) -> {
                 if (serverDecks != null) {
@@ -77,16 +83,18 @@ public class MyOnlineDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListI
                 }
                 LogUtil.i(TAG, "load mycard from server done");
                 rebuildGroupedList(DeckManagerFragment.getOriginalData());
-                if (dialog_read_ex.isShowing()) {
-                    try {
-                        dialog_read_ex.dismiss();
-                    } catch (Exception ex) {
-                    }
-                }
+                setRefreshing(false);
             });
         } else {
             LogUtil.i(TAG, "load originalData done");
             rebuildGroupedList(DeckManagerFragment.getOriginalData());
+            setRefreshing(false);
+        }
+    }
+
+    private void setRefreshing(boolean refreshing) {
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing() != refreshing) {
+            swipeRefreshLayout.setRefreshing(refreshing);
         }
     }
 
