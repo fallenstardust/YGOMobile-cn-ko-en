@@ -14,6 +14,7 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.util.List;
@@ -45,6 +46,8 @@ public class OptionDialog {
     private static final int DIALOG_WIDTH_DP = 280;
     private static final int ITEM_BOTTOM_MARGIN_DP = 4;
     private static final int BUTTON_MIN_HEIGHT_DP = 30;
+    /** 选项过多收缩滚动区时的最小高度 */
+    private static final int MIN_SCROLL_HEIGHT_DP = 60;
 
     private final Context context;
     private PopupWindow popupWindow;
@@ -152,7 +155,7 @@ public class OptionDialog {
             btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
             btn.setAllCaps(false);
             // button_n/button_p 九宫格对应 gframe tButton_L/tButton_L_pressed
-            btn.setBackgroundResource(R.drawable.button_bg);
+            btn.setBackgroundResource(R.drawable.button3_bg);
             btn.setMinHeight(dp2px(BUTTON_MIN_HEIGHT_DP));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -169,19 +172,41 @@ public class OptionDialog {
         }
     }
 
-    /** 水平+垂直均在 layout_game_right 实际范围内居中 */
+    /** 水平+垂直均在 layout_game_right 实际范围内居中，且整体不越出该区域 */
     private void showCenteredInGameRight(View gameRight) {
+        ScrollView scroll = contentView.findViewById(R.id.scroll_option);
+        if (scroll != null) {
+            // 复位上一次的高度限制，先按自然高度测量
+            ViewGroup.LayoutParams slp = scroll.getLayoutParams();
+            slp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            scroll.setLayoutParams(slp);
+        }
         contentView.measure(
                 View.MeasureSpec.makeMeasureSpec(dp2px(DIALOG_WIDTH_DP), View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         int popupW = contentView.getMeasuredWidth();
         int popupH = contentView.getMeasuredHeight();
+        int regionW = gameRight.getWidth();
+        int regionH = gameRight.getHeight();
+        // 选项过多超出区域高度时（ScrollView maxHeight 仅 API30+ 生效，minSdk 25），
+        // 收缩滚动区，保证弹窗整体留在 layout_game_right 内
+        if (scroll != null && popupH > regionH) {
+            ViewGroup.LayoutParams slp = scroll.getLayoutParams();
+            slp.height = Math.max(dp2px(MIN_SCROLL_HEIGHT_DP),
+                    scroll.getMeasuredHeight() - (popupH - regionH));
+            scroll.setLayoutParams(slp);
+            contentView.measure(
+                    View.MeasureSpec.makeMeasureSpec(dp2px(DIALOG_WIDTH_DP), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            popupH = contentView.getMeasuredHeight();
+        }
         int[] loc = new int[2];
         gameRight.getLocationInWindow(loc);
-        int x = loc[0] + (gameRight.getWidth() - popupW) / 2;
-        int y = loc[1] + (gameRight.getHeight() - popupH) / 2;
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
+        int x = loc[0] + (regionW - popupW) / 2;
+        int y = loc[1] + (regionH - popupH) / 2;
+        // 越界钳制到 layout_game_right 区域左上角（而非窗口左上角）
+        if (x < loc[0]) x = loc[0];
+        if (y < loc[1]) y = loc[1];
         popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, x, y);
     }
 
