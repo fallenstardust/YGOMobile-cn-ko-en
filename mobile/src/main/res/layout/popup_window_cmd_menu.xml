@@ -3,32 +3,13 @@
     android:id="@+id/layout_cmd_menu_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/stitlebar"
+    android:background="@color/transparent"
     android:orientation="vertical"
-    android:padding="3dp">
+    android:padding="1dp">
 
-    <TextView
-        android:id="@+id/tv_cmd_menu_title"
+    <LinearLayout
+        android:id="@+id/layout_cmd_menu_items"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:paddingBottom="2dp"
-        android:textColor="@color/white"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    <ScrollView
-        android:id="@+id/scroll_cmd_menu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/layout_cmd_menu_items"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+        android:orientation="vertical" />
 </LinearLayout>

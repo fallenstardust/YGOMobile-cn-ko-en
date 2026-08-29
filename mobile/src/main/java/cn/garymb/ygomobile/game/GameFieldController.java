@@ -7,8 +7,6 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
@@ -16,7 +14,6 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.ui.dialogs.CmdMenuDialog;
-import ocgcore.DataManager;
 import ocgcore.enums.DuelPhase;
 
 /**
@@ -211,6 +208,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             showCardCommandMenu(card, tapX, tapY);
             return;
         }
+        // 无可执行命令：关闭残留的命令菜单，只显示卡片信息
+        dismissCmdMenu();
         // 堆叠区点击：查看卡片信息
         boolean isPile = (location == 0x01 || location == 0x10
                 || location == 0x20 || location == 0x40);
@@ -267,154 +266,21 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     // === 卡片命令菜单 ===
 
+    /**
+     * 菜单构建逻辑已迁移至 CmdMenuDialog.showCardCommandMenu：
+     * 此处仅转发触点与当前命令上下文（idle/battle）
+     */
     private void showCardCommandMenu(GameField.ClientCard card, float tapX, float tapY) {
-        int flag = card.cmdFlag;
-        List<String> options = new ArrayList<>();
-        List<Runnable> actions = new ArrayList<>();
-        String cardName = activity.getCardDisplayName(card.code);
-
-        if ((flag & GameEngine.COMMAND_ACTIVATE) != 0) {
-            List<GameEngine.CmdCardInfo> matches = new ArrayList<>();
-            for (int i = 0; i < engine.activatableCards.size(); i++) {
-                if (engine.activatableCards.get(i).card == card) {
-                    matches.add(engine.activatableCards.get(i));
-                }
-            }
-            if (matches.size() == 1) {
-                GameEngine.CmdCardInfo info = matches.get(0);
-                String descStr = info.desc > 0
-                        ? DataManager.get().getStringManager().getSystemString(info.desc, "发动")
-                        : "发动";
-                options.add("✦ " + descStr);
-                final int idx = info.index;
-                if (cmdContext == CMD_CONTEXT_BATTLE) {
-                    actions.add(() -> activity.sendResponseInt(idx << 16));
-                } else {
-                    actions.add(() -> activity.sendResponseInt((idx << 16) + 5));
-                }
-            } else if (matches.size() > 1) {
-                for (GameEngine.CmdCardInfo info : matches) {
-                    String descStr = info.desc > 0
-                            ? DataManager.get().getStringManager().getSystemString(info.desc, "效果")
-                            : "效果";
-                    options.add("✦ " + descStr);
-                    final int idx = info.index;
-                    if (cmdContext == CMD_CONTEXT_BATTLE) {
-                        actions.add(() -> activity.sendResponseInt(idx << 16));
-                    } else {
-                        actions.add(() -> activity.sendResponseInt((idx << 16) + 5));
-                    }
-                }
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_ATTACK) != 0) {
-            int idx = -1;
-            for (int i = 0; i < engine.attackableCards.size(); i++) {
-                if (engine.attackableCards.get(i).card == card) {
-                    idx = engine.attackableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("⚔ 攻击");
-                final int attackIdx = idx;
-                actions.add(() -> activity.sendResponseInt((attackIdx << 16) + 1));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_SUMMON) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.summonableCards.size(); i++) {
-                if (engine.summonableCards.get(i).card == card) {
-                    idx = engine.summonableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("召唤");
-                final int summonIdx = idx;
-                actions.add(() -> activity.sendResponseInt(summonIdx << 16));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_SPSUMMON) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.spsummonableCards.size(); i++) {
-                if (engine.spsummonableCards.get(i).card == card) {
-                    idx = engine.spsummonableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("特殊召唤");
-                final int spIdx = idx;
-                actions.add(() -> activity.sendResponseInt((spIdx << 16) + 1));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_REPOS) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.reposableCards.size(); i++) {
-                if (engine.reposableCards.get(i).card == card) {
-                    idx = engine.reposableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                String reposText;
-                if ((card.position & 0xA) != 0) {
-                    reposText = "反转";
-                } else if (card.isAttack()) {
-                    reposText = "改为守备";
-                } else {
-                    reposText = "改为攻击";
-                }
-                options.add(reposText);
-                final int reposIdx = idx;
-                actions.add(() -> activity.sendResponseInt((reposIdx << 16) + 2));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_MSET) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.msetableCards.size(); i++) {
-                if (engine.msetableCards.get(i).card == card) {
-                    idx = engine.msetableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("盖放(怪兽)");
-                final int msetIdx = idx;
-                actions.add(() -> activity.sendResponseInt((msetIdx << 16) + 3));
-            }
-        }
-
-        if ((flag & GameEngine.COMMAND_SSET) != 0 && cmdContext == CMD_CONTEXT_IDLE) {
-            int idx = -1;
-            for (int i = 0; i < engine.ssetableCards.size(); i++) {
-                if (engine.ssetableCards.get(i).card == card) {
-                    idx = engine.ssetableCards.get(i).index;
-                    break;
-                }
-            }
-            if (idx >= 0) {
-                options.add("设置(魔陷)");
-                final int ssetIdx = idx;
-                actions.add(() -> activity.sendResponseInt((ssetIdx << 16) + 4));
-            }
-        }
-
-        options.add("ℹ 查看卡片信息");
-        actions.add(() -> activity.showCardInfoPanel(card));
-
         if (cmdMenuDialog == null) {
             cmdMenuDialog = new CmdMenuDialog(activity);
         }
-        cmdMenuDialog.setTitle(cardName);
-        cmdMenuDialog.setItems(options, actions);
-        cmdMenuDialog.show(viewController != null ? viewController.getView() : null, tapX, tapY);
+        cmdMenuDialog.showCardCommandMenu(card, engine, cmdContext,
+                viewController != null ? viewController.getView() : null, tapX, tapY);
+    }
+
+    /** 本次点击无可执行命令时，关闭残留的旧菜单 */
+    private void dismissCmdMenu() {
+        if (cmdMenuDialog != null) cmdMenuDialog.dismiss();
     }
 
     // === 提示信息 ===
@@ -567,6 +433,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             showCardCommandMenu(card, tapX, tapY);
             return;
         }
+        // 无可执行命令：关闭残留的命令菜单
+        dismissCmdMenu();
         if (card != null) {
             // 手卡确认由 GameFieldView 场内动画完成（抬高/翻面+虚线框），不弹卡面展示
             if (location == 0x02) return;
