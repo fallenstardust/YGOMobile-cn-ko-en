@@ -1,9 +1,11 @@
 package cn.garymb.ygomobile.game;
 
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.nio.ByteBuffer;
@@ -13,6 +15,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
+import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CmdMenuDialog;
 import ocgcore.enums.DuelPhase;
 
@@ -43,6 +46,16 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private FrameLayout layoutChatMessages;
     private TextView tvChatMessage1, tvChatMessage2;
 
+    // 表情气泡：显示在发送方头像下方（对齐 gframe drawing.cpp DrawEmoticon），超时自动隐藏
+    private static final long EMOTE_BUBBLE_DURATION_MS = 3000;
+    private ImageView ivPlayerEmoteBubble, ivOpponentEmoteBubble;
+    private final Runnable hidePlayerEmoteBubble = () -> {
+        if (ivPlayerEmoteBubble != null) ivPlayerEmoteBubble.setVisibility(View.GONE);
+    };
+    private final Runnable hideOpponentEmoteBubble = () -> {
+        if (ivOpponentEmoteBubble != null) ivOpponentEmoteBubble.setVisibility(View.GONE);
+    };
+
     // 阶段按钮状态：按钮本体由 GameFieldView 场内绘制（双方怪兽区之间、平行屏幕），
     // 控制器仅维护显示状态并按通讯协议应答点击
     private boolean phaseCurrentVisible = false;
@@ -67,6 +80,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         layoutChatMessages = activity.findViewById(R.id.layout_chat_messages);
         tvChatMessage1 = activity.findViewById(R.id.tv_chat_message_1);
         tvChatMessage2 = activity.findViewById(R.id.tv_chat_message_2);
+        ivPlayerEmoteBubble = activity.findViewById(R.id.iv_player_emote_bubble);
+        ivOpponentEmoteBubble = activity.findViewById(R.id.iv_opponent_emote_bubble);
     }
 
     /**
@@ -123,6 +138,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (topInfoManager != null) topInfoManager.hide();
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
         if (cmdMenuDialog != null) cmdMenuDialog.dismiss();
+        // 清场时隐藏表情气泡并撤销延时隐藏任务
+        if (ivPlayerEmoteBubble != null) ivPlayerEmoteBubble.setVisibility(View.GONE);
+        if (ivOpponentEmoteBubble != null) ivOpponentEmoteBubble.setVisibility(View.GONE);
+        mainHandler.removeCallbacks(hidePlayerEmoteBubble);
+        mainHandler.removeCallbacks(hideOpponentEmoteBubble);
         phaseCurrentVisible = false;
         phaseNextLabel = "";
         phaseEpVisible = false;
@@ -294,6 +314,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     // === 聊天气泡 ===
 
     public void appendChat(String player, String message) {
+        // 表情编码（如 "&laugh"）：不走文字行，在发送方头像下方显示图片气泡
+        //（STOC_CHAT 会广播回发送者，双方统一在此路径展示，对齐 gframe DrawEmoticon）
+        if (isEmoticonCode(message)) {
+            showEmoteBubble(player, message);
+            return;
+        }
         String chatLine = "[" + player + "] " + message;
 
         if (tvChatMessage1 != null && tvChatMessage1.getVisibility() == View.GONE) {
@@ -315,6 +341,38 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (layoutChatMessages != null) {
             layoutChatMessages.setVisibility(View.VISIBLE);
         }
+    }
+
+    private boolean isEmoticonCode(String message) {
+        if (message == null || message.isEmpty()) return false;
+        for (String code : TextureLoader.EMOTICON_KEYS) {
+            if (code.equals(message)) return true;
+        }
+        return false;
+    }
+
+    /** 将表情图片气泡显示到发送方头像下方，并刷新自动隐藏计时 */
+    private void showEmoteBubble(String player, String code) {
+        if (engine == null) return;
+        // DuelClient 将 STOC_CHAT 的 playerType 转为 "Player1"/"Player2"：1=协议索引0，2=协议索引1
+        int protoIdx;
+        if ("Player1".equals(player)) {
+            protoIdx = 0;
+        } else if ("Player2".equals(player)) {
+            protoIdx = 1;
+        } else {
+            return; // 观战者表情不显示气泡
+        }
+        boolean selfSide = engine.isSelfSide(protoIdx);
+        ImageView bubble = selfSide ? ivPlayerEmoteBubble : ivOpponentEmoteBubble;
+        if (bubble == null) return;
+        Bitmap bmp = TextureLoader.get().getEmoticon(code);
+        if (bmp == null || bmp.isRecycled()) return;
+        bubble.setImageBitmap(bmp);
+        bubble.setVisibility(View.VISIBLE);
+        Runnable hide = selfSide ? hidePlayerEmoteBubble : hideOpponentEmoteBubble;
+        mainHandler.removeCallbacks(hide);
+        mainHandler.postDelayed(hide, EMOTE_BUBBLE_DURATION_MS);
     }
 
     // === 阶段按钮 ===

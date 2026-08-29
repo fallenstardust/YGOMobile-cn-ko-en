@@ -120,8 +120,8 @@ public class CardDetailPanel {
         btnSound.setOnClickListener(v -> activity.toggleSoundMute());
         btnSpeed.setOnClickListener(v -> {
         });
-        btnEmote.setOnClickListener(v -> {
-        });
+        // 表情入口（对齐 gframe BUTTON_EMOTICON）：开关切换 4x4 表情面板
+        btnEmote.setOnClickListener(v -> activity.toggleEmotionDialog(btnEmote));
         btnNote.setOnClickListener(v -> activity.getMainMenuDialog().showMainMenu());
 
         if (btnCancelOrFinish != null) {

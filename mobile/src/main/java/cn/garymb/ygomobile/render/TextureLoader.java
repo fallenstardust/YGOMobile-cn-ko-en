@@ -39,8 +39,8 @@ public class TextureLoader {
     /** 表情图集裁剪缓存，对齐 ImageManager::emoticons */
     private final Map<String, Bitmap> emoticonCache = new ConcurrentHashMap<>();
 
-    /** 表情键名与 4x4 图集网格顺序，对齐 image_manager.cpp emoticonRects */
-    private static final String[] EMOTICON_KEYS = {
+    /** 表情键名与 4x4 图集网格顺序，对齐 image_manager.cpp emoticonRects / emoticonCodes（公开供 EmotionDialog 复用） */
+    public static final String[] EMOTICON_KEYS = {
             "&laugh", "&ridiculous", "&stick_tongue", "&reluctant",
             "&sweat", "&confused", "&surprised", "&bawl",
             "&angry", "&rage", "&sneaky", "&obedient",
