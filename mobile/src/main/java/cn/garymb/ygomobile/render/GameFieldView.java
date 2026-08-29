@@ -2,9 +2,11 @@ package cn.garymb.ygomobile.render;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
@@ -22,6 +24,7 @@ import java.nio.FloatBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -33,17 +36,21 @@ import javax.microedition.khronos.opengles.GL10;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 
 /**
- * 决斗场渲染视图（路线 B：OpenGL ES 3.0 真 3D 透视）。
- * <p>
- * 世界坐标系直接采用 gframe 场地坐标：X∈[-1.25,9.15]（与 field3.png 4:3 版面锁定横向放大），Y∈[-3.9,3.9]（+Y 朝向我方），Z 为高度。
- * 棋盘/区域槽/堆叠区/双方手卡/场上卡全部在同一透视相机内绘制，近大远小由 GPU 完成；
- * 卡片位置与旋转直接取 {@link GameField.ClientCard} 的 curX/curY/curZ/curRot*，
  * 与 ClientField::GetCardLocation 数值完全一致。
  * <p>
  * 公开 API 与原 Canvas 版保持一致，调用方（GameFieldViewController/GameFieldController/布局 XML）无需修改。
+ * <p>
+ * 监听收口：卡片/区域点击与长按、阶段按钮、相机变化等所有 listener 均由
+ * {@link GameFieldViewController} 实现并注册，手势识别（GestureDetector）同样由控制器持有，
+ * 本视图仅保留拾取入口（dispatchTap/dispatchLongPress）与回调触发。
+ * <p>
+ * XML 可调参数（declare-styleable GameFieldView）：field_camera_elevation / field_camera_distance /
+ * field_zoom / field_hand_shift 与预览开关。XML 显式声明的值即运行期正式值，所见即所得；
+ * 布局编辑器（isInEditMode）下无法启动 GL，改由 Canvas 绘制等效透视预览。
  */
 public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Renderer {
 
@@ -119,6 +126,19 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private static final long SHUFFLE_MS = 700L;
     // 场地视觉倍率：1.0=场地近端左右边缘精确贴合 GameFieldView 左右缘（field3.png 满幅不裁切）
     private static final float FIELD_ZOOM = 1.0f;
+    // === XML 可调参数（declare-styleable GameFieldView，常量兜底默认值）===
+    // 视点到注视点距离：与俯仰角共同决定相机位置（越高越俯视）
+    private float cameraDistance = CAMERA_DISTANCE;
+    // 场地视觉倍率（运行期实际取值，可被 XML 覆盖）
+    private float fieldZoom = FIELD_ZOOM;
+    // 我方手卡相对决斗场向后平移量（运行期实际取值，可被 XML 覆盖）
+    private float handSelfYShift = HAND_SELF_Y_SHIFT;
+    // XML 是否显式声明了俯仰角（声明时优先于游戏内保存的设置）
+    private boolean elevationFromXml = false;
+    // 设计时预览开关（仅 isInEditMode 生效）
+    private boolean previewShowZones = true;
+    private boolean previewShowHand = true;
+    private boolean previewShowLabels = true;
     private volatile float cameraElevationDeg = DEFAULT_CAMERA_ELEVATION;
     private volatile boolean cameraDirty = false;
 
@@ -216,7 +236,6 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     private long lastFrameNs = 0;
     private long animTimeMs = 0;
-    private GestureDetector gestureDetector;
 
     private static class PendingUpload {
         final long key;
@@ -233,12 +252,37 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     public GameFieldView(Context context) {
         super(context);
-        init();
+        if (!isInEditMode()) init();
     }
 
     public GameFieldView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
+        readXmlAttributes(context, attrs);
+        if (!isInEditMode()) init();
+    }
+
+    /**
+     * 解析 XML 布局参数（declare-styleable GameFieldView）：
+     * XML 显式声明的值同时作为设计时预览与运行期的正式值，参数调校所见即所得
+     */
+    private void readXmlAttributes(Context context, AttributeSet attrs) {
+        if (attrs == null) return;
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.GameFieldView);
+        try {
+            cameraDistance = ta.getFloat(R.styleable.GameFieldView_field_camera_distance, CAMERA_DISTANCE);
+            fieldZoom = ta.getFloat(R.styleable.GameFieldView_field_zoom, FIELD_ZOOM);
+            handSelfYShift = ta.getFloat(R.styleable.GameFieldView_field_hand_shift, HAND_SELF_Y_SHIFT);
+            previewShowZones = ta.getBoolean(R.styleable.GameFieldView_field_preview_zones, true);
+            previewShowHand = ta.getBoolean(R.styleable.GameFieldView_field_preview_hand, true);
+            previewShowLabels = ta.getBoolean(R.styleable.GameFieldView_field_preview_labels, true);
+            if (ta.hasValue(R.styleable.GameFieldView_field_camera_elevation)) {
+                cameraElevationDeg = Math.max(MIN_CAMERA_ELEVATION, Math.min(MAX_CAMERA_ELEVATION,
+                        ta.getFloat(R.styleable.GameFieldView_field_camera_elevation, DEFAULT_CAMERA_ELEVATION)));
+                elevationFromXml = true;
+            }
+        } finally {
+            ta.recycle();
+        }
     }
 
     private void init() {
@@ -255,30 +299,12 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
 
         try {
-            cameraElevationDeg = AppsSettings.get().getIntSettings(
-                    PREF_CAMERA_ELEVATION, Math.round(DEFAULT_CAMERA_ELEVATION));
-            cameraElevationDeg = Math.max(MIN_CAMERA_ELEVATION,
-                    Math.min(MAX_CAMERA_ELEVATION, cameraElevationDeg));
-        } catch (Throwable ignored) {
-        }
-
-        gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return true;
+            // XML 显式声明优先；否则取用户保存的设置
+            if (!elevationFromXml) {
+                cameraElevationDeg = AppsSettings.get().getIntSettings(PREF_CAMERA_ELEVATION, Math.round(DEFAULT_CAMERA_ELEVATION));
+                cameraElevationDeg = Math.max(MIN_CAMERA_ELEVATION, Math.min(MAX_CAMERA_ELEVATION, cameraElevationDeg));
             }
-
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                handleTap(e.getX(), e.getY());
-                return true;
-            }
-
-            @Override
-            public void onLongPress(MotionEvent e) {
-                handleLongPress(e.getX(), e.getY());
-            }
-        });
+        } catch (Throwable ignored) {}
     }
 
     // ==================== 公开 API（与原 Canvas 版兼容）====================
@@ -292,6 +318,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         this.imageLoader = imageLoader;
     }
 
+    /**
+     * 卡片/区域点击与长按监听注册口：监听已迁移至 GameFieldViewController，
+     * 仅由控制器注册本实现，视图拾取后的回调统一打给控制器
+     */
     public void setCardClickListener(OnCardClickListener listener) {
         this.cardClickListener = listener;
     }
@@ -358,7 +388,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 场内阶段按钮点击监听（下一阶段/结束阶段；当前阶段按钮仅指示不可点击）
+     * 场内阶段按钮点击监听（下一阶段/结束阶段；当前阶段按钮仅指示不可点击）；
+     * 仅由 GameFieldViewController 注册本实现
      */
     public void setPhaseButtonListener(OnPhaseButtonListener listener) {
         this.phaseButtonListener = listener;
@@ -418,7 +449,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     @Override
     public void invalidate() {
         super.invalidate();
-        requestRender();
+        if (!isInEditMode()) requestRender();
     }
 
     // ==================== GLSurfaceView.Renderer ====================
@@ -485,7 +516,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         float th = (float) Math.toRadians(cameraElevationDeg);
         float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
 
-        float D = CAMERA_DISTANCE;
+        float D = cameraDistance;
         float eyeY = 0, eyeZ = 0, dY = 0, dZ = -1, fovy = 60f;
         for (int i = 0; i < 6; i++) {
             eyeY = CAM_LOOK_Y + cth * D;
@@ -508,7 +539,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             float K = (FIELD_Y_MAX - CAM_LOOK_Y) * dY;
             float b = -(cth * dY + sth * dZ);
             if (b > 1e-4f && tanH > 1e-4f) {
-                D = ((FIELD_X_MAX - FIELD_X_MIN) * 0.5f * FIELD_ZOOM / tanH - K) / b;
+                D = ((FIELD_X_MAX - FIELD_X_MIN) * 0.5f * fieldZoom / tanH - K) / b;
                 D = Math.max(4.2f, Math.min(14f, D));
             }
         }
@@ -530,7 +561,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         dZ = bz / bl;
         // 横向兜底：场地按 ZOOM 倍宽度入镜（更近的视觉）
         float depthNear = (FIELD_Y_MAX - eyeY) * dY + (0f - eyeZ) * dZ;
-        float needH = (FIELD_X_MAX - FIELD_X_MIN) * 0.5f * FIELD_ZOOM / Math.max(0.5f, depthNear);
+        float needH = (FIELD_X_MAX - FIELD_X_MIN) * 0.5f * fieldZoom / Math.max(0.5f, depthNear);
         if (needH / aspect > halfTan) halfTan = needH / aspect;
         if (halfTan > 1.6f) halfTan = 1.6f;
         fovy = (float) Math.toDegrees(2.0 * Math.atan(halfTan));
@@ -858,10 +889,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 我方手卡后移 HAND_SELF_Y_SHIFT，对方手卡保持原位
+     * 我方手卡后移 handSelfYShift，对方手卡保持原位
      */
-    private static float handY(GameField.ClientCard c) {
-        return c.curY - (c.controler == 0 ? HAND_SELF_Y_SHIFT : 0f);
+    private float handY(GameField.ClientCard c) {
+        return c.curY - (c.controler == 0 ? handSelfYShift : 0f);
     }
 
     /**
@@ -1344,11 +1375,27 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     // ==================== 触摸拾取（射线反投影）====================
 
+    /**
+     * 点按手势统一入口：手势识别（GestureDetector）已迁移至 GameFieldViewController，
+     * 由其识别出手势后回调本入口完成拾取与回调分发，拾取逻辑不变
+     */
+    public void dispatchTap(float x, float y) {
+        handleTap(x, y);
+    }
+
+    /**
+     * 长按手势统一入口（见 {@link #dispatchTap}）
+     */
+    public void dispatchLongPress(float x, float y) {
+        handleLongPress(x, y);
+    }
+
+    /**
+     * 兜底消费：手势识别已迁移至 GameFieldViewController 的 OnTouchListener，
+     * 此处仅防止事件穿透到下层控件
+     */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (gestureDetector != null) {
-            gestureDetector.onTouchEvent(event);
-        }
         return true;
     }
 
@@ -1577,6 +1624,262 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     private static int pendulumScale(GameField.ClientCard c) {
         return Math.max(0, Math.min(13, c.sequence == 6 ? c.lScale : c.rScale));
+    }
+
+    // ==================== 设计时预览（XML 布局编辑器，isInEditMode）====================
+
+    /**
+     * 布局编辑器下无法启动 GL/EGL，这里用 Canvas 绘制等效预览：
+     * 相机与运行期 updateCamera 同一套解算（纯 Java 实现，不依赖 android.opengl），
+     * 区域/堆叠区/手卡坐标与运行期 zoneCenter/pileCenter/getCardLocation 完全同源，
+     * 参数全部取 XML 属性值，编辑器中改属性即时可见
+     */
+    @Override
+    public void draw(Canvas canvas) {
+        if (!isInEditMode()) {
+            super.draw(canvas);
+            return;
+        }
+        try {
+            drawEditPreview(canvas);
+        } catch (Throwable t) {
+            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+            p.setColor(0xFFFF8080);
+            p.setTextSize(12f * getResources().getDisplayMetrics().density);
+            canvas.drawText("GameFieldView preview error: " + t, 8f, 16f, p);
+        }
+    }
+
+    private void drawEditPreview(Canvas canvas) {
+        int w = getWidth(), h = getHeight();
+        if (w <= 1 || h <= 1) return;
+        float density = getResources().getDisplayMetrics().density;
+        // 设计时底色（运行期为透明 GL 面透出背景；预览用实色底保证可读性）
+        canvas.drawColor(0xFF0B1118);
+        EditCamera cam = computeEditCamera(w, h);
+        if (cam == null) return;
+
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
+        line.setStyle(Paint.Style.STROKE);
+        line.setStrokeWidth(Math.max(1f, density));
+
+        // 场地底板（运行期 drawFieldBoard 的兜底底色同色系）
+        float boardCX = (FIELD_X_MIN + FIELD_X_MAX) / 2f;
+        float boardW = FIELD_X_MAX - FIELD_X_MIN, boardH = FIELD_Y_MAX - FIELD_Y_MIN;
+        fill.setColor(0xFF14212C);
+        drawWorldQuad(canvas, fill, cam, w, h, boardCX, 0f, 0f, boardW, boardH);
+        line.setColor(0xFF2E4A5E);
+        drawWorldQuad(canvas, line, cam, w, h, boardCX, 0f, 0f, boardW, boardH);
+
+        if (previewShowZones) {
+            // 区域槽位：与运行期 drawZoneSlots 同一套区域遍历（每方 怪兽7 + 魔陷6 + 堆叠区4）
+            fill.setColor(0x3300C8F0);
+            line.setColor(0x8800C8F0);
+            for (int p = 0; p < 2; p++) {
+                for (int i = 0; i < 7; i++) {
+                    float[] c = zoneCenter(p, 0x04, i);
+                    drawWorldQuad(canvas, fill, cam, w, h, c[0], c[1], 0f, ZONE_W, ZONE_H);
+                    drawWorldQuad(canvas, line, cam, w, h, c[0], c[1], 0f, ZONE_W, ZONE_H);
+                }
+                for (int i = 0; i <= 5; i++) {
+                    float[] c = zoneCenter(p, 0x08, i);
+                    drawWorldQuad(canvas, fill, cam, w, h, c[0], c[1], 0f, ZONE_W, ZONE_H);
+                    drawWorldQuad(canvas, line, cam, w, h, c[0], c[1], 0f, ZONE_W, ZONE_H);
+                }
+                for (int loc : new int[]{0x01, 0x10, 0x20, 0x40}) {
+                    float[] c = pileCenter(p, loc);
+                    if (c == null) continue;
+                    drawWorldQuad(canvas, fill, cam, w, h, c[0], c[1], 0f, PILE_W, PILE_H);
+                    drawWorldQuad(canvas, line, cam, w, h, c[0], c[1], 0f, PILE_W, PILE_H);
+                }
+            }
+        }
+
+        if (previewShowLabels) {
+            Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+            text.setColor(0xCCFFFFFF);
+            text.setTextSize(8f * density);
+            text.setTextAlign(Paint.Align.CENTER);
+            drawLabel(canvas, text, cam, w, h, pileCenter(0, 0x01), "卡组");
+            drawLabel(canvas, text, cam, w, h, pileCenter(0, 0x10), "墓地");
+            drawLabel(canvas, text, cam, w, h, pileCenter(0, 0x20), "除外");
+            drawLabel(canvas, text, cam, w, h, pileCenter(0, 0x40), "额外");
+            drawLabel(canvas, text, cam, w, h, pileCenter(1, 0x01), "卡组");
+            drawLabel(canvas, text, cam, w, h, pileCenter(1, 0x10), "墓地");
+            drawLabel(canvas, text, cam, w, h, pileCenter(1, 0x20), "除外");
+            drawLabel(canvas, text, cam, w, h, pileCenter(1, 0x40), "额外");
+            drawLabel(canvas, text, cam, w, h, zoneCenter(0, 0x08, 5), "场地");
+            drawLabel(canvas, text, cam, w, h, zoneCenter(1, 0x08, 5), "场地");
+        }
+
+        if (previewShowHand) {
+            // 示例手卡：每方 5 张，坐标同运行期 getCardLocation(LOCATION_HAND)，我方计入 handSelfYShift
+            float spacing = 0.95f;
+            for (int i = 0; i < 5; i++) {
+                drawHandCard(canvas, cam, w, h, 3.95f - spacing * 2f + i * spacing,
+                        4.0f - handSelfYShift, 0.5f, 0xFF33516E);
+                drawHandCard(canvas, cam, w, h, 3.95f + spacing * 2f - i * spacing,
+                        -3.4f, 0.5f, 0xFF5C4433);
+            }
+        }
+
+        // 参数读数：调整 XML 属性时便于对照
+        Paint info = new Paint(Paint.ANTI_ALIAS_FLAG);
+        info.setColor(0xAAFFFFFF);
+        info.setTextSize(9f * density);
+        canvas.drawText(String.format(Locale.US,
+                        "GameFieldView 设计预览  俯仰角=%.0f° 视点距离=%.2f 场地倍率=%.2f 手卡后移=%.2f",
+                        cameraElevationDeg, cameraDistance, fieldZoom, handSelfYShift),
+                6f * density, h - 6f * density, info);
+    }
+
+    /**
+     * 预览手卡：运行期手卡为平行屏幕的 billboard，此处按投影中心画 177:254 比例圆角矩形，
+     * 尺寸取卡片世界宽度 CARD_W 的投影像素宽估算
+     */
+    private void drawHandCard(Canvas canvas, EditCamera cam, int w, int h,
+                              float x, float y, float z, int color) {
+        float[] c = projectEdit(cam, w, h, mirrorX(x), y, z);
+        float[] e = projectEdit(cam, w, h, mirrorX(x + CARD_W / 2f), y, z);
+        if (c == null || e == null) return;
+        float halfW = Math.max(2f, Math.abs(e[0] - c[0]));
+        float halfH = halfW * CARD_H / CARD_W;
+        float radius = halfW * 0.12f;
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(color);
+        canvas.drawRoundRect(c[0] - halfW, c[1] - halfH, c[0] + halfW, c[1] + halfH, radius, radius, fill);
+        Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
+        line.setStyle(Paint.Style.STROKE);
+        line.setColor(0xAAFFFFFF);
+        line.setStrokeWidth(Math.max(1f, getResources().getDisplayMetrics().density * 0.75f));
+        canvas.drawRoundRect(c[0] - halfW, c[1] - halfH, c[0] + halfW, c[1] + halfH, radius, radius, line);
+    }
+
+    private void drawLabel(Canvas canvas, Paint text, EditCamera cam, int w, int h,
+                           float[] center, String label) {
+        if (center == null) return;
+        float[] s = projectEdit(cam, w, h, mirrorX(center[0]), center[1], 0.02f);
+        if (s == null) return;
+        canvas.drawText(label, s[0], s[1] + text.getTextSize() / 3f, text);
+    }
+
+    /**
+     * 世界矩形（中心+宽高，先做与运行期一致的 X 镜像）→ 投影四角 → Canvas 四边形
+     */
+    private void drawWorldQuad(Canvas canvas, Paint paint, EditCamera cam, int w, int h,
+                               float cx, float cy, float z, float qw, float qh) {
+        float x0 = mirrorX(cx - qw / 2f), x1 = mirrorX(cx + qw / 2f);
+        float y0 = cy - qh / 2f, y1 = cy + qh / 2f;
+        float[] p1 = projectEdit(cam, w, h, x0, y0, z);
+        float[] p2 = projectEdit(cam, w, h, x1, y0, z);
+        float[] p3 = projectEdit(cam, w, h, x1, y1, z);
+        float[] p4 = projectEdit(cam, w, h, x0, y1, z);
+        if (p1 == null || p2 == null || p3 == null || p4 == null) return;
+        Path path = new Path();
+        path.moveTo(p1[0], p1[1]);
+        path.lineTo(p2[0], p2[1]);
+        path.lineTo(p3[0], p3[1]);
+        path.lineTo(p4[0], p4[1]);
+        path.close();
+        canvas.drawPath(path, paint);
+    }
+
+    /**
+     * 设计时预览相机：运行期 updateCamera 的纯 Java 等效复刻
+     * （编辑器中 android.opengl 为 stub，不可用；此处只用 java.lang.Math）
+     */
+    private static final class EditCamera {
+        float eyeX, eyeY, eyeZ;      // 相机位置
+        float fx, fy, fz;            // 视线前向轴
+        float rx, ry, rz;            // 屏幕右轴
+        float ux, uy, uz;            // 屏幕上轴
+        float halfH, halfW;          // tan(fovy/2) 与 tan(fovy/2)*aspect
+    }
+
+    private EditCamera computeEditCamera(int w, int h) {
+        float aspect = (float) w / h;
+        float th = (float) Math.toRadians(cameraElevationDeg);
+        float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
+
+        float D = cameraDistance;
+        float eyeY = 0, eyeZ = 0, dY = 0, dZ = -1;
+        for (int i = 0; i < 6; i++) {
+            eyeY = CAM_LOOK_Y + cth * D;
+            eyeZ = sth * D;
+            float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
+            float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
+            float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
+            float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
+            if (l1 < 1e-4f || l2 < 1e-4f) break;
+            float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
+            float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
+            float fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
+            float tanH = (float) Math.tan(Math.toRadians(fovy * 0.5f)) * aspect;
+            float by = d1y + d2y, bz = d1z + d2z;
+            float bl = (float) Math.sqrt(by * by + bz * bz);
+            if (bl < 1e-4f) break;
+            dY = by / bl;
+            dZ = bz / bl;
+            float K = (FIELD_Y_MAX - CAM_LOOK_Y) * dY;
+            float b = -(cth * dY + sth * dZ);
+            if (b > 1e-4f && tanH > 1e-4f) {
+                D = ((FIELD_X_MAX - FIELD_X_MIN) * 0.5f * fieldZoom / tanH - K) / b;
+                D = Math.max(4.2f, Math.min(14f, D));
+            }
+        }
+        eyeY = CAM_LOOK_Y + cth * D;
+        eyeZ = sth * D;
+        float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
+        float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
+        float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
+        float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
+        if (l1 < 1e-4f || l2 < 1e-4f) return null;
+        float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
+        float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
+        float fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
+        float halfTan = (float) Math.tan(Math.toRadians(fovy * 0.5f));
+        float by = d1y + d2y, bz = d1z + d2z;
+        float bl = (float) Math.sqrt(by * by + bz * bz);
+        if (bl < 1e-4f) return null;
+        dY = by / bl;
+        dZ = bz / bl;
+        float depthNear = (FIELD_Y_MAX - eyeY) * dY - eyeZ * dZ;
+        float needH = (FIELD_X_MAX - FIELD_X_MIN) * 0.5f * fieldZoom / Math.max(0.5f, depthNear);
+        if (needH / aspect > halfTan) halfTan = needH / aspect;
+        if (halfTan > 1.6f) halfTan = 1.6f;
+
+        EditCamera cam = new EditCamera();
+        cam.eyeX = CAM_X;
+        cam.eyeY = eyeY;
+        cam.eyeZ = eyeZ;
+        // 前向轴 f=(0,dY,dZ)；右轴 r=normalize(cross(f,Z轴))=(sign(dY),0,0)；上轴 u=cross(r,f)
+        cam.fx = 0f;
+        cam.fy = dY;
+        cam.fz = dZ;
+        cam.rx = dY < 0f ? -1f : 1f;
+        cam.ry = 0f;
+        cam.rz = 0f;
+        cam.ux = 0f;
+        cam.uy = -cam.rx * dZ;
+        cam.uz = cam.rx * dY;
+        cam.halfH = halfTan;
+        cam.halfW = halfTan * aspect;
+        return cam;
+    }
+
+    /**
+     * 世界点 → 预览屏幕像素（与运行期 GL 投影等效：相机空间透视除法 + NDC → 像素）
+     */
+    private static float[] projectEdit(EditCamera cam, int w, int h, float x, float y, float z) {
+        float vx = x - cam.eyeX, vy = y - cam.eyeY, vz = z - cam.eyeZ;
+        float zc = vx * cam.fx + vy * cam.fy + vz * cam.fz;
+        if (zc <= 0.05f) return null;
+        float xc = vx * cam.rx + vy * cam.ry + vz * cam.rz;
+        float yc = vx * cam.ux + vy * cam.uy + vz * cam.uz;
+        float nx = xc / (zc * cam.halfW);
+        float ny = yc / (zc * cam.halfH);
+        return new float[]{(nx + 1f) * 0.5f * w, (1f - ny) * 0.5f * h};
     }
 
     // ==================== 着色器工具 / 高刷新率 / 生命周期 ====================

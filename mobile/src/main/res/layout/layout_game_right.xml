@@ -1,9 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?><!-- 右侧区域（层叠结构）：决斗场区域底层铺满，顶部玩家信息区锚定 top，聊天输入框锚定 bottom -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/layout_game_right"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipChildren="false">
+
+    <!-- 决斗场区域：GameFieldView 3D 渲染（场地/区域/场上卡/堆叠区/双方手卡） -->
+    <!-- 以下参数可在 XML 中直接调整，设计预览与运行期同步生效（详见 attrs.xml GameFieldView） -->
+    <cn.garymb.ygomobile.render.GameFieldView
+        android:id="@+id/game_field_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:field_camera_elevation="60"
+        app:field_camera_distance="7.6"
+        app:field_zoom="1.0"
+        app:field_hand_shift="0.7"
+        app:field_preview_zones="true"
+        app:field_preview_hand="true"
+        app:field_preview_labels="true" />
 
     <!-- 决斗场区域（最下层，铺满整个区域） -->
     <LinearLayout
@@ -11,6 +26,316 @@
         android:layout_height="match_parent"
         android:clipChildren="false"
         android:orientation="vertical">
+
+        <!-- 顶部玩家信息区（常驻显示，悬浮于决斗场区域上方） -->
+        <LinearLayout
+            android:id="@+id/layout_top_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:orientation="horizontal">
+
+            <!-- 我方信息面板（左上）：三层叠放，底层头像+血条，中层 lpbarf 框，顶层名字/总卡数/倒计时 -->
+            <FrameLayout
+                android:id="@+id/layout_player_panel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="5">
+
+                <!-- 底层：头像 + LP 血条 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/iv_player_avatar"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_margin="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/avatar" />
+
+                    <!-- LP 血条（drawing.cpp L936-973 tLPBar，我方自左向右填充；每 8000 一节，超出部分叠加下一节颜色层） -->
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginVertical="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1">
+
+                        <ImageView
+                            android:id="@+id/iv_player_lp_bar"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/ygopro_selected_background" />
+
+                        <ImageView
+                            android:id="@+id/iv_player_lp_bar_layer"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY"
+                            android:visibility="gone" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- 中层：lpbarf 框（drawing.cpp L996-1003 tLPBarFrame），覆盖整个面板 -->
+                <ImageView
+                    android:id="@+id/iv_player_lp_frame"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY" />
+
+                <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:paddingStart="50dp"
+                    android:paddingEnd="5dp">
+
+                    <TextView
+                        android:id="@+id/tv_player_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:shadowColor="#FF00E5FF"
+                        android:shadowDx="0"
+                        android:shadowDy="0"
+                        android:shadowRadius="4"
+                        android:text="Knight of Hanoi"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_player_lp_number"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="2"
+                            android:shadowDy="2"
+                            android:shadowRadius="1"
+                            android:text="8000"
+                            android:textColor="@color/white"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="right|center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:id="@+id/iv_player_card_back"
+                                android:layout_width="wrap_content"
+                                android:layout_height="10sp"
+                                android:adjustViewBounds="true"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/unknown" />
+
+                            <TextView
+                                android:id="@+id/tv_player_card_count"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="2dp"
+                                android:gravity="center_vertical"
+                                android:text="0"
+                                android:textColor="#FFFFFF"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/tv_player_time"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginHorizontal="5dp"
+                                android:gravity="center_vertical"
+                                android:text="0"
+                                android:textColor="#FFFFFF"
+                                android:textSize="10sp"
+                                android:visibility="visible" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- 中央回合计数器 -->
+            <TextView
+                android:id="@+id/tv_turn_counter"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/veil_mid_vertical"
+                android:gravity="center"
+                android:shadowColor="@color/white"
+                android:shadowDx="-2"
+                android:shadowDy="-1"
+                android:shadowRadius="1"
+                android:text="99"
+                android:textColor="@color/ygopro_list_background"
+                android:textSize="30sp"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:id="@+id/layout_opponent_panel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="5">
+
+                <!-- 底层：LP 血条 + 头像（镜像我方：血条在左、头像在右） -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- LP 血条（drawing.cpp L936-973 tLPBar，对方自右向左填充；每 8000 一节，超出部分叠加下一节颜色层） -->
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginVertical="4dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1">
+
+                        <ImageView
+                            android:id="@+id/iv_opponent_lp_bar"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/ygopro_selected_background" />
+
+                        <ImageView
+                            android:id="@+id/iv_opponent_lp_bar_layer"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <ImageView
+                        android:id="@+id/iv_opponent_avatar"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_margin="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/avatar" />
+                </LinearLayout>
+
+                <!-- 中层：lpbarf 框（drawing.cpp L996-1003 tLPBarFrame），覆盖整个面板 -->
+                <ImageView
+                    android:id="@+id/iv_opponent_lp_frame"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY" />
+
+                <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（镜像我方：名字靠右，第二行左对齐 倒计时/总卡数/卡背图标） -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="50dp">
+
+                    <TextView
+                        android:id="@+id/tv_opponent_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_gravity="end"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:shadowColor="#FF00E5FF"
+                        android:shadowDx="0"
+                        android:shadowDy="0"
+                        android:shadowRadius="4"
+                        android:text="Opponent"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <!-- 第二行（镜像我方）：LP 数字居中，倒计时/总卡数/卡背图标靠左 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="left|center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tv_opponent_time"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginHorizontal="5dp"
+                                android:gravity="center_vertical"
+                                android:text="0"
+                                android:textColor="@color/white"
+                                android:textSize="10sp"
+                                android:visibility="visible" />
+
+                            <ImageView
+                                android:id="@+id/iv_opponent_card_back"
+                                android:layout_width="wrap_content"
+                                android:layout_height="10sp"
+                                android:adjustViewBounds="true"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/unknown" />
+
+                            <TextView
+                                android:id="@+id/tv_opponent_card_count"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="2dp"
+                                android:gravity="center_vertical"
+                                android:text="0"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tv_opponent_lp_number"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="2"
+                            android:shadowDy="2"
+                            android:shadowRadius="1"
+                            android:text="8000"
+                            android:textColor="@color/white"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
 
         <!-- 聊天消息区域 -->
         <FrameLayout
@@ -55,333 +380,9 @@
                 android:textSize="8sp"
                 android:visibility="visible" />
         </FrameLayout>
-
-        <!-- 决斗场区域：GameFieldView 3D 渲染（场地/区域/场上卡/堆叠区/双方手卡） -->
-        <FrameLayout
-            android:id="@+id/layout_duel_container"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipChildren="false"
-            android:clipToPadding="false">
-
-            <cn.garymb.ygomobile.render.GameFieldView
-                android:id="@+id/game_field_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-        </FrameLayout>
     </LinearLayout>
 
-    <!-- 顶部玩家信息区（常驻显示，悬浮于决斗场区域上方） -->
-    <LinearLayout
-        android:id="@+id/layout_top_info"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:orientation="horizontal">
 
-        <!-- 我方信息面板（左上）：三层叠放，底层头像+血条，中层 lpbarf 框，顶层名字/总卡数/倒计时 -->
-        <FrameLayout
-            android:id="@+id/layout_player_panel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="5">
-
-            <!-- 底层：头像 + LP 血条 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:id="@+id/iv_player_avatar"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_margin="5dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/avatar" />
-
-                <!-- LP 血条（drawing.cpp L936-973 tLPBar，我方自左向右填充；每 8000 一节，超出部分叠加下一节颜色层） -->
-                <FrameLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginVertical="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1">
-
-                    <ImageView
-                        android:id="@+id/iv_player_lp_bar"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitXY"
-                        android:src="@drawable/ygopro_selected_background" />
-
-                    <ImageView
-                        android:id="@+id/iv_player_lp_bar_layer"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitXY"
-                        android:visibility="gone" />
-                </FrameLayout>
-            </LinearLayout>
-
-            <!-- 中层：lpbarf 框（drawing.cpp L996-1003 tLPBarFrame），覆盖整个面板 -->
-            <ImageView
-                android:id="@+id/iv_player_lp_frame"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitXY" />
-
-            <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:paddingStart="50dp"
-                android:paddingEnd="5dp">
-
-                <TextView
-                    android:id="@+id/tv_player_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="5dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:shadowColor="#FF00E5FF"
-                    android:shadowDx="0"
-                    android:shadowDy="0"
-                    android:shadowRadius="4"
-                    android:text="Knight of Hanoi"
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/tv_player_lp_number"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:maxLines="1"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="2"
-                        android:shadowDy="2"
-                        android:shadowRadius="1"
-                        android:text="8000"
-                        android:textColor="@color/white"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="right|center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:id="@+id/iv_player_card_back"
-                            android:layout_width="wrap_content"
-                            android:layout_height="10sp"
-                            android:adjustViewBounds="true"
-                            android:scaleType="fitXY"
-                            android:src="@drawable/unknown" />
-
-                        <TextView
-                            android:id="@+id/tv_player_card_count"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="2dp"
-                            android:gravity="center_vertical"
-                            android:text="0"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:id="@+id/tv_player_time"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginHorizontal="5dp"
-                            android:gravity="center_vertical"
-                            android:text="0"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:visibility="visible" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-        </FrameLayout>
-
-        <!-- 中央回合计数器 -->
-        <TextView
-            android:id="@+id/tv_turn_counter"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginHorizontal="2dp"
-            android:layout_weight="1"
-            android:background="@drawable/veil_mid_vertical"
-            android:gravity="center"
-            android:shadowColor="@color/white"
-            android:shadowDx="-2"
-            android:shadowDy="-1"
-            android:shadowRadius="1"
-            android:text="99"
-            android:textColor="@color/ygopro_list_background"
-            android:textSize="30sp"
-            android:textStyle="bold" />
-
-        <FrameLayout
-            android:id="@+id/layout_opponent_panel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="5">
-
-            <!-- 底层：LP 血条 + 头像（镜像我方：血条在左、头像在右） -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <!-- LP 血条（drawing.cpp L936-973 tLPBar，对方自右向左填充；每 8000 一节，超出部分叠加下一节颜色层） -->
-                <FrameLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginVertical="4dp"
-                    android:layout_marginStart="5dp"
-                    android:layout_weight="1">
-
-                    <ImageView
-                        android:id="@+id/iv_opponent_lp_bar"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitXY"
-                        android:src="@drawable/ygopro_selected_background" />
-
-                    <ImageView
-                        android:id="@+id/iv_opponent_lp_bar_layer"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitXY"
-                        android:visibility="gone" />
-                </FrameLayout>
-
-                <ImageView
-                    android:id="@+id/iv_opponent_avatar"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_margin="5dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/avatar" />
-            </LinearLayout>
-
-            <!-- 中层：lpbarf 框（drawing.cpp L996-1003 tLPBarFrame），覆盖整个面板 -->
-            <ImageView
-                android:id="@+id/iv_opponent_lp_frame"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitXY" />
-
-            <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（镜像我方：名字靠右，第二行左对齐 倒计时/总卡数/卡背图标） -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:paddingStart="5dp"
-                android:paddingEnd="50dp">
-
-                <TextView
-                    android:id="@+id/tv_opponent_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:layout_gravity="end"
-                    android:layout_marginEnd="5dp"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:shadowColor="#FF00E5FF"
-                    android:shadowDx="0"
-                    android:shadowDy="0"
-                    android:shadowRadius="4"
-                    android:text="Opponent"
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-
-                <!-- 第二行（镜像我方）：LP 数字居中，倒计时/总卡数/卡背图标靠左 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="left|center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tv_opponent_time"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginHorizontal="5dp"
-                            android:gravity="center_vertical"
-                            android:text="0"
-                            android:textColor="@color/white"
-                            android:textSize="10sp"
-                            android:visibility="visible" />
-
-                        <ImageView
-                            android:id="@+id/iv_opponent_card_back"
-                            android:layout_width="wrap_content"
-                            android:layout_height="10sp"
-                            android:adjustViewBounds="true"
-                            android:scaleType="fitXY"
-                            android:src="@drawable/unknown" />
-
-                        <TextView
-                            android:id="@+id/tv_opponent_card_count"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="2dp"
-                            android:gravity="center_vertical"
-                            android:text="0"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tv_opponent_lp_number"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:maxLines="1"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="2"
-                        android:shadowDy="2"
-                        android:shadowRadius="1"
-                        android:text="8000"
-                        android:textColor="@color/white"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-            </LinearLayout>
-        </FrameLayout>
-    </LinearLayout>
 
     <!-- 聊天输入框（悬浮于决斗场区域底部） -->
     <EditText
