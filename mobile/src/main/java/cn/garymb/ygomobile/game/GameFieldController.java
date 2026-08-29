@@ -9,7 +9,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.nio.ByteBuffer;
+import java.util.Random;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -41,6 +43,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private int cmdContext = 0;
     private boolean isPlaceSelecting = false;
     private CmdMenuDialog cmdMenuDialog;
+    private final Random random = new Random();
 
     private TextView tvHintMessage;
     private FrameLayout layoutChatMessages;
@@ -198,6 +201,93 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         showHint(msg, 3000);
     }
 
+    /**
+     * 自动放置（复刻 gframe duelclient.cpp MSG_SELECT_PLACE 自动放置 L2211-2264）：
+     * chkMAutoPos/chkSTAutoPos 勾选且可选区域含怪兽区/魔陷区时，按优先级
+     *（我方怪兽→我方魔陷→我方灵摆→对方怪兽→对方魔陷→对方灵摆）选区自动应答
+     * byte[3]{player, location, sequence}；chkRandomPos 决定普通区是否随机取位
+     *
+     * @return true=已自动放置并应答，false=需弹窗手动选择
+     */
+    public boolean tryAutoPlaceSelect() {
+        if (engine == null) return false;
+        AppsSettings settings = AppsSettings.get();
+        int mask = engine.selectFieldMask;
+        // 对齐 gframe 条件：怪兽区可选(0x7f007f)看 chkMAutoPos，否则看 chkSTAutoPos
+        if ((mask & 0x7f007f) != 0) {
+            if (settings.getIntSettings("chkMAutoPos", 0) != 1) return false;
+        } else {
+            if (settings.getIntSettings("chkSTAutoPos", 0) != 1) return false;
+        }
+
+        int filter;
+        int respLocation;
+        int respPlayer;
+        boolean pzone;
+        if ((mask & 0x7f) != 0) {
+            respPlayer = engine.localPlayer(0);
+            respLocation = 0x04;
+            filter = mask & 0x7f;
+            pzone = false;
+        } else if ((mask & 0x3f00) != 0) {
+            respPlayer = engine.localPlayer(0);
+            respLocation = 0x08;
+            filter = (mask >> 8) & 0x3f;
+            pzone = false;
+        } else if ((mask & 0xc000) != 0) {
+            respPlayer = engine.localPlayer(0);
+            respLocation = 0x08;
+            filter = (mask >> 14) & 0x3;
+            pzone = true;
+        } else if ((mask & 0x7f0000) != 0) {
+            respPlayer = engine.localPlayer(1);
+            respLocation = 0x04;
+            filter = (mask >> 16) & 0x7f;
+            pzone = false;
+        } else if ((mask & 0x3f000000) != 0) {
+            respPlayer = engine.localPlayer(1);
+            respLocation = 0x08;
+            filter = (mask >> 24) & 0x3f;
+            pzone = false;
+        } else if ((mask & 0xc0000000) != 0) {
+            respPlayer = engine.localPlayer(1);
+            respLocation = 0x08;
+            filter = (mask >>> 30) & 0x3;
+            pzone = true;
+        } else {
+            return false;
+        }
+
+        int seq;
+        if (!pzone) {
+            if (settings.getIntSettings("chkRandomPos", 0) == 1) {
+                // 随机取位（对齐 gframe chkRandomPos：dist(0,6) 直到命中可选位）
+                do {
+                    seq = random.nextInt(7);
+                } while ((filter & (1 << seq)) == 0);
+            } else {
+                // 固定次序（对齐 gframe：0x40→6, 0x20→5, 0x4→2, 0x2→1, 0x8→3, 0x1→0, 0x10→4）
+                if ((filter & 0x40) != 0) seq = 6;
+                else if ((filter & 0x20) != 0) seq = 5;
+                else if ((filter & 0x4) != 0) seq = 2;
+                else if ((filter & 0x2) != 0) seq = 1;
+                else if ((filter & 0x8) != 0) seq = 3;
+                else if ((filter & 0x1) != 0) seq = 0;
+                else seq = 4;
+            }
+        } else {
+            // 灵摆区：序列固定 6(左)/7(右)，gframe 不对灵摆区随机取位
+            seq = (filter & 0x1) != 0 ? 6 : 7;
+        }
+
+        ByteBuffer buf = ByteBuffer.allocate(3);
+        buf.put((byte) respPlayer);
+        buf.put((byte) respLocation);
+        buf.put((byte) seq);
+        engine.sendResponse(buf.array());
+        return true;
+    }
+
     public boolean cancelPlaceSelect() {
         if (!isPlaceSelecting) return false;
         // 协议应答需要协议侧玩家索引：localPlayer 为对合映射，
@@ -314,6 +404,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     // === 聊天气泡 ===
 
     public void appendChat(String player, String message) {
+        AppsSettings settings = AppsSettings.get();
+        // 对齐 gframe duelclient.cpp STOC_CHAT：停用聊天（chkDisableChatting，对应 chkIgnore1）时丢弃全部消息
+        if (settings.getIntSettings("chkDisableChatting", 0) == 1) return;
+        // 对齐 gframe chkIgnore2：屏蔽观众（Observer）消息
+        if ("Observer".equals(player) && settings.getIntSettings("chkMuteSpectators", 0) == 1) return;
         // 表情编码（如 "&laugh"）：不走文字行，在发送方头像下方显示图片气泡
         //（STOC_CHAT 会广播回发送者，双方统一在此路径展示，对齐 gframe DrawEmoticon）
         if (isEmoticonCode(message)) {
@@ -340,6 +435,18 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
         if (layoutChatMessages != null) {
             layoutChatMessages.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /** 隐藏聊天消息文本（对齐 gframe BUTTON_CHATTING 切换关闭时的 ClearChatMsg：清空聊天显示） */
+    public void clearChatMessages() {
+        if (tvChatMessage1 != null) {
+            tvChatMessage1.setText("");
+            tvChatMessage1.setVisibility(View.GONE);
+        }
+        if (tvChatMessage2 != null) {
+            tvChatMessage2.setText("");
+            tvChatMessage2.setVisibility(View.GONE);
         }
     }
 

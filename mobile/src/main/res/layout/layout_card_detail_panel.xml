@@ -326,9 +326,10 @@
                     android:layout_height="0dp"
                     android:layout_marginBottom="5dp"
                     android:layout_weight="1"
+                    android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
-                    android:scaleType="centerInside"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/setting" />
 
                 <ImageButton
@@ -337,9 +338,10 @@
                     android:layout_height="0dp"
                     android:layout_marginBottom="5dp"
                     android:layout_weight="1"
+                    android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
-                    android:scaleType="centerInside"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/ic_note" />
 
                 <ImageButton
@@ -348,9 +350,10 @@
                     android:layout_height="0dp"
                     android:layout_marginBottom="5dp"
                     android:layout_weight="1"
+                    android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
-                    android:scaleType="centerInside"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/ic_volume_on" />
 
                 <ImageButton
@@ -359,9 +362,10 @@
                     android:layout_height="0dp"
                     android:layout_marginBottom="5dp"
                     android:layout_weight="1"
+                    android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
-                    android:scaleType="centerInside"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/ic_speed" />
 
                 <ImageButton
@@ -370,9 +374,10 @@
                     android:layout_height="0dp"
                     android:layout_marginBottom="5dp"
                     android:layout_weight="1"
+                    android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
-                    android:scaleType="centerInside"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/ic_emoticon" />
 
                 <ImageButton
@@ -380,9 +385,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
+                    android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
-                    android:scaleType="centerInside"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/rename" />
             </LinearLayout>
         </LinearLayout>

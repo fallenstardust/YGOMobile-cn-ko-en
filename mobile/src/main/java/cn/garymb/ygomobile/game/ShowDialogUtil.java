@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -48,6 +49,7 @@ public class ShowDialogUtil {
     private final YGOProActivity activity;
     private final ImageLoader imageLoader;
     private final Handler mainHandler;
+    private final Random random = new Random();
 
     private RPSDialog handSelectDialog;
     private boolean rpsResultShown;
@@ -472,7 +474,12 @@ public class ShowDialogUtil {
             }
         }
 
-        if (hasForced) {
+        AppsSettings settings = AppsSettings.get();
+        // 对齐 gframe duelclient.cpp：chkAutoChain && chain_forced && !(always_chain || chain_when_avail)
+        // → 自动发动首个强制连锁；勾选 chkDefaultShowChain（决斗开始时总是连锁）后不再自动应答
+        boolean autoChain = settings.getIntSettings("chkAutoChain", 0) == 1
+                && settings.getIntSettings("chkDefaultShowChain", 0) == 0;
+        if (hasForced && autoChain) {
             for (int i = 0; i < chainFlags.size(); i++) {
                 if ((chainFlags.get(i) & 0x100) != 0) {
                     sendResponseInt(i);
@@ -508,8 +515,13 @@ public class ShowDialogUtil {
         dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
                 .setPositiveButtonText("不连锁")
                 .setPositiveButton(v -> {
-                    sendResponseInt(-1);
                     panel().hideCancelOrFinishButton();
+                    // 对齐 gframe chkWaitChain：勾选时跳过连锁前随机等待 20-40 帧（约 320-640ms）
+                    if (settings.getIntSettings("chkWaitChain", 0) == 1) {
+                        mainHandler.postDelayed(() -> sendResponseInt(-1), 320 + random.nextInt(321));
+                    } else {
+                        sendResponseInt(-1);
+                    }
                 })
                 .setCancelable(false)
                 .setOnDismissListener(() -> {

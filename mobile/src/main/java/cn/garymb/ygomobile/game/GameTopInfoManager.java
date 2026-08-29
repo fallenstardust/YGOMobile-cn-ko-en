@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.TextureLoader;
@@ -202,10 +203,15 @@ public class GameTopInfoManager {
     // === 玩家名称 / LP（drawing.cpp L1027-1050） ===
 
     public void setPlayerDisplay(int player, String name, String lpText) {
+        // 对齐 gframe chkHidePlayerName：勾选隐藏昵称时决斗内名字以 ******** 显示
+        String displayName = name;
+        if (AppsSettings.get().getIntSettings("chkHideNickName", 0) == 1) {
+            displayName = "********";
+        }
         if (player == 0) {
-            if (tvPlayerName != null) tvPlayerName.setText(name);
+            if (tvPlayerName != null) tvPlayerName.setText(displayName);
         } else {
-            if (tvOpponentName != null) tvOpponentName.setText(name);
+            if (tvOpponentName != null) tvOpponentName.setText(displayName);
         }
         // LP 数字显示（兼容录像模式传入的 "LP: 8000" 前缀格式）
         if (lpText != null) {

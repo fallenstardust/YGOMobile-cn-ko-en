@@ -2,7 +2,6 @@ package cn.garymb.ygomobile;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -71,6 +70,9 @@ public class YGOProActivity extends AppCompatActivity implements
         LanModeDialog.OnLanModeListener {
 
     private static final String TAG = "YGONativeGame";
+
+    /** 公共字符串管理器：初始化后可供整个类调用（对齐 CardDetailPanel.mStringManager 惯例） */
+    public final StringManager mStringManager = DataManager.get().getStringManager();
 
     private GameEngine engine;
     private SoundManager soundManager;
@@ -210,6 +212,11 @@ public class YGOProActivity extends AppCompatActivity implements
         layoutGameContent = findViewById(R.id.layout_game_content);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
         etChatInput = findViewById(R.id.et_chat_input);
+        // 聊天输入框初始可见性跟随停用聊天设置（对齐 gframe wChat：停用聊天时隐藏）
+        if (etChatInput != null
+                && AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1) {
+            etChatInput.setVisibility(View.GONE);
+        }
         setupChatInput();
 
         cardDetailPanel = new CardDetailPanel(this);
@@ -255,8 +262,16 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     private void initEngine() {
+        AppsSettings appsSettings = AppsSettings.get();
         soundManager = new SoundManager(this);
-        soundManager.init(0.8, 0.6, true, true);
+        // 初始化即按保存的音频设置应用（对齐 gframe game.cpp LoadConfig：
+        // enable_sound/sound_volume/enable_music/music_volume/chkSwitchBGM）
+        soundManager.init(
+                appsSettings.getIntSettings("soundVolume", 50) / 100.0,
+                appsSettings.getIntSettings("musicVolume", 50) / 100.0,
+                appsSettings.getIntSettings("chkEnableSound", 1) == 1,
+                appsSettings.getIntSettings("chkEnableMusic", 1) == 1);
+        soundManager.setAutoSwitchBGM(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
 
         imageLoader = new ImageLoader(true);
 
@@ -267,7 +282,11 @@ public class YGOProActivity extends AppCompatActivity implements
         TextureLoader.get().init();
 
         cardDetailPanel.setImageLoader(imageLoader);
+        cardDetailPanel.bindSideButtonIcons();
         fieldCtl.init(engine, imageLoader);
+
+        // 初始化时通过 getIntSettings 统一应用全部已保存设置到对应功能
+        applySettingsToEngine();
     }
 
     private void loadData() {
@@ -296,18 +315,26 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     public void toggleSoundMute() {
-        if (soundManager != null) {
-            SharedPreferences prefs = getSharedPreferences(getPackageName() + ".settings", Context.MODE_PRIVATE);
-            boolean currentSound = prefs.getBoolean("chkEnableSound", true);
-            boolean currentMusic = prefs.getBoolean("chkEnableMusic", true);
-            boolean newMuted = !currentSound && !currentMusic;
-            soundManager.enableSounds(newMuted);
-            soundManager.enableMusic(newMuted);
-            prefs.edit()
-                    .putBoolean("chkEnableSound", newMuted)
-                    .putBoolean("chkEnableMusic", newMuted)
-                    .apply();
-        }
+        if (soundManager == null) return;
+        // 对齐 gframe imgVol 开关：走 AppsSettings 保存（与 SettingsDialog 的
+        // chkEnableSound/chkEnableMusic 同一存储），避免设置对话框与声音按钮脱节
+        AppsSettings settings = AppsSettings.get();
+        boolean currentSound = settings.getIntSettings("chkEnableSound", 1) == 1;
+        boolean currentMusic = settings.getIntSettings("chkEnableMusic", 1) == 1;
+        boolean muted = currentSound || currentMusic;
+        settings.saveIntSettings("chkEnableSound", muted ? 0 : 1);
+        settings.saveIntSettings("chkEnableMusic", muted ? 0 : 1);
+        soundManager.enableSounds(!muted);
+        soundManager.enableMusic(!muted);
+        if (cardDetailPanel != null) cardDetailPanel.updateSoundIcon(!muted);
+    }
+
+    /** 决斗速度开关（对齐 gframe imgQuickAnimation 点击切换 quick_animation 并保存） */
+    public void toggleQuickAnimation() {
+        AppsSettings settings = AppsSettings.get();
+        boolean quick = settings.getIntSettings("chkQuickAnimation", 0) == 1;
+        settings.saveIntSettings("chkQuickAnimation", quick ? 0 : 1);
+        if (cardDetailPanel != null) cardDetailPanel.updateSpeedIcon(!quick);
     }
 
     private boolean handleDirectIntent(Intent intent) {
@@ -758,6 +785,20 @@ public class YGOProActivity extends AppCompatActivity implements
         if (soundManager != null) {
             soundManager.enableSounds(enableSound);
             soundManager.enableMusic(enableMusic);
+            soundManager.setSoundVolume(appsSettings.getIntSettings("soundVolume", 50) / 100.0);
+            soundManager.setMusicVolume(appsSettings.getIntSettings("musicVolume", 50) / 100.0);
+            soundManager.setAutoSwitchBGM(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
+        }
+        if (cardDetailPanel != null) {
+            // 对齐 gframe imgVol/imgQuickAnimation：声音与速度按钮图标同步设置状态
+            cardDetailPanel.updateSoundIcon(enableSound || enableMusic);
+            cardDetailPanel.updateSpeedIcon(appsSettings.getIntSettings("chkQuickAnimation", 0) == 1);
+            // 对齐 gframe BUTTON_CHATTING：聊天按钮图标与输入框可见性同步停用聊天设置
+            boolean chatDisabled = appsSettings.getIntSettings("chkDisableChatting", 0) == 1;
+            cardDetailPanel.updateChatIcon(chatDisabled);
+            if (etChatInput != null) {
+                etChatInput.setVisibility(chatDisabled ? View.GONE : View.VISIBLE);
+            }
         }
         if (deckEditorManager != null) {
             deckEditorManager.refreshLimitList();
@@ -862,12 +903,33 @@ public class YGOProActivity extends AppCompatActivity implements
         runOnUiThread(() -> fieldCtl.appendChat(player, message));
     }
 
+    /**
+     * 聊天开关（对齐 gframe event_handler.cpp BUTTON_CHATTING）：
+     * 停用状态（chkIgnore1=1）→ 启用：图标 tTalk、显示聊天输入框；
+     * 启用状态 → 停用：图标 tShut、隐藏聊天输入框并清空聊天消息
+     */
     public void toggleChatInput() {
         if (etChatInput == null) return;
-        etChatInput.requestFocus();
+        AppsSettings settings = AppsSettings.get();
+        boolean ignored = settings.getIntSettings("chkDisableChatting", 0) == 1;
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
-            imm.showSoftInput(etChatInput, InputMethodManager.SHOW_IMPLICIT);
+        if (ignored) {
+            settings.saveIntSettings("chkDisableChatting", 0);
+            cardDetailPanel.updateChatIcon(false);
+            etChatInput.setVisibility(View.VISIBLE);
+            etChatInput.requestFocus();
+            if (imm != null) {
+                imm.showSoftInput(etChatInput, InputMethodManager.SHOW_IMPLICIT);
+            }
+        } else {
+            settings.saveIntSettings("chkDisableChatting", 1);
+            cardDetailPanel.updateChatIcon(true);
+            if (imm != null && etChatInput.getWindowToken() != null) {
+                imm.hideSoftInputFromWindow(etChatInput.getWindowToken(), 0);
+            }
+            etChatInput.clearFocus();
+            etChatInput.setVisibility(View.GONE);
+            if (fieldCtl != null) fieldCtl.clearChatMessages();
         }
     }
 
@@ -908,7 +970,10 @@ public class YGOProActivity extends AppCompatActivity implements
                     showDialogUtil.showChainSelectDialog(data);
                     break;
                 case 18:
-                    showDialogUtil.showPlaceSelectDialog(false);
+                    // 对齐 gframe MSG_SELECT_PLACE：先按 chkMAutoPos/chkSTAutoPos 尝试自动放置，失败再弹选择框
+                    if (!fieldCtl.tryAutoPlaceSelect()) {
+                        showDialogUtil.showPlaceSelectDialog(false);
+                    }
                     break;
                 case 19:
                     showDialogUtil.showPositionSelectDialog(data);
@@ -1064,11 +1129,10 @@ public class YGOProActivity extends AppCompatActivity implements
      */
     private void showDuelEndDialog() {
         if (isFinishing() || isDestroyed()) return;
-        StringManager sm = DataManager.get().getStringManager();
         YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setMessage(sm.getSystemString(1500, "决斗结束。"))
+        dialog.setMessage(mStringManager.getSystemString(1500, "決斗结束。"))
                 .setType(YesOrNoDialog.TYPE_MESSAGE)
-                .setPositiveButtonText(sm.getSystemString(1211, "确定"))
+                .setPositiveButtonText(mStringManager.getSystemString(1211, "确定"))
                 .setPositiveButton(v -> returnToLanMain(null))
                 .setCenterInView(layoutGameRight)
                 .setCancelable(false);
@@ -1100,13 +1164,20 @@ public class YGOProActivity extends AppCompatActivity implements
             return;
         }
         final byte[] replayData = pendingReplays.remove(0);
+        // 对齐 gframe duelclient.cpp STOC_REPLAY：勾选自动保存录像时不弹窗，
+        // 直接以录像开始时间命名自动保存（对应提示 1367）
+        if (AppsSettings.get().getIntSettings("chkAutoSaveReplay", 0) == 1) {
+            saveReplayFile(replayData, getReplayDefaultName(replayData), true);
+            mainHandler.post(this::processPendingReplays);
+            return;
+        }
         replaySaveDialog = new ReplaySaveDialog(this);
         replaySaveDialog.setDefaultName(getReplayDefaultName(replayData))
                 .setCenterInView(layoutGameRight)
                 .setOnReplayActionListener(new ReplaySaveDialog.OnReplayActionListener() {
                     @Override
                     public void onSave(String fileName) {
-                        saveReplayFile(replayData, fileName);
+                        saveReplayFile(replayData, fileName, false);
                         mainHandler.post(() -> processPendingReplays());
                     }
 
@@ -1146,7 +1217,7 @@ public class YGOProActivity extends AppCompatActivity implements
         }
     }
 
-    private void saveReplayFile(byte[] data, String fileName) {
+    private void saveReplayFile(byte[] data, String fileName, boolean autoSave) {
         String safeName = sanitizeReplayName(fileName);
         try {
             File dir = new File(AppsSettings.get().getReplayDir());
@@ -1160,11 +1231,19 @@ public class YGOProActivity extends AppCompatActivity implements
                 fos.close();
             }
             Log.i(TAG, "Replay saved: " + file.getAbsolutePath());
-            Toast.makeText(this, DataManager.get().getStringManager()
-                    .getSystemString(1335, "保存成功"), Toast.LENGTH_SHORT).show();
+            if (autoSave) {
+                // 对齐 gframe 自動保存提示（系统字符串 1367「リプレイ自動保存 %ls.yrp」）：
+                // 将 %ls 占位替换为实际保存的录像文件名
+                String template = mStringManager
+                        .getSystemString(1367, "リプレイ自動保存 %ls.yrp");
+                Toast.makeText(this, template.replace("%ls", safeName), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, mStringManager
+                        .getSystemString(1335, "保存成功"), Toast.LENGTH_SHORT).show();
+            }
         } catch (IOException e) {
             Log.e(TAG, "Failed to save replay", e);
-            Toast.makeText(this, "录像保存失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "录像保存失败: " + safeName, Toast.LENGTH_SHORT).show();
         }
     }
 

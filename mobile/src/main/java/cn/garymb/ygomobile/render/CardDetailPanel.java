@@ -106,6 +106,67 @@ public class CardDetailPanel {
         this.imageLoader = imageLoader;
     }
 
+    /**
+     * 面板初始化时统一从 TextureLoader 获取侧边功能按钮图标
+     * （对齐 gframe image_manager.cpp extra 图标：tSettings/tLogs/tPlay/tOneX/tEmoticon/tTalk），
+     * 必须在 TextureLoader.init() 之后调用；纹理缺失时保留 XML 默认图兜底
+     */
+    public void bindSideButtonIcons() {
+        TextureLoader tl = TextureLoader.get();
+        if (btnSettings != null) {
+            Bitmap bmp = tl.getSettingsTexture();
+            if (bmp != null) btnSettings.setImageBitmap(bmp);
+        }
+        if (btnNote != null) {
+            Bitmap bmp = tl.getLogsTexture();
+            if (bmp != null) btnNote.setImageBitmap(bmp);
+        }
+        if (btnSound != null) {
+            // 对齐 gframe game.cpp imgVol：声音开启显示 tPlay、全部静音显示 tMute
+            boolean soundOn = AppsSettings.get().getIntSettings("chkEnableSound", 1) == 1
+                    || AppsSettings.get().getIntSettings("chkEnableMusic", 1) == 1;
+            Bitmap bmp = soundOn ? tl.getPlayTexture() : tl.getMuteTexture();
+            if (bmp != null) btnSound.setImageBitmap(bmp);
+        }
+        if (btnSpeed != null) {
+            // 对齐 gframe game.cpp imgQuickAnimation：快速动画 tDoubleX、常速 tOneX
+            boolean quick = AppsSettings.get().getIntSettings("chkQuickAnimation", 0) == 1;
+            Bitmap bmp = quick ? tl.getDoubleXTexture() : tl.getOneXTexture();
+            if (bmp != null) btnSpeed.setImageBitmap(bmp);
+        }
+        if (btnEmote != null) {
+            Bitmap bmp = tl.getEmoticonTexture();
+            if (bmp != null) btnEmote.setImageBitmap(bmp);
+        }
+        if (btnChat != null) {
+            // 对齐 gframe game.cpp L1319：初始图标跟随停用聊天设置（chkDisableChatting），停用显示 tShut、启用显示 tTalk
+            boolean ignored = AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1;
+            Bitmap bmp = ignored ? tl.getShutTexture() : tl.getTalkTexture();
+            if (bmp != null) btnChat.setImageBitmap(bmp);
+        }
+    }
+
+    /** 更新聊天按钮图标（对齐 gframe event_handler.cpp BUTTON_CHATTING：停用聊天显示 tShut、启用显示 tTalk） */
+    public void updateChatIcon(boolean ignored) {
+        if (btnChat == null) return;
+        Bitmap bmp = ignored ? TextureLoader.get().getShutTexture() : TextureLoader.get().getTalkTexture();
+        if (bmp != null) btnChat.setImageBitmap(bmp);
+    }
+
+    /** 更新声音按钮图标（对齐 gframe imgVol：声音开启显示 tPlay、静音显示 tMute） */
+    public void updateSoundIcon(boolean enabled) {
+        if (btnSound == null) return;
+        Bitmap bmp = enabled ? TextureLoader.get().getPlayTexture() : TextureLoader.get().getMuteTexture();
+        if (bmp != null) btnSound.setImageBitmap(bmp);
+    }
+
+    /** 更新速度按钮图标（对齐 gframe imgQuickAnimation：快速动画 tDoubleX、常速 tOneX） */
+    public void updateSpeedIcon(boolean quick) {
+        if (btnSpeed == null) return;
+        Bitmap bmp = quick ? TextureLoader.get().getDoubleXTexture() : TextureLoader.get().getOneXTexture();
+        if (bmp != null) btnSpeed.setImageBitmap(bmp);
+    }
+
     private void setupListeners() {
         btnSurrender.setOnClickListener(v -> {
             if (activity.getEngine() != null) activity.getEngine().sendSurrender();
@@ -118,8 +179,8 @@ public class CardDetailPanel {
         btnSettings.setOnClickListener(v -> activity.showSettingsDialog());
         btnChat.setOnClickListener(v -> activity.toggleChatInput());
         btnSound.setOnClickListener(v -> activity.toggleSoundMute());
-        btnSpeed.setOnClickListener(v -> {
-        });
+        // 速度开关（对齐 gframe imgQuickAnimation 点击切换 quick_animation）
+        btnSpeed.setOnClickListener(v -> activity.toggleQuickAnimation());
         // 表情入口（对齐 gframe BUTTON_EMOTICON）：开关切换 4x4 表情面板
         btnEmote.setOnClickListener(v -> activity.toggleEmotionDialog(btnEmote));
         // 日志入口（对齐 gframe imgLog 开关 wLogs）：切换决斗日志面板显示/隐藏

@@ -84,6 +84,7 @@ public class SoundManager {
     private final Random random = new Random();
     private boolean soundsEnabled = true;
     private boolean musicEnabled = true;
+    private boolean autoSwitchBGM = true;
     private float soundVolume = 1.0f;
     private float musicVolume = 1.0f;
     private final Map<BGM, List<String>> bgmList = new HashMap<>();
@@ -158,6 +159,8 @@ public class SoundManager {
 
     public void playBGM(BGM scene) {
         if (!musicEnabled) return;
+        // 对齐设置项「自动切换BGM」：关闭时保持当前曲目不切换（尚未播放则照常起播）
+        if (!autoSwitchBGM && bgmPlayer != null) return;
         List<String> list = bgmList.get(scene);
         if (list == null || list.isEmpty()) return;
         String path = list.get(random.nextInt(list.size()));
@@ -220,6 +223,11 @@ public class SoundManager {
     public void enableMusic(boolean enable) {
         this.musicEnabled = enable;
         if (!enable) stopBGM();
+    }
+
+    /** 自动切换BGM开关（chkSwitchBGM，strings.conf 1281）：false 时场景切换不换曲 */
+    public void setAutoSwitchBGM(boolean autoSwitch) {
+        this.autoSwitchBGM = autoSwitch;
     }
 
     public void release() {

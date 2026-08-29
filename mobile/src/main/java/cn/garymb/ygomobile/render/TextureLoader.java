@@ -105,14 +105,23 @@ public class TextureLoader {
                 "link_marker_on_3.png", "link_marker_on_4.png",
                 "link_marker_on_6.png", "link_marker_on_7.png",
                 "link_marker_on_8.png", "link_marker_on_9.png",
-                // extra 功能图标 (tSettings/tLogs/tMute/tPlay/tTalk/tOneX/tDoubleX/tShut/tClose/tEmoticon/tGSC)
+        };
+        for (String name : permanentTextures) {
+            Bitmap bmp = loadBitmapFromFile(name);
+            if (bmp != null) {
+                permanentCache.put(name, bmp);
+            }
+        }
+        // extra 功能图标 (tSettings/tLogs/tMute/tPlay/tTalk/tOneX/tDoubleX/tShut/tClose/tEmoticon/tGSC)
+        // 均含 alpha 通道，必须按 ARGB_8888 解码（RGB_565 透明区域会变黑底）
+        String[] extraIcons = {
                 "extra/tsettings.png", "extra/tlogs.png", "extra/tmute.png",
                 "extra/tplay.png", "extra/ttalk.png", "extra/tonex.png",
                 "extra/tdoublex.png", "extra/tshut.png", "extra/tclose.png",
                 "extra/temoticon.png", "extra/gsc.png"
         };
-        for (String name : permanentTextures) {
-            Bitmap bmp = loadBitmapFromFile(name);
+        for (String name : extraIcons) {
+            Bitmap bmp = loadBitmapFromFile(name, Bitmap.Config.ARGB_8888);
             if (bmp != null) {
                 permanentCache.put(name, bmp);
             }
@@ -401,6 +410,50 @@ public class TextureLoader {
     /** tGSC */
     public Bitmap getGscTexture() {
         return getTexture("extra/gsc.png");
+    }
+
+    /** tSettings：设置按钮图标 */
+    public Bitmap getSettingsTexture() {
+        return getTexture("extra/tsettings.png");
+    }
+
+    /** tLogs：决斗日志按钮图标 */
+    public Bitmap getLogsTexture() {
+        return getTexture("extra/tlogs.png");
+    }
+
+    /** tMute / tPlay：声音静音/开启图标 */
+    public Bitmap getMuteTexture() {
+        return getTexture("extra/tmute.png");
+    }
+
+    public Bitmap getPlayTexture() {
+        return getTexture("extra/tplay.png");
+    }
+
+    /** tTalk：聊天按钮图标 */
+    public Bitmap getTalkTexture() {
+        return getTexture("extra/ttalk.png");
+    }
+
+    /** tShut：停用聊天图标 */
+    public Bitmap getShutTexture() {
+        return getTexture("extra/tshut.png");
+    }
+
+    /** tOneX：决斗速度 1x 图标 */
+    public Bitmap getOneXTexture() {
+        return getTexture("extra/tonex.png");
+    }
+
+    /** tDoubleX：决斗速度 2x 图标（对齐 gframe imgQuickAnimation 快速动画状态） */
+    public Bitmap getDoubleXTexture() {
+        return getTexture("extra/tdoublex.png");
+    }
+
+    /** tEmoticon：表情入口按钮图标 */
+    public Bitmap getEmoticonTexture() {
+        return getTexture("extra/temoticon.png");
     }
 
     /** emoticons：按键名取裁剪后的表情，如 "&laugh"、"&angry" */
