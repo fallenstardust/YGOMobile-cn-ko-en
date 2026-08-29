@@ -58,6 +58,7 @@ import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.EmotionDialog;
+import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
@@ -89,6 +90,7 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private EditText etChatInput;
     private EmotionDialog emotionDialog;
+    private DuelLogDialog duelLogDialog;
 
     private boolean isMyTurn = false;
     private volatile boolean isGameStarted = false;
@@ -477,6 +479,9 @@ public class YGOProActivity extends AppCompatActivity implements
         cardDetailPanel.onGameUIHidden();
         // 退出对战（layout_game_right 隐藏）时，一并关闭正在显示的表情面板
         if (emotionDialog != null) emotionDialog.dismiss();
+        // 关闭日志面板并清空记录（对齐桌面版 CloseDuelWindow 的 lstLog->clear）
+        if (duelLogDialog != null) duelLogDialog.dismiss();
+        DuelLogDialog.clearLogs();
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
@@ -1256,5 +1261,13 @@ public class YGOProActivity extends AppCompatActivity implements
         if (hasFocus) {
             setupFullScreen();
         }
+    }
+
+    /** 决斗日志面板（对齐桌面版 imgLog 开关 wLogs）：由卡片详情面板侧栏按钮触发 */
+    public void showDuelLogDialog() {
+        if (duelLogDialog == null) {
+            duelLogDialog = new DuelLogDialog(this);
+        }
+        duelLogDialog.toggle();
     }
 }

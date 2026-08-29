@@ -122,7 +122,8 @@ public class CardDetailPanel {
         });
         // 表情入口（对齐 gframe BUTTON_EMOTICON）：开关切换 4x4 表情面板
         btnEmote.setOnClickListener(v -> activity.toggleEmotionDialog(btnEmote));
-        btnNote.setOnClickListener(v -> activity.getMainMenuDialog().showMainMenu());
+        // 日志入口（对齐 gframe imgLog 开关 wLogs）：切换决斗日志面板显示/隐藏
+        btnNote.setOnClickListener(v -> activity.showDuelLogDialog());
 
         if (btnCancelOrFinish != null) {
             btnCancelOrFinish.setOnClickListener(v -> cancelOrFinish());

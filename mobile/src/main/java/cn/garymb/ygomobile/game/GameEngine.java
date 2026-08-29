@@ -20,6 +20,9 @@ import cn.garymb.ygomobile.network.DuelClient;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.render.TextureLoader;
+import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
 import ocgcore.enums.CardLocation;
 
 public class GameEngine implements DuelClient.ClientListener, GameMessageParser.MessageHandler {
@@ -807,15 +810,29 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 // 消费语义与 gframe select_hint 一致（duelclient.cpp L1458-1461）
                 field.selectHint = data;
                 return;
+            // HINT_OPSELECTED（对齐 duelclient.cpp L1463-1472）：记录"已选择"日志
+            case 4:
+                DuelLogDialog.addOpSelectedLog(data);
+                return;
             case 5:
                 hintText = "当前连锁: " + data;
                 break;
+            // HINT_RACE（对齐 duelclient.cpp L1480-1490）：宣告种族选择记入日志
             case 6:
-                mainHandler.post(() -> {
-                    if (listener != null) listener.onHintMessage("提示ID: " + data);
-                });
+                DuelLogDialog.addSelectedRaceLog(data);
                 return;
+            // HINT_ATTRIB（对齐 duelclient.cpp L1491-1501）：宣告属性选择记入日志
+            case 7:
+                DuelLogDialog.addSelectedAttributeLog(data);
+                return;
+            // HINT_CODE（对齐 duelclient.cpp L1502-1511）：宣言卡名记入日志，携带卡代码供点击查看
+            case 8:
+                DuelLogDialog.addLog(DuelLogDialog.formatSelected(
+                        DataManager.get().getCardManager().getCard(data).Name), data);
+                return;
+            // HINT_NUMBER（对齐 duelclient.cpp L1512-1521）：宣告数字记入日志
             case 9:
+                DuelLogDialog.addLog(DuelLogDialog.sysFormat(1512, "已选择数字：%d", data));
                 soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
                 return;
             default:
@@ -1048,10 +1065,26 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onConfirmDecktop(int player, int count, ByteBuffer data) {
         Log.d(TAG, "ConfirmDecktop: player=" + player + " count=" + count);
+        // 对齐 duelclient.cpp MSG_CONFIRM_DECKTOP L2443-2480：翻开卡组上方N张卡记入日志
+        DuelLogDialog.addLog(DuelLogDialog.sysFormat(207, "翻开卡组上方%d张卡：", count));
+
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt() & 0x7fffffff;
+            data.position(data.position() + 3);
+            DuelLogDialog.addLog("*[" + DataManager.get().getCardManager().getCard(code).Name + "]", code);
+        }
     }
 
     @Override
     public void onConfirmCards(int player, int count, ByteBuffer data) {
+        // 对齐 duelclient.cpp MSG_CONFIRM_CARDS L2518-2545：确认N张卡记入日志
+        DuelLogDialog.addLog(DuelLogDialog.sysFormat(208, "确认%d张卡：", count));
+
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt() & 0x7fffffff;
+            data.position(data.position() + 3);
+            DuelLogDialog.addLog("*[" + DataManager.get().getCardManager().getCard(code).Name + "]", code);
+        }
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(27, data);
         });
@@ -1482,16 +1515,35 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onMissedEffect(int code, int ctrl, int loc, int seq, int effectId) {
         Log.w(TAG, "Missed effect: code=" + code + " effectId=" + effectId);
+        // 对齐 duelclient.cpp MSG_MISSED_EFFECT L3919-3924：错过时点记入日志，携带卡代码
+        DuelLogDialog.addLog(DuelLogDialog.sysFormat(1622, "错过发动时点：%s", DataManager.get().getCardManager().getCard(code).Name), code);
     }
 
     @Override
     public void onTossCoin(int player, int count, ByteBuffer results) {
         soundManager.playSoundEffect(SoundManager.SFX.COIN);
+        // 对齐 duelclient.cpp MSG_TOSS_COIN L3926-3946：掷硬币结果记入日志
+        StringManager sm = DataManager.get().getStringManager();
+        StringBuilder sb = new StringBuilder(sm.getSystemString(1623, "掷硬币："));
+        for (int i = 0; i < count && results.remaining() >= 1; i++) {
+            int res = results.get() & 0xFF;
+            sb.append('[')
+                    .append(res != 0 ? sm.getSystemString(60, "正面") : sm.getSystemString(61, "反面"))
+                    .append(']');
+        }
+        DuelLogDialog.addLog(sb.toString());
     }
 
     @Override
     public void onTossDice(int player, int count, ByteBuffer results) {
         soundManager.playSoundEffect(SoundManager.SFX.DICE);
+        // 对齐 duelclient.cpp MSG_TOSS_DICE L3948-3968：掷骰子结果记入日志
+        StringBuilder sb = new StringBuilder(
+                DataManager.get().getStringManager().getSystemString(1624, "掷骰子："));
+        for (int i = 0; i < count && results.remaining() >= 1; i++) {
+            sb.append('[').append(results.get() & 0xFF).append(']');
+        }
+        DuelLogDialog.addLog(sb.toString());
     }
 
     @Override
