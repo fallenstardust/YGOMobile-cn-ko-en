@@ -47,6 +47,8 @@ public class YesOrNoDialog {
     private DraggablePopupHelper draggableHelper;
     private int messageBgColor = 0;
     private int messageGravity = -1;
+    // 指定弹窗居中区域（如 layout_game_right）；null = 按整个窗口居中（原行为）
+    private View centerInView;
 
     public interface OnDismissListener {
         void onDismiss();
@@ -123,6 +125,12 @@ public class YesOrNoDialog {
 
     public YesOrNoDialog setMessageGravity(int gravity) {
         this.messageGravity = gravity;
+        return this;
+    }
+
+    /** 弹窗按指定区域的宽高居中显示（如 layout_game_right），而非整个 Activity 窗口 */
+    public YesOrNoDialog setCenterInView(View region) {
+        this.centerInView = region;
         return this;
     }
 
@@ -233,6 +241,7 @@ public class YesOrNoDialog {
             }
             if (anchor == null || anchor.getWindowToken() == null) return;
             try {
+                DraggablePopupHelper.centerPopupInRegion(popupWindow, centerInView);
                 if (draggableHelper != null) {
                     draggableHelper.showPopup(popupWindow, anchor);
                 } else {

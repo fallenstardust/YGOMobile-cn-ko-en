@@ -39,9 +39,17 @@ public class ReplaySaveDialog {
     private OnReplayActionListener actionListener;
     private String defaultName = "";
     private DraggablePopupHelper draggableHelper;
+    // 指定弹窗居中区域（如 layout_game_right）；null = 按整个窗口居中（原行为）
+    private View centerInView;
 
     public ReplaySaveDialog(Context context) {
         this.context = context;
+    }
+
+    /** 弹窗按指定区域的宽高居中显示（如 layout_game_right），而非整个 Activity 窗口 */
+    public ReplaySaveDialog setCenterInView(View region) {
+        this.centerInView = region;
+        return this;
     }
 
     public ReplaySaveDialog setDefaultName(String name) {
@@ -118,6 +126,7 @@ public class ReplaySaveDialog {
             }
             if (anchor == null || anchor.getWindowToken() == null) return;
             try {
+                DraggablePopupHelper.centerPopupInRegion(popupWindow, centerInView);
                 if (draggableHelper != null) {
                     draggableHelper.showPopup(popupWindow, anchor);
                 } else {

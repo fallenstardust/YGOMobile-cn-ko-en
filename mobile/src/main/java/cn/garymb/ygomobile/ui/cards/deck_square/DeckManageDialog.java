@@ -32,6 +32,10 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
 
     private ViewPager2 viewPager;
 
+    //对话框是否处于“手动隐藏”状态。DialogFragment.onStart()会无条件调用mDialog.show()，
+    //因此当Activity重新可见时（从后台/历史记录切回、息屏再亮屏），需要依据本标记把对话框重新隐藏
+    private boolean keepHidden = false;
+
     /**
      * 打开卡组管理对话框：若该对话框之前已打开过且只是被隐藏，则直接恢复显示；否则创建新的对话框
      */
@@ -53,6 +57,8 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
         if (dialog == null) {
             return;
         }
+        //主动打开对话框，清除手动隐藏标记
+        keepHidden = false;
         dialog.show();
         if (keyword != null && !keyword.isEmpty()) {
             searchKeyword = keyword;
@@ -70,6 +76,7 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
 
     public void onDismiss() {
         // 只隐藏对话框而不销毁，保留内部状态，下次打开时直接恢复显示
+        keepHidden = true;
         Dialog dialog = getDialog();
         if (dialog != null) {
             dialog.hide();
@@ -80,6 +87,13 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
     }
 
     private YGODeckDialogUtil.OnDeckMenuListener mOnDeckMenuListener;
+
+    /**
+     * 仅供系统在Activity重建时反射实例化本Fragment使用，业务代码请使用带监听器的构造方法
+     */
+    public DeckManageDialog() {
+        super();
+    }
 
     public DeckManageDialog(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener) {
         this(onDeckMenuListener, 0, null);
@@ -96,6 +110,17 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
         return searchKeyword;
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            //进程被系统回收后从历史记录恢复Activity时，FragmentManager会尝试恢复本对话框，
+            //但监听器等状态已丢失，因此标记隐藏并直接移除，不恢复显示
+            keepHidden = true;
+            dismissAllowingStateLoss();
+        }
+    }
+
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
@@ -103,7 +128,7 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
             @Override
             public void onBackPressed() {
                 // 返回键只隐藏对话框窗口而不销毁，保留当前页签、搜索关键词等状态
-                hide();
+                onDismiss();
             }
         };
     }
@@ -154,7 +179,17 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
     @Override
     public void onStart() {
         super.onStart();
-        Window window = getDialog().getWindow();
+        Dialog dialog = getDialog();
+        if (dialog == null) {
+            return;
+        }
+        if (keepHidden) {
+            //DialogFragment.onStart()会无条件重新显示对话框，对手动隐藏的对话框需要再次隐藏，
+            //避免从后台/历史记录切回时意外重新显示
+            dialog.hide();
+            return;
+        }
+        Window window = dialog.getWindow();
         if (window != null) {
             window.setLayout(
                     ViewGroup.LayoutParams.MATCH_PARENT,

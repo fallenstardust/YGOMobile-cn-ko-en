@@ -135,6 +135,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         int startLp = replayData.params.startLp;
         field.players[0].lp = startLp;
         field.players[1].lp = startLp;
+        field.dInfo.startLp = startLp;
+        field.dInfo.lp[0] = startLp;
+        field.dInfo.lp[1] = startLp;
 
         if (!replayData.isSingleMode && !replayData.decks.isEmpty()) {
             setupDeckForPlayer(0, replayData.decks.get(0));
@@ -884,6 +887,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         field.dInfo.duelRule = duelRule;
         field.players[0].lp = lp0;
         field.players[1].lp = lp1;
+        field.dInfo.startLp = Math.max(lp0, lp1);
+        field.dInfo.lp[0] = lp0;
+        field.dInfo.lp[1] = lp1;
         field.initial(0, deck0, extra0, 0);
         field.initial(1, deck1, extra1, 0);
         soundManager.playBGM(SoundManager.BGM.DUEL);
@@ -1014,17 +1020,20 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onDamage(int player, int amount) {
         field.players[player].lp -= amount;
         if (field.players[player].lp < 0) field.players[player].lp = 0;
+        field.startLpChange(player, field.players[player].lp, 0xFFFF0000, "-" + amount, true);
         soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
     @Override public void onRecover(int player, int amount) {
         field.players[player].lp += amount;
+        field.startLpChange(player, field.players[player].lp, 0xFF00FF00, "+" + amount, true);
         soundManager.playSoundEffect(SoundManager.SFX.RECOVER);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
     @Override public void onEquip(int ec, int ecl, int el, int es, int tc, int tl, int ts) { notifyField(); }
     @Override public void onLpUpdate(int player, int lp) {
         field.players[player].lp = lp;
+        field.startLpChange(player, lp, 0, null, false);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
     @Override public void onUnequip(int ctrl, int loc, int seq) { notifyField(); }
@@ -1033,6 +1042,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onPayLpCost(int player, int cost) {
         field.players[player].lp -= cost;
         if (field.players[player].lp < 0) field.players[player].lp = 0;
+        field.startLpChange(player, field.players[player].lp, 0, null, false);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
     @Override public void onAddCounter(int type, int ctrl, int loc, int seq, int count) {}

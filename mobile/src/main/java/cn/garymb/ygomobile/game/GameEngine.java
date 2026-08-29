@@ -700,15 +700,17 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onTimeLimit(int player, int leftTime) {
+        // 协议侧玩家索引统一转本地视角（0=我方），我方为后攻时倒计时也落入我方布局
+        final int p = localPlayer(player & 1);
         if (field.dInfo.timeLimit <= 0) {
             field.dInfo.timeLimit = Math.max(gameTimeLimit, leftTime);
         }
-        field.dInfo.timePlayer = player;
-        field.dInfo.timeLeft[player] = leftTime;
+        field.dInfo.timePlayer = p;
+        field.dInfo.timeLeft[p] = leftTime;
         field.resetTimeTick();
         field.refreshTimeDisplay();
         mainHandler.post(() -> {
-            if (listener != null) listener.onTimeLimitUpdate(player, leftTime);
+            if (listener != null) listener.onTimeLimitUpdate(p, leftTime);
         });
     }
 
@@ -865,7 +867,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onWin(int player, int reason) {
         if (player == 2) {
             soundManager.playBGM(SoundManager.BGM.ALL);
-        } else if (player == client.selfType) {
+        } else if (isSelfSide(player)) {
             soundManager.playBGM(SoundManager.BGM.WIN);
         } else {
             soundManager.playBGM(SoundManager.BGM.LOSE);
@@ -967,8 +969,23 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectPosition(int player, int code, int positions) {
+        positions &= 0x0F;
+        // duelclient.cpp L2275-2278：仅一种表示形式可选时直接以该形式应答，不弹窗
+        if (positions == 0x1 || positions == 0x2 || positions == 0x4 || positions == 0x8) {
+            ByteBuffer resp = ByteBuffer.allocate(4);
+            resp.order(ByteOrder.LITTLE_ENDIAN);
+            resp.putInt(positions);
+            client.sendResponse(resp.array());
+            return;
+        }
+        // 打包 code(4) + positions(4) 传给 UI 层：用于显示卡图与按位掩码显示形式按钮
+        ByteBuffer data = ByteBuffer.allocate(8);
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        data.putInt(code);
+        data.putInt(positions);
+        data.flip();
         mainHandler.post(() -> {
-            if (listener != null) listener.onSelectRequired(19, null);
+            if (listener != null) listener.onSelectRequired(19, data);
         });
     }
 
@@ -1227,8 +1244,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
         soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
+        // 协议侧 controler 转本地索引，保证连锁高亮落在正确的半场
+        final int localCc = localPlayer(cc & 1);
         mainHandler.post(() -> {
-            if (listener != null) listener.onChainAnimation(code, cc, cl, cs);
+            if (listener != null) listener.onChainAnimation(code, localCc, cl, cs);
         });
     }
 
@@ -1310,23 +1329,27 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onDamage(int player, int amount) {
-        int fin = Math.max(0, field.players[player].lp - amount);
-        field.players[player].lp = fin;
-        field.startLpChange(player, fin, 0xFFFF0000, "-" + amount, true);
+        // 协议侧玩家 → 本地视角索引（0=我方）：我方为后攻时伤害/回复正确落到对应半场
+        // 与顶部信息栏左半边（我方）布局保持一致
+        int p = localPlayer(player & 1);
+        int fin = Math.max(0, field.players[p].lp - amount);
+        field.players[p].lp = fin;
+        field.startLpChange(p, fin, 0xFFFF0000, "-" + amount, true);
         soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
         mainHandler.post(() -> {
-            if (listener != null) listener.onPlayerInfoUpdated(player);
+            if (listener != null) listener.onPlayerInfoUpdated(p);
         });
     }
 
     @Override
     public void onRecover(int player, int amount) {
-        int fin = field.players[player].lp + amount;
-        field.players[player].lp = fin;
-        field.startLpChange(player, fin, 0xFF00FF00, "+" + amount, true);
+        int p = localPlayer(player & 1);
+        int fin = field.players[p].lp + amount;
+        field.players[p].lp = fin;
+        field.startLpChange(p, fin, 0xFF00FF00, "+" + amount, true);
         soundManager.playSoundEffect(SoundManager.SFX.RECOVER);
         mainHandler.post(() -> {
-            if (listener != null) listener.onPlayerInfoUpdated(player);
+            if (listener != null) listener.onPlayerInfoUpdated(p);
         });
     }
 
@@ -1346,10 +1369,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onLpUpdate(int player, int lp) {
-        field.players[player].lp = lp;
-        field.startLpChange(player, lp, 0, null, false);
+        int p = localPlayer(player & 1);
+        field.players[p].lp = lp;
+        field.startLpChange(p, lp, 0, null, false);
         mainHandler.post(() -> {
-            if (listener != null) listener.onPlayerInfoUpdated(player);
+            if (listener != null) listener.onPlayerInfoUpdated(p);
         });
     }
 
@@ -1390,11 +1414,12 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onPayLpCost(int player, int cost) {
-        int fin = Math.max(0, field.players[player].lp - cost);
-        field.players[player].lp = fin;
-        field.startLpChange(player, fin, 0, null, false);
+        int p = localPlayer(player & 1);
+        int fin = Math.max(0, field.players[p].lp - cost);
+        field.players[p].lp = fin;
+        field.startLpChange(p, fin, 0, null, false);
         mainHandler.post(() -> {
-            if (listener != null) listener.onPlayerInfoUpdated(player);
+            if (listener != null) listener.onPlayerInfoUpdated(p);
         });
     }
 
@@ -1732,6 +1757,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     public int localPlayer(int player) {
         return duelIsFirst ? player : 1 - player;
+    }
+
+    /** 给定协议侧玩家索引（0/1）是否代表我方（2=平局返回 false） */
+    public boolean isSelfSide(int player) {
+        return player != 2 && localPlayer(player & 1) == 0;
     }
 
     public void release() {
