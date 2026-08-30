@@ -1076,17 +1076,26 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onConfirmCards(int player, int count, ByteBuffer data) {
+    // Deleted:public void onConfirmCards(int player, int count, ByteBuffer data) {
+    public void onConfirmCards(int player, int skipPanel, int count, ByteBuffer data) {
         // 对齐 duelclient.cpp MSG_CONFIRM_CARDS L2518-2545：确认N张卡记入日志
         DuelLogDialog.addLog(DuelLogDialog.sysFormat(208, "确认%d张卡：", count));
 
+        int start = data.position();
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
             data.position(data.position() + 3);
             DuelLogDialog.addLog("*[" + DataManager.get().getCardManager().getCard(code).Name + "]", code);
         }
+        // 日志读取后回退缓冲位置，供下方确认面板复用条目数据
+        data.position(start);
+        // 前置 1 字节 skipPanel 转发 UI（duelclient.cpp L2607：skip_panel 时不弹面板）
+        ByteBuffer packed = ByteBuffer.allocate(1 + data.remaining()).order(ByteOrder.LITTLE_ENDIAN);
+        packed.put((byte) skipPanel);
+        packed.put(data);
+        packed.flip();
         mainHandler.post(() -> {
-            if (listener != null) listener.onSelectRequired(27, data);
+            if (listener != null) listener.onSelectRequired(27, packed);
         });
     }
 

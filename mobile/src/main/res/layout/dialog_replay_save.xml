@@ -4,14 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/sdialogl"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="5dp"
+        android:layout_weight="0.2"
         android:gravity="center_vertical|start"
         android:text="录像文件:"
         android:textColor="@color/white"
@@ -21,8 +21,8 @@
         android:id="@+id/et_replay_name"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginVertical="10dp"
+        android:layout_marginVertical="5dp"
+        android:layout_weight="0.4"
         android:imeOptions="actionDone"
         android:inputType="textNoSuggestions"
         android:singleLine="true"
@@ -35,7 +35,8 @@
     <LinearLayout
         android:id="@+id/replay_save_button_area"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.4"
         android:layout_gravity="bottom"
         android:gravity="center"
         android:orientation="horizontal">

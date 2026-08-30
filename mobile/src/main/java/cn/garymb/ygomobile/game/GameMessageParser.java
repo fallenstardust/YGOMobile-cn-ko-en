@@ -44,7 +44,7 @@ public class GameMessageParser {
         void onSortCard(ByteBuffer data);
         void onSelectUnselectCard(ByteBuffer data);
         void onConfirmDecktop(int player, int count, ByteBuffer data);
-        void onConfirmCards(int player, int count, ByteBuffer data);
+        void onConfirmCards(int player, int skipPanel, int count, ByteBuffer data);
         void onShuffleDeck(int player);
         void onShuffleHand(int player);
         void onRefreshDeck(int player);
@@ -216,9 +216,9 @@ public class GameMessageParser {
             case ConfirmCards: {
                 // duelclient.cpp L2519-2522：player(1) skip_panel(1) count(1) + n×[code4 ctrl1 loc1 seq1]
                 int player = buf.get() & 0xFF;
-                buf.get(); // skip_panel
+                int skipPanel = buf.get() & 0xFF;
                 int count = buf.get() & 0xFF;
-                handler.onConfirmCards(player, count, buf);
+                handler.onConfirmCards(player, skipPanel, count, buf);
                 break;
             }
             case ShuffleDeck:

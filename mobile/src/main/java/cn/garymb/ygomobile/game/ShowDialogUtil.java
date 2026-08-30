@@ -30,6 +30,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
 import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
+import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
 import cn.garymb.ygomobile.ui.dialogs.FirstOrSecondDialog;
 import cn.garymb.ygomobile.ui.dialogs.OptionDialog;
 import cn.garymb.ygomobile.ui.dialogs.PosSelectDialog;
@@ -1142,29 +1143,35 @@ public class ShowDialogUtil {
     }
 
     public void showConfirmCardsDialog(ByteBuffer data) {
-        // duelclient.cpp L2519-2560：player skip_panel count + n×[code4 ctrl1 loc1 seq1]
+        // duelclient.cpp L2518-2617：GameEngine 转发 skipPanel(1) + n×[code4 ctrl1 loc1 seq1]
         // 纯展示：OK 仅关闭（无响应数据），对齐 C++ BUTTON_CARD_SEL_OK 的 actionSignal.Set()
-        if (data == null) {
+        if (data == null || data.remaining() < 1) {
             panel().hideCancelOrFinishButton();
             return;
         }
-        int count = data.remaining() / 7;
+        int skipPanel = data.get() & 0xFF;
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+        while (data.remaining() >= 7) {
             int code = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            items.add(new CardDisplayDialog.CardItem(code, ctrl, loc, seq, 0));
+            // duelclient.cpp L2546-2566：仅卡组/额外（l & 0x41）的卡进入面板确认
+            if ((loc & 0x41) != 0) {
+                items.add(new CardDisplayDialog.CardItem(code, ctrl, loc, seq, 0));
+            }
         }
-        if (items.isEmpty()) {
+        // skip_panel 或面板卡不足 2 张（单张走场上翻卡动画路径）时不弹面板
+        if (skipPanel != 0 || items.size() <= 1) {
             panel().hideCancelOrFinishButton();
             return;
         }
         CardDisplayDialog dialog = new CardDisplayDialog(activity, imageLoader);
         panel().setCardDisplayDialog(dialog);
-        dialog.setTitle("确认 " + items.size() + " 张卡片")
+        // duelclient.cpp L2611：标题取系统字符串 208（"确认%d张卡"）
+        dialog.setTitle(DuelLogDialog.sysFormat(208, "确认%d张卡", items.size()))
                 .setCards(items)
+                .setLocalPlayer(engine().localPlayer(0))
                 .setCardClickListener(this::showCardInfoFromItem)
                 .setOnDismissListener(() -> {
                     panel().hideCancelOrFinishButton();
@@ -1175,7 +1182,8 @@ public class ShowDialogUtil {
 
     public void showCardInfoFromItem(CardDisplayDialog.CardItem item) {
         GameField.ClientCard card = new GameField.ClientCard();
-        card.code = item.code;
+        // code 可能带 0x80000000 翻面标志位，掩码后再使用（对齐 duelclient.cpp code & 0x7fffffff）
+        card.code = item.code & 0x7fffffff;
         card.controler = (item.controler == engine().localPlayer(0)) ? 0 : 1;
         card.location = item.location;
         card.sequence = item.sequence;

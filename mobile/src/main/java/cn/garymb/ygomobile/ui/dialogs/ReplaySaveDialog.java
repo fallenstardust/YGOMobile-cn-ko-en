@@ -67,7 +67,7 @@ public class ReplaySaveDialog {
 
     private void build() {
         float density = context.getResources().getDisplayMetrics().density;
-        int dialogWidth = (int) (280 * density);
+        int dialogWidth = (int) (250 * density);
 
         LinearLayout root = (LinearLayout) LayoutInflater.from(context)
                 .inflate(R.layout.dialog_replay_save, null);

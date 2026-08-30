@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.ui.dialogs;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
@@ -16,12 +18,17 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
 
 public class CardSelectDialog {
 
@@ -32,9 +39,10 @@ public class CardSelectDialog {
     public static final int MODE_SUM = 2;
     public static final int MODE_SORT = 3;
 
-    private static final int COLOR_DEFAULT = 0xFF335577;
-    private static final int COLOR_SELECTED = 0xFF00AA44;
-    private static final int COLOR_OPPONENT = 0xFFAA4444;
+    // 位置标签配色，映射 client_field.h CARD_LIST_* 常量
+    private static final int COLOR_DEFAULT = 0xFF2196F3;   // CARD_LIST_DEFAULT_BACKGROUND_COLOR
+    private static final int COLOR_SELECTED = 0x6011113D;  // CARD_LIST_SELECTED_BACKGROUND_COLOR
+    private static final int COLOR_OPPONENT = 0xFF5A5A5A;  // CARD_LIST_OPPONENT_BACKGROUND_COLOR
 
     // 卡图宽高比 177:254：ImageView 高度 = 宽度 × CARD_ASPECT
     private static final float CARD_ASPECT = 254f / 177f;
@@ -97,6 +105,9 @@ public class CardSelectDialog {
     private final ImageLoader imageLoader;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
+    /** 公共字符串管理器：初始化后可供整个类调用（对齐 CardDetailPanel.mStringManager 惯例） */
+    public final StringManager mStringManager = DataManager.get().getStringManager();
+
     private PopupWindow popupWindow;
     private DraggablePopupHelper draggableHelper;
 
@@ -128,6 +139,10 @@ public class CardSelectDialog {
 
     private OnCardSelectListener listener;
     private OnDismissListener dismissListener;
+
+    // 卡背缓存：对齐 image_manager.cpp tButtonFacedown[0/1]（我方 cover.jpg / 对方 cover2.jpg）
+    private static Bitmap coverSelf;
+    private static Bitmap coverOpponent;
 
     public CardSelectDialog(Context context, ImageLoader imageLoader) {
         this.context = context;
@@ -239,6 +254,10 @@ public class CardSelectDialog {
         if (mode == MODE_SELECT || mode == MODE_SUM) {
             if (!isReady()) return;
             if (listener != null) listener.onCardsSelected(new ArrayList<>(clickOrder));
+        } else if (mode == MODE_UNSELECT) {
+            // event_handler.cpp BUTTON_CARD_SEL_OK (MSG_SELECT_UNSELECT_CARD L968-971)：
+            // 完成按钮 = 发送 -1，仅关闭弹窗会导致协议挂起
+            if (listener != null) listener.onCancel();
         }
         dismiss();
     }
@@ -347,7 +366,8 @@ public class CardSelectDialog {
 
     /**
      * 按对话框宽度反推每张卡宽（扣除根内边距 16dp×2 与每槽水平外边距 4dp×2），
-     * 高度按 177:254 卡图比例计算，保证 ImageView 宽高与卡片比例一致
+     * 高度按 177:254 卡图比例计算，保证 ImageView 宽高与卡片比例一致；
+     * 槽位为 wrap_content，固定宽度后空槽位 GONE 时其余槽位尺寸不变并整体居中
      */
     private void applyCardImageSize(int dialogWidthPx) {
         int containerW = dialogWidthPx - 2 * dp2px(16);
@@ -357,6 +377,7 @@ public class CardSelectDialog {
         for (ImageView iv : ivCards) {
             ViewGroup.LayoutParams lp = iv.getLayoutParams();
             if (lp != null) {
+                lp.width = cardW;
                 lp.height = cardH;
                 iv.setLayoutParams(lp);
             }
@@ -365,6 +386,35 @@ public class CardSelectDialog {
 
     private int dp2px(float dp) {
         return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    /**
+     * 卡背图（core skin 路径，与 CardDetailPanel/TextureLoader 惯例一致）；
+     * 对方卡优先 cover2.jpg，缺失时回退 cover.jpg（对齐 image_manager.cpp L280-282）
+     */
+    private Bitmap getCoverBitmap(boolean opponent) {
+        if (coverSelf == null || coverSelf.isRecycled()) {
+            coverSelf = decodeCover(Constants.CORE_SKIN_COVER);
+        }
+        if (opponent) {
+            if (coverOpponent == null || coverOpponent.isRecycled()) {
+                coverOpponent = decodeCover(Constants.CORE_SKIN_COVER2);
+            }
+            if (coverOpponent != null) return coverOpponent;
+        }
+        return coverSelf;
+    }
+
+    private Bitmap decodeCover(String name) {
+        try {
+            File file = new File(AppsSettings.get().getCoreSkinPath(), name);
+            if (file.exists()) {
+                return BitmapFactory.decodeFile(file.getAbsolutePath());
+            }
+        } catch (Throwable ignored) {
+            // 解码失败按缺失处理，回退 unknown 占位图
+        }
+        return null;
     }
 
     /**
@@ -538,7 +588,7 @@ public class CardSelectDialog {
                 slotViews[i].setVisibility(View.VISIBLE);
                 updateSlotView(i, index);
             } else {
-                slotViews[i].setVisibility(View.INVISIBLE);
+                slotViews[i].setVisibility(View.GONE);
             }
         }
     }
@@ -546,9 +596,11 @@ public class CardSelectDialog {
     private void updateSlotView(int slot, int displayIdx) {
         CardItem item = getItemAt(displayIdx);
         boolean isSelected = isSelectedAt(displayIdx);
-        if (mode == MODE_SORT && sortList[displayIdx] != 0) {
-            tvPositions[slot].setText(String.valueOf(sortList[displayIdx]));
-            tvPositions[slot].setBackgroundColor(COLOR_SELECTED);
+        if (mode == MODE_SORT) {
+            // client_field.cpp ShowSelectCard MSG_SORT_CARD 分支：标签只显示排序数字或空文本
+            tvPositions[slot].setText(sortList[displayIdx] != 0
+                    ? String.valueOf(sortList[displayIdx]) : "");
+            tvPositions[slot].setBackgroundColor(COLOR_DEFAULT);
         } else {
             tvPositions[slot].setText(labelText(item));
             if (isSelected) {
@@ -559,10 +611,19 @@ public class CardSelectDialog {
                 tvPositions[slot].setBackgroundColor(COLOR_DEFAULT);
             }
         }
-        if (item.code > 0) {
-            imageLoader.bindImage(ivCards[slot], item.code, ImageLoader.Type.small);
+        // code 可能带 0x80000000 翻面标志位，掩码后再使用（对齐 duelclient.cpp code & 0x7fffffff）
+        int code = item.code & 0x7fffffff;
+        if (code > 0) {
+            imageLoader.bindImage(ivCards[slot], code, ImageLoader.Type.small);
         } else {
-            ivCards[slot].setImageResource(R.drawable.unknown);
+            // client_field.cpp ShowSelectCard：code==0 显示按控制者区分的卡背
+            boolean opponent = localPlayer >= 0 && item.controler != localPlayer;
+            Bitmap cover = getCoverBitmap(opponent);
+            if (cover != null) {
+                ivCards[slot].setImageBitmap(cover);
+            } else {
+                ivCards[slot].setImageResource(R.drawable.unknown);
+            }
         }
     }
 
@@ -580,32 +641,36 @@ public class CardSelectDialog {
 
     private String formatLocation(CardItem item) {
         if (item.location == 0x80) {
-            return getLocationName(item.location) + "[" + (item.sequence + 1) + "](" + (item.subSeq + 1) + ")";
+            return getLocationName(item.location, item.sequence) + "[" + (item.sequence + 1) + "](" + (item.subSeq + 1) + ")";
         }
-        return getLocationName(item.location) + "[" + (item.sequence + 1) + "]";
+        return getLocationName(item.location, item.sequence) + "[" + (item.sequence + 1) + "]";
     }
 
-    private String getLocationName(int location) {
-        switch (location) {
-            case 0x01:
-                return "卡组";
-            case 0x02:
-                return "手牌";
-            case 0x04:
-                return "怪兽区";
-            case 0x08:
-                return "魔陷区";
-            case 0x10:
-                return "墓地";
-            case 0x20:
-                return "除外";
-            case 0x40:
-                return "额外";
-            case 0x80:
-                return "超量素材";
-            default:
-                return "区域" + location;
+    /**
+     * 移植 data_manager.cpp FormatLocation：STRING_ID_LOCATION=1000 按位索引；
+     * LOCATION_SZONE 按 sequence 区分魔陷区/场地魔法区/灵摆区
+     */
+    private String getLocationName(int location, int sequence) {
+        if (location == 0x08) {
+            if (sequence < 5) {
+                return mStringManager.getSystemString(1003, "魔陷区");
+            } else if (sequence == 5) {
+                return mStringManager.getSystemString(1008, "场地魔法区");
+            } else {
+                return mStringManager.getSystemString(1009, "灵摆区");
+            }
         }
+        int stringId = 0;
+        for (int i = 0; i < 10; i++) {
+            if ((0x1 << i) == location) {
+                stringId = 1000 + i;
+                break;
+            }
+        }
+        if (stringId != 0) {
+            return mStringManager.getSystemString(stringId, "区域" + location);
+        }
+        return "区域" + location;
     }
 
     public void show() {

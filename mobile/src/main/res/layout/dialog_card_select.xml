@@ -4,9 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/sdialogl"
-    android:orientation="vertical"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/tv_card_select_title"
@@ -27,10 +25,9 @@
 
         <LinearLayout
             android:id="@+id/slot_card_0"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="4dp"
-            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
@@ -54,10 +51,9 @@
 
         <LinearLayout
             android:id="@+id/slot_card_1"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="4dp"
-            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
@@ -81,10 +77,9 @@
 
         <LinearLayout
             android:id="@+id/slot_card_2"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="4dp"
-            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
@@ -108,10 +103,9 @@
 
         <LinearLayout
             android:id="@+id/slot_card_3"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="4dp"
-            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
@@ -135,10 +129,9 @@
 
         <LinearLayout
             android:id="@+id/slot_card_4"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="4dp"
-            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView

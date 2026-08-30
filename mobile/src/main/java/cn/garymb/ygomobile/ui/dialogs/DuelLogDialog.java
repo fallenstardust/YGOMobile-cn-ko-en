@@ -43,6 +43,13 @@ public class DuelLogDialog {
     private static final int SYS_CLEAR = 1304;       // 清空
     private static final int SYS_CLOSE = 1211;       // 确定
 
+    /**
+     * 公共字符串管理器：声明时初始化，供类内静态/实例函数统一调用
+     * （对齐 YGOProActivity/CardDetailPanel 的 mStringManager 惯例；
+     * 因 formatRace/formatAttribute/sysFormat 为静态方法，故声明为 static）
+     */
+    public static final StringManager mStringManager = DataManager.get().getStringManager();
+
     public static class LogItem {
         public final String text;
         public final int cardCode;
@@ -102,11 +109,10 @@ public class DuelLogDialog {
     /** 对齐 dataManager.FormatRace：种族位掩码转字符串表名称 */
     private static String formatRace(int mask) {
         StringBuilder sb = new StringBuilder();
-        StringManager sm = DataManager.get().getStringManager();
         for (CardRace race : CardRace.values()) {
             if ((mask & race.value()) != 0) {
                 if (sb.length() > 0) sb.append('/');
-                sb.append(sm.getSystemString(race.getLanguageIndex(), race.name()));
+                sb.append(mStringManager.getSystemString(race.getLanguageIndex(), race.name()));
             }
         }
         return sb.length() > 0 ? sb.toString() : String.valueOf(mask);
@@ -115,11 +121,10 @@ public class DuelLogDialog {
     /** 对齐 dataManager.FormatAttribute：属性位掩码转字符串表名称 */
     private static String formatAttribute(int mask) {
         StringBuilder sb = new StringBuilder();
-        StringManager sm = DataManager.get().getStringManager();
         for (CardAttribute attr : CardAttribute.values()) {
             if ((mask & attr.getId()) != 0) {
                 if (sb.length() > 0) sb.append('/');
-                sb.append(sm.getSystemString(attr.getLanguageIndex(), attr.name()));
+                sb.append(mStringManager.getSystemString(attr.getLanguageIndex(), attr.name()));
             }
         }
         return sb.length() > 0 ? sb.toString() : String.valueOf(mask);
@@ -129,7 +134,7 @@ public class DuelLogDialog {
     public static String sysFormat(int index, String def, Object... args) {
         try {
             return String.format(java.util.Locale.US,
-                    DataManager.get().getStringManager().getSystemString(index, def), args);
+                    mStringManager.getSystemString(index, def), args);
         } catch (Exception e) {
             return def;
         }
@@ -152,9 +157,8 @@ public class DuelLogDialog {
         Button btnClear = root.findViewById(R.id.btn_duel_log_clear);
         Button btnClose = root.findViewById(R.id.btn_duel_log_close);
 
-        StringManager sm = DataManager.get().getStringManager();
-        btnClear.setText(sm.getSystemString(SYS_CLEAR, "清空"));
-        btnClose.setText(sm.getSystemString(SYS_CLOSE, "确定"));
+        btnClear.setText(mStringManager.getSystemString(SYS_CLEAR, "清空"));
+        btnClose.setText(mStringManager.getSystemString(SYS_CLOSE, "确定"));
 
         lvLog.setAdapter(adapter);
         lvLog.setOnItemClickListener((parent, view, position, id) -> {
