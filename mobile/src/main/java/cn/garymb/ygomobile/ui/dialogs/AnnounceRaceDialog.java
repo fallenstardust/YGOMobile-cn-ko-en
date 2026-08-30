@@ -10,7 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.LinearLayout;
+import android.widget.GridLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -61,7 +61,7 @@ public class AnnounceRaceDialog {
     private int announceCount = 1;
 
     private TextView tvTitle;
-    private LinearLayout layoutChecks;
+    private GridLayout layoutChecks;
     private final CheckBox[] chkRaces = new CheckBox[CardRace.values().length];
 
     private OnRaceSelectedListener listener;
@@ -112,6 +112,13 @@ public class AnnounceRaceDialog {
             cb.setTextSize(12);
             cb.setVisibility((races[i].value() & availableMask) != 0 ? View.VISIBLE : View.GONE);
             cb.setOnCheckedChangeListener((buttonView, isChecked) -> onCheckedChanged());
+            // GridLayout 等宽列（对齐 game.cpp L945-947 chkRace 每行 3 格）
+            GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
+            lp.width = 0;
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+            lp.setMargins(dp(2), dp(2), dp(2), dp(2));
+            cb.setLayoutParams(lp);
             chkRaces[i] = cb;
             layoutChecks.addView(cb);
         }

@@ -20,10 +20,10 @@
         android:layout_height="240dp"
         android:layout_marginTop="4dp">
 
-        <LinearLayout
+        <GridLayout
             android:id="@+id/layout_anrace_checks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:columnCount="3" />
     </ScrollView>
 </LinearLayout>
