@@ -1557,15 +1557,25 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onAnnounceRace(int player, int count, int availableRaces) {
+        // duelclient.cpp MSG_ANNOUNCE_RACE L3996-4014：player 已消费，打包 count+available 转发
+        ByteBuffer buf = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN);
+        buf.put((byte) count);
+        buf.putInt(availableRaces);
+        buf.flip();
         mainHandler.post(() -> {
-            if (listener != null) listener.onSelectRequired(140, null);
+            if (listener != null) listener.onSelectRequired(140, buf);
         });
     }
 
     @Override
     public void onAnnounceAttrib(int player, int count, int availableAttribs) {
+        // duelclient.cpp MSG_ANNOUNCE_ATTRIB L4015-4033：同上，打包 count+available 转发
+        ByteBuffer buf = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN);
+        buf.put((byte) count);
+        buf.putInt(availableAttribs);
+        buf.flip();
         mainHandler.post(() -> {
-            if (listener != null) listener.onSelectRequired(141, null);
+            if (listener != null) listener.onSelectRequired(141, buf);
         });
     }
 

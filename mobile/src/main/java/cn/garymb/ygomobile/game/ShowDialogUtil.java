@@ -28,6 +28,10 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.ui.dialogs.AnnounceAttributeDialog;
+import cn.garymb.ygomobile.ui.dialogs.AnnounceCardDialog;
+import cn.garymb.ygomobile.ui.dialogs.AnnounceNumberDialog;
+import cn.garymb.ygomobile.ui.dialogs.AnnounceRaceDialog;
 import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
 import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
@@ -58,6 +62,10 @@ public class ShowDialogUtil {
     private FirstOrSecondDialog tpSelectDialog;
     private PosSelectDialog posSelectDialog;
     private OptionDialog optionDialog;
+    private AnnounceRaceDialog announceRaceDialog;
+    private AnnounceAttributeDialog announceAttributeDialog;
+    private AnnounceCardDialog announceCardDialog;
+    private AnnounceNumberDialog announceNumberDialog;
 
     public ShowDialogUtil(YGOProActivity activity, ImageLoader imageLoader, Handler mainHandler) {
         this.activity = activity;
@@ -816,192 +824,94 @@ public class ShowDialogUtil {
 
     // === 宣言类 ===
 
-    public void showAnnounceRaceDialog() {
-        String[] races = {"战士", "魔法师", "炎", "水", "雷", "岩石", "植物", "兽",
-                "兽战士", "恐龙", "昆虫", "爬虫", "海龙", "鱼", "机械", "超能",
-                "幻神兽", "创造神", "龙"};
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("选择种族");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < races.length; i++) {
-            Button btn = new Button(activity);
-            btn.setText(races[i]);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int raceBit = 1 << i;
-            btn.setOnClickListener(v -> {
-                sendResponseInt(raceBit);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
+    /**
+     * MSG_ANNOUNCE_RACE（duelclient.cpp L3996-4014）：player(1)+count(1)+available(4)，
+     * GameEngine 已消费 player 并打包 count+available。勾选数达到 count 时
+     * 自动应答种族位掩码（event_handler.cpp CHECK_RACE L1003-1015）。
+     * 标题取 select_hint，缺省 563（对齐 duelclient.cpp L4006）。
+     */
+    public void showAnnounceRaceDialog(ByteBuffer data) {
+        if (data == null || data.remaining() < 5) return;
+        int count = data.get() & 0xFF;
+        int available = data.getInt();
+        if (announceRaceDialog != null) announceRaceDialog.dismiss();
+        AnnounceRaceDialog dialog = new AnnounceRaceDialog(activity);
+        announceRaceDialog = dialog;
+        dialog.setTitle(selectTitleText(563, "选择种族"))
+                .setAvailableMask(available)
+                .setAnnounceCount(count)
+                .setOnRaceSelectedListener(this::sendResponseInt)
+                .setOnDismissListener(() -> announceRaceDialog = null);
         dialog.show();
     }
 
-    public void showAnnounceAttribDialog() {
-        String[] attribs = {"光", "暗", "水", "炎", "地", "风", "神"};
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("选择属性");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < attribs.length; i++) {
-            Button btn = new Button(activity);
-            btn.setText(attribs[i]);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int attrBit = 1 << i;
-            btn.setOnClickListener(v -> {
-                sendResponseInt(attrBit);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
+    /**
+     * MSG_ANNOUNCE_ATTRIB（duelclient.cpp L4015-4033）：同上结构，7 属性；
+     * 勾选数达到 count 自动应答属性位掩码（CHECK_ATTRIBUTE L989-1001），缺省标题 562。
+     */
+    public void showAnnounceAttribDialog(ByteBuffer data) {
+        if (data == null || data.remaining() < 5) return;
+        int count = data.get() & 0xFF;
+        int available = data.getInt();
+        if (announceAttributeDialog != null) announceAttributeDialog.dismiss();
+        AnnounceAttributeDialog dialog = new AnnounceAttributeDialog(activity);
+        announceAttributeDialog = dialog;
+        dialog.setTitle(selectTitleText(562, "选择属性"))
+                .setAvailableMask(available)
+                .setAnnounceCount(count)
+                .setOnAttributeSelectedListener(this::sendResponseInt)
+                .setOnDismissListener(() -> announceAttributeDialog = null);
         dialog.show();
     }
 
+    /**
+     * MSG_ANNOUNCE_CARD（duelclient.cpp L4034-4050）：player(1)+count(1)+count×opcode(4)，
+     * opcodes 供 is_declarable 过滤（client_field.cpp L1358-1499）；
+     * 确定发送卡号（BUTTON_ANCARD_OK L486-493），缺省标题 564。
+     */
     public void showAnnounceCardDialog(ByteBuffer data) {
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("宣言卡片");
-
-        LinearLayout root = new LinearLayout(activity);
-        root.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (10 * activity.getResources().getDisplayMetrics().density);
-        root.setPadding(pad, pad, pad, pad);
-
-        EditText input = new EditText(activity);
-        input.setHint("输入卡片名称搜索...");
-        input.setTextColor(0xFFFFFFFF);
-        input.setHintTextColor(0xFF888888);
-        input.setSingleLine(true);
-        root.addView(input);
-
-        LinearLayout resultLayout = new LinearLayout(activity);
-        resultLayout.setOrientation(LinearLayout.VERTICAL);
-        root.addView(resultLayout);
-
-        final int[] selectedCode = {0};
-        final TextView tvSelected = new TextView(activity);
-        tvSelected.setTextColor(0xFFFFFF00);
-        tvSelected.setTextSize(13);
-        tvSelected.setText("未选择卡片");
-        root.addView(tvSelected);
-
-        input.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                resultLayout.removeAllViews();
-                String query = s.toString().trim();
-                if (query.length() < 2) return;
-                SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
-                List<Card> results = new ArrayList<>();
-                for (int i = 0; i < allCards.size(); i++) {
-                    Card c = allCards.valueAt(i);
-                    if (c.containsName(query)) {
-                        results.add(c);
-                        if (results.size() >= 10) break;
-                    }
-                }
-                int limit = Math.min(results.size(), 10);
-                for (int i = 0; i < limit; i++) {
-                    Card c = results.get(i);
-                    Button btn = new Button(activity);
-                    btn.setText(c.Name + " [" + c.Code + "]");
-                    btn.setTextColor(0xFFFFFFFF);
-                    btn.setBackgroundColor(0xFF335577);
-                    btn.setTextSize(12);
-                    btn.setSingleLine(true);
-                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                    lp.bottomMargin = 2;
-                    btn.setLayoutParams(lp);
-                    final int code = c.Code;
-                    btn.setOnClickListener(v -> {
-                        selectedCode[0] = code;
-                        tvSelected.setText("已选择: " + c.Name);
-                    });
-                    resultLayout.addView(btn);
-                }
-            }
-        });
-
-        ScrollView scrollView = new ScrollView(activity);
-        scrollView.addView(root);
-        dialog.setContentView(scrollView);
-        dialog.setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("确认")
-                .setNegativeButtonText("取消")
-                .setPositiveButton(v -> {
-                    if (selectedCode[0] > 0) {
-                        sendResponseInt(selectedCode[0]);
-                    }
-                })
-                .setNegativeButton(v -> sendResponseInt(0))
-                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                .setCancelable(false);
+        if (data == null || data.remaining() < 1) return;
+        int count = data.get() & 0xFF;
+        List<Integer> opcodes = new ArrayList<>();
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            opcodes.add(data.getInt());
+        }
+        if (announceCardDialog != null) announceCardDialog.dismiss();
+        AnnounceCardDialog dialog = new AnnounceCardDialog(activity);
+        announceCardDialog = dialog;
+        dialog.setTitle(selectTitleText(564, "宣言卡片"))
+                .setOpcodes(opcodes)
+                .setOnCardDeclaredListener(this::sendResponseInt)
+                .setOnDismissListener(() -> announceCardDialog = null);
         dialog.show();
     }
 
+    /**
+     * MSG_ANNOUNCE_NUMBER（duelclient.cpp L4051-4093）：player(1)+count(1)+count×value(4)。
+     * 响应为选中项索引（BUTTON_ANNUMBER_OK L480-484：SetResponseI(cbANNumber->getSelected())），
+     * 缺省标题 565。
+     */
     public void showAnnounceNumberDialog(ByteBuffer data) {
         if (data == null || data.remaining() < 1) {
             sendResponseInt(0);
             return;
         }
         int count = data.get() & 0xFF;
-        List<Integer> numbers = new ArrayList<>();
+        List<Integer> values = new ArrayList<>();
         for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            numbers.add(data.getInt());
+            values.add(data.getInt());
         }
-        if (numbers.isEmpty()) {
+        if (values.isEmpty()) {
             sendResponseInt(0);
             return;
         }
-
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("选择数字");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < numbers.size(); i++) {
-            Button btn = new Button(activity);
-            btn.setText(String.valueOf(numbers.get(i)));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int val = numbers.get(i);
-            btn.setOnClickListener(v -> {
-                sendResponseInt(val);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false);
+        if (announceNumberDialog != null) announceNumberDialog.dismiss();
+        AnnounceNumberDialog dialog = new AnnounceNumberDialog(activity);
+        announceNumberDialog = dialog;
+        dialog.setTitle(selectTitleText(565, "选择数字"))
+                .setValues(values)
+                .setOnNumberSelectedListener(this::sendResponseInt)
+                .setOnDismissListener(() -> announceNumberDialog = null);
         dialog.show();
     }
 

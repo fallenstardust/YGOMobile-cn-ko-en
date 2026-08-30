@@ -1003,10 +1003,10 @@ public class YGOProActivity extends AppCompatActivity implements
                     showDialogUtil.showConfirmCardsDialog(data);
                     break;
                 case 140:
-                    showDialogUtil.showAnnounceRaceDialog();
+                    showDialogUtil.showAnnounceRaceDialog(data);
                     break;
                 case 141:
-                    showDialogUtil.showAnnounceAttribDialog();
+                    showDialogUtil.showAnnounceAttribDialog(data);
                     break;
                 case 142:
                     showDialogUtil.showAnnounceCardDialog(data);
