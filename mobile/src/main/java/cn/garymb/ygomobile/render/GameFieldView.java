@@ -14,7 +14,6 @@ import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.AttributeSet;
 import android.view.Display;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
@@ -304,7 +303,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                 cameraElevationDeg = AppsSettings.get().getIntSettings(PREF_CAMERA_ELEVATION, Math.round(DEFAULT_CAMERA_ELEVATION));
                 cameraElevationDeg = Math.max(MIN_CAMERA_ELEVATION, Math.min(MAX_CAMERA_ELEVATION, cameraElevationDeg));
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     // ==================== 公开 API（与原 Canvas 版兼容）====================

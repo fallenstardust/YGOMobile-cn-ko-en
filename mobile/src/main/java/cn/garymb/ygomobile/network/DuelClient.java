@@ -35,7 +35,8 @@ public class DuelClient implements YGOProtocol {
         void onDisconnected();
         void onError(String message);
         void onPacketReceived(int proto, ByteBuffer data);
-        void onChatMessage(String player, String message);
+        // STOC_CHAT playerType 为发送方座位号：0/1 我方队（队首+tag）、2/3 对方队、8 系统、9 脚本错误、11-19 观战者
+        void onChatMessage(int playerType, String message);
         void onPlayerEnter(String name, int pos);
         void onPlayerChange(int status);
         void onWatchChange(int watchCount);
@@ -334,9 +335,10 @@ public class DuelClient implements YGOProtocol {
             if (c == 0) break;
             sb.append(c);
         }
-        String player = playerType < 2 ? "Player" + (playerType + 1) : "Observer";
+        // 原样下发座位号（对齐 gframe duelclient.cpp STOC_CHAT：chat_player_type 即发送方座位），
+        // 由 UI 层按 game.cpp AddChatMsg 的 player 规则区分我方/对方/系统/观战
         if (listener != null) {
-            listener.onChatMessage(player, sb.toString());
+            listener.onChatMessage(playerType, sb.toString());
         }
     }
 

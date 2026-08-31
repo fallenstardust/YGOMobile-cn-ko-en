@@ -899,8 +899,8 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onChatReceived(String player, String message) {
-        runOnUiThread(() -> fieldCtl.appendChat(player, message));
+    public void onChatReceived(int playerType, String message) {
+        runOnUiThread(() -> fieldCtl.appendChat(playerType, message));
     }
 
     /**
@@ -1040,6 +1040,16 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onHintMessage(String hint) {
         runOnUiThread(() -> fieldCtl.showHint(hint, 2000));
+    }
+
+    @Override
+    public void onDuelHint(String hint) {
+        runOnUiThread(() -> fieldCtl.showDuelHint(hint));
+    }
+
+    @Override
+    public void onDuelHintHide() {
+        runOnUiThread(() -> fieldCtl.hideDuelHint());
     }
 
     @Override

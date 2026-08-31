@@ -184,6 +184,16 @@ public class GameTopInfoManager {
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
     }
 
+    /** 我方 LP 血条实测宽度（聊天消息最大宽度基准，对齐 drawing.cpp 玩家聊天 maxwidth） */
+    public int getPlayerLpBarWidth() {
+        return ivPlayerLpBar != null ? ivPlayerLpBar.getWidth() : 0;
+    }
+
+    /** 对方 LP 血条实测宽度（聊天消息最大宽度基准） */
+    public int getOpponentLpBarWidth() {
+        return ivOpponentLpBar != null ? ivOpponentLpBar.getWidth() : 0;
+    }
+
     /** 双方头像（drawing.cpp L992-994） */
     private void setupAvatarImages() {
         Bitmap myAvatar = TextureLoader.get().getAvatar(true);

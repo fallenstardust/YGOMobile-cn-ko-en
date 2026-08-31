@@ -3,12 +3,17 @@ package cn.garymb.ygomobile.game;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -141,6 +146,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (topInfoManager != null) topInfoManager.hide();
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
         if (cmdMenuDialog != null) cmdMenuDialog.dismiss();
+        hideDuelHint();
+        // 清场时清空双方聊天记录与进行中的弹幕
+        myChatLines.clear();
+        opChatLines.clear();
+        clearDanmaku();
         // 清场时隐藏表情气泡并撤销延时隐藏任务
         if (ivPlayerEmoteBubble != null) ivPlayerEmoteBubble.setVisibility(View.GONE);
         if (ivOpponentEmoteBubble != null) ivOpponentEmoteBubble.setVisibility(View.GONE);
@@ -395,51 +405,200 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     // === 提示信息 ===
 
+    /** 提示定时隐藏任务：showHint 与 showDuelHint 共用，避免多次延时任务叠加导致提前隐藏 */
+    private final Runnable hideHintRunnable = () -> {
+        if (tvHintMessage != null) tvHintMessage.setVisibility(View.GONE);
+    };
+
     public void showHint(String msg, int durationMs) {
+        mainHandler.removeCallbacks(hideHintRunnable);
         tvHintMessage.setText(msg);
         tvHintMessage.setVisibility(View.VISIBLE);
-        mainHandler.postDelayed(() -> tvHintMessage.setVisibility(View.GONE), durationMs);
+        mainHandler.postDelayed(hideHintRunnable, durationMs);
     }
 
-    // === 聊天气泡 ===
+    /**
+     * 通讯提示（对齐 gframe stHintMsg）：显示后持续，由下一条通讯消息或显式隐藏
+     * （调用方 GameEngine.onGameMsg / onWaiting / onSelectXxx，见 stHintMsg 调用点）
+     */
+    public void showDuelHint(String text) {
+        mainHandler.removeCallbacks(hideHintRunnable);
+        tvHintMessage.setText(text);
+        tvHintMessage.setVisibility(View.VISIBLE);
+    }
 
-    public void appendChat(String player, String message) {
+    /** 隐藏通讯提示（对齐 duelclient.cpp ClientAnalyze 开头 stHintMsg->setVisible(false)） */
+    public void hideDuelHint() {
+        mainHandler.removeCallbacks(hideHintRunnable);
+        if (tvHintMessage != null) tvHintMessage.setVisibility(View.GONE);
+    }
+
+    // === 聊天消息（对齐 gframe game.cpp AddChatMsg + drawing.cpp DrawChatMsg） ===
+
+    /** 每侧玩家聊天最大行数：超过 5 行向上滚动（清除第一条，最新一条落在最下行） */
+    private static final int MAX_CHAT_LINES = 5;
+    /** 弹幕最大行数：从上到下最多 5 行，超过后循环回第 1 行 */
+    private static final int DANMAKU_MAX_ROWS = 5;
+    /** 弹幕匀速（dp/ms）：时长 = 总路程 / 速度，保证所有消息匀速 */
+    private static final float DANMAKU_SPEED_DP_PER_MS = 0.08f;
+    /** 弹幕行高（dp） */
+    private static final float DANMAKU_ROW_HEIGHT_DP = 16f;
+    /** 观战弹幕颜色（对齐 drawing.cpp chatColor[11..19]） */
+    private static final int[] DANMAKU_OBS_COLORS = {
+            0xFF40FF40, 0xFF4040FF, 0xFF40FFFF, 0xFFFF40FF, 0xFFFFFF40,
+            0xFFFFFFFF, 0xFF808080, 0xFF404040, 0xFF404040
+    };
+
+    private final LinkedList<String> myChatLines = new LinkedList<>();
+    private final LinkedList<String> opChatLines = new LinkedList<>();
+    private int danmakuRowIndex = 0;
+    private final List<TextView> danmakuViews = new ArrayList<>();
+
+    public void appendChat(int playerType, String message) {
         AppsSettings settings = AppsSettings.get();
         // 对齐 gframe duelclient.cpp STOC_CHAT：停用聊天（chkDisableChatting，对应 chkIgnore1）时丢弃全部消息
         if (settings.getIntSettings("chkDisableChatting", 0) == 1) return;
-        // 对齐 gframe chkIgnore2：屏蔽观众（Observer）消息
-        if ("Observer".equals(player) && settings.getIntSettings("chkMuteSpectators", 0) == 1) return;
-        // 表情编码（如 "&laugh"）：不走文字行，在发送方头像下方显示图片气泡
-        //（STOC_CHAT 会广播回发送者，双方统一在此路径展示，对齐 gframe DrawEmoticon）
-        if (isEmoticonCode(message)) {
-            showEmoteBubble(player, message);
-            return;
-        }
-        String chatLine = "[" + player + "] " + message;
-
-        if (tvChatMessage1 != null && tvChatMessage1.getVisibility() == View.GONE) {
-            tvChatMessage1.setText(chatLine);
-            tvChatMessage1.setVisibility(View.VISIBLE);
-        } else if (tvChatMessage2 != null && tvChatMessage2.getVisibility() == View.GONE) {
-            tvChatMessage2.setText(chatLine);
-            tvChatMessage2.setVisibility(View.VISIBLE);
+        if (message == null) message = "";
+        if (playerType >= 0 && playerType < 4) {
+            // 玩家消息（座位号：0/1 我方队首+tag，2/3 对方队首+tag）：
+            // 表情编码不走文字行，在发送方头像下方显示图片气泡（对齐 gframe DrawEmoticon）
+            if (isEmoticonCode(message)) {
+                showEmoteBubble(playerType, message);
+                return;
+            }
+            // 我方（含我方 tag 同伴）→ tv_chat_message_1；对方（含对方 tag）→ tv_chat_message_2。
+            boolean selfSide = isChatSelfSide(playerType);
+            appendSideChat(selfSide, chatNickname(playerType) + ": " + message);
         } else {
-            if (tvChatMessage1 != null) {
-                tvChatMessage1.setText(tvChatMessage2 != null ? tvChatMessage2.getText() : "");
-            }
-            if (tvChatMessage2 != null) {
-                tvChatMessage2.setText(chatLine);
-                tvChatMessage2.setVisibility(View.VISIBLE);
-            }
+            // 系统/脚本错误/观战消息：对齐 chkIgnore2，观战者（11-19）可屏蔽
+            if (playerType >= 11 && playerType <= 19
+                    && settings.getIntSettings("chkMuteSpectators", 0) == 1) return;
+            showChatDanmaku(playerType, message);
         }
+    }
 
-        if (layoutChatMessages != null) {
-            layoutChatMessages.setVisibility(View.VISIBLE);
+    /** 聊天昵称：优先 STOC_HS_PLAYER_ENTER 记录的座位名（对齐 game.cpp AddChatMsg 的昵称前缀） */
+    private String chatNickname(int seat) {
+        if (engine != null && seat >= 0 && seat < engine.seatNames.length) {
+            String name = engine.seatNames[seat];
+            if (name != null && !name.isEmpty()) return name;
         }
+        if (engine != null && engine.getClient() != null
+                && seat == engine.getClient().selfType) {
+            return engine.getPlayerName();
+        }
+        return "Player" + (seat + 1);
+    }
+
+    /**
+     * 聊天消息是否我方发送（对齐 gframe game.cpp ChatLocalPlayer 的边判定）：
+     * STOC_CHAT 的 playerType 是大厅座位号——
+     * 1v1：座位 0/1 分属双方，座位号本身即协议侧边索引（不能 >>1，否则座位 1 会被误判为队伍 0）；
+     * tag：座位 0/1 属我方队（队首+tag 同伴）、2/3 属对方队，座位 >>1 才是协议侧队伍索引
+     * （ChatLocalPlayer 中 tag 座位 1<->2 互换后 0/2 同侧、1/3 同侧即此对应）。
+     * isSelfSide 与牌局渲染同一套 localPlayer 映射（换先攻自动翻边）
+     */
+    private boolean isChatSelfSide(int playerType) {
+        if (engine == null) return false;
+        boolean isTag = engine.getGameMode() == 2;
+        int team = isTag ? (playerType >> 1) : playerType;
+        return engine.isSelfSide(team);
+    }
+
+    /** 我方/对方聊天各占一个 TextView：每条换行，超过 5 行清除第一条（向上滚动），宽度不超过上方 LPbar */
+    private void appendSideChat(boolean selfSide, String line) {
+        TextView tv = selfSide ? tvChatMessage1 : tvChatMessage2;
+        if (tv == null) return;
+        LinkedList<String> lines = selfSide ? myChatLines : opChatLines;
+        lines.addLast(line);
+        while (lines.size() > MAX_CHAT_LINES) {
+            lines.removeFirst();
+        }
+        // 对齐 drawing.cpp 玩家聊天 maxwidth：最大长度不超过上方 LPbar
+        int maxW = selfSide ? topInfoManager.getPlayerLpBarWidth()
+                : topInfoManager.getOpponentLpBarWidth();
+        if (maxW > 0) tv.setMaxWidth(maxW);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lines.size(); i++) {
+            if (i > 0) sb.append('\n');
+            sb.append(lines.get(i));
+        }
+        tv.setText(sb.toString());
+        tv.setVisibility(View.VISIBLE);
+        if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * 系统/观战消息以弹幕形式从右往左匀速滚动（对齐 drawing.cpp L1587-1593：
+     * chatType>=4 时 offsetX 随 chatTiming 递减而增大，从右侧滚向左侧消失）。
+     * 从 LPbar 区域上一层开始，移动到 activity 最左侧消失；最多同时 5 行，超过后循环回第 1 行
+     */
+    private void showChatDanmaku(int playerType, String message) {
+        if (message.isEmpty()) return;
+        FrameLayout container = activity.findViewById(R.id.layout_game_right);
+        if (container == null || container.getWidth() <= 0) return;
+        String text;
+        int color;
+        if (playerType == 8) {            // chatColor[8]：系统消息
+            text = "[System]: " + message;
+            color = 0xFF8080FF;
+        } else if (playerType == 9) {     // chatColor[9]：脚本错误
+            text = "[Script Error]: " + message;
+            color = 0xFFFF4040;
+        } else if (playerType == 10) {    // chatColor[10]：隐藏名
+            text = "[********]: " + message;
+            color = 0xFFFF4040;
+        } else {                          // 观战者 11-19 无前缀（对齐 AddChatMsg default 分支）
+            text = message;
+            color = (playerType >= 11 && playerType <= 19)
+                    ? DANMAKU_OBS_COLORS[playerType - 11] : 0xFFFFFFFF;
+        }
+        TextView tv = new TextView(activity);
+        tv.setText(text);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+        tv.setTextColor(color);
+        tv.setSingleLine(true);
+        // 对齐 drawing.cpp shadowloc：黑色偏移 1px 阴影
+        tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
+        int row = danmakuRowIndex % DANMAKU_MAX_ROWS;
+        danmakuRowIndex++;
+        int rowHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                DANMAKU_ROW_HEIGHT_DP, activity.getResources().getDisplayMetrics());
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP | Gravity.START);
+        lp.topMargin = row * rowHeight;
+        lp.leftMargin = container.getWidth(); // 起点：LPbar 区域上一层的右侧边缘
+        container.addView(tv, lp);
+        danmakuViews.add(tv);
+        float density = activity.getResources().getDisplayMetrics().density;
+        tv.post(() -> {
+            // 匀速：总路程 = 起点到最左侧 + 自身宽度，时长与路程成正比
+            int distance = container.getWidth() + tv.getWidth();
+            long duration = (long) (distance / (DANMAKU_SPEED_DP_PER_MS * density));
+            tv.animate().translationX(-distance).setDuration(duration)
+                    .withEndAction(() -> {
+                        danmakuViews.remove(tv);
+                        container.removeView(tv);
+                    }).start();
+        });
+    }
+
+    /** 清除全部进行中的弹幕 */
+    private void clearDanmaku() {
+        FrameLayout container = activity.findViewById(R.id.layout_game_right);
+        for (TextView tv : danmakuViews) {
+            tv.animate().cancel();
+            if (container != null) container.removeView(tv);
+        }
+        danmakuViews.clear();
+        danmakuRowIndex = 0;
     }
 
     /** 隐藏聊天消息文本（对齐 gframe BUTTON_CHATTING 切换关闭时的 ClearChatMsg：清空聊天显示） */
     public void clearChatMessages() {
+        myChatLines.clear();
+        opChatLines.clear();
         if (tvChatMessage1 != null) {
             tvChatMessage1.setText("");
             tvChatMessage1.setVisibility(View.GONE);
@@ -448,6 +607,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             tvChatMessage2.setText("");
             tvChatMessage2.setVisibility(View.GONE);
         }
+        clearDanmaku();
     }
 
     private boolean isEmoticonCode(String message) {
@@ -459,18 +619,10 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     }
 
     /** 将表情图片气泡显示到发送方头像下方，并刷新自动隐藏计时 */
-    private void showEmoteBubble(String player, String code) {
+    private void showEmoteBubble(int playerType, String code) {
         if (engine == null) return;
-        // DuelClient 将 STOC_CHAT 的 playerType 转为 "Player1"/"Player2"：1=协议索引0，2=协议索引1
-        int protoIdx;
-        if ("Player1".equals(player)) {
-            protoIdx = 0;
-        } else if ("Player2".equals(player)) {
-            protoIdx = 1;
-        } else {
-            return; // 观战者表情不显示气泡
-        }
-        boolean selfSide = engine.isSelfSide(protoIdx);
+        // STOC_CHAT 座位号：与文字聊天同一套分边规则（1v1 用座位、tag 用座位>>1）
+        boolean selfSide = isChatSelfSide(playerType);
         ImageView bubble = selfSide ? ivPlayerEmoteBubble : ivOpponentEmoteBubble;
         if (bubble == null) return;
         Bitmap bmp = TextureLoader.get().getEmoticon(code);

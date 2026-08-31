@@ -23,7 +23,9 @@ import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
+import ocgcore.data.Card;
 import ocgcore.enums.CardLocation;
+import ocgcore.enums.GameMessage;
 
 public class GameEngine implements DuelClient.ClientListener, GameMessageParser.MessageHandler {
     private static final String TAG = "GameEngine";
@@ -50,13 +52,19 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
         void onPhaseChanged(int phase);
 
-        void onChatReceived(String player, String message);
+        void onChatReceived(int playerType, String message);
 
         void onSelectRequired(int selectType, ByteBuffer data);
 
         void onDuelResult(int winner, int reason);
 
         void onHintMessage(String hint);
+
+        /** 通讯提示栏（对齐 gframe stHintMsg）：显示后持续，直到下一条消息或显式隐藏 */
+        void onDuelHint(String hint);
+
+        /** 通讯提示栏隐藏（对齐 duelclient.cpp ClientAnalyze 开头 stHintMsg->setVisible(false)） */
+        void onDuelHintHide();
 
         void onReplayData(byte[] data);
 
@@ -89,6 +97,42 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     private final LuaScriptEngine scriptEngine;
     private EngineListener listener;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    // === stHintMsg 提示栏（对齐 gframe：选择/等待类消息显示，下一条消息隐藏） ===
+
+    /** 等待提示轮换间隔（game.cpp L1624-1633：waitFrame 每 90 帧≈1.5s 轮换 1390/1391/1392） */
+    private static final long WAIT_HINT_TICK_MS = 1500;
+    private static final int[] WAIT_HINT_SYS = {1390, 1391, 1392};
+    private int waitHintIndex;
+    private final Runnable waitHintTicker = new Runnable() {
+        @Override
+        public void run() {
+            waitHintIndex = (waitHintIndex + 1) % WAIT_HINT_SYS.length;
+            postDuelHint(sysString(WAIT_HINT_SYS[waitHintIndex], "等待行动中..."));
+            mainHandler.postDelayed(this, WAIT_HINT_TICK_MS);
+        }
+    };
+
+    private String sysString(int index, String def) {
+        return DataManager.get().getStringManager().getSystemString(index, def);
+    }
+
+    private void postDuelHint(String text) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onDuelHint(text);
+        });
+    }
+
+    private void postDuelHintHide() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onDuelHintHide();
+        });
+    }
+
+    /** 停止等待提示动画（对齐 duelclient.cpp L1309：waitFrame = -1） */
+    private void stopWaitHint() {
+        mainHandler.removeCallbacks(waitHintTicker);
+    }
 
     private String playerName = "Player";
     private int duelStage = YGOProtocol.DUEL_STAGE_BEGIN;
@@ -134,6 +178,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     public final PlayerInfo[] playerInfos = new PlayerInfo[]{new PlayerInfo(), new PlayerInfo()};
+    /** 按大厅座位号存储昵称（STOC_HS_PLAYER_ENTER pos 0-3）：0/1 我方队、2/3 对方队，
+     *  供 STOC_CHAT 显示"昵称: 内容"（对齐 game.cpp AddChatMsg 的 hostname/clientname/hostname_tag/clientname_tag 前缀） */
+    public final String[] seatNames = new String[]{"", "", "", ""};
 
     public GameEngine(SoundManager soundManager) {
         this.client = new DuelClient();
@@ -558,6 +605,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         return client.selfType;
     }
 
+    public String getPlayerName() {
+        return playerName;
+    }
+
     // === State Management ===
 
     private void setState(GameState newState) {
@@ -594,9 +645,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onChatMessage(String player, String message) {
+    public void onChatMessage(int playerType, String message) {
         mainHandler.post(() -> {
-            if (listener != null) listener.onChatReceived(player, message);
+            if (listener != null) listener.onChatReceived(playerType, message);
         });
         soundManager.playSoundEffect(SoundManager.SFX.CHAT);
     }
@@ -606,6 +657,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         Log.i(TAG, "Player entered: " + name + " at pos " + pos);
         if (pos < playerInfos.length) {
             playerInfos[pos].name = name;
+        }
+        // 座位 0-3 全量记录：tag 模式下 pos1/pos3 为双方 tag 同伴，聊天昵称需要
+        if (pos >= 0 && pos < seatNames.length) {
+            seatNames[pos] = name;
         }
         soundManager.playSoundEffect(SoundManager.SFX.PLAYER_ENTER);
         mainHandler.post(() -> {
@@ -635,6 +690,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         duelStage = YGOProtocol.DUEL_STAGE_DUELING;
         setState(GameState.DUELING);
         soundManager.playBGM(SoundManager.BGM.DUEL);
+        // 对局开场清理残留提示（对齐 game.cpp CloseGameWindow L2426 stHintMsg->setVisible(false)）
+        stopWaitHint();
+        postDuelHintHide();
     }
 
     @Override
@@ -642,6 +700,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         duelStage = YGOProtocol.DUEL_STAGE_END;
         setState(GameState.DUEL_END);
         soundManager.stopBGM();
+        stopWaitHint();
+        postDuelHintHide();
     }
 
     @Override
@@ -655,6 +715,12 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onGameMsg(int msgType, ByteBuffer data) {
         data.order(ByteOrder.LITTLE_ENDIAN);
+        // 对齐 duelclient.cpp L1307-1311：除 MSG_WAITING/MSG_CARD_SELECTED 外，
+        // 每条通讯消息开始先停止等待动画并隐藏 stHintMsg（提示栏随通讯推进实时显隐）
+        if (msgType != GameMessage.Waiting.value() && msgType != GameMessage.CardSelected.value()) {
+            stopWaitHint();
+            postDuelHintHide();
+        }
         try {
             GameMessageParser.parse(msgType, data, this);
         } catch (BufferUnderflowException e) {
@@ -681,6 +747,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onHandResult(int res1, int res2) {
         Log.i(TAG, "Hand result: " + res1 + " vs " + res2);
+        // 对齐 duelclient.cpp L528：STOC_HAND_RESULT 公布猜拳结果时隐藏提示
+        postDuelHintHide();
         // STOC_HAND_RESULT 按服务器视角下发 player0/player1 手势，转换为本方视角
         int self = client.selfType;
         final int myHand = (self == 1) ? res2 : res1;
@@ -699,6 +767,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onWaitingSide() {
         Log.i(TAG, "Waiting for side change");
+        // 对齐 duelclient.cpp L575-580：STOC_WAITING_SIDE 显示"等待换备卡"
+        stopWaitHint();
+        postDuelHint(sysString(1409, "等待对方换备卡..."));
     }
 
     @Override
@@ -848,6 +919,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onWaiting() {
         Log.d(TAG, "Waiting...");
+        // 对齐 duelclient.cpp L1610-1616 + game.cpp L1624-1633：waitFrame=0，显示"等待行动中..."并轮换
+        waitHintIndex = 0;
+        postDuelHint(sysString(1390, "等待行动中..."));
+        mainHandler.removeCallbacks(waitHintTicker);
+        mainHandler.postDelayed(waitHintTicker, WAIT_HINT_TICK_MS);
     }
 
     @Override
@@ -955,6 +1031,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectCard(ByteBuffer data) {
+        // 对齐 duelclient.cpp L1964-1974：非 panelmode 时 stHintMsg 显示"提示(min-max)"
+        String hint = selectRangeHint(data, 560, "选择卡片");
+        if (hint != null) postDuelHint(hint);
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(15, data);
         });
@@ -962,6 +1041,28 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectChain(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2158-2163：存在"发动并作为连锁"项(EDESC_OPERATION=1)时用 556，否则 550
+        boolean contiExist = false;
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            dup.get(); // selecting_player
+            int count = dup.get() & 0xFF;
+            dup.get(); // specount
+            dup.getInt(); // hint0
+            dup.getInt(); // hint1
+            for (int i = 0; i < count && dup.remaining() >= 14; i++) {
+                int flag = dup.get() & 0xFF;
+                dup.get(); // forced
+                dup.getInt(); // code
+                dup.position(dup.position() + 4); // c l s ss
+                dup.getInt(); // desc
+                if ((flag & 0x1) != 0) contiExist = true;
+            }
+        } catch (Exception ignored) {
+        }
+        postDuelHint(sysString(contiExist ? 556 : 550,
+                contiExist ? "选择发动效果并作为连锁" : "选择发动效果"));
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(16, data);
         });
@@ -975,9 +1076,15 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         selectFieldMask = ~fieldMask;
         // fieldMask 相对选择方：低 16 位 = 选择方自己的半场。
         // 只有选择方与我不同半场时才交换高低 16 位，保证低 16 位始终是我方半场（下半区）。
-        // 用 localPlayer(与卡牌渲染同一套映射)判断“选择方是否为对方”，player&1 取边以兼容 tag(0/2 先攻,1/3 后攻)。
+        // 用 localPlayer(与卡牌渲染同一套映射)判断"选择方是否为对方"，player&1 取边以兼容 tag(0/2 先攻,1/3 后攻)。
         if (localPlayer(player & 1) == 1) {
             selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
+        }
+        // 对齐 duelclient.cpp L2199-2210：MSG_SELECT_PLACE 提示 569(带卡名)/560
+        if (field.selectHint > 0) {
+            postDuelHint("请选择要放置「" + getCardDisplayName(field.selectHint) + "」的区域");
+        } else {
+            postDuelHint(sysString(560, "请选择放置位置"));
         }
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(18, null);
@@ -1008,6 +1115,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectTribute(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2330-2335：stHintMsg 显示"提示(min-max)"（hint 优先 selectHint，默认 531）
+        String hint = selectRangeHint(data, 531, "解放选择");
+        if (hint != null) postDuelHint(hint);
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(20, data);
         });
@@ -1022,6 +1132,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectCounter(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2362-2365：stHintMsg 显示 GetSysString(204)（移除 N 个指示物）
+        String hint = counterHint(data);
+        if (hint != null) postDuelHint(hint);
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(22, data);
         });
@@ -1029,6 +1142,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectSum(ByteBuffer data) {
+        // 对齐 client_field.cpp L1090-1115 ShowSelectSum：display_hint = GetDesc(select_hint) 或 GetSysString(560)
+        int hint = field.selectHint;
+        postDuelHint(hint > 0 ? DataManager.get().getDesc(hint, "选择卡片") : sysString(560, "选择卡片"));
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(23, data);
         });
@@ -1043,6 +1159,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         if (localPlayer(player & 1) == 1) {
             selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
         }
+        // 对齐 duelclient.cpp L2205-2210：MSG_SELECT_DISFIELD 提示 GetDesc(select_hint ?: 570)
+        int hint = field.selectHint > 0 ? field.selectHint : 570;
+        postDuelHint(DataManager.get().getDesc(hint, "请选择要禁用的区域"));
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(24, null);
         });
@@ -1057,9 +1176,56 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSelectUnselectCard(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2053-2065：stHintMsg 显示"提示(min-max)"
+        String hint = selectRangeHint(data, 560, "选择卡片");
+        if (hint != null) postDuelHint(hint);
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(26, data);
         });
+    }
+
+    // === 提示栏文字生成（对齐 gframe stHintMsg 各调用点的格式化） ===
+
+    /**
+     * 生成选择类消息提示（duelclient.cpp L1965/L2056/L2331："%ls(%d-%d)"）。
+     * 用 duplicate 解析不推进原缓冲（UI 侧仍需读取同一数据）；
+     * selectHint 只读取不消费（消费仍由 UI 侧对话框标题承担）
+     */
+    private String selectRangeHint(ByteBuffer data, int defIndex, String defText) {
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            dup.get(); // selecting_player
+            dup.get(); // cancelable（UNSELECT 为 finishable 位，同位置）
+            int min = dup.get() & 0xFF;
+            int max = dup.get() & 0xFF;
+            int hint = field.selectHint;
+            String title = hint > 0 ? DataManager.get().getDesc(hint, defText) : sysString(defIndex, defText);
+            return title + "(" + min + "-" + max + ")";
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 解析 player(1) counter_type(2) counter_count(2) 生成指示物提示（不推进原缓冲） */
+    private String counterHint(ByteBuffer data) {
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            dup.get(); // selecting_player
+            dup.getShort(); // counter type
+            int count = dup.getShort() & 0xFFFF;
+            return "移除 " + count + " 个指示物";
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 对齐 dataManager.GetName（duelclient.cpp L2201：GetName(select_hint)） */
+    private String getCardDisplayName(int code) {
+        if (code <= 0) return "?";
+        Card card = DataManager.get().getCardManager().getCard(code);
+        return card != null && card.Name != null ? card.Name : "?";
     }
 
     @Override

@@ -351,11 +351,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
+                android:layout_marginStart="50dp"
+                android:maxLines="5"
+                android:ellipsize="end"
                 android:background="#40000000"
-                android:text="player1:聊天玩家1或者3说的话"
                 android:textColor="@color/white"
                 android:textSize="8sp"
-                android:visibility="visible" />
+                android:visibility="gone" />
 
             <!-- 提示信息 -->
             <TextView
@@ -363,7 +365,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center|top"
-                android:background="@drawable/ygopro_deck_background"
+                android:background="@color/colorNavy"
                 android:text="请选择要特殊召唤的怪兽（9-9）"
                 android:textColor="@color/white"
                 android:textSize="8sp"
@@ -375,10 +377,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:background="#40000000"
-                android:text="player2:聊天玩家2或者4说的话"
+                android:layout_marginEnd="50dp"
+                android:maxLines="5"
+                android:ellipsize="end"
                 android:textColor="@color/white"
                 android:textSize="8sp"
-                android:visibility="visible" />
+                android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>
 
