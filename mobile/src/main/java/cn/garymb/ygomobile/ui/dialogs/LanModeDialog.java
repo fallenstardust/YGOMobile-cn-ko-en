@@ -4,9 +4,11 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -16,13 +18,13 @@ import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.Gravity;
-import android.view.WindowManager;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
@@ -30,17 +32,22 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
-import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
-import cn.garymb.ygomobile.ui.adapters.HostListAdapter;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.ui.adapters.HostListAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
+import ocgcore.StringManager;
 
 public class LanModeDialog {
+    /**
+     * 公共字符串管理器：初始化后可供整个类及外部调用
+     */
+    public static final StringManager mStringManager = DataManager.get().getStringManager();
 
     private Context context;
     private PopupWindow popupWindow;
@@ -61,7 +68,7 @@ public class LanModeDialog {
     private Button btnPwStartGame;
     private ImageButton btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
     private TextView tvRoomInfo;
- private TextView tvWatchCount;
+    private TextView tvWatchCount;
     private View layoutTagPlayers;
     private int selfPos = 0;
     private boolean isSelfReady = false;
@@ -252,7 +259,7 @@ public class LanModeDialog {
             showPlayerWaiting();
 
             if (layoutTagPlayers != null) {
-                layoutTagPlayers.setVisibility("TAG".equals(duelMode) ? View.VISIBLE : View.INVISIBLE);
+                layoutTagPlayers.setVisibility("TAG".equalsIgnoreCase(duelMode) ? View.VISIBLE : View.INVISIBLE);
             }
 
             etPwPlayer1Name.setText(nickname.isEmpty() ? Constants.PlayerName : nickname);
@@ -260,10 +267,11 @@ public class LanModeDialog {
             String localIp = LanDiscoveryManager.getLocalIpAddress();
             if (localIp != null) {
                 Toast.makeText(context,
-                        "房间已创建，本机IP: " + localIp + ":7911，等待玩家加入",
+                        mStringManager.getSystemString(1701, "房间已创建，本机IP: %ls，等待玩家加入")
+                                .replace("%ls", localIp + ":7911"),
                         Toast.LENGTH_LONG).show();
             } else {
-                Toast.makeText(context, "房间已创建，等待玩家加入", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, mStringManager.getSystemString(1702, "房间已创建，等待玩家加入"), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -335,7 +343,7 @@ public class LanModeDialog {
             if (discoveryManager == null || discoveryManager.isDiscovering()) return;
 
             btnRefreshLan.setEnabled(false);
-            btnRefreshLan.setText("搜索中...");
+            btnRefreshLan.setText(mStringManager.getSystemString(1703, "搜索中..."));
             discoveredHosts.clear();
             hostListAdapter.clear();
             hostListAdapter.notifyDataSetChanged();
@@ -356,9 +364,9 @@ public class LanModeDialog {
                 @Override
                 public void onDiscoveryFinished() {
                     btnRefreshLan.setEnabled(true);
-                    btnRefreshLan.setText("刷新局域网");
+                    btnRefreshLan.setText(mStringManager.getSystemString(1217, "刷新局域网"));
                     if (discoveredHosts.isEmpty()) {
-                        Toast.makeText(context, "未发现局域网房间", Toast.LENGTH_SHORT).show();
+                        YGOUtil.show("未发现局域网房间");
                     }
                 }
 
@@ -376,11 +384,11 @@ public class LanModeDialog {
             String nickname = etNickname.getText().toString().trim();
 
             if (ip.isEmpty()) {
-                Toast.makeText(context, "请输入主机IP", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, mStringManager.getSystemString(1705, "请输入主机IP"), Toast.LENGTH_SHORT).show();
                 return;
             }
             if (port.isEmpty()) {
-                Toast.makeText(context, "请输入端口", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, mStringManager.getSystemString(1706, "请输入端口"), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -391,7 +399,7 @@ public class LanModeDialog {
             layoutLanMain.setVisibility(View.GONE);
             showPlayerWaiting();
 
-            if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.GONE);
+            if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.INVISIBLE);
 
             etPwPlayer1Name.setText(nickname.isEmpty() ? Constants.PlayerName : nickname);
         });
@@ -425,7 +433,7 @@ public class LanModeDialog {
         tvRoomInfo = layoutPlayerWaiting.findViewById(R.id.tv_room_info);
         tvWatchCount = layoutPlayerWaiting.findViewById(R.id.tv_watch_count);
         layoutTagPlayers = layoutPlayerWaiting.findViewById(R.id.layout_tag_players);
-        
+
         setupWatchView();
     }
 
@@ -479,7 +487,7 @@ public class LanModeDialog {
 
     private void refreshWatchCountDisplay() {
         if (tvWatchCount != null) {
-            tvWatchCount.setText("当前观战人数: " + watchCount);
+            tvWatchCount.setText(mStringManager.getSystemString(1253, "当前观战人数: ") + watchCount);
             if (watchCount > 0 || selfPos >= 4) {
                 tvWatchCount.setVisibility(View.VISIBLE);
             } else {
@@ -525,18 +533,19 @@ public class LanModeDialog {
         selfPos = 0;
         if (btnPwReady != null) {
             btnPwReady.setEnabled(true);
-            btnPwReady.setText("点击准备");
+            btnPwReady.setText(mStringManager.getSystemString(1218, "点击准备"));
             btnPwReady.setPressed(false);
         }
         if (btnPwSpectatorMode != null) btnPwSpectatorMode.setEnabled(true);
-        
+
         if (btnPwStartGame != null) btnPwStartGame.setVisibility(View.INVISIBLE);
         if (layoutTagPlayers != null) layoutTagPlayers.setVisibility(View.INVISIBLE);
-        
+
         watchCount = 0;
         observerNames.clear();
         if (tvWatchCount != null) tvWatchCount.setVisibility(View.INVISIBLE);
-        if (tvWatchCount != null) tvWatchCount.setText("当前观战人数: 0");
+        if (tvWatchCount != null)
+            tvWatchCount.setText(mStringManager.getSystemString(1253, "当前观战人数: ") + 0);
 
         updateSelfCheckboxInteractivity();
     }
@@ -584,7 +593,8 @@ public class LanModeDialog {
             if (pos == selfPos) {
                 isSelfReady = ready;
                 if (btnPwReady != null) {
-                    btnPwReady.setText(ready ? "取消准备" : "点击准备");
+                    btnPwReady.setText(ready ? mStringManager.getSystemString(1219, "取消准备")
+                            : mStringManager.getSystemString(1218, "点击准备"));
                     btnPwReady.setPressed(ready);
                     btnPwReady.setBackground(ready ? context.getDrawable(R.drawable.sbutton_p) : context.getDrawable(R.drawable.sbutton));
                 }
@@ -628,7 +638,8 @@ public class LanModeDialog {
         clearPlayerPos(fromPos);
     }
 
-    public void refreshPlayerDisplay() { for (int i = 0; i < 4; i++) {
+    public void refreshPlayerDisplay() {
+        for (int i = 0; i < 4; i++) {
             String name = getPlayerName(i);
             if (etPwPlayer1Name != null && i == 0) etPwPlayer1Name.setText(name);
             if (etPwPlayer2Name != null && i == 1) etPwPlayer2Name.setText(name);
@@ -638,7 +649,8 @@ public class LanModeDialog {
 
         if (selfPos < 4) {
             if (btnPwReady != null) {
-                btnPwReady.setText(isSelfReady ? "取消准备" : "点击准备");
+                btnPwReady.setText(isSelfReady ? mStringManager.getSystemString(1219, "取消准备")
+                        : mStringManager.getSystemString(1218, "点击准备"));
                 btnPwReady.setPressed(isSelfReady);
                 btnPwReady.setBackground(isSelfReady
                         ? context.getDrawable(R.drawable.sbutton_p)
@@ -651,7 +663,7 @@ public class LanModeDialog {
         }
 
         if (tvWatchCount != null) {
-            tvWatchCount.setText("当前观战人数: " + watchCount);
+            tvWatchCount.setText(mStringManager.getSystemString(1253, "当前观战人数: ") + watchCount);
             if (watchCount > 0 || selfPos >= 4) {
                 tvWatchCount.setVisibility(View.VISIBLE);
             } else {
@@ -684,45 +696,46 @@ public class LanModeDialog {
                                int noCheckDeck, int noShuffleDeck,
                                int startLp, int startHand, int drawCount, int timeLimit) {
         StringBuilder sb = new StringBuilder();
-        sb.append("禁限卡表：").append(getBanlistName(lflist)).append("\n");
-        sb.append("卡片允许：").append(getCardAllowedName(rule)).append("\n");
+        sb.append(mStringManager.getSystemString(1226, "禁限卡表：")).append(getBanlistName(lflist)).append("\n");
+        sb.append(mStringManager.getSystemString(1225, "卡片允许：")).append(getCardAllowedName(rule)).append("\n");
 
         String duelModeText;
         switch (mode) {
             case 0:
-                duelModeText = "单局模式";
+                duelModeText = mStringManager.getSystemString(1244, "单局模式");
                 break;
             case 1:
-                duelModeText = "三局两胜";
+                duelModeText = mStringManager.getSystemString(1245, "比赛模式");
                 break;
             case 2:
-                duelModeText = "TAG";
+                duelModeText = mStringManager.getSystemString(1246, "TAG");
                 break;
             default:
                 duelModeText = "unknown mode";
         }
-        sb.append("决斗模式：").append(duelModeText).append("\n");
+        sb.append(mStringManager.getSystemString(1227, "决斗模式：")).append(duelModeText).append("\n");
 
         if (timeLimit > 0) {
-            sb.append("回合时间：").append(timeLimit).append("\n");
+            sb.append(mStringManager.getSystemString(1237, "回合时间：")).append(timeLimit).append("\n");
         }
 
         sb.append("==========\n");
-        sb.append("初始基本分：").append(startLp).append("\n");
-        sb.append("初始手卡数：").append(startHand).append("\n");
-        sb.append("每回合抽卡：").append(drawCount).append("\n");
+        sb.append(mStringManager.getSystemString(1231, "初始基本分：")).append(startLp).append("\n");
+        sb.append(mStringManager.getSystemString(1232, "初始手卡数：")).append(startHand).append("\n");
+        sb.append(mStringManager.getSystemString(1233, "每回合抽卡：")).append(drawCount).append("\n");
 
         if (duelRule != 5) {
             sb.append("*").append(getDuelRuleName(duelRule)).append("\n");
         }
         if (noCheckDeck != 0) {
-            sb.append("*不检查卡组\n");
+            sb.append("*").append(mStringManager.getSystemString(1229, "不检查卡组")).append("\n");
         }
         if (noShuffleDeck != 0) {
-            sb.append("*不洗切卡组\n");
+            sb.append("*").append(mStringManager.getSystemString(1230, "不洗切卡组")).append("\n");
         }
 
         if (tvRoomInfo != null) tvRoomInfo.setText(sb.toString());
+
 
         isTagMode = (mode == 2);
 
@@ -734,18 +747,33 @@ public class LanModeDialog {
 
     private void resetRoomInfo() {
         if (tvRoomInfo != null) {
-            tvRoomInfo.setText("禁限卡表：----\n卡片允许：----\n决斗模式：----\n回合时间：----\n==========\n初始基本分：----\n初始手卡数：----\n每回合抽卡：----");
+            String dash = "----";
+            String info = mStringManager.getSystemString(1226, "禁限卡表：") + dash + "\n"
+                    + mStringManager.getSystemString(1225, "卡片允许：") + dash + "\n"
+                    + mStringManager.getSystemString(1227, "决斗模式：") + dash + "\n"
+                    + mStringManager.getSystemString(1237, "回合时间：") + dash + "\n"
+                    + "==========\n"
+                    + mStringManager.getSystemString(1231, "初始基本分：") + dash + "\n"
+                    + mStringManager.getSystemString(1232, "初始手卡数：") + dash + "\n"
+                    + mStringManager.getSystemString(1233, "每回合抽卡：") + dash;
+            tvRoomInfo.setText(info);
         }
     }
 
     private String getDuelRuleName(int duelRule) {
         switch (duelRule) {
-            case 1: return "大师规则";
-            case 2: return "新大师规则";
-            case 3: return "大师规则(2020)";
-            case 4: return "大师规则(2020)";
-            case 5: return "大师规则(2020)";
-            default: return "大师规则(2020)";
+            case 1:
+                return mStringManager.getSystemString(1260, "大师规则");
+            case 2:
+                return mStringManager.getSystemString(1261, "大师规则２");
+            case 3:
+                return mStringManager.getSystemString(1262, "大师规则３");
+            case 4:
+                return mStringManager.getSystemString(1263, "新大师规则（2017）");
+            case 5:
+                return mStringManager.getSystemString(1264, "大师规则(2020)");
+            default:
+                return mStringManager.getSystemString(1264, "大师规则(2020)");
         }
     }
 
@@ -769,12 +797,12 @@ public class LanModeDialog {
     private String getCardAllowedName(int rule) {
         switch (rule) {
             case 1:
-                return "仅OCG";
+                return mStringManager.getSystemString(1487, "ＯＣＧ独有");
             case 2:
-                return "仅TCG";
+                return mStringManager.getSystemString(1488, "ＴＣＧ独有");
             case 0:
             default:
-                return "所有卡片";
+                return mStringManager.getSystemString(1486, "所有卡片");
         }
     }
 
@@ -855,7 +883,8 @@ public class LanModeDialog {
         EditText etHostIp = layoutLanMain.findViewById(R.id.et_host_ip);
         EditText etHostPort = layoutLanMain.findViewById(R.id.et_host_port);
         EditText etRoomPassword = layoutLanMain.findViewById(R.id.et_room_password);
-        if (nickname != null && !nickname.isEmpty() && etNickname != null) etNickname.setText(nickname);
+        if (nickname != null && !nickname.isEmpty() && etNickname != null)
+            etNickname.setText(nickname);
         if (hostIp != null && !hostIp.isEmpty() && etHostIp != null) etHostIp.setText(hostIp);
         if (port != null && !port.isEmpty() && etHostPort != null) etHostPort.setText(port);
         if (roomPassword != null && etRoomPassword != null) etRoomPassword.setText(roomPassword);
@@ -903,22 +932,23 @@ public class LanModeDialog {
         spinnerBanlist.setSelection(selectedIndex);
 
         List<SimpleSpinnerItem> ruleItems = new ArrayList<>();
-        ruleItems.add(new SimpleSpinnerItem(0, "大师规则4"));
-        ruleItems.add(new SimpleSpinnerItem(1, "大师规则2020"));
-        ruleItems.add(new SimpleSpinnerItem(2, "新大师规则"));
-        ruleItems.add(new SimpleSpinnerItem(3, "大师规则"));
+        ruleItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1260, "大师规则")));
+        ruleItems.add(new SimpleSpinnerItem(1, mStringManager.getSystemString(1261, "大师规则2")));
+        ruleItems.add(new SimpleSpinnerItem(2, mStringManager.getSystemString(1262, "大师规则３")));
+        ruleItems.add(new SimpleSpinnerItem(3, mStringManager.getSystemString(1263, "新大师规则（2017）")));
+        ruleItems.add(new SimpleSpinnerItem(4, mStringManager.getSystemString(1264, "大师规则（2020）")));
 
         SimpleSpinnerAdapter ruleAdapter = new SimpleSpinnerAdapter(context);
         ruleAdapter.setColor(Color.WHITE);
         ruleAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         ruleAdapter.set(ruleItems);
         spinnerRule.setAdapter(ruleAdapter);
-        spinnerRule.setSelection(1);
+        spinnerRule.setSelection(5);
 
         List<SimpleSpinnerItem> cardAllowedItems = new ArrayList<>();
-        cardAllowedItems.add(new SimpleSpinnerItem(0, "所有卡片"));
-        cardAllowedItems.add(new SimpleSpinnerItem(1, "仅OCG"));
-        cardAllowedItems.add(new SimpleSpinnerItem(2, "仅TCG"));
+        cardAllowedItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1486, "所有卡片")));
+        cardAllowedItems.add(new SimpleSpinnerItem(1, mStringManager.getSystemString(1487, "ＯＣＧ独有")));
+        cardAllowedItems.add(new SimpleSpinnerItem(2, mStringManager.getSystemString(1488, "ＴＣＧ独有")));
 
         SimpleSpinnerAdapter cardAllowedAdapter = new SimpleSpinnerAdapter(context);
         cardAllowedAdapter.setColor(Color.WHITE);
@@ -928,9 +958,9 @@ public class LanModeDialog {
         spinnerCardAllowed.setSelection(0);
 
         List<SimpleSpinnerItem> duelModeItems = new ArrayList<>();
-        duelModeItems.add(new SimpleSpinnerItem(0, "单局模式"));
-        duelModeItems.add(new SimpleSpinnerItem(1, "三局两胜"));
-        duelModeItems.add(new SimpleSpinnerItem(2, "TAG"));
+        duelModeItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1244, "单局模式")));
+        duelModeItems.add(new SimpleSpinnerItem(1, mStringManager.getSystemString(1245, "比赛模式")));
+        duelModeItems.add(new SimpleSpinnerItem(2, mStringManager.getSystemString(1246, "TAG")));
 
         SimpleSpinnerAdapter duelModeAdapter = new SimpleSpinnerAdapter(context);
         duelModeAdapter.setColor(Color.WHITE);
@@ -958,7 +988,7 @@ public class LanModeDialog {
                 btnDeckSelect.setText(currentDeckName);
             }
         } else {
-            btnDeckSelect.setText("请选择卡组");
+            btnDeckSelect.setText(mStringManager.getSystemString(1707, "请选择卡组"));
         }
     }
 
@@ -981,17 +1011,17 @@ public class LanModeDialog {
             btnPwReady.setOnClickListener(v -> {
                 if (!isSelfReady) {
                     if (!sendDeckIfLoaded()) {
-                        Toast.makeText(context, "卡组无效，请重新选择卡组", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, mStringManager.getSystemString(1406, "无效卡组。"), Toast.LENGTH_SHORT).show();
                         return;
                     }
                     isSelfReady = true;
-                    btnPwReady.setText("取消准备");
+                    btnPwReady.setText(mStringManager.getSystemString(1219, "取消准备"));
                     btnPwReady.setPressed(true);
                     updateDeckSelectButtonState();
                     if (listener != null) listener.onPlayerWaitingReady();
                 } else {
                     isSelfReady = false;
-                    btnPwReady.setText("点击准备");
+                    btnPwReady.setText(mStringManager.getSystemString(1218, "点击准备"));
                     btnPwReady.setPressed(false);
                     updateDeckSelectButtonState();
                     if (listener != null) listener.onPlayerWaitingNotReady();
@@ -1019,20 +1049,20 @@ public class LanModeDialog {
                     if (pos != selfPos) return;
                     if (isChecked) {
                         if (!sendDeckIfLoaded()) {
-                            Toast.makeText(context, "卡组无效，请重新选择卡组", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, mStringManager.getSystemString(1406, "无效卡组。"), Toast.LENGTH_SHORT).show();
                             buttonView.setChecked(false);
                             isSelfReady = false;
-                            btnPwReady.setText("点击准备");
+                            btnPwReady.setText(mStringManager.getSystemString(1218, "点击准备"));
                             btnPwReady.setPressed(false);
                             return;
                         }
                         isSelfReady = true;
-                        btnPwReady.setText("取消准备");
+                        btnPwReady.setText(mStringManager.getSystemString(1219, "取消准备"));
                         btnPwReady.setPressed(true);
                         if (listener != null) listener.onPlayerWaitingReady();
                     } else {
                         isSelfReady = false;
-                        btnPwReady.setText("点击准备");
+                        btnPwReady.setText(mStringManager.getSystemString(1218, "点击准备"));
                         btnPwReady.setPressed(false);
                         if (listener != null) listener.onPlayerWaitingNotReady();
                     }
@@ -1076,14 +1106,20 @@ public class LanModeDialog {
                 try {
                     int code = Integer.parseInt(line);
                     switch (section) {
-                        case 1: main.add(code); break;
-                        case 2: extra.add(code); break;
-                        case 3: side.add(code); break;
+                        case 1:
+                            main.add(code);
+                            break;
+                        case 2:
+                            extra.add(code);
+                            break;
+                        case 3:
+                            side.add(code);
+                            break;
                     }
                 } catch (NumberFormatException e) { /* skip */ }
             }
         } catch (Exception e) {
-            Toast.makeText(context, "卡组加载失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, mStringManager.getSystemString(1406, "无效卡组"), Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -1105,33 +1141,21 @@ public class LanModeDialog {
     }
 
     public static int parseRuleIndex(String rule) {
-        if (rule == null) return 1;
-        switch (rule) {
-            case "大师规则4":
-                return 0;
-            case "大师规则2020":
-                return 1;
-            case "新大师规则":
-                return 2;
-            case "大师规则":
-                return 3;
-            default:
-                return 1;
-        }
+        if (rule == null) return 4;
+        if (rule.equals(mStringManager.getSystemString(1260, "大师规则"))) return 0;
+        if (rule.equals(mStringManager.getSystemString(1261, "大师规则2"))) return 1;
+        if (rule.equals(mStringManager.getSystemString(1262, "大师规则3"))) return 2;
+        if (rule.equals(mStringManager.getSystemString(1263, "新大师规则（2017）"))) return 3;
+        if (rule.equals(mStringManager.getSystemString(1263, "大师规则（2020）"))) return 4;
+        return 4;
     }
 
     public static int parseDuelModeIndex(String duelMode) {
         if (duelMode == null) return 0;
-        switch (duelMode) {
-            case "单局模式":
-                return 0;
-            case "三局两胜":
-                return 1;
-            case "TAG":
-                return 2;
-            default:
-                return 0;
-        }
+        if (duelMode.equals(mStringManager.getSystemString(1244, "单局模式"))) return 0;
+        if (duelMode.equals(mStringManager.getSystemString(1245, "比赛模式"))) return 1;
+        if (duelMode.equalsIgnoreCase(mStringManager.getSystemString(1246, "TAG"))) return 2;
+        return 0;
     }
 
     public static int parseIntSafe(String value, int defaultValue) {
@@ -1286,34 +1310,42 @@ public class LanModeDialog {
         String errorDesc;
         switch (errorType) {
             case YGOProtocol.DECKERROR_LFLIST:
-                errorDesc = "禁限卡表违规";
+                errorDesc = mStringManager.getSystemString(1407, "「%ls」的数量不符合当前禁限卡表设定。")
+                        .replace("%ls", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_OCGONLY:
-                errorDesc = "仅限OCG卡片";
+                errorDesc = mStringManager.getSystemString(1413, "「%ls」为OCG独有卡，不允许在当前设定下使用。")
+                        .replace("%ls", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_TCGONLY:
-                errorDesc = "仅限TCG卡片";
+                errorDesc = mStringManager.getSystemString(1414, "「%ls」为TCG独有卡，不允许在当前设定下使用。")
+                        .replace("%ls", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_UNKNOWNCARD:
-                errorDesc = "未知卡片";
+                errorDesc = mStringManager.getSystemString(1415, "卡组中「%ls(%d)」尚不支持在本主机使用")
+                        .replace("%ls", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_CARDCOUNT:
-                errorDesc = "卡片数量超限";
+                errorDesc = mStringManager.getSystemString(1416, "卡组中「%ls」的总数量超过3张。")
+                        .replace("%ls", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_MAINCOUNT:
-                errorDesc = "主卡组数量不符(" + cardCode + "张)";
+                errorDesc = mStringManager.getSystemString(1417, "主卡组数量应为40-60张，当前卡组数量为%d张。")
+                        .replace("%d", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_EXTRACOUNT:
-                errorDesc = "额外卡组数量超限(" + cardCode + "张)";
+                errorDesc = mStringManager.getSystemString(1418, "额外卡组数量超限(%ls张)")
+                        .replace("%ls", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_SIDECOUNT:
-                errorDesc = "副卡组数量超限(" + cardCode + "张)";
+                errorDesc = mStringManager.getSystemString(1419, "副卡组数量应不超过15张，当前卡组数量为%d张。")
+                        .replace("%d", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_NOTAVAIL:
-                errorDesc = "卡片不可用";
+                errorDesc = mStringManager.getSystemString(1420, "有额外卡组卡片存在于主卡组，可能是额外卡组数量超过15张。");
                 break;
             default:
-                errorDesc = "未知卡组错误(type=" + errorType + ")";
+                errorDesc = mStringManager.getSystemString(1421, "未知卡组错误(type=%ls)");
                 break;
         }
 
@@ -1324,10 +1356,13 @@ public class LanModeDialog {
             cardName = cardNameResolver != null ? cardNameResolver.resolve(cardCode) : "";
         }
 
-        String title = "卡组验证失败";
+        String title = mStringManager.getSystemString(1725, "卡组验证失败");
         String message = errorDesc;
         if (!cardName.isEmpty()) {
-            message += "\n卡片: " + cardName + " (" + cardCode + ")";
+            String cardTemplate = mStringManager.getSystemString(1726, "卡片: %ls(%ls)");
+            message += "\n" + cardTemplate
+                    .replaceFirst("%ls", Matcher.quoteReplacement(cardName))
+                    .replaceFirst("%ls", String.valueOf(cardCode));
         }
 
         YesOrNoDialog dialog = new YesOrNoDialog(context);
