@@ -2,12 +2,16 @@ package cn.garymb.ygomobile.game;
 
 import android.graphics.Bitmap;
 import android.os.Handler;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.nio.ByteBuffer;
@@ -53,7 +57,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private TextView tvHintMessage;
     private FrameLayout layoutChatMessages;
     private TextView tvChatMessage1, tvChatMessage2;
-
+    /** 系统/观战弹幕层：叠加在 layout_top_info（LPbar 区域）上一层，XML 中位于其后的子视图 */
+    private FrameLayout layoutDanmaku;
     // 表情气泡：显示在发送方头像下方（对齐 gframe drawing.cpp DrawEmoticon），超时自动隐藏
     private static final long EMOTE_BUBBLE_DURATION_MS = 3000;
     private ImageView ivPlayerEmoteBubble, ivOpponentEmoteBubble;
@@ -88,6 +93,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         layoutChatMessages = activity.findViewById(R.id.layout_chat_messages);
         tvChatMessage1 = activity.findViewById(R.id.tv_chat_message_1);
         tvChatMessage2 = activity.findViewById(R.id.tv_chat_message_2);
+        layoutDanmaku = activity.findViewById(R.id.layout_danmaku);
         ivPlayerEmoteBubble = activity.findViewById(R.id.iv_player_emote_bubble);
         ivOpponentEmoteBubble = activity.findViewById(R.id.iv_opponent_emote_bubble);
     }
@@ -151,6 +157,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         myChatLines.clear();
         opChatLines.clear();
         clearDanmaku();
+        // 清场时兜底退出大厅聊天模式（下次 showPlayerWaiting 会重新进入）
+        lobbyChatMode = false;
+        if (lobbyChatContainer != null) lobbyChatContainer.removeAllViews();
         // 清场时隐藏表情气泡并撤销延时隐藏任务
         if (ivPlayerEmoteBubble != null) ivPlayerEmoteBubble.setVisibility(View.GONE);
         if (ivOpponentEmoteBubble != null) ivOpponentEmoteBubble.setVisibility(View.GONE);
@@ -437,24 +446,17 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     /** 每侧玩家聊天最大行数：超过 5 行向上滚动（清除第一条，最新一条落在最下行） */
     private static final int MAX_CHAT_LINES = 5;
-    /** 弹幕最大行数：从上到下最多 5 行，超过后循环回第 1 行 */
-    private static final int DANMAKU_MAX_ROWS = 5;
-    /** 弹幕匀速（dp/ms）：时长 = 总路程 / 速度，保证所有消息匀速 */
-    private static final float DANMAKU_SPEED_DP_PER_MS = 0.08f;
-    /** 弹幕行高（dp） */
-    private static final float DANMAKU_ROW_HEIGHT_DP = 16f;
-    /** 观战弹幕颜色（对齐 drawing.cpp chatColor[11..19]） */
-    private static final int[] DANMAKU_OBS_COLORS = {
-            0xFF40FF40, 0xFF4040FF, 0xFF40FFFF, 0xFFFF40FF, 0xFFFFFF40,
-            0xFFFFFFFF, 0xFF808080, 0xFF404040, 0xFF404040
-    };
 
     private final LinkedList<String> myChatLines = new LinkedList<>();
     private final LinkedList<String> opChatLines = new LinkedList<>();
-    private int danmakuRowIndex = 0;
-    private final List<TextView> danmakuViews = new ArrayList<>();
 
     public void appendChat(int playerType, String message) {
+        // player waiting 大厅模式：所有系统消息与玩家聊天进入 layout_danmaku 静态列表，
+        // 不走决斗内的分侧聊天/弹幕逻辑（决斗开始时由 exitLobbyChatMode 切回）
+        if (lobbyChatMode) {
+            appendLobbyChat(playerType, message);
+            return;
+        }
         AppsSettings settings = AppsSettings.get();
         // 对齐 gframe duelclient.cpp STOC_CHAT：停用聊天（chkDisableChatting，对应 chkIgnore1）时丢弃全部消息
         if (settings.getIntSettings("chkDisableChatting", 0) == 1) return;
@@ -528,77 +530,196 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.VISIBLE);
     }
 
+    // === 系统/观战消息弹幕（对齐 drawing.cpp DrawChatMsg chatType>=4 分支） ===
+
+    /** 弹幕最大行数：从上到下最多 5 行，超过后循环回第 1 行 */
+    private static final int DANMAKU_MAX_ROWS = 5;
+    /** 弹幕匀速（dp/ms）：时长 = 总路程 / 速度，所有消息速度一致 */
+    private static final float DANMAKU_SPEED_DP_PER_MS = 0.08f;
+    /** 弹幕行高（dp）：5 行总高约 80dp，与 layout_top_info 高度相当 */
+    private static final float DANMAKU_ROW_HEIGHT_DP = 16f;
+    /** 观战弹幕颜色，逐一对齐 drawing.cpp chatColor[11..19]（11=红 12=绿 13=蓝 14=青 15=品红 16=黄 17=白 18=灰 19=深灰） */
+    private static final int[] DANMAKU_OBS_COLORS = {
+            0xFFFF4040, 0xFF40FF40, 0xFF4040FF, 0xFF40FFFF, 0xFFFF40FF,
+            0xFFFFFF40, 0xFFFFFFFF, 0xFF808080, 0xFF404040
+    };
+    /** 聊天消息半透明黑底（对齐 drawing.cpp L1597 draw2DRectangle 0xa0000000） */
+    private static final int CHAT_BG_COLOR = 0xA0000000;
+
+    private int danmakuRowIndex = 0;
+    private final List<TextView> danmakuViews = new ArrayList<>();
+
+    /** 大厅（player waiting）聊天模式：全部消息在 layout_danmaku 静态列表显示 */
+    private boolean lobbyChatMode = false;
+    /** 大厅聊天最大条数：超过时移除最上方最旧的一条 */
+    private static final int MAX_LOBBY_CHAT_LINES = 10;
+    /** 大厅聊天列表容器：每条消息一个 TextView（独立半透明黑底），旧→新从上往下排列 */
+    private LinearLayout lobbyChatContainer;
+
+    /** 清除全部进行中的弹幕（停止聊天/离开决斗界面时调用） */
+    private void clearDanmaku() {
+        for (TextView tv : danmakuViews) {
+            tv.animate().cancel();
+            if (layoutDanmaku != null) layoutDanmaku.removeView(tv);
+        }
+        danmakuViews.clear();
+        danmakuRowIndex = 0;
+    }
+
+    // === player waiting 大厅聊天模式 ===
+
     /**
-     * 系统/观战消息以弹幕形式从右往左匀速滚动（对齐 drawing.cpp L1587-1593：
-     * chatType>=4 时 offsetX 随 chatTiming 递减而增大，从右侧滚向左侧消失）。
-     * 从 LPbar 区域上一层开始，移动到 activity 最左侧消失；最多同时 5 行，超过后循环回第 1 行
+     * 进入大厅聊天模式：所有系统消息与玩家聊天在 layout_danmaku 中按
+     * 从上往下、旧到新的静态列表显示（每条一个 TextView、半透明黑底），
+     * 最多 10 条，超出移除最上方最旧的一条；
+     * 决斗内分侧聊天（tv_chat_message_1/2）与弹幕滚动在此期间停用
      */
-    private void showChatDanmaku(int playerType, String message) {
-        if (message.isEmpty()) return;
-        FrameLayout container = activity.findViewById(R.id.layout_game_right);
-        if (container == null || container.getWidth() <= 0) return;
+    public void enterLobbyChatMode() {
+        lobbyChatMode = true;
+        clearDanmaku();
+        if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
+        if (layoutDanmaku == null) return;
+        if (lobbyChatContainer == null) {
+            lobbyChatContainer = new LinearLayout(activity);
+            lobbyChatContainer.setOrientation(LinearLayout.VERTICAL);
+            float density = activity.getResources().getDisplayMetrics().density;
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT,
+                    Gravity.TOP | Gravity.START);
+            lp.leftMargin = (int) (8 * density);
+            lp.rightMargin = (int) (8 * density);
+            layoutDanmaku.addView(lobbyChatContainer, lp);
+        }
+        lobbyChatContainer.removeAllViews();
+        layoutDanmaku.setVisibility(View.VISIBLE);
+    }
+
+    /** 决斗开始：退出大厅聊天模式，恢复决斗内玩家分侧聊天 + 系统/观战弹幕 */
+    public void exitLobbyChatMode() {
+        if (!lobbyChatMode) return;
+        lobbyChatMode = false;
+        if (lobbyChatContainer != null) lobbyChatContainer.removeAllViews();
+        clearDanmaku();
+    }
+
+    /** 大厅聊天列表追加：旧→新从上往下排列，每条独立半透明黑底；超过 10 条移除最上方旧消息；颜色对齐 drawing.cpp chatColor */
+    private void appendLobbyChat(int playerType, String message) {
+        if (lobbyChatContainer == null) return;
+        if (message == null) message = "";
+        // 表情编码在大厅没有头像气泡可依附，直接忽略
+        if (isEmoticonCode(message)) return;
         String text;
         int color;
-        if (playerType == 8) {            // chatColor[8]：系统消息
+        if (playerType >= 0 && playerType < 4) {
+            // 玩家消息：昵称: 内容（颜色对齐 chatColor[0..3] 白色）
+            text = chatNickname(playerType) + ": " + message;
+            color = 0xFFFFFFFF;
+        } else if (playerType == 8) {
             text = "[System]: " + message;
-            color = 0xFF8080FF;
-        } else if (playerType == 9) {     // chatColor[9]：脚本错误
+            color = 0xFF8080FF;                       // chatColor[8]
+        } else if (playerType == 9) {
             text = "[Script Error]: " + message;
-            color = 0xFFFF4040;
-        } else if (playerType == 10) {    // chatColor[10]：隐藏名
+            color = 0xFFFF4040;                       // chatColor[9]
+        } else if (playerType == 10) {
             text = "[********]: " + message;
-            color = 0xFFFF4040;
-        } else {                          // 观战者 11-19 无前缀（对齐 AddChatMsg default 分支）
+            color = 0xFFFF4040;                       // chatColor[10]
+        } else {
+            // 观战者 11-19（无前缀）与其他未知类型
             text = message;
             color = (playerType >= 11 && playerType <= 19)
                     ? DANMAKU_OBS_COLORS[playerType - 11] : 0xFFFFFFFF;
         }
         TextView tv = new TextView(activity);
         tv.setText(text);
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);  // 与 tv_chat_message 统一 9sp
+        tv.setTextColor(color);
+        tv.setBackgroundColor(CHAT_BG_COLOR);               // 对齐 drawing.cpp draw2DRectangle 0xa0000000
+        tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
+        float density = activity.getResources().getDisplayMetrics().density;
+        int hPadding = (int) (3 * density);
+        tv.setPadding(hPadding, 0, hPadding, 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = (int) (2 * density);          // 每条之间留间隙，黑底不连成整块
+        lobbyChatContainer.addView(tv, lp);
+        // 超过 10 条：移除最上方最旧的一条
+        while (lobbyChatContainer.getChildCount() > MAX_LOBBY_CHAT_LINES) {
+            lobbyChatContainer.removeViewAt(0);
+        }
+    }
+
+    /**
+     * 系统/脚本错误/观战消息以弹幕形式横向滚动显示：
+     * 对齐 drawing.cpp L1587-1593：chatType>=4 时 offsetX = (1200 - chatTiming[i]) * 4，
+     * 消息自右向左匀速移动直至离场消失；颜色对齐 chatColor[chatType]：
+     * 8 系统=0xFF8080FF，9 脚本错误/10 隐藏名=0xFFFF4040，11-19 观战=chatColor[11..19] 轮换。
+     * 前缀对齐 game.cpp AddChatMsg：8→"[System]: "、9→"[Script Error]: "、10→"[********]: "、
+     * 观战 11-19 无前缀（default 分支不追加）。
+     * 弹幕层叠加在 layout_top_info 上一层，行位从上到下循环（最多 5 行）
+     */
+    private void showChatDanmaku(int playerType, String message) {
+        if (message == null || message.isEmpty()) return;
+        if (layoutDanmaku == null) return;
+        if (layoutDanmaku.getWidth() <= 0) {
+            // 首帧尚未布局完成：延后到布局后再入场
+            layoutDanmaku.post(() -> showChatDanmaku(playerType, message));
+            return;
+        }
+        String text;
+        int color;
+        if (playerType == 8) {
+            text = "[System]: " + message;
+            color = 0xFF8080FF;                       // chatColor[8]
+        } else if (playerType == 9) {
+            text = "[Script Error]: " + message;
+            color = 0xFFFF4040;                       // chatColor[9]
+        } else if (playerType == 10) {
+            text = "[********]: " + message;
+            color = 0xFFFF4040;                       // chatColor[10]
+        } else {
+            text = message;
+            color = (playerType >= 11 && playerType <= 19)
+                    ? DANMAKU_OBS_COLORS[playerType - 11] : 0xFFFFFFFF;
+        }
+        TextView tv = new TextView(activity);
+        tv.setText(text);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与 tv_chat_message 统一 9sp
         tv.setTextColor(color);
         tv.setSingleLine(true);
-        // 对齐 drawing.cpp shadowloc：黑色偏移 1px 阴影
+        tv.setBackgroundColor(CHAT_BG_COLOR); // 对齐 drawing.cpp draw2DRectangle 0xa0000000
+        int hPadding = (int) (3 * activity.getResources().getDisplayMetrics().density);
+        tv.setPadding(hPadding, 0, hPadding, 0);
+        // 对齐 drawing.cpp shadowloc：黑色 1px 偏移阴影，保证血条背景上可读
         tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
-        int row = danmakuRowIndex % DANMAKU_MAX_ROWS;
+        int row = danmakuRowIndex % DANMAKU_MAX_ROWS; // 超过 5 行循环回第 1 行
         danmakuRowIndex++;
         int rowHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 DANMAKU_ROW_HEIGHT_DP, activity.getResources().getDisplayMetrics());
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.TOP | Gravity.START);
-        lp.topMargin = row * rowHeight;
-        lp.leftMargin = container.getWidth(); // 起点：LPbar 区域上一层的右侧边缘
-        container.addView(tv, lp);
+        lp.topMargin = row * rowHeight;               // LPbar 区域上一层，从上到下分行
+        lp.leftMargin = layoutDanmaku.getWidth();     // 起点：顶部信息区右缘之外
+        layoutDanmaku.addView(tv, lp);
         danmakuViews.add(tv);
         float density = activity.getResources().getDisplayMetrics().density;
         tv.post(() -> {
-            // 匀速：总路程 = 起点到最左侧 + 自身宽度，时长与路程成正比
-            int distance = container.getWidth() + tv.getWidth();
-            long duration = (long) (distance / (DANMAKU_SPEED_DP_PER_MS * density));
+            // 匀速：总路程 = 弹幕层宽度 + 自身宽度（一直移动到 activity 最左侧消失）
+            int distance = layoutDanmaku.getWidth() + tv.getWidth();
+            long duration = Math.max(1, (long) (distance / (DANMAKU_SPEED_DP_PER_MS * density)));
             tv.animate().translationX(-distance).setDuration(duration)
                     .withEndAction(() -> {
                         danmakuViews.remove(tv);
-                        container.removeView(tv);
+                        layoutDanmaku.removeView(tv);
                     }).start();
         });
-    }
-
-    /** 清除全部进行中的弹幕 */
-    private void clearDanmaku() {
-        FrameLayout container = activity.findViewById(R.id.layout_game_right);
-        for (TextView tv : danmakuViews) {
-            tv.animate().cancel();
-            if (container != null) container.removeView(tv);
-        }
-        danmakuViews.clear();
-        danmakuRowIndex = 0;
     }
 
     /** 隐藏聊天消息文本（对齐 gframe BUTTON_CHATTING 切换关闭时的 ClearChatMsg：清空聊天显示） */
     public void clearChatMessages() {
         myChatLines.clear();
         opChatLines.clear();
+        clearDanmaku();   // clearChatMessages() 末尾：停止聊天时清空弹幕
         if (tvChatMessage1 != null) {
             tvChatMessage1.setText("");
             tvChatMessage1.setVisibility(View.GONE);
@@ -607,7 +728,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             tvChatMessage2.setText("");
             tvChatMessage2.setVisibility(View.GONE);
         }
-        clearDanmaku();
     }
 
     private boolean isEmoticonCode(String message) {

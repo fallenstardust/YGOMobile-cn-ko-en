@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.GridLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -59,7 +58,6 @@ public class AnnounceAttributeDialog {
     private int announceCount = 1;
 
     private TextView tvTitle;
-    private GridLayout layoutChecks;
     private final CheckBox[] chkAttributes = new CheckBox[CardAttribute.values().length];
 
     private OnAttributeSelectedListener listener;
@@ -96,29 +94,25 @@ public class AnnounceAttributeDialog {
         return this;
     }
 
+    /** XML 中固定的 7 个属性勾选框，顺序与 CardAttribute.values() 一致 */
+    private static final int[] CHECKBOX_IDS = {
+            R.id.cb_anattrib_earth, R.id.cb_anattrib_water, R.id.cb_anattrib_fire,
+            R.id.cb_anattrib_wind, R.id.cb_anattrib_light, R.id.cb_anattrib_dark,
+            R.id.cb_anattrib_divine
+    };
+
     private void build() {
         View root = LayoutInflater.from(context).inflate(R.layout.dialog_announce_attribute, null);
         tvTitle = root.findViewById(R.id.tv_anattrib_title);
-        layoutChecks = root.findViewById(R.id.layout_anattrib_checks);
         tvTitle.setText(title);
 
         CardAttribute[] attrs = CardAttribute.values();
         for (int i = 0; i < attrs.length; i++) {
-            CheckBox cb = new CheckBox(context);
+            CheckBox cb = root.findViewById(CHECKBOX_IDS[i]);
             cb.setText(mStringManager.getSystemString(attrs[i].getLanguageIndex(), FALLBACK_NAMES[i]));
-            cb.setTextColor(Color.WHITE);
-            cb.setTextSize(12);
             cb.setVisibility((attrs[i].getId() & availableMask) != 0 ? View.VISIBLE : View.GONE);
             cb.setOnCheckedChangeListener((buttonView, isChecked) -> onCheckedChanged());
-            // GridLayout 等宽列（对齐 game.cpp L935-937 chkAttribute 每行 4 格）
-            GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = 0;
-            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-            lp.setMargins(dp(2), dp(2), dp(2), dp(2));
-            cb.setLayoutParams(lp);
             chkAttributes[i] = cb;
-            layoutChecks.addView(cb);
         }
 
         popupWindow = new PopupWindow(root, dp(DIALOG_WIDTH_DP),

@@ -530,6 +530,9 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private void enterDuelingUI() {
         getMainMenuDialog().hideMainMenu();
+        // 决斗开始：从 player waiting 大厅聊天切回决斗显示
+        //（恢复决斗场渲染，聊天改回玩家分侧 + 系统/观战弹幕逻辑）
+        exitLobbyChatUI();
         showGameUI();
         if (lanModeDialog != null) {
             lanModeDialog.setOnDismissListener(null);
@@ -668,6 +671,45 @@ public class YGOProActivity extends AppCompatActivity implements
         if (engine != null) {
             engine.sendKick(pos);
         }
+    }
+
+    @Override
+    public void onPlayerWaitingShown() {
+        runOnUiThread(this::enterLobbyChatUI);
+    }
+
+    /**
+     * player waiting 大厅聊天界面：显示聊天输入框与 layout_danmaku 聊天列表；
+     * gameTopInfo（layout_top_info）的子布局与决斗场渲染在此期间不显示
+     */
+    private void enterLobbyChatUI() {
+        if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
+        if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
+        // 大厅聊天期间隐藏决斗场 GL 渲染（GLSurfaceView 置 GONE，决斗开始时恢复）
+        View gameFieldView = findViewById(R.id.game_field_view);
+        if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
+        if (topInfoManager != null) topInfoManager.hide();
+        fieldCtl.enterLobbyChatMode();
+        // 大厅等待期间聊天输入框始终可用；此时窗口焦点在 LanModeDialog（PopupWindow）上，
+        // 点击输入框无法自动唤起输入法，需点击时显式请求焦点并调起
+        if (etChatInput != null) {
+            etChatInput.setVisibility(View.VISIBLE);
+            etChatInput.setOnClickListener(v -> v.post(() -> {
+                v.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
+            }));
+        }
+        if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
+    }
+
+    /** 从大厅聊天切回决斗显示：恢复决斗场渲染并退出大厅聊天列表模式 */
+    private void exitLobbyChatUI() {
+        View gameFieldView = findViewById(R.id.game_field_view);
+        if (gameFieldView != null) gameFieldView.setVisibility(View.VISIBLE);
+        if (fieldCtl != null) fieldCtl.exitLobbyChatMode();
+        // 恢复决斗中输入框的默认点击行为（点击自动聚焦，无需强制弹输入法）
+        if (etChatInput != null) etChatInput.setOnClickListener(null);
     }
 
     public void showDeckEditorView() {
@@ -916,11 +958,9 @@ public class YGOProActivity extends AppCompatActivity implements
         if (ignored) {
             settings.saveIntSettings("chkDisableChatting", 0);
             cardDetailPanel.updateChatIcon(false);
+            // 仅显示输入框，不主动获取焦点/弹输入法（避免一显示就弹出输入法），用户点击时再弹出
+            etChatInput.clearFocus();
             etChatInput.setVisibility(View.VISIBLE);
-            etChatInput.requestFocus();
-            if (imm != null) {
-                imm.showSoftInput(etChatInput, InputMethodManager.SHOW_IMPLICIT);
-            }
         } else {
             settings.saveIntSettings("chkDisableChatting", 1);
             cardDetailPanel.updateChatIcon(true);

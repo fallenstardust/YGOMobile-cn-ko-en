@@ -20,7 +20,7 @@
         app:field_preview_hand="true"
         app:field_preview_labels="true" />
 
-    <!-- 决斗场区域（最下层，铺满整个区域） -->
+    <!-- GameTopInfo区域（最上层） -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -354,9 +354,9 @@
                 android:layout_marginStart="50dp"
                 android:maxLines="5"
                 android:ellipsize="end"
-                android:background="#40000000"
+                android:background="#A0000000"
                 android:textColor="@color/white"
-                android:textSize="8sp"
+                android:textSize="9sp"
                 android:visibility="gone" />
 
             <!-- 提示信息 -->
@@ -368,7 +368,7 @@
                 android:background="@color/colorNavy"
                 android:text="请选择要特殊召唤的怪兽（9-9）"
                 android:textColor="@color/white"
-                android:textSize="8sp"
+                android:textSize="9sp"
                 android:visibility="invisible" />
 
             <TextView
@@ -376,15 +376,25 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:background="#40000000"
+                android:background="#A0000000"
                 android:layout_marginEnd="50dp"
                 android:maxLines="5"
                 android:ellipsize="end"
                 android:textColor="@color/white"
-                android:textSize="8sp"
+                android:textSize="9sp"
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>
+
+    <!-- 系统/观战消息弹幕层（对齐 drawing.cpp DrawChatMsg chatType>=4：
+         offsetX = (1200 - chatTiming) * 4 从右往左横向滚动；
+         叠加在 layout_top_info（LPbar 区域）上一层，最多 5 行从上到下循环，颜色对齐 chatColor[]） -->
+    <FrameLayout
+        android:id="@+id/layout_danmaku"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:clipChildren="false" />
 
     <!-- 表情气泡（对齐 gframe drawing.cpp DrawEmoticon）：收到表情聊天时显示在发送方头像下方，由 GameFieldController 定时自动隐藏 -->
     <ImageView
@@ -425,7 +435,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@drawable/ygopro_deck_background"
+        android:background="@drawable/ygopro_base_background"
         android:imeOptions="actionSend|flagNoExtractUi"
         android:inputType="text"
         android:maxLines="1"

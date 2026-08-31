@@ -19,12 +19,14 @@
         android:id="@+id/et_ancard_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:layout_marginTop="6dp"
-        android:background="#335577"
-        android:hint="输入卡名或卡号"
+        android:background="@drawable/ygopro_base_background"
+        android:hint="@string/hit_keyword1"
         android:inputType="text"
         android:singleLine="true"
         android:textColor="@color/white"
+        android:padding="4dp"
         android:textColorHint="#888888"
         android:textSize="11sp" />
 
@@ -32,14 +34,14 @@
         android:id="@+id/lv_ancard"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:layout_marginTop="4dp" />
+        android:background="@drawable/ygopro_base_background"
+        android:layout_marginVertical="5dp" />
 
     <Button
         android:id="@+id/btn_ancard_ok"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="6dp"
         android:background="@drawable/button3_bg"
         android:minWidth="100dp"
         android:minHeight="30dp"

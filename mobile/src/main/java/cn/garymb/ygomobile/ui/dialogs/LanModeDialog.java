@@ -106,6 +106,9 @@ public class LanModeDialog {
         void onStartGameRequested();
 
         void onKickPlayerRequested(int pos);
+
+        /** player waiting 界面已显示：Activity 切换到大厅聊天显示（聊天输入框 + layout_danmaku 聊天列表） */
+        void onPlayerWaitingShown();
     }
 
     private OnLanModeListener listener;
@@ -505,6 +508,9 @@ public class LanModeDialog {
         resetPlayerWaitingState();
         setupKickButtons();
         setupStartButton();
+
+        // 通知 Activity 进入大厅聊天显示（聊天输入框 + layout_danmaku 聊天列表）
+        if (listener != null) listener.onPlayerWaitingShown();
     }
 
     public void resetPlayerWaitingState() {
