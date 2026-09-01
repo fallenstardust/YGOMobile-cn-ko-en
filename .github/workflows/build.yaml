@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - '*.*.*'
-    
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -37,6 +37,7 @@ jobs:
         echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
         echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
         echo "$ANDROID_SDK_ROOT/build-tools/35.0.0" >> $GITHUB_PATH
+        echo "$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_PATH
 
     - name: Use CI Gradle repositories
       run: |
@@ -68,6 +69,24 @@ jobs:
         zip -r scripts.zip script
         mv *.zip mobile/assets/data/
 
+    - name: Prepare So
+      run: |
+        cd mobile/libs
+        mkdir x86
+        mkdir x86_64
+        mkdir arm64-v8a
+        mkdir armeabi-v7a
+
+        cd x86
+        wget https://github.com/jwyxym/ygopru/releases/download/ygomobile-latest/ygoserver-android-x86.ygomobile_support.so -O libygoserver.so
+        cd ../x86_64
+        wget https://github.com/jwyxym/ygopru/releases/download/ygomobile-latest/ygoserver-android-x86_64.ygomobile_support.so -O libygoserver.so
+        cd ../arm64-v8a
+        wget https://github.com/jwyxym/ygopru/releases/download/ygomobile-latest/ygoserver-android-arm64-v8a.ygomobile_support.so -O libygoserver.so
+        cd ../armeabi-v7a
+        wget https://github.com/jwyxym/ygopru/releases/download/ygomobile-latest/ygoserver-android-armeabi-v7a.ygomobile_support.so -O libygoserver.so
+
+
     - name: Prepare DB
       run: |
         git clone https://github.com/mycard/ygopro-database.git --depth 1 ygopro-database
@@ -80,7 +99,7 @@ jobs:
 
     - name: Prepare Sound
       run: |
-        cd mobile/assets/en/data
+        cd mobile/assets/data
         wget https://github.com/fallenstardust/YGOMobile-cn-ko-en/releases/download/sounds/sound.fonts.zip
         unzip sound.fonts.zip
         rm sound.fonts.zip
@@ -94,6 +113,11 @@ jobs:
       run: |
         cd mobile/libs
         wget https://github.com/mercury233/libWindbot/releases/download/latest/libWindbot.aar
+
+    - name: Build NDK
+      run: |
+        cd libcore
+        "$ANDROID_NDK_HOME/ndk-build"
 
     - name: Build
       run: |
@@ -118,67 +142,3 @@ jobs:
         name: YGOMobile.apk
         retention-days: 1
         path: ./build/YGOMobile.apk
-
-  create-release:
-    needs: [build-android]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: build
-
-      - name: Create release-latest
-        run: |
-          cd build
-          gh release delete release-latest --cleanup-tag -y || true
-          gh release create release-latest $(find . -type f) \
-            --target "$GITHUB_SHA" \
-            --title "release-latest" \
-            --notes "Latest build for ${{ github.ref_name }}" \
-            --latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  update-s3:
-    needs: [build-android]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: build
-
-      - name: proxy
-        uses: jwyxym/jwyxym/shadowsocks@master
-        with:
-          ss_server: ${{ secrets.SS_SERVER }}
-          ss_server_port: ${{ secrets.SS_SERVER_PORT }}
-          ss_pass: ${{ secrets.SS_PASS }}
-
-      - name: Upload to Bucket
-        uses: jwyxym/jwyxym/s3@master
-        with:
-          proxy: http://127.0.0.1:1081
-          s3_endpoint: ${{ secrets.S3_ENDPOINT }}
-          access_key: ${{ secrets.S3_ACCESS_KEY }}
-          secret_key: ${{ secrets.S3_SECRET_KEY }}
-          bucket: ${{ secrets.S3_BUCKET }}
-          file_name: YGOMobile.apk
-          file_path: ./build/YGOMobile.apk/YGOMobile.apk
-
-      - name: cdn
-        uses: jwyxym/jwyxym/edgeone-cache@master
-        with:
-          proxy: http://127.0.0.1:1081
-          secret_id: ${{ secrets.EDGE_ID }}
-          secret_key: ${{ secrets.EDGE_KEY }}
-          zone_id: ${{ secrets.EDGE_ZONE_ID }}
-          url_target: ${{ secrets.EDGE_URL }}
