@@ -37,6 +37,7 @@ import java.util.Locale;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.game.ChatInputUI;
 import cn.garymb.ygomobile.game.DeckEditorManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
@@ -99,8 +100,9 @@ public class YGOProActivity extends AppCompatActivity implements
 
     private ReplayEngine currentReplayEngine;
     private CardDetailPanel cardDetailPanel;
-    private GameFieldController fieldCtl;
+    private ChatInputUI chatInputUI;
     private GameTopInfoManager topInfoManager;
+    private GameFieldController fieldCtl;
     private ShowDialogUtil dialogUtil;
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
@@ -211,13 +213,24 @@ public class YGOProActivity extends AppCompatActivity implements
         layoutGameRight = findViewById(R.id.layout_game_right);
         layoutGameContent = findViewById(R.id.layout_game_content);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
-        etChatInput = findViewById(R.id.et_chat_input);
+        EditText etChatInput = findViewById(R.id.et_chat_input);
+        
+        // 初始化聊天输入框 UI 管理器
+        chatInputUI = new ChatInputUI(this, null);
+        chatInputUI.bindChatInput(etChatInput);
+        
+        // 设置聊天消息监听器
+        chatInputUI.setOnChatMessageListener(message -> {
+            if (engine != null && engine.getClient() != null) {
+                engine.sendChat(message);
+            }
+        });
+        
         // 聊天输入框初始可见性跟随停用聊天设置（对齐 gframe wChat：停用聊天时隐藏）
         if (etChatInput != null
                 && AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1) {
             etChatInput.setVisibility(View.GONE);
         }
-        setupChatInput();
 
         cardDetailPanel = new CardDetailPanel(this);
         cardDetailPanel.bindViews();
@@ -229,31 +242,6 @@ public class YGOProActivity extends AppCompatActivity implements
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
     }
 
-    private void setupChatInput() {
-        if (etChatInput == null) return;
-        etChatInput.setOnEditorActionListener((v, actionId, event) -> {
-            boolean isSend = actionId == EditorInfo.IME_ACTION_SEND
-                    || actionId == EditorInfo.IME_ACTION_DONE
-                    || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
-                    && event.getAction() == KeyEvent.ACTION_DOWN);
-            if (isSend) {
-                sendChatMessage();
-                return true;
-            }
-            return false;
-        });
-    }
-
-    private void sendChatMessage() {
-        String message = etChatInput.getText().toString().trim();
-        if (message.isEmpty()) return;
-        if (engine != null && engine.getClient() != null) {
-            engine.sendChat(message);
-        }
-        etChatInput.setText("");
-    }
-
-    /** 表情入口（CardDetailPanel 的 btn_emote，对齐 gframe BUTTON_EMOTICON）：开关切换 4x4 表情面板 */
     public void toggleEmotionDialog(View anchor) {
         if (emotionDialog == null) {
             emotionDialog = new EmotionDialog(this);
@@ -690,16 +678,12 @@ public class YGOProActivity extends AppCompatActivity implements
         if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
         if (topInfoManager != null) topInfoManager.hide();
         fieldCtl.enterLobbyChatMode();
-        // 大厅等待期间聊天输入框始终可用；此时窗口焦点在 LanModeDialog（PopupWindow）上，
-        // 点击输入框无法自动唤起输入法，需点击时显式请求焦点并调起
-        if (etChatInput != null) {
-            etChatInput.setVisibility(View.VISIBLE);
-            etChatInput.setOnClickListener(v -> v.post(() -> {
-                v.requestFocus();
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm != null) imm.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
-            }));
+        
+        // 使用 ChatInputUI 进入大厅聊天模式
+        if (chatInputUI != null) {
+            chatInputUI.enterLobbyChatUI();
         }
+        
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
     }
 
@@ -708,8 +692,11 @@ public class YGOProActivity extends AppCompatActivity implements
         View gameFieldView = findViewById(R.id.game_field_view);
         if (gameFieldView != null) gameFieldView.setVisibility(View.VISIBLE);
         if (fieldCtl != null) fieldCtl.exitLobbyChatMode();
-        // 恢复决斗中输入框的默认点击行为（点击自动聚焦，无需强制弹输入法）
-        if (etChatInput != null) etChatInput.setOnClickListener(null);
+        
+        // 使用 ChatInputUI 退出大厅聊天模式
+        if (chatInputUI != null) {
+            chatInputUI.exitLobbyChatUI();
+        }
     }
 
     public void showDeckEditorView() {
@@ -951,25 +938,12 @@ public class YGOProActivity extends AppCompatActivity implements
      * 启用状态 → 停用：图标 tShut、隐藏聊天输入框并清空聊天消息
      */
     public void toggleChatInput() {
-        if (etChatInput == null) return;
-        AppsSettings settings = AppsSettings.get();
-        boolean ignored = settings.getIntSettings("chkDisableChatting", 0) == 1;
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (ignored) {
-            settings.saveIntSettings("chkDisableChatting", 0);
-            cardDetailPanel.updateChatIcon(false);
-            // 仅显示输入框，不主动获取焦点/弹输入法（避免一显示就弹出输入法），用户点击时再弹出
-            etChatInput.clearFocus();
-            etChatInput.setVisibility(View.VISIBLE);
-        } else {
-            settings.saveIntSettings("chkDisableChatting", 1);
-            cardDetailPanel.updateChatIcon(true);
-            if (imm != null && etChatInput.getWindowToken() != null) {
-                imm.hideSoftInputFromWindow(etChatInput.getWindowToken(), 0);
-            }
-            etChatInput.clearFocus();
-            etChatInput.setVisibility(View.GONE);
-            if (fieldCtl != null) fieldCtl.clearChatMessages();
+        if (chatInputUI != null) {
+            chatInputUI.toggleChatInput(!chatInputUI.isChatEnabled(), () -> {
+                if (fieldCtl != null) {
+                    fieldCtl.clearChatMessages();
+                }
+            });
         }
     }
 

@@ -176,16 +176,16 @@ public class LanModeDialog {
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(false);
+        popupWindow.setOutsideTouchable(true);
         popupWindow.setFocusable(true);
         popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         popupWindow.setTouchInterceptor((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
-                return true;
-            }
             return false;
         });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+
+        customView.setFocusableInTouchMode(true);
+        customView.requestFocus();
 
         draggableHelper = new DraggablePopupHelper(context, "lan_mode_dialog");
         draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
