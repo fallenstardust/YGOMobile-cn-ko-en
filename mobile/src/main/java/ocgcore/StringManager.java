@@ -101,10 +101,17 @@ public class StringManager implements Closeable {
                 String[] words = line.split("[\t ]+", 3);
 
                 if (words.length >= 3) {
+                    // 文本只取第一个制表符之前的部分（制表符后为日文注释等内容），名字内部空格保留
+                    String text = words[2];
+                    int tabIndex = text.indexOf('\t');
+                    if (tabIndex >= 0) {
+                        text = text.substring(0, tabIndex);
+                    }
+                    text = text.trim();
                     if (PRE_SETNAME.equals(words[0])) {
                         //setcode
                         long id = toNumber(words[1]);
-                        CardSet cardSet = new CardSet(id, words[2].trim());
+                        CardSet cardSet = new CardSet(id, text);
                         int i = mCardSets.indexOf(cardSet);
                         if (i >= 0) {
                             CardSet cardSet1 = mCardSets.get(i);
@@ -113,7 +120,7 @@ public class StringManager implements Closeable {
                             mCardSets.add(cardSet);
                         }
                     } else {
-                        mSystem.put((int) toNumber(words[1]), words[2].trim());
+                        mSystem.put((int) toNumber(words[1]), text);
                     }
                 }
             }
@@ -149,11 +156,18 @@ public class StringManager implements Closeable {
                 // 最多切分为3段，保留文本中的空格（韩/英/日等非中文语言的文本包含空格）
                 String[] words = line.split("[\t ]+", 3);
                 if (words.length >= 3) {
+                    // 文本只取第一个制表符之前的部分（制表符后为日文注释等内容），名字内部空格保留
+                    String text = words[2];
+                    int tabIndex = text.indexOf('\t');
+                    if (tabIndex >= 0) {
+                        text = text.substring(0, tabIndex);
+                    }
+                    text = text.trim();
                     if (PRE_SETNAME.equals(words[0])) {
                         //setcode
                         long id = toNumber(words[1]);
                         //setname
-                        String setname = words[2].trim();
+                        String setname = text;
                         CardSet cardSet;
                         cardSet = new CardSet(id, setname);
                         int i = mCardSets.indexOf(cardSet);
@@ -164,7 +178,7 @@ public class StringManager implements Closeable {
                             mCardSets.add(cardSet);
                         }
                     } else {
-                        mSystem.put((int) toNumber(words[1]), words[2].trim());
+                        mSystem.put((int) toNumber(words[1]), text);
                     }
                 }
             }
