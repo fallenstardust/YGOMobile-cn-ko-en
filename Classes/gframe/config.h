@@ -1,13 +1,8 @@
 #ifndef YGOPRO_CONFIG_H
 #define YGOPRO_CONFIG_H
 
-#define IRR_COMPILE_WITH_DX9_DEV_PACK
-
-#include <cerrno>
 #include <cstdio>
-#include <string>
-
-#include "../ocgcore/ocgapi.h"
+#include "../ocgcore/common.h"
 
 #define _IRR_ANDROID_PLATFORM_
 
@@ -46,10 +41,8 @@ inline T myclamp(T v, T lo, T hi) {
 	return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
-#include <irrlicht.h>
 using namespace irr::io;
 using namespace irr::os;
-
 constexpr uint16_t PRO_VERSION = 0x1362;
 
 #endif // YGOPRO_CONFIG_H

@@ -10,24 +10,15 @@
 
 #include "common.h"
 
-#ifdef __cplusplus
-#define EXTERN_C extern "C"
-#else
-#define EXTERN_C
-#endif
-
+#if defined(OCGCORE_EXPORT_FUNCTIONS)
 #ifdef _WIN32
-#define OCGCORE_API EXTERN_C __declspec(dllexport)
+#define OCGCORE_API __declspec(dllexport)
 #else
-#define OCGCORE_API EXTERN_C __attribute__ ((visibility ("default")))
+#define OCGCORE_API [[gnu::visibility("default")]]
 #endif
-
-#define SEED_COUNT	8
-
-#define LEN_FAIL	0
-#define LEN_EMPTY	4
-#define LEN_HEADER	8
-#define TEMP_CARD_ID	0
+#else
+#define OCGCORE_API
+#endif
 
 struct card_data;
 
@@ -35,13 +26,17 @@ typedef byte* (*script_reader)(const char* script_name, int* len);
 typedef uint32_t (*card_reader)(uint32_t code, card_data* data);
 typedef uint32_t (*message_handler)(intptr_t pduel, uint32_t msg_type);
 
-OCGCORE_API void set_script_reader(script_reader f);
-OCGCORE_API void set_card_reader(card_reader f);
-OCGCORE_API void set_message_handler(message_handler f);
-
 byte* read_script(const char* script_name, int* len);
 uint32_t read_card(uint32_t code, card_data* data);
 uint32_t handle_message(void* pduel, uint32_t message_type);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+OCGCORE_API void set_script_reader(script_reader f);
+OCGCORE_API void set_card_reader(card_reader f);
+OCGCORE_API void set_message_handler(message_handler f);
 
 OCGCORE_API intptr_t create_duel(uint_fast32_t seed);
 OCGCORE_API intptr_t create_duel_v2(uint32_t seed_sequence[]);
@@ -61,5 +56,9 @@ OCGCORE_API void set_responsei(intptr_t pduel, int32_t value);
 OCGCORE_API void set_responseb(intptr_t pduel, byte* buf);
 OCGCORE_API int32_t preload_script(intptr_t pduel, const char* script_name);
 OCGCORE_API byte* default_script_reader(const char* script_name, int* len);
+
+#ifdef __cplusplus
+} /* end of the 'extern "C"' block */
+#endif
 
 #endif /* OCGAPI_H_ */

@@ -70,6 +70,9 @@ import com.ourygo.lib.duelassistant.service.DuelAssistantService;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -78,6 +81,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -487,33 +491,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
             super.handleMessage(msg);
             switch (msg.what) {
                 case TYPE_SETTING_GET_VERSION_OK:
-                    String message = msg.obj.toString();
-                    if (message.contains(ID1) && message.contains(ID2) && message.contains(ID3)) {
-                        Version = message.substring(message.indexOf(ID1) + ID1.length(), message.indexOf(";"));//截取版本号
-                        Cache_link = message.substring(message.indexOf(ID2) + ID2.length(), message.indexOf("$"));//截取下载地址
-                        activity.Cache_pre_release_code = message.substring(message.indexOf(ID3) + ID3.length() + 1);//截取先行-正式对照文本
-                        if (!TextUtils.isEmpty(activity.Cache_pre_release_code)) {
-                            arrangeCodeList(activity.Cache_pre_release_code);//转换成两个数组
-                        }
-                        if (Version.compareTo(BuildConfig.VERSION_NAME) > 0 && !TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)) {
-                            DialogPlus dialog = new DialogPlus(getContext());
-                            dialog.setMessage(R.string.Found_Update);
-                            dialog.setLeftButtonText(R.string.download_home);
-                            dialog.setLeftButtonListener((dlg, s) -> {
-                                Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setData(Uri.parse(Cache_link));
-                                startActivity(intent);
-                                dialog.dismiss();
-                            });
-                            dialog.show();
-                        } else {
-                            showBilibiliDialog();
-
-
-                        }
-                    } else {
-                        YGOUtil.showTextToast(R.string.Checking_Update_Failed);
-                    }
+                    parseVersionJson(msg.obj.toString());
                     break;
                 case TYPE_SETTING_GET_VERSION_FAILED:
                     ++FailedCount;
@@ -752,6 +730,51 @@ public class SettingFragment extends PreferenceFragmentPlus {
             Log.e(Constants.TAG, e + "");
         } finally {
 
+        }
+    }
+
+    private void parseVersionJson(String jsonStr) {
+        try {
+            JSONObject json = new JSONObject(jsonStr);
+            Version = json.optString("versionname");
+            HomeActivity.Update_time = json.optString("update_time");
+            JSONArray downloadLink = json.optJSONArray("download_link");
+            if (downloadLink != null && downloadLink.length() > 0) {
+                Cache_link = downloadLink.optString(0);
+            }
+            JSONObject preReleaseCode = json.optJSONObject("pre_release_code");
+            if (preReleaseCode != null && preReleaseCode.length() > 0) {
+                StringBuilder sb = new StringBuilder();
+                Iterator<String> keys = preReleaseCode.keys();
+                while (keys.hasNext()) {
+                    String preCode = keys.next();
+                    sb.append(preCode).append(" ").append(preReleaseCode.optString(preCode)).append("\n");
+                }
+                activity.Cache_pre_release_code = sb.toString();
+            }
+            if (!TextUtils.isEmpty(activity.Cache_pre_release_code)) {
+                activity.pre_code_list.clear();
+                activity.released_code_list.clear();
+                arrangeCodeList(activity.Cache_pre_release_code);
+            }
+            if (!TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)
+                    && Version.compareTo(BuildConfig.VERSION_NAME) > 0) {
+                DialogPlus dialog = new DialogPlus(getContext());
+                dialog.setMessage(R.string.Found_Update);
+                dialog.setLeftButtonText(R.string.download_home);
+                dialog.setLeftButtonListener((dlg, s) -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(Cache_link));
+                    startActivity(intent);
+                    dialog.dismiss();
+                });
+                dialog.show();
+            } else {
+                showBilibiliDialog();
+            }
+        } catch (JSONException e) {
+            Log.e(Constants.TAG, "parse version json error: " + e);
+            YGOUtil.showTextToast(R.string.Checking_Update_Failed);
         }
     }
 

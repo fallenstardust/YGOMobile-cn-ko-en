@@ -458,7 +458,6 @@ uint32_t card::get_another_code() {
 }
 int32_t card::is_set_card(uint32_t set_code) {
 	uint32_t code1 = get_code();
-	card_data dat1;
 	if (code1 == data.code) {
 		if (data.is_setcode(set_code))
 			return TRUE;
@@ -3490,8 +3489,6 @@ int32_t card::is_can_be_special_summoned(effect* reason_effect, uint32_t sumtype
 	if(reason_effect->get_handler() == this)
 		reason_effect->status |= EFFECT_STATUS_SPSELF;
 	if(current.location == LOCATION_MZONE)
-		return FALSE;
-	if(current.location == LOCATION_REMOVED && (current.position & POS_FACEDOWN))
 		return FALSE;
 	if(is_affected_by_effect(EFFECT_REVIVE_LIMIT) && !is_status(STATUS_PROC_COMPLETE)) {
 		if((!nolimit && (current.location & (LOCATION_GRAVE | LOCATION_REMOVED | LOCATION_SZONE)))

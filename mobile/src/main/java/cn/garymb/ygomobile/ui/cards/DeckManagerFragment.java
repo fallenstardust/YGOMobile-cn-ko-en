@@ -326,8 +326,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
 
         // 卡组标题点击打开管理对话框
         tv_deck.setOnClickListener(v -> {
-            new DeckManageDialog(this).show(
-                    requireActivity().getSupportFragmentManager(), "pagerDialog");
+            DeckManageDialog.showDeckManageDialog(
+                    requireActivity().getSupportFragmentManager(), this, 0, null);
         });
 
         // 初始化撤销/重做按钮

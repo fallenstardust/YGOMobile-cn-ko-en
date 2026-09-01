@@ -98,6 +98,11 @@ public class DeckSelectFragment extends Fragment {
         binding.rvDeck.setAdapter(deckAdp);
         binding.rvResultList.setAdapter(resultListAdapter);
 
+        //打开对话框时，将右列卡组列表滚动到自动选中的当前卡组位置，保证其可见
+        if (deckAdp.getSelectPosition() >= 0) {
+            binding.rvDeck.post(() -> binding.rvDeck.scrollToPosition(deckAdp.getSelectPosition()));
+        }
+
         hideAllDeckUtil();
 
 
@@ -119,6 +124,8 @@ public class DeckSelectFragment extends Fragment {
                         }
                     }
                 }
+                //切换分类后重新定位当前卡组，不在该分类则取消选中，避免旧索引误高亮
+                deckAdp.setSelectPosition(findCurDeckPosition());
                 deckAdp.notifyDataSetChanged();
 
             }
@@ -148,7 +155,8 @@ public class DeckSelectFragment extends Fragment {
             public boolean onItemLongClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
                 DeckFile item = (DeckFile) adapter.getItem(position);
                 //即使为local，也有可能为卡包预览，因此过滤掉selectposition==0
-                if (deckAdp.isSelect() || typeAdp.getSelectPosition() == 0)
+                //注意：不能用deckAdp.isSelect()拦截，否则自动选中当前卡组后长按无法进入多选模式
+                if (typeAdp.getSelectPosition() == 0)
                     return true;
 
                 deckAdp.setManySelect(true);
@@ -168,16 +176,10 @@ public class DeckSelectFragment extends Fragment {
         resultListAdapter.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {
             @Override
             public void onItemSelect(int position, DeckFile item) {
-                binding.rvResultList.setVisibility(View.GONE);
-                binding.llMainUi.setVisibility(View.VISIBLE);
-                binding.inputDeckName.getEditableText().clear();
-                //dismiss();
+                //点击搜索结果加载卡组时只隐藏对话框，不重置搜索界面，保留搜索状态供下次恢复显示
                 mDialogListener.onDismiss();
                 onDeckMenuListener.onDeckSelect(item);
             }
-        });
-        binding.ivSearchDeckName.setOnClickListener(v -> {
-            searchDeck();
         });
 
         binding.inputDeckName.setOnEditorActionListener((v, actionId, event) -> {
@@ -190,19 +192,25 @@ public class DeckSelectFragment extends Fragment {
             return false;
         });
 
+        //点击清除按钮：清空输入内容，隐藏搜索结果列表，重新显示卡组分类列表和卡组列表
+        binding.ivClearDeckName.setOnClickListener(v -> {
+            binding.inputDeckName.getEditableText().clear();
+            binding.rvResultList.setVisibility(View.GONE);
+            binding.llMainUi.setVisibility(View.VISIBLE);
+        });
+
         binding.inputDeckName.addTextChangedListener(new TextWatcher() {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // 输入中监听
+                // 输入中监听：有输入内容时显示清除按钮和搜索图标，内容为空时隐藏
                 if (s.toString().isEmpty()) {
-                    binding.llMainUi.setVisibility(View.VISIBLE);
-                    binding.rvResultList.setVisibility(View.GONE);
-                    binding.ivSearchDeckName.setVisibility(View.GONE);
+                    binding.ivClearDeckName.setVisibility(View.GONE);
                 } else {
-                    binding.ivSearchDeckName.setVisibility(View.VISIBLE);
+                    binding.ivClearDeckName.setVisibility(View.VISIBLE);
                 }
-
+                //输入内容变化时即时根据关键词搜索卡组
+                searchDeck(false);
             }
 
             @Override
@@ -436,6 +444,8 @@ public class DeckSelectFragment extends Fragment {
                 clearDeckSelect();
                 deckList.clear();
                 deckList.addAll(DeckUtil.getDeckList(typeList.get(2).getPath()));
+                //删除分类后列表重置为未分类，同样重新定位当前卡组
+                deckAdp.setSelectPosition(findCurDeckPosition());
                 deckAdp.notifyDataSetChanged();
             }
         }));
@@ -506,17 +516,50 @@ public class DeckSelectFragment extends Fragment {
                 }
             }
         }
+        //在当前分类的卡组列表中定位当前加载的卡组，打开对话框时自动选中其卡组名
+        //（必须放在先行卡插入之后匹配，避免索引错位）
+        deckSelectPosition = findCurDeckPosition();
         resultListAdapter = new DeckListAdapter<DeckFile>(getContext(), resultList, -1);
         typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
         deckAdp = new DeckListAdapter<>(getContext(), deckList, deckSelectPosition);
     }
 
     /**
+     * 在当前卡组列表deckList中定位当前加载的卡组（依据最后使用的卡组路径）
+     *
+     * @return 找到返回其索引，否则返回-1
+     */
+    private int findCurDeckPosition() {
+        String selectDeckPath = AppsSettings.get().getLastDeckPath();
+        if (TextUtils.isEmpty(selectDeckPath) || deckList == null) {
+            return -1;
+        }
+        String lastDeckAbsPath = new File(selectDeckPath).getAbsolutePath();
+        for (int i = 0; i < deckList.size(); i++) {
+            if (TextUtils.equals(deckList.get(i).getPath(), lastDeckAbsPath)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * 根据et_input_deck_name的当前值，在allDeckList中搜索卡组
      */
     private void searchDeck() {
+        searchDeck(true);
+    }
+
+    /**
+     * 根据et_input_deck_name的当前值，在allDeckList中搜索卡组
+     *
+     * @param clearFocus 是否清除输入框焦点。打字过程中即时搜索时不清除焦点，避免打断输入
+     */
+    private void searchDeck(boolean clearFocus) {
         resultList.clear();
-        binding.inputDeckName.clearFocus();
+        if (clearFocus) {
+            binding.inputDeckName.clearFocus();
+        }
         String keyword = binding.inputDeckName.getText().toString();
         if (keyword.isEmpty()) {
             binding.llMainUi.setVisibility(View.VISIBLE);

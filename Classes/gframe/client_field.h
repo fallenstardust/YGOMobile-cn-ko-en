@@ -2,14 +2,22 @@
 #define CLIENT_FIELD_H
 
 #include "config.h"
-#include <random>
 #include <vector>
 #include <set>
 #include <map>
 #include <memory>
+#include <IEventReceiver.h>
+#include <vector3d.h>
+
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
 #endif
+
+namespace irr {
+	namespace gui {
+		class IGUIStaticText;
+	}
+}
 
 namespace ygo {
 
@@ -95,7 +103,6 @@ public:
 	bool cant_check_grave{ false };
 	bool tag_surrender{ false };
 	bool tag_teammate_surrender{ false };
-	std::mt19937 rnd;
 
 	ClientField();
 	~ClientField() override;
@@ -189,8 +196,8 @@ private:
 
 // TODO: move these (or all) colors to skin config
 #define CARD_LIST_OVERRIDE_TEXT_COLOR		0xff000099 // Blue
-#define CARD_LIST_DEFAULT_BACKGROUND_COLOR	0xff56649f // White
+#define CARD_LIST_DEFAULT_BACKGROUND_COLOR	0xff2196F3 // mainBlue
 #define CARD_LIST_OPPONENT_BACKGROUND_COLOR	0xff5a5a5a // Gray
-#define CARD_LIST_SELECTED_BACKGROUND_COLOR	0x6011113d // Yellow
+#define CARD_LIST_SELECTED_BACKGROUND_COLOR	0x6011113d // Navy
 
 #endif //CLIENT_FIELD_H

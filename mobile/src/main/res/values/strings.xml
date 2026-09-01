@@ -508,4 +508,12 @@
     <string name="duel_ranking">Duel Rank</string>
     <string name="card_ranking">Card Rank</string>
     <string name="deck_dist_pie_analysis">Deck Distribution Pie Analysis</string>
+
+    <!-- 资源分享相关 -->
+    <string name="resource_share_title">资源共享请求</string>
+    <string name="resource_share_message">%s 请求共享以下资源:\n%s</string>
+    <string name="resource_cdb">· 卡片数据库</string>
+    <string name="resource_lflist">· 禁卡表</string>
+    <string name="resource_strings">· 字段等配置</string>
+    <string name="resource_pics">· 卡图压缩包</string>
 </resources>

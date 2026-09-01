@@ -174,7 +174,7 @@ public interface Constants {
     String URL_DONATE = "https://ifdian.net/a/ygomobile";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
-    String URL_HOME_VERSION = "https://ygom.top/ver_code.txt";
+    String URL_HOME_VERSION = "https://ygom.top/ver_code.json";
     String URL_HOME_VERSION_ALT = "https://cdn02.moecube.com:444/ygom-site/ver_code.txt";
     String URL_BILIBILI_DYNAMIC = "https://m.bilibili.com/space/16033444/";
     String ID1 = "[versionname]";
@@ -228,6 +228,43 @@ public interface Constants {
      * startActivity(intent1);
      */
     String ACTION_OPEN_GAME = "ygomobile.intent.action.GAME";
+    /***
+     * 用于应用间分享ygo资源（cdb、lflist、strings、pics）
+     * <p>
+     * Intent intent = new Intent("ygomobile.intent.action.SHARE_RESOURCE");
+     * intent.putExtra("resources", new int[]{Constants.RESOURCE_CDB, Constants.RESOURCE_PICS});
+     * intent.setPackage("cn.garymb.ygomobile");
+     * startActivityForResult(intent, REQUEST_CODE);
+     * <p>
+     * 返回结果：
+     * ARG_RESOURCE_URIS - Bundle, 包含各资源文件对应的Uri
+     * ARG_VERSION_CODE - int, 分享方应用版本号
+     * ARG_PACKAGE_NAME - String, 分享方包名
+     */
+    String ACTION_SHARE_RESOURCE = "ygomobile.intent.action.SHARE_RESOURCE";
+    String ARG_RESOURCES = "resources";
+    String ARG_RESOURCE_URIS = "resource_uris";
+    String ARG_VERSION_CODE = "version_code";
+    String ARG_PACKAGE_NAME = "package_name";
+
+    //资源类型常量
+    int RESOURCE_CDB = 0;
+    int RESOURCE_LFLIST = 1;
+    int RESOURCE_STRINGS = 2;
+    int RESOURCE_PICS = 3;
+
+    /***
+     * 用于从其他应用接收并保存卡组文件
+     * <p>
+     * ClipData clipData = ClipData.newRawUri("deck", deckUri);
+     * Intent intent = new Intent("ygomobile.intent.action.SAVE_DECK");
+     * intent.putExtra("deck_name", "青眼白龙");
+     * intent.setClipData(clipData);
+     * intent.setPackage("cn.garymb.ygomobile");
+     * startActivity(intent);
+     */
+    String ACTION_SAVE_DECK = "ygomobile.intent.action.SAVE_DECK";
+    String ARG_DECK_NAME = "deck_name";
     String ACTION_RELOAD = "ygomobile.intent.action.RELOAD";
     String IMAGE_URL = "https://github.com/fallenstardust/YGOMobile-pics/master/pics/%s.jpg";
     String IMAGE_FIELD_URL = "https://github.com/fallenstardust/YGOMobile-pics/master/pics/field/%s.jpg";

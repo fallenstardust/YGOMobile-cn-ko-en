@@ -2,10 +2,10 @@
 #define DECK_CON_H
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <random>
-#include <irrlicht.h>
+#include <IEventReceiver.h>
+#include <vector2d.h>
 #ifdef _IRR_ANDROID_PLATFORM_
 #include <android/TouchEventTransferAndroid.h>
 #include <android/android_tools.h>

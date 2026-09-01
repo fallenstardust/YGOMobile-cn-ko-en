@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.loader;
 
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -9,16 +8,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.RequestBuilder;
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
-import com.bumptech.glide.signature.MediaStoreSignature;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
@@ -28,10 +23,8 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
-import cn.garymb.ygomobile.utils.glide.StringSignature;
 import ocgcore.data.Card;
 
 public class ImageLoader implements Closeable {
@@ -56,45 +49,41 @@ public class ImageLoader implements Closeable {
         }
     }
 
-    private static class Cache {
-        private final byte[] data;
-        private final String name;
-
-        public Cache(byte[] data, String name) {
-            this.data = data;
-            this.name = name;
-        }
-    }
-
-    private final boolean useCache;
     private static final String TAG = ImageLoader.class.getSimpleName();
-    private final Map<String, ZipFile> zipFileCache = new ConcurrentHashMap<>();
-    private final Map<Long, ImageLoader.Cache> zipDataCache = new ConcurrentHashMap<>();
-    private ZipFile mDefaultZipFile;
-    private File mPicsFile;
+    //全局共享的zip缓存：所有ImageLoader实例复用已打开的ZipFile，
+    //避免每次bindImage都重新new ZipFile解析zip头
+    private static final Map<String, ZipFile> ZIP_FILE_CACHE = new ConcurrentHashMap<>();
 
     public ImageLoader() {
-        this(false);
     }
 
     public ImageLoader(boolean useCache) {
-        this.useCache = useCache;
     }
 
-    private ZipFile openPicsZip() {
-        if (mPicsFile == null) {
-            mPicsFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_PICS_ZIP);
+    /**
+     * 打开zip(包括ypk)并全局缓存已打开的ZipFile，可被Glide后台线程并发调用。
+     */
+    @Nullable
+    private static ZipFile openZip(File file) {
+        if (file == null || !file.isFile()) {
+            return null;
         }
-        if (mDefaultZipFile == null) {
-            if (mPicsFile.exists()) {
-                try {
-                    mDefaultZipFile = new ZipFile(mPicsFile);
-                } catch (IOException e) {
-                    //Ignore
-                }
-            }
+        String key = file.getAbsolutePath();
+        ZipFile zipFile = ZIP_FILE_CACHE.get(key);
+        if (zipFile != null) {
+            return zipFile;
         }
-        return mDefaultZipFile;
+        try {
+            zipFile = new ZipFile(file);
+        } catch (Throwable e) {
+            return null;
+        }
+        ZipFile old = ZIP_FILE_CACHE.putIfAbsent(key, zipFile);
+        if (old != null) {
+            IOUtils.closeZip(zipFile);
+            return old;
+        }
+        return zipFile;
     }
 
     public void resume() {
@@ -103,13 +92,10 @@ public class ImageLoader implements Closeable {
 
     public void clearZipCache() {
         //关闭zip
-        for (ZipFile zipFile : zipFileCache.values()) {
+        for (ZipFile zipFile : ZIP_FILE_CACHE.values()) {
             IOUtils.closeZip(zipFile);
         }
-        zipFileCache.clear();
-        if (mDefaultZipFile != null) {
-            IOUtils.closeZip(mDefaultZipFile);
-        }
+        ZIP_FILE_CACHE.clear();
     }
 
     @Override
@@ -118,114 +104,93 @@ public class ImageLoader implements Closeable {
             Log.d(TAG, "close and clean cache");
         }
         clearZipCache();
-        zipDataCache.clear();
     }
 
-    private void bind(final byte[] data, String name, ImageView imageview, Drawable pre, @NonNull Type type) {
-        if (BuildConfig.DEBUG_MODE) {
-            Log.v(TAG, "bind data:" + name + ", type=" + type);
-        }
-        bindT(data, name, imageview, pre, type);
-    }
-
-    private void bind(final Uri uri, String name, ImageView imageview, Drawable pre, @NonNull Type type) {
-        if (BuildConfig.DEBUG_MODE) {
-            Log.v(TAG, "bind uri:" + name + ", type=" + type);
-        }
-        bindT(uri, name, imageview, pre, type);
-    }
-
-    private <T> void setDefaults(@NonNull RequestBuilder<Drawable> resource,
-                                 @Nullable com.bumptech.glide.load.Key signature,
-                                 @Nullable Drawable pre,
-                                 @NonNull Type type) {
-        if (pre != null) {
-            resource.placeholder(pre);
-        } else {
-            resource.placeholder(R.drawable.unknown);
-        }
-        resource.error(R.drawable.unknown);
-        resource.transition(DrawableTransitionOptions.withCrossFade());
-        //都改为原图
-//        if (type != Type.origin) {
-//            int[] size = null;
-//            switch (type) {
-//                case small:
-//                    size = Constants.CORE_SKIN_CARD_SMALL_SIZE;
-//                    break;
-//                case middle:
-//                    size = Constants.CORE_SKIN_CARD_MIDDLE_SIZE;
-//                    break;
-//            }
-//            if (size != null) {
-//                resource.override(size[0], size[1]);
-//            }
-//        }
-        if (signature != null) {
-            resource.signature(signature);
-        }
-    }
-
-    private <T> void bindT(final T data, String name, ImageView imageview, Drawable pre, @NonNull Type type) {
-        try {
-            RequestBuilder<Drawable> resource = GlideCompat.with(imageview.getContext()).load(data);
-            setDefaults(resource, new StringSignature(name + ":" + type), pre, type);
-            resource.into(imageview);
-        } catch (Exception e) {
-            Log.e(TAG, "$", e);
-        }
-    }
-
-    private void bind(final File file, ImageView imageview, Drawable pre, @NonNull Type type) {
-        if (BuildConfig.DEBUG_MODE) {
-            Log.v(TAG, "bind file:" + file.getPath() + ", type=" + type);
-        }
-        try {
-            RequestBuilder<Drawable> resource = GlideCompat.with(imageview.getContext()).load(file);
-            setDefaults(resource,
-                    new MediaStoreSignature("image/*", file.lastModified(), ImageLoader.Type.origin.getId()),
-                    pre, type);
-            resource.into(imageview);
-        } catch (Exception e) {
-            Log.e(TAG, "$", e);
-        }
-    }
-
-    private boolean bindInZip(ImageView imageView, long code, Drawable pre, ZipFile zipFile, String nameWithEx, @NonNull Type type) {
-        ZipEntry entry;
-        InputStream inputStream = null;
-        ByteArrayOutputStream outputStream;
-        boolean bind = false;
-        try {
-            entry = zipFile.getEntry(nameWithEx);
-            if (entry != null) {
-                inputStream = zipFile.getInputStream(entry);
-                outputStream = new ByteArrayOutputStream();
-                IOUtils.copy(inputStream, outputStream);
-                byte[] data = outputStream.toByteArray();
-                if (useCache) {
-                    zipDataCache.put(code, new Cache(data, nameWithEx));
+    /**
+     * 按卡号查找并读取卡图数据。
+     * 该方法由CardImageFetcher在Glide后台线程调用，请勿在主线程调用。
+     * 查找顺序与原逻辑一致：expansions下的zip/ypk -> pics/expansions/pics文件夹 -> pics.zip
+     */
+    @Nullable
+    static byte[] findCardImageData(long code) {
+        String name = Constants.CORE_IMAGE_PATH + "/" + code;
+        String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
+        //1.zips(包括ypk)
+        File[] files = AppsSettings.get().getExpansionFiles();
+        if (files != null) {
+            for (File file : files) {
+                ZipFile zipFile = openZip(file);
+                if (zipFile == null) {
+                    continue;
                 }
-                bind(data, nameWithEx, imageView, pre, type);
-                bind = true;
+                byte[] data = readZipEntry(zipFile, name);
+                if (data != null) {
+                    return data;
+                }
+            }
+        }
+        //2.图片文件pics文件夹
+        String resourcePath = AppsSettings.get().getResourcePath();
+        for (String ex : Constants.IMAGE_EX) {
+            File file = new File(resourcePath, name + ex);
+            File file_ex = new File(resourcePath, name_ex + ex);
+            File target;
+            if (file_ex.exists()) {
+                target = file_ex;
+            } else if (file.exists()) {
+                target = file;
+            } else {
+                continue;
+            }
+            byte[] data = readFile(target);
+            if (data != null) {
+                return data;
+            }
+        }
+        //3.pics.zip
+        ZipFile pics = openZip(new File(resourcePath, Constants.CORE_PICS_ZIP));
+        if (pics != null) {
+            byte[] data = readZipEntry(pics, name);
+            if (data != null) {
+                return data;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static byte[] readZipEntry(ZipFile zipFile, String nameWithoutEx) {
+        InputStream inputStream = null;
+        try {
+            for (String ex : Constants.IMAGE_EX) {
+                ZipEntry entry = zipFile.getEntry(nameWithoutEx + ex);
+                if (entry != null) {
+                    inputStream = zipFile.getInputStream(entry);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    IOUtils.copy(inputStream, outputStream);
+                    return outputStream.toByteArray();
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //按未找到处理，由Glide显示error占位图
         } finally {
             IOUtils.close(inputStream);
         }
-        return bind;
+        return null;
     }
 
-    private void cleanInValidZips() {
-        List<String> removes = new ArrayList<>();
-        for (String old : zipFileCache.keySet()) {
-            if (!FileUtils.isExist(old)) {
-                removes.add(old);
-            }
-        }
-        for (String key : removes) {
-            zipFileCache.remove(key);
+    @Nullable
+    private static byte[] readFile(File file) {
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(file);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            IOUtils.copy(inputStream, outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            return null;
+        } finally {
+            IOUtils.close(inputStream);
         }
     }
 
@@ -260,68 +225,21 @@ public class ImageLoader implements Closeable {
         if (BuildConfig.DEBUG_MODE) {
             Log.v(TAG, "bind image:" + code + ", type=" + type);
         }
-        imageview.setImageResource(R.drawable.unknown);
-        String name = Constants.CORE_IMAGE_PATH + "/" + code;
-        String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
-
-        //cache
-        if (useCache) {
-            Cache cache = zipDataCache.get(code);
-            if (cache != null) {
-                bind(cache.data, cache.name, imageview, pre, type);
-                return;
+        try {
+            //通过CardImageModelLoader在Glide后台线程完成zip/文件查找与解码，
+            //主线程不再有任何磁盘IO；不预设unknown、不用过渡动画，内存缓存命中时卡图立即显示
+            RequestBuilder<Drawable> resource = GlideCompat.with(imageview.getContext())
+                    .load(new CardImageModel(code));
+            if (pre != null) {
+                resource.placeholder(pre);
+            } else {
+                resource.placeholder(R.drawable.unknown);
             }
+            resource.error(R.drawable.unknown);
+            resource.into(imageview);
+        } catch (Exception e) {
+            Log.e(TAG, "$", e);
         }
-        //1.zips(包括ypk)
-        File[] files = AppsSettings.get().getExpansionFiles();
-        cleanInValidZips();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile()) {
-                    ZipFile zipFile = useCache ? zipFileCache.get(file.getAbsolutePath()) : null;
-                    if (zipFile == null) {
-                        try {
-                            zipFile = new ZipFile(file);
-                            if (useCache) {
-                                zipFileCache.put(file.getAbsolutePath(), zipFile);
-                            }
-                        } catch (Throwable e) {
-                            //Ignore
-                        }
-                    }
-                    if (zipFile == null) {
-                        continue;
-                    }
-                    for (String ex : Constants.IMAGE_EX) {
-                        if (bindInZip(imageview, code, pre, zipFile, name + ex, type)) {
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-        //2.图片文件pics文件夹
-        for (String ex : Constants.IMAGE_EX) {
-            File file = new File(AppsSettings.get().getResourcePath(), name + ex);
-            File file_ex = new File(AppsSettings.get().getResourcePath(), name_ex + ex);
-            if (file_ex.exists()) {
-                bind(file_ex, imageview, pre, type);
-                return;
-            } else if (file.exists()) {
-                bind(file, imageview, pre, type);
-                return;
-            }
-        }
-        //3.pics.zip
-        ZipFile pics = openPicsZip();
-        if (pics != null) {
-            for (String ex : Constants.IMAGE_EX) {
-                if (bindInZip(imageview, code, pre, pics, name + ex, type)) {
-                    return;
-                }
-            }
-        }
-
     }
 
 }

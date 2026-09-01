@@ -3994,11 +3994,11 @@ int32_t field::send_to(uint16_t step, group * targets, effect * reason_effect, u
 			if(!(reason & REASON_RULE) &&
 			        (pcard->get_status(STATUS_SUMMONING | STATUS_SPSUMMON_STEP)
 			         || ((pcard->current.reason & REASON_EFFECT) && !pcard->is_affect_by_effect(pcard->current.reason_effect))
-			         || (dest == LOCATION_HAND && !pcard->is_capable_send_to_hand(core.reason_player))
-			         || (dest == LOCATION_DECK && !pcard->is_capable_send_to_deck(core.reason_player, send_activating))
-			         || (dest == LOCATION_REMOVED && !pcard->is_removeable(core.reason_player, pcard->sendto_param.position, reason))
-			         || (dest == LOCATION_GRAVE && !pcard->is_capable_send_to_grave(core.reason_player))
-			         || (dest == LOCATION_EXTRA && !pcard->is_capable_send_to_extra(core.reason_player)))) {
+			         || (dest == LOCATION_HAND && !pcard->is_capable_send_to_hand(pcard->current.reason_player))
+			         || (dest == LOCATION_DECK && !pcard->is_capable_send_to_deck(pcard->current.reason_player, send_activating))
+			         || (dest == LOCATION_REMOVED && !pcard->is_removeable(pcard->current.reason_player, pcard->sendto_param.position, reason))
+			         || (dest == LOCATION_GRAVE && !pcard->is_capable_send_to_grave(pcard->current.reason_player))
+			         || (dest == LOCATION_EXTRA && !pcard->is_capable_send_to_extra(pcard->current.reason_player)))) {
 				pcard->current.reason = pcard->temp.reason;
 				pcard->current.reason_player = pcard->temp.reason_player;
 				pcard->current.reason_effect = pcard->temp.reason_effect;
