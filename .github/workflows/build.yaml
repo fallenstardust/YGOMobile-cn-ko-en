@@ -97,16 +97,16 @@ jobs:
         cp ygopro-database/locales/es-ES/cards.cdb mobile/assets/es/data/cards.cdb
         cp ygopro-database/locales/en-US/cards.cdb mobile/assets/en/data/cards.cdb
 
-    - name: Prepare Sound
+    - name: Prepare font
       run: |
         cd mobile/assets/data
-        wget https://github.com/fallenstardust/YGOMobile-cn-ko-en/releases/download/sounds/sound.fonts.zip
-        unzip sound.fonts.zip
-        rm sound.fonts.zip
+        mkdir fonts
+        cd fonts
+        wget https://github.com/fallenstardust/YGOMobile-cn-ko-en/releases/download/sounds/ygo.ttf
 
     - name: Prepare Pack
       run: |
-        git clone https://github.com/fallenstardust/ygopro-card-list.git --depth 1 ygopro-card-list
+        git clone https://github.com/mycard/ygopro-card-list.git --depth 1 ygopro-card-list
         mv ygopro-card-list/pack mobile/assets/data/
 
     - name: Prepare libWindbot.aar
