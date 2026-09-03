@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="?android:attr/listPreferredItemHeightSmall"
+    android:orientation="horizontal"
+    android:background="@color/colorNavy"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@android:id/text1"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:textAppearance="?android:attr/textAppearanceListItemSmall" />
+
+    <ImageView
+        android:id="@+id/iv_delete_keyword"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="false"
+        android:scaleType="centerInside"
+        android:padding="10dp"
+        android:src="@drawable/ic_close_black_24dp"
+        android:contentDescription="@string/delete" />
+</LinearLayout>

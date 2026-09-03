@@ -9,8 +9,8 @@ android {
         minSdkVersion 25
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
-        versionCode 312013013
-        versionName "3.13.7"
+        versionCode 312013014
+        versionName "3.13.7fix1"
         // 主程序协议版本号（十六进制），供 Constants.PRO_VERSION 使用
         buildConfigField 'int', 'PRO_VERSION', '0x1362'
         flavorDimensions "versionCode"

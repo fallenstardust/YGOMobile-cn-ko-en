@@ -12,8 +12,10 @@ import android.graphics.drawable.LayerDrawable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -46,6 +48,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ICardSearcher;
+import cn.garymb.ygomobile.ui.adapters.KeywordHistoryAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -182,6 +185,8 @@ public class CardSearcher implements View.OnClickListener {
 
     private CallBack mCallBack;
     private boolean mShowFavorite;
+    // 关键词历史记录下拉适配器（支持每条记录右侧删除图标）
+    private KeywordHistoryAdapter keywordHistoryAdapter;
 
     public CardSearcher(View view, ICardSearcher iCardSearcher) {
         this.view = view;
@@ -2202,10 +2207,23 @@ public class CardSearcher implements View.OnClickListener {
      */
     private boolean refreshKeywordHistory() {
         List<String> history = SharedPreferenceUtil.getKeywordHistory();
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(mContext,
-                android.R.layout.simple_list_item_1, history);
-        keyWord.setAdapter(adapter);
+        keywordHistoryAdapter = new KeywordHistoryAdapter(mContext, history, this::removeKeywordHistory);
+        keyWord.setAdapter(keywordHistoryAdapter);
         return !history.isEmpty();
+    }
+
+    /**
+     * 删除指定的关键词历史记录：持久化移除后，就地更新下拉列表数据，
+     * 保持下拉展开状态以便连续删除；若已无记录则收起下拉。
+     */
+    private void removeKeywordHistory(String keyword) {
+        SharedPreferenceUtil.removeKeywordHistory(keyword);
+        if (keywordHistoryAdapter != null) {
+            keywordHistoryAdapter.remove(keyword);
+        }
+        if (keywordHistoryAdapter == null || keywordHistoryAdapter.getCount() == 0) {
+            keyWord.dismissDropDown();
+        }
     }
 
     private void showKeywordDropdown() {
