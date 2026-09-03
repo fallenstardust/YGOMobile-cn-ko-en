@@ -26,6 +26,8 @@ public class Card extends CardData implements Parcelable {
     };
     public String Name;
     public String Desc;
+    /** 脚本提示文字 texts.str1~str16（供 MSG_SELECT_OPTION 等按卡号*16+n 解析），全空时为 null */
+    public String[] Strs;
 
     public int RealCode;
 
@@ -37,6 +39,7 @@ public class Card extends CardData implements Parcelable {
         if (card != null) {
             this.Name = card.Name;
             this.Desc = card.Desc;
+            this.Strs = card.Strs;
             this.RealCode = card.RealCode;
         }
     }
@@ -68,6 +71,7 @@ public class Card extends CardData implements Parcelable {
         super(in);
         this.Name = in.readString();
         this.Desc = in.readString();
+        this.Strs = in.createStringArray();
         this.RealCode = in.readInt();
     }
 
@@ -213,6 +217,7 @@ public class Card extends CardData implements Parcelable {
         super.writeToParcel(dest, flags);
         dest.writeString(this.Name);
         dest.writeString(this.Desc);
+        dest.writeStringArray(this.Strs);
         dest.writeInt(this.RealCode);
     }
 }

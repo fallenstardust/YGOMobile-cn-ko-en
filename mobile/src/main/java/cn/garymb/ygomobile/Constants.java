@@ -7,6 +7,7 @@ import cn.garymb.ygomobile.lite.BuildConfig;
 
 public interface Constants {
     boolean DEBUG = BuildConfig.DEBUG;
+    int PRO_VERSION = BuildConfig.PRO_VERSION;
     String PREF_START = "game_pref_";
     String PREF_LAST_GENESYS_MODE = "pref_last_genesys_mode";
     int PREF_DEF_LAST_GENESYS_MODE = 0;//0代表传统禁限模式，1代表Genesys模式
@@ -47,6 +48,10 @@ public interface Constants {
     boolean PREF_DEF_IMMERSIVE_MODE = false;
     String PREF_SENSOR_REFRESH = "pref_key_sensor_refresh";
     boolean PREF_DEF_SENSOR_REFRESH = true;
+
+    String PREF_NATIVE_GAME_MODE = "pref_key_native_game_mode";
+    boolean PREF_DEF_NATIVE_GAME_MODE = false;
+
     String PREF_CHANGE_LOG = "pref_key_change_log";
     String PREF_CHECK_UPDATE = "pref_key_about_check_update";
     String PREF_RESET_GAME_RES = "pref_key_reset_game_res";
@@ -73,6 +78,7 @@ public interface Constants {
     String ASSETS_PATH = "data/";
     String ASSET_SERVER_LIST = "serverlist.xml";
     String ASSET_LIMIT_PNG = ASSETS_PATH + "textures/icon_lim.png";
+    String ASSET_CARDTYPE_PNG = ASSETS_PATH + "textures/cardtype.png";
     String ASSET_ATTR_RACE = ASSETS_PATH + "textures/extra/attribute_race/";
     String ASSET_COVER = ASSETS_PATH + "textures/extra/covers/";
     String DEFAULT_FONT_NAME = "ygo.ttf";
@@ -162,6 +168,10 @@ public interface Constants {
 
     int CARD_RESULT_GRAVITY = Gravity.LEFT;
     int CARD_SEARCH_GRAVITY = Gravity.RIGHT;
+
+    int DIALOG_POPUP_WIDTH_DP = 420;
+    int DIALOG_POPUP_HEIGHT_DP = 280;
+
     int DEFAULT_CARD_COUNT = 500;
     int DECK_WIDTH_MAX_COUNT = 15;
     int DECK_WIDTH_COUNT = 10;
@@ -312,7 +322,11 @@ public interface Constants {
     String QUERY_VERSION = "v";
     String QUERY_YGO_TYPE="ygotype";
 
-
+    //禁限角标高度占卡图高度的比例，调大此值角标变大（原1/4即0.25f）
+    float CARD_LIMIT_OVERLAY_RATIO = 0.3f;
+    //角标数字字号占角标边长的比例（常规/三位数大数值）
+    float CARD_LIMIT_NUM_TEXT_RATIO = 0.6f;
+    float CARD_LIMIT_NUM_TEXT_RATIO_SMALL = 0.45f;
 
     public final String officialExCardPackageName = "ygopro-super-pre";//官方扩展卡包ypk文件的名称
     public final String mercuryExCardPackageName = "ygo233.com-pre-release";//23333扩展卡包ypk文件的名称

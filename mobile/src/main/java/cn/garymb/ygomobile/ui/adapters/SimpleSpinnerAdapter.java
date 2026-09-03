@@ -14,6 +14,8 @@ public class SimpleSpinnerAdapter extends BaseAdapterPlus<SimpleSpinnerItem> {
     private int maxLines = 2;
     private boolean singleLine = false;
     private float textSize = 14f; // 默认字体大小
+    private Integer dropDownBgColor;
+    private Integer dropDownBgRes;
 
     public SimpleSpinnerAdapter(Context context) {
         super(context);
@@ -37,9 +39,21 @@ public class SimpleSpinnerAdapter extends BaseAdapterPlus<SimpleSpinnerItem> {
         this.textSize = textSize;
     }
 
+    // 设置下拉项背景颜色（与setDropDownBackgroundResource互斥，后设置的生效）
+    public void setDropDownBackgroundColor(int color) {
+        this.dropDownBgColor = color;
+        this.dropDownBgRes = null;
+    }
+
+    // 设置下拉项背景drawable资源（与setDropDownBackgroundColor互斥，后设置的生效）
+    public void setDropDownBackgroundResource(int resId) {
+        this.dropDownBgRes = resId;
+        this.dropDownBgColor = null;
+    }
+
     @Override
     protected View createView(int position, ViewGroup parent) {
-        View view = inflate(android.R.layout.simple_list_item_1, null);
+        View view = inflate(R.layout.item_simple_spinner, parent, false);
         TextView textView = view.findViewById(android.R.id.text1);
         view.setTag(textView);
         textView.setMaxLines(maxLines);
@@ -48,6 +62,27 @@ public class SimpleSpinnerAdapter extends BaseAdapterPlus<SimpleSpinnerItem> {
             textView.setSingleLine();
         }
         return view;
+    }
+
+    @Override
+    public View getDropDownView(int position, View convertView, ViewGroup parent) {
+        if (convertView == null) {
+            convertView = inflate(R.layout.item_simple_spinner_dropdown, parent, false);
+            TextView textView = convertView.findViewById(android.R.id.text1);
+            convertView.setTag(textView);
+            textView.setMaxLines(maxLines);
+            textView.setTextSize(textSize);
+            if (singleLine) {
+                textView.setSingleLine();
+            }
+        }
+        if (dropDownBgRes != null) {
+            convertView.setBackgroundResource(dropDownBgRes);
+        } else if (dropDownBgColor != null) {
+            convertView.setBackgroundColor(dropDownBgColor);
+        }
+        attach(convertView, getItem(position), position);
+        return convertView;
     }
 
     @Override

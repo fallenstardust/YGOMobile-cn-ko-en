@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ public class CardGroupView extends FrameLayout {
     private int mCardHeight = Constants.CORE_SKIN_CARD_SMALL_SIZE[1];
     private boolean mPausePadding;
     private ImageLoader mImageLoader;
+    private Bitmap mCardBack;
 
     public void setImageLoader(ImageLoader imageLoader) {
         mImageLoader = imageLoader;
@@ -153,40 +155,77 @@ public class CardGroupView extends FrameLayout {
     private void refreshLayoutParams(int index, int count) {
         mLineLimit = (int) Math.max(mOrgLineLimit, Math.ceil((float) count / (float) mMaxLines));
         if (mPausePadding) return;
-        int p = 0;
-        if (mLineLimit > mOrgLineLimit) {
-            p = -(int) Math.ceil((double) ((mLineLimit - mOrgLineLimit) * mCardWidth) / (float) (mLineLimit - 1));
-        }
+        float stepX = computeStepX();
         int childcount = getChildCount();
         for (int i = index; i < childcount && count > 0; i++, count--) {
             View view = getChildAt(i);
             LayoutParams lp = (LayoutParams) view.getLayoutParams();
             if (lp == null) {
-                lp = getLayoutParamsAt(i, 0);
+                lp = getLayoutParamsAt(i, stepX);
             } else {
-                fillLayoutParams(i, lp, p);
+                fillLayoutParams(i, lp, stepX);
             }
             view.setLayoutParams(lp);
         }
     }
 
-    private void fillLayoutParams(int index, LayoutParams layoutParams, int p) {
+    /**
+     * 按网格实际可用宽度计算相邻卡片的水平步进：
+     * 首张贴左、末张贴右，一行mLineLimit张均匀分布铺满整行。
+     * 宽度未知（尚未布局）时回退原有逻辑。
+     */
+    private float computeStepX() {
+        int availWidth = getWidth() - getPaddingLeft() - getPaddingRight();
+        if (availWidth > mCardWidth && mLineLimit > 1) {
+            return (availWidth - mCardWidth) / (float) (mLineLimit - 1);
+        }
+        if (mLineLimit > mOrgLineLimit) {
+            return mCardWidth - (float) ((mLineLimit - mOrgLineLimit) * mCardWidth) / (mLineLimit - 1);
+        }
+        return mCardWidth;
+    }
+
+    private void fillLayoutParams(int index, LayoutParams layoutParams, float stepX) {
         int line = getLineByIndex(index);
         int x = getLineStartByIndex(index);
         layoutParams.topMargin = line * mCardHeight;
-        layoutParams.leftMargin = x * (mCardWidth + p);
+        layoutParams.leftMargin = Math.round(x * stepX);
     }
 
     private LayoutParams getLayoutParamsAt(int index) {
-        return getLayoutParamsAt(index, 0);
+        return getLayoutParamsAt(index, computeStepX());
     }
 
-    private LayoutParams getLayoutParamsAt(int index, int p) {
+    private LayoutParams getLayoutParamsAt(int index, float stepX) {
         LayoutParams layoutParams = new LayoutParams(mCardWidth, mCardHeight);
-        fillLayoutParams(index, layoutParams, p);
+        fillLayoutParams(index, layoutParams, stepX);
         return layoutParams;
     }
+
+    //网格宽度确定或变化后，按新宽度重新均匀分布
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (w != oldw && getChildCount() > 0) {
+            post(this::refreshLayout);
+        }
+    }
     //endregion
+
+    /**
+     * 按落点坐标计算拖放插入下标：行=y/卡高，列=x/水平步进，
+     * 结果限制在[0, 当前卡片数]内，末尾表示追加。
+     */
+    public int getIndexByPosition(float x, float y) {
+        int count = getChildCount();
+        if (count == 0 || mCardHeight <= 0) return 0;
+        float stepX = computeStepX();
+        int line = (int) ((y - getPaddingTop()) / mCardHeight);
+        line = Math.max(0, Math.min(line, mMaxLines - 1));
+        int col = stepX > 0 ? Math.round((x - getPaddingLeft()) / stepX) : 0;
+        col = Math.max(0, Math.min(col, mLineLimit - 1));
+        return Math.max(0, Math.min(line * mLineLimit + col, count));
+    }
 
     private void onCardAdd(CardView cardView, int index) {
         refreshLayoutParams(getChildCount());
@@ -275,5 +314,60 @@ public class CardGroupView extends FrameLayout {
             CardView cardView = (CardView) getChildAt(i);
             cardView.updateLimit(imageTop, limitList);
         }
+    }
+
+    public void updateAvail(ImageTop imageTop, int availLm) {
+        int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            CardView cardView = (CardView) getChildAt(i);
+            cardView.updateAvail(imageTop, availLm);
+        }
+    }
+
+    /**
+     * 设置指定位置卡片为选中态（显示白色矩形线框），其余卡片取消选中。
+     * @param index 选中的卡片下标，-1 表示全部取消
+     */
+    public void setSelectedIndex(int index) {
+        int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            CardView cardView = (CardView) getChildAt(i);
+            cardView.setSelected(i == index);
+        }
+    }
+
+    /**
+     * 取消所有卡片的选中态
+     */
+    public void clearSelection() {
+        int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            CardView cardView = (CardView) getChildAt(i);
+            cardView.setSelected(false);
+        }
+    }
+
+    /**
+     * 设置卡背图片，addCardBack 添加的占位卡使用该图片显示
+     */
+    public void setCardBackImage(Bitmap bitmap) {
+        mCardBack = bitmap;
+    }
+
+    /**
+     * 添加一张卡背占位卡（对方手卡等不可见卡片）
+     */
+    public boolean addCardBack() {
+        int count = getChildCount();
+        if (count >= getMaxCardCount()) {
+            return false;
+        }
+        if (!mPausePadding) {
+            refreshLayoutParams(count + 1);
+        }
+        CardView cardView = new CardView(getContext());
+        cardView.setCardBackImage(mCardBack);
+        addView(cardView, count);
+        return true;
     }
 }

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/announce_number_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/sdialogl"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_announce_number_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="选择数字"
+        android:textColor="@color/white"
+        android:textSize="11sp" />
+
+    <Spinner
+        android:id="@+id/sp_announce_number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="#335577" />
+
+    <LinearLayout
+        android:id="@+id/layout_annumber_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="vertical" />
+
+    <Button
+        android:id="@+id/btn_annumber_ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/button3_bg"
+        android:minWidth="100dp"
+        android:minHeight="30dp"
+        android:text="@string/ok"
+        android:textColor="@color/white"
+        android:textSize="10sp" />
+</LinearLayout>

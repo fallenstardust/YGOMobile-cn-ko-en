@@ -78,6 +78,30 @@ public class LimitManager implements Closeable {
         return mGenesys_LimitLists.get(name);
     }
 
+    public int getLimitHash(String name) {
+        LimitList list = mLimitLists.get(name);
+        return list != null ? list.getLfHash() : 0;
+    }
+
+    public int getGenesysLimitHash(String name) {
+        LimitList list = mGenesys_LimitLists.get(name);
+        return list != null ? list.getLfHash() : 0;
+    }
+
+    public String getLimitNameByHash(int hash) {
+        for (Map.Entry<String, LimitList> entry : mLimitLists.entrySet()) {
+            if (entry.getValue().getLfHash() == hash) return entry.getKey();
+        }
+        return null;
+    }
+
+    public String getGenesysLimitNameByHash(int hash) {
+        for (Map.Entry<String, LimitList> entry : mGenesys_LimitLists.entrySet()) {
+            if (entry.getValue().getLfHash() == hash) return entry.getKey();
+        }
+        return null;
+    }
+
     public LimitList getLastLimit() {
         if (mLimitNames.isEmpty()) {
             return null;
@@ -162,12 +186,22 @@ public class LimitManager implements Closeable {
         default_res3 = loadFile(ygocore_lflist);
         
         // 4.添加一个空卡表N/A（为了和ygopro显示一致才这么写） 无禁限
-        mLimitLists.put("N/A", new LimitList("N/A"));
-        mLimitNames.add("N/A");
-        mGenesys_LimitLists.put("N/A", new LimitList("N/A"));
-        mGenesys_LimitNames.add("N/A");
-
-        ++mCount;
+        LimitList naList = new LimitList("N/A");
+        naList.setLfHash(0);
+        mLimitLists.put("N/A", naList);
+        LimitList naGenesys = new LimitList("N/A");
+        naGenesys.setLfHash(0);
+        mGenesys_LimitLists.put("N/A", naGenesys);
+        // N/A作为"无禁限"选项追加到名称列表末尾（供下拉菜单选择，不影响getTopLimit默认禁卡表）
+        if (!mLimitNames.contains("N/A")) {
+            mLimitNames.add("N/A");
+        }
+        if (!mGenesys_LimitNames.contains("N/A")) {
+            mGenesys_LimitNames.add("N/A");
+        }
+        // 计数与名称列表保持一致，避免数量与列表长度不一致导致越界
+        mCount = mLimitNames.size();
+        mGenesys_Count = mGenesys_LimitNames.size();
         return expansion_zip_rs1 && expansion_rs2 && default_res3;
     }
 

@@ -1,0 +1,2008 @@
+package cn.garymb.ygomobile.game;
+
+import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import java.io.File;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+
+import cn.garymb.ygomobile.GameApplication;
+import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
+import cn.garymb.ygomobile.engine.LuaScriptEngine;
+import cn.garymb.ygomobile.network.DuelClient;
+import cn.garymb.ygomobile.network.LanDiscoveryManager;
+import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.render.TextureLoader;
+import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
+import ocgcore.data.Card;
+import ocgcore.enums.CardLocation;
+import ocgcore.enums.GameMessage;
+
+public class GameEngine implements DuelClient.ClientListener, GameMessageParser.MessageHandler {
+    private static final String TAG = "GameEngine";
+
+    public enum GameState {
+        IDLE,
+        CONNECTING,
+        LOBBY,
+        DECK_SELECT,
+        HAND_SELECT,
+        TP_SELECT,
+        DUELING,
+        SIDING,
+        DUEL_END,
+        DISCONNECTED
+    }
+
+    public interface EngineListener {
+        void onStateChanged(GameState newState);
+
+        void onFieldChanged();
+
+        void onPlayerInfoUpdated(int player);
+
+        void onPhaseChanged(int phase);
+
+        void onChatReceived(int playerType, String message);
+
+        void onSelectRequired(int selectType, ByteBuffer data);
+
+        void onDuelResult(int winner, int reason);
+
+        void onHintMessage(String hint);
+
+        /** 通讯提示栏（对齐 gframe stHintMsg）：显示后持续，直到下一条消息或显式隐藏 */
+        void onDuelHint(String hint);
+
+        /** 通讯提示栏隐藏（对齐 duelclient.cpp ClientAnalyze 开头 stHintMsg->setVisible(false)） */
+        void onDuelHintHide();
+
+        void onReplayData(byte[] data);
+
+        void onTimeLimitUpdate(int player, int leftTime);
+
+        void onChainAnimation(int code, int controler, int location, int sequence);
+
+        void onPlayerEnter(String name, int pos);
+
+        void onPlayerChange(int status);
+
+        void onWatchChange(int watchCount);
+
+        void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                        int noCheckDeck, int noShuffleDeck,
+                        int startLp, int startHand, int drawCount, int timeLimit);
+
+        void onTypeChange(int type);
+
+        void onDeckError(int errorType, int cardCode);
+
+        /** 猜拳结果（STOC_HAND_RESULT），均为本方视角的手势常量（1=剪刀 2=石头 3=布） */
+        void onHandResult(int myHand, int oppHand);
+    }
+
+    private GameState state = GameState.IDLE;
+    private final DuelClient client;
+    private final SoundManager soundManager;
+    private final GameField field;
+    private final LuaScriptEngine scriptEngine;
+    private EngineListener listener;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    // === stHintMsg 提示栏（对齐 gframe：选择/等待类消息显示，下一条消息隐藏） ===
+
+    /** 等待提示轮换间隔（game.cpp L1624-1633：waitFrame 每 90 帧≈1.5s 轮换 1390/1391/1392） */
+    private static final long WAIT_HINT_TICK_MS = 1500;
+    private static final int[] WAIT_HINT_SYS = {1390, 1391, 1392};
+    private int waitHintIndex;
+    private final Runnable waitHintTicker = new Runnable() {
+        @Override
+        public void run() {
+            waitHintIndex = (waitHintIndex + 1) % WAIT_HINT_SYS.length;
+            postDuelHint(sysString(WAIT_HINT_SYS[waitHintIndex], "等待行动中..."));
+            mainHandler.postDelayed(this, WAIT_HINT_TICK_MS);
+        }
+    };
+
+    private String sysString(int index, String def) {
+        return DataManager.get().getStringManager().getSystemString(index, def);
+    }
+
+    private void postDuelHint(String text) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onDuelHint(text);
+        });
+    }
+
+    private void postDuelHintHide() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onDuelHintHide();
+        });
+    }
+
+    /** 停止等待提示动画（对齐 duelclient.cpp L1309：waitFrame = -1） */
+    private void stopWaitHint() {
+        mainHandler.removeCallbacks(waitHintTicker);
+    }
+
+    private String playerName = "Player";
+    private int duelStage = YGOProtocol.DUEL_STAGE_BEGIN;
+    private int matchResult = 0;
+    private int currentMatch = 0;
+    private int maxMatch = 1;
+    private boolean isHost = false;
+    private boolean isBotMode = false;
+    private ReplayEngine replayEngine;
+    private int gameMode = 0;
+    private int gameRule = 0;
+    private int gameLflist = 0;
+    private int gameStartLp = 8000;
+    private int gameStartHand = 5;
+    private int gameDrawCount = 1;
+    private int gameTimeLimit = 0;
+    private int gameNoCheckDeck = 0;
+    private int gameNoShuffleDeck = 0;
+
+    public int getGameMode() { return gameMode; }
+    public int getGameRule() { return gameRule; }
+    public int getGameLflist() { return gameLflist; }
+    public int getGameStartLp() { return gameStartLp; }
+    public int getGameStartHand() { return gameStartHand; }
+    public int getGameDrawCount() { return gameDrawCount; }
+    public int getGameTimeLimit() { return gameTimeLimit; }
+    public int getGameNoCheckDeck() { return gameNoCheckDeck; }
+    public int getGameNoShuffleDeck() { return gameNoShuffleDeck; }
+
+    public ReplayEngine getReplayEngine() {
+        return replayEngine;
+    }
+
+    public void setReplayEngine(ReplayEngine engine) {
+        this.replayEngine = engine;
+    }
+
+    public static class PlayerInfo {
+        public String name = "";
+        public int lp = 8000;
+        public int startLp = 8000;
+        public int cardCount = 0;
+    }
+
+    public final PlayerInfo[] playerInfos = new PlayerInfo[]{new PlayerInfo(), new PlayerInfo()};
+    /** 按大厅座位号存储昵称（STOC_HS_PLAYER_ENTER pos 0-3）：0/1 我方队、2/3 对方队，
+     *  供 STOC_CHAT 显示"昵称: 内容"（对齐 game.cpp AddChatMsg 的 hostname/clientname/hostname_tag/clientname_tag 前缀） */
+    public final String[] seatNames = new String[]{"", "", "", ""};
+
+    public GameEngine(SoundManager soundManager) {
+        this.client = new DuelClient();
+        this.soundManager = soundManager;
+        this.field = new GameField();
+        this.scriptEngine = LuaScriptEngine.get();
+        client.setListener(this);
+    }
+
+    public void setListener(EngineListener listener) {
+        this.listener = listener;
+    }
+
+    public GameField getField() {
+        return field;
+    }
+
+    public GameState getState() {
+        return state;
+    }
+
+    public DuelClient getClient() {
+        return client;
+    }
+
+    public static final int COMMAND_ACTIVATE = 0x0001;
+    public static final int COMMAND_SUMMON   = 0x0002;
+    public static final int COMMAND_SPSUMMON = 0x0004;
+    public static final int COMMAND_MSET     = 0x0008;
+    public static final int COMMAND_SSET     = 0x0010;
+    public static final int COMMAND_REPOS    = 0x0020;
+    public static final int COMMAND_ATTACK   = 0x0040;
+
+    public static class CmdCardInfo {
+        public GameField.ClientCard card;
+        public int code;
+        public int desc;
+        public int flag;
+        public int index;
+        public CmdCardInfo(GameField.ClientCard card, int code, int desc, int flag, int index) {
+            this.card = card; this.code = code; this.desc = desc; this.flag = flag; this.index = index;
+        }
+    }
+
+    public List<CmdCardInfo> activatableCards = new ArrayList<>();
+    public List<CmdCardInfo> attackableCards = new ArrayList<>();
+    public List<CmdCardInfo> summonableCards = new ArrayList<>();
+    public List<CmdCardInfo> spsummonableCards = new ArrayList<>();
+    public List<CmdCardInfo> reposableCards = new ArrayList<>();
+    public List<CmdCardInfo> msetableCards = new ArrayList<>();
+    public List<CmdCardInfo> ssetableCards = new ArrayList<>();
+    public boolean showBP, showEP, showM2, showShuffle;
+
+    public int selectFieldMask;
+    public int selectFieldPlayer;
+    public int selectFieldCount;
+
+    public void clearCommandFlags() {
+        activatableCards.clear();
+        attackableCards.clear();
+        summonableCards.clear();
+        spsummonableCards.clear();
+        reposableCards.clear();
+        msetableCards.clear();
+        ssetableCards.clear();
+        showBP = false;
+        showEP = false;
+        showM2 = false;
+        showShuffle = false;
+        for (int p = 0; p < 2; p++) {
+            for (GameField.ClientCard c : field.players[p].monsterZone) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].spellZone) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].hand) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].grave) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].removed) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].extra) {
+                if (c != null) c.clearCmdFlag();
+            }
+            for (GameField.ClientCard c : field.players[p].deck) {
+                if (c != null) c.clearCmdFlag();
+            }
+        }
+    }
+
+    public boolean hasIdleCommands() {
+        return !summonableCards.isEmpty() || !spsummonableCards.isEmpty()
+                || !reposableCards.isEmpty() || !msetableCards.isEmpty()
+                || !ssetableCards.isEmpty() || !activatableCards.isEmpty()
+                || showBP || showEP || showShuffle;
+    }
+
+    public boolean hasBattleCommands() {
+        return !attackableCards.isEmpty() || !activatableCards.isEmpty()
+                || showM2 || showEP;
+    }
+
+    public void setPlayerName(String name) {
+        this.playerName = name;
+    }
+
+    public void setBotMode(boolean botMode) {
+        this.isBotMode = botMode;
+    }
+
+    // === Connection ===
+
+    public void connectToServer(String host, int port, boolean createGame,
+                                String roomName, String password,
+                                int rule, int mode, int duelRule,
+                                int startLp, int startHand, int drawCount, int timeLimit,
+                                boolean noCheckDeck, boolean noShuffleDeck) {
+        setState(GameState.CONNECTING);
+        this.isHost = createGame;
+        this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+
+        new Thread(() -> {
+            boolean connected = client.connect(host, port);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                return;
+            }
+            client.sendExternalAddress(host);
+            client.sendPlayerInfo(playerName);
+            client.sendJoinGame(0x1362, password);
+        }, "GameConnect").start();
+    }
+
+    public void startLocalServer() {
+        Log.i(TAG, "Starting local server...");
+        setState(GameState.CONNECTING);
+        this.isHost = true;
+        this.maxMatch = 1;
+        new Thread(() -> {
+            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
+            if (!serverStarted) {
+                Log.w(TAG, "NetServer may already be running");
+            }
+            LanDiscoveryManager.acquireHostMulticastLock();
+            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
+            boolean connected = client.connect("127.0.0.1", 7911);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(0, 0, 0, 5,
+                    false, false,
+                    8000, 5, 1, 0,
+                    "Local Game", "");
+        }, "LocalServer").start();
+    }
+
+    public void startLocalServerWithSettings(int lflist, int rule, int mode, int duelRule,
+                                              boolean noCheckDeck, boolean noShuffleDeck,
+                                              int startLp, int startHand, int drawCount, int timeLimit,
+                                              String roomName, String password) {
+        Log.i(TAG, "Starting local server with settings: " + roomName);
+        setState(GameState.CONNECTING);
+        this.isHost = true;
+        this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+        new Thread(() -> {
+            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
+            if (!serverStarted) {
+                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
+            }
+            LanDiscoveryManager.acquireHostMulticastLock();
+            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
+            boolean connected = client.connect("127.0.0.1", 7911);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(lflist, rule, mode, duelRule,
+                    noCheckDeck, noShuffleDeck,
+                    startLp, startHand, drawCount, timeLimit,
+                    roomName, password);
+        }, "LocalServer").start();
+    }
+
+    public void startSingleMode(String luaPath) {
+        Log.i(TAG, "Starting single mode: " + luaPath);
+        byte[] scriptData = scriptEngine.loadSingleScript(new File(luaPath).getName());
+        if (scriptData == null || scriptData.length == 0) {
+            Log.e(TAG, "Failed to load single mode script: " + luaPath);
+            setState(GameState.IDLE);
+            mainHandler.post(() -> {
+                if (listener != null) listener.onHintMessage("无法加载残局脚本: " + new File(luaPath).getName());
+            });
+            return;
+        }
+        setState(GameState.CONNECTING);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage("正在加载残局...");
+        });
+        isBotMode = false;
+        new Thread(() -> {
+            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
+            if (!serverStarted) {
+                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
+            }
+            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
+            boolean connected = client.connect("127.0.0.1", 7911);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(0, 0, 1, 5,
+                    true, false,
+                    8000, 5, 1, 0,
+                    "Single Play", "");
+        }, "SingleMode").start();
+    }
+
+    public void startBotDuel(String host, int port, String botCommand, String deckFile) {
+        Log.i(TAG, "Starting bot duel via native WindBot: " + botCommand);
+        isBotMode = true;
+        setState(GameState.CONNECTING);
+
+        new Thread(() -> {
+            boolean serverStarted = IrrlichtBridge.startGameServer(port);
+            if (!serverStarted) {
+                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
+            }
+            try { Thread.sleep(800); } catch (InterruptedException e) { /* ignore */ }
+
+            boolean connected = client.connect(host, port);
+            if (!connected) {
+                setState(GameState.DISCONNECTED);
+                mainHandler.post(() -> {
+                    if (listener != null) listener.onHintMessage("无法连接到本地游戏服务器"); });
+                return;
+            }
+            client.sendPlayerInfo(playerName);
+            client.sendCreateGame(0, 0, 0, 5,
+                    true, false,
+                    8000, 5, 1, 0,
+                    "Bot Duel", "");
+
+            try { Thread.sleep(1500); } catch (InterruptedException e) { /* ignore */ }
+
+            String windbotArgs = "WindBotHost:" + host + " Port:" + port
+                    + " Name:WindBot"                    + (botCommand != null && !botCommand.isEmpty() ? " " + botCommand : "");
+            Log.i(TAG, "Launching WindBot: " + windbotArgs);
+
+            mainHandler.post(() -> {
+                try {
+                    Intent intent = new Intent();
+                    intent.putExtra("args", windbotArgs);
+                    intent.setAction("RUN_WINDBOT");
+                    GameApplication.get().sendBroadcast(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to launch WindBot", e);
+                    if (listener != null) listener.onHintMessage("启动AI失败: " + e.getMessage());
+                }
+            });
+        }, "BotDuel").start();
+    }
+
+    /**
+     * 启动 WindBot 连接到指定主机并加入房间。
+     * 用于人机对战：本地已通过 startLocalServerWithSettings 建立主机后，
+     * 让 AI 作为第二名玩家加入，主机端在 player waiting 页面即可看到其加入。
+     *
+     * @param deckFile 为 P2(WindBot) 指定的卡组文件绝对路径；非空时通过 DeckFile 参数
+     *                 覆盖 AI 自带卡组（对应 WindBot 内部 Deck.Load(DeckFile ?? Executor.Deck)）。
+     */
+    public void launchWindBot(String host, int port, String botCommand, String deckFile) {
+        isBotMode = true;
+        new Thread(() -> {
+            try { Thread.sleep(1500); } catch (InterruptedException e) { /* ignore */ }
+            // WindBot.RunAndroid 以空格拆分参数(保留单引号片段)，再以 '=' 拆 key/value。
+            // 因此所有参数必须是 Key=Value 形式；含空格的值需用单引号包裹。
+            StringBuilder sb = new StringBuilder();
+            sb.append("Host=").append(host)
+              .append(" Port=").append(port)
+              .append(" Name=WindBot");
+            if (botCommand != null && !botCommand.isEmpty()) {
+                sb.append(' ').append(botCommand);
+            }
+            if (deckFile != null && !deckFile.isEmpty()) {
+                // DeckFile 覆盖 AI 默认卡组，作为 P2 实际使用的卡组
+                sb.append(" DeckFile='").append(deckFile).append('\'');
+            }
+            String windbotArgs = sb.toString();
+            Log.i(TAG, "Launching WindBot: " + windbotArgs);
+            mainHandler.post(() -> {
+                try {
+                    Intent intent = new android.content.Intent();
+                    intent.putExtra("args", windbotArgs);
+                    intent.setAction("RUN_WINDBOT");
+                    GameApplication.get().sendBroadcast(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to launch WindBot", e);
+                    if (listener != null) listener.onHintMessage("启动AI失败: " + e.getMessage());
+                }
+            });
+        }, "WindBotLauncher").start();
+    }
+
+    public void loadReplay(String replayPath) {
+        Log.i(TAG, "Loading replay: " + replayPath);
+        if (replayEngine == null) {
+            replayEngine = new ReplayEngine(field, soundManager);
+        }
+        setState(GameState.CONNECTING);
+        replayEngine.loadAndPlay(replayPath);
+        setState(GameState.DUELING);
+    }
+
+    public void pauseReplay() {
+        if (replayEngine != null) replayEngine.pause();
+    }
+
+    public void resumeReplay() {
+        if (replayEngine != null) replayEngine.resume();
+    }
+
+    public void stopReplay() {
+        if (replayEngine != null) replayEngine.stop();
+        setState(GameState.IDLE);
+    }
+
+    public void skipReplayAhead() {
+        if (replayEngine != null) replayEngine.skipAhead();
+    }
+
+    public void disconnect() {
+        client.disconnect();
+        if (isHost) {
+            try {
+                IrrlichtBridge.stopGameServer();
+                Log.i(TAG, "Local game server stopped");
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to stop local game server", e);
+            }
+        }
+        LanDiscoveryManager.releaseHostMulticastLock();
+        setState(GameState.DISCONNECTED);
+    }
+
+    // === Lobby Actions ===
+
+    public void sendReady() {
+        client.sendReady();
+    }
+
+    public void sendNotReady() {
+        client.sendNotReady();
+    }
+
+    public void sendStart() {
+        client.sendStart();
+    }
+
+    public void sendKick(int pos) {
+        client.sendKick(pos);
+    }
+
+    public void sendChat(String message) {
+        client.sendChat(message);
+    }
+
+    public void sendSurrender() {
+        client.sendSurrender();
+    }
+
+    public void sendToDuelist() {
+        client.sendToDuelist();
+    }
+
+    public void sendToObserver() {
+        client.sendToObserver();
+    }
+
+    // === Game Actions ===
+
+    public void sendHandResult(int result) {
+        client.sendHandResult(result);
+    }
+
+    public void sendTPResult(boolean chooseFirst) {
+        client.sendTPResult(chooseFirst);
+    }
+
+    public void sendDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
+        client.sendUpdateDeck(main, extra, side);
+        // 预读本方卡组全部卡图（TextureLoader 后台解码 + LRU 缓存、内部去重），
+        // 对局开始后我方抽卡/召唤直接带图，消除灰色占位闪现
+        try {
+            TextureLoader tl = TextureLoader.get();
+            for (List<Integer> deck : new List[]{main, extra, side}) {
+                if (deck == null) continue;
+                for (Integer code : deck) {
+                    if (code != null && code > 0) tl.getCardBitmap(code & 0xFFFFFFFFL);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public void sendResponse(byte[] responseData) {
+        client.sendResponse(responseData);
+    }
+
+    public void sendTimeConfirm() {
+        client.sendTimeConfirm();
+    }
+
+    public int getSelfType() {
+        return client.selfType;
+    }
+
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    // === State Management ===
+
+    private void setState(GameState newState) {
+        if (this.state == newState) return;
+        this.state = newState;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onStateChanged(newState);
+        });
+    }
+
+    // === DuelClient.ClientListener ===
+
+    @Override
+    public void onConnected() {
+        Log.i(TAG, "Connected to server");
+    }
+
+    @Override
+    public void onDisconnected() {
+        Log.i(TAG, "Disconnected from server");
+        if (state != GameState.DUEL_END) {
+            setState(GameState.DISCONNECTED);
+        }
+    }
+
+    @Override
+    public void onError(String message) {
+        Log.e(TAG, "Network error: " + message);
+    }
+
+    @Override
+    public void onPacketReceived(int proto, ByteBuffer data) {
+        Log.d(TAG, "Unhandled packet: " + String.format("0x%02X", proto));
+    }
+
+    @Override
+    public void onChatMessage(int playerType, String message) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onChatReceived(playerType, message);
+        });
+        soundManager.playSoundEffect(SoundManager.SFX.CHAT);
+    }
+
+    @Override
+    public void onPlayerEnter(String name, int pos) {
+        Log.i(TAG, "Player entered: " + name + " at pos " + pos);
+        if (pos < playerInfos.length) {
+            playerInfos[pos].name = name;
+        }
+        // 座位 0-3 全量记录：tag 模式下 pos1/pos3 为双方 tag 同伴，聊天昵称需要
+        if (pos >= 0 && pos < seatNames.length) {
+            seatNames[pos] = name;
+        }
+        soundManager.playSoundEffect(SoundManager.SFX.PLAYER_ENTER);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerEnter(name, pos);
+        });
+    }
+
+    @Override
+    public void onPlayerChange(int status) {
+        Log.i(TAG, "Player change: " + String.format("0x%02X", status));
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerChange(status);
+        });
+    }
+
+    @Override
+    public void onWatchChange(int watchCount) {
+        Log.i(TAG, "Watch count changed: " + watchCount);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onWatchChange(watchCount);
+        });
+    }
+
+    @Override
+    public void onDuelStart() {
+        field.clear();
+        duelStage = YGOProtocol.DUEL_STAGE_DUELING;
+        setState(GameState.DUELING);
+        soundManager.playBGM(SoundManager.BGM.DUEL);
+        // 对局开场清理残留提示（对齐 game.cpp CloseGameWindow L2426 stHintMsg->setVisible(false)）
+        stopWaitHint();
+        postDuelHintHide();
+    }
+
+    @Override
+    public void onDuelEnd() {
+        duelStage = YGOProtocol.DUEL_STAGE_END;
+        setState(GameState.DUEL_END);
+        soundManager.stopBGM();
+        stopWaitHint();
+        postDuelHintHide();
+    }
+
+    @Override
+    public void onReplay(byte[] data) {
+        Log.i(TAG, "Replay data received from server, size=" + data.length);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onReplayData(data);
+        });
+    }
+
+    @Override
+    public void onGameMsg(int msgType, ByteBuffer data) {
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        // 对齐 duelclient.cpp L1307-1311：除 MSG_WAITING/MSG_CARD_SELECTED 外，
+        // 每条通讯消息开始先停止等待动画并隐藏 stHintMsg（提示栏随通讯推进实时显隐）
+        if (msgType != GameMessage.Waiting.value() && msgType != GameMessage.CardSelected.value()) {
+            stopWaitHint();
+            postDuelHintHide();
+        }
+        try {
+            GameMessageParser.parse(msgType, data, this);
+        } catch (BufferUnderflowException e) {
+            Log.e(TAG, "Failed to parse game message type=" + msgType + ", remaining=" + data.remaining(), e);
+        }
+    }
+
+    @Override
+    public void onHandSelect() {
+        setState(GameState.HAND_SELECT);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(0, null);
+        });
+    }
+
+    @Override
+    public void onTPSelect() {
+        setState(GameState.TP_SELECT);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(1, null);
+        });
+    }
+
+    @Override
+    public void onHandResult(int res1, int res2) {
+        Log.i(TAG, "Hand result: " + res1 + " vs " + res2);
+        // 对齐 duelclient.cpp L528：STOC_HAND_RESULT 公布猜拳结果时隐藏提示
+        postDuelHintHide();
+        // STOC_HAND_RESULT 按服务器视角下发 player0/player1 手势，转换为本方视角
+        int self = client.selfType;
+        final int myHand = (self == 1) ? res2 : res1;
+        final int oppHand = (self == 1) ? res1 : res2;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHandResult(myHand, oppHand);
+        });
+    }
+
+    @Override
+    public void onChangeSide() {
+        duelStage = YGOProtocol.DUEL_STAGE_SIDING;
+        setState(GameState.SIDING);
+    }
+
+    @Override
+    public void onWaitingSide() {
+        Log.i(TAG, "Waiting for side change");
+        // 对齐 duelclient.cpp L575-580：STOC_WAITING_SIDE 显示"等待换备卡"
+        stopWaitHint();
+        postDuelHint(sysString(1409, "等待对方换备卡..."));
+    }
+
+    @Override
+    public void onTimeLimit(int player, int leftTime) {
+        // 协议侧玩家索引统一转本地视角（0=我方），我方为后攻时倒计时也落入我方布局
+        final int p = localPlayer(player & 1);
+        if (field.dInfo.timeLimit <= 0) {
+            field.dInfo.timeLimit = Math.max(gameTimeLimit, leftTime);
+        }
+        field.dInfo.timePlayer = p;
+        field.dInfo.timeLeft[p] = leftTime;
+        field.resetTimeTick();
+        field.refreshTimeDisplay();
+        mainHandler.post(() -> {
+            if (listener != null) listener.onTimeLimitUpdate(p, leftTime);
+        });
+    }
+
+    @Override
+    public void onErrorMsg(int msg, int code) {
+        String errorMsg;
+        switch (msg) {
+            case YGOProtocol.ERRMSG_JOINERROR:
+                errorMsg = "无法加入房间";
+                break;
+            case YGOProtocol.ERRMSG_DECKERROR: {
+                int errorType = (code >> 28) & 0xF;
+                int cardCode = code & 0x0FFFFFFF;
+                mainHandler.post(() -> {
+                    if (listener != null) listener.onDeckError(errorType, cardCode);
+                });
+                return;
+            }
+            case YGOProtocol.ERRMSG_SIDEERROR:
+                errorMsg = "副卡组错误";
+                break;
+            case YGOProtocol.ERRMSG_VERERROR:
+                errorMsg = "版本不匹配";
+                break;
+            default:
+                errorMsg = "未知错误: " + msg;
+                break;
+        }
+        Log.e(TAG, "Server error: " + errorMsg);
+        final String finalMsg = errorMsg;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage(finalMsg);
+        });
+    }
+
+    @Override
+    public void onTypeChange(int type) {
+        Log.i(TAG, "Type changed to: " + type);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onTypeChange(type);
+        });
+        setState(GameState.LOBBY);
+    }
+
+    @Override
+    public void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                           int noCheckDeck, int noShuffleDeck,
+                           int startLp, int startHand, int drawCount, int timeLimit) {
+        playerInfos[0].startLp = startLp;
+        playerInfos[1].startLp = startLp;
+        playerInfos[0].lp = startLp;
+        playerInfos[1].lp = startLp;
+        this.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+        this.gameMode = mode;
+        this.gameRule = rule;
+        this.gameLflist = lflist;
+        this.gameStartLp = startLp;
+        this.gameStartHand = startHand;
+        this.gameDrawCount = drawCount;
+        this.gameTimeLimit = timeLimit;
+        this.gameNoCheckDeck = noCheckDeck;
+        this.gameNoShuffleDeck = noShuffleDeck;
+        field.dInfo.timeLimit = timeLimit;
+        field.dInfo.startLp = startLp;
+        field.dInfo.lp[0] = startLp;
+        field.dInfo.lp[1] = startLp;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onJoinGame(lflist, rule, mode, duelRule,
+                    noCheckDeck, noShuffleDeck,
+                    startLp, startHand, drawCount, timeLimit);
+        });
+        setState(GameState.LOBBY);
+    }
+
+    // === GameMessageParser.MessageHandler ===
+
+    @Override
+    public void onRetry() {
+        Log.w(TAG, "Retry message received");
+    }
+
+    @Override
+    public void onHint(int type, int player, int data) {
+        String hintText = "";
+        switch (type) {
+            case 1:
+                hintText = "卡片效果发动";
+                break;
+            case 2:
+                hintText = "请选择";
+                break;
+            case 3:
+                // HINT_SELECTMSG：保存下一条选择对话框标题的 sys 字符串索引，
+                // 消费语义与 gframe select_hint 一致（duelclient.cpp L1458-1461）
+                field.selectHint = data;
+                return;
+            // HINT_OPSELECTED（对齐 duelclient.cpp L1463-1472）：记录"已选择"日志
+            case 4:
+                DuelLogDialog.addOpSelectedLog(data);
+                return;
+            case 5:
+                hintText = "当前连锁: " + data;
+                break;
+            // HINT_RACE（对齐 duelclient.cpp L1480-1490）：宣告种族选择记入日志
+            case 6:
+                DuelLogDialog.addSelectedRaceLog(data);
+                return;
+            // HINT_ATTRIB（对齐 duelclient.cpp L1491-1501）：宣告属性选择记入日志
+            case 7:
+                DuelLogDialog.addSelectedAttributeLog(data);
+                return;
+            // HINT_CODE（对齐 duelclient.cpp L1502-1511）：宣言卡名记入日志，携带卡代码供点击查看
+            case 8:
+                DuelLogDialog.addLog(DuelLogDialog.formatSelected(
+                        DataManager.get().getCardManager().getCard(data).Name), data);
+                return;
+            // HINT_NUMBER（对齐 duelclient.cpp L1512-1521）：宣告数字记入日志
+            case 9:
+                DuelLogDialog.addLog(DuelLogDialog.sysFormat(1512, "已选择数字：%d", data));
+                soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
+                return;
+            default:
+                hintText = "Hint type=" + type + " data=" + data;
+                break;
+        }
+        final String finalHint = hintText;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage(finalHint);
+        });
+    }
+
+    @Override
+    public void onWaiting() {
+        Log.d(TAG, "Waiting...");
+        // 对齐 duelclient.cpp L1610-1616 + game.cpp L1624-1633：waitFrame=0，显示"等待行动中..."并轮换
+        waitHintIndex = 0;
+        postDuelHint(sysString(1390, "等待行动中..."));
+        mainHandler.removeCallbacks(waitHintTicker);
+        mainHandler.postDelayed(waitHintTicker, WAIT_HINT_TICK_MS);
+    }
+
+    @Override
+    public void onStart(int playerType, int duelRule, int lp0, int lp1,
+                        int deck0, int extra0, int deck1, int extra1) {
+        field.clear();
+        field.dInfo.duelRule = duelRule;
+        duelIsFirst = (playerType & 1) == 0;
+        int p0 = localPlayer(0);
+        int p1 = localPlayer(1);
+        playerInfos[p0].lp = lp0;
+        playerInfos[p1].lp = lp1;
+        playerInfos[p0].startLp = lp0;
+        playerInfos[p1].startLp = lp1;
+        field.players[p0].lp = lp0;
+        field.players[p1].lp = lp1;
+        field.dInfo.startLp = Math.max(lp0, lp1);
+        field.dInfo.lp[p0] = lp0;
+        field.dInfo.lp[p1] = lp1;
+        // ClientField::Initial：为双方卡组/额外创建全部 ClientCard（背面朝下、带堆叠高度）
+        field.initial(p0, deck0, extra0, 0);
+        field.initial(p1, deck1, extra1, 0);
+        setState(GameState.DUELING);
+        mainHandler.post(() -> {
+            if (listener != null) {
+                listener.onFieldChanged();
+                listener.onPlayerInfoUpdated(0);
+                listener.onPlayerInfoUpdated(1);
+            }
+        });
+    }
+
+    @Override
+    public void onWin(int player, int reason) {
+        if (player == 2) {
+            soundManager.playBGM(SoundManager.BGM.ALL);
+        } else if (isSelfSide(player)) {
+            soundManager.playBGM(SoundManager.BGM.WIN);
+        } else {
+            soundManager.playBGM(SoundManager.BGM.LOSE);
+        }
+        currentMatch++;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onDuelResult(player, reason);
+        });
+    }
+
+    @Override
+    public void onUpdateData(int player, int location, ByteBuffer data) {
+        parseUpdateData(localPlayer(player), location, data);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onUpdateCard(int player, int location, int sequence, ByteBuffer data) {
+        parseUpdateCard(localPlayer(player), location, sequence, data);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onRequestDeck(int player) {
+        setState(GameState.DECK_SELECT);
+    }
+
+    @Override
+    public void onSelectBattleCmd(ByteBuffer data) {
+        parseBattleCmd(data);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(10, null);
+        });
+    }
+
+    @Override
+    public void onSelectIdleCmd(ByteBuffer data) {
+        parseIdleCmd(data);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(11, null);
+        });
+    }
+
+    @Override
+    public void onSelectEffectYn(ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(12, data);
+        });
+    }
+
+    @Override
+    public void onSelectYesNo(ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(13, data);
+        });
+    }
+
+    @Override
+    public void onSelectOption(ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(14, data);
+        });
+    }
+
+    @Override
+    public void onSelectCard(ByteBuffer data) {
+        // 对齐 duelclient.cpp L1964-1974：非 panelmode 时 stHintMsg 显示"提示(min-max)"
+        String hint = selectRangeHint(data, 560, "选择卡片");
+        if (hint != null) postDuelHint(hint);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(15, data);
+        });
+    }
+
+    @Override
+    public void onSelectChain(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2158-2163：存在"发动并作为连锁"项(EDESC_OPERATION=1)时用 556，否则 550
+        boolean contiExist = false;
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            dup.get(); // selecting_player
+            int count = dup.get() & 0xFF;
+            dup.get(); // specount
+            dup.getInt(); // hint0
+            dup.getInt(); // hint1
+            for (int i = 0; i < count && dup.remaining() >= 14; i++) {
+                int flag = dup.get() & 0xFF;
+                dup.get(); // forced
+                dup.getInt(); // code
+                dup.position(dup.position() + 4); // c l s ss
+                dup.getInt(); // desc
+                if ((flag & 0x1) != 0) contiExist = true;
+            }
+        } catch (Exception ignored) {
+        }
+        postDuelHint(sysString(contiExist ? 556 : 550,
+                contiExist ? "选择发动效果并作为连锁" : "选择发动效果"));
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(16, data);
+        });
+    }
+
+    @Override
+    public void onSelectPlace(int player, int count, int fieldMask) {
+        clearCommandFlags();
+        selectFieldPlayer = player;
+        selectFieldCount = count;
+        selectFieldMask = ~fieldMask;
+        // fieldMask 相对选择方：低 16 位 = 选择方自己的半场。
+        // 只有选择方与我不同半场时才交换高低 16 位，保证低 16 位始终是我方半场（下半区）。
+        // 用 localPlayer(与卡牌渲染同一套映射)判断"选择方是否为对方"，player&1 取边以兼容 tag(0/2 先攻,1/3 后攻)。
+        if (localPlayer(player & 1) == 1) {
+            selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
+        }
+        // 对齐 duelclient.cpp L2199-2210：MSG_SELECT_PLACE 提示 569(带卡名)/560
+        if (field.selectHint > 0) {
+            postDuelHint("请选择要放置「" + getCardDisplayName(field.selectHint) + "」的区域");
+        } else {
+            postDuelHint(sysString(560, "请选择放置位置"));
+        }
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(18, null);
+        });
+    }
+
+    @Override
+    public void onSelectPosition(int player, int code, int positions) {
+        positions &= 0x0F;
+        // duelclient.cpp L2275-2278：仅一种表示形式可选时直接以该形式应答，不弹窗
+        if (positions == 0x1 || positions == 0x2 || positions == 0x4 || positions == 0x8) {
+            ByteBuffer resp = ByteBuffer.allocate(4);
+            resp.order(ByteOrder.LITTLE_ENDIAN);
+            resp.putInt(positions);
+            client.sendResponse(resp.array());
+            return;
+        }
+        // 打包 code(4) + positions(4) 传给 UI 层：用于显示卡图与按位掩码显示形式按钮
+        ByteBuffer data = ByteBuffer.allocate(8);
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        data.putInt(code);
+        data.putInt(positions);
+        data.flip();
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(19, data);
+        });
+    }
+
+    @Override
+    public void onSelectTribute(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2330-2335：stHintMsg 显示"提示(min-max)"（hint 优先 selectHint，默认 531）
+        String hint = selectRangeHint(data, 531, "解放选择");
+        if (hint != null) postDuelHint(hint);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(20, data);
+        });
+    }
+
+    @Override
+    public void onSortChain(ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(21, data);
+        });
+    }
+
+    @Override
+    public void onSelectCounter(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2362-2365：stHintMsg 显示 GetSysString(204)（移除 N 个指示物）
+        String hint = counterHint(data);
+        if (hint != null) postDuelHint(hint);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(22, data);
+        });
+    }
+
+    @Override
+    public void onSelectSum(ByteBuffer data) {
+        // 对齐 client_field.cpp L1090-1115 ShowSelectSum：display_hint = GetDesc(select_hint) 或 GetSysString(560)
+        int hint = field.selectHint;
+        postDuelHint(hint > 0 ? DataManager.get().getDesc(hint, "选择卡片") : sysString(560, "选择卡片"));
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(23, data);
+        });
+    }
+
+    @Override
+    public void onSelectDisfield(int player, int count, int fieldMask) {
+        clearCommandFlags();
+        selectFieldPlayer = player;
+        selectFieldCount = count;
+        selectFieldMask = ~fieldMask;
+        if (localPlayer(player & 1) == 1) {
+            selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
+        }
+        // 对齐 duelclient.cpp L2205-2210：MSG_SELECT_DISFIELD 提示 GetDesc(select_hint ?: 570)
+        int hint = field.selectHint > 0 ? field.selectHint : 570;
+        postDuelHint(DataManager.get().getDesc(hint, "请选择要禁用的区域"));
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(24, null);
+        });
+    }
+
+    @Override
+    public void onSortCard(ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(25, data);
+        });
+    }
+
+    @Override
+    public void onSelectUnselectCard(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2053-2065：stHintMsg 显示"提示(min-max)"
+        String hint = selectRangeHint(data, 560, "选择卡片");
+        if (hint != null) postDuelHint(hint);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(26, data);
+        });
+    }
+
+    // === 提示栏文字生成（对齐 gframe stHintMsg 各调用点的格式化） ===
+
+    /**
+     * 生成选择类消息提示（duelclient.cpp L1965/L2056/L2331："%ls(%d-%d)"）。
+     * 用 duplicate 解析不推进原缓冲（UI 侧仍需读取同一数据）；
+     * selectHint 只读取不消费（消费仍由 UI 侧对话框标题承担）
+     */
+    private String selectRangeHint(ByteBuffer data, int defIndex, String defText) {
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            dup.get(); // selecting_player
+            dup.get(); // cancelable（UNSELECT 为 finishable 位，同位置）
+            int min = dup.get() & 0xFF;
+            int max = dup.get() & 0xFF;
+            int hint = field.selectHint;
+            String title = hint > 0 ? DataManager.get().getDesc(hint, defText) : sysString(defIndex, defText);
+            return title + "(" + min + "-" + max + ")";
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 解析 player(1) counter_type(2) counter_count(2) 生成指示物提示（不推进原缓冲） */
+    private String counterHint(ByteBuffer data) {
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            dup.get(); // selecting_player
+            dup.getShort(); // counter type
+            int count = dup.getShort() & 0xFFFF;
+            return "移除 " + count + " 个指示物";
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 对齐 dataManager.GetName（duelclient.cpp L2201：GetName(select_hint)） */
+    private String getCardDisplayName(int code) {
+        if (code <= 0) return "?";
+        Card card = DataManager.get().getCardManager().getCard(code);
+        return card != null && card.Name != null ? card.Name : "?";
+    }
+
+    @Override
+    public void onConfirmDecktop(int player, int count, ByteBuffer data) {
+        Log.d(TAG, "ConfirmDecktop: player=" + player + " count=" + count);
+        // 对齐 duelclient.cpp MSG_CONFIRM_DECKTOP L2443-2480：翻开卡组上方N张卡记入日志
+        DuelLogDialog.addLog(DuelLogDialog.sysFormat(207, "翻开卡组上方%d张卡：", count));
+
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt() & 0x7fffffff;
+            data.position(data.position() + 3);
+            DuelLogDialog.addLog("*[" + DataManager.get().getCardManager().getCard(code).Name + "]", code);
+        }
+    }
+
+    @Override
+    // Deleted:public void onConfirmCards(int player, int count, ByteBuffer data) {
+    public void onConfirmCards(int player, int skipPanel, int count, ByteBuffer data) {
+        // 对齐 duelclient.cpp MSG_CONFIRM_CARDS L2518-2545：确认N张卡记入日志
+        DuelLogDialog.addLog(DuelLogDialog.sysFormat(208, "确认%d张卡：", count));
+
+        int start = data.position();
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt() & 0x7fffffff;
+            data.position(data.position() + 3);
+            DuelLogDialog.addLog("*[" + DataManager.get().getCardManager().getCard(code).Name + "]", code);
+        }
+        // 日志读取后回退缓冲位置，供下方确认面板复用条目数据
+        data.position(start);
+        // 前置 1 字节 skipPanel 转发 UI（duelclient.cpp L2607：skip_panel 时不弹面板）
+        ByteBuffer packed = ByteBuffer.allocate(1 + data.remaining()).order(ByteOrder.LITTLE_ENDIAN);
+        packed.put((byte) skipPanel);
+        packed.put(data);
+        packed.flip();
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(27, packed);
+        });
+    }
+
+    @Override
+    public void onShuffleDeck(int player) {
+        soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onShuffleHand(int player) {
+        soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onRefreshDeck(int player) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onSwapGraveDeck(int player) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onShuffleSetCard(int player, int count, ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onReverseDeck(int player) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onDeckTop(int player, int code) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onNewTurn(int player) {
+        field.currentPlayer = localPlayer(player);
+        field.turnCount++;
+        soundManager.playSoundEffect(SoundManager.SFX.NEXT_TURN);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onNewPhase(int phase) {
+        field.currentPhase = phase;
+        soundManager.playSoundEffect(SoundManager.SFX.PHASE);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPhaseChanged(phase);
+        });
+    }
+
+    @Override
+    public void onMove(int code, int oldCtrl, int oldLoc, int oldSeq,
+                       int newCtrl, int newLoc, int newSeq, int position, int reason) {
+        oldCtrl = localPlayer(oldCtrl);
+        newCtrl = localPlayer(newCtrl);
+        GameField.ClientCard card = field.getCard(oldCtrl, oldLoc, oldSeq);
+        if (card == null) {
+            card = new GameField.ClientCard();
+        }
+        card.code = code;
+        card.position = position;
+        field.removeCard(oldCtrl, oldLoc, oldSeq);
+        field.addCard(newCtrl, newLoc, newSeq, card);
+        field.moveCardAnimated(card, 8);
+        // 手卡增删后重排双方手卡（数量变化 → 间距变化）
+        if (oldLoc == CardLocation.Hand.value() || newLoc == CardLocation.Hand.value()) {
+            field.updateHandLayout(0, 10);
+            field.updateHandLayout(1, 10);
+        }
+        if (newLoc == CardLocation.Removed.value()) {
+            soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
+        } else if (newLoc == CardLocation.Grave.value()) {
+            soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);
+        } else if (newLoc == CardLocation.MonsterZone.value() && oldLoc == 0) {
+            soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+        }
+
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onPosChange(int code, int ctrl, int loc, int seq, int oldPos, int newPos) {
+        ctrl = localPlayer(ctrl);
+        GameField.ClientCard card = field.getCard(ctrl, loc, seq);
+        if (card != null) {
+            card.position = newPos;
+        }
+        if ((oldPos & 0xA) != 0 && (newPos & 0x5) != 0) {
+            soundManager.playSoundEffect(SoundManager.SFX.FLIP);
+        }
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onSet(int code, int ctrl, int loc, int seq) {
+        ctrl = localPlayer(ctrl);
+        GameField.ClientCard card = new GameField.ClientCard();
+        card.code = code;
+        card.position = 0x2;
+        field.addCard(ctrl, loc, seq, card);
+        soundManager.playSoundEffect(SoundManager.SFX.SET);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onSwap(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
+        GameField.ClientCard c1 = field.getCard(c1ctrl, c1loc, c1seq);
+        GameField.ClientCard c2 = field.getCard(c2ctrl, c2loc, c2seq);
+        field.addCard(c1ctrl, c1loc, c1seq, c2);
+        field.addCard(c2ctrl, c2loc, c2seq, c1);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onFieldDisabled(int disabledMask) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onSummoning(int code, int ctrl, int loc, int seq) {
+        soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+    }
+
+    @Override
+    public void onSummoned() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onSpSummoning(int code, int ctrl, int loc, int seq) {
+        soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON);
+    }
+
+    @Override
+    public void onSpSummoned() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onFlipSummoning(int code, int ctrl, int loc, int seq) {
+        soundManager.playSoundEffect(SoundManager.SFX.FLIP);
+    }
+
+    @Override
+    public void onFlipSummoned() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
+        soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
+        // 协议侧 controler 转本地索引，保证连锁高亮落在正确的半场
+        final int localCc = localPlayer(cc & 1);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onChainAnimation(code, localCc, cl, cs);
+        });
+    }
+
+    @Override
+    public void onChained(int code) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onChainSolving(int chainCount) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onChainSolved(int chainCount) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onChainEnd() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onChainNegated(int chainCount) {
+        soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
+    }
+
+    @Override
+    public void onChainDisabled(int chainCount) {
+        soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
+    }
+
+    @Override
+    public void onDraw(int player, int count, int[] codes) {
+        // duelclient.cpp MSG_DRAW L3519-3547
+        final int p = localPlayer(player);
+        int deckLoc = CardLocation.Deck.value();
+        int handLoc = CardLocation.Hand.value();
+        // 1) 给被抽的卡组顶设卡码
+        int top = field.getCardCount(p, deckLoc) - 1;
+        for (int i = 0; i < count; i++) {
+            GameField.ClientCard pcard = field.getCard(p, deckLoc, top - i);
+            if (pcard != null && (!field.deckReversed || codes[i] != 0)) {
+                pcard.setCode(codes[i] & 0x7fffffff);
+            }
+        }
+        // 2) 逐张从卡组顶移除 → 加入手卡 → 全部手卡重新布局（MoveCard 10 帧）
+        for (int i = 0; i < count; i++) {
+            int t = field.getCardCount(p, deckLoc) - 1;
+            GameField.ClientCard pcard = field.removeCard(p, deckLoc, t);
+            if (pcard == null) {
+                pcard = new GameField.ClientCard();
+                pcard.owner = p;
+                pcard.controler = p;
+                if (i < codes.length) pcard.setCode(codes[i] & 0x7fffffff);
+            }
+            field.addCard(p, handLoc, 0, pcard);
+            for (GameField.ClientCard hc : field.players[p].hand) {
+                if (hc != null) field.moveCardAnimated(hc, 10);
+            }
+        }
+        soundManager.playSoundEffect(SoundManager.SFX.DRAW);
+        mainHandler.post(() -> {
+            if (listener != null) {
+                listener.onFieldChanged();
+                listener.onPlayerInfoUpdated(p);
+            }
+        });
+    }
+
+    @Override
+    public void onDamage(int player, int amount) {
+        // 协议侧玩家 → 本地视角索引（0=我方）：我方为后攻时伤害/回复正确落到对应半场
+        // 与顶部信息栏左半边（我方）布局保持一致
+        int p = localPlayer(player & 1);
+        int fin = Math.max(0, field.players[p].lp - amount);
+        field.players[p].lp = fin;
+        field.startLpChange(p, fin, 0xFFFF0000, "-" + amount, true);
+        soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerInfoUpdated(p);
+        });
+    }
+
+    @Override
+    public void onRecover(int player, int amount) {
+        int p = localPlayer(player & 1);
+        int fin = field.players[p].lp + amount;
+        field.players[p].lp = fin;
+        field.startLpChange(p, fin, 0xFF00FF00, "+" + amount, true);
+        soundManager.playSoundEffect(SoundManager.SFX.RECOVER);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerInfoUpdated(p);
+        });
+    }
+
+    @Override
+    public void onEquip(int eqCode, int eqCtrl, int eqLoc, int eqSeq,
+                        int tCtrl, int tLoc, int tSeq) {
+        GameField.ClientCard equipCard = field.getCard(eqCtrl, eqLoc, eqSeq);
+        GameField.ClientCard target = field.getCard(tCtrl, tLoc, tSeq);
+        if (equipCard != null && target != null) {
+            equipCard.equipCard = target;
+        }
+        soundManager.playSoundEffect(SoundManager.SFX.EQUIP);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onLpUpdate(int player, int lp) {
+        int p = localPlayer(player & 1);
+        field.players[p].lp = lp;
+        field.startLpChange(p, lp, 0, null, false);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerInfoUpdated(p);
+        });
+    }
+
+    @Override
+    public void onUnequip(int ctrl, int loc, int seq) {
+        GameField.ClientCard card = field.getCard(ctrl, loc, seq);
+        if (card != null) {
+            card.equipCard = null;
+        }
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onCardTarget(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
+        GameField.ClientCard c1 = field.getCard(c1ctrl, c1loc, c1seq);
+        GameField.ClientCard c2 = field.getCard(c2ctrl, c2loc, c2seq);
+        if (c1 != null && c2 != null) {
+            c1.targetCards.add(c2);
+        }
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onCancelTarget(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
+        GameField.ClientCard c1 = field.getCard(c1ctrl, c1loc, c1seq);
+        GameField.ClientCard c2 = field.getCard(c2ctrl, c2loc, c2seq);
+        if (c1 != null && c2 != null) {
+            c1.targetCards.remove(c2);
+        }
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onPayLpCost(int player, int cost) {
+        int p = localPlayer(player & 1);
+        int fin = Math.max(0, field.players[p].lp - cost);
+        field.players[p].lp = fin;
+        field.startLpChange(p, fin, 0, null, false);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onPlayerInfoUpdated(p);
+        });
+    }
+
+    @Override
+    public void onAddCounter(int type, int ctrl, int loc, int seq, int count) {
+        GameField.ClientCard card = field.getCard(ctrl, loc, seq);
+        if (card != null) {
+            card.counters.put(type, count);
+        }
+        soundManager.playSoundEffect(SoundManager.SFX.COUNTER_ADD);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onRemoveCounter(int type, int ctrl, int loc, int seq, int count) {
+        GameField.ClientCard card = field.getCard(ctrl, loc, seq);
+        if (card != null) {
+            card.counters.remove(type);
+        }
+        soundManager.playSoundEffect(SoundManager.SFX.COUNTER_REMOVE);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onAttack(int aCtrl, int aLoc, int aSeq, int dCtrl, int dLoc, int dSeq) {
+        soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onBattle(int atkAtk, boolean atkPos, int defAtk, boolean defPos) {
+        Log.d(TAG, "Battle: " + atkAtk + " vs " + defAtk);
+    }
+
+    @Override
+    public void onAttackDisabled() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onDamageStepStart() {
+        Log.d(TAG, "Damage step start");
+    }
+
+    @Override
+    public void onDamageStepEnd() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onMissedEffect(int code, int ctrl, int loc, int seq, int effectId) {
+        Log.w(TAG, "Missed effect: code=" + code + " effectId=" + effectId);
+        // 对齐 duelclient.cpp MSG_MISSED_EFFECT L3919-3924：错过时点记入日志，携带卡代码
+        DuelLogDialog.addLog(DuelLogDialog.sysFormat(1622, "错过发动时点：%s", DataManager.get().getCardManager().getCard(code).Name), code);
+    }
+
+    @Override
+    public void onTossCoin(int player, int count, ByteBuffer results) {
+        soundManager.playSoundEffect(SoundManager.SFX.COIN);
+        // 对齐 duelclient.cpp MSG_TOSS_COIN L3926-3946：掷硬币结果记入日志
+        StringManager sm = DataManager.get().getStringManager();
+        StringBuilder sb = new StringBuilder(sm.getSystemString(1623, "掷硬币："));
+        for (int i = 0; i < count && results.remaining() >= 1; i++) {
+            int res = results.get() & 0xFF;
+            sb.append('[')
+                    .append(res != 0 ? sm.getSystemString(60, "正面") : sm.getSystemString(61, "反面"))
+                    .append(']');
+        }
+        DuelLogDialog.addLog(sb.toString());
+    }
+
+    @Override
+    public void onTossDice(int player, int count, ByteBuffer results) {
+        soundManager.playSoundEffect(SoundManager.SFX.DICE);
+        // 对齐 duelclient.cpp MSG_TOSS_DICE L3948-3968：掷骰子结果记入日志
+        StringBuilder sb = new StringBuilder(
+                DataManager.get().getStringManager().getSystemString(1624, "掷骰子："));
+        for (int i = 0; i < count && results.remaining() >= 1; i++) {
+            sb.append('[').append(results.get() & 0xFF).append(']');
+        }
+        DuelLogDialog.addLog(sb.toString());
+    }
+
+    @Override
+    public void onAnnounceRace(int player, int count, int availableRaces) {
+        // duelclient.cpp MSG_ANNOUNCE_RACE L3996-4014：player 已消费，打包 count+available 转发
+        ByteBuffer buf = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN);
+        buf.put((byte) count);
+        buf.putInt(availableRaces);
+        buf.flip();
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(140, buf);
+        });
+    }
+
+    @Override
+    public void onAnnounceAttrib(int player, int count, int availableAttribs) {
+        // duelclient.cpp MSG_ANNOUNCE_ATTRIB L4015-4033：同上，打包 count+available 转发
+        ByteBuffer buf = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN);
+        buf.put((byte) count);
+        buf.putInt(availableAttribs);
+        buf.flip();
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(141, buf);
+        });
+    }
+
+    @Override
+    public void onAnnounceCard(int player, ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(142, data);
+        });
+    }
+
+    @Override
+    public void onAnnounceNumber(int player, ByteBuffer data) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onSelectRequired(143, data);
+        });
+    }
+
+    @Override
+    public void onCardHint(int type, int data) {
+        Log.d(TAG, "CardHint: type=" + type + " data=" + data);
+    }
+
+    @Override
+    public void onTagSwap(int player) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onReloadField() {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
+    public void onAiName(String name) {
+        Log.i(TAG, "AI name: " + name);
+    }
+
+    @Override
+    public void onShowHint(String hint) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage(hint);
+        });
+    }
+
+    @Override
+    public void onMatchKill(int code) {
+        matchResult = 3;
+    }
+
+    @Override
+    public void onCustomMsg(String msg) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage(msg);
+        });
+    }
+
+    @Override
+    public void onDuelWinner(int player, int reason) {
+        onWin(player, reason);
+    }
+
+    // === Data parsing helpers ===
+
+    /**
+     * MSG_UPDATE_DATA（client_field.cpp UpdateFieldCard真值格式）：
+     * 无 count 字段，按列表条目遍历；每条先读 int32 len（含自身 4 字节），
+     * len>8 才有 query 数据（query 内首个 int32 是 flag），随后跳到 len-4 处。
+     * 固定槽位列表（怪兽区/魔法区）空位也有len=4 条目；动态列表只发实际卡。
+     */
+    private void parseUpdateData(int player, int location, ByteBuffer data) {
+        List<GameField.ClientCard> list = field.players[player].getLocationList(location);
+        if (list == null) return;
+        boolean fixedSlots = (location == 0x04 || location == 0x08);
+        for (int i = 0; i < list.size(); i++) {
+            GameField.ClientCard card = list.get(i);
+            if (card == null && !fixedSlots) continue;
+            if (data.remaining() < 4) break;
+            int len = data.getInt();
+            int next = data.position() + (len - 4);
+            if (next < data.position() || next > data.limit()) break;
+            if (len > 8 && card != null) {
+                ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
+                sub.limit(Math.min(sub.limit(), len - 4));
+                card.updateQuery(sub);
+            }
+            data.position(next);
+        }
+    }
+
+    /**
+     * MSG_UPDATE_CARD（client_field.cpp UpdateCard 真值格式）：
+     * int32 len 前缀，len>8 时才解析 query（对现有卡对象更新，绝不整卡替换）
+     */
+    private void parseUpdateCard(int player, int location, int sequence, ByteBuffer data) {
+        if (data.remaining() < 4) return;
+        int len = data.getInt();
+        if (len <= 8) return;
+        GameField.ClientCard card = field.getCard(player, location, sequence);
+        if (card == null) {
+            card = new GameField.ClientCard();
+            card.controler = player;
+            card.location = location;
+            card.sequence = sequence;
+            field.addCard(player, location, sequence, card);
+        }
+        ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
+        sub.limit(Math.min(sub.limit(), len - 4));
+        card.updateQuery(sub);
+    }
+
+    private void parseBattleCmd(ByteBuffer data) {
+        clearCommandFlags();
+        int selectingPlayer = data.get() & 0xFF;
+        int count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 9; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            int desc = data.getInt();
+            int flag = 0;
+            if ((code & 0x80000000) != 0) {
+                flag = 1;
+                code &= 0x7fffffff;
+            }
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_ACTIVATE;
+                activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));
+            }
+        }
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 8; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            int diratt = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_ATTACK;
+                attackableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+        showM2 = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+        showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+    }
+
+    private void parseIdleCmd(ByteBuffer data) {
+        clearCommandFlags();
+        int selectingPlayer = data.get() & 0xFF;
+        int count;
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_SUMMON;
+                summonableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_SPSUMMON;
+                if (card.code == 0 && code != 0) card.code = code;
+                spsummonableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_REPOS;
+                reposableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_MSET;
+                msetableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_SSET;
+                ssetableCards.add(new CmdCardInfo(card, code, 0, 0, i));
+            }
+        }
+
+        count = data.get() & 0xFF;
+        for (int i = 0; i < count && data.remaining() >= 11; i++) {
+            int code = data.getInt();
+            int con = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            int desc = data.getInt();
+            int flag = 0;
+            if ((code & 0x80000000) != 0) {
+                flag = 1;
+                code &= 0x7fffffff;
+            }
+            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            if (card != null) {
+                card.cmdFlag |= COMMAND_ACTIVATE;
+                activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));
+            }
+        }
+
+        showBP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+        showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+        showShuffle = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+    }
+
+    /** Game::LocalPlayer：dInfo.isFirst ? player : 1 - player */
+    private boolean duelIsFirst = true;
+
+    public int localPlayer(int player) {
+        return duelIsFirst ? player : 1 - player;
+    }
+
+    /** 给定协议侧玩家索引（0/1）是否代表我方（2=平局返回 false） */
+    public boolean isSelfSide(int player) {
+        return player != 2 && localPlayer(player & 1) == 0;
+    }
+
+    public void release() {
+        disconnect();
+        scriptEngine.release();
+    }
+}

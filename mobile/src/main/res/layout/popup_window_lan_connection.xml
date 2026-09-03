@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/window2"
+    android:padding="15dp">
+
+    <include
+        layout="@layout/popup_window_lan_main"
+        android:id="@+id/layout_lan_main" />
+
+    <include
+        layout="@layout/popup_window_create_host"
+        android:id="@+id/layout_create_host_settings"
+        android:visibility="gone" />
+
+    <include
+        layout="@layout/popup_window_player_waiting"
+        android:id="@+id/layout_player_waiting"
+        android:visibility="gone" />
+
+</FrameLayout>

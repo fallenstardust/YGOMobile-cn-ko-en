@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/announce_race_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/sdialogl"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_anrace_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="选择种族"
+        android:textColor="@color/white"
+        android:textSize="11sp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:layout_marginTop="4dp">
+
+        <GridLayout
+            android:id="@+id/layout_anrace_checks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="3" />
+    </ScrollView>
+</LinearLayout>

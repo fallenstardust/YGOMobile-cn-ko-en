@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 按下态：渐变变为 colorNavy，描边变为黑色 -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="@color/colorNavy"
+                android:endColor="@color/colorNavy"
+                android:angle="270" />
+            <corners android:radius="2dp" />
+            <stroke
+                android:width="0.3dp"
+                android:color="@color/colorPrimary" />
+        </shape>
+    </item>
+    <!-- 默认态：保持原样式 -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="@color/FallGreen"
+                android:endColor="@color/FallGreen"
+                android:angle="270" />
+            <corners android:radius="2dp" />
+            <stroke
+                android:width="0.3dp"
+                android:color="@color/ygopro_line_color" />
+        </shape>
+    </item>
+</selector>
