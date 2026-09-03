@@ -68,6 +68,21 @@ public class SharedPreferenceUtil {
         getShareRecord().edit().putString(KEYWORD_HISTORY_KEY, arr.toString()).commit();
     }
 
+    /**
+     * 删除指定的一条搜索关键词历史记录
+     */
+    public static void removeKeywordHistory(String keyword) {
+        if (TextUtils.isEmpty(keyword)) return;
+        List<String> history = getKeywordHistory();
+        if (history.remove(keyword)) {
+            JSONArray arr = new JSONArray();
+            for (String s : history) {
+                arr.put(s);
+            }
+            getShareRecord().edit().putString(KEYWORD_HISTORY_KEY, arr.toString()).commit();
+        }
+    }
+
     //获取存放路径的share
     public static SharedPreferences getSharePath() {
         return App.get().getSharedPreferences("path", Context.MODE_PRIVATE);
