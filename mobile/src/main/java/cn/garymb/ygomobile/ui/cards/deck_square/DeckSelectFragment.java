@@ -68,8 +68,8 @@ public class DeckSelectFragment extends Fragment {
 
     private List<DeckFile> resultList = new ArrayList<>();//存储卡组“根据关键词搜索”的结果
 
-    List<DeckType> typeList = null;
-    List<DeckFile> deckList = null;     //存储当前卡组分类下的所有卡组
+    List<DeckType> typeList = new ArrayList<>();
+    List<DeckFile> deckList = new ArrayList<>();     //存储当前卡组分类下的所有卡组
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
 
@@ -466,11 +466,26 @@ public class DeckSelectFragment extends Fragment {
     }
 
     private void initAdapter() {
+        int typeSelectPosition = rebuildDeckLists();
+        int deckSelectPosition = findCurDeckPosition();
+        resultListAdapter = new DeckListAdapter<DeckFile>(getContext(), resultList, -1);
+        typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
+        deckAdp = new DeckListAdapter<>(getContext(), deckList, deckSelectPosition);
+    }
+
+    /**
+     * 依据磁盘当前的卡组文件重建分类列表、当前分类卡组列表以及用于搜索的全部本地卡组列表。
+     * 为保证已绑定这些列表的适配器能感知数据变化，这里对列表做原地更新（clear + addAll），不重新赋值字段。
+     *
+     * @return 当前卡组所属分类在typeList中的索引
+     */
+    private int rebuildDeckLists() {
         String selectDeckPath = AppsSettings.get().getLastDeckPath();
-        typeList = DeckUtil.getDeckTypeList(getContext());
+
+        typeList.clear();
+        typeList.addAll(DeckUtil.getDeckTypeList(getContext()));
 
         int typeSelectPosition = 2;//卡组分类选择，默认值为2（未分类卡组）。0代表“卡包展示”，1代表“人机卡组”
-        int deckSelectPosition = -1;
 
         //根据卡组路径selectDeckPath得到该卡组所属分类
         if (!TextUtils.isEmpty(selectDeckPath)) {
@@ -500,8 +515,10 @@ public class DeckSelectFragment extends Fragment {
             }
         }
         //根据卡组分类查出属于该分类下的所有卡组
-        deckList = DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath());
+        deckList.clear();
+        deckList.addAll(DeckUtil.getDeckList(typeList.get(typeSelectPosition).getPath()));
 
+        allDeckList.clear();
         for (int i = 0; i < typeList.size(); i++) {
             if (typeList.get(i).isLocal()) {
                 allDeckList.addAll(DeckUtil.getDeckList(typeList.get(i).getPath()));//把所有分类里的卡组全部纳入，用于关键词查询目标
@@ -516,12 +533,36 @@ public class DeckSelectFragment extends Fragment {
                 }
             }
         }
-        //在当前分类的卡组列表中定位当前加载的卡组，打开对话框时自动选中其卡组名
-        //（必须放在先行卡插入之后匹配，避免索引错位）
-        deckSelectPosition = findCurDeckPosition();
-        resultListAdapter = new DeckListAdapter<DeckFile>(getContext(), resultList, -1);
-        typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
-        deckAdp = new DeckListAdapter<>(getContext(), deckList, deckSelectPosition);
+        return typeSelectPosition;
+    }
+
+    /**
+     * 在卡组编辑页对卡组执行新建、重命名、删除后，同步刷新本对话框内“本地卡组”页签的列表，
+     * 使其与修改后的磁盘卡组保持一致。视图尚未创建时直接返回，onCreateView会用最新数据构建。
+     */
+    public void refreshDeckList() {
+        if (binding == null || typeAdp == null || deckAdp == null) {
+            return;
+        }
+        int typeSelectPosition = rebuildDeckLists();
+        typeAdp.setSelectPosition(typeSelectPosition);
+        typeAdp.notifyDataSetChanged();
+
+        //重新定位当前卡组，保证高亮与滚动位置正确
+        int deckSelectPosition = findCurDeckPosition();
+        deckAdp.setSelectPosition(deckSelectPosition);
+        deckAdp.notifyDataSetChanged();
+        if (deckSelectPosition >= 0) {
+            binding.rvDeck.scrollToPosition(deckSelectPosition);
+        }
+
+        //若当前处于搜索结果状态，用刷新后的全部卡组列表重新检索，保持结果一致
+        String keyword = binding.inputDeckName.getText().toString();
+        if (!keyword.isEmpty()) {
+            searchDeck(false);
+        } else {
+            clearDeckSelect();
+        }
     }
 
     /**

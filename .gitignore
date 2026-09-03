@@ -63,7 +63,8 @@ output-metadata.json
 /mobile/assets/es/data/*.cdb
 /mobile/assets/jp/data/*.cdb
 /mobile/assets/pt/data/*.cdb
-/mobile/assets/data/sound/
+/mobile/assets/data/sound/BGM/
+/mobile/assets/data/sound/chants/
 /mobile/assets/data/fonts/
 /mobile/assets/data/*.zip
 

@@ -86,6 +86,22 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
     public void onShow() {
     }
 
+    /**
+     * 通知“本地卡组”页签刷新卡组列表，使被隐藏复用的对话框在卡组发生增删改后仍与磁盘保持一致。
+     * 若对话框尚未创建或页签视图未构建，则由其onCreateView在显示时用最新数据构建，此处无需处理。
+     */
+    public void refreshLocalDeckList() {
+        if (getChildFragmentManager() == null) {
+            return;
+        }
+        for (Fragment fragment : getChildFragmentManager().getFragments()) {
+            if (fragment instanceof DeckSelectFragment) {
+                ((DeckSelectFragment) fragment).refreshDeckList();
+                break;
+            }
+        }
+    }
+
     private YGODeckDialogUtil.OnDeckMenuListener mOnDeckMenuListener;
 
     /**
