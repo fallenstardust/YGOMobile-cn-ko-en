@@ -506,6 +506,8 @@ public class YGOProActivity extends AppCompatActivity implements
         cardDetailPanel.onGameUIHidden();
         // 退出对战（layout_game_right 隐藏）时，一并关闭正在显示的表情面板
         if (emotionDialog != null) emotionDialog.dismiss();
+        // 退出对战时关闭正在显示的宣言类对话框（属性/数字/种族），避免残留弹窗遮挡返回界面
+        if (dialogUtil != null) dialogUtil.dismissAnnounceDialogs();
         // 关闭日志面板并清空记录（对齐桌面版 CloseDuelWindow 的 lstLog->clear）
         if (duelLogDialog != null) duelLogDialog.dismiss();
         DuelLogDialog.clearLogs();

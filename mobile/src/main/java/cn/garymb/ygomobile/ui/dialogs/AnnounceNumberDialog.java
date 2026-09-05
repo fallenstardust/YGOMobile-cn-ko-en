@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
@@ -35,9 +36,17 @@ import ocgcore.StringManager;
  */
 public class AnnounceNumberDialog {
 
-    private static final int DIALOG_WIDTH_DP = 300;
+    private static final int DIALOG_WIDTH_DP = 200;
     /** 快捷按钮数量，对齐 btnANNumber[12]（game.cpp L908） */
     private static final int GRID_COUNT = 12;
+
+    /** XML 中固定的 12 个快捷数字按钮，索引 i 对应数字 i+1 */
+    private static final int[] GRID_BUTTON_IDS = {
+            R.id.btn_annumber_1, R.id.btn_annumber_2, R.id.btn_annumber_3,
+            R.id.btn_annumber_4, R.id.btn_annumber_5, R.id.btn_annumber_6,
+            R.id.btn_annumber_7, R.id.btn_annumber_8, R.id.btn_annumber_9,
+            R.id.btn_annumber_10, R.id.btn_annumber_11, R.id.btn_annumber_12
+    };
 
     public interface OnNumberSelectedListener {
         void onNumberSelected(int selectedIndex);
@@ -63,9 +72,10 @@ public class AnnounceNumberDialog {
 
     private TextView tvTitle;
     private Spinner spNumber;
-    private LinearLayout layoutButtons;
+    private GridLayout layoutButtons;
     private Button btnOk;
     private final Button[] gridButtons = new Button[GRID_COUNT];
+
 
     private OnNumberSelectedListener listener;
     private OnDismissListener dismissListener;
@@ -149,25 +159,12 @@ public class AnnounceNumberDialog {
             }
         });
 
-        for (int row = 0; row < GRID_COUNT / 3; row++) {
-            LinearLayout line = new LinearLayout(context);
-            line.setOrientation(LinearLayout.HORIZONTAL);
-            for (int col = 0; col < 3; col++) {
-                final int idx = row * 3 + col;
-                Button btn = new Button(context);
-                btn.setText(String.valueOf(idx + 1));
-                btn.setTextColor(Color.WHITE);
-                btn.setTextSize(12);
-                btn.setBackgroundColor(0xFF335577);
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-                lp.setMargins(dp(2), dp(2), dp(2), dp(2));
-                btn.setLayoutParams(lp);
-                btn.setOnClickListener(v -> onGridButtonClicked(idx));
-                gridButtons[idx] = btn;
-                line.addView(btn);
-            }
-            layoutButtons.addView(line);
+        for (int i = 0; i < GRID_COUNT; i++) {
+            final int idx = i;
+            Button btn = root.findViewById(GRID_BUTTON_IDS[i]);
+            btn.setText(String.valueOf(idx + 1));
+            btn.setOnClickListener(v -> onGridButtonClicked(idx));
+            gridButtons[idx] = btn;
         }
 
         spNumber.setSelection(0);
@@ -226,7 +223,7 @@ public class AnnounceNumberDialog {
             if (v >= 1 && v <= GRID_COUNT) hit = v - 1;
         }
         for (int i = 0; i < GRID_COUNT; i++) {
-            gridButtons[i].setBackgroundColor(i == hit ? 0xFF5577AA : 0xFF335577);
+            gridButtons[i].setSelected(i == hit);
         }
     }
 

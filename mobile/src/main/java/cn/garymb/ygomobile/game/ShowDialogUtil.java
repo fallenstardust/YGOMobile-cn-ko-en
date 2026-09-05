@@ -1130,35 +1130,22 @@ public class ShowDialogUtil {
         panel().dismissOpenDialogs();
     }
 
-    // === 通用列表对话框 ===
-
-    public interface OnItemPickedListener {
-        void onPicked(int which);
-    }
-
-    public void showListDialog(String title, String[] items, OnItemPickedListener listener) {
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle(title);
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-        for (int i = 0; i < items.length; i++) {
-            Button btn = new Button(activity);
-            btn.setText(items[i]);
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF006688);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 8;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                if (listener != null) listener.onPicked(idx);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
+    /**
+     * 退出对战（layout_game_right 隐藏）时关闭可能残留的宣言类对话框：
+     * 宣言属性 / 宣言数字 / 宣言种族（由 YGOProActivity hideGameUI 调用）
+     */
+    public void dismissAnnounceDialogs() {
+        if (announceAttributeDialog != null) {
+            announceAttributeDialog.dismiss();
+            announceAttributeDialog = null;
         }
-        dialog.setCancelable(false);
-        dialog.show();
+        if (announceNumberDialog != null) {
+            announceNumberDialog.dismiss();
+            announceNumberDialog = null;
+        }
+        if (announceRaceDialog != null) {
+            announceRaceDialog.dismiss();
+            announceRaceDialog = null;
+        }
     }
 }
