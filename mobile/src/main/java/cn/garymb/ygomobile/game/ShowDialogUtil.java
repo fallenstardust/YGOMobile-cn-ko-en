@@ -837,7 +837,7 @@ public class ShowDialogUtil {
         if (announceRaceDialog != null) announceRaceDialog.dismiss();
         AnnounceRaceDialog dialog = new AnnounceRaceDialog(activity);
         announceRaceDialog = dialog;
-        dialog.setTitle(selectTitleText(563, "选择种族"))
+        dialog.setTitle(selectTitleText(563, "请选择要宣言的种族"))
                 .setAvailableMask(available)
                 .setAnnounceCount(count)
                 .setOnRaceSelectedListener(this::sendResponseInt)

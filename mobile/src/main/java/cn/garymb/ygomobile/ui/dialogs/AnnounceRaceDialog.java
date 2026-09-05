@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.GridLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -36,7 +35,7 @@ public class AnnounceRaceDialog {
     private static final String[] FALLBACK_NAMES = {
             "战士", "魔法师", "天使", "恶魔", "不死", "机械", "水", "炎", "岩石",
             "鸟兽", "植物", "昆虫", "雷", "龙", "兽", "兽战士", "恐龙",
-            "鱼", "海龙", "爬虫", "超能力", "幻神兽", "创造神", "幻龙", "电子界", "幻想"
+            "鱼", "海龙", "爬虫", "超能力", "幻神兽", "创造神", "幻龙", "电子界", "幻想魔"
     };
 
     public interface OnRaceSelectedListener {
@@ -61,7 +60,6 @@ public class AnnounceRaceDialog {
     private int announceCount = 1;
 
     private TextView tvTitle;
-    private GridLayout layoutChecks;
     private final CheckBox[] chkRaces = new CheckBox[CardRace.values().length];
 
     private OnRaceSelectedListener listener;
@@ -98,29 +96,31 @@ public class AnnounceRaceDialog {
         return this;
     }
 
+    /** XML 中固定的 26 个种族勾选框，顺序与 CardRace.values() 一致 */
+    private static final int[] CHECKBOX_IDS = {
+            R.id.cb_anrace_warrior, R.id.cb_anrace_spellcaster, R.id.cb_anrace_fairy,
+            R.id.cb_anrace_fiend, R.id.cb_anrace_zombie, R.id.cb_anrace_machine,
+            R.id.cb_anrace_aqua, R.id.cb_anrace_pyro, R.id.cb_anrace_rock,
+            R.id.cb_anrace_wingedbeast, R.id.cb_anrace_plant, R.id.cb_anrace_insect,
+            R.id.cb_anrace_thunder, R.id.cb_anrace_dragon, R.id.cb_anrace_beast,
+            R.id.cb_anrace_beastwarrior, R.id.cb_anrace_dinosaur, R.id.cb_anrace_fish,
+            R.id.cb_anrace_seaserpent, R.id.cb_anrace_reptile, R.id.cb_anrace_psychic,
+            R.id.cb_anrace_divinebeast, R.id.cb_anrace_creatorgod, R.id.cb_anrace_wyrm,
+            R.id.cb_anrace_cyberse, R.id.cb_anrace_illusion
+    };
+
     private void build() {
         View root = LayoutInflater.from(context).inflate(R.layout.dialog_announce_race, null);
         tvTitle = root.findViewById(R.id.tv_anrace_title);
-        layoutChecks = root.findViewById(R.id.layout_anrace_checks);
         tvTitle.setText(title);
 
         CardRace[] races = CardRace.values();
         for (int i = 0; i < races.length; i++) {
-            CheckBox cb = new CheckBox(context);
+            CheckBox cb = root.findViewById(CHECKBOX_IDS[i]);
             cb.setText(mStringManager.getSystemString(races[i].getLanguageIndex(), FALLBACK_NAMES[i]));
-            cb.setTextColor(Color.WHITE);
-            cb.setTextSize(12);
             cb.setVisibility((races[i].value() & availableMask) != 0 ? View.VISIBLE : View.GONE);
             cb.setOnCheckedChangeListener((buttonView, isChecked) -> onCheckedChanged());
-            // GridLayout 等宽列（对齐 game.cpp L945-947 chkRace 每行 3 格）
-            GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = 0;
-            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-            lp.setMargins(dp(2), dp(2), dp(2), dp(2));
-            cb.setLayoutParams(lp);
             chkRaces[i] = cb;
-            layoutChecks.addView(cb);
         }
 
         popupWindow = new PopupWindow(root, dp(DIALOG_WIDTH_DP),
