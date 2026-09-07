@@ -3,8 +3,9 @@
     android:id="@+id/announce_race_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/sdialogl"
-    android:orientation="vertical">
+    android:background="@drawable/window2s"
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <TextView
         android:id="@+id/tv_anrace_title"
@@ -15,15 +16,324 @@
         android:textColor="@color/white"
         android:textSize="11sp" />
 
-    <ScrollView
+    <GridLayout
+        android:id="@+id/layout_anrace_checks"
         android:layout_width="match_parent"
-        android:layout_height="240dp"
-        android:layout_marginTop="4dp">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:columnCount="3"
+        android:rowCount="9">
 
-        <GridLayout
-            android:id="@+id/layout_anrace_checks"
-            android:layout_width="match_parent"
+        <CheckBox
+            android:id="@+id/cb_anrace_warrior"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:columnCount="3" />
-    </ScrollView>
+            android:layout_row="0"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="战士"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_spellcaster"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="0"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="魔法师"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_fairy"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="0"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="天使"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_fiend"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="1"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="恶魔"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_zombie"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="1"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="不死"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_machine"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="1"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="机械"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_aqua"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="2"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="水"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_pyro"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="2"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="炎"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_rock"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="2"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="岩石"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_wingedbeast"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="3"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="鸟兽"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_plant"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="3"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="植物"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_insect"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="3"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="昆虫"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_thunder"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="4"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="雷"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_dragon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="4"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="龙"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_beast"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="4"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="兽"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_beastwarrior"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="5"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="兽战士"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_dinosaur"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="5"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="恐龙"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_fish"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="5"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="鱼"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_seaserpent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="6"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="海龙"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_reptile"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="6"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="爬虫"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_psychic"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="6"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="超能力"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_divinebeast"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="7"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="幻神兽"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_creatorgod"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="7"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="创造神"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_wyrm"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="7"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="幻龙"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_cyberse"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="8"
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="电子界"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cb_anrace_illusion"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_row="8"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:text="幻想"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+    </GridLayout>
 </LinearLayout>
