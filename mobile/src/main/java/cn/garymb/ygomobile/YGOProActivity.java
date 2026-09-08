@@ -865,6 +865,8 @@ public class YGOProActivity extends AppCompatActivity implements
             case DUELING:
                 enterDuelingUI();
                 cardDetailPanel.showBottomActions();
+                // 对齐 duelclient.cpp L912-916：STOC_GAME_START 按 chkDefaultShowChain 初始化时点三态
+                cardDetailPanel.onDuelStarted();
                 pendingReplays.clear();
                 duelEndHandling = false;
                 break;
@@ -926,6 +928,17 @@ public class YGOProActivity extends AppCompatActivity implements
             isMyTurn = (engine.getField().currentPlayer == 0);
             topInfoManager.updateTurn(engine.getField().turnCount, isMyTurn);
             fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
+        });
+    }
+
+    /**
+     * MSG_NEW_TURN（对齐 duelclient.cpp L2865-2877）：
+     * 每回合开始显示左侧面板的三个时点按钮并刷新其按下态
+     */
+    @Override
+    public void onTurnStarted(int player) {
+        runOnUiThread(() -> {
+            if (cardDetailPanel != null) cardDetailPanel.showChainButtons();
         });
     }
 

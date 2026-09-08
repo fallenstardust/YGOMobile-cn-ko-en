@@ -14,6 +14,7 @@ import java.io.File;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.ReplayEngine;
@@ -55,6 +56,14 @@ public class CardDetailPanel {
     private int currentCardCode = -1;
     private Bitmap coverBitmap;
     private StringManager mStringManager = DataManager.get().getStringManager();
+
+    // === 时点三态（对齐 gframe game.h: ignore_chain / always_chain / chain_when_avail，三者互斥） ===
+    /** 忽略时点（sys1292）：跳过所有非强制、非诱发的时点询问 */
+    private boolean ignoreChain;
+    /** 显示时点（sys1293）：即使没有可发动的卡也询问每个时点 */
+    private boolean alwaysChain;
+    /** 可用时点（sys1294）：只要存在可发动的卡就询问 */
+    private boolean chainWhenAvail;
 
     // 选择上下文（cancelOrFinish 决策所需，由 YGOProActivity 注册同步）
     private int currentSelectType = -1;
@@ -98,6 +107,9 @@ public class CardDetailPanel {
         btnReplayShuffle = activity.findViewById(R.id.btn_replay_shuffle);
         btnReplayQuit = activity.findViewById(R.id.btn_replay_quit);
         layoutDeckControl = activity.findViewById(R.id.layout_deck_control);
+
+        // 对齐 game.cpp L1357-1359：三个时点按钮创建后默认隐藏，MSG_NEW_TURN 时才显示
+        hideChainButtons();
 
         setupListeners();
     }
@@ -171,10 +183,29 @@ public class CardDetailPanel {
         btnSurrender.setOnClickListener(v -> {
             if (activity.getEngine() != null) activity.getEngine().sendSurrender();
         });
-        btnIgnoreTiming.setOnClickListener(v -> activity.sendResponseInt(-1));
+        // 时点按钮（对齐 event_handler.cpp L297-320 BUTTON_CHAIN_IGNORE/ALWAYS/WHENAVAIL）：
+        // gframe 用 setIsPushButton(true) 实现"推送式开关"，点击后 isPressed() 即为新状态；
+        // 这里等价为翻转自身标志，并强制清掉另外两态（三态互斥），最后刷新按下态显示
+        btnIgnoreTiming.setOnClickListener(v -> {
+            playButtonSound();
+            ignoreChain = !ignoreChain;
+            alwaysChain = false;
+            chainWhenAvail = false;
+            updateChainButtons();
+        });
         btnShowTiming.setOnClickListener(v -> {
+            playButtonSound();
+            alwaysChain = !alwaysChain;
+            ignoreChain = false;
+            chainWhenAvail = false;
+            updateChainButtons();
         });
         btnAvailableTiming.setOnClickListener(v -> {
+            playButtonSound();
+            chainWhenAvail = !chainWhenAvail;
+            alwaysChain = false;
+            ignoreChain = false;
+            updateChainButtons();
         });
         btnSettings.setOnClickListener(v -> activity.showSettingsDialog());
         btnChat.setOnClickListener(v -> activity.toggleChatInput());
@@ -515,8 +546,110 @@ public class CardDetailPanel {
     }
 
     public void closeGameButtons() {
+        // 对齐 game.cpp Game::CloseGameButtons() L2395-2398：隐藏三个时点按钮与取消/完成按钮
+        hideChainButtons();
         hideCancelOrFinishButton();
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+    }
+
+    // === 时点按钮 (对应 C++ btnChainIgnore / btnChainAlways / btnChainWhenAvail) ===
+
+    /** 显示时点（gframe always_chain）：供 ShowDialogUtil 在 MSG_SELECT_CHAIN 中判定自动应答 */
+    public boolean isAlwaysChain() {
+        return alwaysChain;
+    }
+
+    /** 忽略时点（gframe ignore_chain） */
+    public boolean isIgnoreChain() {
+        return ignoreChain;
+    }
+
+    /** 可用时点（gframe chain_when_avail） */
+    public boolean isChainWhenAvail() {
+        return chainWhenAvail;
+    }
+
+    /**
+     * 刷新三个时点按钮的按下态（对齐 event_handler.cpp L2874-2880 ClientField::UpdateChainButtons）。
+     * drawable/button3_bg.xml 中 state_selected 与 state_pressed 同为 @drawable/sbutton_p，
+     * 因此 setSelected(flag) 等价于 gframe 的
+     * ChangeToIGUIImageButton(btn, tButton_S, tButton_S_pressed) + setPressed(flag)
+     */
+    public void updateChainButtons() {
+        if (btnIgnoreTiming != null) btnIgnoreTiming.setSelected(ignoreChain);
+        if (btnShowTiming != null) btnShowTiming.setSelected(alwaysChain);
+        if (btnAvailableTiming != null) btnAvailableTiming.setSelected(chainWhenAvail);
+    }
+
+    /** 按钮文字取自 strings.conf（对齐 game.cpp L1348/1350/1352 的 GetSysString(1292/1293/1294)） */
+    private void applyChainButtonTitles() {
+        mStringManager = DataManager.get().getStringManager();
+        if (btnIgnoreTiming != null) {
+            btnIgnoreTiming.setText(mStringManager.getSystemString(1292, "忽略时点"));
+        }
+        if (btnShowTiming != null) {
+            btnShowTiming.setText(mStringManager.getSystemString(1293, "显示时点"));
+        }
+        if (btnAvailableTiming != null) {
+            btnAvailableTiming.setText(mStringManager.getSystemString(1294, "可用时点"));
+        }
+    }
+
+    /**
+     * MSG_NEW_TURN 时显示时点按钮（对齐 duelclient.cpp L2865-2877）：
+     * control_mode == 0 → 显示三键并刷新按下态；否则隐藏三键与取消/完成按钮
+     */
+    public void showChainButtons() {
+        if (AppsSettings.get().getIntSettings("control_mode", 0) != 0) {
+            hideChainButtons();
+            hideCancelOrFinishButton();
+            return;
+        }
+        applyChainButtonTitles();
+        if (btnIgnoreTiming != null) btnIgnoreTiming.setVisibility(View.VISIBLE);
+        if (btnShowTiming != null) btnShowTiming.setVisibility(View.VISIBLE);
+        if (btnAvailableTiming != null) btnAvailableTiming.setVisibility(View.VISIBLE);
+        updateChainButtons();
+    }
+
+    /**
+     * 隐藏时点按钮。用 INVISIBLE 而非 GONE（与本布局 btn_shuffle_hand 一致）：
+     * layout_bottom_actions 是 weight 布局，GONE 会让"投降"按钮尺寸跳变
+     */
+    public void hideChainButtons() {
+        if (btnIgnoreTiming != null) {
+            btnIgnoreTiming.setSelected(false);
+            btnIgnoreTiming.setVisibility(View.INVISIBLE);
+        }
+        if (btnShowTiming != null) {
+            btnShowTiming.setSelected(false);
+            btnShowTiming.setVisibility(View.INVISIBLE);
+        }
+        if (btnAvailableTiming != null) {
+            btnAvailableTiming.setSelected(false);
+            btnAvailableTiming.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    /**
+     * STOC_GAME_START 时初始化时点三态（对齐 duelclient.cpp L912-916）：
+     * 勾选「开局默认显示所有时点」(chkDefaultShowChain) → always_chain = true，另两态清零。
+     * 未勾选时保持原值不清零，与 gframe 一致（Game 成员跨局保留，
+     * 下一局首个 MSG_NEW_TURN 会由 UpdateChainButtons 还原按下态显示）
+     */
+    public void onDuelStarted() {
+        if (AppsSettings.get().getIntSettings("chkDefaultShowChain", 0) == 1) {
+            alwaysChain = true;
+            ignoreChain = false;
+            chainWhenAvail = false;
+        }
+        updateChainButtons();
+    }
+
+    /** 对齐 gframe 各 BUTTON_* handler 开头的 PlaySoundEffect(SoundManager::SFX::BUTTON) */
+    private void playButtonSound() {
+        SoundManager soundManager = activity.getSoundManager();
+        if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
     }
 
     // === 取消或完成按钮 (对应 C++ ClientField::CancelOrFinish) ===

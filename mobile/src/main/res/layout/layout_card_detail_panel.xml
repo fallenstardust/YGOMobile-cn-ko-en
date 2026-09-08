@@ -56,7 +56,8 @@
                     android:background="@drawable/button3_bg"
                     android:text="忽略时点"
                     android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:textSize="10sp"
+                    android:visibility="invisible" />
 
                 <Button
                     android:id="@+id/btn_show_timing"
@@ -67,7 +68,8 @@
                     android:background="@drawable/button3_bg"
                     android:text="显示时点"
                     android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:textSize="10sp"
+                    android:visibility="invisible" />
 
                 <Button
                     android:id="@+id/btn_available_timing"
@@ -78,7 +80,8 @@
                     android:background="@drawable/button3_bg"
                     android:text="可用时点"
                     android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:textSize="10sp"
+                    android:visibility="invisible" />
 
                 <Button
                     android:id="@+id/btn_shuffle_hand"

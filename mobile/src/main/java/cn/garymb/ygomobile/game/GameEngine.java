@@ -52,6 +52,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
         void onPhaseChanged(int phase);
 
+        /**
+         * MSG_NEW_TURN（对齐 duelclient.cpp L2865-2877）：
+         * 用于在每回合开始时显示/刷新左侧面板的时点按钮
+         *
+         * @param player 本地视角的当前回合玩家（0 = 我方）
+         */
+        void onTurnStarted(int player);
+
         void onChatReceived(int playerType, String message);
 
         void onSelectRequired(int selectType, ByteBuffer data);
@@ -1080,12 +1088,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         if (localPlayer(player & 1) == 1) {
             selectFieldMask = (selectFieldMask >>> 16) | (selectFieldMask << 16);
         }
-        // 对齐 duelclient.cpp L2199-2210：MSG_SELECT_PLACE 提示 569(带卡名)/560
+        // 对齐 duelclient.cpp L2199-2208：MSG_SELECT_PLACE 提示 sys569「请选择[%ls]的位置」（select_hint 此时是卡号）/ sys560
         if (field.selectHint > 0) {
-            postDuelHint("请选择要放置「" + getCardDisplayName(field.selectHint) + "」的区域");
+            postDuelHint(DataManager.get().formatSystemString(569, "请选择[%s]的位置",
+                    DataManager.get().getName(field.selectHint)));
         } else {
             postDuelHint(sysString(560, "请选择放置位置"));
         }
+        field.selectHint = 0;
         mainHandler.post(() -> {
             if (listener != null) listener.onSelectRequired(18, null);
         });
@@ -1207,15 +1217,16 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         }
     }
 
-    /** 解析 player(1) counter_type(2) counter_count(2) 生成指示物提示（不推进原缓冲） */
+    /** 解析 player(1) counter_type(2) counter_count(2)，对齐 duelclient.cpp L2362：GetSysString(204) */
     private String counterHint(ByteBuffer data) {
         try {
             ByteBuffer dup = data.duplicate();
             dup.order(ByteOrder.LITTLE_ENDIAN);
             dup.get(); // selecting_player
-            dup.getShort(); // counter type
+            int counterType = dup.getShort() & 0xFFFF;
             int count = dup.getShort() & 0xFFFF;
-            return "移除 " + count + " 个指示物";
+            DataManager dm = DataManager.get();
+            return dm.formatSystemString(204, "请取除%d个[%s]", count, dm.getCounterName(counterType));
         } catch (Exception e) {
             return null;
         }
@@ -1321,8 +1332,12 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         field.currentPlayer = localPlayer(player);
         field.turnCount++;
         soundManager.playSoundEffect(SoundManager.SFX.NEXT_TURN);
+        final int localCurrent = field.currentPlayer;
         mainHandler.post(() -> {
-            if (listener != null) listener.onFieldChanged();
+            if (listener != null) {
+                listener.onFieldChanged();
+                listener.onTurnStarted(localCurrent);
+            }
         });
     }
 

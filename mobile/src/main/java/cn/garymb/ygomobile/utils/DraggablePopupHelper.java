@@ -224,13 +224,6 @@ public class DraggablePopupHelper {
             ACTIVE_LAYERS.add(this);
         }
 
-        @Override
-        protected void onDetachedFromWindow() {
-            ACTIVE_LAYERS.remove(this);
-            cancelForwardedGesture();
-            super.onDetachedFromWindow();
-        }
-
         /**
          * 触点是否落在对话框内容区（唯一子视图）内；
          * 内容尚未布局（宽高为 0）时视为不在内，避免误吞事件
