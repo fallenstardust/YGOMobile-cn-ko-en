@@ -698,7 +698,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.TOP | Gravity.START);
-        lp.topMargin = row * rowHeight;               // LPbar 区域上一层，从上到下分行
+        // 垂直锚定到 LP 血条所在的顶部透明带：GameFieldView 为 setZOrderOnTop(true) 的
+        // GLSurfaceView，血条以下区域被场地/手卡纹理遮挡，弹幕只有落在血条带内才可见
+        lp.topMargin = danmakuRowTopMargin(row, rowHeight);
         lp.leftMargin = layoutDanmaku.getWidth();     // 起点：顶部信息区右缘之外
         layoutDanmaku.addView(tv, lp);
         danmakuViews.add(tv);
@@ -713,6 +715,35 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
                         layoutDanmaku.removeView(tv);
                     }).start();
         });
+    }
+
+    /**
+     * 弹幕行 topMargin（相对 layout_danmaku 顶边，px）：
+     * 把 DANMAKU_MAX_ROWS 行压缩进「弹幕层顶 ～ LP 血条底边」这条 GL 透明带内，
+     * 使弹幕与血条同一高度水平滚动，且不被 GameFieldView 的场地/手卡纹理遮挡。
+     * 行距 = min(设定行高 DANMAKU_ROW_HEIGHT_DP, 透明带高度 / 行数)；
+     * 血条尚未就绪时兜底为按设定行高从顶累积。
+     */
+    private int danmakuRowTopMargin(int row, int rowHeight) {
+        int[] lpBar = topInfoManager != null ? topInfoManager.getLpBarPositionAndHeight() : null;
+        if (lpBar == null) {
+            return row * rowHeight;
+        }
+        int[] dmLoc = new int[2];
+        layoutDanmaku.getLocationInWindow(dmLoc);
+        int lpTopRel = lpTopRel(lpBar, dmLoc);
+        int bandBottom = lpTopRel + lpBar[1];     // 可见透明带下沿＝血条底边
+        if (bandBottom <= 0) {
+            return row * rowHeight;
+        }
+        int spacing = Math.min(rowHeight, bandBottom / DANMAKU_MAX_ROWS);
+        if (spacing <= 0) spacing = rowHeight;
+        return row * spacing;
+    }
+
+    /** 血条顶边相对弹幕层顶边的偏移（两者同为窗口坐标，作差即相对值） */
+    private int lpTopRel(int[] lpBar, int[] dmLoc) {
+        return lpBar[0] - dmLoc[1];
     }
 
     /** 隐藏聊天消息文本（对齐 gframe BUTTON_CHATTING 切换关闭时的 ClearChatMsg：清空聊天显示） */

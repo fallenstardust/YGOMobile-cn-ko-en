@@ -1,17 +1,13 @@
 package cn.garymb.ygomobile.game;
 
 import android.os.Handler;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,6 +41,7 @@ import cn.garymb.ygomobile.ui.dialogs.RPSDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
+import ocgcore.enums.CardType;
 
 /**
  * 决斗中所有选择/确认对话框的统一管理类，从 YGOProActivity 迁移而来，
@@ -138,6 +135,13 @@ public class ShowDialogUtil {
         return DataManager.get().formatSystemString(index, defText, args);
     }
 
+    /**
+     * 游戏内弹窗居中区域：决斗场 layout_game_right（而非整个 Activity 窗口）
+     */
+    private View gameDialogRegion() {
+        return activity.findViewById(R.id.layout_game_right);
+    }
+
     // === 猜拳 / 先后攻 ===
 
     public void showHandSelectDialog() {
@@ -163,13 +167,17 @@ public class ShowDialogUtil {
         dialog.show();
     }
 
-    /** 新对局进入猜拳阶段时重置结果抑制状态（由 YGOProActivity onStateChanged(HAND_SELECT) 调用） */
+    /**
+     * 新对局进入猜拳阶段时重置结果抑制状态（由 YGOProActivity onStateChanged(HAND_SELECT) 调用）
+     */
     public void resetRpsResultState() {
         rpsResultShown = false;
         lastHandSent = 0;
     }
 
-    /** STOC_HAND_RESULT：播放猜拳结果动画（本方手势自底上升、对方手势倒置自 layout_game_right 顶部下降） */
+    /**
+     * STOC_HAND_RESULT：播放猜拳结果动画（本方手势自底上升、对方手势倒置自 layout_game_right 顶部下降）
+     */
     public void onHandResult(int myHand, int oppHand) {
         // 仅分出胜负（非平局）时抑制后续 RPSDialog 显示；
         // 平局（手势相同）不置位，服务器重发 MSG_SELECT_HAND 时仍弹窗供玩家再次出拳
@@ -238,7 +246,9 @@ public class ShowDialogUtil {
         dialog.show();
     }
 
-    /** 选项弹窗标题：系统字符串 555（strings.conf "!system 555 Select an option."）；消费 selectHint 避免残留影响后续选卡标题 */
+    /**
+     * 选项弹窗标题：系统字符串 555（strings.conf "!system 555 Select an option."）；消费 selectHint 避免残留影响后续选卡标题
+     */
     private String optionTitleText() {
         GameField f = engine() != null ? engine().getField() : null;
         if (f != null) f.selectHint = 0;
@@ -277,15 +287,30 @@ public class ShowDialogUtil {
             String raw = dm.getDesc(desc, "");
             message = raw.isEmpty() ? "是否发动「" + cardName + "」的效果？" : raw;
         }
-        showYesNoQuery(message);
+        showYesNoQuery(message, code, cardName);
     }
 
-    /** 是/否确认弹窗公共构建：是=1 否=0（MSG_SELECT_YESNO / MSG_SELECT_EFFECTYN 应答） */
+    /**
+     * 是/否确认弹窗公共构建：是=1 否=0（MSG_SELECT_YESNO / MSG_SELECT_EFFECTYN 应答）
+     */
     private void showYesNoQuery(String message) {
+        showYesNoQuery(message, 0, null);
+    }
+
+    /**
+     * 是/否确认弹窗公共构建（可带卡名着色）：cardCode>0 且 cardName 非空时，
+     * 由 YesOrNoDialog 将 message 中的卡名按卡片类型着色（怪兽黄/魔法淡绿/陷阱淡粉）。
+     */
+    private void showYesNoQuery(String message, int cardCode, String cardName) {
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("确认")
-                .setMessage(message)
-                .setType(YesOrNoDialog.TYPE_YES_NO)
+        // 不显示标题栏：询问文本（如"是否发动「X」的效果？"）已在 message 中，
+        // 标题留空由 YesOrNoDialog 自动隐藏 tv_yes_no_title
+        if (cardCode > 0 && cardName != null && !cardName.isEmpty()) {
+            dialog.setMessageWithCardName(message, cardCode, cardName);
+        } else {
+            dialog.setMessage(message);
+        }
+        dialog.setType(YesOrNoDialog.TYPE_YES_NO)
                 .setPositiveButtonText("是")
                 .setNegativeButtonText("否")
                 .setPositiveButton(v -> {
@@ -297,6 +322,7 @@ public class ShowDialogUtil {
                     panel().hideCancelOrFinishButton();
                 })
                 .setCancelable(false)
+                .setCenterInView(gameDialogRegion())
                 .setOnDismissListener(() -> {
                     panel().hideCancelOrFinishButton();
                     panel().setCurrentDialog(null);
@@ -588,13 +614,14 @@ public class ShowDialogUtil {
                 .setPositiveButtonText(forced ? "" : sysText(204, "不连锁"))
                 .setPositiveButton(v -> {
                     if (forced) return;
-                    // 对齐 event_handler.cpp L378-382 BUTTON_NO + MSG_SELECT_CHAIN：
+                    // 对齐 event_handler.cpp L352-382 BUTTON_NO + MSG_SELECT_CHAIN：
                     // SetResponseI(-1) → 隐藏询问窗 → ShowCancelOrFinishButton(0)
                     panel().hideCancelOrFinishButton();
                     clearChainSelect();
                     sendResponseInt(-1);
                 })
                 .setCancelable(false)
+                .setCenterInView(gameDialogRegion())
                 .setOnDismissListener(() -> {
                     panel().hideCancelOrFinishButton();
                     panel().setCurrentDialog(null);
@@ -610,14 +637,14 @@ public class ShowDialogUtil {
      * MSG_SELECT_CHAIN 且 count == 0 时的询问（duelclient.cpp L2173-2174 的 sys201 + sys202）。
      * 只有开启"显示时点"(always_chain) 才会走到这里，其余情况已在自动放弃分支应答 -1。
      * 是 → 仅关闭询问窗，改由左侧「取消操作」按钮应答 -1
-     *      （event_handler.cpp L352-357 + L974 CancelOrFinish）；
+     * （event_handler.cpp L352-357 + L974 CancelOrFinish）；
      * 否 → 立即应答 -1（event_handler.cpp L378-382）
      */
     private void showChainEmptyQuery() {
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         panel().setCurrentDialog(dialog);
-        dialog.setTitle(sysText(201, "此时没有可以发动的效果"))
-                .setMessage(sysText(201, "此时没有可以发动的效果") + "\n"
+        // 不显示标题栏：完整询问文本（sys201 + sys202）已在 message 中
+        dialog.setMessage(sysText(201, "此时没有可以发动的效果") + "\n"
                         + sysText(202, "是否要确认场上的情况？"))
                 .setType(YesOrNoDialog.TYPE_YES_NO)
                 .setPositiveButtonText("是")
@@ -629,11 +656,14 @@ public class ShowDialogUtil {
                     panel().hideCancelOrFinishButton();
                 })
                 .setCancelable(false)
+                .setCenterInView(gameDialogRegion())
                 .setOnDismissListener(() -> panel().setCurrentDialog(null));
         dialog.show();
     }
 
-    /** 对齐 C++ ClientField::ClearChainSelect()：清掉场上卡片的可发动高亮与选择标记 */
+    /**
+     * 对齐 C++ ClientField::ClearChainSelect()：清掉场上卡片的可发动高亮与选择标记
+     */
     private void clearChainSelect() {
         GameEngine e = engine();
         if (e != null && e.getField() != null) e.getField().clearChainSelect();
@@ -824,7 +854,8 @@ public class ShowDialogUtil {
             });
             layoutOptions.addView(btn);
         }
-        dialog.setCancelable(false);
+        dialog.setCancelable(false)
+                .setCenterInView(gameDialogRegion());
         dialog.show();
     }
 

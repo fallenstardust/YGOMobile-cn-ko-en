@@ -45,11 +45,19 @@ public class GameTopInfoManager {
     private static final int TURN_PLAYER_OPP = 1;
     /** 回合尚未决定（layout_game_right 刚显示 / 猜拳阶段）：双方均按非回合样式显示 */
     private static final int TURN_PLAYER_NONE = -1;
-    /** 当前回合玩家名字阴影色：holo blue bright，用于凸显回合方 */
-    private static final int NAME_SHADOW_ACTIVE = YGOUtil.c(R.color.holo_blue_bright);
-    /** 非回合玩家名字阴影色：黑色 */
+    /** 我方回合（左半区）玩家名字文字色：holo blue bright */
+    private static final int NAME_COLOR_ME_ACTIVE = YGOUtil.c(R.color.holo_blue_bright);
+    /** 对方回合（右半区）玩家名字文字色：holo orange bright */
+    private static final int NAME_COLOR_OPP_ACTIVE = YGOUtil.c(R.color.holo_orange_bright);
+    /** 非回合玩家名字文字色：白色，与布局 tv_*_name 默认 textColor 一致 */
+    private static final int NAME_COLOR_INACTIVE = YGOUtil.c(R.color.white);
+    /** 当前回合玩家名字外发光色：holo green bright（colors.xml #95d389），辨识度高于原 holo blue bright */
+    private static final int NAME_SHADOW_ACTIVE = YGOUtil.c(R.color.holo_green_bright);
+    /** 非回合玩家阴影色：黑色 */
     private static final int NAME_SHADOW_INACTIVE = YGOUtil.c(R.color.black);
-    /** 名字阴影几何参数，与布局 tv_player_name / tv_opponent_name 的 shadowRadius/Dx/Dy 保持一致 */
+    /** 回合玩家外发光半径：dx/dy 均为 0 属零偏移全向光晕，加大半径形成包裹文字的外发光 */
+    private static final float NAME_GLOW_RADIUS = 8f;
+    /** 非回合玩家阴影半径，与布局 tv_player_name / tv_opponent_name 的 shadowRadius 保持一致 */
     private static final float NAME_SHADOW_RADIUS = 4f;
     private static final float NAME_SHADOW_DX = 0f;
     private static final float NAME_SHADOW_DY = 0f;
@@ -149,7 +157,7 @@ public class GameTopInfoManager {
         setTurnText(DEFAULT_TURN_TEXT);
         if (tvPlayerTime != null) tvPlayerTime.setVisibility(View.GONE);
         if (tvOpponentTime != null) tvOpponentTime.setVisibility(View.GONE);
-        // 猜拳前回合方未定：双方 lpbarf 均灰色、名字阴影均黑色，
+        // 猜拳前回合方未定：双方 lpbarf 均灰色、名字均为默认白色，
         // 待 MSG_NEW_TURN/MSG_NEW_PHASE 到来后由 updateTurn 切到真实回合方
         applyTurnHighlight(TURN_PLAYER_NONE);
         updateLpBar(DEFAULT_MAX_LP, DEFAULT_MAX_LP, ivPlayerLpBar, ivPlayerLpBarLayer, Gravity.START);
@@ -211,6 +219,20 @@ public class GameTopInfoManager {
         return ivOpponentLpBar != null ? ivOpponentLpBar.getWidth() : 0;
     }
 
+    /**
+     * 我方 LP 血条在窗口中的顶边坐标与高度（弹幕垂直定位锚点）。
+     * GameFieldView 为 setZOrderOnTop(true) 的 GLSurfaceView，只有血条所在的顶部透明带
+     * 才不会被场地/手卡纹理遮挡；弹幕锚定该带才能与血条同一高度且稳定可见。
+     * 以委托方式暴露，避免 GameFieldController 直接访问私有视图字段。
+     * @return int[]{血条顶边窗口 Y 坐标, 血条高度(px)}；血条尚未布局完成时返回 null
+     */
+    public int[] getLpBarPositionAndHeight() {
+        if (ivPlayerLpBar == null || ivPlayerLpBar.getHeight() <= 0) return null;
+        int[] loc = new int[2];
+        ivPlayerLpBar.getLocationInWindow(loc);
+        return new int[]{loc[1], ivPlayerLpBar.getHeight()};
+    }
+
     /** 双方头像（drawing.cpp L992-994） */
     private void setupAvatarImages() {
         Bitmap myAvatar = TextureLoader.get().getAvatar(true);
@@ -259,7 +281,7 @@ public class GameTopInfoManager {
     }
 
     /**
-     * 更新回合数并切换回合方视觉高亮（LPBarFrame 彩色/灰色 + 玩家名字阴影色）
+     * 更新回合数并切换回合方视觉高亮（LPBarFrame 彩色/灰色 + 玩家名字文字色）
      * @param turn     当前回合数
      * @param isMyTurn 本地视角：是否为我方回合
      */
@@ -269,27 +291,29 @@ public class GameTopInfoManager {
     }
 
     /**
-     * 回合方视觉高亮统一入口：LPBarFrame 与名字阴影同步切换，避免两处状态不一致。
+     * 回合方视觉高亮统一入口：LPBarFrame 与名字文字色同步切换，避免两处状态不一致。
      * @param turnPlayer {@link #TURN_PLAYER_ME} / {@link #TURN_PLAYER_OPP} /
      *                   {@link #TURN_PLAYER_NONE}（回合未定，双方均非回合样式）
      */
     private void applyTurnHighlight(int turnPlayer) {
         applyLpBarFrames(turnPlayer);
-        applyNameShadow(turnPlayer);
+        applyNameTextColor(turnPlayer);
     }
 
     /**
-     * 当前回合玩家名字阴影改为 holo blue bright 以凸显回合方，非回合玩家保持黑色；
-     * 回合未定时双方均为黑色。阴影几何参数沿用布局（radius=4, dx=0, dy=0），仅切换颜色
+     * 仅切换回合玩家名字的文字色，不做阴影/外发光变化：
+     * 我方（左半区）回合 → holo blue bright，对方（右半区）回合 → holo orange bright，
+     * 非回合玩家与回合未定（{@link #TURN_PLAYER_NONE}）→ 白色；
+     * 文字阴影沿用布局 tv_*_name 的 shadowColor/shadowRadius 固定值
      */
-    private void applyNameShadow(int turnPlayer) {
+    private void applyNameTextColor(int turnPlayer) {
         if (tvPlayerName != null) {
-            tvPlayerName.setShadowLayer(NAME_SHADOW_RADIUS, NAME_SHADOW_DX, NAME_SHADOW_DY,
-                    turnPlayer == TURN_PLAYER_ME ? NAME_SHADOW_ACTIVE : NAME_SHADOW_INACTIVE);
+            tvPlayerName.setTextColor(turnPlayer == TURN_PLAYER_ME
+                    ? NAME_COLOR_ME_ACTIVE : NAME_COLOR_INACTIVE);
         }
         if (tvOpponentName != null) {
-            tvOpponentName.setShadowLayer(NAME_SHADOW_RADIUS, NAME_SHADOW_DX, NAME_SHADOW_DY,
-                    turnPlayer == TURN_PLAYER_OPP ? NAME_SHADOW_ACTIVE : NAME_SHADOW_INACTIVE);
+            tvOpponentName.setTextColor(turnPlayer == TURN_PLAYER_OPP
+                    ? NAME_COLOR_OPP_ACTIVE : NAME_COLOR_INACTIVE);
         }
     }
 

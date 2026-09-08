@@ -34,6 +34,7 @@
             android:id="@+id/layout_option_items"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:orientation="vertical" />
     </ScrollView>
 </LinearLayout>

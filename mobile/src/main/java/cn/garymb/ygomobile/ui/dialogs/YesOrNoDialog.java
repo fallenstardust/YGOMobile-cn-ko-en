@@ -5,6 +5,9 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -19,18 +22,26 @@ import android.widget.TextView;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import ocgcore.DataManager;
+import ocgcore.data.Card;
+import ocgcore.enums.CardType;
 
 public class YesOrNoDialog {
 
     public static final int TYPE_MESSAGE = 0;
     public static final int TYPE_YES_NO = 1;
 
+    // 卡片名字着色（对齐 YGO 卡框配色：怪兽=黄、魔法=淡绿、陷阱=淡粉）
+    private static final int CARD_NAME_COLOR_MONSTER = 0xFFFFD700; // 怪兽卡：黄色
+    private static final int CARD_NAME_COLOR_SPELL = 0xFF90EE90;   // 魔法卡：淡绿色
+    private static final int CARD_NAME_COLOR_TRAP = 0xFFFFB6C1;    // 陷阱卡：淡粉色
+
     private final Context context;
     private PopupWindow popupWindow;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private String title = "";
-    private String message = "";
+    private CharSequence message = "";
     private int type = TYPE_MESSAGE;
 
     private String positiveText = "确定";
@@ -63,8 +74,18 @@ public class YesOrNoDialog {
         return this;
     }
 
-    public YesOrNoDialog setMessage(String message) {
+    public YesOrNoDialog setMessage(CharSequence message) {
         this.message = message;
+        return this;
+    }
+
+    /**
+     * 设置消息文本，并将其中的卡名按卡片类型着色（怪兽=黄、魔法=淡绿、陷阱=淡粉）。
+     * message 为已把 [%ls] 替换成卡名后的完整文本；cardName 为其中要着色的卡名子串；
+     * code 用于查询卡片类型。非卡片或无法识别类型时按普通文本显示。
+     */
+    public YesOrNoDialog setMessageWithCardName(String message, int code, String cardName) {
+        this.message = colorizeCardName(message, code, cardName);
         return this;
     }
 
@@ -132,6 +153,38 @@ public class YesOrNoDialog {
     public YesOrNoDialog setCenterInView(View region) {
         this.centerInView = region;
         return this;
+    }
+
+    /** 将 message 中出现的卡名按卡片类型着色，返回可显示的 CharSequence */
+    private CharSequence colorizeCardName(String message, int code, String cardName) {
+        if (message == null || message.isEmpty() || cardName == null || cardName.isEmpty()) {
+            return message;
+        }
+        int color = cardNameColor(code);
+        if (color == 0) return message;
+        SpannableString span = new SpannableString(message);
+        int from = 0;
+        int idx;
+        while ((idx = message.indexOf(cardName, from)) >= 0) {
+            span.setSpan(new ForegroundColorSpan(color), idx, idx + cardName.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            from = idx + cardName.length();
+        }
+        return span;
+    }
+
+    /**
+     * 依卡片类型返回卡名颜色：魔法=淡绿、陷阱=淡粉、怪兽=黄；无法识别返回 0（不着色）。
+     * 陷阱怪兽同时带 Trap|Monster 位，优先按陷阱着色，对齐卡框配色。
+     */
+    private int cardNameColor(int code) {
+        if (code <= 0) return 0;
+        Card card = DataManager.get().getCardManager().getCard(code);
+        if (card == null) return 0;
+        if (card.isType(CardType.Spell)) return CARD_NAME_COLOR_SPELL;
+        if (card.isType(CardType.Trap)) return CARD_NAME_COLOR_TRAP;
+        if (card.isType(CardType.Monster)) return CARD_NAME_COLOR_MONSTER;
+        return 0;
     }
 
     private void build() {

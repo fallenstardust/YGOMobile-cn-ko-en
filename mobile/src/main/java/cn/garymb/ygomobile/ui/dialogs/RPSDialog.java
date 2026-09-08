@@ -46,6 +46,9 @@ public class RPSDialog {
      */
     private static final float STOP_GAP_HALF_PX = 10f;
 
+    /** 猜拳弹窗底边与聊天输入框（et_chat_input）上沿的间距（dp）：上移避免遮挡输入框 */
+    private static final float CHAT_INPUT_GAP_DP = 6f;
+
     /**
      * 位移速度曲线（参考 drawing.cpp 短帧快动画设计）：
      * 前 50% 时间为较快匀速段（走完 70% 路程），后 50% 时间平方减速直至停止，
@@ -144,7 +147,7 @@ public class RPSDialog {
 
     /**
      * 水平：在 layout_game_right 实际宽度内居中；
-     * 垂直：弹窗底边与 GameFieldView 底边齐平
+     * 垂直：弹窗底边停在聊天输入框（et_chat_input）上沿之上，避免遮挡输入框
      */
     private void showAlignedToField(View gameRight) {
         contentView.measure(
@@ -158,11 +161,21 @@ public class RPSDialog {
         int x = grLoc[0] + (gameRight.getWidth() - popupW) / 2;
 
         Activity activity = (Activity) context;
-        View fieldView = activity.findViewById(R.id.layout_game_right);
-        View bottomRef = (fieldView != null && fieldView.getHeight() > 0) ? fieldView : gameRight;
-        int[] brLoc = new int[2];
-        bottomRef.getLocationInWindow(brLoc);
-        int y = brLoc[1] + bottomRef.getHeight() - popupH;
+        // 垂直：优先锚定聊天输入框上沿，弹窗整体上移，不再遮挡 et_chat_input
+        View chatInput = activity.findViewById(R.id.et_chat_input);
+        int y;
+        if (chatInput != null && chatInput.getVisibility() == View.VISIBLE && chatInput.getHeight() > 0) {
+            int[] ciLoc = new int[2];
+            chatInput.getLocationInWindow(ciLoc);
+            y = ciLoc[1] - popupH - dp2px(CHAT_INPUT_GAP_DP);
+        } else {
+            // 兜底：输入框不可用时，弹窗底边与 layout_game_right 底边齐平（原行为）
+            View fieldView = activity.findViewById(R.id.layout_game_right);
+            View bottomRef = (fieldView != null && fieldView.getHeight() > 0) ? fieldView : gameRight;
+            int[] brLoc = new int[2];
+            bottomRef.getLocationInWindow(brLoc);
+            y = brLoc[1] + bottomRef.getHeight() - popupH;
+        }
         if (x < 0) x = 0;
         if (y < 0) y = 0;
 

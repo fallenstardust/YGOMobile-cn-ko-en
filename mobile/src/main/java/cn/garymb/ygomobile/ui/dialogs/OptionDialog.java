@@ -48,6 +48,8 @@ public class OptionDialog {
     private static final int BUTTON_MIN_HEIGHT_DP = 30;
     /** 选项过多收缩滚动区时的最小高度 */
     private static final int MIN_SCROLL_HEIGHT_DP = 60;
+    /** 选项少于此数量时，按钮组在弹窗内垂直居中排列（否则顶部对齐并可滚动） */
+    private static final int CENTER_VERTICAL_MAX_OPTIONS = 5;
 
     private final Context context;
     private PopupWindow popupWindow;
@@ -170,15 +172,36 @@ public class OptionDialog {
             });
             container.addView(btn);
         }
+        // 选项少于 5 个时：按钮组在弹窗内垂直居中排列（而非顶部对齐）。
+        // 预留高度在 showCenteredInGameRight 中按「5 个按钮」计算；这里开启 fillViewport
+        // 并让容器填满滚动区、内容垂直居中即可。
+        if (options.size() < CENTER_VERTICAL_MAX_OPTIONS) {
+            ScrollView scroll = contentView.findViewById(R.id.scroll_option);
+            if (scroll != null) scroll.setFillViewport(true);
+            ViewGroup.LayoutParams clp = container.getLayoutParams();
+            if (clp != null) {
+                clp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                container.setLayoutParams(clp);
+            }
+            container.setGravity(Gravity.CENTER_VERTICAL);
+        }
     }
 
     /** 水平+垂直均在 layout_game_right 实际范围内居中，且整体不越出该区域 */
     private void showCenteredInGameRight(View gameRight) {
         ScrollView scroll = contentView.findViewById(R.id.scroll_option);
+        boolean centerButtons = options != null && options.size() < CENTER_VERTICAL_MAX_OPTIONS;
         if (scroll != null) {
-            // 复位上一次的高度限制，先按自然高度测量
             ViewGroup.LayoutParams slp = scroll.getLayoutParams();
-            slp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            if (centerButtons) {
+                // 少于 5 个选项：为滚动区预留「5 个按钮」的固定高度，
+                // 使按钮组可在其中垂直居中（fillViewport + 容器 gravity 已在 build 中设置）
+                slp.height = dp2px(CENTER_VERTICAL_MAX_OPTIONS
+                        * (BUTTON_MIN_HEIGHT_DP + ITEM_BOTTOM_MARGIN_DP));
+            } else {
+                // 复位上一次的高度限制，先按自然高度测量
+                slp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            }
             scroll.setLayoutParams(slp);
         }
         contentView.measure(
