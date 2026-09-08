@@ -90,8 +90,8 @@ public class TextureLoader {
                 "act.png", "attack.png", "chain.png", "negated.png",
                 "number.png", "equip.png", "target.png", "chaintarget.png",
                 "mask.png",
-                // LP 条 (tLPBar/tLPFrame/tLPBarFrame)
-                "lp3.png", "lpf.png", "lpbarf.png",
+                // LP 条颜色（纯色无 alpha，RGB_565 即可）
+                "lp3.png",
                 // 禁限/OT/卡片类型图标 (tLim/tOT/tCardType)
                 "icon_lim.png", "ot.png", "cardtype.png",
                 // 手牌背景 (tHand[0..2])
@@ -108,6 +108,15 @@ public class TextureLoader {
         };
         for (String name : permanentTextures) {
             Bitmap bmp = loadBitmapFromFile(name);
+            if (bmp != null) {
+                permanentCache.put(name, bmp);
+            }
+        }
+        // lpbarf/lpf 为叠加在血条与头像之上的边框贴图，内部必须透明，
+        // 按 ARGB_8888 解码（RGB_565 会丢透明通道，边框糊成实色块）
+        String[] alphaTextures = { "lpf.png", "lpbarf.png" };
+        for (String name : alphaTextures) {
+            Bitmap bmp = loadBitmapFromFile(name, Bitmap.Config.ARGB_8888);
             if (bmp != null) {
                 permanentCache.put(name, bmp);
             }
@@ -334,8 +343,8 @@ public class TextureLoader {
 
     /**
      * lpbarf.png LP 框行裁剪（drawing.cpp L996-1003）：
-     * 305x280 图集共 4 行 70px，row0=我方回合彩色、row1=我方非回合灰色、
-     * row2=对方非回合灰色、row3=对方回合彩色
+     * 305x280 图集共 4 行 70px：row0=我方回合绿色、row1=我方非回合灰色、
+     * row2=对方回合红色、row3=对方非回合灰色
      */
     public Bitmap getLpBarFrameRow(int row) {
         if (row < 0 || row > 3) return null;

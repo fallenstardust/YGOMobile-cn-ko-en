@@ -933,11 +933,15 @@ public class YGOProActivity extends AppCompatActivity implements
 
     /**
      * MSG_NEW_TURN（对齐 duelclient.cpp L2865-2877）：
-     * 每回合开始显示左侧面板的三个时点按钮并刷新其按下态
+     * 回合方切换的第一时间同步 LPBarFrame 彩色/灰色（drawing.cpp L996-1003），
+     * 并显示左侧面板的三个时点按钮、刷新其按下态
      */
     @Override
     public void onTurnStarted(int player) {
         runOnUiThread(() -> {
+            // player 为本地视角索引（GameEngine.onNewTurn 已做 localPlayer 转换）：0=我方回合
+            isMyTurn = (player == 0);
+            topInfoManager.updateTurn(engine.getField().turnCount, isMyTurn);
             if (cardDetailPanel != null) cardDetailPanel.showChainButtons();
         });
     }

@@ -16,6 +16,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.TextureLoader;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
  * layout_top_info 顶部玩家信息条统一管理类（供 YGOProActivity 调用）。
@@ -34,10 +35,24 @@ public class GameTopInfoManager {
     private static final String DEFAULT_TURN_TEXT = "1";
     private static final int DEFAULT_MAX_LP = 8000;
     /** lpbarf.png 行索引（drawing.cpp L996-1003）：回合方彩色、非回合方灰色 */
-    private static final int FRAME_ROW_ME_ACTIVE = 0;
-    private static final int FRAME_ROW_ME_INACTIVE = 1;
-    private static final int FRAME_ROW_OPP_INACTIVE = 2;
-    private static final int FRAME_ROW_OPP_ACTIVE = 3;
+    private static final int FRAME_ROW_ME_ACTIVE = 0;      // 我方回合：左框绿色 recti(0,0,305,70)
+    private static final int FRAME_ROW_ME_INACTIVE = 1;    // 我方非回合：左框灰色 recti(0,70,305,140)
+    private static final int FRAME_ROW_OPP_ACTIVE = 2;     // 对方回合：右框红色 recti(0,140,305,210)
+    private static final int FRAME_ROW_OPP_INACTIVE = 3;   // 对方非回合：右框灰色 recti(0,210,305,280)
+    /** 本地视角回合方索引：0=我方回合 */
+    private static final int TURN_PLAYER_ME = 0;
+    /** 本地视角回合方索引：1=对方回合 */
+    private static final int TURN_PLAYER_OPP = 1;
+    /** 回合尚未决定（layout_game_right 刚显示 / 猜拳阶段）：双方均按非回合样式显示 */
+    private static final int TURN_PLAYER_NONE = -1;
+    /** 当前回合玩家名字阴影色：holo blue bright，用于凸显回合方 */
+    private static final int NAME_SHADOW_ACTIVE = YGOUtil.c(R.color.holo_blue_bright);
+    /** 非回合玩家名字阴影色：黑色 */
+    private static final int NAME_SHADOW_INACTIVE = YGOUtil.c(R.color.black);
+    /** 名字阴影几何参数，与布局 tv_player_name / tv_opponent_name 的 shadowRadius/Dx/Dy 保持一致 */
+    private static final float NAME_SHADOW_RADIUS = 4f;
+    private static final float NAME_SHADOW_DX = 0f;
+    private static final float NAME_SHADOW_DY = 0f;
     private static final int LP_BAR_LEVEL_FULL = 10000;
     /** LP 动画心跳周期（约 60fps，对齐 drawing.cpp 每帧推进 lpframe） */
     private static final long LP_ANIM_TICK_MS = 16;
@@ -134,7 +149,9 @@ public class GameTopInfoManager {
         setTurnText(DEFAULT_TURN_TEXT);
         if (tvPlayerTime != null) tvPlayerTime.setVisibility(View.GONE);
         if (tvOpponentTime != null) tvOpponentTime.setVisibility(View.GONE);
-        applyLpBarFrames(true);
+        // 猜拳前回合方未定：双方 lpbarf 均灰色、名字阴影均黑色，
+        // 待 MSG_NEW_TURN/MSG_NEW_PHASE 到来后由 updateTurn 切到真实回合方
+        applyTurnHighlight(TURN_PLAYER_NONE);
         updateLpBar(DEFAULT_MAX_LP, DEFAULT_MAX_LP, ivPlayerLpBar, ivPlayerLpBarLayer, Gravity.START);
         updateLpBar(DEFAULT_MAX_LP, DEFAULT_MAX_LP, ivOpponentLpBar, ivOpponentLpBarLayer, Gravity.END);
     }
@@ -242,13 +259,38 @@ public class GameTopInfoManager {
     }
 
     /**
-     * 更新回合数并切换双方 LPBarFrame 彩色/灰色
+     * 更新回合数并切换回合方视觉高亮（LPBarFrame 彩色/灰色 + 玩家名字阴影色）
      * @param turn     当前回合数
      * @param isMyTurn 本地视角：是否为我方回合
      */
     public void updateTurn(int turn, boolean isMyTurn) {
         setTurnText(String.valueOf(turn));
-        applyLpBarFrames(isMyTurn);
+        applyTurnHighlight(isMyTurn ? TURN_PLAYER_ME : TURN_PLAYER_OPP);
+    }
+
+    /**
+     * 回合方视觉高亮统一入口：LPBarFrame 与名字阴影同步切换，避免两处状态不一致。
+     * @param turnPlayer {@link #TURN_PLAYER_ME} / {@link #TURN_PLAYER_OPP} /
+     *                   {@link #TURN_PLAYER_NONE}（回合未定，双方均非回合样式）
+     */
+    private void applyTurnHighlight(int turnPlayer) {
+        applyLpBarFrames(turnPlayer);
+        applyNameShadow(turnPlayer);
+    }
+
+    /**
+     * 当前回合玩家名字阴影改为 holo blue bright 以凸显回合方，非回合玩家保持黑色；
+     * 回合未定时双方均为黑色。阴影几何参数沿用布局（radius=4, dx=0, dy=0），仅切换颜色
+     */
+    private void applyNameShadow(int turnPlayer) {
+        if (tvPlayerName != null) {
+            tvPlayerName.setShadowLayer(NAME_SHADOW_RADIUS, NAME_SHADOW_DX, NAME_SHADOW_DY,
+                    turnPlayer == TURN_PLAYER_ME ? NAME_SHADOW_ACTIVE : NAME_SHADOW_INACTIVE);
+        }
+        if (tvOpponentName != null) {
+            tvOpponentName.setShadowLayer(NAME_SHADOW_RADIUS, NAME_SHADOW_DX, NAME_SHADOW_DY,
+                    turnPlayer == TURN_PLAYER_OPP ? NAME_SHADOW_ACTIVE : NAME_SHADOW_INACTIVE);
+        }
     }
 
     // === LP 血条与 LPBarFrame（drawing.cpp L936-973、L996-1003） ===
@@ -331,14 +373,20 @@ public class GameTopInfoManager {
         return new ClipDrawable(tile, gravity, ClipDrawable.HORIZONTAL);
     }
 
-    /** drawing.cpp L996-1003：我方回合=我方彩色框+对方灰色框，对方回合反之；贴图缺失时保留原图层 */
-    private void applyLpBarFrames(boolean isMyTurn) {
+    /**
+     * drawing.cpp L996-1003：回合方取彩色行（我方绿 row0 / 对方红 row2），
+     * 非回合方取灰色行（我方 row1 / 对方 row3）；
+     * turnPlayer 为 {@link #TURN_PLAYER_NONE} 时双方都取灰色行；贴图缺失时保留原图层
+     */
+    private void applyLpBarFrames(int turnPlayer) {
         if (ivPlayerLpFrame != null) {
-            BitmapDrawable d = newFrameDrawable(isMyTurn ? FRAME_ROW_ME_ACTIVE : FRAME_ROW_ME_INACTIVE);
+            BitmapDrawable d = newFrameDrawable(
+                    turnPlayer == TURN_PLAYER_ME ? FRAME_ROW_ME_ACTIVE : FRAME_ROW_ME_INACTIVE);
             if (d != null) ivPlayerLpFrame.setImageDrawable(d);
         }
         if (ivOpponentLpFrame != null) {
-            BitmapDrawable d = newFrameDrawable(isMyTurn ? FRAME_ROW_OPP_INACTIVE : FRAME_ROW_OPP_ACTIVE);
+            BitmapDrawable d = newFrameDrawable(
+                    turnPlayer == TURN_PLAYER_OPP ? FRAME_ROW_OPP_ACTIVE : FRAME_ROW_OPP_INACTIVE);
             if (d != null) ivOpponentLpFrame.setImageDrawable(d);
         }
     }
