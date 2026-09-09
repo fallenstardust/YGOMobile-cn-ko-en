@@ -327,7 +327,7 @@ public class SingleModeDialog {
                         8000, 5, 1, 0,
                         "Bot Game", "");
                 // 2. 切换进入 LAN 界面的 player waiting 页面（作为主机）
-                LanModeDialog.showPlayerWaitingForBotHost(activity);
+                PlayerWaitingDialog.showPlayerWaitingForBotHost(activity);
                 // 3. 启动 WindBot 连接本地主机并加入；deckFile 为 P2 指定卡组
                 engine.launchWindBot("127.0.0.1", 7911, botCommand, deckFile);
             }

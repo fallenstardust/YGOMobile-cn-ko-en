@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
@@ -11,11 +10,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -51,14 +47,16 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.TextureLoader;
+import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
+import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
+import cn.garymb.ygomobile.ui.dialogs.EmotionDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.MainMenuDialog;
+import cn.garymb.ygomobile.ui.dialogs.PlayerWaitingDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
-import cn.garymb.ygomobile.ui.dialogs.EmotionDialog;
-import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
@@ -68,11 +66,15 @@ import ocgcore.data.Card;
 
 public class YGOProActivity extends AppCompatActivity implements
         GameEngine.EngineListener,
-        LanModeDialog.OnLanModeListener {
+        LanModeDialog.OnLanModeListener,
+        CreateHostDialog.OnCreateHostListener,
+        PlayerWaitingDialog.OnPlayerWaitingListener {
 
     private static final String TAG = "YGONativeGame";
 
-    /** 公共字符串管理器：初始化后可供整个类调用（对齐 CardDetailPanel.mStringManager 惯例） */
+    /**
+     * 公共字符串管理器：初始化后可供整个类调用（对齐 CardDetailPanel.mStringManager 惯例）
+     */
     public final StringManager mStringManager = DataManager.get().getStringManager();
 
     private GameEngine engine;
@@ -90,6 +92,8 @@ public class YGOProActivity extends AppCompatActivity implements
     private FrameLayout dialogContainer;
     private MainMenuDialog mainMenuDialog;
     private LanModeDialog lanModeDialog;
+    private CreateHostDialog createHostDialog;
+    private PlayerWaitingDialog playerWaitingDialog;
 
     private EditText etChatInput;
     private EmotionDialog emotionDialog;
@@ -150,21 +154,21 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onPlayerEnter(String name, int pos) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null) lanModeDialog.handlePlayerEnter(name, pos);
+            if (playerWaitingDialog != null) playerWaitingDialog.handlePlayerEnter(name, pos);
         });
     }
 
     @Override
     public void onPlayerChange(int status) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null) lanModeDialog.handlePlayerChange(status);
+            if (playerWaitingDialog != null) playerWaitingDialog.handlePlayerChange(status);
         });
     }
 
     @Override
     public void onWatchChange(int watchCount) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null) lanModeDialog.handleWatchChange(watchCount);
+            if (playerWaitingDialog != null) playerWaitingDialog.handleWatchChange(watchCount);
         });
     }
 
@@ -173,17 +177,18 @@ public class YGOProActivity extends AppCompatActivity implements
                            int noCheckDeck, int noShuffleDeck,
                            int startLp, int startHand, int drawCount, int timeLimit) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null) lanModeDialog.handleJoinGame(lflist, rule, mode, duelRule,
-                    noCheckDeck, noShuffleDeck, startLp, startHand, drawCount, timeLimit);
+            if (playerWaitingDialog != null)
+                playerWaitingDialog.handleJoinGame(lflist, rule, mode, duelRule,
+                        noCheckDeck, noShuffleDeck, startLp, startHand, drawCount, timeLimit);
         });
     }
 
     @Override
     public void onTypeChange(int type) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null) {
+            if (playerWaitingDialog != null) {
                 boolean isTag = engine.getGameMode() == 2;
-                lanModeDialog.handleTypeChange(type, isTag);
+                playerWaitingDialog.handleTypeChange(type, isTag);
             }
         });
     }
@@ -191,7 +196,8 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onDeckError(int errorType, int cardCode) {
         runOnUiThread(() -> {
-            if (lanModeDialog != null) lanModeDialog.handleDeckError(errorType, cardCode);
+            if (playerWaitingDialog != null)
+                playerWaitingDialog.handleDeckError(errorType, cardCode);
         });
     }
 
@@ -214,18 +220,18 @@ public class YGOProActivity extends AppCompatActivity implements
         layoutGameContent = findViewById(R.id.layout_game_content);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
         EditText etChatInput = findViewById(R.id.et_chat_input);
-        
+
         // 初始化聊天输入框 UI 管理器
         chatInputUI = new ChatInputUI(this, null);
         chatInputUI.bindChatInput(etChatInput);
-        
+
         // 设置聊天消息监听器
         chatInputUI.setOnChatMessageListener(message -> {
             if (engine != null && engine.getClient() != null) {
                 engine.sendChat(message);
             }
         });
-        
+
         // 聊天输入框初始可见性跟随停用聊天设置（对齐 gframe wChat：停用聊天时隐藏）
         if (etChatInput != null
                 && AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1) {
@@ -317,7 +323,9 @@ public class YGOProActivity extends AppCompatActivity implements
         if (cardDetailPanel != null) cardDetailPanel.updateSoundIcon(!muted);
     }
 
-    /** 决斗速度开关（对齐 gframe imgQuickAnimation 点击切换 quick_animation 并保存） */
+    /**
+     * 决斗速度开关（对齐 gframe imgQuickAnimation 点击切换 quick_animation 并保存）
+     */
     public void toggleQuickAnimation() {
         AppsSettings settings = AppsSettings.get();
         boolean quick = settings.getIntSettings("chkQuickAnimation", 0) == 1;
@@ -333,7 +341,7 @@ public class YGOProActivity extends AppCompatActivity implements
             long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
             if (System.currentTimeMillis() - time < YGOGameOptions.TIME_OUT) {
                 joinFromOptions(options);
-                LanModeDialog.showPlayerWaitingForDirectJoin(this, options);
+                PlayerWaitingDialog.showPlayerWaitingForDirectJoin(this, options);
                 return true;
             }
         }
@@ -351,7 +359,7 @@ public class YGOProActivity extends AppCompatActivity implements
             engine.connectToServer(host, port, false,
                     room != null ? room : "", "",
                     0, 0, 5, 8000, 5, 1, 0, false, false);
-            LanModeDialog.showPlayerWaitingForDirectJoin(this, null);
+            PlayerWaitingDialog.showPlayerWaitingForDirectJoin(this, null);
             return true;
         }
 
@@ -482,7 +490,21 @@ public class YGOProActivity extends AppCompatActivity implements
 
     public void setLanModeDialog(LanModeDialog dialog) {
         lanModeDialog = dialog;
-        lanModeDialog.setCardNameResolver(this::getCardDisplayName);
+    }
+
+    public LanModeDialog getLanModeDialog() {
+        return lanModeDialog;
+    }
+
+    public void setPlayerWaitingDialog(PlayerWaitingDialog dialog) {
+        playerWaitingDialog = dialog;
+        if (playerWaitingDialog != null) {
+            playerWaitingDialog.setCardNameResolver(this::getCardDisplayName);
+        }
+    }
+
+    public PlayerWaitingDialog getPlayerWaitingDialog() {
+        return playerWaitingDialog;
     }
 
     public SoundManager getSoundManager() {
@@ -524,11 +546,26 @@ public class YGOProActivity extends AppCompatActivity implements
         //（恢复决斗场渲染，聊天改回玩家分侧 + 系统/观战弹幕逻辑）
         exitLobbyChatUI();
         showGameUI();
+        dismissAllLanDialogs();
+        isGameStarted = true;
+    }
+
+    /**
+     * 决斗开始/彻底离开局域网流程时，关闭三个局域网对话框（先清空 dismiss 回调避免误恢复主菜单）
+     */
+    private void dismissAllLanDialogs() {
         if (lanModeDialog != null) {
             lanModeDialog.setOnDismissListener(null);
             lanModeDialog.dismiss();
         }
-        isGameStarted = true;
+        if (createHostDialog != null) {
+            createHostDialog.setOnDismissListener(null);
+            createHostDialog.dismiss();
+        }
+        if (playerWaitingDialog != null) {
+            playerWaitingDialog.setOnDismissListener(null);
+            playerWaitingDialog.dismiss();
+        }
     }
 
     /**
@@ -553,20 +590,26 @@ public class YGOProActivity extends AppCompatActivity implements
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
 
+        // 关闭玩家等待/建主界面，回到局域网主界面
+        if (playerWaitingDialog != null) {
+            playerWaitingDialog.setOnDismissListener(null);
+            playerWaitingDialog.dismiss();
+            playerWaitingDialog = null;
+        }
+        if (createHostDialog != null) {
+            createHostDialog.setOnDismissListener(null);
+            createHostDialog.dismiss();
+            createHostDialog = null;
+        }
+
         if (TextUtils.isEmpty(lastJoinHost)) {
             getMainMenuDialog().restoreMainMenu();
-        } else if (lanModeDialog != null && lanModeDialog.isShowing()) {
-            lanModeDialog.showLanMain();
-            lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
-                    String.valueOf(lastJoinPort), lastJoinRoomName);
         } else {
-            LanModeDialog dialog = new LanModeDialog(this, this);
-            setLanModeDialog(dialog);
-            dialog.show(dialogContainer);
-            dialog.setOnDismissListener(() -> getMainMenuDialog().restoreMainMenu());
-            dialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
-                    String.valueOf(lastJoinPort), lastJoinRoomName);
-            dialog.showLanMain();
+            LanModeDialog.showLanModeDialog(this);
+            if (lanModeDialog != null) {
+                lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
+                        String.valueOf(lastJoinPort), lastJoinRoomName);
+            }
         }
         if (toastMsg != null && !toastMsg.isEmpty()) {
             Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show();
@@ -578,6 +621,12 @@ public class YGOProActivity extends AppCompatActivity implements
         lastJoinHost = host != null ? host : "";
         lastJoinPort = port;
         lastJoinRoomName = roomName != null ? roomName : "";
+    }
+
+    @Override
+    public void onCreateHostRequested(String nickname) {
+        if (lanModeDialog != null) lanModeDialog.hideForNavigation();
+        showCreateHost(nickname);
     }
 
     @Override
@@ -596,6 +645,15 @@ public class YGOProActivity extends AppCompatActivity implements
                 noCheckDeck, noShuffleDeck,
                 startLP, startHand, drawCount, timeLimit,
                 roomName, password != null ? password : "");
+
+        if (createHostDialog != null) createHostDialog.hideForNavigation();
+        showPlayerWaiting(userName, modeIdx == 2);
+    }
+
+    @Override
+    public void onCancelCreate() {
+        if (createHostDialog != null) createHostDialog.hideForNavigation();
+        LanModeDialog.showLanModeDialog(this);
     }
 
     @Override
@@ -611,10 +669,9 @@ public class YGOProActivity extends AppCompatActivity implements
         engine.setPlayerName(userName);
         engine.connectToServer(ip, portNum, false, "", password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
-    }
 
-    @Override
-    public void onExitLan() {
+        if (lanModeDialog != null) lanModeDialog.hideForNavigation();
+        showPlayerWaiting(userName, false);
     }
 
     @Override
@@ -638,8 +695,14 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onPlayerWaitingExit() {
+    public void onExitWaiting() {
         if (engine != null) engine.disconnect();
+        if (playerWaitingDialog != null) playerWaitingDialog.hideForNavigation();
+        LanModeDialog.showLanModeDialog(this);
+        if (lanModeDialog != null) {
+            lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
+                    String.valueOf(lastJoinPort), lastJoinRoomName);
+        }
     }
 
     @Override
@@ -680,21 +743,23 @@ public class YGOProActivity extends AppCompatActivity implements
         if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
         if (topInfoManager != null) topInfoManager.hide();
         fieldCtl.enterLobbyChatMode();
-        
+
         // 使用 ChatInputUI 进入大厅聊天模式
         if (chatInputUI != null) {
             chatInputUI.enterLobbyChatUI();
         }
-        
+
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
     }
 
-    /** 从大厅聊天切回决斗显示：恢复决斗场渲染并退出大厅聊天列表模式 */
+    /**
+     * 从大厅聊天切回决斗显示：恢复决斗场渲染并退出大厅聊天列表模式
+     */
     private void exitLobbyChatUI() {
         View gameFieldView = findViewById(R.id.game_field_view);
         if (gameFieldView != null) gameFieldView.setVisibility(View.VISIBLE);
         if (fieldCtl != null) fieldCtl.exitLobbyChatMode();
-        
+
         // 使用 ChatInputUI 退出大厅聊天模式
         if (chatInputUI != null) {
             chatInputUI.exitLobbyChatUI();
@@ -844,9 +909,8 @@ public class YGOProActivity extends AppCompatActivity implements
         switch (newState) {
             case LOBBY:
                 duelEndHandling = false;
-                if (lanModeDialog != null && lanModeDialog.isPlayerWaitingVisible()) {
-                    // Already showing player waiting via LanModeDialog, do nothing
-                } else {
+                // 已通过 PlayerWaitingDialog 显示玩家等待界面时无需处理；否则隐藏主菜单
+                if (playerWaitingDialog == null || !playerWaitingDialog.isShowing()) {
                     getMainMenuDialog().hideMainMenu();
                 }
                 break;
@@ -1326,6 +1390,11 @@ public class YGOProActivity extends AppCompatActivity implements
         super.onDestroy();
         mainHandler.removeCallbacks(duelEndReplayProcessor);
         DraggablePopupHelper.resetAllPositions(this);
+        // 释放局域网三对话框，避免持有已销毁的窗口/上下文
+        dismissAllLanDialogs();
+        lanModeDialog = null;
+        createHostDialog = null;
+        playerWaitingDialog = null;
         if (topInfoManager != null) {
             topInfoManager.stopTimer();
         }
@@ -1385,11 +1454,42 @@ public class YGOProActivity extends AppCompatActivity implements
         }
     }
 
-    /** 决斗日志面板（对齐桌面版 imgLog 开关 wLogs）：由卡片详情面板侧栏按钮触发 */
+    /**
+     * 决斗日志面板（对齐桌面版 imgLog 开关 wLogs）：由卡片详情面板侧栏按钮触发
+     */
     public void showDuelLogDialog() {
         if (duelLogDialog == null) {
             duelLogDialog = new DuelLogDialog(this);
         }
         duelLogDialog.toggle();
+    }
+
+    // === 局域网三对话框导航 ===
+
+    private void showCreateHost(String nickname) {
+        if (createHostDialog == null) {
+            createHostDialog = new CreateHostDialog(this, this);
+            // 点击外部/返回键意外关闭建主界面时回到局域网主界面
+            createHostDialog.setOnDismissListener(() -> LanModeDialog.showLanModeDialog(this));
+        }
+        createHostDialog.setNickname(nickname);
+        if (createHostDialog.canReshow()) {
+            createHostDialog.reshow(dialogContainer);
+        } else if (!createHostDialog.isShowing()) {
+            createHostDialog.show(dialogContainer);
+        }
+    }
+
+    private void showPlayerWaiting(String nickname, boolean tagMode) {
+        if (playerWaitingDialog != null) {
+            playerWaitingDialog.hideForNavigation();
+        }
+        PlayerWaitingDialog dialog = new PlayerWaitingDialog(this, this);
+        setPlayerWaitingDialog(dialog);
+        dialog.setOnDismissListener(() -> getMainMenuDialog().restoreMainMenu());
+        dialog.show(dialogContainer);
+        String name = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+        dialog.setPlayerName(0, name);
+        dialog.setTagPlayersVisible(tagMode);
     }
 }

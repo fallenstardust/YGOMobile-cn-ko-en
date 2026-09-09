@@ -1,9 +1,6 @@
 package cn.garymb.ygomobile.game;
 
 import android.os.Handler;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -40,8 +37,6 @@ import cn.garymb.ygomobile.ui.dialogs.PosSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.RPSDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import ocgcore.DataManager;
-import ocgcore.data.Card;
-import ocgcore.enums.CardType;
 
 /**
  * 决斗中所有选择/确认对话框的统一管理类，从 YGOProActivity 迁移而来，
@@ -125,12 +120,16 @@ public class ShowDialogUtil {
                 .getSystemString(hint > 0 ? hint : defIndex, defText);
     }
 
-    /** 系统字符串（对齐 gframe dataManager.GetSysString(index)） */
+    /**
+     * 系统字符串（对齐 gframe dataManager.GetSysString(index)）
+     */
     private String sysText(int index, String defText) {
         return DataManager.get().getStringManager().getSystemString(index, defText);
     }
 
-    /** 系统字符串 + 通讯参数替换（对齐 gframe myswprintf(GetSysString(index), args...)） */
+    /**
+     * 系统字符串 + 通讯参数替换（对齐 gframe myswprintf(GetSysString(index), args...)）
+     */
     private String sysFormat(int index, String defText, Object... args) {
         return DataManager.get().formatSystemString(index, defText, args);
     }

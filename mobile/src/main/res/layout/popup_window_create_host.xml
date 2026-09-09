@@ -3,6 +3,8 @@
     android:id="@+id/layout_create_host_settings"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/window2"
+    android:padding="15dp"
     android:orientation="vertical">
 
 

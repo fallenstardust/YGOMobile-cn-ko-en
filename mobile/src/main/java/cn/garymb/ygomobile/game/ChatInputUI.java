@@ -109,17 +109,33 @@ public class ChatInputUI {
      */
     public void enterLobbyChatUI() {
         if (etChatInput == null) return;
-        
+
+        // 重新绑定发送监听，避免 UI 模式切换导致 onEditorActionListener 失效
+        setupChatInput();
+
         etChatInput.setVisibility(View.VISIBLE);
         etChatInput.setFocusable(true);
         etChatInput.setFocusableInTouchMode(true);
         etChatInput.setClickable(true);
         etChatInput.clearFocus();
-        
-        final android.view.inputmethod.InputMethodManager imm = 
-                (android.view.inputmethod.InputMethodManager) 
+
+        final android.view.inputmethod.InputMethodManager imm =
+                (android.view.inputmethod.InputMethodManager)
                 context.getSystemService(Context.INPUT_METHOD_SERVICE);
-        
+
+        // 大厅等待模式下 LanModeDialog(PopupWindow) 覆盖并持有窗口焦点，
+        // 默认点击链路无法唤起输入法；在点击回调中 post 延迟显式请求焦点并 showSoftInput，
+        // 以确保窗口焦点正确转移到 Activity 并触发 IME
+        etChatInput.setOnClickListener(v -> v.post(() -> {
+            try {
+                if (v.requestFocus() && imm != null) {
+                    imm.showSoftInput(v, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                }
+            } catch (Exception e) {
+                android.util.Log.e("ChatInputUI", "Lobby chat click IME error: " + e.getMessage(), e);
+            }
+        }));
+
         etChatInput.post(() -> {
             try {
                 if (etChatInput.requestFocus() && imm != null) {
@@ -139,6 +155,9 @@ public class ChatInputUI {
         
         // 重新绑定 editor action listener（确保状态正确）
         setupChatInput();
+
+        // 清除大厅模式专用的点击唤起输入法监听，恢复决斗模式默认行为（禁止自动弹出输入法）
+        etChatInput.setOnClickListener(null);
         
         // 隐藏输入法并释放焦点
         etChatInput.clearFocus();
