@@ -46,6 +46,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
@@ -63,6 +64,7 @@ import cn.garymb.ygomobile.utils.FullScreenUtils;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
+import ocgcore.enums.DuelPhase;
 
 public class YGOProActivity extends AppCompatActivity implements
         GameEngine.EngineListener,
@@ -986,12 +988,12 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     public void onPhaseChanged(int phase) {
         runOnUiThread(() -> {
-            // currentPlayer 为本地视角索引（MSG_NEW_TURN 已做 localPlayer 转换）：
-            // 不管我方是先攻还是后攻，我方回合恒为 0；
-            // selfType 是座位号，不能与协议侧回合索引直接比较
             isMyTurn = (engine.getField().currentPlayer == 0);
             topInfoManager.updateTurn(engine.getField().turnCount, isMyTurn);
             fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
+            // case 101：阶段文字跟随通讯切换（DuelPhase → showcardcode 4~9）
+            int textCode = phaseTextCode(phase);
+            if (textCode > 0) specEffect().showText(textCode);
         });
     }
 
@@ -1122,6 +1124,10 @@ public class YGOProActivity extends AppCompatActivity implements
     public void onDuelResult(int winner, int reason) {
         topInfoManager.stopTimer();
         runOnUiThread(() -> {
+            int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
+                    : (engine.isSelfSide(winner) ? SpecEffectOverlay.TEXT_YOU_WIN
+                                                 : SpecEffectOverlay.TEXT_YOU_LOSE);
+            specEffect().showWinText(code, null);      // case 101：胜负文字
             String result;
             if (winner == 2) {
                 result = "平局";
@@ -1168,7 +1174,10 @@ public class YGOProActivity extends AppCompatActivity implements
 
     @Override
     public void onChainAnimation(int code, int controler, int location, int sequence) {
-        runOnUiThread(() -> fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500));
+        runOnUiThread(() -> {
+            fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500);
+            specEffect().showActivate(code);          // case 1：发动卡片大图
+        });
     }
 
     @Override
@@ -1491,5 +1500,38 @@ public class YGOProActivity extends AppCompatActivity implements
         String name = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
         dialog.setPlayerName(0, name);
         dialog.setTagPlayersVisible(tagMode);
+    }
+
+    private SpecEffectOverlay specEffectOverlay;
+
+    private SpecEffectOverlay specEffect() {
+        if (specEffectOverlay == null) specEffectOverlay = new SpecEffectOverlay(this);
+        return specEffectOverlay;
+    }
+
+    /**
+     * MSG_NEW_PHASE 的 phase 値 → DrawSpec case 101 的 showcardcode（对齐 duelclient.cpp L2905-2929）：
+     * Draw→4, Standby→5, Main1→6, BattleStart→7, Main2→8, End→9；
+     * 战斗子阶段等无独立提示文字的相位返回 0（不显示阶段文字）
+     */
+    private int phaseTextCode(int phase) {
+        DuelPhase dp = DuelPhase.valueOf(phase);
+        if (dp == null) return 0;
+        switch (dp) {
+            case Draw:
+                return SpecEffectOverlay.TEXT_DRAW_PHASE;
+            case Standby:
+                return SpecEffectOverlay.TEXT_STANDBY_PHASE;
+            case Main1:
+                return SpecEffectOverlay.TEXT_MAIN_PHASE_1;
+            case BattleStart:
+                return SpecEffectOverlay.TEXT_BATTLE_PHASE;
+            case Main2:
+                return SpecEffectOverlay.TEXT_MAIN_PHASE_2;
+            case End:
+                return SpecEffectOverlay.TEXT_END_PHASE;
+            default:
+                return 0;
+        }
     }
 }
