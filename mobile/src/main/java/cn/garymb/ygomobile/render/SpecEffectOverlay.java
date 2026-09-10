@@ -23,6 +23,8 @@ import java.util.Map;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.BitmapUtil;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
 
 /**
  * 决斗场特效覆盖层：移植 gframe drawing.cpp Game::DrawSpec() 的 showcard 各分支，
@@ -132,9 +134,27 @@ public class SpecEffectOverlay {
         showText(textCode, null, textCode == TEXT_YOU_WIN || textCode == TEXT_YOU_LOSE ? 110 : 30);
     }
 
-    /** case 101：MSG_WIN，附带胜利说明字符串（vic_string），停留时长对齐 C++ 的 110 帧 */
-    public void showWinText(int textCode, String vicString) {
-        showText(textCode, vicString, 110);
+    /**
+     * case 101：MSG_WIN 胜负文字，停留时长对齐 C++ 的 110 帧。
+     * reason 为通讯中的 victory reason（MSG_WIN 第二字节），winnerName 为胜者名（可空）。
+     * 胜利说明对齐 duelclient.cpp L1596-1602：reason<0x10 → "[胜者名] 原因"，否则仅"原因"，
+     * 原因文本取自 strings.conf 的 !victory 段（StringManager.getVictoryString）。
+     */
+    public void showWinText(int textCode, int reason, String winnerName) {
+        showText(textCode, buildVictoryString(reason, winnerName), 110);
+    }
+
+    /** 组装胜利说明文本（对齐 duelclient.cpp MSG_WIN 的 vic_buf 构造），无对应文本时返回 null（不显示底框） */
+    private String buildVictoryString(int reason, String winnerName) {
+        StringManager sm = DataManager.get().getStringManager();
+        if (sm == null) return null;
+        String vic = sm.getVictoryString(reason, "");
+        if (vic == null || vic.isEmpty()) return null;
+        // reason < 0x10：普通胜利，前缀胜者名；否则为特殊效果胜利，仅显示原因文本
+        if (reason < 0x10 && winnerName != null && !winnerName.isEmpty()) {
+            return "[" + winnerName + "] " + vic;
+        }
+        return vic;
     }
 
     /** case 101：自定义文字（如需本地化阶段名，可由调用方传入 StringManager 结果） */
@@ -301,10 +321,10 @@ public class SpecEffectOverlay {
             super(context);
             textPaint.setColor(Color.WHITE);
             textPaint.setTextAlign(Paint.Align.CENTER);
-            textPaint.setFakeBoldText(true);
+            textPaint.setFakeBoldText(false);
             shadowPaint.setColor(Color.BLACK);
             shadowPaint.setTextAlign(Paint.Align.CENTER);
-            shadowPaint.setFakeBoldText(true);
+            shadowPaint.setFakeBoldText(false);
         }
 
         void setOnFinishListener(OnFinishListener l) {
@@ -643,7 +663,7 @@ public class SpecEffectOverlay {
             }
             int a = clamp((int) (alpha * 255), 0, 255);
             if (a <= 0) return;
-            float size = regionH * 0.11f;
+            float size = regionH * 0.09f;   // 略微缩小阶段文字
             float x = cx + off;
             textPaint.setTextSize(size);
             textPaint.setAlpha(a);
@@ -653,13 +673,14 @@ public class SpecEffectOverlay {
             canvas.drawText(str, x + 2, baseline + 2, shadowPaint);
             canvas.drawText(str, x, baseline, textPaint);
 
-            // 胜利说明（vic_string）：胜负文字下方半透明底框 + 文本
+            // 胜利说明（vic_string）：胜负文字下方半透明底框 + 文本（对齐 drawing.cpp L1486-1491）
             if (subText != null && subText.length() > 0
-                    && (param == TEXT_YOU_WIN || param == TEXT_YOU_LOSE)) {
-                float subSize = regionH * 0.045f;
+                    && (cardCode == TEXT_YOU_WIN || cardCode == TEXT_YOU_LOSE)) {
+                // 胜负说明文字缩小（原 0.045），并整体上移更靠近上方的 YOU WIN/YOU LOSE（原 0.09）
+                float subSize = regionH * 0.036f;
                 textPaint.setTextSize(subSize);
                 float subW = Math.max(textPaint.measureText(subText) + 24, regionW * 0.2f);
-                float subY = baseline + regionH * 0.09f;
+                float subY = baseline + regionH * 0.066f;
                 bmpPaint.setAlpha(a);
                 RectF box = new RectF(cx - subW / 2f, subY - subSize, cx + subW / 2f, subY + subSize * 0.6f);
                 Paint boxPaint = new Paint();

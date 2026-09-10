@@ -26,7 +26,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         void onReplayPlayerInfoUpdated(int player);
         void onReplayPhaseChanged(int phase);
         void onReplayHintMessage(String hint);
-        void onReplayFinished(String result);
+        void onReplayFinished(int winner, int reason);
     }
 
     private ReplayState state = ReplayState.IDLE;
@@ -243,7 +243,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         setState(ReplayState.FINISHED);
         mainHandler.post(() -> {
             soundManager.stopBGM();
-            if (listener != null) listener.onReplayFinished("录像回放结束");
+            // 回放自然播放完毕（未经 MSG_WIN 判定胜负）：winner=-1 表示无结果，UI 不显示胜负文字
+            if (listener != null) listener.onReplayFinished(-1, 0);
         });
     }
 
@@ -896,14 +897,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         mainHandler.post(() -> { if (listener != null) listener.onReplayFieldChanged(); });
     }
     @Override public void onWin(int player, int reason) {
-        String result;
-        if (player == 2) result = "平局";
-        else result = "玩家 " + (player + 1) + " 获胜";
-        if (reason == 0) result += " (LP归零)";
-        else if (reason == 1) result += " (卡组抽完)";
         soundManager.stopBGM();
-        String finalResult = result;
-        mainHandler.post(() -> { if (listener != null) listener.onReplayFinished(finalResult); });
+        // 直接把 MSG_WIN 的胜者与胜利原因透传给 UI，由阶段文字（case 101）显示胜负 + !victory 原因
+        mainHandler.post(() -> { if (listener != null) listener.onReplayFinished(player, reason); });
     }
     @Override public void onUpdateData(int player, int location, ByteBuffer data) {
         mainHandler.post(() -> { if (listener != null) listener.onReplayFieldChanged(); });

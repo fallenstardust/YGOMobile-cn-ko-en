@@ -37,8 +37,11 @@ public class StringManager implements Closeable {
     private static final String PRE_SETNAME = "!setname";
     /** strings.conf "#counters" 段（对齐 data_manager.cpp ReadStringConfLine 的 "!counter %x %240[^\n]"） */
     private static final String PRE_COUNTER = "!counter";
+    /** strings.conf "!victory %x" 段（对齐 data_manager.cpp ReadStringConfLine 的 _victoryStrings） */
+    private static final String PRE_VICTORY = "!victory";
     private final SparseArray<String> mSystem = new SparseArray<>();
     private final SparseArray<String> mCounter = new SparseArray<>();
+    private final SparseArray<String> mVictory = new SparseArray<>();
     private final List<CardSet> mCardSets = new ArrayList<>();
 
     public StringManager() {
@@ -49,12 +52,14 @@ public class StringManager implements Closeable {
     public void close() {
         mSystem.clear();
         mCounter.clear();
+        mVictory.clear();
         mCardSets.clear();
     }
 
     public boolean load() {
         mSystem.clear();
         mCounter.clear();
+        mVictory.clear();
         mCardSets.clear();
         File stringFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_STRING_PATH);
         boolean rs1 = loadFile(stringFile.getAbsolutePath());
@@ -145,7 +150,7 @@ public class StringManager implements Closeable {
      */
     private void parseConfLine(String line) {
         if (line.startsWith("#") || (!line.startsWith(PRE_SYSTEM) && !line.startsWith(PRE_SETNAME)
-                && !line.startsWith(PRE_COUNTER))) {
+                && !line.startsWith(PRE_COUNTER) && !line.startsWith(PRE_VICTORY))) {
             return;
         }
         // 最多切分为3段，保留文本中的空格（韩/英/日等非中文语言的文本包含空格）
@@ -171,6 +176,8 @@ public class StringManager implements Closeable {
             }
         } else if (PRE_COUNTER.equals(words[0])) {
             mCounter.put(id, text);
+        } else if (PRE_VICTORY.equals(words[0])) {
+            mVictory.put(id, text);
         } else {
             mSystem.put(id, text);
         }
@@ -240,6 +247,23 @@ public class StringManager implements Closeable {
             if (TextUtils.isEmpty(str) && (code & 0x1000) != 0) {
                 str = mCounter.get(code & 0xfff);
             }
+            if (TextUtils.isEmpty(str)) {
+                return def;
+            }
+            return StringUtils.toDBC(str);
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    /**
+     * 胜利原因文本，对齐 data_manager.cpp DataManager::GetVictoryString（strings.conf "!victory %x" 段）。
+     * MSG_WIN 的 reason 字节即为 code：0x0 投降、0x1 LP 归零、0x2 无卡可抽、0x3 超时、0x4 断线，
+     * 0x10 起为各类效果胜利（Exodia / 终局倒计时 / 威尼米纳加 等）。
+     */
+    public String getVictoryString(int code, String def) {
+        try {
+            String str = mVictory.get(code);
             if (TextUtils.isEmpty(str)) {
                 return def;
             }

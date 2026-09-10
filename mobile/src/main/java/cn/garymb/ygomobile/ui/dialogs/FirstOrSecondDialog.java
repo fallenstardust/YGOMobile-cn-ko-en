@@ -49,7 +49,10 @@ public class FirstOrSecondDialog {
     }
 
     public boolean isShowing() {
-        return showing && popupWindow != null && popupWindow.isShowing();
+        // 同 RPSDialog：showing 表示「已显示或等待布局完成后显示」，不叠加 popupWindow.isShowing()。
+        // onTPSelect 会先 setState(TP_SELECT) 再 onSelectRequired(1)，两条路径都调用 showTPSelectDialog，
+        // 延迟显示期间若 isShowing() 误报 false 会创建出第二个弹窗，导致先后攻弹窗残留关不掉。
+        return showing;
     }
 
     public void show() {

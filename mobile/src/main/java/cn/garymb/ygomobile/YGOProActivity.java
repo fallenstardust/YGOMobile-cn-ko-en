@@ -1127,17 +1127,25 @@ public class YGOProActivity extends AppCompatActivity implements
             int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
                     : (engine.isSelfSide(winner) ? SpecEffectOverlay.TEXT_YOU_WIN
                                                  : SpecEffectOverlay.TEXT_YOU_LOSE);
-            specEffect().showWinText(code, null);      // case 101：胜负文字
-            String result;
-            if (winner == 2) {
-                result = "平局";
-            } else if (engine.isSelfSide(winner)) {
-                result = "🎉 你赢了！";
-            } else {
-                result = "😢 你输了";
-            }
-            showResultDialog(result, false);
+            // case 101：胜负文字 + 胜利原因（对齐 duelclient.cpp MSG_WIN，reason<0x10 时前缀胜者名）
+            String winnerName = (winner == 2) ? null
+                    : playerDisplayName(engine.isSelfSide(winner) ? 0 : 1);
+            specEffect().showWinText(code, reason, winnerName);
+
         });
+    }
+
+    /**
+     * 取本地视角玩家（0=我方，1=对方）的显示名，复用 onPlayerInfoUpdated 的座位映射逻辑，
+     * 用于 MSG_WIN 胜利说明的 "[胜者名] 原因" 前缀（对齐 duelclient.cpp L1586-1599）
+     */
+    private String playerDisplayName(int localIndex) {
+        int selfSeat = engine.getClient().selfType;
+        int seat = (localIndex == 0) ? selfSeat : (selfSeat ^ 1);
+        GameEngine.PlayerInfo info = (seat >= 0 && seat < engine.playerInfos.length)
+                ? engine.playerInfos[seat] : null;
+        String defaultName = (localIndex == 0) ? Constants.PlayerName : "Opponent";
+        return (info == null || info.name.isEmpty()) ? defaultName : info.name;
     }
 
     @Override
@@ -1219,25 +1227,6 @@ public class YGOProActivity extends AppCompatActivity implements
         cardDetailPanel.showCardInfo(card);
     }
 
-    public void showResultDialog(String result) {
-        showResultDialog(result, true);
-    }
-
-    public void showResultDialog(String result, boolean exitOnConfirm) {
-        if (resultDialog != null) resultDialog.dismiss();
-        resultDialog = new YesOrNoDialog(this);
-        resultDialog.setTitle("决斗结果")
-                .setMessage(result)
-                .setPositiveButton(v -> {
-                    if (exitOnConfirm) {
-                        finish();
-                    }
-                })
-                .setOnDismissListener(() -> resultDialog = null)
-                .setCancelable(false);
-        resultDialog.show();
-    }
-
     /**
      * 决斗结束提示框：仅显示「确定」按钮（TYPE_MESSAGE）。
      * 弹窗时机已调整为：通讯发来的录像全部确认保存或取消之后（见 processPendingReplays），
@@ -1304,6 +1293,19 @@ public class YGOProActivity extends AppCompatActivity implements
                     }
                 });
         replaySaveDialog.show();
+    }
+
+    /**
+     * 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因，替代原来的 showResultDialog 弹窗。
+     * 回放为观战视角，约定 player 0 胜=YOU WIN、player 1 胜=YOU LOSE、player 2=平局；
+     * winner<0 表示回放自然播放完毕（无 MSG_WIN 判定），不显示胜负文字。
+     */
+    public void showReplayResult(int winner, int reason, String winnerName) {
+        if (winner < 0) return;
+        int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
+                : (winner == 0 ? SpecEffectOverlay.TEXT_YOU_WIN
+                   : SpecEffectOverlay.TEXT_YOU_LOSE);
+        specEffect().showWinText(code, reason, winnerName);
     }
 
     /**

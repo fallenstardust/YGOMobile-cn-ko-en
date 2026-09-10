@@ -517,10 +517,19 @@ public class ReplayModeDialog {
             }
 
             @Override
-            public void onReplayFinished(String result) {
+            public void onReplayFinished(int winner, int reason) {
                 activity.runOnUiThread(() -> {
+                    // 取回放中胜者的名字，用于胜利说明 "[胜者名] 原因" 前缀（reason<0x10 时）
+                    String winnerName = null;
+                    if (winner == 0 || winner == 1) {
+                        ReplayReader.ReplayData rd = replayEngine.getReplayData();
+                        if (rd != null && winner < rd.playerNames.size()) {
+                            winnerName = rd.playerNames.get(winner);
+                        }
+                    }
                     hideReplayControls(activity);
-                    activity.showResultDialog(result);
+                    // case 101：回放结束改用阶段文字显示胜负 + 胜利原因（替代 showResultDialog 弹窗）
+                    activity.showReplayResult(winner, reason, winnerName);
                 });
             }
         });

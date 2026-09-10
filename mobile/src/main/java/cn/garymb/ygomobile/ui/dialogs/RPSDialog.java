@@ -39,13 +39,6 @@ public class RPSDialog {
     private static final long HOLD_MS = 500;
     private static final long FADE_MS = 200;
 
-    /**
-     * 双方停止线相对 layout_game_right 半高中心线的偏移：
-     * 我方顶边停在（半高 − 10px），对方底边停在（半高 + 10px），
-     * 两图相对边之间形成固定 20px 间隙
-     */
-    private static final float STOP_GAP_HALF_PX = 10f;
-
     /** 猜拳弹窗底边与聊天输入框（et_chat_input）上沿的间距（dp）：上移避免遮挡输入框 */
     private static final float CHAT_INPUT_GAP_DP = 6f;
 
@@ -86,7 +79,12 @@ public class RPSDialog {
     }
 
     public boolean isShowing() {
-        return showing && popupWindow != null && popupWindow.isShowing();
+        // showing 在 show() 各分支（含 game_field_view 宽度为 0 时「延迟到布局完成再显示」的分支）
+        // 都会立即置 true，dismiss()/系统 onDismiss 置 false，故它准确表示「本实例已显示或正在等待显示」。
+        // 不能再叠加 popupWindow.isShowing()：延迟显示期间 popup 尚未 showAtLocation，该值为 false，
+        // 会让 showHandSelectDialog 的去重判断误以为「没在显示」而创建出第二个弹窗，
+        // 前一个弹窗随后被布局回调显示出来却无人持有引用，点击时 dismiss 关不掉 → 残留遮挡。
+        return showing;
     }
 
     public void show() {
@@ -196,13 +194,16 @@ public class RPSDialog {
      * GameFieldView 是 setZOrderOnTop(true) 的 GLSurfaceView，GL 曲面合成在 Activity 窗口之上，
      * 加在布局里的普通 ImageView 会被场地纹理遮挡，因此两图放进全屏透明、不拦截触摸的
      * PopupWindow（与 RPSDialog 同层，稳定显示在 GL 曲面之上），布局直接使用窗口坐标。
-     * 我方手势图从场地中央底边开始向上移动，顶边停在 layout_game_right 高度一半 − 10px；
-     * 对方手势图倒置（rotation 180°）从 layout_game_right 顶部开始向下移动，底边停在
-     * layout_game_right 高度一半 + 10px；两图相对边之间保持 20px 间隙。
-     * 停留 HOLD_MS 后两图淡出移除并关闭覆盖层。平局（手势相同）时重新显示 RPSDialog 供玩家再出；
-     * 分出胜负（手势不同）后不再显示 RPSDialog，由 ShowDialogUtil 按结果抑制。
+     * 动画图片尺寸与弹窗三个手势按钮的布局实际尺寸一致（popup_window_rps.xml：70dp×100dp，FIT_CENTER）。
+     * 我方手势图从场地中央底边开始向上移动、对方手势图倒置（rotation 180°）从 layout_game_right
+     * 顶部开始向下移动，两者的相对边都停在 layout_game_right 半高中心线（在中心线相接）。
+     * 停留 HOLD_MS 后两图淡出移除并关闭覆盖层，随后回调 onEnd（动画完全结束）。
+     * 由调用方（ShowDialogUtil）在 onEnd 中决定是否重新显示 RPSDialog：平局重新显示供玩家再出、
+     * 分出胜负则不再显示——从而保证弹窗一定在动画播完之后才重新出现，不会被通讯结果抢先。
+     *
+     * @param onEnd 动画（含淡出）完全结束后在 UI 线程回调，可为 null
      */
-    public void playResultAnimation(int myHand, int oppHand) {
+    public void playResultAnimation(int myHand, int oppHand, Runnable onEnd) {
         if (!(context instanceof Activity)) return;
         Activity activity = (Activity) context;
         View gameRight = activity.findViewById(R.id.layout_game_right);
@@ -214,10 +215,10 @@ public class RPSDialog {
         // 中止上一次未完成的动画（平局连续出拳时可能出现重叠）
         dismissAnimWindow();
 
-        // 手势位图为 64×64 方形解码，视图同取方形，避免 FIT_CENTER 产生上下透明留白，
-        // 使图案边缘与计算边缘一致，两图间隙即为真实的 20px
-        final int imgW = dp2px(60);
-        final int imgH = dp2px(60);
+        // 动画图片尺寸与 RPSDialog 三个手势按钮的布局实际尺寸一致（70dp×100dp，见 popup_window_rps.xml），
+        // 同样使用 FIT_CENTER，保证动画中的手势与弹窗按钮观感一致
+        final int imgW = dp2px(70);
+        final int imgH = dp2px(100);
 
         // 覆盖层铺满窗口，图片布局直接使用窗口坐标（getLocationInWindow）
         int[] grLoc = new int[2];
@@ -228,10 +229,11 @@ public class RPSDialog {
         final int grLeft = grLoc[0];
         final int grTop = grLoc[1];
         // 中心线 = layout_game_right 高度一半（窗口坐标）；
-        // 我方顶边停止线 = 中心线 − 10px，对方底边停止线 = 中心线 + 10px → 两图间 20px 间隙
+        // 我方顶边、对方底边都停在中心线：较原终点各移近 10px（我方原 midY−10px 下移 10px、
+        // 对方原 midY+10px 上移 10px），两图在中心线相接、间隙归零
         final float midY = grTop + gameRight.getHeight() / 2f;
-        final float myStopTop = midY - STOP_GAP_HALF_PX;
-        final float oppStopBottom = midY + STOP_GAP_HALF_PX;
+        final float myStopTop = midY;
+        final float oppStopBottom = midY;
         final int centerX = grLeft + (gameRight.getWidth() - imgW) / 2;
         // 我方起点：场地中央底边（图片底边与场地底边齐平）
         final int myStartTop = fLoc[1] + fieldView.getHeight() - imgH;
@@ -262,16 +264,20 @@ public class RPSDialog {
         animWindow = window;
         window.showAtLocation(activity.getWindow().getDecorView(), Gravity.NO_GRAVITY, 0, 0);
 
-        // 我方：自底边上升，顶边停在（layout_game_right 半高 − 10px）
+        // 我方：自底边上升，顶边停在中心线
         myIv.animate().translationY(myStopTop - myStartTop).setDuration(MOVE_MS)
                 .setInterpolator(MOVE_INTERPOLATOR).start();
-        // 对方：倒置图自 layout_game_right 顶部下降，底边停在（layout_game_right 半高 + 10px）
+        // 对方：倒置图自 layout_game_right 顶部下降，底边停在中心线
         oppIv.animate().translationY(oppStopBottom - oppStartTop - imgH).setDuration(MOVE_MS)
                 .setInterpolator(MOVE_INTERPOLATOR)
                 .withEndAction(() -> overlay.postDelayed(() -> {
                     myIv.animate().alpha(0f).setDuration(FADE_MS).start();
                     oppIv.animate().alpha(0f).setDuration(FADE_MS)
-                            .withEndAction(this::dismissAnimWindow).start();
+                            .withEndAction(() -> {
+                                dismissAnimWindow();
+                                // 动画（含淡出）完全结束后回调：由调用方决定是否重新显示弹窗（平局）
+                                if (onEnd != null) onEnd.run();
+                            }).start();
                 }, HOLD_MS))
                 .start();
     }

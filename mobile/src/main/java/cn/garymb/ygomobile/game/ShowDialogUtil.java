@@ -61,6 +61,10 @@ public class ShowDialogUtil {
     private RPSDialog handSelectDialog;
     private boolean rpsResultShown;
     private int lastHandSent;
+    // 猜拳结果动画正在播放：期间到达的 MSG_SELECT_HAND 先挂起，待动画结束回调再决定是否重显弹窗，
+    // 避免动画未播完就因通讯结果抢先重新显示 RPSDialog
+    private boolean rpsAnimating;
+    private boolean pendingHandSelect;
     private FirstOrSecondDialog tpSelectDialog;
     private PosSelectDialog posSelectDialog;
     private OptionDialog optionDialog;
@@ -153,7 +157,20 @@ public class ShowDialogUtil {
             }
             return;
         }
-        if (handSelectDialog != null && handSelectDialog.isShowing()) return;
+        if (rpsAnimating) {
+            // 动画播放中：挂起本次请求，待动画结束回调（见 onHandResult）再重新进入本方法显示，
+            // 保证弹窗一定在动画播完之后才出现（平局重显），不被通讯结果抢先
+            pendingHandSelect = true;
+            return;
+        }
+        if (handSelectDialog != null) {
+            // 已显示、或已创建正在等待布局完成后显示（延迟显示分支）：复用，绝不创建第二个实例，
+            // 否则前一个弹窗会被布局回调显示出来却无人持有引用，点击 dismiss 关不掉 → 残留遮挡
+            if (handSelectDialog.isShowing()) return;
+            // 已关闭的旧实例：兜底 dismiss 清理后重建
+            handSelectDialog.dismiss();
+            handSelectDialog = null;
+        }
         RPSDialog dialog = new RPSDialog(activity);
         handSelectDialog = dialog;
         dialog.setCancelable(false)
@@ -172,10 +189,14 @@ public class ShowDialogUtil {
     public void resetRpsResultState() {
         rpsResultShown = false;
         lastHandSent = 0;
+        rpsAnimating = false;
+        pendingHandSelect = false;
     }
 
     /**
-     * STOC_HAND_RESULT：播放猜拳结果动画（本方手势自底上升、对方手势倒置自 layout_game_right 顶部下降）
+     * STOC_HAND_RESULT：播放猜拳结果动画（本方手势自底上升、对方手势倒置自 layout_game_right 顶部下降）。
+     * 动画期间置 rpsAnimating，期间到达的 MSG_SELECT_HAND 会被 showHandSelectDialog 挂起；
+     * 动画完全结束后在回调里清除标志，并按需（平局）重新显示弹窗——胜负则因 rpsResultShown 不再显示。
      */
     public void onHandResult(int myHand, int oppHand) {
         // 仅分出胜负（非平局）时抑制后续 RPSDialog 显示；
@@ -184,7 +205,15 @@ public class ShowDialogUtil {
             rpsResultShown = true;
         }
         if (handSelectDialog != null) {
-            handSelectDialog.playResultAnimation(myHand, oppHand);
+            rpsAnimating = true;
+            handSelectDialog.playResultAnimation(myHand, oppHand, () -> {
+                rpsAnimating = false;
+                if (pendingHandSelect) {
+                    pendingHandSelect = false;
+                    // 动画播完后才重新显示；若已分胜负，showHandSelectDialog 内部会自动应答并跳过显示
+                    showHandSelectDialog();
+                }
+            });
         }
     }
 
@@ -1288,6 +1317,8 @@ public class ShowDialogUtil {
         }
         rpsResultShown = false;
         lastHandSent = 0;
+        rpsAnimating = false;
+        pendingHandSelect = false;
         panel().dismissOpenDialogs();
     }
 
