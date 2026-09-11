@@ -9,6 +9,7 @@ import java.io.File;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,6 +97,19 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
         /** 猜拳结果（STOC_HAND_RESULT），均为本方视角的手势常量（1=剪刀 2=石头 3=布） */
         void onHandResult(int myHand, int oppHand);
+
+        /**
+         * 召唤类卡片居中动画（对齐 duelclient.cpp MSG_SUMMONING/MSG_SPSUMMONING/MSG_FLIPSUMMONING）：
+         * summonType 取 SUMMON_NORMAL/SUMMON_SPECIAL/SUMMON_FLIP，
+         * 宿主据此播放 case 7（通常/反转：翻面进入）或 case 5（特殊：放大淡入）
+         */
+        void onSummonAnimation(int code, int summonType);
+
+        /**
+         * 效果无效卡片居中动画（对齐 duelclient.cpp MSG_CHAIN_NEGATED/MSG_CHAIN_DISABLED，showcard=3）：
+         * code 为被无效连锁的卡码，居中显示卡片 + 无效图标（破坏被无效即"不会被破坏"）
+         */
+        void onNegatedAnimation(int code);
     }
 
     private GameState state = GameState.IDLE;
@@ -105,6 +119,32 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     private final LuaScriptEngine scriptEngine;
     private EngineListener listener;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    /**
+     * 连锁卡码序列（对齐 gframe dField.chains[].code）：MSG_CHAINING 依次入列，
+     * 供 MSG_CHAIN_NEGATED/DISABLED 按 ct-1 取被无效的卡码；MSG_CHAIN_END 清空。
+     * 仅在通讯（网络）线程访问，无需同步。
+     */
+    private final List<Integer> chainCodes = new ArrayList<>();
+
+    /**
+     * 消息串行闸门（对齐 duelclient.cpp ClientAnalyze + WaitFrameSignal 的串行语义）：
+     * C++ 网络线程处理到召唤/发动/无效等动画消息时用 WaitFrameSignal 阻塞，直到动画播完才处理
+     * 下一条消息（如"是否发动/是否连锁"的询问弹窗）。本工程所有消息经 DuelClient.handlePacket
+     * 的 mainHandler.post 投递到主线程处理，无法阻塞网络线程（阻塞主线程会让 Choreographer 停摆、
+     * 动画永远播不完 → 死锁），故改为「主线程消息队列 + 动画闸门」：动画消息派发后关闭闸门，
+     * 暂缓派发后续消息，待 SpecEffectOverlay 特效队列排空（notifySpecEffectIdle）再继续。
+     * 全部逻辑均在主线程执行，无需加锁。
+     */
+    private final ArrayDeque<Runnable> pendingMsgs = new ArrayDeque<>();
+    private boolean dispatchingMsg = false;    // 正在派发一条消息（防重入）
+    private boolean animGateClosed = false;    // 动画播放期间关闭闸门，暂缓后续消息
+    /** 闸门兜底超时：万一特效队列因异常未排空，超时后强制重开，避免消息永久卡死 */
+    private static final long ANIM_GATE_TIMEOUT_MS = 8000L;
+    private final Runnable animGateFailsafe = () -> {
+        animGateClosed = false;
+        drainPendingMsgs();
+    };
 
     // === stHintMsg 提示栏（对齐 gframe：选择/等待类消息显示，下一条消息隐藏） ===
 
@@ -221,6 +261,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public static final int COMMAND_SSET     = 0x0010;
     public static final int COMMAND_REPOS    = 0x0020;
     public static final int COMMAND_ATTACK   = 0x0040;
+
+    // === 召唤动画类型（onSummonAnimation 的 summonType 参数，对齐 duelclient.cpp showcard=5/7） ===
+    public static final int SUMMON_NORMAL = 0;   // 通常召唤（MSG_SUMMONING，case 7 翻面）
+    public static final int SUMMON_SPECIAL = 1;  // 特殊召唤（MSG_SPSUMMONING，case 5 放大淡入）
+    public static final int SUMMON_FLIP = 2;     // 反转召唤（MSG_FLIPSUMMONING，case 7 翻面）
 
     public static class CmdCardInfo {
         public GameField.ClientCard card;
@@ -723,6 +768,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onGameMsg(int msgType, ByteBuffer data) {
         data.order(ByteOrder.LITTLE_ENDIAN);
+        // 入队后由闸门串行派发：动画消息会关闭闸门，暂缓后续消息（对齐 C++ WaitFrameSignal 阻塞语义）
+        pendingMsgs.offer(() -> dispatchGameMsg(msgType, data));
+        drainPendingMsgs();
+    }
+
+    /** 实际派发单条通讯消息（对齐 duelclient.cpp ClientAnalyze 主体） */
+    private void dispatchGameMsg(int msgType, ByteBuffer data) {
         // 对齐 duelclient.cpp L1307-1311：除 MSG_WAITING/MSG_CARD_SELECTED 外，
         // 每条通讯消息开始先停止等待动画并隐藏 stHintMsg（提示栏随通讯推进实时显隐）
         if (msgType != GameMessage.Waiting.value() && msgType != GameMessage.CardSelected.value()) {
@@ -734,6 +786,45 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         } catch (BufferUnderflowException e) {
             Log.e(TAG, "Failed to parse game message type=" + msgType + ", remaining=" + data.remaining(), e);
         }
+    }
+
+    /**
+     * 串行派发待处理消息：闸门开启（无动画播放）时逐条取出处理；一旦某条消息触发动画并关闭闸门
+     * （closeAnimGate），循环停止，剩余消息保留在队列，待动画结束（notifySpecEffectIdle）再继续。
+     */
+    private void drainPendingMsgs() {
+        if (dispatchingMsg || animGateClosed) return;
+        dispatchingMsg = true;
+        try {
+            while (!animGateClosed) {
+                Runnable task = pendingMsgs.poll();
+                if (task == null) break;
+                task.run();
+            }
+        } finally {
+            dispatchingMsg = false;
+        }
+    }
+
+    /**
+     * 关闭动画闸门（对齐 C++ 动画消息后的 WaitFrameSignal）：暂缓派发后续消息，
+     * 直到 SpecEffectOverlay 特效队列排空回调 notifySpecEffectIdle，或超时兜底重开。
+     */
+    private void closeAnimGate() {
+        animGateClosed = true;
+        mainHandler.removeCallbacks(animGateFailsafe);
+        mainHandler.postDelayed(animGateFailsafe, ANIM_GATE_TIMEOUT_MS);
+    }
+
+    /**
+     * UI 特效队列排空回调（由 SpecEffectOverlay 的 OnIdleListener 触发，对齐 WaitFrameSignal 结束）：
+     * 重开闸门并继续派发被暂缓的后续消息（如动画后的"是否发动/连锁"询问弹窗）。
+     */
+    public void notifySpecEffectIdle() {
+        if (!animGateClosed) return;
+        animGateClosed = false;
+        mainHandler.removeCallbacks(animGateFailsafe);
+        drainPendingMsgs();
     }
 
     @Override
@@ -1431,6 +1522,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onSummoning(int code, int ctrl, int loc, int seq) {
         soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+        // duelclient.cpp MSG_SUMMONING L3252-3258：showcardcode=code, showcarddif=0, showcard=7（翻面进入）
+        postSummonAnimation(code, SUMMON_NORMAL);
     }
 
     @Override
@@ -1443,6 +1536,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onSpSummoning(int code, int ctrl, int loc, int seq) {
         soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON);
+        // duelclient.cpp MSG_SPSUMMONING L3287-3290：if(code) showcarddif=1, showcard=5（放大淡入）
+        if (code != 0) postSummonAnimation(code, SUMMON_SPECIAL);
     }
 
     @Override
@@ -1455,6 +1550,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onFlipSummoning(int code, int ctrl, int loc, int seq) {
         soundManager.playSoundEffect(SoundManager.SFX.FLIP);
+        // duelclient.cpp MSG_FLIPSUMMONING L3317-3320：showcardcode=code, showcarddif=0, showcard=7（翻面进入）
+        postSummonAnimation(code, SUMMON_FLIP);
     }
 
     @Override
@@ -1464,39 +1561,47 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         });
     }
 
-    @Override
-    public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
-        soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
-        // 协议侧 controler 转本地索引，保证连锁高亮落在正确的半场
-        final int localCc = localPlayer(cc & 1);
-        mainHandler.post(() -> {
-            if (listener != null) listener.onChainAnimation(code, localCc, cl, cs);
-        });
+    /** 召唤类卡片居中动画（对齐 duelclient.cpp showcard=5/7）：同步派发后关闭闸门，待动画播完再处理后续消息 */
+    private void postSummonAnimation(int code, int summonType) {
+        if (listener == null) return;
+        listener.onSummonAnimation(code, summonType);
+        closeAnimGate();
     }
 
     @Override
-    public void onChained(int code) {
-        mainHandler.post(() -> {
-            if (listener != null) listener.onFieldChanged();
-        });
+    public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
+        soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
+        // 记录连锁卡码（对齐 gframe MSG_CHAINED 将 current_chain.code 压入 dField.chains），
+        // 供 MSG_CHAIN_NEGATED/DISABLED 按 ct-1 取被无效的卡码
+        chainCodes.add(code);
+        // 协议侧 controler 转本地索引，保证连锁高亮落在正确的半场
+        final int localCc = localPlayer(cc & 1);
+        if (listener != null) {
+            listener.onChainAnimation(code, localCc, cl, cs);
+            // 发动动画播完再处理后续消息（对齐 C++ MSG_CHAINING 的 WaitFrameSignal(30)）
+            closeAnimGate();
+        }
+    }
+
+    @Override
+    public void onChained(int chainCount) {
+        
     }
 
     @Override
     public void onChainSolving(int chainCount) {
-        mainHandler.post(() -> {
-            if (listener != null) listener.onFieldChanged();
-        });
+
     }
 
     @Override
     public void onChainSolved(int chainCount) {
-        mainHandler.post(() -> {
-            if (listener != null) listener.onFieldChanged();
-        });
+
     }
 
     @Override
     public void onChainEnd() {
+        // 对齐 duelclient.cpp MSG_CHAIN_END L3442：chains.clear()
+        chainCodes.clear();
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1505,11 +1610,27 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onChainNegated(int chainCount) {
         soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
+        postNegatedAnimation(chainCount);
     }
 
     @Override
     public void onChainDisabled(int chainCount) {
         soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
+        postNegatedAnimation(chainCount);
+    }
+
+    /**
+     * 效果无效卡片居中动画（对齐 duelclient.cpp MSG_CHAIN_NEGATED/DISABLED L3450-3452：
+     * showcardcode = chains[ct-1].code, showcarddif=0, showcard=3）。
+     * ct 为 1 基连锁序号；取不到卡码时不播放。
+     */
+    private void postNegatedAnimation(int chainCount) {
+        final int code = (chainCount >= 1 && chainCount <= chainCodes.size())
+                ? chainCodes.get(chainCount - 1) : 0;
+        if (code == 0 || listener == null) return;
+        listener.onNegatedAnimation(code);
+        // 无效动画播完再处理后续消息（对齐 C++ MSG_CHAIN_NEGATED/DISABLED 的 WaitFrameSignal(30)）
+        closeAnimGate();
     }
 
     @Override

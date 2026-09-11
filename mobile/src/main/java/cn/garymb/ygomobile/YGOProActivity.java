@@ -1189,6 +1189,23 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     @Override
+    public void onSummonAnimation(int code, int summonType) {
+        runOnUiThread(() -> {
+            if (summonType == GameEngine.SUMMON_SPECIAL) {
+                specEffect().showSpecialSummon(code); // case 5：特殊召唤，放大 + 淡入
+            } else {
+                specEffect().showSummon(code);        // case 7：通常/反转召唤，翻面进入
+            }
+        });
+    }
+
+    @Override
+    public void onNegatedAnimation(int code) {
+        // case 3：效果无效（破坏被无效即"不会被破坏"），居中卡片 + 无效图标
+        runOnUiThread(() -> specEffect().showNegated(code));
+    }
+
+    @Override
     public void onHandResult(int myHand, int oppHand) {
         runOnUiThread(() -> getDialogUtil().onHandResult(myHand, oppHand));
     }
@@ -1507,7 +1524,13 @@ public class YGOProActivity extends AppCompatActivity implements
     private SpecEffectOverlay specEffectOverlay;
 
     private SpecEffectOverlay specEffect() {
-        if (specEffectOverlay == null) specEffectOverlay = new SpecEffectOverlay(this);
+        if (specEffectOverlay == null) {
+            specEffectOverlay = new SpecEffectOverlay(this);
+            // 特效队列排空 → 通知引擎重开消息闸门，实现「召唤/发动动画播完后再弹询问框」的串行序列
+            specEffectOverlay.setOnIdleListener(() -> {
+                if (engine != null) engine.notifySpecEffectIdle();
+            });
+        }
         return specEffectOverlay;
     }
 

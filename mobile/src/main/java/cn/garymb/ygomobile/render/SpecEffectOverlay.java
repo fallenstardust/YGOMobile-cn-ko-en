@@ -78,6 +78,8 @@ public class SpecEffectOverlay {
     private float speed = 1f;
     /** 特效请求队列：保证动画串行播放——上一段完全结束后再播下一段，避免多段动画互相打断/同时播出 */
     private final ArrayDeque<EffectRequest> queue = new ArrayDeque<>();
+    /** 特效队列排空（无动画播放）回调：供 GameEngine 重开消息闸门，实现「动画播完再弹窗」的串行序列 */
+    private OnIdleListener idleListener;
 
     public SpecEffectOverlay(Activity activity) {
         this.activity = activity;
@@ -87,6 +89,11 @@ public class SpecEffectOverlay {
     public void setAnimationSpeed(float multiplier) {
         this.speed = Math.max(0.25f, multiplier);
         if (view != null) view.speed = this.speed;
+    }
+
+    /** 设置特效队列排空回调（在 UI 线程触发）：队列中所有动画播放完毕、当前空闲时调用一次 */
+    public void setOnIdleListener(OnIdleListener l) {
+        this.idleListener = l;
     }
 
     // ==================== 对外触发的各 case 动画 ====================
@@ -108,8 +115,8 @@ public class SpecEffectOverlay {
 
     /** case 5：特殊召唤，卡片大图自中心放大并淡入（MSG_SPSUMMONING） */
     public void showSpecialSummon(int code) {
-        // C++ showcarddif 初值为 1
-        enqueue(new EffectRequest(EFFECT_SPSUMMON, code, 1, 20, null, null, 0));
+        // C++ showcarddif 初值为 1（第 7 参才是 difInit；此前误把 1 传入 param 槽导致 dif 初值为 0）
+        enqueue(new EffectRequest(EFFECT_SPSUMMON, code, 0, 20, null, null, 1));
     }
 
     /** case 6：计数器，卡片大图 + 中央缩小的数字图标（MSG_COUNTER CHINT_TURN，number 取 0~24） */
@@ -190,12 +197,15 @@ public class SpecEffectOverlay {
         pumpQueue();
     }
 
-    /** 仅在无动画播放时取出队首请求开播；队列已空则关闭覆盖层。由 onFinish 逐段驱动，形成序列 */
+    /** 仅在无动画播放时取出队首请求开播；队列已空则通知引擎并关闭覆盖层。由 onFinish 逐段驱动，形成序列 */
     private void pumpQueue() {
         if (view == null || view.running) return;
         EffectRequest req = queue.poll();
         if (req == null) {
-            dismissWindow();
+            // 先通知引擎队列已排空（引擎可能在同一调用栈内立即派发下一条消息并入队新动画），
+            // 通知后若仍无动画播放，才关闭覆盖层，避免「关闭→立即重开」的闪烁
+            if (idleListener != null) idleListener.onIdle();
+            if (queue.isEmpty() && (view == null || !view.running)) dismissWindow();
             return;
         }
         updateRegion(view);
@@ -258,6 +268,11 @@ public class SpecEffectOverlay {
         void onFinish();
     }
 
+    /** 特效队列排空、当前无动画播放时触发一次的回调 */
+    public interface OnIdleListener {
+        void onIdle();
+    }
+
     /** 一次特效播放请求（队列元素），字段与 SpecEffectView.startCard 参数一一对应 */
     private static final class EffectRequest {
         final int type, code, param;
@@ -305,6 +320,7 @@ public class SpecEffectOverlay {
         private float p = 0f;        // showcardp
         private float holdFrames = 0f;
         private float holdCount = 0f;
+        private float cardWaitFrames = 0f;   // 卡图迟迟未解码完成的累计帧数（兜底防止动画/闸门永久卡住）
         private float speed = 1f;
         private boolean running = false;
         private boolean frameScheduled = false;
@@ -398,6 +414,7 @@ public class SpecEffectOverlay {
             dif = 0f;
             p = 0f;
             holdCount = 0f;
+            cardWaitFrames = 0f;
             invalidate();
             if (finishListener != null) finishListener.onFinish();
         }
@@ -420,7 +437,14 @@ public class SpecEffectOverlay {
         private void step(float fr) {
             if (effectType == EFFECT_NONE) return;
             // 卡片大图未解码完成前不推进（对齐 C++ if(showimg==NULL) return）
-            if (needsCard(effectType) && card() == null) return;
+            if (needsCard(effectType) && card() == null) {
+                // 卡图始终解码失败（如卡片不存在）时不能无限等待，否则 GameEngine 消息闸门被永久关闭：
+                // 累计约 40 帧后强制结束本段动画，交还控制权（正常卡图解码极快，不会误触发）
+                cardWaitFrames += fr;
+                if (cardWaitFrames >= 40f) finish();
+                return;
+            }
+            cardWaitFrames = 0f;
             boolean done = false;
             switch (effectType) {
                 case EFFECT_ACTIVATE:
