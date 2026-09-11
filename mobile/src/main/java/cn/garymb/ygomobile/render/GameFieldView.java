@@ -72,27 +72,27 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         void onPhaseEpClicked();
     }
 
-    // === 场地坐标常量（与 field3.png 版面锁定：宽 10.4 = 7.8×880/660，贴图内格子恰为正方形）===
+    // === 场地坐标常量：底板矩形与格子尺寸全部取自 GameField（materials.cpp 唯一真值）。
+    // 卡片落点、格子、底板贴图网格共用 fx()/恒等 Y 同一仿射映射，三者必然完美重叠 ===
     private static final float FIELD_CENTER_X = 3.95f;
-    private static final float X_SCALE = 1.217f / 1.1f;
-    private static final float FIELD_X_MIN = -1.25f;
-    private static final float FIELD_X_MAX = 9.15f;
-    private static final float FIELD_Y_MIN = -3.9f;
-    private static final float FIELD_Y_MAX = 3.9f;
+    private static final float FIELD_X_MIN = GameField.fieldBoardMinX();
+    private static final float FIELD_X_MAX = GameField.fieldBoardMaxX();
+    private static final float FIELD_Y_MIN = GameField.FIELD_TEX_Y_MIN;
+    private static final float FIELD_Y_MAX = GameField.FIELD_TEX_Y_MAX;
     // 卡片世界尺寸：严格 177:254 比例
     private static final float CARD_W = 0.8f;
     private static final float CARD_H = 0.8f * 254f / 177f;
-    // 区域槽尺寸：254×254 规格正方形（field3.png 锁定后边长 1.217），怪兽/魔陷/额外怪兽/堆叠区共用
-    private static final float ZONE_W = 1.217f;
-    private static final float ZONE_H = 1.217f;
-    private static final float PILE_W = 1.217f;
-    private static final float PILE_H = 1.217f;
+    // 区域槽尺寸：与 GameField 格子同源（materials.cpp 1.1×1.2 / 0.8×1.2 经 fx 缩放）
+    private static final float ZONE_W = GameField.ZONE_W;
+    private static final float ZONE_H = GameField.ZONE_H;
+    private static final float PILE_W = GameField.PILE_W;
+    private static final float PILE_H = GameField.PILE_H;
 
     /**
-     * 与 GameField.fx 一致：以场地中心为轴的 254×254 规格横向缩放（绘制/拾取共用，保证命中不偏）
+     * 与 GameField.fx 同一映射：格子/卡片/底板共用，保证命中与绘制不偏
      */
     private static float fx(float x) {
-        return FIELD_CENTER_X + (x - FIELD_CENTER_X) * X_SCALE;
+        return GameField.fx(x);
     }
 
     /**
@@ -149,8 +149,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     "uniform mat4 uMVP;\n" +
                     "uniform float uFlipU;\n" +
                     "uniform float uFlipV;\n" +
+                    "uniform vec4 uUVRect;\n" +
                     "out vec2 vUV;\n" +
-                    "void main(){ vUV=vec2(mix(aUV.x,1.0-aUV.x,uFlipU),mix(aUV.y,1.0-aUV.y,uFlipV)); gl_Position=uMVP*vec4(aPos,0.0,1.0); }\n";
+                    "void main(){ vec2 uv=vec2(mix(aUV.x,1.0-aUV.x,uFlipU),mix(aUV.y,1.0-aUV.y,uFlipV)); vUV=uUVRect.xy+uv*uUVRect.zw; gl_Position=uMVP*vec4(aPos,0.0,1.0); }\n";
 
     private static final String FS_TEX =
             "#version 300 es\n" +
@@ -201,7 +202,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     // === GL 资源 ===
     private int texProg, colorProg;
-    private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV;
+    private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV, texLocUVRect;
     private int colorLocMVP, colorLocColor;
     private int vao;
     private final HashMap<Long, Integer> textures = new HashMap<>();
@@ -467,6 +468,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         texLocTex = GLES30.glGetUniformLocation(texProg, "uTex");
         texLocFlipU = GLES30.glGetUniformLocation(texProg, "uFlipU");
         texLocFlipV = GLES30.glGetUniformLocation(texProg, "uFlipV");
+        texLocUVRect = GLES30.glGetUniformLocation(texProg, "uUVRect");
         colorLocMVP = GLES30.glGetUniformLocation(colorProg, "uMVP");
         colorLocColor = GLES30.glGetUniformLocation(colorProg, "uColor");
 
@@ -652,11 +654,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     /**
      * 场地底板：对齐 gframe drawing.cpp L326/L369 ——
      * rule=(duel_rule>=4)?1:0 选 field3/field2；显示场地魔法卡时改用 field-transparent 版。
+     * 底板矩形取 materials.cpp vField（-1..9 × -4..4）经 fx 映射，与格子/卡片同仿射，网格完美重叠。
      * 其余区域保持透明，透出窗口背景。
      */
     private void drawFieldBoard(GameField f) {
         int rule = (f.dInfo.duelRule >= 4) ? 1 : 0;
-        boolean transparent = fieldSpellDisplayed(f);
+        int code1 = fieldSpellCode(f, 0);
+        int code2 = fieldSpellCode(f, 1);
+        boolean transparent = code1 > 0 || code2 > 0;
+        // 场地魔法背景图先于底板绘制（z=-0.01 底板之下），对齐 drawing.cpp DrawBackGround
+        if (transparent) drawFieldSpellArt(code1, code2);
         int tex = obtainFieldTexture(rule, transparent);
         float w = FIELD_X_MAX - FIELD_X_MIN;
         float h = FIELD_Y_MAX - FIELD_Y_MIN;
@@ -673,20 +680,49 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * gframe drawField 语义：任一方场地魔法区(szone seq5)存在正面场地卡时，用 transparent 版底图
+     * gframe DrawBackGround 语义：取该方场地魔法区(szone seq5)正面场地卡 code，无则 0
      */
-    private static boolean fieldSpellDisplayed(GameField f) {
+    private static int fieldSpellCode(GameField f, int player) {
         try {
-            for (int p = 0; p < 2; p++) {
-                List<GameField.ClientCard> sz = f.players[p].spellZone;
-                if (sz.size() > 5) {
-                    GameField.ClientCard c = sz.get(5);
-                    if (c != null && c.isFaceUp() && c.code != 0) return true;
-                }
+            List<GameField.ClientCard> sz = f.players[player].spellZone;
+            if (sz.size() > 5) {
+                GameField.ClientCard c = sz.get(5);
+                if (c != null && c.isFaceUp() && c.code != 0) return c.code;
             }
         } catch (Throwable ignored) {
         }
-        return false;
+        return 0;
+    }
+
+    /**
+     * 场地魔法背景图（image_manager.cpp GetTextureField + materials.cpp vFieldSpell*）：
+     * 单方/双方同码 → 整幅 vFieldSpell；双方异码 → 各画半幅（vFieldSpell1/2 的 uv 子矩形）
+     */
+    private void drawFieldSpellArt(int code1, int code2) {
+        float x0 = fx(GameField.FIELD_SPELL_X_MIN);
+        float x1 = fx(GameField.FIELD_SPELL_X_MAX);
+        float w = x1 - x0;
+        float cx = mirrorX((x0 + x1) / 2f);
+        if (code1 > 0 && code2 > 0 && code1 != code2) {
+            drawFieldSpellRect(obtainFieldSpellTexture(code1),
+                    0.8f, 3.2f, 1f, 0.2f, 0.8f, 0.63636f, 0.36364f, cx, w);
+            drawFieldSpellRect(obtainFieldSpellTexture(code2),
+                    -3.2f, -0.8f, 1f, 1f, -0.36364f, 0.63636f, -0.43636f, cx, w);
+        } else {
+            drawFieldSpellRect(obtainFieldSpellTexture(code1 > 0 ? code1 : code2),
+                    GameField.FIELD_SPELL_Y_MIN, GameField.FIELD_SPELL_Y_MAX,
+                    1f, 0f, 1f, 0f, 1f, cx, w);
+        }
+    }
+
+    private void drawFieldSpellRect(int tex, float yMin, float yMax, float flipU,
+                                    float offU, float scU, float offV, float scV,
+                                    float cx, float w) {
+        if (tex <= 0) return;
+        Matrix.setIdentityM(mModel, 0);
+        Matrix.translateM(mModel, 0, cx, (yMin + yMax) / 2f, -0.01f);
+        Matrix.scaleM(mModel, 0, w, yMax - yMin, 1f);
+        drawQuadTexUV(mModel, tex, 1f, flipU, 0f, offU, offV, scU, scV);
     }
 
     private void drawZoneSlots() {
@@ -708,19 +744,96 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
     }
 
+    // === 可选格子高亮：环绕格子的虚线行进动画（drawing.cpp DrawSelectionLine + game.cpp linePattern/stippleMask）===
+    private static final int STIPPLE_MASK = 0x0f0f;
+    private static final float DASH_PX = 4f;
+    private static final float OUTLINE_PX = 2.5f;
+    private static final float MARCH_PX_PER_SEC = 48f;
+
     private void drawHighlights() {
         int mask = highlightFieldMask;
         if (mask == 0) return;
-        float a = 0.30f + 0.12f * (float) Math.sin(animTimeMs * 0.005);
-        for (int i = 0; i < 7; i++) {
-            if ((mask & (1 << i)) != 0) drawZoneGlow(0, 0x04, i, a);
-            if ((mask & (1 << (16 + i))) != 0) drawZoneGlow(1, 0x04, i, a);
-        }
-        for (int i = 0; i < 6; i++) {
-            if ((mask & (1 << (8 + i))) != 0) drawZoneGlow(0, 0x08, i, a);
-            if ((mask & (1 << (24 + i))) != 0) drawZoneGlow(1, 0x08, i, a);
+        float phase = animTimeMs * 0.001f * MARCH_PX_PER_SEC;
+        for (int p = 0; p < 2; p++) {
+            float r = p == 0 ? 0f : 1f;
+            float g = p == 0 ? 1f : 0f;
+            float b = p == 0 ? 1f : 0f;
+            for (int i = 0; i < 7; i++) {
+                if ((mask & (1 << zoneBitPos(p, 0x04, i))) != 0)
+                    drawZoneMarching(p, 0x04, i, phase, r, g, b);
+            }
+            for (int i = 0; i < 8; i++) {
+                int bit = zoneBitPos(p, 0x08, i);
+                if (bit >= 0 && (mask & (1 << bit)) != 0)
+                    drawZoneMarching(p, 0x08, i, phase, r, g, b);
+            }
         }
     }
+
+    /**
+     * 单格虚线行进框：四角投影到屏幕取像素边长，按 16bit stipple(0x0f0f) 沿周长走像素，
+     * “亮”段换算回世界坐标画粗线段；patternCursor 跨边累积、phase 随时间推进 → 蚂蚁线环绕运动
+     */
+    private void drawZoneMarching(int player, int loc, int seq, float phase,
+                                  float r, float g, float b) {
+        float[] rect = GameField.getZoneRect(player, loc, seq);
+        if (rect == null) return;
+        float cx = mirrorX(rect[0]), cy = rect[1];
+        float hw = rect[2] / 2f, hh = rect[3] / 2f;
+        float x0 = cx - hw, x1 = cx + hw, y0 = cy - hh, y1 = cy + hh;
+        // 角点顺序对齐 C++ v[0..3]，边序对齐 edgeStart/edgeEnd
+        float[] qx = {x0, x1, x0, x1};
+        float[] qy = {y0, y0, y1, y1};
+        int[] es = {0, 1, 3, 2};
+        int[] ee = {1, 3, 2, 0};
+        float[] sx = new float[4], sy = new float[4];
+        for (int i = 0; i < 4; i++) {
+            float[] s = projectWorldPoint(qx[i], qy[i], 0.03f);
+            if (s == null) return;
+            sx[i] = s[0];
+            sy[i] = s[1];
+        }
+        float patternCursor = 0f;
+        for (int i = 0; i < 4; i++) {
+            int a = es[i], d = ee[i];
+            float worldLen = (i == 0 || i == 2) ? rect[2] : rect[3];
+            float screenLen = (float) Math.hypot(sx[d] - sx[a], sy[d] - sy[a]);
+            if (screenLen < 1f || worldLen < 1e-4f) continue;
+            float thick = OUTLINE_PX * worldLen / screenLen;
+            float c = 0f;
+            while (c < screenLen) {
+                boolean on = ((STIPPLE_MASK >> ((int) (phase + patternCursor + c) & 0xf)) & 1) != 0;
+                float runEnd = c + 1f;
+                while (runEnd < screenLen
+                        && ((((STIPPLE_MASK >> ((int) (phase + patternCursor + runEnd) & 0xf)) & 1) != 0) == on)) {
+                    runEnd += 1f;
+                }
+                if (runEnd > screenLen) runEnd = screenLen;
+                if (on) {
+                    float t0 = c / screenLen, t1 = runEnd / screenLen;
+                    drawDash(qx[a] + (qx[d] - qx[a]) * t0, qy[a] + (qy[d] - qy[a]) * t0,
+                            qx[a] + (qx[d] - qx[a]) * t1, qy[a] + (qy[d] - qy[a]) * t1,
+                            thick, r, g, b);
+                }
+                c = runEnd;
+            }
+            patternCursor = (patternCursor + screenLen) % 16f;
+        }
+    }
+
+    /** 单段虚线：边在世界空间轴对齐，水平边给厚度作高、垂直边给厚度作宽 */
+    private void drawDash(float x0, float y0, float x1, float y1, float thick,
+                          float r, float g, float b) {
+        float w = Math.abs(x1 - x0);
+        float h = Math.abs(y1 - y0);
+        if (h < 1e-4f) {
+            h = thick;
+        } else {
+            w = thick;
+        }
+        drawFlatQuad((x0 + x1) / 2f, (y0 + y1) / 2f, 0.03f, w, h, r, g, b, 0.95f);
+    }
+
 
     private void drawZoneGlow(int player, int loc, int seq, float alpha) {
         float[] c = zoneCenter(player, loc, seq);
@@ -931,6 +1044,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     private void drawQuadTex(float[] model, int texId, float alpha, float flipU, float flipV) {
+        drawQuadTexUV(model, texId, alpha, flipU, flipV, 0f, 0f, 1f, 1f);
+    }
+
+    private void drawQuadTexUV(float[] model, int texId, float alpha, float flipU, float flipV,
+                               float offU, float offV, float scU, float scV) {
         if (texId <= 0) return;
         GLES30.glUseProgram(texProg);
         Matrix.multiplyMM(mMVP, 0, mVP, 0, model, 0);
@@ -938,6 +1056,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         GLES30.glUniform4f(texLocTint, 1f, 1f, 1f, alpha);
         GLES30.glUniform1f(texLocFlipU, flipU);
         GLES30.glUniform1f(texLocFlipV, flipV);
+        GLES30.glUniform4f(texLocUVRect, offU, offV, scU, scV);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texId);
         GLES30.glUniform1i(texLocTex, 0);
@@ -1109,6 +1228,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         GLES30.glUniform4f(texLocTint, 1f, 1f, 1f, alpha);
         GLES30.glUniform1f(texLocFlipU, 0f);
         GLES30.glUniform1f(texLocFlipV, 0f);
+        GLES30.glUniform4f(texLocUVRect, 0f, 0f, 1f, 1f);
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texId);
         GLES30.glUniform1i(texLocTex, 0);
@@ -1159,6 +1279,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return -10L - (long) rule * 2L - (transparent ? 1L : 0L);
     }
 
+    /**
+     * 场地底板纹理（drawing.cpp L369：drawField ? tFieldTransparent[rule] : tField[rule]）：
+     * 首次请求时工作线程解码，下一帧 drainUploads 上传；未就绪返回 -1，由 drawFieldBoard 兜底底色填充
+     */
     private int obtainFieldTexture(int rule, boolean transparent) {
         long key = fieldTexKey(rule, transparent);
         Integer id = textures.get(key);
@@ -1173,7 +1297,41 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                         b = src.copy(Bitmap.Config.ARGB_8888, false);
                 } catch (Throwable ignored) {
                 }
-                // b==null（文件缺失）时不上传：requested 保留，之后走颜色兜底、不重复请求
+                if (b != null) {
+                    pendingUploads.offer(new PendingUpload(key, b, true));
+                } else {
+                    // 解码失败：释放请求标记，后续帧可重试
+                    requested.remove(key);
+                }
+            });
+        } catch (Throwable t) {
+            requested.remove(key);
+        }
+        return -1;
+    }
+
+    private static long fieldSpellTexKey(int code) {
+        return -1000000000L - code;
+    }
+
+    /**
+     * 场地魔法背景图纹理（TextureLoader 全源解码 + LRU 缓存），异步上传，缺失不重试
+     */
+    private int obtainFieldSpellTexture(int code) {
+        if (code <= 0) return -1;
+        long key = fieldSpellTexKey(code);
+        Integer id = textures.get(key);
+        if (id != null) return id;
+        if (!requested.add(key)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getFieldSpellBitmap(code);
+                    if (src != null && !src.isRecycled())
+                        b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
                 if (b != null) pendingUploads.offer(new PendingUpload(key, b, true));
             });
         } catch (Throwable t) {
@@ -1562,41 +1720,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     // ==================== 场地几何（与 GameField/旧版 getZoneRectLocalF 一致）====================
 
     private static float[] zoneCenter(int player, int loc, int seq) {
-        if (loc == 0x04) {
-            if (player == 0) {
-                float cx = fx(seq < 5 ? 1.75f + 1.1f * seq : (seq == 5 ? 2.85f : 5.05f));
-                float cy = seq < 5 ? 1.4f : 0f;
-                return new float[]{cx, cy};
-            }
-            float cx = fx(seq < 5 ? 6.15f - 1.1f * seq : (seq == 5 ? 5.05f : 2.85f));
-            float cy = seq < 5 ? -1.4f : 0f;
-            return new float[]{cx, cy};
-        }
-        if (player == 0) {
-            float cx = fx(seq < 5 ? 1.75f + 1.1f * seq
-                    : (seq == 5 ? 0.6f : (seq == 6 ? 0.6f : 8.3f)));
-            float cy = seq < 5 ? 2.56f : (seq == 5 ? 2.0f : 0.7f);
-            return new float[]{cx, cy};
-        }
-        float cx = fx(seq < 5 ? 6.15f - 1.1f * seq
-                : (seq == 5 ? 7.3f : (seq == 6 ? 7.3f : -0.4f)));
-        float cy = seq < 5 ? -2.56f : (seq == 5 ? -2.0f : -0.7f);
-        return new float[]{cx, cy};
+        float[] r = GameField.getZoneRect(player, loc, seq);
+        return r == null ? new float[]{FIELD_CENTER_X, 0f} : new float[]{r[0], r[1]};
     }
 
     private static float[] pileCenter(int player, int loc) {
-        if (player == 0) {
-            if (loc == 0x01) return new float[]{fx(7.3f), 3.3f};
-            if (loc == 0x10) return new float[]{fx(7.3f), 2.0f};
-            if (loc == 0x20) return new float[]{fx(7.3f), 0.7f};
-            if (loc == 0x40) return new float[]{fx(0.6f), 3.3f};
-            return null;
-        }
-        if (loc == 0x01) return new float[]{fx(0.6f), -3.3f};
-        if (loc == 0x10) return new float[]{fx(0.6f), -2.0f};
-        if (loc == 0x20) return new float[]{fx(0.6f), -0.7f};
-        if (loc == 0x40) return new float[]{fx(7.3f), -3.3f};
-        return null;
+        float[] r = GameField.getPileRect(player, loc);
+        return r == null ? null : new float[]{r[0], r[1]};
     }
 
     private static boolean zoneContains(int player, int loc, int seq, float x, float y) {

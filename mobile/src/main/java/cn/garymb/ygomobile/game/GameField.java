@@ -868,8 +868,75 @@ public class GameField {
      *  X 坐标以场地中心 3.95 为轴按 (292px世界长)/1.1 放大，决斗场更宽且与 field3.png 拉伸适配 */
     private static final float X_SCALE = (292f * 0.8f / 177f) / 1.1f;
 
-    private static float fx(float x) {
+    /** C++ materials.cpp vField：底板贴图 uv(0,0)-(1,1) 覆盖的世界矩形。
+     *  底板、格子、卡片落点共用 fx()/恒等 Y 这同一仿射映射，故贴图网格与格子必然完美重叠 */
+    public static final float FIELD_TEX_X_MIN = -1f;
+    public static final float FIELD_TEX_X_MAX = 9f;
+    public static final float FIELD_TEX_Y_MIN = -4f;
+    public static final float FIELD_TEX_Y_MAX = 4f;
+    /** C++ materials.cpp vFieldSpell：场地魔法背景图矩形（z=-0.01，绘于底板之下） */
+    public static final float FIELD_SPELL_X_MIN = 1.2f;
+    public static final float FIELD_SPELL_X_MAX = 6.7f;
+    public static final float FIELD_SPELL_Y_MIN = -3.2f;
+    public static final float FIELD_SPELL_Y_MAX = 3.2f;
+
+    /** 格子尺寸：materials.cpp 怪兽/魔陷格 1.1×1.2、堆叠区 0.8×1.2（X 经 fx 缩放） */
+    public static final float ZONE_W = 1.1f * X_SCALE;
+    public static final float ZONE_H = 1.2f;
+    public static final float PILE_W = 0.8f * X_SCALE;
+    public static final float PILE_H = 1.2f;
+
+    public static float fx(float x) {
         return 3.95f + (x - 3.95f) * X_SCALE;
+    }
+
+    public static float fieldBoardMinX() {
+        return fx(FIELD_TEX_X_MIN);
+    }
+
+    public static float fieldBoardMaxX() {
+        return fx(FIELD_TEX_X_MAX);
+    }
+
+    /**
+     * 格子矩形 {cx, cy, w, h}（materials.cpp vFieldMzone/vFieldSzone 中心经 fx 缩放）：
+     * 与 getCardLocation 同源，保证卡片落点恒为对应格子的宽度中心
+     */
+    public static float[] getZoneRect(int controler, int location, int sequence) {
+        if (location == 0x04) {
+            return new float[]{mzoneCX(controler, sequence), mzoneCY(controler, sequence), ZONE_W, ZONE_H};
+        }
+        if (location == 0x08) {
+            return new float[]{szoneCX(controler, sequence), szoneCY(controler, sequence), ZONE_W, ZONE_H};
+        }
+        return null;
+    }
+
+    /** 堆叠区矩形 {cx, cy, w, h}（materials.cpp vFieldDeck/Grave/Remove/Extra 中心） */
+    public static float[] getPileRect(int controler, int location) {
+        float cx;
+        float cy;
+        switch (location) {
+            case 0x01:
+                cx = fx(controler == 0 ? 7.3f : 0.6f);
+                cy = controler == 0 ? 3.3f : -3.3f;
+                break;
+            case 0x10:
+                cx = fx(controler == 0 ? 7.3f : 0.6f);
+                cy = controler == 0 ? 2.0f : -2.0f;
+                break;
+            case 0x20:
+                cx = fx(controler == 0 ? 7.3f : 0.6f);
+                cy = controler == 0 ? 0.7f : -0.7f;
+                break;
+            case 0x40:
+                cx = fx(controler == 0 ? 0.6f : 7.3f);
+                cy = controler == 0 ? 3.3f : -3.3f;
+                break;
+            default:
+                return null;
+        }
+        return new float[]{cx, cy, PILE_W, PILE_H};
     }
 
     private static float mzoneCX(int c, int s) {
@@ -897,11 +964,11 @@ public class GameField {
 
     private static float szoneCY(int c, int s) {
         if (c == 0) {
-            if (s < 5) return 2.56f;
+            if (s < 5) return 2.6f;
             if (s == 5) return 2.0f;
             return 0.7f;
         }
-        if (s < 5) return -2.56f;
+        if (s < 5) return -2.6f;
         if (s == 5) return -2.0f;
         return -0.7f;
     }
@@ -920,8 +987,9 @@ public class GameField {
 
         switch (location) {
             case 0x01: { // LOCATION_DECK
-                t[0] = fx(controler == 0 ? 7.3f : 0.6f);
-                t[1] = controler == 0 ? 3.3f : -3.3f;
+                float[] pr = getPileRect(controler, 0x01);
+                t[0] = pr[0];
+                t[1] = pr[1];
                 t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
                 boolean back = (deckReversed == pcard.is_reversed);
                 t[4] = back ? PI : 0f;
@@ -1000,23 +1068,26 @@ public class GameField {
                 break;
             }
             case 0x10: { // LOCATION_GRAVE
-                t[0] = fx(controler == 0 ? 7.3f : 0.6f);
-                t[1] = controler == 0 ? 2.0f : -2.0f;
+                float[] pr = getPileRect(controler, 0x10);
+                t[0] = pr[0];
+                t[1] = pr[1];
                 t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
                 t[5] = controler == 0 ? 0f : PI;
                 break;
             }
             case 0x20: { // LOCATION_REMOVED
-                t[0] = fx(controler == 0 ? 7.3f : 0.6f);
-                t[1] = controler == 0 ? 0.7f : -0.7f;
+                float[] pr = getPileRect(controler, 0x20);
+                t[0] = pr[0];
+                t[1] = pr[1];
                 t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
                 t[4] = faceup ? 0f : PI;
                 t[5] = controler == 0 ? 0f : PI;
                 break;
             }
             case 0x40: { // LOCATION_EXTRA
-                t[0] = fx(controler == 0 ? 0.6f : 7.3f);
-                t[1] = controler == 0 ? 3.3f : -3.3f;
+                float[] pr = getPileRect(controler, 0x40);
+                t[0] = pr[0];
+                t[1] = pr[1];
                 t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
                 t[4] = faceup ? 0f : PI;
                 t[5] = controler == 0 ? 0f : PI;

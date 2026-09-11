@@ -180,6 +180,54 @@ public class ImageLoader implements Closeable {
         return null;
     }
 
+    /**
+     * 按场地魔法卡号查找场地背景图数据（image_manager.cpp GetTextureField 同源路径）：
+     * expansions zip -> expansions/pics/field -> pics/field -> pics.zip
+     */
+    @Nullable
+    public static byte[] findFieldImageData(long code) {
+        String name = Constants.CORE_IMAGE_PATH + "/" + Constants.CORE_IMAGE_FIELD_PATH + "/" + code;
+        String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + Constants.CORE_IMAGE_FIELD_PATH + "/" + code;
+        File[] files = AppsSettings.get().getExpansionFiles();
+        if (files != null) {
+            for (File file : files) {
+                ZipFile zipFile = openZip(file);
+                if (zipFile == null) {
+                    continue;
+                }
+                byte[] data = readZipEntry(zipFile, name);
+                if (data != null) {
+                    return data;
+                }
+            }
+        }
+        String resourcePath = AppsSettings.get().getResourcePath();
+        for (String ex : Constants.IMAGE_EX) {
+            File file_ex = new File(resourcePath, name_ex + ex);
+            File file = new File(resourcePath, name + ex);
+            File target;
+            if (file_ex.exists()) {
+                target = file_ex;
+            } else if (file.exists()) {
+                target = file;
+            } else {
+                continue;
+            }
+            byte[] data = readFile(target);
+            if (data != null) {
+                return data;
+            }
+        }
+        ZipFile pics = openZip(new File(resourcePath, Constants.CORE_PICS_ZIP));
+        if (pics != null) {
+            byte[] data = readZipEntry(pics, name);
+            if (data != null) {
+                return data;
+            }
+        }
+        return null;
+    }
+
     @Nullable
     private static byte[] readFile(File file) {
         InputStream inputStream = null;

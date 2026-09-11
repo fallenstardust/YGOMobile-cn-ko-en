@@ -213,6 +213,34 @@ public class TextureLoader {
         return bmp;
     }
 
+    /**
+     * 场地魔法背景图（image_manager.cpp GetTextureField）：expansions/pics/field → pics/field，
+     * png 优先 jpg 兜底；可能含透明通道，按 ARGB_8888 解码
+     */
+    public Bitmap getFieldSpellBitmap(int code) {
+        if (code <= 0) return null;
+        String key = "fieldspell_" + code;
+        Bitmap cached = bitmapCache.get(key);
+        if (cached != null && !cached.isRecycled()) return cached;
+        byte[] data;
+        try {
+            data = ImageLoader.findFieldImageData(code);
+        } catch (Throwable t) {
+            return null;
+        }
+        if (data == null || data.length == 0) return null;
+        try {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length, opts);
+            if (bmp != null) bitmapCache.put(key, bmp);
+            return bmp;
+        } catch (Throwable t) {
+            Log.e(TAG, "decode field spell failed: " + code, t);
+            return null;
+        }
+    }
+
     private Bitmap getFieldBitmapArgb(String name) {
         return getBitmapArgb(name);
     }
