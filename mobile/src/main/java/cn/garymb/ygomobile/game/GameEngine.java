@@ -110,6 +110,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
          * code 为被无效连锁的卡码，居中显示卡片 + 无效图标（破坏被无效即"不会被破坏"）
          */
         void onNegatedAnimation(int code);
+
+        /**
+         * 居中特效层是否仍在播放（供统一动画屏障查询）：宿主返回 SpecEffectOverlay.isBusy()。
+         * 与场地卡片动画（GameField.isAnimating）一起构成动画屏障，任一在播则暂缓派发后续消息，
+         * 把 GameFieldView 的卡片移动纳入与特效、弹窗相同的串行序列。
+         */
+        boolean isSpecEffectBusy();
     }
 
     private GameState state = GameState.IDLE;
@@ -144,6 +151,25 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     private final Runnable animGateFailsafe = () -> {
         animGateClosed = false;
         drainPendingMsgs();
+    };
+
+    /**
+     * 动画闸门轮询间隔：闸门关闭后主线程每 16ms 查询一次「场地卡片动画 + 居中特效」是否仍在播，
+     * 两者都空闲即重开闸门。用轮询而非在 GL 渲染线程捕捉「animating→idle 跳变」，是为规避掉帧时
+     * 单帧跨越多帧动画（onDrawFrame 中 dt 上限 0.1 → animationSpeed 可达 12，8 帧移动可能一帧结束）
+     * 导致跳变被错过、闸门一直卡到超时兜底。
+     */
+    private static final long ANIM_GATE_POLL_MS = 16L;
+    private final Runnable animGatePoller = new Runnable() {
+        @Override
+        public void run() {
+            if (!animGateClosed) return;
+            if (isAnyAnimationBusy()) {
+                mainHandler.postDelayed(this, ANIM_GATE_POLL_MS);
+            } else {
+                reopenAnimGate();
+            }
+        }
     };
 
     // === stHintMsg 提示栏（对齐 gframe：选择/等待类消息显示，下一条消息隐藏） ===
@@ -796,10 +822,17 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         if (dispatchingMsg || animGateClosed) return;
         dispatchingMsg = true;
         try {
-            while (!animGateClosed) {
+            while (true) {
                 Runnable task = pendingMsgs.poll();
                 if (task == null) break;
                 task.run();
+                // 泛化动画屏障：本条消息若同步触发了场地卡片移动/淡入淡出（moveCardAnimated 立即置
+                // aniFrame）或居中特效（startCard→startLoop 立即置 running），随即关闭闸门暂缓后续消息，
+                // 待动画播完（轮询器或 idle 快路径重开）再继续——对齐 C++ 每条动画消息后的 WaitFrameSignal。
+                if (isAnyAnimationBusy()) {
+                    closeAnimGate();
+                    break;
+                }
             }
         } finally {
             dispatchingMsg = false;
@@ -808,23 +841,61 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     /**
      * 关闭动画闸门（对齐 C++ 动画消息后的 WaitFrameSignal）：暂缓派发后续消息，
-     * 直到 SpecEffectOverlay 特效队列排空回调 notifySpecEffectIdle，或超时兜底重开。
+     * 启动轮询器每 16ms 检测「场地卡片动画 + 居中特效」是否播完，全部空闲即重开；
+     * 特效队列排空的 idle 回调（notifySpecEffectIdle）作为快路径可提前重开；另设超时兜底防卡死。
      */
     private void closeAnimGate() {
+        if (animGateClosed) return;
         animGateClosed = true;
         mainHandler.removeCallbacks(animGateFailsafe);
         mainHandler.postDelayed(animGateFailsafe, ANIM_GATE_TIMEOUT_MS);
+        mainHandler.removeCallbacks(animGatePoller);
+        mainHandler.postDelayed(animGatePoller, ANIM_GATE_POLL_MS);
     }
 
     /**
-     * UI 特效队列排空回调（由 SpecEffectOverlay 的 OnIdleListener 触发，对齐 WaitFrameSignal 结束）：
-     * 重开闸门并继续派发被暂缓的后续消息（如动画后的"是否发动/连锁"询问弹窗）。
+     * 重开动画闸门：清除轮询器与超时兜底，继续派发被暂缓的后续消息
+     * （阶段文字/卡片移动播完后的下一条消息、动画后的"是否发动/连锁"询问弹窗、可选择外框等）。
+     */
+    private void reopenAnimGate() {
+        if (!animGateClosed) return;
+        animGateClosed = false;
+        mainHandler.removeCallbacks(animGatePoller);
+        mainHandler.removeCallbacks(animGateFailsafe);
+        drainPendingMsgs();
+    }
+
+    /**
+     * 统一动画屏障：场地卡片移动/淡入淡出（GL 线程逐帧推进 aniFrame）、LP 变化动画
+     * （浮字停留 30 帧 + 血条数字过渡 10 帧，主线程心跳推进）与居中特效（SpecEffectOverlay 队列/视图）
+     * 任一仍在播放即返回 true；全部空闲才放行后续消息，从而把 GameFieldView 的卡片移动、
+     * gameTopInfo 的血量变化纳入与特效、弹窗相同的串行序列。
+     */
+    private boolean isAnyAnimationBusy() {
+        boolean fieldBusy = false;
+        try {
+            // isAnimating()=卡片移动；isLpAnimating()=LP 浮字/血条动画（对齐 duelclient.cpp
+            // MSG_DAMAGE/RECOVER/PAY_LPCOST 的 WaitFrameSignal(30)+(11)、MSG_LPUPDATE 的 WaitFrameSignal(11)）
+            fieldBusy = field != null && (field.isAnimating() || field.isLpAnimating());
+        } catch (Throwable ignored) {
+        }
+        boolean overlayBusy = false;
+        try {
+            overlayBusy = listener != null && listener.isSpecEffectBusy();
+        } catch (Throwable ignored) {
+        }
+        return fieldBusy || overlayBusy;
+    }
+
+    /**
+     * UI 特效队列排空回调（由 SpecEffectOverlay 的 OnIdleListener 触发）：重开闸门的快路径。
+     * 特效排空不代表场地卡片动画也结束，故仍需 isAnyAnimationBusy() 复核；场地仍在动画则交轮询器等待，
+     * 避免过早放行导致卡片移动与后续消息并发。
      */
     public void notifySpecEffectIdle() {
         if (!animGateClosed) return;
-        animGateClosed = false;
-        mainHandler.removeCallbacks(animGateFailsafe);
-        drainPendingMsgs();
+        if (isAnyAnimationBusy()) return;
+        reopenAnimGate();
     }
 
     @Override
@@ -1436,9 +1507,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onNewPhase(int phase) {
         field.currentPhase = phase;
         soundManager.playSoundEffect(SoundManager.SFX.PHASE);
-        mainHandler.post(() -> {
-            if (listener != null) listener.onPhaseChanged(phase);
-        });
+        // 同步派发（不再 mainHandler.post）：使阶段文字（case 101）在本次消息派发期间即入队
+        // SpecEffectOverlay（startCard→startLoop 立即置 running），统一动画屏障才能检测到「阶段文字在播」并关闭闸门，
+        // 令当前阶段内的卡片移动、阶段按钮文字变化、可选择外框、连锁/conti_act 动画等后续消息排在阶段文字之后，
+        // 对齐 duelclient.cpp MSG_NEW_PHASE 的 showcard=101 + WaitFrameSignal(40)（overlay 阶段文字恰 40 帧）。
+        if (listener != null) listener.onPhaseChanged(phase);
     }
 
     @Override
@@ -1561,11 +1634,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         });
     }
 
-    /** 召唤类卡片居中动画（对齐 duelclient.cpp showcard=5/7）：同步派发后关闭闸门，待动画播完再处理后续消息 */
+    /** 召唤类卡片居中动画（对齐 duelclient.cpp showcard=5/7）：同步派发即入队特效，
+     *  闸门由 drainPendingMsgs 的统一动画屏障检测关闭，无需在此显式关闭 */
     private void postSummonAnimation(int code, int summonType) {
         if (listener == null) return;
         listener.onSummonAnimation(code, summonType);
-        closeAnimGate();
     }
 
     @Override
@@ -1577,9 +1650,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         // 协议侧 controler 转本地索引，保证连锁高亮落在正确的半场
         final int localCc = localPlayer(cc & 1);
         if (listener != null) {
+            // 发动动画入队即由统一动画屏障关闭闸门，播完再处理后续消息（对齐 C++ MSG_CHAINING 的 WaitFrameSignal(30)）
             listener.onChainAnimation(code, localCc, cl, cs);
-            // 发动动画播完再处理后续消息（对齐 C++ MSG_CHAINING 的 WaitFrameSignal(30)）
-            closeAnimGate();
         }
     }
 
@@ -1628,9 +1700,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         final int code = (chainCount >= 1 && chainCount <= chainCodes.size())
                 ? chainCodes.get(chainCount - 1) : 0;
         if (code == 0 || listener == null) return;
+        // 无效动画入队即由统一动画屏障关闭闸门，播完再处理后续消息
+        // （对齐 C++ MSG_CHAIN_NEGATED/DISABLED 的 WaitFrameSignal(30)）
         listener.onNegatedAnimation(code);
-        // 无效动画播完再处理后续消息（对齐 C++ MSG_CHAIN_NEGATED/DISABLED 的 WaitFrameSignal(30)）
-        closeAnimGate();
     }
 
     @Override
@@ -1761,7 +1833,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         int p = localPlayer(player & 1);
         int fin = Math.max(0, field.players[p].lp - cost);
         field.players[p].lp = fin;
-        field.startLpChange(p, fin, 0, null, false);
+        // 对齐 duelclient.cpp MSG_PAY_LPCOST L3755-3763：SFX.DAMAGE + lpccolor=0xff0000ff（蓝）、lpcstring="-cost"、
+        // WaitFrameSignal(30)+lpframe=10+WaitFrameSignal(11)——支付基本分同样先浮字再扣减；startLpChange(showText=true)
+        // 同步置 lpPending，统一动画屏障据此暂缓后续消息（如随后场上怪兽被破坏离场的 MSG_MOVE）
+        soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
+        field.startLpChange(p, fin, 0xFF0000FF, "-" + cost, true);
         mainHandler.post(() -> {
             if (listener != null) listener.onPlayerInfoUpdated(p);
         });

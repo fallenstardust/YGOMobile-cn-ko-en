@@ -1062,6 +1062,32 @@ public class GameField {
         updateListAnimation(overlayCards);
     }
 
+    /**
+     * 场地是否仍有卡片动画在播放（对齐 gframe draw loop 中 aniFrame>0 的移动/淡入淡出卡片）：
+     * 遍历与 updateCardAnimation 完全相同的区域列表，任一 ClientCard 的 aniFrame>0 即视为动画进行中。
+     * 供 GameEngine 统一动画屏障判断「GameFieldView 卡片移动是否播完」，实现与特效/弹窗相同的串行序列。
+     * 说明：aniFrame 由 GL 渲染线程逐帧递减，本方法在主线程读取，属良性数据竞争
+     * （最坏多等一个轮询周期即 16ms），无需加锁以免与渲染线程争用。
+     */
+    public boolean isAnimating() {
+        try {
+            for (int p = 0; p < 2; p++) {
+                if (isListAnimating(players[p].deck)
+                        || isListAnimating(players[p].hand)
+                        || isListAnimating(players[p].monsterZone)
+                        || isListAnimating(players[p].spellZone)
+                        || isListAnimating(players[p].grave)
+                        || isListAnimating(players[p].removed)
+                        || isListAnimating(players[p].extra)) {
+                    return true;
+                }
+            }
+            return isListAnimating(overlayCards);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     private void updateListAnimation(List<ClientCard> list) {
         for (ClientCard pcard : list) {
             if (pcard == null || pcard.aniFrame <= 0) continue;
@@ -1102,6 +1128,14 @@ public class GameField {
                 pcard.chain_code = 0;
             }
         }
+    }
+
+    private static boolean isListAnimating(List<ClientCard> list) {
+        if (list == null) return false;
+        for (ClientCard pcard : list) {
+            if (pcard != null && pcard.aniFrame > 0) return true;
+        }
+        return false;
     }
 
     private static float easeInOutCubic(float t) {

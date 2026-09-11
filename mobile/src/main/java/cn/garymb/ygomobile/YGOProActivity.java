@@ -1206,6 +1206,13 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     @Override
+    public boolean isSpecEffectBusy() {
+        // 统一动画屏障的特效侧查询：直接读字段（不用 specEffect() 以免按需创建），
+        // 覆盖层未创建即视为空闲，供 GameEngine 判断居中特效是否仍在播放
+        return specEffectOverlay != null && specEffectOverlay.isBusy();
+    }
+
+    @Override
     public void onHandResult(int myHand, int oppHand) {
         runOnUiThread(() -> getDialogUtil().onHandResult(myHand, oppHand));
     }

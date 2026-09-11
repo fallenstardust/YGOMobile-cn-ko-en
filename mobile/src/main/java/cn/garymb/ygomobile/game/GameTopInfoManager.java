@@ -1,15 +1,19 @@
 package cn.garymb.ygomobile.game;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ClipDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -51,25 +55,30 @@ public class GameTopInfoManager {
     private static final int NAME_COLOR_OPP_ACTIVE = YGOUtil.c(R.color.holo_orange_bright);
     /** 非回合玩家名字文字色：白色，与布局 tv_*_name 默认 textColor 一致 */
     private static final int NAME_COLOR_INACTIVE = YGOUtil.c(R.color.white);
-    /** 当前回合玩家名字外发光色：holo green bright（colors.xml #95d389），辨识度高于原 holo blue bright */
-    private static final int NAME_SHADOW_ACTIVE = YGOUtil.c(R.color.holo_green_bright);
     /** 非回合玩家阴影色：黑色 */
-    private static final int NAME_SHADOW_INACTIVE = YGOUtil.c(R.color.black);
-    /** 回合玩家外发光半径：dx/dy 均为 0 属零偏移全向光晕，加大半径形成包裹文字的外发光 */
-    private static final float NAME_GLOW_RADIUS = 8f;
-    /** 非回合玩家阴影半径，与布局 tv_player_name / tv_opponent_name 的 shadowRadius 保持一致 */
-    private static final float NAME_SHADOW_RADIUS = 4f;
-    private static final float NAME_SHADOW_DX = 0f;
-    private static final float NAME_SHADOW_DY = 0f;
     private static final int LP_BAR_LEVEL_FULL = 10000;
     /** LP 动画心跳周期（约 60fps，对齐 drawing.cpp 每帧推进 lpframe） */
     private static final long LP_ANIM_TICK_MS = 16;
+    /** LP 变化浮字字号（sp）：悬浮于决斗场之上，比原信息面板内 20sp 略大以更醒目 */
+    private static final float LP_FLOAT_TEXT_SIZE_SP = 30f;
+    /** 我方 LP 浮字垂直位置（占 layout_game_right 高度比例，>0.5 即中轴偏下）：
+     *  对齐 drawing.cpp L986 lpplayer==0 的 Resize(400,470,920,520)，y 中心 495/640≈0.77 */
+    private static final float LP_FLOAT_FRAC_PLAYER = 0.77f;
+    /** 对方 LP 浮字垂直位置（<0.5 即中轴偏上）：
+     *  对齐 drawing.cpp L988 lpplayer==1 的 Resize(400,160,920,210)，y 中心 185/640≈0.29 */
+    private static final float LP_FLOAT_FRAC_OPPONENT = 0.29f;
+    /** 伤害浮字的引擎侧标识色 RGB（对齐 duelclient.cpp MSG_DAMAGE 的 lpccolor=0xffff0000 纯红）：
+     *  GameEngine/ReplayEngine 的 onDamage 仍以纯红下发「伤害」语义，展示层据此 RGB 识别后改绘为 colorAccent；
+     *  仅匹配 FF0000，回复绿(00ff00)/支付蓝(0000ff) 不受影响，故对两个引擎的伤害一致生效 */
+    private static final int LP_FLOAT_DAMAGE_RGB = 0x00FF0000;
+    /** 伤害数字展示色：colorAccent（用户需求）。类加载时解析一次，避免逐帧心跳重复取色 */
+    private static final int LP_FLOAT_DAMAGE_COLOR = YGOUtil.c(R.color.colorAccent);
 
     private final YGOProActivity activity;
     private final Handler mainHandler;
 
+    private FrameLayout layoutGameRight;
     private LinearLayout layoutTopInfo;
-    private FrameLayout layoutPlayerPanel, layoutOpponentPanel;
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
     private ImageView ivPlayerCardBack, ivOpponentCardBack;
     private ImageView ivPlayerLpFrame, ivOpponentLpFrame;
@@ -78,7 +87,14 @@ public class GameTopInfoManager {
     private TextView tvOpponentName, tvOpponentTime, tvOpponentCardCount;
     private TextView tvPlayerLpNumber, tvOpponentLpNumber;
     private TextView tvTurnCounter;
-
+    /** LP 变化浮字（-1000/+500，对齐 drawing.cpp L984-990 lpcstring/lpccolor）：
+     *  GameFieldView 是 setZOrderOnTop(true) 的 GLSurfaceView，GL 曲面合成在 Activity 窗口之上，
+     *  作为 layout_game_right 子 View 的浮字会被场地/卡片纹理遮挡；故改由「透明、不抢焦点、不拦截触摸的
+     *  PopupWindow」承载（图层约定同 SpecEffectOverlay/RPSDialog），稳定显示在 GL 曲面之上。
+     *  PopupWindow 精确覆盖 layout_game_right，我方居中轴偏下、对方居中轴偏上，随心跳显隐并按 lpccolor 的 alpha 淡出 */
+    private PopupWindow lpFloatWindow;
+    private FrameLayout lpFloatContainer;
+    private TextView tvPlayerLpFloat, tvOpponentLpFloat;
     private final int[] duelTimeLeft = new int[2];
     private int duelTimePlayer = -1;
     private int duelTimeLimit = 0;
@@ -121,9 +137,8 @@ public class GameTopInfoManager {
 
     /** 统一初始化 layout_top_info 全部视图（由 YGOProActivity.initViews 调用） */
     public void initViews() {
+        layoutGameRight = activity.findViewById(R.id.layout_game_right);
         layoutTopInfo = activity.findViewById(R.id.layout_top_info);
-        layoutPlayerPanel = activity.findViewById(R.id.layout_player_panel);
-        layoutOpponentPanel = activity.findViewById(R.id.layout_opponent_panel);
         ivPlayerAvatar = activity.findViewById(R.id.iv_player_avatar);
         ivOpponentAvatar = activity.findViewById(R.id.iv_opponent_avatar);
         ivPlayerLpFrame = activity.findViewById(R.id.iv_player_lp_frame);
@@ -348,6 +363,118 @@ public class GameTopInfoManager {
         updateLpBar(field.dInfo.lp[1], maxLp, ivOpponentLpBar, ivOpponentLpBarLayer, Gravity.END);
         setLpNumberText(0, String.valueOf(Math.max(0, field.dInfo.lp[0])));
         setLpNumberText(1, String.valueOf(Math.max(0, field.dInfo.lp[1])));
+        refreshLpFloatText(field);
+    }
+
+    /**
+     * 惰性创建承载 LP 浮字的 PopupWindow（图层约定同 SpecEffectOverlay/RPSDialog）：
+     * GameFieldView 为 setZOrderOnTop(true) 的 GLSurfaceView，GL 曲面合成在 Activity 窗口之上，
+     * 普通子 View 会被场地/卡片纹理遮挡；PopupWindow 是独立子窗口，合成在 GL 曲面之上，
+     * 透明、不抢焦点、不拦截触摸，事件穿透到下层游戏 UI。浮字 TextView 加在其内容容器上。
+     */
+    private void ensureFloatWindow() {
+        if (lpFloatWindow != null) return;
+        lpFloatContainer = new FrameLayout(activity);
+        lpFloatContainer.setClipChildren(false);
+        tvPlayerLpFloat = createLpFloatText(lpFloatContainer);
+        tvOpponentLpFloat = createLpFloatText(lpFloatContainer);
+        lpFloatWindow = new PopupWindow(lpFloatContainer,
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpFloatWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        // 纯展示层：不抢焦点、不拦截触摸，事件穿透到下层游戏 UI（对齐 SpecEffectOverlay）
+        lpFloatWindow.setFocusable(false);
+        lpFloatWindow.setOutsideTouchable(false);
+        lpFloatWindow.setTouchable(false);
+    }
+
+    /**
+     * 将浮字 PopupWindow 精确覆盖到 layout_game_right 区域（显示在 GL 曲面之上，不被卡片遮挡）：
+     * 已在显示则直接返回，避免逐帧心跳重复 show 的开销；窗口尺寸＝layout_game_right 尺寸，
+     * 故浮字 gravity CENTER 即居中于决斗场中轴，translationY 按高度比例上/下偏移。
+     * 定位惯例对齐 DuelLogDialog.showAtGameRightTopRight：以 layout_game_right 为锚 + getLocationInWindow 坐标。
+     */
+    private void showFloatWindow() {
+        if (lpFloatWindow != null && lpFloatWindow.isShowing()) return;
+        if (layoutGameRight == null) return;
+        if (activity.isFinishing() || activity.isDestroyed()) return;
+        int w = layoutGameRight.getWidth();
+        int h = layoutGameRight.getHeight();
+        if (w <= 0 || h <= 0) return;
+        View decor = activity.getWindow().getDecorView();
+        if (decor == null || decor.getWindowToken() == null) return;
+        ensureFloatWindow();
+        int[] loc = new int[2];
+        layoutGameRight.getLocationInWindow(loc);
+        lpFloatWindow.setWidth(w);
+        lpFloatWindow.setHeight(h);
+        try {
+            lpFloatWindow.showAtLocation(layoutGameRight, Gravity.NO_GRAVITY, loc[0], loc[1]);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void dismissFloatWindow() {
+        try {
+            if (lpFloatWindow != null && lpFloatWindow.isShowing()) lpFloatWindow.dismiss();
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** 在浮字 PopupWindow 的内容容器内创建一个居中于中轴、初始隐藏的 LP 变化浮字 TextView */
+    private TextView createLpFloatText(FrameLayout parent) {
+        if (parent == null) return null;
+        TextView tv = new TextView(activity);
+        tv.setTextSize(LP_FLOAT_TEXT_SIZE_SP);
+        tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        tv.setGravity(Gravity.CENTER);
+        tv.setVisibility(View.GONE);
+        tv.setClickable(false);
+        tv.setFocusable(false);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        // gravity 居中：浮字中心先落在容器（＝layout_game_right）中轴，上/下偏移再由 applyLpFloat 的 translationY 施加
+        lp.gravity = Gravity.CENTER;
+        parent.addView(tv, lp);
+        return tv;
+    }
+
+    /**
+     * LP 变化浮字刷新（对齐 drawing.cpp L984-990）：lpcstring 非空时先把浮字层 PopupWindow 覆盖到决斗场
+     * （GL 曲面之上，不被卡片遮挡），再按 lpplayer 在对应半区显示浮字，文字色取 lpccolor
+     * （其 alpha 在扣减的 10 帧内每帧 -0x19 衰减，浮字随之淡出）；为空则隐藏两侧浮字并关闭浮字层。
+     * 由 lpBarTicker 心跳每 16ms 驱动，与血条/数字过渡同步。
+     */
+    private void refreshLpFloatText(GameField field) {
+        String s = field.lpcstring;
+        boolean show = s != null && !s.isEmpty();
+        if (show) showFloatWindow();
+        applyLpFloat(tvPlayerLpFloat, show && field.lpplayer == 0, s, field.lpccolor, LP_FLOAT_FRAC_PLAYER);
+        applyLpFloat(tvOpponentLpFloat, show && field.lpplayer == 1, s, field.lpccolor, LP_FLOAT_FRAC_OPPONENT);
+        if (!show) dismissFloatWindow();
+    }
+
+    private void applyLpFloat(TextView tv, boolean visible, String text, int color, float targetFraction) {
+        if (tv == null) return;
+        if (!visible) {
+            if (tv.getVisibility() != View.GONE) tv.setVisibility(View.GONE);
+            return;
+        }
+        tv.setText(text);
+        // 伤害数字（引擎侧纯红 0xFFFF0000）按需求改绘为 colorAccent：仅替换 RGB，保留淡出动画的 alpha 分量
+        int drawColor = color;
+        if ((drawColor & 0x00FFFFFF) == LP_FLOAT_DAMAGE_RGB) {
+            drawColor = (drawColor & 0xFF000000) | (LP_FLOAT_DAMAGE_COLOR & 0x00FFFFFF);
+        }
+        tv.setTextColor(drawColor);
+        // 阴影色对齐 C++ DrawShadowText 的 lpccolor|0x00ffffff（白描边，alpha 随浮字一同淡出）
+        tv.setShadowLayer(2f, 2f, 2f, drawColor | 0x00FFFFFF);
+        // 垂直定位：gravity 已使浮字居中于容器（＝layout_game_right）中轴，translationY 按目标比例上/下偏移
+        // （targetFraction>0.5 偏下＝我方、<0.5 偏上＝对方，对齐 drawing.cpp Resize y 坐标）
+        if (layoutGameRight != null) {
+            int h = layoutGameRight.getHeight();
+            if (h > 0) tv.setTranslationY((targetFraction - 0.5f) * h);
+        }
+        if (tv.getVisibility() != View.VISIBLE) tv.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -454,6 +581,11 @@ public class GameTopInfoManager {
         mainHandler.removeCallbacks(lpBarTicker);
         pendingLpField = null;
         duelTimePlayer = -1;
+        // LP 动画心跳停止后不再有 refreshLpDisplay 驱动，显式隐藏浮字并关闭浮字层 PopupWindow，
+        // 避免残留与窗口泄漏（reset/hide/onDestroy 均经此）
+        if (tvPlayerLpFloat != null) tvPlayerLpFloat.setVisibility(View.GONE);
+        if (tvOpponentLpFloat != null) tvOpponentLpFloat.setVisibility(View.GONE);
+        dismissFloatWindow();
     }
 
     private void updateTimeDisplay() {

@@ -96,6 +96,15 @@ public class SpecEffectOverlay {
         this.idleListener = l;
     }
 
+    /**
+     * 特效层是否仍在播放：队列有待播动画，或当前视图正在逐帧绘制（running）。
+     * 供 GameEngine 统一动画屏障即时查询——与 OnIdleListener 互补：idle 是「排空瞬间」的快路径通知，
+     * 本方法是任意时刻的状态查询（闸门轮询器每 16ms 调用一次，派发每条消息后也调用一次）。
+     */
+    public boolean isBusy() {
+        return !queue.isEmpty() || (view != null && view.running);
+    }
+
     // ==================== 对外触发的各 case 动画 ====================
 
     /** case 1→2：发动效果，布局中央卡片大图 + tMask 遮罩光带自左向右揭开（MSG_CHAINING / HINT_EFFECT） */
