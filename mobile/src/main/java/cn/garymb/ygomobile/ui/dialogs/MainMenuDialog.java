@@ -67,6 +67,13 @@ public class MainMenuDialog {
         showMainMenu();
     }
 
+    /** 彻底关闭弹窗（Activity 销毁时调用，不触发 BGM 切换等副作用），避免 WindowLeaked */
+    public void dismiss() {
+        if (popupWindow != null && popupWindow.isShowing()) {
+            popupWindow.dismiss();
+        }
+    }
+
     public boolean isShowing() {
         return popupWindow != null && popupWindow.isShowing();
     }

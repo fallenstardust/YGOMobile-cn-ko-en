@@ -1430,6 +1430,12 @@ public class YGOProActivity extends AppCompatActivity implements
         lanModeDialog = null;
         createHostDialog = null;
         playerWaitingDialog = null;
+        // 关闭主菜单弹窗：其 PopupWindow 可能因 restoreMainMenu 恢复后仍未 dismiss，
+        // Activity 销毁时会触发 android.view.WindowLeaked
+        if (mainMenuDialog != null) {
+            mainMenuDialog.dismiss();
+            mainMenuDialog = null;
+        }
         if (topInfoManager != null) {
             topInfoManager.stopTimer();
         }

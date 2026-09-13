@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,9 +25,11 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
+import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.CmdMenuDialog;
 import ocgcore.enums.DuelPhase;
 
@@ -52,6 +55,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private GameEngine engine;
     private int cmdContext = 0;
     private boolean isPlaceSelecting = false;
+    // === 场上/手牌直接选择会话（MSG_SELECT_CARD/SELECT_TRIBUTE_CARD 候选全在场内时，不弹 CardSelectDialog）===
+    private boolean isCardSelecting = false;
+    private int cardSelectMin = 0;
+    private int cardSelectMax = 0;
+    private boolean cardSelectCancelable = false;
+    private final List<Integer> cardSelectClickOrder = new ArrayList<>();
     private CmdMenuDialog cmdMenuDialog;
     private final Random random = new Random();
 
@@ -153,6 +162,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (topInfoManager != null) topInfoManager.hide();
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
         if (cmdMenuDialog != null) cmdMenuDialog.dismiss();
+        if (isCardSelecting) endCardSelect();
         hideDuelHint();
         // 清场时清空双方聊天记录与进行中的弹幕
         myChatLines.clear();
@@ -409,6 +419,122 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             if (sequence == 7) return base + 15;
         }
         return -1;
+    }
+
+    // === 场上/手牌直接选择（对齐 gframe drawing.cpp DrawCard 卡片选择轮廓，不弹 CardSelectDialog）===
+
+    /**
+     * 进入场上选择模式：候选卡标记 is_selectable（GameFieldView 绘制黄色虚线行进轮廓），
+     * 玩家直接点击场上/手牌卡片切换选中；达到 max 自动应答，或点「完成选择」按钮应答
+     */
+    public void beginCardSelect(List<CardSelectDialog.CardItem> items, int min, int max, boolean cancelable) {
+        if (engine == null || items == null) return;
+        GameField field = engine.getField();
+        field.clearSelect();
+        field.selectableCards.clear();
+        field.selectedCards.clear();
+        cardSelectClickOrder.clear();
+        cardSelectMin = min;
+        cardSelectMax = max;
+        cardSelectCancelable = cancelable;
+        for (CardSelectDialog.CardItem it : items) {
+            // 消息里的 ctrl 是协议索引，getCard 需本地索引（localPlayer 为对合映射）
+            int lp = engine.localPlayer(it.controler);
+            GameField.ClientCard card = field.getCard(lp, it.location & 0x7f, it.sequence);
+            if (card == null) continue;
+            card.is_selectable = true;
+            card.is_selected = false;
+            card.select_seq = it.selectSeq;
+            field.selectableCards.add(card);
+        }
+        isCardSelecting = true;
+        if (viewController != null) viewController.invalidate();
+        showHint("点击高亮的卡片进行选择", 3000);
+    }
+
+    private void handleCardSelection(int player, int location, int sequence) {
+        if (engine == null) return;
+        GameField field = engine.getField();
+        GameField.ClientCard card = field.getCard(player, location, sequence);
+        if (card == null || !card.is_selectable) {
+            showHint("该卡片不可选择", 2000);
+            return;
+        }
+        if (card.is_selected) {
+            card.is_selected = false;
+            field.selectedCards.remove(card);
+            cardSelectClickOrder.remove(Integer.valueOf(card.select_seq));
+        } else {
+            if (cardSelectMax > 0 && cardSelectClickOrder.size() >= cardSelectMax) {
+                showHint("已达到最大可选数量", 2000);
+                return;
+            }
+            card.is_selected = true;
+            field.selectedCards.add(card);
+            cardSelectClickOrder.add(card.select_seq);
+        }
+        if (viewController != null) viewController.invalidate();
+        // 达到要求数量自动应答通讯
+        if (cardSelectMax > 0 && cardSelectClickOrder.size() >= cardSelectMax) {
+            confirmCardSelect();
+            return;
+        }
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        if (panel != null) {
+            panel.updateCancelOrFinishButton(cardSelectClickOrder.size() >= cardSelectMin,
+                    cardSelectCancelable, !cardSelectClickOrder.isEmpty());
+        }
+    }
+
+    /** 「完成选择」按钮：达到 min 即应答，否则可取消时应答 -1 */
+    public boolean finishCardSelect() {
+        if (!isCardSelecting) return false;
+        if (cardSelectClickOrder.size() >= cardSelectMin) {
+            return confirmCardSelect();
+        }
+        return cancelCardSelect();
+    }
+
+    private boolean confirmCardSelect() {
+        if (!isCardSelecting || engine == null) return false;
+        if (cardSelectClickOrder.size() < cardSelectMin) {
+            showHint("至少需要选择 " + cardSelectMin + " 张卡片", 2000);
+            return false;
+        }
+        // C++ SetResponseSelectedCards：respbuf[0]=len，其后按点击顺序填 select_seq
+        ByteBuffer buf = ByteBuffer.allocate(1 + cardSelectClickOrder.size());
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        buf.put((byte) cardSelectClickOrder.size());
+        for (int seq : cardSelectClickOrder) {
+            buf.put((byte) seq);
+        }
+        engine.sendResponse(buf.array());
+        endCardSelect();
+        return true;
+    }
+
+    private boolean cancelCardSelect() {
+        if (!isCardSelecting) return false;
+        if (cardSelectCancelable && cardSelectClickOrder.isEmpty()) {
+            activity.sendResponseInt(-1);
+            endCardSelect();
+            return true;
+        }
+        return false;
+    }
+
+    private void endCardSelect() {
+        isCardSelecting = false;
+        cardSelectClickOrder.clear();
+        if (engine != null) {
+            GameField field = engine.getField();
+            field.clearSelect();
+            field.selectableCards.clear();
+            field.selectedCards.clear();
+        }
+        if (viewController != null) viewController.invalidate();
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        if (panel != null) panel.hideCancelOrFinishButton();
     }
 
     // === 卡片命令菜单 ===
@@ -914,6 +1040,10 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     public void onCardClick(int player, int location, int sequence, float tapX, float tapY) {
         Log.d(TAG, "Card click: p=" + player + " loc=" + location + " seq=" + sequence);
         if (engine == null) return;
+        if (isCardSelecting) {
+            handleCardSelection(player, location, sequence);
+            return;
+        }
         GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
         if (card != null && card.cmdFlag != 0) {
             showCardCommandMenu(card, tapX, tapY);

@@ -645,6 +645,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
         GLES30.glDepthMask(false);
         drawHighlights();
+        drawCardSelectOutlines(f);
         drawPhaseButtons();
         GLES30.glDepthMask(true);
     }
@@ -834,10 +835,127 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         drawFlatQuad((x0 + x1) / 2f, (y0 + y1) / 2f, 0.03f, w, h, r, g, b, 0.95f);
     }
 
+    // === 卡片选择轮廓：黄色蚂蚁线（对齐 drawing.cpp DrawSelectionLine + DrawCard L638-643）===
+    private final float[] mOutlineModel = new float[16];
+    private final float[] mOutlineTmp = new float[16];
+    private final float[] mDashLocal = new float[16];
+    private final float[] mDashWorld = new float[16];
 
-    private void drawZoneGlow(int player, int loc, int seq, float alpha) {
-        float[] c = zoneCenter(player, loc, seq);
-        drawFlatQuad(mirrorX(c[0]), c[1], 0.03f, ZONE_W, ZONE_H, 0f, 1f, 0.39f, alpha);
+    /**
+     * 场上/手牌直接选择模式：为每张 is_selectable 的卡片绘制黄色轮廓线，
+     * 未选中(is_selected=false)为虚线行进、已选中为实线（对齐 gframe stipple=!is_selected）
+     */
+    private void drawCardSelectOutlines(GameField f) {
+        List<GameField.ClientCard> list = f.selectableCards;
+        if (list == null || list.isEmpty()) return;
+        float phase = animTimeMs * 0.001f * MARCH_PX_PER_SEC;
+        for (int i = 0, n = list.size(); i < n; i++) {
+            GameField.ClientCard c;
+            try {
+                c = list.get(i);
+            } catch (Throwable e) {
+                continue;
+            }
+            if (c == null || !c.is_selectable) continue;
+            if (c.curAlpha <= 2f) continue;
+            try {
+                drawCardMarchingOutline(c, c.is_selected, phase);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    /**
+     * 单卡轮廓蚂蚁线：构建卡片模型矩阵，四角投影到屏幕取像素边长，按 16bit stipple(0x0f0f)
+     * 沿周长走像素；亮段在卡片局部空间构建细矩形经卡片矩阵变换绘制（兼容手卡 billboard/守备旋转）。
+     * 线宽按局部 x/y 轴的世界缩放换算，保证屏幕像素宽度恒定
+     */
+    private void drawCardMarchingOutline(GameField.ClientCard c, boolean solid, float phase) {
+        buildCardModel(c, mOutlineModel);
+        float sx = (float) Math.sqrt(mOutlineModel[0] * mOutlineModel[0]
+                + mOutlineModel[1] * mOutlineModel[1] + mOutlineModel[2] * mOutlineModel[2]);
+        float sy = (float) Math.sqrt(mOutlineModel[4] * mOutlineModel[4]
+                + mOutlineModel[5] * mOutlineModel[5] + mOutlineModel[6] * mOutlineModel[6]);
+        if (sx < 1e-5f || sy < 1e-5f) return;
+        float[] lx = {-0.5f, 0.5f, -0.5f, 0.5f};
+        float[] ly = {-0.5f, -0.5f, 0.5f, 0.5f};
+        int[] es = {0, 1, 3, 2};
+        int[] ee = {1, 3, 2, 0};
+        float[] px = new float[4], py = new float[4];
+        float[] v = new float[4];
+        for (int i = 0; i < 4; i++) {
+            v[0] = lx[i]; v[1] = ly[i]; v[2] = 0f; v[3] = 1f;
+            Matrix.multiplyMV(mOutlineTmp, 0, mOutlineModel, 0, v, 0);
+            float[] s = projectWorldPoint(mOutlineTmp[0], mOutlineTmp[1], mOutlineTmp[2]);
+            if (s == null) return;
+            px[i] = s[0]; py[i] = s[1];
+        }
+        float patternCursor = 0f;
+        for (int i = 0; i < 4; i++) {
+            int a = es[i], d = ee[i];
+            float screenLen = (float) Math.hypot(px[d] - px[a], py[d] - py[a]);
+            if (screenLen < 1f) continue;
+            float dlx = lx[d] - lx[a], dly = ly[d] - ly[a];
+            boolean horizontal = Math.abs(dlx) >= Math.abs(dly);
+            float alongScale = horizontal ? sx : sy;
+            float perpScale = horizontal ? sy : sx;
+            float thickLocal = OUTLINE_PX * alongScale / (perpScale * screenLen);
+            float ang = (float) Math.toDegrees(Math.atan2(dly, dlx));
+            float cursor = 0f;
+            while (cursor < screenLen) {
+                boolean on = solid
+                        || ((STIPPLE_MASK >> ((int) (phase + patternCursor + cursor) & 0xf)) & 1) != 0;
+                float runEnd = cursor + 1f;
+                if (!solid) {
+                    while (runEnd < screenLen
+                            && ((((STIPPLE_MASK >> ((int) (phase + patternCursor + runEnd) & 0xf)) & 1) != 0) == on)) {
+                        runEnd += 1f;
+                    }
+                } else {
+                    runEnd = screenLen;
+                }
+                if (runEnd > screenLen) runEnd = screenLen;
+                if (on) {
+                    float t0 = cursor / screenLen, t1 = runEnd / screenLen;
+                    float cx2 = lx[a] + dlx * (t0 + t1) * 0.5f;
+                    float cy2 = ly[a] + dly * (t0 + t1) * 0.5f;
+                    float segLen = (t1 - t0);
+                    Matrix.setIdentityM(mDashLocal, 0);
+                    Matrix.translateM(mDashLocal, 0, cx2, cy2, 0.002f);
+                    Matrix.rotateM(mDashLocal, 0, ang, 0f, 0f, 1f);
+                    Matrix.scaleM(mDashLocal, 0, segLen, thickLocal, 1f);
+                    Matrix.multiplyMM(mDashWorld, 0, mOutlineModel, 0, mDashLocal, 0);
+                    drawQuadColor(mDashWorld, 1f, 1f, 0f, 0.95f);
+                }
+                cursor = runEnd;
+            }
+            patternCursor = (patternCursor + screenLen) % 16f;
+        }
+    }
+
+    /**
+     * 构建卡片模型矩阵（drawCard 与选择轮廓共用，避免姿态计算分叉）：
+     * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)
+     */
+    private void buildCardModel(GameField.ClientCard c, float[] out) {
+        Matrix.setIdentityM(out, 0);
+        if (c.location == 0x02) {
+            Matrix.translateM(out, 0, mirrorX(c.curX),
+                    handY(c) + mCamRot[5] * handLift(c), c.curZ + handLiftZ(c));
+            Matrix.multiplyMM(mModelTmp, 0, out, 0, mCamRot, 0);
+            System.arraycopy(mModelTmp, 0, out, 0, 16);
+            Matrix.scaleM(out, 0, CARD_W, CARD_H, 1f);
+        } else {
+            boolean isPile = c.location == 0x01 || c.location == 0x10
+                    || c.location == 0x20 || c.location == 0x40;
+            float jx = isPile ? ((c.sequence % 3) - 1) * 0.012f : 0f;
+            float jy = isPile ? (((c.sequence / 3) % 3) - 1) * 0.012f : 0f;
+            Matrix.translateM(out, 0, mirrorX(c.curX) + jx, c.curY + jy, c.curZ);
+            Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotY), 0f, 1f, 0f);
+            Matrix.rotateM(out, 0, (float) Math.toDegrees(c.curRotX), 1f, 0f, 0f);
+            Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotZ), 0f, 0f, 1f);
+            Matrix.scaleM(out, 0, CARD_W, CARD_H, 1f);
+        }
     }
 
     private void drawFieldCards(GameField f) {
@@ -914,27 +1032,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         if (alpha <= 0.01f) return;
 
         boolean isHand = c.location == 0x02;
-        if (isHand) {
-            // 手卡平行屏幕：姿态取相机旋转；我方手卡后移、选中抬高（沿相机 up 轴，Y/Z 分量与命中检测一致）
-            Matrix.setIdentityM(mModel, 0);
-            Matrix.translateM(mModel, 0, mirrorX(c.curX),
-                    handY(c) + mCamRot[5] * handLift(c), c.curZ + handLiftZ(c));
-            Matrix.multiplyMM(mModelTmp, 0, mModel, 0, mCamRot, 0);
-            System.arraycopy(mModelTmp, 0, mModel, 0, 16);
-            Matrix.scaleM(mModel, 0, CARD_W, CARD_H, 1f);
-        } else {
-            // 堆叠区各层加确定性微错位，侧面露出卡边呈现厚度
-            boolean isPile = c.location == 0x01 || c.location == 0x10
-                    || c.location == 0x20 || c.location == 0x40;
-            float jx = isPile ? ((c.sequence % 3) - 1) * 0.012f : 0f;
-            float jy = isPile ? (((c.sequence / 3) % 3) - 1) * 0.012f : 0f;
-            Matrix.setIdentityM(mModel, 0);
-            Matrix.translateM(mModel, 0, mirrorX(c.curX) + jx, c.curY + jy, c.curZ);
-            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(-c.curRotY), 0f, 1f, 0f);
-            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(c.curRotX), 1f, 0f, 0f);
-            Matrix.rotateM(mModel, 0, (float) Math.toDegrees(-c.curRotZ), 0f, 0f, 1f);
-            Matrix.scaleM(mModel, 0, CARD_W, CARD_H, 1f);
-        }
+        buildCardModel(c, mModel);
 
         int glow = pickGlowColor(c);
         if (glow != 0) drawGlow(glow, alpha);

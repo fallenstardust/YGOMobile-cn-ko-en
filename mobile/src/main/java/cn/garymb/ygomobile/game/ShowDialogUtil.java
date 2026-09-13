@@ -570,6 +570,50 @@ public class ShowDialogUtil {
 
     // === 卡片选择类 ===
 
+    /**
+     * 场上/手牌直接选择模式（对齐 gframe drawing.cpp DrawCard L638-643 的卡片选择轮廓）：
+     * 当候选卡全部位于手牌(0x02)/怪兽区(0x04)/魔陷区(0x08)且非超量素材时，不弹 CardSelectDialog，
+     * 改由 GameFieldController 在场上高亮虚线框供直接点击选择
+     *
+     * @return true=已进入场上选择模式，调用方无需再弹窗
+     */
+    private boolean tryFieldCardSelect(List<CardSelectDialog.CardItem> items,
+                                       int min, int max, boolean cancelable) {
+        GameFieldController ctl = fieldCtl();
+        GameEngine eng = engine();
+        GameField f = (eng != null) ? eng.getField() : null;
+        if (ctl == null || eng == null || f == null || items == null || items.isEmpty())
+            return false;
+        for (CardSelectDialog.CardItem it : items) {
+            int loc = it.location;
+            if ((loc & 0x80) != 0) return false;   // 超量素材无法在场上单独点击
+            if ((loc & 0xe) == 0) return false;    // 不在手牌/怪兽区/魔陷区（卡组/墓地/额外/除外等仍需弹窗）
+            int lp = eng.localPlayer(it.controler);
+            if (f.getCard(lp, loc & 0x7f, it.sequence) == null) return false;
+        }
+        ctl.beginCardSelect(items, min, max, cancelable);
+        // 完成/取消按钮沿用 CardDetailPanel（currentSelectType 已由 YGOProActivity 设为 15/20）
+        panel().updateCancelOrFinishButton(min == 0, cancelable, false);
+        return true;
+    }
+
+    /**
+     * 解析用于显示的卡片有效代码（对齐 client_field.cpp ShowSelectCard L465-475：以 pcard->code 决定卡图/卡背）：
+     * 通讯带真实码时直接使用（对齐 duelclient.cpp `if(code != 0) pcard->SetCode(code)`）；
+     * 通讯码掩码后为 0（联机核心对"对方已知 id 的卡"隐藏信息）时，回退场上 ClientCard 的已知码，
+     * 从而显示卡图而非卡背；场上也无码（真正未知的盖卡）时返回 0，仍按卡背显示。
+     */
+    private int resolveCardCode(int msgCode, int ctrl, int loc, int seq, int subSeq) {
+        if ((msgCode & 0x7fffffff) != 0) return msgCode;
+        GameEngine eng = engine();
+        GameField f = (eng != null) ? eng.getField() : null;
+        if (f != null) {
+            GameField.ClientCard pcard = f.getCard(eng.localPlayer(ctrl), loc, seq, subSeq);
+            if (pcard != null) return pcard.code;
+        }
+        return msgCode;
+    }
+
     public void showCardSelectDialog(ByteBuffer data) {
         // duelclient.cpp L1923-1984：player(1) cancelable(1) min(1) max(1) count(1) + n×[code4 ctrl1 loc1 seq1 subseq1]
         if (data == null || data.remaining() < 5) {
@@ -583,17 +627,19 @@ public class ShowDialogUtil {
         int count = data.get() & 0xFF;
         List<CardSelectDialog.CardItem> items = new ArrayList<>();
         for (int i = 0; i < count && data.remaining() >= 8; i++) {
-            int code = data.getInt();
+            int rawCode = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int subSeq = data.get() & 0xFF;
+            int code = resolveCardCode(rawCode, ctrl, loc, seq, subSeq);
             items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, subSeq, i));
         }
         if (items.isEmpty()) {
             sendResponseInt(0);
             return;
         }
+        if (tryFieldCardSelect(items, min, max, cancelable != 0)) return;
         final List<CardSelectDialog.CardItem> cardInfos = items;
         CardSelectDialog dialog = new CardSelectDialog(activity, imageLoader);
         panel().setCardSelectDialog(dialog);
@@ -643,17 +689,19 @@ public class ShowDialogUtil {
         int count = data.get() & 0xFF;
         List<CardSelectDialog.CardItem> items = new ArrayList<>();
         for (int i = 0; i < count && data.remaining() >= 8; i++) {
-            int code = data.getInt();
+            int rawCode = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int tributeValue = data.get() & 0xFF;
+            int code = resolveCardCode(rawCode, ctrl, loc, seq, 0);
             items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, 0, i, tributeValue));
         }
         if (items.isEmpty()) {
             sendResponseInt(0);
             return;
         }
+        if (tryFieldCardSelect(items, min, max, cancelable != 0)) return;
         final List<CardSelectDialog.CardItem> cardInfos = items;
         CardSelectDialog dialog = new CardSelectDialog(activity, imageLoader);
         panel().setCardSelectDialog(dialog);
@@ -710,21 +758,23 @@ public class ShowDialogUtil {
         int mustCount = data.get() & 0xFF;
         List<CardSelectDialog.CardItem> mustCards = new ArrayList<>();
         for (int i = 0; i < mustCount && data.remaining() >= 11; i++) {
-            int code = data.getInt();
+            int rawCode = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int opParam = data.getInt();
+            int code = resolveCardCode(rawCode, ctrl, loc, seq, 0);
             mustCards.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, 0, 0, opParam));
         }
         int count = data.remaining() >= 1 ? (data.get() & 0xFF) : 0;
         List<CardSelectDialog.CardItem> items = new ArrayList<>();
         for (int i = 0; i < count && data.remaining() >= 11; i++) {
-            int code = data.getInt();
+            int rawCode = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int opParam = data.getInt();
+            int code = resolveCardCode(rawCode, ctrl, loc, seq, 0);
             items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, 0, i, opParam));
         }
         if (items.isEmpty()) {
@@ -911,10 +961,11 @@ public class ShowDialogUtil {
         }
         List<CardSelectDialog.CardItem> items = new ArrayList<>();
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
-            int code = data.getInt();
+            int rawCode = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
+            int code = resolveCardCode(rawCode, ctrl, loc, seq, 0);
             items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, 0, i));
         }
         if (items.size() < count) {
@@ -963,20 +1014,22 @@ public class ShowDialogUtil {
         List<CardSelectDialog.CardItem> items = new ArrayList<>();
         int seqIndex = 0;
         for (int i = 0; i < count1 && data.remaining() >= 8; i++) {
-            int code = data.getInt();
+            int rawCode = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int subSeq = data.get() & 0xFF;
+            int code = resolveCardCode(rawCode, ctrl, loc, seq, subSeq);
             items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, subSeq, seqIndex++));
         }
         int count2 = data.remaining() >= 1 ? (data.get() & 0xFF) : 0;
         for (int i = 0; i < count2 && data.remaining() >= 8; i++) {
-            int code = data.getInt();
+            int rawCode = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int subSeq = data.get() & 0xFF;
+            int code = resolveCardCode(rawCode, ctrl, loc, seq, subSeq);
             items.add(new CardSelectDialog.CardItem(code, ctrl, loc, seq, subSeq, seqIndex++));
         }
         if (items.isEmpty()) {
@@ -1041,12 +1094,13 @@ public class ShowDialogUtil {
         int skipPanel = data.get() & 0xFF;
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
         while (data.remaining() >= 7) {
-            int code = data.getInt();
+            int rawCode = data.getInt();
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             // duelclient.cpp L2546-2566：仅卡组/额外（l & 0x41）的卡进入面板确认
             if ((loc & 0x41) != 0) {
+                int code = resolveCardCode(rawCode, ctrl, loc, seq, 0);
                 items.add(new CardDisplayDialog.CardItem(code, ctrl, loc, seq, 0));
             }
         }

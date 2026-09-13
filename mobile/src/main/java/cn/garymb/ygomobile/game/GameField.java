@@ -414,6 +414,9 @@ public class GameField {
     public int selectMin, selectMax, mustSelectCount;
     public int selectSumval, selectMode;
     public int selectHint;
+    /** 对齐 duelclient.cpp L40 event_string：由 HINT_EVENT 及召唤/抽卡/伤害/攻击/连锁等事件消息写入，
+     *  在 MSG_SELECT_CHAIN / MSG_SELECT_EFFECTYN 询问前作为「触发时点」前缀拼接（L2176/2178） */
+    public String eventString = "";
     public boolean selectCancelable;
     public boolean selectReady;
     public int selectCurvalL, selectCurvalH;
@@ -612,6 +615,7 @@ public class GameField {
         turnCount = 0;
         extraPCount[0] = 0;
         extraPCount[1] = 0;
+        eventString = "";
     }
 
     public void initial(int player, int deckc, int extrac, int sidec) {

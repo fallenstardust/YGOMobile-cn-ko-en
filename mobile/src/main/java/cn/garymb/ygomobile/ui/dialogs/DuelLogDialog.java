@@ -83,9 +83,14 @@ public class DuelLogDialog {
 
     // === 决斗日志文本工具（自 GameEngine 迁入，供通讯解析端调用，对齐桌面版 duelclient.cpp 各 AddLog 调用点） ===
 
-    /** "已选择：%s" 模板：桌面版使用 GetSysString(1510) */
+    /** sys1510「玩家选择了：[%ls]」：桌面版 HINT_OPSELECTED/HINT_ZONE 用 GetSysString(1510)（duelclient.cpp L1464/L1562） */
     public static String formatSelected(String what) {
-        return sysFormat(1510, "已选择：%s", what);
+        return sysFormat(1510, "玩家选择了：%s", what);
+    }
+
+    /** sys1511「玩家宣言了：[%ls]」：桌面版 HINT_RACE/ATTRIB/CODE 用 GetSysString(1511)（duelclient.cpp L1482/L1493/L1503） */
+    public static String formatDeclared(String what) {
+        return sysFormat(1511, "玩家宣言了：%s", what);
     }
 
     /** HINT_OPSELECTED：desc 经 DataManager.getDesc 解析（系统字符串或卡片脚本提示） */
@@ -96,14 +101,14 @@ public class DuelLogDialog {
         }
     }
 
-    /** HINT_RACE：宣告种族选择记入日志 */
+    /** HINT_RACE：宣告种族记入日志（对齐 gframe 用 sys1511「玩家宣言了」，duelclient.cpp L1482） */
     public static void addSelectedRaceLog(int raceMask) {
-        addLog(formatSelected(formatRace(raceMask)));
+        addLog(formatDeclared(formatRace(raceMask)));
     }
 
-    /** HINT_ATTRIB：宣告属性选择记入日志 */
+    /** HINT_ATTRIB：宣告属性记入日志（对齐 gframe 用 sys1511「玩家宣言了」，duelclient.cpp L1493） */
     public static void addSelectedAttributeLog(int attrMask) {
-        addLog(formatSelected(formatAttribute(attrMask)));
+        addLog(formatDeclared(formatAttribute(attrMask)));
     }
 
     /** 对齐 dataManager.FormatRace：种族位掩码转字符串表名称 */
@@ -130,14 +135,14 @@ public class DuelLogDialog {
         return sb.length() > 0 ? sb.toString() : String.valueOf(mask);
     }
 
-    /** sys 字符串模板格式化：模板取自字符串表，缺失时使用兜底文本 */
+    /**
+     * sys 字符串模板格式化：模板取自字符串表，缺失时使用兜底文本 def。
+     * 委托 DataManager.formatSystemString（内部 cFormat）处理 strings.conf 的 C 宽字符格式符 %ls：
+     * 裸 String.format 遇 %ls 会抛 UnknownFormatConversionException('l')，导致回退成含字面 "%s" 的 def，
+     * 这正是日志条目残留 "%s" 的根因（对齐 YesOrNoDialog.sysFormat 惯例）。
+     */
     public static String sysFormat(int index, String def, Object... args) {
-        try {
-            return String.format(java.util.Locale.US,
-                    mStringManager.getSystemString(index, def), args);
-        } catch (Exception e) {
-            return def;
-        }
+        return DataManager.get().formatSystemString(index, def, args);
     }
 
     private final YGOProActivity activity;

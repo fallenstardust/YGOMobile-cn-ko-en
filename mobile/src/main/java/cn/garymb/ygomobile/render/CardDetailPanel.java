@@ -722,6 +722,12 @@ public class CardDetailPanel {
                         hideCancelOrFinishButton();
                         cardSelectDialog.dismiss();
                     }
+                } else {
+                    // 场上/手牌直接选择模式（无弹窗）：由 GameFieldController 完成/取消
+                    GameFieldController fieldCtl = activity.getFieldCtl();
+                    if (fieldCtl != null && fieldCtl.finishCardSelect()) {
+                        hideCancelOrFinishButton();
+                    }
                 }
                 break;
             }

@@ -32,6 +32,8 @@ import java.util.Set;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
@@ -429,6 +431,17 @@ public class YesOrNoDialog {
         return activity.findViewById(R.id.layout_game_right);
     }
 
+    /**
+     * 在连锁询问文本前拼接 event_string（对齐 duelclient.cpp MSG_SELECT_CHAIN L2176/2178：
+     * stQMessage = event_string + "\n" + 询问语）。event_string 为空时原样返回。
+     */
+    private static String prependChainEvent(YGOProActivity activity, String text) {
+        GameEngine engine = activity.getEngine();
+        GameField field = engine != null ? engine.getField() : null;
+        String event = field != null ? field.eventString : null;
+        return (event == null || event.isEmpty()) ? text : event + "\n" + text;
+    }
+
     /** 是/否确认弹窗（MSG_SELECT_YESNO / MSG_SELECT_EFFECTYN）：是=1 否=0 */
     public static void showYesNoQuery(YGOProActivity activity, String message) {
         showYesNoQuery(activity, message, 0, null);
@@ -544,7 +557,7 @@ public class YesOrNoDialog {
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         chainQueryDialog = dialog;
         panel(activity).setCurrentDialog(dialog);
-        dialog.setMessage(queryText)
+        dialog.setMessage(prependChainEvent(activity, queryText))
                 .asYesNo()
                 .setPositiveButton(v -> activity.getDialogUtil().enterChainFieldMode(true))
                 .setNegativeButton(v -> activity.getDialogUtil().finishChainPass())
@@ -564,9 +577,10 @@ public class YesOrNoDialog {
             title = sysText(contiExist ? 556 : 550,
                     contiExist ? "请选择要发动/处理的效果" : "请选择要发动的效果");
         } else if (selectTrigger) {
-            title = sysText(222, "是否要发动诱发类效果？") + "\n" + sysText(223, "稍后将询问其他可以发动的效果。");
+            title = prependChainEvent(activity,
+                    sysText(222, "是否要发动诱发类效果？") + "\n" + sysText(223, "稍后将询问其他可以发动的效果。"));
         } else {
-            title = sysText(203, "是否要进行连锁？");
+            title = prependChainEvent(activity, sysText(203, "是否要进行连锁？"));
         }
         final boolean forced = chainForced;
         YesOrNoDialog dialog = new YesOrNoDialog(activity);

@@ -191,6 +191,16 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         return DataManager.get().getStringManager().getSystemString(index, def);
     }
 
+    /**
+     * 写入 event_string（对齐 duelclient.cpp 各事件消息的 myswprintf(event_string, GetSysString(id), args...)）。
+     * 无参数时直接取系统字符串；有参数时用 formatSystemString 填充其中的 %ls/%d。
+     */
+    private void setEventString(int index, String def, Object... args) {
+        field.eventString = (args == null || args.length == 0)
+                ? sysString(index, def)
+                : DataManager.get().formatSystemString(index, def, args);
+    }
+
     private void postDuelHint(String text) {
         mainHandler.post(() -> {
             if (listener != null) listener.onDuelHint(text);
@@ -1040,9 +1050,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onHint(int type, int player, int data) {
         String hintText = "";
         switch (type) {
+            // HINT_EVENT（对齐 duelclient.cpp L1445-1447）：静默写入 event_string=GetDesc(data)，不弹提示
             case 1:
-                hintText = "卡片效果发动";
-                break;
+                field.eventString = DataManager.get().getDesc(data, "");
+                return;
             case 2:
                 hintText = "请选择";
                 break;
@@ -1066,10 +1077,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             case 7:
                 DuelLogDialog.addSelectedAttributeLog(data);
                 return;
-            // HINT_CODE（对齐 duelclient.cpp L1502-1511）：宣言卡名记入日志，携带卡代码供点击查看
+            // HINT_CODE（对齐 duelclient.cpp L1502-1511）：宣言卡名记入日志（sys1511「玩家宣言了」），携带卡代码供点击查看
             case 8:
-                DuelLogDialog.addLog(DuelLogDialog.formatSelected(
-                        DataManager.get().getCardManager().getCard(data).Name), data);
+                DuelLogDialog.addLog(DuelLogDialog.formatDeclared(DataManager.get().getName(data)), data);
                 return;
             // HINT_NUMBER（对齐 duelclient.cpp L1512-1521）：宣告数字记入日志
             case 9:
@@ -1410,7 +1420,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
             data.position(data.position() + 3);
-            DuelLogDialog.addLog("*[" + DataManager.get().getCardManager().getCard(code).Name + "]", code);
+            DuelLogDialog.addLog("*[" + DataManager.get().getName(code) + "]", code);
         }
     }
 
@@ -1424,7 +1434,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
             data.position(data.position() + 3);
-            DuelLogDialog.addLog("*[" + DataManager.get().getCardManager().getCard(code).Name + "]", code);
+            DuelLogDialog.addLog("*[" + DataManager.get().getName(code) + "]", code);
         }
         // 日志读取后回退缓冲位置，供下方确认面板复用条目数据
         data.position(start);
@@ -1556,6 +1566,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         if ((oldPos & 0xA) != 0 && (newPos & 0x5) != 0) {
             soundManager.playSoundEffect(SoundManager.SFX.FLIP);
         }
+        setEventString(1600, "卡片改变了表示形式");
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1569,6 +1580,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         card.position = 0x2;
         field.addCard(ctrl, loc, seq, card);
         soundManager.playSoundEffect(SoundManager.SFX.SET);
+        setEventString(1601, "盖放了卡片");
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1580,6 +1592,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         GameField.ClientCard c2 = field.getCard(c2ctrl, c2loc, c2seq);
         field.addCard(c1ctrl, c1loc, c1seq, c2);
         field.addCard(c2ctrl, c2loc, c2seq, c1);
+        setEventString(1602, "卡的控制权改变了");
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1595,12 +1608,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onSummoning(int code, int ctrl, int loc, int seq) {
         soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
-        // duelclient.cpp MSG_SUMMONING L3252-3258：showcardcode=code, showcarddif=0, showcard=7（翻面进入）
+        // duelclient.cpp MSG_SUMMONING L3250/3252-3258：event_string=sys1603「[%ls]召唤中」+ showcard=7（翻面进入）
+        setEventString(1603, "[%s]召唤中", DataManager.get().getName(code));
         postSummonAnimation(code, SUMMON_NORMAL);
     }
 
     @Override
     public void onSummoned() {
+        setEventString(1604, "怪兽召唤成功");
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1609,12 +1624,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onSpSummoning(int code, int ctrl, int loc, int seq) {
         soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON);
-        // duelclient.cpp MSG_SPSUMMONING L3287-3290：if(code) showcarddif=1, showcard=5（放大淡入）
+        // duelclient.cpp MSG_SPSUMMONING L3286-3290：event_string=sys1605「[%ls]特殊召唤中」+ if(code) showcard=5（放大淡入）
+        setEventString(1605, "[%s]特殊召唤中", DataManager.get().getName(code));
         if (code != 0) postSummonAnimation(code, SUMMON_SPECIAL);
     }
 
     @Override
     public void onSpSummoned() {
+        setEventString(1606, "怪兽特殊召唤成功");
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1623,12 +1640,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onFlipSummoning(int code, int ctrl, int loc, int seq) {
         soundManager.playSoundEffect(SoundManager.SFX.FLIP);
-        // duelclient.cpp MSG_FLIPSUMMONING L3317-3320：showcardcode=code, showcarddif=0, showcard=7（翻面进入）
+        // duelclient.cpp MSG_FLIPSUMMONING L3314-3320：event_string=sys1607「[%ls]反转召唤中」+ showcard=7（翻面进入）
+        setEventString(1607, "[%s]反转召唤中", DataManager.get().getName(code));
         postSummonAnimation(code, SUMMON_FLIP);
     }
 
     @Override
     public void onFlipSummoned() {
+        setEventString(1608, "怪兽反转召唤成功");
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1657,7 +1676,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onChained(int chainCount) {
-        
+        // 对齐 duelclient.cpp MSG_CHAINED L3406：event_string=sys1609「[%ls]的效果发动」，卡名取 current_chain.code
+        //（即最近一次 onChaining 压入 chainCodes 的卡码）
+        int curCode = chainCodes.isEmpty() ? 0 : chainCodes.get(chainCodes.size() - 1);
+        setEventString(1609, "[%s]的效果发动", DataManager.get().getName(curCode));
     }
 
     @Override
@@ -1735,6 +1757,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             }
         }
         soundManager.playSoundEffect(SoundManager.SFX.DRAW);
+        setEventString(p == 0 ? 1611 : 1612, p == 0 ? "我方抽了%d张卡" : "对方抽了%d张卡", count);
         mainHandler.post(() -> {
             if (listener != null) {
                 listener.onFieldChanged();
@@ -1752,6 +1775,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         field.players[p].lp = fin;
         field.startLpChange(p, fin, 0xFFFF0000, "-" + amount, true);
         soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
+        setEventString(p == 0 ? 1613 : 1614, p == 0 ? "我方受到%d伤害" : "对方受到%d伤害", amount);
         mainHandler.post(() -> {
             if (listener != null) listener.onPlayerInfoUpdated(p);
         });
@@ -1764,6 +1788,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         field.players[p].lp = fin;
         field.startLpChange(p, fin, 0xFF00FF00, "+" + amount, true);
         soundManager.playSoundEffect(SoundManager.SFX.RECOVER);
+        setEventString(p == 0 ? 1615 : 1616, p == 0 ? "我方回复%d基本分" : "对方回复%d基本分", amount);
         mainHandler.post(() -> {
             if (listener != null) listener.onPlayerInfoUpdated(p);
         });
@@ -1870,6 +1895,17 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onAttack(int aCtrl, int aLoc, int aSeq, int dCtrl, int dLoc, int dSeq) {
         soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
+        // 对齐 duelclient.cpp MSG_ATTACK L3830-3847：有攻击对象(dLoc!=0)写 sys1619「[%ls]攻击[%ls]」，
+        // 否则写 sys1620「[%ls]直接攻击」；卡名经 GetName(code)，协议侧 controler 需转本地索引
+        GameField.ClientCard atkCard = field.getCard(localPlayer(aCtrl & 1), aLoc, aSeq);
+        String atkName = atkCard != null ? DataManager.get().getName(atkCard.code) : "";
+        if (dLoc != 0) {
+            GameField.ClientCard defCard = field.getCard(localPlayer(dCtrl & 1), dLoc, dSeq);
+            String defName = defCard != null ? DataManager.get().getName(defCard.code) : "";
+            setEventString(1619, "[%s]攻击[%s]", atkName, defName);
+        } else {
+            setEventString(1620, "[%s]直接攻击", atkName);
+        }
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1882,6 +1918,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onAttackDisabled() {
+        // 对齐 duelclient.cpp MSG_ATTACK_DISABLED L3910：sys1621「攻击被无效」（无占位符，C++ 传入的卡名参数被忽略）
+        setEventString(1621, "攻击被无效");
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -1902,8 +1940,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onMissedEffect(int code, int ctrl, int loc, int seq, int effectId) {
         Log.w(TAG, "Missed effect: code=" + code + " effectId=" + effectId);
-        // 对齐 duelclient.cpp MSG_MISSED_EFFECT L3919-3924：错过时点记入日志，携带卡代码
-        DuelLogDialog.addLog(DuelLogDialog.sysFormat(1622, "错过发动时点：%s", DataManager.get().getCardManager().getCard(code).Name), code);
+        // 对齐 duelclient.cpp MSG_MISSED_EFFECT L3919-3924：sys1622「[%ls]错过时点」用 GetName(code) 填充，携带卡代码
+        DuelLogDialog.addLog(DuelLogDialog.sysFormat(1622, "[%s]错过时点", DataManager.get().getName(code)), code);
     }
 
     @Override
