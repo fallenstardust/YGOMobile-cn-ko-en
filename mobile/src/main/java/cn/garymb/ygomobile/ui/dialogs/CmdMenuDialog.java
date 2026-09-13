@@ -38,6 +38,7 @@ public class CmdMenuDialog {
     /** 命令上下文（与 GameFieldController.CMD_CONTEXT_* 保持同值） */
     public static final int CMD_CONTEXT_IDLE = 1;
     public static final int CMD_CONTEXT_BATTLE = 2;
+    public static final int CMD_CONTEXT_CHAIN = 3;
 
     /** 系统字符串索引（对应 strings.conf #actions 段，与 gframe wCmdMenu 按钮文本一致） */
     private static final int SYS_ACTIVATE = 1150;    // 发动
@@ -164,6 +165,7 @@ public class CmdMenuDialog {
         int flag = card.cmdFlag;
         boolean battlePhase = (cmdContext == CMD_CONTEXT_BATTLE);
         boolean idlePhase = (cmdContext == CMD_CONTEXT_IDLE);
+        boolean chainPhase = (cmdContext == CMD_CONTEXT_CHAIN);
         List<String> options = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
 
@@ -172,14 +174,20 @@ public class CmdMenuDialog {
         if ((flag & GameEngine.COMMAND_ACTIVATE) != 0) {
             for (GameEngine.CmdCardInfo info : engine.activatableCards) {
                 if (info.card != card) continue;
-                // desc 本身即系统字符串索引；无 desc 或索引缺失时回退到“发动”（同样取自字符串表）
-                String label = info.desc > 0 ? sysString(info.desc, activateText) : activateText;
-                options.add(label);
                 final int idx = info.index;
-                if (battlePhase) {
-                    actions.add(() -> activity.sendResponseInt(idx << 16));
+                if (chainPhase) {
+                    // 连锁发动（MSG_SELECT_CHAIN）：描述走 GetDesc（对齐 C++ ShowSelectOption，可显示卡片脚本效果文字），
+                    // 响应仅发送连锁项索引，交由 ShowDialogUtil.activateChainOption 统一收尾（清高亮 / 退出连锁模式）
+                    options.add(info.desc > 0 ? DataManager.get().getDesc(info.desc, activateText) : activateText);
+                    actions.add(() -> activity.getDialogUtil().activateChainOption(idx));
                 } else {
-                    actions.add(() -> activity.sendResponseInt((idx << 16) + 5));
+                    // desc 本身即系统字符串索引；无 desc 或索引缺失时回退到“发动”（同样取自字符串表）
+                    options.add(info.desc > 0 ? sysString(info.desc, activateText) : activateText);
+                    if (battlePhase) {
+                        actions.add(() -> activity.sendResponseInt(idx << 16));
+                    } else {
+                        actions.add(() -> activity.sendResponseInt((idx << 16) + 5));
+                    }
                 }
             }
         }

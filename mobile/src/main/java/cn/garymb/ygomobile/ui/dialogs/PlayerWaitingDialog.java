@@ -142,7 +142,9 @@ public class PlayerWaitingDialog {
                 currentDeckCategory = categoryName;
                 AppsSettings.get().setLastDeckPath(deckPath);
                 updateDeckButtonText();
-                sendDeckIfLoaded();
+                // 选择卡组仅更新本地状态，不再自动发卡/进入准备流程；
+                // 发卡（准备第一步）推迟到点击"准备"(btnPwReady) 或勾选自选框时由 sendDeckIfLoaded() 统一触发
+
             }
 
             @Override

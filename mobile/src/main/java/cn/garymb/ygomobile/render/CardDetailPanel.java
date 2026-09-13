@@ -18,6 +18,7 @@ import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.ReplayEngine;
+import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog;
@@ -742,7 +743,20 @@ public class CardDetailPanel {
                 if (cardDisplayDialog != null) cardDisplayDialog.dismiss();
                 break;
             }
-            case 16:
+            case 16: {
+                // 连锁（MSG_SELECT_CHAIN）取消：优先按 wQuery 语义处理——场上点击模式下点击「取消操作」
+                // 重新弹出询问窗（对齐 CancelOrFinish 的 PopupElement(wQuery)），实现「暂时隐藏」后可恢复；
+                // 无询问窗（panelmode 列表）时回退到直接应答 -1。handleChainCancel 内部自行管理 selectType，
+                // 故此处直接 return，跳过方法末尾的 currentSelectType=-1 复位
+                ShowDialogUtil du = activity.getDialogUtil();
+                if (du != null && du.handleChainCancel()) {
+                    return;
+                }
+                activity.sendResponseInt(-1);
+                hideCancelOrFinishButton();
+                if (currentDialog != null) currentDialog.dismiss();
+                break;
+            }
             case 25: {
                 activity.sendResponseInt(-1);
                 hideCancelOrFinishButton();

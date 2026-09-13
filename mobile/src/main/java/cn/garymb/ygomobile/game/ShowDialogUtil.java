@@ -2,9 +2,6 @@ package cn.garymb.ygomobile.game;
 
 import android.os.Handler;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.LinearLayout;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,16 +9,11 @@ import java.io.FileReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 import cn.garymb.ygomobile.AppsSettings;
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
-import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.dialogs.AnnounceAttributeDialog;
@@ -46,12 +38,6 @@ public class ShowDialogUtil {
 
     private static final String TAG = "ShowDialogUtil";
 
-    /**
-     * 对齐 duelclient.cpp L49：select_effectyn_id{95,96,97,218,219,220}。
-     * 这些 desc 对应的系统字符串各含单个 %ls，用卡名替换。
-     */
-    private static final Set<Integer> SELECT_EFFECTYN_ID =
-            new HashSet<>(Arrays.asList(95, 96, 97, 218, 219, 220));
 
     private final YGOProActivity activity;
     private final ImageLoader imageLoader;
@@ -66,8 +52,6 @@ public class ShowDialogUtil {
     private boolean rpsAnimating;
     private boolean pendingHandSelect;
     private FirstOrSecondDialog tpSelectDialog;
-    private PosSelectDialog posSelectDialog;
-    private OptionDialog optionDialog;
     private AnnounceRaceDialog announceRaceDialog;
     private AnnounceAttributeDialog announceAttributeDialog;
     private AnnounceCardDialog announceCardDialog;
@@ -99,18 +83,6 @@ public class ShowDialogUtil {
 
     // === 通用辅助 ===
 
-    private int getResId(String name, String type) {
-        return activity.getResources().getIdentifier(name, type, activity.getPackageName());
-    }
-
-    private View inflateSelectLayout() {
-        View contentView = activity.getLayoutInflater().inflate(R.layout.dialog_game_select, null);
-        contentView.findViewById(getResId("tv_select_title", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("tv_select_hint", "id")).setVisibility(View.GONE);
-        contentView.findViewById(getResId("layout_select_buttons", "id")).setVisibility(View.GONE);
-        return contentView;
-    }
-
     /**
      * 选择类对话框标题：优先使用 MSG_HINT(HINT_SELECTMSG) 通讯下发的索引调用
      * StringManager.getSystemString，无索引时按 gframe 缺省值兜底
@@ -129,20 +101,6 @@ public class ShowDialogUtil {
      */
     private String sysText(int index, String defText) {
         return DataManager.get().getStringManager().getSystemString(index, defText);
-    }
-
-    /**
-     * 系统字符串 + 通讯参数替换（对齐 gframe myswprintf(GetSysString(index), args...)）
-     */
-    private String sysFormat(int index, String defText, Object... args) {
-        return DataManager.get().formatSystemString(index, defText, args);
-    }
-
-    /**
-     * 游戏内弹窗居中区域：决斗场 layout_game_right（而非整个 Activity 窗口）
-     */
-    private View gameDialogRegion() {
-        return activity.findViewById(R.id.layout_game_right);
     }
 
     // === 猜拳 / 先后攻 ===
@@ -238,7 +196,7 @@ public class ShowDialogUtil {
             data.get(); // selecting_player
             descId = data.getInt();
         }
-        showYesNoQuery(DataManager.get().getDesc(descId, "是否发动效果？"));
+        YesOrNoDialog.showYesNoQuery(activity, DataManager.get().getDesc(descId, "是否发动效果？"));
     }
 
     /**
@@ -249,114 +207,11 @@ public class ShowDialogUtil {
      * 点击选项发送 CTOS_RESPONSE（int32 索引，playerop.cpp select_option 校验范围）。
      */
     public void showOptionDialog(ByteBuffer data) {
-        if (data == null || data.remaining() < 2) {
-            return;
-        }
-        data.get(); // selecting_player
-        int count = data.get() & 0xFF;
-        List<String> options = new ArrayList<>();
-        for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            int descId = data.getInt();
-            options.add(DataManager.get().getDesc(descId, "Option " + (i + 1)));
-        }
-        if (options.isEmpty()) {
-            // 无可解析选项时兜底应答 0，避免通讯挂起（core 侧会校验索引合法性）
-            sendResponseInt(0);
-            return;
-        }
-        if (optionDialog != null && optionDialog.isShowing()) return;
-        OptionDialog dialog = new OptionDialog(activity);
-        optionDialog = dialog;
-        dialog.setTitle(optionTitleText())
-                .setOptions(options)
-                .setOnOptionSelectedListener(this::sendResponseInt)
-                .setOnDismissListener(() -> optionDialog = null);
-        dialog.show();
-    }
-
-    /**
-     * 选项弹窗标题：系统字符串 555（strings.conf "!system 555 Select an option."）；消费 selectHint 避免残留影响后续选卡标题
-     */
-    private String optionTitleText() {
-        GameField f = engine() != null ? engine().getField() : null;
-        if (f != null) f.selectHint = 0;
-        return DataManager.get().getStringManager().getSystemString(555, "请选择一项");
+        OptionDialog.showOptionDialog(activity, data);
     }
 
     public void showEffectYnDialog(ByteBuffer data) {
-        // duelclient.cpp L1868-1895：player(1) code(4) c(1) l(1) s(1) flag(1) desc(4)
-        if (data == null || data.remaining() < 13) {
-            showYesNoQuery(sysText(94, "是否现在使用这张卡的效果？"));
-            return;
-        }
-        data.get();                        // selecting_player
-        int code = data.getInt();
-        data.get();                        // c（控制者）
-        int location = data.get() & 0xFF;  // l
-        int sequence = data.get() & 0xFF;  // s
-        data.get();                        // flag
-        int desc = data.getInt();
-        String cardName = activity.getCardDisplayName(code);
-        DataManager dm = DataManager.get();
-        String locationName = dm.formatLocation(location, sequence);
-        String message;
-        if (desc == 0) {
-            // sys200「是否在[%ls]发动[%ls]的效果？」→ FormatLocation(l,s) + 卡名
-            message = sysFormat(200, "是否在[%s]发动[%s]的效果？", locationName, cardName);
-        } else if (desc == 221) {
-            // sys221「是否在[%ls]发动[%ls]的诱发类效果？」+ 换行 + sys223
-            message = sysFormat(221, "是否在[%s]发动[%s]的诱发类效果？", locationName, cardName)
-                    + "\n" + sysText(223, "稍后将询问其他可以发动的效果。");
-        } else if (SELECT_EFFECTYN_ID.contains(desc)) {
-            // sys95/96/97/218/219/220：单个 %ls 填卡名
-            message = sysFormat(desc, "是否使用[%s]的效果？", cardName);
-        } else {
-            // 其余 desc 走 GetDesc；C++ 用 L"%ls" 打印，即把结果当数据而非格式串，故这里不做替换
-            String raw = dm.getDesc(desc, "");
-            message = raw.isEmpty() ? "是否发动「" + cardName + "」的效果？" : raw;
-        }
-        showYesNoQuery(message, code, cardName);
-    }
-
-    /**
-     * 是/否确认弹窗公共构建：是=1 否=0（MSG_SELECT_YESNO / MSG_SELECT_EFFECTYN 应答）
-     */
-    private void showYesNoQuery(String message) {
-        showYesNoQuery(message, 0, null);
-    }
-
-    /**
-     * 是/否确认弹窗公共构建（可带卡名着色）：cardCode>0 且 cardName 非空时，
-     * 由 YesOrNoDialog 将 message 中的卡名按卡片类型着色（怪兽黄/魔法淡绿/陷阱淡粉）。
-     */
-    private void showYesNoQuery(String message, int cardCode, String cardName) {
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        // 不显示标题栏：询问文本（如"是否发动「X」的效果？"）已在 message 中，
-        // 标题留空由 YesOrNoDialog 自动隐藏 tv_yes_no_title
-        if (cardCode > 0 && cardName != null && !cardName.isEmpty()) {
-            dialog.setMessageWithCardName(message, cardCode, cardName);
-        } else {
-            dialog.setMessage(message);
-        }
-        dialog.setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("是")
-                .setNegativeButtonText("否")
-                .setPositiveButton(v -> {
-                    sendResponseInt(1);
-                    panel().hideCancelOrFinishButton();
-                })
-                .setNegativeButton(v -> {
-                    sendResponseInt(0);
-                    panel().hideCancelOrFinishButton();
-                })
-                .setCancelable(false)
-                .setCenterInView(gameDialogRegion())
-                .setOnDismissListener(() -> {
-                    panel().hideCancelOrFinishButton();
-                    panel().setCurrentDialog(null);
-                });
-        panel().showCancelOrFinishButton("否");
-        dialog.show();
+        YesOrNoDialog.showEffectYnDialog(activity, data);
     }
 
     // === 场上命令 / 位置 / 表示形式 ===
@@ -383,79 +238,16 @@ public class ShowDialogUtil {
      * 选择后发送 CTOS_RESPONSE，core 按所选形式把卡放上场并下发场地更新同步状态。
      */
     public void showPositionSelectDialog(ByteBuffer data) {
-        if (data == null || data.remaining() < 8) return;
-        int code = data.getInt();
-        int positions = data.getInt() & 0x0F;
-        // 单一形式兜底（正常路径已在 GameEngine.onSelectPosition 拦截自动应答）
-        if (positions == 0x1 || positions == 0x2 || positions == 0x4 || positions == 0x8) {
-            sendResponseInt(positions);
-            return;
-        }
-        if (positions == 0) return;
-        if (posSelectDialog != null && posSelectDialog.isShowing()) return;
-        PosSelectDialog dialog = new PosSelectDialog(activity, imageLoader);
-        posSelectDialog = dialog;
-        dialog.setTitle(DataManager.get().getStringManager()
-                        .getSystemString(561, "选择表示形式"))
-                .setOnPositionSelectedListener(pos -> {
-                    // 先隐藏弹窗再发送协议：core 随后将卡按所选形式放上场并同步场地状态
-                    dialog.dismiss();
-                    sendResponseInt(pos);
-                });
-        dialog.show(code, positions);
+        PosSelectDialog.showPositionSelectDialog(activity, imageLoader, data);
     }
 
     // === 卡组选择 / SIDE ===
 
     public void showDeckSelectDialog() {
-        File deckDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_DECK_PATH);
-        File[] deckFiles = deckDir.exists()
-                ? deckDir.listFiles((dir, name) -> name.endsWith(Constants.YDK_FILE_EX))
-                : null;
-
-        List<String> deckNames = new ArrayList<>();
-        if (deckFiles != null && deckFiles.length > 0) {
-            for (File f : deckFiles) {
-                deckNames.add(f.getName().replace(Constants.YDK_FILE_EX, ""));
-            }
-        } else {
-            deckNames.add("（暂无卡组文件）");
-        }
-
-        final File[] finalDeckFiles = deckFiles;
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("选择卡组");
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < deckNames.size(); i++) {
-            Button btn = new Button(activity);
-            btn.setText(deckNames.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int pos = i;
-            btn.setOnClickListener(v -> {
-                if (finalDeckFiles != null && pos < finalDeckFiles.length) {
-                    loadAndSendDeck(finalDeckFiles[pos]);
-                }
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-
-        dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
-                .setPositiveButtonText("取消")
-                .setPositiveButton(v -> engine().disconnect())
-                .setCancelable(false);
-        dialog.show();
+        YesOrNoDialog.showDeckSelectDialog(activity);
     }
 
-    private void loadAndSendDeck(File ydkFile) {
+    public void loadAndSendDeck(File ydkFile) {
         new Thread(() -> {
             List<Integer> main = new ArrayList<>();
             List<Integer> extra = new ArrayList<>();
@@ -524,10 +316,17 @@ public class ShowDialogUtil {
         // duelclient.cpp L2091：specount == 0x7f 表示这是诱发类效果询问（select_trigger）
         boolean selectTrigger = (specount == 0x7f);
 
+        GameEngine e = engine();
+        GameField field = e != null ? e.getField() : null;
+        // 清理上一条指令（idle/battle）遗留的命令标记与上次连锁高亮，避免脏状态残留
+        if (e != null) e.clearCommandFlags();
+        clearChainSelect();
+
         List<String> chainOptions = new ArrayList<>();
         List<Integer> chainFlags = new ArrayList<>();
         boolean chainForced = false;
         boolean contiExist = false;
+        boolean panelmode = false;
         for (int i = 0; i < count && data.remaining() >= 14; i++) {
             int flag = data.get() & 0xFF;
             int forced = data.get() & 0xFF;
@@ -541,7 +340,41 @@ public class ShowDialogUtil {
 
             // duelclient.cpp L2110-2117：forced → chain_forced；flag & EDESC_OPERATION → conti_exist
             if (forced != 0) chainForced = true;
-            if ((flag & 0x1) != 0) contiExist = true;
+            boolean conti = (flag & 0x1) != 0;
+            if (conti) contiExist = true;
+            // duelclient.cpp L2133-2134：LOCATION_OVERLAY 连锁项 → panelmode（overlay 单元无法在场上单独点击）
+            if ((loc & 0x80) != 0) panelmode = true;
+
+            // 填充场上卡片状态（对齐 duelclient.cpp L2106-2135）：把可发动卡片高亮为 is_selectable
+            //（GameFieldView 渲染黄色脉冲）并挂 COMMAND_ACTIVATE，使玩家点击高亮卡片经
+            // onCardClick→CmdMenuDialog 发动；连锁发动响应仅发送连锁项索引（index=i）
+            if (field != null && e != null) {
+                int localCtrl = e.localPlayer(ctrl & 1);
+                GameField.ClientCard card = field.getCard(localCtrl, loc, seq, subSeq);
+                if (card != null) {
+                    card.is_selected = false;
+                    card.is_selectable = true;
+                    card.cmdFlag |= GameEngine.COMMAND_ACTIVATE;
+                    int pureLoc = loc & 0x7f;
+                    if (conti) {
+                        card.chain_code = code;
+                        field.contiCards.add(card);
+                        field.contiAct = true;
+                    }
+                    if (pureLoc == 0x01) {
+                        card.setCode(code);
+                        field.deckAct[localCtrl] = true;
+                    } else if (pureLoc == 0x10) {
+                        field.graveAct[localCtrl] = true;
+                    } else if (pureLoc == 0x20) {
+                        field.removeAct[localCtrl] = true;
+                    } else if (pureLoc == 0x40) {
+                        field.extraAct[localCtrl] = true;
+                    }
+                    field.activatableCards.add(card);
+                    e.activatableCards.add(new GameEngine.CmdCardInfo(card, code, desc, flag, i));
+                }
+            }
 
             String cardName = activity.getCardDisplayName(code);
             // 连锁描述同样可能为卡片脚本提示文字（卡号*16+n），统一走 getDesc
@@ -594,107 +427,131 @@ public class ShowDialogUtil {
         // duelclient.cpp L2173-2174：count == 0 且未自动放弃（说明开了"显示时点"）
         // → 弹 sys201 + sys202 询问，而不是直接应答 -1
         if (chainOptions.isEmpty()) {
-            showChainEmptyQuery();
+            YesOrNoDialog.showChainEmptyQuery(activity);
             return;
         }
 
-        // duelclient.cpp L2172-2181：非强制连锁时 wQuery 文案
-        // select_trigger → 222 + 223；否则 → 203；强制连锁不询问，直接列出可连锁项（提示 550/556）
-        String title;
+        // panelmode（overlay 连锁项）不进入场上点击模式；强制连锁不可取消
+        YesOrNoDialog.setChainForcedMode(chainForced && !panelmode);
+
+        // duelclient.cpp L2164-2170：panelmode → 保留列表对话框（overlay 单元无法在场上单独点击发动）
+        if (panelmode) {
+            clearChainSelect();
+            YesOrNoDialog.showChainListDialog(activity, contiExist, selectTrigger, chainForced, chainOptions, chainFlags);
+            return;
+        }
+
+        // duelclient.cpp L2172-2181：强制连锁不弹询问窗，直接进入场上点击发动模式（不允许取消/放弃）
         if (chainForced) {
-            title = sysText(contiExist ? 556 : 550,
-                    contiExist ? "请选择要发动/处理的效果" : "请选择要发动的效果");
-        } else if (selectTrigger) {
-            title = sysText(222, "是否要发动诱发类效果？") + "\n"
-                    + sysText(223, "稍后将询问其他可以发动的效果。");
-        } else {
-            title = sysText(203, "是否要进行连锁？");
+            YesOrNoDialog.setChainQueryDialog(null);
+            enterChainFieldMode(false);
+            return;
         }
 
-        final boolean forced = chainForced;
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        panel().setCurrentDialog(dialog);
-        dialog.setTitle(title);
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 0; i < chainOptions.size(); i++) {
-            Button btn = new Button(activity);
-            btn.setText(chainOptions.get(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor((chainFlags.get(i) & 0x100) != 0 ? 0xFFAA3333 : 0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int idx = i;
-            btn.setOnClickListener(v -> {
-                clearChainSelect();
-                sendResponseInt(idx);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-
-        dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
-                // 强制连锁时不允许"不连锁"（对齐 gframe chain_forced 时不弹 wQuery、无 BUTTON_NO 路径）
-                .setPositiveButtonText(forced ? "" : sysText(204, "不连锁"))
-                .setPositiveButton(v -> {
-                    if (forced) return;
-                    // 对齐 event_handler.cpp L352-382 BUTTON_NO + MSG_SELECT_CHAIN：
-                    // SetResponseI(-1) → 隐藏询问窗 → ShowCancelOrFinishButton(0)
-                    panel().hideCancelOrFinishButton();
-                    clearChainSelect();
-                    sendResponseInt(-1);
-                })
-                .setCancelable(false)
-                .setCenterInView(gameDialogRegion())
-                .setOnDismissListener(() -> {
-                    panel().hideCancelOrFinishButton();
-                    panel().setCurrentDialog(null);
-                });
-        if (!forced) {
-            // 对齐 event_handler.cpp L352-357 BUTTON_YES + MSG_SELECT_CHAIN：ShowCancelOrFinishButton(1) → sys1295
-            panel().showCancelOrFinishButton(sysText(1295, "取消操作"));
-        }
-        dialog.show();
+        // 非强制连锁：弹出 wQuery 式是/否询问窗（stQMessage 文案），场上可发动卡片已高亮（黄色脉冲）。
+        String queryText = selectTrigger
+                ? sysText(222, "是否要发动诱发类效果？") + "\n" + sysText(223, "稍后将询问其他可以发动的效果。")
+                : sysText(203, "是否要进行连锁？");
+        YesOrNoDialog.showChainQuery(activity, queryText);
     }
 
     /**
-     * MSG_SELECT_CHAIN 且 count == 0 时的询问（duelclient.cpp L2173-2174 的 sys201 + sys202）。
-     * 只有开启"显示时点"(always_chain) 才会走到这里，其余情况已在自动放弃分支应答 -1。
-     * 是 → 仅关闭询问窗，改由左侧「取消操作」按钮应答 -1
-     * （event_handler.cpp L352-357 + L974 CancelOrFinish）；
-     * 否 → 立即应答 -1（event_handler.cpp L378-382）
+     * 对齐 C++ ClientField::ClearChainSelect()：清掉场上卡片的可发动高亮与选择标记，
+     * 并清空 engine/field 两侧可发动列表（field.clearChainSelect 复位标记但不清 activatableCards 本身）
      */
-    private void showChainEmptyQuery() {
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        panel().setCurrentDialog(dialog);
-        // 不显示标题栏：完整询问文本（sys201 + sys202）已在 message 中
-        dialog.setMessage(sysText(201, "此时没有可以发动的效果") + "\n"
-                        + sysText(202, "是否要确认场上的情况？"))
-                .setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("是")
-                .setNegativeButtonText("否")
-                .setPositiveButton(v -> panel().showCancelOrFinishButton(sysText(1295, "取消操作")))
-                .setNegativeButton(v -> {
-                    clearChainSelect();
-                    sendResponseInt(-1);
-                    panel().hideCancelOrFinishButton();
-                })
-                .setCancelable(false)
-                .setCenterInView(gameDialogRegion())
-                .setOnDismissListener(() -> panel().setCurrentDialog(null));
-        dialog.show();
-    }
-
-    /**
-     * 对齐 C++ ClientField::ClearChainSelect()：清掉场上卡片的可发动高亮与选择标记
-     */
-    private void clearChainSelect() {
+    public void clearChainSelect() {
         GameEngine e = engine();
-        if (e != null && e.getField() != null) e.getField().clearChainSelect();
+        if (e == null) return;
+        GameField f = e.getField();
+        if (f != null) {
+            f.clearChainSelect();
+            f.activatableCards.clear();
+        }
+        e.activatableCards.clear();
+    }
+
+    /**
+     * 进入场上点击发动模式（对齐 event_handler.cpp BUTTON_YES + MSG_SELECT_CHAIN：HideElement(wQuery)
+     * 后等待玩家点击场上高亮卡片发动）：设 cmdContext=CHAIN 使 CmdMenuDialog 走连锁响应编码（仅发索引）。
+     *
+     * @param showCancelButton 非强制连锁显示「取消操作」按钮（sys1295），点击可重新弹出询问窗
+     */
+    public void enterChainFieldMode(boolean showCancelButton) {
+        GameFieldController ctl = fieldCtl();
+        if (ctl != null) ctl.beginChainCommand();
+        CardDetailPanel p = panel();
+        if (p != null) {
+            p.setSelectType(16);
+            if (showCancelButton) {
+                p.showCancelOrFinishButton(sysText(1295, "取消操作"));
+            }
+        }
+    }
+
+    /**
+     * 退出场上点击发动模式：复位命令上下文、关闭残留命令菜单与询问窗引用
+     */
+    private void exitChainFieldMode() {
+        YesOrNoDialog.setChainForcedMode(false);
+        YesOrNoDialog.setChainQueryDialog(null);
+        GameFieldController ctl = fieldCtl();
+        if (ctl != null) ctl.endChainCommand();
+    }
+
+    /**
+     * 放弃连锁（应答 -1），对齐 event_handler.cpp BUTTON_NO / CancelOrFinish 的 SetResponseI(-1)：
+     * 退出场上模式、清高亮、隐藏「取消操作」按钮并复位选择类型
+     */
+    public void finishChainPass() {
+        exitChainFieldMode();
+        clearChainSelect();
+        CardDetailPanel p = panel();
+        if (p != null) {
+            p.hideCancelOrFinishButton();
+            p.setSelectType(-1);
+        }
+        sendResponseInt(-1);
+    }
+
+    /**
+     * 发动指定连锁项（由 CmdMenuDialog 连锁分支调用），对齐 event_handler.cpp L833-841
+     * MSG_SELECT_CHAIN → SetResponseI(index)：连锁发动响应仅发送连锁项索引（区别于 idle 的 (index<<16)+5）
+     */
+    public void activateChainOption(int index) {
+        exitChainFieldMode();
+        clearChainSelect();
+        CardDetailPanel p = panel();
+        if (p != null) {
+            p.hideCancelOrFinishButton();
+            p.setSelectType(-1);
+        }
+        sendResponseInt(index);
+    }
+
+    /**
+     * 「取消操作」按钮在连锁（selectType 16）下的处理，对齐 event_handler.cpp L3170-3197
+     * CancelOrFinish(MSG_SELECT_CHAIN)：强制连锁不可取消；询问窗可见则应答 -1；
+     * 询问窗已隐藏（场上点击模式）则重新弹出询问窗（PopupElement(wQuery)），实现「暂时隐藏」后可恢复。
+     *
+     * @return true=已按连锁语义消费本次点击；false=无连锁询问窗（panelmode 列表），交由调用方走默认 -1
+     */
+    public boolean handleChainCancel() {
+        if (YesOrNoDialog.isChainForcedMode()) return true;
+        YesOrNoDialog q = YesOrNoDialog.getChainQueryDialog();
+        if (q == null) return false;
+        if (q.isShowing()) {
+            finishChainPass();
+            return true;
+        }
+        CardDetailPanel p = panel();
+        if (p != null) {
+            p.hideCancelOrFinishButton();
+            p.setCurrentDialog(q);
+        }
+        GameFieldController ctl = fieldCtl();
+        if (ctl != null) ctl.endChainCommand();
+        q.show();
+        return true;
     }
 
     public void showSortChainDialog(ByteBuffer data) {
@@ -833,75 +690,7 @@ public class ShowDialogUtil {
     }
 
     public void showCounterSelectDialog(ByteBuffer data) {
-        // duelclient.cpp L2343-2361 / playerop.cpp L608-622：
-        // player(1) counterType(2) counterCount(2) cardCount(1) + cardCount×[code4 c1 l1 s1 counterNum2]
-        if (data == null || data.remaining() < 6) {
-            sendResponseInt(0);
-            return;
-        }
-        data.get();                                    // selecting_player
-        int counterType = data.getShort() & 0xFFFF;
-        int counterCount = data.getShort() & 0xFFFF;   // 需要取除的总数
-        int cardCount = data.get() & 0xFF;             // 可选卡片数
-        final List<Integer> cardCounters = new ArrayList<>();
-        for (int i = 0; i < cardCount && data.remaining() >= 9; i++) {
-            data.getInt();                             // code
-            data.get();                                // c
-            data.get();                                // l
-            data.get();                                // s
-            cardCounters.add(data.getShort() & 0xFFFF);// 该卡持有的此类指示物数
-        }
-        if (cardCounters.isEmpty() || counterCount <= 0) {
-            sendResponseInt(0);
-            return;
-        }
-        DataManager dm = DataManager.get();
-        // sys204「请取除%d个[%ls]」→ 数量 + GetCounterName(counterType)
-        String title = dm.formatSystemString(204, "请取除%d个[%s]",
-                counterCount, dm.getCounterName(counterType));
-
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle(title);
-        View contentView = inflateSelectLayout();
-        dialog.setContentView(contentView);
-        LinearLayout layoutOptions = contentView.findViewById(getResId("layout_options", "id"));
-
-        for (int i = 1; i <= counterCount; i++) {
-            Button btn = new Button(activity);
-            btn.setText(String.valueOf(i));
-            btn.setTextColor(0xFFFFFFFF);
-            btn.setBackgroundColor(0xFF335577);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = 4;
-            btn.setLayoutParams(lp);
-            final int val = i;
-            btn.setOnClickListener(v -> {
-                sendCounterResponse(cardCounters, val);
-                dialog.dismiss();
-            });
-            layoutOptions.addView(btn);
-        }
-        dialog.setCancelable(false)
-                .setCenterInView(gameDialogRegion());
-        dialog.show();
-    }
-
-    /**
-     * playerop.cpp L624-637：应答为每张可选卡一个 int16（该卡取除的指示物数），
-     * 总和必须等于 counterCount，否则核心回 MSG_RETRY。
-     * 这里按列表顺序贪心分摊玩家选定的总数。
-     */
-    private void sendCounterResponse(List<Integer> cardCounters, int total) {
-        ByteBuffer buf = ByteBuffer.allocate(2 * cardCounters.size());
-        buf.order(ByteOrder.LITTLE_ENDIAN);
-        int remain = total;
-        for (int i = 0; i < cardCounters.size(); i++) {
-            int take = Math.min(remain, cardCounters.get(i));
-            buf.putShort((short) take);
-            remain -= take;
-        }
-        engine().sendResponse(buf.array());
+        YesOrNoDialog.showCounterSelectDialog(activity, data);
     }
 
     public void showSumSelectDialog(ByteBuffer data) {
@@ -1293,15 +1082,6 @@ public class ShowDialogUtil {
 
     // === 决斗结果 / 结束 ===
 
-    public void showResultDialog(String result) {
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle("决斗结果")
-                .setMessage(result)
-                .setPositiveButton(v -> activity.finish())
-                .setCancelable(false);
-        dialog.show();
-    }
-
     /**
      * 连接断开 / 决斗结束时统一关闭所有可能残留的选择类对话框，
      * 避免遗留弹窗遮挡重新显示的局域网主界面（由 YGOProActivity returnToLanMain 调用）
@@ -1317,8 +1097,11 @@ public class ShowDialogUtil {
         }
         rpsResultShown = false;
         lastHandSent = 0;
-        rpsAnimating = false;
-        pendingHandSelect = false;
+        // 连锁场上点击模式复位：关闭询问窗、退出命令上下文并清除高亮，避免脏状态残留到下一局
+        YesOrNoDialog.dismissChainQuery();
+        GameFieldController chainCtl = fieldCtl();
+        if (chainCtl != null) chainCtl.endChainCommand();
+        clearChainSelect();
         panel().dismissOpenDialogs();
     }
 

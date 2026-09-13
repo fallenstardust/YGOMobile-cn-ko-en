@@ -15,9 +15,14 @@ import android.widget.ImageButton;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import java.nio.ByteBuffer;
+
+import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.TextureLoader;
+
+import ocgcore.DataManager;
 
 /**
  * 表示形式选择弹窗，效仿 gframe game.cpp L853-864 wPosSelect 与
@@ -51,6 +56,9 @@ public class PosSelectDialog {
     private static final int GAP_DP = 8;
     private static final int ROOT_PADDING_DP = 8;
 
+    /** 当前正在显示的表示形式选择弹窗（去重用），由静态工厂 showPositionSelectDialog 维护 */
+    private static PosSelectDialog current;
+
     private final Context context;
     private final ImageLoader imageLoader;
 
@@ -60,6 +68,35 @@ public class PosSelectDialog {
     private OnPositionSelectedListener selectListener;
     private OnDismissListener dismissListener;
     private boolean showing;
+
+    /**
+     * MSG_SELECT_POSITION 静态工厂（供 ShowDialogUtil.showPositionSelectDialog 委托调用）：
+     * data 为 GameEngine 打包的 code(4) + positions(4)。单一形式直接应答不弹窗；
+     * 多形式弹出选择框，标题取系统字符串 561（对齐 game.cpp wPosSelect 的 GetSysString(561)），
+     * 选择后发送 CTOS_RESPONSE，core 按所选形式把卡放上场并下发场地更新同步状态。
+     */
+    public static void showPositionSelectDialog(YGOProActivity activity, ImageLoader imageLoader, ByteBuffer data) {
+        if (data == null || data.remaining() < 8) return;
+        int code = data.getInt();
+        int positions = data.getInt() & 0x0F;
+        // 单一形式兜底（正常路径已在 GameEngine.onSelectPosition 拦截自动应答）
+        if (positions == 0x1 || positions == 0x2 || positions == 0x4 || positions == 0x8) {
+            activity.sendResponseInt(positions);
+            return;
+        }
+        if (positions == 0) return;
+        if (current != null && current.isShowing()) return;
+        PosSelectDialog dialog = new PosSelectDialog(activity, imageLoader);
+        current = dialog;
+        dialog.setTitle(DataManager.get().getStringManager().getSystemString(561, "选择表示形式"))
+                .setOnPositionSelectedListener(pos -> {
+                    // 先隐藏弹窗再发送协议：core 随后将卡按所选形式放上场并同步场地状态
+                    dialog.dismiss();
+                    activity.sendResponseInt(pos);
+                })
+                .setOnDismissListener(() -> current = null);
+        dialog.show(code, positions);
+    }
 
     public PosSelectDialog(Context context, ImageLoader imageLoader) {
         this.context = context;

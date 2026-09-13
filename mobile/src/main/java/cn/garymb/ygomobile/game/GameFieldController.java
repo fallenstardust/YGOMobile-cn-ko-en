@@ -43,6 +43,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private static final String TAG = "YGONativeGame";
     static final int CMD_CONTEXT_IDLE = 1;
     static final int CMD_CONTEXT_BATTLE = 2;
+    static final int CMD_CONTEXT_CHAIN = 3;
 
     private final YGOProActivity activity;
     private final Handler mainHandler;
@@ -208,6 +209,23 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         // 通讯（MSG_SELECT_BATTLE_CMD）允许进入结束阶段
         setEpButtonAllowed(true);
         showHint("点击卡片进行攻击或发动", 2500);
+    }
+
+    /**
+     * 连锁发动模式（对齐 gframe MSG_SELECT_CHAIN 非 panelmode 路径 + BUTTON_YES）：
+     * 询问窗「是」后进入——场上可发动卡片已高亮（is_selectable 黄色脉冲），玩家点击高亮卡片
+     * 弹出命令菜单发动，响应仅发送连锁项索引（见 CmdMenuDialog 连锁分支 / ShowDialogUtil.activateChainOption）。
+     * 与 idle/battle 不同：连锁期间不启用结束阶段按钮（selectType==16 时 YGOProActivity 已关闭 EP）。
+     */
+    public void beginChainCommand() {
+        setCmdContext(CMD_CONTEXT_CHAIN);
+        showHint("点击场上高亮的卡片发动效果", 2500);
+    }
+
+    /** 退出连锁发动模式：复位命令上下文并关闭残留命令菜单 */
+    public void endChainCommand() {
+        setCmdContext(0);
+        dismissCmdMenu();
     }
 
     // === 放置区域选择 ===

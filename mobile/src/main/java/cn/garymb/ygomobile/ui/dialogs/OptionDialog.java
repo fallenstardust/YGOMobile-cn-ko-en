@@ -17,9 +17,14 @@ import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
+
+import ocgcore.DataManager;
 
 /**
  * 选项选择弹窗，效仿 gframe game.cpp L828-851 wOptions 与
@@ -51,6 +56,9 @@ public class OptionDialog {
     /** 选项少于此数量时，按钮组在弹窗内垂直居中排列（否则顶部对齐并可滚动） */
     private static final int CENTER_VERTICAL_MAX_OPTIONS = 5;
 
+    /** 当前正在显示的选项弹窗（去重用），由静态工厂 showOptionDialog 维护 */
+    private static OptionDialog current;
+
     private final Context context;
     private PopupWindow popupWindow;
     private View contentView;
@@ -59,6 +67,48 @@ public class OptionDialog {
     private OnOptionSelectedListener selectListener;
     private OnDismissListener dismissListener;
     private boolean showing;
+
+    /**
+     * MSG_SELECT_OPTION 静态工厂（供 ShowDialogUtil.showOptionDialog 委托调用）：
+     * data 为 player(1) + count(1) + count×desc(4)。选项经 DataManager.getDesc 解析：
+     * <=0x7ff 为系统字符串，否则 卡号*16+n 取 cdb 缓存进 Card.Stras 的脚本提示文字；
+     * 标题取系统字符串 555（"Select an option."）。无选项兜底应答 0，避免通讯挂起。
+     * 点击选项发送 CTOS_RESPONSE（int32 索引，playerop.cpp select_option 校验范围）。
+     */
+    public static void showOptionDialog(YGOProActivity activity, ByteBuffer data) {
+        if (data == null || data.remaining() < 2) return;
+        data.get(); // selecting_player
+        int count = data.get() & 0xFF;
+        List<String> options = new ArrayList<>();
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            int descId = data.getInt();
+            options.add(DataManager.get().getDesc(descId, "Option " + (i + 1)));
+        }
+        if (options.isEmpty()) {
+            // 无可解析选项时兜底应答 0，避免通讯挂起（core 侧会校验索引合法性）
+            activity.sendResponseInt(0);
+            return;
+        }
+        if (current != null && current.isShowing()) return;
+        OptionDialog dialog = new OptionDialog(activity);
+        current = dialog;
+        dialog.setTitle(optionTitleText(activity))
+                .setOptions(options)
+                .setOnOptionSelectedListener(activity::sendResponseInt)
+                .setOnDismissListener(() -> current = null);
+        dialog.show();
+    }
+
+    /**
+     * 选项弹窗标题：系统字符串 555；消费 selectHint 避免残留影响后续选卡标题。
+     * 用链式访问 activity.getEngine().getField().selectHint，无需导入 GameEngine/GameField。
+     */
+    private static String optionTitleText(YGOProActivity activity) {
+        if (activity.getEngine() != null && activity.getEngine().getField() != null) {
+            activity.getEngine().getField().selectHint = 0;
+        }
+        return DataManager.get().getStringManager().getSystemString(555, "请选择一项");
+    }
 
     public OptionDialog(Context context) {
         this.context = context;
