@@ -30,7 +30,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -113,24 +115,76 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private static final float CAMERA_DISTANCE = 7.6f;
     private static final float CAM_X = 3.95f;
     private static final float CAM_LOOK_Y = 0.3f;
-    // 纵向取景锚点：对方手卡上缘贴上缘；下锚点取场地近端，我方手卡后移后底边略高于视图底边
-    private static final float ANCHOR_TOP_Y = -3.8f, ANCHOR_TOP_Z = 0.95f;
-    private static final float ANCHOR_BOTTOM_Y = 3.9f, ANCHOR_BOTTOM_Z = -0.1f;
-    // 我方手卡相对决斗场向后平移量：使手卡底边略高于视图底边
-    private static final float HAND_SELF_Y_SHIFT = 0.7f;
+
+    // === 取景内容真值（全部由 GameField 几何推导，随俯仰角/屏幕宽高动态解算，不再硬编码锚点）===
+    /** 手卡 billboard 所在平面高度（gframe getCardLocation：LOCATION_HAND z=0.5） */
+    private static final float HAND_Z = 0.5f;
+    /** 我方 / 对方手卡行的场地 y（gframe：4.0 / -3.4） */
+    private static final float SELF_HAND_Y = 4.0f;
+    private static final float OPP_HAND_Y = -3.4f;
+    /** 我方近端魔陷区外缘 y：szoneCY(0,&lt;5)=2.6 + ZONE_H/2=0.6，手卡屏幕上缘不得越过此线 */
+    private static final float SZONE_NEAR_Y = 3.2f;
+    /** 手卡屏幕上缘与魔陷区外缘之间保留的间隙（沿视线投影到地面后度量） */
+    private static final float HAND_CLEAR_GAP = 0.06f;
+    /** 纵向取景锚点相对手卡极值的安全裕量倍率 */
+    private static final float ANCHOR_FOV_MARGIN = 1.04f;
+    /** 可交互内容外侧安全边距（世界单位） */
+    private static final float CONTENT_PAD = 0.12f;
+    /** 视点距离夹取：过近透视畸变过大，过远画面变平且深度精度下降 */
+    private static final float MIN_CAM_D = 5.0f;
+    private static final float MAX_CAM_D = 14.0f;
+    /** 近/远裁剪面：由 0.5/100 收紧到 1/60，同等深度位宽下精度提升约 20 倍 */
+    private static final float CAM_NEAR = 1.0f;
+    private static final float CAM_FAR = 60.0f;
+
+    /**
+     * 需要完整入镜的可交互内容（怪兽区 / 魔陷区 / 堆叠区）→ {横向半宽(相对场地中轴), 所在 y 行}。
+     * 底板贴图的空白边距不计入：横向取景只保证“能点到的东西”不被裁掉，
+     * 从而在同样的屏幕宽高比下让卡片尽可能大（底板近端两角允许略微出画）。
+     */
+    private static final float[][] CONTENT_RECTS = buildContentRects();
+
+    private static float[][] buildContentRects() {
+        float[][] tmp = new float[64][];
+        int[] piles = {0x01, 0x10, 0x20, 0x40};
+        int n = 0;
+        for (int p = 0; p < 2; p++) {
+            for (int i = 0; i < GameField.MAX_MONSTER_ZONE && n < tmp.length; i++)
+                n = addContentRect(tmp, n, GameField.getZoneRect(p, 0x04, i));
+            for (int i = 0; i < GameField.MAX_SPELL_ZONE && n < tmp.length; i++)
+                n = addContentRect(tmp, n, GameField.getZoneRect(p, 0x08, i));
+            for (int loc : piles) {
+                if (n >= tmp.length) break;
+                n = addContentRect(tmp, n, GameField.getPileRect(p, loc));
+            }
+        }
+        float[][] out = new float[n][];
+        for (int i = 0; i < n; i++) out[i] = tmp[i];
+        return out;
+    }
+
+    private static int addContentRect(float[][] dst, int idx, float[] rect) {
+        if (rect == null) return idx;
+        float half = rect[2] * 0.5f;
+        float hw = Math.max(Math.abs(rect[0] + half - CAM_X), Math.abs(rect[0] - half - CAM_X)) + CONTENT_PAD;
+        dst[idx] = new float[]{hw, rect[1]};
+        return idx + 1;
+    }
+
     // 选中手卡抬高量
     private static final float HAND_LIFT = 0.3f;
     // 对方手卡确认：翻面展示时长与洗切动画时长
     private static final long OPP_REVEAL_MS = 2500L;
     private static final long SHUFFLE_MS = 700L;
-    // 场地视觉倍率：1.0=场地近端左右边缘精确贴合 GameFieldView 左右缘（field3.png 满幅不裁切）
+    // 场地视觉倍率：1.0=全部可交互格子/堆叠区恰好完整入镜；&lt;1 裁掉边缘换取更大的卡片；&gt;1 留更多边距
     private static final float FIELD_ZOOM = 1.0f;
     // === XML 可调参数（declare-styleable GameFieldView，常量兜底默认值）===
     // 视点到注视点距离：与俯仰角共同决定相机位置（越高越俯视）
     private float cameraDistance = CAMERA_DISTANCE;
     // 场地视觉倍率（运行期实际取值，可被 XML 覆盖）
     private float fieldZoom = FIELD_ZOOM;
-    // 我方手卡相对决斗场向后平移量（运行期实际取值，可被 XML 覆盖）
+    // 我方手卡手动微调偏置（正值=再向场地外侧后移）；基准后移量由 solveCamera 按俯仰角动态解算
+    private static final float HAND_SELF_Y_SHIFT = 0f;
     private float handSelfYShift = HAND_SELF_Y_SHIFT;
     // XML 是否显式声明了俯仰角（声明时优先于游戏内保存的设置）
     private boolean elevationFromXml = false;
@@ -228,6 +282,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private final float[] mOrthoVP = new float[16];
     // 相机姿态矩阵（view 旋转部分的转置）：手卡 billboard 平行屏幕用
     private final float[] mCamRot = new float[16];
+    // 视点位置：drawCard 判定卡片正/背面朝向用（仅 GL 线程读写）
+    private float camEyeX = CAM_X, camEyeY = 0f, camEyeZ = 1f;
+    // 我方手卡行动态后移量：solveCamera 写入，绘制与触摸命中共用（主线程也会读）
+    private volatile float selfHandShift = 0f;
     private final Object camLock = new Object();
     private final float[] pickInvVP = new float[16];
     private volatile int viewW = 1, viewH = 1;
@@ -287,7 +345,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     private void init() {
         setEGLContextClientVersion(3);
-        setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        // 24bit 深度：16bit 在远视点下连 0.001~0.003 的层间距都分辨不出（手卡叠放/堆叠层/正反面）
+        setEGLConfigChooser(new DepthConfigChooser());
         // 透明背景：GL Surface 置顶合成，透明像素处透出窗口背景（bg.jpg）与 HUD
         setZOrderOnTop(true);
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
@@ -496,6 +555,40 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         phaseLabelKeys.clear();
     }
 
+    /**
+     * EGL 配置：优先 RGBA8888 + 24bit 深度，个别设备无该配置时按 24→16→0 逐级回落，避免直接黑屏
+     */
+    private static final class DepthConfigChooser implements GLSurfaceView.EGLConfigChooser {
+        private static final int[] DEPTH_CANDIDATES = {24, 16, 0};
+
+        @Override
+        public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
+            int[] num = new int[1];
+            int[] got = new int[1];
+            for (int depth : DEPTH_CANDIDATES) {
+                int[] attrs = {
+                        EGL10.EGL_RED_SIZE, 8,
+                        EGL10.EGL_GREEN_SIZE, 8,
+                        EGL10.EGL_BLUE_SIZE, 8,
+                        EGL10.EGL_ALPHA_SIZE, 8,
+                        EGL10.EGL_DEPTH_SIZE, depth,
+                        EGL10.EGL_STENCIL_SIZE, 0,
+                        EGL10.EGL_NONE
+                };
+                if (!egl.eglChooseConfig(display, attrs, null, 0, num) || num[0] <= 0) continue;
+                EGLConfig[] configs = new EGLConfig[num[0]];
+                if (!egl.eglChooseConfig(display, attrs, configs, configs.length, num)) continue;
+                for (EGLConfig config : configs) {
+                    if (config == null) continue;
+                    if (egl.eglGetConfigAttrib(display, config, EGL10.EGL_DEPTH_SIZE, got) && got[0] >= depth) {
+                        return config;
+                    }
+                }
+            }
+            throw new IllegalArgumentException("No RGBA8888 EGL config available");
+        }
+    }
+
     @Override
     public void onSurfaceChanged(GL10 gl, int w, int h) {
         viewW = w;
@@ -504,73 +597,131 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         updateCamera();
     }
 
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        // 折叠屏展开/折叠、分屏拖拽：View 尺寸变化后兜底重建相机（onSurfaceChanged 未覆盖时的保险）
+        cameraDirty = true;
+    }
+
     /**
-     * 由俯仰角参数重建相机：eye 按(俯仰角, 距离)球面布置；注视方向取
-     * “对方手卡上缘/己方手卡下缘”两锚点方向的角平分线，FOV 取两锚点夹角；
-     * 视点距离迭代求解，使场地近端左右边缘尽量贴合屏幕左右缘（场地宽度与
-     * GameFieldView 实际宽度一致），竖屏/超宽屏受几何限制时取最优近似。
-     * 拾取矩阵与手卡 billboard 姿态同步重建。
+     * 相机解算结果：运行期 GL 与设计时 Canvas 预览共用同一份解算，保证布局编辑器所见即所得
      */
-    private void updateCamera() {
-        int w = viewW, h = viewH;
-        if (w <= 1 || h <= 1) return;
+    private static final class CameraSolve {
+        boolean valid;
+        float eyeY, eyeZ;       // 视点（eyeX 恒为 CAM_X）
+        float dirY, dirZ;       // 视线前向（YZ 平面内单位向量）
+        float tanV;             // tan(fovy/2)
+        float selfHandShift;    // 我方手卡行后移量（含 XML 手动微调）
+    }
+
+    /**
+     * 由「俯仰角 + GameFieldView 实际宽高」完整解算相机，全部随屏幕尺寸动态变化：
+     * <ol>
+     * <li>我方手卡行 y 按俯仰角解析求解，使其屏幕上缘沿视线落到地面时恰好停在近端魔陷区外缘之外，
+     * 任何俯仰角下都不会遮挡魔法陷阱区（固定后移量做不到这点）；</li>
+     * <li>纵向取景锚点 = 对方手卡屏幕上缘 / 我方手卡屏幕下缘（billboard 极值，随俯仰角与手卡行变化），
+     * FOV 取两锚点夹角 × 裕量；</li>
+     * <li>横向按「可交互内容」逐行求 max(半宽/该行深度)，已满足即停 → 保留尽量近的视点，
+     * 卡片尽可能大；宽高比过小（折叠屏展开/竖屏）后退也无法容纳时放大 FOV 兜底，任何宽高比都不丢格子。</li>
+     * </ol>
+     */
+    private CameraSolve solveCamera(int w, int h) {
+        CameraSolve s = new CameraSolve();
+        if (w <= 1 || h <= 1) return s;
         float aspect = (float) w / h;
         float th = (float) Math.toRadians(cameraElevationDeg);
         float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
+        if (sth < 1e-3f || cth < 1e-3f) return s;
+        // 手卡平行屏幕，相机 up≈(0,-sinθ,cosθ)：卡片半高在世界 Y/Z 上的投影
+        float hY = CARD_H * 0.5f * sth;
+        float hZ = CARD_H * 0.5f * cth;
+        float topZ = HAND_Z + hZ;      // 手卡屏幕上缘的世界 z
+        float bottomZ = HAND_Z - hZ;   // 手卡屏幕下缘的世界 z
 
-        float D = cameraDistance;
-        float eyeY = 0, eyeZ = 0, dY = 0, dZ = -1, fovy = 60f;
-        for (int i = 0; i < 6; i++) {
+        float D = Math.max(MIN_CAM_D, Math.min(MAX_CAM_D, cameraDistance));
+        float eyeY = CAM_LOOK_Y + cth * D, eyeZ = sth * D;
+        float dY = 0f, dZ = -1f, tanV = 0.5f, selfCy = SELF_HAND_Y;
+        for (int i = 0; i < 8; i++) {
             eyeY = CAM_LOOK_Y + cth * D;
             eyeZ = sth * D;
-            float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
-            float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
+            selfCy = solveSelfHandY(eyeY, eyeZ, hY, topZ);
+            float v1y = (OPP_HAND_Y - hY) - eyeY, v1z = topZ - eyeZ;
+            float v2y = (selfCy + hY) - eyeY, v2z = bottomZ - eyeZ;
             float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
             float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
             if (l1 < 1e-4f || l2 < 1e-4f) break;
             float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
             float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
-            fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
-            float tanH = (float) Math.tan(Math.toRadians(fovy * 0.5f)) * aspect;
+            tanV = (float) Math.tan(Math.acos(dot) * 0.5 * ANCHOR_FOV_MARGIN);
             float by = d1y + d2y, bz = d1z + d2z;
             float bl = (float) Math.sqrt(by * by + bz * bz);
             if (bl < 1e-4f) break;
             dY = by / bl;
             dZ = bz / bl;
-            // 场地近端(y=FIELD_Y_MAX)沿视线深度 depth(D)=K+b*D 为线性，令 半宽*ZOOM/depth==tanH 解出 D
-            float K = (FIELD_Y_MAX - CAM_LOOK_Y) * dY;
-            float b = -(cth * dY + sth * dZ);
-            if (b > 1e-4f && tanH > 1e-4f) {
-                D = ((FIELD_X_MAX - FIELD_X_MIN) * 0.5f * fieldZoom / tanH - K) / b;
-                D = Math.max(4.2f, Math.min(14f, D));
-            }
+            s.valid = true;
+            if (contentHalfTan(eyeY, eyeZ, dY, dZ) * fieldZoom <= tanV * aspect) break;
+            if (D >= MAX_CAM_D - 1e-3f) break;
+            D = Math.min(MAX_CAM_D, D * 1.35f);
         }
-        eyeY = CAM_LOOK_Y + cth * D;
-        eyeZ = sth * D;
-        float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
-        float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
-        float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
-        float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
-        if (l1 < 1e-4f || l2 < 1e-4f) return;
-        float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
-        float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
-        fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
-        float halfTan = (float) Math.tan(Math.toRadians(fovy * 0.5f));
-        float by = d1y + d2y, bz = d1z + d2z;
-        float bl = (float) Math.sqrt(by * by + bz * bz);
-        if (bl < 1e-4f) return;
-        dY = by / bl;
-        dZ = bz / bl;
-        // 横向兜底：场地按 ZOOM 倍宽度入镜（更近的视觉）
-        float depthNear = (FIELD_Y_MAX - eyeY) * dY + (0f - eyeZ) * dZ;
-        float needH = (FIELD_X_MAX - FIELD_X_MIN) * 0.5f * fieldZoom / Math.max(0.5f, depthNear);
-        if (needH / aspect > halfTan) halfTan = needH / aspect;
-        if (halfTan > 1.6f) halfTan = 1.6f;
-        fovy = (float) Math.toDegrees(2.0 * Math.atan(halfTan));
+        if (!s.valid) return s;
 
-        Matrix.perspectiveM(mProj, 0, fovy, aspect, 0.5f, 100f);
-        Matrix.setLookAtM(mView, 0, CAM_X, eyeY, eyeZ,
-                CAM_X, eyeY + dY, eyeZ + dZ, 0f, 0f, 1f);
+        float need = contentHalfTan(eyeY, eyeZ, dY, dZ) * fieldZoom;
+        if (need / aspect > tanV) tanV = need / aspect;
+        if (tanV > 1.6f) tanV = 1.6f;
+
+        float shift = SELF_HAND_Y - selfCy + handSelfYShift;
+        s.eyeY = eyeY;
+        s.eyeZ = eyeZ;
+        s.dirY = dY;
+        s.dirZ = dZ;
+        s.tanV = tanV;
+        s.selfHandShift = Math.max(-2.5f, Math.min(2.5f, shift));
+        return s;
+    }
+
+    /**
+     * 解算我方手卡行的场地 y：手卡是 billboard，其屏幕上缘 (cy-hY, HAND_Z+hZ) 沿视线落到地面(z=0)
+     * 的交点必须落在近端魔陷区外缘之外 HAND_CLEAR_GAP。视线越斜（俯仰角越小）所需后移量越大，
+     * 因此必须随相机动态求解，不能用固定常量。
+     */
+    private static float solveSelfHandY(float eyeY, float eyeZ, float hY, float topZ) {
+        if (eyeZ < 1e-3f) return SELF_HAND_Y;
+        float dz = eyeZ - topZ;
+        if (dz < 0.2f) return SELF_HAND_Y + 2.0f;
+        float cy = eyeY + hY - (eyeY - SZONE_NEAR_Y - HAND_CLEAR_GAP) * dz / eyeZ;
+        return Math.max(3.4f, Math.min(6.5f, cy));
+    }
+
+    /**
+     * 横向取景需求：所有可交互内容中 max(半宽 / 该行沿视线深度)，即容纳全部内容所需的 tan(fovx/2)
+     */
+    private static float contentHalfTan(float eyeY, float eyeZ, float dY, float dZ) {
+        float need = 0f;
+        for (int i = 0; i < CONTENT_RECTS.length; i++) {
+            float[] r = CONTENT_RECTS[i];
+            float depth = (r[1] - eyeY) * dY + (0f - eyeZ) * dZ;
+            if (depth < 0.2f) continue;
+            float t = r[0] / depth;
+            if (t > need) need = t;
+        }
+        return need;
+    }
+
+    private void updateCamera() {
+        CameraSolve s = solveCamera(viewW, viewH);
+        if (!s.valid) return;
+        float aspect = (float) viewW / viewH;
+        float fovy = (float) Math.toDegrees(2.0 * Math.atan(s.tanV));
+
+        camEyeX = CAM_X;
+        camEyeY = s.eyeY;
+        camEyeZ = s.eyeZ;
+        selfHandShift = s.selfHandShift;
+
+        Matrix.perspectiveM(mProj, 0, fovy, aspect, CAM_NEAR, CAM_FAR);
+        Matrix.setLookAtM(mView, 0, CAM_X, s.eyeY, s.eyeZ,
+                CAM_X, s.eyeY + s.dirY, s.eyeZ + s.dirZ, 0f, 0f, 1f);
         Matrix.multiplyMM(mVP, 0, mProj, 0, mView, 0);
 
         synchronized (camLock) {
@@ -877,6 +1028,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         float sy = (float) Math.sqrt(mOutlineModel[4] * mOutlineModel[4]
                 + mOutlineModel[5] * mOutlineModel[5] + mOutlineModel[6] * mOutlineModel[6]);
         if (sx < 1e-5f || sy < 1e-5f) return;
+        // 轮廓线始终抬到朝向相机的一侧，否则盖放卡（背面朝相机）的轮廓会被卡背遮住
+        float outZ = isFrontFacing(mOutlineModel) ? 0.002f : -0.002f;
         float[] lx = {-0.5f, 0.5f, -0.5f, 0.5f};
         float[] ly = {-0.5f, -0.5f, 0.5f, 0.5f};
         int[] es = {0, 1, 3, 2};
@@ -921,7 +1074,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     float cy2 = ly[a] + dly * (t0 + t1) * 0.5f;
                     float segLen = (t1 - t0);
                     Matrix.setIdentityM(mDashLocal, 0);
-                    Matrix.translateM(mDashLocal, 0, cx2, cy2, 0.002f);
+                    Matrix.translateM(mDashLocal, 0, cx2, cy2, outZ);
                     Matrix.rotateM(mDashLocal, 0, ang, 0f, 0f, 1f);
                     Matrix.scaleM(mDashLocal, 0, segLen, thickLocal, 1f);
                     Matrix.multiplyMM(mDashWorld, 0, mOutlineModel, 0, mDashLocal, 0);
@@ -1021,10 +1174,14 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 双面卡片：背面 cover + 正面卡图。
+     * 单面卡片绘制（对齐 gframe drawing.cpp：每张卡只画朝向相机的那一面）。
      * 位置取 getCardLocation 动画值并做 X 镜像；旋转按 Y→X→Z 合成、Y/Z 轴取反
      * （空间镜像使绕 Y/Z 旋转反向），保证 gframe 各位置的面朝：
-     * 对方暗手牌（rotX+rotY=π）cover 朝相机、守备/盖放/堆叠区朝向均正确。
+     * 对方暗手牌（rotX+rotY=π）卡背朝相机、守备/盖放/堆叠区朝向均正确。
+     * <p>
+     * 不再正反两面同绘：两面只差 0.002 的层间距，在远视点下不足一个深度台阶，
+     * 会出现“半张卡图 + 半张卡背”的 z-fighting，盖放卡还会被底板吞掉；
+     * 单面绘制同时把 overdraw 减半。
      */
     private void drawCard(GameField.ClientCard c) {
         if (c == null) return;
@@ -1033,12 +1190,14 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
         boolean isHand = c.location == 0x02;
         buildCardModel(c, mModel);
+        boolean front = isFrontFacing(mModel);
 
         int glow = pickGlowColor(c);
-        if (glow != 0) drawGlow(glow, alpha);
+        if (glow != 0) drawGlow(glow, alpha, front);
 
         int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
         if (isHand) {
+            // 手卡为 billboard，恒正面朝向相机
             if (code > 0 && (c.controler == 0 || c.isFaceUp())) {
                 int tex = obtainTexture(code, pendulumMode(c), pendulumScale(c));
                 if (tex > 0) {
@@ -1047,33 +1206,19 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     drawQuadColor(mModel, 0.35f, 0.35f, 0.40f, alpha);
                 }
             } else {
-                // 对方手卡：卡背正对相机
-                System.arraycopy(mModel, 0, mModelTmp, 0, 16);
-                Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, 0.002f);
-                int coverTex = obtainCover(true);
-                if (coverTex > 0) {
-                    drawQuadTex(mModelTmp, coverTex, alpha, 0f, 1f);
-                } else {
-                    drawQuadColor(mModelTmp, 0.24f, 0.18f, 0.13f, alpha);
-                }
+                drawCoverQuad(mModel, true, alpha, 0f, 1f);
             }
             return;
         }
 
-        // 背面（cover），沿卡片局部 -Z 微偏移避免共面闪烁
-        System.arraycopy(mModel, 0, mModelTmp, 0, 16);
-        Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, -0.002f);
-        Matrix.rotateM(mModelTmp, 0, 180f, 0f, 1f, 0f);
-        int coverTex = obtainCover(c.owner != 0);
-        if (coverTex > 0) {
-            drawQuadTex(mModelTmp, coverTex, alpha);
-        } else {
-            drawQuadColor(mModelTmp, 0.24f, 0.18f, 0.13f, alpha);
-        }
-
-        // 正面（手牌区 position 不含 POS_FACEUP 位，code>0 时同样按正面渲染）
-        boolean faceUp = c.isFaceUp() || c.location == 0x02;
-        if (faceUp && code > 0) {
+        boolean faceUp = c.isFaceUp();
+        if (!front) {
+            // 背面朝向相机（盖放/守备盖放/卡组背面）：绕局部 Y 翻 180° 后绘卡背，
+            // 卡背自身正面朝相机，贴图方向与 gframe 一致且不与任何面共面
+            System.arraycopy(mModel, 0, mModelTmp, 0, 16);
+            Matrix.rotateM(mModelTmp, 0, 180f, 0f, 1f, 0f);
+            drawCoverQuad(mModelTmp, c.owner != 0, alpha, 1f, 0f);
+        } else if (faceUp && code > 0) {
             int tex = obtainTexture(code, pendulumMode(c), pendulumScale(c));
             if (tex > 0) {
                 drawQuadTex(mModel, tex, alpha);
@@ -1081,7 +1226,26 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                 drawQuadColor(mModel, 0.35f, 0.35f, 0.40f, alpha);
             }
         } else {
-            drawQuadColor(mModel, 0.16f, 0.12f, 0.10f, alpha);
+            // 正面朝向相机但非表侧表示（卡组顶等）：gframe 同样贴卡背材质
+            drawCoverQuad(mModel, c.owner != 0, alpha, 1f, 0f);
+        }
+    }
+
+    /**
+     * 卡片正面（局部 +Z）是否朝向视点：model 第 3 列为正面法线（Z 缩放恒为 1，仍是单位向量）、
+     * 第 4 列为卡片中心
+     */
+    private boolean isFrontFacing(float[] model) {
+        float nx = model[8], ny = model[9], nz = model[10];
+        return (camEyeX - model[12]) * nx + (camEyeY - model[13]) * ny + (camEyeZ - model[14]) * nz >= 0f;
+    }
+
+    private void drawCoverQuad(float[] model, boolean opponent, float alpha, float flipU, float flipV) {
+        int coverTex = obtainCover(opponent);
+        if (coverTex > 0) {
+            drawQuadTex(model, coverTex, alpha, flipU, flipV);
+        } else {
+            drawQuadColor(model, 0.24f, 0.18f, 0.13f, alpha);
         }
     }
 
@@ -1100,10 +1264,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 我方手卡后移 handSelfYShift，对方手卡保持原位
+     * 我方手卡后移量：基准量由 solveCamera 按俯仰角动态解算（保证不遮挡魔陷区），
+     * 再叠加 XML field_hand_shift 的手动微调；对方手卡保持 gframe 原位
      */
     private float handY(GameField.ClientCard c) {
-        return c.curY - (c.controler == 0 ? handSelfYShift : 0f);
+        return c.curY - (c.controler == 0 ? selfHandShift : 0f);
     }
 
     /**
@@ -1120,9 +1285,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return mCamRot[6] * handLift(c);
     }
 
-    private void drawGlow(int color, float cardAlpha) {
+    private void drawGlow(int color, float cardAlpha, boolean front) {
         System.arraycopy(mModel, 0, mModelTmp, 0, 16);
-        Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, -0.004f);
+        // 背面朝向相机时偏移取反，保证光晕恒落在卡片之下（否则会给卡背染色）
+        Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, front ? -0.004f : 0.004f);
         Matrix.scaleM(mModelTmp, 0, mModelTmp, 0, 1.10f, 1.10f, 1f);
         float a = cardAlpha * (0.55f + 0.30f * (float) Math.sin(animTimeMs * 0.005));
         drawQuadColor(mModelTmp, ((color >> 16) & 0xFF) / 255f,
@@ -1942,13 +2108,14 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
 
         if (previewShowHand) {
-            // 示例手卡：每方 5 张，坐标同运行期 getCardLocation(LOCATION_HAND)，我方计入 handSelfYShift
+            // 示例手卡：每方 5 张，坐标同运行期 getCardLocation(LOCATION_HAND)，
+            // 我方行位用 solveCamera 解算出的动态后移量（与运行期完全一致）
             float spacing = 0.95f;
             for (int i = 0; i < 5; i++) {
                 drawHandCard(canvas, cam, w, h, 3.95f - spacing * 2f + i * spacing,
-                        4.0f - handSelfYShift, 0.5f, 0xFF33516E);
+                        SELF_HAND_Y - cam.selfHandShift, HAND_Z, 0xFF33516E);
                 drawHandCard(canvas, cam, w, h, 3.95f + spacing * 2f - i * spacing,
-                        -3.4f, 0.5f, 0xFF5C4433);
+                        OPP_HAND_Y, HAND_Z, 0xFF5C4433);
             }
         }
 
@@ -1957,8 +2124,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         info.setColor(0xAAFFFFFF);
         info.setTextSize(9f * density);
         canvas.drawText(String.format(Locale.US,
-                        "GameFieldView 设计预览  俯仰角=%.0f° 视点距离=%.2f 场地倍率=%.2f 手卡后移=%.2f",
-                        cameraElevationDeg, cameraDistance, fieldZoom, handSelfYShift),
+                        "GameFieldView 设计预览  俯仰角=%.0f° 视点距离=%.2f 场地倍率=%.2f 手卡后移=%.3f(解算) 视高=%.1f°",
+                        cameraElevationDeg, cameraDistance, fieldZoom, cam.selfHandShift,
+                        Math.toDegrees(2.0 * Math.atan(cam.halfH))),
                 6f * density, h - 6f * density, info);
     }
 
@@ -2014,8 +2182,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 设计时预览相机：运行期 updateCamera 的纯 Java 等效复刻
-     * （编辑器中 android.opengl 为 stub，不可用；此处只用 java.lang.Math）
+     * 设计时预览相机：与运行期 updateCamera 共用 {@link #solveCamera(int, int)}
+     * （编辑器中 android.opengl 为 stub，不可用；此处只用 java.lang.Math 还原同一套外参/内参）
      */
     private static final class EditCamera {
         float eyeX, eyeY, eyeZ;      // 相机位置
@@ -2023,76 +2191,30 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         float rx, ry, rz;            // 屏幕右轴
         float ux, uy, uz;            // 屏幕上轴
         float halfH, halfW;          // tan(fovy/2) 与 tan(fovy/2)*aspect
+        float selfHandShift;         // 我方手卡行后移量
     }
 
     private EditCamera computeEditCamera(int w, int h) {
+        CameraSolve s = solveCamera(w, h);
+        if (!s.valid) return null;
         float aspect = (float) w / h;
-        float th = (float) Math.toRadians(cameraElevationDeg);
-        float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
-
-        float D = cameraDistance;
-        float eyeY = 0, eyeZ = 0, dY = 0, dZ = -1;
-        for (int i = 0; i < 6; i++) {
-            eyeY = CAM_LOOK_Y + cth * D;
-            eyeZ = sth * D;
-            float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
-            float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
-            float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
-            float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
-            if (l1 < 1e-4f || l2 < 1e-4f) break;
-            float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
-            float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
-            float fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
-            float tanH = (float) Math.tan(Math.toRadians(fovy * 0.5f)) * aspect;
-            float by = d1y + d2y, bz = d1z + d2z;
-            float bl = (float) Math.sqrt(by * by + bz * bz);
-            if (bl < 1e-4f) break;
-            dY = by / bl;
-            dZ = bz / bl;
-            float K = (FIELD_Y_MAX - CAM_LOOK_Y) * dY;
-            float b = -(cth * dY + sth * dZ);
-            if (b > 1e-4f && tanH > 1e-4f) {
-                D = ((FIELD_X_MAX - FIELD_X_MIN) * 0.5f * fieldZoom / tanH - K) / b;
-                D = Math.max(4.2f, Math.min(14f, D));
-            }
-        }
-        eyeY = CAM_LOOK_Y + cth * D;
-        eyeZ = sth * D;
-        float v1y = ANCHOR_TOP_Y - eyeY, v1z = ANCHOR_TOP_Z - eyeZ;
-        float v2y = ANCHOR_BOTTOM_Y - eyeY, v2z = ANCHOR_BOTTOM_Z - eyeZ;
-        float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
-        float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
-        if (l1 < 1e-4f || l2 < 1e-4f) return null;
-        float d1y = v1y / l1, d1z = v1z / l1, d2y = v2y / l2, d2z = v2z / l2;
-        float dot = Math.max(-1f, Math.min(1f, d1y * d2y + d1z * d2z));
-        float fovy = (float) Math.toDegrees(Math.acos(dot)) * 1.04f;
-        float halfTan = (float) Math.tan(Math.toRadians(fovy * 0.5f));
-        float by = d1y + d2y, bz = d1z + d2z;
-        float bl = (float) Math.sqrt(by * by + bz * bz);
-        if (bl < 1e-4f) return null;
-        dY = by / bl;
-        dZ = bz / bl;
-        float depthNear = (FIELD_Y_MAX - eyeY) * dY - eyeZ * dZ;
-        float needH = (FIELD_X_MAX - FIELD_X_MIN) * 0.5f * fieldZoom / Math.max(0.5f, depthNear);
-        if (needH / aspect > halfTan) halfTan = needH / aspect;
-        if (halfTan > 1.6f) halfTan = 1.6f;
-
         EditCamera cam = new EditCamera();
         cam.eyeX = CAM_X;
-        cam.eyeY = eyeY;
-        cam.eyeZ = eyeZ;
+        cam.eyeY = s.eyeY;
+        cam.eyeZ = s.eyeZ;
         // 前向轴 f=(0,dY,dZ)；右轴 r=normalize(cross(f,Z轴))=(sign(dY),0,0)；上轴 u=cross(r,f)
         cam.fx = 0f;
-        cam.fy = dY;
-        cam.fz = dZ;
-        cam.rx = dY < 0f ? -1f : 1f;
+        cam.fy = s.dirY;
+        cam.fz = s.dirZ;
+        cam.rx = s.dirY < 0f ? -1f : 1f;
         cam.ry = 0f;
         cam.rz = 0f;
         cam.ux = 0f;
-        cam.uy = -cam.rx * dZ;
-        cam.uz = cam.rx * dY;
-        cam.halfH = halfTan;
-        cam.halfW = halfTan * aspect;
+        cam.uy = -cam.rx * s.dirZ;
+        cam.uz = cam.rx * s.dirY;
+        cam.halfH = s.tanV;
+        cam.halfW = s.tanV * aspect;
+        cam.selfHandShift = s.selfHandShift;
         return cam;
     }
 

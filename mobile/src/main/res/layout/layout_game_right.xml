@@ -15,7 +15,7 @@
         app:field_camera_elevation="60"
         app:field_camera_distance="7.6"
         app:field_zoom="1.0"
-        app:field_hand_shift="0.7"
+        app:field_hand_shift="0"
         app:field_preview_zones="true"
         app:field_preview_hand="true"
         app:field_preview_labels="true" />
