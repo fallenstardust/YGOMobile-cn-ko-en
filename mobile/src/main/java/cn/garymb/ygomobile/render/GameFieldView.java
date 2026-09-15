@@ -142,9 +142,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private static final int PILE_MAX_LAYERS = 14;
     private static final float PILE_LAYER_THICK = 0.012f;
 
-    // === 总攻击力 bar（问题5）：materials.cpp vTotalAtk*（raw 场地坐标，x 经 fx 映射、y 直用）===
-    private static final float[] TOTAL_ATK_ME_MR4 = {0.5f, 1.3f, 1.5f, 2.0f};
-    private static final float[] TOTAL_ATK_OP_MR4 = {6.4f, -0.1f, 7.4f, 0.65f};
+    // === 总攻击力 bar（问题5）：raw 场地坐标（x 经 fx 映射、y 直用）===
+    // rule>3（MR4）：贴各自场地区(szone seq5)靠场地中心一侧的上沿之上，留 0.1 间隙，
+    //   既不压场地区格子(0.05~1.15 × 1.4~2.6 / 6.75~7.85 × -2.6~-1.4)，
+    //   也不压最左怪兽格(x≥1.2 / x≤6.7)；方向对齐 drawing.cpp vTotalAtkop 的中心朝向。
+    // rule<=3（MR3）：无额外怪兽区，落在额外怪兽区位置（materials.cpp vTotalAtkmeT/opT）。
+    private static final float[] TOTAL_ATK_ME_MR4 = {0.15f, 0.6f, 1.05f, 1.3f};
+    private static final float[] TOTAL_ATK_OP_MR4 = {6.85f, -1.3f, 7.75f, -0.6f};
     private static final float[] TOTAL_ATK_ME_MR3 = {2.5f, 0.95f, 3.5f, 1.65f};
     private static final float[] TOTAL_ATK_OP_MR3 = {4.45f, 0.4f, 5.45f, 1.1f};
     private static final long TOTAL_ATK_KEY = -3L;
@@ -1017,7 +1021,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                 float pilePx = Math.abs(top[1] - bot[1]);
                 float hpx = Math.max(10f, Math.min(40f, pilePx * 0.30f));
                 float[] anchor = projectWorldPoint(mirrorX(r[0]), nearY + 0.14f, 0.02f);
-                drawScreenNumber(anchor, String.valueOf(cnt), 0xFFFFFF00, hpx);
+                drawScreenNumber(anchor, pileCountLabel(f, p, loc, cnt), 0xFFFFFF00, hpx);
             }
         }
         boolean mr4 = f.dInfo.duelRule >= 4;
@@ -1034,6 +1038,47 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             drawScreenNumber(a, String.valueOf(f.dInfo.totalAttack[p]), f.dInfo.totalAttackColor[p], hpx);
         }
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+    }
+
+    /**
+     * 堆叠区数量文字（需求1）：额外卡组与除外区在总数后追加括号区分表侧/里侧。
+     * - 额外卡组(0x40)：显示「总数(表侧)」——表侧数=extraPCount[p]（对齐 drawing.cpp L1130-1131
+     *   extra.size() 与 (extra_p_count)）；例：表侧10、里侧5、总数15 → "15(10)"。
+     * - 除外区(0x20)：显示「总数(里侧)」——里侧数=总数-表侧数，表侧数=removed 中 isFaceUp() 计数；
+     *   例：表侧10、里侧5、总数15 → "15(5)"。
+     * 括号内数量为 0 时只显示总数（全区同朝向，无需区分）；卡组(0x01)/墓地(0x10) 维持总数。
+     */
+    private static String pileCountLabel(GameField f, int p, int loc, int total) {
+        if (loc == 0x40) {
+            int faceUp = clampCount(f.extraPCount[p], total);
+            return faceUp > 0 ? total + "(" + faceUp + ")" : String.valueOf(total);
+        }
+        if (loc == 0x20) {
+            int faceUp = clampCount(countFaceUp(f, p, 0x20), total);
+            int faceDown = total - faceUp;
+            return faceDown > 0 ? total + "(" + faceDown + ")" : String.valueOf(total);
+        }
+        return String.valueOf(total);
+    }
+
+    /** 统计某区列表中表侧（正面朝上）卡片数，对齐 ClientCard.isFaceUp 的 position 位判定 */
+    private static int countFaceUp(GameField f, int p, int loc) {
+        try {
+            List<GameField.ClientCard> list = f.players[p].getLocationList(loc);
+            if (list == null) return 0;
+            int n = 0;
+            for (GameField.ClientCard c : list) {
+                if (c != null && c.isFaceUp()) n++;
+            }
+            return n;
+        } catch (Throwable t) {
+            return 0;
+        }
+    }
+
+    private static int clampCount(int v, int max) {
+        if (v < 0) return 0;
+        return Math.min(v, max);
     }
 
     private void drawScreenNumber(float[] screenXY, String text, int color, float heightPx) {
