@@ -67,8 +67,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private TextView tvHintMessage;
     private FrameLayout layoutChatMessages;
     private TextView tvChatMessage1, tvChatMessage2;
-    /** 系统/观战弹幕层：叠加在 layout_top_info（LPbar 区域）上一层，XML 中位于其后的子视图 */
+    /** 系统/观战消息弹幕层（layout_danmaku）：FrameLayout，弹幕与大厅聊天列表的父容器 */
     private FrameLayout layoutDanmaku;
+    /** 顶部信息条（gameTopInfo）：其实测高度作为相机顶部内缩量，确保对方手卡不遮挡（问题1） */
+    private View layoutTopInfo;
+
     // 表情气泡：显示在发送方头像下方（对齐 gframe drawing.cpp DrawEmoticon），超时自动隐藏
     private static final long EMOTE_BUBBLE_DURATION_MS = 3000;
     private ImageView ivPlayerEmoteBubble, ivOpponentEmoteBubble;
@@ -96,6 +99,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         viewController = new GameFieldViewController(activity);
         bindChatViews();
         setupPhaseButtons();
+        setupOverlayAnchoring();
     }
 
     private void bindChatViews() {
@@ -106,6 +110,37 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         layoutDanmaku = activity.findViewById(R.id.layout_danmaku);
         ivPlayerEmoteBubble = activity.findViewById(R.id.iv_player_emote_bubble);
         ivOpponentEmoteBubble = activity.findViewById(R.id.iv_opponent_emote_bubble);
+        layoutTopInfo = activity.findViewById(R.id.layout_top_info);
+    }
+
+    /**
+     * 问题1：把 gameTopInfo 实测高度喂给相机作为顶部内缩（对方手卡不遮挡顶部条），
+     * 并在相机每次重建后把聊天信息 + 中央提示文本重新锚定到「对方手卡正上方」。
+     * 顶部条高度变化 / 屏幕旋转 / 折叠屏切换都会经 OnLayoutChange 与相机回调自适应。
+     */
+    private void setupOverlayAnchoring() {
+        if (viewController == null) return;
+        if (layoutTopInfo != null) {
+            layoutTopInfo.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+                int hgt = v.getHeight();
+                if (hgt > 0) viewController.setTopInsetPx(hgt);
+            });
+        }
+        viewController.setOnCameraChangedListener(this::anchorChatAboveOpponentHand);
+    }
+
+    private void anchorChatAboveOpponentHand() {
+        if (viewController == null || layoutChatMessages == null) return;
+        final float oppTopY = viewController.getOpponentHandTopScreenY();
+        final int topH = layoutTopInfo != null ? layoutTopInfo.getHeight() : 0;
+        layoutChatMessages.post(() -> {
+            int hgt = layoutChatMessages.getHeight();
+            if (hgt <= 0) return;
+            // 让聊天/提示容器的底边贴到对方手卡上缘之上（容器顶基准 = 顶部条高度）
+            float ty = oppTopY - topH - hgt;
+            if (ty < 0f) ty = 0f;
+            layoutChatMessages.setTranslationY(ty);
+        });
     }
 
     /**

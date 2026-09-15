@@ -356,90 +356,78 @@ public class TextureLoader {
         return getTexture("mask.png");
     }
 
-    /** tLPBar / tLPFrame / tLPBarFrame：LP 条、LP 框 */
-    public Bitmap getLpBar() {
-        return getTexture("lp3.png");
+    /** tTotalAtk（image_manager.cpp L47 textures/totalAtk.png）：总攻击力 bar，含透明通道按 ARGB 解码 */
+    public Bitmap getTotalAtkTexture() {
+        return getBitmapArgb("totalAtk.png");
     }
 
-    public Bitmap getLpFrame() {
-        return getTexture("lpf.png");
-    }
+    // === LP 血条颜色行 / 边框行（对齐 drawing.cpp L946-971 与 L998-1002）===
 
-    public Bitmap getLpBarFrame() {
-        return getTexture("lpbarf.png");
+    /** lp3.png 纵向均分 5 行纯色（对齐 drawing.cpp bgColorPos/fgColorPos % 5） */
+    private static final int LP_BAR_COLOR_ROWS = 5;
+    /** lpbarf.png 纵向均分 4 行边框：我方彩/灰、对方彩/灰（对齐 drawing.cpp L998-1002） */
+    private static final int LP_FRAME_ROWS = 4;
+    /** lp3.png 行裁剪缓存：血条每次刷新都会取行，缓存避免重复 createBitmap */
+    private final Map<Integer, Bitmap> lpBarRowCache = new ConcurrentHashMap<>();
+    /** lpbarf.png 行裁剪缓存：回合切换时取行 */
+    private final Map<Integer, Bitmap> lpFrameRowCache = new ConcurrentHashMap<>();
+
+    /**
+     * lp3.png 的第 colorRow 行颜色条（对齐 drawing.cpp L946-971：source recti(0, row*60, 60, (row+1)*60)）。
+     * lp3.png 纵向均分 5 行纯色、横向平铺填充血条；纯色无 alpha，直接取 RGB_565 预加载缓存裁剪。
+     * colorRow 负数归零、超界按 5 取模（对齐 C++ 的 (layerCount±) % 5）。
+     */
+    public Bitmap getLpBarColorRow(int colorRow) {
+        if (colorRow < 0) colorRow = 0;
+        colorRow %= LP_BAR_COLOR_ROWS;
+        Bitmap cached = lpBarRowCache.get(colorRow);
+        if (cached != null && !cached.isRecycled()) return cached;
+        Bitmap row = cropRow(getTexture("lp3.png"), colorRow, LP_BAR_COLOR_ROWS);
+        if (row != null) lpBarRowCache.put(colorRow, row);
+        return row;
     }
 
     /**
-     * lpbarf.png LP 框行裁剪（drawing.cpp L996-1003）：
-     * 305x280 图集共 4 行 70px：row0=我方回合绿色、row1=我方非回合灰色、
-     * row2=对方回合红色、row3=对方非回合灰色
+     * lpbarf.png 的第 row 行边框（对齐 drawing.cpp L998-1002）：
+     * 0=我方回合彩色左框 recti(0,0,305,70)、1=我方非回合灰框 recti(0,70,305,140)、
+     * 2=对方回合彩色右框 recti(0,140,305,210)、3=对方非回合灰框 recti(0,210,305,280)。
+     * 边框含透明通道，取 ARGB_8888 预加载缓存裁剪；越界钳制到 [0,3]。
      */
     public Bitmap getLpBarFrameRow(int row) {
-        if (row < 0 || row > 3) return null;
-        String key = "lpbarf_row_" + row;
-        Bitmap cached = permanentCache.get(key);
-        if (cached != null) return cached;
-        Bitmap sheet = getLpBarFrame();
-        if (sheet == null || sheet.getWidth() <= 0 || sheet.getHeight() < (row + 1) * 70) return null;
+        if (row < 0) row = 0;
+        if (row >= LP_FRAME_ROWS) row = LP_FRAME_ROWS - 1;
+        Bitmap cached = lpFrameRowCache.get(row);
+        if (cached != null && !cached.isRecycled()) return cached;
+        Bitmap r = cropRow(getTexture("lpbarf.png"), row, LP_FRAME_ROWS);
+        if (r != null) lpFrameRowCache.put(row, r);
+        return r;
+    }
+
+    /** 将 sheet 纵向均分为 rows 份取第 index 份（末行吃掉除不尽的余数；越界/失败返回 null） */
+    private Bitmap cropRow(Bitmap sheet, int index, int rows) {
+        if (sheet == null || sheet.isRecycled()) return null;
+        int w = sheet.getWidth();
+        int h = sheet.getHeight();
+        if (w <= 0 || h <= 0 || rows <= 0 || index < 0 || index >= rows) return null;
+        int rowH = h / rows;
+        if (rowH <= 0) return null;
+        int top = index * rowH;
+        int bottom = (index == rows - 1) ? h : top + rowH;
+        if (bottom <= top || bottom > h) return null;
         try {
-            Bitmap bmp = Bitmap.createBitmap(sheet, 0, row * 70, sheet.getWidth(), 70);
-            if (bmp != null) permanentCache.put(key, bmp);
-            return bmp;
+            return Bitmap.createBitmap(sheet, 0, top, w, bottom - top);
         } catch (Exception e) {
-            Log.e(TAG, "crop lpbarf failed: row " + row, e);
+            Log.e(TAG, "cropRow failed: index=" + index + " rows=" + rows, e);
             return null;
         }
     }
 
-    /**
-     * lp3.png 血条颜色行裁剪（drawing.cpp L936-972）：
-     * 每行 60px 共 5 种颜色，LP 超过初始上限时按层数循环换色
-     */
-    public Bitmap getLpBarColorRow(int index) {
-        int row = ((index % 5) + 5) % 5;
-        String key = "lp3_row_" + row;
-        Bitmap cached = permanentCache.get(key);
-        if (cached != null) return cached;
-        Bitmap sheet = getLpBar();
-        if (sheet == null || sheet.getWidth() <= 0 || sheet.getHeight() < (row + 1) * 60) return null;
-        try {
-            Bitmap bmp = Bitmap.createBitmap(sheet, 0, row * 60, sheet.getWidth(), 60);
-            if (bmp != null) permanentCache.put(key, bmp);
-            return bmp;
-        } catch (Exception e) {
-            Log.e(TAG, "crop lp3 failed: row " + row, e);
-            return null;
-        }
-    }
-
-    /** tLim：禁限图标  tOT：OT 图标  tCardType：卡片类型条 */
-    public Bitmap getLimitIcon() {
-        return getTexture("icon_lim.png");
-    }
-
-    public Bitmap getOtIcon() {
-        return getTexture("ot.png");
-    }
-
-    public Bitmap getCardTypeTexture() {
-        return getTexture("cardtype.png");
-    }
-
-    /** tHand[0..2]：猜拳手势f1/f2/f3.jpg，index 取 0-2 */
-    public Bitmap getHandTexture(int index) {
-        if (index < 0 || index > 2) return null;
-        return getTexture("f" + (index + 1) + ".jpg");
-    }
-
-    /** tTotalAtk：攻击合计  tSelField：可选区域高亮  tClock：计时 */
-    public Bitmap getTotalAtkTexture() {
-        return getTexture("totalAtk.png");
-    }
-
+    /** tSelField：可选区域高亮 */
     public Bitmap getSelFieldTexture() {
         return getTexture("selfield.png");
     }
 
+    /** tClock：计时 */
     public Bitmap getClockTexture() {
         return getTexture("tiktok.png");
     }

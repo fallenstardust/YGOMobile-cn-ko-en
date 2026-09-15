@@ -1575,10 +1575,15 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     @Override
     public void onSet(int code, int ctrl, int loc, int seq) {
         ctrl = localPlayer(ctrl);
-        GameField.ClientCard card = new GameField.ClientCard();
-        card.code = code;
-        card.position = 0x2;
-        field.addCard(ctrl, loc, seq, card);
+        // 对齐 gframe duelclient.cpp MSG_SET（L3179-3189）：仅播音效 + 事件串，绝不新建/替换卡片。
+        // 卡片已由先到的 MSG_MOVE(onMove) 放入并定位到格子；旧实现在此 new 了一张 cur*=0 的卡，
+        // 而 addCard 对 MZONE/SZONE 只做 list.set 不调 setCardPos，新卡落在世界原点、与底板共面被
+        // 深度吞掉，于是里侧守备怪兽 / 盖放魔陷卡都看不到卡背矩形。
+        GameField.ClientCard card = field.getCard(ctrl, loc, seq);
+        if (card != null && card.curX == 0f && card.curY == 0f && card.curZ == 0f) {
+            // 兜底：极少数回放/重载路径卡已在列表却从未定位，补一次定位（不覆盖 code/position）
+            field.moveCardAnimated(card, 1);
+        }
         soundManager.playSoundEffect(SoundManager.SFX.SET);
         setEventString(1601, "盖放了卡片");
         mainHandler.post(() -> {

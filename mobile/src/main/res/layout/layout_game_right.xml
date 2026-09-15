@@ -12,7 +12,7 @@
         android:id="@+id/game_field_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:field_camera_elevation="60"
+        app:field_camera_elevation="52"
         app:field_camera_distance="7.6"
         app:field_zoom="1.0"
         app:field_hand_shift="0"

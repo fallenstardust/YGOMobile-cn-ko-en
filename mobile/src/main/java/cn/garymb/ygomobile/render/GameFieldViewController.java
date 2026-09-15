@@ -158,6 +158,16 @@ public class GameFieldViewController
         return fieldView != null ? fieldView.projectFieldMidline() : null;
     }
 
+    /** 顶部内缩像素：传入 gameTopInfo 实测高度，令对方手卡不遮挡顶部信息条（问题1） */
+    public void setTopInsetPx(float px) {
+        if (fieldView != null) fieldView.setTopInsetPx(px);
+    }
+
+    /** 对方手卡屏幕上缘 y（像素）：供聊天/中央提示锚定在其正上方（问题1） */
+    public float getOpponentHandTopScreenY() {
+        return fieldView != null ? fieldView.getOpponentHandTopScreenY() : 0f;
+    }
+
     // ==================== 监听注册（业务方使用） ====================
 
     /**

@@ -106,8 +106,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return FIELD_X_MIN + FIELD_X_MAX - x;
     }
 
-    // === 相机参数（俯仰角可由设置调整，默认俯视 60°）===
-    public static final float DEFAULT_CAMERA_ELEVATION = 60f;
+    // === 相机参数（俯仰角可由设置调整，默认俯视 52°：比 60° 更平，配合顶部内缩避免对方手卡顶到 gameTopInfo）===
+    public static final float DEFAULT_CAMERA_ELEVATION = 52f;
     public static final float MIN_CAMERA_ELEVATION = 35f;
     public static final float MAX_CAMERA_ELEVATION = 75f;
     private static final String PREF_CAMERA_ELEVATION = "camera_elevation";
@@ -136,6 +136,18 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     /** 近/远裁剪面：由 0.5/100 收紧到 1/60，同等深度位宽下精度提升约 20 倍 */
     private static final float CAM_NEAR = 1.0f;
     private static final float CAM_FAR = 60.0f;
+
+    // === 堆叠区厚度（问题4）：可见层在 PILE_BASE_Z 之上按张数均匀抬升，形成侧视厚度 ===
+    private static final float PILE_BASE_Z = 0.02f;
+    private static final int PILE_MAX_LAYERS = 14;
+    private static final float PILE_LAYER_THICK = 0.012f;
+
+    // === 总攻击力 bar（问题5）：materials.cpp vTotalAtk*（raw 场地坐标，x 经 fx 映射、y 直用）===
+    private static final float[] TOTAL_ATK_ME_MR4 = {0.5f, 1.3f, 1.5f, 2.0f};
+    private static final float[] TOTAL_ATK_OP_MR4 = {6.4f, -0.1f, 7.4f, 0.65f};
+    private static final float[] TOTAL_ATK_ME_MR3 = {2.5f, 0.95f, 3.5f, 1.65f};
+    private static final float[] TOTAL_ATK_OP_MR3 = {4.45f, 0.4f, 5.45f, 1.1f};
+    private static final long TOTAL_ATK_KEY = -3L;
 
     /**
      * 需要完整入镜的可交互内容（怪兽区 / 魔陷区 / 堆叠区）→ {横向半宽(相对场地中轴), 所在 y 行}。
@@ -270,6 +282,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private final HashMap<String, Long> phaseLabelKeys = new HashMap<>();
     private long phaseLabelKeySeq = -1000L;
 
+    // 屏幕空间数字文字纹理键（区域计数 / 总攻击力数字共用，键含颜色；负值递减独立键域）
+    private final HashMap<String, Long> numLabelKeys = new HashMap<>();
+    private long numLabelKeySeq = -100000L;
+
     // === 矩阵与相机缓存 ===
     private final float[] mProj = new float[16];
     private final float[] mView = new float[16];
@@ -286,6 +302,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private float camEyeX = CAM_X, camEyeY = 0f, camEyeZ = 1f;
     // 我方手卡行动态后移量：solveCamera 写入，绘制与触摸命中共用（主线程也会读）
     private volatile float selfHandShift = 0f;
+    // 顶部内缩像素（问题1）：由控制器传入 gameTopInfo 实测高度，离轴视锥据此把对方手卡压到其下
+    private volatile float topInsetPx = 0f;
     private final Object camLock = new Object();
     private final float[] pickInvVP = new float[16];
     private volatile int viewW = 1, viewH = 1;
@@ -489,6 +507,33 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         requestRender();
     }
 
+    /**
+     * 顶部内缩像素（问题1）：传入 gameTopInfo（layout_top_info）的实测高度，
+     * 相机以离轴视锥把对方手卡上缘压到该高度之下，确保对方手卡不遮挡顶部信息条。
+     * 随屏幕旋转 / 折叠屏 / 顶部条高度变化调用即可自适应重建相机。
+     */
+    public void setTopInsetPx(float px) {
+        float v = Math.max(0f, px);
+        if (Math.abs(v - topInsetPx) < 0.5f) return;
+        topInsetPx = v;
+        cameraDirty = true;
+        requestRender();
+        Runnable l = onCameraChangedListener;
+        if (l != null) post(l);
+    }
+
+    /**
+     * 对方手卡屏幕上缘的屏幕 y（像素，相对本 View 左上角）：供覆盖层把聊天信息与中央提示文本
+     * 锚定在「对方手卡正上方」。相机未就绪时回退为当前顶部内缩量。
+     */
+    public float getOpponentHandTopScreenY() {
+        float th = (float) Math.toRadians(cameraElevationDeg);
+        float hY = CARD_H * 0.5f * (float) Math.sin(th);
+        float hZ = CARD_H * 0.5f * (float) Math.cos(th);
+        float[] s = projectWorldPoint(CAM_X, OPP_HAND_Y - hY, HAND_Z + hZ);
+        return s != null ? s[1] : topInsetPx;
+    }
+
     public float getCameraElevation() {
         return cameraElevationDeg;
     }
@@ -611,8 +656,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         boolean valid;
         float eyeY, eyeZ;       // 视点（eyeX 恒为 CAM_X）
         float dirY, dirZ;       // 视线前向（YZ 平面内单位向量）
-        float tanV;             // tan(fovy/2)
+        float tanV;             // tan(fovy/2)（对称基准）
         float selfHandShift;    // 我方手卡行后移量（含 XML 手动微调）
+        float frustumHH;        // 离轴视锥竖向半高 tan（含顶部内缩后放大）
+        float frustumC;         // 离轴视锥竖向中心偏移 tan（>0 = 视锥上移，内容整体下压）
     }
 
     /**
@@ -670,6 +717,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         if (need / aspect > tanV) tanV = need / aspect;
         if (tanV > 1.6f) tanV = 1.6f;
 
+        // 顶部内缩（问题1）：用离轴视锥把「对方手卡上缘」锚到屏幕顶部内缩线 ndcTop 之下，
+        // 我方手卡下缘仍锚到 ndc=-1（屏幕底），从而在不裁掉任何一方的前提下为 gameTopInfo 让出顶部空间。
+        // 由对称半角 tanV 解离轴参数：hh = 2·tanV/(1+ndcTop)，c = hh - tanV（推导见类注释）。
+        float inset = Math.max(0f, Math.min(topInsetPx, h * 0.45f));
+        float ndcTop = (h > 1f) ? (1f - 2f * inset / h) : 1f;
+        if (ndcTop < 0.05f) ndcTop = 0.05f;
+        float hh = 2f * tanV / (1f + ndcTop);
+        s.frustumHH = hh;
+        s.frustumC = hh - tanV;
+
         float shift = SELF_HAND_Y - selfCy + handSelfYShift;
         s.eyeY = eyeY;
         s.eyeZ = eyeZ;
@@ -712,14 +769,18 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         CameraSolve s = solveCamera(viewW, viewH);
         if (!s.valid) return;
         float aspect = (float) viewW / viewH;
-        float fovy = (float) Math.toDegrees(2.0 * Math.atan(s.tanV));
 
         camEyeX = CAM_X;
         camEyeY = s.eyeY;
         camEyeZ = s.eyeZ;
         selfHandShift = s.selfHandShift;
 
-        Matrix.perspectiveM(mProj, 0, fovy, aspect, CAM_NEAR, CAM_FAR);
+        // 离轴（顶部内缩）透视视锥：left/right 对称、bottom/top 非对称，横向半宽 = 竖向半高 × aspect
+        float near = CAM_NEAR;
+        float fTop = (s.frustumC + s.frustumHH) * near;
+        float fBottom = (s.frustumC - s.frustumHH) * near;
+        float fRight = s.frustumHH * aspect * near;
+        Matrix.frustumM(mProj, 0, -fRight, fRight, fBottom, fTop, near, CAM_FAR);
         Matrix.setLookAtM(mView, 0, CAM_X, s.eyeY, s.eyeZ,
                 CAM_X, s.eyeY + s.dirY, s.eyeZ + s.dirZ, 0f, 0f, 1f);
         Matrix.multiplyMM(mVP, 0, mProj, 0, mView, 0);
@@ -791,6 +852,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
         drawZoneSlots();
         try {
+            drawTotalAttackBars(f);
+        } catch (Throwable ignored) {
+        }
+        try {
             drawFieldCards(f);
         } catch (Throwable ignored) {
         }
@@ -798,6 +863,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         drawHighlights();
         drawCardSelectOutlines(f);
         drawPhaseButtons();
+        try {
+            drawFieldNumbers(f);
+        } catch (Throwable ignored) {
+        }
         GLES30.glDepthMask(true);
     }
 
@@ -894,6 +963,136 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                 drawFlatQuad(mirrorX(c[0]), c[1], 0.004f, PILE_W, PILE_H, 0f, 0.78f, 0.94f, pulse);
             }
         }
+    }
+
+    // === 问题5：总攻击力 bar（drawing.cpp L399-422 + materials.cpp vTotalAtk*）===
+    private static float[] totalAtkRect(int p, boolean mr4) {
+        if (p == 0) return mr4 ? TOTAL_ATK_ME_MR4 : TOTAL_ATK_ME_MR3;
+        return mr4 ? TOTAL_ATK_OP_MR4 : TOTAL_ATK_OP_MR3;
+    }
+
+    /**
+     * 总攻击力 bar：duel_rule>=4 用 vTotalAtkme/op，否则 vTotalAtkmeT/opT；
+     * raw x 经 fx 映射、y 直用，绘制空间再做 X 镜像，贴 totalAtk.png，仅 total_attack>0 时绘制。
+     */
+    private void drawTotalAttackBars(GameField f) {
+        if (f == null) return;
+        boolean mr4 = f.dInfo.duelRule >= 4;
+        int tex = obtainTotalAtkTexture();
+        for (int p = 0; p < 2; p++) {
+            if (f.dInfo.totalAttack[p] <= 0) continue;
+            float[] rc = totalAtkRect(p, mr4);
+            float x0 = fx(rc[0]), x1 = fx(rc[2]);
+            float cxw = (x0 + x1) / 2f;
+            float cyw = (rc[1] + rc[3]) / 2f;
+            float w = Math.abs(x1 - x0), h = Math.abs(rc[3] - rc[1]);
+            Matrix.setIdentityM(mModel, 0);
+            Matrix.translateM(mModel, 0, mirrorX(cxw), cyw, 0.006f);
+            Matrix.scaleM(mModel, 0, w, h, 1f);
+            if (tex > 0) drawQuadTex(mModel, tex, 1f);
+            else drawQuadColor(mModel, 0.85f, 0.62f, 0.12f, 0.80f);
+        }
+    }
+
+    /**
+     * 问题3+5：屏幕像素正交空间绘制区域堆叠数量与总攻击力数字，天然垂直于观看视线（与阶段按钮同方案）。
+     * 区域数字贴在卡组/额外/墓地/除外格子「靠近摄像头的底边」（+y 侧缘）外侧；总攻击力数字叠在 bar 中心。
+     */
+    private void drawFieldNumbers(GameField f) {
+        int w = viewW, h = viewH;
+        if (w <= 1 || h <= 1 || f == null) return;
+        Matrix.orthoM(mOrthoVP, 0, 0f, w, h, 0f, -1f, 1f);
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST);
+        for (int p = 0; p < 2; p++) {
+            for (int loc : new int[]{0x01, 0x40, 0x10, 0x20}) {
+                int cnt = f.getCardCount(p, loc);
+                if (cnt <= 0) continue;
+                float[] r = GameField.getPileRect(p, loc);
+                if (r == null) continue;
+                float nearY = r[1] + r[3] / 2f;              // 靠摄像头的 +y 侧缘
+                float farY = r[1] - r[3] / 2f;
+                float[] top = projectWorldPoint(mirrorX(r[0]), nearY, 0.02f);
+                float[] bot = projectWorldPoint(mirrorX(r[0]), farY, 0.02f);
+                if (top == null || bot == null) continue;
+                float pilePx = Math.abs(top[1] - bot[1]);
+                float hpx = Math.max(10f, Math.min(40f, pilePx * 0.30f));
+                float[] anchor = projectWorldPoint(mirrorX(r[0]), nearY + 0.14f, 0.02f);
+                drawScreenNumber(anchor, String.valueOf(cnt), 0xFFFFFF00, hpx);
+            }
+        }
+        boolean mr4 = f.dInfo.duelRule >= 4;
+        for (int p = 0; p < 2; p++) {
+            if (f.dInfo.totalAttack[p] <= 0) continue;
+            float[] rc = totalAtkRect(p, mr4);
+            float cxw = (fx(rc[0]) + fx(rc[2])) / 2f;
+            float cyw = (rc[1] + rc[3]) / 2f;
+            float[] a = projectWorldPoint(mirrorX(cxw), cyw, 0.012f);
+            float[] b = projectWorldPoint(mirrorX(cxw), rc[3], 0.012f);
+            float[] c2 = projectWorldPoint(mirrorX(cxw), rc[1], 0.012f);
+            float hpx = 14f;
+            if (b != null && c2 != null) hpx = Math.max(10f, Math.min(40f, Math.abs(b[1] - c2[1]) * 0.8f));
+            drawScreenNumber(a, String.valueOf(f.dInfo.totalAttack[p]), f.dInfo.totalAttackColor[p], hpx);
+        }
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+    }
+
+    private void drawScreenNumber(float[] screenXY, String text, int color, float heightPx) {
+        if (screenXY == null || text == null || text.isEmpty()) return;
+        int tex = obtainNumberTexture(text, color);
+        if (tex <= 0) return;
+        drawScreenQuadTex(screenXY[0], screenXY[1], heightPx * 2f, heightPx, tex, 1f);
+    }
+
+    private int obtainTotalAtkTexture() {
+        Integer id = textures.get(TOTAL_ATK_KEY);
+        if (id != null) return id;
+        if (!requested.add(TOTAL_ATK_KEY)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getTotalAtkTexture();
+                    if (src != null && !src.isRecycled()) b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                if (b != null) pendingUploads.offer(new PendingUpload(TOTAL_ATK_KEY, b, true));
+                else requested.remove(TOTAL_ATK_KEY);
+            });
+        } catch (Throwable t) {
+            requested.remove(TOTAL_ATK_KEY);
+        }
+        return -1;
+    }
+
+    private int obtainNumberTexture(String text, int color) {
+        String k = text + "|" + color;
+        Long key = numLabelKeys.get(k);
+        if (key == null) {
+            key = numLabelKeySeq--;
+            numLabelKeys.put(k, key);
+            try {
+                pendingUploads.offer(new PendingUpload(key, makeNumberBitmap(text, color), true));
+            } catch (Throwable ignored) {
+            }
+        }
+        Integer id = textures.get(key);
+        return id != null ? id : -1;
+    }
+
+    private static Bitmap makeNumberBitmap(String text, int color) {
+        int w = 128, h = 64;
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas cv = new Canvas(bmp);
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setTextSize(44f);
+        p.setFakeBoldText(true);
+        float tw = p.measureText(text);
+        if (tw > w * 0.92f) p.setTextSize(44f * (w * 0.92f) / tw);
+        p.setColor(color | 0xFF000000);
+        p.setTextAlign(Paint.Align.CENTER);
+        p.setShadowLayer(3f, 1f, 1f, 0xC0000000);
+        cv.drawText(text, w / 2f, h / 2f - (p.ascent() + p.descent()) / 2f, p);
+        return bmp;
     }
 
     // === 可选格子高亮：环绕格子的虚线行进动画（drawing.cpp DrawSelectionLine + game.cpp linePattern/stippleMask）===
@@ -1091,6 +1290,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
      * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)
      */
     private void buildCardModel(GameField.ClientCard c, float[] out) {
+        buildCardModel(c, out, 0f);
+    }
+
+    private void buildCardModel(GameField.ClientCard c, float[] out, float zBias) {
         Matrix.setIdentityM(out, 0);
         if (c.location == 0x02) {
             Matrix.translateM(out, 0, mirrorX(c.curX),
@@ -1103,7 +1306,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     || c.location == 0x20 || c.location == 0x40;
             float jx = isPile ? ((c.sequence % 3) - 1) * 0.012f : 0f;
             float jy = isPile ? (((c.sequence / 3) % 3) - 1) * 0.012f : 0f;
-            Matrix.translateM(out, 0, mirrorX(c.curX) + jx, c.curY + jy, c.curZ);
+            Matrix.translateM(out, 0, mirrorX(c.curX) + jx, c.curY + jy, c.curZ + zBias);
             Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotY), 0f, 1f, 0f);
             Matrix.rotateM(out, 0, (float) Math.toDegrees(c.curRotX), 1f, 0f, 0f);
             Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotZ), 0f, 0f, 1f);
@@ -1157,7 +1360,14 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     break;
                 }
             }
-            int skip = Math.max(0, n - 20); // 堆叠区绘制最上 20 层呈现厚度，z 间距已在 GameField 封顶
+            if (n == 0) return;
+            // 问题4：GameField 对 seq>18 的 curZ 封顶，旧实现绘制的顶部多层全部共面 → 无厚度且 z-fighting。
+            // 改为仅绘最上 PILE_MAX_LAYERS 层，并在 PILE_BASE_Z 之上按张数均匀抬升显式层高，形成随数量增长的厚度。
+            int layers = Math.min(n, PILE_MAX_LAYERS);
+            int skip = n - layers;
+            float thick = layers * PILE_LAYER_THICK;
+            float step = layers > 1 ? thick / (layers - 1) : 0f;
+            int drawn = 0;
             for (int i = 0, s = pile.size(); i < s; i++) {
                 GameField.ClientCard c;
                 try {
@@ -1167,7 +1377,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                 }
                 if (c == null) continue;
                 if (skip-- > 0) continue;
-                drawCard(c);
+                float targetZ = PILE_BASE_Z + drawn * step;
+                drawCard(c, targetZ - c.curZ);
+                drawn++;
             }
         } catch (Throwable ignored) {
         }
@@ -1184,12 +1396,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
      * 单面绘制同时把 overdraw 减半。
      */
     private void drawCard(GameField.ClientCard c) {
+        drawCard(c, 0f);
+    }
+
+    private void drawCard(GameField.ClientCard c, float zBias) {
         if (c == null) return;
         float alpha = Math.max(0f, Math.min(1f, c.curAlpha / 255f));
         if (alpha <= 0.01f) return;
 
         boolean isHand = c.location == 0x02;
-        buildCardModel(c, mModel);
+        buildCardModel(c, mModel, zBias);
         boolean front = isFrontFacing(mModel);
 
         int glow = pickGlowColor(c);
@@ -2190,7 +2406,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         float fx, fy, fz;            // 视线前向轴
         float rx, ry, rz;            // 屏幕右轴
         float ux, uy, uz;            // 屏幕上轴
-        float halfH, halfW;          // tan(fovy/2) 与 tan(fovy/2)*aspect
+        float halfH, halfW;          // 竖向半高 tan（离轴=frustumHH）与横向半宽 tan（=halfH*aspect）
+        float frustumC;              // 离轴视锥竖向中心偏移 tan
         float selfHandShift;         // 我方手卡行后移量
     }
 
@@ -2202,7 +2419,6 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         cam.eyeX = CAM_X;
         cam.eyeY = s.eyeY;
         cam.eyeZ = s.eyeZ;
-        // 前向轴 f=(0,dY,dZ)；右轴 r=normalize(cross(f,Z轴))=(sign(dY),0,0)；上轴 u=cross(r,f)
         cam.fx = 0f;
         cam.fy = s.dirY;
         cam.fz = s.dirZ;
@@ -2212,15 +2428,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         cam.ux = 0f;
         cam.uy = -cam.rx * s.dirZ;
         cam.uz = cam.rx * s.dirY;
-        cam.halfH = s.tanV;
-        cam.halfW = s.tanV * aspect;
+        cam.halfH = s.frustumHH;
+        cam.halfW = s.frustumHH * aspect;
+        cam.frustumC = s.frustumC;
         cam.selfHandShift = s.selfHandShift;
         return cam;
     }
 
-    /**
-     * 世界点 → 预览屏幕像素（与运行期 GL 投影等效：相机空间透视除法 + NDC → 像素）
-     */
     private static float[] projectEdit(EditCamera cam, int w, int h, float x, float y, float z) {
         float vx = x - cam.eyeX, vy = y - cam.eyeY, vz = z - cam.eyeZ;
         float zc = vx * cam.fx + vy * cam.fy + vz * cam.fz;
@@ -2228,7 +2442,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         float xc = vx * cam.rx + vy * cam.ry + vz * cam.rz;
         float yc = vx * cam.ux + vy * cam.uy + vz * cam.uz;
         float nx = xc / (zc * cam.halfW);
-        float ny = yc / (zc * cam.halfH);
+        float ny = ((yc / zc) - cam.frustumC) / cam.halfH;
         return new float[]{(nx + 1f) * 0.5f * w, (1f - ny) * 0.5f * h};
     }
 
