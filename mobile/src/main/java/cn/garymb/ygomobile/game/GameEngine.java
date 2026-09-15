@@ -1525,21 +1525,62 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onMove(int code, int oldCtrl, int oldLoc, int oldSeq,
+    public void onMove(int code, int oldCtrl, int oldLoc, int oldSeq, int oldPos,
                        int newCtrl, int newLoc, int newSeq, int position, int reason) {
         oldCtrl = localPlayer(oldCtrl);
         newCtrl = localPlayer(newCtrl);
-        GameField.ClientCard card = field.getCard(oldCtrl, oldLoc, oldSeq);
-        if (card == null) {
-            card = new GameField.ClientCard();
+        boolean oldOverlay = (oldLoc & 0x80) != 0;
+        boolean newOverlay = (newLoc & 0x80) != 0;
+
+        if (newOverlay && !oldOverlay) {
+            // 作为超量素材叠放到超量怪兽下方（duelclient.cpp L3055-3095）
+            GameField.ClientCard card = field.getCard(oldCtrl, oldLoc & 0x7f, oldSeq);
+            if (card == null) card = new GameField.ClientCard();
+            if (code != 0) card.code = code;
+            card.position = position;
+            if (field.attachOverlayMaterial(card, oldCtrl, oldLoc & 0x7f, oldSeq, newCtrl, newSeq)) {
+                field.moveCardAnimated(card, 10);
+            }
+        } else if (oldOverlay && !newOverlay) {
+            // 超量素材离场（duelclient.cpp L3096-3124）：oldSeq=超量怪兽格、oldPos=素材序号
+            GameField.ClientCard card = field.detachOverlayMaterial(
+                    oldCtrl, oldSeq, oldPos, newCtrl, newLoc & 0x7f, newSeq, position);
+            if (card != null) {
+                if (code != 0) card.code = code;
+                field.moveCardAnimated(card, 10);
+            }
+        } else if (oldOverlay) {
+            // 素材在两只超量怪兽间转移（duelclient.cpp L3125+）
+            GameField.ClientCard src = field.getCard(oldCtrl, CardLocation.MonsterZone.value(), oldSeq);
+            GameField.ClientCard dst = field.getCard(newCtrl, CardLocation.MonsterZone.value(), newSeq);
+            if (src != null && dst != null && oldPos >= 0 && oldPos < src.overlayed.size()) {
+                GameField.ClientCard m = src.overlayed.remove(oldPos);
+                for (int i = 0; i < src.overlayed.size(); i++) {
+                    GameField.ClientCard s = src.overlayed.get(i);
+                    if (s == null) continue;
+                    s.sequence = i;
+                    field.moveCardAnimated(s, 2);
+                }
+                if (m != null) {
+                    dst.overlayed.add(m);
+                    m.overlayTarget = dst;
+                    m.controler = newCtrl;
+                    m.sequence = dst.overlayed.size() - 1;
+                    field.moveCardAnimated(m, 10);
+                }
+            }
+        } else {
+            GameField.ClientCard card = field.getCard(oldCtrl, oldLoc, oldSeq);
+            if (card == null) card = new GameField.ClientCard();
+            card.code = code;
+            card.position = position;
+            field.removeCard(oldCtrl, oldLoc, oldSeq);
+            field.addCard(newCtrl, newLoc, newSeq, card);
+            field.moveCardAnimated(card, 8);
         }
-        card.code = code;
-        card.position = position;
-        field.removeCard(oldCtrl, oldLoc, oldSeq);
-        field.addCard(newCtrl, newLoc, newSeq, card);
-        field.moveCardAnimated(card, 8);
+
         // 手卡增删后重排双方手卡（数量变化 → 间距变化）
-        if (oldLoc == CardLocation.Hand.value() || newLoc == CardLocation.Hand.value()) {
+        if ((oldLoc & 0x7f) == CardLocation.Hand.value() || (newLoc & 0x7f) == CardLocation.Hand.value()) {
             field.updateHandLayout(0, 10);
             field.updateHandLayout(1, 10);
         }

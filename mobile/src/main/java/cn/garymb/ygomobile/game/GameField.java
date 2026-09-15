@@ -376,6 +376,18 @@ public class GameField {
         public List<ClientCard> targets = new ArrayList<>();
     }
 
+    /** 需求2：待挂超量素材——素材 MSG_MOVE 先于超量怪兽 MSG_MOVE 到达时暂存，待怪兽入格再补挂 */
+    private static final class PendingOverlay {
+        final ClientCard card;
+        final int ctrl;
+        final int seq;
+        PendingOverlay(ClientCard card, int ctrl, int seq) {
+            this.card = card;
+            this.ctrl = ctrl;
+            this.seq = seq;
+        }
+    }
+
     public final PlayerField[] players = new PlayerField[2];
     public int currentPlayer;
     public int currentPhase;
@@ -383,6 +395,7 @@ public class GameField {
     public boolean isTag;
     public List<ChainInfo> chains = new ArrayList<>();
     public List<ClientCard> overlayCards = new ArrayList<>();
+    private final List<PendingOverlay> pendingOverlays = new ArrayList<>();
     public int[] extraPCount = new int[2];
     public long disabledField;
     public boolean deckReversed;
@@ -595,6 +608,7 @@ public class GameField {
             pzoneAct[i] = false;
         }
         overlayCards.clear();
+        pendingOverlays.clear();
         chains.clear();
         activatableCards.clear();
         summonableCards.clear();
@@ -730,6 +744,8 @@ public class GameField {
             }
             case 0x04: {
                 list.set(sequence, card);
+                // 需求2：怪兽入格后补挂先到的待挂素材，使其飞向本格并正面叠放
+                flushPendingOverlays(controler, sequence, card);
                 break;
             }
             case 0x08: {
@@ -843,12 +859,120 @@ public class GameField {
         return pcard;
     }
 
+    /**
+     * 将卡片作为超量素材叠放到 (newCtrl, 怪兽区, xyzSeq) 的超量怪兽下方
+     *（对齐 duelclient.cpp MSG_MOVE 的 !(pl&OVERLAY) && (cl&OVERLAY) 分支 L3055-3095）：
+     * 先从原区域移除，再挂到目标 overlayed 列表与场地级 overlayCards 绘制列表，
+     * 设 overlayTarget/location=OVERLAY/sequence=叠放序号；返回 true 表示已就位、调用方随后
+     * moveCardAnimated 播放堆叠动画。
+     * 需求2：目标超量怪兽尚未就位（素材 MSG_MOVE 先于怪兽 MSG_MOVE 到达）时，改为登记待挂素材
+     * 并返回 false——素材仍留在 overlayCards 原地显示，待怪兽入格由 flushPendingOverlays 补挂，
+     * 从而正确播放「飞向怪兽区格子并正面叠放」的移动动画，避免素材滞留原格或被甩到世界原点。
+     */
+    public boolean attachOverlayMaterial(ClientCard pcard, int oldCtrl, int oldLoc, int oldSeq,
+                                         int newCtrl, int xyzSeq) {
+        if (pcard == null) return false;
+        ClientCard olcard = getCard(newCtrl, CardLocation.MonsterZone.value(), xyzSeq);
+        if (olcard == null) {
+            removeCard(oldCtrl, oldLoc, oldSeq);
+            pcard.controler = newCtrl;
+            pcard.location = CardLocation.Overlay.value();
+            pcard.overlayTarget = null;
+            pcard.sequence = 0;
+            if (!overlayCards.contains(pcard)) overlayCards.add(pcard);
+            pendingOverlays.add(new PendingOverlay(pcard, newCtrl, xyzSeq));
+            return false;
+        }
+        removeCard(oldCtrl, oldLoc, oldSeq);
+        if (!olcard.overlayed.contains(pcard)) olcard.overlayed.add(pcard);
+        if (!overlayCards.contains(pcard)) overlayCards.add(pcard);
+        pcard.overlayTarget = olcard;
+        pcard.controler = newCtrl;
+        pcard.location = CardLocation.Overlay.value();
+        pcard.sequence = olcard.overlayed.size() - 1;
+        return true;
+    }
+
+    /**
+     * 需求2：超量怪兽入格后补挂待挂素材——按到达顺序挂到 overlayed、绑定 overlayTarget/序号，
+     * 各自播放 10 帧移动动画，使素材从原位置飞向该怪兽区格子并正面叠放
+     *（对齐 duelclient.cpp MSG_MOVE 素材入 overlay 分支的 MoveCard(pcard, 10)）。
+     */
+    private void flushPendingOverlays(int ctrl, int seq, ClientCard olcard) {
+        if (olcard == null || pendingOverlays.isEmpty()) return;
+        java.util.Iterator<PendingOverlay> it = pendingOverlays.iterator();
+        while (it.hasNext()) {
+            PendingOverlay po = it.next();
+            if (po == null || po.ctrl != ctrl || po.seq != seq) continue;
+            it.remove();
+            ClientCard m = po.card;
+            if (m == null) continue;
+            if (!olcard.overlayed.contains(m)) olcard.overlayed.add(m);
+            if (!overlayCards.contains(m)) overlayCards.add(m);
+            m.overlayTarget = olcard;
+            m.controler = ctrl;
+            m.location = CardLocation.Overlay.value();
+            m.sequence = olcard.overlayed.size() - 1;
+            moveCardAnimated(m, 10);
+        }
+    }
+
+    /**
+     * 从 (oldCtrl, 怪兽区, xyzSeq) 的超量怪兽下方取出第 subSeq 张素材送入新区域
+     *（对齐 duelclient.cpp MSG_MOVE 的 (pl&OVERLAY) && !(cl&OVERLAY) 分支 L3096-3124）：
+     * 从 overlayed 与场地级 overlayCards 移除、清 overlayTarget、加入新区域，
+     * 其余素材重排序号并各自播放 2 帧归位动画；返回被取出的素材卡供调用方播放离场动画。
+     */
+    public ClientCard detachOverlayMaterial(int oldCtrl, int xyzSeq, int subSeq,
+                                            int newCtrl, int newLoc, int newSeq, int newPos) {
+        ClientCard olcard = getCard(oldCtrl, CardLocation.MonsterZone.value(), xyzSeq);
+        if (olcard == null) return null;
+        if (subSeq < 0 || subSeq >= olcard.overlayed.size()) return null;
+        ClientCard pcard = olcard.overlayed.get(subSeq);
+        if (pcard == null) return null;
+        olcard.overlayed.remove(subSeq);
+        pcard.overlayTarget = null;
+        pcard.position = newPos;
+        overlayCards.remove(pcard);
+        addCard(newCtrl, newLoc, newSeq, pcard);
+        for (int i = 0; i < olcard.overlayed.size(); i++) {
+            ClientCard m = olcard.overlayed.get(i);
+            if (m == null) continue;
+            m.sequence = i;
+            moveCardAnimated(m, 2);
+        }
+        return pcard;
+    }
+
     public void updateCard(int controler, int location, int sequence, ByteBuffer data) {
         ClientCard pcard = getCard(controler, location, sequence);
         if (pcard != null && data.remaining() >= 4) {
             int len = data.getInt();
             if (len > 4 && data.remaining() >= len - 4) {
                 pcard.updateQuery(data);
+            }
+        }
+        // 超量素材登记表重建（reload/init 路径）：QUERY_OVERLAY_CARD 仅填充各怪兽的 overlayed，
+        // 据此重建场地级 overlayCards 绘制列表并绑定 overlayTarget/序号，随后统一 setCardPos 归位
+        overlayCards.clear();
+        for (int p = 0; p < 2; p++) {
+            for (ClientCard m : players[p].monsterZone) {
+                if (m == null || m.overlayed.isEmpty()) continue;
+                for (int i = 0; i < m.overlayed.size(); i++) {
+                    ClientCard o = m.overlayed.get(i);
+                    if (o == null) continue;
+                    o.overlayTarget = m;
+                    o.controler = p;
+                    o.location = CardLocation.Overlay.value();
+                    o.sequence = i;
+                    overlayCards.add(o);
+                }
+            }
+        }
+        for (ClientCard c : overlayCards) {
+            if (c != null) {
+                setCardPos(c);
+                c.is_moving = false;
             }
         }
     }
@@ -1099,7 +1223,17 @@ public class GameField {
             }
             case 0x80: { // LOCATION_OVERLAY
                 ClientCard target = pcard.overlayTarget;
-                if (target == null || target.location != 0x04) return t;
+                if (target == null || target.location != 0x04) {
+                    // 需求2：目标超量怪兽尚未就位——保持卡片当前姿态（对齐 C++ GetCardLocation
+                    // 提前 return 不改 t/r 的语义），避免待挂素材被甩到世界原点
+                    t[0] = pcard.curX;
+                    t[1] = pcard.curY;
+                    t[2] = pcard.curZ;
+                    t[3] = pcard.curRotX;
+                    t[4] = pcard.curRotY;
+                    t[5] = pcard.curRotZ;
+                    return t;
+                }
                 int oseq = target.sequence;
                 int mseq = Math.max(0, Math.min(sequence, MAX_LAYER_COUNT - 1));
                 if (target.controler == 0) {

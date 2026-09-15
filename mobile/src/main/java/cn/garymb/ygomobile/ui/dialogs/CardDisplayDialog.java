@@ -60,6 +60,11 @@ public class CardDisplayDialog {
         void onCardClick(CardItem item);
     }
 
+    /** 需求5：长按卡片显示该卡在通讯中的实时状态信息 */
+    public interface OnCardLongClick {
+        boolean onCardLongClick(CardItem item);
+    }
+
     public interface OnDismissListener {
         void onDismiss();
     }
@@ -88,6 +93,7 @@ public class CardDisplayDialog {
 
     private OnDismissListener dismissListener;
     private OnCardClick cardClickListener;
+    private OnCardLongClick cardLongClickListener;
 
     // 卡背缓存：对齐 image_manager.cpp tButtonFacedown[0/1]（我方 cover.jpg / 对方 cover2.jpg）
     private static Bitmap coverSelf;
@@ -122,6 +128,11 @@ public class CardDisplayDialog {
 
     public CardDisplayDialog setCardClickListener(OnCardClick listener) {
         this.cardClickListener = listener;
+        return this;
+    }
+
+    public CardDisplayDialog setCardLongClickListener(OnCardLongClick listener) {
+        this.cardLongClickListener = listener;
         return this;
     }
 
@@ -171,6 +182,13 @@ public class CardDisplayDialog {
                 if (index < cards.size() && cardClickListener != null) {
                     cardClickListener.onCardClick(cards.get(index));
                 }
+            });
+            slotViews[i].setOnLongClickListener(v -> {
+                int index = pageOffset + slot;
+                if (index < cards.size() && cardLongClickListener != null) {
+                    return cardLongClickListener.onCardLongClick(cards.get(index));
+                }
+                return false;
             });
         }
         sbPage.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {

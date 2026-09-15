@@ -54,7 +54,7 @@ public class GameMessageParser {
         void onDeckTop(int player, int code);
         void onNewTurn(int player);
         void onNewPhase(int phase);
-        void onMove(int code, int oldControler, int oldLocation, int oldSequence,
+        void onMove(int code, int oldControler, int oldLocation, int oldSequence, int oldPosition,
                     int newControler, int newLocation, int newSequence, int position, int reason);
         void onPosChange(int code, int controler, int location, int sequence,
                          int oldPos, int newPos);
@@ -260,13 +260,13 @@ public class GameMessageParser {
                 int oldCtrl = buf.get() & 0xFF;
                 int oldLoc = buf.get() & 0xFF;
                 int oldSeq = buf.get() & 0xFF;
-                buf.get(); // old position
+                int oldPos = buf.get() & 0xFF; // 超量素材离场时该字节为素材在 overlayed 中的序号
                 int newCtrl = buf.get() & 0xFF;
                 int newLoc = buf.get() & 0xFF;
                 int newSeq = buf.get() & 0xFF;
                 int pos = buf.get() & 0xFF;
                 int reason = buf.getInt();
-                handler.onMove(code, oldCtrl, oldLoc, oldSeq, newCtrl, newLoc, newSeq, pos, reason);
+                handler.onMove(code, oldCtrl, oldLoc, oldSeq, oldPos, newCtrl, newLoc, newSeq, pos, reason);
                 break;
             }
             case PosChange: {

@@ -579,11 +579,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      * 此处仅转发触点与当前命令上下文（idle/battle）
      */
     private void showCardCommandMenu(GameField.ClientCard card, float tapX, float tapY) {
+        showCardCommandMenu(card, tapX, tapY, false);
+    }
+
+    private void showCardCommandMenu(GameField.ClientCard card, float tapX, float tapY, boolean viewButton) {
         if (cmdMenuDialog == null) {
             cmdMenuDialog = new CmdMenuDialog(activity);
         }
         cmdMenuDialog.showCardCommandMenu(card, engine, cmdContext,
-                viewController != null ? viewController.getView() : null, tapX, tapY);
+                viewController != null ? viewController.getView() : null, tapX, tapY, viewButton);
     }
 
     /** 本次点击无可执行命令时，关闭残留的旧菜单 */
@@ -1080,17 +1084,24 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             return;
         }
         GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
-        if (card != null && card.cmdFlag != 0) {
-            showCardCommandMenu(card, tapX, tapY);
+        if (card == null) {
+            dismissCmdMenu();
+            return;
+        }
+        // 需求4：持有超量素材的怪兽，以及卡组/额外/墓地/除外堆叠区，弹出含「查看」的命令菜单，
+        // 并把该卡在通讯中可执行的其他命令（发动/特殊召唤/攻击等）一并列出
+        boolean isPile = (location == 0x01 || location == 0x40
+                || location == 0x10 || location == 0x20);
+        boolean xyzWithMats = (location == 0x04) && !card.overlayed.isEmpty();
+        if (card.cmdFlag != 0 || isPile || xyzWithMats) {
+            showCardCommandMenu(card, tapX, tapY, isPile || xyzWithMats);
             return;
         }
         // 无可执行命令：关闭残留的命令菜单
         dismissCmdMenu();
-        if (card != null) {
-            // 手卡确认由 GameFieldView 场内动画完成（抬高/翻面+虚线框），不弹卡面展示
-            if (location == 0x02) return;
-            activity.showCardInfoPanel(card);
-        }
+        // 手卡确认由 GameFieldView 场内动画完成（抬高/翻面+虚线框），不弹卡面展示
+        if (location == 0x02) return;
+        activity.showCardInfoPanel(card);
     }
 
     @Override

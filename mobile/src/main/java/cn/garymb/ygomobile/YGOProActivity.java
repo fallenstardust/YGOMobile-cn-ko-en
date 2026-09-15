@@ -481,6 +481,9 @@ public class YGOProActivity extends AppCompatActivity implements
     public CardDetailPanel getCardDetailPanel() {
         return cardDetailPanel;
     }
+    public ImageLoader getImageLoader() {
+        return imageLoader;
+    }
 
     public void setCurrentReplayEngine(ReplayEngine engine) {
         currentReplayEngine = engine;

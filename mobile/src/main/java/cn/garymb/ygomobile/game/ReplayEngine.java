@@ -446,13 +446,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     int mOldCtrl = buf.get() & 0xFF;
                     int mOldLoc = buf.get() & 0xFF;
                     int mOldSeq = buf.get() & 0xFF;
-                    buf.get(); // old pos
+                    int mOldPos = buf.get() & 0xFF; // 超量素材离场时为素材序号
                     int mNewCtrl = buf.get() & 0xFF;
                     int mNewLoc = buf.get() & 0xFF;
                     int mNewSeq = buf.get() & 0xFF;
                     int mPos = buf.get() & 0xFF;
                     int mReason = buf.getInt();
-                    onMove(mCode, mOldCtrl, mOldLoc, mOldSeq, mNewCtrl, mNewLoc, mNewSeq, mPos, mReason);
+                    onMove(mCode, mOldCtrl, mOldLoc, mOldSeq, mOldPos, mNewCtrl, mNewLoc, mNewSeq, mPos, mReason);
                     break;
 
                 case 53: // MSG_POS_CHANGE
@@ -945,13 +945,30 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         soundManager.playSoundEffect(SoundManager.SFX.PHASE);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPhaseChanged(phase); });
     }
-    @Override public void onMove(int code, int oc, int ol, int os, int nc, int nl, int ns, int pos, int reason) {
-        GameField.ClientCard card = field.getCard(oc, ol, os);
-        if (card == null) card = new GameField.ClientCard();
-        card.code = code;
-        card.position = pos;
-        field.removeCard(oc, ol, os);
-        field.addCard(nc, nl, ns, card);
+    @Override public void onMove(int code, int oc, int ol, int os, int opos, int nc, int nl, int ns, int pos, int reason) {
+        boolean oldOv = (ol & 0x80) != 0, newOv = (nl & 0x80) != 0;
+        if (newOv && !oldOv) {
+            GameField.ClientCard card = field.getCard(oc, ol & 0x7f, os);
+            if (card == null) card = new GameField.ClientCard();
+            if (code != 0) card.code = code;
+            card.position = pos;
+            if (field.attachOverlayMaterial(card, oc, ol & 0x7f, os, nc, ns)) {
+                field.moveCardAnimated(card, 1);
+            }
+        } else if (oldOv && !newOv) {
+            GameField.ClientCard card = field.detachOverlayMaterial(oc, os, opos, nc, nl & 0x7f, ns, pos);
+            if (card != null) {
+                if (code != 0) card.code = code;
+                field.moveCardAnimated(card, 1);
+            }
+        } else {
+            GameField.ClientCard card = field.getCard(oc, ol, os);
+            if (card == null) card = new GameField.ClientCard();
+            card.code = code;
+            card.position = pos;
+            field.removeCard(oc, ol, os);
+            field.addCard(nc, nl, ns, card);
+        }
         soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
         notifyField();
     }
