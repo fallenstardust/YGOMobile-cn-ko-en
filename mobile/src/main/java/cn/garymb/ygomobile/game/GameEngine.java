@@ -774,8 +774,24 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
+    public void onDeckCount(int deck0, int extra0, int side0, int deck1, int extra1, int side1) {
+        // STOC_DECK_COUNT 在 STOC_DUEL_START 之后、MSG_START 之前下发双方卡组/额外/副卡组数量，
+        // 供猜拳阶段在场地展示「卡组堆叠 / 额外卡组堆叠 / 除外区堆叠(显示副卡组数量)」。
+        // 对齐 duelclient.cpp STOC_DECK_COUNT L584-598：C++ 用字面量 Initial(0)/Initial(1)（本地视角），
+        // 故此处不经 localPlayer 映射；field 已由 onDuelStart 清空，这里只填充不重复 clear。
+        field.initial(0, deck0, extra0, side0);
+        field.initial(1, deck1, extra1, side1);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
+    }
+
+    @Override
     public void onDuelStart() {
         field.clear();
+        duelStarted = true;
+        inDuel = false;
+        siding = false;
         duelStage = YGOProtocol.DUEL_STAGE_DUELING;
         setState(GameState.DUELING);
         soundManager.playBGM(SoundManager.BGM.DUEL);
@@ -786,6 +802,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onDuelEnd() {
+        duelStarted = false;
+        inDuel = false;
+        siding = false;
         duelStage = YGOProtocol.DUEL_STAGE_END;
         setState(GameState.DUEL_END);
         soundManager.stopBGM();
@@ -940,12 +959,16 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onChangeSide() {
+        duelStarted = false;
+        inDuel = false;
+        siding = true;
         duelStage = YGOProtocol.DUEL_STAGE_SIDING;
         setState(GameState.SIDING);
     }
 
     @Override
     public void onWaitingSide() {
+        inDuel = false;
         Log.i(TAG, "Waiting for side change");
         // 对齐 duelclient.cpp L575-580：STOC_WAITING_SIDE 显示"等待换备卡"
         stopWaitHint();
@@ -1107,9 +1130,10 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onStart(int playerType, int duelRule, int lp0, int lp1,
-                        int deck0, int extra0, int deck1, int extra1) {
+    public void onStart(int playerType, int duelRule, int lp0, int lp1, int deck0, int extra0, int deck1, int extra1) {
         field.clear();
+        inDuel = true;
+        siding = false;
         field.dInfo.duelRule = duelRule;
         duelIsFirst = (playerType & 1) == 0;
         int p0 = localPlayer(0);
@@ -2287,6 +2311,20 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     /** Game::LocalPlayer：dInfo.isFirst ? player : 1 - player */
     private boolean duelIsFirst = true;
+
+    /** 对局状态标志，对齐 gframe dInfo.isStarted / dInfo.isInDuel / Game.is_siding，
+     *  供聊天 ChatLocalPlayer 的分边与昵称判定使用。转换点（对齐 duelclient.cpp）：
+     *  STOC_DUEL_START(L858)→started；MSG_START(L1627)→inDuel；
+     *  STOC_CHANGE_SIDE(L541/545)→siding 且 started=false；STOC_WAITING_SIDE(L576)/STOC_DUEL_END(L1008)→复位 */
+    private boolean duelStarted = false;
+    private boolean inDuel = false;
+    private boolean siding = false;
+
+    public boolean isStarted() { return duelStarted; }
+    public boolean isInDuel() { return inDuel; }
+    public boolean isSiding() { return siding; }
+    /** 本局我方是否先攻（对齐 dInfo.isFirst） */
+    public boolean isDuelFirst() { return duelIsFirst; }
 
     public int localPlayer(int player) {
         return duelIsFirst ? player : 1 - player;

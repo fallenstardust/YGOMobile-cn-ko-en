@@ -17,9 +17,11 @@ import android.widget.TextView;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
@@ -88,6 +90,10 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private String phaseCurrentLabel = "";
     private String phaseNextLabel = "";
     private boolean phaseEpVisible = false;
+
+    /** 正在显示的模态对话框集合（是/否、卡片选择/确认、命令菜单）。
+     *  非空时禁用决斗场三个阶段按钮，全部隐藏后恢复。 */
+    private final Set<Object> activeModalDialogs = new HashSet<>();
 
     public GameFieldController(YGOProActivity activity, Handler mainHandler, GameTopInfoManager topInfoManager) {
         this.activity = activity;
@@ -182,6 +188,32 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
     }
 
+    /** 设置下一阶段按钮文字（BP/M2），空串表示隐藏；由 idle/battle 指令按通讯可用性驱动 */
+    private void setNextPhaseButton(String label) {
+        phaseNextLabel = label == null ? "" : label;
+        pushPhaseDisplay();
+    }
+
+    /** 模态对话框显示——登记并禁用三个阶段按钮 */
+    public void onModalDialogShown(Object dialog) {
+        if (dialog == null) return;
+        activeModalDialogs.add(dialog);
+        updatePhaseButtonsEnabled();
+    }
+
+    /** 模态对话框隐藏——注销，集合为空时恢复三个阶段按钮 */
+    public void onModalDialogHidden(Object dialog) {
+        if (activeModalDialogs.remove(dialog)) {
+            updatePhaseButtonsEnabled();
+        }
+    }
+
+    private void updatePhaseButtonsEnabled() {
+        if (viewController != null) {
+            viewController.setPhaseButtonsEnabled(activeModalDialogs.isEmpty());
+        }
+    }
+
     public void init(GameEngine engine, ImageLoader imageLoader) {
         this.engine = engine;
         viewController.init(engine.getField(), imageLoader, this);
@@ -215,6 +247,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         phaseNextLabel = "";
         phaseEpVisible = false;
         pushPhaseDisplay();
+        // 清场时重置模态对话框登记并恢复阶段按钮可用
+        activeModalDialogs.clear();
+        if (viewController != null) viewController.setPhaseButtonsEnabled(true);
     }
 
     public void invalidate() {
@@ -239,6 +274,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             activity.sendResponseInt(7);
             return;
         }
+        // 下一阶段按钮 BP 依通讯可用性(MSG_SELECT_IDLECMD btnBP)显示——
+        // 先攻第一回合服务器不下发 btnBP，故此时不显示 BP
+        setNextPhaseButton(engine.showBP ? "BP" : "");
         // 通讯（MSG_SELECT_IDLE_CMD）允许进入结束阶段
         setEpButtonAllowed(true);
         showHint("点击手牌或场上卡片进行操作", 2500);
@@ -251,6 +289,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             activity.sendResponseInt(3);
             return;
         }
+        // 下一阶段按钮 M2 依通讯可用性(MSG_SELECT_BATTLECMD btnM2)显示
+        setNextPhaseButton(engine.showM2 ? "M2" : "");
         // 通讯（MSG_SELECT_BATTLE_CMD）允许进入结束阶段
         setEpButtonAllowed(true);
         showHint("点击卡片进行攻击或发动", 2500);
@@ -652,8 +692,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
                 return;
             }
             // 我方（含我方 tag 同伴）→ tv_chat_message_1；对方（含对方 tag）→ tv_chat_message_2。
-            boolean selfSide = isChatSelfSide(playerType);
-            appendSideChat(selfSide, chatNickname(playerType) + ": " + message);
+            // 先按 gframe ChatLocalPlayer 把发送方决斗序号转为命名槽位 chatType，
+            // 再据 chatType 分边与取名——修复后攻时对方消息被拼上我方昵称的错位。
+            // 分边：chatType∈{0,2}=我方队（左）、{1,3}=对方队（右）（对齐 AddChatMsg L2325 player==0||2）。
+            int chatType = chatLocalType(playerType);
+            boolean selfSide = (chatType == 0 || chatType == 2);
+            appendSideChat(selfSide, chatNameByLocalType(chatType) + ": " + message);
         } else {
             // 系统/脚本错误/观战消息：对齐 chkIgnore2，观战者（11-19）可屏蔽
             if (playerType >= 11 && playerType <= 19
@@ -675,19 +719,79 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         return "Player" + (seat + 1);
     }
 
+    /** 对齐 gframe OppositePlayer：tag 翻队伍位(0x2)、1v1 翻单边位(0x1) */
+    private int oppositeChatPlayer(int player, boolean isTag) {
+        int sideBit = isTag ? 0x2 : 0x1;
+        return player ^ sideBit;
+    }
+
     /**
-     * 聊天消息是否我方发送（对齐 gframe game.cpp ChatLocalPlayer 的边判定）：
-     * STOC_CHAT 的 playerType 是大厅座位号——
-     * 1v1：座位 0/1 分属双方，座位号本身即协议侧边索引（不能 >>1，否则座位 1 会被误判为队伍 0）；
-     * tag：座位 0/1 属我方队（队首+tag 同伴）、2/3 属对方队，座位 >>1 才是协议侧队伍索引
-     * （ChatLocalPlayer 中 tag 座位 1<->2 互换后 0/2 同侧、1/3 同侧即此对应）。
-     * isSelfSide 与牌局渲染同一套 localPlayer 映射（换先攻自动翻边）
+     * 复刻 gframe game.cpp ChatLocalPlayer——把 STOC_CHAT 的发送方座位号（对局内为决斗序号
+     * dp->type）转换为 AddChatMsg 用于命名槽位与分边的 chatType（0-3）。分边规则：chatType∈{0,2}=
+     * 我方队（左）、{1,3}=对方队（右）（对齐 AddChatMsg L2325 player==0||2）。不返回 is_self 位
+     * （本端口音效在引擎层统一处理）。
      */
-    private boolean isChatSelfSide(int playerType) {
-        if (engine == null) return false;
+    private int chatLocalType(int player) {
+        if (player > 3) return player;
+        if (engine == null) return player;
         boolean isTag = engine.getGameMode() == 2;
-        int team = isTag ? (playerType >> 1) : playerType;
-        return engine.isSelfSide(team);
+        int selftype = engine.getSelfType();
+        if (engine.isStarted() || engine.isSiding()) {
+            if (engine.isInDuel()) {
+                // 对局中：按先攻判定是否需要换边
+                player = engine.isDuelFirst() ? player : oppositeChatPlayer(player, isTag);
+            } else {
+                // 换备卡 / 等待猜拳结果：按原始座位边界换边
+                int selftypeBoundary = isTag ? 2 : 1;
+                if (selftype >= selftypeBoundary && selftype < 4)
+                    player = oppositeChatPlayer(player, isTag);
+            }
+        }
+        // tag 座位 1<->2 互换（对齐 ChatLocalPlayer 末尾，无论对局内外均执行）
+        if (isTag && (player == 1 || player == 2)) {
+            player = 3 - player;
+        }
+        return player;
+    }
+
+    /**
+     * chatType（0-3）→ 原始大厅座位 → seatNames 昵称。复刻 duelclient.cpp STOC_DUEL_START 对
+     * hostname/clientname/hostname_tag/clientname_tag 四个槽位的赋值
+     * （chatType0→hostname、1→clientname、2→hostname_tag、3→clientname_tag），修复后攻时命名错位。
+     */
+    private String chatNameByLocalType(int chatType) {
+        if (engine == null) return "Player" + (chatType + 1);
+        boolean isTag = engine.getGameMode() == 2;
+        int selftype = engine.getSelfType();
+        int origSeat;
+        if (!isTag) {
+            // selftype!=1：hostname←seat0、clientname←seat1；selftype==1：hostname←seat1、clientname←seat0
+            origSeat = (selftype != 1) ? chatType : (chatType == 0 ? 1 : 0);
+        } else if (selftype > 1 && selftype < 4) {
+            // hostname←seat2、clientname←seat0、hostname_tag←seat3、clientname_tag←seat1
+            switch (chatType) {
+                case 0: origSeat = 2; break;
+                case 1: origSeat = 0; break;
+                case 2: origSeat = 3; break;
+                default: origSeat = 1; break;
+            }
+        } else {
+            // hostname←seat0、clientname←seat2、hostname_tag←seat1、clientname_tag←seat3
+            switch (chatType) {
+                case 0: origSeat = 0; break;
+                case 1: origSeat = 2; break;
+                case 2: origSeat = 1; break;
+                default: origSeat = 3; break;
+            }
+        }
+        if (origSeat >= 0 && origSeat < engine.seatNames.length) {
+            String name = engine.seatNames[origSeat];
+            if (name != null && !name.isEmpty()) return name;
+        }
+        if (origSeat == selftype) {
+            return engine.getPlayerName();
+        }
+        return "Player" + (origSeat + 1);
     }
 
     /** 我方/对方聊天各占一个 TextView：每条换行，超过 5 行清除第一条（向上滚动），宽度不超过上方 LPbar */
@@ -955,8 +1059,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     /** 将表情图片气泡显示到发送方头像下方，并刷新自动隐藏计时 */
     private void showEmoteBubble(int playerType, String code) {
         if (engine == null) return;
-        // STOC_CHAT 座位号：与文字聊天同一套分边规则（1v1 用座位、tag 用座位>>1）
-        boolean selfSide = isChatSelfSide(playerType);
+        // 与文字聊天同一套 chatType 分边规则（chatType∈{0,2}=我方）
+        int chatType = chatLocalType(playerType);
+        boolean selfSide = (chatType == 0 || chatType == 2);
         ImageView bubble = selfSide ? ivPlayerEmoteBubble : ivOpponentEmoteBubble;
         if (bubble == null) return;
         Bitmap bmp = TextureLoader.get().getEmoticon(code);
@@ -998,15 +1103,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
                 break;
             case Main1:
                 phaseCurrentLabel = "M1";
-                if (isMyTurn) phaseNextLabel = "BP";
+                // BP 不再于阶段切换时无条件显示，改由 beginIdleCommand 依通讯(MSG_SELECT_IDLECMD btnBP)驱动
                 break;
             case BattleStart:
             case BattleStep:
+            case Battle:
             case Damage:
             case DamageCal:
-            case Battle:
                 phaseCurrentLabel = "BP";
-                if (isMyTurn) phaseNextLabel = "M2";
+                // M2 改由 beginBattleCommand 依通讯(MSG_SELECT_BATTLECMD btnM2)驱动
                 break;
             case Main2:
                 phaseCurrentLabel = "M2";
@@ -1088,7 +1193,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             dismissCmdMenu();
             return;
         }
-        // 需求4：持有超量素材的怪兽，以及卡组/额外/墓地/除外堆叠区，弹出含「查看」的命令菜单，
+        // 持有超量素材的怪兽，以及卡组/额外/墓地/除外堆叠区，弹出含「查看」的命令菜单，
         // 并把该卡在通讯中可执行的其他命令（发动/特殊召唤/攻击等）一并列出
         boolean isPile = (location == 0x01 || location == 0x40
                 || location == 0x10 || location == 0x20);

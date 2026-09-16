@@ -71,7 +71,7 @@ public class GameTopInfoManager {
      *  GameEngine/ReplayEngine 的 onDamage 仍以纯红下发「伤害」语义，展示层据此 RGB 识别后改绘为 colorAccent；
      *  仅匹配 FF0000，回复绿(00ff00)/支付蓝(0000ff) 不受影响，故对两个引擎的伤害一致生效 */
     private static final int LP_FLOAT_DAMAGE_RGB = 0x00FF0000;
-    /** 伤害数字展示色：colorAccent（用户需求）。类加载时解析一次，避免逐帧心跳重复取色 */
+    /** 伤害数字展示色：colorAccent。类加载时解析一次，避免逐帧心跳重复取色 */
     private static final int LP_FLOAT_DAMAGE_COLOR = YGOUtil.c(R.color.colorAccent);
 
     private final YGOProActivity activity;
@@ -460,7 +460,7 @@ public class GameTopInfoManager {
             return;
         }
         tv.setText(text);
-        // 伤害数字（引擎侧纯红 0xFFFF0000）按需求改绘为 colorAccent：仅替换 RGB，保留淡出动画的 alpha 分量
+        // 伤害数字（colorAccent）：仅替换 RGB，保留淡出动画的 alpha 分量
         int drawColor = color;
         if ((drawColor & 0x00FFFFFF) == LP_FLOAT_DAMAGE_RGB) {
             drawColor = (drawColor & 0xFF000000) | (LP_FLOAT_DAMAGE_COLOR & 0x00FFFFFF);

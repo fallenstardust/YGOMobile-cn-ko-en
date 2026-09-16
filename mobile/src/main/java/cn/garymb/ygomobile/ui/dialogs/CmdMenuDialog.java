@@ -54,10 +54,10 @@ public class CmdMenuDialog {
     private static final int SYS_ATTACK = 1157;      // 攻击
     private static final int SYS_SET_MONSTER = 1159; // 怪兽卡设置到魔陷区
 
-    /** 「查看」入口文本（需求4）：与项目内其他中文提示一致直接内联 */
+    /** 「查看」入口文本：与项目内其他中文提示一致直接内联 */
     private static final String VIEW_TEXT = "查看";
 
-    // 需求5：位置卡片列表的三种模式（查看 / 发动 / 特殊召唤）
+    // 位置卡片列表的三种模式（查看 / 发动 / 特殊召唤）
     private static final int MODE_VIEW = 0;
     private static final int MODE_ACTIVATE = 1;
     private static final int MODE_SPSUMMON = 2;
@@ -79,6 +79,8 @@ public class CmdMenuDialog {
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setFocusable(true);
         popupWindow.setOutsideTouchable(true);
+        // 菜单隐藏后恢复决斗场阶段按钮
+        popupWindow.setOnDismissListener(() -> activity.notifyGameDialogHidden(this));
     }
 
     /**
@@ -143,6 +145,8 @@ public class CmdMenuDialog {
         if (top < 0) top = 0;
 
         popupWindow.showAtLocation(decor, Gravity.TOP | Gravity.START, left, top);
+        // 菜单显示期间禁用决斗场阶段按钮
+        activity.notifyGameDialogShown(this);
     }
 
     public boolean isShowing() {
@@ -184,7 +188,7 @@ public class CmdMenuDialog {
         List<Runnable> actions = new ArrayList<>();
 
         if (viewButton) {
-            // 需求5：点击持有超量素材的怪兽 / 卡组 / 额外 / 墓地 / 除外——
+            // 点击持有超量素材的怪兽 / 卡组 / 额外 / 墓地 / 除外——
             // 查看/发动/特殊召唤按钮均打开 CardDisplayDialog 列出该位置对应卡片
             buildPositionMenu(card, engine, cmdContext, options, actions);
         } else {
@@ -295,7 +299,7 @@ public class CmdMenuDialog {
     }
 
     /**
-     * 需求5：堆叠区 / 超量怪兽入口的「位置命令」菜单。
+     * 堆叠区 / 超量怪兽入口的「位置命令」菜单。
      * 查看 → 列出该位置全部卡片；发动 / 特殊召唤 → 列出该位置对应可操作卡片，
      * 单击即向通讯发送对应响应进入下一步。
      */
@@ -515,12 +519,12 @@ public class CmdMenuDialog {
         return Math.round(value * activity.getResources().getDisplayMetrics().density);
     }
 
-    /** 需求3：标题标注是哪一方（card.controler 已是视角侧，0=我方） */
+    /** 标题标注是哪一方（card.controler 已是视角侧，0=我方） */
     private static String sidePrefix(int controler) {
         return controler == 0 ? "我方" : "对方";
     }
 
-    /** 需求3：卡组/额外/墓地/除外区名称（与 YGOProActivity.getLocationName 一致） */
+    /** 卡组/额外/墓地/除外区名称（与 YGOProActivity.getLocationName 一致） */
     private static String pileName(int location) {
         switch (location) {
             case 0x01: return "卡组";

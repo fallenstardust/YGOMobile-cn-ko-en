@@ -376,7 +376,7 @@ public class GameField {
         public List<ClientCard> targets = new ArrayList<>();
     }
 
-    /** 需求2：待挂超量素材——素材 MSG_MOVE 先于超量怪兽 MSG_MOVE 到达时暂存，待怪兽入格再补挂 */
+    /** 待挂超量素材——素材 MSG_MOVE 先于超量怪兽 MSG_MOVE 到达时暂存，待怪兽入格再补挂 */
     private static final class PendingOverlay {
         final ClientCard card;
         final int ctrl;
@@ -744,7 +744,7 @@ public class GameField {
             }
             case 0x04: {
                 list.set(sequence, card);
-                // 需求2：怪兽入格后补挂先到的待挂素材，使其飞向本格并正面叠放
+                // 怪兽入格后补挂先到的待挂素材，使其飞向本格并正面叠放
                 flushPendingOverlays(controler, sequence, card);
                 break;
             }
@@ -865,7 +865,7 @@ public class GameField {
      * 先从原区域移除，再挂到目标 overlayed 列表与场地级 overlayCards 绘制列表，
      * 设 overlayTarget/location=OVERLAY/sequence=叠放序号；返回 true 表示已就位、调用方随后
      * moveCardAnimated 播放堆叠动画。
-     * 需求2：目标超量怪兽尚未就位（素材 MSG_MOVE 先于怪兽 MSG_MOVE 到达）时，改为登记待挂素材
+     * 目标超量怪兽尚未就位（素材 MSG_MOVE 先于怪兽 MSG_MOVE 到达）时，改为登记待挂素材
      * 并返回 false——素材仍留在 overlayCards 原地显示，待怪兽入格由 flushPendingOverlays 补挂，
      * 从而正确播放「飞向怪兽区格子并正面叠放」的移动动画，避免素材滞留原格或被甩到世界原点。
      */
@@ -894,7 +894,7 @@ public class GameField {
     }
 
     /**
-     * 需求2：超量怪兽入格后补挂待挂素材——按到达顺序挂到 overlayed、绑定 overlayTarget/序号，
+     * 超量怪兽入格后补挂待挂素材——按到达顺序挂到 overlayed、绑定 overlayTarget/序号，
      * 各自播放 10 帧移动动画，使素材从原位置飞向该怪兽区格子并正面叠放
      *（对齐 duelclient.cpp MSG_MOVE 素材入 overlay 分支的 MoveCard(pcard, 10)）。
      */
@@ -1224,7 +1224,7 @@ public class GameField {
             case 0x80: { // LOCATION_OVERLAY
                 ClientCard target = pcard.overlayTarget;
                 if (target == null || target.location != 0x04) {
-                    // 需求2：目标超量怪兽尚未就位——保持卡片当前姿态（对齐 C++ GetCardLocation
+                    // 目标超量怪兽尚未就位——保持卡片当前姿态（对齐 C++ GetCardLocation
                     // 提前 return 不改 t/r 的语义），避免待挂素材被甩到世界原点
                     t[0] = pcard.curX;
                     t[1] = pcard.curY;

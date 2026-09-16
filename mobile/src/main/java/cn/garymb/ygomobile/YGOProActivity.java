@@ -467,6 +467,16 @@ public class YGOProActivity extends AppCompatActivity implements
         return fieldCtl;
     }
 
+    /** 模态对话框（是/否、卡片选择/确认、命令菜单）显示——禁用决斗场三个阶段按钮 */
+    public void notifyGameDialogShown(Object dialog) {
+        if (fieldCtl != null) fieldCtl.onModalDialogShown(dialog);
+    }
+
+    /** 模态对话框隐藏——恢复决斗场三个阶段按钮 */
+    public void notifyGameDialogHidden(Object dialog) {
+        if (fieldCtl != null) fieldCtl.onModalDialogHidden(dialog);
+    }
+
     public GameTopInfoManager getTopInfoManager() {
         return topInfoManager;
     }

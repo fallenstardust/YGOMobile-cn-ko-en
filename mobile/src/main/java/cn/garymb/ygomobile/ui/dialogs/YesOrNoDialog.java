@@ -330,6 +330,10 @@ public class YesOrNoDialog {
         });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
         popupWindow.setOnDismissListener(() -> {
+            // 对话框隐藏后恢复决斗场阶段按钮
+            if (context instanceof YGOProActivity) {
+                ((YGOProActivity) context).notifyGameDialogHidden(this);
+            }
             if (dismissListener != null) dismissListener.onDismiss();
         });
 
@@ -362,6 +366,10 @@ public class YesOrNoDialog {
                     draggableHelper.showPopup(popupWindow, anchor);
                 } else {
                     popupWindow.showAtLocation(anchor, Gravity.CENTER, 0, 0);
+                }
+                // 对话框显示期间禁用决斗场阶段按钮
+                if (context instanceof YGOProActivity) {
+                    ((YGOProActivity) context).notifyGameDialogShown(this);
                 }
             } catch (Exception e) {
                 // Token expired or window already showing

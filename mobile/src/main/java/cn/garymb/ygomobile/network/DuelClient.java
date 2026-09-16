@@ -40,6 +40,8 @@ public class DuelClient implements YGOProtocol {
         void onPlayerEnter(String name, int pos);
         void onPlayerChange(int status);
         void onWatchChange(int watchCount);
+        // STOC_DECK_COUNT 双方卡组/额外/副卡组数量（本地视角 0/1），供猜拳阶段场地堆叠展示
+        void onDeckCount(int deck0, int extra0, int side0, int deck1, int extra1, int side1);
         void onDuelStart();
         void onDuelEnd();
         void onReplay(byte[] data);
@@ -376,7 +378,9 @@ public class DuelClient implements YGOProtocol {
         int extra1 = buf.getShort() & 0xFFFF;
         int side1 = buf.getShort() & 0xFFFF;
         if (listener != null) {
-            listener.onPacketReceived(STOC_DECK_COUNT, buf);
+            // 原实现把游标已越过的 buf 交给 onPacketReceived，6 个数量被丢弃；
+            // 改为直接回调解析结果（对齐 duelclient.cpp STOC_DECK_COUNT L584-598）。
+            listener.onDeckCount(deck0, extra0, side0, deck1, extra1, side1);
         }
     }
 

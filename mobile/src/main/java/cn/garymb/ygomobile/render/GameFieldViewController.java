@@ -232,4 +232,11 @@ public class GameFieldViewController
             fieldView.setPhaseDisplay(currentVisible, currentLabel, nextLabel, epVisible);
         }
     }
+
+    /** 模态对话框显示期间禁用三个阶段按钮（不可点击 + 变暗），隐藏后恢复 */
+    public void setPhaseButtonsEnabled(boolean enabled) {
+        if (fieldView != null) {
+            fieldView.setPhaseButtonsEnabled(enabled);
+        }
+    }
 }

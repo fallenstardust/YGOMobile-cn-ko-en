@@ -269,6 +269,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private volatile String phaseCurrentLabel = "";
     private volatile String phaseNextLabel = "";
     private volatile boolean phaseEpVisible = false;
+    // 模态对话框（是/否、卡片选择/确认、命令菜单）显示期间禁用三个阶段按钮
+    private volatile boolean phaseButtonsEnabled = true;
 
     // === GL 资源 ===
     private int texProg, colorProg;
@@ -489,6 +491,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         phaseCurrentLabel = currentLabel == null ? "" : currentLabel;
         phaseNextLabel = nextLabel == null ? "" : nextLabel;
         phaseEpVisible = epVisible;
+        requestRender();
+    }
+
+    /** 三个阶段按钮可用性（模态对话框显示期间禁用：不可点击且变暗） */
+    public void setPhaseButtonsEnabled(boolean enabled) {
+        if (phaseButtonsEnabled == enabled) return;
+        phaseButtonsEnabled = enabled;
         requestRender();
     }
 
@@ -757,7 +766,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 横向取景需求：所有可交互内容中 max(半宽 / 该行沿视线深度)，即容纳全部内容所需的 tan(fovx/2)
+     * 所有可交互内容中 max(半宽 / 该行沿视线深度)，即容纳全部内容所需的 tan(fovx/2)
      */
     private static float contentHalfTan(float eyeY, float eyeZ, float dY, float dZ) {
         float need = 0f;
@@ -1047,7 +1056,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 堆叠区数量文字（需求1）：额外卡组与除外区在总数后追加括号区分表侧/里侧。
+     * 堆叠区数量文字：额外卡组与除外区在总数后追加括号区分表侧/里侧。
      * - 额外卡组(0x40)：显示「总数(表侧)」——表侧数=extraPCount[p]（对齐 drawing.cpp L1130-1131
      *   extra.size() 与 (extra_p_count)）；例：表侧10、里侧5、总数15 → "15(10)"。
      * - 除外区(0x20)：显示「总数(里侧)」——里侧数=总数-表侧数，表侧数=removed 中 isFaceUp() 计数；
@@ -1087,7 +1096,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return Math.min(v, max);
     }
 
-    // === 需求1：场上怪兽 攻击力/守备力/link 值 + 灵摆刻度值 文字显示 ===
+    // 场上怪兽 攻击力/守备力/link 值 + 灵摆刻度值 文字显示
     // 数值取自 client_card.cpp 计算的 atkString/defString/linkString/lscString/rscString；
     // 落点取自 client_field.cpp GetCardLocation 的格子几何；灵摆刻度显示对齐 drawing.cpp DrawCard。
 
@@ -1141,7 +1150,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f)) * STAT_SIZE_SCALE;
         boolean ours = (p == 0);
 
-        // 需求1：ATK/DEF（连接怪兽为 ATK/L‑n）紧贴「视角相对下沿」外侧显示——
+        // ATK/DEF（连接怪兽为 ATK/L‑n）紧贴「视角相对下沿」外侧显示——
         // 我方数字上沿贴卡片下边缘（屏幕下缘外侧），对方数字底边贴卡片下边缘（屏幕上缘外侧）。
         // 本轮再朝卡片方向贴近 STAT_SNUG_PX 像素（我方攻守上抬、对方攻守下降）。
         float[] eL = ours ? nearL : farL;
@@ -1163,7 +1172,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         statY += Math.signum(center[1] - statY) * STAT_SNUG_PX;   // 再贴近卡片 2px
         drawScreenText(edgeX, statY, parts, colors, hpx);
 
-        // 需求2：等级(L*,白/调律黄)或阶级(R*,玫红)紧贴「视角相对上沿」外侧的角显示。
+        // 等级(L*,白/调律黄)或阶级(R*,玫红)紧贴「视角相对上沿」外侧的角显示。
         // 对齐 drawing.cpp DrawStatus：我方在卡片左上角（屏幕上缘左角、左对齐）；
         // 对方卡旋转 180°，其等级在卡主视角右上角 = 屏幕下缘左角、左对齐
         //（原实现取屏幕下缘右角=卡主视角左上角，故本轮改为左角）。
@@ -1199,11 +1208,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         float[] farR = projectWorldPoint(mirrorX(cx + hw), cy - hh, 0.02f);
         float[] center = projectWorldPoint(mirrorX(cx), cy, 0.02f);
         if (nearL == null || nearR == null || farL == null || farR == null || center == null) return;
-        // 需求3：字号对齐堆叠数量
+        // 字号对齐堆叠数量
         float cardHpx = Math.abs(center[1] - nearL[1]) * 2f;
         float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f));
         boolean ours = (p == 0);
-        // 需求4：左刻度→视角左上角、右刻度→视角右上角（对方旋转 180° 后左右/上下互换）
+        // 左刻度→视角左上角、右刻度→视角右上角（对方旋转 180° 后左右/上下互换）
         float[] corner;
         if (ours) {
             float[] l = farL[0] <= farR[0] ? farL : farR;
@@ -1216,7 +1225,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
         float tx = corner[0] + Math.signum(center[0] - corner[0]) * hpx * 0.9f;
         float ty = corner[1] + Math.signum(center[1] - corner[1]) * hpx * 0.8f;
-        // 需求4：刻度白色（对齐 drawing.cpp 灵摆刻度 0xffffffff）
+        // 刻度白色（对齐 drawing.cpp 灵摆刻度 0xffffffff）
         drawScreenText(tx, ty, new String[]{txt}, new int[]{0xFFFFFFFF}, hpx);
     }
     private void drawScreenNumber(float[] screenXY, String text, int color, float heightPx) {
@@ -1278,9 +1287,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return bmp;
     }
 
-    // === 需求1-4：多色自适应宽度 HUD 文字（ATK/DEF、等级/阶级、灵摆刻度）===
+    // === 多色自适应宽度 HUD 文字（ATK/DEF、等级/阶级、灵摆刻度）===
     // 与 makeNumberBitmap 的区别：位图宽度随文本增长而非缩放字号，
-    // 保证「1500/2000」这类长串的字高与堆叠数量数字完全一致（需求3）。
+    // 保证「1500/2000」这类长串的字高与堆叠数量数字完全一致。
     private static final float STAT_TEXT_SIZE = 44f;
     private static final int STAT_BMP_H = 64;
     private static final int STAT_PAD_X = 6;
@@ -1355,7 +1364,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private static final int ALIGN_CENTER = 0;
     private static final int ALIGN_LEFT = 1;
     private static final int ALIGN_RIGHT = 2;
-    /** 攻守/等级数字比堆叠数量再小一号（需求：比原来小 1 号） */
+    /** 攻守/等级数字尺寸 */
     private static final float STAT_SIZE_SCALE = 0.85f;
     private static final float STAT_SNUG_PX = 2f;
 
@@ -1961,18 +1970,22 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
      */
     private void drawPhaseButton(float[] rect, String label, boolean pressed) {
         if (rect == null || label == null || label.isEmpty()) return;
+        boolean enabled = phaseButtonsEnabled;
+        float a = enabled ? 1f : 0.4f;   // 禁用时整体变暗
         float cx = rect[0], cy = rect[1], bw = rect[2], bh = rect[3];
-        drawScreenQuadColor(cx, cy, bw + 3f, bh + 3f, 0.04f, 0.08f, 0.12f, 0.92f);
+        drawScreenQuadColor(cx, cy, bw + 3f, bh + 3f, 0.04f, 0.08f, 0.12f, 0.92f * a);
         if (pressed) {
-            drawScreenQuadColor(cx, cy, bw, bh, 0.15f, 0.22f, 0.32f, 0.94f);
-        } else {
+            drawScreenQuadColor(cx, cy, bw, bh, 0.15f, 0.22f, 0.32f, 0.94f * a);
+        } else if (enabled) {
             drawScreenQuadColor(cx, cy, bw, bh, 0.30f, 0.44f, 0.58f, 0.90f);
+        } else {
+            drawScreenQuadColor(cx, cy, bw, bh, 0.16f, 0.24f, 0.32f, 0.90f);
         }
         int tex = obtainPhaseLabelTexture(label);
         if (tex > 0) {
             // 标签位图固定 256×80：按 3.2:1 铺展，宽度封顶按钮内宽（短文字两侧留透明区）
             float tw = Math.min(bh * 3.2f, bw * 0.96f);
-            drawScreenQuadTex(cx, cy, tw, tw / 3.2f, tex, 1f);
+            drawScreenQuadTex(cx, cy, tw, tw / 3.2f, tex, a);
         }
     }
 
