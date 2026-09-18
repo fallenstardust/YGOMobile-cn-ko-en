@@ -1001,12 +1001,31 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override
     public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
         soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
+        // duelclient.cpp MSG_CHAINING L3345/L3366-3371：录像同样维护 current_chain，
+        // 使卡片列表的「在连锁%d发动 / 被连锁%d的[%ls]选择为对象」状态标签在回放中一致
+        field.currentChain = new GameField.ChainInfo();
+        field.currentChain.chainCard = field.getCard(pcc & 1, pcl, pcs, subs);
+        field.currentChain.code = code;
+        field.currentChain.desc = desc;
+        field.currentChain.controler = cc & 1;
+        field.currentChain.location = cl;
+        field.currentChain.sequence = cs;
     }
 
-    @Override public void onChained(int chainCount) { notifyField(); }
+    @Override public void onChained(int chainCount) {
+        if (field.currentChain != null && !field.chains.contains(field.currentChain)) {
+            field.chains.add(field.currentChain);
+        }
+        notifyField();
+    }
     @Override public void onChainSolving(int chainCount) {}
     @Override public void onChainSolved(int chainCount) { notifyField(); }
-    @Override public void onChainEnd() { notifyField(); }
+    @Override public void onChainEnd() {
+        // duelclient.cpp MSG_CHAIN_END L3442
+        field.chains.clear();
+        field.currentChain = new GameField.ChainInfo();
+        notifyField();
+    }
     @Override public void onChainNegated(int chainCount) { soundManager.playSoundEffect(SoundManager.SFX.NEGATE); }
     @Override public void onChainDisabled(int chainCount) { soundManager.playSoundEffect(SoundManager.SFX.NEGATE); }
     @Override public void onDraw(int player, int count, int[] codes) {
@@ -1072,7 +1091,21 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onAnnounceAttrib(int player, int count, int availableAttribs) {}
     @Override public void onAnnounceCard(int player, ByteBuffer data) {}
     @Override public void onAnnounceNumber(int player, ByteBuffer data) {}
-    @Override public void onCardHint(int type, int data) {}
+    @Override public void onCardHint(int player, int location, int sequence, int hintType, int value) {
+        // duelclient.cpp MSG_CARD_HINT L4094-4109：desc_hints 计数维护
+        field.applyCardHint(player & 1, location, sequence, hintType, value);
+    }
+    @Override public void onBecomeTarget(int count, ByteBuffer data) {
+        if (data == null || count <= 0) { notifyField(); return; }
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            int ctrl = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            data.get(); // subseq：C++ 读取即弃
+            field.addChainTarget(ctrl & 1, loc, seq);
+        }
+        notifyField();
+    }
     @Override public void onTagSwap(int player) { notifyField(); }
     @Override public void onReloadField() { notifyField(); }
     @Override public void onAiName(String name) {}

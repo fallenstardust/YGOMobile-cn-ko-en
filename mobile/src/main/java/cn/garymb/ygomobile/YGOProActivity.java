@@ -946,6 +946,10 @@ public class YGOProActivity extends AppCompatActivity implements
                 cardDetailPanel.showBottomActions();
                 // 对齐 duelclient.cpp L912-916：STOC_GAME_START 按 chkDefaultShowChain 初始化时点三态
                 cardDetailPanel.onDuelStarted();
+                // 进入决斗后仅对战玩家显示投降按钮（观战者 selfType>=7 不显示）；
+                // 猜拳/选先后阶段保持隐藏（onGameUIShown 已默认隐藏）
+                int selfSeat = engine.getClient().selfType;
+                cardDetailPanel.setSurrenderVisible(selfSeat >= 0 && selfSeat < 7);
                 pendingReplays.clear();
                 duelEndHandling = false;
                 break;
@@ -1137,13 +1141,17 @@ public class YGOProActivity extends AppCompatActivity implements
     public void onDuelResult(int winner, int reason) {
         topInfoManager.stopTimer();
         runOnUiThread(() -> {
+            boolean selfWon = winner != 2 && engine.isSelfSide(winner);
             int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
-                    : (engine.isSelfSide(winner) ? SpecEffectOverlay.TEXT_YOU_WIN
-                                                 : SpecEffectOverlay.TEXT_YOU_LOSE);
-            // case 101：胜负文字 + 胜利原因（对齐 duelclient.cpp MSG_WIN，reason<0x10 时前缀胜者名）
-            String winnerName = (winner == 2) ? null
-                    : playerDisplayName(engine.isSelfSide(winner) ? 0 : 1);
-            specEffect().showWinText(code, reason, winnerName);
+                    : (selfWon ? SpecEffectOverlay.TEXT_YOU_WIN
+                       : SpecEffectOverlay.TEXT_YOU_LOSE);
+            // 对齐 duelclient.cpp MSG_WIN："[X] 原因" 前缀里的 X 是【败方】昵称
+            //（duelclient.cpp STOC_DUEL_START：hostname=我方 self、clientname=对方；
+            //  LocalPlayer(winner)==0 即我方胜 → 用 clientname(对方=败者)；否则我方负 → 用 hostname(我方=败者)）。
+            // 之前误传胜者名，后攻时表现为一胜一负名字对调。playerDisplayName(0)=我方、(1)=对方。
+            String vicName = (winner == 2) ? null
+                    : playerDisplayName(selfWon ? 1 : 0);
+            specEffect().showWinText(code, reason, vicName);
 
         });
     }
@@ -1159,6 +1167,50 @@ public class YGOProActivity extends AppCompatActivity implements
                 ? engine.playerInfos[seat] : null;
         String defaultName = (localIndex == 0) ? Constants.PlayerName : "Opponent";
         return (info == null || info.name.isEmpty()) ? defaultName : info.name;
+    }
+
+    /**
+     * 投降入口（对齐 event_handler.cpp BUTTON_LEAVE_GAME → wSurrender(1359) 确认 → CTOS_SURRENDER）：
+     * 先弹 YesOrNoDialog 二次确认，确认后才发送投降通讯；
+     * tag 模式下若本方已发起投降、正在等待队友回应，则忽略重复点击
+     */
+    public void requestSurrender() {
+        if (engine == null || !engine.isInDuel()) return;
+        if (engine.isTagMode() && engine.isSurrenderPending()) return;
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setTitle(mStringManager.getSystemString(1351, "投降"))
+                .setMessage(mStringManager.getSystemString(1359, "是否确定投降？"))
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText(mStringManager.getSystemString(1213, "是"))
+                .setNegativeButtonText(mStringManager.getSystemString(1214, "否"))
+                .setPositiveButton(v -> {
+                    if (engine != null) engine.sendSurrender();
+                })
+                .setCenterInView(layoutGameRight)
+                .setCancelable(false);
+        dialog.show();
+    }
+
+    /**
+     * tag 模式队友请求投降（对齐 STOC_TEAMMATE_SURRENDER + sysString 1355）：
+     * 弹出询问框，本方同意后再次发送 CTOS_SURRENDER，
+     * 服务器（tag_duel.cpp Surrender）检测到双方均投降才会判定 MSG_WIN
+     */
+    @Override
+    public void onTeammateSurrenderRequest() {
+        if (isFinishing() || isDestroyed()) return;
+        YesOrNoDialog dialog = new YesOrNoDialog(this);
+        dialog.setMessage(mStringManager.getSystemString(1355, "投降(1/2)"))
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText(mStringManager.getSystemString(1213, "是"))
+                .setNegativeButtonText(mStringManager.getSystemString(1214, "否"))
+                .setPositiveButton(v -> {
+                    if (engine != null) engine.sendSurrender();
+                })
+                .setNegativeButton(v -> { /* 拒绝：保持对局，双方未全部同意，服务器不会判定投降 */ })
+                .setCenterInView(layoutGameRight)
+                .setCancelable(false);
+        dialog.show();
     }
 
     @Override

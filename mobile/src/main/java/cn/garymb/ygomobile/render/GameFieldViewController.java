@@ -76,7 +76,15 @@ public class GameFieldViewController
                 fieldView.dispatchLongPress(e.getX(), e.getY());
             }
         });
-        fieldView.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+        fieldView.setOnTouchListener((v, event) -> {
+            boolean handled = gestureDetector.onTouchEvent(event);
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                // 长按状态标签随抬手隐藏（未显示时为空操作）
+                fieldView.dispatchLongPressEnd();
+            }
+            return handled;
+        });
     }
 
     public void init(GameField field, ImageLoader imageLoader, GameFieldView.OnCardClickListener listener) {
@@ -206,9 +214,15 @@ public class GameFieldViewController
     }
 
     @Override
-    public void onFieldLongPress(int player, int location, int sequence) {
+    public void onFieldLongPress(int player, int location, int sequence, float x, float y) {
         GameFieldView.OnCardClickListener l = cardClickDelegate;
-        if (l != null) l.onFieldLongPress(player, location, sequence);
+        if (l != null) l.onFieldLongPress(player, location, sequence, x, y);
+    }
+
+    @Override
+    public void onFieldLongPressEnd() {
+        GameFieldView.OnCardClickListener l = cardClickDelegate;
+        if (l != null) l.onFieldLongPressEnd();
     }
 
     // ==================== GameFieldView.OnPhaseButtonListener（统一转发委托） ====================

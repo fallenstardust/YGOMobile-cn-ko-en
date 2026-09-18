@@ -100,7 +100,13 @@ public class GameMessageParser {
         void onAnnounceAttrib(int player, int count, int availableAttribs);
         void onAnnounceCard(int player, ByteBuffer data);
         void onAnnounceNumber(int player, ByteBuffer data);
-        void onCardHint(int type, int data);
+        /**
+         * duelclient.cpp MSG_CARD_HINT L4094-4100：
+         * controler(1) location(1) sequence(1) subseq(1，C++ 读入即弃) hintType(1) value(4)
+         */
+        void onCardHint(int player, int location, int sequence, int hintType, int value);
+        /** duelclient.cpp MSG_BECOME_TARGET L3486-3497：count(1) + count×[ctrl1 loc1 seq1 ss1(忽略)] */
+        void onBecomeTarget(int count, ByteBuffer data);
         void onTagSwap(int player);
         void onReloadField();
         void onAiName(String name);
@@ -370,6 +376,12 @@ public class GameMessageParser {
             case ChainDisabled:
                 handler.onChainDisabled(buf.get() & 0xFF);
                 break;
+            case BecomeTarget: {
+                // duelclient.cpp MSG_BECOME_TARGET L3488-3497：目标写入 current_chain.target
+                int btCount = buf.get() & 0xFF;
+                handler.onBecomeTarget(btCount, buf);
+                break;
+            }
             case Draw: {
                 int player = buf.get() & 0xFF;
                 int count = buf.get() & 0xFF;
@@ -527,9 +539,14 @@ public class GameMessageParser {
                 handler.onAnnounceNumber(buf.get() & 0xFF, buf);
                 break;
             case CardHint: {
-                int type = buf.get() & 0xFF;
-                int data = buf.getInt();
-                handler.onCardHint(type, data);
+                // duelclient.cpp MSG_CARD_HINT L4095-4100：c(1) l(1) s(1) 占位(1) chtype(1) value(4) 共 9 字节
+                int chPlayer = buf.get() & 0xFF;
+                int chLocation = buf.get() & 0xFF;
+                int chSequence = buf.get() & 0xFF;
+                buf.get(); // subseq：C++ 读取但忽略（GetCard 三参，超量素材不加提示）
+                int chType = buf.get() & 0xFF;
+                int chValue = buf.getInt();
+                handler.onCardHint(chPlayer, chLocation, chSequence, chType, chValue);
                 break;
             }
             case TagSwap:

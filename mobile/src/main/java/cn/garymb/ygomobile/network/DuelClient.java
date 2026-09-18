@@ -54,6 +54,8 @@ public class DuelClient implements YGOProtocol {
         void onTimeLimit(int player, int leftTime);
         void onErrorMsg(int msg, int code);
         void onTypeChange(int type);
+        // STOC_TEAMMATE_SURRENDER：tag 模式队友请求投降（对齐 duelclient.cpp STOC_TEAMMATE_SURRENDER / tag_duel.cpp Surrender）
+        default void onTeammateSurrender() {}
         void onJoinGame(int lflist, int rule, int mode, int duelRule,
                         int noCheckDeck, int noShuffleDeck,
                         int startLp, int startHand, int drawCount, int timeLimit);
@@ -256,9 +258,11 @@ public class DuelClient implements YGOProtocol {
                 case STOC_DECK_COUNT:
                     handleDeckCount(buf);
                     break;
+                case STOC_TEAMMATE_SURRENDER:
+                    listener.onTeammateSurrender();
+                    break;
                 case STOC_TP_RESULT:
                 case STOC_LEAVE_GAME:
-                case STOC_TEAMMATE_SURRENDER:
                 case STOC_FIELD_FINISH:
                     break;
                 default:

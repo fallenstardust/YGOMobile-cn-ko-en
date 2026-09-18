@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +52,12 @@ public class CmdMenuDialog {
     private static final int SYS_TO_ATTACK = 1156;   // 攻击表示
     private static final int SYS_ATTACK = 1157;      // 攻击
     private static final int SYS_SET_MONSTER = 1159; // 怪兽卡设置到魔陷区
+    private static final int SYS_RESET = 1162;       // 表示重置(Reset Effect)
+    private static final int SYS_SELECT_OPTION = 555;// 请选择一项
+
+    /** client_field.h EDESC_*：duelclient.cpp L2120-2121 连锁项 flag 分流 */
+    private static final int EDESC_OPERATION = 0x1;  // 继续（不弹发动菜单）
+    private static final int EDESC_RESET = 0x2;      // 表示重置（走 btnReset）
 
     /** 「查看」入口文本：与项目内其他中文提示一致直接内联 */
     private static final String VIEW_TEXT = "查看";
@@ -208,28 +213,44 @@ public class CmdMenuDialog {
     private void buildCardCommandMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
                                       List<String> options, List<Runnable> actions) {
         int flag = card.cmdFlag;
-        boolean battlePhase = (cmdContext == CMD_CONTEXT_BATTLE);
         boolean idlePhase = (cmdContext == CMD_CONTEXT_IDLE);
-        boolean chainPhase = (cmdContext == CMD_CONTEXT_CHAIN);
 
         String activateText = sysString(SYS_ACTIVATE);
 
+        // 需求：卡片有多个可发动效果时也只生成一个「发动」按钮，按钮文字仅取系统字符串 1150，
+        // 不再拼接该卡的脚本提示文字；点击后用 OptionDialog 列出各效果文字供选择。
+        // 对齐 event_handler.cpp BUTTON_CMD_ACTIVATE L501-538：
+        //   flag & EDESC_OPERATION → continue（由「继续/放弃」链路处理）
+        //   select_options.size()==1 时直接应答，否则 command_card = menu_card; ShowSelectOption()
+        List<GameEngine.CmdCardInfo> activateList = new ArrayList<>();
         if ((flag & GameEngine.COMMAND_ACTIVATE) != 0) {
             for (GameEngine.CmdCardInfo info : engine.activatableCards) {
                 if (info.card != card) continue;
-                final int idx = info.index;
-                if (chainPhase) {
-                    options.add(info.desc > 0 ? DataManager.get().getDesc(info.desc, activateText) : activateText);
-                    actions.add(() -> activity.getDialogUtil().activateChainOption(idx));
-                } else {
-                    options.add(info.desc > 0 ? sysString(info.desc, activateText) : activateText);
-                    if (battlePhase) {
-                        actions.add(() -> activity.sendResponseInt(idx << 16));
-                    } else {
-                        actions.add(() -> activity.sendResponseInt((idx << 16) + 5));
-                    }
-                }
+                if ((info.flag & EDESC_OPERATION) != 0) continue;
+                if ((info.flag & EDESC_RESET) != 0) continue;
+                activateList.add(info);
             }
+        }
+        if (!activateList.isEmpty()) {
+            options.add(activateText);
+            final List<GameEngine.CmdCardInfo> chosen = activateList;
+            actions.add(() -> showActivateOptions(cmdContext, chosen));
+        }
+
+        // duelclient.cpp L2121 / event_handler.cpp BUTTON_CMD_RESET L501-538：
+        // EDESC_RESET 项只由「表示重置」处理，Java 无 COMMAND_RESET 标记，故单独收集，避免无处可点导致通讯卡住
+        List<GameEngine.CmdCardInfo> resetList = new ArrayList<>();
+        if ((flag & GameEngine.COMMAND_ACTIVATE) != 0) {
+            for (GameEngine.CmdCardInfo info : engine.activatableCards) {
+                if (info.card != card) continue;
+                if ((info.flag & EDESC_RESET) == 0) continue;
+                resetList.add(info);
+            }
+        }
+        if (!resetList.isEmpty()) {
+            options.add(sysString(SYS_RESET, "表示重置"));
+            final List<GameEngine.CmdCardInfo> chosen = resetList;
+            actions.add(() -> showActivateOptions(cmdContext, chosen));
         }
 
         if ((flag & GameEngine.COMMAND_ATTACK) != 0) {
@@ -382,8 +403,46 @@ public class CmdMenuDialog {
     }
 
     /**
-     * 构建并弹出 CardDisplayDialog：单击 → 查看模式显示卡片详情 / 命令模式发送响应；
-     * 长按 → 显示该卡在通讯中的实时状态信息（Toast）。
+     * 发动/表示重置：单条直接应答，多条弹 OptionDialog 列出各效果脚本提示文字
+     *（对齐 client_field.cpp ShowSelectOption + event_handler.cpp BUTTON_OPTION → SetResponseSelectedOption）。
+     */
+    private void showActivateOptions(int cmdContext, List<GameEngine.CmdCardInfo> infos) {
+        if (infos == null || infos.isEmpty()) return;
+        if (infos.size() == 1) {
+            respondActivate(cmdContext, infos.get(0).index);
+            return;
+        }
+        String fallback = sysString(SYS_ACTIVATE);
+        List<String> texts = new ArrayList<>();
+        for (GameEngine.CmdCardInfo info : infos) {
+            texts.add(info.desc > 0 ? DataManager.get().getDesc(info.desc, fallback) : fallback);
+        }
+        final List<GameEngine.CmdCardInfo> targets = infos;
+        new OptionDialog(activity)
+                .setTitle(sysString(SYS_SELECT_OPTION, "请选择一项"))
+                .setOptions(texts)
+                .setOnOptionSelectedListener(index -> {
+                    if (index >= 0 && index < targets.size()) {
+                        respondActivate(cmdContext, targets.get(index).index);
+                    }
+                })
+                .show();
+    }
+
+    /** 发动响应编码（event_handler.cpp SetResponseSelectedOption L3002-3017） */
+    private void respondActivate(int cmdContext, int idx) {
+        if (cmdContext == CMD_CONTEXT_CHAIN) {
+            activity.getDialogUtil().activateChainOption(idx);
+        } else if (cmdContext == CMD_CONTEXT_BATTLE) {
+            activity.sendResponseInt(idx << 16);
+        } else {
+            activity.sendResponseInt((idx << 16) + 5);
+        }
+    }
+
+    /**
+     * 构建并弹出 CardDisplayDialog：单击 → 命令模式发送响应；
+     * 按下即在 CardDetailPanel 显示详情、按住悬浮显示通讯状态标签（由 CardDisplayDialog 内部接管）。
      */
     private void showCardListDialog(String title, List<CardDisplayDialog.CardItem> items,
                                     List<Integer> indices, int mode, int cmdContext, GameEngine engine) {
@@ -395,6 +454,7 @@ public class CmdMenuDialog {
         dialog.setTitle(title)
                 .setCards(items)
                 .setLocalPlayer(0)   // item.controler 已是视角侧（0=我方）
+                .setControlerProtocolSide(false)
                 .setCardClickListener(item -> {
                     if (mode == MODE_VIEW) {
                         activity.showCardInfoPanel(clientCardFromItem(item));
@@ -405,10 +465,6 @@ public class CmdMenuDialog {
                         }
                         dialog.dismiss();
                     }
-                })
-                .setCardLongClickListener(item -> {
-                    showLiveStatus(engine, item);
-                    return true;
                 })
                 .setOnDismissListener(() -> {
                     if (panel != null) panel.setCardDisplayDialog(null);
@@ -439,49 +495,20 @@ public class CmdMenuDialog {
         return c;
     }
 
-    /** 长按：从场地模型解析对应实时卡片，展示通讯中获取的状态信息 */
-    private void showLiveStatus(GameEngine engine, CardDisplayDialog.CardItem item) {
-        GameField.ClientCard c = resolveLiveCard(engine, item);
-        String msg;
-        if (c == null) {
-            msg = "无通讯状态信息";
-        } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append(c.code > 0 ? ("[" + c.code + "]") : "[???]");
-            if (!nz(c.lvString).isEmpty()) sb.append("  ").append(c.lvString);
-            if (!nz(c.atkString).isEmpty()) sb.append("  ATK ").append(c.atkString);
-            if (!nz(c.defString).isEmpty()) sb.append(" / DEF ").append(c.defString);
-            if (!nz(c.linkString).isEmpty()) sb.append("  ").append(c.linkString);
-            if (!nz(c.lscString).isEmpty()) sb.append("  刻度 ").append(c.lscString).append("/").append(nz(c.rscString));
-            sb.append("  表示 ").append(positionText(c.position));
-            if (c.counters != null && !c.counters.isEmpty()) sb.append("  指示物 ").append(c.counters.size()).append(" 种");
-            msg = sb.toString();
+    /** 标题标注是哪一方（card.controler 已是视角侧，0=我方） */
+    private static String sidePrefix(int controler) {
+        return controler == 0 ? "我方" : "对方";
+    }
+
+    /** 卡组/额外/墓地/除外区名称（与 YGOProActivity.getLocationName 一致） */
+    private static String pileName(int location) {
+        switch (location) {
+            case 0x01: return "卡组";
+            case 0x40: return "额外卡组";
+            case 0x10: return "墓地";
+            case 0x20: return "除外区";
+            default: return "卡片";
         }
-        Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show();
-    }
-
-    private GameField.ClientCard resolveLiveCard(GameEngine engine, CardDisplayDialog.CardItem item) {
-        if (engine == null) return null;
-        GameField field = engine.getField();
-        if (field == null) return null;
-        if (item.location == LOC_OVERLAY) {
-            GameField.ClientCard xyz = field.getCard(item.controler, LOC_MZONE, item.sequence);
-            if (xyz != null && item.subSeq >= 0 && item.subSeq < xyz.overlayed.size()) {
-                return xyz.overlayed.get(item.subSeq);
-            }
-            return null;
-        }
-        return field.getCard(item.controler, item.location, item.sequence);
-    }
-
-    private static String positionText(int pos) {
-        boolean faceup = (pos & 0x5) != 0;
-        boolean attack = (pos & 0x3) != 0;
-        return (faceup ? "表侧" : "里侧") + (attack ? "攻击" : "守备");
-    }
-
-    private static String nz(String s) {
-        return s == null ? "" : s;
     }
 
     private static int findCmdIndex(List<GameEngine.CmdCardInfo> list, GameField.ClientCard card) {
@@ -517,21 +544,5 @@ public class CmdMenuDialog {
 
     private int dp(int value) {
         return Math.round(value * activity.getResources().getDisplayMetrics().density);
-    }
-
-    /** 标题标注是哪一方（card.controler 已是视角侧，0=我方） */
-    private static String sidePrefix(int controler) {
-        return controler == 0 ? "我方" : "对方";
-    }
-
-    /** 卡组/额外/墓地/除外区名称（与 YGOProActivity.getLocationName 一致） */
-    private static String pileName(int location) {
-        switch (location) {
-            case 0x01: return "卡组";
-            case 0x40: return "额外卡组";
-            case 0x10: return "墓地";
-            case 0x20: return "除外区";
-            default: return "卡片";
-        }
     }
 }

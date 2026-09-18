@@ -28,6 +28,7 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.render.CardStatusTipHelper;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
@@ -1210,11 +1211,23 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     }
 
     @Override
-    public void onFieldLongPress(int player, int location, int sequence) {
+    public void onFieldLongPress(int player, int location, int sequence, float x, float y) {
         Log.d(TAG, "Long press: p=" + player + " loc=" + location + " seq=" + sequence);
-        GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
-        if (card != null && card.code > 0) {
-            activity.showCardInfoPanel(card);
+        GameField field = engine.getField();
+        GameField.ClientCard card = field.getCard(player, location, sequence);
+        if (card == null) return;
+        // 详情面板只显卡表原始数据；通讯当前值与原始值的差异行走悬浮标签
+        // （对应 gframe：ShowCardInfo(code) 原值详情 + DrawStatus/标签状态信息）
+        activity.showCardInfoPanel(card);
+        String tip = CardStatusTipHelper.buildStatusText(field, card);
+        if (tip != null && !tip.isEmpty() && viewController != null
+                && viewController.getView() != null) {
+            CardStatusTipHelper.FieldTip.show(activity, viewController.getView(), tip, x, y);
         }
+    }
+
+    @Override
+    public void onFieldLongPressEnd() {
+        CardStatusTipHelper.FieldTip.hide();
     }
 }

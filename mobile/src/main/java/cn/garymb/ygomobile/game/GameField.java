@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import ocgcore.enums.CardLocation;
 import ocgcore.enums.CardPosition;
@@ -53,6 +54,13 @@ public class GameField {
     public static final int POS_ATTACK = 0x3;
     public static final int POS_DEFENSE = 0xC;
 
+    /** client_field.h STATUS_PROC_COMPLETE：以正规程序特殊召唤过的标记 */
+    public static final int STATUS_PROC_COMPLETE = 0x0008;
+    /** duelclient.cpp MSG_CARD_HINT L4104 CHINT_DESC_ADD：为卡片追加一条效果文字提示 */
+    public static final int CHINT_DESC_ADD = 6;
+    /** duelclient.cpp MSG_CARD_HINT L4106 CHINT_DESC_REMOVE：移除一条提示，计数归零才真正删除 */
+    public static final int CHINT_DESC_REMOVE = 7;
+
     public static class ClientCard {
         public int code;
         public int alias;
@@ -95,6 +103,13 @@ public class GameField {
         public List<ClientCard> overlayed = new ArrayList<>();
         public ClientCard overlayTarget;
         public int status;
+
+        /**
+         * duelclient.cpp MSG_CARD_HINT 的 desc_hints：效果文字描述 id → 引用计数。
+         * TreeMap 保证与 C++ std::map 一致按 desc 升序遍历（event_handler.cpp L2933-2936）。
+         * 注意：C++ ClientCard::ClearData() 不清 desc_hints，故此处 clearData 也不清。
+         */
+        public final Map<Integer, Integer> descHints = new TreeMap<>();
 
         public boolean is_moving;
         public boolean is_fading;
@@ -190,6 +205,25 @@ public class GameField {
             lscString = "";
             rscString = "";
             counters.clear();
+        }
+
+        /** duelclient.cpp L4105：desc_hints[value]++ */
+        public void addDescHint(int desc) {
+            Integer c = descHints.get(desc);
+            descHints.put(desc, c == null ? 1 : c + 1);
+        }
+
+        /** duelclient.cpp L4107-4109：desc_hints[value]--，归零 erase */
+        public void removeDescHint(int desc) {
+            Integer c = descHints.get(desc);
+            if (c == null) return;
+            if (c - 1 <= 0) descHints.remove(desc);
+            else descHints.put(desc, c - 1);
+        }
+
+        /** duelclient.cpp MSG_SHUFFLE_HAND L2691：洗手卡后逐张 desc_hints.clear() */
+        public void clearDescHints() {
+            descHints.clear();
         }
 
         public void clearTarget() {
@@ -394,6 +428,13 @@ public class GameField {
     public int turnCount;
     public boolean isTag;
     public List<ChainInfo> chains = new ArrayList<>();
+
+    /**
+     * 正在构建中的连锁（对齐 duelclient.cpp dField.current_chain）：
+     * MSG_CHAINING 重建、MSG_BECOME_TARGET 追加 target、MSG_CHAINED 压入 chains。
+     * 供 ClientField::ShowCardInfoInList 生成「在连锁%d发动」「被连锁%d的[%ls]选择为对象」标签。
+     */
+    public ChainInfo currentChain = new ChainInfo();
     public List<ClientCard> overlayCards = new ArrayList<>();
     private final List<PendingOverlay> pendingOverlays = new ArrayList<>();
     public int[] extraPCount = new int[2];
@@ -610,6 +651,7 @@ public class GameField {
         overlayCards.clear();
         pendingOverlays.clear();
         chains.clear();
+        currentChain = new ChainInfo();
         activatableCards.clear();
         summonableCards.clear();
         spsummonableCards.clear();
@@ -704,6 +746,28 @@ public class GameField {
             return null;
         }
         return card;
+    }
+
+    /**
+     * duelclient.cpp MSG_CARD_HINT L4094-4109 的 desc_hints 部分：
+     * 以三参 GetCard 定位卡片（超量素材取不到 → 与 C++ 一致直接忽略本条提示）。
+     * 其余 chtype（CHINT_TURN 等）由调用方按动画需求另行处理。
+     */
+    public void applyCardHint(int localControler, int location, int sequence, int hintType, int value) {
+        ClientCard pcard = getCard(localControler, location, sequence);
+        if (pcard == null) return;
+        if (hintType == CHINT_DESC_ADD) {
+            pcard.addDescHint(value);
+        } else if (hintType == CHINT_DESC_REMOVE) {
+            pcard.removeDescHint(value);
+        }
+    }
+
+    /** duelclient.cpp MSG_BECOME_TARGET L3500：current_chain.target.insert(pcard) */
+    public void addChainTarget(int localControler, int location, int sequence) {
+        ClientCard pcard = getCard(localControler, location, sequence);
+        if (pcard == null || currentChain == null || currentChain.targets == null) return;
+        if (!currentChain.targets.contains(pcard)) currentChain.targets.add(pcard);
     }
 
     public void addCard(int controler, int location, int sequence, ClientCard card) {

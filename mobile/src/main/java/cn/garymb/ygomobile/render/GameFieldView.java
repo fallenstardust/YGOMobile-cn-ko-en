@@ -62,7 +62,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
         void onZoneClick(int player, int location, int sequence, float tapX, float tapY);
 
-        void onFieldLongPress(int player, int location, int sequence);
+        /** 长按命中卡片：x/y 为视图内触点坐标（状态悬浮标签锚定用） */
+        void onFieldLongPress(int player, int location, int sequence, float x, float y);
+
+        /** 长按手势结束（抬手/取消）：宿主据此隐藏状态悬浮标签 */
+        void onFieldLongPressEnd();
     }
 
     /**
@@ -152,6 +156,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private static final float[] TOTAL_ATK_ME_MR3 = {2.5f, 0.95f, 3.5f, 1.65f};
     private static final float[] TOTAL_ATK_OP_MR3 = {4.45f, 0.4f, 5.45f, 1.1f};
     private static final long TOTAL_ATK_KEY = -3L;
+    // 区域发动 / conti_act 旋转提示图标（materials: act.png），对齐 drawing.cpp DrawMisc 的 tAct + act_rot
+    private static final long ACT_TEX_KEY = -4L;
+    // conti_cards 隐形格子最多堆叠显示层数（对齐 drawing.cpp 中部场地空隙的可视堆叠）
+    private static final int MAX_CONTI_LAYERS = 5;
 
     /**
      * 需要完整入镜的可交互内容（怪兽区 / 魔陷区 / 堆叠区）→ {横向半宽(相对场地中轴), 所在 y 行}。
@@ -874,6 +882,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             drawFieldCards(f);
         } catch (Throwable ignored) {
         }
+        try {
+            drawZoneActHints(f);
+            drawContiGrid(f);
+        } catch (Throwable ignored) {
+        }
         GLES30.glDepthMask(false);
         drawHighlights();
         drawCardSelectOutlines(f);
@@ -1011,6 +1024,122 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             if (tex > 0) drawQuadTex(mModel, tex, 1f);
             else drawQuadColor(mModel, 0.85f, 0.62f, 0.12f, 0.80f);
         }
+    }
+
+    // === 需求1+2：区域发动提示 / conti_act 隐形格子（drawing.cpp DrawMisc L811-875）===
+
+    /** 旋转图标自旋角度（度）：对齐 drawing.cpp act_rot.Z += 0.02/帧 @60fps ≈ 1.2 rad/s ≈ 68.8°/s */
+    private float actSpinDegrees() {
+        return (animTimeMs % 5240L) / 5240f * 360f;
+    }
+
+    /**
+     * 需求1：我方墓地/除外/卡组/额外在有可发动/可特召项（graveAct/removeAct/deckAct/extraAct 置位）时，
+     * 在该堆叠格正上方绘制一个旋转的 act 图标（对齐 drawing.cpp deck_act/grave_act/remove_act/extra_act
+     * 分支在 vFieldDeck/Grave/Remove/Extra 中心上方绘制旋转 vActivate）。
+     */
+    private void drawZoneActHints(GameField f) {
+        if (f == null) return;
+        boolean any = false;
+        for (int p = 0; p < 2; p++) {
+            if (f.deckAct[p] || f.graveAct[p] || f.removeAct[p] || f.extraAct[p]) {
+                any = true;
+                break;
+            }
+        }
+        if (!any) return;
+        int tex = obtainActTexture();
+        if (tex <= 0) return;
+        float spin = actSpinDegrees();
+        float sz = ZONE_W;
+        for (int p = 0; p < 2; p++) {
+            drawActIconOverPile(tex, p, 0x01, f.deckAct[p], sz, spin);
+            drawActIconOverPile(tex, p, 0x10, f.graveAct[p], sz, spin);
+            drawActIconOverPile(tex, p, 0x20, f.removeAct[p], sz, spin);
+            drawActIconOverPile(tex, p, 0x40, f.extraAct[p], sz, spin);
+        }
+    }
+
+    private void drawActIconOverPile(int tex, int p, int loc, boolean on, float sz, float spin) {
+        if (!on) return;
+        float[] c = pileCenter(p, loc);
+        if (c == null) return;
+        drawActIconAt(tex, mirrorX(c[0]), c[1], 0.05f, sz, spin);
+    }
+
+    /** 在场地上方绘制一枚绕场地法线（世界 Z）自旋的 act 图标（平铺于场地平面、朝向相机） */
+    private void drawActIconAt(int tex, float cx, float cy, float z, float sz, float spin) {
+        Matrix.setIdentityM(mModel, 0);
+        Matrix.translateM(mModel, 0, cx, cy, z);
+        Matrix.rotateM(mModel, 0, spin, 0f, 0f, 1f);
+        Matrix.scaleM(mModel, 0, sz, sz, 1f);
+        drawQuadTex(mModel, tex, 0.92f);
+    }
+
+    /**
+     * 需求2：战斗阶段按钮（PHASE_NEXT，锚定场地中心 (FIELD_CENTER_X,0)）所在场地中部空隙处，
+     * 绘制一个「隐形格子」——堆叠显示 conti_cards（通讯中回合结束仍需效果结算的卡），
+     * 并在其上方绘制旋转 act 图标（对齐 drawing.cpp conti_act 分支：vFieldContiAct 中心堆叠卡面 + 旋转 vActivate）。
+     */
+    private void drawContiGrid(GameField f) {
+        if (f == null || !f.contiAct) return;
+        List<GameField.ClientCard> cards = f.contiCards;
+        if (cards == null || cards.isEmpty()) return;
+        float cx = FIELD_CENTER_X;
+        float cy = 0f;
+        float cardW = 0.9f;
+        float cardH = 0.9f * 254f / 177f;
+        int n = 0;
+        for (int i = 0, s = cards.size(); i < s && n < MAX_CONTI_LAYERS; i++) {
+            GameField.ClientCard c;
+            try {
+                c = cards.get(i);
+            } catch (Throwable e) {
+                continue;
+            }
+            if (c == null) continue;
+            int code = c.code != 0 ? c.code : c.chain_code;
+            float z = 0.03f + 0.01f * n;
+            Matrix.setIdentityM(mModel, 0);
+            Matrix.translateM(mModel, 0, cx, cy, z);
+            Matrix.scaleM(mModel, 0, cardW, cardH, 1f);
+            if (code > 0) {
+                int ct = obtainTexture(code, 0, 0);
+                if (ct > 0) drawQuadTex(mModel, ct, 1f);
+                else drawQuadColor(mModel, 0.35f, 0.35f, 0.40f, 1f);
+            } else {
+                int cover = obtainCover(false);
+                if (cover > 0) drawQuadTex(mModel, cover, 1f);
+            }
+            n++;
+        }
+        int tex = obtainActTexture();
+        if (tex > 0) {
+            float spin = actSpinDegrees();
+            drawActIconAt(tex, cx, cy, 0.03f + 0.01f * n + 0.03f, cardW, spin);
+        }
+    }
+
+    /** act 提示图标纹理（act.png）：仿 obtainTotalAtkTexture，首次请求异步上传，未就绪返回 -1 */
+    private int obtainActTexture() {
+        Integer id = textures.get(ACT_TEX_KEY);
+        if (id != null) return id;
+        if (!requested.add(ACT_TEX_KEY)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getActTexture();
+                    if (src != null && !src.isRecycled()) b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                if (b != null) pendingUploads.offer(new PendingUpload(ACT_TEX_KEY, b, true));
+                else requested.remove(ACT_TEX_KEY);
+            });
+        } catch (Throwable t) {
+            requested.remove(ACT_TEX_KEY);
+        }
+        return -1;
     }
 
     /**
@@ -2333,6 +2462,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
+     * 长按结束入口：由控制器在 ACTION_UP/CANCEL 时调用，转发给业务方隐藏状态标签
+     */
+    public void dispatchLongPressEnd() {
+        OnCardClickListener listener = cardClickListener;
+        if (listener != null) {
+            listener.onFieldLongPressEnd();
+        }
+    }
+
+    /**
      * 兜底消费：手势识别已迁移至 GameFieldViewController 的 OnTouchListener，
      * 此处仅防止事件穿透到下层控件
      */
@@ -2430,7 +2569,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         try {
             int[] hit = hitCard(ray, f);
             if (hit != null) {
-                listener.onFieldLongPress(hit[0], hit[1], hit[2]);
+                listener.onFieldLongPress(hit[0], hit[1], hit[2], x, y);
             }
         } catch (Throwable ignored) {
         }

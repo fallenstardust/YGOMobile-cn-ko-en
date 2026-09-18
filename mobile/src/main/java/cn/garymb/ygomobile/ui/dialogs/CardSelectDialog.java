@@ -25,8 +25,11 @@ import java.util.List;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.render.CardStatusTipHelper;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -111,6 +114,8 @@ public class CardSelectDialog {
 
     private PopupWindow popupWindow;
     private DraggablePopupHelper draggableHelper;
+    /** 按下查看详情 / 按住悬浮通讯状态标签（每次 build 随包装层重建） */
+    private CardStatusTipHelper tipHelper;
 
     private int mode = MODE_SELECT;
     private String title = "选择卡片";
@@ -126,6 +131,11 @@ public class CardSelectDialog {
     private int localPlayer = -1;
     private boolean showValues = false;
     private int pageOffset = 0;
+    /**
+     * item.controler 是否为协议侧索引：ShowDialogUtil 由通讯解析构建 → true（默认）；
+     * CmdMenuDialog 由场上模型构建（已是视角侧）→ false。视角侧转换见 {@link #viewControler(int)}。
+     */
+    private boolean controlerProtocolSide = true;
 
     private final List<Integer> clickOrder = new ArrayList<>();
     private int[] sortList = new int[0];
@@ -216,6 +226,12 @@ public class CardSelectDialog {
         return this;
     }
 
+    /** 声明 CardItem.controler 的口径（true=协议侧，false=本地视角侧），影响详情与状态标签的取卡 */
+    public CardSelectDialog setControlerProtocolSide(boolean protocolSide) {
+        this.controlerProtocolSide = protocolSide;
+        return this;
+    }
+
     public CardSelectDialog setListener(OnCardSelectListener listener) {
         this.listener = listener;
         return this;
@@ -267,15 +283,85 @@ public class CardSelectDialog {
         return cards.size() + mustCards.size();
     }
 
-    private CardItem getItemAt(int displayIdx) {
-        if (displayIdx < mustCards.size()) return mustCards.get(displayIdx);
-        return cards.get(displayIdx - mustCards.size());
+    /**
+     * 显示序 → 协议序索引：整个卡片列表的显示顺序为协议顺序的整体反转
+     * （协议末位卡排在第一槽）。selected/sortList/点击回调/协议响应全部经此
+     * 换算取协议索引，反转仅影响槽位排布，不影响发送协议的索引语义
+     */
+    private int displayToProto(int displayIdx) {
+        int count = getDisplayCount();
+        if (displayIdx < 0 || displayIdx >= count) return -1;
+        return count - 1 - displayIdx;
     }
 
+    /** 显示序 → 卡片项：经 displayToProto 反转换回协议序（必选卡在前、可选卡在后），越界返回 null */
+    private CardItem getItemAt(int displayIdx) {
+        int idx = displayToProto(displayIdx);
+        if (idx < 0) return null;
+        if (idx < mustCards.size()) return mustCards.get(idx);
+        idx -= mustCards.size();
+        return idx < cards.size() ? cards.get(idx) : null;
+    }
+
+    /** 显示序 → 是否已选：必选卡恒视为已选（对齐 client_field.cpp 必选卡高亮） */
     private boolean isSelectedAt(int displayIdx) {
-        if (displayIdx < mustCards.size()) return true;
-        int idx = displayIdx - mustCards.size();
-        return idx < selected.length && selected[idx];
+        int idx = displayToProto(displayIdx);
+        if (idx < 0) return false;
+        if (idx < mustCards.size()) return true;
+        idx -= mustCards.size();
+        return idx >= 0 && idx < selected.length && selected[idx];
+    }
+
+    private GameEngine engine() {
+        if (context instanceof YGOProActivity) return ((YGOProActivity) context).getEngine();
+        return null;
+    }
+
+    /** 槽位 → 卡片项：槽位先加 pageOffset 换算为显示序，越界返回 null（空槽/翻页尾部） */
+    private CardItem itemAtSlot(int slot) {
+        int index = pageOffset + slot;
+        if (index < 0 || index >= getDisplayCount()) return null;
+        return getItemAt(index);
+    }
+
+    /** 协议侧 controler → 本地视角侧（localPlayer 为对合映射，视角侧口径时原样返回） */
+    private int viewControler(int controler) {
+        if (!controlerProtocolSide) return controler & 1;
+        GameEngine eng = engine();
+        return eng != null ? eng.localPlayer(controler & 1) : (controler & 1);
+    }
+
+    /**
+     * 按下即在 CardDetailPanel 显示卡片详情：详情面板只显卡表原始数据（完全由 code 决定，
+     * 对齐 game.cpp Game::ShowCardInfo(int code) 按 code 查数据库），因此直接采用与
+     * updateSlotView 卡图绑定同源的 item.code & 0x7fffffff 从 CardManager 获取——
+     * 场上实时卡（resolveLiveCard）暗卡时 code==0，不能用它判断，否则能看见卡图却只显示未知/卡背；
+     * code==0（该槽显示的是卡背图）时对齐 C++ ClearCardInfo 显示卡背默认面板
+     */
+    private void showDetailAtSlot(int slot) {
+        CardItem item = itemAtSlot(slot);
+        if (item == null || !(context instanceof YGOProActivity)) return;
+        GameField.ClientCard card = new GameField.ClientCard();
+        card.code = item.code & 0x7fffffff;
+        card.controler = viewControler(item.controler);
+        card.location = item.location & 0x7f;
+        card.sequence = item.sequence;
+        ((YGOProActivity) context).showCardInfoPanel(card);
+    }
+
+    /** 按住悬浮标签文字：通讯状态（ShowCardInfoInList 等价物） */
+    private String statusTextAtSlot(int slot) {
+        CardItem item = itemAtSlot(slot);
+        if (item == null) return null;
+        GameEngine eng = engine();
+        GameField field = eng != null ? eng.getField() : null;
+        GameField.ClientCard card = CardStatusTipHelper.resolveLiveCard(field,
+                viewControler(item.controler), item.location, item.sequence, item.subSeq);
+        if (card == null && (item.code & 0x7fffffff) != 0) {
+            card = new GameField.ClientCard();
+            card.code = item.code & 0x7fffffff;
+        }
+        return CardStatusTipHelper.buildStatusText(field, card);
     }
 
     private void build() {
@@ -321,9 +407,14 @@ public class CardSelectDialog {
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
 
+        // 直接以内容根构建，包装层由 findTipOverlay 向上解析
+        tipHelper = new CardStatusTipHelper(context, root);
+        tipHelper.setOnCardPressedListener(this::showDetailAtSlot);
+        tipHelper.setOnSlotClickListener(this::onSlotClicked);
+        tipHelper.setTipProvider(this::statusTextAtSlot);
         for (int i = 0; i < SLOT_COUNT; i++) {
-            final int slot = i;
-            slotViews[i].setOnClickListener(v -> onSlotClicked(slot));
+            // 触摸面与按下动画均落在卡片图上（"按下卡片图"直接命中）
+            tipHelper.attach(i, ivCards[i], ivCards[i]);
         }
         sbPage.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -435,12 +526,13 @@ public class CardSelectDialog {
     }
 
     private void onSlotClicked(int slot) {
-        int index = pageOffset + slot;
-        if (index >= getDisplayCount()) return;
+        int displayIdx = pageOffset + slot;
+        int index = displayToProto(displayIdx);
+        if (index < 0) return;
         switch (mode) {
             case MODE_UNSELECT: {
                 selected[index] = !selected[index];
-                updateSlotView(slot, index);
+                updateSlotView(slot, displayIdx);
                 if (listener != null) listener.onCardClicked(index);
                 dismiss();
                 break;
@@ -453,11 +545,11 @@ public class CardSelectDialog {
                     for (int i = 0; i < sortList.length; i++) {
                         if (sortList[i] > sel) sortList[i]--;
                     }
-                    updateSlotView(slot, index);
+                    updateSlotView(slot, displayIdx);
                 } else {
                     sortCounter++;
                     sortList[index] = sortCounter;
-                    updateSlotView(slot, index);
+                    updateSlotView(slot, displayIdx);
                     if (sortCounter == sortList.length) {
                         int[] respBuf = new int[sortList.length];
                         for (int i = 0; i < sortList.length; i++) {
@@ -484,7 +576,7 @@ public class CardSelectDialog {
                     selected[realIdx] = true;
                     clickOrder.add(realIdx);
                 }
-                updateSlotView(slot, index);
+                updateSlotView(slot, displayIdx);
                 if (listener != null) listener.onCardClicked(index);
                 updateSumState();
                 break;
@@ -497,14 +589,14 @@ public class CardSelectDialog {
                     selected[index] = true;
                     clickOrder.add(index);
                 }
-                updateSlotView(slot, index);
+                updateSlotView(slot, displayIdx);
                 if (listener != null) listener.onCardClicked(index);
                 int sel = getSelectedCount();
                 updateTitle("已选: " + sel + "/" + maxSelect);
                 if (sel >= maxSelect) {
                     confirm();
                 } else {
-                    btnOk.setVisibility(sel >= minSelect ? View.VISIBLE : View.GONE);
+                    btnOk.setVisibility(sel >= minSelect ? View.VISIBLE : View.INVISIBLE);
                 }
                 break;
             }
@@ -523,7 +615,7 @@ public class CardSelectDialog {
         if (ready && optCount >= maxSelect) {
             confirm();
         } else {
-            btnOk.setVisibility(ready ? View.VISIBLE : View.GONE);
+            btnOk.setVisibility(ready ? View.VISIBLE : View.INVISIBLE);
         }
     }
 
@@ -575,6 +667,7 @@ public class CardSelectDialog {
     }
 
     private void refreshSlots() {
+        if (tipHelper != null) tipHelper.hide();
         int displayCount = getDisplayCount();
         if (displayCount > SLOT_COUNT) {
             sbPage.setMax(displayCount - SLOT_COUNT);
@@ -600,11 +693,14 @@ public class CardSelectDialog {
 
     private void updateSlotView(int slot, int displayIdx) {
         CardItem item = getItemAt(displayIdx);
+        if (item == null) return;
         boolean isSelected = isSelectedAt(displayIdx);
         if (mode == MODE_SORT) {
             // client_field.cpp ShowSelectCard MSG_SORT_CARD 分支：标签只显示排序数字或空文本
-            tvPositions[slot].setText(sortList[displayIdx] != 0
-                    ? String.valueOf(sortList[displayIdx]) : "");
+            // sortList 以协议序索引存储，显示序需经 displayToProto 换算
+            int proto = displayToProto(displayIdx);
+            tvPositions[slot].setText(proto >= 0 && sortList[proto] != 0
+                    ? String.valueOf(sortList[proto]) : "");
             tvPositions[slot].setBackgroundColor(COLOR_DEFAULT);
         } else {
             tvPositions[slot].setText(labelText(item));
@@ -698,11 +794,11 @@ public class CardSelectDialog {
             refreshSlots();
             switch (mode) {
                 case MODE_SORT:
-                    btnOk.setVisibility(View.GONE);
+                    btnOk.setVisibility(View.INVISIBLE);
                     updateTitle("点击顺序: 0/" + cards.size());
                     break;
                 case MODE_UNSELECT:
-                    btnOk.setVisibility(finishable ? View.VISIBLE : View.GONE);
+                    btnOk.setVisibility(finishable ? View.VISIBLE : View.INVISIBLE);
                     if (finishable) {
                         btnOk.setText("完成");
                     }
@@ -714,7 +810,7 @@ public class CardSelectDialog {
                 default:
                     int sel = getSelectedCount();
                     updateTitle("已选: " + sel + "/" + maxSelect);
-                    btnOk.setVisibility(sel >= minSelect ? View.VISIBLE : View.GONE);
+                    btnOk.setVisibility(sel >= minSelect ? View.VISIBLE : View.INVISIBLE);
                     break;
             }
             try {

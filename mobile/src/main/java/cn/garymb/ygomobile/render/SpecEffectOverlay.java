@@ -152,23 +152,23 @@ public class SpecEffectOverlay {
 
     /**
      * case 101：MSG_WIN 胜负文字，停留时长对齐 C++ 的 110 帧。
-     * reason 为通讯中的 victory reason（MSG_WIN 第二字节），winnerName 为胜者名（可空）。
-     * 胜利说明对齐 duelclient.cpp L1596-1602：reason<0x10 → "[胜者名] 原因"，否则仅"原因"，
+     * reason 为通讯中的 victory reason（MSG_WIN 第二字节），vicName 为“败方”昵称（可空）。
+     * 胜利说明对齐 duelclient.cpp L1596-1602：reason<0x10 → "[败者名] 原因"，否则仅"原因"，
      * 原因文本取自 strings.conf 的 !victory 段（StringManager.getVictoryString）。
      */
-    public void showWinText(int textCode, int reason, String winnerName) {
-        showText(textCode, buildVictoryString(reason, winnerName), 110);
+    public void showWinText(int textCode, int reason, String vicName) {
+        showText(textCode, buildVictoryString(reason, vicName), 110);
     }
 
     /** 组装胜利说明文本（对齐 duelclient.cpp MSG_WIN 的 vic_buf 构造），无对应文本时返回 null（不显示底框） */
-    private String buildVictoryString(int reason, String winnerName) {
+    private String buildVictoryString(int reason, String vicName) {
         StringManager sm = DataManager.get().getStringManager();
         if (sm == null) return null;
         String vic = sm.getVictoryString(reason, "");
         if (vic == null || vic.isEmpty()) return null;
-        // reason < 0x10：普通胜利，前缀胜者名；否则为特殊效果胜利，仅显示原因文本
-        if (reason < 0x10 && winnerName != null && !winnerName.isEmpty()) {
-            return "[" + winnerName + "] " + vic;
+        // reason < 0x10：普通胜利，前缀败者名；否则为特殊效果胜利，仅显示原因文本
+        if (reason < 0x10 && vicName != null && !vicName.isEmpty()) {
+            return "[" + vicName + "] " + vic;
         }
         return vic;
     }

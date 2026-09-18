@@ -181,8 +181,11 @@ public class CardDetailPanel {
     }
 
     private void setupListeners() {
+        // 点击投降不再直接发送通讯：交由 Activity 弹 YesOrNoDialog 二次确认
+        //（对齐 event_handler.cpp BUTTON_LEAVE_GAME → PopupElement(wSurrender) → BUTTON_SURRENDER_YES → CTOS_SURRENDER）
         btnSurrender.setOnClickListener(v -> {
-            if (activity.getEngine() != null) activity.getEngine().sendSurrender();
+            playButtonSound();
+            activity.requestSurrender();
         });
         // 时点按钮（对齐 event_handler.cpp L297-320 BUTTON_CHAIN_IGNORE/ALWAYS/WHENAVAIL）：
         // gframe 用 setIsPushButton(true) 实现"推送式开关"，点击后 isPressed() 即为新状态；
@@ -260,7 +263,9 @@ public class CardDetailPanel {
     // === 卡片详情面板 ===
 
     public void showCardInfo(GameField.ClientCard card) {
-        if (card == null || card.code <= 0) return;
+        // 移除 code<=0 检查：对于 CardSelectDialog 中的已知 code 的暗卡（里侧怪兽、卡组表侧等），
+        // 只要能读取到卡片图案就应该显示详细信息，而不是当作未知卡处理
+        if (card == null) return;
         showCard(card);
     }
 
@@ -296,6 +301,8 @@ public class CardDetailPanel {
     }
 
     public void showCard(GameField.ClientCard clientCard) {
+        // code<=0 视为未知/暗卡：对齐 event_handler.cpp L1130-1133 ClearCardInfo 显示卡背，
+        // 而不是走 getCard(0) 失败后误报「???」；unknown 仅保留给 code>0 但卡表查无此卡
         if (clientCard == null || clientCard.code <= 0) {
             showDefault();
             return;
@@ -317,7 +324,9 @@ public class CardDetailPanel {
         bindCardName(cardData, code);
         bindCardSetname(cardData);
         bindCardAttr(cardData);
-        bindCardLevel(cardData, clientCard);
+        // 详情面板只显示卡表原始数据（对齐 game.cpp Game::ShowCardInfo(int code) 全部取 cd 原值），
+        // 通讯修改后的等级/属性/种族/攻守/刻度一律不进详情，差异在长按标签中显示
+        bindCardLevel(cardData);
         bindCardDesc(cardData);
 
         if (svCardDesc != null) {
@@ -454,47 +463,6 @@ public class CardDetailPanel {
         }
 
         tvCardAttr.setText(sb.toString());
-    }
-
-    private void bindCardLevel(Card cardData, GameField.ClientCard clientCard) {
-        if (tvCardLevel == null) return;
-
-        if (cardData.isType(CardType.Spell) || cardData.isType(CardType.Trap)) {
-            tvCardLevel.setText("");
-            tvCardLevel.setVisibility(View.GONE);
-            return;
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        if (cardData.isLink()) {
-            sb.append("LINK-").append(cardData.getLinkNumber());
-        } else if (cardData.isType(CardType.Xyz)) {
-            int rank = clientCard.rank > 0 ? clientCard.rank : cardData.getStar();
-            sb.append("☆").append(rank);
-        } else if (cardData.isType(CardType.Monster)) {
-            int level = clientCard.level > 0 ? clientCard.level : cardData.getStar();
-            sb.append("★").append(level);
-        }
-
-        if (cardData.isType(CardType.Monster)) {
-            int atk = clientCard.isFaceUp() ? clientCard.attack : cardData.Attack;
-            int def = clientCard.isFaceUp() ? clientCard.defense : cardData.Defense;
-            String atkStr = atk < 0 ? "?" : String.valueOf(atk);
-            String defStr = cardData.isLink() ? "-" : (def < 0 ? "?" : String.valueOf(def));
-            if (sb.length() > 0) sb.append("  ");
-            sb.append(atkStr).append("/").append(defStr);
-        }
-
-        if (cardData.LeftScale > 0 || cardData.RightScale > 0) {
-            int lsc = clientCard.lScale > 0 ? clientCard.lScale : cardData.LeftScale;
-            int rsc = clientCard.rScale > 0 ? clientCard.rScale : cardData.RightScale;
-            if (sb.length() > 0) sb.append("  ");
-            sb.append("灵摆 ").append(lsc).append("/").append(rsc);
-        }
-
-        tvCardLevel.setText(sb.toString());
-        tvCardLevel.setVisibility(View.VISIBLE);
     }
 
     private void bindCardLevel(Card cardData) {
@@ -790,8 +758,21 @@ public class CardDetailPanel {
 
     public void onGameUIShown() {
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
+        // 投降按钮默认隐藏：猜拳(HAND_SELECT)/选先后(TP_SELECT)阶段不显示，
+        // 进入决斗(DUELING)且为对战玩家时由 Activity 调用 setSurrenderVisible(true) 显示
+        //（对齐 gframe：btnLeaveGame 在 STOC_DUEL_START 前不出现，观战者不显示投降）
+        setSurrenderVisible(false);
         showDefault();
         hideCancelOrFinishButton();
+    }
+
+    /**
+     * 控制投降按钮显隐。使用 INVISIBLE 而非 GONE（与本布局链式按钮一致）：
+     * layout_bottom_actions 为 weight 布局，GONE 会让其它按钮尺寸跳变
+     */
+    public void setSurrenderVisible(boolean visible) {
+        if (btnSurrender != null)
+            btnSurrender.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
     }
 
     public void onGameUIHidden() {

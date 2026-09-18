@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 卡片状态标签气泡背景：圆角矩形 + 半透明底色，用于场上/手卡长按时显示通讯状态信息 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- 圆角背景，颜色参考 gframe CARD_LIST_SELECTED_BACKGROUND_COLOR -->
+    <solid android:color="#6011113D" />
+    <!-- 圆角半径 4dp -->
+    <corners android:radius="4dp" />
+</shape>

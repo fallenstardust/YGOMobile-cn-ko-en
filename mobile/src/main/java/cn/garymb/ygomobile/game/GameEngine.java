@@ -26,6 +26,7 @@ import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardLocation;
+import ocgcore.enums.CardType;
 import ocgcore.enums.GameMessage;
 
 public class GameEngine implements DuelClient.ClientListener, GameMessageParser.MessageHandler {
@@ -117,6 +118,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
          * 把 GameFieldView 的卡片移动纳入与特效、弹窗相同的串行序列。
          */
         boolean isSpecEffectBusy();
+
+        /** tag 模式：队友请求投降，本方需确认是否同意（对齐 STOC_TEAMMATE_SURRENDER + sysString 1355） */
+        default void onTeammateSurrenderRequest() {}
     }
 
     private GameState state = GameState.IDLE;
@@ -225,6 +229,9 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     private int maxMatch = 1;
     private boolean isHost = false;
     private boolean isBotMode = false;
+
+    /** tag 模式本方是否已发起投降（等待队友回应）：防止对 STOC_TEAMMATE_SURRENDER 自我弹窗与重复发起 */
+    private boolean tagSurrenderInitiated = false;
     private ReplayEngine replayEngine;
     private int gameMode = 0;
     private int gameRule = 0;
@@ -362,6 +369,24 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 if (c != null) c.clearCmdFlag();
             }
         }
+    }
+
+    /**
+     * 复位「区域发动提示 / conti_act」渲染标志（对齐 duelclient.cpp MSG_SELECT_IDLECMD/BATTLECMD
+     * 每次重新计算 grave_act/remove_act/extra_act/deck_act 与 conti_act/conti_cards）：
+     * 在解析 idle/battle 命令前清空，避免上一选择的脏标志残留。
+     *（连锁路径由 ShowDialogUtil 设置、clearChainSelect 复位，不经此方法，故不放这里以免误清连锁提示）
+     */
+    private void resetFieldCommandHints() {
+        for (int p = 0; p < 2; p++) {
+            field.deckAct[p] = false;
+            field.graveAct[p] = false;
+            field.removeAct[p] = false;
+            field.extraAct[p] = false;
+            field.pzoneAct[p] = false;
+        }
+        field.contiCards.clear();
+        field.contiAct = false;
     }
 
     public boolean hasIdleCommands() {
@@ -645,8 +670,29 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     public void sendSurrender() {
+        if (isTagMode()) tagSurrenderInitiated = true;
         client.sendSurrender();
     }
+
+    /** 是否 tag 双人模式（gameMode == MODE_TAG） */
+    public boolean isTagMode() {
+        return gameMode == YGOProtocol.MODE_TAG;
+    }
+    /** tag 模式：本方已发起投降、正在等待队友回应 */
+    public boolean isSurrenderPending() {
+        return tagSurrenderInitiated;
+    }
+
+    @Override
+    public void onTeammateSurrender() {
+        // tag_duel.cpp Surrender 会把 STOC_TEAMMATE_SURRENDER 同时发给发起方与队友；
+        // 发起方只是知会（已在等待队友，不再弹窗），未发起的队友才弹出“是否同意投降”确认框
+        if (tagSurrenderInitiated) return;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onTeammateSurrenderRequest();
+        });
+    }
+
 
     public void sendToDuelist() {
         client.sendToDuelist();
@@ -792,6 +838,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         duelStarted = true;
         inDuel = false;
         siding = false;
+        tagSurrenderInitiated = false;
         duelStage = YGOProtocol.DUEL_STAGE_DUELING;
         setState(GameState.DUELING);
         soundManager.playBGM(SoundManager.BGM.DUEL);
@@ -805,6 +852,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         duelStarted = false;
         inDuel = false;
         siding = false;
+        tagSurrenderInitiated = false;
         duelStage = YGOProtocol.DUEL_STAGE_END;
         setState(GameState.DUEL_END);
         soundManager.stopBGM();
@@ -1482,6 +1530,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onShuffleHand(int player) {
+        // duelclient.cpp MSG_SHUFFLE_HAND L2689-2692：逐张 SetCode 后 desc_hints.clear()
+        final int p = localPlayer(player & 1);
+        for (GameField.ClientCard c : field.players[p].hand) {
+            if (c != null) c.clearDescHints();
+        }
         soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
@@ -1561,7 +1614,12 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             GameField.ClientCard card = field.getCard(oldCtrl, oldLoc & 0x7f, oldSeq);
             if (card == null) card = new GameField.ClientCard();
             if (code != 0) card.code = code;
-            card.position = position;
+            // 对齐 duelclient.cpp MSG_MOVE 素材入 overlay 分支（L3055-3095）：C++ 此分支绝不改写
+            // pcard->position，素材保留其在场上的表侧表示，叠放后正面朝上。旧实现用协议 cp 覆盖 position
+            //（该字节对 overlay 移动常为 0），使表侧素材被 isFaceUp() 判为里侧 → 「原地变背面 / 卡背」；
+            // 且素材本应在怪兽格下方叠放，而非留在原格或被甩走。仅当卡片为兜底新建（position 仍为默认 0）
+            // 时显式置表侧，避免渲染成卡背。
+            if (card.position == 0) card.position = GameField.POS_FACEUP;
             if (field.attachOverlayMaterial(card, oldCtrl, oldLoc & 0x7f, oldSeq, newCtrl, newSeq)) {
                 field.moveCardAnimated(card, 10);
             }
@@ -1738,6 +1796,16 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         chainCodes.add(code);
         // 协议侧 controler 转本地索引，保证连锁高亮落在正确的半场
         final int localCc = localPlayer(cc & 1);
+        // duelclient.cpp MSG_CHAINING L3345/L3366-3374：四参 GetCard 取发动卡并填充 current_chain，
+        // 其后 MSG_BECOME_TARGET 写入 current_chain.target，MSG_CHAINED 再压入 chains；
+        // 供 ClientField::ShowCardInfoInList（event_handler.cpp L2937-2947）生成连锁状态标签
+        field.currentChain = new GameField.ChainInfo();
+        field.currentChain.chainCard = field.getCard(localPlayer(pcc & 1), pcl, pcs, subs);
+        field.currentChain.code = code;
+        field.currentChain.desc = desc;
+        field.currentChain.controler = localCc;
+        field.currentChain.location = cl;
+        field.currentChain.sequence = cs;
         if (listener != null) {
             // 发动动画入队即由统一动画屏障关闭闸门，播完再处理后续消息（对齐 C++ MSG_CHAINING 的 WaitFrameSignal(30)）
             listener.onChainAnimation(code, localCc, cl, cs);
@@ -1750,6 +1818,11 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         //（即最近一次 onChaining 压入 chainCodes 的卡码）
         int curCode = chainCodes.isEmpty() ? 0 : chainCodes.get(chainCodes.size() - 1);
         setEventString(1609, "[%s]的效果发动", DataManager.get().getName(curCode));
+        // duelclient.cpp MSG_CHAINED L3408：chains.push_back(current_chain)。
+        // C++ 为值拷贝，Java 用引用语义（同一对象入列），使效果处理期追加的目标同样能体现在状态标签上
+        if (field.currentChain != null && !field.chains.contains(field.currentChain)) {
+            field.chains.add(field.currentChain);
+        }
     }
 
     @Override
@@ -1766,6 +1839,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     public void onChainEnd() {
         // 对齐 duelclient.cpp MSG_CHAIN_END L3442：chains.clear()
         chainCodes.clear();
+        field.chains.clear();
+        field.currentChain = new GameField.ChainInfo();
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });
@@ -2080,8 +2155,26 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     }
 
     @Override
-    public void onCardHint(int type, int data) {
-        Log.d(TAG, "CardHint: type=" + type + " data=" + data);
+    public void onCardHint(int player, int location, int sequence, int hintType, int value) {
+        // duelclient.cpp MSG_CARD_HINT L4094-4109：CHINT_DESC_ADD/REMOVE 维护卡片 desc_hints
+        field.applyCardHint(localPlayer(player & 1), location, sequence, hintType, value);
+    }
+
+    @Override
+    public void onBecomeTarget(int count, ByteBuffer data) {
+        if (data == null || count <= 0) return;
+        // duelclient.cpp MSG_BECOME_TARGET L3493-3500：每条 4 字节，第 4 字节（subseq）读入即弃，
+        // 三参 GetCard 后写入 current_chain.target
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            int ctrl = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            data.get();
+            field.addChainTarget(localPlayer(ctrl & 1), loc, seq);
+        }
+        mainHandler.post(() -> {
+            if (listener != null) listener.onFieldChanged();
+        });
     }
 
     @Override
@@ -2178,6 +2271,7 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     private void parseBattleCmd(ByteBuffer data) {
         clearCommandFlags();
+        resetFieldCommandHints();
         int selectingPlayer = data.get() & 0xFF;
         int count = data.get() & 0xFF;
         for (int i = 0; i < count && data.remaining() >= 9; i++) {
@@ -2191,9 +2285,25 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 flag = 1;
                 code &= 0x7fffffff;
             }
-            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            int lpl = localPlayer(con & 1);
+            GameField.ClientCard card = field.getCard(lpl, loc, seq);
             if (card != null) {
-                card.cmdFlag |= COMMAND_ACTIVATE;
+                // 对齐 duelclient.cpp L1704-1716：EDESC_OPERATION → conti_act（回合结束待结算），
+                // 否则 COMMAND_ACTIVATE 并按所在区域置墓地/除外/额外发动提示
+                if (flag != 0) {
+                    card.chain_code = code;
+                    field.contiCards.add(card);
+                    field.contiAct = true;
+                } else {
+                    card.cmdFlag |= COMMAND_ACTIVATE;
+                    if (card.location == 0x10) {
+                        field.graveAct[lpl] = true;
+                    } else if (card.location == 0x20) {
+                        field.removeAct[lpl] = true;
+                    } else if (card.location == 0x40) {
+                        field.extraAct[lpl] = true;
+                    }
+                }
                 activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));
             }
         }
@@ -2216,9 +2326,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     private void parseIdleCmd(ByteBuffer data) {
         clearCommandFlags();
+        resetFieldCommandHints();
         int selectingPlayer = data.get() & 0xFF;
         int count;
 
+        // 第1段 summonable_cards（duelclient.cpp L1750-1760）：仅置 COMMAND_SUMMON 并入 summonableCards，
+        // 应答编码 i<<16（event_handler.cpp BUTTON_CMD_SUMMON L595-605）。
+        // 修复：此前误按特召段解析（置 COMMAND_SPSUMMON + 入 spsummonableCards），
+        // 导致手卡可通常召唤的怪兽只显示「特殊召唤」且应答 op=1 越出 spsummon_list 而无效果。
         count = data.get() & 0xFF;
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt();
@@ -2232,16 +2347,35 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             }
         }
 
+        // 第2段 spsummonable_cards（duelclient.cpp L1761-1785）：COMMAND_SPSUMMON + 按区域置发动提示，
+        // 卡组项需补明卡码（对应 pcard->SetCode(code)），应答编码 (i<<16)+1。
         count = data.get() & 0xFF;
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt();
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            int lpl = localPlayer(con & 1);
+            GameField.ClientCard card = field.getCard(lpl, loc, seq);
             if (card != null) {
                 card.cmdFlag |= COMMAND_SPSUMMON;
-                if (card.code == 0 && code != 0) card.code = code;
+                if (card.location == CardLocation.Deck.value()) {
+                    card.code = code;
+                    field.deckAct[lpl] = true;
+                } else if (card.location == CardLocation.Grave.value()) {
+                    field.graveAct[lpl] = true;
+                } else if (card.location == CardLocation.Removed.value()) {
+                    field.removeAct[lpl] = true;
+                } else if (card.location == CardLocation.Extra.value()) {
+                    field.extraAct[lpl] = true;
+                } else {
+                    // duelclient.cpp L1780-1784：灵摆区（duel_rule>=4 为 seq0，否则 seq6）且未被装备占用
+                    int leftSeq = field.dInfo.duelRule >= 4 ? 0 : 6;
+                    if (card.location == CardLocation.SpellZone.value() && card.sequence == leftSeq
+                            && (card.type & CardType.Pendulum.getId()) != 0 && card.equipTarget == null) {
+                        field.pzoneAct[lpl] = true;
+                    }
+                }
                 spsummonableCards.add(new CmdCardInfo(card, code, 0, 0, i));
             }
         }
@@ -2297,9 +2431,24 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
                 flag = 1;
                 code &= 0x7fffffff;
             }
-            GameField.ClientCard card = field.getCard(localPlayer(con & 1), loc, seq);
+            int lpl = localPlayer(con & 1);
+            GameField.ClientCard card = field.getCard(lpl, loc, seq);
             if (card != null) {
-                card.cmdFlag |= COMMAND_ACTIVATE;
+                // 对齐 duelclient.cpp L1837-1849：EDESC_OPERATION → conti_act，否则按区域置提示
+                if (flag != 0) {
+                    card.chain_code = code;
+                    field.contiCards.add(card);
+                    field.contiAct = true;
+                } else {
+                    card.cmdFlag |= COMMAND_ACTIVATE;
+                    if (card.location == 0x10) {
+                        field.graveAct[lpl] = true;
+                    } else if (card.location == 0x20) {
+                        field.removeAct[lpl] = true;
+                    } else if (card.location == 0x40) {
+                        field.extraAct[lpl] = true;
+                    }
+                }
                 activatableCards.add(new CmdCardInfo(card, code, desc, flag, i));
             }
         }

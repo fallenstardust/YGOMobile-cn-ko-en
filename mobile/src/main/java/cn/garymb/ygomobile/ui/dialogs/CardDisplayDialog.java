@@ -23,8 +23,11 @@ import java.util.List;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.render.CardStatusTipHelper;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -61,11 +64,6 @@ public class CardDisplayDialog {
         void onCardClick(CardItem item);
     }
 
-    /** 长按卡片显示该卡在通讯中的实时状态信息 */
-    public interface OnCardLongClick {
-        boolean onCardLongClick(CardItem item);
-    }
-
     public interface OnDismissListener {
         void onDismiss();
     }
@@ -79,11 +77,17 @@ public class CardDisplayDialog {
 
     private PopupWindow popupWindow;
     private DraggablePopupHelper draggableHelper;
+    /** 按下查看详情 / 按住悬浮通讯状态标签（每次 build 随包装层重建） */
+    private CardStatusTipHelper tipHelper;
 
     private List<CardItem> cards = new ArrayList<>();
     private String title = "卡片确认";
     private int pageOffset = 0;
     private int localPlayer = -1;
+    /**
+     * item.controler 口径：true=协议侧（ShowDialogUtil），false=本地视角侧（CmdMenuDialog）。
+     */
+    private boolean controlerProtocolSide = true;
 
     private TextView tvTitle;
     private SeekBar sbPage;
@@ -94,7 +98,6 @@ public class CardDisplayDialog {
 
     private OnDismissListener dismissListener;
     private OnCardClick cardClickListener;
-    private OnCardLongClick cardLongClickListener;
 
     // 卡背缓存：对齐 image_manager.cpp tButtonFacedown[0/1]（我方 cover.jpg / 对方 cover2.jpg）
     private static Bitmap coverSelf;
@@ -111,7 +114,15 @@ public class CardDisplayDialog {
     }
 
     public CardDisplayDialog setCards(List<CardItem> cardList) {
-        this.cards = cardList != null ? cardList : new ArrayList<>();
+        this.cards = new ArrayList<>();
+        if (cardList != null) {
+            // 显示顺序整体反序：传入序列的末位排在第一槽
+            //（该列表多来自场上/手卡收集，反序后与决斗场视觉方向一致；
+            // 点击回调传出 CardItem 对象、不携带列表下标，反序不影响任何协议语义）
+            for (int i = cardList.size() - 1; i >= 0; i--) {
+                this.cards.add(cardList.get(i));
+            }
+        }
         this.pageOffset = 0;
         return this;
     }
@@ -132,8 +143,9 @@ public class CardDisplayDialog {
         return this;
     }
 
-    public CardDisplayDialog setCardLongClickListener(OnCardLongClick listener) {
-        this.cardLongClickListener = listener;
+    /** 声明 CardItem.controler 的口径（true=协议侧，false=本地视角侧），影响详情与状态标签的取卡 */
+    public CardDisplayDialog setControlerProtocolSide(boolean protocolSide) {
+        this.controlerProtocolSide = protocolSide;
         return this;
     }
 
@@ -180,21 +192,14 @@ public class CardDisplayDialog {
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
 
+        // 按下即在 CardDetailPanel 显示详情；按住超过 0.3 秒悬浮显示通讯状态标签且抬手不视为点击
+        tipHelper = new CardStatusTipHelper(context, root);
+        tipHelper.setOnCardPressedListener(this::showDetailAtSlot);
+        tipHelper.setOnSlotClickListener(this::onSlotClicked);
+        tipHelper.setTipProvider(this::statusTextAtSlot);
         for (int i = 0; i < SLOT_COUNT; i++) {
-            final int slot = i;
-            slotViews[i].setOnClickListener(v -> {
-                int index = pageOffset + slot;
-                if (index < cards.size() && cardClickListener != null) {
-                    cardClickListener.onCardClick(cards.get(index));
-                }
-            });
-            slotViews[i].setOnLongClickListener(v -> {
-                int index = pageOffset + slot;
-                if (index < cards.size() && cardLongClickListener != null) {
-                    return cardLongClickListener.onCardLongClick(cards.get(index));
-                }
-                return false;
-            });
+            // 触摸面与按下动画均落在卡片图上（"按下卡片图"直接命中）
+            tipHelper.attach(i, ivCards[i], ivCards[i]);
         }
         sbPage.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -294,6 +299,7 @@ public class CardDisplayDialog {
     }
 
     private void refreshSlots() {
+        if (tipHelper != null) tipHelper.hide();
         if (cards.size() > SLOT_COUNT) {
             sbPage.setMax(cards.size() - SLOT_COUNT);
             sbPage.setVisibility(View.VISIBLE);
@@ -366,6 +372,62 @@ public class CardDisplayDialog {
             return mStringManager.getSystemString(stringId, "区域" + location);
         }
         return "区域" + location;
+    }
+
+    private GameEngine engine() {
+        if (context instanceof YGOProActivity) return ((YGOProActivity) context).getEngine();
+        return null;
+    }
+
+    private CardItem itemAtSlot(int slot) {
+        int index = pageOffset + slot;
+        if (index < 0 || index >= cards.size()) return null;
+        return cards.get(index);
+    }
+
+    /** 协议侧 controler → 本地视角侧（localPlayer 为对合映射，视角侧口径时原样返回） */
+    private int viewControler(int controler) {
+        if (!controlerProtocolSide) return controler & 1;
+        GameEngine eng = engine();
+        return eng != null ? eng.localPlayer(controler & 1) : (controler & 1);
+    }
+
+    /** 抬手且未超过按住阈值：视为点击，交由宿主决定发送响应等 */
+    private void onSlotClicked(int slot) {
+        CardItem item = itemAtSlot(slot);
+        if (item != null && cardClickListener != null) {
+            cardClickListener.onCardClick(item);
+        }
+    }
+
+    /** 按下即在 CardDetailPanel 显示卡片详情：与 CardSelectDialog 同——详情按 code 查卡表
+     * （game.cpp Game::ShowCardInfo(int code)），直接采用与卡图同源的 item.code，
+     * 场上实时卡暗卡时 code==0 不可依赖；code==0 显示卡背默认面板
+     */
+    private void showDetailAtSlot(int slot) {
+        CardItem item = itemAtSlot(slot);
+        if (item == null || !(context instanceof YGOProActivity)) return;
+        GameField.ClientCard card = new GameField.ClientCard();
+        card.code = item.code & 0x7fffffff;
+        card.controler = viewControler(item.controler);
+        card.location = item.location & 0x7f;
+        card.sequence = item.sequence;
+        ((YGOProActivity) context).showCardInfoPanel(card);
+    }
+
+    /** 按住悬浮标签文字：通讯状态（ShowCardInfoInList 等价物） */
+    private String statusTextAtSlot(int slot) {
+        CardItem item = itemAtSlot(slot);
+        if (item == null) return null;
+        GameEngine eng = engine();
+        GameField field = eng != null ? eng.getField() : null;
+        GameField.ClientCard card = CardStatusTipHelper.resolveLiveCard(field,
+                viewControler(item.controler), item.location, item.sequence, item.subSeq);
+        if (card == null && (item.code & 0x7fffffff) != 0) {
+            card = new GameField.ClientCard();
+            card.code = item.code & 0x7fffffff;
+        }
+        return CardStatusTipHelper.buildStatusText(field, card);
     }
 
     public void show() {
