@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.render;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.TypedValue;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.FrameLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import java.util.Map;
@@ -57,6 +59,8 @@ public class CardStatusTipHelper {
      */
     private static final int TIP_BACKGROUND = 0x6011113D;
     private static final float TIP_TEXT_SIZE_SP = 11f;
+    /** 场上/手卡悬浮气泡字体：比列表内 cardtip 小一号 */
+    private static final float FIELD_TIP_TEXT_SIZE_SP = TIP_TEXT_SIZE_SP - 1f;
     private static final int TIP_PADDING_DP = 4;
     /**
      * 左右留白：对应 gframe 钳制用的 10 * xScale
@@ -335,7 +339,16 @@ public class CardStatusTipHelper {
         DataManager dm = DataManager.get();
         StringBuilder sb = new StringBuilder();
         if (card.code != 0) {
-            sb.append(dm.getName(card.code));
+            String name0 = dm.getName(card.code);
+            sb.append(name0);
+            // 通讯中该卡当前被视为的卡名（QUERY_ALIAS）：与卡表本名不同才补一行「(别名)」，
+            // 镜像 event_handler.cpp L1680-1683 / L1704-1707 的 GetName(alias) 括号显示
+            if (card.alias != 0) {
+                String aliasName = dm.getName(card.alias);
+                if (aliasName != null && !aliasName.isEmpty() && !aliasName.equals(name0)) {
+                    sb.append("\n(").append(aliasName).append(")");
+                }
+            }
         }
         if (card.location != CardLocation.Deck.value()) {
             appendStatDiffLines(sb, dm, card);
@@ -444,85 +457,126 @@ public class CardStatusTipHelper {
     }
 
     /**
-     * 场上 / 手卡长按的同款悬浮标签：GameFieldView 是 GLSurfaceView 不能挂子 View，
-     * 标签挂到 Activity content 层（等价 gframe 全局唯一的 stCardListTip 静态文本），
-     * 使用圆形背景（聊天气泡风格）以便在复杂游戏画面上清晰可读，
-     * 并且置于 Z 轴上层以确保不被卡片遮挡
+     * 场上 / 手卡长按的同款悬浮标签。
+     * <p>
+     * GameFieldView 是 setZOrderOnTop(true) 的 GLSurfaceView，GL 曲面合成在 Activity 窗口之上，
+     * 挂在 content 层的普通 View（即便抬高 elevation / bringToFront）仍会被卡片遮挡。故与
+     * SpecEffectOverlay 采用同一图层约定：用全屏透明、不拦截触摸的 PopupWindow（独立窗口，位于
+     * GL 曲面之上）承载气泡标签，稳定显示在卡片前面，不再被遮挡。
+     * <p>
+     * 锚定：我方卡片把气泡放在卡片「上边缘」之上；对方卡片对其视角是倒置 180° 的，其卡名/信息
+     * 落在视觉下缘，故把气泡放在「下边缘上方」。卡片上下边缘由 GameFieldView.getCardScreenBounds
+     * 投影得到的实际绘制四边形给出（bounds 为空时回退到触点）。字体比列表内 cardtip 小一号。
+     * 两个对话框内的 cardtip 走 showTip() 挂弹窗包装层的路径，与此无关，位置与字号均保持不变。
      */
     public static final class FieldTip {
-        private static TextView sView;
+        private static PopupWindow sWindow;
 
-        public static void show(Activity activity, View anchor, String text, float x, float y) {
+        public static void show(Activity activity, View anchor, String text,
+                                float tapX, float tapY, float[] bounds, boolean mine) {
             hide();
             if (activity == null || anchor == null || text == null || text.isEmpty()) return;
-            ViewGroup content = activity.findViewById(android.R.id.content);
-            if (content == null) return;
+            View decor = activity.getWindow().getDecorView();
+            if (decor == null || decor.getWindowToken() == null) return;
 
-            float density = activity.getResources().getDisplayMetrics().density;
-            TextView tv = new TextView(activity);
+            final float density = activity.getResources().getDisplayMetrics().density;
+
+            final TextView tv = new TextView(activity);
             tv.setTextColor(Color.WHITE);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, TIP_TEXT_SIZE_SP);
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, FIELD_TIP_TEXT_SIZE_SP);
             tv.setGravity(Gravity.CENTER);
-            // 使用圆形背景以提高可读性
             tv.setBackgroundResource(R.drawable.card_status_tip_bg);
-            int p = (int) (TIP_PADDING_DP * density + 0.5f);
-            tv.setPadding(p, p, p, p);
+            int pad = (int) (TIP_PADDING_DP * density + 0.5f);
+            tv.setPadding(pad, pad, pad, pad);
             tv.setMaxWidth((int) (TIP_MAX_WIDTH_DP * density + 0.5f));
             tv.setText(text);
-            tv.setClickable(false);
-            tv.setLongClickable(false);
 
-            // 将标签置于顶层之上，确保不被卡片遮挡
+            final FrameLayout root = new FrameLayout(activity);
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.gravity = Gravity.START | Gravity.TOP;
-            // 通过 setNextFocusUp/Down/Cp 等确保标签不参与焦点链，不会被意外聚焦
-            tv.setFocusable(false);
-            //tv.setNavigationIcons(null);
+            root.addView(tv, lp);
 
-            content.addView(tv, lp);
+            PopupWindow window = new PopupWindow(root,
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            // 纯展示层：不抢焦点、不拦截触摸，事件穿透到下层决斗场
+            window.setFocusable(false);
+            window.setOutsideTouchable(false);
+            window.setTouchable(false);
+            try {
+                window.showAtLocation(decor, Gravity.NO_GRAVITY, 0, 0);
+            } catch (Exception ignored) {
+                return;
+            }
+            sWindow = window;
 
-            // 强制将标签提到 Z 轴上层（通过 layout 参数指定 elevation）
-            Float elevation = 8f * density;
-            tv.setElevation(elevation);
-            tv.bringToFront();
+            // 待 PopupWindow 完成测量布局后再定位（此时 root 有真实宽高可做越界翻转钳制）
+            final float[] fb = bounds;
+            final boolean fm = mine;
+            root.post(new Runnable() {
+                @Override
+                public void run() {
+                    positionTip(tv, root, anchor, tapX, tapY, fb, fm, density);
+                }
+            });
+        }
 
-            tv.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        private static void positionTip(TextView tv, FrameLayout root, View anchor,
+                                        float tapX, float tapY, float[] bounds, boolean mine,
+                                        float density) {
+            if (sWindow == null) return;   // 已 hide()，post 回调延后触发的兜底
             int[] aLoc = new int[2];
-            int[] cLoc = new int[2];
+            int[] rLoc = new int[2];
             anchor.getLocationInWindow(aLoc);
-            content.getLocationInWindow(cLoc);
-
+            root.getLocationInWindow(rLoc);
             float margin = TIP_EDGE_MARGIN_DP * density;
-            float gap = 12f * density;
-            int w = tv.getMeasuredWidth();
-            int h = tv.getMeasuredHeight();
-            float cx = aLoc[0] + x - cLoc[0];
-            float cy = aLoc[1] + y - cLoc[1];
+            float gap = 8f * density;
+            int w = tv.getWidth() > 0 ? tv.getWidth() : tv.getMeasuredWidth();
+            int h = tv.getHeight() > 0 ? tv.getHeight() : tv.getMeasuredHeight();
+            int rootW = root.getWidth();
+            int rootH = root.getHeight();
+
+            // anchor(GameFieldView) 视图内坐标 + anchor 窗口偏移 = 窗口坐标；
+            // root 铺满窗口，减去 root 窗口偏移即得 root 内坐标
+            float cxWin;
+            float edgeWin;
+            if (bounds != null && bounds.length >= 3) {
+                cxWin = aLoc[0] + bounds[0];
+                // bounds[1]=卡片视觉顶边, bounds[2]=卡片视觉底边
+                // 我方锚上边缘、对方锚下边缘（其卡面对我方倒置 180°，信息在视觉下缘）
+                edgeWin = aLoc[1] + (mine ? bounds[1] : bounds[2]);
+            } else {
+                cxWin = aLoc[0] + tapX;
+                edgeWin = aLoc[1] + tapY;
+            }
+            float cx = cxWin - rLoc[0];
+            float edgeY = edgeWin - rLoc[1];
 
             float left = cx - w / 2f;
-            float maxLeft = content.getWidth() - w - margin;
+            float maxLeft = rootW - w - margin;
             if (maxLeft < margin) maxLeft = margin;
             if (left < margin) left = margin;
             if (left > maxLeft) left = maxLeft;
 
-            float top = cy + gap;
-            if (top + h > content.getHeight() - margin) top = cy - h - gap;
+            // 默认把气泡放在参考边缘「之上」（气泡底边贴边缘上方 gap）；
+            // 上方放不下则翻到边缘下方，再越界则贴边钳制
+            float top = edgeY - gap - h;
+            if (top < margin) top = edgeY + gap;
+            if (top + h > rootH - margin) top = rootH - margin - h;
             if (top < margin) top = margin;
 
             tv.setX(left);
             tv.setY(top);
-            sView = tv;
         }
 
         public static void hide() {
-            if (sView != null) {
-                ViewGroup parent = (ViewGroup) sView.getParent();
-                if (parent != null) {
-                    parent.removeView(sView);
+            if (sWindow != null) {
+                try {
+                    if (sWindow.isShowing()) sWindow.dismiss();
+                } catch (Exception ignored) {
                 }
-                sView = null;
+                sWindow = null;
             }
         }
     }

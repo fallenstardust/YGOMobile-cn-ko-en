@@ -557,6 +557,69 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return s != null ? s[1] : topInsetPx;
     }
 
+    /**
+     * 长按气泡标签锚定用：把指定卡在屏幕上绘制的实际四边形投影为包围盒，
+     * 返回 {centerX, topY, bottomY}（相对本 View 左上角，像素）；相机未就绪 / 取卡失败返回 null。
+     * 复用与 drawCard 同一套卡片姿态（含手卡 billboard、对方卡 180° 翻转），
+     * 因此 topY/bottomY 即卡片视觉上下边缘。projectWorldPoint 已线程安全，可在 UI 线程调用。
+     */
+    public float[] getCardScreenBounds(int player, int location, int sequence) {
+        GameField f = field;
+        if (f == null) return null;
+        GameField.ClientCard c;
+        try {
+            c = f.getCard(player, location, sequence);
+        } catch (Throwable e) {
+            c = null;
+        }
+        if (c == null) return null;
+        float[] model = new float[16];
+        buildCardModelForPicking(c, model);
+        float[][] corners = {
+                {-0.5f, -0.5f}, {0.5f, -0.5f}, {-0.5f, 0.5f}, {0.5f, 0.5f},
+        };
+        float minX = Float.MAX_VALUE, maxX = -Float.MAX_VALUE;
+        float minY = Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
+        for (float[] k : corners) {
+            float wx = model[0] * k[0] + model[4] * k[1] + model[12];
+            float wy = model[1] * k[0] + model[5] * k[1] + model[13];
+            float wz = model[2] * k[0] + model[6] * k[1] + model[14];
+            float[] s = projectWorldPoint(wx, wy, wz);
+            if (s == null) return null;
+            if (s[0] < minX) minX = s[0];
+            if (s[0] > maxX) maxX = s[0];
+            if (s[1] < minY) minY = s[1];
+            if (s[1] > maxY) maxY = s[1];
+        }
+        return new float[]{(minX + maxX) / 2f, minY, maxY};
+    }
+
+    /**
+     * buildCardModel 的 UI 线程安全副本：不复用 GL 线程 scratch（mModelTmp），
+     * 并在 camLock 下取 mCamRot 快照，供 getCardScreenBounds 复现卡片绘制姿态。
+     */
+    private void buildCardModelForPicking(GameField.ClientCard c, float[] out) {
+        Matrix.setIdentityM(out, 0);
+        if (c.location == 0x02) {
+            float[] cam = new float[16];
+            synchronized (camLock) {
+                System.arraycopy(mCamRot, 0, cam, 0, 16);
+            }
+            Matrix.translateM(out, 0, mirrorX(c.curX),
+                    handY(c) + cam[5] * handLift(c), c.curZ + handLiftZ(c));
+            float[] tmp = new float[16];
+            Matrix.multiplyMM(tmp, 0, out, 0, cam, 0);
+            System.arraycopy(tmp, 0, out, 0, 16);
+            Matrix.scaleM(out, 0, CARD_W, CARD_H, 1f);
+        } else {
+            Matrix.translateM(out, 0, mirrorX(c.curX), c.curY, c.curZ);
+            Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotY), 0f, 1f, 0f);
+            Matrix.rotateM(out, 0, (float) Math.toDegrees(c.curRotX), 1f, 0f, 0f);
+            Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotZ), 0f, 0f, 1f);
+            Matrix.scaleM(out, 0, CARD_W, CARD_H, 1f);
+        }
+    }
+
     public float getCameraElevation() {
         return cameraElevationDeg;
     }

@@ -1222,7 +1222,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         String tip = CardStatusTipHelper.buildStatusText(field, card);
         if (tip != null && !tip.isEmpty() && viewController != null
                 && viewController.getView() != null) {
-            CardStatusTipHelper.FieldTip.show(activity, viewController.getView(), tip, x, y);
+            // 投影该卡屏幕包围盒，按我方/对方决定气泡锚定到卡片上边缘还是下边缘
+            float[] bounds = viewController.getView()
+                    .getCardScreenBounds(player, location, sequence);
+            boolean mine = (player == 0);
+            CardStatusTipHelper.FieldTip.show(activity, viewController.getView(), tip, x, y, bounds, mine);
         }
     }
 
