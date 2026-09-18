@@ -23,6 +23,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.utils.LogUtil;
 
 public class DuelClient implements YGOProtocol {
@@ -669,5 +671,283 @@ public class DuelClient implements YGOProtocol {
         }, "HostDiscovery");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    // === DuelClient.ClientListener ===
+    // STOC 通讯回调处理（自 GameEngine 合并，对齐 gframe duelclient.cpp ClientAnalyze 的 STOC_* 处理）：
+    // 共享状态经 GameEngine 访问；游戏消息（onGameMsg）交由 GameEngine 的「消息串行闸门」排队派发。
+    public static class StocHandler implements ClientListener {
+        // 保持拆分前日志标识，便于与旧版日志比对
+        private static final String TAG = "GameEngine";
+
+        private final GameEngine engine;
+
+        public StocHandler(GameEngine engine) {
+            this.engine = engine;
+        }
+
+        @Override
+        public void onConnected() {
+            Log.i(TAG, "Connected to server");
+        }
+
+        @Override
+        public void onDisconnected() {
+            Log.i(TAG, "Disconnected from server");
+            if (engine.getState() != GameEngine.GameState.DUEL_END) {
+                engine.setEngineState(GameEngine.GameState.DISCONNECTED);
+            }
+        }
+
+        @Override
+        public void onError(String message) {
+            Log.e(TAG, "Network error: " + message);
+        }
+
+        @Override
+        public void onPacketReceived(int proto, ByteBuffer data) {
+            Log.d(TAG, "Unhandled packet: " + String.format("0x%02X", proto));
+        }
+
+        @Override
+        public void onChatMessage(int playerType, String message) {
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onChatReceived(playerType, message);
+            });
+            engine.soundManager.playSoundEffect(SoundManager.SFX.CHAT);
+        }
+
+        @Override
+        public void onPlayerEnter(String name, int pos) {
+            Log.i(TAG, "Player entered: " + name + " at pos " + pos);
+            if (pos < engine.playerInfos.length) {
+                engine.playerInfos[pos].name = name;
+            }
+            // 座位 0-3 全量记录：tag 模式下 pos1/pos3 为双方 tag 同伴，聊天昵称需要
+            if (pos >= 0 && pos < engine.seatNames.length) {
+                engine.seatNames[pos] = name;
+            }
+            engine.soundManager.playSoundEffect(SoundManager.SFX.PLAYER_ENTER);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onPlayerEnter(name, pos);
+            });
+        }
+
+        @Override
+        public void onPlayerChange(int status) {
+            Log.i(TAG, "Player change: " + String.format("0x%02X", status));
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onPlayerChange(status);
+            });
+        }
+
+        @Override
+        public void onWatchChange(int watchCount) {
+            Log.i(TAG, "Watch count changed: " + watchCount);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onWatchChange(watchCount);
+            });
+        }
+
+        @Override
+        public void onDeckCount(int deck0, int extra0, int side0, int deck1, int extra1, int side1) {
+            // STOC_DECK_COUNT 在 STOC_DUEL_START 之后、MSG_START 之前下发双方卡组/额外/副卡组数量，
+            // 供猜拳阶段在场地展示「卡组堆叠 / 额外卡组堆叠 / 除外区堆叠(显示副卡组数量)」。
+            // 对齐 duelclient.cpp STOC_DECK_COUNT L584-598：C++ 用字面量 Initial(0)/Initial(1)（本地视角），
+            // 故此处不经 localPlayer 映射；field 已由 onDuelStart 清空，这里只填充不重复 clear。
+            engine.field.initial(0, deck0, extra0, side0);
+            engine.field.initial(1, deck1, extra1, side1);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            });
+        }
+
+        @Override
+        public void onDuelStart() {
+            engine.field.clear();
+            engine.duelStarted = true;
+            engine.inDuel = false;
+            engine.siding = false;
+            engine.tagSurrenderInitiated = false;
+            engine.duelStage = YGOProtocol.DUEL_STAGE_DUELING;
+            engine.setEngineState(GameEngine.GameState.DUELING);
+            engine.soundManager.playBGM(SoundManager.BGM.DUEL);
+            // 对局开场清理残留提示（对齐 game.cpp CloseGameWindow L2426 stHintMsg->setVisible(false)）
+            engine.hintManager.stopWaitHint();
+            engine.hintManager.postDuelHintHide();
+        }
+
+        @Override
+        public void onDuelEnd() {
+            engine.duelStarted = false;
+            engine.inDuel = false;
+            engine.siding = false;
+            engine.tagSurrenderInitiated = false;
+            engine.duelStage = YGOProtocol.DUEL_STAGE_END;
+            engine.setEngineState(GameEngine.GameState.DUEL_END);
+            engine.soundManager.stopBGM();
+            engine.hintManager.stopWaitHint();
+            engine.hintManager.postDuelHintHide();
+        }
+
+        @Override
+        public void onReplay(byte[] data) {
+            Log.i(TAG, "Replay data received from server, size=" + data.length);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onReplayData(data);
+            });
+        }
+
+        @Override
+        public void onGameMsg(int msgType, ByteBuffer data) {
+            // 入队后由 GameEngine 闸门串行派发：动画消息会关闭闸门，暂缓后续消息
+            // （对齐 C++ WaitFrameSignal 阻塞语义，队列/闸门逻辑在 GameEngine）
+            engine.enqueueGameMsg(msgType, data);
+        }
+
+        @Override
+        public void onHandSelect() {
+            engine.setEngineState(GameEngine.GameState.HAND_SELECT);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onSelectRequired(0, null);
+            });
+        }
+
+        @Override
+        public void onTPSelect() {
+            engine.setEngineState(GameEngine.GameState.TP_SELECT);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onSelectRequired(1, null);
+            });
+        }
+
+        @Override
+        public void onHandResult(int res1, int res2) {
+            Log.i(TAG, "Hand result: " + res1 + " vs " + res2);
+            // 对齐 duelclient.cpp L528：STOC_HAND_RESULT 公布猜拳结果时隐藏提示
+            engine.hintManager.postDuelHintHide();
+            // STOC_HAND_RESULT 按服务器视角下发 player0/player1 手势，转换为本方视角
+            int self = engine.client.selfType;
+            final int myHand = (self == 1) ? res2 : res1;
+            final int oppHand = (self == 1) ? res1 : res2;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onHandResult(myHand, oppHand);
+            });
+        }
+
+        @Override
+        public void onChangeSide() {
+            engine.duelStarted = false;
+            engine.inDuel = false;
+            engine.siding = true;
+            engine.duelStage = YGOProtocol.DUEL_STAGE_SIDING;
+            engine.setEngineState(GameEngine.GameState.SIDING);
+        }
+
+        @Override
+        public void onWaitingSide() {
+            engine.inDuel = false;
+            Log.i(TAG, "Waiting for side change");
+            // 对齐 duelclient.cpp L575-580：STOC_WAITING_SIDE 显示"等待换备卡"
+            engine.hintManager.stopWaitHint();
+            engine.hintManager.postDuelHint(engine.hintManager.sysString(1409, "等待对方换备卡..."));
+        }
+
+        @Override
+        public void onTimeLimit(int player, int leftTime) {
+            // 协议侧玩家索引统一转本地视角（0=我方），我方为后攻时倒计时也落入我方布局
+            final int p = engine.localPlayer(player & 1);
+            if (engine.field.dInfo.timeLimit <= 0) {
+                engine.field.dInfo.timeLimit = Math.max(engine.gameTimeLimit, leftTime);
+            }
+            engine.field.dInfo.timePlayer = p;
+            engine.field.dInfo.timeLeft[p] = leftTime;
+            engine.field.resetTimeTick();
+            engine.field.refreshTimeDisplay();
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onTimeLimitUpdate(p, leftTime);
+            });
+        }
+
+        @Override
+        public void onErrorMsg(int msg, int code) {
+            String errorMsg;
+            switch (msg) {
+                case YGOProtocol.ERRMSG_JOINERROR:
+                    errorMsg = "无法加入房间";
+                    break;
+                case YGOProtocol.ERRMSG_DECKERROR: {
+                    int errorType = (code >> 28) & 0xF;
+                    int cardCode = code & 0x0FFFFFFF;
+                    engine.mainHandler.post(() -> {
+                        if (engine.listener != null) engine.listener.onDeckError(errorType, cardCode);
+                    });
+                    return;
+                }
+                case YGOProtocol.ERRMSG_SIDEERROR:
+                    errorMsg = "副卡组错误";
+                    break;
+                case YGOProtocol.ERRMSG_VERERROR:
+                    errorMsg = "版本不匹配";
+                    break;
+                default:
+                    errorMsg = "未知错误: " + msg;
+                    break;
+            }
+            Log.e(TAG, "Server error: " + errorMsg);
+            final String finalMsg = errorMsg;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onHintMessage(finalMsg);
+            });
+        }
+
+        @Override
+        public void onTypeChange(int type) {
+            Log.i(TAG, "Type changed to: " + type);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onTypeChange(type);
+            });
+            engine.setEngineState(GameEngine.GameState.LOBBY);
+        }
+
+        @Override
+        public void onTeammateSurrender() {
+            // tag_duel.cpp Surrender 会把 STOC_TEAMMATE_SURRENDER 同时发给发起方与队友；
+            // 发起方只是知会（已在等待队友，不再弹窗），未发起的队友才弹出“是否同意投降”确认框
+            if (engine.tagSurrenderInitiated) return;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onTeammateSurrenderRequest();
+            });
+        }
+
+        @Override
+        public void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                               int noCheckDeck, int noShuffleDeck,
+                               int startLp, int startHand, int drawCount, int timeLimit) {
+            engine.playerInfos[0].startLp = startLp;
+            engine.playerInfos[1].startLp = startLp;
+            engine.playerInfos[0].lp = startLp;
+            engine.playerInfos[1].lp = startLp;
+            engine.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+            engine.gameMode = mode;
+            engine.gameRule = rule;
+            engine.gameLflist = lflist;
+            engine.gameStartLp = startLp;
+            engine.gameStartHand = startHand;
+            engine.gameDrawCount = drawCount;
+            engine.gameTimeLimit = timeLimit;
+            engine.gameNoCheckDeck = noCheckDeck;
+            engine.gameNoShuffleDeck = noShuffleDeck;
+            engine.field.dInfo.timeLimit = timeLimit;
+            engine.field.dInfo.startLp = startLp;
+            engine.field.dInfo.lp[0] = startLp;
+            engine.field.dInfo.lp[1] = startLp;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onJoinGame(lflist, rule, mode, duelRule,
+                        noCheckDeck, noShuffleDeck,
+                        startLp, startHand, drawCount, timeLimit);
+            });
+            engine.setEngineState(GameEngine.GameState.LOBBY);
+        }
     }
 }

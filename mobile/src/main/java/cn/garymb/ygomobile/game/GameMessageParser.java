@@ -8,7 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
+import ocgcore.DataManager;
 import ocgcore.enums.CardLocation;
 import ocgcore.enums.DuelPhase;
 import ocgcore.enums.GameMessage;
@@ -597,5 +600,315 @@ public class GameMessageParser {
             int sequence = buf.get() & 0xFF;
             handler.onUpdateCard(player, location, sequence, buf);
         }
+    }
+
+    // === GameMessageParser.MessageHandler ===
+    // 网络对局消息处理实现（自 GameEngine 合并，对齐 gframe duelclient.cpp ClientAnalyze）：
+    // 共享状态经 engine 访问；场地事件类 handler 在 DuelEventHandler 实现并转发回本类方法。
+
+    private final GameEngine engine;
+
+    /** 网络对局解析器构造（GameEngine 装配）；回放等场景仍使用静态 parse(msg, buf, handler) */
+    public GameMessageParser(GameEngine engine) {
+        this.engine = engine;
+    }
+
+    public void onRetry() {
+        Log.w(TAG, "Retry message received");
+    }
+
+    public void onHint(int type, int player, int data) {
+        String hintText = "";
+        switch (type) {
+            // HINT_EVENT（对齐 duelclient.cpp L1445-1447）：静默写入 event_string=GetDesc(data)，不弹提示
+            case 1:
+                engine.field.eventString = DataManager.get().getDesc(data, "");
+                return;
+            case 2:
+                hintText = "请选择";
+                break;
+            case 3:
+                // HINT_SELECTMSG：保存下一条选择对话框标题的 sys 字符串索引，
+                // 消费语义与 gframe select_hint 一致（duelclient.cpp L1458-1461）
+                engine.field.selectHint = data;
+                return;
+            // HINT_OPSELECTED（对齐 duelclient.cpp L1463-1472）：记录"已选择"日志
+            case 4:
+                DuelLogDialog.addOpSelectedLog(data);
+                return;
+            case 5:
+                hintText = "当前连锁: " + data;
+                break;
+            // HINT_RACE（对齐 duelclient.cpp L1480-1490）：宣告种族选择记入日志
+            case 6:
+                DuelLogDialog.addSelectedRaceLog(data);
+                return;
+            // HINT_ATTRIB（对齐 duelclient.cpp L1491-1501）：宣告属性选择记入日志
+            case 7:
+                DuelLogDialog.addSelectedAttributeLog(data);
+                return;
+            // HINT_CODE（对齐 duelclient.cpp L1502-1511）：宣言卡名记入日志（sys1511「玩家宣言了」），携带卡代码供点击查看
+            case 8:
+                DuelLogDialog.addLog(DuelLogDialog.formatDeclared(DataManager.get().getName(data)), data);
+                return;
+            // HINT_NUMBER（对齐 duelclient.cpp L1512-1521）：宣告数字记入日志
+            case 9:
+                DuelLogDialog.addLog(DuelLogDialog.sysFormat(1512, "已选择数字：%d", data));
+                engine.soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
+                return;
+            default:
+                hintText = "Hint type=" + type + " data=" + data;
+                break;
+        }
+        final String finalHint = hintText;
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onHintMessage(finalHint);
+        });
+    }
+
+    public void onWaiting() {
+        Log.d(TAG, "Waiting...");
+        // 对齐 duelclient.cpp L1610-1616 + game.cpp L1624-1633：waitFrame=0，显示"等待行动中..."并轮换
+        engine.hintManager.startWaitHint();
+    }
+
+    public void onStart(int playerType, int duelRule, int lp0, int lp1, int deck0, int extra0, int deck1, int extra1) {
+        engine.field.clear();
+        engine.inDuel = true;
+        engine.siding = false;
+        engine.field.dInfo.duelRule = duelRule;
+        engine.duelIsFirst = (playerType & 1) == 0;
+        int p0 = engine.localPlayer(0);
+        int p1 = engine.localPlayer(1);
+        engine.playerInfos[p0].lp = lp0;
+        engine.playerInfos[p1].lp = lp1;
+        engine.playerInfos[p0].startLp = lp0;
+        engine.playerInfos[p1].startLp = lp1;
+        engine.field.players[p0].lp = lp0;
+        engine.field.players[p1].lp = lp1;
+        engine.field.dInfo.startLp = Math.max(lp0, lp1);
+        engine.field.dInfo.lp[p0] = lp0;
+        engine.field.dInfo.lp[p1] = lp1;
+        // ClientField::Initial：为双方卡组/额外创建全部 ClientCard（背面朝下、带堆叠高度）
+        engine.field.initial(p0, deck0, extra0, 0);
+        engine.field.initial(p1, deck1, extra1, 0);
+        engine.setState(GameEngine.GameState.DUELING);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) {
+                engine.listener.onFieldChanged();
+                engine.listener.onPlayerInfoUpdated(0);
+                engine.listener.onPlayerInfoUpdated(1);
+            }
+        });
+    }
+
+    public void onWin(int player, int reason) {
+        if (player == 2) {
+            engine.soundManager.playBGM(SoundManager.BGM.ALL);
+        } else if (engine.isSelfSide(player)) {
+            engine.soundManager.playBGM(SoundManager.BGM.WIN);
+        } else {
+            engine.soundManager.playBGM(SoundManager.BGM.LOSE);
+        }
+        engine.currentMatch++;
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onDuelResult(player, reason);
+        });
+    }
+
+    public void onUpdateData(int player, int location, ByteBuffer data) {
+        engine.dataParser.parseUpdateData(engine.localPlayer(player), location, data);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        });
+    }
+
+    public void onUpdateCard(int player, int location, int sequence, ByteBuffer data) {
+        engine.dataParser.parseUpdateCard(engine.localPlayer(player), location, sequence, data);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        });
+    }
+
+    public void onRequestDeck(int player) {
+        engine.setState(GameEngine.GameState.DECK_SELECT);
+    }
+
+    public void onSelectBattleCmd(ByteBuffer data) {
+        engine.dataParser.parseBattleCmd(data);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(10, null);
+        });
+    }
+
+    public void onSelectIdleCmd(ByteBuffer data) {
+        engine.dataParser.parseIdleCmd(data);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(11, null);
+        });
+    }
+
+    public void onSelectEffectYn(ByteBuffer data) {
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(12, data);
+        });
+    }
+
+    public void onSelectYesNo(ByteBuffer data) {
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(13, data);
+        });
+    }
+
+    public void onSelectOption(ByteBuffer data) {
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(14, data);
+        });
+    }
+
+    public void onSelectCard(ByteBuffer data) {
+        // 对齐 duelclient.cpp L1964-1974：非 panelmode 时 stHintMsg 显示"提示(min-max)"
+        String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片");
+        if (hint != null) engine.hintManager.postDuelHint(hint);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(15, data);
+        });
+    }
+
+    public void onSelectChain(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2158-2163：存在"发动并作为连锁"项(EDESC_OPERATION=1)时用 556，否则 550
+        boolean contiExist = false;
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            dup.get(); // selecting_player
+            int count = dup.get() & 0xFF;
+            dup.get(); // specount
+            dup.getInt(); // hint0
+            dup.getInt(); // hint1
+            for (int i = 0; i < count && dup.remaining() >= 14; i++) {
+                int flag = dup.get() & 0xFF;
+                dup.get(); // forced
+                dup.getInt(); // code
+                dup.position(dup.position() + 4); // c l s ss
+                dup.getInt(); // desc
+                if ((flag & 0x1) != 0) contiExist = true;
+            }
+        } catch (Exception ignored) {
+        }
+        engine.hintManager.postDuelHint(engine.hintManager.sysString(contiExist ? 556 : 550,
+                contiExist ? "选择发动效果并作为连锁" : "选择发动效果"));
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(16, data);
+        });
+    }
+
+    public void onSelectPlace(int player, int count, int fieldMask) {
+        engine.clearCommandFlags();
+        engine.selectFieldPlayer = player;
+        engine.selectFieldCount = count;
+        engine.selectFieldMask = ~fieldMask;
+        // fieldMask 相对选择方：低 16 位 = 选择方自己的半场。
+        // 只有选择方与我不同半场时才交换高低 16 位，保证低 16 位始终是我方半场（下半区）。
+        // 用 localPlayer(与卡牌渲染同一套映射)判断"选择方是否为对方"，player&1 取边以兼容 tag(0/2 先攻,1/3 后攻)。
+        if (engine.localPlayer(player & 1) == 1) {
+            engine.selectFieldMask = (engine.selectFieldMask >>> 16) | (engine.selectFieldMask << 16);
+        }
+        // 对齐 duelclient.cpp L2199-2208：MSG_SELECT_PLACE 提示 sys569「请选择[%ls]的位置」（select_hint 此时是卡号）/ sys560
+        if (engine.field.selectHint > 0) {
+            engine.hintManager.postDuelHint(DataManager.get().formatSystemString(569, "请选择[%s]的位置",
+                    DataManager.get().getName(engine.field.selectHint)));
+        } else {
+            engine.hintManager.postDuelHint(engine.hintManager.sysString(560, "请选择放置位置"));
+        }
+        engine.field.selectHint = 0;
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(18, null);
+        });
+    }
+
+    public void onSelectPosition(int player, int code, int positions) {
+        positions &= 0x0F;
+        // duelclient.cpp L2275-2278：仅一种表示形式可选时直接以该形式应答，不弹窗
+        if (positions == 0x1 || positions == 0x2 || positions == 0x4 || positions == 0x8) {
+            ByteBuffer resp = ByteBuffer.allocate(4);
+            resp.order(ByteOrder.LITTLE_ENDIAN);
+            resp.putInt(positions);
+            engine.client.sendResponse(resp.array());
+            return;
+        }
+        // 打包 code(4) + positions(4) 传给 UI 层：用于显示卡图与按位掩码显示形式按钮
+        ByteBuffer data = ByteBuffer.allocate(8);
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        data.putInt(code);
+        data.putInt(positions);
+        data.flip();
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(19, data);
+        });
+    }
+
+    public void onSelectTribute(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2330-2335：stHintMsg 显示"提示(min-max)"（hint 优先 selectHint，默认 531）
+        String hint = engine.hintManager.selectRangeHint(data, 531, "解放选择");
+        if (hint != null) engine.hintManager.postDuelHint(hint);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(20, data);
+        });
+    }
+
+    public void onSortChain(ByteBuffer data) {
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(21, data);
+        });
+    }
+
+    public void onSelectCounter(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2362-2365：stHintMsg 显示 GetSysString(204)（移除 N 个指示物）
+        String hint = engine.hintManager.counterHint(data);
+        if (hint != null) engine.hintManager.postDuelHint(hint);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(22, data);
+        });
+    }
+
+    public void onSelectSum(ByteBuffer data) {
+        // 对齐 client_field.cpp L1090-1115 ShowSelectSum：display_hint = GetDesc(select_hint) 或 GetSysString(560)
+        int hint = engine.field.selectHint;
+        engine.hintManager.postDuelHint(hint > 0 ? DataManager.get().getDesc(hint, "选择卡片") : engine.hintManager.sysString(560, "选择卡片"));
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(23, data);
+        });
+    }
+
+    public void onSelectDisfield(int player, int count, int fieldMask) {
+        engine.clearCommandFlags();
+        engine.selectFieldPlayer = player;
+        engine.selectFieldCount = count;
+        engine.selectFieldMask = ~fieldMask;
+        if (engine.localPlayer(player & 1) == 1) {
+            engine.selectFieldMask = (engine.selectFieldMask >>> 16) | (engine.selectFieldMask << 16);
+        }
+        // 对齐 duelclient.cpp L2205-2210：MSG_SELECT_DISFIELD 提示 GetDesc(select_hint ?: 570)
+        int hint = engine.field.selectHint > 0 ? engine.field.selectHint : 570;
+        engine.hintManager.postDuelHint(DataManager.get().getDesc(hint, "请选择要禁用的区域"));
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(24, null);
+        });
+    }
+
+    public void onSortCard(ByteBuffer data) {
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(25, data);
+        });
+    }
+
+    public void onSelectUnselectCard(ByteBuffer data) {
+        // 对齐 duelclient.cpp L2053-2065：stHintMsg 显示"提示(min-max)"
+        String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片");
+        if (hint != null) engine.hintManager.postDuelHint(hint);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(26, data);
+        });
     }
 }
