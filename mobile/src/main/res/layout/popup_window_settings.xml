@@ -247,10 +247,14 @@
                     android:thumb="@drawable/ic_radius_bg" />
             </LinearLayout>
 
-            <View
+            <CheckBox
+                android:id="@+id/chkDrawSingleChain"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:text="只有连锁1也显示连锁动画"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

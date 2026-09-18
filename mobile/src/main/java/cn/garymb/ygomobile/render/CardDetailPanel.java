@@ -700,8 +700,16 @@ public class CardDetailPanel {
                 break;
             }
             case 23: {
-                if (cardSelectDialog != null && cardSelectDialog.isReady()) {
-                    cardSelectDialog.confirm();
+                if (cardSelectDialog != null) {
+                    if (cardSelectDialog.isReady()) {
+                        cardSelectDialog.confirm();
+                    }
+                } else {
+                    // 场上/手牌合计选择模式（无弹窗）：selectReady 时由 GameFieldController 应答（C++ L3156-3158）
+                    GameFieldController fieldCtl = activity.getFieldCtl();
+                    if (fieldCtl != null && fieldCtl.finishCardSelect()) {
+                        hideCancelOrFinishButton();
+                    }
                 }
                 break;
             }

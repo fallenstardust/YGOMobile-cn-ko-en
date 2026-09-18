@@ -12,6 +12,7 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.util.Log;
 import android.util.AttributeSet;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -36,6 +37,7 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -161,6 +163,34 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     // conti_cards 隐形格子最多堆叠显示层数（对齐 drawing.cpp 中部场地空隙的可视堆叠）
     private static final int MAX_CONTI_LAYERS = 5;
 
+    // === 场上卡片状态图标 / 连锁图标（materials.cpp vSymbol/vNegate/vPScale + drawing.cpp DrawCard/DrawMisc）===
+    // 键域必须避开 fieldTexKey(-10..-13) 与 scale(-200..)，否则 number 等图标会误取场地底板纹理
+    private static final long EQUIP_TEX_KEY = -50L;
+    private static final long TARGET_TEX_KEY = -51L;
+    private static final long CHAIN_TARGET_TEX_KEY = -52L;
+    private static final long NEGATED_TEX_KEY = -53L;
+    private static final long CHAIN_TEX_KEY = -54L;
+    private static final long CHAIN_NUM_TEX_KEY = -55L;
+    private static final long ATTACK_TEX_KEY = -56L;
+    private static final int IC_EQUIP = 0, IC_TARGET = 1, IC_CHAIN_TARGET = 2, IC_NEGATED = 3, IC_CHAIN = 4, IC_ATTACK = 5;
+    // tAttack 攻击可宣言标记（drawing.cpp L685-693）：atkdy=sin(atkframe)，atkframe+=0.1/帧@60fps≈6rad/s；
+    // 相对卡片(0.7×1.0)沿场地纵轴偏移 (atkdy/4+0.35)*卡高，指向敌方一侧，对方半场绕法线转 180°
+    private static final float ATTACK_BOB_RAD_PER_MS = 0.006f;
+    private static final float ATTACK_OFF_BASE = 0.35f;
+    // ocgcore common.h：STATUS_DISABLED=0x1 STATUS_FORBIDDEN=0x4000000 LOCATION_ONFIELD=0xc POS_FACEUP=0x5
+    private static final int STATUS_DISABLED = 0x0001;
+    private static final int STATUS_FORBIDDEN = 0x4000000;
+    private static final int LOCATION_ONFIELD = 0x0c;
+    private static final int POS_FACEUP = 0x5;
+    // number.png 连锁序号精灵 5 列网格单元（对齐 materials.cpp vChainNum 0.19375×0.2421875）
+    private static final float CHAIN_NUM_U_CELL = 0.19375f;
+    private static final float CHAIN_NUM_V_CELL = 0.2421875f;
+    // vSymbol(0.7×0.7)=满卡宽×0.7卡高；vNegate(0.5×0.5)相对卡片 0.714 宽×0.5 高、中心略偏下
+    private static final float SYMBOL_H_FRAC = 0.7f;
+    private static final float NEGATE_W_FRAC = 0.5f / 0.7f;
+    private static final float NEGATE_H_FRAC = 0.5f;
+    private static final float NEGATE_Y_OFF_FRAC = -0.03f;
+
     /**
      * 需要完整入镜的可交互内容（怪兽区 / 魔陷区 / 堆叠区）→ {横向半宽(相对场地中轴), 所在 y 行}。
      * 底板贴图的空白边距不计入：横向取景只保证“能点到的东西”不被裁掉，
@@ -247,6 +277,30 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     "out vec4 fragColor;\n" +
                     "void main(){ fragColor=uColor; }\n";
 
+    // === 需求3：攻击宣言绿色弧形流动动画（materials.cpp GenArrow + drawing.cpp L1504-1513）===
+    // 逐顶点 3D 位置 + RGBA 颜色，用透视 mVP 绘制一条从攻击者越过目标、拱起于场地上方的绿带，
+    // 颜色 alpha 随流动窗口沿弧滑动（对齐 attack_sv 窗口，C++ 基绿 0xc000ff00）。
+    private static final String VS_ARROW =
+            "#version 300 es\n" +
+                    "layout(location=0) in vec3 aPos;\n" +
+                    "layout(location=1) in vec4 aColor;\n" +
+                    "uniform mat4 uMVP;\n" +
+                    "out vec4 vColor;\n" +
+                    "void main(){ vColor=aColor; gl_Position=uMVP*vec4(aPos,1.0); }\n";
+
+    private static final String FS_ARROW =
+            "#version 300 es\n" +
+                    "precision mediump float;\n" +
+                    "in vec4 vColor;\n" +
+                    "out vec4 fragColor;\n" +
+                    "void main(){ fragColor=vColor; }\n";
+
+    // GenArrow 共 40 顶点（i=0..18 两侧绿带 + 36/37 箭头翼 + 38/39 箭头尖），stride=3+4=7 float
+    private static final int ARROW_MAX_VERTS = 40;
+    private static final int ARROW_STRIDE_FLOATS = 7;
+    private static final long ATTACK_ARC_MS = 900L;   // 对齐 WaitFrameSignal(40)≈667ms，略放宽
+    private static final long ATTACK_ARC_SWEEP_MS = 450L; // 对齐 attack_sv 0→28 步进4/帧≈30帧@60fps 一次扫过
+
     // 单位矩形（XY 平面，法线 +Z；v=0 在局部 -Y 边即 Bitmap 顶部；u 为标准布局。
     // 场地卡 uFlipU=1 抵消相机 +X→屏幕左 镜像；手卡 billboard 局部+Y=屏幕上方，
     // 需 uFlipU=0 + uFlipV=1 恢复正向贴图）
@@ -285,6 +339,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV, texLocUVRect;
     private int colorLocMVP, colorLocColor;
     private int vao;
+    // 需求3：攻击弧 3D 逐顶点色程序 / 动态 VAO-VBO / 顶点暂存缓冲（仅 GL 线程访问）
+    private int arrowProg, arrowLocMVP;
+    private int arrowVao, arrowVbo;
+    private FloatBuffer arrowBuf;
     private final HashMap<Long, Integer> textures = new HashMap<>();
     private final Set<Long> requested = Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>());
     // 解码失败重试状态（仅 GL 线程访问）：上次请求时间 + 已尝试次数
@@ -678,6 +736,26 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         GLES30.glVertexAttribPointer(1, 2, GLES30.GL_FLOAT, false, 16, 8);
         GLES30.glBindVertexArray(0);
 
+        // 需求3：攻击弧 3D 逐顶点色程序与动态 VAO/VBO（每帧 glBufferSubData 更新顶点）
+        arrowProg = createProgram(VS_ARROW, FS_ARROW);
+        arrowLocMVP = GLES30.glGetUniformLocation(arrowProg, "uMVP");
+        int[] avaos = new int[1], avbos = new int[1];
+        GLES30.glGenVertexArrays(1, avaos, 0);
+        arrowVao = avaos[0];
+        GLES30.glGenBuffers(1, avbos, 0);
+        arrowVbo = avbos[0];
+        arrowBuf = ByteBuffer.allocateDirect(ARROW_MAX_VERTS * ARROW_STRIDE_FLOATS * 4)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        GLES30.glBindVertexArray(arrowVao);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, arrowVbo);
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, ARROW_MAX_VERTS * ARROW_STRIDE_FLOATS * 4,
+                null, GLES30.GL_DYNAMIC_DRAW);
+        GLES30.glEnableVertexAttribArray(0);
+        GLES30.glVertexAttribPointer(0, 3, GLES30.GL_FLOAT, false, ARROW_STRIDE_FLOATS * 4, 0);
+        GLES30.glEnableVertexAttribArray(1);
+        GLES30.glVertexAttribPointer(1, 4, GLES30.GL_FLOAT, false, ARROW_STRIDE_FLOATS * 4, 3 * 4);
+        GLES30.glBindVertexArray(0);
+
         // 上下文（重新）创建：纹理缓存全部失效，重新按需加载
         textures.clear();
         requested.clear();
@@ -946,6 +1024,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         } catch (Throwable ignored) {
         }
         try {
+            drawFieldCardOverlays(f);
             drawZoneActHints(f);
             drawContiGrid(f);
         } catch (Throwable ignored) {
@@ -961,6 +1040,15 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         try {
             drawFieldCardTexts(f);
         } catch (Throwable ignored) {
+        }
+        try {
+            drawChainIcons(f);
+        } catch (Throwable ignored) {
+        }
+        try {
+            drawAttackArc(f);
+        } catch (Throwable t) {
+            Log.w("GameFieldView", "drawAttackArc failed", t);
         }
         GLES30.glDepthMask(true);
     }
@@ -1100,12 +1188,15 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
      * 需求1：我方墓地/除外/卡组/额外在有可发动/可特召项（graveAct/removeAct/deckAct/extraAct 置位）时，
      * 在该堆叠格正上方绘制一个旋转的 act 图标（对齐 drawing.cpp deck_act/grave_act/remove_act/extra_act
      * 分支在 vFieldDeck/Grave/Remove/Extra 中心上方绘制旋转 vActivate）。
+     * 灵摆召唤可用（pzoneAct）时另在左灵摆刻度魔陷格（MR4=seq0，否则 seq6）上方绘制同款旋转
+     * act 图标（对齐 drawing.cpp pzone_act 分支 L838-847：vFieldSzone 中心 z=0.03 绘旋转 vActivate）。
      */
     private void drawZoneActHints(GameField f) {
         if (f == null) return;
         boolean any = false;
         for (int p = 0; p < 2; p++) {
-            if (f.deckAct[p] || f.graveAct[p] || f.removeAct[p] || f.extraAct[p]) {
+            if (f.deckAct[p] || f.graveAct[p] || f.removeAct[p] || f.extraAct[p]
+                    || f.pzoneAct[p]) {
                 any = true;
                 break;
             }
@@ -1115,19 +1206,31 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         if (tex <= 0) return;
         float spin = actSpinDegrees();
         float sz = ZONE_W;
+        int leftSeq = f.dInfo.duelRule >= 4 ? 0 : 6;
         for (int p = 0; p < 2; p++) {
-            drawActIconOverPile(tex, p, 0x01, f.deckAct[p], sz, spin);
-            drawActIconOverPile(tex, p, 0x10, f.graveAct[p], sz, spin);
-            drawActIconOverPile(tex, p, 0x20, f.removeAct[p], sz, spin);
-            drawActIconOverPile(tex, p, 0x40, f.extraAct[p], sz, spin);
+            drawActIconOverPile(tex, f, p, 0x01, f.deckAct[p], sz, spin);
+            drawActIconOverPile(tex, f, p, 0x10, f.graveAct[p], sz, spin);
+            drawActIconOverPile(tex, f, p, 0x20, f.removeAct[p], sz, spin);
+            drawActIconOverPile(tex, f, p, 0x40, f.extraAct[p], sz, spin);
+            if (f.pzoneAct[p]) {
+                float[] c = zoneCenter(p, 0x08, leftSeq);
+                if (c != null) drawActIconAt(tex, mirrorX(c[0]), c[1], 0.03f, sz, spin);
+            }
         }
     }
 
-    private void drawActIconOverPile(int tex, int p, int loc, boolean on, float sz, float spin) {
+    private void drawActIconOverPile(int tex, GameField f, int p, int loc, boolean on, float sz, float spin) {
         if (!on) return;
         float[] c = pileCenter(p, loc);
         if (c == null) return;
-        drawActIconAt(tex, mirrorX(c[0]), c[1], 0.05f, sz, spin);
+        // 按该堆叠当前显示厚度抬到「最高层之上一层」：Java drawPile 顶部 z =
+        // PILE_BASE_Z + layers*PILE_LAYER_THICK，再加一层作为图标高度。
+        // （对齐 drawing.cpp deck/grave/remove/extra_act 的 pile.size()*0.01+0.02 语义，
+        //   但换算到本工程的堆叠模型，避免被卡片堆压住）
+        int cnt = f.getCardCount(p, loc);
+        int layers = Math.min(Math.max(cnt, 1), PILE_MAX_LAYERS);
+        float z = PILE_BASE_Z + layers * PILE_LAYER_THICK + PILE_LAYER_THICK;
+        drawActIconAt(tex, mirrorX(c[0]), c[1], z, sz, spin);
     }
 
     /** 在场地上方绘制一枚绕场地法线（世界 Z）自旋的 act 图标（平铺于场地平面、朝向相机） */
@@ -1205,8 +1308,376 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         return -1;
     }
 
+    // ==================== 场上卡片状态图标 / 灵摆刻度图片 / 连锁图标 ====================
+
     /**
-     * 问题3+5：屏幕像素正交空间绘制区域堆叠数量与总攻击力数字，天然垂直于观看视线（与阶段按钮同方案）。
+     * 需求2：场上卡片正上方的状态叠加图标（对齐 drawing.cpp DrawCard L653-719）。
+     * 装备/对象/连锁对象/效果无效按 C++ 严格 else-if 优先级，灵摆规则>=4 最左/最右魔陷区
+     * 的灵摆卡整卡叠加 lscale/rscale 刻度图片。仅遍历怪兽区/魔陷区（场上卡）。
+     */
+    private void drawFieldCardOverlays(GameField f) {
+        if (f == null) return;
+        boolean mr4 = f.dInfo.duelRule >= 4;
+        for (int p = 0; p < 2; p++) {
+            overlayCardList(f.players[p].monsterZone, mr4);
+            overlayCardList(f.players[p].spellZone, mr4);
+        }
+    }
+
+    private void overlayCardList(List<GameField.ClientCard> list, boolean mr4) {
+        if (list == null) return;
+        try {
+            for (int i = 0, n = list.size(); i < n; i++) {
+                GameField.ClientCard c;
+                try {
+                    c = list.get(i);
+                } catch (Throwable e) {
+                    continue;
+                }
+                if (c == null) continue;
+                overlayCardStatus(c, mr4);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void overlayCardStatus(GameField.ClientCard c, boolean mr4) {
+        if (c.is_moving) return;
+        if (c.is_showequip) {
+            drawFieldIcon(c, obtainIconTexture(EQUIP_TEX_KEY, IC_EQUIP), 1f, SYMBOL_H_FRAC, 0f);
+        } else if (c.is_showtarget) {
+            drawFieldIcon(c, obtainIconTexture(TARGET_TEX_KEY, IC_TARGET), 1f, SYMBOL_H_FRAC, 0f);
+        } else if (c.is_showchaintarget) {
+            drawFieldIcon(c, obtainIconTexture(CHAIN_TARGET_TEX_KEY, IC_CHAIN_TARGET), 1f, SYMBOL_H_FRAC, 0f);
+        } else if ((c.status & (STATUS_DISABLED | STATUS_FORBIDDEN)) != 0
+                && (c.location & LOCATION_ONFIELD) != 0 && (c.position & POS_FACEUP) != 0) {
+            drawFieldIcon(c, obtainIconTexture(NEGATED_TEX_KEY, IC_NEGATED),
+                    NEGATE_W_FRAC, NEGATE_H_FRAC, NEGATE_Y_OFF_FRAC * CARD_H);
+        }
+        if (mr4 && (c.type & TYPE_PENDULUM) != 0 && (c.location & 0x08) != 0
+                && c.isFaceUp() && (c.sequence == 0 || c.sequence == 4)) {
+            boolean left = c.sequence == 0;
+            int tex = obtainScaleIcon(left, clampScale(left ? c.lScale : c.rScale));
+            if (tex > 0) drawFieldIcon(c, tex, 1f, 1f, 0f);
+        }
+        // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）
+        if ((c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0) {
+            drawAttackIcon(c);
+        }
+    }
+
+    /**
+     * 场上可攻击怪兽的 tAttack 动画箭头：沿场地纵轴朝敌方一侧上下浮动，对方半场绕法线转 180°，
+     * 尺寸与装备/对象图标一致（vSymbol 0.7×0.7）。对齐 drawing.cpp DrawCard 攻击命令标记分支。
+     */
+    private void drawAttackIcon(GameField.ClientCard c) {
+        int tex = obtainIconTexture(ATTACK_TEX_KEY, IC_ATTACK);
+        if (tex <= 0) return;
+        // animTimeMs 为绝对毫秒时间戳，须以 double 计算相位，否则 float 在 ~1e10 量级丢精度导致抖动
+        float dy = (float) Math.sin((double) animTimeMs * ATTACK_BOB_RAD_PER_MS);
+        float mag = (dy / 4f + ATTACK_OFF_BASE) * CARD_H;
+        float yOff = (c.controler == 0 ? -1f : 1f) * mag;
+        float rotDeg = c.controler == 0 ? 0f : 180f;
+        Matrix.setIdentityM(mModel, 0);
+        Matrix.translateM(mModel, 0, mirrorX(c.curX), c.curY + yOff, c.curZ + 0.03f);
+        if (rotDeg != 0f) Matrix.rotateM(mModel, 0, rotDeg, 0f, 0f, 1f);
+        Matrix.scaleM(mModel, 0, CARD_W, CARD_H * SYMBOL_H_FRAC, 1f);
+        drawQuadTex(mModel, tex, 1f);
+    }
+
+    private static int clampScale(int s) {
+        return Math.max(0, Math.min(13, s));
+    }
+
+    /** 卡片正上方绘一枚世界坐标正立（不随卡片旋转）的叠加图标，尺寸按卡片足迹分数换算 */
+    private void drawFieldIcon(GameField.ClientCard c, int tex, float wFrac, float hFrac, float yOff) {
+        if (tex <= 0) return;
+        Matrix.setIdentityM(mModel, 0);
+        Matrix.translateM(mModel, 0, mirrorX(c.curX), c.curY + yOff, c.curZ + 0.02f);
+        Matrix.scaleM(mModel, 0, CARD_W * wFrac, CARD_H * hFrac, 1f);
+        drawQuadTex(mModel, tex, 1f);
+    }
+
+    /**
+     * 需求3：连锁进行中的 chain 动画 + number 序号，绘制在连锁源卡片（含手卡）上方
+     * （对齐 drawing.cpp DrawMisc L883-902）。世界空间绘制：图标/序号平铺于场地平面
+     * （vSymbol/vChainNum 为 XY 平面四边形），chain 图标绕世界 Z 轴自旋（act_rot），
+     * number 序号不自旋，与 conti_act、灵摆刻度贴图一致，随相机俯仰呈斜向透视（平行于卡片）。
+     * 图标位置取 ChainInfo 的位置快照（MSG_CHAINED 时捕捉）：发动卡后续离开原位（入墓/回手等）
+     * 时图标不跟随移动，停留在原地直到连锁消失（符合游戏王规则）。
+     * 遍历 chains，遇 solved break。
+     */
+    private void drawChainIcons(GameField f) {
+        if (f == null) return;
+        List<GameField.ChainInfo> chains = f.chains;
+        if (chains == null || chains.isEmpty()) return;
+        // 对齐 drawing.cpp L878：仅当连锁数 > 1，或勾选「只有连锁1也显示连锁动画」(draw_single_chain) 时才显示
+        try {
+            if (chains.size() <= 1
+                    && cn.garymb.ygomobile.AppsSettings.get().getIntSettings("draw_single_chain", 0) != 1)
+                return;
+        } catch (Throwable ignored) {
+        }
+        int chainTex = obtainIconTexture(CHAIN_TEX_KEY, IC_CHAIN);
+        int numTex = obtainChainNumberTexture();
+        if (chainTex <= 0 && numTex <= 0) return;
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST);
+        float spin = actSpinDegrees();
+        int n;
+        try {
+            n = chains.size();
+        } catch (Throwable e) {
+            n = 0;
+        }
+        for (int i = 0; i < n; i++) {
+            GameField.ChainInfo ch;
+            try {
+                ch = chains.get(i);
+            } catch (Throwable e) {
+                continue;
+            }
+            if (ch == null) continue;
+            if (ch.solved) break;
+            GameField.ClientCard card = ch.chainCard;
+            if (card == null) {
+                try {
+                    card = f.getCard(ch.controler, ch.location, ch.sequence);
+                } catch (Throwable e) {
+                    card = null;
+                }
+            }
+            if (card == null) continue;
+            // 位置快照：onChained 未捕捉到时（chainCard 当时为 null）首绘时补捕一次，
+            // 此后固定在该处，不随卡片移动（入墓/回手等）而偏移
+            if (!ch.iconPosCaptured) {
+                ch.iconX = card.curX;
+                ch.iconY = card.curY;
+                ch.iconZ = card.curZ;
+                ch.iconPosCaptured = true;
+            }
+            float cx = mirrorX(ch.iconX);
+            float cy = ch.iconY;
+            float cz = ch.iconZ + 0.05f;
+            // chain 图标：vSymbol 0.7×0.7（=CARD_W 见方），绕场地法线（世界 Z）自旋
+            if (chainTex > 0) {
+                Matrix.setIdentityM(mModel, 0);
+                Matrix.translateM(mModel, 0, cx, cy, cz);
+                Matrix.rotateM(mModel, 0, spin, 0f, 0f, 1f);
+                Matrix.scaleM(mModel, 0, CARD_W, CARD_W, 1f);
+                drawQuadTex(mModel, chainTex, 0.92f);
+            }
+            // number 序号：vChainNum 0.7×0.7 按 it.setScale(0.6) → 0.42 见方，取 number.png 5 列网格子矩形，不自旋
+            if (numTex > 0) {
+                float numSz = CARD_W * 0.6f;
+                float offU = CHAIN_NUM_U_CELL * (i % 5);
+                float offV = CHAIN_NUM_V_CELL * (i / 5);
+                Matrix.setIdentityM(mModel, 0);
+                Matrix.translateM(mModel, 0, cx, cy, cz + 0.01f);
+                Matrix.scaleM(mModel, 0, numSz, numSz, 1f);
+                drawQuadTexUV(mModel, numTex, 1f, 1f, 0f, offU, offV, CHAIN_NUM_U_CELL, CHAIN_NUM_V_CELL);
+            }
+        }
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+    }
+
+    /**
+     * 需求3：攻击宣言绿色弧形流动动画（materials.cpp GenArrow L243-258 +
+     * drawing.cpp L1504-1513 attack_sv 窗口流动 + duelclient.cpp MSG_ATTACK L3817-3866 锚点/旋转解算）。
+     * 从攻击者到目标构建一条在场地上方拱起（中点最高）的弧形绿带，逐顶点 alpha 随流动窗口
+     * 从攻击者向目标滑动（对应 C++ attack_sv 0→28），显示约 0.9s 后自动清除。关深度测试置顶。
+     */
+    private void drawAttackArc(GameField f) {
+        if (f == null || arrowProg == 0 || arrowBuf == null) return;
+        GameField.ClientCard atk = f.arcAttacker;
+        if (atk == null) return;
+        long elapsed = animTimeMs - f.arcStartMs;
+        if (elapsed < 0 || elapsed > ATTACK_ARC_MS) {
+            f.arcAttacker = null;
+            f.arcTarget = null;
+            return;
+        }
+        // 需求2：对方回合的攻击者收不到 battle cmd，其 COMMAND_ATTACK 恒为 0；
+        // 在攻击弧显示的约 0.9s 内为其临时补绘 tAttack 浮动动画。我方攻击者已由
+        // overlayCardStatus 依据 cmdFlag 绘制，故此处仅补对方攻击者，避免重复叠加。
+        // 图标补绘单独容错：其异常不得中断整条弧线的绘制。
+        if ((atk.cmdFlag & GameEngine.COMMAND_ATTACK) == 0) {
+            try {
+                drawAttackIcon(atk);
+            } catch (Throwable t) {
+                Log.w("GameFieldView", "drawAttackIcon(attacker) failed", t);
+            }
+        }
+        float ax = mirrorX(atk.curX), ay = atk.curY;
+        float dx, dy;
+        if (f.arcTarget != null) {
+            dx = mirrorX(f.arcTarget.curX);
+            dy = f.arcTarget.curY;
+        } else {
+            // 直接攻击：弧落到被攻击方手牌行的宽度中心（duelclient.cpp L3850-3853 真值
+            // (3.95, ca==0?-3.5:3.5)，即对方手牌侧；按 getCardLocation 手牌行 y 精确化：
+            // 对方(手牌 y=-3.4)/我方(手牌 y=4.0)，X 取场地中心 3.95 经镜像）
+            dx = mirrorX(FIELD_CENTER_X);
+            dy = (atk.controler == 0) ? -3.4f : 4.0f;
+        }
+        float vx = ax - dx, vy = ay - dy;
+        float len = (float) Math.sqrt(vx * vx + vy * vy);
+        if (len < 1e-3f) {
+            f.arcAttacker = null;
+            f.arcTarget = null;
+            return;
+        }
+        float sy = len * 0.5f;
+        // 局部 +Y（攻击者方向）与局部 X（带宽方向）均在场地 XY 平面；拱起沿世界 +Z
+        float uYx = vx / len, uYy = vy / len;
+        float uXx = -uYy, uXy = uYx;
+        float mx = (ax + dx) * 0.5f, my = (ay + dy) * 0.5f;
+        // 流动窗口中心（配对索引 0..18）循环从攻击者侧向目标侧滑动
+        float sweep = (elapsed % ATTACK_ARC_SWEEP_MS) / (float) ATTACK_ARC_SWEEP_MS;
+        float wc = -1.0f + sweep * 20.0f;
+
+        arrowBuf.position(0);
+        int verts = 0;
+        // 绿带主体 18 对（36 顶点）：C++ 循环 i=0..18 写 vArrow[i*2]/[i*2+1]，最后一对（索引
+        // 36/37）随即被箭头翼覆写，故带体实为 18 对 + 2 翼 + 2 尖 = 恰 40 顶点（此前按 19 对
+        // 追加翼/尖得 42 顶点，写入溢出 BufferOverflowException 被上层吞掉，弧从未画出）
+        for (int j = 0; j < 18; j++) {
+            float ayf = 1.0f - 0.1f * j;
+            float along = ayf * sy;
+            float arch = 2.0f * (1.0f - ayf * ayf);   // C++ -2*(ay*ay-1)，中点(ay=0)最高 2.0
+            float ccx = mx + uYx * along, ccy = my + uYy * along;
+            float a = arrowAlpha(j, wc);
+            putArrowVertex(ccx + uXx * 0.1f, ccy + uXy * 0.1f, arch, 0f, 1f, 0f, a);
+            putArrowVertex(ccx - uXx * 0.1f, ccy - uXy * 0.1f, arch, 0f, 1f, 0f, a);
+            verts += 2;
+        }
+        // 箭头翼（宽度扩到 0.2，沿轴/高度各微偏 -0.01）与箭头尖（目标脚下，白色）
+        float along17 = -0.7f * sy;
+        float ccx17 = mx + uYx * along17, ccy17 = my + uYy * along17;
+        float arch17 = 2.0f * (1.0f - 0.49f);
+        float wingA = arrowAlpha(17, wc);
+        putArrowVertex(ccx17 + uXx * 0.2f, ccy17 + uXy * 0.2f, arch17 - 0.01f, 0.5f, 1f, 0.5f, wingA);
+        putArrowVertex(ccx17 - uXx * 0.2f, ccy17 - uXy * 0.2f, arch17 - 0.01f, 0.5f, 1f, 0.5f, wingA);
+        putArrowVertex(dx, dy, 0.02f, 1f, 1f, 1f, 0.8f);
+        putArrowVertex(dx, dy, 0.02f, 1f, 1f, 1f, 0.8f);
+        verts += 4;
+        if (verts > ARROW_MAX_VERTS) verts = ARROW_MAX_VERTS;   // 防溢出保险：宁缺顶点不丢整条弧
+
+        GLES30.glUseProgram(arrowProg);
+        GLES30.glUniformMatrix4fv(arrowLocMVP, 1, false, mVP, 0);
+        arrowBuf.position(0);
+        GLES30.glBindVertexArray(arrowVao);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, arrowVbo);
+        GLES30.glBufferSubData(GLES30.GL_ARRAY_BUFFER, 0, verts * ARROW_STRIDE_FLOATS * 4, arrowBuf);
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST);
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, verts);
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+        GLES30.glBindVertexArray(0);
+    }
+
+    private void putArrowVertex(float x, float y, float z, float r, float g, float b, float a) {
+        arrowBuf.put(x).put(y).put(z).put(r).put(g).put(b).put(a);
+    }
+
+    /**
+     * 对齐 materials.cpp GenArrow 顶点色 0xc000ff00（alpha=0.75 恒亮绿）：整带基线即 0.75，
+     * attack_sv 流动窗口内提亮至 1.0（旧实现基线 0.28 在深绿场地上几乎不可见）
+     */
+    private static float arrowAlpha(int pairIdx, float wc) {
+        float d = Math.abs(pairIdx - wc);
+        return d < 3f ? 1.0f : 0.75f;
+    }
+
+    /** 场上状态/连锁图标纹理：首次异步上传，未就绪返回 -1 */
+    private int obtainIconTexture(long key, final int which) {
+        Integer id = textures.get(key);
+        if (id != null) return id;
+        if (!requested.add(key)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    TextureLoader tl = TextureLoader.get();
+                    Bitmap src;
+                    switch (which) {
+                        case IC_TARGET:
+                            src = tl.getTargetTexture();
+                            break;
+                        case IC_CHAIN_TARGET:
+                            src = tl.getChainTargetTexture();
+                            break;
+                        case IC_NEGATED:
+                            src = tl.getNegatedTexture();
+                            break;
+                        case IC_CHAIN:
+                            src = tl.getChainTexture();
+                            break;
+                        case IC_ATTACK:
+                            src = tl.getAttackTexture();
+                            break;
+                        case IC_EQUIP:
+                        default:
+                            src = tl.getEquipTexture();
+                            break;
+                    }
+                    if (src != null && !src.isRecycled()) b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                if (b != null) pendingUploads.offer(new PendingUpload(key, b, true));
+                else requested.remove(key);
+            });
+        } catch (Throwable t) {
+            requested.remove(key);
+        }
+        return -1;
+    }
+
+    /** number.png 连锁序号整图纹理（5 列网格，按 UV 子矩形取样） */
+    private int obtainChainNumberTexture() {
+        Integer id = textures.get(CHAIN_NUM_TEX_KEY);
+        if (id != null) return id;
+        if (!requested.add(CHAIN_NUM_TEX_KEY)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getNumberTexture();
+                    if (src != null && !src.isRecycled()) b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                if (b != null) pendingUploads.offer(new PendingUpload(CHAIN_NUM_TEX_KEY, b, true));
+                else requested.remove(CHAIN_NUM_TEX_KEY);
+            });
+        } catch (Throwable t) {
+            requested.remove(CHAIN_NUM_TEX_KEY);
+        }
+        return -1;
+    }
+
+    /** 灵摆刻度图片纹理（extra/lscale_X.png|rscale_X.png），按 (left,value) 独立键异步上传 */
+    private int obtainScaleIcon(final boolean left, final int value) {
+        long key = -200L - (left ? value : value + 100);
+        Integer id = textures.get(key);
+        if (id != null) return id;
+        if (!requested.add(key)) return -1;
+        try {
+            texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getScaleTexture(left, value);
+                    if (src != null && !src.isRecycled()) b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                if (b != null) pendingUploads.offer(new PendingUpload(key, b, true));
+                else requested.remove(key);
+            });
+        } catch (Throwable t) {
+            requested.remove(key);
+        }
+        return -1;
+    }
+
+    /**
+     * 屏幕像素正交空间绘制区域堆叠数量与总攻击力数字，天然垂直于观看视线（与阶段按钮同方案）。
      * 区域数字贴在卡组/额外/墓地/除外格子「靠近摄像头的底边」（+y 侧缘）外侧；总攻击力数字叠在 bar 中心。
      */
     private void drawFieldNumbers(GameField f) {

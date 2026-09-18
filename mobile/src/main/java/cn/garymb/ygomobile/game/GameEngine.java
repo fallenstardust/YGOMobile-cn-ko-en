@@ -158,6 +158,16 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
     };
 
     /**
+     * 定时动画屏障（对齐不产生卡片动画的 WaitFrameSignal）：如 MSG_ATTACK 的弧光展示
+     * （duelclient.cpp L3861-3865 GenArrow + WaitFrameSignal(40)≈667ms）——弧光是时间窗口
+     * 绘制、不占用 aniFrame/特效队列，若无此屏障后续消息（伤害步骤/效果询问弹窗）立即推进，
+     * 弹窗遮挡 GL 场地使弧线（尤其无后续卡片动画的直接攻击）来不及展示。
+     * 持有期内 isAnyAnimationBusy() 恒 true，闸门保持关闭直至到期。
+     */
+    private static final long ATTACK_HOLD_MS = 700L;
+    private volatile long animHoldUntilMs;
+
+    /**
      * 动画闸门轮询间隔：闸门关闭后主线程每 16ms 查询一次「场地卡片动画 + 居中特效」是否仍在播，
      * 两者都空闲即重开闸门。用轮询而非在 GL 渲染线程捕捉「animating→idle 跳变」，是为规避掉帧时
      * 单帧跨越多帧动画（onDrawFrame 中 dt 上限 0.1 → animationSpeed 可达 12，8 帧移动可能一帧结束）
@@ -949,6 +959,8 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
      * gameTopInfo 的血量变化纳入与特效、弹窗相同的串行序列。
      */
     private boolean isAnyAnimationBusy() {
+        // 定时屏障持有期（MSG_ATTACK 弧光展示等）：未到期一律视为忙，串行化后续消息
+        if (System.currentTimeMillis() < animHoldUntilMs) return true;
         boolean fieldBusy = false;
         try {
             // isAnimating()=卡片移动；isLpAnimating()=LP 浮字/血条动画（对齐 duelclient.cpp
@@ -1620,21 +1632,29 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             // 且素材本应在怪兽格下方叠放，而非留在原格或被甩走。仅当卡片为兜底新建（position 仍为默认 0）
             // 时显式置表侧，避免渲染成卡背。
             if (card.position == 0) card.position = GameField.POS_FACEUP;
-            if (field.attachOverlayMaterial(card, oldCtrl, oldLoc & 0x7f, oldSeq, newCtrl, newSeq)) {
+            // 宿主按消息 cl 字节动态定位（L3069 GetCard(cc, cl & 0x7f, cs)）：脚本可在怪兽尚处
+            // 额外卡组时执行 Overlay，此时 cs 是 EXTRA 序号；仅当宿主已在怪兽区时播堆叠动画
+            //（L3086 if (olcard->location == LOCATION_MZONE)），否则由 flushPendingOverlays 待怪兽入格补挂
+            GameField.ClientCard olcard = field.attachOverlayMaterial(card, oldCtrl, oldLoc & 0x7f, oldSeq,
+                    newCtrl, newLoc & 0x7f, newSeq);
+            if (olcard != null && olcard.location == CardLocation.MonsterZone.value()) {
                 field.moveCardAnimated(card, 10);
             }
         } else if (oldOverlay && !newOverlay) {
-            // 超量素材离场（duelclient.cpp L3096-3124）：oldSeq=超量怪兽格、oldPos=素材序号
+            // 超量素材离场（duelclient.cpp L3096-3124）：oldSeq=超量怪兽格、oldPos=素材序号；
+            // 宿主按消息 pl 字节动态定位（L3097 GetCard(pc, pl & 0x7f, ps)）——怪兽自身 MSG_MOVE
+            // 先到时宿主可能已在墓地等区域，硬编码怪兽区查找会导致素材无离场动画
             GameField.ClientCard card = field.detachOverlayMaterial(
-                    oldCtrl, oldSeq, oldPos, newCtrl, newLoc & 0x7f, newSeq, position);
+                    oldCtrl, oldLoc & 0x7f, oldSeq, oldPos, newCtrl, newLoc & 0x7f, newSeq, position);
             if (card != null) {
                 if (code != 0) card.code = code;
                 field.moveCardAnimated(card, 10);
             }
         } else if (oldOverlay) {
-            // 素材在两只超量怪兽间转移（duelclient.cpp L3125+）
-            GameField.ClientCard src = field.getCard(oldCtrl, CardLocation.MonsterZone.value(), oldSeq);
-            GameField.ClientCard dst = field.getCard(newCtrl, CardLocation.MonsterZone.value(), newSeq);
+            // 素材在两只超量怪兽间转移（duelclient.cpp L3125-3153）：两侧宿主同样按消息 loc 字节
+            // 动态定位（GetCard(pc, pl & 0x7f, ps) / GetCard(cc, cl & 0x7f, cs)）
+            GameField.ClientCard src = field.getCard(oldCtrl, oldLoc & 0x7f, oldSeq);
+            GameField.ClientCard dst = field.getCard(newCtrl, newLoc & 0x7f, newSeq);
             if (src != null && dst != null && oldPos >= 0 && oldPos < src.overlayed.size()) {
                 GameField.ClientCard m = src.overlayed.remove(oldPos);
                 for (int i = 0; i < src.overlayed.size(); i++) {
@@ -1658,7 +1678,17 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
             card.position = position;
             field.removeCard(oldCtrl, oldLoc, oldSeq);
             field.addCard(newCtrl, newLoc, newSeq, card);
-            field.moveCardAnimated(card, 8);
+            // 对齐 duelclient.cpp MSG_MOVE L3032-3046：带超量素材的怪兽移动到怪兽区时，
+            // 素材先同帧飞向新格下方重排（逐素材 MoveCard(10)），WaitFrameSignal(10) 素材
+            // 全部到位后本体才落上去（本体延迟 10 帧）——消除「素材盖在怪兽上面」的共面观感；
+            // 其余普通移动本体 10 帧（原 8 帧与 C++ 不符）。addCard 0x04 内的
+            // flushPendingOverlays 已把先到的待挂素材挂入 overlayed，此处一并跟动。
+            if (newLoc == CardLocation.MonsterZone.value() && !card.overlayed.isEmpty()) {
+                field.moveOverlayMaterials(card, 10);
+                field.moveCardAnimated(card, 10, 10);
+            } else {
+                field.moveCardAnimated(card, 10);
+            }
         }
 
         // 手卡增删后重排双方手卡（数量变化 → 间距变化）
@@ -1684,10 +1714,19 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         ctrl = localPlayer(ctrl);
         GameField.ClientCard card = field.getCard(ctrl, loc, seq);
         if (card != null) {
+            // 对齐 duelclient.cpp MSG_POS_CHANGE L3165-3168：正面→里侧时清除指示物与效果对象链接
+            if ((oldPos & GameField.POS_FACEUP) != 0 && (newPos & GameField.POS_FACEDOWN) != 0) {
+                card.counters.clear();
+                card.clearTarget();
+            }
+            // 对齐 L3169-3171：卡码变化则更新，再写入新表示形式
+            if (code != 0 && card.code != code)
+                card.setCode(code);
             card.position = newPos;
-        }
-        if ((oldPos & 0xA) != 0 && (newPos & 0x5) != 0) {
-            soundManager.playSoundEffect(SoundManager.SFX.FLIP);
+            // 对齐 L3174 MoveCard(pcard, 10)：由 getCardLocation 依据新 position 求目标姿态
+            //（里侧翻开 curRotY、攻击↔守备 curRotZ），normalizeAngleTarget 取最短路径，
+            // 播放里侧翻开 / 攻守互转的卡片转动动画而非瞬时切换。C++ 此处不播音效，故不加声音。
+            field.moveCardAnimated(card, 10);
         }
         setEventString(1600, "卡片改变了表示形式");
         mainHandler.post(() -> {
@@ -1716,10 +1755,19 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onSwap(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
+        c1ctrl = localPlayer(c1ctrl);
+        c2ctrl = localPlayer(c2ctrl);
         GameField.ClientCard c1 = field.getCard(c1ctrl, c1loc, c1seq);
         GameField.ClientCard c2 = field.getCard(c2ctrl, c2loc, c2seq);
         field.addCard(c1ctrl, c1loc, c1seq, c2);
         field.addCard(c2ctrl, c2loc, c2seq, c1);
+        // 对齐 duelclient.cpp MSG_SWAP L3210-3215：互换后两本体及各自超量素材全部同帧
+        // MoveCard(10)——旧实现一帧动画都不播，卡片瞬移且带素材怪兽的素材留在原地。
+        // 素材目标位由 getCardLocation 依 overlayTarget 实时求出，本体已入新格则飞向新格下方。
+        if (c1 != null) field.moveCardAnimated(c1, 10);
+        if (c2 != null) field.moveCardAnimated(c2, 10);
+        field.moveOverlayMaterials(c1, 10);
+        field.moveOverlayMaterials(c2, 10);
         setEventString(1602, "卡的控制权改变了");
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
@@ -1801,6 +1849,13 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         // 供 ClientField::ShowCardInfoInList（event_handler.cpp L2937-2947）生成连锁状态标签
         field.currentChain = new GameField.ChainInfo();
         field.currentChain.chainCard = field.getCard(localPlayer(pcc & 1), pcl, pcs, subs);
+        // 对齐 duelclient.cpp MSG_CHAINING L3346-3349：发动卡卡码变化（手卡/场上里侧卡翻开揭示）
+        // 时 SetCode + MoveCard(pcard, 10)，由 code 0→真实卡码驱动 curRotY 插值，播放反面到正面的转动动画。
+        GameField.ClientCard chainCard = field.currentChain.chainCard;
+        if (chainCard != null && chainCard.code != code) {
+            chainCard.setCode(code);
+            field.moveCardAnimated(chainCard, 10);
+        }
         field.currentChain.code = code;
         field.currentChain.desc = desc;
         field.currentChain.controler = localCc;
@@ -1821,6 +1876,14 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
         // duelclient.cpp MSG_CHAINED L3408：chains.push_back(current_chain)。
         // C++ 为值拷贝，Java 用引用语义（同一对象入列），使效果处理期追加的目标同样能体现在状态标签上
         if (field.currentChain != null && !field.chains.contains(field.currentChain)) {
+            // 连锁图标位置快照：此刻卡片尚未因结算离开原位，图标此后固定在此处直到连锁消失
+            GameField.ClientCard cc = field.currentChain.chainCard;
+            if (cc != null) {
+                field.currentChain.iconX = cc.curX;
+                field.currentChain.iconY = cc.curY;
+                field.currentChain.iconZ = cc.curZ;
+                field.currentChain.iconPosCaptured = true;
+            }
             field.chains.add(field.currentChain);
         }
     }
@@ -2039,18 +2102,34 @@ public class GameEngine implements DuelClient.ClientListener, GameMessageParser.
 
     @Override
     public void onAttack(int aCtrl, int aLoc, int aSeq, int dCtrl, int dLoc, int dSeq) {
-        soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
-        // 对齐 duelclient.cpp MSG_ATTACK L3830-3847：有攻击对象(dLoc!=0)写 sys1619「[%ls]攻击[%ls]」，
-        // 否则写 sys1620「[%ls]直接攻击」；卡名经 GetName(code)，协议侧 controler 需转本地索引
+        // 对齐 duelclient.cpp MSG_ATTACK L3830-3860：有目标攻怪音效 ATTACK，直接攻击音效 DIRECT_ATTACK
         GameField.ClientCard atkCard = field.getCard(localPlayer(aCtrl & 1), aLoc, aSeq);
+        if (atkCard == null) {
+            // 留痕诊断：攻击者卡查不到时弧线无起点、整条不绘（duelclient.cpp L3822 attacker 总可查到）
+            Log.w(TAG, "onAttack: attacker card not found ctrl=" + aCtrl + " loc=" + aLoc + " seq=" + aSeq);
+        }
         String atkName = atkCard != null ? DataManager.get().getName(atkCard.code) : "";
         if (dLoc != 0) {
+            soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
             GameField.ClientCard defCard = field.getCard(localPlayer(dCtrl & 1), dLoc, dSeq);
             String defName = defCard != null ? DataManager.get().getName(defCard.code) : "";
             setEventString(1619, "[%s]攻击[%s]", atkName, defName);
+            // 需求3：记录绿色攻击弧端点（攻击者→目标），GameFieldView 在约 0.9s 内绘制流动弧
+            field.arcAttacker = atkCard;
+            field.arcTarget = defCard;
+            field.arcStartMs = System.currentTimeMillis();
         } else {
+            soundManager.playSoundEffect(SoundManager.SFX.DIRECT_ATTACK);
             setEventString(1620, "[%s]直接攻击", atkName);
+            // 直接攻击：无目标卡，弧落到对方手牌行一侧（duelclient.cpp L3850-3853）
+            field.arcAttacker = atkCard;
+            field.arcTarget = null;
+            field.arcStartMs = System.currentTimeMillis();
         }
+        // 对齐 duelclient.cpp MSG_ATTACK L3864 WaitFrameSignal(40)：弧光展示期内关闭闸门，
+        // 后续伤害步骤/询问弹窗不得抢先于弧线展示（直接攻击无卡片动画屏障，旧实现弧被弹窗
+        // 遮挡几乎不可见；攻怪因伴随 MSG_MOVE 动画而受影响较小）
+        animHoldUntilMs = System.currentTimeMillis() + ATTACK_HOLD_MS;
         mainHandler.post(() -> {
             if (listener != null) listener.onFieldChanged();
         });

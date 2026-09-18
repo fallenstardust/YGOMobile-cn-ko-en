@@ -196,6 +196,14 @@ public class CmdMenuDialog {
             // 点击持有超量素材的怪兽 / 卡组 / 额外 / 墓地 / 除外——
             // 查看/发动/特殊召唤按钮均打开 CardDisplayDialog 列出该位置对应卡片
             buildPositionMenu(card, engine, cmdContext, options, actions);
+            // 堆叠区顶部是正面卡（墓地/除外/额外可见卡面）时，菜单弹出的同时
+            // 即时在左侧 CardDetailPanel 显示该卡详情（卡组/超量素材背面被
+            // isFaceUp 自然过滤，不触发）
+            int loc = card.location;
+            if (card.code > 0 && card.isFaceUp()
+                    && (loc == 0x10 || loc == 0x20 || loc == 0x40 || loc == 0x01)) {
+                activity.showCardInfoPanel(card);
+            }
         } else {
             if (card.code > 0) activity.showCardInfoPanel(card);
             buildCardCommandMenu(card, engine, cmdContext, options, actions);

@@ -140,6 +140,12 @@ public class CardSelectDialog {
     private final List<Integer> clickOrder = new ArrayList<>();
     private int[] sortList = new int[0];
     private int sortCounter = 0;
+    /**
+     * 显示序 → 协议序索引的排布表（长度 = 显示总数），在 {@link #show(View)} 时按初始
+     * 选择状态构建一次，本次会话内固定不变（避免点选时卡片跳动）。
+     * 规则：沿用原有「协议序整体反转」的相对顺序，但把已选中的可选卡稳定地挪到列表末尾
+     */
+    private int[] displayOrder = new int[0];
 
     private TextView tvTitle;
     private SeekBar sbPage;
@@ -176,6 +182,7 @@ public class CardSelectDialog {
         this.clickOrder.clear();
         this.sortList = new int[this.cards.size()];
         this.sortCounter = 0;
+        this.displayOrder = new int[0];
         this.pageOffset = 0;
         return this;
     }
@@ -284,14 +291,46 @@ public class CardSelectDialog {
     }
 
     /**
-     * 显示序 → 协议序索引：整个卡片列表的显示顺序为协议顺序的整体反转
-     * （协议末位卡排在第一槽）。selected/sortList/点击回调/协议响应全部经此
-     * 换算取协议索引，反转仅影响槽位排布，不影响发送协议的索引语义
+     * 显示序 → 协议序索引：沿用协议序整体反转的相对顺序（协议末位卡排在第一），
+     * 并把已选中的可选卡稳定地排到列表末尾（见 {@link #buildDisplayOrder()}）。
+     * selected/sortList/点击回调/协议响应全部经此换算取协议索引，排布仅影响槽位顺序，
+     * 不影响发送协议的索引语义。排布表未构建时兜底为纯反转。
      */
     private int displayToProto(int displayIdx) {
         int count = getDisplayCount();
         if (displayIdx < 0 || displayIdx >= count) return -1;
+        if (displayOrder != null && displayOrder.length == count) return displayOrder[displayIdx];
         return count - 1 - displayIdx;
+    }
+
+    /**
+     * 按初始选择状态构建显示排布：先保持既有「协议序整体反转」的相对顺序，再把已选中的
+     * 可选卡（非必选卡）稳定挪到末尾。必选卡与未选卡留在前段相对顺序不变，因此无预选的普通
+     * 选择弹窗排布与旧行为完全一致；仅取消选择/带预选的重弹弹窗会把已选卡沉到列表最后。
+     */
+    private void buildDisplayOrder() {
+        int count = getDisplayCount();
+        int m = mustCards.size();
+        int[] ordered = new int[count];
+        int w = 0;
+        // 前段：未挪到末尾的卡（必选卡 + 未选可选卡），保持协议序反转的相对顺序
+        for (int d = 0; d < count; d++) {
+            int p = count - 1 - d;
+            if (!isMovedToLast(p, m)) ordered[w++] = p;
+        }
+        // 末段：已选中的可选卡，同样按协议序反转的相对顺序追加
+        for (int d = 0; d < count; d++) {
+            int p = count - 1 - d;
+            if (isMovedToLast(p, m)) ordered[w++] = p;
+        }
+        displayOrder = ordered;
+    }
+
+    /** 该协议序是否为「需挪到末尾」的已选可选卡（必选卡不算，保持在原位） */
+    private boolean isMovedToLast(int proto, int mustCount) {
+        if (proto < mustCount) return false;
+        int sel = proto - mustCount;
+        return sel >= 0 && sel < selected.length && selected[sel];
     }
 
     /** 显示序 → 卡片项：经 displayToProto 反转换回协议序（必选卡在前、可选卡在后），越界返回 null */
@@ -791,6 +830,7 @@ public class CardSelectDialog {
                 }
             }
             if (anchor == null || anchor.getWindowToken() == null) return;
+            buildDisplayOrder();
             refreshSlots();
             switch (mode) {
                 case MODE_SORT:

@@ -571,6 +571,14 @@ public class ShowDialogUtil {
     // === 卡片选择类 ===
 
     /**
+     * 场上分流诊断日志——候选卡仍在手牌/墓地等以外的区域、或字段解析失败导致回退弹窗时，
+     * 每个 return false 分支记录原因与卡片详情（logcat 过滤 "FieldSelect" 可定位失败守卫）
+     */
+    private static void fsLog(String msg) {
+        android.util.Log.i("FieldSelect", msg);
+    }
+
+    /**
      * 场上/手牌直接选择模式（对齐 gframe drawing.cpp DrawCard L638-643 的卡片选择轮廓）：
      * 当候选卡全部位于手牌(0x02)/怪兽区(0x04)/魔陷区(0x08)且非超量素材时，不弹 CardSelectDialog，
      * 改由 GameFieldController 在场上高亮虚线框供直接点击选择
@@ -582,18 +590,100 @@ public class ShowDialogUtil {
         GameFieldController ctl = fieldCtl();
         GameEngine eng = engine();
         GameField f = (eng != null) ? eng.getField() : null;
-        if (ctl == null || eng == null || f == null || items == null || items.isEmpty())
+        if (ctl == null || eng == null || f == null || items == null || items.isEmpty()) {
+            fsLog("tryFieldCardSelect SKIP: ctl=" + ctl + " eng=" + eng + " f=" + f
+                    + " items=" + (items == null ? "null" : items.size()));
             return false;
+        }
+        // duelclient.cpp L1934：手牌数以消息解析前的实时张数为基准
+        int[] handCount = { f.getCardCount(0, 0x02), f.getCardCount(1, 0x02) };
+        int[] selectInHand = new int[2];
         for (CardSelectDialog.CardItem it : items) {
             int loc = it.location;
-            if ((loc & 0x80) != 0) return false;   // 超量素材无法在场上单独点击
-            if ((loc & 0xe) == 0) return false;    // 不在手牌/怪兽区/魔陷区（卡组/墓地/额外/除外等仍需弹窗）
+            if ((loc & 0x80) != 0) {
+                fsLog("tryFieldCardSelect SKIP: overlay material code=" + it.code
+                        + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc) + " seq=" + it.sequence);
+                return false;
+            }
+            if ((loc & 0xe) == 0) {
+                fsLog("tryFieldCardSelect SKIP: out-of-field code=" + it.code
+                        + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc) + " seq=" + it.sequence);
+                return false;
+            }
             int lp = eng.localPlayer(it.controler);
-            if (f.getCard(lp, loc & 0x7f, it.sequence) == null) return false;
+            if (f.getCard(lp, loc & 0x7f, it.sequence) == null) {
+                fsLog("tryFieldCardSelect SKIP: getCard null code=" + it.code
+                        + " ctrl=" + it.controler + "->" + lp + " loc=0x" + Integer.toHexString(loc & 0x7f)
+                        + " seq=" + it.sequence);
+                return false;
+            }
+            // duelclient.cpp L1957-1961：该方手牌≥ 10 张且候选在手牌内超过 1 张 → 拥挤，回退弹窗
+            if ((loc & 0x02) != 0 && handCount[lp] >= 10 && ++selectInHand[lp] > 1) {
+                fsLog("tryFieldCardSelect SKIP: hand crowded player=" + lp + " handCount=" + handCount[lp]);
+                return false;
+            }
         }
+        fsLog("tryFieldCardSelect FIELD MODE: count=" + items.size() + " min=" + min + " max=" + max);
         ctl.beginCardSelect(items, min, max, cancelable);
         // 完成/取消按钮沿用 CardDetailPanel（currentSelectType 已由 YGOProActivity 设为 15/20）
         panel().updateCancelOrFinishButton(min == 0, cancelable, false);
+        return true;
+    }
+
+    /**
+     * 合计选择（MSG_SELECT_SUM，召唤手续常用：同调/仪式等按等级合计解放）场上分流：
+     * 对齐 duelclient.cpp L2404-2405 可选候选 `(l & 0xe) == 0 → 弹窗`（手牌参与不弹窗），
+     * 叠加保守约束：must 候选与超量素材也需场上可解析才走场上模式
+     *
+     * @return true=已进入场上合计选择模式，调用方无需再弹窗
+     */
+    private boolean tryFieldSumSelect(List<CardSelectDialog.CardItem> mustCards,
+                                      List<CardSelectDialog.CardItem> items,
+                                      int selectMode, int sumVal, int min, int max) {
+        GameFieldController ctl = fieldCtl();
+        GameEngine eng = engine();
+        GameField f = (eng != null) ? eng.getField() : null;
+        if (ctl == null || eng == null || f == null || items == null || items.isEmpty()) {
+            fsLog("tryFieldSumSelect SKIP: ctl=" + ctl + " eng=" + eng + " f=" + f
+                    + " items=" + (items == null ? "null" : items.size()));
+            return false;
+        }
+        for (CardSelectDialog.CardItem it : items) {
+            int loc = it.location;
+            if ((loc & 0x80) != 0) {
+                fsLog("tryFieldSumSelect SKIP: overlay material code=" + it.code
+                        + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc) + " seq=" + it.sequence);
+                return false;   // 超量素材场上无法直接点击 → 弹窗
+            }
+            if ((loc & 0xe) == 0) {
+                fsLog("tryFieldSumSelect SKIP: out-of-field code=" + it.code
+                        + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc) + " seq=" + it.sequence);
+                return false;   // 卡组/墓地/额外/除外等 → 弹窗
+            }
+            if (f.getCard(eng.localPlayer(it.controler), loc & 0x7f, it.sequence) == null) {
+                fsLog("tryFieldSumSelect SKIP: getCard null code=" + it.code
+                        + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc & 0x7f) + " seq=" + it.sequence);
+                return false;
+            }
+        }
+        if (mustCards != null) {
+            for (CardSelectDialog.CardItem it : mustCards) {
+                int loc = it.location;
+                if ((loc & 0xe) == 0) {
+                    fsLog("tryFieldSumSelect SKIP: must out-of-field code=" + it.code
+                            + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc) + " seq=" + it.sequence);
+                    return false;
+                }
+                if (f.getCard(eng.localPlayer(it.controler), loc & 0x7f, it.sequence) == null) {
+                    fsLog("tryFieldSumSelect SKIP: must getCard null code=" + it.code
+                            + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc & 0x7f) + " seq=" + it.sequence);
+                    return false;
+                }
+            }
+        }
+        fsLog("tryFieldSumSelect FIELD MODE: must=" + (mustCards == null ? 0 : mustCards.size())
+                + " opt=" + items.size() + " mode=" + selectMode + " sum=" + sumVal + " min=" + min + " max=" + max);
+        ctl.beginSumSelect(mustCards, items, selectMode, sumVal, min, max);
         return true;
     }
 
@@ -784,6 +874,8 @@ public class ShowDialogUtil {
             engine().sendResponse(resp);
             return;
         }
+        // 候选全在场/手卡：不弹窗，场上蚂蚁线直接选择（duelclient.cpp L2404-2405 分流真值）
+        if (tryFieldSumSelect(mustCards, items, selectMode, sumVal, min, max)) return;
         final List<CardSelectDialog.CardItem> cardInfos = items;
         final int fMustCount = mustCount;
         CardSelectDialog dialog = new CardSelectDialog(activity, imageLoader);

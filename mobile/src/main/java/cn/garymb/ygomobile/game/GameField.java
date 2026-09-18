@@ -20,7 +20,7 @@ public class GameField {
     public static final int MAX_REMOVED = 128;
     public static final int MAX_EXTRA = 32;
     public static final int MAX_DECK = 128;
-    public static final int MAX_LAYER_COUNT = 5;
+    public static final int MAX_LAYER_COUNT = 6;
 
     public static final int QUERY_CODE = 0x01;
     public static final int QUERY_POSITION = 0x02;
@@ -140,6 +140,9 @@ public class GameField {
         public float animToRotX, animToRotY, animToRotZ;
         public float animFromAlpha, animToAlpha;
         public int animTotalFrame;
+        /** 动画启动延迟帧（对齐 duelclient.cpp MSG_MOVE L3032-3038 的 WaitFrameSignal(10)：
+         *  带素材怪兽移动时素材先归位，本体延迟若干帧再落上去），延迟期内不插值不扣 aniFrame */
+        public float animDelayFrame;
 
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
@@ -408,16 +411,24 @@ public class GameField {
         public boolean solved;
         public boolean needDistinguish;
         public List<ClientCard> targets = new ArrayList<>();
+        /**
+         * 连锁图标（chain 旋转图 / number 序号）位置快照：连锁成立（MSG_CHAINED）时捕捉发动卡
+         * 所在 xyz，此后卡片因结算等离开原位时图标不跟随移动，停留在原地直到连锁消失。
+         */
+        public boolean iconPosCaptured;
+        public float iconX, iconY, iconZ;
     }
 
     /** 待挂超量素材——素材 MSG_MOVE 先于超量怪兽 MSG_MOVE 到达时暂存，待怪兽入格再补挂 */
     private static final class PendingOverlay {
         final ClientCard card;
         final int ctrl;
+        final int loc;
         final int seq;
-        PendingOverlay(ClientCard card, int ctrl, int seq) {
+        PendingOverlay(ClientCard card, int ctrl, int loc, int seq) {
             this.card = card;
             this.ctrl = ctrl;
+            this.loc = loc;
             this.seq = seq;
         }
     }
@@ -458,6 +469,16 @@ public class GameField {
     public boolean[] extraAct = new boolean[2];
     public boolean[] pzoneAct = new boolean[2];
     public boolean contiAct;
+
+    /**
+     * 需求3：攻击宣言绿色弧形流动动画状态（对齐 duelclient.cpp MSG_ATTACK L3817-3866 +
+     * materials.cpp GenArrow + drawing.cpp L1504-1513 attack_sv 窗口流动）。
+     * onAttack 时写入攻击者/目标卡与起始时间戳，GameFieldView.drawAttackArc 读取并在约 0.9s 内绘制。
+     * arcTarget 为 null 表示直接攻击，绘制时落到对方场地一侧的固定点。
+     */
+    public ClientCard arcAttacker;
+    public ClientCard arcTarget;
+    public volatile long arcStartMs;
 
     public List<ClientCard> selectableCards = new ArrayList<>();
     public List<ClientCard> selectedCards = new ArrayList<>();
@@ -827,16 +848,29 @@ public class GameField {
                 break;
             }
             case 0x40: {
-                if (extraPCount[controler] == 0 || (card != null && card.isFaceUp())) {
-                    list.set(sequence, card);
-                } else {
-                    int faceupBegin = list.size() - extraPCount[controler];
-                    if (faceupBegin < 0) faceupBegin = 0;
-                    if (faceupBegin > list.size()) faceupBegin = list.size();
-                    list.add(faceupBegin, card);
+                // 对齐 C++ AddCard(LOCATION_EXTRA)（client_field.cpp L211-221）：额外卡组堆叠约定
+                // 里侧在下方、表侧集中于上方（高 index = 高 z = 堆顶）。表侧进入 push_back 到堆顶；
+                // 里侧回去（融合/同调/超量/连接以里侧返回额外卡组）插到 faceup_begin = 实际张数 -
+                // 表侧数，即里侧组最上方、表侧组正下方，而非整堆最上方。
+                // 注意：Java 的 extra 是定长 null 填充列表，list.size() 含尾部空位，
+                // 用 size() 代替实际张数会把里侧回插的卡顶到堆最上方（旧 Bug）。
+                boolean faceUp = card != null && card.isFaceUp();
+                int count = 0;
+                for (int i = 0; i < list.size(); i++) {
+                    if (list.get(i) != null) count++;
                 }
+                int at = (extraPCount[controler] == 0 || faceUp)
+                        ? count                            // 等价 push_back：追加到实际末尾
+                        : count - extraPCount[controler];  // 里侧组顶部（第一张表侧之下）
+                if (at < 0) at = 0;
+                if (count >= list.size()) list.add(null);  // 兼容列表曾被撑短：先腾出末尾槽位
+                // 从密区末尾起逐格右移一格，再把卡片插入 at（保持定长 null 填充结构）
+                for (int i = count; i > at; i--) {
+                    list.set(i, list.get(i - 1));
+                }
+                list.set(at, card);
                 resetSequence(list, true);
-                if (card != null && card.isFaceUp()) {
+                if (faceUp) {
                     extraPCount[controler]++;
                 }
                 break;
@@ -924,19 +958,21 @@ public class GameField {
     }
 
     /**
-     * 将卡片作为超量素材叠放到 (newCtrl, 怪兽区, xyzSeq) 的超量怪兽下方
+     * 将卡片作为超量素材叠放到 (newCtrl, newLocBase, xyzSeq) 的超量怪兽下方
      *（对齐 duelclient.cpp MSG_MOVE 的 !(pl&OVERLAY) && (cl&OVERLAY) 分支 L3055-3095）：
+     * 宿主按消息 loc 字节动态定位——ocgcore get_info_location（card.cpp L389-403）对带
+     * overlay_target 的卡返回宿主的 (c, l|0x80, s)，而脚本常在怪兽尚处额外卡组时就执行
+     * Overlay，此时 cs 是 EXTRA 序号，硬编码怪兽区查找会失败导致素材永挂不化滞留原格。
      * 先从原区域移除，再挂到目标 overlayed 列表与场地级 overlayCards 绘制列表，
-     * 设 overlayTarget/location=OVERLAY/sequence=叠放序号；返回 true 表示已就位、调用方随后
-     * moveCardAnimated 播放堆叠动画。
-     * 目标超量怪兽尚未就位（素材 MSG_MOVE 先于怪兽 MSG_MOVE 到达）时，改为登记待挂素材
-     * 并返回 false——素材仍留在 overlayCards 原地显示，待怪兽入格由 flushPendingOverlays 补挂，
-     * 从而正确播放「飞向怪兽区格子并正面叠放」的移动动画，避免素材滞留原格或被甩到世界原点。
+     * 设 overlayTarget/location=OVERLAY/sequence=叠放序号；返回定位到的宿主 olcard（调用方
+     * 仅在 olcard.location==MZONE 时播放堆叠动画，对齐 C++ L3086 的条件），
+     * 返回 null 表示宿主尚未就位——登记待挂素材，素材仍留在 overlayCards 原地显示，
+     * 待怪兽入格由 flushPendingOverlays 按 (ctrl, loc, seq) 三键补挂。
      */
-    public boolean attachOverlayMaterial(ClientCard pcard, int oldCtrl, int oldLoc, int oldSeq,
-                                         int newCtrl, int xyzSeq) {
-        if (pcard == null) return false;
-        ClientCard olcard = getCard(newCtrl, CardLocation.MonsterZone.value(), xyzSeq);
+    public ClientCard attachOverlayMaterial(ClientCard pcard, int oldCtrl, int oldLoc, int oldSeq,
+                                            int newCtrl, int newLocBase, int xyzSeq) {
+        if (pcard == null) return null;
+        ClientCard olcard = getCard(newCtrl, newLocBase, xyzSeq);
         if (olcard == null) {
             removeCard(oldCtrl, oldLoc, oldSeq);
             pcard.controler = newCtrl;
@@ -944,8 +980,8 @@ public class GameField {
             pcard.overlayTarget = null;
             pcard.sequence = 0;
             if (!overlayCards.contains(pcard)) overlayCards.add(pcard);
-            pendingOverlays.add(new PendingOverlay(pcard, newCtrl, xyzSeq));
-            return false;
+            pendingOverlays.add(new PendingOverlay(pcard, newCtrl, newLocBase, xyzSeq));
+            return null;
         }
         removeCard(oldCtrl, oldLoc, oldSeq);
         if (!olcard.overlayed.contains(pcard)) olcard.overlayed.add(pcard);
@@ -954,7 +990,7 @@ public class GameField {
         pcard.controler = newCtrl;
         pcard.location = CardLocation.Overlay.value();
         pcard.sequence = olcard.overlayed.size() - 1;
-        return true;
+        return olcard;
     }
 
     /**
@@ -967,7 +1003,7 @@ public class GameField {
         java.util.Iterator<PendingOverlay> it = pendingOverlays.iterator();
         while (it.hasNext()) {
             PendingOverlay po = it.next();
-            if (po == null || po.ctrl != ctrl || po.seq != seq) continue;
+            if (po == null || po.ctrl != ctrl || po.loc != 0x04 || po.seq != seq) continue;
             it.remove();
             ClientCard m = po.card;
             if (m == null) continue;
@@ -982,14 +1018,16 @@ public class GameField {
     }
 
     /**
-     * 从 (oldCtrl, 怪兽区, xyzSeq) 的超量怪兽下方取出第 subSeq 张素材送入新区域
+     * 从 (oldCtrl, oldLocBase, xyzSeq) 的超量怪兽下方取出第 subSeq 张素材送入新区域
      *（对齐 duelclient.cpp MSG_MOVE 的 (pl&OVERLAY) && !(cl&OVERLAY) 分支 L3096-3124）：
+     * 宿主按消息 pl 字节动态定位——超量怪兽离场时其自身 MSG_MOVE 先到达（可能已入墓地，
+     * pl&0x7f=GRAVE），硬编码怪兽区查找会返回 null 导致素材无离场动画。
      * 从 overlayed 与场地级 overlayCards 移除、清 overlayTarget、加入新区域，
      * 其余素材重排序号并各自播放 2 帧归位动画；返回被取出的素材卡供调用方播放离场动画。
      */
-    public ClientCard detachOverlayMaterial(int oldCtrl, int xyzSeq, int subSeq,
+    public ClientCard detachOverlayMaterial(int oldCtrl, int oldLocBase, int xyzSeq, int subSeq,
                                             int newCtrl, int newLoc, int newSeq, int newPos) {
-        ClientCard olcard = getCard(oldCtrl, CardLocation.MonsterZone.value(), xyzSeq);
+        ClientCard olcard = getCard(oldCtrl, oldLocBase, xyzSeq);
         if (olcard == null) return null;
         if (subSeq < 0 || subSeq >= olcard.overlayed.size()) return null;
         ClientCard pcard = olcard.overlayed.get(subSeq);
@@ -1006,6 +1044,21 @@ public class GameField {
             moveCardAnimated(m, 2);
         }
         return pcard;
+    }
+
+    /**
+     * 带超量素材的怪兽移动到怪兽区时，素材随本体重排到新格下方（对齐 duelclient.cpp
+     * MSG_MOVE L3032-3038：cl==0x4 且 overlayed 非空时逐素材 MoveCard(10) + WaitFrameSignal(10)，
+     * 本体延迟后再落上）；移动到其他区域时 C++ 同样让素材逐张 MoveCard（跟随本体目标格），
+     * 这里统一为各素材播放 frame 帧移动动画——素材的目标位由 getCardLocation 的
+     * LOCATION_OVERLAY 分支依 overlayTarget 实时求出，本体已入新格则素材飞向新格下方。
+     */
+    public void moveOverlayMaterials(ClientCard monster, int frame) {
+        if (monster == null || monster.overlayed.isEmpty()) return;
+        for (int i = 0; i < monster.overlayed.size(); i++) {
+            ClientCard m = monster.overlayed.get(i);
+            if (m != null) moveCardAnimated(m, frame);
+        }
     }
 
     public void updateCard(int controler, int location, int sequence, ByteBuffer data) {
@@ -1364,6 +1417,12 @@ public class GameField {
     private void updateListAnimation(List<ClientCard> list) {
         for (ClientCard pcard : list) {
             if (pcard == null || pcard.aniFrame <= 0) continue;
+            // 启动延迟：对齐 C++ 素材先飞、本体/后续卡 WaitFrameSignal 后再动的串行时序；
+            // 延迟期内 aniFrame 不扣减，统一动画屏障（isAnimating）持续等待，消息不会提前推进
+            if (pcard.animDelayFrame > 0) {
+                pcard.animDelayFrame -= animationSpeed;
+                continue;
+            }
             // 缓动插值：按剩余帧比例计算进度，easeInOutCubic 平滑起止，替代原线性累加
             if (pcard.is_moving) {
                 int total = Math.max(1, pcard.animTotalFrame);
@@ -1479,9 +1538,18 @@ public class GameField {
     }
 
     public void moveCardAnimated(ClientCard pcard, int frame) {
+        moveCardAnimated(pcard, frame, 0);
+    }
+
+    /**
+     * delay 帧后启动的 frame 帧移动动画（对齐 duelclient.cpp MSG_MOVE L3032-3046：
+     * 素材 MoveCard(10)+WaitFrameSignal(10) 后本体才 MoveCard(10)）。
+     */
+    public void moveCardAnimated(ClientCard pcard, int frame, int delay) {
         if (pcard == null || frame <= 0) return;
         float[] loc = getCardLocation(pcard);
 
+        pcard.animDelayFrame = Math.max(0, delay);
         pcard.animFromX = pcard.curX;
         pcard.animFromY = pcard.curY;
         pcard.animFromZ = pcard.curZ;

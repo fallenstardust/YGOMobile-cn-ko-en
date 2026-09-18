@@ -86,11 +86,7 @@ public class TextureLoader {
                 // 卡背与未知卡图 (tCover / tUnknown)
                 "cover.jpg", "cover2.jpg",
                 "unknown.jpg",
-                // 场上状态标记 (tAct/tAttack/tChain/tNegated/tNumber/tEquip/tTarget/tChainTarget/tMask)
-                "act.png", "attack.png", "chain.png", "negated.png",
-                "number.png", "equip.png", "target.png", "chaintarget.png",
-                "mask.png",
-                // LP 条颜色（纯色无 alpha，RGB_565 即可）
+                // lp3.png 为纯色无 alpha（RGB_565 即可）
                 "lp3.png",
                 // 禁限/OT/卡片类型图标 (tLim/tOT/tCardType)
                 "icon_lim.png", "ot.png", "cardtype.png",
@@ -112,9 +108,11 @@ public class TextureLoader {
                 permanentCache.put(name, bmp);
             }
         }
-        // lpbarf/lpf 为叠加在血条与头像之上的边框贴图，内部必须透明，
-        // 按 ARGB_8888 解码（RGB_565 会丢透明通道，边框糊成实色块）
-        String[] alphaTextures = { "lpf.png", "lpbarf.png" };
+        // lpf/lpbarf 为边框贴图，act/attack/chain/negated/number/equip/target/chaintarget/mask
+        // 为场上状态叠加图标，均含透明通道，必须按 ARGB_8888 解码（RGB_565 会丢 alpha → 黑底方块）
+        String[] alphaTextures = { "lpf.png", "lpbarf.png",
+                "act.png", "attack.png", "chain.png", "negated.png",
+                "number.png", "equip.png", "target.png", "chaintarget.png", "mask.png" };
         for (String name : alphaTextures) {
             Bitmap bmp = loadBitmapFromFile(name, Bitmap.Config.ARGB_8888);
             if (bmp != null) {

@@ -952,11 +952,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             if (card == null) card = new GameField.ClientCard();
             if (code != 0) card.code = code;
             card.position = pos;
-            if (field.attachOverlayMaterial(card, oc, ol & 0x7f, os, nc, ns)) {
+            // 宿主按消息 loc 字节动态定位（duelclient.cpp L3069/L3097），仅宿主在怪兽区时跟动画
+            GameField.ClientCard olcard = field.attachOverlayMaterial(card, oc, ol & 0x7f, os, nc, nl & 0x7f, ns);
+            if (olcard != null && olcard.location == 0x04) {
                 field.moveCardAnimated(card, 1);
             }
         } else if (oldOv && !newOv) {
-            GameField.ClientCard card = field.detachOverlayMaterial(oc, os, opos, nc, nl & 0x7f, ns, pos);
+            GameField.ClientCard card = field.detachOverlayMaterial(oc, ol & 0x7f, os, opos, nc, nl & 0x7f, ns, pos);
             if (card != null) {
                 if (code != 0) card.code = code;
                 field.moveCardAnimated(card, 1);

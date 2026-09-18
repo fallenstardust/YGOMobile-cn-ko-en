@@ -103,6 +103,8 @@ public class SettingsDialog {
         chkDrawFieldSpell.setText(stringManager.getSystemString(1283, ""));
         CheckBox chkQuickAnimation = rootLayout.findViewById(R.id.chkQuickAnimation);
         chkQuickAnimation.setText(stringManager.getSystemString(1299, ""));
+        CheckBox chkDrawSingleChain = rootLayout.findViewById(R.id.chkDrawSingleChain);
+        chkDrawSingleChain.setText(stringManager.getSystemString(1287, ""));
         CheckBox chkGenesysMode = rootLayout.findViewById(R.id.chkGenesysMode);
         chkGenesysMode.setText(stringManager.getSystemString(1698, ""));
         CheckBox chkBanList = rootLayout.findViewById(R.id.chkBanList);
@@ -132,6 +134,7 @@ public class SettingsDialog {
         chkHideNickName.setChecked(appsSettings.getIntSettings("chkHideNickName", 0) == 1);
         chkDrawFieldSpell.setChecked(appsSettings.getIntSettings("chkDrawFieldSpell", 0) == 1);
         chkQuickAnimation.setChecked(appsSettings.getIntSettings("chkQuickAnimation", 0) == 1);
+        chkDrawSingleChain.setChecked(appsSettings.getIntSettings("draw_single_chain", 0) == 1);
         chkGenesysMode.setChecked(appsSettings.getGenesysMode() == 1);
         chkMuteSpectators.setChecked(appsSettings.getIntSettings("chkMuteSpectators", 0) == 1);
         chkDisableChatting.setChecked(appsSettings.getIntSettings("chkDisableChatting", 0) == 1);
@@ -155,6 +158,7 @@ public class SettingsDialog {
         bindInstantSave(appsSettings, chkHideNickName, "chkHideNickName");
         bindInstantSave(appsSettings, chkDrawFieldSpell, "chkDrawFieldSpell");
         bindInstantSave(appsSettings, chkQuickAnimation, "chkQuickAnimation");
+        bindInstantSave(appsSettings, chkDrawSingleChain, "draw_single_chain");
         bindInstantSave(appsSettings, chkMuteSpectators, "chkMuteSpectators");
         bindInstantSave(appsSettings, chkDisableChatting, "chkDisableChatting");
         bindInstantSave(appsSettings, chkAutoSaveReplay, "chkAutoSaveReplay");
