@@ -206,6 +206,8 @@ public class GameEngine {
     public int gameTimeLimit = 0;
     public int gameNoCheckDeck = 0;
     public int gameNoShuffleDeck = 0;
+    /** 是否已收到过 STOC_JOIN_GAME 房间信息（gameXxx 字段与 field.dInfo.duelRule 有效），供等待界面就绪后补发 */
+    public boolean hasJoinRoomInfoCache = false;
 
     public int getGameMode() { return gameMode; }
     public int getGameRule() { return gameRule; }

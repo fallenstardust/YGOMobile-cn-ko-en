@@ -508,6 +508,17 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     /**
+     * 录像回放开始：切换到决斗场 UI（对齐 game.cpp Main::Replay 显示 GameUI 窗口），
+     * 与 enterDuelingUI 相同的布局切换但不置 isGameStarted（回放无投降/断线流程）
+     */
+    public void enterReplayUI() {
+        getMainMenuDialog().hideMainMenu();
+        exitLobbyChatUI();
+        showGameUI();
+        dismissAllLanDialogs();
+    }
+
+    /**
      * 决斗开始/彻底离开局域网流程时，关闭三个局域网对话框（先清空 dismiss 回调避免误恢复主菜单）
      */
     private void dismissAllLanDialogs() {
@@ -884,6 +895,16 @@ public class YGOProActivity extends AppCompatActivity {
                 if (mainMenuDialog != null && mainMenuDialog.isShowing()) {
                     soundManager.stopBGM();
                     finish();
+                    return;
+                }
+                // 回放进行中：返回键 = 退出回放回主菜单（对应 gframe 回放窗口关闭）
+                if (currentReplayEngine != null) {
+                    ReplayModeDialog.quitReplay(YGOProActivity.this);
+                    return;
+                }
+                // 玩家等待界面显示中：弹窗不再获焦（聊天输入框需窗口焦点），返回键转发为退出等待回局域网主界面
+                if (playerWaitingDialog != null && playerWaitingDialog.isShowing()) {
+                    getPlayerWaitingListener().onExitWaiting();
                     return;
                 }
                 if (!isGameStarted) {

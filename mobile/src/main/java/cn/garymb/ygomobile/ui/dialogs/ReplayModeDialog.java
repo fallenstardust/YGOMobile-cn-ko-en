@@ -352,7 +352,12 @@ public class ReplayModeDialog {
     }
 
     private void loadReplay(File replayFile) {
-        popupWindow.dismiss();
+        if (popupWindow != null) {
+            // 载入回放属内部跳转：先摘除 dismiss 回调，避免退场动画延迟触发 restoreMainMenu
+            // 把主菜单叠在回放画面上
+            popupWindow.setOnDismissListener(null);
+            popupWindow.dismiss();
+        }
         if (listener != null) {
             listener.onReplaySelected(replayFile.getAbsolutePath(), startTurn);
         }
@@ -463,6 +468,9 @@ public class ReplayModeDialog {
 
     public static void startReplayPlayback(YGOProActivity activity, String replayPath, int startTurn) {
         if (activity.getEngine() == null) return;
+        // 对齐 game.cpp Main::Replay → showFieldWindow：先切入决斗场 UI（隐藏主菜单/局域网弹窗），
+        // 否则回放开始后主菜单仍覆盖在画面上
+        activity.enterReplayUI();
         ReplayEngine replayEngine = new ReplayEngine(activity.getEngine().getField(), activity.getSoundManager());
         activity.getEngine().setReplayEngine(replayEngine);
         activity.setCurrentReplayEngine(replayEngine);

@@ -18,6 +18,7 @@ import java.util.concurrent.ThreadFactory;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.NativeInitOptions;
+import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
 import cn.garymb.ygomobile.network.BufferIO;
 import cn.garymb.ygomobile.network.YGOProtocol;
@@ -126,6 +127,8 @@ public final class LanGameServer implements YGOProtocol {
     private boolean bootstrapEngine() {
         try {
             NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
+            // native 引擎只读 rootPath/script/ 实体文件，先把 scripts.zip 解压出 script/ 目录
+            NativeScriptBootstrap.ensureScriptsExtracted(options.mWorkPath);
             String[] cdbPaths = options.mDbList.toArray(new String[0]);
             return OcgDuelEngine.init(options.mWorkPath, cdbPaths);
         } catch (Throwable t) {

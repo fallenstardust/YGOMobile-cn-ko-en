@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
+import cn.garymb.ygomobile.engine.OcgDuelEngine;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import ocgcore.enums.CardLocation;
 
@@ -36,7 +38,12 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private ReplayReader.ReplayData replayData;
+    /** 响应记录流（uniform 模式消息区全部为 [uint8 len][response] 记录，非消息字节流）。 */
     private ByteBuffer replayBuffer;
+    /** 当前正在消费的单条引擎消息体缓冲，供 skipBytes 推进游标。 */
+    private ByteBuffer msgBuf;
+    private long pduel = 0L;
+    private volatile boolean replayWinSeen = false;
     private Thread replayThread;
     private volatile boolean isRunning = false;
     private volatile boolean isPaused = false;
@@ -52,7 +59,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private volatile int restartTargetStep = 0;
     private int restartFromStep = 0;
     private boolean isSkipping = false;
-    private byte[] originalReplayBytes = null;
+    private byte[] originalResponseBytes = null;
 
     public ReplayEngine(GameField field, SoundManager soundManager) {
         this.field = field;
@@ -90,13 +97,24 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 return;
             }
 
-            originalReplayBytes = replayData.replayBuffer.array().clone();
+            // 回放需要重跑引擎复现消息流（C++ ReplayMode::ReplayThread），先引导卡片/脚本资源
+            if (!NativeScriptBootstrap.ensureEngineReady()) {
+                setState(ReplayState.ERROR);
+                mainHandler.post(() -> {
+                    if (listener != null) listener.onReplayHintMessage("决斗引擎或卡片脚本加载失败");
+                });
+                return;
+            }
 
             field.clear();
             setupInitialField();
 
             replayBuffer = replayData.replayBuffer;
             replayBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            // 快照响应记录区（undo/restart 时 Rewind 重放，对齐 cur_replay.Rewind）
+            originalResponseBytes = new byte[replayBuffer.remaining()];
+            ((ByteBuffer) replayBuffer.duplicate().order(ByteOrder.LITTLE_ENDIAN)).get(originalResponseBytes);
+            replayWinSeen = false;
 
             setState(ReplayState.PLAYING);
             isRunning = true;
@@ -185,11 +203,24 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             card.sequence = i;
             extraList.set(i, card);
         }
+        // 对齐 replay_mode.cpp StartDuel 的 dField.Initial(player, mainc, extrac)
+        field.initial(player, deckInfo.main.size(), deckInfo.extra.size(), 0);
     }
 
     private void replayLoop(int startTurn) {
         try {
-            while (isRunning && replayBuffer != null && replayBuffer.remaining() > 0) {
+            // 对齐 ReplayMode::ReplayThread：重建决斗→逐条 process/get_message→分析，
+            // 消息流由引擎以相同 seed 重新产生，文件里只有玩家响应记录
+            if (!startReplayDuel()) {
+                mainHandler.post(() -> {
+                    if (listener != null) listener.onReplayHintMessage("回放引擎启动失败（卡数据或脚本缺失）");
+                });
+                isRunning = false;
+                setState(ReplayState.ERROR);
+                return;
+            }
+            soundManager.playBGM(SoundManager.BGM.DUEL);
+            while (isRunning) {
                 if (isPaused && !isRestarting) {
                     try { Thread.sleep(100); } catch (InterruptedException e) { break; }
                     continue;
@@ -205,76 +236,179 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     isSwapping = false;
                 }
 
-                if (replayBuffer.remaining() < 1) break;
-                int msgType = replayBuffer.get() & 0xFF;
-
-                boolean pauseable = isPauseable(msgType);
-                
-                if (!processMessage(msgType)) {
+                int result = OcgDuelEngine.process(pduel);
+                int len = result & OcgDuelEngine.PROCESSOR_BUFFER_LEN;
+                int flag = result & OcgDuelEngine.PROCESSOR_FLAG;
+                if (len > 0) {
+                    byte[] msg = OcgDuelEngine.getMessage(pduel);
+                    if (!replayAnalyze(msg)) {
+                        break;
+                    }
+                }
+                if (flag == OcgDuelEngine.PROCESSOR_END) {
                     break;
-                }
-
-                if (pauseable && skipStep > 0) {
-                    skipStep--;
-                    if (skipStep == 0) {
-                        // 上一步回退：已快进到目标步，停在该步（步进模式）
-                        isSkipping = false;
-                        currentStep = restartFromStep;
-                        pause();
-                        notifyField();
-                    }
-                    continue;
-                }
-
-                currentStep++;
-
-                if (msgType == 40) { // MSG_NEW_TURN
-                    if (isSkipping && skipTurn > 0) {
-                        skipTurn--;
-                        if (skipTurn == 0) {
-                            isSkipping = false;
-                            mainHandler.post(() -> {
-                                if (listener != null) listener.onReplayHintMessage("快进结束，从当前回合开始正常播放");
-                            });
-                        }
-                        continue;
-                    }
-                }
-
-                if (!skipForward && !isSkipping) {
-                    try { Thread.sleep(800); } catch (InterruptedException e) { break; }
                 }
             }
         } catch (Exception e) {
             Log.e(TAG, "Replay loop error", e);
         }
 
+        endReplayDuel();
         isRunning = false;
         setState(ReplayState.FINISHED);
+        final boolean winShown = replayWinSeen;
         mainHandler.post(() -> {
             soundManager.stopBGM();
             // 回放自然播放完毕（未经 MSG_WIN 判定胜负）：winner=-1 表示无结果，UI 不显示胜负文字
-            if (listener != null) listener.onReplayFinished(-1, 0);
+            if (!winShown && listener != null) listener.onReplayFinished(-1, 0);
         });
     }
 
+    /** 重建决斗（对齐 ReplayMode::StartDuel）：seed/卡组/参数取录像头，不写任何消息。 */
+    private boolean startReplayDuel() {
+        ReplayReader.ExtendedReplayHeader eh = replayData.header;
+        if (eh.base.id == ReplayReader.REPLAY_ID_YRP2) {
+            pduel = OcgDuelEngine.createDuelV2(eh.seedSequence);
+        } else {
+            // YRP1 旧格式：C++ 以 mt19937(seed) 首个输出建局，此处直接用原 seed
+            pduel = OcgDuelEngine.createDuel(eh.base.seed);
+        }
+        if (pduel == 0L) {
+            return false;
+        }
+        field.dInfo.duelRule = replayData.params.duelFlag >> 16; // replay_mode.cpp L175
+        OcgDuelEngine.setPlayerInfo(pduel, 0, replayData.params.startLp,
+                replayData.params.startHand, replayData.params.drawCount);
+        OcgDuelEngine.setPlayerInfo(pduel, 1, replayData.params.startLp,
+                replayData.params.startHand, replayData.params.drawCount);
+        if (replayData.isSingleMode) {
+            // L213-219：残局回放预载 ./single/xxx.lua
+            if (OcgDuelEngine.preloadScript(pduel, "./single/" + replayData.scriptName) == 0) {
+                OcgDuelEngine.endDuel(pduel);
+                pduel = 0L;
+                return false;
+            }
+        } else if (replayData.isTag && replayData.decks.size() >= 4) {
+            // L193-211：0/2 为主将 new_card，1/3 为替补 new_tag_card
+            loadDeckToEngine(replayData.decks.get(0), 0, false);
+            loadDeckToEngine(replayData.decks.get(1), 0, true);
+            loadDeckToEngine(replayData.decks.get(2), 1, false);
+            loadDeckToEngine(replayData.decks.get(3), 1, true);
+        } else {
+            for (int i = 0; i < replayData.decks.size() && i < 2; i++) {
+                loadDeckToEngine(replayData.decks.get(i), i, false);
+            }
+        }
+        OcgDuelEngine.startDuel(pduel, replayData.params.duelFlag);
+        return true;
+    }
+
+    private void loadDeckToEngine(ReplayReader.DeckInfo deck, int player, boolean tagMate) {
+        if (tagMate) {
+            for (int code : deck.main) {
+                OcgDuelEngine.newTagCard(pduel, code, player, OcgDuelEngine.LOCATION_DECK);
+            }
+            for (int code : deck.extra) {
+                OcgDuelEngine.newTagCard(pduel, code, player, OcgDuelEngine.LOCATION_EXTRA);
+            }
+        } else {
+            for (int code : deck.main) {
+                OcgDuelEngine.newCard(pduel, code, player, player, OcgDuelEngine.LOCATION_DECK, 0,
+                        OcgDuelEngine.POS_FACEDOWN_DEFENSE);
+            }
+            for (int code : deck.extra) {
+                OcgDuelEngine.newCard(pduel, code, player, player, OcgDuelEngine.LOCATION_EXTRA, 0,
+                        OcgDuelEngine.POS_FACEDOWN_DEFENSE);
+            }
+        }
+    }
+
+    private void endReplayDuel() {
+        if (pduel != 0L) {
+            OcgDuelEngine.endDuel(pduel);
+            pduel = 0L;
+        }
+    }
+
+    /**
+     * 分析一批引擎消息（ packed 多条），对齐 ReplayMode::ReplayAnalyze：逐条按消息体
+     * 长度表推进游标，SELECT 类从响应流读记录喂引擎，显示类交 processMessage；
+     * 可暂停消息计数并做步进/快进/800ms 节奏控制。
+     */
+    private boolean replayAnalyze(byte[] data) {
+        ByteBuffer buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+        while (buf.hasRemaining()) {
+            if (!isRunning) {
+                return false;
+            }
+            if (isSwapping) {
+                performSwapField();
+                isSwapping = false;
+            }
+            int msgType = buf.get() & 0xFF;
+            boolean pauseable = isPauseable(msgType);
+            if (!processMessage(msgType, buf)) {
+                return false;
+            }
+            if (!pauseable) {
+                continue;
+            }
+
+            if (skipStep > 0) {
+                skipStep--;
+                if (skipStep == 0) {
+                    // 上一步回退：已快进到目标步，停在该步（步进模式）
+                    isSkipping = false;
+                    currentStep = restartFromStep;
+                    pause();
+                    notifyField();
+                }
+                continue;
+            }
+
+            currentStep++;
+
+            if (msgType == 40) { // MSG_NEW_TURN
+                if (isSkipping && skipTurn > 0) {
+                    skipTurn--;
+                    if (skipTurn == 0) {
+                        isSkipping = false;
+                        mainHandler.post(() -> {
+                            if (listener != null) listener.onReplayHintMessage("快进结束，从当前回合开始正常播放");
+                        });
+                    }
+                    continue;
+                }
+            }
+
+            if (!skipForward && !isSkipping) {
+                try { Thread.sleep(800); } catch (InterruptedException e) { return false; }
+            }
+        }
+        return true;
+    }
+
     private boolean isPauseable(int msgType) {
+        // 对齐 replay_mode.cpp ReplayAnalyze 的 pauseable=false 集合（这些消息不计步/不暂停）
         switch (msgType) {
             case 52: // MSG_SET
             case 54: // MSG_FIELD_DISABLED
             case 60: // MSG_SUMMONING
-            case 61: // MSG_SUMMONED
             case 62: // MSG_SPSUMMONING
-            case 63: // MSG_SPSUMMONED
             case 64: // MSG_FLIPSUMMONING
-            case 65: // MSG_FLIPSUMMONED
-            case 70: // MSG_CHAINING
-            case 71: // MSG_CHAINED
             case 72: // MSG_CHAIN_SOLVING
             case 73: // MSG_CHAIN_SOLVED
             case 74: // MSG_CHAIN_END
-            case 75: // MSG_CHAIN_NEGATED
-            case 76: // MSG_CHAIN_DISABLED
+            case 80: // MSG_CARD_SELECTED
+            case 81: // MSG_RANDOM_SELECTED
+            case 93: // MSG_EQUIP
+            case 95: // MSG_UNEQUIP
+            case 96: // MSG_CARD_TARGET
+            case 97: // MSG_CANCEL_TARGET
+            case 111: // MSG_BATTLE
+            case 112: // MSG_ATTACK_DISABLED
+            case 113: // MSG_DAMAGE_STEP_START
+            case 114: // MSG_DAMAGE_STEP_END
                 return false;
             default:
                 return true;
@@ -284,12 +418,19 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private void performRestart() {
         isRestarting = false;
         isSkipping = true;
-        
-        replayBuffer = ByteBuffer.wrap(originalReplayBytes).order(ByteOrder.LITTLE_ENDIAN);
-        
+
+        // 对齐 ReplayMode::Restart：end_duel → Rewind（响应流回到起点）→ 重新 StartDuel 重跑
+        endReplayDuel();
+        replayBuffer = ByteBuffer.wrap(originalResponseBytes).order(ByteOrder.LITTLE_ENDIAN);
+
         field.clear();
         setupInitialField();
-        
+
+        if (!startReplayDuel()) {
+            isRunning = false;
+            return;
+        }
+
         currentStep = 0;
         skipStep = Math.max(0, restartTargetStep);
         restartFromStep = skipStep;
@@ -307,9 +448,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         notifyField();
     }
 
-    private boolean processMessage(int msgType) {
-        ByteBuffer buf = replayBuffer;
-        if (buf == null || buf.remaining() < 0) return false;
+    private boolean processMessage(int msgType, ByteBuffer buf) {
+        if (buf == null) return false;
+        msgBuf = buf;
 
         try {
             switch (msgType) {
@@ -348,13 +489,14 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     if (buf.remaining() < 2) return false;
                     int winner = buf.get() & 0xFF;
                     int reason = buf.get() & 0xFF;
+                    replayWinSeen = true;
                     onWin(winner, reason);
                     return false;
                 }
 
                 case 6: // MSG_UPDATE_DATA
                 case 7: // MSG_UPDATE_CARD
-                    handleUpdate(msgType);
+                    handleUpdate(msgType, buf);
                     break;
 
                 case 8: // MSG_REQUEST_DECK
@@ -377,13 +519,14 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 case 24: // MSG_SELECT_DISFIELD
                 case 25: // MSG_SORT_CARD
                 case 26: // MSG_SELECT_UNSELECT_CARD
-                    skipReplayResponse(msgType);
+                    // 引擎产生的 SELECT 消息带完整消息体：推进游标后从响应流读记录喂引擎
+                    if (!selectWithResponse(msgType, buf)) return false;
                     break;
 
                 case 30: // MSG_CONFIRM_DECKTOP
                 case 31: // MSG_CONFIRM_CARDS
                 case 42: // MSG_CONFIRM_EXTRATOP
-                    skipConfirm(msgType);
+                    skipConfirm(msgType, buf);
                     break;
 
                 case 32: // MSG_SHUFFLE_DECK
@@ -467,7 +610,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onMove(mCode, mOldCtrl, mOldLoc, mOldSeq, mOldPos, mNewCtrl, mNewLoc, mNewSeq, mPos, mReason);
                     break;
 
-                case 53: // MSG_POS_CHANGE
+                case 51: // MSG_POS_CHANGE（common.h：51，replay_mode.cpp pbuf+=9）
                     if (buf.remaining() < 9) return false;
                     int pcCode = buf.getInt();
                     int pcCtrl = buf.get() & 0xFF;
@@ -478,27 +621,24 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onPosChange(pcCode, pcCtrl, pcLoc, pcSeq, pcOld, pcNew);
                     break;
 
-                case 54: // MSG_SET
+                case 52: // MSG_SET（pbuf+=8：code + ctrl loc seq pos）
                     if (buf.remaining() < 8) return false;
                     int setCode = buf.getInt();
                     int setCtrl = buf.get() & 0xFF;
                     int setLoc = buf.get() & 0xFF;
                     int setSeq = buf.get() & 0xFF;
-                    buf.get(); // padding
-                    buf.get();
-                    buf.get();
-                    buf.get();
+                    buf.get(); // pos
                     onSet(setCode, setCtrl, setLoc, setSeq);
                     break;
 
-                case 55: // MSG_SWAP
+                case 53: // MSG_SWAP（pbuf+=16）
                     if (buf.remaining() < 16) return false;
                     buf.getInt(); int sw1c = buf.get() & 0xFF; int sw1l = buf.get() & 0xFF; int sw1s = buf.get() & 0xFF; buf.get();
                     buf.getInt(); int sw2c = buf.get() & 0xFF; int sw2l = buf.get() & 0xFF; int sw2s = buf.get() & 0xFF; buf.get();
                     onSwap(sw1c, sw1l, sw1s, sw2c, sw2l, sw2s);
                     break;
 
-                case 56: // MSG_FIELD_DISABLED
+                case 54: // MSG_FIELD_DISABLED（pbuf+=4）
                     skipBytes(4);
                     break;
 
@@ -672,21 +812,17 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     break;
                 }
 
-                case 132: // MSG_ROCK_PAPER_SCISSORS
-                    skipBytes(1);
+                case 132: // MSG_ROCK_PAPER_SCISSORS：player，随后是响应记录
+                    if (!selectWithResponse(132, buf)) return false;
                     break;
 
                 case 133: // MSG_HAND_RES
                     skipBytes(1);
                     break;
 
-                case 140: case 141: skipBytes(6); break; // ANNOUNCE_RACE / ATTRIB
-                case 142: case 143: { // ANNOUNCE_CARD / NUMBER
-                    int anP = buf.get() & 0xFF;
-                    int anC = buf.get() & 0xFF;
-                    skipBytes(anC * 4);
+                case 140: case 141: case 142: case 143: // ANNOUNCE_*：均等待录像中的响应
+                    if (!selectWithResponse(msgType, buf)) return false;
                     break;
-                }
 
                 case 160: skipBytes(9); break; // CARD_HINT
                 case 165: skipBytes(6); break; // PLAYER_HINT
@@ -695,12 +831,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     skipBytes(4);
                     break;
 
-                case 161: { // MSG_TAG_SWAP
+                case 161: { // MSG_TAG_SWAP：固定 9 字节 + main*4 + extra*4（C++ pbuf+=pbuf[2]*4+pbuf[4]*4+9）
                     int tsPlayer = buf.get() & 0xFF;
                     buf.get();
                     int tsMainCount = buf.get() & 0xFF;
                     buf.get();
                     int tsExtraCount = buf.get() & 0xFF;
+                    skipBytes(4);
                     skipBytes(tsMainCount * 4 + tsExtraCount * 4);
                     onTagSwap(tsPlayer);
                     break;
@@ -757,70 +894,132 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     }
 
     private void skipBytes(int count) {
-        if (replayBuffer != null && replayBuffer.remaining() >= count) {
-            replayBuffer.position(replayBuffer.position() + count);
+        if (msgBuf != null && msgBuf.remaining() >= count) {
+            msgBuf.position(msgBuf.position() + count);
         }
     }
 
-    private void skipReplayResponse(int msgType) {
-        ByteBuffer buf = replayBuffer;
+    /**
+     * SELECT/ANNOUNCE 类消息：按 replay_mode.cpp::ReplayAnalyze 的长度表推进引擎消息游标，
+     * 然后从响应记录流读一条 [uint8 len][data] 喂给 set_responseb（对应 ReadReplayResponse）。
+     */
+    private boolean selectWithResponse(int msgType, ByteBuffer buf) {
         switch (msgType) {
-            case 10: { // SELECT_BATTLECMD
-                buf.get(); int cnt = buf.get() & 0xFF;
-                skipBytes(cnt * 11);
-                int cnt2 = buf.get() & 0xFF;
-                skipBytes(cnt2 * 8 + 2);
+            case 10: { // SELECT_BATTLECMD: player + cnt*11 + cnt2*8 + 2
+                buf.get();
+                int bc1 = buf.get() & 0xFF;
+                skipBytes(bc1 * 11);
+                int bc2 = buf.get() & 0xFF;
+                skipBytes(bc2 * 8 + 2);
                 break;
             }
-            case 11: { // SELECT_IDLECMD
+            case 11: { // SELECT_IDLECMD: player + 5组(cnt*7) + cnt*11+3
                 buf.get();
                 for (int t = 0; t < 5; t++) {
-                    int c = buf.get() & 0xFF; skipBytes(c * 7);
+                    int c = buf.get() & 0xFF;
+                    skipBytes(c * 7);
                 }
-                int c6 = buf.get() & 0xFF; skipBytes(c6 * 11 + 3);
+                int ic = buf.get() & 0xFF;
+                skipBytes(ic * 11 + 3);
                 break;
             }
-            case 12: buf.get(); skipBytes(12); break; // SELECT_EFFECTYN
-            case 13: buf.get(); skipBytes(4); break;  // SELECT_YESNO
-            case 14: buf.get(); int oc = buf.get() & 0xFF; skipBytes(oc * 4); break; // SELECT_OPTION
-            case 15: case 20: // SELECT_CARD / SELECT_TRIBUTE
-                buf.get(); skipBytes(3);
-                int cc = buf.get() & 0xFF; skipBytes(cc * 8);
+            case 12: // SELECT_EFFECTYN: player + 12
+                skipBytes(13);
                 break;
-            case 16: // SELECT_CHAIN
-                buf.get(); int chc = buf.get() & 0xFF;
+            case 13: // SELECT_YESNO: player + 4
+                skipBytes(5);
+                break;
+            case 14: // SELECT_OPTION: player + cnt + cnt*4
+                buf.get();
+                int oc = buf.get() & 0xFF;
+                skipBytes(oc * 4);
+                break;
+            case 15: case 20: // SELECT_CARD / SELECT_TRIBUTE: player + 3 + cnt*8
+                buf.get();
+                skipBytes(3);
+                int cc = buf.get() & 0xFF;
+                skipBytes(cc * 8);
+                break;
+            case 16: // SELECT_CHAIN: player + cnt + 9 + cnt*14
+                buf.get();
+                int chc = buf.get() & 0xFF;
                 skipBytes(9 + chc * 14);
                 break;
-            case 17: // SORT_CHAIN
-                buf.get(); int scC = buf.get() & 0xFF; skipBytes(scC * 7);
+            case 17: // SORT_CHAIN（C++ 回放未列，按 duelclient 消息长 player + cnt*7）
+                buf.get();
+                int scC = buf.get() & 0xFF;
+                skipBytes(scC * 7);
                 break;
-            case 18: case 24: buf.get(); skipBytes(5); break; // SELECT_PLACE / DISFIELD
-            case 19: buf.get(); skipBytes(5); break; // SELECT_POSITION
-            case 22: // SELECT_COUNTER
-                buf.get(); skipBytes(4);
-                int ccnt = buf.get() & 0xFF; skipBytes(ccnt * 9);
-                break;
-            case 23: // SELECT_SUM
-                buf.get(); buf.get();
+            case 18: case 19: case 24: // PLACE / POSITION / DISFIELD: player + 5
                 skipBytes(6);
-                int sc1 = buf.get() & 0xFF; skipBytes(sc1 * 11);
-                int sc2 = buf.get() & 0xFF; skipBytes(sc2 * 11);
                 break;
-            case 25: // SORT_CARD
-                buf.get(); int scc = buf.get() & 0xFF; skipBytes(scc * 7);
-                break;
-            case 26: { // SELECT_UNSELECT_CARD
+            case 22: // SELECT_COUNTER: player + 4 + cnt*9
                 buf.get();
                 skipBytes(4);
-                int uc1 = buf.get() & 0xFF; skipBytes(uc1 * 8);
-                int uc2 = buf.get() & 0xFF; skipBytes(uc2 * 8);
+                int ctr = buf.get() & 0xFF;
+                skipBytes(ctr * 9);
+                break;
+            case 23: { // SELECT_SUM: sumtype + player + 6 + 两组 cnt*11
+                buf.get();
+                buf.get();
+                skipBytes(6);
+                int s1 = buf.get() & 0xFF;
+                skipBytes(s1 * 11);
+                int s2 = buf.get() & 0xFF;
+                skipBytes(s2 * 11);
                 break;
             }
+            case 25: // SORT_CARD: player + cnt + cnt*7
+                buf.get();
+                int scc = buf.get() & 0xFF;
+                skipBytes(scc * 7);
+                break;
+            case 26: { // SELECT_UNSELECT_CARD: player + 4 + 两组 cnt*8
+                buf.get();
+                skipBytes(4);
+                int u1 = buf.get() & 0xFF;
+                skipBytes(u1 * 8);
+                int u2 = buf.get() & 0xFF;
+                skipBytes(u2 * 8);
+                break;
+            }
+            case 132: // ROCK_PAPER_SCISSORS: player
+                skipBytes(1);
+                break;
+            case 140: case 141: // ANNOUNCE_RACE / ATTRIB: player + 5
+                skipBytes(6);
+                break;
+            case 142: case 143: // ANNOUNCE_CARD / NUMBER: player + cnt + cnt*4
+                buf.get();
+                int ac = buf.get() & 0xFF;
+                skipBytes(ac * 4);
+                break;
+            default:
+                Log.w(TAG, "Unhandled select msg: " + msgType);
+                return false;
         }
+        return feedRecordedResponse();
     }
 
-    private void skipConfirm(int msgType) {
-        ByteBuffer buf = replayBuffer;
+    /** 从响应记录流读 [uint8 len][data] 并 set_responseb（对齐 ReadReplayResponse）。 */
+    private boolean feedRecordedResponse() {
+        ByteBuffer rp = replayBuffer;
+        if (rp == null || pduel == 0L || !rp.hasRemaining()) {
+            Log.w(TAG, "响应记录提前耗尽，结束回放");
+            return false;
+        }
+        int len = rp.get() & 0xFF;
+        if (len > rp.remaining()) {
+            len = rp.remaining();
+        }
+        // set_responseb 需指向引擎可读的完整响应缓冲（SIZE_RETURN_VALUE=256，同 ServerDuel）
+        byte[] resb = new byte[256];
+        rp.get(resb, 0, len);
+        OcgDuelEngine.setResponseB(pduel, resb);
+        return true;
+    }
+
+    private void skipConfirm(int msgType, ByteBuffer buf) {
         if (msgType == 30) { // CONFIRM_DECKTOP
             buf.get(); int cnt = buf.get() & 0xFF;
             skipBytes(cnt * 7);
@@ -834,8 +1033,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         }
     }
 
-    private void handleUpdate(int msgType) {
-        ByteBuffer buf = replayBuffer;
+    private void handleUpdate(int msgType, ByteBuffer buf) {
         int player = buf.get() & 0xFF;
         int location = buf.get() & 0xFF;
         if (msgType == 6) { // UPDATE_DATA

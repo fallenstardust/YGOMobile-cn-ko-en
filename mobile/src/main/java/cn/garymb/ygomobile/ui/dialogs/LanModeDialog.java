@@ -63,7 +63,10 @@ public class LanModeDialog {
     private final OnLanModeListener listener;
 
     private final PopupWindow.OnDismissListener internalDismissListener = () -> {
-        if (suppressDismiss) return;
+        if (suppressDismiss) {
+            suppressDismiss = false;
+            return;
+        }
         if (externalDismissListener != null) externalDismissListener.onDismiss();
     };
 
@@ -213,15 +216,16 @@ public class LanModeDialog {
         }
     }
 
-    /** 内部跳转（前往建主/玩家等待）：保留实例供复用，但不触发外部 dismiss 回调 */
+    /** 内部跳转（前往建主/玩家等待）：保留实例供复用，但不触发外部 dismiss 回调；
+     * 弹窗退场动画会延迟触发 onDismiss，抑制标志由回调内消费复位，
+     * 否则延迟回调会误触发 restoreMainMenu（建主后进等待界面主菜单错误叠出） */
     public void hideForNavigation() {
         if (popupWindow == null) return;
         hiddenForReuse = true;
-        suppressDismiss = true;
         if (popupWindow.isShowing()) {
+            suppressDismiss = true;
             popupWindow.dismiss();
         }
-        suppressDismiss = false;
     }
 
     /** 是否为“隐藏待复用”状态：可被 reshow() 原样重显 */

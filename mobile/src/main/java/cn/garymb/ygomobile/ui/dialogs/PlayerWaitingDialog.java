@@ -91,7 +91,10 @@ public class PlayerWaitingDialog {
     private final OnPlayerWaitingListener listener;
 
     private final PopupWindow.OnDismissListener internalDismissListener = () -> {
-        if (suppressDismiss) return;
+        if (suppressDismiss) {
+            suppressDismiss = false;
+            return;
+        }
         if (externalDismissListener != null) externalDismissListener.onDismiss();
     };
 
@@ -117,8 +120,11 @@ public class PlayerWaitingDialog {
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
-        popupWindow.setFocusable(true);
+        // 等待界面自身无输入控件：改为非获焦弹窗（同 MainMenuDialog），把窗口焦点留给 Activity，
+        // 否则大厅聊天输入框 et_chat_input 无法获得窗口焦点弹起输入法；
+        // outsideTouchable 同步关闭，避免点外部区域误 dismiss 弹窗触发回主菜单
+        popupWindow.setOutsideTouchable(false);
+        popupWindow.setFocusable(false);
         popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         popupWindow.setTouchInterceptor((v, event) -> false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
@@ -597,13 +603,20 @@ public class PlayerWaitingDialog {
         return name != null ? name : "N/A";
     }
 
+    /** 卡片允许：协议 HostInfo.rule 0..5，对齐 game.cpp cbRule 六项（1481-1486） */
     private String getCardAllowedName(int rule) {
         switch (rule) {
-            case 1:
-                return mStringManager.getSystemString(1487, "ＯＣＧ独有");
-            case 2:
-                return mStringManager.getSystemString(1488, "ＴＣＧ独有");
             case 0:
+                return mStringManager.getSystemString(1481, "ＯＣＧ");
+            case 1:
+                return mStringManager.getSystemString(1482, "ＴＣＧ");
+            case 2:
+                return mStringManager.getSystemString(1483, "简体中文");
+            case 3:
+                return mStringManager.getSystemString(1484, "自定义卡片");
+            case 4:
+                return mStringManager.getSystemString(1485, "无独有卡");
+            case 5:
             default:
                 return mStringManager.getSystemString(1486, "所有卡片");
         }
@@ -929,7 +942,8 @@ public class PlayerWaitingDialog {
     }
 
     public void handleJoinGame(int lflist, int rule, int mode, int duelRule, int noCheckDeck, int noShuffleDeck, int startLp, int startHand, int drawCount, int timeLimit) {
-        if (!isShowing()) return;
+        // 视图在 show() 中已同步创建：不再以 isShowing() 丢弃回调
+        //（弹窗真正就绪可能晚于 STOC_JOIN_GAME 到达，丢弃后房间信息永久停留“----”）
         updateRoomInfo(lflist, rule, mode, duelRule, noCheckDeck, noShuffleDeck, startLp, startHand, drawCount, timeLimit);
     }
 
@@ -1014,14 +1028,14 @@ public class PlayerWaitingDialog {
         this.cardNameResolver = resolver;
     }
 
-    /** 内部跳转（决斗开始/返回主界面）：抑制外部 dismiss 回调后关闭 */
+    /** 内部跳转（决斗开始/返回主界面）：抑制外部 dismiss 回调后关闭；
+     * 弹窗退场动画会延迟触发 onDismiss，抑制标志由回调内消费复位 */
     public void hideForNavigation() {
         if (popupWindow == null) return;
-        suppressDismiss = true;
         if (popupWindow.isShowing()) {
+            suppressDismiss = true;
             popupWindow.dismiss();
         }
-        suppressDismiss = false;
     }
 
     public void dismiss() {

@@ -689,6 +689,8 @@ public class DuelClient implements YGOProtocol {
         @Override
         public void onConnected() {
             Log.i(TAG, "Connected to server");
+            // 新会话建立时作废上一次连接的房间信息缓存，避免等待界面补发陈旧规则
+            engine.hasJoinRoomInfoCache = false;
         }
 
         @Override
@@ -948,6 +950,8 @@ public class DuelClient implements YGOProtocol {
             engine.field.dInfo.startLp = startLp;
             engine.field.dInfo.lp[0] = startLp;
             engine.field.dInfo.lp[1] = startLp;
+            // 缓存完整房间信息（含 duelRule 已写入 dInfo），供 PlayerWaitingDialog 就绪后补发
+            engine.hasJoinRoomInfoCache = true;
             engine.mainHandler.post(() -> {
                 if (engine.listener != null) engine.listener.onJoinGame(lflist, rule, mode, duelRule,
                         noCheckDeck, noShuffleDeck,

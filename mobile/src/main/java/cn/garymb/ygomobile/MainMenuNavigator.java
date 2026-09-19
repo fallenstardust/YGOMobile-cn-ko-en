@@ -34,7 +34,7 @@ class MainMenuNavigator implements
     }
 
     @Override
-    public void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
+    public void onCreateHostConfirmed(int lflist, int cardAllowed, int modeIdx, int duelRule,
                                       int startLP, int startHand, int drawCount, int timeLimit,
                                       boolean noCheckDeck, boolean noShuffleDeck,
                                       String hostName, String password, String nickname) {
@@ -45,7 +45,9 @@ class MainMenuNavigator implements
         activity.saveLastConnectionInfo(userName, localIp != null ? localIp : "127.0.0.1", 7911, roomName);
 
         activity.engine.setPlayerName(userName);
-        activity.engine.startLocalServerWithSettings(lflist, ruleIdx, modeIdx, duelRule,
+        // cardAllowed 即协议 HostInfo.rule（卡片允许 0..5，对齐 duelclient.cpp cscg.info.rule），
+        // duelRule 为协议 HostInfo.duel_rule（1..5）
+        activity.engine.startLocalServerWithSettings(lflist, cardAllowed, modeIdx, duelRule,
                 noCheckDeck, noShuffleDeck,
                 startLP, startHand, drawCount, timeLimit,
                 roomName, password != null ? password : "");
@@ -134,7 +136,20 @@ class MainMenuNavigator implements
 
     @Override
     public void onPlayerWaitingShown() {
-        activity.runOnUiThread(activity::enterLobbyChatUI);
+        activity.runOnUiThread(() -> {
+            activity.enterLobbyChatUI();
+            // 兼容时序竞态：STOC_JOIN_GAME 若在等待界面创建前到达（handleJoinGame 被丢弃），
+            // 界面就绪后用引擎缓存的房间信息补发房间规则显示（对齐 gframe 进入 wHostPrepare 即刷新 stHostPrepRule）
+            if (activity.engine != null && activity.engine.hasJoinRoomInfoCache
+                    && activity.playerWaitingDialog != null) {
+                activity.playerWaitingDialog.updateRoomInfo(activity.engine.gameLflist,
+                        activity.engine.gameRule, activity.engine.gameMode,
+                        activity.engine.field.dInfo.duelRule,
+                        activity.engine.gameNoCheckDeck, activity.engine.gameNoShuffleDeck,
+                        activity.engine.gameStartLp, activity.engine.gameStartHand,
+                        activity.engine.gameDrawCount, activity.engine.gameTimeLimit);
+            }
+        });
     }
 
     // === 建主 / 玩家等待对话框显示入口 ===

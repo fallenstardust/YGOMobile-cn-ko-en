@@ -59,7 +59,11 @@ public class CreateHostDialog {
     private EditText etHostPassword;
 
     public interface OnCreateHostListener {
-        void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
+        /**
+         * cardAllowed 即协议 HostInfo.rule（卡片允许，对齐 game.cpp cbRule 选中索引 0..5），
+         * duelRule 为协议 HostInfo.duel_rule（game.cpp cbDuelRule 选中索引 +1，1..5）
+         */
+        void onCreateHostConfirmed(int lflist, int cardAllowed, int modeIdx, int duelRule,
                                    int startLP, int startHand, int drawCount, int timeLimit,
                                    boolean noCheckDeck, boolean noShuffleDeck,
                                    String hostName, String password, String nickname);
@@ -71,7 +75,10 @@ public class CreateHostDialog {
     private final OnCreateHostListener listener;
 
     private final PopupWindow.OnDismissListener internalDismissListener = () -> {
-        if (suppressDismiss) return;
+        if (suppressDismiss) {
+            suppressDismiss = false;
+            return;
+        }
         if (externalDismissListener != null) externalDismissListener.onDismiss();
     };
 
@@ -147,13 +154,15 @@ public class CreateHostDialog {
             int ruleIdx = parseRuleIndex(rule);
             int modeIdx = parseDuelModeIndex(duelMode);
             int duelRule = ruleIdx + 1;
+            // 卡片允许下拉选中项即协议 rule 字段（对齐 duelclient.cpp cscg.info.rule = cbRule->getSelected()）
+            int cardAllowed = spinnerCardAllowed.getSelectedItemPosition();
             int lp = parseIntSafe(startLPStr, 8000);
             int hand = parseIntSafe(startHandStr, 5);
             int draw = parseIntSafe(drawCountStr, 1);
             int time = parseIntSafe(timeLimitStr, 0);
 
             if (listener != null) {
-                listener.onCreateHostConfirmed(lflist, ruleIdx, modeIdx, duelRule,
+                listener.onCreateHostConfirmed(lflist, cardAllowed, modeIdx, duelRule,
                         lp, hand, draw, time,
                         noCheckDeck, noShuffleDeck, hostName, password, nick);
             }
@@ -183,11 +192,11 @@ public class CreateHostDialog {
     public void hideForNavigation() {
         if (popupWindow == null) return;
         hiddenForReuse = true;
-        suppressDismiss = true;
         if (popupWindow.isShowing()) {
+            // 弹窗退场动画会延迟触发 onDismiss，suppressDismiss 标志改由回调内消费复位
+            suppressDismiss = true;
             popupWindow.dismiss();
         }
-        suppressDismiss = false;
     }
 
     public boolean canReshow() {
@@ -254,18 +263,24 @@ public class CreateHostDialog {
         ruleAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         ruleAdapter.set(ruleItems);
         spinnerRule.setAdapter(ruleAdapter);
-        spinnerRule.setSelection(5);
+        // 默认大师规则（2020）= 索引4（协议 duel_rule=5），对齐 game.cpp cbDuelRule->setSelected(default_rule-1)
+        spinnerRule.setSelection(4);
 
+        // 卡片允许：对齐 game.cpp cbRule 六项（1481-1486），选中索引即协议 HostInfo.rule
         List<SimpleSpinnerItem> cardAllowedItems = new ArrayList<>();
-        cardAllowedItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1486, "所有卡片")));
-        cardAllowedItems.add(new SimpleSpinnerItem(1, mStringManager.getSystemString(1487, "ＯＣＧ独有")));
-        cardAllowedItems.add(new SimpleSpinnerItem(2, mStringManager.getSystemString(1488, "ＴＣＧ独有")));
+        cardAllowedItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1481, "ＯＣＧ")));
+        cardAllowedItems.add(new SimpleSpinnerItem(1, mStringManager.getSystemString(1482, "ＴＣＧ")));
+        cardAllowedItems.add(new SimpleSpinnerItem(2, mStringManager.getSystemString(1483, "简体中文")));
+        cardAllowedItems.add(new SimpleSpinnerItem(3, mStringManager.getSystemString(1484, "自定义卡片")));
+        cardAllowedItems.add(new SimpleSpinnerItem(4, mStringManager.getSystemString(1485, "无独有卡")));
+        cardAllowedItems.add(new SimpleSpinnerItem(5, mStringManager.getSystemString(1486, "所有卡片")));
 
         SimpleSpinnerAdapter cardAllowedAdapter = new SimpleSpinnerAdapter(context);
         cardAllowedAdapter.setColor(Color.WHITE);
         cardAllowedAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         cardAllowedAdapter.set(cardAllowedItems);
         spinnerCardAllowed.setAdapter(cardAllowedAdapter);
+        // 默认选中 ＯＣＧ（协议 rule=0，AVAIL_OCG），对齐 game.cpp defaultOT=1 时 cbRule->setSelected(0)
         spinnerCardAllowed.setSelection(0);
 
         List<SimpleSpinnerItem> duelModeItems = new ArrayList<>();
@@ -294,9 +309,9 @@ public class CreateHostDialog {
         if (rule == null) return 4;
         if (rule.equals(mStringManager.getSystemString(1260, "大师规则"))) return 0;
         if (rule.equals(mStringManager.getSystemString(1261, "大师规则2"))) return 1;
-        if (rule.equals(mStringManager.getSystemString(1262, "大师规则3"))) return 2;
+        if (rule.equals(mStringManager.getSystemString(1262, "大师规则３"))) return 2;
         if (rule.equals(mStringManager.getSystemString(1263, "新大师规则（2017）"))) return 3;
-        if (rule.equals(mStringManager.getSystemString(1263, "大师规则（2020）"))) return 4;
+        if (rule.equals(mStringManager.getSystemString(1264, "大师规则（2020）"))) return 4;
         return 4;
     }
 
