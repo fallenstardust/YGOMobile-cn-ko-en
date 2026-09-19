@@ -1045,7 +1045,7 @@ public class PlayerWaitingDialog {
         View anchor = activity.getDialogContainer();
         anchor.post(() -> {
             if (activity.isFinishing() || activity.isDestroyed()) return;
-            PlayerWaitingDialog dialog = new PlayerWaitingDialog(activity, activity);
+            PlayerWaitingDialog dialog = new PlayerWaitingDialog(activity, activity.getPlayerWaitingListener());
             activity.setPlayerWaitingDialog(dialog);
             dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
             dialog.show(anchor);
@@ -1060,7 +1060,7 @@ public class PlayerWaitingDialog {
         View anchor = activity.getDialogContainer();
         anchor.post(() -> {
             if (activity.isFinishing() || activity.isDestroyed()) return;
-            PlayerWaitingDialog dialog = new PlayerWaitingDialog(activity, activity);
+            PlayerWaitingDialog dialog = new PlayerWaitingDialog(activity, activity.getPlayerWaitingListener());
             activity.setPlayerWaitingDialog(dialog);
             dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
             dialog.show(anchor);

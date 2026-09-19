@@ -420,7 +420,7 @@ public class GameField {
     }
 
     /** 待挂超量素材——素材 MSG_MOVE 先于超量怪兽 MSG_MOVE 到达时暂存，待怪兽入格再补挂 */
-    private static final class PendingOverlay {
+    static final class PendingOverlay {
         final ClientCard card;
         final int ctrl;
         final int loc;
@@ -447,7 +447,7 @@ public class GameField {
      */
     public ChainInfo currentChain = new ChainInfo();
     public List<ClientCard> overlayCards = new ArrayList<>();
-    private final List<PendingOverlay> pendingOverlays = new ArrayList<>();
+    final List<PendingOverlay> pendingOverlays = new ArrayList<>();
     public int[] extraPCount = new int[2];
     public long disabledField;
     public boolean deckReversed;
@@ -513,151 +513,54 @@ public class GameField {
 
     public final DuelInfo dInfo = new DuelInfo();
 
-    // === Game::lpframe/lpplayer/lpd/lpccolor/lpcstring LP 动画状态机 ===
+    /** 同包协作类：坐标几何 / 卡片增删改 / 动画与 HUD。构造注入门面引用，经包级私有直连共享状态。 */
+    final GameFieldGeometry geometry;
+    final GameFieldCards cards;
+    final GameFieldMotion motion;
+
+    // === Game::lpframe/lpplayer/lpd/lpccolor/lpcstring LP 动画状态机（推进逻辑在 GameFieldMotion）===
     public int lpframe;
     public int lpplayer;
     public int lpd;
     public int lpccolor;
     public String lpcstring = "";
-    private int lpFinal;
-    private int lpDelay;        // 等价 WaitFrameSignal(30)：浮字先全亮展示 30 帧
-    private boolean lpPending;
-    private long lastTimeTickMs;
+    int lpFinal;
+    int lpDelay;        // 等价 WaitFrameSignal(30)：浮字先全亮展示 30 帧
+    boolean lpPending;
+    long lastTimeTickMs;
 
-    /**
-     * 触发 LP 变化动画（duelclient.cpp MSG_DAMAGE/RECOVER/LPUPDATE/PAY_LPCOST）
-     * @param showText true=伤害/回复（先 30 帧浮字再扣减）；false=LPUPDATE/支付（立即扣减）
-     */
-    public void startLpChange(int player, int finalLp, int color, String text, boolean showText) {
-        lpplayer = player;
-        lpFinal = finalLp;
-        lpd = (dInfo.lp[player] - finalLp) / 10;
-        if (showText && text != null) {
-            lpccolor = color;
-            lpcstring = text;
-            lpDelay = 30;
-            lpframe = 0;
-        } else {
-            lpccolor = 0;
-            lpcstring = "";
-            lpDelay = 0;
-            lpframe = 10;
-        }
-        lpPending = true;
-    }
+    // === 区域规格 / 场地底板 / 格子与堆叠尺寸真值（materials.cpp）；落点计算在 GameFieldGeometry ===
+    /** 区域规格：怪兽/魔陷区宽 290px、高 254px，格子间 2px 间隔 → 横向间距 292px；
+     *  X 坐标以场地中心 3.95 为轴按 (292px世界长)/1.1 放大，决斗场更宽且与 field3.png 拉伸适配 */
+    static final float X_SCALE = (292f * 0.8f / 177f) / 1.1f;
 
-    /** 每帧调用（等价 DrawMisc L974-979 的推进） */
-    public void updateLpAnimation() {
-        if (!lpPending) return;
-        if (lpDelay > 0) {
-            lpDelay--;
-            if (lpDelay == 0) lpframe = 10;
-            return;
-        }
-        if (lpframe > 0) {
-            dInfo.lp[lpplayer] -= lpd;
-            int a = (lpccolor >>> 24) - 0x19;
-            if (a < 0) a = 0;
-            lpccolor = (a << 24) | (lpccolor & 0x00FFFFFF);
-            lpframe--;
-        }
-        if (lpframe <= 0) {
-            dInfo.lp[lpplayer] = lpFinal;
-            lpcstring = "";
-            lpPending = false;
-        }
-    }
+    /** C++ materials.cpp vField：底板贴图 uv(0,0)-(1,1) 覆盖的世界矩形。
+     *  底板、格子、卡片落点共用 fx()/恒等 Y 这同一仿射映射，故贴图网格与格子必然完美重叠 */
+    public static final float FIELD_TEX_X_MIN = -1f;
+    public static final float FIELD_TEX_X_MAX = 9f;
+    public static final float FIELD_TEX_Y_MIN = -4f;
+    public static final float FIELD_TEX_Y_MAX = 4f;
+    /** C++ materials.cpp vFieldSpell：场地魔法背景图矩形（z=-0.01，绘于底板之下） */
+    public static final float FIELD_SPELL_X_MIN = 1.2f;
+    public static final float FIELD_SPELL_X_MAX = 6.7f;
+    public static final float FIELD_SPELL_Y_MIN = -3.2f;
+    public static final float FIELD_SPELL_Y_MAX = 3.2f;
 
-    public boolean isLpAnimating() {
-        return lpPending;
-    }
+    /** 格子尺寸：materials.cpp 怪兽/魔陷格 1.1×1.2、堆叠区 0.8×1.2（X 经 fx 缩放） */
+    public static final float ZONE_W = 1.1f * X_SCALE;
+    public static final float ZONE_H = 1.2f;
+    public static final float PILE_W = 0.8f * X_SCALE;
+    public static final float PILE_H = 1.2f;
 
-    /** Game::RefreshTimeDisplay 忠实移植（game.cpp L1679-1695） */
-    public void refreshTimeDisplay() {
-        for (int i = 0; i < 2; i++) {
-            if (dInfo.timeLeft[i] > 0 && dInfo.timeLimit > 0) {
-                if (dInfo.timeLeft[i] >= dInfo.timeLimit / 2)
-                    dInfo.timeColor[i] = 0xFF00FF00;
-                else if (dInfo.timeLeft[i] >= dInfo.timeLimit / 3)
-                    dInfo.timeColor[i] = 0xFFFFFF00;
-                else if (dInfo.timeLeft[i] >= dInfo.timeLimit / 6)
-                    dInfo.timeColor[i] = 0xFFFF7F00;
-                else
-                    dInfo.timeColor[i] = 0xFFFF0000;
-            } else {
-                dInfo.timeColor[i] = 0xFFFFFFFF;
-            }
-        }
-    }
-
-    public void resetTimeTick() {
-        lastTimeTickMs = 0;
-    }
-
-    /** 本地每秒倒计时（game.cpp 主循环 L1659-1664，STOC_TIME_LIMIT 到达时被resetTimeTick 校正） */
-    public void tickTime(long nowMs) {
-        if (dInfo.timeLimit <= 0 || dInfo.timePlayer < 0 || dInfo.timePlayer > 1) return;
-        if (lastTimeTickMs == 0) {
-            lastTimeTickMs = nowMs;
-            return;
-        }
-        boolean changed = false;
-        while (nowMs - lastTimeTickMs >= 1000) {
-            lastTimeTickMs += 1000;
-            if (dInfo.timeLeft[dInfo.timePlayer] > 0) {
-                dInfo.timeLeft[dInfo.timePlayer]--;
-                changed = true;
-            }
-        }
-        if (changed) refreshTimeDisplay();
-    }
-
-    /** ClientField::RefreshCardCountDisplay 忠实移植（client_field.cpp L1583-1624） */
-    public void refreshCardCountDisplay() {
-        for (int p = 0; p < 2; p++) {
-            int count = 0;
-            int total = 0;
-            for (ClientCard c : players[p].hand) {
-                if (c != null) count++;
-            }
-            for (ClientCard c : players[p].monsterZone) {
-                if (c != null) {
-                    count++;
-                    if (c.position == CardPosition.FaceUpAttack.value() && c.attack > 0)
-                        total += c.attack;
-                }
-            }
-            for (ClientCard c : players[p].spellZone) {
-                if (c != null) count++;
-            }
-            dInfo.cardCount[p] = count;
-            dInfo.totalAttack[p] = total;
-        }
-        if (dInfo.cardCount[0] > dInfo.cardCount[1]) {
-            dInfo.cardCountColor[0] = 0xFFFFFF00;
-            dInfo.cardCountColor[1] = 0xFFFF2A00;
-        } else if (dInfo.cardCount[1] > dInfo.cardCount[0]) {
-            dInfo.cardCountColor[1] = 0xFFFFFF00;
-            dInfo.cardCountColor[0] = 0xFFFF2A00;
-        } else {
-            dInfo.cardCountColor[0] = 0xFFFFFFFF;
-            dInfo.cardCountColor[1] = 0xFFFFFFFF;
-        }
-        if (dInfo.totalAttack[0] > dInfo.totalAttack[1]) {
-            dInfo.totalAttackColor[0] = 0xFFFFFF00;
-            dInfo.totalAttackColor[1] = 0xFFFF2A00;
-        } else if (dInfo.totalAttack[1] > dInfo.totalAttack[0]) {
-            dInfo.totalAttackColor[1] = 0xFFFFFF00;
-            dInfo.totalAttackColor[0] = 0xFFFF2A00;
-        } else {
-            dInfo.totalAttackColor[0] = 0xFFFFFFFF;
-            dInfo.totalAttackColor[1] = 0xFFFFFFFF;
-        }
-    }
+    // 动画速度倍率：1 为原速，2 即 2 倍速
+    public float animationSpeed = 1f;
 
     public GameField() {
         players[0] = new PlayerField();
         players[1] = new PlayerField();
+        geometry = new GameFieldGeometry(this);
+        cards = new GameFieldCards(this);
+        motion = new GameFieldMotion(this);
     }
 
     public void clear() {
@@ -769,994 +672,6 @@ public class GameField {
         return card;
     }
 
-    /**
-     * duelclient.cpp MSG_CARD_HINT L4094-4109 的 desc_hints 部分：
-     * 以三参 GetCard 定位卡片（超量素材取不到 → 与 C++ 一致直接忽略本条提示）。
-     * 其余 chtype（CHINT_TURN 等）由调用方按动画需求另行处理。
-     */
-    public void applyCardHint(int localControler, int location, int sequence, int hintType, int value) {
-        ClientCard pcard = getCard(localControler, location, sequence);
-        if (pcard == null) return;
-        if (hintType == CHINT_DESC_ADD) {
-            pcard.addDescHint(value);
-        } else if (hintType == CHINT_DESC_REMOVE) {
-            pcard.removeDescHint(value);
-        }
-    }
-
-    /** duelclient.cpp MSG_BECOME_TARGET L3500：current_chain.target.insert(pcard) */
-    public void addChainTarget(int localControler, int location, int sequence) {
-        ClientCard pcard = getCard(localControler, location, sequence);
-        if (pcard == null || currentChain == null || currentChain.targets == null) return;
-        if (!currentChain.targets.contains(pcard)) currentChain.targets.add(pcard);
-    }
-
-    public void addCard(int controler, int location, int sequence, ClientCard card) {
-        if (controler < 0 || controler > 1) return;
-        if (card != null) {
-            card.controler = controler;
-            card.location = location;
-            card.sequence = sequence;
-        }
-        List<ClientCard> list = players[controler].getLocationList(location);
-        if (list == null) return;
-        while (list.size() <= sequence) list.add(null);
-        switch (location) {
-            case 0x01: {
-                if (sequence == 0 && !list.isEmpty() && list.get(0) != null) {
-                    list.add(0, card);
-                } else {
-                    list.set(sequence, card);
-                }
-                resetSequence(list, true);
-                if (card != null) {
-                    card.is_reversed = false;
-                    card.clearData();
-                    card.clearTarget();
-                }
-                break;
-            }
-            case 0x02: {
-                // C++ AddCard(LOCATION_HAND)：push_back —— 追加到第一个空位而非覆盖
-                int idx = -1;
-                for (int i = 0; i < list.size(); i++) {
-                    if (list.get(i) == null) { idx = i; break; }
-                }
-                if (idx < 0) list.add(card);
-                else list.set(idx, card);
-                resetSequence(list, false);
-                break;
-            }
-            case 0x04: {
-                list.set(sequence, card);
-                // 怪兽入格后补挂先到的待挂素材，使其飞向本格并正面叠放
-                flushPendingOverlays(controler, sequence, card);
-                break;
-            }
-            case 0x08: {
-                list.set(sequence, card);
-                break;
-            }
-            case 0x10: {
-                list.set(sequence, card);
-                if (card != null) card.sequence = sequence;
-                break;
-            }
-            case 0x20: {
-                list.set(sequence, card);
-                if (card != null) card.sequence = sequence;
-                break;
-            }
-            case 0x40: {
-                // 对齐 C++ AddCard(LOCATION_EXTRA)（client_field.cpp L211-221）：额外卡组堆叠约定
-                // 里侧在下方、表侧集中于上方（高 index = 高 z = 堆顶）。表侧进入 push_back 到堆顶；
-                // 里侧回去（融合/同调/超量/连接以里侧返回额外卡组）插到 faceup_begin = 实际张数 -
-                // 表侧数，即里侧组最上方、表侧组正下方，而非整堆最上方。
-                // 注意：Java 的 extra 是定长 null 填充列表，list.size() 含尾部空位，
-                // 用 size() 代替实际张数会把里侧回插的卡顶到堆最上方（旧 Bug）。
-                boolean faceUp = card != null && card.isFaceUp();
-                int count = 0;
-                for (int i = 0; i < list.size(); i++) {
-                    if (list.get(i) != null) count++;
-                }
-                int at = (extraPCount[controler] == 0 || faceUp)
-                        ? count                            // 等价 push_back：追加到实际末尾
-                        : count - extraPCount[controler];  // 里侧组顶部（第一张表侧之下）
-                if (at < 0) at = 0;
-                if (count >= list.size()) list.add(null);  // 兼容列表曾被撑短：先腾出末尾槽位
-                // 从密区末尾起逐格右移一格，再把卡片插入 at（保持定长 null 填充结构）
-                for (int i = count; i > at; i--) {
-                    list.set(i, list.get(i - 1));
-                }
-                list.set(at, card);
-                resetSequence(list, true);
-                if (faceUp) {
-                    extraPCount[controler]++;
-                }
-                break;
-            }
-        }
-    }
-
-    public ClientCard removeCard(int controler, int location, int sequence) {
-        if (controler < 0 || controler > 1) return null;
-        List<ClientCard> list = players[controler].getLocationList(location);
-        if (list == null || sequence < 0 || sequence >= list.size()) return null;
-        ClientCard pcard = list.get(sequence);
-        switch (location) {
-            case 0x01: {
-                for (int i = sequence; i < list.size() - 1; i++) {
-                    ClientCard next = list.get(i + 1);
-                    list.set(i, next);
-                    if (next != null) {
-                        next.sequence--;
-                        next.curZ -= 0.01f;
-                    }
-                }
-                list.set(list.size() - 1, null);
-                break;
-            }
-            case 0x02: {
-                // C++ erase：前移压实，保持手卡序号与列表下标一致（getCard 依赖）
-                for (int i = sequence; i < list.size() - 1; i++) {
-                    list.set(i, list.get(i + 1));
-                }
-                list.set(list.size() - 1, null);
-                resetSequence(list, false);
-                break;
-            }
-            case 0x04: {
-                list.set(sequence, null);
-                break;
-            }
-            case 0x08: {
-                list.set(sequence, null);
-                break;
-            }
-            case 0x10: {
-                for (int i = sequence; i < list.size() - 1; i++) {
-                    ClientCard next = list.get(i + 1);
-                    list.set(i, next);
-                    if (next != null) {
-                        next.sequence--;
-                        next.curZ -= 0.01f;
-                    }
-                }
-                list.set(list.size() - 1, null);
-                break;
-            }
-            case 0x20: {
-                for (int i = sequence; i < list.size() - 1; i++) {
-                    ClientCard next = list.get(i + 1);
-                    list.set(i, next);
-                    if (next != null) {
-                        next.sequence--;
-                        next.curZ -= 0.01f;
-                    }
-                }
-                list.set(list.size() - 1, null);
-                break;
-            }
-            case 0x40: {
-                for (int i = sequence; i < list.size() - 1; i++) {
-                    ClientCard next = list.get(i + 1);
-                    list.set(i, next);
-                    if (next != null) {
-                        next.sequence--;
-                        next.curZ -= 0.01f;
-                    }
-                }
-                list.set(list.size() - 1, null);
-                if (pcard != null && pcard.isFaceUp()) {
-                    extraPCount[controler]--;
-                }
-                break;
-            }
-        }
-        if (pcard != null) pcard.location = 0;
-        return pcard;
-    }
-
-    /**
-     * 将卡片作为超量素材叠放到 (newCtrl, newLocBase, xyzSeq) 的超量怪兽下方
-     *（对齐 duelclient.cpp MSG_MOVE 的 !(pl&OVERLAY) && (cl&OVERLAY) 分支 L3055-3095）：
-     * 宿主按消息 loc 字节动态定位——ocgcore get_info_location（card.cpp L389-403）对带
-     * overlay_target 的卡返回宿主的 (c, l|0x80, s)，而脚本常在怪兽尚处额外卡组时就执行
-     * Overlay，此时 cs 是 EXTRA 序号，硬编码怪兽区查找会失败导致素材永挂不化滞留原格。
-     * 先从原区域移除，再挂到目标 overlayed 列表与场地级 overlayCards 绘制列表，
-     * 设 overlayTarget/location=OVERLAY/sequence=叠放序号；返回定位到的宿主 olcard（调用方
-     * 仅在 olcard.location==MZONE 时播放堆叠动画，对齐 C++ L3086 的条件），
-     * 返回 null 表示宿主尚未就位——登记待挂素材，素材仍留在 overlayCards 原地显示，
-     * 待怪兽入格由 flushPendingOverlays 按 (ctrl, loc, seq) 三键补挂。
-     */
-    public ClientCard attachOverlayMaterial(ClientCard pcard, int oldCtrl, int oldLoc, int oldSeq,
-                                            int newCtrl, int newLocBase, int xyzSeq) {
-        if (pcard == null) return null;
-        ClientCard olcard = getCard(newCtrl, newLocBase, xyzSeq);
-        if (olcard == null) {
-            removeCard(oldCtrl, oldLoc, oldSeq);
-            pcard.controler = newCtrl;
-            pcard.location = CardLocation.Overlay.value();
-            pcard.overlayTarget = null;
-            pcard.sequence = 0;
-            if (!overlayCards.contains(pcard)) overlayCards.add(pcard);
-            pendingOverlays.add(new PendingOverlay(pcard, newCtrl, newLocBase, xyzSeq));
-            return null;
-        }
-        removeCard(oldCtrl, oldLoc, oldSeq);
-        if (!olcard.overlayed.contains(pcard)) olcard.overlayed.add(pcard);
-        if (!overlayCards.contains(pcard)) overlayCards.add(pcard);
-        pcard.overlayTarget = olcard;
-        pcard.controler = newCtrl;
-        pcard.location = CardLocation.Overlay.value();
-        pcard.sequence = olcard.overlayed.size() - 1;
-        return olcard;
-    }
-
-    /**
-     * 超量怪兽入格后补挂待挂素材——按到达顺序挂到 overlayed、绑定 overlayTarget/序号，
-     * 各自播放 10 帧移动动画，使素材从原位置飞向该怪兽区格子并正面叠放
-     *（对齐 duelclient.cpp MSG_MOVE 素材入 overlay 分支的 MoveCard(pcard, 10)）。
-     */
-    private void flushPendingOverlays(int ctrl, int seq, ClientCard olcard) {
-        if (olcard == null || pendingOverlays.isEmpty()) return;
-        java.util.Iterator<PendingOverlay> it = pendingOverlays.iterator();
-        while (it.hasNext()) {
-            PendingOverlay po = it.next();
-            if (po == null || po.ctrl != ctrl || po.loc != 0x04 || po.seq != seq) continue;
-            it.remove();
-            ClientCard m = po.card;
-            if (m == null) continue;
-            if (!olcard.overlayed.contains(m)) olcard.overlayed.add(m);
-            if (!overlayCards.contains(m)) overlayCards.add(m);
-            m.overlayTarget = olcard;
-            m.controler = ctrl;
-            m.location = CardLocation.Overlay.value();
-            m.sequence = olcard.overlayed.size() - 1;
-            moveCardAnimated(m, 10);
-        }
-    }
-
-    /**
-     * 从 (oldCtrl, oldLocBase, xyzSeq) 的超量怪兽下方取出第 subSeq 张素材送入新区域
-     *（对齐 duelclient.cpp MSG_MOVE 的 (pl&OVERLAY) && !(cl&OVERLAY) 分支 L3096-3124）：
-     * 宿主按消息 pl 字节动态定位——超量怪兽离场时其自身 MSG_MOVE 先到达（可能已入墓地，
-     * pl&0x7f=GRAVE），硬编码怪兽区查找会返回 null 导致素材无离场动画。
-     * 从 overlayed 与场地级 overlayCards 移除、清 overlayTarget、加入新区域，
-     * 其余素材重排序号并各自播放 2 帧归位动画；返回被取出的素材卡供调用方播放离场动画。
-     */
-    public ClientCard detachOverlayMaterial(int oldCtrl, int oldLocBase, int xyzSeq, int subSeq,
-                                            int newCtrl, int newLoc, int newSeq, int newPos) {
-        ClientCard olcard = getCard(oldCtrl, oldLocBase, xyzSeq);
-        if (olcard == null) return null;
-        if (subSeq < 0 || subSeq >= olcard.overlayed.size()) return null;
-        ClientCard pcard = olcard.overlayed.get(subSeq);
-        if (pcard == null) return null;
-        olcard.overlayed.remove(subSeq);
-        pcard.overlayTarget = null;
-        pcard.position = newPos;
-        overlayCards.remove(pcard);
-        addCard(newCtrl, newLoc, newSeq, pcard);
-        for (int i = 0; i < olcard.overlayed.size(); i++) {
-            ClientCard m = olcard.overlayed.get(i);
-            if (m == null) continue;
-            m.sequence = i;
-            moveCardAnimated(m, 2);
-        }
-        return pcard;
-    }
-
-    /**
-     * 带超量素材的怪兽移动到怪兽区时，素材随本体重排到新格下方（对齐 duelclient.cpp
-     * MSG_MOVE L3032-3038：cl==0x4 且 overlayed 非空时逐素材 MoveCard(10) + WaitFrameSignal(10)，
-     * 本体延迟后再落上）；移动到其他区域时 C++ 同样让素材逐张 MoveCard（跟随本体目标格），
-     * 这里统一为各素材播放 frame 帧移动动画——素材的目标位由 getCardLocation 的
-     * LOCATION_OVERLAY 分支依 overlayTarget 实时求出，本体已入新格则素材飞向新格下方。
-     */
-    public void moveOverlayMaterials(ClientCard monster, int frame) {
-        if (monster == null || monster.overlayed.isEmpty()) return;
-        for (int i = 0; i < monster.overlayed.size(); i++) {
-            ClientCard m = monster.overlayed.get(i);
-            if (m != null) moveCardAnimated(m, frame);
-        }
-    }
-
-    public void updateCard(int controler, int location, int sequence, ByteBuffer data) {
-        ClientCard pcard = getCard(controler, location, sequence);
-        if (pcard != null && data.remaining() >= 4) {
-            int len = data.getInt();
-            if (len > 4 && data.remaining() >= len - 4) {
-                pcard.updateQuery(data);
-            }
-        }
-        // 超量素材登记表重建（reload/init 路径）：QUERY_OVERLAY_CARD 仅填充各怪兽的 overlayed，
-        // 据此重建场地级 overlayCards 绘制列表并绑定 overlayTarget/序号，随后统一 setCardPos 归位
-        overlayCards.clear();
-        for (int p = 0; p < 2; p++) {
-            for (ClientCard m : players[p].monsterZone) {
-                if (m == null || m.overlayed.isEmpty()) continue;
-                for (int i = 0; i < m.overlayed.size(); i++) {
-                    ClientCard o = m.overlayed.get(i);
-                    if (o == null) continue;
-                    o.overlayTarget = m;
-                    o.controler = p;
-                    o.location = CardLocation.Overlay.value();
-                    o.sequence = i;
-                    overlayCards.add(o);
-                }
-            }
-        }
-        for (ClientCard c : overlayCards) {
-            if (c != null) {
-                setCardPos(c);
-                c.is_moving = false;
-            }
-        }
-    }
-
-    public void moveCard(ClientCard pcard, int frame) {
-        moveCardAnimated(pcard, frame);
-    }
-
-    public void fadeCard(ClientCard pcard, int alpha, int frame) {
-        if (pcard == null) return;
-        pcard.animFromAlpha = pcard.curAlpha;
-        pcard.animToAlpha = alpha;
-        pcard.animTotalFrame = frame;
-        pcard.is_fading = true;
-        pcard.aniFrame = frame;
-    }
-
-    // === ClientField::GetCardLocation 忠实移植（MR4，rule=1；坐标真值来自 materials.cpp）===
-
-    /** 区域规格：怪兽/魔陷区宽 290px、高 254px，格子间 2px 间隔 → 横向间距 292px；
-     *  X 坐标以场地中心 3.95 为轴按 (292px世界长)/1.1 放大，决斗场更宽且与 field3.png 拉伸适配 */
-    private static final float X_SCALE = (292f * 0.8f / 177f) / 1.1f;
-
-    /** C++ materials.cpp vField：底板贴图 uv(0,0)-(1,1) 覆盖的世界矩形。
-     *  底板、格子、卡片落点共用 fx()/恒等 Y 这同一仿射映射，故贴图网格与格子必然完美重叠 */
-    public static final float FIELD_TEX_X_MIN = -1f;
-    public static final float FIELD_TEX_X_MAX = 9f;
-    public static final float FIELD_TEX_Y_MIN = -4f;
-    public static final float FIELD_TEX_Y_MAX = 4f;
-    /** C++ materials.cpp vFieldSpell：场地魔法背景图矩形（z=-0.01，绘于底板之下） */
-    public static final float FIELD_SPELL_X_MIN = 1.2f;
-    public static final float FIELD_SPELL_X_MAX = 6.7f;
-    public static final float FIELD_SPELL_Y_MIN = -3.2f;
-    public static final float FIELD_SPELL_Y_MAX = 3.2f;
-
-    /** 格子尺寸：materials.cpp 怪兽/魔陷格 1.1×1.2、堆叠区 0.8×1.2（X 经 fx 缩放） */
-    public static final float ZONE_W = 1.1f * X_SCALE;
-    public static final float ZONE_H = 1.2f;
-    public static final float PILE_W = 0.8f * X_SCALE;
-    public static final float PILE_H = 1.2f;
-
-    public static float fx(float x) {
-        return 3.95f + (x - 3.95f) * X_SCALE;
-    }
-
-    public static float fieldBoardMinX() {
-        return fx(FIELD_TEX_X_MIN);
-    }
-
-    public static float fieldBoardMaxX() {
-        return fx(FIELD_TEX_X_MAX);
-    }
-
-    /**
-     * 格子矩形 {cx, cy, w, h}（materials.cpp vFieldMzone/vFieldSzone 中心经 fx 缩放）：
-     * 与 getCardLocation 同源，保证卡片落点恒为对应格子的宽度中心
-     */
-    public static float[] getZoneRect(int controler, int location, int sequence) {
-        if (location == 0x04) {
-            return new float[]{mzoneCX(controler, sequence), mzoneCY(controler, sequence), ZONE_W, ZONE_H};
-        }
-        if (location == 0x08) {
-            return new float[]{szoneCX(controler, sequence), szoneCY(controler, sequence), ZONE_W, ZONE_H};
-        }
-        return null;
-    }
-
-    /** 堆叠区矩形 {cx, cy, w, h}（materials.cpp vFieldDeck/Grave/Remove/Extra 中心） */
-    public static float[] getPileRect(int controler, int location) {
-        float cx;
-        float cy;
-        switch (location) {
-            case 0x01:
-                cx = fx(controler == 0 ? 7.3f : 0.6f);
-                cy = controler == 0 ? 3.3f : -3.3f;
-                break;
-            case 0x10:
-                cx = fx(controler == 0 ? 7.3f : 0.6f);
-                cy = controler == 0 ? 2.0f : -2.0f;
-                break;
-            case 0x20:
-                cx = fx(controler == 0 ? 7.3f : 0.6f);
-                cy = controler == 0 ? 0.7f : -0.7f;
-                break;
-            case 0x40:
-                cx = fx(controler == 0 ? 0.6f : 7.3f);
-                cy = controler == 0 ? 3.3f : -3.3f;
-                break;
-            default:
-                return null;
-        }
-        return new float[]{cx, cy, PILE_W, PILE_H};
-    }
-
-    private static float mzoneCX(int c, int s) {
-        if (c == 0) return fx(s < 5 ? 1.75f + 1.1f * s : (s == 5 ? 2.85f : 5.05f));
-        return fx(s < 5 ? 6.15f - 1.1f * s : (s == 5 ? 5.05f : 2.85f));
-    }
-
-    private static float mzoneCY(int c, int s) {
-        if (s >= 5) return 0f;
-        return c == 0 ? 1.4f : -1.4f;
-    }
-
-    private static float szoneCX(int c, int s) {
-        if (c == 0) {
-            if (s < 5) return fx(1.75f + 1.1f * s);
-            if (s == 5) return fx(0.6f);
-            if (s == 6) return fx(0.6f);
-            return fx(8.3f);
-        }
-        if (s < 5) return fx(6.15f - 1.1f * s);
-        if (s == 5) return fx(7.3f);
-        if (s == 6) return fx(7.3f);
-        return fx(-0.4f);
-    }
-
-    private static float szoneCY(int c, int s) {
-        if (c == 0) {
-            if (s < 5) return 2.6f;
-            if (s == 5) return 2.0f;
-            return 0.7f;
-        }
-        if (s < 5) return -2.6f;
-        if (s == 5) return -2.0f;
-        return -0.7f;
-    }
-
-    /**
-     * 返回 {x, y, z, rotX, rotY, rotZ}，与 ClientField::GetCardLocation 一致
-     */
-    public float[] getCardLocation(ClientCard pcard) {
-        float[] t = new float[6];
-        int controler = pcard.controler;
-        int sequence = pcard.sequence;
-        int location = pcard.location;
-        boolean facedown = (pcard.position & POS_FACEDOWN) != 0;
-        boolean defense = (pcard.position & POS_DEFENSE) != 0;
-        boolean faceup = (pcard.position & POS_FACEUP) != 0;
-
-        switch (location) {
-            case 0x01: { // LOCATION_DECK
-                float[] pr = getPileRect(controler, 0x01);
-                t[0] = pr[0];
-                t[1] = pr[1];
-                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
-                boolean back = (deckReversed == pcard.is_reversed);
-                t[4] = back ? PI : 0f;
-                t[5] = controler == 0 ? 0f : PI;
-                break;
-            }
-            case 0:
-            case 0x02: { // LOCATION_HAND
-                int count = getCardCount(controler, 0x02);
-                if (count <= 0) count = 1;
-                float spacing = handSpacing(count);
-                if (controler == 0) {
-                    t[0] = 3.95f - spacing * (count - 1) / 2f + sequence * spacing;
-                    if (pcard.is_hovered) {
-                        t[1] = 3.84f;
-                        t[2] = 0.656f + 0.001f * sequence;
-                    } else {
-                        t[1] = 4.0f;
-                        t[2] = 0.5f + 0.001f * sequence;
-                    }
-                    if (pcard.code != 0) {
-                        t[3] = -0.798056f;
-                        t[4] = 0f;
-                    } else {
-                        t[3] = 0.798056f;
-                        t[4] = PI;
-                    }
-                } else {
-                    t[0] = 3.95f + spacing * (count - 1) / 2f - sequence * spacing;
-                    if (pcard.is_hovered) {
-                        t[1] = -3.56f;
-                        t[2] = 0.656f - 0.001f * sequence;
-                    } else {
-                        t[1] = -3.4f;
-                        t[2] = 0.5f - 0.001f * sequence;
-                    }
-                    if (pcard.code == 0) {
-                        t[3] = 0.798056f;
-                        t[4] = PI;
-                    } else {
-                        t[3] = -0.798056f;
-                        t[4] = 0f;
-                    }
-                }
-                break;
-            }
-            case 0x04: { // LOCATION_MZONE
-                t[0] = mzoneCX(controler, sequence);
-                t[1] = mzoneCY(controler, sequence);
-                t[2] = 0.02f;
-                if (controler == 0) {
-                    if (defense) {
-                        t[5] = -PI / 2f;
-                        t[4] = facedown ? PI + 0.001f : 0f;
-                    } else {
-                        t[5] = 0f;
-                        t[4] = facedown ? PI : 0f;
-                    }
-                } else {
-                    if (defense) {
-                        t[5] = PI / 2f;
-                        t[4] = facedown ? PI + 0.001f : 0f;
-                    } else {
-                        t[5] = PI;
-                        t[4] = facedown ? PI : 0f;
-                    }
-                }
-                break;
-            }
-            case 0x08: { // LOCATION_SZONE
-                t[0] = szoneCX(controler, sequence);
-                t[1] = szoneCY(controler, sequence);
-                t[2] = 0.01f;
-                t[4] = facedown ? PI : 0f;
-                t[5] = controler == 0 ? 0f : PI;
-                break;
-            }
-            case 0x10: { // LOCATION_GRAVE
-                float[] pr = getPileRect(controler, 0x10);
-                t[0] = pr[0];
-                t[1] = pr[1];
-                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
-                t[5] = controler == 0 ? 0f : PI;
-                break;
-            }
-            case 0x20: { // LOCATION_REMOVED
-                float[] pr = getPileRect(controler, 0x20);
-                t[0] = pr[0];
-                t[1] = pr[1];
-                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
-                t[4] = faceup ? 0f : PI;
-                t[5] = controler == 0 ? 0f : PI;
-                break;
-            }
-            case 0x40: { // LOCATION_EXTRA
-                float[] pr = getPileRect(controler, 0x40);
-                t[0] = pr[0];
-                t[1] = pr[1];
-                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
-                t[4] = faceup ? 0f : PI;
-                t[5] = controler == 0 ? 0f : PI;
-                break;
-            }
-            case 0x80: { // LOCATION_OVERLAY
-                ClientCard target = pcard.overlayTarget;
-                if (target == null || target.location != 0x04) {
-                    // 目标超量怪兽尚未就位——保持卡片当前姿态（对齐 C++ GetCardLocation
-                    // 提前 return 不改 t/r 的语义），避免待挂素材被甩到世界原点
-                    t[0] = pcard.curX;
-                    t[1] = pcard.curY;
-                    t[2] = pcard.curZ;
-                    t[3] = pcard.curRotX;
-                    t[4] = pcard.curRotY;
-                    t[5] = pcard.curRotZ;
-                    return t;
-                }
-                int oseq = target.sequence;
-                int mseq = Math.max(0, Math.min(sequence, MAX_LAYER_COUNT - 1));
-                if (target.controler == 0) {
-                    t[0] = mzoneCX(0, oseq) - 0.12f + 0.06f * mseq;
-                    t[1] = mzoneCY(0, oseq) + 0.05f;
-                    t[5] = 0f;
-                } else {
-                    t[0] = mzoneCX(1, oseq) + 0.12f - 0.06f * mseq;
-                    t[1] = mzoneCY(1, oseq) - 0.05f;
-                    t[5] = PI;
-                }
-                t[2] = 0.001f + mseq * 0.003f;
-                break;
-            }
-        }
-        return t;
-    }
-
-    /** 手卡间距：小于7张保留些许间距(0.95>卡宽0.8)，大于等于7张开始层叠，越多越密 */
-    private static float handSpacing(int count) {
-        if (count < 7) return 0.95f;
-        return Math.max(0.55f, Math.min(0.72f, 5.0f / count));
-    }
-
-    public void updateCardAnimation(int frame) {
-        for (int p = 0; p < 2; p++) {
-            updateListAnimation(players[p].deck);
-            updateListAnimation(players[p].hand);
-            updateListAnimation(players[p].monsterZone);
-            updateListAnimation(players[p].spellZone);
-            updateListAnimation(players[p].grave);
-            updateListAnimation(players[p].removed);
-            updateListAnimation(players[p].extra);
-        }
-        updateListAnimation(overlayCards);
-    }
-
-    /**
-     * 场地是否仍有卡片动画在播放（对齐 gframe draw loop 中 aniFrame>0 的移动/淡入淡出卡片）：
-     * 遍历与 updateCardAnimation 完全相同的区域列表，任一 ClientCard 的 aniFrame>0 即视为动画进行中。
-     * 供 GameEngine 统一动画屏障判断「GameFieldView 卡片移动是否播完」，实现与特效/弹窗相同的串行序列。
-     * 说明：aniFrame 由 GL 渲染线程逐帧递减，本方法在主线程读取，属良性数据竞争
-     * （最坏多等一个轮询周期即 16ms），无需加锁以免与渲染线程争用。
-     */
-    public boolean isAnimating() {
-        try {
-            for (int p = 0; p < 2; p++) {
-                if (isListAnimating(players[p].deck)
-                        || isListAnimating(players[p].hand)
-                        || isListAnimating(players[p].monsterZone)
-                        || isListAnimating(players[p].spellZone)
-                        || isListAnimating(players[p].grave)
-                        || isListAnimating(players[p].removed)
-                        || isListAnimating(players[p].extra)) {
-                    return true;
-                }
-            }
-            return isListAnimating(overlayCards);
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-    private void updateListAnimation(List<ClientCard> list) {
-        for (ClientCard pcard : list) {
-            if (pcard == null || pcard.aniFrame <= 0) continue;
-            // 启动延迟：对齐 C++ 素材先飞、本体/后续卡 WaitFrameSignal 后再动的串行时序；
-            // 延迟期内 aniFrame 不扣减，统一动画屏障（isAnimating）持续等待，消息不会提前推进
-            if (pcard.animDelayFrame > 0) {
-                pcard.animDelayFrame -= animationSpeed;
-                continue;
-            }
-            // 缓动插值：按剩余帧比例计算进度，easeInOutCubic 平滑起止，替代原线性累加
-            if (pcard.is_moving) {
-                int total = Math.max(1, pcard.animTotalFrame);
-                float t = Math.min(1f, Math.max(0f, 1f - pcard.aniFrame / (float) total));
-                float e = easeInOutCubic(t);
-                pcard.curX = pcard.animFromX + (pcard.animToX - pcard.animFromX) * e;
-                pcard.curY = pcard.animFromY + (pcard.animToY - pcard.animFromY) * e;
-                pcard.curZ = pcard.animFromZ + (pcard.animToZ - pcard.animFromZ) * e;
-                pcard.curRotX = pcard.animFromRotX + (pcard.animToRotX - pcard.animFromRotX) * e;
-                pcard.curRotY = pcard.animFromRotY + (pcard.animToRotY - pcard.animFromRotY) * e;
-                pcard.curRotZ = pcard.animFromRotZ + (pcard.animToRotZ - pcard.animFromRotZ) * e;
-            }
-            if (pcard.is_fading) {
-                int total = Math.max(1, pcard.animTotalFrame);
-                float t = Math.min(1f, Math.max(0f, 1f - pcard.aniFrame / (float) total));
-                pcard.curAlpha = pcard.animFromAlpha
-                        + (pcard.animToAlpha - pcard.animFromAlpha) * easeInOutCubic(t);
-            }
-            pcard.aniFrame -= animationSpeed;
-            if (pcard.aniFrame <= 0) {
-                pcard.aniFrame = 0;
-                if (pcard.is_moving) {
-                    pcard.curX = pcard.animToX;
-                    pcard.curY = pcard.animToY;
-                    pcard.curZ = pcard.animToZ;
-                    pcard.curRotX = pcard.animToRotX;
-                    pcard.curRotY = pcard.animToRotY;
-                    pcard.curRotZ = pcard.animToRotZ;
-                }
-                if (pcard.is_fading) {
-                    pcard.curAlpha = pcard.animToAlpha;
-                }
-                pcard.is_moving = false;
-                pcard.is_fading = false;
-                pcard.chain_code = 0;
-            }
-        }
-    }
-
-    private static boolean isListAnimating(List<ClientCard> list) {
-        if (list == null) return false;
-        for (ClientCard pcard : list) {
-            if (pcard != null && pcard.aniFrame > 0) return true;
-        }
-        return false;
-    }
-
-    private static float easeInOutCubic(float t) {
-        return t < 0.5f ? 4f * t * t * t : 1f - (float) Math.pow(-2f * t + 2f, 3) / 2f;
-    }
-
-    public void refreshAllCards() {
-        for (int p = 0; p < 2; p++) {
-            for (ClientCard c : players[p].deck) {
-                if (c != null) {
-                    setCardPos(c);
-                    c.is_moving = false;
-                }
-            }
-            for (ClientCard c : players[p].hand) {
-                if (c != null) {
-                    setCardPos(c);
-                    c.is_moving = false;
-                }
-            }
-            for (ClientCard c : players[p].monsterZone) {
-                if (c != null) {
-                    setCardPos(c);
-                    c.is_moving = false;
-                }
-            }
-            for (ClientCard c : players[p].spellZone) {
-                if (c != null) {
-                    setCardPos(c);
-                    c.is_moving = false;
-                }
-            }
-            for (ClientCard c : players[p].grave) {
-                if (c != null) {
-                    setCardPos(c);
-                    c.is_moving = false;
-                }
-            }
-            for (ClientCard c : players[p].removed) {
-                if (c != null) {
-                    setCardPos(c);
-                    c.is_moving = false;
-                }
-            }
-            for (ClientCard c : players[p].extra) {
-                if (c != null) {
-                    setCardPos(c);
-                    c.is_moving = false;
-                }
-            }
-        }
-        for (ClientCard c : overlayCards) {
-            if (c != null) {
-                setCardPos(c);
-                c.is_moving = false;
-            }
-        }
-    }
-
-    private void setCardPos(ClientCard pcard) {
-        float[] loc = getCardLocation(pcard);
-        pcard.curX = loc[0];
-        pcard.curY = loc[1];
-        pcard.curZ = loc[2];
-        pcard.curRotX = loc[3];
-        pcard.curRotY = loc[4];
-        pcard.curRotZ = loc[5];
-    }
-
-    public void moveCardAnimated(ClientCard pcard, int frame) {
-        moveCardAnimated(pcard, frame, 0);
-    }
-
-    /**
-     * delay 帧后启动的 frame 帧移动动画（对齐 duelclient.cpp MSG_MOVE L3032-3046：
-     * 素材 MoveCard(10)+WaitFrameSignal(10) 后本体才 MoveCard(10)）。
-     */
-    public void moveCardAnimated(ClientCard pcard, int frame, int delay) {
-        if (pcard == null || frame <= 0) return;
-        float[] loc = getCardLocation(pcard);
-
-        pcard.animDelayFrame = Math.max(0, delay);
-        pcard.animFromX = pcard.curX;
-        pcard.animFromY = pcard.curY;
-        pcard.animFromZ = pcard.curZ;
-        pcard.animToX = loc[0];
-        pcard.animToY = loc[1];
-        pcard.animToZ = loc[2];
-
-        pcard.animFromRotX = pcard.curRotX;
-        pcard.animFromRotY = pcard.curRotY;
-        pcard.animFromRotZ = pcard.curRotZ;
-        pcard.animToRotX = normalizeAngleTarget(pcard.curRotX, loc[3]);
-        pcard.animToRotY = normalizeAngleTarget(pcard.curRotY, loc[4]);
-        pcard.animToRotZ = normalizeAngleTarget(pcard.curRotZ, loc[5]);
-
-        pcard.animTotalFrame = frame;
-        pcard.is_moving = true;
-        pcard.aniFrame = frame;
-    }
-
-    /** 将目标角度归一化到起点 ±π 内，保证旋转走最短路径 */
-    private static float normalizeAngleTarget(float from, float to) {
-        float diff = (to - from) % (float) (Math.PI * 2);
-        if (diff > Math.PI) diff -= (float) (Math.PI * 2);
-        if (diff < -Math.PI) diff += (float) (Math.PI * 2);
-        return from + diff;
-    }
-
-    // 动画速度倍率：1 为原速，2 即 2 倍速
-    public float animationSpeed = 1f;
-
-    public void setAnimationSpeed(float speed) {
-        animationSpeed = Math.max(0.25f, speed);
-    }
-
-    /**
-     * 手卡数量变化后重排该方手卡：其余卡用 frame 帧动画移到新间距位置；
-     * 正在移动的卡不打断（保持自己的动画，目标位置已与新布局一致）
-     */
-    public void updateHandLayout(int controler, int frame) {
-        List<ClientCard> hand = players[controler].hand;
-        for (ClientCard c : hand) {
-            if (c == null) continue;
-            float[] loc = getCardLocation(c);
-            if (c.is_moving) continue;
-            if (frame > 0 && (Math.abs(loc[0] - c.curX) > 0.001f
-                    || Math.abs(loc[1] - c.curY) > 0.001f)) {
-                moveCardAnimated(c, frame);
-            } else {
-                c.curX = loc[0];
-                c.curY = loc[1];
-                c.curZ = loc[2];
-                c.curRotX = loc[3];
-                c.curRotY = loc[4];
-                c.curRotZ = loc[5];
-            }
-        }
-    }
-
-    public void clearCommandFlag() {
-        for (ClientCard c : activatableCards)
-            if (c != null) {
-                c.cmdFlag = 0;
-                c.chain_code = 0;
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        for (ClientCard c : summonableCards)
-            if (c != null) {
-                c.cmdFlag = 0;
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        for (ClientCard c : spsummonableCards)
-            if (c != null) {
-                c.cmdFlag = 0;
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        for (ClientCard c : msetableCards)
-            if (c != null) {
-                c.cmdFlag = 0;
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        for (ClientCard c : ssetableCards)
-            if (c != null) {
-                c.cmdFlag = 0;
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        for (ClientCard c : reposableCards)
-            if (c != null) {
-                c.cmdFlag = 0;
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        for (ClientCard c : attackableCards)
-            if (c != null) {
-                c.cmdFlag = 0;
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        for (int i = 0; i < 2; i++) {
-            deckAct[i] = false;
-            extraAct[i] = false;
-            graveAct[i] = false;
-            removeAct[i] = false;
-            pzoneAct[i] = false;
-        }
-        contiCards.clear();
-        contiAct = false;
-        activatableCards.clear();
-        summonableCards.clear();
-        spsummonableCards.clear();
-        msetableCards.clear();
-        ssetableCards.clear();
-        reposableCards.clear();
-        attackableCards.clear();
-    }
-
-    public void clearSelect() {
-        for (ClientCard c : selectableCards) {
-            if (c != null) {
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        }
-        for (ClientCard c : selectedCards) {
-            if (c != null) {
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        }
-        for (ClientCard c : selectsumAll) {
-            if (c != null) {
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        }
-        for (ClientCard c : selectsumCards) {
-            if (c != null) {
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        }
-    }
-
-    public void clearChainSelect() {
-        for (ClientCard c : activatableCards) {
-            if (c != null) {
-                c.cmdFlag = 0;
-                c.chain_code = 0;
-                c.is_selectable = false;
-                c.is_selected = false;
-            }
-        }
-        for (int i = 0; i < 2; i++) {
-            deckAct[i] = false;
-            extraAct[i] = false;
-            graveAct[i] = false;
-            removeAct[i] = false;
-            pzoneAct[i] = false;
-        }
-        contiCards.clear();
-        contiAct = false;
-    }
-
-    public void swapField() {
-        PlayerField temp = players[0];
-        players[0] = players[1];
-        players[1] = temp;
-        for (int p = 0; p < 2; p++) {
-            updateCardControler(players[p], p);
-        }
-        int tmpExtraP = extraPCount[0];
-        extraPCount[0] = extraPCount[1];
-        extraPCount[1] = tmpExtraP;
-        for (ClientCard card : overlayCards) {
-            if (card != null) card.controler = 1 - card.controler;
-        }
-        for (ChainInfo ch : chains) {
-            ch.controler = 1 - ch.controler;
-        }
-        disabledField = (disabledField >> 16) | (disabledField << 16);
-    }
-
-    public static boolean clientCardSort(ClientCard c1, ClientCard c2) {
-        if (c1.is_selected != c2.is_selected)
-            return !c1.is_selected;
-        int cp1 = c1.overlayTarget != null ? c1.overlayTarget.controler : c1.controler;
-        int cp2 = c2.overlayTarget != null ? c2.overlayTarget.controler : c2.controler;
-        if (cp1 != cp2) return cp1 < cp2;
-        if (c1.location != c2.location) return c1.location < c2.location;
-        if (c1.location == CardLocation.Overlay.value()) {
-            if (c1.overlayTarget != c2.overlayTarget)
-                return c1.overlayTarget.sequence < c2.overlayTarget.sequence;
-            else
-                return c1.sequence < c2.sequence;
-        } else if (c1.location == CardLocation.Deck.value()) {
-            return c1.sequence > c2.sequence;
-        } else if ((c1.location & (CardLocation.Grave.value() | CardLocation.Removed.value() | CardLocation.Extra.value())) != 0) {
-            return c1.sequence > c2.sequence;
-        } else {
-            return c1.sequence < c2.sequence;
-        }
-    }
-
     public int getCardCount(int controler, int location) {
         if (controler < 0 || controler > 1) return 0;
         List<ClientCard> list = players[controler].getLocationList(location);
@@ -1768,24 +683,167 @@ public class GameField {
         return count;
     }
 
-    private void updateCardControler(PlayerField playerField, int controler) {
-        updateListControler(playerField.deck, controler);
-        updateListControler(playerField.hand, controler);
-        updateListControler(playerField.monsterZone, controler);
-        updateListControler(playerField.spellZone, controler);
-        updateListControler(playerField.grave, controler);
-        updateListControler(playerField.removed, controler);
-        updateListControler(playerField.extra, controler);
-        if (playerField.fieldSpell != null) {
-            playerField.fieldSpell.controler = controler;
-        }
+    // ================================================================================================
+    //  以下为转发桩：行为实现逐行等价移植至同包协作类，对外契约（签名 / 可见性）保持不变。
+    //  · 卡片增删改 / 超量素材 / 命令·选择状态清理   → GameFieldCards (cards)
+    //  · 坐标几何 GetCardLocation / 格子·堆叠矩形      → GameFieldGeometry (geometry)
+    //  · LP 动画 / HUD 时间·计数 / 卡片动画更新 / 布局 → GameFieldMotion (motion)
+    // ================================================================================================
+
+    // === LP 变化动画 / HUD 时间·计数显示（GameFieldMotion）===
+
+    public void startLpChange(int player, int finalLp, int color, String text, boolean showText) {
+        motion.startLpChange(player, finalLp, color, text, showText);
     }
 
-    private void updateListControler(List<ClientCard> list, int controler) {
-        for (ClientCard card : list) {
-            if (card != null) {
-                card.controler = controler;
-            }
-        }
+    public void updateLpAnimation() {
+        motion.updateLpAnimation();
+    }
+
+    public boolean isLpAnimating() {
+        return motion.isLpAnimating();
+    }
+
+    public void refreshTimeDisplay() {
+        motion.refreshTimeDisplay();
+    }
+
+    public void resetTimeTick() {
+        motion.resetTimeTick();
+    }
+
+    public void tickTime(long nowMs) {
+        motion.tickTime(nowMs);
+    }
+
+    public void refreshCardCountDisplay() {
+        motion.refreshCardCountDisplay();
+    }
+
+    // === 卡片增删改 / 超量素材 / 提示（GameFieldCards）===
+
+    public void applyCardHint(int localControler, int location, int sequence, int hintType, int value) {
+        cards.applyCardHint(localControler, location, sequence, hintType, value);
+    }
+
+    public void addChainTarget(int localControler, int location, int sequence) {
+        cards.addChainTarget(localControler, location, sequence);
+    }
+
+    public void addCard(int controler, int location, int sequence, ClientCard card) {
+        cards.addCard(controler, location, sequence, card);
+    }
+
+    public ClientCard removeCard(int controler, int location, int sequence) {
+        return cards.removeCard(controler, location, sequence);
+    }
+
+    public ClientCard attachOverlayMaterial(ClientCard pcard, int oldCtrl, int oldLoc, int oldSeq,
+                                            int newCtrl, int newLocBase, int xyzSeq) {
+        return cards.attachOverlayMaterial(pcard, oldCtrl, oldLoc, oldSeq, newCtrl, newLocBase, xyzSeq);
+    }
+
+    public ClientCard detachOverlayMaterial(int oldCtrl, int oldLocBase, int xyzSeq, int subSeq,
+                                            int newCtrl, int newLoc, int newSeq, int newPos) {
+        return cards.detachOverlayMaterial(oldCtrl, oldLocBase, xyzSeq, subSeq, newCtrl, newLoc, newSeq, newPos);
+    }
+
+    public void moveOverlayMaterials(ClientCard monster, int frame) {
+        cards.moveOverlayMaterials(monster, frame);
+    }
+
+    public void updateCard(int controler, int location, int sequence, ByteBuffer data) {
+        cards.updateCard(controler, location, sequence, data);
+    }
+
+    public void moveCard(ClientCard pcard, int frame) {
+        cards.moveCard(pcard, frame);
+    }
+
+    public void fadeCard(ClientCard pcard, int alpha, int frame) {
+        cards.fadeCard(pcard, alpha, frame);
+    }
+
+    // === 坐标几何（GameFieldGeometry）：render 包静态入口 + 落点真值，方法体转发 ===
+
+    public static float fx(float x) {
+        return GameFieldGeometry.fx(x);
+    }
+
+    public static float fieldBoardMinX() {
+        return GameFieldGeometry.fieldBoardMinX();
+    }
+
+    public static float fieldBoardMaxX() {
+        return GameFieldGeometry.fieldBoardMaxX();
+    }
+
+    public static float[] getZoneRect(int controler, int location, int sequence) {
+        return GameFieldGeometry.getZoneRect(controler, location, sequence);
+    }
+
+    public static float[] getPileRect(int controler, int location) {
+        return GameFieldGeometry.getPileRect(controler, location);
+    }
+
+    /** 返回 {x, y, z, rotX, rotY, rotZ}，与 ClientField::GetCardLocation 一致 */
+    public float[] getCardLocation(ClientCard pcard) {
+        return geometry.getCardLocation(pcard);
+    }
+
+    // === 卡片动画更新 / 落点归位 / 手卡布局（GameFieldMotion）===
+
+    public void updateCardAnimation(int frame) {
+        motion.updateCardAnimation(frame);
+    }
+
+    public boolean isAnimating() {
+        return motion.isAnimating();
+    }
+
+    public void refreshAllCards() {
+        motion.refreshAllCards();
+    }
+
+    void setCardPos(ClientCard pcard) {
+        motion.setCardPos(pcard);
+    }
+
+    public void moveCardAnimated(ClientCard pcard, int frame) {
+        motion.moveCardAnimated(pcard, frame);
+    }
+
+    public void moveCardAnimated(ClientCard pcard, int frame, int delay) {
+        motion.moveCardAnimated(pcard, frame, delay);
+    }
+
+    public void setAnimationSpeed(float speed) {
+        motion.setAnimationSpeed(speed);
+    }
+
+    public void updateHandLayout(int controler, int frame) {
+        motion.updateHandLayout(controler, frame);
+    }
+
+    // === 命令标记 / 选择状态清理 / 交换场地（GameFieldCards）===
+
+    public void clearCommandFlag() {
+        cards.clearCommandFlag();
+    }
+
+    public void clearSelect() {
+        cards.clearSelect();
+    }
+
+    public void clearChainSelect() {
+        cards.clearChainSelect();
+    }
+
+    public void swapField() {
+        cards.swapField();
+    }
+
+    public static boolean clientCardSort(ClientCard c1, ClientCard c2) {
+        return GameFieldCards.clientCardSort(c1, c2);
     }
 }

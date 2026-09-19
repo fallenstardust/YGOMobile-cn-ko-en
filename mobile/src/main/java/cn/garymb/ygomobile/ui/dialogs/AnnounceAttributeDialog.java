@@ -13,6 +13,8 @@ import android.widget.CheckBox;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import java.nio.ByteBuffer;
+
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
@@ -42,6 +44,47 @@ public class AnnounceAttributeDialog {
 
     public interface OnDismissListener {
         void onDismiss();
+    }
+
+    /** 当前正在显示的宣言属性弹窗（去重用），由静态工厂 showAnnounceAttribDialog 维护 */
+    private static AnnounceAttributeDialog current;
+
+    /**
+     * MSG_ANNOUNCE_ATTRIB 静态工厂（供 ShowDialogUtil.showAnnounceAttribDialog 委托调用）：
+     * duelclient.cpp L4015-4033 count(1)+available(4)，7 属性；勾选数达 count 自动应答属性位掩码；缺省标题 562。
+     */
+    public static void showAnnounceAttribDialog(YGOProActivity activity, ByteBuffer data) {
+        if (data == null || data.remaining() < 5) return;
+        int count = data.get() & 0xFF;
+        int available = data.getInt();
+        if (current != null) current.dismiss();
+        AnnounceAttributeDialog dialog = new AnnounceAttributeDialog(activity);
+        current = dialog;
+        dialog.setTitle(selectTitleText(activity, 562, "选择属性"))
+                .setAvailableMask(available)
+                .setAnnounceCount(count)
+                .setOnAttributeSelectedListener(activity::sendResponseInt)
+                .setOnDismissListener(() -> current = null);
+        dialog.show();
+    }
+
+    /** 退出对战时关闭可能残留的宣言属性弹窗（由 ShowDialogUtil.dismissAnnounceDialogs 调用） */
+    public static void dismissCurrent() {
+        if (current != null) {
+            current.dismiss();
+            current = null;
+        }
+    }
+
+    /** 选择类标题：优先用 selectHint，消费后清零（链式访问，不导入 game 类）。 */
+    private static String selectTitleText(YGOProActivity activity, int defIndex, String defText) {
+        int hint = 0;
+        if (activity.getEngine() != null && activity.getEngine().getField() != null) {
+            hint = activity.getEngine().getField().selectHint;
+            activity.getEngine().getField().selectHint = 0;
+        }
+        return DataManager.get().getStringManager()
+                .getSystemString(hint > 0 ? hint : defIndex, defText);
     }
 
     private final Context context;

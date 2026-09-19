@@ -18,6 +18,7 @@ import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +55,58 @@ public class AnnounceNumberDialog {
 
     public interface OnDismissListener {
         void onDismiss();
+    }
+
+    /** 当前正在显示的宣言数字弹窗（去重用），由静态工厂 showAnnounceNumberDialog 维护 */
+    private static AnnounceNumberDialog current;
+
+    /**
+     * MSG_ANNOUNCE_NUMBER 静态工厂（供 ShowDialogUtil.showAnnounceNumberDialog 委托调用）：
+     * duelclient.cpp L4051-4093 count(1)+count×value(4)。响应为选中项索引，缺省标题 565。
+     */
+    public static void showAnnounceNumberDialog(YGOProActivity activity, ByteBuffer data) {
+        if (data == null || data.remaining() < 1) {
+            activity.sendResponseInt(0);
+            return;
+        }
+        int count = data.get() & 0xFF;
+        List<Integer> values = new ArrayList<>();
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            values.add(data.getInt());
+        }
+        if (values.isEmpty()) {
+            activity.sendResponseInt(0);
+            return;
+        }
+        if (current != null) current.dismiss();
+        AnnounceNumberDialog dialog = new AnnounceNumberDialog(activity);
+        current = dialog;
+        dialog.setTitle(selectTitleText(activity, 565, "选择数字"))
+                .setValues(values)
+                .setOnNumberSelectedListener(activity::sendResponseInt)
+                .setOnDismissListener(() -> current = null);
+        dialog.show();
+    }
+
+    /** 退出对战时关闭可能残留的宣言数字弹窗（由 ShowDialogUtil.dismissAnnounceDialogs 调用） */
+    public static void dismissCurrent() {
+        if (current != null) {
+            current.dismiss();
+            current = null;
+        }
+    }
+
+    /**
+     * 选择类标题：优先用 selectHint，消费后清零（链式访问，不导入 game 类）。
+     */
+    private static String selectTitleText(YGOProActivity activity, int defIndex, String defText) {
+        int hint = 0;
+        if (activity.getEngine() != null && activity.getEngine().getField() != null) {
+            hint = activity.getEngine().getField().selectHint;
+            activity.getEngine().getField().selectHint = 0;
+        }
+        return DataManager.get().getStringManager()
+                .getSystemString(hint > 0 ? hint : defIndex, defText);
     }
 
     private final Context context;

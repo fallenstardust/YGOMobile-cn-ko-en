@@ -260,7 +260,7 @@ public class LanModeDialog {
             existing.reshow(activity.getDialogContainer());
             return;
         }
-        LanModeDialog dialog = new LanModeDialog(activity, activity);
+        LanModeDialog dialog = new LanModeDialog(activity, activity.getDialogNavListener());
         activity.setLanModeDialog(dialog);
         dialog.show(activity.getDialogContainer());
         dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());

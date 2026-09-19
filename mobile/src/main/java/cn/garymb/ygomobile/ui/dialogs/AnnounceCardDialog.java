@@ -22,6 +22,7 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -83,6 +84,44 @@ public class AnnounceCardDialog {
 
     public interface OnDismissListener {
         void onDismiss();
+    }
+
+    /** 当前正在显示的宣言卡片弹窗（去重用），由静态工厂 showAnnounceCardDialog 维护 */
+    private static AnnounceCardDialog current;
+
+    /**
+     * MSG_ANNOUNCE_CARD 静态工厂（供 ShowDialogUtil.showAnnounceCardDialog 委托调用）：
+     * duelclient.cpp L4034-4050 count(1)+count×opcode(4)，opcodes 供 is_declarable 过滤；
+     * 确定发送卡号，缺省标题 564。
+     */
+    public static void showAnnounceCardDialog(YGOProActivity activity, ByteBuffer data) {
+        if (data == null || data.remaining() < 1) return;
+        int count = data.get() & 0xFF;
+        List<Integer> opcodes = new ArrayList<>();
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            opcodes.add(data.getInt());
+        }
+        if (current != null) current.dismiss();
+        AnnounceCardDialog dialog = new AnnounceCardDialog(activity);
+        current = dialog;
+        dialog.setTitle(selectTitleText(activity, 564, "宣言卡片"))
+                .setOpcodes(opcodes)
+                .setOnCardDeclaredListener(activity::sendResponseInt)
+                .setOnDismissListener(() -> current = null);
+        dialog.show();
+    }
+
+    /**
+     * 选择类标题：优先用 selectHint，消费后清零（链式访问，不导入 game 类）。
+     */
+    private static String selectTitleText(YGOProActivity activity, int defIndex, String defText) {
+        int hint = 0;
+        if (activity.getEngine() != null && activity.getEngine().getField() != null) {
+            hint = activity.getEngine().getField().selectHint;
+            activity.getEngine().getField().selectHint = 0;
+        }
+        return DataManager.get().getStringManager()
+                .getSystemString(hint > 0 ? hint : defIndex, defText);
     }
 
     private final Context context;

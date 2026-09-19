@@ -21,15 +21,9 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -40,13 +34,10 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.GameTopInfoManager;
 import cn.garymb.ygomobile.game.ReplayEngine;
-import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.render.CardDetailPanel;
-import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
@@ -55,7 +46,6 @@ import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.MainMenuDialog;
 import cn.garymb.ygomobile.ui.dialogs.PlayerWaitingDialog;
 import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
-import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
@@ -64,13 +54,13 @@ import cn.garymb.ygomobile.utils.FullScreenUtils;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
-import ocgcore.enums.DuelPhase;
 
-public class YGOProActivity extends AppCompatActivity implements
-        GameEngine.EngineListener,
-        LanModeDialog.OnLanModeListener,
-        CreateHostDialog.OnCreateHostListener,
-        PlayerWaitingDialog.OnPlayerWaitingListener {
+/**
+ * 决斗主界面门面：保留 Activity 生命周期、视图装配、UI 编排与全部对外公共 API，
+ * 按 // === 分栏把 GameEngine.EngineListener 回调下沉到 {@link EngineCallbackDelegate}、
+ * 三个对话框监听接口下沉到 {@link MainMenuNavigator}（同包，包级私有直连本类共享状态）。
+ */
+public class YGOProActivity extends AppCompatActivity {
 
     private static final String TAG = "YGONativeGame";
 
@@ -79,62 +69,50 @@ public class YGOProActivity extends AppCompatActivity implements
      */
     public final StringManager mStringManager = DataManager.get().getStringManager();
 
-    private GameEngine engine;
+    // 以下共享字段被同包协作类（EngineCallbackDelegate / MainMenuNavigator）经包级私有直连访问
+    GameEngine engine;
     private SoundManager soundManager;
     private ImageLoader imageLoader;
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    private DeckEditorManager deckEditorManager;
+    private EngineCallbackDelegate engineCallback;
+    private MainMenuNavigator menuNav;
+
+    DeckEditorManager deckEditorManager;
     private View layoutDeckEditor;
 
     private LinearLayout layoutDeckControl;
-    private FrameLayout layoutGameRight;
+    FrameLayout layoutGameRight;
     private View layoutGameContent;
 
-    private FrameLayout dialogContainer;
+    FrameLayout dialogContainer;
     private MainMenuDialog mainMenuDialog;
-    private LanModeDialog lanModeDialog;
-    private CreateHostDialog createHostDialog;
-    private PlayerWaitingDialog playerWaitingDialog;
+    LanModeDialog lanModeDialog;
+    CreateHostDialog createHostDialog;
+    PlayerWaitingDialog playerWaitingDialog;
 
     private EditText etChatInput;
     private EmotionDialog emotionDialog;
     private DuelLogDialog duelLogDialog;
 
-    private boolean isMyTurn = false;
-    private volatile boolean isGameStarted = false;
+    volatile boolean isGameStarted = false;
 
     private ReplayEngine currentReplayEngine;
-    private CardDetailPanel cardDetailPanel;
+    CardDetailPanel cardDetailPanel;
     private ChatInputUI chatInputUI;
-    private GameTopInfoManager topInfoManager;
-    private GameFieldController fieldCtl;
-    private ShowDialogUtil dialogUtil;
+    GameTopInfoManager topInfoManager;
+    GameFieldController fieldCtl;
+    ShowDialogUtil dialogUtil;
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
     private FullScreenUtils mFullScreenUtils;
     private String currentBgPath;
 
     // 最近一次加入/创建房间的连接信息：断线或决斗结束返回局域网主界面时回显
-    private String lastJoinNickname = "";
-    private String lastJoinHost = "";
-    private int lastJoinPort = 0;
-    private String lastJoinRoomName = "";
-
-    // 决斗结束后通讯发来的待保存录像队列（STOC_REPLAY 可能发来多个）
-    private final List<byte[]> pendingReplays = new ArrayList<>();
-    private boolean duelEndHandling = false;
-    private YesOrNoDialog resultDialog;
-    private ReplaySaveDialog replaySaveDialog;
-    // STOC_REPLAY 紧随 STOC_DUEL_END 下发：录像处理延迟到该窗口内无新数据到达再启动，
-    // 避免在录像数据尚未收齐时就走到「决斗结束」弹窗
-    private static final long REPLAY_ARRIVAL_WAIT_MS = 800;
-    private final Runnable duelEndReplayProcessor = new Runnable() {
-        @Override
-        public void run() {
-            processPendingReplays();
-        }
-    };
+    String lastJoinNickname = "";
+    String lastJoinHost = "";
+    int lastJoinPort = 0;
+    String lastJoinRoomName = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,56 +129,6 @@ public class YGOProActivity extends AppCompatActivity implements
         if (!handleDirectIntent(getIntent())) {
             getMainMenuDialog().showMainMenu();
         }
-    }
-
-    @Override
-    public void onPlayerEnter(String name, int pos) {
-        runOnUiThread(() -> {
-            if (playerWaitingDialog != null) playerWaitingDialog.handlePlayerEnter(name, pos);
-        });
-    }
-
-    @Override
-    public void onPlayerChange(int status) {
-        runOnUiThread(() -> {
-            if (playerWaitingDialog != null) playerWaitingDialog.handlePlayerChange(status);
-        });
-    }
-
-    @Override
-    public void onWatchChange(int watchCount) {
-        runOnUiThread(() -> {
-            if (playerWaitingDialog != null) playerWaitingDialog.handleWatchChange(watchCount);
-        });
-    }
-
-    @Override
-    public void onJoinGame(int lflist, int rule, int mode, int duelRule,
-                           int noCheckDeck, int noShuffleDeck,
-                           int startLp, int startHand, int drawCount, int timeLimit) {
-        runOnUiThread(() -> {
-            if (playerWaitingDialog != null)
-                playerWaitingDialog.handleJoinGame(lflist, rule, mode, duelRule,
-                        noCheckDeck, noShuffleDeck, startLp, startHand, drawCount, timeLimit);
-        });
-    }
-
-    @Override
-    public void onTypeChange(int type) {
-        runOnUiThread(() -> {
-            if (playerWaitingDialog != null) {
-                boolean isTag = engine.getGameMode() == 2;
-                playerWaitingDialog.handleTypeChange(type, isTag);
-            }
-        });
-    }
-
-    @Override
-    public void onDeckError(int errorType, int cardCode) {
-        runOnUiThread(() -> {
-            if (playerWaitingDialog != null)
-                playerWaitingDialog.handleDeckError(errorType, cardCode);
-        });
     }
 
     private void setupFullScreen() {
@@ -271,8 +199,12 @@ public class YGOProActivity extends AppCompatActivity implements
 
         imageLoader = new ImageLoader(true);
 
+        // 引擎回调与对话框监听分别下沉到同包协作类，经包级私有直连本门面的共享状态/UI 编排
+        engineCallback = new EngineCallbackDelegate(this);
+        menuNav = new MainMenuNavigator(this);
+
         engine = new GameEngine(soundManager);
-        engine.setListener(this);
+        engine.setListener(engineCallback);
         engine.setPlayerName(Constants.PlayerName);
 
         TextureLoader.get().init();
@@ -526,6 +458,16 @@ public class YGOProActivity extends AppCompatActivity implements
         return soundManager;
     }
 
+    /** 供 LanModeDialog 静态入口构造时接线：返回承载 OnLanModeListener 的协作实例 */
+    public LanModeDialog.OnLanModeListener getDialogNavListener() {
+        return menuNav;
+    }
+
+    /** 供 PlayerWaitingDialog 静态入口构造时接线：返回承载 OnPlayerWaitingListener 的协作实例 */
+    public PlayerWaitingDialog.OnPlayerWaitingListener getPlayerWaitingListener() {
+        return menuNav;
+    }
+
     public void hideGameUI() {
         fieldCtl.hide();
         cardDetailPanel.onGameUIHidden();
@@ -555,7 +497,7 @@ public class YGOProActivity extends AppCompatActivity implements
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
     }
 
-    private void enterDuelingUI() {
+    void enterDuelingUI() {
         getMainMenuDialog().hideMainMenu();
         // 决斗开始：从 player waiting 大厅聊天切回决斗显示
         //（恢复决斗场渲染，聊天改回玩家分侧 + 系统/观战弹幕逻辑）
@@ -589,15 +531,10 @@ public class YGOProActivity extends AppCompatActivity implements
      * 重新显示 LanModeDialog 的 lan main 布局，并回显加入游戏时填写的
      * username、host、port、roomname 等信息；无连接信息时回退主菜单
      */
-    private void returnToLanMain(String toastMsg) {
+    void returnToLanMain(String toastMsg) {
         if (isFinishing() || isDestroyed()) return;
         isGameStarted = false;
-        duelEndHandling = false;
-        pendingReplays.clear();
-        if (replaySaveDialog != null) {
-            replaySaveDialog.dismiss();
-            replaySaveDialog = null;
-        }
+        if (engineCallback != null) engineCallback.resetDuelEndState();
         if (topInfoManager != null) topInfoManager.stopTimer();
         if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
         hideGameUI();
@@ -631,126 +568,18 @@ public class YGOProActivity extends AppCompatActivity implements
         }
     }
 
-    private void saveLastConnectionInfo(String nickname, String host, int port, String roomName) {
+    void saveLastConnectionInfo(String nickname, String host, int port, String roomName) {
         lastJoinNickname = nickname != null ? nickname : "";
         lastJoinHost = host != null ? host : "";
         lastJoinPort = port;
         lastJoinRoomName = roomName != null ? roomName : "";
     }
 
-    @Override
-    public void onCreateHostRequested(String nickname) {
-        if (lanModeDialog != null) lanModeDialog.hideForNavigation();
-        showCreateHost(nickname);
-    }
-
-    @Override
-    public void onCreateHostConfirmed(int lflist, int ruleIdx, int modeIdx, int duelRule,
-                                      int startLP, int startHand, int drawCount, int timeLimit,
-                                      boolean noCheckDeck, boolean noShuffleDeck,
-                                      String hostName, String password, String nickname) {
-        String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
-        String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
-
-        String localIp = LanDiscoveryManager.getLocalIpAddress();
-        saveLastConnectionInfo(userName, localIp != null ? localIp : "127.0.0.1", 7911, roomName);
-
-        engine.setPlayerName(userName);
-        engine.startLocalServerWithSettings(lflist, ruleIdx, modeIdx, duelRule,
-                noCheckDeck, noShuffleDeck,
-                startLP, startHand, drawCount, timeLimit,
-                roomName, password != null ? password : "");
-
-        if (createHostDialog != null) createHostDialog.hideForNavigation();
-        showPlayerWaiting(userName, modeIdx == 2);
-    }
-
-    @Override
-    public void onCancelCreate() {
-        if (createHostDialog != null) createHostDialog.hideForNavigation();
-        LanModeDialog.showLanModeDialog(this);
-    }
-
-    @Override
-    public void onJoinGameRequested(String ip, String port, String password, String nickname) {
-        int portNum;
-        try {
-            portNum = Integer.parseInt(port);
-        } catch (NumberFormatException e) {
-            portNum = 7911;
-        }
-        String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
-        saveLastConnectionInfo(userName, ip, portNum, password);
-        engine.setPlayerName(userName);
-        engine.connectToServer(ip, portNum, false, "", password,
-                0, 0, 5, 8000, 5, 1, 0, false, false);
-
-        if (lanModeDialog != null) lanModeDialog.hideForNavigation();
-        showPlayerWaiting(userName, false);
-    }
-
-    @Override
-    public void onPlayerWaitingReady() {
-        if (engine != null) engine.sendReady();
-    }
-
-    @Override
-    public void onPlayerWaitingNotReady() {
-        if (engine != null) engine.sendNotReady();
-    }
-
-    @Override
-    public void onPlayerWaitingToDuelist() {
-        if (engine != null) engine.sendToDuelist();
-    }
-
-    @Override
-    public void onPlayerWaitingToObserver() {
-        if (engine != null) engine.sendToObserver();
-    }
-
-    @Override
-    public void onExitWaiting() {
-        if (engine != null) engine.disconnect();
-        if (playerWaitingDialog != null) playerWaitingDialog.hideForNavigation();
-        LanModeDialog.showLanModeDialog(this);
-        if (lanModeDialog != null) {
-            lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
-                    String.valueOf(lastJoinPort), lastJoinRoomName);
-        }
-    }
-
-    @Override
-    public void onPlayerWaitingDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
-        if (engine != null) {
-            engine.sendDeckUpdate(main, extra, side);
-        }
-    }
-
-    @Override
-    public void onStartGameRequested() {
-        if (engine != null) {
-            engine.sendStart();
-        }
-    }
-
-    @Override
-    public void onKickPlayerRequested(int pos) {
-        if (engine != null) {
-            engine.sendKick(pos);
-        }
-    }
-
-    @Override
-    public void onPlayerWaitingShown() {
-        runOnUiThread(this::enterLobbyChatUI);
-    }
-
     /**
      * player waiting 大厅聊天界面：显示聊天输入框与 layout_danmaku 聊天列表；
      * gameTopInfo（layout_top_info）的子布局与决斗场渲染在此期间不显示
      */
-    private void enterLobbyChatUI() {
+    void enterLobbyChatUI() {
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
         // 大厅聊天期间隐藏决斗场 GL 渲染（GLSurfaceView 置 GONE，决斗开始时恢复）
@@ -916,123 +745,7 @@ public class YGOProActivity extends AppCompatActivity implements
         }
     }
 
-    // === EngineListener ===
-
-    @Override
-    public void onStateChanged(GameEngine.GameState newState) {
-        Log.i(TAG, "State: " + newState);
-        switch (newState) {
-            case LOBBY:
-                duelEndHandling = false;
-                // 已通过 PlayerWaitingDialog 显示玩家等待界面时无需处理；否则隐藏主菜单
-                if (playerWaitingDialog == null || !playerWaitingDialog.isShowing()) {
-                    getMainMenuDialog().hideMainMenu();
-                }
-                break;
-            case DECK_SELECT:
-                getDialogUtil().showDeckSelectDialog();
-                break;
-            case HAND_SELECT:
-                enterDuelingUI();
-                getDialogUtil().resetRpsResultState();
-                getDialogUtil().showHandSelectDialog();
-                break;
-            case TP_SELECT:
-                enterDuelingUI();
-                getDialogUtil().showTPSelectDialog();
-                break;
-            case DUELING:
-                enterDuelingUI();
-                cardDetailPanel.showBottomActions();
-                // 对齐 duelclient.cpp L912-916：STOC_GAME_START 按 chkDefaultShowChain 初始化时点三态
-                cardDetailPanel.onDuelStarted();
-                // 进入决斗后仅对战玩家显示投降按钮（观战者 selfType>=7 不显示）；
-                // 猜拳/选先后阶段保持隐藏（onGameUIShown 已默认隐藏）
-                int selfSeat = engine.getClient().selfType;
-                cardDetailPanel.setSurrenderVisible(selfSeat >= 0 && selfSeat < 7);
-                pendingReplays.clear();
-                duelEndHandling = false;
-                break;
-            case SIDING:
-                showDeckEditorView();              // 打开卡组编辑器
-                if (deckEditorManager != null) {
-                    deckEditorManager.enterSideMode();  // 记录替换前张数并允许编辑
-                }
-                break;
-            case DUEL_END:
-                cardDetailPanel.closeGameButtons();
-                duelEndHandling = true;
-                if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
-                if (resultDialog != null) {
-                    resultDialog.dismiss();
-                    resultDialog = null;
-                }
-                if (engine != null) engine.disconnect();
-                // 顺序：先处理通讯发来的录像（保存/取消），全部完成后再弹「决斗结束」对话框
-                scheduleReplayProcessing();
-                break;
-            case DISCONNECTED:
-                if (duelEndHandling) break; // 决斗结束流程已接管返回逻辑，避免重复
-                returnToLanMain(isGameStarted ? "与服务器连接已断开" : null);
-                break;
-        }
-    }
-
-    @Override
-    public void onFieldChanged() {
-        fieldCtl.invalidate();
-        runOnUiThread(() -> topInfoManager.updateCardCountDisplay(engine.getField()));
-    }
-
-    @Override
-    public void onPlayerInfoUpdated(int player) {
-        runOnUiThread(() -> {
-            // player 为本地视角索引（0=我方）；playerInfos 按座位号存储（STOC_HS_PLAYER_ENTER），
-            // 我方名称取 selfType 座位、对方取另一座位（1v1），越界座位回退默认名
-            int selfSeat = engine.getClient().selfType;
-            int seat = (player == 0) ? selfSeat : (selfSeat ^ 1);
-            GameEngine.PlayerInfo info = (seat >= 0 && seat < engine.playerInfos.length)
-                    ? engine.playerInfos[seat] : null;
-            GameField.PlayerField pf = engine.getField().players[player];
-            String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
-            String name = (info == null || info.name.isEmpty()) ? defaultName : info.name;
-            topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
-            topInfoManager.updateLpBars(engine.getField());
-            topInfoManager.updateCardCountDisplay(engine.getField());
-        });
-    }
-
-    @Override
-    public void onPhaseChanged(int phase) {
-        runOnUiThread(() -> {
-            isMyTurn = (engine.getField().currentPlayer == 0);
-            topInfoManager.updateTurn(engine.getField().turnCount, isMyTurn);
-            fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
-            // case 101：阶段文字跟随通讯切换（DuelPhase → showcardcode 4~9）
-            int textCode = phaseTextCode(phase);
-            if (textCode > 0) specEffect().showText(textCode);
-        });
-    }
-
-    /**
-     * MSG_NEW_TURN（对齐 duelclient.cpp L2865-2877）：
-     * 回合方切换的第一时间同步 LPBarFrame 彩色/灰色（drawing.cpp L996-1003），
-     * 并显示左侧面板的三个时点按钮、刷新其按下态
-     */
-    @Override
-    public void onTurnStarted(int player) {
-        runOnUiThread(() -> {
-            // player 为本地视角索引（GameEngine.onNewTurn 已做 localPlayer 转换）：0=我方回合
-            isMyTurn = (player == 0);
-            topInfoManager.updateTurn(engine.getField().turnCount, isMyTurn);
-            if (cardDetailPanel != null) cardDetailPanel.showChainButtons();
-        });
-    }
-
-    @Override
-    public void onChatReceived(int playerType, String message) {
-        runOnUiThread(() -> fieldCtl.appendChat(playerType, message));
-    }
+    // === 决斗场内联交互（保留在门面：由卡片详情面板/聊天 UI 等直接调用的公共入口） ===
 
     /**
      * 聊天开关（对齐 gframe event_handler.cpp BUTTON_CHATTING）：
@@ -1047,126 +760,6 @@ public class YGOProActivity extends AppCompatActivity implements
                 }
             });
         }
-    }
-
-    @Override
-    public void onSelectRequired(int selectType, ByteBuffer data) {
-        runOnUiThread(() -> {
-            // 结束阶段按钮仅在通讯允许进入 EP 时有效：
-            // 空闲指令(11)/战斗指令(10) 路径内会按指令可用性重新启用；其余请求一律隐藏
-            fieldCtl.setEpButtonAllowed(selectType == 10 || selectType == 11);
-            cardDetailPanel.setSelectType(selectType);
-            ShowDialogUtil showDialogUtil = getDialogUtil();
-            switch (selectType) {
-                case 0:
-                    showDialogUtil.showHandSelectDialog();
-                    break;
-                case 1:
-                    showDialogUtil.showTPSelectDialog();
-                    break;
-                case 10:
-                    showDialogUtil.showBattleCmdDialog(data);
-                    break;
-                case 11:
-                    showDialogUtil.showIdleCmdDialog(data);
-                    break;
-                case 12:
-                    showDialogUtil.showEffectYnDialog(data);
-                    break;
-                case 13:
-                    showDialogUtil.showYesNoDialog(data);
-                    break;
-                case 14:
-                    showDialogUtil.showOptionDialog(data);
-                    break;
-                case 15:
-                    showDialogUtil.showCardSelectDialog(data);
-                    break;
-                case 16:
-                    showDialogUtil.showChainSelectDialog(data);
-                    break;
-                case 18:
-                    // 对齐 gframe MSG_SELECT_PLACE：先按 chkMAutoPos/chkSTAutoPos 尝试自动放置，失败再弹选择框
-                    if (!fieldCtl.tryAutoPlaceSelect()) {
-                        showDialogUtil.showPlaceSelectDialog(false);
-                    }
-                    break;
-                case 19:
-                    showDialogUtil.showPositionSelectDialog(data);
-                    break;
-                case 20:
-                    showDialogUtil.showTributeSelectDialog(data);
-                    break;
-                case 21:
-                    showDialogUtil.showSortChainDialog(data);
-                    break;
-                case 22:
-                    showDialogUtil.showCounterSelectDialog(data);
-                    break;
-                case 23:
-                    showDialogUtil.showSumSelectDialog(data);
-                    break;
-                case 24:
-                    showDialogUtil.showPlaceSelectDialog(true);
-                    break;
-                case 25:
-                    showDialogUtil.showSortCardDialog(data);
-                    break;
-                case 26:
-                    showDialogUtil.showUnselectCardDialog(data);
-                    break;
-                case 27:
-                    showDialogUtil.showConfirmCardsDialog(data);
-                    break;
-                case 140:
-                    showDialogUtil.showAnnounceRaceDialog(data);
-                    break;
-                case 141:
-                    showDialogUtil.showAnnounceAttribDialog(data);
-                    break;
-                case 142:
-                    showDialogUtil.showAnnounceCardDialog(data);
-                    break;
-                case 143:
-                    showDialogUtil.showAnnounceNumberDialog(data);
-                    break;
-                default:
-                    Log.w(TAG, "Unhandled select type: " + selectType);
-                    break;
-            }
-        });
-    }
-
-    @Override
-    public void onDuelResult(int winner, int reason) {
-        topInfoManager.stopTimer();
-        runOnUiThread(() -> {
-            boolean selfWon = winner != 2 && engine.isSelfSide(winner);
-            int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
-                    : (selfWon ? SpecEffectOverlay.TEXT_YOU_WIN
-                       : SpecEffectOverlay.TEXT_YOU_LOSE);
-            // 对齐 duelclient.cpp MSG_WIN："[X] 原因" 前缀里的 X 是【败方】昵称
-            //（duelclient.cpp STOC_DUEL_START：hostname=我方 self、clientname=对方；
-            //  LocalPlayer(winner)==0 即我方胜 → 用 clientname(对方=败者)；否则我方负 → 用 hostname(我方=败者)）。
-            // 之前误传胜者名，后攻时表现为一胜一负名字对调。playerDisplayName(0)=我方、(1)=对方。
-            String vicName = (winner == 2) ? null
-                    : playerDisplayName(selfWon ? 1 : 0);
-            specEffect().showWinText(code, reason, vicName);
-
-        });
-    }
-
-    /**
-     * 取本地视角玩家（0=我方，1=对方）的显示名，复用 onPlayerInfoUpdated 的座位映射逻辑，
-     * 用于 MSG_WIN 胜利说明的 "[胜者名] 原因" 前缀（对齐 duelclient.cpp L1586-1599）
-     */
-    private String playerDisplayName(int localIndex) {
-        int selfSeat = engine.getClient().selfType;
-        int seat = (localIndex == 0) ? selfSeat : (selfSeat ^ 1);
-        GameEngine.PlayerInfo info = (seat >= 0 && seat < engine.playerInfos.length)
-                ? engine.playerInfos[seat] : null;
-        String defaultName = (localIndex == 0) ? Constants.PlayerName : "Opponent";
-        return (info == null || info.name.isEmpty()) ? defaultName : info.name;
     }
 
     /**
@@ -1189,97 +782,6 @@ public class YGOProActivity extends AppCompatActivity implements
                 .setCenterInView(layoutGameRight)
                 .setCancelable(false);
         dialog.show();
-    }
-
-    /**
-     * tag 模式队友请求投降（对齐 STOC_TEAMMATE_SURRENDER + sysString 1355）：
-     * 弹出询问框，本方同意后再次发送 CTOS_SURRENDER，
-     * 服务器（tag_duel.cpp Surrender）检测到双方均投降才会判定 MSG_WIN
-     */
-    @Override
-    public void onTeammateSurrenderRequest() {
-        if (isFinishing() || isDestroyed()) return;
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setMessage(mStringManager.getSystemString(1355, "投降(1/2)"))
-                .setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText(mStringManager.getSystemString(1213, "是"))
-                .setNegativeButtonText(mStringManager.getSystemString(1214, "否"))
-                .setPositiveButton(v -> {
-                    if (engine != null) engine.sendSurrender();
-                })
-                .setNegativeButton(v -> { /* 拒绝：保持对局，双方未全部同意，服务器不会判定投降 */ })
-                .setCenterInView(layoutGameRight)
-                .setCancelable(false);
-        dialog.show();
-    }
-
-    @Override
-    public void onHintMessage(String hint) {
-        runOnUiThread(() -> fieldCtl.showHint(hint, 2000));
-    }
-
-    @Override
-    public void onDuelHint(String hint) {
-        runOnUiThread(() -> fieldCtl.showDuelHint(hint));
-    }
-
-    @Override
-    public void onDuelHintHide() {
-        runOnUiThread(() -> fieldCtl.hideDuelHint());
-    }
-
-    @Override
-    public void onReplayData(byte[] data) {
-        Log.i(TAG, "Replay data received, size=" + data.length);
-        runOnUiThread(() -> {
-            pendingReplays.add(data);
-            // 决斗结束流程中通讯仍在补发录像：重置等待窗口，确保队列收全后再开始处理
-            if (duelEndHandling) {
-                scheduleReplayProcessing();
-            }
-        });
-    }
-
-    @Override
-    public void onTimeLimitUpdate(int player, int leftTime) {
-        runOnUiThread(() -> topInfoManager.onTimeLimitUpdate(player, leftTime, engine.getGameTimeLimit()));
-    }
-
-    @Override
-    public void onChainAnimation(int code, int controler, int location, int sequence) {
-        runOnUiThread(() -> {
-            fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500);
-            specEffect().showActivate(code);          // case 1：发动卡片大图
-        });
-    }
-
-    @Override
-    public void onSummonAnimation(int code, int summonType) {
-        runOnUiThread(() -> {
-            if (summonType == GameEngine.SUMMON_SPECIAL) {
-                specEffect().showSpecialSummon(code); // case 5：特殊召唤，放大 + 淡入
-            } else {
-                specEffect().showSummon(code);        // case 7：通常/反转召唤，翻面进入
-            }
-        });
-    }
-
-    @Override
-    public void onNegatedAnimation(int code) {
-        // case 3：效果无效（破坏被无效即"不会被破坏"），居中卡片 + 无效图标
-        runOnUiThread(() -> specEffect().showNegated(code));
-    }
-
-    @Override
-    public boolean isSpecEffectBusy() {
-        // 统一动画屏障的特效侧查询：直接读字段（不用 specEffect() 以免按需创建），
-        // 覆盖层未创建即视为空闲，供 GameEngine 判断居中特效是否仍在播放
-        return specEffectOverlay != null && specEffectOverlay.isBusy();
-    }
-
-    @Override
-    public void onHandResult(int myHand, int oppHand) {
-        runOnUiThread(() -> getDialogUtil().onHandResult(myHand, oppHand));
     }
 
     public String getCardDisplayName(int code) {
@@ -1317,151 +819,10 @@ public class YGOProActivity extends AppCompatActivity implements
     }
 
     /**
-     * 决斗结束提示框：仅显示「确定」按钮（TYPE_MESSAGE）。
-     * 弹窗时机已调整为：通讯发来的录像全部确认保存或取消之后（见 processPendingReplays），
-     * 点击确定后隐藏决斗 UI 并重新显示 LanModeDialog
-     */
-    private void showDuelEndDialog() {
-        if (isFinishing() || isDestroyed()) return;
-        YesOrNoDialog dialog = new YesOrNoDialog(this);
-        dialog.setMessage(mStringManager.getSystemString(1500, "決斗结束。"))
-                .setType(YesOrNoDialog.TYPE_MESSAGE)
-                .setPositiveButtonText(mStringManager.getSystemString(1211, "确定"))
-                .setPositiveButton(v -> returnToLanMain(null))
-                .setCenterInView(layoutGameRight)
-                .setCancelable(false);
-        dialog.show();
-    }
-
-    /**
-     * 延迟启动录像处理：先取消上一次调度，窗口内若有新录像到达（onReplayData）会再次重置，
-     * 直到通讯不再发送录像才真正开始逐个弹出录像保存对话框
-     */
-    private void scheduleReplayProcessing() {
-        mainHandler.removeCallbacks(duelEndReplayProcessor);
-        mainHandler.postDelayed(duelEndReplayProcessor, REPLAY_ARRIVAL_WAIT_MS);
-    }
-
-    /**
-     * 逐个处理通讯发来的录像：有待保存项则弹出录像保存对话框；
-     * 全部处理完毕（保存或取消跳过）后才弹出「决斗结束」对话框
-     */
-    private void processPendingReplays() {
-        // 防止延迟调度与队列内递归调用重叠执行
-        mainHandler.removeCallbacks(duelEndReplayProcessor);
-        if (isFinishing() || isDestroyed()) {
-            pendingReplays.clear();
-            return;
-        }
-        if (pendingReplays.isEmpty()) {
-            showDuelEndDialog();
-            return;
-        }
-        final byte[] replayData = pendingReplays.remove(0);
-        // 对齐 gframe duelclient.cpp STOC_REPLAY：勾选自动保存录像时不弹窗，
-        // 直接以录像开始时间命名自动保存（对应提示 1367）
-        if (AppsSettings.get().getIntSettings("chkAutoSaveReplay", 0) == 1) {
-            saveReplayFile(replayData, getReplayDefaultName(replayData), true);
-            mainHandler.post(this::processPendingReplays);
-            return;
-        }
-        replaySaveDialog = new ReplaySaveDialog(this);
-        replaySaveDialog.setDefaultName(getReplayDefaultName(replayData))
-                .setCenterInView(layoutGameRight)
-                .setOnReplayActionListener(new ReplaySaveDialog.OnReplayActionListener() {
-                    @Override
-                    public void onSave(String fileName) {
-                        saveReplayFile(replayData, fileName, false);
-                        mainHandler.post(() -> processPendingReplays());
-                    }
-
-                    @Override
-                    public void onCancel() {
-                        // 跳过当前录像，检查通讯是否还发来了其它录像文件
-                        mainHandler.post(() -> processPendingReplays());
-                    }
-                });
-        replaySaveDialog.show();
-    }
-
-    /**
-     * 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因，替代原来的 showResultDialog 弹窗。
-     * 回放为观战视角，约定 player 0 胜=YOU WIN、player 1 胜=YOU LOSE、player 2=平局；
-     * winner<0 表示回放自然播放完毕（无 MSG_WIN 判定），不显示胜负文字。
+     * 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因，委托 EngineCallbackDelegate 的居中特效层。
      */
     public void showReplayResult(int winner, int reason, String winnerName) {
-        if (winner < 0) return;
-        int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
-                : (winner == 0 ? SpecEffectOverlay.TEXT_YOU_WIN
-                   : SpecEffectOverlay.TEXT_YOU_LOSE);
-        specEffect().showWinText(code, reason, winnerName);
-    }
-
-    /**
-     * 从通讯发来的录像数据中解析默认文件名，
-     * 与 gframe duelclient.cpp STOC_REPLAY 一致：录像开始时间 %Y-%m-%d %H-%M-%S
-     */
-    private String getReplayDefaultName(byte[] data) {
-        try {
-            if (data == null || data.length < 24) return "_LastReplay";
-            ByteBuffer buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
-            int id = buf.getInt();
-            if (id != ReplayReader.REPLAY_ID_YRP1 && id != ReplayReader.REPLAY_ID_YRP2) {
-                return "_LastReplay";
-            }
-            buf.getInt(); // version
-            int flag = buf.getInt();
-            int seed = buf.getInt();
-            buf.getInt(); // datasize
-            int startTime = buf.getInt();
-            long ts = ((flag & ReplayReader.REPLAY_UNIFORM) != 0)
-                    ? Integer.toUnsignedLong(startTime)
-                    : Integer.toUnsignedLong(seed);
-            return new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US)
-                    .format(new Date(ts * 1000L));
-        } catch (Exception e) {
-            return "_LastReplay";
-        }
-    }
-
-    private void saveReplayFile(byte[] data, String fileName, boolean autoSave) {
-        String safeName = sanitizeReplayName(fileName);
-        try {
-            File dir = new File(AppsSettings.get().getReplayDir());
-            if (!dir.exists()) dir.mkdirs();
-            File file = new File(dir, safeName + Constants.YRP_FILE_EX);
-            FileOutputStream fos = new FileOutputStream(file);
-            try {
-                fos.write(data);
-                fos.flush();
-            } finally {
-                fos.close();
-            }
-            Log.i(TAG, "Replay saved: " + file.getAbsolutePath());
-            if (autoSave) {
-                // 对齐 gframe 自動保存提示（系统字符串 1367「リプレイ自動保存 %ls.yrp」）：
-                // 将 %ls 占位替换为实际保存的录像文件名
-                String template = mStringManager
-                        .getSystemString(1367, "リプレイ自動保存 %ls.yrp");
-                Toast.makeText(this, template.replace("%ls", safeName), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, mStringManager
-                        .getSystemString(1335, "保存成功"), Toast.LENGTH_SHORT).show();
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to save replay", e);
-            Toast.makeText(this, "录像保存失败: " + safeName, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private String sanitizeReplayName(String name) {
-        String n = (name == null) ? "" : name.trim();
-        if (n.toLowerCase(Locale.US).endsWith(Constants.YRP_FILE_EX)) {
-            n = n.substring(0, n.length() - Constants.YRP_FILE_EX.length());
-        }
-        n = n.replaceAll("[\\\\/:*?\"<>|]", "").trim();
-        if (n.isEmpty()) n = "_LastReplay";
-        return n;
+        if (engineCallback != null) engineCallback.showReplayResult(winner, reason, winnerName);
     }
 
     public void showHintMessage(String msg) {
@@ -1488,7 +849,7 @@ public class YGOProActivity extends AppCompatActivity implements
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mainHandler.removeCallbacks(duelEndReplayProcessor);
+        if (engineCallback != null) engineCallback.cancelReplayProcessing();
         DraggablePopupHelper.resetAllPositions(this);
         // 释放局域网三对话框，避免持有已销毁的窗口/上下文
         dismissAllLanDialogs();
@@ -1568,73 +929,5 @@ public class YGOProActivity extends AppCompatActivity implements
             duelLogDialog = new DuelLogDialog(this);
         }
         duelLogDialog.toggle();
-    }
-
-    // === 局域网三对话框导航 ===
-
-    private void showCreateHost(String nickname) {
-        if (createHostDialog == null) {
-            createHostDialog = new CreateHostDialog(this, this);
-            // 点击外部/返回键意外关闭建主界面时回到局域网主界面
-            createHostDialog.setOnDismissListener(() -> LanModeDialog.showLanModeDialog(this));
-        }
-        createHostDialog.setNickname(nickname);
-        if (createHostDialog.canReshow()) {
-            createHostDialog.reshow(dialogContainer);
-        } else if (!createHostDialog.isShowing()) {
-            createHostDialog.show(dialogContainer);
-        }
-    }
-
-    private void showPlayerWaiting(String nickname, boolean tagMode) {
-        if (playerWaitingDialog != null) {
-            playerWaitingDialog.hideForNavigation();
-        }
-        PlayerWaitingDialog dialog = new PlayerWaitingDialog(this, this);
-        setPlayerWaitingDialog(dialog);
-        dialog.setOnDismissListener(() -> getMainMenuDialog().restoreMainMenu());
-        dialog.show(dialogContainer);
-        String name = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
-        dialog.setPlayerName(0, name);
-        dialog.setTagPlayersVisible(tagMode);
-    }
-
-    private SpecEffectOverlay specEffectOverlay;
-
-    private SpecEffectOverlay specEffect() {
-        if (specEffectOverlay == null) {
-            specEffectOverlay = new SpecEffectOverlay(this);
-            // 特效队列排空 → 通知引擎重开消息闸门，实现「召唤/发动动画播完后再弹询问框」的串行序列
-            specEffectOverlay.setOnIdleListener(() -> {
-                if (engine != null) engine.notifySpecEffectIdle();
-            });
-        }
-        return specEffectOverlay;
-    }
-
-    /**
-     * MSG_NEW_PHASE 的 phase 値 → DrawSpec case 101 的 showcardcode（对齐 duelclient.cpp L2905-2929）：
-     * Draw→4, Standby→5, Main1→6, BattleStart→7, Main2→8, End→9；
-     * 战斗子阶段等无独立提示文字的相位返回 0（不显示阶段文字）
-     */
-    private int phaseTextCode(int phase) {
-        DuelPhase dp = DuelPhase.valueOf(phase);
-        if (dp == null) return 0;
-        switch (dp) {
-            case Draw:
-                return SpecEffectOverlay.TEXT_DRAW_PHASE;
-            case Standby:
-                return SpecEffectOverlay.TEXT_STANDBY_PHASE;
-            case Main1:
-                return SpecEffectOverlay.TEXT_MAIN_PHASE_1;
-            case BattleStart:
-                return SpecEffectOverlay.TEXT_BATTLE_PHASE;
-            case Main2:
-                return SpecEffectOverlay.TEXT_MAIN_PHASE_2;
-            case End:
-                return SpecEffectOverlay.TEXT_END_PHASE;
-            default:
-                return 0;
-        }
     }
 }

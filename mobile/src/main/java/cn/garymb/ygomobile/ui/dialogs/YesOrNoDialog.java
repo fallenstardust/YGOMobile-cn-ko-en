@@ -482,6 +482,20 @@ public class YesOrNoDialog {
     }
 
     /**
+     * MSG_SELECT_YESNO 静态工厂（供 ShowDialogUtil.showYesNoDialog 委托调用）：
+     * duelclient.cpp L1902-1910 player(1) + desc(4)，desc 走 GetDesc（系统字符串或卡片脚本提示文字），
+     * 再交既有 showYesNoQuery 弹出是/否确认窗（是=1 否=0）。
+     */
+    public static void showYesNoDialog(YGOProActivity activity, ByteBuffer data) {
+        int descId = 0;
+        if (data != null && data.remaining() >= 5) {
+            data.get(); // selecting_player
+            descId = data.getInt();
+        }
+        showYesNoQuery(activity, DataManager.get().getDesc(descId, "是否发动效果？"));
+    }
+
+    /**
      * 对齐 duelclient.cpp L49：select_effectyn_id{95,96,97,218,219,220}。
      * 这些 desc 对应的系统字符串各含单个 %ls，用卡名替换。
      */
