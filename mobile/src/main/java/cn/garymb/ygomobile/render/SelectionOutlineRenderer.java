@@ -157,13 +157,21 @@ final class SelectionOutlineRenderer {
     }
 
     /**
-     * 场上/手牌直接选择模式：为每张 is_selectable 的卡片绘制黄色轮廓线，
-     * 未选中(is_selected=false)为虚线行进、已选中为实线（对齐 gframe stipple=!is_selected）
+     * 为每张 is_selectable 的卡片绘制黄色蚂蚁线轮廓（取代原金色脉冲外框），未选中为虚线行进、
+     * 已选中为实线（对齐 gframe stipple=!is_selected）。覆盖两个来源：
+     * · selectableCards —— 场上/手牌直接选择与会话框（CardSelectDialog）候选同步标记；
+     * · activatableCards —— 连锁询问（MSG_SELECT_CHAIN“是否发动”）的可发动卡，
+     * 含手卡/场上/墓地/卡组/额外堆叠（ChainSelectController 已标 is_selectable）
      */
     void drawCardSelectOutlines(GameField f) {
-        List<GameField.ClientCard> list = f.selectableCards;
-        if (list == null || list.isEmpty()) return;
         float phase = marchPhase();
+        drawSelectOutlineList(f.selectableCards, phase, null);
+        drawSelectOutlineList(f.activatableCards, phase, f.selectableCards);
+    }
+
+    private void drawSelectOutlineList(List<GameField.ClientCard> list, float phase,
+                                       List<GameField.ClientCard> skip) {
+        if (list == null) return;
         for (int i = 0, n = list.size(); i < n; i++) {
             GameField.ClientCard c;
             try {
@@ -172,6 +180,7 @@ final class SelectionOutlineRenderer {
                 continue;
             }
             if (c == null || !c.is_selectable) continue;
+            if (skip != null && skip.contains(c)) continue;
             if (c.curAlpha <= 2f) continue;
             try {
                 drawCardMarchingOutline(c, c.is_selected, phase);

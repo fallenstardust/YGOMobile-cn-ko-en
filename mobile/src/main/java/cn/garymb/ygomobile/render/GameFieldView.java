@@ -843,7 +843,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         if (c.is_selected) return 0xFFFFFF00;
         if (c.is_highlighting) return 0xFF00FFFF;
         if (c.is_showequip || c.is_showtarget || c.is_showchaintarget) return 0xFFFF4444;
-        if (c.is_selectable) return 0xFFFFD700;
+        // is_selectable 不再绘制金色脉冲外框：候选/可发动高亮统一改由
+        // SelectionOutlineRenderer.drawCardSelectOutlines 的黄色蚂蚁线轮廓承担
         return 0;
     }
 

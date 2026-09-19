@@ -557,8 +557,42 @@ public class GameEngine {
      */
     public void enqueueGameMsg(int msgType, ByteBuffer data) {
         data.order(ByteOrder.LITTLE_ENDIAN);
+        // 对齐 duelclient.cpp L1298-1303：除 MSG_RETRY 外每条消息均缓存一份快照，
+        // 供服务端下发 RETRY（无效应答）后重放重建选择 UI（服务端不会重发原 SELECT）
+        if (msgType != GameMessage.Retry.value()) {
+            ByteBuffer snapshot = data.duplicate();
+            byte[] body = new byte[snapshot.remaining()];
+            snapshot.get(body);
+            lastGameMsgType = msgType;
+            lastGameMsgBody = body;
+            retryReplayCount = 0;
+        }
         // 入队后由闸门串行派发：动画消息会关闭闸门，暂缓后续消息（对齐 C++ WaitFrameSignal 阻塞语义）
         pendingMsgs.offer(() -> dispatchGameMsg(msgType, data));
+        drainPendingMsgs();
+    }
+
+    /** 上一条非 RETRY 游戏消息缓存（对齐 duelclient.cpp last_successful_msg）与重放次数守卫 */
+    private int lastGameMsgType = -1;
+    private byte[] lastGameMsgBody;
+    private int retryReplayCount = 0;
+
+    /**
+     * 收到 MSG_RETRY 后重放上一条消息（对齐 duelclient.cpp L1351-1404 的
+     * ClientAnalyze(last_successful_msg)）：重建被无效应答打断的选择 UI。
+     * 连续重放设上限防“自动非法应答 ↔ 服务端 RETRY”热循环，收到新消息即清零。
+     */
+    public void replayLastGameMsg() {
+        if (lastGameMsgType < 0 || lastGameMsgBody == null) return;
+        if (++retryReplayCount > 3) {
+            Log.e(TAG, "replayLastGameMsg: retry replay limit exceeded, give up (msgType="
+                    + lastGameMsgType + ")");
+            return;
+        }
+        ByteBuffer buf = ByteBuffer.wrap(lastGameMsgBody);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        // 直接入队但不刷新缓存（保留原快照以便再次重放），故不经 enqueueGameMsg 的缓存分支
+        pendingMsgs.offer(() -> dispatchGameMsg(lastGameMsgType, buf));
         drainPendingMsgs();
     }
 

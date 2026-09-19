@@ -26,6 +26,44 @@ class CardSelectController {
         this.util = util;
     }
 
+    /** 弹窗弹出期间被标记 is_selectable 的场上卡（蚂蚁线高亮同步来源），dismiss 时精确还原 */
+    private final List<GameField.ClientCard> dialogMarkedCards = new ArrayList<>();
+
+    /**
+     * 选择类 CardSelectDialog 弹出时同步高亮场上/手卡候选：弹窗是本端的选择 UI，
+     * 但候选卡在对局画面上也应显示黄色蚂蚁线（SelectionOutlineRenderer 按
+     * selectableCards + is_selectable 绘制）。仅标记本次新增，dialogMarkedCards
+     * 记录供 dismiss 精确还原，不连锁/场上直接选择的既有状态
+     */
+    private void markFieldCardsForDialog(List<CardSelectDialog.CardItem> items) {
+        GameEngine eng = util.engine();
+        GameField f = (eng != null) ? eng.getField() : null;
+        if (f == null || items == null) return;
+        for (CardSelectDialog.CardItem it : items) {
+            GameField.ClientCard card = f.getCard(eng.localPlayer(it.controler),
+                    it.location, it.sequence, it.subSeq);
+            if (card == null || card.is_selectable) continue;
+            card.is_selectable = true;
+            card.is_selected = false;
+            f.selectableCards.add(card);
+            dialogMarkedCards.add(card);
+        }
+    }
+
+    /** 对话框关闭：仅撤销 markFieldCardsForDialog 打的标记并从渲染源移除 */
+    private void clearFieldCardsForDialog() {
+        if (dialogMarkedCards.isEmpty()) return;
+        GameEngine eng = util.engine();
+        GameField f = (eng != null) ? eng.getField() : null;
+        for (GameField.ClientCard c : dialogMarkedCards) {
+            if (c != null) {
+                c.is_selectable = false;
+                if (f != null) f.selectableCards.remove(c);
+            }
+        }
+        dialogMarkedCards.clear();
+    }
+
     /**
      * 场上分流诊断日志——候选卡仍在手牌/墓地等以外的区域、或字段解析失败导致回退弹窗时，
      * 每个 return false 分支记录原因与卡片详情（logcat 过滤 "FieldSelect" 可定位失败守卫）
@@ -221,6 +259,7 @@ class CardSelectController {
             return;
         }
         if (tryFieldCardSelect(items, min, max, cancelable != 0)) return;
+        markFieldCardsForDialog(items);
         final List<CardSelectDialog.CardItem> cardInfos = items;
         CardSelectDialog dialog = new CardSelectDialog(util.activity, util.imageLoader);
         util.panel().setCardSelectDialog(dialog);
@@ -249,6 +288,7 @@ class CardSelectController {
                     }
                 })
                 .setOnDismissListener(() -> {
+                    clearFieldCardsForDialog();
                     util.panel().hideCancelOrFinishButton();
                     util.panel().setCardSelectDialog(null);
                 })
@@ -283,6 +323,7 @@ class CardSelectController {
             return;
         }
         if (tryFieldCardSelect(items, min, max, cancelable != 0)) return;
+        markFieldCardsForDialog(items);
         final List<CardSelectDialog.CardItem> cardInfos = items;
         CardSelectDialog dialog = new CardSelectDialog(util.activity, util.imageLoader);
         util.panel().setCardSelectDialog(dialog);
@@ -311,6 +352,7 @@ class CardSelectController {
                     }
                 })
                 .setOnDismissListener(() -> {
+                    clearFieldCardsForDialog();
                     util.panel().hideCancelOrFinishButton();
                     util.panel().setCardSelectDialog(null);
                 })
@@ -363,6 +405,8 @@ class CardSelectController {
         }
         // 候选全在场/手卡：不弹窗，场上蚂蚁线直接选择（duelclient.cpp L2404-2405 分流真值）
         if (tryFieldSumSelect(mustCards, items, selectMode, sumVal, min, max)) return;
+        markFieldCardsForDialog(mustCards);
+        markFieldCardsForDialog(items);
         final List<CardSelectDialog.CardItem> cardInfos = items;
         final int fMustCount = mustCount;
         CardSelectDialog dialog = new CardSelectDialog(util.activity, util.imageLoader);
@@ -393,6 +437,7 @@ class CardSelectController {
                     }
                 })
                 .setOnDismissListener(() -> {
+                    clearFieldCardsForDialog();
                     util.panel().hideCancelOrFinishButton();
                     util.panel().setCardSelectDialog(null);
                 })
@@ -492,6 +537,8 @@ class CardSelectController {
         }
         // 候选全在场/手：不弹窗，场上虚线/实线直接点选（duelclient.cpp L1985-2079 同 SELECT_CARD 分流）
         if (tryFieldUnselectCardSelect(items, count1, min, max, finishable, cancelable)) return;
+        // 仅可选段（count1）画蚂蚁线；已确认素材段（count2）在弹窗里预选中，场上不重复标记
+        markFieldCardsForDialog(items.subList(0, Math.min(count1, items.size())));
         boolean[] preSelected = new boolean[items.size()];
         for (int i = count1; i < items.size(); i++) {
             preSelected[i] = true;
@@ -526,6 +573,7 @@ class CardSelectController {
                     }
                 })
                 .setOnDismissListener(() -> {
+                    clearFieldCardsForDialog();
                     util.panel().hideCancelOrFinishButton();
                     util.panel().setCardSelectDialog(null);
                 })

@@ -48,6 +48,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private int totalSteps = 0;
     private int skipStep = 0;
     private int skipTurn = 0;
+    /** undo/restart 重放时目标落点步（在重置 currentStep 前捕获），landing 后写回 currentStep。 */
+    private volatile int restartTargetStep = 0;
+    private int restartFromStep = 0;
     private boolean isSkipping = false;
     private byte[] originalReplayBytes = null;
 
@@ -213,6 +216,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
                 if (pauseable && skipStep > 0) {
                     skipStep--;
+                    if (skipStep == 0) {
+                        // 上一步回退：已快进到目标步，停在该步（步进模式）
+                        isSkipping = false;
+                        currentStep = restartFromStep;
+                        pause();
+                        notifyField();
+                    }
                     continue;
                 }
 
@@ -281,8 +291,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         setupInitialField();
         
         currentStep = 0;
-        skipStep = Math.max(0, currentStep - 1);
-        
+        skipStep = Math.max(0, restartTargetStep);
+        restartFromStep = skipStep;
+        restartTargetStep = 0;
+
         if (skipStep == 0) {
             isSkipping = false;
             pause();
@@ -871,6 +883,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         if (skipStep > 0 || currentStep == 0) {
             return;
         }
+        // 回到上一步：捕获当前步-1 作为重放落点，从头重放到该步后暂停
+        restartTargetStep = currentStep - 1;
         isRestarting = true;
         resume();
     }
@@ -884,6 +898,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     }
 
     public void restart() {
+        restartTargetStep = 0;
         isRestarting = true;
         resume();
     }

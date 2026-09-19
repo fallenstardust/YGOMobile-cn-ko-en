@@ -6,9 +6,9 @@ import android.util.Log;
 import java.io.File;
 
 import cn.garymb.ygomobile.GameApplication;
-import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.network.server.LanGameServer;
 
 /**
  * === Connection ===
@@ -21,8 +21,73 @@ public class ConnectionManager {
 
     private final GameEngine engine;
 
+    /** 纯 Java 局域网主机（建主/残局/人机共用），懒启动、断线时停止。 */
+    private LanGameServer localServer;
+
     public ConnectionManager(GameEngine engine) {
         this.engine = engine;
+        this.botJoinTimeout = () -> {
+            LanGameServer server = localServer;
+            if (server == null || !server.isRunning()) {
+                return;
+            }
+            if (!server.isSecondPlayerJoined() && engine.listener != null) {
+                engine.listener.onHintMessage("AI 连接失败：WindBot 未在预期时间内加入");
+            }
+        };
+    }
+
+    /**
+     * 启动（或复用）纯 Java 局域网主机。失败时经 listener 显式反馈，不再静默死线程。
+     *
+     * @param port  监听端口
+     * @param scene 触发场景（用于提示文案）
+     * @return 主机已就绪返回 true
+     */
+    private boolean ensureLocalServer(int port, String scene) {
+        LanGameServer server = localServer;
+        if (server == null) {
+            server = new LanGameServer();
+            localServer = server;
+        }
+        if (server.isRunning()) {
+            return true;
+        }
+        boolean started;
+        try {
+            started = server.start(port);
+        } catch (Throwable t) {
+            Log.e(TAG, "启动局域网主机异常: " + scene, t);
+            started = false;
+        }
+        if (!started) {
+            final String reason = "建立主机失败: 决斗引擎不可用或端口被占用";
+            Log.w(TAG, reason + " (" + scene + ")");
+            engine.setState(GameEngine.GameState.DISCONNECTED);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) {
+                    engine.listener.onHintMessage(reason);
+                }
+            });
+        }
+        return started;
+    }
+
+    /** AI 加入超时（毫秒）：启动 WindBot 后若在此时长内第二玩家仍未入座则提示失败。 */
+    private static final long BOT_JOIN_TIMEOUT_MS = 25000L;
+
+    /** AI 加入超时任务（在构造函数中初始化，以引用已赋值的 engine）。 */
+    private final Runnable botJoinTimeout;
+
+    /** 启动/重置 AI 加入超时定时器（主线程）。 */
+    private void scheduleBotJoinTimeout() {
+        engine.mainHandler.removeCallbacks(botJoinTimeout);
+        engine.mainHandler.postDelayed(botJoinTimeout, BOT_JOIN_TIMEOUT_MS);
+    }
+
+    /** 取消未触发的 AI 加入超时（正常加入或断线时）。 */
+    private void cancelBotJoinTimeout() {
+        engine.mainHandler.removeCallbacks(botJoinTimeout);
     }
 
     public void connectToServer(String host, int port, boolean createGame,
@@ -52,22 +117,32 @@ public class ConnectionManager {
         engine.isHost = true;
         engine.maxMatch = 1;
         new Thread(() -> {
-            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
-            if (!serverStarted) {
-                Log.w(TAG, "NetServer may already be running");
-            }
-            LanDiscoveryManager.acquireHostMulticastLock();
-            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
-            boolean connected = engine.client.connect("127.0.0.1", 7911);
-            if (!connected) {
+            try {
+                if (!ensureLocalServer(7911, "局域网建主")) {
+                    return;
+                }
+                LanDiscoveryManager.acquireHostMulticastLock();
+                try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
+                boolean connected = engine.client.connect("127.0.0.1", 7911);
+                if (!connected) {
+                    engine.setState(GameEngine.GameState.DISCONNECTED);
+                    engine.mainHandler.post(() -> {
+                        if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器");
+                    });
+                    return;
+                }
+                engine.client.sendPlayerInfo(engine.playerName);
+                engine.client.sendCreateGame(0, 0, 0, 5,
+                        false, false,
+                        8000, 5, 1, 0,
+                        "Local Game", "");
+            } catch (Throwable t) {
+                Log.e(TAG, "建立主机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
-                return;
+                engine.mainHandler.post(() -> {
+                    if (engine.listener != null) engine.listener.onHintMessage("建立主机失败: " + t.getMessage());
+                });
             }
-            engine.client.sendPlayerInfo(engine.playerName);
-            engine.client.sendCreateGame(0, 0, 0, 5,
-                    false, false,
-                    8000, 5, 1, 0,
-                    "Local Game", "");
         }, "LocalServer").start();
     }
 
@@ -80,22 +155,32 @@ public class ConnectionManager {
         engine.isHost = true;
         engine.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
         new Thread(() -> {
-            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
-            if (!serverStarted) {
-                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
-            }
-            LanDiscoveryManager.acquireHostMulticastLock();
-            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
-            boolean connected = engine.client.connect("127.0.0.1", 7911);
-            if (!connected) {
+            try {
+                if (!ensureLocalServer(7911, "局域网建主")) {
+                    return;
+                }
+                LanDiscoveryManager.acquireHostMulticastLock();
+                try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
+                boolean connected = engine.client.connect("127.0.0.1", 7911);
+                if (!connected) {
+                    engine.setState(GameEngine.GameState.DISCONNECTED);
+                    engine.mainHandler.post(() -> {
+                        if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器");
+                    });
+                    return;
+                }
+                engine.client.sendPlayerInfo(engine.playerName);
+                engine.client.sendCreateGame(lflist, rule, mode, duelRule,
+                        noCheckDeck, noShuffleDeck,
+                        startLp, startHand, drawCount, timeLimit,
+                        roomName, password);
+            } catch (Throwable t) {
+                Log.e(TAG, "建立主机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
-                return;
+                engine.mainHandler.post(() -> {
+                    if (engine.listener != null) engine.listener.onHintMessage("建立主机失败: " + t.getMessage());
+                });
             }
-            engine.client.sendPlayerInfo(engine.playerName);
-            engine.client.sendCreateGame(lflist, rule, mode, duelRule,
-                    noCheckDeck, noShuffleDeck,
-                    startLp, startHand, drawCount, timeLimit,
-                    roomName, password);
         }, "LocalServer").start();
     }
 
@@ -116,21 +201,31 @@ public class ConnectionManager {
         });
         engine.isBotMode = false;
         new Thread(() -> {
-            boolean serverStarted = IrrlichtBridge.startGameServer(7911);
-            if (!serverStarted) {
-                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
-            }
-            try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
-            boolean connected = engine.client.connect("127.0.0.1", 7911);
-            if (!connected) {
+            try {
+                if (!ensureLocalServer(7911, "残局模式")) {
+                    return;
+                }
+                try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
+                boolean connected = engine.client.connect("127.0.0.1", 7911);
+                if (!connected) {
+                    engine.setState(GameEngine.GameState.DISCONNECTED);
+                    engine.mainHandler.post(() -> {
+                        if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器");
+                    });
+                    return;
+                }
+                engine.client.sendPlayerInfo(engine.playerName);
+                engine.client.sendCreateGame(0, 0, 1, 5,
+                        true, false,
+                        8000, 5, 1, 0,
+                        "Single Play", "");
+            } catch (Throwable t) {
+                Log.e(TAG, "启动残局失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
-                return;
+                engine.mainHandler.post(() -> {
+                    if (engine.listener != null) engine.listener.onHintMessage("启动残局失败: " + t.getMessage());
+                });
             }
-            engine.client.sendPlayerInfo(engine.playerName);
-            engine.client.sendCreateGame(0, 0, 1, 5,
-                    true, false,
-                    8000, 5, 1, 0,
-                    "Single Play", "");
         }, "SingleMode").start();
     }
 
@@ -140,42 +235,50 @@ public class ConnectionManager {
         engine.setState(GameEngine.GameState.CONNECTING);
 
         new Thread(() -> {
-            boolean serverStarted = IrrlichtBridge.startGameServer(port);
-            if (!serverStarted) {
-                Log.w(TAG, "NetServer may already be running, trying to connect anyway");
-            }
-            try { Thread.sleep(800); } catch (InterruptedException e) { /* ignore */ }
+            try {
+                if (!ensureLocalServer(port, "人机模式")) {
+                    return;
+                }
+                try { Thread.sleep(800); } catch (InterruptedException e) { /* ignore */ }
 
-            boolean connected = engine.client.connect(host, port);
-            if (!connected) {
+                boolean connected = engine.client.connect(host, port);
+                if (!connected) {
+                    engine.setState(GameEngine.GameState.DISCONNECTED);
+                    engine.mainHandler.post(() -> {
+                        if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器"); });
+                    return;
+                }
+                engine.client.sendPlayerInfo(engine.playerName);
+                engine.client.sendCreateGame(0, 0, 0, 5,
+                        true, false,
+                        8000, 5, 1, 0,
+                        "Bot Duel", "");
+
+                try { Thread.sleep(1500); } catch (InterruptedException e) { /* ignore */ }
+
+                String windbotArgs = "WindBotHost:" + host + " Port:" + port
+                        + " Name:WindBot"                    + (botCommand != null && !botCommand.isEmpty() ? " " + botCommand : "");
+                Log.i(TAG, "Launching WindBot: " + windbotArgs);
+
+                engine.mainHandler.post(() -> {
+                    try {
+                        Intent intent = new Intent();
+                        intent.putExtra("args", windbotArgs);
+                        intent.setAction("RUN_WINDBOT");
+                        GameApplication.get().sendBroadcast(intent);
+                        scheduleBotJoinTimeout();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to launch WindBot", e);
+                        if (engine.listener != null) engine.listener.onHintMessage("启动AI失败: " + e.getMessage());
+                    }
+                });
+            } catch (Throwable t) {
+                Log.e(TAG, "启动人机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
                 engine.mainHandler.post(() -> {
-                    if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器"); });
-                return;
+                    if (engine.listener != null) engine.listener.onHintMessage("启动人机失败: " + t.getMessage());
+                });
             }
-            engine.client.sendPlayerInfo(engine.playerName);
-            engine.client.sendCreateGame(0, 0, 0, 5,
-                    true, false,
-                    8000, 5, 1, 0,
-                    "Bot Duel", "");
-
-            try { Thread.sleep(1500); } catch (InterruptedException e) { /* ignore */ }
-
-            String windbotArgs = "WindBotHost:" + host + " Port:" + port
-                    + " Name:WindBot"                    + (botCommand != null && !botCommand.isEmpty() ? " " + botCommand : "");
-            Log.i(TAG, "Launching WindBot: " + windbotArgs);
-
-            engine.mainHandler.post(() -> {
-                try {
-                    Intent intent = new Intent();
-                    intent.putExtra("args", windbotArgs);
-                    intent.setAction("RUN_WINDBOT");
-                    GameApplication.get().sendBroadcast(intent);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to launch WindBot", e);
-                    if (engine.listener != null) engine.listener.onHintMessage("启动AI失败: " + e.getMessage());
-                }
-            });
         }, "BotDuel").start();
     }
 
@@ -212,6 +315,7 @@ public class ConnectionManager {
                     intent.putExtra("args", windbotArgs);
                     intent.setAction("RUN_WINDBOT");
                     GameApplication.get().sendBroadcast(intent);
+                    scheduleBotJoinTimeout();
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to launch WindBot", e);
                     if (engine.listener != null) engine.listener.onHintMessage("启动AI失败: " + e.getMessage());
@@ -251,12 +355,16 @@ public class ConnectionManager {
 
     public void disconnect() {
         engine.client.disconnect();
+        cancelBotJoinTimeout();
         if (engine.isHost) {
-            try {
-                IrrlichtBridge.stopGameServer();
-                Log.i(TAG, "Local game server stopped");
-            } catch (Exception e) {
-                Log.w(TAG, "Failed to stop local game server", e);
+            LanGameServer server = localServer;
+            if (server != null) {
+                try {
+                    server.stopServer();
+                    Log.i(TAG, "Local game server stopped");
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to stop local game server", e);
+                }
             }
         }
         LanDiscoveryManager.releaseHostMulticastLock();

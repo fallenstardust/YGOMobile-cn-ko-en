@@ -1,2 +1,2 @@
-include ':libcore', ':mobile', ':libygo'
+include ':libcore', ':mobile', ':libygo', ':libygoengine'
 //include ':app'

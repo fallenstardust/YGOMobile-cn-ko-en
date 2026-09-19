@@ -88,6 +88,8 @@ repositories {
 dependencies {
     implementation 'junit:junit:4.12'
     implementation project(':libcore')
+    // 薄 JNI 决斗引擎 libygoengine.so（局域网主机 / 残局 / 人机 复用）
+    implementation project(':libygoengine')
     //support-annotations，support-vector-drawable
 //    implementation 'com.android.support:appcompat-v7:' + rootProject.ext.supportVersion
 //    implementation 'com.android.support:recyclerview-v7:' + rootProject.ext.supportVersion

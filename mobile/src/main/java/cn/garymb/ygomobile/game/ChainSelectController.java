@@ -72,8 +72,8 @@ class ChainSelectController {
             // duelclient.cpp L2133-2134：LOCATION_OVERLAY 连锁项 → panelmode（overlay 单元无法在场上单独点击）
             if ((loc & 0x80) != 0) panelmode = true;
 
-            // 填充场上卡片状态（对齐 duelclient.cpp L2106-2135）：把可发动卡片高亮为 is_selectable
-            //（GameFieldView 渲染黄色脉冲）并挂 COMMAND_ACTIVATE，使玩家点击高亮卡片经
+            // 填充场上卡片状态（对齐 duelclient.cpp L2106-2135）：把可发动卡片标记 is_selectable
+            //（GameFieldView 经 activatableCards 绘制黄色蚂蚁线轮廓）并挂 COMMAND_ACTIVATE，使玩家点击高亮卡片经
             // onCardClick→CmdMenuDialog 发动；连锁发动响应仅发送连锁项索引（index=i）
             if (field != null && e != null) {
                 int localCtrl = e.localPlayer(ctrl & 1);
@@ -177,7 +177,7 @@ class ChainSelectController {
             return;
         }
 
-        // 非强制连锁：弹出 wQuery 式是/否询问窗（stQMessage 文案），场上可发动卡片已高亮（黄色脉冲）。
+        // 非强制连锁：弹出 wQuery 式是/否询问窗（stQMessage 文案），场上可发动卡片已标 is_selectable（蚂蚁线轮廓）。
         String queryText = selectTrigger
                 ? util.sysText(222, "是否要发动诱发类效果？") + "\n" + util.sysText(223, "稍后将询问其他可以发动的效果。")
                 : util.sysText(203, "是否要进行连锁？");

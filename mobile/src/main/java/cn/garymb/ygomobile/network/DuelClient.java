@@ -857,6 +857,12 @@ public class DuelClient implements YGOProtocol {
         public void onTimeLimit(int player, int leftTime) {
             // 协议侧玩家索引统一转本地视角（0=我方），我方为后攻时倒计时也落入我方布局
             final int p = engine.localPlayer(player & 1);
+            // 对齐 duelclient.cpp L1091-1093：限时局收到 STOC_TIME_LIMIT 且轮到我方时立即回
+            // CTOS_TIME_CONFIRM——服务端 WaitforResponse 在限时把 state 置 CTOS_TIME_CONFIRM
+            // （single_duel.cpp L1480），包门控（netserver.cpp L417）会静默丢弃此后我方的一切
+            // CTOS_RESPONSE，直到 TimeConfirm 把 state 改回 CTOS_RESPONSE；漏发即表现为
+            // “操作一两个发动后卡死、无断线提示”（233 等开限时的服务器必现）
+            if (p == 0) engine.sendTimeConfirm();
             if (engine.field.dInfo.timeLimit <= 0) {
                 engine.field.dInfo.timeLimit = Math.max(engine.gameTimeLimit, leftTime);
             }

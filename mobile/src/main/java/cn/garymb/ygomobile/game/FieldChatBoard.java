@@ -93,6 +93,15 @@ class FieldChatBoard {
                 showEmoteBubble(playerType, message);
                 return;
             }
+            // 发言中内嵌 &xxx 表情码（如对方发“好的&laugh”）：提取出码转表情气泡，
+            // 剩余文字照常入聊天行；剥离后无剩余文本则只显示气泡不显示空行
+            StringBuilder textSb = new StringBuilder();
+            List<String> embeddedCodes = extractEmbeddedEmoticonCodes(message, textSb);
+            if (!embeddedCodes.isEmpty()) {
+                for (String code : embeddedCodes) showEmoteBubble(playerType, code);
+                message = textSb.toString().trim();
+                if (message.isEmpty()) return;
+            }
             // 我方（含我方 tag 同伴）→ tv_chat_message_1；对方（含对方 tag）→ tv_chat_message_2。
             // 先按 gframe ChatLocalPlayer 把发送方决斗序号转为命名槽位 chatType，
             // 再据 chatType 分边与取名——修复后攻时对方消息被拼上我方昵称的错位。
@@ -430,6 +439,35 @@ class FieldChatBoard {
             if (code.equals(message)) return true;
         }
         return false;
+    }
+
+    /**
+     * 扫描文本中内嵌的表情码（EMOTICON_KEYS 表内 & 前缀码，同一位置最长匹配），
+     * 命中的码返回、非码文本原样拼入 remaining；无命中时返回空列表。
+     */
+    private List<String> extractEmbeddedEmoticonCodes(String text, StringBuilder remaining) {
+        List<String> codes = new ArrayList<>();
+        int i = 0;
+        while (i < text.length()) {
+            char c = text.charAt(i);
+            if (c == '&') {
+                String matched = null;
+                for (String code : TextureLoader.EMOTICON_KEYS) {
+                    if (text.startsWith(code, i)
+                            && (matched == null || code.length() > matched.length())) {
+                        matched = code;
+                    }
+                }
+                if (matched != null) {
+                    codes.add(matched);
+                    i += matched.length();
+                    continue;
+                }
+            }
+            remaining.append(c);
+            i++;
+        }
+        return codes;
     }
 
     /** 将表情图片气泡显示到发送方头像下方，并刷新自动隐藏计时 */

@@ -615,6 +615,13 @@ public class GameMessageParser {
 
     public void onRetry() {
         Log.w(TAG, "Retry message received");
+        // 对齐 duelclient.cpp L1320-1404：无效应答后服务端只回 1 字节 MSG_RETRY，
+        // 不重发原 SELECT（single_duel.cpp L583-591）——C++ 弹提示后重放缓存的上一条
+        // 消息重建选择 UI 供玩家重新应答；此前仅打日志导致选择弹窗永久丢失、对局冻结
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onHintMessage("操作无效，请重新选择");
+        });
+        engine.replayLastGameMsg();
     }
 
     public void onHint(int type, int player, int data) {

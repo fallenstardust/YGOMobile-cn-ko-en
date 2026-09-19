@@ -303,7 +303,7 @@ public class LanDiscoveryManager implements YGOProtocol {
         int duelRule = buf.get() & 0xFF;
         int noCheckDeck = buf.get() & 0xFF;
         int noShuffleDeck = buf.get() & 0xFF;
-        buf.position(buf.position() + 2);
+        buf.position(buf.position() + 3); // HostInfo padding[3]
         int startLp = buf.getInt();
         int startHand = buf.get() & 0xFF;
         int drawCount = buf.get() & 0xFF;
