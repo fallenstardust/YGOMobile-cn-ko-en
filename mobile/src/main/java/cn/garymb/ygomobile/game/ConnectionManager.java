@@ -21,8 +21,9 @@ public class ConnectionManager {
 
     private final GameEngine engine;
 
-    /** 纯 Java 局域网主机（建主/残局/人机共用），懒启动、断线时停止。 */
-    private LanGameServer localServer;
+    /** 纯 Java 局域网主机（建主/残局/人机共用），懒启动、断线时停止。
+     * volatile：launchWindBot 在独立线程轮询房间就绪状态，需跨线程可见性 */
+    private volatile LanGameServer localServer;
 
     public ConnectionManager(GameEngine engine) {
         this.engine = engine;
@@ -293,7 +294,21 @@ public class ConnectionManager {
     public void launchWindBot(String host, int port, String botCommand, String deckFile) {
         engine.isBotMode = true;
         new Thread(() -> {
-            try { Thread.sleep(1500); } catch (InterruptedException e) { /* ignore */ }
+            // 等待本地主机房间就绪再广播启动 WindBot：startLocalServerWithSettings 的
+            // 引擎引导（ensureLocalServer 加载 cdb/script）+ createGame 在另一线程完成，
+            // 可能超过固定延时，房间未建好时 AI 连入无房可加（旧 startBotDuel 同线程串行无此竞态）
+            LanGameServer server = localServer;
+            for (int i = 0; i < 100 && (server == null || !server.isRoomReady()); i++) {
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    break;
+                }
+                server = localServer;
+            }
+            try {
+                Thread.sleep(500); // 就绪后留少量缓冲，确保监听_ACCEPT已稳定
+            } catch (InterruptedException e) { /* ignore */ }
             // WindBot.RunAndroid 以空格拆分参数(保留单引号片段)，再以 '=' 拆 key/value。
             // 因此所有参数必须是 Key=Value 形式；含空格的值需用单引号包裹。
             StringBuilder sb = new StringBuilder();

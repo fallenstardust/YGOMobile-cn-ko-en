@@ -60,6 +60,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private int restartFromStep = 0;
     private boolean isSkipping = false;
     private byte[] originalResponseBytes = null;
+    /** 回放异常终止原因（对齐 replay_mode.cpp "Error occurs." 与 EndDuel 1501 提示），自然结束为 null。 */
+    private volatile String lastErrorMessage;
+
+    public String getLastErrorMessage() { return lastErrorMessage; }
 
     public ReplayEngine(GameField field, SoundManager soundManager) {
         this.field = field;
@@ -90,6 +94,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         new Thread(() -> {
             replayData = ReplayReader.loadReplay(replayPath);
             if (replayData == null) {
+                lastErrorMessage = "无法加载录像文件";
                 setState(ReplayState.ERROR);
                 mainHandler.post(() -> {
                     if (listener != null) listener.onReplayHintMessage("无法加载录像文件");
@@ -99,6 +104,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
             // 回放需要重跑引擎复现消息流（C++ ReplayMode::ReplayThread），先引导卡片/脚本资源
             if (!NativeScriptBootstrap.ensureEngineReady()) {
+                lastErrorMessage = "决斗引擎或卡片脚本加载失败";
                 setState(ReplayState.ERROR);
                 mainHandler.post(() -> {
                     if (listener != null) listener.onReplayHintMessage("决斗引擎或卡片脚本加载失败");
@@ -212,12 +218,17 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             // 对齐 ReplayMode::ReplayThread：重建决斗→逐条 process/get_message→分析，
             // 消息流由引擎以相同 seed 重新产生，文件里只有玩家响应记录
             if (!startReplayDuel()) {
+                lastErrorMessage = "回放引擎启动失败（卡数据或脚本缺失）";
                 mainHandler.post(() -> {
                     if (listener != null) listener.onReplayHintMessage("回放引擎启动失败（卡数据或脚本缺失）");
                 });
                 isRunning = false;
                 setState(ReplayState.ERROR);
                 return;
+            }
+            if (!replayData.isSingleMode) {
+                // 对齐 ReplayThread L88-91：开局先刷两名玩家的卡组/额外卡面
+                refreshDeck(0); refreshDeck(1); refreshExtra(0); refreshExtra(1);
             }
             soundManager.playBGM(SoundManager.BGM.DUEL);
             while (isRunning) {
@@ -430,6 +441,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             isRunning = false;
             return;
         }
+        if (!replayData.isSingleMode) {
+            // 对齐 ReplayThread L121-124：restart 重跑后同样先刷卡组/额外卡面
+            refreshDeck(0); refreshDeck(1); refreshExtra(0); refreshExtra(1);
+        }
 
         currentStep = 0;
         skipStep = Math.max(0, restartTargetStep);
@@ -455,6 +470,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         try {
             switch (msgType) {
                 case 1: // MSG_RETRY
+                    lastErrorMessage = "Error occurs.（引擎请求重放 MSG_RETRY，步数=" + currentStep + "）";
                     mainHandler.post(() -> {
                         if (listener != null) listener.onReplayHintMessage("录像错误: Retry");
                     });
@@ -505,6 +521,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
                 case 10: // MSG_SELECT_BATTLECMD
                 case 11: // MSG_SELECT_IDLECMD
+                    // 对齐 replay_mode.cpp L340/L357：战斗/主要阶段选择前 ReplayRefresh 刷全部卡面
+                    replayRefresh();
+                    if (!selectWithResponse(msgType, buf)) return false;
+                    break;
                 case 12: // MSG_SELECT_EFFECTYN
                 case 13: // MSG_SELECT_YESNO
                 case 14: // MSG_SELECT_OPTION
@@ -533,6 +553,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     if (buf.remaining() < 1) return false;
                     int sdPlayer = buf.get() & 0xFF;
                     onShuffleDeck(sdPlayer);
+                    // 对齐 replay_mode.cpp L458：洗牌后整库重查卡面
+                    refreshDeck(sdPlayer);
                     break;
 
                 case 33: // MSG_SHUFFLE_HAND
@@ -552,6 +574,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     if (buf.remaining() < 1) return false;
                     int sgPlayer = buf.get() & 0xFF;
                     onSwapGraveDeck(sgPlayer);
+                    // 对齐 replay_mode.cpp L483：墓地/卡组互换后重查墓地卡面
+                    refreshGrave(sgPlayer);
                     break;
 
                 case 36: // MSG_SHUFFLE_SET_CARD
@@ -564,6 +588,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
                 case 37: // MSG_REVERSE_DECK
                     onReverseDeck(0);
+                    // 对齐 replay_mode.cpp L488-489：反转卡组后双方卡组重查
+                    refreshDeck(0);
+                    refreshDeck(1);
                     break;
 
                 case 38: // MSG_DECK_TOP
@@ -593,6 +620,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     if (buf.remaining() < 2) return false;
                     int phase = buf.getShort() & 0xFFFF;
                     onNewPhase(phase);
+                    // 对齐 replay_mode.cpp L520：新阶段 ReplayRefresh
+                    replayRefresh();
                     break;
 
                 case 50: // MSG_MOVE
@@ -608,6 +637,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     int mPos = buf.get() & 0xFF;
                     int mReason = buf.getInt();
                     onMove(mCode, mOldCtrl, mOldLoc, mOldSeq, mOldPos, mNewCtrl, mNewLoc, mNewSeq, mPos, mReason);
+                    // 对齐 replay_mode.cpp L534-537：移动后刷目标卡/同区卡组
+                    if (mNewLoc != 0 && (mNewLoc & 0x80) == 0
+                            && (mOldLoc != mNewLoc || mOldCtrl != mNewCtrl)) {
+                        refreshSingle(mNewCtrl & 1, mNewLoc, mNewSeq, REFRESH_FLAG_ALL);
+                    } else if (mOldLoc == mNewLoc && mNewLoc == OcgDuelEngine.LOCATION_DECK) {
+                        refreshDeck(mNewCtrl);
+                    }
                     break;
 
                 case 51: // MSG_POS_CHANGE（common.h：51，replay_mode.cpp pbuf+=9）
@@ -652,7 +688,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onSummoning(sumCode, sumCtrl, sumLoc, sumSeq);
                     break;
                 }
-                case 61: onSummoned(); break;
+                case 61: onSummoned(); replayRefresh(); break;
                 case 62: { // MSG_SPSUMMONING
                     if (buf.remaining() < 8) return false;
                     int spCode = buf.getInt();
@@ -663,7 +699,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onSpSummoning(spCode, spCtrl, spLoc, spSeq);
                     break;
                 }
-                case 63: onSpSummoned(); break;
+                case 63: onSpSummoned(); replayRefresh(); break;
                 case 64: { // MSG_FLIPSUMMONING
                     if (buf.remaining() < 8) return false;
                     int flCode = buf.getInt();
@@ -674,7 +710,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onFlipSummoning(flCode, flCtrl, flLoc, flSeq);
                     break;
                 }
-                case 65: onFlipSummoned(); break;
+                case 65: onFlipSummoned(); replayRefresh(); break;
 
                 case 70: // MSG_CHAINING
                     if (buf.remaining() < 16) return false;
@@ -690,10 +726,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     int chCt = buf.get() & 0xFF;
                     onChaining(chCode, chPcc, chPcl, chPcs, chSubs, chCc, chCl, chCs, chDesc);
                     break;
-                case 71: skipBytes(1); onChained(0); break;
+                case 71: skipBytes(1); onChained(0); replayRefresh(); break;
                 case 72: skipBytes(1); onChainSolving(0); break;
-                case 73: skipBytes(1); onChainSolved(0); break;
-                case 74: onChainEnd(); break;
+                case 73: skipBytes(1); onChainSolved(0); replayRefresh(); break;
+                case 74: onChainEnd(); replayRefresh(); break;
                 case 75: skipBytes(1); onChainNegated(0); break;
                 case 76: skipBytes(1); onChainDisabled(0); break;
 
@@ -791,8 +827,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     break;
 
                 case 112: onAttackDisabled(); break; // MSG_ATTACK_DISABLED
-                case 113: onDamageStepStart(); break; // MSG_DAMAGE_STEP_START
-                case 114: onDamageStepEnd(); break; // MSG_DAMAGE_STEP_END
+                case 113: onDamageStepStart(); replayRefresh(); break; // MSG_DAMAGE_STEP_START
+                case 114: onDamageStepEnd(); replayRefresh(); break; // MSG_DAMAGE_STEP_END
 
                 case 120: skipBytes(8); break; // MSG_MISSED_EFFECT
                 case 130: { // MSG_TOSS_COIN
@@ -840,6 +876,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     skipBytes(4);
                     skipBytes(tsMainCount * 4 + tsExtraCount * 4);
                     onTagSwap(tsPlayer);
+                    // 对齐 replay_mode.cpp L802-803：双打换人后卡组/额外重查
+                    refreshDeck(tsPlayer);
+                    refreshExtra(tsPlayer);
                     break;
                 }
 
@@ -859,6 +898,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     }
                     skipBytes(1);
                     onReloadField();
+                    // 对齐 replay_mode.cpp L824-825：RELOAD_FIELD 全区域重查 + 刷新全部卡面
+                    replayReload();
                     break;
                 }
 
@@ -883,10 +924,12 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
                 default:
                     Log.w(TAG, "Unknown replay msg: " + msgType);
+                    lastErrorMessage = "未知回放消息 " + msgType + "（回放游标可能错位，步数=" + currentStep + "）";
                     break;
             }
         } catch (Exception e) {
             Log.e(TAG, "Error processing replay msg " + msgType, e);
+            lastErrorMessage = "处理回放消息 " + msgType + " 异常：" + e;
             return false;
         }
 
@@ -1005,6 +1048,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private boolean feedRecordedResponse() {
         ByteBuffer rp = replayBuffer;
         if (rp == null || pduel == 0L || !rp.hasRemaining()) {
+            lastErrorMessage = "录像响应记录提前耗尽（步数=" + currentStep + "）";
             Log.w(TAG, "响应记录提前耗尽，结束回放");
             return false;
         }
@@ -1046,6 +1090,107 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
     private ByteBuffer createSubBuffer(int size) {
         return ByteBuffer.allocate(0).order(ByteOrder.LITTLE_ENDIAN);
+    }
+
+    // === 引擎查询刷新卡面（对齐 replay_mode.cpp ReplayRefresh 全家与 ReplayReload L862-917）===
+    // 录像消息流由引擎重跑产生，但显示卡片（code/属性/攻守等）不在消息体内，
+    // 必须像 C++ 一样在阶段/召唤/连锁/移动等节点用 query_field_card/query_card
+    // 以特定 flag 重查引擎并刷进 GameField，否则画面永远只有卡背。
+    private static final int REFRESH_FLAG_ALL = 0xf81fff;   // ReplayRefresh/ReplayRefreshSingle 默认
+    private static final int REFRESH_FLAG_ZONE = 0x181fff;  // Deck/Extra/Grave 默认
+    private static final int RELOAD_FLAG = 0xffdfff;        // ReplayReload
+
+    /** 对齐 ReloadLocation：query_field_card 整区域重查后按 UpdateFieldCard 格式应用 */
+    private void reloadLocation(int player, int location, int flag) {
+        if (pduel == 0L) return;
+        byte[] blocks = OcgDuelEngine.queryFieldCard(pduel, player, location, flag, 0);
+        if (blocks == null || blocks.length == 0) return;
+        applyFieldQuery(player & 1, location, blocks);
+    }
+
+    /** 对齐 ClientField::UpdateFieldCard：blocks 为 [int32 clen(含自身)][int32 flag][...] * N，
+     *  怪兽/魔陷区为固定槽位列表（空位也有 clen=4 条目），与 LAN 客户端 parseUpdateData 同格式 */
+    private void applyFieldQuery(int player, int location, byte[] blocks) {
+        java.util.List<GameField.ClientCard> list = field.players[player].getLocationList(location);
+        if (list == null) return;
+        ByteBuffer data = ByteBuffer.wrap(blocks).order(ByteOrder.LITTLE_ENDIAN);
+        boolean fixedSlots = (location == OcgDuelEngine.LOCATION_MZONE
+                || location == OcgDuelEngine.LOCATION_SZONE);
+        for (int i = 0; i < list.size(); i++) {
+            GameField.ClientCard card = list.get(i);
+            if (card == null && !fixedSlots) continue;
+            if (data.remaining() < 4) break;
+            int len = data.getInt();
+            int next = data.position() + (len - 4);
+            if (next < data.position() || next > data.limit()) break;
+            if (len > 8 && card != null) {
+                ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
+                sub.limit(Math.min(sub.limit(), len - 4));
+                card.updateQuery(sub);
+            }
+            data.position(next);
+        }
+    }
+
+    /** 对齐 ReplayRefresh(flag=0xf81fff)：双方 MZONE/SZONE/HAND 六区域重查 */
+    private void replayRefresh() {
+        if (pduel == 0L) return;
+        reloadLocation(0, OcgDuelEngine.LOCATION_MZONE, REFRESH_FLAG_ALL);
+        reloadLocation(1, OcgDuelEngine.LOCATION_MZONE, REFRESH_FLAG_ALL);
+        reloadLocation(0, OcgDuelEngine.LOCATION_SZONE, REFRESH_FLAG_ALL);
+        reloadLocation(1, OcgDuelEngine.LOCATION_SZONE, REFRESH_FLAG_ALL);
+        reloadLocation(0, OcgDuelEngine.LOCATION_HAND, REFRESH_FLAG_ALL);
+        reloadLocation(1, OcgDuelEngine.LOCATION_HAND, REFRESH_FLAG_ALL);
+        notifyField();
+    }
+
+    /** 对齐 ReplayRefreshDeck（flag=0x181fff） */
+    private void refreshDeck(int player) {
+        reloadLocation(player & 1, OcgDuelEngine.LOCATION_DECK, REFRESH_FLAG_ZONE);
+        notifyField();
+    }
+
+    /** 对齐 ReplayRefreshExtra（flag=0x181fff） */
+    private void refreshExtra(int player) {
+        reloadLocation(player & 1, OcgDuelEngine.LOCATION_EXTRA, REFRESH_FLAG_ZONE);
+        notifyField();
+    }
+
+    /** 对齐 ReplayRefreshGrave（flag=0x181fff） */
+    private void refreshGrave(int player) {
+        reloadLocation(player & 1, OcgDuelEngine.LOCATION_GRAVE, REFRESH_FLAG_ZONE);
+        notifyField();
+    }
+
+    /** 对齐 ReplayRefreshSingle(flag=0xf81fff)：query_card 单卡重查 + UpdateCard 格式应用 */
+    private void refreshSingle(int player, int location, int sequence, int flag) {
+        if (pduel == 0L) return;
+        byte[] q = OcgDuelEngine.queryCard(pduel, player, location, sequence, flag, 0);
+        if (q == null || q.length < 12) return;
+        ByteBuffer data = ByteBuffer.wrap(q).order(ByteOrder.LITTLE_ENDIAN);
+        int len = data.getInt();
+        if (len <= 8) return;
+        GameField.ClientCard card = field.getCard(player & 1, location, sequence);
+        if (card == null) return;
+        ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
+        sub.limit(Math.min(sub.limit(), len - 4));
+        card.updateQuery(sub);
+    }
+
+    /** 对齐 ReplayReload：双方七区域 flag=0xffdfff 全量重查 + RefreshAllCards */
+    private void replayReload() {
+        if (pduel == 0L) return;
+        for (int p = 0; p < 2; p++) {
+            reloadLocation(p, OcgDuelEngine.LOCATION_MZONE, RELOAD_FLAG);
+            reloadLocation(p, OcgDuelEngine.LOCATION_SZONE, RELOAD_FLAG);
+            reloadLocation(p, OcgDuelEngine.LOCATION_HAND, RELOAD_FLAG);
+            reloadLocation(p, OcgDuelEngine.LOCATION_DECK, RELOAD_FLAG);
+            reloadLocation(p, OcgDuelEngine.LOCATION_EXTRA, RELOAD_FLAG);
+            reloadLocation(p, OcgDuelEngine.LOCATION_GRAVE, RELOAD_FLAG);
+            reloadLocation(p, OcgDuelEngine.LOCATION_REMOVED, RELOAD_FLAG);
+        }
+        field.refreshAllCards();
+        notifyField();
     }
 
     // === Control ===

@@ -587,6 +587,15 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     /**
+     * 显式退出玩家等待界面时由 MainMenuNavigator.onExitWaiting 在 disconnect 前调用：
+     * 抑制本次 DISCONNECTED 自动 returnToLanMain（否则会连带弹出 LanModeDialog/MainMenuDialog），
+     * 返回导航（bot→SingleModeDialog / LAN→LanModeDialog）由退出入口独占
+     */
+    void suppressNextDisconnectedReturn() {
+        if (engineCallback != null) engineCallback.suppressNextDisconnectedReturn();
+    }
+
+    /**
      * player waiting 大厅聊天界面：显示聊天输入框与 layout_danmaku 聊天列表；
      * gameTopInfo（layout_top_info）的子布局与决斗场渲染在此期间不显示
      */

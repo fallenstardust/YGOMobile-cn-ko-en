@@ -479,7 +479,14 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             }
         });
         if (btnDeckManager != null) {
+            // 再次点击"选择卡组/卡组管理"按钮收起已展开的卡组选择窗（切换式交互，
+            // 与 PlayerWaitingDialog 的 btnPwDeckSelect 行为一致）
             btnDeckManager.setOnClickListener(v -> {
+                if (deckSelectorDialog == null) return;
+                if (deckSelectorDialog.isShowing()) {
+                    deckSelectorDialog.dismiss();
+                    return;
+                }
                 if (isModified && !isReadonly) {
                     showConfirmDialog("此操作将放弃对当前卡组的修改，是否继续？",
                             () -> {
@@ -487,7 +494,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                                     deckSelectorDialog.show(btnDeckManager);
                             });
                 } else {
-                    if (deckSelectorDialog != null) deckSelectorDialog.show(btnDeckManager);
+                    deckSelectorDialog.show(btnDeckManager);
                 }
             });
         }

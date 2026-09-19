@@ -257,6 +257,11 @@ public class DeckSelectorDialog {
         }
     }
 
+    /** 当前是否正在显示：供调用方实现"再次点击收起"的切换式交互 */
+    public boolean isShowing() {
+        return popupWindow != null && popupWindow.isShowing();
+    }
+
     public void setOperationButtonsEnabled(boolean enabled) {
         for (Button btn : operationButtons) {
             btn.setEnabled(enabled);

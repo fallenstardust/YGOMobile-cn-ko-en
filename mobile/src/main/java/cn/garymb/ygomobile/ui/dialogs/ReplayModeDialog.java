@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
@@ -30,6 +31,7 @@ import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.ReplayEngine;
 import cn.garymb.ygomobile.game.ReplayReader;
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.activities.ShareFileActivity;
@@ -37,8 +39,15 @@ import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.Constants;
+import ocgcore.DataManager;
 
 public class ReplayModeDialog {
+
+    /**
+     * 进入回放前选中的录像绝对路径：退出回放重新打开本界面时用于还原列表选中
+     * （一次性消费：还原后置空，避免下次从主菜单进入时也预选中）
+     */
+    private static String lastSelectedReplayPath;
 
     private Context context;
     private PopupWindow popupWindow;
@@ -175,10 +184,36 @@ public class ReplayModeDialog {
             showRenameDialog(selectedReplayFile, lvReplayList);
         });
 
+        // 退出回放重新进入时还原上一次播放的录像选中状态（对应桌面版回放窗口关闭回到录像选择界面）
+        restoreLastSelectedReplay(lvReplayList, tvReplayInfo);
+
         btnExitReplay.setOnClickListener(v -> popupWindow.dismiss());
 
         anchorView.setVisibility(View.GONE);
         draggableHelper.showPopup(popupWindow, anchorView);
+    }
+
+    /** 若存在退出回放前播放过的录像且文件仍在列表中，则还原其选中与信息展示 */
+    private void restoreLastSelectedReplay(ListView lvReplayList, TextView tvReplayInfo) {
+        if (lastSelectedReplayPath == null) {
+            return;
+        }
+        String path = lastSelectedReplayPath;
+        lastSelectedReplayPath = null;
+        File[] files = getReplayFiles();
+        if (files == null) {
+            return;
+        }
+        for (int i = 0; i < files.length; i++) {
+            if (path.equals(files[i].getAbsolutePath())) {
+                selectedReplayFile = files[i];
+                replayAdapter.setSelectedPosition(i);
+                updateReplayInfo(tvReplayInfo, selectedReplayFile);
+                updateControlsState(true);
+                lvReplayList.setSelection(i);
+                break;
+            }
+        }
     }
 
     private void updateControlsState(boolean enabled) {
@@ -352,6 +387,8 @@ public class ReplayModeDialog {
     }
 
     private void loadReplay(File replayFile) {
+        // 记录本次播放的录像，供退出回放后重新打开本界面时还原选中
+        lastSelectedReplayPath = replayFile.getAbsolutePath();
         if (popupWindow != null) {
             // 载入回放属内部跳转：先摘除 dismiss 回调，避免退场动画延迟触发 restoreMainMenu
             // 把主菜单叠在回放画面上
@@ -474,6 +511,8 @@ public class ReplayModeDialog {
         ReplayEngine replayEngine = new ReplayEngine(activity.getEngine().getField(), activity.getSoundManager());
         activity.getEngine().setReplayEngine(replayEngine);
         activity.setCurrentReplayEngine(replayEngine);
+        // 结束/错误弹窗只弹一次；quitReplay 触发的二次 FINISHED 状态被此标志拦截
+        final AtomicBoolean endDlgShown = new AtomicBoolean(false);
 
         replayEngine.setListener(new ReplayEngine.ReplayListener() {
             @Override
@@ -489,7 +528,15 @@ public class ReplayModeDialog {
                             break;
                         case FINISHED:
                             activity.getFieldCtl().setPhaseText("⏹");
-                            hideReplayControls(activity);
+                            // 对齐 EndDuel（replay_mode.cpp L223-251）：结束后先弹提示框，
+                            // 确认后才回录像选择窗并隐藏控制条；不再在 FINISHED 立即隐藏
+                            // 控制按钮（修复回放提前终止时按钮莫名消失无法继续操作）
+                            showReplayEndDialog(activity, replayEngine, endDlgShown, false);
+                            break;
+                        case ERROR:
+                            activity.getFieldCtl().setPhaseText("⏹");
+                            // 对齐 MSG_RETRY 分支 L311-316："Error occurs." 提示后等待确认
+                            showReplayEndDialog(activity, replayEngine, endDlgShown, true);
                             break;
                     }
                 });
@@ -535,13 +582,40 @@ public class ReplayModeDialog {
                             winnerName = rd.playerNames.get(winner);
                         }
                     }
-                    hideReplayControls(activity);
-                    // case 101：回放结束改用阶段文字显示胜负 + 胜利原因（替代 showResultDialog 弹窗）
+                    // 不再在此处隐藏控制条：胜负文字先显示，结束提示弹窗由 FINISHED 状态统一弹出，
+                    // 用户确认后经 quitReplay 退出回放回录像选择窗（对齐 C++ EndDuel 流程）
                     activity.showReplayResult(winner, reason, winnerName);
                 });
             }
         });
         replayEngine.loadAndPlay(replayPath, startTurn);
+    }
+
+    /**
+     * 回放结束提示框（对齐 replay_mode.cpp：EndDuel L228-232 弹系统串 1501、
+     * MSG_RETRY L311-316 弹 "Error occurs."）：确认后退出回放回录像选择界面
+     */
+    private static void showReplayEndDialog(YGOProActivity activity, ReplayEngine engine,
+                                            AtomicBoolean shown, boolean forceError) {
+        // 用户已主动退出（quitReplay 已清空 currentReplayEngine）时不再弹窗，避免重复退出
+        if (activity.getCurrentReplayEngine() == null) return;
+        if (!shown.compareAndSet(false, true)) return;
+        String err = engine != null ? engine.getLastErrorMessage() : null;
+        if (forceError && err == null) err = "回放未能启动";
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        if (err != null) {
+            dialog.setTitle("回放异常")
+                    .setMessage("Error occurs.\n" + err);
+        } else {
+            String endText = DataManager.get().getStringManager().getSystemString(1501, "录像播放结束");
+            dialog.setTitle(endText).setMessage(endText);
+        }
+        dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
+                .setPositiveButtonText("确定")
+                .setPositiveButton(v -> quitReplay(activity))
+                .setCenterInView(activity.findViewById(R.id.layout_game_right))
+                .setCancelable(false)
+                .show();
     }
 
     public static void hideReplayControls(YGOProActivity activity) {
@@ -552,6 +626,12 @@ public class ReplayModeDialog {
     public static void quitReplay(YGOProActivity activity) {
         if (activity.getCurrentReplayEngine() != null) activity.getCurrentReplayEngine().stop();
         hideReplayControls(activity);
-        activity.getMainMenuDialog().restoreMainMenu();
+        // 退出回放不再直接回主菜单，而是重新打开录像选择界面并还原上次选中的录像：
+        // 先做与主菜单显示等价的界面清理（隐藏决斗场/恢复菜单背景/菜单 BGM），
+        // 但不弹出主菜单——主菜单留待本录像界面 dismiss 时再恢复
+        activity.hideGameUI();
+        activity.setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
+        activity.getSoundManager().playBGM(SoundManager.BGM.MENU);
+        showReplayModeDialog(activity);
     }
 }

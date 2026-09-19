@@ -130,8 +130,10 @@ public class PlayerWaitingDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
         popupWindow.setOnDismissListener(internalDismissListener);
 
-        customView.setFocusableInTouchMode(true);
-        customView.requestFocus();
+        // 全屏弹窗窗口不得作为 touch-modal：否则等待界面会像一层遮罩截走落在全屏窗口
+        // 范围内的系统窗口（软键盘）交互，导致输入法弹出后无法点击按键；
+        // 置为非模态后输入法窗口始终位于本弹窗之上一层且可正常响应触摸
+        popupWindow.setTouchModal(false);
 
         draggableHelper = new DraggablePopupHelper(context, "player_waiting_dialog");
         draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
@@ -158,8 +160,12 @@ public class PlayerWaitingDialog {
             }
         });
 
+        // 再次点击"选择卡组"按钮收起已展开的卡组选择窗（切换式交互）
         btnPwDeckSelect.setOnClickListener(v -> {
-            if (deckSelectorDialog != null) {
+            if (deckSelectorDialog == null) return;
+            if (deckSelectorDialog.isShowing()) {
+                deckSelectorDialog.dismiss();
+            } else {
                 deckSelectorDialog.show(btnPwDeckSelect);
             }
         });
@@ -744,8 +750,26 @@ public class PlayerWaitingDialog {
                     updateDeckSelectButtonState();
                     if (listener != null) listener.onPlayerWaitingNotReady();
                 }
+                // 修复：主机自身没有 STOC_PLAYER_CHANGE 回显回路，点准备按钮后必须静默同步
+                // 自身 checkbox，否则 updateStartButtonState 判定主机位永远未勾选，
+                // 开始按钮永远无法恢复可用（远端玩家经 handlePlayerChange 回显无此问题）
+                syncSelfCheckboxAndStartState(checkboxes);
             });
         }
+    }
+
+    /** 静默同步自身 ready checkbox 并重新评估开始按钮可用状态（不触发重发卡组的监听回调） */
+    private void syncSelfCheckboxAndStartState(CheckBox[] checkboxes) {
+        if (selfPos < 0 || selfPos >= checkboxes.length) return;
+        CheckBox self = checkboxes[selfPos];
+        if (self == null) return;
+        if (self.isChecked() != isSelfReady) {
+            self.setOnCheckedChangeListener(null);
+            self.setChecked(isSelfReady);
+            // 重挂原监听（updateSelfCheckboxInteractivity 内按 selfPos 重新绑定）
+            updateSelfCheckboxInteractivity();
+        }
+        updateStartButtonState();
     }
 
     private void updateSelfCheckboxInteractivity() {
@@ -770,13 +794,19 @@ public class PlayerWaitingDialog {
                         isSelfReady = true;
                         btnPwReady.setText(mStringManager.getSystemString(1219, "取消准备"));
                         btnPwReady.setPressed(true);
+                        updateDeckSelectButtonState();
                         if (listener != null) listener.onPlayerWaitingReady();
                     } else {
                         isSelfReady = false;
                         btnPwReady.setText(mStringManager.getSystemString(1218, "点击准备"));
                         btnPwReady.setPressed(false);
+                        updateDeckSelectButtonState();
                         if (listener != null) listener.onPlayerWaitingNotReady();
                     }
+                    // 直点自身 checkbox 是与 btnPwReady 平行的独立准备入口：
+                    // 主机无 STOC_PLAYER_CHANGE 回环，必须在此重估开始按钮可用状态，
+                    // 否则最后一名玩家（主机）经勾选框准备后开始按钮永远停留灰色
+                    updateStartButtonState();
                 });
             } else {
                 checkboxes[i].setEnabled(false);
@@ -893,16 +923,19 @@ public class PlayerWaitingDialog {
     }
 
     // === 引擎事件处理（由 YGOProActivity 转发） ===
+    // 注：以下 handleXxx 不得以 isShowing() 丢弃事件——弹窗窗口经 DraggablePopupHelper
+    // bringHostPopupToFront 重排（removeViewImmediate+addView）后 isShowing 会误报 false，
+    // 导致主机侧玩家名/ready 回显与 STOC_TYPE_CHANGE 被静默丢弃，
+    // 开始按钮永远灰色、WindBot 加入不可见（同 handleJoinGame 修复缘由）；
+    // 视图均为 show() 中同步创建且各 setter 自带判空，事件早到/窗已关时写入无害
 
     public void handlePlayerEnter(String name, int pos) {
-        if (!isShowing()) return;
         removeObserver(name);
         setPlayerName(pos, name);
         refreshPlayerDisplay();
     }
 
     public void handlePlayerChange(int status) {
-        if (!isShowing()) return;
         int pos = (status >> 4) & 0x0F;
         int state = status & 0x0F;
 
@@ -936,7 +969,6 @@ public class PlayerWaitingDialog {
     }
 
     public void handleWatchChange(int watchCount) {
-        if (!isShowing()) return;
         updateWatchCount(watchCount);
         refreshPlayerDisplay();
     }
@@ -948,7 +980,6 @@ public class PlayerWaitingDialog {
     }
 
     public void handleTypeChange(int type, boolean isTag) {
-        if (!isShowing()) return;
         int selfType = type & 0x0F;
         boolean isHost = ((type >> 4) & 0x0F) != 0;
         updateTypeChange(selfType, isTag, isHost);

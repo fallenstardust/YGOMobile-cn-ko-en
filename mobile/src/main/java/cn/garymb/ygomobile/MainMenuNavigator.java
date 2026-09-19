@@ -6,6 +6,7 @@ import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
 import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.PlayerWaitingDialog;
+import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 
 /**
  * 局域网主菜单导航协作类（由 YGOProActivity 按 // === 分栏拆分而来）：
@@ -104,8 +105,26 @@ class MainMenuNavigator implements
 
     @Override
     public void onExitWaiting() {
-        if (activity.engine != null) activity.engine.disconnect();
-        if (activity.playerWaitingDialog != null) activity.playerWaitingDialog.hideForNavigation();
+        // 人机模式（从 SingleModeDialog 建主进入等待界面）退出后应回 SingleModeDialog，
+        // 而非 LanModeDialog；且不得出现 MainMenuDialog
+        final boolean botMode = activity.engine != null && activity.engine.isBotMode;
+        // 先关闭等待界面并抑制其 dismiss→restoreMainMenu 兜底，再断开连接；
+        // DISCONNECTED 的自动 returnToLanMain（会连带弹 LanMode/MainMenu）已被
+        // suppressNextDisconnectedReturn 抑制，返回导航由本入口独占
+        if (activity.playerWaitingDialog != null) {
+            activity.playerWaitingDialog.hideForNavigation();
+            activity.setPlayerWaitingDialog(null);
+        }
+        activity.hideGameUI();
+        if (activity.engine != null) {
+            activity.suppressNextDisconnectedReturn();
+            activity.engine.disconnect();
+            if (botMode) activity.engine.setBotMode(false);
+        }
+        if (botMode) {
+            SingleModeDialog.showSingleModeDialog(activity);
+            return;
+        }
         LanModeDialog.showLanModeDialog(activity);
         if (activity.lanModeDialog != null) {
             activity.lanModeDialog.preFillConnectionFields(activity.lastJoinNickname, activity.lastJoinHost,

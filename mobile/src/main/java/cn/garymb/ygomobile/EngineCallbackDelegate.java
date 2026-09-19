@@ -42,6 +42,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     // === 决斗结束 / 录像处理状态（随回调内聚于本类） ===
     private final List<byte[]> pendingReplays = new ArrayList<>();
     private boolean duelEndHandling = false;
+    // 显式退出等待界面时置位：本次 DISCONNECTED 回调跳过 returnToLanMain，
+    // 返回导航由退出入口独占（bot→SingleModeDialog / LAN→LanModeDialog），
+    // 避免 LanModeDialog 与 MainMenuDialog 连带弹出
+    private boolean suppressDisconnectedReturn = false;
     private YesOrNoDialog resultDialog;
     private ReplaySaveDialog replaySaveDialog;
     // STOC_REPLAY 紧随 STOC_DUEL_END 下发：录像处理延迟到该窗口内无新数据到达再启动，
@@ -117,9 +121,18 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 break;
             case DISCONNECTED:
                 if (duelEndHandling) break; // 决斗结束流程已接管返回逻辑，避免重复
+                if (suppressDisconnectedReturn) {
+                    suppressDisconnectedReturn = false; // 退出入口已接管导航，单次消费
+                    break;
+                }
                 activity.returnToLanMain(activity.isGameStarted ? "与服务器连接已断开" : null);
                 break;
         }
+    }
+
+    /** 抑制下一次 DISCONNECTED 自动 returnToLanMain（由退出等待界面入口在 disconnect 前置位） */
+    void suppressNextDisconnectedReturn() {
+        suppressDisconnectedReturn = true;
     }
 
     @Override

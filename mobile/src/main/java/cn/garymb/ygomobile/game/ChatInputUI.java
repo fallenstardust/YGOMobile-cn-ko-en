@@ -136,15 +136,8 @@ public class ChatInputUI {
             }
         }));
 
-        etChatInput.post(() -> {
-            try {
-                if (etChatInput.requestFocus() && imm != null) {
-                    imm.showSoftInput(etChatInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-                }
-            } catch (Exception e) {
-                android.util.Log.e("ChatInputUI", "Enter Lobby Chat IME error: " + e.getMessage(), e);
-            }
-        });
+        // 进入大厅等待界面时不自动抢焦点、不自动弹出输入法：
+        // 由玩家自行点击输入框触发下方 clickListener 唤起 IME
     }
     
     /**

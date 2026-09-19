@@ -42,6 +42,17 @@ public class SingleModeDialog {
     private Context context;
     private PopupWindow popupWindow;
     private DraggablePopupHelper draggableHelper;
+    // dismiss 闩锁：内部跳转（hideForNavigation）关闭时不上报外部 dismiss 回调，
+    // 避免误触发 restoreMainMenu（同 PlayerWaitingDialog/LanModeDialog 模式）
+    private boolean suppressDismiss = false;
+    private PopupWindow.OnDismissListener externalDismissListener;
+    private final PopupWindow.OnDismissListener internalDismissListener = () -> {
+        if (suppressDismiss) {
+            suppressDismiss = false;
+            return;
+        }
+        if (externalDismissListener != null) externalDismissListener.onDismiss();
+    };
     private final StringManager mStringManager = DataManager.get().getStringManager();
 
     public interface OnSingleModeListener {
@@ -244,7 +255,9 @@ public class SingleModeDialog {
                 boolean noCheckDeck = chkNoCheckDeck.isChecked();
                 boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
 
-                popupWindow.dismiss();
+                // 人机对战建主：内部跳转关闭本弹窗并抑制 dismiss → restoreMainMenu，
+                // 否则主菜单会在玩家等待界面上层误显示
+                hideForNavigation();
                 if (listener != null) {
                     listener.onStartBotDuel(botCommand, deckFile, duelRule, noCheckDeck, noShuffleDeck);
                 }
@@ -296,9 +309,18 @@ public class SingleModeDialog {
         }
     }
 
+    /** 内部跳转（人机对战建主进入玩家等待界面）：抑制外部 dismiss 回调后关闭，
+     * 避免误触发 restoreMainMenu 在等待界面上层弹出主菜单 */
+    public void hideForNavigation() {
+        if (popupWindow == null || !popupWindow.isShowing()) return;
+        suppressDismiss = true;
+        popupWindow.dismiss();
+    }
+
     public void setOnDismissListener(PopupWindow.OnDismissListener listener) {
+        this.externalDismissListener = listener;
         if (popupWindow != null) {
-            popupWindow.setOnDismissListener(listener);
+            popupWindow.setOnDismissListener(internalDismissListener);
         }
     }
 

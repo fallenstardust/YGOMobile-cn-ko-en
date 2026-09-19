@@ -338,6 +338,13 @@ public final class LanGameServer implements YGOProtocol {
         return r != null && r.players[1] != null;
     }
 
+    /** 房间已建好且房主已入座（环回客户端 CTOS_CREATE_GAME 处理完成），
+     * 此时 WindBot 连入才有房间可加（未就绪时 JOIN_GAME 无房间可匹配） */
+    public boolean isRoomReady() {
+        GameRoom r = room;
+        return r != null && r.hostPlayer != null;
+    }
+
     private void cleanup() {
         closeQuietly(serverSocket);
         closeQuietly(udpSocket);
