@@ -715,9 +715,18 @@ public class CardDetailPanel {
             }
             case 26: {
                 // event_handler.cpp L968-971：UNSELECT 的完成/取消按钮 = 发送 -1
+                if (cardSelectDialog == null) {
+                    // 场上/手牌直接选择模式（无弹窗，连接手续逐步选素材）：
+                    // 应答 -1 并清理场上会话（finishCardSelect 内走 UNSELECT 分支→cancelCardSelect）
+                    GameFieldController fieldCtl = activity.getFieldCtl();
+                    if (fieldCtl != null && fieldCtl.finishCardSelect()) {
+                        hideCancelOrFinishButton();
+                    }
+                    break;
+                }
                 activity.sendResponseInt(-1);
                 hideCancelOrFinishButton();
-                if (cardSelectDialog != null) cardSelectDialog.dismiss();
+                cardSelectDialog.dismiss();
                 break;
             }
             case 27: {

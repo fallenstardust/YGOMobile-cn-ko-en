@@ -363,6 +363,29 @@ class GameFieldCards {
         if (!field.currentChain.targets.contains(pcard)) field.currentChain.targets.add(pcard);
     }
 
+    /**
+     * event_handler.cpp SetShowMark L2901-2918：对目标卡联动开关其关联图标标记。
+     * 装备关系（equipTarget / equipped 集合）→ is_showequip；
+     * 永续对象关系（cardTarget 对位 targetCards 及其反向 ownerTarget）→ is_showtarget；
+     * 连锁对象（chain_card ↔ target 双向）→ is_showchaintarget。
+     * 桌面版由悬停触发，移动端语义为“点击卡片时展示”，由 FieldTouchPicker 挂接。
+     */
+    public void setShowMark(ClientCard pcard, boolean enable) {
+        if (pcard == null) return;
+        if (pcard.equipTarget != null) pcard.equipTarget.is_showequip = enable;
+        for (ClientCard c : pcard.equipped) c.is_showequip = enable;
+        for (ClientCard c : pcard.targetCards) c.is_showtarget = enable;
+        for (ClientCard c : pcard.ownerTarget) c.is_showtarget = enable;
+        for (ChainInfo ch : field.chains) {
+            if (pcard == ch.chainCard) {
+                for (ClientCard t : ch.targets) t.is_showchaintarget = enable;
+            }
+            if (ch.targets.contains(pcard) && ch.chainCard != null) {
+                ch.chainCard.is_showchaintarget = enable;
+            }
+        }
+    }
+
     public void clearCommandFlag() {
         for (ClientCard c : field.activatableCards)
             if (c != null) {

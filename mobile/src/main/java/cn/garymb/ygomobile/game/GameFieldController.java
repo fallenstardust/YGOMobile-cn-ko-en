@@ -313,6 +313,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         select.beginCardSelect(items, min, max, cancelable);
     }
 
+    public void beginUnselectCardSelect(List<CardSelectDialog.CardItem> items, int selectableCount,
+                                        int min, int max, boolean finishable, boolean cancelable) {
+        select.beginUnselectCardSelect(items, selectableCount, min, max, finishable, cancelable);
+    }
+
     public boolean finishCardSelect() {
         return select.finishCardSelect();
     }

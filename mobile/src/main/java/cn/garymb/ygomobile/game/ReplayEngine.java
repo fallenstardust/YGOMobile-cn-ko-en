@@ -581,11 +581,12 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onRecover(rcvPlayer, rcvAmt);
                     break;
 
-                case 93: // MSG_EQUIP
+                case 93: // MSG_EQUIP：c1 l1 s1 pos c2 l2 s2 pos（duelclient.cpp L3619-3627）
                     if (buf.remaining() < 8) return false;
-                    buf.getInt();
                     int eqCtrl = buf.get() & 0xFF; int eqLoc = buf.get() & 0xFF; int eqSeq = buf.get() & 0xFF;
+                    buf.get(); // position
                     int tCtrl = buf.get() & 0xFF; int tLoc = buf.get() & 0xFF; int tSeq = buf.get() & 0xFF;
+                    buf.get(); // position
                     onEquip(0, eqCtrl, eqLoc, eqSeq, tCtrl, tLoc, tSeq);
                     break;
 
@@ -596,8 +597,24 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onLpUpdate(lpPlayer, lpVal);
                     break;
 
-                case 95: skipBytes(4); onUnequip(0, 0, 0); break;
-                case 96: case 97: skipBytes(8); break; // CARD_TARGET / CANCEL_TARGET
+                case 95: { // MSG_UNEQUIP：c l s pos
+                    if (buf.remaining() < 4) return false;
+                    int unCtrl = buf.get() & 0xFF; int unLoc = buf.get() & 0xFF; int unSeq = buf.get() & 0xFF;
+                    buf.get(); // position
+                    onUnequip(unCtrl, unLoc, unSeq);
+                    break;
+                }
+
+                case 96: case 97: { // MSG_CARD_TARGET / MSG_CANCEL_TARGET：c1 l1 s1 pos c2 l2 s2 pos
+                    if (buf.remaining() < 8) return false;
+                    int c1ctrl = buf.get() & 0xFF; int c1loc = buf.get() & 0xFF; int c1seq = buf.get() & 0xFF;
+                    buf.get(); // position
+                    int c2ctrl = buf.get() & 0xFF; int c2loc = buf.get() & 0xFF; int c2seq = buf.get() & 0xFF;
+                    buf.get(); // position
+                    if (msgType == 96) onCardTarget(c1ctrl, c1loc, c1seq, c2ctrl, c2loc, c2seq);
+                    else onCancelTarget(c1ctrl, c1loc, c1seq, c2ctrl, c2loc, c2seq);
+                    break;
+                }
 
                 case 100: // MSG_PAY_LPCOST
                     if (buf.remaining() < 5) return false;
@@ -1023,7 +1040,11 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onChainSolving(int chainCount) {}
     @Override public void onChainSolved(int chainCount) { notifyField(); }
     @Override public void onChainEnd() {
-        // duelclient.cpp MSG_CHAIN_END L3442
+        // duelclient.cpp MSG_CHAIN_END L3436-3442：逐链清 is_showchaintarget 后再 clear
+        for (GameField.ChainInfo ch : field.chains) {
+            for (GameField.ClientCard t : ch.targets) t.is_showchaintarget = false;
+            if (ch.chainCard != null) ch.chainCard.is_showchaintarget = false;
+        }
         field.chains.clear();
         field.currentChain = new GameField.ChainInfo();
         notifyField();
@@ -1064,15 +1085,60 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         soundManager.playSoundEffect(SoundManager.SFX.RECOVER);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
-    @Override public void onEquip(int ec, int ecl, int el, int es, int tc, int tl, int ts) { notifyField(); }
+    @Override public void onEquip(int ec, int ecl, int el, int es, int tc, int tl, int ts) {
+        // duelclient.cpp MSG_EQUIP：录像视角不本地化，直接按 ctrl&1 维护装备双向关系
+        GameField.ClientCard pc1 = field.getCard(ecl & 1, el, es);
+        GameField.ClientCard pc2 = field.getCard(tc & 1, tl, ts);
+        if (pc1 != null && pc2 != null) {
+            if (pc1.equipTarget != null) {
+                pc1.is_showequip = false;
+                pc1.equipTarget.is_showequip = false;
+                pc1.equipTarget.equipped.remove(pc1);
+            }
+            pc1.equipCard = pc2;
+            pc1.equipTarget = pc2;
+            if (!pc2.equipped.contains(pc1)) pc2.equipped.add(pc1);
+        }
+        notifyField();
+    }
     @Override public void onLpUpdate(int player, int lp) {
         field.players[player].lp = lp;
         field.startLpChange(player, lp, 0, null, false);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
-    @Override public void onUnequip(int ctrl, int loc, int seq) { notifyField(); }
-    @Override public void onCardTarget(int c1c, int c1l, int c1s, int c2c, int c2l, int c2s) {}
-    @Override public void onCancelTarget(int c1c, int c1l, int c1s, int c2c, int c2l, int c2s) {}
+    @Override public void onUnequip(int ctrl, int loc, int seq) {
+        GameField.ClientCard card = field.getCard(ctrl & 1, loc, seq);
+        if (card != null) {
+            if (card.equipTarget != null) {
+                card.equipTarget.equipped.remove(card);
+                card.equipTarget.is_showequip = false;
+                card.is_showequip = false;
+                card.equipTarget = null;
+            }
+            card.equipCard = null;
+        }
+        notifyField();
+    }
+    @Override public void onCardTarget(int c1c, int c1l, int c1s, int c2c, int c2l, int c2s) {
+        // duelclient.cpp MSG_CARD_TARGET L3708-3709：双向登记 cardTarget / ownerTarget
+        GameField.ClientCard c1 = field.getCard(c1c & 1, c1l, c1s);
+        GameField.ClientCard c2 = field.getCard(c2c & 1, c2l, c2s);
+        if (c1 != null && c2 != null) {
+            if (!c1.targetCards.contains(c2)) c1.targetCards.add(c2);
+            if (!c2.ownerTarget.contains(c1)) c2.ownerTarget.add(c1);
+        }
+        notifyField();
+    }
+    @Override public void onCancelTarget(int c1c, int c1l, int c1s, int c2c, int c2l, int c2s) {
+        GameField.ClientCard c1 = field.getCard(c1c & 1, c1l, c1s);
+        GameField.ClientCard c2 = field.getCard(c2c & 1, c2l, c2s);
+        if (c1 != null && c2 != null) {
+            c1.targetCards.remove(c2);
+            c2.ownerTarget.remove(c1);
+            c2.is_showtarget = false;
+        }
+        notifyField();
+    }
     @Override public void onPayLpCost(int player, int cost) {
         field.players[player].lp -= cost;
         if (field.players[player].lp < 0) field.players[player].lp = 0;

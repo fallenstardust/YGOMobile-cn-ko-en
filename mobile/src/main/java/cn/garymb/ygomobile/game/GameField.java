@@ -100,6 +100,8 @@ public class GameField {
         public int link_marker;
         public ClientCard equipTarget;
         public List<ClientCard> equipped = new ArrayList<>();
+        /** client_field.h ClientCard::ownerTarget：被哪些卡的永续效果以其为对象（MSG_CARD_TARGET 反向登记） */
+        public List<ClientCard> ownerTarget = new ArrayList<>();
         public List<ClientCard> overlayed = new ArrayList<>();
         public ClientCard overlayTarget;
         public int status;
@@ -826,6 +828,11 @@ public class GameField {
     }
 
     // === 命令标记 / 选择状态清理 / 交换场地（GameFieldCards）===
+
+    /** client_field.cpp ClientField::SetShowMark：点击卡片（移动端悬停语义）时联动开关其装备/对象/连锁对象标记 */
+    public void setShowMark(ClientCard pcard, boolean enable) {
+        cards.setShowMark(pcard, enable);
+    }
 
     public void clearCommandFlag() {
         cards.clearCommandFlag();

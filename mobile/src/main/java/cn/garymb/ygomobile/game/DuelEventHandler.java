@@ -507,7 +507,12 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onChainEnd() {
-        // 对齐 duelclient.cpp MSG_CHAIN_END L3442：chains.clear()
+        // 对齐 duelclient.cpp MSG_CHAIN_END L3436-3442：逐链清除对象卡与发动卡的
+        // is_showchaintarget 后再 chains.clear()
+        for (GameField.ChainInfo ch : engine.field.chains) {
+            for (GameField.ClientCard t : ch.targets) t.is_showchaintarget = false;
+            if (ch.chainCard != null) ch.chainCard.is_showchaintarget = false;
+        }
         chainCodes.clear();
         engine.field.chains.clear();
         engine.field.currentChain = new GameField.ChainInfo();
@@ -598,10 +603,19 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onEquip(int eqCode, int eqCtrl, int eqLoc, int eqSeq,
                         int tCtrl, int tLoc, int tSeq) {
-        GameField.ClientCard equipCard = engine.field.getCard(eqCtrl, eqLoc, eqSeq);
-        GameField.ClientCard target = engine.field.getCard(tCtrl, tLoc, tSeq);
-        if (equipCard != null && target != null) {
-            equipCard.equipCard = target;
+        // duelclient.cpp MSG_EQUIP L3619-3652：旧装备关系解除（equipped 集合摘除、
+        // 集合空时清 is_showequip），再登记新关系 pc1->equipTarget=pc2、pc2->equipped.add(pc1)
+        GameField.ClientCard pc1 = engine.field.getCard(engine.localPlayer(eqCtrl & 1), eqLoc, eqSeq);
+        GameField.ClientCard pc2 = engine.field.getCard(engine.localPlayer(tCtrl & 1), tLoc, tSeq);
+        if (pc1 != null && pc2 != null) {
+            if (pc1.equipTarget != null) {
+                pc1.is_showequip = false;
+                pc1.equipTarget.is_showequip = false;
+                pc1.equipTarget.equipped.remove(pc1);
+            }
+            pc1.equipCard = pc2; // 兼容旧字段（HUD 图标的装备卡指向）
+            pc1.equipTarget = pc2;
+            if (!pc2.equipped.contains(pc1)) pc2.equipped.add(pc1);
         }
         engine.soundManager.playSoundEffect(SoundManager.SFX.EQUIP);
         engine.mainHandler.post(() -> {
@@ -621,8 +635,15 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onUnequip(int ctrl, int loc, int seq) {
-        GameField.ClientCard card = engine.field.getCard(ctrl, loc, seq);
+        // duelclient.cpp MSG_UNEQUIP L3671-3691：从被装备卡 equipped 集合摘除，集合空时清 is_showequip
+        GameField.ClientCard card = engine.field.getCard(engine.localPlayer(ctrl & 1), loc, seq);
         if (card != null) {
+            if (card.equipTarget != null) {
+                card.equipTarget.equipped.remove(card);
+                card.equipTarget.is_showequip = false;
+                card.is_showequip = false;
+                card.equipTarget = null;
+            }
             card.equipCard = null;
         }
         engine.mainHandler.post(() -> {
@@ -632,10 +653,12 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onCardTarget(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
-        GameField.ClientCard c1 = engine.field.getCard(c1ctrl, c1loc, c1seq);
-        GameField.ClientCard c2 = engine.field.getCard(c2ctrl, c2loc, c2seq);
+        // duelclient.cpp MSG_CARD_TARGET L3692-3717：c1->cardTarget.insert(c2); c2->ownerTarget.insert(c1)
+        GameField.ClientCard c1 = engine.field.getCard(engine.localPlayer(c1ctrl & 1), c1loc, c1seq);
+        GameField.ClientCard c2 = engine.field.getCard(engine.localPlayer(c2ctrl & 1), c2loc, c2seq);
         if (c1 != null && c2 != null) {
-            c1.targetCards.add(c2);
+            if (!c1.targetCards.contains(c2)) c1.targetCards.add(c2);
+            if (!c2.ownerTarget.contains(c1)) c2.ownerTarget.add(c1);
         }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
@@ -644,10 +667,13 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onCancelTarget(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
-        GameField.ClientCard c1 = engine.field.getCard(c1ctrl, c1loc, c1seq);
-        GameField.ClientCard c2 = engine.field.getCard(c2ctrl, c2loc, c2seq);
+        // duelclient.cpp MSG_CANCEL_TARGET L3718-3743：双向摘除，并对位清理悬停态图标标记
+        GameField.ClientCard c1 = engine.field.getCard(engine.localPlayer(c1ctrl & 1), c1loc, c1seq);
+        GameField.ClientCard c2 = engine.field.getCard(engine.localPlayer(c2ctrl & 1), c2loc, c2seq);
         if (c1 != null && c2 != null) {
             c1.targetCards.remove(c2);
+            c2.ownerTarget.remove(c1);
+            c2.is_showtarget = false;
         }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();

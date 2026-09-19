@@ -92,15 +92,10 @@ public class TextureLoader {
                 "icon_lim.png", "ot.png", "cardtype.png",
                 // 手牌背景 (tHand[0..2])
                 "f1.jpg", "f2.jpg", "f3.jpg",
-                // 攻击合计/选择区域/计时 (tTotalAtk/tSelField/tClock)
-                "totalAtk.png", "selfield.png", "tiktok.png",
+                // 攻击合计/计时 (tTotalAtk/tClock)
+                "totalAtk.png", "tiktok.png",
                 // 头像 (tAvatar)
                 "me.jpg", "opponent.jpg",
-                // 连接标记 (tSelFieldLinkArrows[1..4,6..9])
-                "link_marker_on_1.png", "link_marker_on_2.png",
-                "link_marker_on_3.png", "link_marker_on_4.png",
-                "link_marker_on_6.png", "link_marker_on_7.png",
-                "link_marker_on_8.png", "link_marker_on_9.png",
         };
         for (String name : permanentTextures) {
             Bitmap bmp = loadBitmapFromFile(name);
@@ -109,10 +104,16 @@ public class TextureLoader {
             }
         }
         // lpf/lpbarf 为边框贴图，act/attack/chain/negated/number/equip/target/chaintarget/mask
-        // 为场上状态叠加图标，均含透明通道，必须按 ARGB_8888 解码（RGB_565 会丢 alpha → 黑底方块）
+        // 为场上状态叠加图标，selfield（可选区域高亮框）与 link_marker_on_*（连接箭头点亮）
+        // 均为透明叠加贴图，含透明通道，必须按 ARGB_8888 解码（RGB_565 会丢 alpha → 黑底方块）
         String[] alphaTextures = { "lpf.png", "lpbarf.png",
                 "act.png", "attack.png", "chain.png", "negated.png",
-                "number.png", "equip.png", "target.png", "chaintarget.png", "mask.png" };
+                "number.png", "equip.png", "target.png", "chaintarget.png", "mask.png",
+                "selfield.png",
+                "link_marker_on_1.png", "link_marker_on_2.png",
+                "link_marker_on_3.png", "link_marker_on_4.png",
+                "link_marker_on_6.png", "link_marker_on_7.png",
+                "link_marker_on_8.png", "link_marker_on_9.png" };
         for (String name : alphaTextures) {
             Bitmap bmp = loadBitmapFromFile(name, Bitmap.Config.ARGB_8888);
             if (bmp != null) {

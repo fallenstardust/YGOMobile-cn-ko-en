@@ -51,38 +51,73 @@ class CardSelectController {
                     + " items=" + (items == null ? "null" : items.size()));
             return false;
         }
+        if (!fieldCandidatesSelectable("tryFieldCardSelect", eng, f, items)) return false;
+        fsLog("tryFieldCardSelect FIELD MODE: count=" + items.size() + " min=" + min + " max=" + max);
+        ctl.beginCardSelect(items, min, max, cancelable);
+        // 完成/取消按钮沿用 CardDetailPanel（currentSelectType 已由 YGOProActivity 设为 15/20）
+        util.panel().updateCancelOrFinishButton(min == 0, cancelable, false);
+        return true;
+    }
+
+    /**
+     * 场上/手牌直接选择候选合法性检查（MSG_SELECT_CARD 与 MSG_SELECT_UNSELECT_CARD 共用，
+     * 对齐 duelclient.cpp L1945-1961 / L2009-2051 的 panelmode 判定）：任一候选为超量素材、
+     * 场地外（卡组/墓地/除外/额外，即 (loc&0xf1)!=0 等价判定 loc&0xe==0）、场上解析不到，
+     * 或手牌拥挤（该方手牌≥10 张且手牌内候选超过 1 张）→ false 回退弹窗
+     */
+    private boolean fieldCandidatesSelectable(String tag, GameEngine eng, GameField f,
+                                              List<CardSelectDialog.CardItem> items) {
         // duelclient.cpp L1934：手牌数以消息解析前的实时张数为基准
         int[] handCount = { f.getCardCount(0, 0x02), f.getCardCount(1, 0x02) };
         int[] selectInHand = new int[2];
         for (CardSelectDialog.CardItem it : items) {
             int loc = it.location;
             if ((loc & 0x80) != 0) {
-                fsLog("tryFieldCardSelect SKIP: overlay material code=" + it.code
+                fsLog(tag + " SKIP: overlay material code=" + it.code
                         + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc) + " seq=" + it.sequence);
                 return false;
             }
             if ((loc & 0xe) == 0) {
-                fsLog("tryFieldCardSelect SKIP: out-of-field code=" + it.code
+                fsLog(tag + " SKIP: out-of-field code=" + it.code
                         + " ctrl=" + it.controler + " loc=0x" + Integer.toHexString(loc) + " seq=" + it.sequence);
                 return false;
             }
             int lp = eng.localPlayer(it.controler);
             if (f.getCard(lp, loc & 0x7f, it.sequence) == null) {
-                fsLog("tryFieldCardSelect SKIP: getCard null code=" + it.code
+                fsLog(tag + " SKIP: getCard null code=" + it.code
                         + " ctrl=" + it.controler + "->" + lp + " loc=0x" + Integer.toHexString(loc & 0x7f)
                         + " seq=" + it.sequence);
                 return false;
             }
             // duelclient.cpp L1957-1961：该方手牌≥ 10 张且候选在手牌内超过 1 张 → 拥挤，回退弹窗
             if ((loc & 0x02) != 0 && handCount[lp] >= 10 && ++selectInHand[lp] > 1) {
-                fsLog("tryFieldCardSelect SKIP: hand crowded player=" + lp + " handCount=" + handCount[lp]);
+                fsLog(tag + " SKIP: hand crowded player=" + lp + " handCount=" + handCount[lp]);
                 return false;
             }
         }
-        fsLog("tryFieldCardSelect FIELD MODE: count=" + items.size() + " min=" + min + " max=" + max);
-        ctl.beginCardSelect(items, min, max, cancelable);
-        // 完成/取消按钮沿用 CardDetailPanel（currentSelectType 已由 YGOProActivity 设为 15/20）
-        util.panel().updateCancelOrFinishButton(min == 0, cancelable, false);
+        return true;
+    }
+
+    /**
+     * MSG_SELECT_UNSELECT_CARD 场上分流（连接召唤手续逐步选素材的所在消息）：
+     * gframe L1985-2079 对其套用与 MSG_SELECT_CARD 相同的 panelmode 判定，
+     * 候选（count1 可选 + count2 已确认素材）全在场/手时不弹窗——场上可选卡画行进虚线、
+     * 预选素材画实线框，点击任意可选卡立即应答
+     */
+    private boolean tryFieldUnselectCardSelect(List<CardSelectDialog.CardItem> items, int selectableCount,
+                                               int min, int max, boolean finishable, boolean cancelable) {
+        GameFieldController ctl = util.fieldCtl();
+        GameEngine eng = util.engine();
+        GameField f = (eng != null) ? eng.getField() : null;
+        if (ctl == null || eng == null || f == null || items == null || items.isEmpty()) {
+            fsLog("tryFieldUnselect SKIP: ctl=" + ctl + " eng=" + eng + " f=" + f
+                    + " items=" + (items == null ? "null" : items.size()));
+            return false;
+        }
+        if (!fieldCandidatesSelectable("tryFieldUnselect", eng, f, items)) return false;
+        fsLog("tryFieldUnselect FIELD MODE: count=" + items.size() + " selectable=" + selectableCount
+                + " min=" + min + " max=" + max);
+        ctl.beginUnselectCardSelect(items, selectableCount, min, max, finishable, cancelable);
         return true;
     }
 
@@ -455,6 +490,8 @@ class CardSelectController {
             util.sendResponseInt(-1);
             return;
         }
+        // 候选全在场/手：不弹窗，场上虚线/实线直接点选（duelclient.cpp L1985-2079 同 SELECT_CARD 分流）
+        if (tryFieldUnselectCardSelect(items, count1, min, max, finishable, cancelable)) return;
         boolean[] preSelected = new boolean[items.size()];
         for (int i = count1; i < items.size(); i++) {
             preSelected[i] = true;

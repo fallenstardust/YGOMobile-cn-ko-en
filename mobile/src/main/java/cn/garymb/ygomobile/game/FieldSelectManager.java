@@ -29,6 +29,9 @@ class FieldSelectManager {
     int cardSelectMax = 0;
     boolean cardSelectCancelable = false;
     final List<Integer> cardSelectClickOrder = new ArrayList<>();
+    // === MSG_SELECT_UNSELECT_CARD 场上会话（连接召唤手续逐步选素材：点卡即单卡提交，
+    //  count2 已确认素材画实线框；gframe duelclient.cpp L1985-2079）===
+    boolean isUnselectSelecting = false;
     // === 场上/手牌合计选择会话（MSG_SELECT_SUM 候选全在场内时不弹 CardSelectDialog，
     //  忠实移植 client_field.cpp CheckSelectSum/ShowSelectSum 的点击-重校验循环）===
     boolean isSumSelecting = false;
@@ -238,6 +241,7 @@ class FieldSelectManager {
         field.selectsumCards.clear();
         cardSelectClickOrder.clear();
         isSumSelecting = false;
+        isUnselectSelecting = false;
         cardSelectMin = min;
         cardSelectMax = max;
         cardSelectCancelable = cancelable;
@@ -256,6 +260,50 @@ class FieldSelectManager {
         ctl.showHint("点击高亮的卡片进行选择", 3000);
     }
 
+    /**
+     * 进入 UNSELECT 场上直接选择会话（MSG_SELECT_UNSELECT_CARD，连接召唤手续逐步选素材）：
+     * 对齐 duelclient.cpp L2003-2051——count1 可选卡 is_selectable/未选中（行进虚线），
+     * count2 已确认素材 is_selectable 且 is_selected（实线框，不入 selected_cards，同 gframe
+     * selected_cards 仅存玩家点选卡片的语义）；点击任意可选卡立即应答（event_handler.cpp
+     * L1520-1535），完成/取消按钮应答 -1（gframe L2067-2077 select_cancelable=finishable||cancelable）
+     */
+    void beginUnselectCardSelect(List<CardSelectDialog.CardItem> items, int selectableCount,
+                                 int min, int max, boolean finishable, boolean cancelable) {
+        if (ctl.engine == null || items == null || items.isEmpty()) return;
+        GameField field = ctl.engine.getField();
+        field.clearSelect();
+        field.selectableCards.clear();
+        field.selectedCards.clear();
+        field.selectsumAll.clear();
+        field.selectsumCards.clear();
+        cardSelectClickOrder.clear();
+        isSumSelecting = false;
+        isUnselectSelecting = true;
+        isCardSelecting = true;
+        cardSelectMin = min;
+        cardSelectMax = max;
+        // gframe L1989：select_cancelable = finishable || cancelable
+        cardSelectCancelable = finishable || cancelable;
+        for (int i = 0; i < items.size(); i++) {
+            CardSelectDialog.CardItem it = items.get(i);
+            GameField.ClientCard card = field.getCard(ctl.engine.localPlayer(it.controler),
+                    it.location & 0x7f, it.sequence);
+            if (card == null) continue;
+            card.is_selectable = true;
+            // count2（i≥selectableCount）预选中 → 实线框（gframe L2043）
+            card.is_selected = i >= selectableCount;
+            card.select_seq = it.selectSeq;
+            field.selectableCards.add(card);
+        }
+        if (ctl.viewController != null) ctl.viewController.invalidate();
+        ctl.showHint("点击高亮的卡片进行选择", 3000);
+        CardDetailPanel panel = ctl.activity.getCardDetailPanel();
+        if (panel != null) {
+            // gframe L2067-2077：finishable → 「完成」，否则 cancelable → 「取消」，皆无 → 隐藏
+            panel.updateCancelOrFinishButton(finishable, cancelable, false);
+        }
+    }
+
     void handleCardSelection(int player, int location, int sequence) {
         if (ctl.engine == null) return;
         GameField field = ctl.engine.getField();
@@ -263,6 +311,19 @@ class FieldSelectManager {
         // 合计选择（SUM）模式：交给专用点击-重校验循环（event_handler.cpp L1557-1566）
         if (isSumSelecting) {
             handleSumSelectionClick(card);
+            return;
+        }
+        // UNSELECT 场上模式（连接手续逐步选素材，event_handler.cpp L1520-1535）：
+        // 点击任意 is_selectable 卡 → 立即应答 [1, select_seq]，无效点击静默忽略（同 C++ break）
+        if (isUnselectSelecting) {
+            if (card != null && card.is_selectable) {
+                ByteBuffer buf = ByteBuffer.allocate(2);
+                buf.order(ByteOrder.LITTLE_ENDIAN);
+                buf.put((byte) 1);
+                buf.put((byte) card.select_seq);
+                ctl.engine.sendResponse(buf.array());
+                endCardSelect();
+            }
             return;
         }
         if (card == null || !card.is_selectable) {
@@ -304,6 +365,11 @@ class FieldSelectManager {
     /** 「完成选择」按钮：达到 min 即应答，否则可取消时应答 -1 */
     boolean finishCardSelect() {
         if (!isCardSelecting) return false;
+        // UNSELECT 场上会话：无部分确认（单卡点击即提交），完成/取消统一应答 -1
+        //（event_handler.cpp L968-971：UNSELECT 的 CancelOrFinish = 发送 -1）
+        if (isUnselectSelecting) {
+            return cancelCardSelect();
+        }
         // SUM 模式：仅在 selectReady 时应答（event_handler.cpp L3156-3158 CancelOrFinish），SUM 不可取消
         if (isSumSelecting) {
             if (ctl.engine.getField().selectReady) {
@@ -349,6 +415,7 @@ class FieldSelectManager {
     void endCardSelect() {
         isCardSelecting = false;
         isSumSelecting = false;
+        isUnselectSelecting = false;
         cardSelectClickOrder.clear();
         if (ctl.engine != null) {
             GameField field = ctl.engine.getField();
@@ -381,6 +448,7 @@ class FieldSelectManager {
         field.selectsumCards.clear();
         cardSelectClickOrder.clear();
         isSumSelecting = true;
+        isUnselectSelecting = false;
         isCardSelecting = true;
         cardSelectCancelable = false;
         field.mustSelectCount = mustItems == null ? 0 : mustItems.size();

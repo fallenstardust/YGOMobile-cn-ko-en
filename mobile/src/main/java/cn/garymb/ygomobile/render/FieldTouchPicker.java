@@ -50,6 +50,9 @@ final class FieldTouchPicker {
                                 if (!FieldGeometry.zoneContains(p, loc, i, g[0], g[1])) continue;
                                 int bit = FieldGeometry.zoneBitPos(p, loc, i);
                                 if (bit >= 0 && (mask & (1 << bit)) != 0) {
+                                    // 选中被点格子：该格随之显示 selfield 高亮（drawing.cpp 悬停块）
+                                    view.setSelectedCard(p, loc, i);
+                                    view.applyShowMarks(null);
                                     listener.onZoneClick(p, loc, i, x, y);
                                     return;
                                 }
@@ -62,9 +65,21 @@ final class FieldTouchPicker {
             int[] hit = hitCard(ray, f);
             if (hit != null) {
                 view.setSelectedCard(hit[0], hit[1], hit[2]);
+                // 点击卡片 = 桌面悬停语义：联动开关装备/永续对象/连锁对象三种图标（SetShowMark）
+                try {
+                    view.applyShowMarks(f.getCard(hit[0], hit[1], hit[2]));
+                } catch (Throwable ignored2) {
+                }
                 listener.onCardClick(hit[0], hit[1], hit[2], x, y);
             } else {
-                view.clearSelection();
+                // 空格子拾取：命中场上格时仍置选中区，使 selfield/连接箭头随点击显示
+                int[] zone = pickFieldZone(ray, f);
+                if (zone != null) {
+                    view.setSelectedCard(zone[0], zone[1], zone[2]);
+                } else {
+                    view.clearSelection();
+                }
+                view.applyShowMarks(null);
             }
         } catch (Throwable ignored) {
         }
@@ -246,6 +261,30 @@ final class FieldTouchPicker {
                 }
             }
         } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
+    /**
+     * 拾取命中的场上格（MZONE/SZONE）：对位 drawing.cpp DrawBackGround 悬停块给
+     * hovered_location/hovered_sequence 赋值的条件（MR<4 排除额外怪兽区 seq>4、
+     * MR>=4 排除灵摆区 seq>5）；无命中返回 null
+     */
+    private int[] pickFieldZone(float[] ray, GameField f) {
+        float[] g = new float[2];
+        if (!planeHit(ray, 0.02f, g)) return null;
+        // 绘制做了 X 镜像，命中点镜像还原后才能与真实 zone 坐标比较
+        g[0] = FieldGeometry.mirrorX(g[0]);
+        boolean mr4 = f.dInfo.duelRule >= 4;
+        for (int p = 0; p < 2; p++) {
+            for (int loc : new int[]{0x04, 0x08}) {
+                int max = (loc == 0x04) ? GameField.MAX_MONSTER_ZONE : GameField.MAX_SPELL_ZONE;
+                for (int i = 0; i < max; i++) {
+                    if (!mr4 && loc == 0x04 && i > 4) continue;
+                    if (mr4 && loc == 0x08 && i > 5) continue;
+                    if (FieldGeometry.zoneContains(p, loc, i, g[0], g[1])) return new int[]{p, loc, i};
+                }
+            }
         }
         return null;
     }

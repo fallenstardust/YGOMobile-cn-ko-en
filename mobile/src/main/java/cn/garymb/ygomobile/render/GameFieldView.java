@@ -311,6 +311,46 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         requestRender();
     }
 
+    /** 当前选中（移动端语义=点击，对位桌面悬停 hovered_card）并联动展示关联图标的卡片 */
+    volatile GameField.ClientCard markedCard;
+
+    /**
+     * event_handler.cpp 悬停触发 SetShowMark 的点击版：先对上一张解除装备/对象/连锁对象
+     * 图标标记，再对新点击卡置位；由 FieldTouchPicker 在卡片命中处调用
+     */
+    void applyShowMarks(GameField.ClientCard card) {
+        GameField f = field;
+        if (f == null) return;
+        GameField.ClientCard old = markedCard;
+        if (old == card) return;
+        if (old != null) {
+            try {
+                f.setShowMark(old, false);
+            } catch (Throwable ignored) {
+            }
+        }
+        markedCard = card;
+        if (card != null) {
+            try {
+                f.setShowMark(card, true);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    /**
+     * 当前选中的场上格子（仅 MZONE 0x04 / SZONE 0x08）：供
+     * {@link SelectionOutlineRenderer#drawSelFieldOverlay} 绘制 selfield 与连接箭头；无则 null
+     */
+    int[] selectedFieldZone() {
+        int p = selectedPlayer;
+        int loc = selectedLocation;
+        int seq = selectedSequence;
+        if (p < 0 || p > 1 || seq < 0) return null;
+        if (loc != 0x04 && loc != 0x08) return null;
+        return new int[]{p, loc, seq};
+    }
+
     /**
      * 连续渲染模式自带动画循环，保留接口仅为兼容
      */
@@ -575,6 +615,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         board.drawZoneSlots();
         try {
             board.drawTotalAttackBars(f);
+        } catch (Throwable ignored) {
+        }
+        // 点击格子的 selfield / 连接箭头点亮（drawing.cpp DrawBackGround 悬停块，z=0.006 绘于卡片之下）
+        try {
+            outlines.drawSelFieldOverlay(f);
         } catch (Throwable ignored) {
         }
         try {
