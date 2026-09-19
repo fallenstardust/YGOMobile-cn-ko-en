@@ -416,6 +416,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     public void onJoinGame(int lflist, int rule, int mode, int duelRule,
                            int noCheckDeck, int noShuffleDeck,
                            int startLp, int startHand, int drawCount, int timeLimit) {
+        // 对齐 gframe duelclient.cpp L737：STOC_JOIN_GAME 到达即写入 duel_rule/start_lp，
+        // 早于 MSG_START（猜拳之前），让场地贴图 field/field2/field3 与格子布局按 rule 提前分流
+        activity.engine.field.dInfo.duelRule = duelRule;
+        activity.engine.field.dInfo.startLp = startLp;
         activity.runOnUiThread(() -> {
             if (activity.playerWaitingDialog != null)
                 activity.playerWaitingDialog.handleJoinGame(lflist, rule, mode, duelRule,

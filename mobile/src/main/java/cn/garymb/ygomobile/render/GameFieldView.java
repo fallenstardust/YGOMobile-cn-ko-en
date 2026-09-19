@@ -612,7 +612,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             board.drawFieldBoard(f);
         } catch (Throwable ignored) {
         }
-        board.drawZoneSlots();
+        board.drawZoneSlots(f);
         try {
             board.drawTotalAttackBars(f);
         } catch (Throwable ignored) {

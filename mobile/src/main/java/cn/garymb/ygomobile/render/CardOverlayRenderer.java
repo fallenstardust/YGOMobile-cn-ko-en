@@ -52,6 +52,10 @@ final class CardOverlayRenderer {
     private static final float NEGATE_W_FRAC = 0.5f / 0.7f;
     private static final float NEGATE_H_FRAC = 0.5f;
     private static final float NEGATE_Y_OFF_FRAC = -0.03f;
+    // z 层阶梯（用户需求）：卡片 curZ → 灵摆刻度图 +0.02 → 状态图标 +0.03（刻度+0.01）
+    // → 攻击箭头 +0.04，逐层不共面防条栅
+    private static final float SCALE_Z_OFF = 0.02f;
+    private static final float ICON_Z_OFF = 0.03f;
     /** CardType.Pendulum 位（ocgcore.enums.CardType.Pendulum = 0x1000000） */
     private static final int TYPE_PENDULUM = 0x1000000;
 
@@ -145,22 +149,23 @@ final class CardOverlayRenderer {
 
     private void overlayCardStatus(GameField.ClientCard c, boolean mr4) {
         if (c.is_moving) return;
+        // z 层（用户需求）：装备/对象/连锁对象/无效图标在灵摆刻度图（lscale，curZ+0.02）上再高 0.01f
         if (c.is_showequip) {
-            drawFieldIcon(c, obtainIconTexture(EQUIP_TEX_KEY, IC_EQUIP), 1f, SYMBOL_H_FRAC, 0f);
+            drawFieldIcon(c, obtainIconTexture(EQUIP_TEX_KEY, IC_EQUIP), 1f, SYMBOL_H_FRAC, 0f, ICON_Z_OFF);
         } else if (c.is_showtarget) {
-            drawFieldIcon(c, obtainIconTexture(TARGET_TEX_KEY, IC_TARGET), 1f, SYMBOL_H_FRAC, 0f);
+            drawFieldIcon(c, obtainIconTexture(TARGET_TEX_KEY, IC_TARGET), 1f, SYMBOL_H_FRAC, 0f, ICON_Z_OFF);
         } else if (c.is_showchaintarget) {
-            drawFieldIcon(c, obtainIconTexture(CHAIN_TARGET_TEX_KEY, IC_CHAIN_TARGET), 1f, SYMBOL_H_FRAC, 0f);
+            drawFieldIcon(c, obtainIconTexture(CHAIN_TARGET_TEX_KEY, IC_CHAIN_TARGET), 1f, SYMBOL_H_FRAC, 0f, ICON_Z_OFF);
         } else if ((c.status & (STATUS_DISABLED | STATUS_FORBIDDEN)) != 0
                 && (c.location & LOCATION_ONFIELD) != 0 && (c.position & POS_FACEUP) != 0) {
             drawFieldIcon(c, obtainIconTexture(NEGATED_TEX_KEY, IC_NEGATED),
-                    NEGATE_W_FRAC, NEGATE_H_FRAC, NEGATE_Y_OFF_FRAC * FieldGeometry.CARD_H);
+                    NEGATE_W_FRAC, NEGATE_H_FRAC, NEGATE_Y_OFF_FRAC * FieldGeometry.CARD_H, ICON_Z_OFF);
         }
         if (mr4 && (c.type & TYPE_PENDULUM) != 0 && (c.location & 0x08) != 0
                 && c.isFaceUp() && (c.sequence == 0 || c.sequence == 4)) {
             boolean left = c.sequence == 0;
             int tex = obtainScaleIcon(left, clampScale(left ? c.lScale : c.rScale));
-            if (tex > 0) drawFieldIcon(c, tex, 1f, 1f, 0f);
+            if (tex > 0) drawFieldIcon(c, tex, 1f, 1f, 0f, SCALE_Z_OFF);
         }
         // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）
         if ((c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0) {
@@ -181,7 +186,7 @@ final class CardOverlayRenderer {
         float yOff = (c.controler == 0 ? -1f : 1f) * mag;
         float rotDeg = c.controler == 0 ? 0f : 180f;
         Matrix.setIdentityM(view.mModel, 0);
-        Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(c.curX), c.curY + yOff, c.curZ + 0.03f);
+        Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(c.curX), c.curY + yOff, c.curZ + ICON_Z_OFF + 0.01f);
         if (rotDeg != 0f) Matrix.rotateM(view.mModel, 0, rotDeg, 0f, 0f, 1f);
         Matrix.scaleM(view.mModel, 0, FieldGeometry.CARD_W, FieldGeometry.CARD_H * SYMBOL_H_FRAC, 1f);
         view.drawQuadTex(view.mModel, tex, 1f);
@@ -191,11 +196,12 @@ final class CardOverlayRenderer {
         return Math.max(0, Math.min(13, s));
     }
 
-    /** 卡片正上方绘一枚世界坐标正立（不随卡片旋转）的叠加图标，尺寸按卡片足迹分数换算 */
-    private void drawFieldIcon(GameField.ClientCard c, int tex, float wFrac, float hFrac, float yOff) {
+    /** 卡片正上方绘一枚世界坐标正立（不随卡片旋转）的叠加图标，尺寸按卡片足迹分数换算；
+     *  zOff 区分层：灵摆刻度图 SCALE_Z_OFF，状态/无效图标 ICON_Z_OFF（=刻度+0.01，不共面） */
+    private void drawFieldIcon(GameField.ClientCard c, int tex, float wFrac, float hFrac, float yOff, float zOff) {
         if (tex <= 0) return;
         Matrix.setIdentityM(view.mModel, 0);
-        Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(c.curX), c.curY + yOff, c.curZ + 0.02f);
+        Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(c.curX), c.curY + yOff, c.curZ + zOff);
         Matrix.scaleM(view.mModel, 0, FieldGeometry.CARD_W * wFrac, FieldGeometry.CARD_H * hFrac, 1f);
         view.drawQuadTex(view.mModel, tex, 1f);
     }

@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.render;
 
 import android.graphics.Bitmap;
+import android.opengl.GLES30;
 import android.opengl.Matrix;
 
 import java.util.List;
@@ -22,7 +23,18 @@ final class SelectionOutlineRenderer {
     // === 可选格子高亮：环绕格子的虚线行进动画（drawing.cpp DrawSelectionLine + game.cpp linePattern/stippleMask）===
     private static final int STIPPLE_MASK = 0x0f0f;
     private static final float OUTLINE_PX = 2.5f;
-    private static final float MARCH_PX_PER_SEC = 48f;
+    /**
+     * 蚂蚁线一个 16px 图案循环的毫秒周期（16px ÷ 48px/s ≈ 333ms，对齐 C++ 每帧左旋一次
+     * stippleMask 的观感）。animTimeMs 是 ~1.7e12 量级的绝对时间戳，必须先取模再转 float：
+     * 否则 phase ≈ 8.5e10 远超 float 精确整数域，(int) 转换饱和为 Integer.MAX_VALUE，
+     * 图案位恒取 bit15=0 → 整条蚂蚁线不可见（问题1根因）
+     */
+    private static final long MARCH_LOOP_MS = 333L;
+
+    /** 蚂蚁线行进相位 [0,16)：等效 C++ stippleMask 每帧左旋，亮段沿边序方向移动 */
+    private float marchPhase() {
+        return (view.animTimeMs % MARCH_LOOP_MS) / (float) MARCH_LOOP_MS * 16f;
+    }
 
     // === 卡片选择轮廓：黄色蚂蚁线（对齐 drawing.cpp DrawSelectionLine + DrawCard L638-643）===
     private final float[] mOutlineModel = new float[16];
@@ -34,8 +46,12 @@ final class SelectionOutlineRenderer {
     /** 纹理键：避开 FieldTextureManager 已占用的 -1/-10/-50..-56/-200/-1e9 负键域 */
     private static final long SELFIELD_TEX_KEY = -60L;
     private static final long LINK_MARKER_TEX_BASE = -70L;
-    /** z 层：场地板 -0.01、格子槽 0.004、selfield/link marker 0.006、SZONE 卡 0.01、MZONE 卡 0.02 */
-    private static final float SEL_FIELD_Z = 0.006f;
+    /**
+     * z 层（用户需求重排）：场地板/格子槽在下，selfield/link marker 在背景图 field3 上高 0.01f；
+     * 绘制时关深度测试、先于卡片段，卡片（SZONE 0.01/MZONE 0.02）后绘自然盖在其上，
+     * 与 SZONE 卡同 z 也不会条栅（不写深度）
+     */
+    private static final float SEL_FIELD_Z = 0.01f;
     /** 连接标记位（drawing.h LINK_MARKER_*）：箭头贴图编号 = 最低置位 + 1 */
     private static final int LM_BOTTOM_LEFT = 0x001;
     private static final int LM_BOTTOM = 0x002;
@@ -54,7 +70,7 @@ final class SelectionOutlineRenderer {
     void drawHighlights() {
         int mask = view.highlightFieldMask;
         if (mask == 0) return;
-        float phase = view.animTimeMs * 0.001f * MARCH_PX_PER_SEC;
+        float phase = marchPhase();
         for (int p = 0; p < 2; p++) {
             float r = p == 0 ? 0f : 1f;
             float g = p == 0 ? 1f : 0f;
@@ -73,9 +89,11 @@ final class SelectionOutlineRenderer {
 
     /**
      * 单格虚线行进框：四角投影到屏幕取像素边长，按 16bit stipple(0x0f0f) 沿周长走像素，
-     * “亮”段换算回世界坐标画粗线段；patternCursor 跨边累积、phase 随时间推进 → 蚂蚁线环绕运动。
-     * 边序与 C++ edgeStart/edgeEnd 相反：绘制经 {@link FieldGeometry#mirrorX} 翻转 X（复现桌面
-     * 方位）使世界同边序在屏幕上反向，反转边序后屏幕行进方向才是顺时针（用户需求）
+     * “亮”段换算回世界坐标画粗线段；patternCursor 跨边累积、相位随时间后移图案索引
+     * （index = cursor - phase，等效 C++ mask 左旋）→ 亮段沿边序方向行进。
+     * 边序与 C++ DrawSelectionLine edgeStart{0,1,3,2}/edgeEnd{1,3,2,0} 完全一致：
+     * 本工程绘制虽经 {@link FieldGeometry#mirrorX} 翻转 X，但相机为 RH 且架在我方侧，
+     * 屏幕手性与 C++（LH 相机）一致（屏幕右 = +raw），故按 C++ 原边序即为屏幕顺时针
      */
     private void drawZoneMarching(int player, int loc, int seq, float phase,
                                   float r, float g, float b) {
@@ -84,11 +102,12 @@ final class SelectionOutlineRenderer {
         float cx = FieldGeometry.mirrorX(rect[0]), cy = rect[1];
         float hw = rect[2] / 2f, hh = rect[3] / 2f;
         float x0 = cx - hw, x1 = cx + hw, y0 = cy - hh, y1 = cy + hh;
-        // 角点顺序对齐 C++ v[0..3]；边序反转（屏幕顺时针）：左→下→右→上
+        // 角点：绘制空间经 mirrorX 且相机 RH（屏幕右 = -drawX = +raw），q0=屏幕右上、q1=左上、
+        // q2=右下、q3=左下；顺时针路径：上边左→右(1→0)、右边上→下(0→2)、下边右→左(2→3)、左边下→上(3→1)
         float[] qx = {x0, x1, x0, x1};
         float[] qy = {y0, y0, y1, y1};
-        int[] es = {0, 2, 3, 1};
-        int[] ee = {2, 3, 1, 0};
+        int[] es = {1, 0, 2, 3};
+        int[] ee = {0, 2, 3, 1};
         float[] sx = new float[4], sy = new float[4];
         for (int i = 0; i < 4; i++) {
             float[] s = view.projectWorldPoint(qx[i], qy[i], 0.03f);
@@ -105,10 +124,10 @@ final class SelectionOutlineRenderer {
             float thick = OUTLINE_PX * worldLen / screenLen;
             float c = 0f;
             while (c < screenLen) {
-                boolean on = ((STIPPLE_MASK >> ((int) (phase + patternCursor + c) & 0xf)) & 1) != 0;
+                boolean on = ((STIPPLE_MASK >> ((int) (patternCursor + c - phase) & 0xf)) & 1) != 0;
                 float runEnd = c + 1f;
                 while (runEnd < screenLen
-                        && ((((STIPPLE_MASK >> ((int) (phase + patternCursor + runEnd) & 0xf)) & 1) != 0) == on)) {
+                        && ((((STIPPLE_MASK >> ((int) (patternCursor + runEnd - phase) & 0xf)) & 1) != 0) == on)) {
                     runEnd += 1f;
                 }
                 if (runEnd > screenLen) runEnd = screenLen;
@@ -144,7 +163,7 @@ final class SelectionOutlineRenderer {
     void drawCardSelectOutlines(GameField f) {
         List<GameField.ClientCard> list = f.selectableCards;
         if (list == null || list.isEmpty()) return;
-        float phase = view.animTimeMs * 0.001f * MARCH_PX_PER_SEC;
+        float phase = marchPhase();
         for (int i = 0, n = list.size(); i < n; i++) {
             GameField.ClientCard c;
             try {
@@ -177,8 +196,10 @@ final class SelectionOutlineRenderer {
         float outZ = view.isFrontFacing(mOutlineModel) ? 0.002f : -0.002f;
         float[] lx = {-0.5f, 0.5f, -0.5f, 0.5f};
         float[] ly = {-0.5f, -0.5f, 0.5f, 0.5f};
-        int[] es = {0, 1, 3, 2};
-        int[] ee = {1, 3, 2, 0};
+        // 与格子行进框同理：局部 -y=屏幕上、局部 +x=屏幕左，c0=右上 c1=左上 c2=右下 c3=左下，
+        // 亮段沿 上→右→下→左 路径前移 = 屏幕顺时针
+        int[] es = {1, 0, 2, 3};
+        int[] ee = {0, 2, 3, 1};
         float[] px = new float[4], py = new float[4];
         float[] v = new float[4];
         for (int i = 0; i < 4; i++) {
@@ -202,11 +223,11 @@ final class SelectionOutlineRenderer {
             float cursor = 0f;
             while (cursor < screenLen) {
                 boolean on = solid
-                        || ((STIPPLE_MASK >> ((int) (phase + patternCursor + cursor) & 0xf)) & 1) != 0;
+                        || ((STIPPLE_MASK >> ((int) (patternCursor + cursor - phase) & 0xf)) & 1) != 0;
                 float runEnd = cursor + 1f;
                 if (!solid) {
                     while (runEnd < screenLen
-                            && ((((STIPPLE_MASK >> ((int) (phase + patternCursor + runEnd) & 0xf)) & 1) != 0) == on)) {
+                            && ((((STIPPLE_MASK >> ((int) (patternCursor + runEnd - phase) & 0xf)) & 1) != 0) == on)) {
                         runEnd += 1f;
                     }
                 } else {
@@ -246,19 +267,25 @@ final class SelectionOutlineRenderer {
         boolean mr4 = f.dInfo.duelRule >= 4;
         if (!mr4 && loc == 0x04 && seq > 4) return;
         if (mr4 && loc == 0x08 && seq > 5) return;
-        GameField.ClientCard pc = null;
+        // 背景图 +0.01f 层：关深度测试绘制（不读写深度），避免与 SZONE 卡/超量素材共面条栅；
+        // 本方法先于 drawFieldCards 调用，后绘卡片自然覆盖其上
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST);
         try {
-            pc = f.getCard(player, loc, seq);
-        } catch (Throwable ignored) {
+            GameField.ClientCard pc = null;
+            try {
+                pc = f.getCard(player, loc, seq);
+            } catch (Throwable ignored) {
+            }
+            if (loc == 0x04 && pc != null && pc.isLink()) {
+                drawLinkedZones(f, pc);
+            }
+            int texId = obtainSelFieldTexture();
+            float[] rect = GameField.getZoneRect(player, loc, seq);
+            // drawing.cpp L468：悬停 selfield 固定 reverse=false（不旋转）、spin=false
+            if (texId > 0 && rect != null) drawSelFieldQuad(rect, player, texId, false);
+        } finally {
+            GLES30.glEnable(GLES30.GL_DEPTH_TEST);
         }
-        if (loc == 0x04 && pc != null && pc.isLink()) {
-            drawLinkedZones(f, pc);
-        }
-        int texId = obtainSelFieldTexture();
-        if (texId <= 0) return;
-        float[] rect = GameField.getZoneRect(player, loc, seq);
-        // drawing.cpp L468：悬停 selfield 固定 reverse=false（不旋转）、spin=false
-        if (rect != null) drawSelFieldQuad(rect, player, texId, false);
     }
 
     /**

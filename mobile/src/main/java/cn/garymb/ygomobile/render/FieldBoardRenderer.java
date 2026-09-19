@@ -101,10 +101,17 @@ final class FieldBoardRenderer {
         view.drawQuadTexUV(view.mModel, tex, 1f, flipU, 0f, offU, offV, scU, scV);
     }
 
-    void drawZoneSlots() {
+    /**
+     * 青色脉冲空格子槽：布局按 duel_rule 分流（对齐 drawing.cpp DrawBackGround L458-460 的
+     * 规则过滤：MR<4 怪兽区仅 seq0-4、魔法陷阱区含左右额外格 seq6/7；MR≥4 怪兽区 7 格、
+     * 魔法陷阱区仅 seq0-5），与 field2/field3 底板贴图印刷的格子对齐；
+     * duelRule 已在 STOC_JOIN_GAME（猜拳前）写入 dInfo，见 EngineCallbackDelegate#onJoinGame
+     */
+    void drawZoneSlots(GameField f) {
         float pulse = 0.10f + 0.08f * (float) Math.sin(view.animTimeMs * 0.002);
+        boolean mr4 = f.dInfo.duelRule >= 4;
         for (int p = 0; p < 2; p++) {
-            for (int i = 0; i < 7; i++) {
+            for (int i = 0; i < (mr4 ? 7 : 5); i++) {
                 float[] c = FieldGeometry.zoneCenter(p, 0x04, i);
                 view.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
                         FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, 0f, 0.78f, 0.94f, pulse);
@@ -113,6 +120,14 @@ final class FieldBoardRenderer {
                 float[] c = FieldGeometry.zoneCenter(p, 0x08, i);
                 view.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
                         FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, 0f, 0.78f, 0.94f, pulse);
+            }
+            if (!mr4) {
+                // MR<4：field2 底板额外魔法陷阱格（左下/右下，几何真值见 GameFieldGeometry s==6/7 分支）
+                for (int i = 6; i <= 7; i++) {
+                    float[] c = FieldGeometry.zoneCenter(p, 0x08, i);
+                    view.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
+                            FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, 0f, 0.78f, 0.94f, pulse);
+                }
             }
             for (int loc : new int[]{0x01, 0x10, 0x20, 0x40}) {
                 float[] c = FieldGeometry.pileCenter(p, loc);
@@ -182,7 +197,9 @@ final class FieldBoardRenderer {
      * 在该堆叠格正上方绘制一个旋转的 act 图标（对齐 drawing.cpp deck_act/grave_act/remove_act/extra_act
      * 分支在 vFieldDeck/Grave/Remove/Extra 中心上方绘制旋转 vActivate）。
      * 灵摆召唤可用（pzoneAct）时另在左灵摆刻度魔陷格（MR4=seq0，否则 seq6）上方绘制同款旋转
-     * act 图标（对齐 drawing.cpp pzone_act 分支 L838-847：vFieldSzone 中心 z=0.03 绘旋转 vActivate）。
+     * act 图标（对齐 drawing.cpp pzone_act 分支 L838-847：vFieldSzone 中心绘旋转 vActivate）。
+     * z 层阶梯（用户需求）：背景 field3 z=0 → selfield/link marker 0.01 → 卡上图标层
+     * （SZONE 卡 0.01+0.03=0.04，MZONE 卡 0.02+0.03=0.05）→ act/conti_act 提示 0.06 置顶。
      */
     void drawZoneActHints(GameField f) {
         if (f == null) return;
@@ -207,7 +224,8 @@ final class FieldBoardRenderer {
             drawActIconOverPile(tex, f, p, 0x40, f.extraAct[p], sz, spin);
             if (f.pzoneAct[p]) {
                 float[] c = FieldGeometry.zoneCenter(p, 0x08, leftSeq);
-                if (c != null) drawActIconAt(tex, FieldGeometry.mirrorX(c[0]), c[1], 0.03f, sz, spin);
+                // 0.06：高于 selfield(0.01) 与卡上图标层(≤0.05)，act 提示置顶（用户需求）
+                if (c != null) drawActIconAt(tex, FieldGeometry.mirrorX(c[0]), c[1], 0.06f, sz, spin);
             }
         }
     }
@@ -275,7 +293,10 @@ final class FieldBoardRenderer {
         int tex = obtainActTexture();
         if (tex > 0) {
             float spin = actSpinDegrees();
-            drawActIconAt(tex, cx, cy, 0.03f + 0.01f * n + 0.03f, cardW, spin);
+            // conti_act 置顶：不低于图标/自选场层阶梯（selfield 0.01、图标≤0.05）+0.01，
+            // 且在 conti 卡堆（0.03+0.01n）之上一层
+            float actZ = Math.max(0.06f, 0.03f + 0.01f * n + 0.03f);
+            drawActIconAt(tex, cx, cy, actZ, cardW, spin);
         }
     }
 
