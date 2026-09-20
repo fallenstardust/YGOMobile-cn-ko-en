@@ -43,4 +43,16 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
+    <!-- 左上角 FPS 实时帧率显示（覆盖于决斗场之上，随 GameFieldView 每秒刷新） -->
+    <TextView
+        android:id="@+id/tv_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="1dp"
+        android:background="@drawable/button_radius_black_transparents"
+        android:text="FPS --"
+        android:textColor="@color/white"
+        android:textSize="6sp" />
+
 </FrameLayout>

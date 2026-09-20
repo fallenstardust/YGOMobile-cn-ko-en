@@ -16,8 +16,10 @@ import ocgcore.enums.LimitType;
  * {@code checkAvail}。返回值为 gframe 风格的编码错误：{@code (DECKERROR_* << 28) | code}，
  * 0 表示合法。
  *
- * <p>禁限表按 {@code hostInfo.lflist} 哈希从 {@link LimitManager} 反查；哈希 0（N/A）或
- * 未找到时视为无禁限（返回 0），与 C++ {@code GetLFList} 返回空时的行为一致。
+ * <p>禁限表按 {@code hostInfo.lflist} 哈希从 {@link LimitManager} 反查；哈希非 0 且两张表都
+ * 查不到时视为列表不存在，对齐 C++ {@code CheckDeck} 的 {@code if (!lflist) return 0;}：
+ * 跳过全部卡级检查（avail/额外类型/张数/禁限）；哈希 0（N/A）则为合法空表，
+ * 仅无禁限而其余检查照常。
  */
 final class DeckChecker implements YGOProtocol {
 
@@ -44,6 +46,12 @@ final class DeckChecker implements YGOProtocol {
         }
         if (deck.side.size() > Constants.DECK_SIDE_MAX) {
             return (DECKERROR_SIDECOUNT << 28) | deck.side.size();
+        }
+        // C++ deck_manager.cpp::CheckDeck L250-252：GetLFList(lfhash) 查不到 → return 0，
+        // 跳过后续全部卡级检查；曾因 Java 继续执行 avail/张数检查导致哈希未收录时
+        // 误报“不符合当前卡池设定”，服务端拒绝 READY、全员勾选后开始按钮仍不可用
+        if (lflist != 0 && limitNameOf(lflist) == null) {
+            return 0;
         }
         LimitList lf = resolveLimitList(lflist);
         int avail = (rule >= 0 && rule < RULE_MAP.length) ? RULE_MAP[rule] : 0;
@@ -146,6 +154,16 @@ final class DeckChecker implements YGOProtocol {
             return DECKERROR_TCGONLY;
         }
         return DECKERROR_NOTAVAIL;
+    }
+
+    /** 按哈希反查禁限表名（常规表优先，其次 Genesys 表）；未收录返回 null。 */
+    private static String limitNameOf(int lflist) {
+        LimitManager lm = DataManager.get().getLimitManager();
+        if (lm == null) {
+            return null;
+        }
+        String name = lm.getLimitNameByHash(lflist);
+        return name != null ? name : lm.getGenesysLimitNameByHash(lflist);
     }
 
     /** 按 lflist 哈希解析禁限表；0/未找到返回 null（表示无禁限）。 */

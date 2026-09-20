@@ -184,6 +184,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private long lastFrameNs = 0;
     volatile long animTimeMs = 0;
 
+    // FPS 统计——GL 线程逐帧累加，每满 1s 计算一次并经监听回调到主线程刷新 tv_fps
+    private long fpsFrames;
+    private long fpsWindowStartNs;
+    private OnFpsListener onFpsListener;
+
     // === 协作类（按功能分栏委派，构造注入本视图，同包包级私有直连共享 GL 状态）===
     FieldCamera cam;
     FieldTextureManager tex;
@@ -362,6 +367,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
      */
     public void setOnCameraChangedListener(Runnable listener) {
         this.onCameraChangedListener = listener;
+    }
+
+    /** 帧率回调接口（每秒一次，已在主线程触发） */
+    public interface OnFpsListener {
+        void onFps(int fps);
+    }
+
+    /** 注册 FPS 监听，由 Activity 在布局绑定时调用 */
+    public void setOnFpsListener(OnFpsListener listener) {
+        this.onFpsListener = listener;
     }
 
     /**
@@ -582,6 +597,18 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         if (dt > 0.1f) dt = 0.1f;
         animTimeMs = System.currentTimeMillis();
 
+        // 需求2：帧率统计窗口，每累计满 1 秒把整窗口平均帧率回调到主线程
+        if (fpsWindowStartNs == 0) fpsWindowStartNs = now;
+        fpsFrames++;
+        long fpsElapsed = now - fpsWindowStartNs;
+        if (fpsElapsed >= 1_000_000_000L) {
+            final int fps = (int) (fpsFrames * 1_000_000_000L / fpsElapsed);
+            fpsFrames = 0;
+            fpsWindowStartNs = now;
+            final OnFpsListener l = onFpsListener;
+            if (l != null) post(() -> l.onFps(fps));
+        }
+
         if (cameraDirty) {
             cameraDirty = false;
             cam.updateCamera();
@@ -786,8 +813,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
         int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
         if (isHand) {
-            // 手卡为 billboard，恒正面朝向相机
-            if (code > 0 && (c.controler == 0 || c.isFaceUp())) {
+            // 手卡为 billboard，恒正面朝向相机。
+            // 对齐 client_field.cpp GetCardLocation 手卡分支 L866-895：手卡正/背面仅由
+            // code 决定（code!=0 → 正面），与 controler/position 无关——录像由本地引擎
+            // 重跑产生消息，双方手卡 code 均已知 → 对方手卡自然正面展示；
+            // 实时对局服务端已把对方手卡 code 清零（DuelAnalyzer MSG_DRAW/MSG_MOVE/refreshHand），
+            // 未泄露信息仍为卡背
+            if (code > 0) {
                 int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
                 if (tex > 0) {
                     drawQuadTex(mModel, tex, alpha, 0f, 1f);

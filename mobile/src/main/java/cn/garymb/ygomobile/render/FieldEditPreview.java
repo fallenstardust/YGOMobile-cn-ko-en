@@ -195,6 +195,8 @@ final class FieldEditPreview {
         cam.uy = -cam.rx * s.dirZ;
         cam.uz = cam.rx * s.dirY;
         cam.halfH = s.frustumHH;
+        // 横向半宽与运行期 updateCamera 一致，用与竖向同一基准 frustumHH*aspect（而非 tanV），
+        // 保证设计预览与实机同为等距视锥、卡片矩形不拉伸（所见即所得）
         cam.halfW = s.frustumHH * aspect;
         cam.frustumC = s.frustumC;
         cam.selfHandShift = s.selfHandShift;

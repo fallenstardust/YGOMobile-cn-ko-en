@@ -243,11 +243,10 @@ class GameFieldGeometry {
                 }
                 int oseq = target.sequence;
                 int mseq = Math.max(0, Math.min(sequence, GameField.MAX_LAYER_COUNT - 1));
-                // C++ GetCardLocation LOCATION_OVERLAY（client_field.cpp L1014-1036）：宿主下方偏左
-                // （屏幕右=+raw，与 C++ 同向），≥3 张时按 C++ 扇形 -0.12+0.06*mseq 逐张右移；
-                // <3 张不展开、固定左偏堆叠（用户需求）
-                float dx = (target.overlayed.size() >= 3)
-                        ? (0.12f - 0.06f * mseq) : 0.12f;
+                // C++ GetCardLocation LOCATION_OVERLAY（client_field.cpp L1014-1036）：每枚素材按序号
+                // 沿宿主卡横向逐张偏移 -0.12+0.06*mseq、并沿 Z 逐张抬高 material_height，形成扇形叠放，
+                // 使场上素材数量直观可数（对齐 C++，不再对 <3 张收拢为纯堆叠）。
+                float dx = 0.12f - 0.06f * mseq;
                 if (target.controler == 0) {
                     t[0] = mzoneCX(0, oseq) - dx;
                     t[1] = mzoneCY(0, oseq) + 0.05f;
@@ -257,9 +256,9 @@ class GameFieldGeometry {
                     t[1] = mzoneCY(1, oseq) - 0.05f;
                     t[5] = GameField.PI;
                 }
-                // z 阶梯 0.002+0.003*mseq：错开格子槽 0.004 / selfield 0.01 / SZONE 卡 0.01
-                // 共面条栅（问题3），且恒低于 MZONE 宿主卡 0.02
-                t[2] = 0.002f + mseq * 0.003f;
+                // z 阶梯 0.001+0.003*mseq（对齐 overlay_buttom=0.001 / material_height=0.003）：
+                // 错开格子槽 0.004 / selfield 0.01 / SZONE 卡 0.01 共面条栅，且恒低于 MZONE 宿主卡 0.02
+                t[2] = 0.001f + mseq * 0.003f;
                 break;
             }
         }

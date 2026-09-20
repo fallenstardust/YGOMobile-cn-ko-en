@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.render;
 import android.graphics.Bitmap;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
-import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -52,14 +51,14 @@ final class CardOverlayRenderer {
     private static final float NEGATE_W_FRAC = 0.5f / 0.7f;
     private static final float NEGATE_H_FRAC = 0.5f;
     private static final float NEGATE_Y_OFF_FRAC = -0.03f;
-    // z 层阶梯（用户需求）：卡片 curZ → 灵摆刻度图 +0.02 → 状态图标 +0.03（刻度+0.01）
+    // z 层阶梯：卡片 curZ → 灵摆刻度图 +0.02 → 状态图标 +0.03（刻度+0.01）
     // → 攻击箭头 +0.04，逐层不共面防条栅
     private static final float SCALE_Z_OFF = 0.02f;
     private static final float ICON_Z_OFF = 0.03f;
     /** CardType.Pendulum 位（ocgcore.enums.CardType.Pendulum = 0x1000000） */
     private static final int TYPE_PENDULUM = 0x1000000;
 
-    // === 需求3：攻击宣言绿色弧形流动动画（materials.cpp GenArrow + drawing.cpp L1504-1513）===
+    // === 攻击宣言绿色弧形流动动画（materials.cpp GenArrow + drawing.cpp L1504-1513）===
     // 逐顶点 3D 位置 + RGBA 颜色，用透视 mVP 绘制一条从攻击者越过目标、拱起于场地上方的绿带，
     // 颜色 alpha 随流动窗口沿弧滑动（对齐 attack_sv 窗口，C++ 基绿 0xc000ff00）。
     private static final String VS_ARROW =
@@ -81,12 +80,18 @@ final class CardOverlayRenderer {
     private static final int ARROW_MAX_VERTS = 40;
     private static final int ARROW_STRIDE_FLOATS = 7;
     private static final long ATTACK_ARC_MS = 900L;   // 对齐 WaitFrameSignal(40)≈667ms，略放宽
-    private static final long ATTACK_ARC_SWEEP_MS = 450L; // 对齐 attack_sv 0→28 步进4/帧≈30帧@60fps 一次扫过
+    // drawing.cpp L1510：每帧仅绘制 12 个顶点（6 对绿带）的滑动窗口；此处把窗口起点按展示时长
+    // 连续推进（消除 C++ attack_sv 每帧+4 离散跳档的掉帧观感），沿弧循环跳跃 3 次。
+    private static final int ARROW_WINDOW_VERTS = 12;
+    private static final int ARROW_JUMP_TIMES = 3;
+    private static final float ARROW_COLOR_A = 0xc0 / 255f; // materials.cpp GenArrow 0xc000ff00 alpha
 
-    // 需求3：攻击弧 3D 逐顶点色程序 / 动态 VAO-VBO / 顶点暂存缓冲（仅 GL 线程访问）
+    // 攻击弧 3D 逐顶点色程序 / 动态 VAO-VBO / 顶点暂存缓冲（仅 GL 线程访问）
     private int arrowProg, arrowLocMVP;
     private int arrowVao, arrowVbo;
     private FloatBuffer arrowBuf;
+    // 攻击弧显示期间需隐藏的 tAttack(attack.png) 浮动箭头：即当前弧线起点攻击者
+    private GameField.ClientCard hideAttackCard;
 
     CardOverlayRenderer(GameFieldView view) {
         this.view = view;
@@ -117,12 +122,19 @@ final class CardOverlayRenderer {
     }
 
     /**
-     * 需求2：场上卡片正上方的状态叠加图标（对齐 drawing.cpp DrawCard L653-719）。
+     * 场上卡片正上方的状态叠加图标（对齐 drawing.cpp DrawCard L653-719）。
      * 装备/对象/连锁对象/效果无效按 C++ 严格 else-if 优先级，灵摆规则>=4 最左/最右魔陷区
      * 的灵摆卡整卡叠加 lscale/rscale 刻度图片。仅遍历怪兽区/魔陷区（场上卡）。
      */
     void drawFieldCardOverlays(GameField f) {
         if (f == null) return;
+        // 攻击宣言弧线显示期间隐藏攻击者的 attack.png 浮动箭头（对齐 C++：
+        // MSG_ATTACK 时 attacker 的 cmdFlag 已随询问结束清空，弧线期间不再绘制 tAttack）
+        hideAttackCard = null;
+        if (f.arcAttacker != null) {
+            long el = view.animTimeMs - f.arcStartMs;
+            if (el >= 0 && el <= ATTACK_ARC_MS) hideAttackCard = f.arcAttacker;
+        }
         boolean mr4 = f.dInfo.duelRule >= 4;
         for (int p = 0; p < 2; p++) {
             overlayCardList(f.players[p].monsterZone, mr4);
@@ -149,7 +161,7 @@ final class CardOverlayRenderer {
 
     private void overlayCardStatus(GameField.ClientCard c, boolean mr4) {
         if (c.is_moving) return;
-        // z 层（用户需求）：装备/对象/连锁对象/无效图标在灵摆刻度图（lscale，curZ+0.02）上再高 0.01f
+        // z 层：装备/对象/连锁对象/无效图标在灵摆刻度图（lscale，curZ+0.02）上再高 0.01f
         if (c.is_showequip) {
             drawFieldIcon(c, obtainIconTexture(EQUIP_TEX_KEY, IC_EQUIP), 1f, SYMBOL_H_FRAC, 0f, ICON_Z_OFF);
         } else if (c.is_showtarget) {
@@ -167,8 +179,9 @@ final class CardOverlayRenderer {
             int tex = obtainScaleIcon(left, clampScale(left ? c.lScale : c.rScale));
             if (tex > 0) drawFieldIcon(c, tex, 1f, 1f, 0f, SCALE_Z_OFF);
         }
-        // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）
-        if ((c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0) {
+        // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）；
+        // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达
+        if ((c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0 && c != hideAttackCard) {
             drawAttackIcon(c);
         }
     }
@@ -207,7 +220,7 @@ final class CardOverlayRenderer {
     }
 
     /**
-     * 需求3：连锁进行中的 chain 动画 + number 序号，绘制在连锁源卡片（含手卡）上方
+     * 连锁进行中的 chain 动画 + number 序号，绘制在连锁源卡片（含手卡）上方
      * （对齐 drawing.cpp DrawMisc L883-902）。世界空间绘制：图标/序号平铺于场地平面
      * （vSymbol/vChainNum 为 XY 平面四边形），chain 图标绕世界 Z 轴自旋（act_rot），
      * number 序号不自旋，与 conti_act、灵摆刻度贴图一致，随相机俯仰呈斜向透视（平行于卡片）。
@@ -289,7 +302,7 @@ final class CardOverlayRenderer {
     }
 
     /**
-     * 需求3：攻击宣言绿色弧形流动动画（materials.cpp GenArrow L243-258 +
+     * 攻击宣言绿色弧形流动动画（materials.cpp GenArrow L243-258 +
      * drawing.cpp L1504-1513 attack_sv 窗口流动 + duelclient.cpp MSG_ATTACK L3817-3866 锚点/旋转解算）。
      * 从攻击者到目标构建一条在场地上方拱起（中点最高）的弧形绿带，逐顶点 alpha 随流动窗口
      * 从攻击者向目标滑动（对应 C++ attack_sv 0→28），显示约 0.9s 后自动清除。关深度测试置顶。
@@ -304,28 +317,24 @@ final class CardOverlayRenderer {
             f.arcTarget = null;
             return;
         }
-        // 需求2：对方回合的攻击者收不到 battle cmd，其 COMMAND_ATTACK 恒为 0；
-        // 在攻击弧显示的约 0.9s 内为其临时补绘 tAttack 浮动动画。我方攻击者已由
-        // overlayCardStatus 依据 cmdFlag 绘制，故此处仅补对方攻击者，避免重复叠加。
-        // 图标补绘单独容错：其异常不得中断整条弧线的绘制。
-        if ((atk.cmdFlag & GameEngine.COMMAND_ATTACK) == 0) {
-            try {
-                drawAttackIcon(atk);
-            } catch (Throwable t) {
-                Log.w("GameFieldView", "drawAttackIcon(attacker) failed", t);
-            }
+        // 攻击弧显示期间攻击者的 tAttack(attack.png) 浮动箭头我方/对方都绘制——
+        // 对方攻击手收不到 battle cmd（cmdFlag 恒为 0），此处统一补绘；overlayCardStatus
+        // 已用 hideAttackCard 抑制该卡常规绘制，避免我方攻击手重复叠加。
+        try {
+            drawAttackIcon(atk);
+        } catch (Throwable ignored) {
         }
+        // 弧线端点（渲染空间，X 已镜像）。有目标取目标卡当前坐标；直接攻击落到
+        // 被攻击方一侧的固定点（duelclient.cpp L3850-3853：xd=场地中心 3.95，yd=ca==0?-3.5:3.5）。
+        // 两端点均随攻击者 curX/curY 变化，故箭头角度天然随格子与目标实时改变。
         float ax = FieldGeometry.mirrorX(atk.curX), ay = atk.curY;
         float dx, dy;
         if (f.arcTarget != null) {
             dx = FieldGeometry.mirrorX(f.arcTarget.curX);
             dy = f.arcTarget.curY;
         } else {
-            // 直接攻击：弧落到被攻击方手牌行的宽度中心（duelclient.cpp L3850-3853 真值
-            // (3.95, ca==0?-3.5:3.5)，即对方手牌侧；按 getCardLocation 手牌行 y 精确化：
-            // 对方(手牌 y=-3.4)/我方(手牌 y=4.0)，X 取场地中心 3.95 经镜像）
             dx = FieldGeometry.mirrorX(FieldGeometry.FIELD_CENTER_X);
-            dy = (atk.controler == 0) ? -3.4f : 4.0f;
+            dy = (atk.controler == 0) ? -3.5f : 3.5f;
         }
         float vx = ax - dx, vy = ay - dy;
         float len = (float) Math.sqrt(vx * vx + vy * vy);
@@ -335,64 +344,54 @@ final class CardOverlayRenderer {
             return;
         }
         float sy = len * 0.5f;
-        // 局部 +Y（攻击者方向）与局部 X（带宽方向）均在场地 XY 平面；拱起沿世界 +Z
+        // 局部坐标轴：+Y=目标→攻击者（对应 C++ 局部 Y），X=带宽（场地平面内垂直），Z=拱起（世界 +Z）
         float uYx = vx / len, uYy = vy / len;
         float uXx = -uYy, uXy = uYx;
         float mx = (ax + dx) * 0.5f, my = (ay + dy) * 0.5f;
-        // 流动窗口中心（配对索引 0..18）循环从攻击者侧向目标侧滑动
-        float sweep = (elapsed % ATTACK_ARC_SWEEP_MS) / (float) ATTACK_ARC_SWEEP_MS;
-        float wc = -1.0f + sweep * 20.0f;
 
+        // 构建与 materials.cpp GenArrow 完全一致的 40 顶点带体（顶点序 0..39），
+        // 逐帧用滑动窗口只绘其中 12 个顶点，形成亮绿箭头沿弧跳跃的效果。
         arrowBuf.position(0);
-        int verts = 0;
-        // 绿带主体 18 对（36 顶点）：C++ 循环 i=0..18 写 vArrow[i*2]/[i*2+1]，最后一对（索引
-        // 36/37）随即被箭头翼覆写，故带体实为 18 对 + 2 翼 + 2 尖 = 恰 40 顶点（此前按 19 对
-        // 追加翼/尖得 42 顶点，写入溢出 BufferOverflowException 被上层吞掉，弧从未画出）
-        for (int j = 0; j < 18; j++) {
-            float ayf = 1.0f - 0.1f * j;
+        for (int i = 0; i < 18; i++) {   // 带体 18 对 = 顶点 0..35，ay=1.0..-0.7
+            float ayf = 1.0f - 0.1f * i;
             float along = ayf * sy;
-            float arch = 2.0f * (1.0f - ayf * ayf);   // C++ -2*(ay*ay-1)，中点(ay=0)最高 2.0
+            float arch = 2.0f * (1.0f - ayf * ayf);   // C++ -2*(ay*ay-1)，中点最高 2.0
             float ccx = mx + uYx * along, ccy = my + uYy * along;
-            float a = arrowAlpha(j, wc);
-            putArrowVertex(ccx + uXx * 0.1f, ccy + uXy * 0.1f, arch, 0f, 1f, 0f, a);
-            putArrowVertex(ccx - uXx * 0.1f, ccy - uXy * 0.1f, arch, 0f, 1f, 0f, a);
-            verts += 2;
+            putArrow(ccx + uXx * 0.1f, ccy + uXy * 0.1f, arch, 0f, 1f, 0f);
+            putArrow(ccx - uXx * 0.1f, ccy - uXy * 0.1f, arch, 0f, 1f, 0f);
         }
-        // 箭头翼（宽度扩到 0.2，沿轴/高度各微偏 -0.01）与箭头尖（目标脚下，白色）
-        float along17 = -0.7f * sy;
-        float ccx17 = mx + uYx * along17, ccy17 = my + uYy * along17;
-        float arch17 = 2.0f * (1.0f - 0.49f);
-        float wingA = arrowAlpha(17, wc);
-        putArrowVertex(ccx17 + uXx * 0.2f, ccy17 + uXy * 0.2f, arch17 - 0.01f, 0.5f, 1f, 0.5f, wingA);
-        putArrowVertex(ccx17 - uXx * 0.2f, ccy17 - uXy * 0.2f, arch17 - 0.01f, 0.5f, 1f, 0.5f, wingA);
-        putArrowVertex(dx, dy, 0.02f, 1f, 1f, 1f, 0.8f);
-        putArrowVertex(dx, dy, 0.02f, 1f, 1f, 1f, 0.8f);
-        verts += 4;
-        if (verts > ARROW_MAX_VERTS) verts = ARROW_MAX_VERTS;   // 防溢出保险：宁缺顶点不丢整条弧
+        // 箭头翼（顶点 36/37）：i=17 处加宽到 0.2，沿轴/拱高各 -0.01（C++ vArrow[36]/[37]）
+        float alongW = -0.7f * sy, archW = 2.0f * (1.0f - 0.49f) - 0.01f;
+        float ccxW = mx + uYx * alongW, ccyW = my + uYy * alongW;
+        putArrow(ccxW + uXx * 0.2f, ccyW + uXy * 0.2f, archW, 0.5f, 1f, 0.5f);
+        putArrow(ccxW - uXx * 0.2f, ccyW - uXy * 0.2f, archW, 0.5f, 1f, 0.5f);
+        // 箭头尖（顶点 38/39）：目标脚下，白色（C++ vArrow[38]/[39]=0xc0ffffff）
+        putArrow(dx, dy, 0.02f, 1f, 1f, 1f);
+        putArrow(dx, dy, 0.02f, 1f, 1f, 1f);
+
+        // 滑动窗口起点连续推进（去掉 C++ attack_sv 每帧+4 的离散跳档以消除掉帧观感），
+        // 展示期内沿弧循环跳跃 ARROW_JUMP_TIMES 次；sv∈[0, 40-12]=[0,28]
+        double loop = (elapsed / (double) ATTACK_ARC_MS) * ARROW_JUMP_TIMES;
+        double phase = loop - Math.floor(loop);              // [0,1)
+        int maxSv = ARROW_MAX_VERTS - ARROW_WINDOW_VERTS;    // 28
+        int sv = (int) (phase * (maxSv + 1));
+        if (sv > maxSv) sv = maxSv;
 
         GLES30.glUseProgram(arrowProg);
         GLES30.glUniformMatrix4fv(arrowLocMVP, 1, false, view.cam.mVP, 0);
         arrowBuf.position(0);
         GLES30.glBindVertexArray(arrowVao);
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, arrowVbo);
-        GLES30.glBufferSubData(GLES30.GL_ARRAY_BUFFER, 0, verts * ARROW_STRIDE_FLOATS * 4, arrowBuf);
+        GLES30.glBufferSubData(GLES30.GL_ARRAY_BUFFER, 0, ARROW_MAX_VERTS * ARROW_STRIDE_FLOATS * 4, arrowBuf);
         GLES30.glDisable(GLES30.GL_DEPTH_TEST);
-        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, verts);
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, sv, ARROW_WINDOW_VERTS);
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
         GLES30.glBindVertexArray(0);
     }
 
-    private void putArrowVertex(float x, float y, float z, float r, float g, float b, float a) {
-        arrowBuf.put(x).put(y).put(z).put(r).put(g).put(b).put(a);
-    }
-
-    /**
-     * 对齐 materials.cpp GenArrow 顶点色 0xc000ff00（alpha=0.75 恒亮绿）：整带基线即 0.75，
-     * attack_sv 流动窗口内提亮至 1.0（旧实现基线 0.28 在深绿场地上几乎不可见）
-     */
-    private static float arrowAlpha(int pairIdx, float wc) {
-        float d = Math.abs(pairIdx - wc);
-        return d < 3f ? 1.0f : 0.75f;
+    /** 写入一个箭头顶点：位置（渲染空间）+ RGB + 恒定 alpha 0.75（对齐 GenArrow 0xc000ff00） */
+    private void putArrow(float x, float y, float z, float r, float g, float b) {
+        arrowBuf.put(x).put(y).put(z).put(r).put(g).put(b).put(ARROW_COLOR_A);
     }
 
     /** 场上状态/连锁图标纹理：首次异步上传，未就绪返回 -1 */

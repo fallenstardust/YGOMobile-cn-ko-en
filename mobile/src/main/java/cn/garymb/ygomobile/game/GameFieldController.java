@@ -387,6 +387,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             dismissCmdMenu();
             return;
         }
+        // 点击场上/手卡卡片，无论是否有可执行命令（是否弹命令菜单），
+        // 都先把该卡详情显示到左侧 cardDetailPanel
+        activity.showCardInfoPanel(card);
         // 持有超量素材的怪兽，以及卡组/额外/墓地/除外堆叠区，弹出含「查看」的命令菜单，
         // 并把该卡在通讯中可执行的其他命令（发动/特殊召唤/攻击等）一并列出
         boolean isPile = (location == 0x01 || location == 0x40
@@ -396,11 +399,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             showCardCommandMenu(card, tapX, tapY, isPile || xyzWithMats);
             return;
         }
-        // 无可执行命令：关闭残留的命令菜单
+        // 无可执行命令：关闭残留的命令菜单（详情面板已在上方显示，手卡确认动画由场内完成）
         dismissCmdMenu();
-        // 手卡确认由 GameFieldView 场内动画完成（抬高/翻面+虚线框），不弹卡面展示
-        if (location == 0x02) return;
-        activity.showCardInfoPanel(card);
     }
 
     @Override

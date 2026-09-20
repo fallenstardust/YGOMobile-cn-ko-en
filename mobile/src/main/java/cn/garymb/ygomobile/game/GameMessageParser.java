@@ -48,8 +48,11 @@ public class GameMessageParser {
         void onSelectUnselectCard(ByteBuffer data);
         void onConfirmDecktop(int player, int count, ByteBuffer data);
         void onConfirmCards(int player, int skipPanel, int count, ByteBuffer data);
-        void onShuffleDeck(int player);
-        void onShuffleHand(int player);
+        /** duelclient.cpp MSG_SHUFFLE_DECK L2620-2657：player(1)，handler 内自读 */
+        void onShuffleDeck(ByteBuffer data);
+        /** duelclient.cpp MSG_SHUFFLE_HAND L2659-2701：player(1) count(1) + count×code(4)，
+         *  新卡面在聚拢动画停留段才换入（L2689-2692），故 handler 内自行读字段 */
+        void onShuffleHand(ByteBuffer data);
         void onRefreshDeck(int player);
         void onSwapGraveDeck(int player);
         void onShuffleSetCard(int player, int count, ByteBuffer data);
@@ -231,10 +234,10 @@ public class GameMessageParser {
                 break;
             }
             case ShuffleDeck:
-                handler.onShuffleDeck(buf.get() & 0xFF);
+                handler.onShuffleDeck(buf);
                 break;
             case ShuffleHand:
-                handler.onShuffleHand(buf.get() & 0xFF);
+                handler.onShuffleHand(buf);
                 break;
             case RefreshDeck:
                 handler.onRefreshDeck(buf.get() & 0xFF);

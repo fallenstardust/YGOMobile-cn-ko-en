@@ -552,7 +552,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 case 32: // MSG_SHUFFLE_DECK
                     if (buf.remaining() < 1) return false;
                     int sdPlayer = buf.get() & 0xFF;
-                    onShuffleDeck(sdPlayer);
+                    applyShuffleDeck(sdPlayer);
                     // 对齐 replay_mode.cpp L458：洗牌后整库重查卡面
                     refreshDeck(sdPlayer);
                     break;
@@ -562,7 +562,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     int shPlayer = buf.get() & 0xFF;
                     int shCount = buf.get() & 0xFF;
                     skipBytes(shCount * 4);
-                    onShuffleHand(shPlayer);
+                    applyShuffleHand(shPlayer);
                     break;
 
                 case 34: // MSG_REFRESH_DECK
@@ -1302,8 +1302,19 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onConfirmDecktop(int player, int count, ByteBuffer data) {}
 
     @Override public void onConfirmCards(int player, int skipPanel, int count, ByteBuffer data) {}
-    @Override public void onShuffleDeck(int player) { soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); notifyField(); }
-    @Override public void onShuffleHand(int player) { soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); notifyField(); }
+    @Override public void onShuffleDeck(ByteBuffer data) {
+        int player = data.get() & 0xFF;
+        applyShuffleDeck(player);
+    }
+    @Override public void onShuffleHand(ByteBuffer data) {
+        int player = data.get() & 0xFF;
+        int count = data.get() & 0xFF;
+        if (data.remaining() >= count * 4) data.position(data.position() + count * 4);
+        applyShuffleHand(player);
+    }
+    // 回放不播洗牌动画（对齐 C++ 录像快进跳过动画分支），仅音效 + 刷面
+    private void applyShuffleDeck(int player) { soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); notifyField(); }
+    private void applyShuffleHand(int player) { soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); notifyField(); }
     @Override public void onRefreshDeck(int player) { notifyField(); }
     @Override public void onSwapGraveDeck(int player) { notifyField(); }
     @Override public void onShuffleSetCard(int player, int count, ByteBuffer data) { notifyField(); }

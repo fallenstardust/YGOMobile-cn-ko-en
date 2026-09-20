@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +20,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
@@ -371,21 +371,31 @@ public class PlayerWaitingDialog {
         updateSelfCheckboxInteractivity();
     }
 
+    /** 席位有人加入时的半透明背景色
+     * （对齐 gframe duelclient.cpp STOC_HS_PLAYER_ENTER L1175 /
+     *  STOC_HS_PLAYER_CHANGE L1198：stHostPrepDuelist[pos]->setBackgroundColor(0x60045f6a)） */
+    private static final int SEAT_OCCUPIED_COLOR = 0x60045F6A;
+
     public void setPlayerName(int pos, String name) {
+        TextView seat = null;
         switch (pos) {
             case 0:
-                if (etPwPlayer1Name != null) etPwPlayer1Name.setText(name);
+                seat = etPwPlayer1Name;
                 break;
             case 1:
-                if (etPwPlayer2Name != null) etPwPlayer2Name.setText(name);
+                seat = etPwPlayer2Name;
                 break;
             case 2:
-                if (etPwPlayer3Name != null) etPwPlayer3Name.setText(name);
+                seat = etPwPlayer3Name;
                 break;
             case 3:
-                if (etPwPlayer4Name != null) etPwPlayer4Name.setText(name);
+                seat = etPwPlayer4Name;
                 break;
         }
+        if (seat == null) return;
+        seat.setText(name);
+        // 玩家加入(名字非空)时叠加半透明色提醒该席位已被占据，离开/清空时恢复透明
+        seat.setBackgroundColor(TextUtils.isEmpty(name) ? Color.TRANSPARENT : SEAT_OCCUPIED_COLOR);
     }
 
     public String getPlayerName(int pos) {
@@ -906,12 +916,9 @@ public class PlayerWaitingDialog {
         }
         int duelistCount = isTagMode ? 4 : 2;
         CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+        // 对齐 duelclient.cpp STOC_HS_PLAYER_CHANGE L1238-1243：开始按钮仅以各座位准备勾选判定，
+        // 不附加玩家名非空门槛——名字回显缺失/时序异常时曾导致全员准备后按钮仍永久置灰
         for (int i = 0; i < duelistCount; i++) {
-            if (getPlayerName(i).isEmpty()) {
-                btnPwStartGame.setEnabled(false);
-                btnPwStartGame.setTextColor(Color.GRAY);
-                return;
-            }
             if (checkboxes[i] == null || !checkboxes[i].isChecked()) {
                 btnPwStartGame.setEnabled(false);
                 btnPwStartGame.setTextColor(Color.GRAY);
@@ -986,27 +993,38 @@ public class PlayerWaitingDialog {
     }
 
     public void handleDeckError(int errorType, int cardCode) {
+        // 卡名直接拼入错误文本的「%ls」占位（解析不到卡名时回退显示 code），不再另起一行提示卡名
+        String cardName = "";
+        if (cardCode > 0 && errorType != YGOProtocol.DECKERROR_MAINCOUNT
+                && errorType != YGOProtocol.DECKERROR_EXTRACOUNT
+                && errorType != YGOProtocol.DECKERROR_SIDECOUNT
+                && cardNameResolver != null) {
+            String resolved = cardNameResolver.resolve(cardCode);
+            cardName = resolved != null ? resolved : "";
+        }
+        String nameOrCode = cardName.isEmpty() ? String.valueOf(cardCode) : cardName;
         String errorDesc;
         switch (errorType) {
             case YGOProtocol.DECKERROR_LFLIST:
                 errorDesc = mStringManager.getSystemString(1407, "「%ls」的数量不符合当前禁限卡表设定。")
-                        .replace("%ls", String.valueOf(cardCode));
+                        .replace("%ls", nameOrCode);
                 break;
             case YGOProtocol.DECKERROR_OCGONLY:
                 errorDesc = mStringManager.getSystemString(1413, "「%ls」为OCG独有卡，不允许在当前设定下使用。")
-                        .replace("%ls", String.valueOf(cardCode));
+                        .replace("%ls", nameOrCode);
                 break;
             case YGOProtocol.DECKERROR_TCGONLY:
                 errorDesc = mStringManager.getSystemString(1414, "「%ls」为TCG独有卡，不允许在当前设定下使用。")
-                        .replace("%ls", String.valueOf(cardCode));
+                        .replace("%ls", nameOrCode);
                 break;
             case YGOProtocol.DECKERROR_UNKNOWNCARD:
                 errorDesc = mStringManager.getSystemString(1415, "卡组中「%ls(%d)」尚不支持在本主机使用")
-                        .replace("%ls", String.valueOf(cardCode));
+                        .replace("%ls", nameOrCode)
+                        .replace("%d", String.valueOf(cardCode));
                 break;
             case YGOProtocol.DECKERROR_CARDCOUNT:
                 errorDesc = mStringManager.getSystemString(1416, "卡组中「%ls」的总数量超过3张。")
-                        .replace("%ls", String.valueOf(cardCode));
+                        .replace("%ls", nameOrCode);
                 break;
             case YGOProtocol.DECKERROR_MAINCOUNT:
                 errorDesc = mStringManager.getSystemString(1417, "主卡组数量应为40-60张，当前卡组数量为%d张。")
@@ -1024,28 +1042,14 @@ public class PlayerWaitingDialog {
                 errorDesc = mStringManager.getSystemString(1420, "有额外卡组卡片存在于主卡组，可能是额外卡组数量超过15张。");
                 break;
             default:
-                errorDesc = mStringManager.getSystemString(1421, "未知卡组错误(type=%ls)");
+                errorDesc = mStringManager.getSystemString(1421, "未知卡组错误(type=%ls)")
+                        .replace("%ls", String.valueOf(errorType));
                 break;
         }
 
-        String cardName = "";
-        if (cardCode > 0 && errorType != YGOProtocol.DECKERROR_MAINCOUNT
-                && errorType != YGOProtocol.DECKERROR_EXTRACOUNT
-                && errorType != YGOProtocol.DECKERROR_SIDECOUNT) {
-            cardName = cardNameResolver != null ? cardNameResolver.resolve(cardCode) : "";
-        }
-
         String title = mStringManager.getSystemString(1725, "卡组验证失败");
-        String message = errorDesc;
-        if (!cardName.isEmpty()) {
-            String cardTemplate = mStringManager.getSystemString(1726, "卡片: %ls(%ls)");
-            message += "\n" + cardTemplate
-                    .replaceFirst("%ls", Matcher.quoteReplacement(cardName))
-                    .replaceFirst("%ls", String.valueOf(cardCode));
-        }
-
         YesOrNoDialog dialog = new YesOrNoDialog(context);
-        dialog.setTitle(title).setMessage(message);
+        dialog.setTitle(title).setMessage(errorDesc);
         dialog.show();
     }
 

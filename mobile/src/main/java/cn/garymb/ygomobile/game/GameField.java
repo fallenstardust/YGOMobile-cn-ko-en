@@ -145,6 +145,20 @@ public class GameField {
         /** 动画启动延迟帧（对齐 duelclient.cpp MSG_MOVE L3032-3038 的 WaitFrameSignal(10)：
          *  带素材怪兽移动时素材先归位，本体延迟若干帧再落上去），延迟期内不插值不扣 aniFrame */
         public float animDelayFrame;
+        /** 卡组抖动动画进行中标记（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650 的 5 轮抖动，
+         *  轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startDeckShake） */
+        public boolean is_deck_shake;
+        /** 洗手卡聚拢/翻面动画进行中标记（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699，
+         *  轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startHandShuffle） */
+        public boolean is_hand_shuffle;
+        /** 卡组抖动每轮随机幅度（对应 C++ 每轮 dPos = real_dist(rnd)*0.4-0.2，3 帧总位移 = 3×dPos） */
+        public final float[] deckShakeDx = new float[5];
+        /** 洗手卡关键帧基准：起始姿态 / 新布局落点 / 聚拢中线位置与翻面终值 */
+        public float hsFromX, hsFromY, hsFromZ, hsFromRotX, hsFromRotY;
+        public float hsToX, hsToY, hsToZ, hsToRotX, hsToRotY;
+        public float hsGatherX, hsFlipRotX, hsFlipRotY;
+        /** 洗手卡是否含对手手卡翻面段（duelclient.cpp L2666-2679：player==1 且非回放非单机） */
+        public boolean hsFlip;
 
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
@@ -473,7 +487,7 @@ public class GameField {
     public boolean contiAct;
 
     /**
-     * 需求3：攻击宣言绿色弧形流动动画状态（对齐 duelclient.cpp MSG_ATTACK L3817-3866 +
+     * 攻击宣言绿色弧形流动动画状态（对齐 duelclient.cpp MSG_ATTACK L3817-3866 +
      * materials.cpp GenArrow + drawing.cpp L1504-1513 attack_sv 窗口流动）。
      * onAttack 时写入攻击者/目标卡与起始时间戳，GameFieldView.drawAttackArc 读取并在约 0.9s 内绘制。
      * arcTarget 为 null 表示直接攻击，绘制时落到对方场地一侧的固定点。
@@ -817,6 +831,16 @@ public class GameField {
 
     public void moveCardAnimated(ClientCard pcard, int frame, int delay) {
         motion.moveCardAnimated(pcard, frame, delay);
+    }
+
+    /** 卡组抖动单动画（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650：5 轮 × (3 帧抖开 + 3 帧回位)） */
+    public void startDeckShake(ClientCard pcard) {
+        motion.startDeckShake(pcard);
+    }
+
+    /** 洗手卡聚拢/翻面单动画（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699） */
+    public void startHandShuffle(ClientCard pcard, boolean flip) {
+        motion.startHandShuffle(pcard, flip);
     }
 
     public void setAnimationSpeed(float speed) {

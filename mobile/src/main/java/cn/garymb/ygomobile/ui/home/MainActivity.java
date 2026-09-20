@@ -134,8 +134,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
-        if (mResCheckTask.mReceiver != null)
-            mResCheckTask.unregisterMReceiver();
+        // RUN_WINDBOT 监听已改为 WindBotService 进程级常驻， MainActivity 销毁不再注销
     }
 
     @Override

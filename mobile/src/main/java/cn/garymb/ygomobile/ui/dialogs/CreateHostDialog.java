@@ -11,6 +11,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -31,6 +32,8 @@ import ocgcore.StringManager;
 /**
  * 局域网建主设置界面（layout_create_host_settings）：禁限卡表/规则/卡片允许/决斗模式等
  * 房间参数配置，点击“确定”回调 onCreateHostConfirmed 由外部创建本地服务端并进入玩家等待界面。
+ * 全部界面文字与 Spinner 选项均通过 StringManager.getSystemString 获取
+ * （对齐 gframe game.cpp wCreateHost 各控件的 GetSysString 编号），XML 内文本仅作兜底。
  */
 public class CreateHostDialog {
     public static final StringManager mStringManager = DataManager.get().getStringManager();
@@ -115,6 +118,8 @@ public class CreateHostDialog {
         etHostPassword = customView.findViewById(R.id.et_host_password);
         Button btnConfirmCreate = customView.findViewById(R.id.btn_confirm_create);
         Button btnCancelCreate = customView.findViewById(R.id.btn_cancel_create);
+
+        applySystemStrings(customView, btnConfirmCreate, btnCancelCreate);
 
         float density = context.getResources().getDisplayMetrics().density;
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
@@ -215,6 +220,39 @@ public class CreateHostDialog {
         if (popupWindow != null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }
+    }
+
+    /**
+     * 建主界面全部静态文字改走 getSystemString，
+     * 编号对齐 gframe game.cpp wCreateHost：
+     * 1226 禁限卡表 / 1236 规则 / 1225 卡片允许 / 1231 初始LP / 1227 决斗模式 /
+     * 1232 初始手卡 / 1237 每回合时间 / 1233 每回合抽卡 / 1229 不检查卡组 /
+     * 1230 不洗切卡组 / 1234 房间名 / 1235 房间密码 / 1211 确定 / 1212 取消
+     */
+    private void applySystemStrings(View root, Button btnConfirm, Button btnCancel) {
+        setSysText(root, R.id.tv_banlist_label, 1226, "禁限卡表：");
+        setSysText(root, R.id.tv_rule_label, 1236, "规则：");
+        setSysText(root, R.id.tv_card_allowed_label, 1225, "卡片允许：");
+        setSysText(root, R.id.tv_start_lp_label, 1231, "初始基本分：");
+        setSysText(root, R.id.tv_duel_mode_label, 1227, "决斗模式：");
+        setSysText(root, R.id.tv_start_hand_label, 1232, "初始手卡数：");
+        setSysText(root, R.id.tv_time_limit_label, 1237, "每回合时间：");
+        setSysText(root, R.id.tv_draw_count_label, 1233, "每回合抽卡：");
+        setSysText(root, R.id.chk_no_check_deck, 1229, "不检查卡组");
+        setSysText(root, R.id.chk_no_shuffle_deck, 1230, "不洗切卡组");
+        setSysText(root, R.id.tv_room_name_label, 1234, "房间名称：");
+        setSysText(root, R.id.tv_room_pwd_label, 1235, "房间密码：");
+        setSysTextOn(btnConfirm, 1211, "确认");
+        setSysTextOn(btnCancel, 1212, "取消");
+    }
+
+    private void setSysText(View root, int viewId, int sysIdx, String def) {
+        View v = root.findViewById(viewId);
+        if (v instanceof TextView) setSysTextOn((TextView) v, sysIdx, def);
+    }
+
+    private void setSysTextOn(TextView tv, int sysIdx, String def) {
+        if (tv != null) tv.setText(mStringManager.getSystemString(sysIdx, def));
     }
 
     private void setupSpinners(Spinner spinnerBanlist, Spinner spinnerRule,

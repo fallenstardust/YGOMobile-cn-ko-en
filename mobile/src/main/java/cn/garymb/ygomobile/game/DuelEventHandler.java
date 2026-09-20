@@ -171,21 +171,99 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     }
 
     @Override
-    public void onShuffleDeck(int player) {
-        engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+    public void onShuffleDeck(ByteBuffer data) {
+        // duelclient.cpp MSG_SHUFFLE_DECK L2620-2657：卡组不足 2 张直接返回（无声无动画）
+        final int p = engine.localPlayer(data.get() & 0xFF);
+        final List<GameField.ClientCard> deck = engine.field.players[p].deck;
+        if (deck.size() < 2) return;
+        final boolean rev = engine.field.deckReversed;
+        if (rev) {
+            // L2626-2631：先置 deck_reversed=false 使正向排布为新落点，逐张 10 帧移过去，
+            // WaitFrameSignal(10)（is_moving 占住闸门 10 帧）
+            engine.field.deckReversed = false;
+            for (GameField.ClientCard c : deck) {
+                if (c != null) engine.field.moveCardAnimated(c, 10);
+            }
+        }
+        // L2633-2636：抖动前逐张清卡码与 is_reversed（卡组以背面呈现）；5 轮抖动延迟到
+        // 正向排布到位后启动（30 帧单动画，期间 aniFrame>0 持续占住统一动画闸门）
+        final long preDelay = rev ? 170L : 0L;
+        engine.mainHandler.postDelayed(() -> {
+            for (GameField.ClientCard c : deck) {
+                if (c != null) {
+                    c.setCode(0);
+                    c.is_reversed = false;
+                }
+            }
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); // L2638
+            for (GameField.ClientCard c : deck) {
+                if (c != null) engine.field.startDeckShake(c);
+            }
+            // L2651-2655：抖完 5 轮后恢复倒转标记并 10 帧移回倒转排布（延迟 30 帧接在抖动后）
+            if (rev) {
+                engine.field.deckReversed = true;
+                for (GameField.ClientCard c : deck) {
+                    if (c != null) engine.field.moveCardAnimated(c, 10, 30);
+                }
+            }
+            engine.animHoldUntilMs = System.currentTimeMillis()
+                    + preDelay + 30L * 17L + 100L;
+        }, preDelay);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
     }
 
     @Override
-    public void onShuffleHand(int player) {
-        // duelclient.cpp MSG_SHUFFLE_HAND L2689-2692：逐张 SetCode 后 desc_hints.clear()
-        final int p = engine.localPlayer(player & 1);
-        for (GameField.ClientCard c : engine.field.players[p].hand) {
-            if (c != null) c.clearDescHints();
+    public void onShuffleHand(ByteBuffer data) {
+        // duelclient.cpp MSG_SHUFFLE_HAND L2659-2701：服务端已按洗后顺序重排并重发全部手卡，
+        // 此刻列表已是新布局；动画为 翻面(对手)→聚拢→停留→回新布局 的单条关键帧动画
+        final int p = engine.localPlayer(data.get() & 0xFF);
+        final int count = data.get() & 0xFF;
+        final List<GameField.ClientCard> hand = engine.field.players[p].hand;
+        // 读取新卡面（L2689-2692 在聚拢停留段才 SetCode），停留段后延迟换入，
+        // 避免对手视角背面卡在聚拢前因 code 非 0 而提前亮出正面
+        final int[] newCodes = new int[count];
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            newCodes[i] = data.getInt();
         }
-        engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+        if (count > 1) {
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); // L2663-2664
+        }
+        // L2666：player==1 且非回放非单机时，背面展示的对手手卡先做 5 帧翻面揭示
+        final boolean flip = p == 1 && engine.replayEngine == null;
+        int maxTotal = 0;
+        for (GameField.ClientCard c : hand) {
+            if (c == null) continue;
+            engine.field.startHandShuffle(c, flip);
+            maxTotal = Math.max(maxTotal, c.animTotalFrame);
+        }
+        if (maxTotal > 0) {
+            // 停留段末（回位前 1 帧，对应 C++ gather+Wait(11) 后的 SetCode）主线程换入新卡面
+            int returnStart = maxTotal >= 31 ? 26 : 21;
+            final long revealDelay = (returnStart - 1L) * 17L;
+            engine.mainHandler.postDelayed(() -> {
+                int idx = 0;
+                for (GameField.ClientCard c : hand) {
+                    if (c == null) continue;
+                    if (idx < count) c.setCode(newCodes[idx] & 0x7fffffff);
+                    c.clearDescHints(); // L2691：desc_hints.clear()
+                    idx++;
+                }
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            }, revealDelay);
+            // 统一动画闸门持有时长 = 整段关键帧动画 + 回位尾帧余量
+            engine.animHoldUntilMs = System.currentTimeMillis() + (maxTotal + 5L) * 17L;
+        } else if (count > 0) {
+            // 手卡列表为空（无卡可动画）：直接换面，保持与旧实现一致的同步语义
+            int idx = 0;
+            for (GameField.ClientCard c : hand) {
+                if (c == null) continue;
+                if (idx < count) c.setCode(newCodes[idx] & 0x7fffffff);
+                c.clearDescHints();
+                idx++;
+            }
+        }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
@@ -547,7 +625,9 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                 pcard.setCode(codes[i] & 0x7fffffff);
             }
         }
-        // 2) 逐张从卡组顶移除 → 加入手卡 → 全部手卡重新布局（MoveCard 10 帧）
+        // 2) 逐张从卡组顶移除 → 加入手卡 → 全部手卡重新布局（MoveCard 10 帧）；
+        //    addCard 对 HAND 不设位置，抽出的卡保留卡组 curX → 天然形成「从卡组飞入手卡」
+        //    的展示动画；每张延迟 i*5 帧（对齐 MSG_DRAW L3542-3552 逐张 WaitFrameSignal(5)）
         for (int i = 0; i < count; i++) {
             int t = engine.field.getCardCount(p, deckLoc) - 1;
             GameField.ClientCard pcard = engine.field.removeCard(p, deckLoc, t);
@@ -559,11 +639,13 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             }
             engine.field.addCard(p, handLoc, 0, pcard);
             for (GameField.ClientCard hc : engine.field.players[p].hand) {
-                if (hc != null) engine.field.moveCardAnimated(hc, 10);
+                if (hc != null) engine.field.moveCardAnimated(hc, 10, i * 5);
             }
         }
         engine.soundManager.playSoundEffect(SoundManager.SFX.DRAW);
         engine.hintManager.setEventString(p == 0 ? 1611 : 1612, p == 0 ? "我方抽了%d张卡" : "对方抽了%d张卡", count);
+        // 抽卡展示动画持闸：最后一张延迟 (count-1)*5 帧 + 10 帧飞行 + 尾帧余量
+        engine.animHoldUntilMs = System.currentTimeMillis() + ((count - 1) * 5L + 15L) * 17L;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {
                 engine.listener.onFieldChanged();
@@ -733,7 +815,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             GameField.ClientCard defCard = engine.field.getCard(engine.localPlayer(dCtrl & 1), dLoc, dSeq);
             String defName = defCard != null ? DataManager.get().getName(defCard.code) : "";
             engine.hintManager.setEventString(1619, "[%s]攻击[%s]", atkName, defName);
-            // 需求3：记录绿色攻击弧端点（攻击者→目标），GameFieldView 在约 0.9s 内绘制流动弧
+            // 记录绿色攻击弧端点（攻击者→目标），GameFieldView 在约 0.9s 内绘制流动弧
             engine.field.arcAttacker = atkCard;
             engine.field.arcTarget = defCard;
             engine.field.arcStartMs = System.currentTimeMillis();

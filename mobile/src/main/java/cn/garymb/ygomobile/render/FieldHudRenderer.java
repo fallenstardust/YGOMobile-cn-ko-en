@@ -168,22 +168,25 @@ final class FieldHudRenderer {
     private void drawMonsterStatTexts(int p, int seq, GameField.ClientCard c) {
         float[] r = GameField.getZoneRect(p, 0x04, seq);
         if (r == null) return;
-        float cx = r[0], cy = r[1], hw = r[2] / 2f, hh = r[3] / 2f;
+        float cx = r[0], cy = r[1];
+        // 文字锚定到「卡片矩形」而非更大的格子矩形——按卡片自身足迹取半宽半高；
+        // 守备表示卡片绕 Z 旋转 90°，其世界 X/Y 半 extent 对调。
+        boolean defense = (c.position & GameField.POS_DEFENSE) != 0;
+        float hx = (defense ? FieldGeometry.CARD_H : FieldGeometry.CARD_W) * 0.5f;
+        float hy = (defense ? FieldGeometry.CARD_W : FieldGeometry.CARD_H) * 0.5f;
         // 四角 + 中心投影（world +y 靠相机 → 屏幕更下）
-        float[] nearL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hw), cy + hh, 0.02f);
-        float[] nearR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hw), cy + hh, 0.02f);
-        float[] farL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hw), cy - hh, 0.02f);
-        float[] farR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hw), cy - hh, 0.02f);
+        float[] nearL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy + hy, 0.02f);
+        float[] nearR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy + hy, 0.02f);
+        float[] farL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy - hy, 0.02f);
+        float[] farR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy - hy, 0.02f);
         float[] center = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy, 0.02f);
         if (nearL == null || nearR == null || farL == null || farR == null || center == null) return;
-        // 字号对齐堆叠数量（0.30 系数）后整体再缩小一号（攻守/等级数字比原来小 1 号）
         float cardHpx = Math.abs(center[1] - nearL[1]) * 2f;
         float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f)) * STAT_SIZE_SCALE;
         boolean ours = (p == 0);
 
-        // ATK/DEF（连接怪兽为 ATK/L‑n）紧贴「视角相对下沿」外侧显示——
-        // 我方数字上沿贴卡片下边缘（屏幕下缘外侧），对方数字底边贴卡片下边缘（屏幕上缘外侧）。
-        // 本轮再朝卡片方向贴近 STAT_SNUG_PX 像素（我方攻守上抬、对方攻守下降）。
+        // ATK/DEF（连接值为 ATK/L-n）居中压在卡片「视角相对底边」线上——字高一半在卡上、
+        // 一半垂在卡外，与卡片略微重叠而不整体显示在卡面内。
         float[] eL = ours ? nearL : farL;
         float[] eR = ours ? nearR : farR;
         float edgeX = (eL[0] + eR[0]) / 2f;
@@ -198,27 +201,19 @@ final class FieldHudRenderer {
             colors = new int[]{statValueColor(c.attack, c.baseAttack), 0xFFFFFFFF,
                     statValueColor(c.defense, c.baseDefense)};
         }
-        // 数字中心移到卡片外侧半个字高处（远离卡片中心方向）：贴边而不压卡面
-        float statY = edgeY - (float) Math.signum(center[1] - edgeY) * (hpx / 2f);
-        statY += (float) Math.signum(center[1] - statY) * STAT_SNUG_PX;   // 再贴近卡片 2px
-        drawScreenText(edgeX, statY, parts, colors, hpx);
+        drawScreenText(edgeX, edgeY, parts, colors, hpx);
 
-        // 等级(L*,白/调律黄)或阶级(R*,玫红)紧贴「视角相对上沿」外侧的角显示。
-        // 对齐 drawing.cpp DrawStatus：我方在卡片左上角（屏幕上缘左角、左对齐）；
-        // 对方卡旋转 180°，其等级在卡主视角右上角 = 屏幕下缘左角、左对齐
-        //（原实现取屏幕下缘右角=卡主视角左上角，故本轮改为左角）。
+        // 等级(L*/调律黄/阶级攻瑰红)置于卡片矩形「左上角」，左对齐并略压入卡内（贴近顶边）。
+        // 我方顶边=屏幕上缘(far)，对方卡旋转 180° 其顶边=屏幕下缘(near)。
         if (c.lvString != null && !c.lvString.isEmpty()) {
-            float[] tl = ours
-                    ? (farL[0] <= farR[0] ? farL : farR)      // 我方：屏幕上缘左角
-                    : (nearL[0] <= nearR[0] ? nearL : nearR); // 对方：屏幕下缘左角（=卡主视角右上角）
+            float[] topL = ours ? farL : nearL;
+            float[] topR = ours ? farR : nearR;
+            float[] tl = topL[0] <= topR[0] ? topL : topR;   // 顶边的左角
             int lvColor = (c.type & TYPE_XYZ) != 0 ? 0xFFFF80FF
                     : (c.type & TYPE_TUNER) != 0 ? 0xFFFFFF00 : 0xFFFFFFFF;
-            // 竖直方向移到卡片外侧半个字高处，再朝卡片方向贴近 STAT_SNUG_PX（我方下移、对方上移）
-            float lvY = tl[1] - (float) Math.signum(center[1] - tl[1]) * (hpx / 2f);
-            lvY += (float) Math.signum(center[1] - lvY) * STAT_SNUG_PX;
-            // 水平方向朝卡片中心贴近 STAT_SNUG_PX（我方等级右移 2px）
-            float lvX = tl[0] + (float) Math.signum(center[0] - tl[0]) * STAT_SNUG_PX;
-            drawScreenTextAligned(lvX, lvY, new String[]{c.lvString}, new int[]{lvColor}, hpx, ALIGN_LEFT);
+            // 从顶角向卡片中心方向压入 hpx*0.4（文字竖中心略低于顶边→位于卡片矩形左上角）
+            float lvY = tl[1] + (float) Math.signum(center[1] - tl[1]) * (hpx * 0.4f);
+            drawScreenTextAligned(tl[0], lvY, new String[]{c.lvString}, new int[]{lvColor}, hpx, ALIGN_LEFT);
         }
     }
 
@@ -232,32 +227,29 @@ final class FieldHudRenderer {
         if (txt == null || txt.isEmpty()) return;
         float[] r = GameField.getZoneRect(p, 0x08, seq);
         if (r == null) return;
-        float cx = r[0], cy = r[1], hw = r[2] / 2f, hh = r[3] / 2f;
-        float[] nearL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hw), cy + hh, 0.02f);
-        float[] nearR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hw), cy + hh, 0.02f);
-        float[] farL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hw), cy - hh, 0.02f);
-        float[] farR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hw), cy - hh, 0.02f);
+        float cx = r[0], cy = r[1];
+        // 灵摆刻度锚到卡片矩形左上/右上角（非格子矩形），按卡片足迹取半宽半高
+        float hx = FieldGeometry.CARD_W * 0.5f, hy = FieldGeometry.CARD_H * 0.5f;
+        float[] nearL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy + hy, 0.02f);
+        float[] nearR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy + hy, 0.02f);
+        float[] farL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy - hy, 0.02f);
+        float[] farR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy - hy, 0.02f);
         float[] center = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy, 0.02f);
         if (nearL == null || nearR == null || farL == null || farR == null || center == null) return;
-        // 字号对齐堆叠数量
         float cardHpx = Math.abs(center[1] - nearL[1]) * 2f;
         float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f));
         boolean ours = (p == 0);
-        // 左刻度→视角左上角、右刻度→视角右上角（对方旋转 180° 后左右/上下互换）
-        float[] corner;
-        if (ours) {
-            float[] l = farL[0] <= farR[0] ? farL : farR;
-            float[] rr = farL[0] <= farR[0] ? farR : farL;
-            corner = leftScale ? l : rr;
-        } else {
-            float[] l = nearL[0] >= nearR[0] ? nearL : nearR;   // 对方视角左上 = 屏幕右
-            float[] rr = nearL[0] >= nearR[0] ? nearR : nearL;  // 对方视角右上 = 屏幕左
-            corner = leftScale ? l : rr;
-        }
-        float tx = corner[0] + (float) Math.signum(center[0] - corner[0]) * hpx * 0.9f;
-        float ty = corner[1] + (float) Math.signum(center[1] - corner[1]) * hpx * 0.8f;
+        // 顶边：我方屏幕上缘(far)、对方旋转 180° 后顶边=屏幕下缘(near)
+        float[] topL = ours ? farL : nearL;
+        float[] topR = ours ? farR : nearR;
+        // 左刻度→卡片矩形左上角(左对齐)、右刻度→右上角(右对齐)，向卡内压入 hpx*0.4
+        float[] corner = leftScale
+                ? (topL[0] <= topR[0] ? topL : topR)
+                : (topL[0] <= topR[0] ? topR : topL);
+        float ty = corner[1] + (float) Math.signum(center[1] - corner[1]) * (hpx * 0.4f);
+        int align = leftScale ? ALIGN_LEFT : ALIGN_RIGHT;
         // 刻度白色（对齐 drawing.cpp 灵摆刻度 0xffffffff）
-        drawScreenText(tx, ty, new String[]{txt}, new int[]{0xFFFFFFFF}, hpx);
+        drawScreenTextAligned(corner[0], ty, new String[]{txt}, new int[]{0xFFFFFFFF}, hpx, align);
     }
 
     private void drawScreenNumber(float[] screenXY, String text, int color, float heightPx) {
