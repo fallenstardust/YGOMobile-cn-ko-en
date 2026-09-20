@@ -357,11 +357,17 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         currentCardSearchMessage = keyword;
         CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).cardTypes(new ArrayList<>()).build();//构建CardSearchInfo时type不能为null
         mCardLoader.search(searchInfo);
+        //点击卡片详情中的高亮文字进行的关键词搜索，同样计入搜索历史
+        mCardSearcher.recordHistoryKeyword(keyword);
     }
 
     private void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
             onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
+            //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
+            if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {
+                mCardSearcher.recordHistoryKeyword(mCardDetail.getCardInfo().Name);
+            }
         } else {
             Log.w("cc", "No card found");
         }

@@ -33,6 +33,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.cardview.widget.CardView;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -69,6 +70,7 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.ServerListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckManageDialog;
 import cn.garymb.ygomobile.ui.mycard.bean.McNews;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
 import cn.garymb.ygomobile.ui.mycard.mcchat.util.ImageUtil;
@@ -672,8 +674,26 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
         if (!file.getAbsolutePath().isEmpty()) {
             mBundle.putString("setDeck", file.getAbsolutePath());
             activity.fragment_deck_cards.setArguments(mBundle);
+            // 保存剪贴板中的卡组码后，卡组已落地到本地卡组目录，
+            // 通知卡组管理对话框刷新“本地卡组”列表，使其与磁盘保持一致
+            syncDeckManageDialog();
         }
         activity.switchFragment(activity.fragment_deck_cards, 2, true);
+    }
+
+    /**
+     * 从剪贴板保存卡组码生成新卡组文件后，同步刷新卡组管理对话框中的本地卡组列表。
+     * 若对话框当前不存在，则下次创建时会以最新数据构建，无需处理。
+     */
+    private void syncDeckManageDialog() {
+        if (!isAdded() || activity == null) {
+            return;
+        }
+        Fragment fragment = activity.getSupportFragmentManager()
+                .findFragmentByTag(DeckManageDialog.DIALOG_TAG);
+        if (fragment instanceof DeckManageDialog) {
+            ((DeckManageDialog) fragment).refreshLocalDeckList();
+        }
     }
 
     @Override
