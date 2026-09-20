@@ -738,6 +738,23 @@ public class DraggablePopupHelper {
         }
     }
 
+    /** 清除本弹窗持久化的拖拽位置，下次显示回到默认居中布局。 */
+    public void clearSavedPosition() {
+        lastX = 0;
+        lastY = 0;
+        hasSavedPosition = false;
+        prefs.edit().remove(dialogId + KEY_X).remove(dialogId + KEY_Y).apply();
+    }
+
+    /** 按 dialogId 清除某个弹窗持久化的拖拽位置（供对话框释放自身布局时调用，不影响其他弹窗）。 */
+    public static void clearPosition(Context context, String dialogId) {
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(dialogId + KEY_X)
+            .remove(dialogId + KEY_Y)
+            .apply();
+    }
+
     public static void resetAllPositions(Context context) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .edit()

@@ -15,9 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
-import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.NativeInitOptions;
 import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
 import cn.garymb.ygomobile.network.BufferIO;
@@ -123,18 +121,12 @@ public final class LanGameServer implements YGOProtocol {
         }
     }
 
-    /** 加载卡片数据与脚本目录（主库最后覆盖扩展），对齐 AppsSettings 的 cdb 列表顺序。 */
+    /** 引导引擎：确保 script/ 已解压并加载卡片数据库。
+     * 经 {@link NativeScriptBootstrap#ensureEngineReady()} 幂等引导：相同资源根目录仅首次
+     * 真正 {@code OcgDuelEngine.init}（加载 cdb+脚本，耗时数秒），后续建主直接命中缓存，
+     * 消除“每次建主都重载引擎”的4~5秒延迟（对齐 C++ gframe 启动时一次性加载、多次建主复用）。 */
     private boolean bootstrapEngine() {
-        try {
-            NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
-            // native 引擎只读 rootPath/script/ 实体文件，先把 scripts.zip 解压出 script/ 目录
-            NativeScriptBootstrap.ensureScriptsExtracted(options.mWorkPath);
-            String[] cdbPaths = options.mDbList.toArray(new String[0]);
-            return OcgDuelEngine.init(options.mWorkPath, cdbPaths);
-        } catch (Throwable t) {
-            Log.e(TAG, "引擎初始化异常", t);
-            return false;
-        }
+        return NativeScriptBootstrap.ensureEngineReady();
     }
 
     // ==================================================================

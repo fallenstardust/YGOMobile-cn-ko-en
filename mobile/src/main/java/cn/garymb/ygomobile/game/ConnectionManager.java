@@ -123,7 +123,7 @@ public class ConnectionManager {
                     return;
                 }
                 LanDiscoveryManager.acquireHostMulticastLock();
-                try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
+                // start() 已同步完成 ServerSocket 绑定与 accept 线程拉起，无需额外等待即可环回连接
                 boolean connected = engine.client.connect("127.0.0.1", 7911);
                 if (!connected) {
                     engine.setState(GameEngine.GameState.DISCONNECTED);
@@ -161,7 +161,7 @@ public class ConnectionManager {
                     return;
                 }
                 LanDiscoveryManager.acquireHostMulticastLock();
-                try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
+                // start() 已同步完成 ServerSocket 绑定与 accept 线程拉起，无需额外等待即可环回连接
                 boolean connected = engine.client.connect("127.0.0.1", 7911);
                 if (!connected) {
                     engine.setState(GameEngine.GameState.DISCONNECTED);
@@ -295,20 +295,20 @@ public class ConnectionManager {
         engine.isBotMode = true;
         new Thread(() -> {
             // 等待本地主机房间就绪再广播启动 WindBot：startLocalServerWithSettings 的
-            // 引擎引导（ensureLocalServer 加载 cdb/script）+ createGame 在另一线程完成，
-            // 可能超过固定延时，房间未建好时 AI 连入无房可加（旧 startBotDuel 同线程串行无此竞态）
+            // 引擎引导（ensureLocalServer）+ createGame 在另一线程完成，房间未建好时 AI 连入无房可加。
+            // isRoomReady() 为权威信号（房间已建且房主已入座），accept 循环已随 start() 启动，
+            // 故一旦就绪即可立即广播——采用细粒度轮询、去掉固定缓冲，使 AI 在房间就绪后尽快加入。
             LanGameServer server = localServer;
-            for (int i = 0; i < 100 && (server == null || !server.isRoomReady()); i++) {
+            long deadline = System.currentTimeMillis() + 10000L;
+            while (System.currentTimeMillis() < deadline
+                    && (server == null || !server.isRoomReady())) {
                 try {
-                    Thread.sleep(200);
+                    Thread.sleep(20);
                 } catch (InterruptedException e) {
                     break;
                 }
                 server = localServer;
             }
-            try {
-                Thread.sleep(500); // 就绪后留少量缓冲，确保监听_ACCEPT已稳定
-            } catch (InterruptedException e) { /* ignore */ }
             // WindBot.RunAndroid 以空格拆分参数(保留单引号片段)，再以 '=' 拆 key/value。
             // 因此所有参数必须是 Key=Value 形式；含空格的值需用单引号包裹。
             StringBuilder sb = new StringBuilder();

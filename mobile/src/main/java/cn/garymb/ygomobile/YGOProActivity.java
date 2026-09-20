@@ -28,6 +28,7 @@ import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.game.ChatInputUI;
 import cn.garymb.ygomobile.game.DeckEditorManager;
 import cn.garymb.ygomobile.game.GameEngine;
@@ -127,6 +128,7 @@ public class YGOProActivity extends AppCompatActivity {
         initEngine();
         loadData();
         startWindbotListener();
+        warmUpDuelEngine();
         setupBackPressedHandler();
 
         if (!handleDirectIntent(getIntent())) {
@@ -248,6 +250,19 @@ public class YGOProActivity extends AppCompatActivity {
             WindBotService.startListening(getApplicationContext());
             Log.i(TAG, "WindBot listener ready");
         }, "WindBotInit").start();
+    }
+
+    /**
+     * 后台预热 native 决斗引擎：提前完成 scripts.zip 解压与 cards.cdb/脚本加载
+     * （{@code OcgDuelEngine.init} 的首次耗时数秒一次性开销），使首次建立局域网主机
+     * 时无需再等待引擎引导，握手即时完成。ensureEngineReady 幂等且同步，与建主线程
+     * 并发时后者会阻塞至预热完成，不会重复加载。
+     */
+    private void warmUpDuelEngine() {
+        new Thread(() -> {
+            boolean ready = NativeScriptBootstrap.ensureEngineReady();
+            Log.i(TAG, "Duel engine warm-up " + (ready ? "done" : "skipped/failed"));
+        }, "EngineWarmUp").start();
     }
 
     // === 供三个UI管理类回调的桥接方法 ===

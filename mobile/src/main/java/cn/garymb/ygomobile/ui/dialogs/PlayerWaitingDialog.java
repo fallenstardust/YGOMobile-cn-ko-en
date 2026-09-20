@@ -26,8 +26,10 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -39,6 +41,9 @@ import ocgcore.StringManager;
  */
 public class PlayerWaitingDialog {
     public static final StringManager mStringManager = DataManager.get().getStringManager();
+
+    /** 拖拽布局持久化 id：本弹窗是唯一“退出即释放”的对话框，退出时需清除此 key 的位置缓存。 */
+    private static final String DIALOG_ID = "player_waiting_dialog";
 
     private final Context context;
     private PopupWindow popupWindow;
@@ -135,7 +140,7 @@ public class PlayerWaitingDialog {
         // 置为非模态后输入法窗口始终位于本弹窗之上一层且可正常响应触摸
         popupWindow.setTouchModal(false);
 
-        draggableHelper = new DraggablePopupHelper(context, "player_waiting_dialog");
+        draggableHelper = new DraggablePopupHelper(context, DIALOG_ID);
         draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
 
         loadLastDeckInfo();
@@ -708,6 +713,28 @@ public class PlayerWaitingDialog {
         currentDeckCategory = settings.getLastCategory();
         currentDeckName = settings.getLastDeckName();
         currentDeckPath = settings.getLastDeckPath();
+
+        // 进入等待界面时，若最后选择的分类是"卡包展示"（其卡组不可用于对战），
+        // 默认改为选中"未分类卡组"的第一个卡组，并保存为最后选择的分类与最后选择的卡组。
+        // 此逻辑仅在 PlayerWaitingDialog 生效，不影响其他入口的卡组选择。
+        if (TextUtils.equals(context.getString(R.string.category_pack), currentDeckCategory)) {
+            List<DeckFile> uncatDecks = DeckUtil.getDeckList(settings.getDeckDir());
+            if (uncatDecks != null && !uncatDecks.isEmpty()) {
+                DeckFile first = uncatDecks.get(0);
+                currentDeckPath = first.getPath();
+                currentDeckName = first.getName();
+                currentDeckCategory = first.getTypeName();
+                // setLastDeckPath 依据卡组路径重新写入最后分类与最后卡组名，
+                // 使随后展开的 DeckSelectorDialog 默认选中该未分类卡组
+                settings.setLastDeckPath(currentDeckPath);
+            } else {
+                // 未分类下无卡组：清空选择，等待界面回退到"请选择卡组"
+                currentDeckPath = "";
+                currentDeckName = "";
+                currentDeckCategory = "";
+            }
+        }
+
         updateDeckButtonText();
     }
 
@@ -1080,6 +1107,30 @@ public class PlayerWaitingDialog {
         if (deckSelectorDialog != null) {
             deckSelectorDialog.dismiss();
         }
+    }
+
+    /**
+     * 退出等待界面时彻底释放本弹窗：区别于其他“仅隐藏、下次复用保留布局”的对话框，
+     * PlayerWaitingDialog 每次都新建实例，故退出时须清除其持久化的拖拽布局位置，
+     * 使下次进入回到默认居中布局；同时收起卡组选择子窗、置空引用以释放视图。
+     * 抑制 dismiss→restoreMainMenu 兜底回调，返回导航由调用方（onExitWaiting）独占。
+     */
+    public void releaseOnExit() {
+        if (deckSelectorDialog != null) {
+            deckSelectorDialog.dismiss();
+            deckSelectorDialog = null;
+        }
+        if (popupWindow != null) {
+            if (popupWindow.isShowing()) {
+                suppressDismiss = true;
+                popupWindow.setOnDismissListener(null);
+                popupWindow.dismiss();
+            }
+            popupWindow = null;
+        }
+        draggableHelper = null;
+        externalDismissListener = null;
+        DraggablePopupHelper.clearPosition(context, DIALOG_ID);
     }
 
     // === 静态入口：由 YGOProActivity 调用（直连/人机直接进入玩家等待界面） ===

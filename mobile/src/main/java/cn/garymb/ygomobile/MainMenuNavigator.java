@@ -125,11 +125,11 @@ class MainMenuNavigator implements
         // 人机模式（从 SingleModeDialog 建主进入等待界面）退出后应回 SingleModeDialog，
         // 而非 LanModeDialog；且不得出现 MainMenuDialog
         final boolean botMode = activity.engine != null && activity.engine.isBotMode;
-        // 先关闭等待界面并抑制其 dismiss→restoreMainMenu 兜底，再断开连接；
+        // 先彻底释放等待界面（本弹窗退出即释放、不保留拖拽布局），抑制其 dismiss→restoreMainMenu 兜底，再断开连接；
         // DISCONNECTED 的自动 returnToLanMain（会连带弹 LanMode/MainMenu）已被
         // suppressNextDisconnectedReturn 抑制，返回导航由本入口独占
         if (activity.playerWaitingDialog != null) {
-            activity.playerWaitingDialog.hideForNavigation();
+            activity.playerWaitingDialog.releaseOnExit();
             activity.setPlayerWaitingDialog(null);
         }
         activity.hideGameUI();
