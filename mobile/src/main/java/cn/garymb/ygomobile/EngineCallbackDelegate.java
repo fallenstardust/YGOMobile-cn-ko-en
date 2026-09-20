@@ -521,7 +521,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
 
                     @Override
                     public void onCancel() {
-                        // 跳过当前录像，检查通讯是否还发来了其它录像文件
+                        // 对齐 gframe duelclient.cpp STOC_REPLAY L1080-1082：
+                        // 点「否」(actionParam==0) 时仍将最近一局静默保存为 _LastReplay.yrp
+                        saveLastReplay(replayData);
+                        // 继续检查通讯是否还发来了其它录像文件
                         activity.mainHandler.post(() -> processPendingReplays());
                     }
                 });
@@ -582,6 +585,28 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         } catch (IOException e) {
             Log.e(TAG, "Failed to save replay", e);
             Toast.makeText(activity, "录像保存失败: " + safeName, Toast.LENGTH_SHORT).show();
+            // 对齐 gframe duelclient.cpp STOC_REPLAY L1078-1079：保存失败时兜底存为 _LastReplay.yrp
+            saveLastReplay(data);
+        }
+    }
+
+    /**
+     * 静默保存最近一局为 _LastReplay.yrp（不弹任何提示）：
+     * 对应 gframe duelclient.cpp STOC_REPLAY 中点「否」与保存失败两条
+     * new_replay.SaveReplay(L"_LastReplay") 路径
+     */
+    private void saveLastReplay(byte[] data) {
+        try {
+            File dir = new File(AppsSettings.get().getReplayDir());
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, "_LastReplay" + Constants.YRP_FILE_EX);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(data);
+                fos.flush();
+            }
+            Log.i(TAG, "Last replay saved: " + file.getAbsolutePath());
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save last replay", e);
         }
     }
 

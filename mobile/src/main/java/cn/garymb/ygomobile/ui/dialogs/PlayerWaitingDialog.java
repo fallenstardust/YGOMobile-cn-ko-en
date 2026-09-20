@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -370,21 +371,31 @@ public class PlayerWaitingDialog {
         updateSelfCheckboxInteractivity();
     }
 
+    /** 席位有人加入时的半透明背景色
+     * （对齐 gframe duelclient.cpp STOC_HS_PLAYER_ENTER L1175 /
+     *  STOC_HS_PLAYER_CHANGE L1198：stHostPrepDuelist[pos]->setBackgroundColor(0x60045f6a)） */
+    private static final int SEAT_OCCUPIED_COLOR = 0x60045F6A;
+
     public void setPlayerName(int pos, String name) {
+        TextView seat = null;
         switch (pos) {
             case 0:
-                if (etPwPlayer1Name != null) etPwPlayer1Name.setText(name);
+                seat = etPwPlayer1Name;
                 break;
             case 1:
-                if (etPwPlayer2Name != null) etPwPlayer2Name.setText(name);
+                seat = etPwPlayer2Name;
                 break;
             case 2:
-                if (etPwPlayer3Name != null) etPwPlayer3Name.setText(name);
+                seat = etPwPlayer3Name;
                 break;
             case 3:
-                if (etPwPlayer4Name != null) etPwPlayer4Name.setText(name);
+                seat = etPwPlayer4Name;
                 break;
         }
+        if (seat == null) return;
+        seat.setText(name);
+        // 玩家加入(名字非空)时叠加半透明色提醒该席位已被占据，离开/清空时恢复透明
+        seat.setBackgroundColor(TextUtils.isEmpty(name) ? Color.TRANSPARENT : SEAT_OCCUPIED_COLOR);
     }
 
     public String getPlayerName(int pos) {

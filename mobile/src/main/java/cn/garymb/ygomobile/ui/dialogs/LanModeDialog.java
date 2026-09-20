@@ -105,6 +105,8 @@ public class LanModeDialog {
             if (entry != null) {
                 etHostIp.setText(entry.ip);
                 etHostPort.setText(String.valueOf(entry.port));
+                // 点选房间不自动填充密码：清空残留并等玩家自行输入
+                etRoomPassword.setText("");
             }
         });
 
@@ -196,11 +198,14 @@ public class LanModeDialog {
         draggableHelper.showPopup(popupWindow, anchorView);
     }
 
-    public void preFillConnectionFields(String nickname, String hostIp, String port, String roomPassword) {
+    /**
+     * 回显上次连接信息：仅昵称/主机/端口，
+     * 房间密码不自动填充（对齐 gframe 选择局域网房间只填地址端口，密码由玩家自行输入）
+     */
+    public void preFillConnectionFields(String nickname, String hostIp, String port) {
         if (nickname != null && !nickname.isEmpty() && etNickname != null) etNickname.setText(nickname);
         if (hostIp != null && !hostIp.isEmpty() && etHostIp != null) etHostIp.setText(hostIp);
         if (port != null && !port.isEmpty() && etHostPort != null) etHostPort.setText(port);
-        if (roomPassword != null && etRoomPassword != null) etRoomPassword.setText(roomPassword);
     }
 
     public boolean isShowing() {

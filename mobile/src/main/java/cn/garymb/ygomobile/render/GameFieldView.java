@@ -184,6 +184,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private long lastFrameNs = 0;
     volatile long animTimeMs = 0;
 
+    // FPS 统计——GL 线程逐帧累加，每满 1s 计算一次并经监听回调到主线程刷新 tv_fps
+    private long fpsFrames;
+    private long fpsWindowStartNs;
+    private OnFpsListener onFpsListener;
+
     // === 协作类（按功能分栏委派，构造注入本视图，同包包级私有直连共享 GL 状态）===
     FieldCamera cam;
     FieldTextureManager tex;
@@ -362,6 +367,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
      */
     public void setOnCameraChangedListener(Runnable listener) {
         this.onCameraChangedListener = listener;
+    }
+
+    /** 帧率回调接口（每秒一次，已在主线程触发） */
+    public interface OnFpsListener {
+        void onFps(int fps);
+    }
+
+    /** 注册 FPS 监听，由 Activity 在布局绑定时调用 */
+    public void setOnFpsListener(OnFpsListener listener) {
+        this.onFpsListener = listener;
     }
 
     /**
@@ -581,6 +596,18 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         lastFrameNs = now;
         if (dt > 0.1f) dt = 0.1f;
         animTimeMs = System.currentTimeMillis();
+
+        // 需求2：帧率统计窗口，每累计满 1 秒把整窗口平均帧率回调到主线程
+        if (fpsWindowStartNs == 0) fpsWindowStartNs = now;
+        fpsFrames++;
+        long fpsElapsed = now - fpsWindowStartNs;
+        if (fpsElapsed >= 1_000_000_000L) {
+            final int fps = (int) (fpsFrames * 1_000_000_000L / fpsElapsed);
+            fpsFrames = 0;
+            fpsWindowStartNs = now;
+            final OnFpsListener l = onFpsListener;
+            if (l != null) post(() -> l.onFps(fps));
+        }
 
         if (cameraDirty) {
             cameraDirty = false;

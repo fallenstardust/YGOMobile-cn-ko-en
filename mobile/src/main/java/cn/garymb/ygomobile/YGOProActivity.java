@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -38,6 +39,7 @@ import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
@@ -124,6 +126,7 @@ public class YGOProActivity extends AppCompatActivity {
         initViews();
         initEngine();
         loadData();
+        startWindbotListener();
         setupBackPressedHandler();
 
         if (!handleDirectIntent(getIntent())) {
@@ -175,6 +178,15 @@ public class YGOProActivity extends AppCompatActivity {
         fieldCtl = new GameFieldController(this, mainHandler, topInfoManager);
         fieldCtl.create();
 
+        // 左上角 FPS 实时显示——GameFieldView 每秒回调帧率到主线程刷新 tv_fps
+        final TextView tvFps = findViewById(R.id.tv_fps);
+        if (tvFps != null) {
+            View gv = findViewById(R.id.game_field_view);
+            if (gv instanceof GameFieldView) {
+                ((GameFieldView) gv).setOnFpsListener(fps -> tvFps.setText("FPS " + fps));
+            }
+        }
+
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
     }
 
@@ -222,6 +234,20 @@ public class YGOProActivity extends AppCompatActivity {
             DataManager.get().load(false);
             Log.i(TAG, "DataManager loaded");
         }, "DataLoad").start();
+    }
+
+    /**
+     * 初始化即后台启动 windbot：提前完成 WindBot.initAndroid 与 RUN_WINDBOT 监听注册，
+     * 使人机对战不必等到进入 PlayerWaitingDialog 才初始化（原 ResCheckTask 路径在
+     * isOnlyGame 直达决斗界面时会被跳过），节约启动等待时间。
+     * initAndroid 在 WindBotService 内做了进程级去重：MainActivity 已初始化过时
+     * 此处仅确保监听已注册，不会重复进入 Mono 运行时（重复 init 会导致 libmonosgen 崩溃）
+     */
+    private void startWindbotListener() {
+        new Thread(() -> {
+            WindBotService.startListening(getApplicationContext());
+            Log.i(TAG, "WindBot listener ready");
+        }, "WindBotInit").start();
     }
 
     // === 供三个UI管理类回调的桥接方法 ===
@@ -570,8 +596,9 @@ public class YGOProActivity extends AppCompatActivity {
         } else {
             LanModeDialog.showLanModeDialog(this);
             if (lanModeDialog != null) {
+                // 房间密码不自动回显，由玩家自行输入
                 lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
-                        String.valueOf(lastJoinPort), lastJoinRoomName);
+                        String.valueOf(lastJoinPort));
             }
         }
         if (toastMsg != null && !toastMsg.isEmpty()) {

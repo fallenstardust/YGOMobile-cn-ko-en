@@ -106,9 +106,11 @@ public final class YrpWriter {
     public byte[] build() {
         byte[] raw = record.toByteArray();
         flag |= REPLAY_COMPRESSED;
-        // props：byte0 = (pb*5+lc)*9+lp；byte1..4 = dictSize 小端；byte5..7 保留 0
+        // props：byte0 = LZMA1 属性字节，编码约定 lc + 9*lp + 45*pb（与 XZ LZMAInputStream、
+        //   C++ LzmaDec 的解码 lc=prop%9、lp=(prop/9)%5、pb=(prop/9)/5 对偶）；
+        //   byte1..4 = dictSize 小端；byte5..7 保留 0。
         byte[] props = new byte[8];
-        props[0] = (byte) ((PB * 5 + LC) * 9 + LP);
+        props[0] = (byte) (LC + 9 * LP + 45 * PB);
         ByteBuffer db = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
         db.putInt(DICT_SIZE);
         System.arraycopy(db.array(), 0, props, 1, 4);
@@ -139,25 +141,33 @@ public final class YrpWriter {
         return out.array();
     }
 
+    /** LZMA_ALONE 头部字节数：1(属性) + 4(dictSize) + 8(未压缩长度)。 */
+    private static final int LZMA_ALONE_HEADER_SIZE = 13;
+
     private static byte[] lzmaCompress(byte[] raw) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            // tukaani 的裸 LZMA1 写端：LZMAOutputStream 读取 LZMA2Options 的 dict/lc/lp/pb/mode，
-            // 仅输出 LZMA1 压缩体（不含属性头），与 replay.cpp 的裸 LZMA 输出一致；
-            // props 头由 build() 依据同样的 LC/LP/PB/DICT 手工写入，与 ReplayReader 解码对偶。
+            // tukaani 的 LZMAOutputStream 输出的是 LZMA_ALONE 格式：13 字节头(属性+dict+长度) + 裸 LZMA1 压缩体。
+            // 而 replay.cpp 的 LzmaCompress 只产出裸 LZMA1 压缩体，属性/dict 单独存于 .yrp 头 props[]，
+            // ReplayReader 也用 LZMAInputStream(in, -1, propsByte, dictSize) 从裸流解码。
+            // 故这里必须剥掉 13 字节头，只保留压缩体，才能与 ReplayReader/C++ 对偶。
             LZMA2Options options = new LZMA2Options();
             options.setMode(LZMA2Options.MODE_NORMAL);
             options.setDictSize(DICT_SIZE);
             options.setLc(LC);
             options.setLp(LP);
             options.setPb(PB);
-            // 传真实长度：不写结束标记（size>=0 时 LZMAOutputStream 不追加 end marker）
+            // 传真实长度：size>=0 时 LZMAOutputStream 不追加 end marker，ReplayReader 按 datasize 读取
             LZMAOutputStream lzma = new LZMAOutputStream(bos, options, raw.length);
             lzma.write(raw);
             lzma.finish();
-            lzma.flush();
+            // 不调用 flush()：LZMAOutputStream 不支持 flush，调用会抛 XZIOException
             lzma.close();
-            return bos.toByteArray();
+            byte[] alone = bos.toByteArray();
+            if (alone.length <= LZMA_ALONE_HEADER_SIZE) {
+                return new byte[0];
+            }
+            return Arrays.copyOfRange(alone, LZMA_ALONE_HEADER_SIZE, alone.length);
         } catch (IOException e) {
             // 理论上内存流不会抛；退回未压缩（COMPRESSED 标志已在 build 置位，此处保持）
             return Arrays.copyOf(raw, raw.length);

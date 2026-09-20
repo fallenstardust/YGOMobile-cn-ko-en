@@ -53,6 +53,23 @@ class MainMenuNavigator implements
                 startLP, startHand, drawCount, timeLimit,
                 roomName, password != null ? password : "");
 
+        // 房主在建主时已掌握全部房间设置：立即预写入引擎房间信息缓存并置 hasJoinRoomInfoCache，
+        // 使 PlayerWaitingDialog 就绪即刷新房间设置显示（onPlayerWaitingShown 补发命中缓存），
+        // 无需等待 startLocalServerWithSettings 后台线程（含 500ms 引导延时）环回 connect→createGame→
+        // STOC_JOIN_GAME 才回填，消除建主后房间设置“慢一步才显示”的观感（对齐 gframe 进入
+        // wHostPrepare 即用已知设置刷新 stHostPrepRule）；随后环回 STOC_JOIN_GAME 回传相同值幂等覆盖。
+        activity.engine.gameLflist = lflist;
+        activity.engine.gameRule = cardAllowed;
+        activity.engine.gameMode = modeIdx;
+        activity.engine.field.dInfo.duelRule = duelRule;
+        activity.engine.gameNoCheckDeck = noCheckDeck ? 1 : 0;
+        activity.engine.gameNoShuffleDeck = noShuffleDeck ? 1 : 0;
+        activity.engine.gameStartLp = startLP;
+        activity.engine.gameStartHand = startHand;
+        activity.engine.gameDrawCount = drawCount;
+        activity.engine.gameTimeLimit = timeLimit;
+        activity.engine.hasJoinRoomInfoCache = true;
+
         if (activity.createHostDialog != null) activity.createHostDialog.hideForNavigation();
         showPlayerWaiting(userName, modeIdx == 2);
     }
@@ -127,8 +144,9 @@ class MainMenuNavigator implements
         }
         LanModeDialog.showLanModeDialog(activity);
         if (activity.lanModeDialog != null) {
+            // 房间密码不自动回显，由玩家自行输入
             activity.lanModeDialog.preFillConnectionFields(activity.lastJoinNickname, activity.lastJoinHost,
-                    String.valueOf(activity.lastJoinPort), activity.lastJoinRoomName);
+                    String.valueOf(activity.lastJoinPort));
         }
     }
 

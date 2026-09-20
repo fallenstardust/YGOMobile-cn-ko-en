@@ -236,7 +236,11 @@ final class FieldCamera {
         camEyeZ = s.eyeZ;
         selfHandShift = s.selfHandShift;
 
-        // 离轴（顶部内缩）透视视锥：left/right 对称、bottom/top 非对称，横向半宽 = 竖向半高 × aspect
+        // 离轴（顶部内缩）透视视锥：bottom/top 非对称由 frustumHH 承担（含顶部内缩放大）。
+        // 横向半宽必须与竖向同一基准 frustumHH（而非 tanV），保证横竖缩放因子一致——
+        // 否则 frustumHH(=2tanV/(1+ndcTop))>tanV 会把卡片矩形横向拉宽（比例失真）。用 frustumHH*aspect
+        // 使场地位于等距（isotropic）视锥内，卡片严格保持 177:254 原始比例；GameFieldView 宽度仍由
+        // layout_game_right 决定（match_parent），横向自然留白属正常取景，不再以拉伸换取贴边。
         float near = CAM_NEAR;
         float fTop = (s.frustumC + s.frustumHH) * near;
         float fBottom = (s.frustumC - s.frustumHH) * near;

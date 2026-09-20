@@ -53,14 +53,18 @@ public class CmdMenuDialog {
     private static final int SYS_ATTACK = 1157;      // 攻击
     private static final int SYS_SET_MONSTER = 1159; // 怪兽卡设置到魔陷区
     private static final int SYS_RESET = 1162;       // 表示重置(Reset Effect)
+    private static final int SYS_SHOW_LIST = 1158;   // 查看列表（对齐 game.cpp btnShowList）
     private static final int SYS_SELECT_OPTION = 555;// 请选择一项
 
     /** client_field.h EDESC_*：duelclient.cpp L2120-2121 连锁项 flag 分流 */
     private static final int EDESC_OPERATION = 0x1;  // 继续（不弹发动菜单）
     private static final int EDESC_RESET = 0x2;      // 表示重置（走 btnReset）
 
-    /** 「查看」入口文本：与项目内其他中文提示一致直接内联 */
-    private static final String VIEW_TEXT = "查看";
+    /** 「查看列表」入口：文字取系统字符串 1158（对齐 gframe game.cpp btnShowList），
+     *  排列在发动/特殊召唤下方（对齐 event_handler.cpp ShowMenu 中 btnShowList 的固定槽位） */
+    private String viewListText() {
+        return sysString(SYS_SHOW_LIST, "查看列表");
+    }
 
     // 位置卡片列表的三种模式（查看 / 发动 / 特殊召唤）
     private static final int MODE_VIEW = 0;
@@ -225,7 +229,7 @@ public class CmdMenuDialog {
 
         String activateText = sysString(SYS_ACTIVATE);
 
-        // 需求：卡片有多个可发动效果时也只生成一个「发动」按钮，按钮文字仅取系统字符串 1150，
+        // 卡片有多个可发动效果时也只生成一个「发动」按钮，按钮文字仅取系统字符串 1150，
         // 不再拼接该卡的脚本提示文字；点击后用 OptionDialog 列出各效果文字供选择。
         // 对齐 event_handler.cpp BUTTON_CMD_ACTIVATE L501-538：
         //   flag & EDESC_OPERATION → continue（由「继续/放弃」链路处理）
@@ -329,14 +333,11 @@ public class CmdMenuDialog {
 
     /**
      * 堆叠区 / 超量怪兽入口的「位置命令」菜单。
-     * 查看 → 列出该位置全部卡片；发动 / 特殊召唤 → 列出该位置对应可操作卡片，
-     * 单击即向通讯发送对应响应进入下一步。
+     * 发动 / 特殊召唤 → 列出该位置对应可操作卡片，单击即向通讯发送对应响应进入下一步；
+     * 「查看列表」统一排列在发动/特殊召唤下方，列出该位置全部卡片。
      */
     private void buildPositionMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
                                    List<String> options, List<Runnable> actions) {
-        options.add(VIEW_TEXT);
-        actions.add(() -> showViewList(card, engine));
-
         final List<GameEngine.CmdCardInfo> actList = matchCmdCards(engine.activatableCards, card);
         if (!actList.isEmpty()) {
             options.add(sysString(SYS_ACTIVATE));
@@ -348,6 +349,9 @@ public class CmdMenuDialog {
             options.add(sysString(SYS_SPSUMMON));
             actions.add(() -> showCmdList(card, engine, cmdContext, spList, MODE_SPSUMMON));
         }
+
+        options.add(viewListText());
+        actions.add(() -> showViewList(card, engine));
     }
 
     /** 过滤出与被点位置匹配的命令卡：超量怪兽按格序列匹配，堆叠区匹配整堆（controler+location） */
@@ -388,7 +392,7 @@ public class CmdMenuDialog {
             }
             title = sidePrefix(card.controler) + pileName(card.location);
         } else {
-            title = VIEW_TEXT;
+            title = viewListText();
         }
         showCardListDialog(title, items, null, MODE_VIEW, 0, engine);
     }
