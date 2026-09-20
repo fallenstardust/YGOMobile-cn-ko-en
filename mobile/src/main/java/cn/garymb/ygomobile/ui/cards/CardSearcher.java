@@ -2007,6 +2007,32 @@ public class CardSearcher implements View.OnClickListener {
         updateSearchNavButtons();
     }
 
+    /**
+     * 将一次由卡片详情触发的外部关键词搜索（点击高亮文字、点击关联卡片按钮）记入搜索历史。
+     * 仅更新历史列表与导航按钮状态，不重新执行搜索、不改动搜索面板的筛选条件，
+     * 以保持各调用方当前的结果展示不变。记录的条目为仅含关键词的 CardSearchInfo，
+     * 因此通过“上一次/下一次”导航可复现为对该关键词的普通搜索。
+     *
+     * @param keyword 关键词；为空时不记录
+     */
+    public void recordHistoryKeyword(String keyword) {
+        if (TextUtils.isEmpty(keyword)) {
+            return;
+        }
+        CardSearchInfo info = new CardSearchInfo.Builder()
+                .keyword(keyword)
+                .cardTypes(new ArrayList<>())
+                .build();
+        // 与 performSearch 保持一致的去重：若已存在相同条件则将其移到末尾，避免重复条目
+        int sameIndex = findSameSearchInfo(searchHistory, info);
+        if (sameIndex >= 0) {
+            searchHistory.remove(sameIndex);
+        }
+        searchHistory.add(info);
+        searchIndex = searchHistory.size() - 1;
+        updateSearchNavButtons();
+    }
+
     private boolean isDefaultSearch(CardSearchInfo info) {
         if (info.getKeyWord() != null && !TextUtils.isEmpty(info.getKeyWord().getValue())) {
             return false;
