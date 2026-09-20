@@ -29,14 +29,22 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckSelectorUtil;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 
 public class DeckSelectorDialog {
+
+    private static final String TAG = "DeckSelectorDialog";
 
     private Context context;
     private PopupWindow popupWindow;
@@ -624,6 +632,8 @@ public class DeckSelectorDialog {
             }
             if (oldDir.renameTo(newDir)) {
                 YGOUtil.show("重命名成功", Gravity.CENTER);
+                //分类重命名会改变其下所有卡组的 deckType，需批量重新上传以覆盖云端记录
+                syncUploadDecks(listYdkFilesRecursive(newDir));
                 reloadAndRefresh();
                 int newCatIndex = displayCategoryNames.indexOf(newName);
                 if (newCatIndex >= 0) {
@@ -659,6 +669,8 @@ public class DeckSelectorDialog {
         dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
         dialog.setPositiveButton(v -> {
             File dir = new File(ci.baseDirPath, ci.category.categoryName);
+            //分类删除会连带删除其下所有卡组，需先同步删除云端对应记录（必须在删除磁盘文件前构造 DeckFile）
+            syncDeleteDecksFromCloud(listYdkFilesRecursive(dir));
             if (deleteFolderRecursive(dir)) {
                 YGOUtil.show(mStringManager.getSystemString(1338, "删除成功"), Gravity.CENTER);
                 reloadAndRefresh();
@@ -704,6 +716,8 @@ public class DeckSelectorDialog {
                     YGOUtil.show("创建成功", Gravity.CENTER);
                     String ydkFileName = deckFile.getName();
                     String catName = ci.category.categoryName;
+                    //新建卡组：向云端申请新的 deckId 后上传（萌卡账号已登录时）
+                    syncUploadSingleDeck(deckFile, true);
                     reloadAndRefresh();
                     selectCategoryAndDeck(catName, ydkFileName);
                 } else {
@@ -753,6 +767,8 @@ public class DeckSelectorDialog {
                 CategoryInfo ci = getSelectedCategoryInfo();
                 String catName = ci != null ? ci.category.categoryName : "";
                 String ydkFileName = newFile.getName();
+                //重命名不改变 ydk 中已有的 deckId，直接覆盖上传以更新云端的卡组名
+                syncUploadSingleDeck(newFile, false);
                 reloadAndRefresh();
                 selectCategoryAndDeck(catName, ydkFileName);
             } else {
@@ -785,6 +801,8 @@ public class DeckSelectorDialog {
         dialog.setPositiveButton(v -> {
             File file = new File(selectedDeckPath[0]);
             int savedCatPos = selectedCategoryPos[0];
+            //先同步删除云端卡组（必须在 ydk 从磁盘删除前构造 DeckFile 以读取其中 deckId）
+            syncDeleteDeckFromCloud(file);
             if (file.delete()) {
                 YGOUtil.show(mStringManager.getSystemString(1338, "删除成功"), Gravity.CENTER);
                 reloadAndRefresh();
@@ -846,6 +864,8 @@ public class DeckSelectorDialog {
             new File(targetDir).mkdirs();
             if (src.renameTo(dest)) {
                 YGOUtil.show("移动成功", Gravity.CENTER);
+                //移动不改变 ydk 中已有的 deckId，只是 deckType（所属分类）发生变化，直接覆盖上传
+                syncUploadSingleDeck(dest, false);
                 dialog.dismiss();
                 reloadAndRefresh();
                 selectCategoryAndDeck(targetCatName, ydkFileName);
@@ -906,6 +926,9 @@ public class DeckSelectorDialog {
             new File(targetDir).mkdirs();
             if (copyFile(src, dest)) {
                 YGOUtil.show("复制成功", Gravity.CENTER);
+                //复制得到的卡组是全新的卡组：向云端申请新的 deckId 后上传（会覆盖副本 ydk
+                //中从源卡组直接复制过来的旧 deckId）
+                syncUploadSingleDeck(dest, true);
                 dialog.dismiss();
                 reloadAndRefresh();
                 selectCategoryAndDeck(targetCatName, ydkFileName);
@@ -917,6 +940,108 @@ public class DeckSelectorDialog {
     }
 
     // ==================== 工具方法 ====================
+
+    /**
+     * 新建/重命名/移动单个卡组之后，同步上传到卡组广场云端（仅在萌卡账号已登录时执行），
+     * 逻辑对齐 DeckManagerFragment 中对 DeckSquareApiUtil 的调用。
+     *
+     * @param ydkFile  操作完成后的本地卡组文件
+     * @param newDeck  是否为全新卡组（新建/复制）：true 时先向服务器申请新的 deckId 再上传，
+     *                 false（重命名/移动）时复用 ydk 文件中已有的 deckId 直接覆盖上传
+     */
+    private void syncUploadSingleDeck(File ydkFile, boolean newDeck) {
+        if (SharedPreferenceUtil.getServerToken() == null) {
+            return;
+        }
+        LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(),
+                SharedPreferenceUtil.getServerToken());
+        VUiKit.defer().when(() -> {
+            try {
+                List<MyDeckItem> deckItemList = new ArrayList<>();
+                deckItemList.add(DeckUtil.getMyDeckItem(ydkFile));
+                if (newDeck) {
+                    DeckSquareApiUtil.requestIdAndPushNewDecks(deckItemList, loginToken);
+                } else {
+                    DeckSquareApiUtil.UploadMyDecks(deckItemList, loginToken);
+                }
+            } catch (IOException e) {
+                return e;
+            }
+            return 0;
+        }).fail(e -> LogUtil.e(TAG, "Upload deck failed: " + e))
+                .done(result -> LogUtil.d(TAG, "Deck uploaded successfully"));
+    }
+
+    /**
+     * 分类重命名后批量同步其下所有卡组（deckType 发生变化，需重新上传覆盖云端记录）。
+     */
+    private void syncUploadDecks(List<File> ydkFiles) {
+        if (SharedPreferenceUtil.getServerToken() == null || ydkFiles == null || ydkFiles.isEmpty()) {
+            return;
+        }
+        LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(),
+                SharedPreferenceUtil.getServerToken());
+        VUiKit.defer().when(() -> {
+            try {
+                List<MyDeckItem> deckItemList = new ArrayList<>();
+                for (File ydk : ydkFiles) {
+                    deckItemList.add(DeckUtil.getMyDeckItem(ydk));
+                }
+                DeckSquareApiUtil.UploadMyDecks(deckItemList, loginToken);
+            } catch (IOException e) {
+                return e;
+            }
+            return 0;
+        }).fail(e -> LogUtil.e(TAG, "Upload decks failed: " + e))
+                .done(result -> LogUtil.d(TAG, "Decks uploaded successfully"));
+    }
+
+    /**
+     * 删除单个卡组时先删除云端对应记录；必须在 ydk 文件从磁盘删除之前构造 DeckFile，
+     * 以便读取其中保存的 deckId。未登录时 DeckSquareApiUtil.deleteDecks 内部会直接跳过。
+     */
+    private void syncDeleteDeckFromCloud(File ydkFile) {
+        List<File> ydkFiles = new ArrayList<>();
+        ydkFiles.add(ydkFile);
+        syncDeleteDecksFromCloud(ydkFiles);
+    }
+
+    /**
+     * 批量删除卡组（如删除整个分类）时先删除云端对应记录；同样必须在 ydk 文件从磁盘
+     * 删除之前构造 DeckFile 列表，以便读取其中保存的 deckId。
+     */
+    private void syncDeleteDecksFromCloud(List<File> ydkFiles) {
+        if (ydkFiles == null || ydkFiles.isEmpty()) {
+            return;
+        }
+        List<DeckFile> deckFileList = new ArrayList<>();
+        for (File ydk : ydkFiles) {
+            deckFileList.add(new DeckFile(ydk));
+        }
+        DeckSquareApiUtil.deleteDecks(deckFileList);
+    }
+
+    /**
+     * 递归列出指定目录下所有的 ydk 文件（包含子目录），用于分类重命名/删除时的批量同步。
+     */
+    private static List<File> listYdkFilesRecursive(File dir) {
+        List<File> result = new ArrayList<>();
+        if (dir == null || !dir.exists()) {
+            return result;
+        }
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return result;
+        }
+        for (File f : files) {
+            if (f.isDirectory()) {
+                result.addAll(listYdkFilesRecursive(f));
+            } else if (f.getName().toLowerCase(java.util.Locale.US).endsWith(Constants.YDK_FILE_EX)) {
+                result.add(f);
+            }
+        }
+        return result;
+    }
 
     private CategoryInfo getSelectedCategoryInfo() {
         if (selectedCategoryPos[0] < 0 || selectedCategoryPos[0] >= catInfos.size()) return null;

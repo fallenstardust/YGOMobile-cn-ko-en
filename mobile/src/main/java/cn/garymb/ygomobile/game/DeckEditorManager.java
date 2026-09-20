@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,11 +35,17 @@ import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.cards.deck.CardTypeImage;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
+import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
+import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.dialogs.DeckSelectorDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
+import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
 import cn.garymb.ygomobile.ui.widget.CardView;
 import cn.garymb.ygomobile.utils.DeckUtil;
+import cn.garymb.ygomobile.utils.LogUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -720,6 +727,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         showConfirmDialog(deckName + "\n" + DataManager.get().getStringManager().getSystemString(1337, "是否删除这个卡组？"), () -> {
             File deckFile = new File(currentDeckFilePath);
             if (deckFile.exists()) {
+                //先同步删除云端卡组（DeckFile必须在 ydk 文件从磁盘删除之前构造，
+                //以便读取其中保存的 deckId；未登录时 deleteDecks 内部会直接跳过）
+                syncDeckDeleteFromCloud(deckFile);
+
                 deckFile.delete();
                 currentDeckFilePath = "";
                 currentDeckName = "";
@@ -770,6 +781,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             isModified = false;
             YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1335, "保存成功"));
             if (listener != null) listener.onDeckSaved();
+            //保存到本地成功后，同步上传到卡组广场云端（萌卡账号已登录时）
+            syncDeckUploadToCloud(deckFile, false);
         }
     }
 
@@ -794,7 +807,50 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             AppsSettings.get().saveSettings("lastdeck", name);
             YGOUtil.showTextToast("卡组已保存为: " + name);
             if (listener != null) listener.onDeckSaved();
+            //另存为相当于新建卡组：向云端申请新的 deckId 后再上传（萌卡账号已登录时）
+            syncDeckUploadToCloud(deckFile, true);
         }
+    }
+
+    /**
+     * 保存/另存卡组成功后，将卡组同步上传到卡组广场云端（仅在萌卡账号已登录时执行），
+     * 逻辑对齐 DeckManagerFragment 中 action_save / 新建卡组 两处对 DeckSquareApiUtil 的调用。
+     *
+     * @param ydkFile   刚保存成功的本地卡组文件
+     * @param isNewDeck 是否为“另存为”新建的卡组：true 时先向服务器申请新的 deckId 再上传，
+     *                  false 时复用 ydk 文件中已有的 deckId 直接覆盖上传
+     */
+    private void syncDeckUploadToCloud(File ydkFile, boolean isNewDeck) {
+        if (SharedPreferenceUtil.getServerToken() == null) {
+            return;
+        }
+        LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(),
+                SharedPreferenceUtil.getServerToken());
+        VUiKit.defer().when(() -> {
+            try {
+                List<MyDeckItem> deckItemList = new ArrayList<>();
+                deckItemList.add(DeckUtil.getMyDeckItem(ydkFile));
+                if (isNewDeck) {
+                    DeckSquareApiUtil.requestIdAndPushNewDecks(deckItemList, loginToken);
+                } else {
+                    DeckSquareApiUtil.UploadMyDecks(deckItemList, loginToken);
+                }
+            } catch (IOException e) {
+                return e;
+            }
+            return 0;
+        }).fail(e -> LogUtil.e(TAG, "Upload deck failed: " + e))
+                .done(result -> LogUtil.d(TAG, "Deck uploaded successfully"));
+    }
+
+    /**
+     * 删除卡组时先删除云端对应记录；必须在 ydk 文件从磁盘删除之前构造 DeckFile，
+     * 以便读取其中保存的 deckId。未登录时 DeckSquareApiUtil.deleteDecks 内部会直接跳过。
+     */
+    private void syncDeckDeleteFromCloud(File ydkFile) {
+        List<DeckFile> deckFileList = new ArrayList<>();
+        deckFileList.add(new DeckFile(ydkFile));
+        DeckSquareApiUtil.deleteDecks(deckFileList);
     }
 
     private int getCardClassRank(Card card) {
