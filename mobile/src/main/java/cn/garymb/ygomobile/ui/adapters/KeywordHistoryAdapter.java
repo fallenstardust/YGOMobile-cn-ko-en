@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.ui.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -65,10 +66,16 @@ public class KeywordHistoryAdapter extends ArrayAdapter<String> {
         }
         View deleteBtn = view.findViewById(R.id.iv_delete_keyword);
         if (deleteBtn != null) {
-            deleteBtn.setOnClickListener(v -> {
-                if (deleteListener != null && keyword != null) {
-                    deleteListener.onDelete(keyword);
+            // 消费删除按钮上的触摸事件，避免下拉列表把该次点击当作选中项而立即收起，
+            // 从而保持列表展开、支持连续删除多条记录；仅在 ACTION_UP 时触发删除
+            deleteBtn.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    if (deleteListener != null && keyword != null) {
+                        deleteListener.onDelete(keyword);
+                    }
+                    v.performClick();
                 }
+                return true;
             });
         }
         return view;
