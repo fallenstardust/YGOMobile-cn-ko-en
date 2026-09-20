@@ -471,8 +471,12 @@ final class DuelAnalyzer implements YGOProtocol {
                     break;
                 }
                 case EngineMessage.MSG_SET: {
+                    // 对齐 single_duel.cpp L994-996：C++ BufferIO::Write 会自行推进 pbuf 4 字节（清零 code），
+                    // 再 pbuf += 4 跳过 ctrl/loc/seq/position，共消费 engType+8 字节、发包 9 字节。
+                    // Java writeInt32 不移游标，此处必须 cursor += 8；旧值 +=4 导致游标错位、
+                    // 后续消息被误解析（等待消息被跳过 → process() 空转占死 roomExecutor → 卡死）。
                     writeInt32(msg, cursor, 0);
-                    cursor += 4;
+                    cursor += 8;
                     broadcastMsg(range(msg, start, cursor));
                     break;
                 }

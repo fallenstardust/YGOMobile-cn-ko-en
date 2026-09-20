@@ -786,8 +786,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
         int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
         if (isHand) {
-            // 手卡为 billboard，恒正面朝向相机
-            if (code > 0 && (c.controler == 0 || c.isFaceUp())) {
+            // 手卡为 billboard，恒正面朝向相机。
+            // 对齐 client_field.cpp GetCardLocation 手卡分支 L866-895：手卡正/背面仅由
+            // code 决定（code!=0 → 正面），与 controler/position 无关——录像由本地引擎
+            // 重跑产生消息，双方手卡 code 均已知 → 对方手卡自然正面展示；
+            // 实时对局服务端已把对方手卡 code 清零（DuelAnalyzer MSG_DRAW/MSG_MOVE/refreshHand），
+            // 未泄露信息仍为卡背
+            if (code > 0) {
                 int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
                 if (tex > 0) {
                     drawQuadTex(mModel, tex, alpha, 0f, 1f);
