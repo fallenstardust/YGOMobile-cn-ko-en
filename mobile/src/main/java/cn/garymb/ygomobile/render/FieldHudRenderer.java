@@ -253,9 +253,10 @@ final class FieldHudRenderer {
         boolean defense = (c.position & GameField.POS_DEFENSE) != 0;
         float hx = (defense ? FieldGeometry.CARD_H : FieldGeometry.CARD_W) * 0.5f;
         float hy = (defense ? FieldGeometry.CARD_W : FieldGeometry.CARD_H) * 0.5f;
-        // 屏幕顶边恒为远端（−y 侧，远离相机）；绘制空间 +x=屏幕左、−x=屏幕右
-        float[] screenTopRight = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy - hy, 0.02f);
-        float[] screenTopLeft = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy - hy, 0.02f);
+        // 屏幕顶边恒为远端（−y 侧，远离相机）；绘制空间经 mirrorX 后 +x=屏幕左、−x=屏幕右，
+        // 故 mirrorX(cx−hx)（变换后 x 较大）落在屏幕左上角、mirrorX(cx+hx) 落在屏幕右上角。
+        float[] screenTopLeft = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy - hy, 0.02f);
+        float[] screenTopRight = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy - hy, 0.02f);
         if (screenTopRight == null || screenTopLeft == null) return;
         // 字号基准：恒按 CARD_H 竖向投影测量（与 drawMonsterStatTexts 同源），
         // 守备表示下不自适应 footprint，避免刻度文字大小随表示变化

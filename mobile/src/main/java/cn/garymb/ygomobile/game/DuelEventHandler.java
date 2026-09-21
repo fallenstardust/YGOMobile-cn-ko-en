@@ -456,16 +456,16 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             engine.field.updateHandLayout(0, 10);
             engine.field.updateHandLayout(1, 10);
         }
-        // 音效对齐 duelclient.cpp MSG_MOVE L2952-2957：仅在真正发生移动（pl!=cl）时，
-        // 除外到 REMOVED 播 BANISHED、因效果破坏（REASON_DESTROY）到墓地播 DESTROYED；
-        // 召唤特召上新怪兽区才播 SUMMON（旧实现任意入墓都播破坏音）
-        if (newLoc != oldLoc && (newLoc & CardLocation.Removed.value()) != 0) {
-            engine.soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
-        } else if (newLoc != oldLoc && (reason & 0x2) != 0
-                && (newLoc & CardLocation.Grave.value()) != 0) {
-            engine.soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);
-        } else if (newLoc == CardLocation.MonsterZone.value() && oldLoc == 0) {
-            engine.soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+        // 音效严格对齐 duelclient.cpp MSG_MOVE L2952-2957：仅在真正发生移动（pl!=cl）时，
+        // 除外（目标含 LOCATION_REMOVED=0x20）播 BANISHED，否则因效果破坏（REASON_DESTROY=0x2）播 DESTROYED。
+        // C++ 此分支不要求目的地是墓地（破坏回手/回卡组等同样播 DESTROYED），也没有 SUMMON 分支——
+        // 召唤/特殊召唤音效由 MSG_SUMMONING/MSG_SPSUMMONING（SummonAnimationManager）负责，此处重复播会错音。
+        if (newLoc != oldLoc) {
+            if ((newLoc & CardLocation.Removed.value()) != 0) {
+                engine.soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
+            } else if ((reason & 0x2) != 0) {
+                engine.soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);
+            }
         }
 
         engine.mainHandler.post(() -> {

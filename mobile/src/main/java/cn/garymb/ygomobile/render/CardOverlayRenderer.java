@@ -155,9 +155,10 @@ final class CardOverlayRenderer {
 
     /**
      * 场上卡片正上方的状态叠加图标（对齐 drawing.cpp DrawCard L653-719）。
-     * 装备/对象/连锁对象/效果无效按 C++ 严格 else-if 优先级。灵摆刻度改由
-     * {@link FieldHudRenderer} 以文字绘制在卡片矩形屏幕外侧顶角（不再整卡叠加
-     * lscale/rscale 贴图），MR3 额外灵摆区 seq6/7 已在纹理侧烘焙刻度保持原样。
+     * 装备/对象/连锁对象/效果无效按 C++ 严格 else-if 优先级。灵摆刻度：MR4 由
+     * {@link #drawPendulumScaleOverlay} 叠加 tLScale/tRScale 宝石贴图（对齐 drawing.cpp
+     * vPScale 整卡足迹），并由 {@link FieldHudRenderer} 在卡片顶角绘制刻度数字（两者共存）；
+     * MR3 额外灵摆区 seq6/7 已在纹理侧烘焙刻度保持原样。
      * 仅遍历怪兽区/魔陷区（场上卡）。
      */
     void drawFieldCardOverlays(GameField f) {
@@ -312,8 +313,11 @@ final class CardOverlayRenderer {
             drawFieldIcon(c, obtainIconTexture(NEGATED_TEX_KEY, IC_NEGATED),
                     NEGATE_W_FRAC, NEGATE_H_FRAC, NEGATE_Y_OFF_FRAC * FieldGeometry.CARD_H, ICON_Z_OFF);
         }
-        // 灵摆刻度：MR4 由 FieldHudRenderer 以文字绘制在卡片矩形屏幕外侧顶角，此处不再叠加贴图
-        // （对齐 drawing.cpp L695-719 的语义，仅呈现形式由 tLScale/tRScale 贴图改为刻度数字文本）
+        // 灵摆刻度贴图：MR4 在灵摆区（seq0 左 / seq4 右）表侧灵摆卡上叠加 tLScale/tRScale
+        // 宝石贴图（对齐 drawing.cpp L695-719 vPScale：整卡足迹、仅平移到卡中心不随卡旋转）；
+        // 与 FieldHudRenderer 绘制的卡片顶角刻度数字共存。MR3 额外灵摆区 seq6/7 已在纹理侧
+        // 烘焙刻度（compositePendulum），此处不重复叠加。
+        drawPendulumScaleOverlay(c, mr4);
         // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）；
         // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达；
         // 已选定为攻击目标的对方怪兽（hideAttackTarget）同样不再显示——箭头只标记攻击手。
@@ -347,6 +351,43 @@ final class CardOverlayRenderer {
 
     private static int clampScale(int s) {
         return Math.max(0, Math.min(13, s));
+    }
+
+    /**
+     * MR4 灵摆区卡片的 tLScale/tRScale 宝石贴图叠加（对齐 drawing.cpp L695-719）。
+     * <p>
+     * 门控 isPSEnabled = {@link cn.garymb.ygomobile.AppsSettings#isPendulumScale()}；仅魔陷区
+     * （location 0x08）表侧灵摆卡、非装备卡。C++ 用 vPScale（[-0.35,-0.5]~[0.35,0.5]=整卡足迹）
+     * 仅平移到 pcard->curPos（不随卡片旋转）绘制，宝石在贴图内落于对应角——故走 drawFieldIcon
+     * 的 wFrac/hFrac=1 全卡足迹、zOff=SCALE_Z_OFF 无旋转路径。MR3（duel_rule&lt;4）额外灵摆区
+     * seq6/7 的刻度已由 FieldTextureManager.compositePendulum 烘焙进卡图，这里直接跳过避免重影。
+     */
+    private void drawPendulumScaleOverlay(GameField.ClientCard c, boolean mr4) {
+        if ((c.type & TYPE_PENDULUM) == 0) return;
+        if (c.location != 0x08) return;                        // LOCATION_SZONE
+        if (!c.isFaceUp() || c.equipTarget != null) return;    // 对齐 drawing.cpp 表侧 & !equipTarget
+        boolean gate;
+        try {
+            gate = cn.garymb.ygomobile.AppsSettings.get().isPendulumScale();
+        } catch (Throwable e) {
+            gate = false;
+        }
+        if (!gate) return;
+        if (!mr4) return;                                      // MR3 seq6/7 已烘焙进卡图
+        boolean left;
+        int value;
+        if (c.sequence == 0) {
+            left = true;
+            value = clampScale(c.lScale);
+        } else if (c.sequence == 4) {
+            left = false;
+            value = clampScale(c.rScale);
+        } else {
+            return;
+        }
+        int tex = obtainScaleIcon(left, value);
+        if (tex <= 0) return;
+        drawFieldIcon(c, tex, 1f, 1f, 0f, SCALE_Z_OFF);
     }
 
     /** 卡片正上方绘一枚世界坐标正立（不随卡片旋转）的叠加图标，尺寸按卡片足迹分数换算；

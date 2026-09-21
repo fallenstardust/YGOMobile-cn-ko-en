@@ -209,7 +209,7 @@ public class YGOProActivity extends AppCompatActivity {
                 appsSettings.getIntSettings("musicVolume", 50) / 100.0,
                 appsSettings.getIntSettings("chkEnableSound", 1) == 1,
                 appsSettings.getIntSettings("chkEnableMusic", 1) == 1);
-        soundManager.setAutoSwitchBGM(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
+        soundManager.setMusicMode(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
 
         imageLoader = new ImageLoader(true);
 
@@ -810,7 +810,7 @@ public class YGOProActivity extends AppCompatActivity {
             soundManager.enableMusic(enableMusic);
             soundManager.setSoundVolume(appsSettings.getIntSettings("soundVolume", 50) / 100.0);
             soundManager.setMusicVolume(appsSettings.getIntSettings("musicVolume", 50) / 100.0);
-            soundManager.setAutoSwitchBGM(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
+            soundManager.setMusicMode(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
         }
         if (cardDetailPanel != null) {
             // 对齐 gframe imgVol/imgQuickAnimation：声音与速度按钮图标同步设置状态

@@ -60,15 +60,20 @@ public class SoundManager {
         }
     }
 
+    /**
+     * BGM 场景。dirName 为 sound/BGM 下的子目录名（对齐 gframe sound_manager.cpp
+     * RefreshBGMList 创建的 duel/menu/deck/advantage/disadvantage/win/lose 目录）；
+     * ALL 无独立目录，代表根目录与所有子目录音乐的合集。
+     */
     public enum BGM {
-        ALL("BGM"),
-        DUEL("BGM"),
-        MENU("BGM"),
-        DECK("BGM"),
-        ADVANTAGE("BGM"),
-        DISADVANTAGE("BGM"),
-        WIN("BGM"),
-        LOSE("BGM");
+        ALL(""),
+        DUEL("duel"),
+        MENU("menu"),
+        DECK("deck"),
+        ADVANTAGE("advantage"),
+        DISADVANTAGE("disadvantage"),
+        WIN("win"),
+        LOSE("lose");
 
         final String dirName;
 
@@ -84,11 +89,15 @@ public class SoundManager {
     private final Random random = new Random();
     private boolean soundsEnabled = true;
     private boolean musicEnabled = true;
-    private boolean autoSwitchBGM = true;
+    // 对齐 C++ chkMusicMode（strings.conf 1281「按场景切换音乐」）：
+    // true=各场景从自己子目录选曲；false=所有场景统一走 ALL 曲池
+    private boolean musicMode = false;
     private float soundVolume = 1.0f;
     private float musicVolume = 1.0f;
     private final Map<BGM, List<String>> bgmList = new HashMap<>();
     private String currentBgm = "";
+    // 当前已播放的场景（对齐 C++ bgm_scene）：同场景不重复切歌
+    private BGM bgmScene = null;
 
     public SoundManager(Context context) {
         this.context = context;
@@ -139,33 +148,54 @@ public class SoundManager {
     }
 
     public void refreshBGMList() {
-        String bgmDir = getSoundDir() + "/BGM";
-        File dir = new File(bgmDir);
-        if (!dir.exists() || !dir.isDirectory()) return;
-
-        List<String> allFiles = new ArrayList<>();
-        File[] files = dir.listFiles((d, name) ->
-                name.endsWith(".mp3") || name.endsWith(".ogg") || name.endsWith(".wav"));
-        if (files != null) {
-            for (File f : files) {
-                allFiles.add(f.getAbsolutePath());
+        bgmList.clear();
+        for (BGM scene : BGM.values()) bgmList.put(scene, new ArrayList<>());
+        File root = new File(getSoundDir(), "BGM");
+        if (!root.exists() || !root.isDirectory()) return;
+        List<String> all = bgmList.get(BGM.ALL);
+        List<String> duel = bgmList.get(BGM.DUEL);
+        // 根目录音乐：同时计入 ALL 与 DUEL（对齐 C++ RefreshBGMDir("", DUEL)）
+        for (File f : listMusicFiles(root)) {
+            all.add(f.getAbsolutePath());
+            duel.add(f.getAbsolutePath());
+        }
+        // 各场景子目录：同时计入 ALL 与对应场景（对齐 RefreshBGMDir(sub, scene)）
+        for (BGM scene : BGM.values()) {
+            if (scene == BGM.ALL || scene == BGM.DUEL) continue;
+            File sub = new File(root, scene.dirName);
+            if (sub.exists() && sub.isDirectory()) {
+                for (File f : listMusicFiles(sub)) {
+                    all.add(f.getAbsolutePath());
+                    bgmList.get(scene).add(f.getAbsolutePath());
+                }
             }
         }
-        bgmList.clear();
-        for (BGM scene : BGM.values()) {
-            bgmList.put(scene, new ArrayList<>(allFiles));
-        }
+    }
+
+    /** 目录下音频文件（mp3/ogg/wav，忽略大小写） */
+    private static File[] listMusicFiles(File dir) {
+        File[] files = dir.listFiles((d, name) -> {
+            String n = name.toLowerCase();
+            return n.endsWith(".mp3") || n.endsWith(".ogg") || n.endsWith(".wav");
+        });
+        return files != null ? files : new File[0];
     }
 
     public void playBGM(BGM scene) {
         if (!musicEnabled) return;
-        // 对齐设置项「自动切换BGM」：关闭时保持当前曲目不切换（尚未播放则照常起播）
-        if (!autoSwitchBGM && bgmPlayer != null) return;
-        List<String> list = bgmList.get(scene);
+        // 对齐 C++ PlayBGM：未勾选「按场景切换音乐」时所有场景统一走 ALL 曲池
+        BGM eff = musicMode ? scene : BGM.ALL;
+        List<String> list = bgmList.get(eff);
+        if ((list == null || list.isEmpty()) && eff != BGM.ALL) {
+            eff = BGM.ALL;                 // 该场景无曲时回退 ALL
+            list = bgmList.get(eff);
+        }
         if (list == null || list.isEmpty()) return;
+        // 同场景且仍在播放则不切歌（对齐 C++ scene!=bgm_scene || !exists(current)）
+        if (eff == bgmScene && bgmPlayer != null) return;
         String path = list.get(random.nextInt(list.size()));
-        if (path.equals(currentBgm)) return;
         playMusic(path, true);
+        bgmScene = eff;
     }
 
     public void playMusic(String path, boolean loop) {
@@ -225,9 +255,10 @@ public class SoundManager {
         if (!enable) stopBGM();
     }
 
-    /** 自动切换BGM开关（chkSwitchBGM，strings.conf 1281）：false 时场景切换不换曲 */
-    public void setAutoSwitchBGM(boolean autoSwitch) {
-        this.autoSwitchBGM = autoSwitch;
+    /** 「按场景切换音乐」开关（chkMusicMode，strings.conf 1281）：
+     *  true=各场景从自己子目录选曲；false=统一 ALL 曲池 */
+    public void setMusicMode(boolean musicMode) {
+        this.musicMode = musicMode;
     }
 
     public void release() {
