@@ -1367,12 +1367,16 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     s.sequence = i;
                     if (!skipAnim) field.moveCardAnimated(s, 2);
                 }
+                // 源宿主素材减少 → 堆顶下降，宿主回落（目标 Z = 0.02+0.01×素材数）
+                if (!skipAnim && src.location == 0x04) field.moveCardAnimated(src, 2);
                 if (m != null) {
                     dst.overlayed.add(m);
                     m.overlayTarget = dst;
                     m.controler = nc;
                     m.sequence = dst.overlayed.size() - 1;
                     if (!skipAnim) field.moveCardAnimated(m, 10);
+                    // 目标宿主素材增加 → 堆顶抬高，宿主上移
+                    if (!skipAnim && dst.location == 0x04) field.moveCardAnimated(dst, 10);
                 }
             }
         } else if (nl == 0) {

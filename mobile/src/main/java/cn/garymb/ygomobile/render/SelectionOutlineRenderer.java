@@ -22,7 +22,8 @@ final class SelectionOutlineRenderer {
 
     // === 可选格子高亮：环绕格子的虚线行进动画（drawing.cpp DrawSelectionLine + game.cpp linePattern/stippleMask）===
     private static final int STIPPLE_MASK = 0x0f0f;
-    private static final float OUTLINE_PX = 2.5f;
+    /** 蚂蚁线屏幕像素线宽：按需求在原 2.5px 基础上适度加粗（两处用法共用此真值） */
+    private static final float OUTLINE_PX = 3.5f;
     /**
      * 蚂蚁线一个 16px 图案循环的毫秒周期（16px ÷ 48px/s ≈ 333ms，对齐 C++ 每帧左旋一次
      * stippleMask 的观感）。animTimeMs 是 ~1.7e12 量级的绝对时间戳，必须先取模再转 float：

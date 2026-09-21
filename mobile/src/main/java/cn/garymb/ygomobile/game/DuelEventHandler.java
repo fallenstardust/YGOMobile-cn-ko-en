@@ -379,12 +379,18 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                     s.sequence = i;
                     engine.field.moveCardAnimated(s, 2);
                 }
+                // 源宿主素材减少 → 堆顶下降，宿主回落（目标 Z = 0.02+0.01×素材数）
+                if (src.location == CardLocation.MonsterZone.value())
+                    engine.field.moveCardAnimated(src, 2);
                 if (m != null) {
                     dst.overlayed.add(m);
                     m.overlayTarget = dst;
                     m.controler = newCtrl;
                     m.sequence = dst.overlayed.size() - 1;
                     engine.field.moveCardAnimated(m, 10);
+                    // 目标宿主素材增加 → 堆顶抬高，宿主上移
+                    if (dst.location == CardLocation.MonsterZone.value())
+                        engine.field.moveCardAnimated(dst, 10);
                 }
             }
         } else if (newLoc == 0) {

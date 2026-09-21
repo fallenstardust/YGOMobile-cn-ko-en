@@ -306,6 +306,27 @@ public class YGOProActivity extends AppCompatActivity {
         boolean quick = settings.getIntSettings("chkQuickAnimation", 0) == 1;
         settings.saveIntSettings("chkQuickAnimation", quick ? 0 : 1);
         if (cardDetailPanel != null) cardDetailPanel.updateSpeedIcon(!quick);
+        // 切换后立即应用新速度（对齐 event_handler.cpp BUTTON_QUICK_ANIMIATION 同步设置生效）
+        applyAnimationSpeed();
+    }
+
+    // === 动画速度（对齐 gframe gameConf.quick_animation：WaitFrameSignal 截半、appear 12/20，≈ 2 倍速） ===
+
+    /** 基础动画速度倍率（quick_animation 关闭） */
+    private static final float ANIM_SPEED_NORMAL = 1f;
+    /** 加速动画速度倍率（quick_animation 开启，C++ 等待帧数截半的等价实现） */
+    private static final float ANIM_SPEED_QUICK = 2f;
+
+    /**
+     * 按 chkQuickAnimation 当前值随时调节动画速度：场上卡片移动/淡入淡出
+     * （GameFieldController→GameFieldView）与居中特效（SpecEffectOverlay）两套动画同步，
+     * 设置对话框 checkbox、详情面板按钮与启动时 applySettingsToEngine 均经此入口生效
+     */
+    private void applyAnimationSpeed() {
+        boolean quick = AppsSettings.get().getIntSettings("chkQuickAnimation", 0) == 1;
+        float speed = quick ? ANIM_SPEED_QUICK : ANIM_SPEED_NORMAL;
+        if (fieldCtl != null) fieldCtl.setAnimationSpeed(speed);
+        if (engineCallback != null) engineCallback.setAnimationSpeed(speed);
     }
 
     private boolean handleDirectIntent(Intent intent) {
@@ -802,6 +823,8 @@ public class YGOProActivity extends AppCompatActivity {
                 etChatInput.setVisibility(chatDisabled ? View.GONE : View.VISIBLE);
             }
         }
+        // 动画速度随 chkQuickAnimation 即时生效（启动初始化与设置对话框变更均经此）
+        applyAnimationSpeed();
         if (deckEditorManager != null) {
             deckEditorManager.refreshLimitList();
         }

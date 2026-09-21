@@ -664,6 +664,14 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     }
 
     /**
+     * 动画速度倍率（对齐 quick_animation）：居中特效（召唤/发动/阶段文字）时长同倍缩放；
+     * specEffect() 仅创建实例不弹窗，启动时预置速度无副作用
+     */
+    void setAnimationSpeed(float multiplier) {
+        specEffect().setAnimationSpeed(multiplier);
+    }
+
+    /**
      * MSG_NEW_PHASE 的 phase 値 → DrawSpec case 101 的 showcardcode（对齐 duelclient.cpp L2905-2929）：
      * Draw→4, Standby→5, Main1→6, BattleStart→7, Main2→8, End→9；
      * 战斗子阶段等无独立提示文字的相位返回 0（不显示阶段文字）

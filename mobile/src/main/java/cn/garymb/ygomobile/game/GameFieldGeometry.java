@@ -111,8 +111,10 @@ class GameFieldGeometry {
 
     private static float mzoneCX(int c, int s) {
         float step = 1.1f + ZONE_GAP;
-        if (c == 0) return fx(s < 5 ? 3.95f + (s - 2) * step : (s == 5 ? 2.85f : 5.05f));
-        return fx(s < 5 ? 3.95f + (2 - s) * step : (s == 5 ? 5.05f : 2.85f));
+        // 额外怪兽区(s5/s6)与主怪兽行第 2/4 列(seq1/seq3 = 3.95∓step)严格对齐：
+        // 旧值 ±1.1 未含 ZONE_GAP，间隙统一后与主怪兽列错位，现改用同一 step 消除偏差
+        if (c == 0) return fx(s < 5 ? 3.95f + (s - 2) * step : (s == 5 ? 3.95f - step : 3.95f + step));
+        return fx(s < 5 ? 3.95f + (2 - s) * step : (s == 5 ? 3.95f + step : 3.95f - step));
     }
 
     private static float mzoneCY(int c, int s) {
@@ -217,7 +219,10 @@ class GameFieldGeometry {
             case 0x04: { // LOCATION_MZONE
                 t[0] = mzoneCX(controler, sequence);
                 t[1] = mzoneCY(controler, sequence);
-                t[2] = 0.02f;
+                // 超量宿主高度随素材数抬高：C++ mzone_buttom=0.02 固定不抬，但本项目素材
+                // 露出量放大后固定 0.02 会让下层素材与格子槽共面；按需求每张素材计
+                // 0.01f 厚度，宿主坐在素材堆顶上，素材逐层露出完整矩形
+                t[2] = 0.02f + 0.01f * pcard.overlayed.size();
                 if (controler == 0) {
                     if (defense) {
                         t[5] = -GameField.PI / 2f;
@@ -301,9 +306,10 @@ class GameFieldGeometry {
                     t[1] = mzoneCY(1, oseq) - OVERLAY_PEEK;
                     t[5] = GameField.PI;
                 }
-                // z 阶梯 0.001+0.003*mseq（对齐 overlay_buttom=0.001 / material_height=0.003）：
-                // 错开格子槽 0.004 / selfield 0.01 / SZONE 卡 0.01 共面条栅，且恒低于 MZONE 宿主卡 0.02
-                t[2] = 0.001f + mseq * 0.003f;
+                // z 阶梯：每枚素材矩形厚 0.01f（C++ material_height=0.003 不足以盖过格子槽
+                // 0.004/selfield 0.01，会被区域格子重叠遮挡），首枚底面抬到 0.01 高于格子槽，
+                // 逐枚叠加后整体位于怪兽区域格子之上，叠放中每张素材矩形都显示完整
+                t[2] = 0.01f + 0.01f * mseq;
                 break;
             }
         }

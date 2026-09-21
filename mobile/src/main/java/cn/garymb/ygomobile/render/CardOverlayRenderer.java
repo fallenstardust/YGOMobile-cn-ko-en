@@ -112,6 +112,8 @@ final class CardOverlayRenderer {
     private FloatBuffer arrowBuf;
     // 攻击弧显示期间需隐藏的 tAttack(attack.png) 浮动箭头：即当前弧线起点攻击者
     private GameField.ClientCard hideAttackCard;
+    /** 已选定为当前攻击目标的对方怪兽：攻击弧展示期内不再在其卡上绘制 attack 浮动箭头 */
+    private GameField.ClientCard hideAttackTarget;
 
     // 可发动绿点专用矩阵 scratch：buildCardModel 内部会占用 view.mModelTmp 作手卡 billboard 临时量，
     // 不能把 mModelTmp 同时作为其 out，故本处用独立数组避免 multiplyMM 结果/源同数组的未定义行为。
@@ -153,11 +155,16 @@ final class CardOverlayRenderer {
     void drawFieldCardOverlays(GameField f) {
         if (f == null) return;
         // 攻击宣言弧线显示期间隐藏攻击者的 attack.png 浮动箭头（对齐 C++：
-        // MSG_ATTACK 时 attacker 的 cmdFlag 已随询问结束清空，弧线期间不再绘制 tAttack）
+        // MSG_ATTACK 时 attacker 的 cmdFlag 已随询问结束清空，弧线期间不再绘制 tAttack）；
+        // 同理，已被选定为攻击目标的怪兽（arcTarget）卡上也不再显示攻击箭头
         hideAttackCard = null;
+        hideAttackTarget = null;
         if (f.arcAttacker != null) {
             long el = view.animTimeMs - f.arcStartMs;
-            if (el >= 0 && el <= ATTACK_ARC_MS) hideAttackCard = f.arcAttacker;
+            if (el >= 0 && el <= ATTACK_ARC_MS) {
+                hideAttackCard = f.arcAttacker;
+                hideAttackTarget = f.arcTarget;
+            }
         }
         boolean mr4 = f.dInfo.duelRule >= 4;
         // 对方战斗阶段（攻击宣言窗口 BATTLE_START/BATTLE_STEP）：服务端不会把对方的 battle cmd
@@ -261,12 +268,13 @@ final class CardOverlayRenderer {
             if (tex > 0) drawFieldIcon(c, tex, 1f, 1f, 0f, SCALE_Z_OFF);
         }
         // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）；
-        // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达。
+        // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达；
+        // 已选定为攻击目标的对方怪兽（hideAttackTarget）同样不再显示——箭头只标记攻击手。
         // 我方：cmdFlag 含 COMMAND_ATTACK（由 battle cmd 精确置位）；
         // 对方：战斗宣言阶段的表侧攻击表示怪兽，近似判断（收不到对方 battle cmd）。
         boolean showAttack = (c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0
                 || (oppAttackHint && c.controler == 1 && c.isFaceUp() && c.isAttack());
-        if (showAttack && c != hideAttackCard) {
+        if (showAttack && c != hideAttackCard && c != hideAttackTarget) {
             drawAttackIcon(c);
         }
     }

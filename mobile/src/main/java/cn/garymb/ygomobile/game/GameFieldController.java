@@ -185,6 +185,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         viewController.invalidate();
     }
 
+    /**
+     * 动画速度倍率（对齐 gframe gameConf.quick_animation）：转发到渲染视图，
+     * 缩放所有卡片移动/淡入淡出动画的帧推进量；1=原速，2=加速动画
+     */
+    public void setAnimationSpeed(float multiplier) {
+        if (viewController != null && viewController.getView() != null)
+            viewController.getView().setAnimationSpeed(multiplier);
+    }
+
     public void selectCardWithAutoClear(int controler, int location, int sequence, int durationMs) {
         viewController.selectCardWithAutoClear(controler, location, sequence, durationMs);
     }

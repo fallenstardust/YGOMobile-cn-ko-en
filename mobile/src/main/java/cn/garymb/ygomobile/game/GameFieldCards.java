@@ -224,6 +224,9 @@ class GameFieldCards {
         pcard.controler = newCtrl;
         pcard.location = CardLocation.Overlay.value();
         pcard.sequence = olcard.overlayed.size() - 1;
+        // 宿主随素材数增加抬高（MZONE 目标 Z = 0.02+0.01×素材数）：叠挂后重播一次移动
+        // 动画使 curZ 插值到新堆顶，否则静止卡不跟随目标位变化、下层素材与格子槽共面
+        if (olcard.location == CardLocation.MonsterZone.value()) field.moveCardAnimated(olcard, 10);
         return olcard;
     }
 
@@ -248,6 +251,8 @@ class GameFieldCards {
             m.location = CardLocation.Overlay.value();
             m.sequence = olcard.overlayed.size() - 1;
             field.moveCardAnimated(m, 10);
+            // 待挂素材集中补挂后宿主同样需抬到堆顶（同上：目标 Z 随素材数变化）
+            if (olcard.location == CardLocation.MonsterZone.value()) field.moveCardAnimated(olcard, 10);
         }
     }
 
@@ -277,6 +282,8 @@ class GameFieldCards {
             m.sequence = i;
             field.moveCardAnimated(m, 2);
         }
+        // 素材离场后宿主堆顶下降，同样重播移动使宿主 curZ 插值回落到新堆顶
+        if (olcard.location == CardLocation.MonsterZone.value()) field.moveCardAnimated(olcard, 2);
         return pcard;
     }
 
