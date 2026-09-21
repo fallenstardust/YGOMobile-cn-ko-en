@@ -23,6 +23,14 @@ class FieldSelectManager {
 
     // === 放置区域选择会话 ===
     boolean isPlaceSelecting = false;
+    // 对齐 gframe event_handler.cpp MSG_SELECT_PLACE/DISFIELD L1398-1458：
+    // 需累计选择 selectFieldCount 个区域后一次性应答（多条 {player,location,sequence}），
+    // 而非首个点击即应答——此前只发 1 格，count>1 时响应长度不足被服务端判非法→
+    // MSG_RETRY→重放上限后放弃→决斗卡死。selectedFieldBits 累计已选区域位（与
+    // getZoneBitPos 同一 32 位编码：位 0-6 我方MZone、8-15 我方SZone、16-22 对方MZone、24-31 对方SZone）。
+    int placeSelectRemain = 0;
+    boolean placeSelectCancelable = false;
+    int selectedFieldBits = 0;
     // === 场上/手牌直接选择会话（MSG_SELECT_CARD/SELECT_TRIBUTE_CARD 候选全在场内时，不弹 CardSelectDialog）===
     boolean isCardSelecting = false;
     int cardSelectMin = 0;
@@ -48,9 +56,21 @@ class FieldSelectManager {
     void beginPlaceSelect(boolean isDisfield) {
         isPlaceSelecting = true;
         int mask = ctl.engine.selectFieldMask;
+        int count = ctl.engine.selectFieldCount;
+        placeSelectRemain = count > 0 ? count : 1;
+        placeSelectCancelable = count == 0;
+        selectedFieldBits = 0;
         ctl.viewController.highlightField(mask);
         String msg = isDisfield ? "请选择要禁用的区域" : "请选择放置位置";
+        if (placeSelectCancelable) {
+            msg += "（可不选，点「取消」跳过）";
+        } else if (placeSelectRemain > 1) {
+            msg += "（需选择 " + placeSelectRemain + " 个区域）";
+        }
         ctl.showHint(msg, 3000);
+        // count==0（select_cancelable）→ 显示「取消」按钮（对齐 gframe ShowCancelOrFinishButton(1)）
+        CardDetailPanel panel = ctl.activity.getCardDetailPanel();
+        if (panel != null) panel.updateCancelOrFinishButton(false, placeSelectCancelable, false);
     }
 
     /**
@@ -63,6 +83,8 @@ class FieldSelectManager {
      */
     boolean tryAutoPlaceSelect() {
         if (ctl.engine == null) return false;
+        // 多区域（count>1）需玩家逐个点选，自动放置只适用于单区域
+        if (ctl.engine.selectFieldCount > 1) return false;
         AppsSettings settings = AppsSettings.get();
         int mask = ctl.engine.selectFieldMask;
         // 对齐 gframe 条件：怪兽区可选(0x7f007f)看 chkMAutoPos，否则看 chkSTAutoPos
@@ -150,8 +172,7 @@ class FieldSelectManager {
         buf.put((byte) 0);
         buf.put((byte) 0);
         ctl.engine.sendResponse(buf.array());
-        isPlaceSelecting = false;
-        ctl.viewController.clearHighlight();
+        finishPlaceSelect();
         return true;
     }
 
@@ -190,27 +211,49 @@ class FieldSelectManager {
             ctl.showHint("该区域不可选择", 3000);
             return;
         }
-        isPlaceSelecting = false;
-        ctl.viewController.clearHighlight();
-
-        // player 为本地方位索引(0=我方,1=对方)，协议响应需转换为协议侧玩家索引
-        //（localPlayer 为对合映射：本地索引 → 协议索引）
-        int respPlayer = ctl.engine.localPlayer(player & 1);
-        int respLocation;
-        if (location == 0x04) {
-            respLocation = 0x04;
-        } else if (location == 0x08) {
-            respLocation = 0x08;
-        } else {
-            respLocation = location;
+        // 点击已选区域 → 取消该位（对齐 gframe：selected_field 位取反，select_min 回升）
+        if ((selectedFieldBits & (1 << bitPos)) != 0) {
+            selectedFieldBits &= ~(1 << bitPos);
+            placeSelectRemain++;
+            ctl.showHint("还需选择 " + placeSelectRemain + " 个区域", 2500);
+            return;
         }
-        int respSeq = sequence;
+        selectedFieldBits |= (1 << bitPos);
+        placeSelectRemain--;
+        if (placeSelectRemain > 0) {
+            ctl.showHint("还需选择 " + placeSelectRemain + " 个区域", 2500);
+            return;
+        }
+        // 数量满足：按 gframe 固定次序组装多条应答并发送
+        byte[] resp = buildPlaceResponse(selectedFieldBits);
+        finishPlaceSelect();
+        ctl.engine.sendResponse(resp);
+    }
 
-        ByteBuffer buf = ByteBuffer.allocate(3);
-        buf.put((byte) respPlayer);
-        buf.put((byte) respLocation);
-        buf.put((byte) respSeq);
-        ctl.engine.sendResponse(buf.array());
+    /** 结束放置区域选择会话：清状态、去高亮、隐藏 cancelOrFinish（联动恢复洗切手卡） */
+    private void finishPlaceSelect() {
+        isPlaceSelecting = false;
+        selectedFieldBits = 0;
+        placeSelectRemain = 0;
+        ctl.viewController.clearHighlight();
+        CardDetailPanel panel = ctl.activity.getCardDetailPanel();
+        if (panel != null) panel.hideCancelOrFinishButton();
+    }
+
+    /**
+     * 组装放置/禁用区域应答：对齐 gframe event_handler.cpp L1411-1448 的固定次序——
+     * 我方 MZone(位0-6) → 我方 SZone(位8-15) → 对方 MZone(位16-22) → 对方 SZone(位24-31)，
+     * 每个置位区域追加 3 字节 {协议玩家索引, LOCATION, sequence}。
+     */
+    private byte[] buildPlaceResponse(int bits) {
+        int myP = ctl.engine.localPlayer(0);
+        int oppP = ctl.engine.localPlayer(1);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        for (int i = 0; i < 7; i++) if ((bits & (1 << i)) != 0) { out.write(myP); out.write(0x04); out.write(i); }
+        for (int i = 0; i < 8; i++) if ((bits & (1 << (8 + i))) != 0) { out.write(myP); out.write(0x08); out.write(i); }
+        for (int i = 0; i < 7; i++) if ((bits & (1 << (16 + i))) != 0) { out.write(oppP); out.write(0x04); out.write(i); }
+        for (int i = 0; i < 8; i++) if ((bits & (1 << (24 + i))) != 0) { out.write(oppP); out.write(0x08); out.write(i); }
+        return out.toByteArray();
     }
 
     private int getZoneBitPos(int player, int location, int sequence) {
