@@ -72,6 +72,14 @@ public class CardDetailPanel {
     private CardSelectDialog cardSelectDialog;
     private CardDisplayDialog cardDisplayDialog;
 
+    // cancelOrFinish 与洗手卡互斥显隐协调（取消/完成按钮显示时隐藏洗手卡，隐藏后按通讯允许恢复）
+    /** 通讯（MSG_SELECT_IDLECMD show_shuffle）是否允许洗切手卡 */
+    private boolean shuffleAllowedByMsg;
+    /** cancelOrFinish 按钮当前是否处于可见态（VISIBLE） */
+    private boolean cancelOrFinishShown;
+    /** cancelOrFinish 按钮周围的蚂蚁线高亮动画 */
+    private MarchingAntsDrawable antsHighlight;
+
     public CardDetailPanel(YGOProActivity activity) {
         this.activity = activity;
     }
@@ -227,10 +235,11 @@ public class CardDetailPanel {
         }
 
         // 洗切手卡（对齐 event_handler.cpp BUTTON_CMD_SHUFFLE L495-499）：点击即隐藏并应答 8，
-        // 显隐由 MSG_SELECT_IDLECMD 的 show_shuffle 驱动（duelclient.cpp L1859-1865）
+        // 显隐由 MSG_SELECT_IDLECMD 的 show_shuffle 驱动（duelclient.cpp L1859-1865）；
+        // 点击后同时把「通讯允许洗切」标志置假，避免后续 cancelOrFinish 切换时误恢复
         if (btnShuffleHand != null) {
             btnShuffleHand.setOnClickListener(v -> {
-                btnShuffleHand.setVisibility(View.INVISIBLE);
+                updateShuffleButton(false);
                 activity.sendResponseInt(8);
             });
         }
@@ -656,10 +665,7 @@ public class CardDetailPanel {
     }
 
     public void showCancelOrFinishButton(String text) {
-        if (btnCancelOrFinish != null) {
-            btnCancelOrFinish.setText(text);
-            btnCancelOrFinish.setVisibility(View.VISIBLE);
-        }
+        setCancelOrFinishShown(true, text);
     }
 
     /**
@@ -667,31 +673,64 @@ public class CardDetailPanel {
      * layout_bottom_actions 为 weight 布局，GONE 会让其余按钮尺寸跳变
      */
     public void hideCancelOrFinishButton() {
-        if (btnCancelOrFinish != null) {
-            btnCancelOrFinish.setVisibility(View.INVISIBLE);
+        setCancelOrFinishShown(false, null);
+    }
+
+    /**
+     * cancelOrFinish 可见态统一入口：切换按钮显隐、同步蚂蚁线高亮、并联动洗切手卡按钮显隐
+     *（显示时暂时隐藏洗切手卡，隐藏后若通讯允许则恢复）。
+     */
+    private void setCancelOrFinishShown(boolean visible, String text) {
+        if (btnCancelOrFinish == null) return;
+        if (text != null) btnCancelOrFinish.setText(text);
+        cancelOrFinishShown = visible;
+        btnCancelOrFinish.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        updateAntsHighlight();
+        applyShuffleVisibility();
+    }
+
+    /** cancelOrFinish 可见则挂上并启动蚂蚁线，否则停止并移除 */
+    private void updateAntsHighlight() {
+        if (btnCancelOrFinish == null) return;
+        if (cancelOrFinishShown) {
+            if (antsHighlight == null) {
+                float density = activity.getResources().getDisplayMetrics().density;
+                antsHighlight = new MarchingAntsDrawable(density);
+            }
+            btnCancelOrFinish.setForeground(antsHighlight);
+            antsHighlight.start();
+        } else {
+            if (antsHighlight != null) antsHighlight.stop();
+            btnCancelOrFinish.setForeground(null);
         }
     }
 
     /**
      * 洗切手卡按钮显隐（对齐 duelclient.cpp MSG_SELECT_IDLECMD L1859-1865：
-     * show_shuffle → btnShuffle->setVisible(true/false)）；同样用 INVISIBLE 保持 weight 布局稳定
+     * show_shuffle → btnShuffle->setVisible(true/false)）；记录通讯允许态，
+     * 实际可见性另受 cancelOrFinish 是否显示约束（见 applyShuffleVisibility）
      */
     public void updateShuffleButton(boolean visible) {
+        shuffleAllowedByMsg = visible;
+        applyShuffleVisibility();
+    }
+
+    /** 洗切手卡可见 = 通讯允许 且 cancelOrFinish 未显示；均用 INVISIBLE 保持 weight 布局稳定 */
+    private void applyShuffleVisibility() {
         if (btnShuffleHand != null) {
-            btnShuffleHand.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+            btnShuffleHand.setVisibility(shuffleAllowedByMsg && !cancelOrFinishShown
+                    ? View.VISIBLE : View.INVISIBLE);
         }
     }
 
     public void updateCancelOrFinishButton(boolean ready, boolean cancelable, boolean hasSelection) {
         if (btnCancelOrFinish == null) return;
         if (ready) {
-            btnCancelOrFinish.setText("完成选择");
-            btnCancelOrFinish.setVisibility(View.VISIBLE);
+            setCancelOrFinishShown(true, "完成选择");
         } else if (cancelable && !hasSelection) {
-            btnCancelOrFinish.setText("取消");
-            btnCancelOrFinish.setVisibility(View.VISIBLE);
+            setCancelOrFinishShown(true, "取消");
         } else {
-            btnCancelOrFinish.setVisibility(View.INVISIBLE);
+            setCancelOrFinishShown(false, null);
         }
     }
 

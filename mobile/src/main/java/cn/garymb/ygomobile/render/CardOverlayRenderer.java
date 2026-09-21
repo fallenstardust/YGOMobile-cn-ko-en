@@ -63,17 +63,23 @@ final class CardOverlayRenderer {
     /** CardType.Pendulum 位（ocgcore.enums.CardType.Pendulum = 0x1000000） */
     private static final int TYPE_PENDULUM = 0x1000000;
 
-    // === 可发动/特殊召唤卡片右上角呼吸绿点（CmdMenuDialog「发动」/「特殊召唤」按钮的可视化提示）===
-    // 判据与 CmdMenuDialog.buildCardCommandMenu 完全一致：cmdFlag 含 COMMAND_ACTIVATE（发动，
+    // === 可发动/召唤/特殊召唤卡片角位呼吸绿点（CmdMenuDialog「发动」/「召唤」/「特殊召唤」按钮的可视化提示）===
+    // 判据与 CmdMenuDialog.buildCardCommandMenu 一致：cmdFlag 含 COMMAND_ACTIVATE（发动，
     // 由 CommandDataParser 在真实入列 activatableCards 时置位）或 COMMAND_SPSUMMON（特殊召唤，
-    // 仅 idle 阶段且入列 spsummonableCards 时置位）。绿点置于卡片自身朝向的右上角，
-    // alpha 随时间正弦呼吸。cmdFlag 仅下发给当前可操作的本地玩家，故不会在对方卡上误显。
+    // 仅 idle 阶段且入列 spsummonableCards 时置位）；手卡另纳入 COMMAND_SUMMON（通常召唤）。
+    // 绿点置于卡片角位顶点，alpha 随时间正弦呼吸。cmdFlag 仅下发给当前可操作的本地玩家，
+    // 故不会在对方卡上误显。
     private static final int COMMAND_ACTIVATE_OR_SPSUMMON =
             GameEngine.COMMAND_ACTIVATE | GameEngine.COMMAND_SPSUMMON;
+    // 手卡额外纳入 COMMAND_SUMMON：手卡点击可出现「召唤」按钮（idle 通常召唤，
+    // CommandDataParser 对 summonableCards 置位）时也显示绿点，与「特殊召唤」一致。
+    private static final int HAND_DOT_MASK =
+            GameEngine.COMMAND_ACTIVATE | GameEngine.COMMAND_SPSUMMON | GameEngine.COMMAND_SUMMON;
     // 绿点尺寸：小圆点（程序化生成的圆点纹理），直径为固定世界尺寸，圆心正落在
     // 卡片自身朝向的右上角直角点上（局部坐标 (0.5,0.5)），比旧版内缩的方块更靠右上角。
     private static final long ACT_DOT_TEX_KEY = -57L;
-    private static final float ACT_DOT_DIAM = 0.055f;
+    // 直径由旧 0.055f 适度增大，使手卡/场上/灵摆卡的可发动提示更醒目。
+    private static final float ACT_DOT_DIAM = 0.1f;
     private static final float ACT_DOT_LIFT = 0.02f;
     private static final float ACT_DOT_BREATH_RAD_PER_MS = 0.006f;
     private static final int ACT_DOT_COLOR = 0xFF26FF4D;
@@ -193,14 +199,14 @@ final class CardOverlayRenderer {
         float alpha = 0.55f + 0.45f * dy;
         boolean mr4 = f.dInfo.duelRule >= 4;
         for (int p = 0; p < 2; p++) {
-            activatableDotList(f.players[p].hand, alpha, false, mr4);
-            activatableDotList(f.players[p].monsterZone, alpha, false, mr4);
-            activatableDotList(f.players[p].spellZone, alpha, true, mr4);
+            activatableDotList(f.players[p].hand, alpha, false, mr4, HAND_DOT_MASK);
+            activatableDotList(f.players[p].monsterZone, alpha, false, mr4, COMMAND_ACTIVATE_OR_SPSUMMON);
+            activatableDotList(f.players[p].spellZone, alpha, true, mr4, COMMAND_ACTIVATE_OR_SPSUMMON);
         }
     }
 
     private void activatableDotList(List<GameField.ClientCard> list, float alpha,
-                                    boolean spellZone, boolean mr4) {
+                                    boolean spellZone, boolean mr4, int mask) {
         if (list == null) return;
         try {
             for (int i = 0, n = list.size(); i < n; i++) {
@@ -211,16 +217,16 @@ final class CardOverlayRenderer {
                     continue;
                 }
                 if (c == null || c.is_moving) continue;
-                if ((c.cmdFlag & COMMAND_ACTIVATE_OR_SPSUMMON) == 0) continue;
+                if ((c.cmdFlag & mask) == 0) continue;
                 drawActivatableDot(c, alpha, spellZone, mr4);
             }
         } catch (Throwable ignored) {
         }
     }
 
-    /** 单卡右上角呼吸绿点：复用 buildCardModel 得到卡片姿态（含手卡 billboard），
-     *  把一枚小圆点纹理的圆心平移到卡片矩形的「屏幕右上顶点」直角点上；
-     *  灵摆魔陷带屏幕右侧的卡为例外（刻度文字占右上顶点），绿点移到屏幕左上顶点。
+    /** 单卡角位呼吸绿点：复用 buildCardModel 得到卡片姿态（含手卡 billboard），
+     *  把一枚小圆点纹理的圆心平移到卡片矩形的角位顶点上：手卡贴屏幕左上顶点，
+     *  场上卡默认贴屏幕右上顶点；灵摆魔陷带屏幕右侧的卡为例外（刻度文字占右上顶点），绿点改贴左上顶点。
      *  卡片局部空间非等比（CARD_W×CARD_H），按 1/CARD_W、1/CARD_H 反向缩放 x/y 使屏幕上呈正圆；
      *  抬升沿世界 +z（相机恒在上方）而非卡片局部 +z，保证盖放/竖立卡不被卡面遮挡。 */
     private void drawActivatableDot(GameField.ClientCard c, float alpha,
@@ -241,7 +247,10 @@ final class CardOverlayRenderer {
                     : (c.sequence == 6 || c.sequence == 7);
             pendulumRight = strip && FieldGeometry.mirrorX(c.curX) < FieldGeometry.FIELD_CENTER_X;
         }
-        float cornerX = 0.5f, cornerY = 0.5f;
+        // 手卡（location 0x02）走相机 billboard、不进下面的四角搜罗，直接用局部角点：
+        // 局部 +x=屏幕右、+y=屏幕上，故 (-0.5,0.5) 为屏幕左上顶点（手卡绿点按要求贴左上角）。
+        // 场上卡 cornerX 初值仅作占位，实际由下方按旋转解算出屏幕右上/左上顶点。
+        float cornerX = (c.location == 0x02) ? -0.5f : 0.5f, cornerY = 0.5f;
         if (c.location != 0x02) {
             float a = -c.curRotZ; // buildCardModel 实际绕 Z 旋转角为 -curRotZ
             float ca = (float) Math.cos(a), sa = (float) Math.sin(a);

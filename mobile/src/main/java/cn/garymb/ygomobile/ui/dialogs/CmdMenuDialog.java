@@ -340,18 +340,55 @@ public class CmdMenuDialog {
                                    List<String> options, List<Runnable> actions) {
         final List<GameEngine.CmdCardInfo> actList = matchCmdCards(engine.activatableCards, card);
         if (!actList.isEmpty()) {
-            options.add(sysString(SYS_ACTIVATE));
-            actions.add(() -> showCmdList(card, engine, cmdContext, actList, MODE_ACTIVATE));
+            // 同一张卡的多个可发动效果（如带素材的超量怪兽）：与 buildCardCommandMenu 一致，
+            // 用 OptionDialog 列出各效果的脚本提示文字供选择，而不是用 CardDisplayDialog
+            // 显示多张相同卡图（视觉上无法区分发动的是哪个效果）。
+            if (allSameCard(actList)) {
+                final List<GameEngine.CmdCardInfo> chosen = filterActivatable(actList);
+                if (!chosen.isEmpty()) {
+                    options.add(sysString(SYS_ACTIVATE));
+                    actions.add(() -> showActivateOptions(cmdContext, chosen));
+                }
+            } else {
+                options.add(sysString(SYS_ACTIVATE));
+                actions.add(() -> showCmdList(card, engine, cmdContext, actList, MODE_ACTIVATE));
+            }
         }
 
         final List<GameEngine.CmdCardInfo> spList = matchCmdCards(engine.spsummonableCards, card);
         if (!spList.isEmpty()) {
             options.add(sysString(SYS_SPSUMMON));
-            actions.add(() -> showCmdList(card, engine, cmdContext, spList, MODE_SPSUMMON));
+            if (allSameCard(spList)) {
+                final List<GameEngine.CmdCardInfo> chosen = spList;
+                actions.add(() -> showOptionListForMode(cmdContext, chosen, MODE_SPSUMMON));
+            } else {
+                actions.add(() -> showCmdList(card, engine, cmdContext, spList, MODE_SPSUMMON));
+            }
         }
 
         options.add(viewListText());
         actions.add(() -> showViewList(card, engine));
+    }
+
+    /** 是否列表中全部命令项都属于同一张卡（多则同卡多效果，少则堆叠区不同卡） */
+    private static boolean allSameCard(List<GameEngine.CmdCardInfo> infos) {
+        if (infos.size() <= 1) return true;
+        GameField.ClientCard c0 = infos.get(0).card;
+        for (GameEngine.CmdCardInfo info : infos) {
+            if (info.card != c0) return false;
+        }
+        return true;
+    }
+
+    /** 过滤掉 EDESC_OPERATION / EDESC_RESET 项（与 buildCardCommandMenu 发动收集口径一致） */
+    private static List<GameEngine.CmdCardInfo> filterActivatable(List<GameEngine.CmdCardInfo> src) {
+        List<GameEngine.CmdCardInfo> out = new ArrayList<>();
+        for (GameEngine.CmdCardInfo info : src) {
+            if ((info.flag & EDESC_OPERATION) != 0) continue;
+            if ((info.flag & EDESC_RESET) != 0) continue;
+            out.add(info);
+        }
+        return out;
     }
 
     /** 过滤出与被点位置匹配的命令卡：超量怪兽按格序列匹配，堆叠区匹配整堆（controler+location） */
@@ -450,16 +487,24 @@ public class CmdMenuDialog {
     }
 
     /**
-     * 发动/表示重置：单条直接应答，多条弹 OptionDialog 列出各效果脚本提示文字
+     * 发动：单条直接应答，多条弹 OptionDialog 列出各效果脚本提示文字
      *（对齐 client_field.cpp ShowSelectOption + event_handler.cpp BUTTON_OPTION → SetResponseSelectedOption）。
      */
     private void showActivateOptions(int cmdContext, List<GameEngine.CmdCardInfo> infos) {
+        showOptionListForMode(cmdContext, infos, MODE_ACTIVATE);
+    }
+
+    /**
+     * 单卡多命令（发动 / 特殊召唤）选择：仅 1 项直接应答，多项弹 OptionDialog 列出各效果
+     * 脚本提示文字供选择；应答编码统一走 sendCmdResponse(mode, …)（与单卡菜单一致）。
+     */
+    private void showOptionListForMode(int cmdContext, List<GameEngine.CmdCardInfo> infos, int mode) {
         if (infos == null || infos.isEmpty()) return;
         if (infos.size() == 1) {
-            respondActivate(cmdContext, infos.get(0).index);
+            sendCmdResponse(mode, cmdContext, infos.get(0).index);
             return;
         }
-        String fallback = sysString(SYS_ACTIVATE);
+        String fallback = sysString(mode == MODE_SPSUMMON ? SYS_SPSUMMON : SYS_ACTIVATE);
         List<String> texts = new ArrayList<>();
         for (GameEngine.CmdCardInfo info : infos) {
             texts.add(info.desc > 0 ? DataManager.get().getDesc(info.desc, fallback) : fallback);
@@ -470,21 +515,10 @@ public class CmdMenuDialog {
                 .setOptions(texts)
                 .setOnOptionSelectedListener(index -> {
                     if (index >= 0 && index < targets.size()) {
-                        respondActivate(cmdContext, targets.get(index).index);
+                        sendCmdResponse(mode, cmdContext, targets.get(index).index);
                     }
                 })
                 .show();
-    }
-
-    /** 发动响应编码（event_handler.cpp SetResponseSelectedOption L3002-3017） */
-    private void respondActivate(int cmdContext, int idx) {
-        if (cmdContext == CMD_CONTEXT_CHAIN) {
-            activity.getDialogUtil().activateChainOption(idx);
-        } else if (cmdContext == CMD_CONTEXT_BATTLE) {
-            activity.sendResponseInt(idx << 16);
-        } else {
-            activity.sendResponseInt((idx << 16) + 5);
-        }
     }
 
     /**

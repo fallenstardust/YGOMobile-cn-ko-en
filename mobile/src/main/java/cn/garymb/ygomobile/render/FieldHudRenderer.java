@@ -43,6 +43,9 @@ final class FieldHudRenderer {
     /** 攻守/等级数字尺寸 */
     private static final float STAT_SIZE_SCALE = 0.85f;
     private static final float STAT_SNUG_PX = 2f;
+    /** 灵摆刻度数字抬升系数（×字高 hpx）：把文字从「竖中心坐在顶角」上移到「底边坐在顶角」，
+     *  使两张灵摆卡的刻度数字抬高到卡片矩形顶点、与同角位的可发动绿点对齐。正交屏 y 向下，故减去。 */
+    private static final float SCALE_TOP_LIFT = 0.5f;
 
     // 屏幕空间数字文字纹理键（区域计数 / 总攻击力数字共用，键含颜色；负值递减独立键域）
     private final HashMap<String, Long> numLabelKeys = new HashMap<>();
@@ -263,12 +266,13 @@ final class FieldHudRenderer {
         float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f));
         // 屏幕侧：格子中心 mirrorX 后 > 中轴 = 屏幕左（我方 seq0/5、对方 seq6/7 带），
         // < 中轴 = 屏幕右（我方 seq6/7 带、对方 seq0/5）；左侧卡贴左上角顶点左对齐、
-        // 右侧卡贴右上角顶点右对齐，不压入（文字竖中心坐在顶点线上）
+        // 右侧卡贴右上角顶点右对齐；再把文字上移 hpx×SCALE_TOP_LIFT，使其底边坐在顶角顶点上（抬高到顶点）
         boolean screenLeft = FieldGeometry.mirrorX(cx) > FieldGeometry.FIELD_CENTER_X;
         float[] corner = screenLeft ? screenTopLeft : screenTopRight;
         int align = screenLeft ? ALIGN_LEFT : ALIGN_RIGHT;
         // 刻度白色（对齐 drawing.cpp 灵摆刻度 0xffffffff）
-        drawScreenTextAligned(corner[0], corner[1], new String[]{txt}, new int[]{0xFFFFFFFF}, hpx, align);
+        drawScreenTextAligned(corner[0], corner[1] - hpx * SCALE_TOP_LIFT,
+                new String[]{txt}, new int[]{0xFFFFFFFF}, hpx, align);
     }
 
     private void drawScreenNumber(float[] screenXY, String text, int color, float heightPx) {
