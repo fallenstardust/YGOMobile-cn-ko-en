@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- :libygoengine 仅用于打包 libygoengine.so（薄 JNI 决斗引擎），无 Java 组件。 -->
-</manifest>
