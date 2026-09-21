@@ -47,7 +47,7 @@ final class SelectionOutlineRenderer {
     private static final long SELFIELD_TEX_KEY = -60L;
     private static final long LINK_MARKER_TEX_BASE = -70L;
     /**
-     * z 层（用户需求重排）：场地板/格子槽在下，selfield/link marker 在背景图 field3 上高 0.01f；
+     * z 层：场地板/格子槽在下，selfield/link marker 在背景图 field3 上高 0.01f；
      * 绘制时关深度测试、先于卡片段，卡片（SZONE 0.01/MZONE 0.02）后绘自然盖在其上，
      * 与 SZONE 卡同 z 也不会条栅（不写深度）
      */

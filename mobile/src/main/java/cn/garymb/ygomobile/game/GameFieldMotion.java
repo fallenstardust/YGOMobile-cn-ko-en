@@ -164,6 +164,14 @@ class GameFieldMotion {
             updateListAnimation(field.players[p].extra);
         }
         updateListAnimation(field.overlayCards);
+        // 淡出卡已脱离区域列表（duelclient.cpp MSG_MOVE cl==0：FadeCard 播完才
+        // RemoveCard+DestroyCard），单独驱动并在动画结束后从暂存列表移除
+        updateListAnimation(field.fadingCards);
+        for (int i = field.fadingCards.size() - 1; i >= 0; i--) {
+            ClientCard c = field.fadingCards.get(i);
+            if (c == null || c.aniFrame <= 0)
+                field.fadingCards.remove(i);
+        }
     }
 
     /**
@@ -186,7 +194,7 @@ class GameFieldMotion {
                     return true;
                 }
             }
-            return isListAnimating(field.overlayCards);
+            return isListAnimating(field.overlayCards) || isListAnimating(field.fadingCards);
         } catch (Throwable ignored) {
             return false;
         }
@@ -243,23 +251,49 @@ class GameFieldMotion {
                     pcard.curRotY += pcard.hsFlipRotY * flipv;
                 }
             }
-            // 缓动插值：按剩余帧比例计算进度，easeInOutCubic 平滑起止，替代原线性累加
+            // 线性插值：严格对齐 drawing.cpp DrawCard 的 curPos += dPos（dPos=(target-cur)/frame）——
+            // gframe 卡片移动/淡入淡出均为每帧等速线性累加，无缓动。按剩余帧比例线性求值以在
+            // 变帧率下保持恒定速度（dt*60 驱动的 aniFrame 递减）。
             if (pcard.is_moving && !pcard.is_deck_shake && !pcard.is_hand_shuffle) {
                 int total = Math.max(1, pcard.animTotalFrame);
-                float t = Math.min(1f, Math.max(0f, 1f - pcard.aniFrame / (float) total));
-                float e = easeInOutCubic(t);
-                pcard.curX = pcard.animFromX + (pcard.animToX - pcard.animFromX) * e;
-                pcard.curY = pcard.animFromY + (pcard.animToY - pcard.animFromY) * e;
-                pcard.curZ = pcard.animFromZ + (pcard.animToZ - pcard.animFromZ) * e;
-                pcard.curRotX = pcard.animFromRotX + (pcard.animToRotX - pcard.animFromRotX) * e;
-                pcard.curRotY = pcard.animFromRotY + (pcard.animToRotY - pcard.animFromRotY) * e;
-                pcard.curRotZ = pcard.animFromRotZ + (pcard.animToRotZ - pcard.animFromRotZ) * e;
+                if (pcard.animJitterX != 0f) {
+                    // 同区重排抖动（duelclient.cpp MSG_MOVE L3022-3030）：前 5 帧每帧恒定横移
+                    // dPos=animJitterX（±0.3，方向随控制方）且 Y/Z/旋转保持原位，
+                    // 后 5 帧从偏移终点线性回到目标位（MoveCard(5)）
+                    int el = Math.max(0, Math.min(total, total - (int) pcard.aniFrame));
+                    if (el <= 5) {
+                        pcard.curX = pcard.animFromX + pcard.animJitterX * el;
+                        pcard.curY = pcard.animFromY;
+                        pcard.curZ = pcard.animFromZ;
+                        pcard.curRotX = pcard.animFromRotX;
+                        pcard.curRotY = pcard.animFromRotY;
+                        pcard.curRotZ = pcard.animFromRotZ;
+                    } else {
+                        float e = Math.min(1f, (el - 5) / 5f);
+                        float jx = pcard.animFromX + pcard.animJitterX * 5f;
+                        pcard.curX = jx + (pcard.animToX - jx) * e;
+                        pcard.curY = pcard.animFromY + (pcard.animToY - pcard.animFromY) * e;
+                        pcard.curZ = pcard.animFromZ + (pcard.animToZ - pcard.animFromZ) * e;
+                        pcard.curRotX = pcard.animFromRotX + (pcard.animToRotX - pcard.animFromRotX) * e;
+                        pcard.curRotY = pcard.animFromRotY + (pcard.animToRotY - pcard.animFromRotY) * e;
+                        pcard.curRotZ = pcard.animFromRotZ + (pcard.animToRotZ - pcard.animFromRotZ) * e;
+                    }
+                } else {
+                    float t = Math.min(1f, Math.max(0f, 1f - pcard.aniFrame / (float) total));
+                    float e = t;
+                    pcard.curX = pcard.animFromX + (pcard.animToX - pcard.animFromX) * e;
+                    pcard.curY = pcard.animFromY + (pcard.animToY - pcard.animFromY) * e;
+                    pcard.curZ = pcard.animFromZ + (pcard.animToZ - pcard.animFromZ) * e;
+                    pcard.curRotX = pcard.animFromRotX + (pcard.animToRotX - pcard.animFromRotX) * e;
+                    pcard.curRotY = pcard.animFromRotY + (pcard.animToRotY - pcard.animFromRotY) * e;
+                    pcard.curRotZ = pcard.animFromRotZ + (pcard.animToRotZ - pcard.animFromRotZ) * e;
+                }
             }
             if (pcard.is_fading) {
                 int total = Math.max(1, pcard.animTotalFrame);
                 float t = Math.min(1f, Math.max(0f, 1f - pcard.aniFrame / (float) total));
                 pcard.curAlpha = pcard.animFromAlpha
-                        + (pcard.animToAlpha - pcard.animFromAlpha) * easeInOutCubic(t);
+                        + (pcard.animToAlpha - pcard.animFromAlpha) * t;
             }
             pcard.aniFrame -= field.animationSpeed;
             if (pcard.aniFrame <= 0) {
@@ -277,6 +311,7 @@ class GameFieldMotion {
                 }
                 pcard.is_moving = false;
                 pcard.is_fading = false;
+                pcard.animJitterX = 0f;
                 if (pcard.is_deck_shake) {
                     // 抖动结束精确回基线（防 animationSpeed>1 跳过 u=0 帧）
                     pcard.is_deck_shake = false;
@@ -304,10 +339,6 @@ class GameFieldMotion {
             if (pcard != null && pcard.aniFrame > 0) return true;
         }
         return false;
-    }
-
-    private static float easeInOutCubic(float t) {
-        return t < 0.5f ? 4f * t * t * t : 1f - (float) Math.pow(-2f * t + 2f, 3) / 2f;
     }
 
     public void refreshAllCards() {
@@ -480,7 +511,9 @@ class GameFieldMotion {
         for (ClientCard c : hand) {
             if (c == null) continue;
             float[] loc = field.getCardLocation(c);
-            if (c.is_moving) continue;
+            // 正在移动/淡入淡出的卡不打断：淡入卡（pl==0 登场）保持自己的淡入节奏，
+            // 位置由手牌布局重排动画接管会在下次重排时自然对齐
+            if (c.is_moving || c.is_fading) continue;
             if (frame > 0 && (Math.abs(loc[0] - c.curX) > 0.001f
                     || Math.abs(loc[1] - c.curY) > 0.001f)) {
                 moveCardAnimated(c, frame);

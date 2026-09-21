@@ -12,6 +12,35 @@ class GameFieldGeometry {
 
     private final GameField field;
 
+    /**
+     * 超量素材相对宿主怪兽的纵向露出量（世界单位）。C++ client_field.cpp 原值为 0.05，
+     * 仅露出宿主下缘一线、素材卡显示不完整；此处按需求放大以在宿主下方露出更完整的素材卡，
+     * 兼顾数量可辨与不越入相邻魔陷行，可据实机观感微调。
+     */
+    private static final float OVERLAY_PEEK = 0.16f;
+
+    /**
+     * 主怪兽区/魔陷区相邻格子间的额外缝隙（原始单位，与格子步长基准 1.1 同量纲）。
+     * 原 5 主格中心步长恰等于格宽 1.1（槽矩形边对边贴合、无间隙），现按需求以中心保持
+     * （中轴 3.95 固定、两侧对称外扩）将主 5 格（s<5）步长改为 1.1 + ZONE_GAP，使相邻格之间
+     * 出现宽度约 ZONE_GAP×X_SCALE 的缝隙。按需求本间隙进一步统一作用于：额外怪兽区与双方
+     * 主怪兽行的纵向间隔、主怪兽行与魔陷行的纵向间隔、场地/额外卡组/墓地/除外/卡组各堆叠格
+     * 彼此及其与怪兽区/魔陷区之间（横向邻接用原始值 0.1，纵向邻接用 vg = 0.1×X_SCALE，
+     * 使两方向的世界单位缝宽一致）。卡片落点 / 选中框 / 拾取 / 场地槽均派生自本组几何，
+     * 会自动跟随。注：本选择有意不跟随 field3.png 烘焙网格线（需接受与底图网格的错位）。
+     */
+    private static final float ZONE_GAP = 0.1f;
+
+    /** 纵向缝隙的世界单位等价值：X 向经 fx 放大 X_SCALE 倍，Y 向不放大，
+     *  故 Y 向间隔需乘 X_SCALE 才能与横向缝隙视觉等宽 */
+    private static float vg() {
+        return ZONE_GAP * GameField.X_SCALE;
+    }
+
+    /** 对方手卡沿纵轴额外向远离场地中心方向平移量（Y 世界单位）：因场地区/魔陷行等
+     *  按 ZONE_GAP 外扩后对方手卡更易遮挡魔陷区格子，按需求整体外推减少遮挡 */
+    private static final float OPP_HAND_PUSH = 0.35f;
+
     GameFieldGeometry(GameField field) {
         this.field = field;
     }
@@ -42,31 +71,37 @@ class GameFieldGeometry {
             return new float[]{mzoneCX(controler, sequence), mzoneCY(controler, sequence), GameField.ZONE_W, GameField.ZONE_H};
         }
         if (location == 0x08) {
+            // 场地区（szone seq5）改为与墓地堆叠区一致的长方形（PILE_W×PILE_H），其余魔陷格保持 ZONE_W×ZONE_H
+            if (sequence == 5) {
+                return new float[]{szoneCX(controler, sequence), szoneCY(controler, sequence), GameField.PILE_W, GameField.PILE_H};
+            }
             return new float[]{szoneCX(controler, sequence), szoneCY(controler, sequence), GameField.ZONE_W, GameField.ZONE_H};
         }
         return null;
     }
 
-    /** 堆叠区矩形 {cx, cy, w, h}（materials.cpp vFieldDeck/Grave/Remove/Extra 中心） */
+    /** 堆叠区矩形 {cx, cy, w, h}（materials.cpp vFieldDeck/Grave/Remove/Extra 中心，
+     *  按 ZONE_GAP 统一间隙外扩：侧列与魔陷行最外格留 0.1 原始横向间隙，
+     *  列内相邻格纵向间隔留 vg，与怪兽/魔陷区缝隙等宽） */
     static float[] getPileRect(int controler, int location) {
         float cx;
         float cy;
         switch (location) {
             case 0x01:
-                cx = fx(controler == 0 ? 7.3f : 0.6f);
-                cy = controler == 0 ? 3.3f : -3.3f;
+                cx = fx(controler == 0 ? 7.4f : 0.5f);
+                cy = controler == 0 ? 3.2f + vg() : -(3.2f + vg());
                 break;
             case 0x10:
-                cx = fx(controler == 0 ? 7.3f : 0.6f);
+                cx = fx(controler == 0 ? 7.4f : 0.5f);
                 cy = controler == 0 ? 2.0f : -2.0f;
                 break;
             case 0x20:
-                cx = fx(controler == 0 ? 7.3f : 0.6f);
-                cy = controler == 0 ? 0.7f : -0.7f;
+                cx = fx(controler == 0 ? 7.4f : 0.5f);
+                cy = controler == 0 ? 0.8f - vg() : -(0.8f - vg());
                 break;
             case 0x40:
-                cx = fx(controler == 0 ? 0.6f : 7.3f);
-                cy = controler == 0 ? 3.3f : -3.3f;
+                cx = fx(controler == 0 ? 0.5f : 7.4f);
+                cy = controler == 0 ? 3.2f + vg() : -(3.2f + vg());
                 break;
             default:
                 return null;
@@ -75,37 +110,44 @@ class GameFieldGeometry {
     }
 
     private static float mzoneCX(int c, int s) {
-        if (c == 0) return fx(s < 5 ? 1.75f + 1.1f * s : (s == 5 ? 2.85f : 5.05f));
-        return fx(s < 5 ? 6.15f - 1.1f * s : (s == 5 ? 5.05f : 2.85f));
+        float step = 1.1f + ZONE_GAP;
+        if (c == 0) return fx(s < 5 ? 3.95f + (s - 2) * step : (s == 5 ? 2.85f : 5.05f));
+        return fx(s < 5 ? 3.95f + (2 - s) * step : (s == 5 ? 5.05f : 2.85f));
     }
 
     private static float mzoneCY(int c, int s) {
+        // 额外怪兽区行固定 Y=0（行高 1.2、上缘 0.6），主怪兽行按与额外怪兽区间隙
+        // = vg 内收：中心 = 0.6 + 0.6 + vg = 1.2 + vg（原 1.4，间隙 0.2 偏大）
         if (s >= 5) return 0f;
-        return c == 0 ? 1.4f : -1.4f;
+        return c == 0 ? 1.2f + vg() : -(1.2f + vg());
     }
 
     private static float szoneCX(int c, int s) {
+        float step = 1.1f + ZONE_GAP;
         if (c == 0) {
-            if (s < 5) return fx(1.75f + 1.1f * s);
-            if (s == 5) return fx(0.6f);
-            if (s == 6) return fx(0.6f);
-            return fx(8.3f);
+            if (s < 5) return fx(3.95f + (s - 2) * step);
+            if (s == 5) return fx(0.5f);
+            if (s == 6) return fx(0.5f);
+            return fx(8.45f);
         }
-        if (s < 5) return fx(6.15f - 1.1f * s);
-        if (s == 5) return fx(7.3f);
-        if (s == 6) return fx(7.3f);
-        return fx(-0.4f);
+        if (s < 5) return fx(3.95f + (2 - s) * step);
+        if (s == 5) return fx(7.4f);
+        if (s == 6) return fx(7.4f);
+        return fx(-0.55f);
     }
 
     private static float szoneCY(int c, int s) {
+        // 纵向间隔统一为 vg（与横向缝隙世界等宽）：魔陷行（s<5）距主怪兽行
+        // (1.2+vg) 再隔 1.2+vg → 2.4+2vg；场地区(s==5)保持 ±2.0 与墓地堆叠同高；
+        // 灵摆列(s>=6)距场地区下缘隔 vg → 0.8-vg，与除外堆叠同排。
         if (c == 0) {
-            if (s < 5) return 2.6f;
+            if (s < 5) return 2.4f + 2 * vg();
             if (s == 5) return 2.0f;
-            return 0.7f;
+            return 0.8f - vg();
         }
-        if (s < 5) return -2.6f;
+        if (s < 5) return -(2.4f + 2 * vg());
         if (s == 5) return -2.0f;
-        return -0.7f;
+        return -(0.8f - vg());
     }
 
     /**
@@ -154,11 +196,12 @@ class GameFieldGeometry {
                     }
                 } else {
                     t[0] = 3.95f + spacing * (count - 1) / 2f - sequence * spacing;
+                    // 对方手卡整体沿纵轴外推 OPP_HAND_PUSH（悬停位同幅平移保持相对关系）
                     if (pcard.is_hovered) {
-                        t[1] = -3.56f;
+                        t[1] = -3.56f - OPP_HAND_PUSH;
                         t[2] = 0.656f - 0.001f * sequence;
                     } else {
-                        t[1] = -3.4f;
+                        t[1] = -3.4f - OPP_HAND_PUSH;
                         t[2] = 0.5f - 0.001f * sequence;
                     }
                     if (pcard.code == 0) {
@@ -244,16 +287,18 @@ class GameFieldGeometry {
                 int oseq = target.sequence;
                 int mseq = Math.max(0, Math.min(sequence, GameField.MAX_LAYER_COUNT - 1));
                 // C++ GetCardLocation LOCATION_OVERLAY（client_field.cpp L1014-1036）：每枚素材按序号
-                // 沿宿主卡横向逐张偏移 -0.12+0.06*mseq、并沿 Z 逐张抬高 material_height，形成扇形叠放，
-                // 使场上素材数量直观可数（对齐 C++，不再对 <3 张收拢为纯堆叠）。
+                // 沿宿主卡横向逐张偏移 -0.12+0.06*mseq、并沿 Z 逐张抬高 material_height，形成扇形叠放。
+                // 纵向露出量在 C++ 中为 ±0.05（仅露出宿主下缘一线），本项目按需求放大为 OVERLAY_PEEK，
+                // 使宿主下方每枚素材卡露出更完整、数量直观可数；素材目标位由宿主 overlayTarget 的
+                // sequence 实时推导，故宿主移动到别的格子时素材自动跟随叠放到新格下方。
                 float dx = 0.12f - 0.06f * mseq;
                 if (target.controler == 0) {
                     t[0] = mzoneCX(0, oseq) - dx;
-                    t[1] = mzoneCY(0, oseq) + 0.05f;
+                    t[1] = mzoneCY(0, oseq) + OVERLAY_PEEK;
                     t[5] = 0f;
                 } else {
                     t[0] = mzoneCX(1, oseq) + dx;
-                    t[1] = mzoneCY(1, oseq) - 0.05f;
+                    t[1] = mzoneCY(1, oseq) - OVERLAY_PEEK;
                     t[5] = GameField.PI;
                 }
                 // z 阶梯 0.001+0.003*mseq（对齐 overlay_buttom=0.001 / material_height=0.003）：

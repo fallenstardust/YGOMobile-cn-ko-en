@@ -34,11 +34,18 @@ final class FieldCamera {
     // === 取景内容真值（全部由 GameField 几何推导，随俯仰角/屏幕宽高动态解算，不再硬编码锚点）===
     /** 手卡 billboard 所在平面高度（gframe getCardLocation：LOCATION_HAND z=0.5） */
     static final float HAND_Z = 0.5f;
-    /** 我方 / 对方手卡行的场地 y（gframe：4.0 / -3.4） */
+    /** 我方 / 对方手卡行的场地 y（gframe：4.0 / -3.4；对方行随 GameFieldGeometry 的
+     *  OPP_HAND_PUSH=0.35 整体外推至 -3.75，减少遮挡魔陷区） */
     static final float SELF_HAND_Y = 4.0f;
-    static final float OPP_HAND_Y = -3.4f;
-    /** 我方近端魔陷区外缘 y：szoneCY(0,&lt;5)=2.6 + ZONE_H/2=0.6，手卡屏幕上缘不得越过此线 */
-    private static final float SZONE_NEAR_Y = 3.2f;
+    static final float OPP_HAND_Y = -3.75f;
+    /** 我方近端魔陷区外缘 y：由几何真值派生 = szoneCY(0,<5) 中心 + 半格高，
+     *  随 ZONE_GAP 统一间隙自动跟随（原硬编码 3.2，现 ≈3.24），手卡屏幕上缘不得越过此线 */
+    private static final float SZONE_NEAR_Y = szoneNearY();
+
+    private static float szoneNearY() {
+        float[] r = GameField.getZoneRect(0, 0x08, 0);
+        return r == null ? 3.2f : r[1] + r[3] / 2f;
+    }
     /** 手卡屏幕上缘与魔陷区外缘之间保留的间隙（沿视线投影到地面后度量） */
     private static final float HAND_CLEAR_GAP = 0.06f;
     /** 纵向取景锚点相对手卡极值的安全裕量倍率 */

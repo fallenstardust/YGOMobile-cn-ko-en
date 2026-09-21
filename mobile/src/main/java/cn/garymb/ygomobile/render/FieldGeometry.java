@@ -56,8 +56,10 @@ final class FieldGeometry {
     }
 
     static boolean zoneContains(int player, int loc, int seq, float x, float y) {
-        float[] c = zoneCenter(player, loc, seq);
-        return Math.abs(x - c[0]) <= ZONE_W / 2f && Math.abs(y - c[1]) <= ZONE_H / 2f;
+        // 直接取格子矩形（含尺寸），使命中区与绘制区同源：场地区(seq5)已改为墓地尺寸长方形
+        float[] r = GameField.getZoneRect(player, loc, seq);
+        if (r == null) return false;
+        return Math.abs(x - r[0]) <= r[2] / 2f && Math.abs(y - r[1]) <= r[3] / 2f;
     }
 
     static int zoneBitPos(int player, int location, int sequence) {

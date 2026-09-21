@@ -135,6 +135,10 @@ public class GameField {
         public int aniFrame;
         public float curAlpha = 255;
         public float dAlpha;
+        /** 手卡点击抬高动画进度（0=原位，1=完全抬高）：由 GameFieldView 渲染线程逐帧线性推进，
+         *  对齐 client_card.cpp SetCode 手卡 MoveCard(5)（约 5 帧 ≈ 0.083s 线性抬升），
+         *  取代此前按选中状态瞬时跳变，使抬高过程更丝滑 */
+        public float handLiftAnim;
         // 动画插值起点/终点与总帧数（缓动轨迹）
         public float animFromX, animFromY, animFromZ;
         public float animToX, animToY, animToZ;
@@ -142,6 +146,10 @@ public class GameField {
         public float animToRotX, animToRotY, animToRotZ;
         public float animFromAlpha, animToAlpha;
         public int animTotalFrame;
+        /** 同区重排抖动横向速度（对齐 duelclient.cpp MSG_MOVE L3022-3030 重排分支的
+         *  dPos=(±0.3,0,0)×5 帧侧移后 MoveCard(5) 回正）：非零时 updateListAnimation 对
+         *  is_moving 卡片改用「先侧移后归位」两阶段轨迹，符号按 C++ pc==1 时取正 */
+        public float animJitterX;
         /** 动画启动延迟帧（对齐 duelclient.cpp MSG_MOVE L3032-3038 的 WaitFrameSignal(10)：
          *  带素材怪兽移动时素材先归位，本体延迟若干帧再落上去），延迟期内不插值不扣 aniFrame */
         public float animDelayFrame;
@@ -463,6 +471,15 @@ public class GameField {
      */
     public ChainInfo currentChain = new ChainInfo();
     public List<ClientCard> overlayCards = new ArrayList<>();
+    /**
+     * 淡出中的已离场卡片（duelclient.cpp MSG_MOVE cl==0 分支 L2973-2990：FadeCard(→5,appear)
+     * 后 RemoveCard/DestroyCard）：Java 结构性移除同步完成，卡片暂存于本列表继续渲染，
+     * 动画播完（aniFrame≤0）由 GameFieldMotion.updateCardAnimation purge，避免消失卡瞬间掉帧。
+     */
+    public final List<ClientCard> fadingCards = new ArrayList<>();
+    /** C++ duelclient.cpp L2958 appear = quick_animation ? 12 : 20（本工程无快动画开关，取 20）：
+     *  MSG_MOVE pl==0 / cl==0 出现与消失卡片的淡入淡出帧数 */
+    public static final int APPEAR_FRAME = 20;
     final List<PendingOverlay> pendingOverlays = new ArrayList<>();
     public int[] extraPCount = new int[2];
     public long disabledField;
@@ -589,6 +606,7 @@ public class GameField {
             pzoneAct[i] = false;
         }
         overlayCards.clear();
+        fadingCards.clear();
         pendingOverlays.clear();
         chains.clear();
         currentChain = new ChainInfo();

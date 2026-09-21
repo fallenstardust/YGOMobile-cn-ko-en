@@ -41,8 +41,11 @@ final class FieldBoardRenderer {
         // 场地魔法背景图先于底板绘制（z=-0.01 底板之下），对齐 drawing.cpp DrawBackGround
         if (transparent) drawFieldSpellArt(code1, code2);
         int tex = view.tex.obtainFieldTexture(rule, transparent);
-        float w = FieldGeometry.FIELD_X_MAX - FieldGeometry.FIELD_X_MIN;
-        float h = FieldGeometry.FIELD_Y_MAX - FieldGeometry.FIELD_Y_MIN;
+        // 因魔陷行新增纵向缝隙、卡区整体更外扩，场地底板贴图矩形随之稍微外扩（中心不变、四边各向外
+        // 放大 BOARD_MARGIN），使卡片区仍完整落在底板内；底板网格与格子的错位已在需求中明确忽略。
+        final float boardMargin = 0.25f;
+        float w = (FieldGeometry.FIELD_X_MAX - FieldGeometry.FIELD_X_MIN) + boardMargin * 2f;
+        float h = (FieldGeometry.FIELD_Y_MAX - FieldGeometry.FIELD_Y_MIN) + boardMargin * 2f;
         float cx = FieldGeometry.mirrorX((FieldGeometry.FIELD_X_MIN + FieldGeometry.FIELD_X_MAX) / 2f);
         if (tex > 0) {
             Matrix.setIdentityM(view.mModel, 0);
@@ -118,8 +121,11 @@ final class FieldBoardRenderer {
             }
             for (int i = 0; i <= 5; i++) {
                 float[] c = FieldGeometry.zoneCenter(p, 0x08, i);
+                // 场地区（seq5）绘制为与墓地一致的长方形（PILE_W×PILE_H），其余魔陷格保持方格
+                float zw = (i == 5) ? FieldGeometry.PILE_W : FieldGeometry.ZONE_W;
+                float zh = (i == 5) ? FieldGeometry.PILE_H : FieldGeometry.ZONE_H;
                 view.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
-                        FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, 0f, 0.78f, 0.94f, pulse);
+                        zw, zh, 0f, 0.78f, 0.94f, pulse);
             }
             if (!mr4) {
                 // MR<4：field2 底板额外魔法陷阱格（左下/右下，几何真值见 GameFieldGeometry s==6/7 分支）
@@ -193,12 +199,12 @@ final class FieldBoardRenderer {
     }
 
     /**
-     * 需求1：我方墓地/除外/卡组/额外在有可发动/可特召项（graveAct/removeAct/deckAct/extraAct 置位）时，
+     * 我方墓地/除外/卡组/额外在有可发动/可特召项（graveAct/removeAct/deckAct/extraAct 置位）时，
      * 在该堆叠格正上方绘制一个旋转的 act 图标（对齐 drawing.cpp deck_act/grave_act/remove_act/extra_act
      * 分支在 vFieldDeck/Grave/Remove/Extra 中心上方绘制旋转 vActivate）。
      * 灵摆召唤可用（pzoneAct）时另在左灵摆刻度魔陷格（MR4=seq0，否则 seq6）上方绘制同款旋转
      * act 图标（对齐 drawing.cpp pzone_act 分支 L838-847：vFieldSzone 中心绘旋转 vActivate）。
-     * z 层阶梯（用户需求）：背景 field3 z=0 → selfield/link marker 0.01 → 卡上图标层
+     * z 层阶梯：背景 field3 z=0 → selfield/link marker 0.01 → 卡上图标层
      * （SZONE 卡 0.01+0.03=0.04，MZONE 卡 0.02+0.03=0.05）→ act/conti_act 提示 0.06 置顶。
      */
     void drawZoneActHints(GameField f) {
@@ -224,7 +230,7 @@ final class FieldBoardRenderer {
             drawActIconOverPile(tex, f, p, 0x40, f.extraAct[p], sz, spin);
             if (f.pzoneAct[p]) {
                 float[] c = FieldGeometry.zoneCenter(p, 0x08, leftSeq);
-                // 0.06：高于 selfield(0.01) 与卡上图标层(≤0.05)，act 提示置顶（用户需求）
+                // 0.06：高于 selfield(0.01) 与卡上图标层(≤0.05)，act 提示置顶
                 if (c != null) drawActIconAt(tex, FieldGeometry.mirrorX(c[0]), c[1], 0.06f, sz, spin);
             }
         }
@@ -254,7 +260,7 @@ final class FieldBoardRenderer {
     }
 
     /**
-     * 需求2：战斗阶段按钮（PHASE_NEXT，锚定场地中心 (FIELD_CENTER_X,0)）所在场地中部空隙处，
+     * 战斗阶段按钮（PHASE_NEXT，锚定场地中心 (FIELD_CENTER_X,0)）所在场地中部空隙处，
      * 绘制一个「隐形格子」——堆叠显示 conti_cards（通讯中回合结束仍需效果结算的卡），
      * 并在其上方绘制旋转 act 图标（对齐 drawing.cpp conti_act 分支：vFieldContiAct 中心堆叠卡面 + 旋转 vActivate）。
      */

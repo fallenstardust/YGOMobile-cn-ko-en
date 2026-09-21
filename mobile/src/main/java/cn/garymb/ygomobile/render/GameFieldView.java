@@ -630,6 +630,12 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                 f.updateCardAnimation(1);
             } catch (Throwable ignored) {
             }
+            // 手卡抬高动画：逐帧线性推进每张手卡的 handLiftAnim（目标=当前选中卡），
+            // 使点击抬高/回落呈约 5 帧的线性缓动，对齐 drawing.cpp 手卡移动动画样式
+            try {
+                updateHandLift(dt);
+            } catch (Throwable ignored) {
+            }
         }
         if (f == null) return;
 
@@ -655,6 +661,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         }
         try {
             overlays.drawFieldCardOverlays(f);
+            overlays.drawActivatableDots(f);
             board.drawZoneActHints(f);
             board.drawContiGrid(f);
         } catch (Throwable ignored) {
@@ -728,6 +735,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             drawCardList(f.players[p].hand);
         }
         drawCardList(f.overlayCards);
+        // 离场淡出卡已脱离区域列表（cl==0：FadeCard 播完才 RemoveCard），单独绘制直到淡出完成
+        drawCardList(f.fadingCards);
     }
 
     /**
@@ -778,7 +787,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                 if (c == null) continue;
                 if (skip-- > 0) continue;
                 float targetZ = PILE_BASE_Z + drawn * step;
-                drawCard(c, targetZ - c.curZ);
+                // 飞行中的卡不施加堆叠层 zBias 吸附：保留自身动画的 Z 插值（从来源堆高度
+                // 飞至目标堆高度），否则卡组→墓地/除外等移动只有平面滑移、无立体弧线
+                drawCard(c, c.is_moving ? 0f : targetZ - c.curZ);
                 drawn++;
             }
         } catch (Throwable ignored) {
@@ -894,10 +905,44 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 选中手卡抬升量：未选中为 0，选中为 HAND_LIFT（沿相机 up 轴抬升，绘制/命中共用）
+     * 逐帧推进双方手卡的抬高动画进度：向目标（当前选中卡→1，其余→0）以恒定速率线性靠拢，
+     * 速率取 1/0.083s≈12/s，对应 client_card.cpp 手卡 MoveCard(5)（60fps 下 5 帧 ≈ 0.083s 完成）。
+     * 新选中的卡渐升、上一个被取消的卡渐降，二者进度独立过渡不跳变。
+     */
+    private void updateHandLift(float dt) {
+        GameField f = field;
+        if (f == null) return;
+        float step = dt * 12f;
+        for (int p = 0; p < 2; p++) {
+            java.util.List<GameField.ClientCard> hand = f.players[p].hand;
+            if (hand == null) continue;
+            try {
+                for (int i = 0, n = hand.size(); i < n; i++) {
+                    GameField.ClientCard c;
+                    try {
+                        c = hand.get(i);
+                    } catch (Throwable e) {
+                        continue;
+                    }
+                    if (c == null) continue;
+                    float target = isSelectedCard(c) ? 1f : 0f;
+                    if (c.handLiftAnim < target) {
+                        c.handLiftAnim = Math.min(target, c.handLiftAnim + step);
+                    } else if (c.handLiftAnim > target) {
+                        c.handLiftAnim = Math.max(target, c.handLiftAnim - step);
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    /**
+     * 选中手卡抬升量：按动画进度 c.handLiftAnim(0..1) 线性插值（对齐 drawing.cpp 手卡
+     * MoveCard(5) 的线性抬升），而非按选中状态瞬时跳变；进度由 updateHandLift 逐帧推进。
      */
     float handLift(GameField.ClientCard c) {
-        return isSelectedCard(c) ? HAND_LIFT : 0f;
+        return HAND_LIFT * c.handLiftAnim;
     }
 
     /**

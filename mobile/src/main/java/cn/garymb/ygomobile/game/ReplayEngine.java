@@ -1333,21 +1333,72 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     }
     @Override public void onMove(int code, int oc, int ol, int os, int opos, int nc, int nl, int ns, int pos, int reason) {
         boolean oldOv = (ol & 0x80) != 0, newOv = (nl & 0x80) != 0;
+        // 快进（isSkipping）等价 C++ isReplaySkiping：直接换位不播动画（duelclient.cpp L3012-3015）
+        boolean skipAnim = isSkipping;
         if (newOv && !oldOv) {
+            // 作为超量素材叠放（duelclient.cpp L3055-3095）：不本地改写 position（旧实现用 cp
+            // 覆盖致表侧素材变背面），仅新建兜底卡时置表侧；宿主在怪兽区才播 10 帧堆叠动画
             GameField.ClientCard card = field.getCard(oc, ol & 0x7f, os);
             if (card == null) card = new GameField.ClientCard();
             if (code != 0) card.code = code;
-            card.position = pos;
-            // 宿主按消息 loc 字节动态定位（duelclient.cpp L3069/L3097），仅宿主在怪兽区时跟动画
+            if (card.position == 0) card.position = GameField.POS_FACEUP;
             GameField.ClientCard olcard = field.attachOverlayMaterial(card, oc, ol & 0x7f, os, nc, nl & 0x7f, ns);
             if (olcard != null && olcard.location == 0x04) {
-                field.moveCardAnimated(card, 1);
+                if (!skipAnim) field.moveCardAnimated(card, 10);
+                else field.setCardPos(card);
             }
         } else if (oldOv && !newOv) {
+            // 素材离叠（L3096-3124）：detach 内已逐素材 MoveCard(2) 重排，此处本体 10 帧飞向新区域
             GameField.ClientCard card = field.detachOverlayMaterial(oc, ol & 0x7f, os, opos, nc, nl & 0x7f, ns, pos);
             if (card != null) {
                 if (code != 0) card.code = code;
-                field.moveCardAnimated(card, 1);
+                if (!skipAnim) field.moveCardAnimated(card, 10);
+                else field.setCardPos(card);
+            }
+        } else if (oldOv && newOv) {
+            // 素材在两只超量怪兽间转移（L3125-3153）：旧实现落入通用分支导致素材滞留
+            GameField.ClientCard src = field.getCard(oc, ol & 0x7f, os);
+            GameField.ClientCard dst = field.getCard(nc, nl & 0x7f, ns);
+            if (src != null && dst != null && opos >= 0 && opos < src.overlayed.size()) {
+                GameField.ClientCard m = src.overlayed.remove(opos);
+                for (int i = 0; i < src.overlayed.size(); i++) {
+                    GameField.ClientCard s = src.overlayed.get(i);
+                    if (s == null) continue;
+                    s.sequence = i;
+                    if (!skipAnim) field.moveCardAnimated(s, 2);
+                }
+                if (m != null) {
+                    dst.overlayed.add(m);
+                    m.overlayTarget = dst;
+                    m.controler = nc;
+                    m.sequence = dst.overlayed.size() - 1;
+                    if (!skipAnim) field.moveCardAnimated(m, 10);
+                }
+            }
+        } else if (nl == 0) {
+            // 离场消失（cl==0，L2973-2990）：移除后淡出，播完由 GameFieldMotion purge
+            GameField.ClientCard card = field.removeCard(oc, ol, os);
+            if (card != null) {
+                if (code != 0 && card.code != code) card.code = code;
+                card.clearTarget();
+                card.is_hovered = false;
+                if (!skipAnim) {
+                    field.fadeCard(card, 5, GameField.APPEAR_FRAME);
+                    field.fadingCards.add(card);
+                }
+            }
+        } else if (ol == 0) {
+            // 登场出现（pl==0，L2959-2972）：入区定位后从 alpha 5 淡入（卡组/额外登场等
+            // “凭空出现”的卡片自此有完整的淡入动画）
+            GameField.ClientCard card = new GameField.ClientCard();
+            card.owner = nc;
+            card.code = code;
+            card.position = pos;
+            field.addCard(nc, nl, ns, card);
+            field.setCardPos(card);
+            if (!skipAnim) {
+                card.curAlpha = 5;
+                field.fadeCard(card, 255, GameField.APPEAR_FRAME);
             }
         } else {
             GameField.ClientCard card = field.getCard(oc, ol, os);
@@ -1356,19 +1407,74 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             card.position = pos;
             field.removeCard(oc, ol, os);
             field.addCard(nc, nl, ns, card);
+            // 卡组→墓地/除外/额外/场上、额外→场上等全部普通移动：镜像 DuelEventHandler.onMove
+            // 同套动画分支（旧实现无任何动画，即用户所报“缺少移动动画”的根因）
+            if (skipAnim) {
+                field.setCardPos(card);
+            } else if (ol == nl && oc == nc && (nl & 0x71) != 0) {
+                // 同区重排抖动（L3022-3030）：先 5 帧横移 ±0.3 再 5 帧回位
+                field.moveCardAnimated(card, 10);
+                card.animJitterX = oc == 1 ? 0.3f : -0.3f;
+            } else if (nl == 0x04 && !card.overlayed.isEmpty()) {
+                // 带素材怪兽移动：素材先重排到新格下方，本体延迟 10 帧再落上（L3032-3037）
+                field.moveOverlayMaterials(card, 10);
+                field.moveCardAnimated(card, 10, 10);
+            } else {
+                field.moveCardAnimated(card, 10);
+            }
         }
-        soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+        // 手卡增删后重排双方手卡（对应 C++ cl==0x2 全手卡 MoveCard / pl==0x2 来源手卡跟动）
+        if (!skipAnim && ((ol & 0x7f) == 0x02 || (nl & 0x7f) == 0x02)) {
+            field.updateHandLayout(0, 10);
+            field.updateHandLayout(1, 10);
+        }
+        // 音效对齐 duelclient.cpp MSG_MOVE L2952-2957：仅非快进且真正移动时，除外播 BANISHED、
+        // 效果破坏入墓播 DESTROYED；召唤/特召音效由独立的 MSG_SUMMONING/SP_SUMMONING 触发
+        //（旧实现对每条 MSG_MOVE 无条件播 SUMMON，任何移动都响召唤音）
+        if (!skipAnim && nl != ol) {
+            if ((nl & 0x20) != 0) {
+                soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
+            } else if ((reason & 0x2) != 0 && (nl & 0x10) != 0) {
+                soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);
+            }
+        }
         notifyField();
     }
     @Override public void onPosChange(int code, int ctrl, int loc, int seq, int oldPos, int newPos) {
         GameField.ClientCard card = field.getCard(ctrl, loc, seq);
-        if (card != null) card.position = newPos;
+        if (card != null) {
+            // 镜像 DuelEventHandler.onPosChange（duelclient.cpp MSG_POS_CHANGE L3165-3174）：
+            // 翻开清指示物/对象链接，卡码变化更新，再 MoveCard(10) 播里侧翻开/攻守互转转体动画
+            if ((oldPos & GameField.POS_FACEUP) != 0 && (newPos & GameField.POS_FACEDOWN) != 0) {
+                card.counters.clear();
+                card.clearTarget();
+            }
+            if (code != 0 && card.code != code)
+                card.setCode(code);
+            card.position = newPos;
+            if (!isSkipping) field.moveCardAnimated(card, 10);
+            else field.setCardPos(card);
+        }
         notifyField();
     }
     @Override public void onSet(int code, int ctrl, int loc, int seq) {
-        GameField.ClientCard card = new GameField.ClientCard();
-        card.code = code; card.position = 0x2;
-        field.addCard(ctrl, loc, seq, card);
+        // 对齐 duelclient.cpp MSG_SET：仅音效 + 事件提示，卡片由先到的 MSG_MOVE 已入区；
+        // 旧实现在此处 new 卡覆盖：新卡 cur*=0 落世界原点被底板深度吞掉，盖卡看不见卡背
+        GameField.ClientCard card = field.getCard(ctrl, loc, seq);
+        if (card != null) {
+            if (card.curX == 0f && card.curY == 0f && card.curZ == 0f) {
+                // 兜底：极少数路径卡已在列表却从未定位，补一次定位（不覆盖 code/position）
+                field.setCardPos(card);
+            }
+        } else {
+            card = new GameField.ClientCard();
+            card.owner = ctrl;
+            card.code = code;
+            card.position = GameField.POS_FACEDOWN;
+            field.addCard(ctrl, loc, seq, card);
+            field.setCardPos(card);
+        }
+        soundManager.playSoundEffect(SoundManager.SFX.SET);
         notifyField();
     }
     @Override public void onSwap(int c1c, int c1l, int c1s, int c2c, int c2l, int c2s) {
@@ -1376,6 +1482,16 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         GameField.ClientCard c2 = field.getCard(c2c, c2l, c2s);
         field.addCard(c1c, c1l, c1s, c2);
         field.addCard(c2c, c2l, c2s, c1);
+        // 对齐 duelclient.cpp MSG_SWAP L3210-3215：互换后两本体及各自素材全部 MoveCard(10)
+        if (!isSkipping) {
+            if (c1 != null) field.moveCardAnimated(c1, 10);
+            if (c2 != null) field.moveCardAnimated(c2, 10);
+            field.moveOverlayMaterials(c1, 10);
+            field.moveOverlayMaterials(c2, 10);
+        } else {
+            if (c1 != null) field.setCardPos(c1);
+            if (c2 != null) field.setCardPos(c2);
+        }
         notifyField();
     }
     @Override public void onFieldDisabled(int disabledMask) {}

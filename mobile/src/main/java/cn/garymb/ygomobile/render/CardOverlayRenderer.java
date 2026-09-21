@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.render;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
@@ -38,6 +40,9 @@ final class CardOverlayRenderer {
     // 相对卡片(0.7×1.0)沿场地纵轴偏移 (atkdy/4+0.35)*卡高，指向敌方一侧，对方半场绕法线转 180°
     private static final float ATTACK_BOB_RAD_PER_MS = 0.006f;
     private static final float ATTACK_OFF_BASE = 0.35f;
+    // 战斗宣言阶段窗口（ocgcoreenums.DuelPhase）：BATTLE_START=0x08、BATTLE_STEP=0x10，
+    // 即回合玩家在造成伤害前可宣言攻击的阶段，用于对方可攻击怪兽的近似判定
+    private static final int BATTLE_DECLARE_MASK = 0x08 | 0x10;
     // ocgcore common.h：STATUS_DISABLED=0x1 STATUS_FORBIDDEN=0x4000000 LOCATION_ONFIELD=0xc POS_FACEUP=0x5
     private static final int STATUS_DISABLED = 0x0001;
     private static final int STATUS_FORBIDDEN = 0x4000000;
@@ -57,6 +62,21 @@ final class CardOverlayRenderer {
     private static final float ICON_Z_OFF = 0.03f;
     /** CardType.Pendulum 位（ocgcore.enums.CardType.Pendulum = 0x1000000） */
     private static final int TYPE_PENDULUM = 0x1000000;
+
+    // === 可发动/特殊召唤卡片右上角呼吸绿点（CmdMenuDialog「发动」/「特殊召唤」按钮的可视化提示）===
+    // 判据与 CmdMenuDialog.buildCardCommandMenu 完全一致：cmdFlag 含 COMMAND_ACTIVATE（发动，
+    // 由 CommandDataParser 在真实入列 activatableCards 时置位）或 COMMAND_SPSUMMON（特殊召唤，
+    // 仅 idle 阶段且入列 spsummonableCards 时置位）。绿点置于卡片自身朝向的右上角，
+    // alpha 随时间正弦呼吸。cmdFlag 仅下发给当前可操作的本地玩家，故不会在对方卡上误显。
+    private static final int COMMAND_ACTIVATE_OR_SPSUMMON =
+            GameEngine.COMMAND_ACTIVATE | GameEngine.COMMAND_SPSUMMON;
+    // 绿点尺寸：小圆点（程序化生成的圆点纹理），直径为固定世界尺寸，圆心正落在
+    // 卡片自身朝向的右上角直角点上（局部坐标 (0.5,0.5)），比旧版内缩的方块更靠右上角。
+    private static final long ACT_DOT_TEX_KEY = -57L;
+    private static final float ACT_DOT_DIAM = 0.055f;
+    private static final float ACT_DOT_LIFT = 0.02f;
+    private static final float ACT_DOT_BREATH_RAD_PER_MS = 0.006f;
+    private static final int ACT_DOT_COLOR = 0xFF26FF4D;
 
     // === 攻击宣言绿色弧形流动动画（materials.cpp GenArrow + drawing.cpp L1504-1513）===
     // 逐顶点 3D 位置 + RGBA 颜色，用透视 mVP 绘制一条从攻击者越过目标、拱起于场地上方的绿带，
@@ -92,6 +112,10 @@ final class CardOverlayRenderer {
     private FloatBuffer arrowBuf;
     // 攻击弧显示期间需隐藏的 tAttack(attack.png) 浮动箭头：即当前弧线起点攻击者
     private GameField.ClientCard hideAttackCard;
+
+    // 可发动绿点专用矩阵 scratch：buildCardModel 内部会占用 view.mModelTmp 作手卡 billboard 临时量，
+    // 不能把 mModelTmp 同时作为其 out，故本处用独立数组避免 multiplyMM 结果/源同数组的未定义行为。
+    private final float[] dotModel = new float[16];
 
     CardOverlayRenderer(GameFieldView view) {
         this.view = view;
@@ -136,13 +160,70 @@ final class CardOverlayRenderer {
             if (el >= 0 && el <= ATTACK_ARC_MS) hideAttackCard = f.arcAttacker;
         }
         boolean mr4 = f.dInfo.duelRule >= 4;
+        // 对方战斗阶段（攻击宣言窗口 BATTLE_START/BATTLE_STEP）：服务端不会把对方的 battle cmd
+        // 下发到本地（其 SELECT_BATTLE_CMD 只发给操作方），故对方怪兽 cmdFlag 恒为 0、无法走常规
+        // COMMAND_ATTACK 分支。此处以「对方回合 + 战斗宣言阶段 + 表侧攻击表示」近似判断其可攻击怪兽，
+        // 补绘与我方一致的 attack.png 浮动箭头。
+        boolean oppAttackHint = f.currentPlayer != 0
+                && (f.currentPhase & BATTLE_DECLARE_MASK) != 0;
         for (int p = 0; p < 2; p++) {
-            overlayCardList(f.players[p].monsterZone, mr4);
-            overlayCardList(f.players[p].spellZone, mr4);
+            overlayCardList(f.players[p].monsterZone, mr4, oppAttackHint);
+            overlayCardList(f.players[p].spellZone, mr4, oppAttackHint);
         }
     }
 
-    private void overlayCardList(List<GameField.ClientCard> list, boolean mr4) {
+    /**
+     * 可发动 / 特殊召唤卡片右上角的呼吸绿点：遍历双方手卡与场上（怪兽区/魔陷区），
+     * 对 cmdFlag 含 COMMAND_ACTIVATE|COMMAND_SPSUMMON（即点击会弹「发动」或「特殊召唤」按钮）
+     * 的卡片，在其自身朝向的右上角直角点上绘一枚随时间呼吸的绿色小圆点。
+     */
+    void drawActivatableDots(GameField f) {
+        if (f == null) return;
+        // 呼吸 alpha：0.55 + 0.45*sin(t)，animTimeMs 为毫秒时间戳，以 double 计相位避免 float 丢精度
+        float dy = (float) Math.sin((double) view.animTimeMs * ACT_DOT_BREATH_RAD_PER_MS);
+        float alpha = 0.55f + 0.45f * dy;
+        for (int p = 0; p < 2; p++) {
+            activatableDotList(f.players[p].hand, alpha);
+            activatableDotList(f.players[p].monsterZone, alpha);
+            activatableDotList(f.players[p].spellZone, alpha);
+        }
+    }
+
+    private void activatableDotList(List<GameField.ClientCard> list, float alpha) {
+        if (list == null) return;
+        try {
+            for (int i = 0, n = list.size(); i < n; i++) {
+                GameField.ClientCard c;
+                try {
+                    c = list.get(i);
+                } catch (Throwable e) {
+                    continue;
+                }
+                if (c == null || c.is_moving) continue;
+                if ((c.cmdFlag & COMMAND_ACTIVATE_OR_SPSUMMON) == 0) continue;
+                drawActivatableDot(c, alpha);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 单卡右上角呼吸绿点：复用 buildCardModel 得到卡片姿态（含手卡 billboard），
+     *  把一枚小圆点纹理的圆心平移到卡片局部右上角直角点 (0.5,0.5)；卡片局部空间非等比
+     *  （CARD_W×CARD_H），故按 1/CARD_W、1/CARD_H 反向缩放 x/y 使屏幕上呈正圆。 */
+    private void drawActivatableDot(GameField.ClientCard c, float alpha) {
+        int tex = obtainActivatableDotTexture();
+        if (tex <= 0) return;
+        final float[] m = dotModel;
+        view.buildCardModel(c, m);
+        // 圆心落在卡片右上角直角点（局部 (0.5,0.5)），沿局部 +z 抬升避免与卡面共面
+        float sx = ACT_DOT_DIAM / FieldGeometry.CARD_W;
+        float sy = ACT_DOT_DIAM / FieldGeometry.CARD_H;
+        Matrix.translateM(m, 0, 0.5f, 0.5f, ACT_DOT_LIFT);
+        Matrix.scaleM(m, 0, sx, sy, 1f);
+        view.drawQuadTex(m, tex, alpha);
+    }
+
+    private void overlayCardList(List<GameField.ClientCard> list, boolean mr4, boolean oppAttackHint) {
         if (list == null) return;
         try {
             for (int i = 0, n = list.size(); i < n; i++) {
@@ -153,13 +234,13 @@ final class CardOverlayRenderer {
                     continue;
                 }
                 if (c == null) continue;
-                overlayCardStatus(c, mr4);
+                overlayCardStatus(c, mr4, oppAttackHint);
             }
         } catch (Throwable ignored) {
         }
     }
 
-    private void overlayCardStatus(GameField.ClientCard c, boolean mr4) {
+    private void overlayCardStatus(GameField.ClientCard c, boolean mr4, boolean oppAttackHint) {
         if (c.is_moving) return;
         // z 层：装备/对象/连锁对象/无效图标在灵摆刻度图（lscale，curZ+0.02）上再高 0.01f
         if (c.is_showequip) {
@@ -180,8 +261,12 @@ final class CardOverlayRenderer {
             if (tex > 0) drawFieldIcon(c, tex, 1f, 1f, 0f, SCALE_Z_OFF);
         }
         // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）；
-        // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达
-        if ((c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0 && c != hideAttackCard) {
+        // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达。
+        // 我方：cmdFlag 含 COMMAND_ATTACK（由 battle cmd 精确置位）；
+        // 对方：战斗宣言阶段的表侧攻击表示怪兽，近似判断（收不到对方 battle cmd）。
+        boolean showAttack = (c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0
+                || (oppAttackHint && c.controler == 1 && c.isFaceUp() && c.isAttack());
+        if (showAttack && c != hideAttackCard) {
             drawAttackIcon(c);
         }
     }
@@ -437,6 +522,42 @@ final class CardOverlayRenderer {
             tex.cancelRequest(key);
         }
         return -1;
+    }
+
+    /**
+     * 可发动 / 特殊召唤卡片右上角呼吸绿点的圆点纹理：程序化绘一张带镖齿的纯绿色实心圆
+     *（透明背景）异步上传，RGB 烘入位图，呼吸 alpha 经 drawQuadTex 的 tint 控制。
+     */
+    private int obtainActivatableDotTexture() {
+        FieldTextureManager tex = view.tex;
+        Integer id = tex.texCache().get(ACT_DOT_TEX_KEY);
+        if (id != null) return id;
+        if (!tex.beginRequest(ACT_DOT_TEX_KEY)) return -1;
+        try {
+            tex.texExecutor().execute(() -> {
+                Bitmap b = makeCircleBitmap(64, ACT_DOT_COLOR);
+                if (b != null) tex.offerUpload(new FieldTextureManager.PendingUpload(ACT_DOT_TEX_KEY, b, true));
+                else tex.cancelRequest(ACT_DOT_TEX_KEY);
+            });
+        } catch (Throwable t) {
+            tex.cancelRequest(ACT_DOT_TEX_KEY);
+        }
+        return -1;
+    }
+
+    /** 生成 size×size 的 ARGB 实心圆位图（圆外透明、ANTI_ALIAS 镖齿），失败返回 null */
+    private static Bitmap makeCircleBitmap(int size, int color) {
+        try {
+            Bitmap b = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+            Canvas cv = new Canvas(b);
+            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+            p.setColor(color);
+            float r = size / 2f;
+            cv.drawCircle(r, r, r * 0.92f, p);
+            return b;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     /** number.png 连锁序号整图纹理（5 列网格，按 UV 子矩形取样） */

@@ -387,6 +387,31 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                     engine.field.moveCardAnimated(m, 10);
                 }
             }
+        } else if (newLoc == 0) {
+            // 离场消失（cl==0，duelclient.cpp MSG_MOVE L2973-2990）：先从区域移除，
+            // 清效果对象链接后淡出到 alpha 5（APPEAR_FRAME 帧），播完由 GameFieldMotion  purge；
+            // 旧实现直接丢弃卡片，场上/墓地卡片消失没有任何淡出过程
+            GameField.ClientCard card = engine.field.removeCard(oldCtrl, oldLoc, oldSeq);
+            if (card != null) {
+                if (code != 0 && card.code != code)
+                    card.code = code;
+                card.clearTarget();
+                card.is_hovered = false;
+                engine.field.fadeCard(card, 5, GameField.APPEAR_FRAME);
+                engine.field.fadingCards.add(card);
+            }
+        } else if (oldLoc == 0) {
+            // 登场出现（pl==0，duelclient.cpp MSG_MOVE L2959-2972）：新建卡片入区后先定位到
+            // 目标格，再从 alpha 5 淡入到 255（C++ GetCardLocation 置 curPos + FadeCard(255, appear)）；
+            // 旧实现虽新建但无淡入，卡片从全透明区直接以实色闪现
+            GameField.ClientCard card = new GameField.ClientCard();
+            card.owner = newCtrl;
+            card.code = code;
+            card.position = position;
+            engine.field.addCard(newCtrl, newLoc, newSeq, card);
+            engine.field.setCardPos(card);
+            card.curAlpha = 5;
+            engine.field.fadeCard(card, 255, GameField.APPEAR_FRAME);
         } else {
             GameField.ClientCard card = engine.field.getCard(oldCtrl, oldLoc, oldSeq);
             if (card == null) card = new GameField.ClientCard();
@@ -394,12 +419,17 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             card.position = position;
             engine.field.removeCard(oldCtrl, oldLoc, oldSeq);
             engine.field.addCard(newCtrl, newLoc, newSeq, card);
-            // 对齐 duelclient.cpp MSG_MOVE L3032-3046：带超量素材的怪兽移动到怪兽区时，
-            // 素材先同帧飞向新格下方重排（逐素材 MoveCard(10)），WaitFrameSignal(10) 素材
-            // 全部到位后本体才落上去（本体延迟 10 帧）——消除「素材盖在怪兽上面」的共面观感；
-            // 其余普通移动本体 10 帧（原 8 帧与 C++ 不符）。addCard 0x04 内的
-            // flushPendingOverlays 已把先到的待挂素材挂入 overlayed，此处一并跟动。
-            if (newLoc == CardLocation.MonsterZone.value() && !card.overlayed.isEmpty()) {
+            // 同区重排（duelclient.cpp MSG_MOVE L3022-3030：pl==cl && pc==cc && cl&0x71）：
+            // 先 5 帧每帧横移 ±0.3（对方手卡向右、我方向左抖开），再 5 帧回到新位置，
+            // 形成 gframe 标志性的抽卡/缩手抖动；animJitterX 驱动两阶段轨迹（合并 10 帧）。
+            // 带超量素材的怪兽移动到怪兽区时（L3032-3046），素材先同帧飞向新格下方重排
+            //（逐素材 MoveCard(10)），WaitFrameSignal(10) 素材全部到位后本体才落上去
+            //（本体延迟 10 帧）——消除「素材盖在怪兽上面」的共面观感；其余普通移动本体
+            // 10 帧。addCard 0x04 内的 flushPendingOverlays 已把先到的待挂素材挂入 overlayed，此处一并跟动。
+            if (oldLoc == newLoc && oldCtrl == newCtrl && (newLoc & 0x71) != 0) {
+                engine.field.moveCardAnimated(card, 10);
+                card.animJitterX = oldCtrl == 1 ? 0.3f : -0.3f;
+            } else if (newLoc == CardLocation.MonsterZone.value() && !card.overlayed.isEmpty()) {
                 engine.field.moveOverlayMaterials(card, 10);
                 engine.field.moveCardAnimated(card, 10, 10);
             } else {
@@ -412,9 +442,13 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             engine.field.updateHandLayout(0, 10);
             engine.field.updateHandLayout(1, 10);
         }
-        if (newLoc == CardLocation.Removed.value()) {
+        // 音效对齐 duelclient.cpp MSG_MOVE L2952-2957：仅在真正发生移动（pl!=cl）时，
+        // 除外到 REMOVED 播 BANISHED、因效果破坏（REASON_DESTROY）到墓地播 DESTROYED；
+        // 召唤特召上新怪兽区才播 SUMMON（旧实现任意入墓都播破坏音）
+        if (newLoc != oldLoc && (newLoc & CardLocation.Removed.value()) != 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
-        } else if (newLoc == CardLocation.Grave.value()) {
+        } else if (newLoc != oldLoc && (reason & 0x2) != 0
+                && (newLoc & CardLocation.Grave.value()) != 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);
         } else if (newLoc == CardLocation.MonsterZone.value() && oldLoc == 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
@@ -613,11 +647,11 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onDraw(int player, int count, int[] codes) {
-        // duelclient.cpp MSG_DRAW L3519-3547
+        // duelclient.cpp MSG_DRAW L3519-3557
         final int p = engine.localPlayer(player);
-        int deckLoc = CardLocation.Deck.value();
-        int handLoc = CardLocation.Hand.value();
-        // 1) 给被抽的卡组顶设卡码
+        final int deckLoc = CardLocation.Deck.value();
+        final int handLoc = CardLocation.Hand.value();
+        // 1) 给被抽的卡组顶设卡码（对齐 L3529-3534：deck_reversed 且 code=0 时不揭码）
         int top = engine.field.getCardCount(p, deckLoc) - 1;
         for (int i = 0; i < count; i++) {
             GameField.ClientCard pcard = engine.field.getCard(p, deckLoc, top - i);
@@ -625,32 +659,48 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                 pcard.setCode(codes[i] & 0x7fffffff);
             }
         }
-        // 2) 逐张从卡组顶移除 → 加入手卡 → 全部手卡重新布局（MoveCard 10 帧）；
-        //    addCard 对 HAND 不设位置，抽出的卡保留卡组 curX → 天然形成「从卡组飞入手卡」
-        //    的展示动画；每张延迟 i*5 帧（对齐 MSG_DRAW L3542-3552 逐张 WaitFrameSignal(5)）
+        // 2) 起手 N 张 / 单独抽卡动画：严格对齐 C++ L3542-3552 的逐张时序——每次从卡组顶取一张、
+        //    入手卡、让该手卡从卡组顶飞入并顺带把已在手中的卡重排让位，随后 WaitFrameSignal(5)
+        //    再抽下一张。旧实现在同一同步循环里对每张重复 moveCardAnimated 并覆盖 animDelayFrame，
+        //    令所有卡同时起步、抽卡逐张感被抹平（即“缺少抽卡动画”的根因）。这里把每张卡的入手
+        //    按 5 帧节拍用 postDelayed 依次排布，主线程逐帧渲染即可看到一张张抽入的动画。
+        final long stepMs = 5L * 17L;
         for (int i = 0; i < count; i++) {
-            int t = engine.field.getCardCount(p, deckLoc) - 1;
-            GameField.ClientCard pcard = engine.field.removeCard(p, deckLoc, t);
-            if (pcard == null) {
-                pcard = new GameField.ClientCard();
-                pcard.owner = p;
-                pcard.controler = p;
-                if (i < codes.length) pcard.setCode(codes[i] & 0x7fffffff);
-            }
-            engine.field.addCard(p, handLoc, 0, pcard);
-            for (GameField.ClientCard hc : engine.field.players[p].hand) {
-                if (hc != null) engine.field.moveCardAnimated(hc, 10, i * 5);
-            }
+            final int idx = i;
+            engine.mainHandler.postDelayed(() -> drawOneCard(p, deckLoc, handLoc, codes, idx), idx * stepMs);
         }
-        engine.soundManager.playSoundEffect(SoundManager.SFX.DRAW);
         engine.hintManager.setEventString(p == 0 ? 1611 : 1612, p == 0 ? "我方抽了%d张卡" : "对方抽了%d张卡", count);
-        // 抽卡展示动画持闸：最后一张延迟 (count-1)*5 帧 + 10 帧飞行 + 尾帧余量
+        // 抽卡展示动画持闸：最后一张延迟 (count-1)*5 帧启动 + 10 帧飞行 + 尾帧余量
         engine.animHoldUntilMs = System.currentTimeMillis() + ((count - 1) * 5L + 15L) * 17L;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {
                 engine.listener.onFieldChanged();
                 engine.listener.onPlayerInfoUpdated(p);
             }
+        });
+    }
+
+    /**
+     * 单张抽卡（onDraw 按 5 帧节拍调度调用，对齐 duelclient.cpp MSG_DRAW 循环体 L3543-3550）：
+     * 从卡组顶移除 → 加入手卡 → 该卡从卡组位飞入 + 已有手卡重排让位（10 帧）→ 播放抽卡音效。
+     */
+    private void drawOneCard(int p, int deckLoc, int handLoc, int[] codes, int idx) {
+        int t = engine.field.getCardCount(p, deckLoc) - 1;
+        if (t < 0) return;
+        GameField.ClientCard pcard = engine.field.removeCard(p, deckLoc, t);
+        if (pcard == null) {
+            pcard = new GameField.ClientCard();
+            pcard.owner = p;
+            pcard.controler = p;
+            if (idx < codes.length) pcard.setCode(codes[idx] & 0x7fffffff);
+        }
+        engine.field.addCard(p, handLoc, 0, pcard);
+        for (GameField.ClientCard hc : engine.field.players[p].hand) {
+            if (hc != null) engine.field.moveCardAnimated(hc, 10);
+        }
+        engine.soundManager.playSoundEffect(SoundManager.SFX.DRAW);
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onFieldChanged();
         });
     }
 
