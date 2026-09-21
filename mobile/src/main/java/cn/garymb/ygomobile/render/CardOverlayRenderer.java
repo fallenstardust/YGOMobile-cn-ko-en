@@ -149,8 +149,10 @@ final class CardOverlayRenderer {
 
     /**
      * 场上卡片正上方的状态叠加图标（对齐 drawing.cpp DrawCard L653-719）。
-     * 装备/对象/连锁对象/效果无效按 C++ 严格 else-if 优先级，灵摆规则>=4 最左/最右魔陷区
-     * 的灵摆卡整卡叠加 lscale/rscale 刻度图片。仅遍历怪兽区/魔陷区（场上卡）。
+     * 装备/对象/连锁对象/效果无效按 C++ 严格 else-if 优先级。灵摆刻度改由
+     * {@link FieldHudRenderer} 以文字绘制在卡片矩形屏幕外侧顶角（不再整卡叠加
+     * lscale/rscale 贴图），MR3 额外灵摆区 seq6/7 已在纹理侧烘焙刻度保持原样。
+     * 仅遍历怪兽区/魔陷区（场上卡）。
      */
     void drawFieldCardOverlays(GameField f) {
         if (f == null) return;
@@ -182,21 +184,23 @@ final class CardOverlayRenderer {
     /**
      * 可发动 / 特殊召唤卡片右上角的呼吸绿点：遍历双方手卡与场上（怪兽区/魔陷区），
      * 对 cmdFlag 含 COMMAND_ACTIVATE|COMMAND_SPSUMMON（即点击会弹「发动」或「特殊召唤」按钮）
-     * 的卡片，在其自身朝向的右上角直角点上绘一枚随时间呼吸的绿色小圆点。
+     * 的卡片，在其屏幕右上顶点直角点上绘一枚随时间呼吸的绿色小圆点（灵摆带屏幕右侧卡除外）。
      */
     void drawActivatableDots(GameField f) {
         if (f == null) return;
         // 呼吸 alpha：0.55 + 0.45*sin(t)，animTimeMs 为毫秒时间戳，以 double 计相位避免 float 丢精度
         float dy = (float) Math.sin((double) view.animTimeMs * ACT_DOT_BREATH_RAD_PER_MS);
         float alpha = 0.55f + 0.45f * dy;
+        boolean mr4 = f.dInfo.duelRule >= 4;
         for (int p = 0; p < 2; p++) {
-            activatableDotList(f.players[p].hand, alpha);
-            activatableDotList(f.players[p].monsterZone, alpha);
-            activatableDotList(f.players[p].spellZone, alpha);
+            activatableDotList(f.players[p].hand, alpha, false, mr4);
+            activatableDotList(f.players[p].monsterZone, alpha, false, mr4);
+            activatableDotList(f.players[p].spellZone, alpha, true, mr4);
         }
     }
 
-    private void activatableDotList(List<GameField.ClientCard> list, float alpha) {
+    private void activatableDotList(List<GameField.ClientCard> list, float alpha,
+                                    boolean spellZone, boolean mr4) {
         if (list == null) return;
         try {
             for (int i = 0, n = list.size(); i < n; i++) {
@@ -208,25 +212,63 @@ final class CardOverlayRenderer {
                 }
                 if (c == null || c.is_moving) continue;
                 if ((c.cmdFlag & COMMAND_ACTIVATE_OR_SPSUMMON) == 0) continue;
-                drawActivatableDot(c, alpha);
+                drawActivatableDot(c, alpha, spellZone, mr4);
             }
         } catch (Throwable ignored) {
         }
     }
 
     /** 单卡右上角呼吸绿点：复用 buildCardModel 得到卡片姿态（含手卡 billboard），
-     *  把一枚小圆点纹理的圆心平移到卡片局部右上角直角点 (0.5,0.5)；卡片局部空间非等比
-     *  （CARD_W×CARD_H），故按 1/CARD_W、1/CARD_H 反向缩放 x/y 使屏幕上呈正圆。 */
-    private void drawActivatableDot(GameField.ClientCard c, float alpha) {
+     *  把一枚小圆点纹理的圆心平移到卡片矩形的「屏幕右上顶点」直角点上；
+     *  灵摆魔陷带屏幕右侧的卡为例外（刻度文字占右上顶点），绿点移到屏幕左上顶点。
+     *  卡片局部空间非等比（CARD_W×CARD_H），按 1/CARD_W、1/CARD_H 反向缩放 x/y 使屏幕上呈正圆；
+     *  抬升沿世界 +z（相机恒在上方）而非卡片局部 +z，保证盖放/竖立卡不被卡面遮挡。 */
+    private void drawActivatableDot(GameField.ClientCard c, float alpha,
+                                    boolean spellZone, boolean mr4) {
         int tex = obtainActivatableDotTexture();
         if (tex <= 0) return;
         final float[] m = dotModel;
         view.buildCardModel(c, m);
-        // 圆心落在卡片右上角直角点（局部 (0.5,0.5)），沿局部 +z 抬升避免与卡面共面
+        // 屏幕右上角：绘制空间经 mirrorX 后 +x=屏幕左、−y=屏幕上（+y 靠相机），故取
+        // 世界 y 最小（屏幕顶）的角、其中世界 x 最小（屏幕右）者为屏幕右上顶点；
+        // 需同时计入绕 Z 旋转（对方 180°、守备 ±90°）与绕 X 翻面（盖放卡 cos(rotX)<0
+        // 时局部 y 在世界 y 上取反），否则同一局部角会落到屏幕左下/右下。
+        // 灵摆带例外：魔陷区表侧灵摆卡且卡片中心落在屏幕右侧（mirrorX(curX)<中轴），
+        // 右上顶点让位给刻度文字，绿点改贴左上顶点（屏幕顶角中取世界 x 最大）。
+        boolean pendulumRight = false;
+        if (spellZone && c.location == 0x08 && (c.type & TYPE_PENDULUM) != 0 && c.isFaceUp()) {
+            boolean strip = mr4 ? (c.sequence == 0 || c.sequence == 4)
+                    : (c.sequence == 6 || c.sequence == 7);
+            pendulumRight = strip && FieldGeometry.mirrorX(c.curX) < FieldGeometry.FIELD_CENTER_X;
+        }
+        float cornerX = 0.5f, cornerY = 0.5f;
+        if (c.location != 0x02) {
+            float a = -c.curRotZ; // buildCardModel 实际绕 Z 旋转角为 -curRotZ
+            float ca = (float) Math.cos(a), sa = (float) Math.sin(a);
+            float cx = (float) Math.cos(c.curRotX); // 绕 X 翻面：盖放时局部 y 在世界 y 上取反
+            float bestX = Float.POSITIVE_INFINITY, bestY = Float.POSITIVE_INFINITY;
+            for (int q = 0; q < 4; q++) {
+                float lx = ((q & 1) == 0 ? -0.5f : 0.5f) * FieldGeometry.CARD_W;
+                float ly = ((q & 2) == 0 ? -0.5f : 0.5f) * FieldGeometry.CARD_H;
+                float lyw = ly * cx;
+                float wx = ca * lx - sa * lyw;
+                float wy = sa * lx + ca * lyw;
+                boolean better = wy < bestY - 1e-6f
+                        || (Math.abs(wy - bestY) <= 1e-6f
+                        && (pendulumRight ? wx > bestX : wx < bestX));
+                if (better) {
+                    bestX = wx;
+                    bestY = wy;
+                    cornerX = lx / FieldGeometry.CARD_W;
+                    cornerY = ly / FieldGeometry.CARD_H;
+                }
+            }
+        }
         float sx = ACT_DOT_DIAM / FieldGeometry.CARD_W;
         float sy = ACT_DOT_DIAM / FieldGeometry.CARD_H;
-        Matrix.translateM(m, 0, 0.5f, 0.5f, ACT_DOT_LIFT);
+        Matrix.translateM(m, 0, cornerX, cornerY, 0f);
         Matrix.scaleM(m, 0, sx, sy, 1f);
+        m[14] += ACT_DOT_LIFT; // 平移分量已含卡片姿态，直接沿世界 +z 抬升恒朝向相机一侧
         view.drawQuadTex(m, tex, alpha);
     }
 
@@ -261,12 +303,8 @@ final class CardOverlayRenderer {
             drawFieldIcon(c, obtainIconTexture(NEGATED_TEX_KEY, IC_NEGATED),
                     NEGATE_W_FRAC, NEGATE_H_FRAC, NEGATE_Y_OFF_FRAC * FieldGeometry.CARD_H, ICON_Z_OFF);
         }
-        if (mr4 && (c.type & TYPE_PENDULUM) != 0 && (c.location & 0x08) != 0
-                && c.isFaceUp() && (c.sequence == 0 || c.sequence == 4)) {
-            boolean left = c.sequence == 0;
-            int tex = obtainScaleIcon(left, clampScale(left ? c.lScale : c.rScale));
-            if (tex > 0) drawFieldIcon(c, tex, 1f, 1f, 0f, SCALE_Z_OFF);
-        }
+        // 灵摆刻度：MR4 由 FieldHudRenderer 以文字绘制在卡片矩形屏幕外侧顶角，此处不再叠加贴图
+        // （对齐 drawing.cpp L695-719 的语义，仅呈现形式由 tLScale/tRScale 贴图改为刻度数字文本）
         // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）；
         // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达；
         // 已选定为攻击目标的对方怪兽（hideAttackTarget）同样不再显示——箭头只标记攻击手。

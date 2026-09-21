@@ -38,8 +38,9 @@ final class FieldBoardRenderer {
         int code1 = fieldSpellCode(f, 0);
         int code2 = fieldSpellCode(f, 1);
         boolean transparent = code1 > 0 || code2 > 0;
-        // 场地魔法背景图先于底板绘制（z=-0.01 底板之下），对齐 drawing.cpp DrawBackGround
-        if (transparent) drawFieldSpellArt(code1, code2);
+        // 场地魔法背景图先于底板绘制（z=-0.01 底板之下），对齐 drawing.cpp DrawBackGround；
+        // 矩形尺寸随格子布局动态取双方魔法陷阱区包围盒（格子已调整，不再用旧常量）
+        if (transparent) drawFieldSpellArt(code1, code2, rule == 1);
         int tex = view.tex.obtainFieldTexture(rule, transparent);
         // 因魔陷行新增纵向缝隙、卡区整体更外扩，场地底板贴图矩形随之稍微外扩（中心不变、四边各向外
         // 放大 BOARD_MARGIN），使卡片区仍完整落在底板内；底板网格与格子的错位已在需求中明确忽略。
@@ -74,23 +75,46 @@ final class FieldBoardRenderer {
     }
 
     /**
-     * 场地魔法背景图（image_manager.cpp GetTextureField + materials.cpp vFieldSpell*）：
-     * 单方/双方同码 → 整幅 vFieldSpell；双方异码 → 各画半幅（vFieldSpell1/2 的 uv 子矩形）
+     * 双方魔法陷阱区（seq0-5，MR3 另含额外灵摆格 seq6/7；场地区 seq5 按 PILE 尺寸参与包围盒）
+     * 的 raw 坐标包围盒 {xMin, xMax, yMin, yMax}：场地魔法背景图横纵范围与本方格子行完全对齐
      */
-    private void drawFieldSpellArt(int code1, int code2) {
-        float x0 = FieldGeometry.fx(GameField.FIELD_SPELL_X_MIN);
-        float x1 = FieldGeometry.fx(GameField.FIELD_SPELL_X_MAX);
-        float w = x1 - x0;
-        float cx = FieldGeometry.mirrorX((x0 + x1) / 2f);
+    private static float[] szoneBounds(boolean mr4) {
+        float xMin = Float.MAX_VALUE, xMax = -Float.MAX_VALUE;
+        float yMin = Float.MAX_VALUE, yMax = -Float.MAX_VALUE;
+        for (int p = 0; p < 2; p++) {
+            int maxSeq = mr4 ? 5 : 7;
+            for (int s = 0; s <= maxSeq; s++) {
+                float[] r = GameField.getZoneRect(p, 0x08, s);
+                if (r == null) continue;
+                xMin = Math.min(xMin, r[0] - r[2] / 2f);
+                xMax = Math.max(xMax, r[0] + r[2] / 2f);
+                yMin = Math.min(yMin, r[1] - r[3] / 2f);
+                yMax = Math.max(yMax, r[1] + r[3] / 2f);
+            }
+        }
+        if (xMin > xMax) return null;
+        return new float[]{xMin, xMax, yMin, yMax};
+    }
+
+    /**
+     * 场地魔法背景图（image_manager.cpp GetTextureField + materials.cpp vFieldSpell*）：
+     * 单方/双方同码 → 整幅 vFieldSpell；双方异码 → 各画半幅（图上半给我方 +y 侧、下半给
+     * 对方 −y 侧，v=1 对应 +y）；矩形取 {@link #szoneBounds} 双方魔陷区包围盒
+     */
+    private void drawFieldSpellArt(int code1, int code2, boolean mr4) {
+        float[] b = szoneBounds(mr4);
+        if (b == null) return;
+        float w = b[1] - b[0];
+        float cx = FieldGeometry.mirrorX((b[0] + b[1]) / 2f);
         if (code1 > 0 && code2 > 0 && code1 != code2) {
+            float midY = (b[2] + b[3]) / 2f;
             drawFieldSpellRect(view.tex.obtainFieldSpellTexture(code1),
-                    0.8f, 3.2f, 1f, 0.2f, 0.8f, 0.63636f, 0.36364f, cx, w);
+                    midY, b[3], 1f, 0f, 1f, 0.5f, 0.5f, cx, w);
             drawFieldSpellRect(view.tex.obtainFieldSpellTexture(code2),
-                    -3.2f, -0.8f, 1f, 1f, -0.36364f, 0.63636f, -0.43636f, cx, w);
+                    b[2], midY, 1f, 1f, -1f, 0.5f, -0.5f, cx, w);
         } else {
             drawFieldSpellRect(view.tex.obtainFieldSpellTexture(code1 > 0 ? code1 : code2),
-                    GameField.FIELD_SPELL_Y_MIN, GameField.FIELD_SPELL_Y_MAX,
-                    1f, 0f, 1f, 0f, 1f, cx, w);
+                    b[2], b[3], 1f, 0f, 1f, 0f, 1f, cx, w);
         }
     }
 
@@ -142,6 +166,51 @@ final class FieldBoardRenderer {
                         FieldGeometry.PILE_W, FieldGeometry.PILE_H, 0f, 0.78f, 0.94f, pulse);
             }
         }
+    }
+
+    /**
+     * 不可用格子对角交叉线（对齐 drawing.cpp L424-455 「disabled field」分支：mBackLine 材质下
+     * 对 dField.disabled_field 逐位画两条白色 draw3DLine 对角线 v[0]↔v[3]、v[1]↔v[2]）。
+     * 位布局同 duelclient.cpp MSG_FIELD_DISABLED：p0 mzone bits0-6、p0 szone bits8-15、
+     * p1 mzone bits16-22、p1 szone bits24-31；MSG_SWAP 时高低 16 位已由 GameFieldCards.swapField 换位。
+     * z=0.006：高于格子槽(0.004)/底板、低于 SZONE 卡(0.01)，被放下的卡自然盖住。
+     */
+    void drawDisabledZones(GameField f) {
+        if (f == null || f.disabledField == 0) return;
+        long mask = f.disabledField;
+        for (int p = 0; p < 2; p++) {
+            int base = p == 0 ? 0 : 16;
+            int mzoneMax = (f.dInfo.duelRule >= 4) ? 7 : 5;
+            for (int i = 0; i < mzoneMax; i++) {
+                if ((mask & (1L << (base + i))) != 0) drawZoneCross(p, 0x04, i);
+            }
+            for (int i = 0; i < 8; i++) {
+                if ((mask & (1L << (base + 8 + i))) != 0) drawZoneCross(p, 0x08, i);
+            }
+        }
+    }
+
+    /** 单格两条对角线：四角 (±w/2, ±h/2)，角序与 C++ v[i][0..3] 一致（mirrorX 不改变对角拓扑） */
+    private void drawZoneCross(int player, int loc, int seq) {
+        float[] r = GameField.getZoneRect(player, loc, seq);
+        if (r == null) return;
+        float cx = FieldGeometry.mirrorX(r[0]), cy = r[1];
+        float hw = r[2] / 2f, hh = r[3] / 2f;
+        drawDiag(cx - hw, cy - hh, cx + hw, cy + hh);
+        drawDiag(cx - hw, cy + hh, cx + hw, cy - hh);
+    }
+
+    /** 世界 XY 平面内一条粗对角线 quad：平移到中点 → 绕 Z 旋转对齐 → 缩放至长×线宽 */
+    private void drawDiag(float x0, float y0, float x1, float y1) {
+        float dx = x1 - x0, dy = y1 - y0;
+        float len = (float) Math.hypot(dx, dy);
+        if (len < 1e-4f) return;
+        float thick = len * 0.045f;
+        Matrix.setIdentityM(view.mModel, 0);
+        Matrix.translateM(view.mModel, 0, (x0 + x1) / 2f, (y0 + y1) / 2f, 0.006f);
+        Matrix.rotateM(view.mModel, 0, (float) Math.toDegrees(Math.atan2(dy, dx)), 0f, 0f, 1f);
+        Matrix.scaleM(view.mModel, 0, len, thick, 1f);
+        view.drawQuadColor(view.mModel, 1f, 1f, 1f, 0.85f);
     }
 
     private static float[] totalAtkRect(int p, boolean mr4) {

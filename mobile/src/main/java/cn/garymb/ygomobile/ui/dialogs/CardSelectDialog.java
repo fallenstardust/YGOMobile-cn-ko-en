@@ -854,6 +854,12 @@ public class CardSelectDialog {
                     break;
             }
             try {
+                // 默认居中于 layout_game_right 区域而非整个窗口（与 YesOrNoDialog 同模式，
+                // 拖拽保存过位置时 showPopup 走 NO_GRAVITY 绝对坐标，不受此 margin 影响）
+                if (context instanceof android.app.Activity) {
+                    View region = ((android.app.Activity) context).findViewById(R.id.layout_game_right);
+                    DraggablePopupHelper.centerPopupInRegion(popupWindow, region);
+                }
                 if (draggableHelper != null) {
                     draggableHelper.showPopup(popupWindow, anchor);
                 } else {

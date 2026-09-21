@@ -215,6 +215,10 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         // 下一阶段按钮 BP 依通讯可用性(MSG_SELECT_IDLECMD btnBP)显示——
         // 先攻第一回合服务器不下发 btnBP，故此时不显示 BP
         phaseBar.setNextPhaseButton(engine.showBP ? "BP" : "");
+        // 洗切手卡按钮（对齐 duelclient.cpp MSG_SELECT_IDLECMD L1859-1865）：
+        // 通讯 show_shuffle 允许时显示，每次主阶命令重新评估
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        if (panel != null) panel.updateShuffleButton(engine.showShuffle);
         // 通讯（MSG_SELECT_IDLE_CMD）允许进入结束阶段
         phaseBar.setEpButtonAllowed(true);
         showHint("点击手牌或场上卡片进行操作", 2500);
@@ -229,6 +233,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
         // 下一阶段按钮 M2 依通讯可用性(MSG_SELECT_BATTLECMD btnM2)显示
         phaseBar.setNextPhaseButton(engine.showM2 ? "M2" : "");
+        // 战斗命令无洗切手卡（gframe 仅 IDLECMD 置可见），离开主阶即隐藏
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        if (panel != null) panel.updateShuffleButton(false);
         // 通讯（MSG_SELECT_BATTLE_CMD）允许进入结束阶段
         phaseBar.setEpButtonAllowed(true);
         showHint("点击卡片进行攻击或发动", 2500);

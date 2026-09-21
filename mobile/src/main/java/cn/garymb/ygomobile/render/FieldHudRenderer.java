@@ -56,7 +56,8 @@ final class FieldHudRenderer {
 
     /**
      * 屏幕像素正交空间绘制区域堆叠数量与总攻击力数字，天然垂直于观看视线（与阶段按钮同方案）。
-     * 区域数字贴在卡组/额外/墓地/除外格子「靠近摄像头的底边」（+y 侧缘）外侧；总攻击力数字叠在 bar 中心。
+     * 区域数字贴在本堆格子「靠近摄像头的底边」(+y 侧缘)内侧近端（原贴外缘外侧，
+     * 会压到邻区堆叠上导致归属看错）；总攻击力数字叠在 bar 中心。
      */
     void drawFieldNumbers(GameField f) {
         int w = view.viewW, h = view.viewH;
@@ -76,7 +77,9 @@ final class FieldHudRenderer {
                 if (top == null || bot == null) continue;
                 float pilePx = Math.abs(top[1] - bot[1]);
                 float hpx = Math.max(10f, Math.min(40f, pilePx * 0.30f));
-                float[] anchor = view.projectWorldPoint(FieldGeometry.mirrorX(r[0]), nearY + 0.14f, 0.02f);
+                // 锚点从近端外侧 0.14 改为贴进本堆近端内侧 0.05：数字紧跟自己的堆叠，
+                // 不再压向场地中心方向相邻堆的上缘造成视觉误判
+                float[] anchor = view.projectWorldPoint(FieldGeometry.mirrorX(r[0]), nearY - 0.05f, 0.02f);
                 drawScreenNumber(anchor, pileCountLabel(f, p, loc, cnt), 0xFFFFFF00, hpx);
             }
         }
@@ -141,8 +144,9 @@ final class FieldHudRenderer {
      * 场上卡片数值文字（正交 HUD 通道，关深度测试，与 drawFieldNumbers 同一套投影）：
      * - 表侧怪兽：攻击表示 → 左下攻击力/右下守备力；守备表示 → 左下守备力/右下攻击力；
      *   连接怪兽 → 左下攻击力/右下 link 值（连接怪兽 defString 已为 "-"）。
-     * - 灵摆刻度：rule>=4 时魔陷区最左(seq0)左上角显示左刻度、最右(seq4)右上角显示右刻度；
-     *   rule<4 时用 seq6/seq7（对齐 drawing.cpp DrawCard 的灵摆刻度分支）。
+     * - 灵摆刻度：文字贴卡片矩形「屏幕外侧顶角顶点」——屏幕左侧卡左上角(左对齐)、
+     *   屏幕右侧卡右上角(右对齐)；rule>=4 用 seq0/seq4，rule<4 用 seq6/seq7（MR3 刻度已烘焙
+     *   进卡图纹理，此处仅补文字定位分支）。
      * 移动中的卡片跳过（对齐 DrawCard is_moving 提前返回），字号随格子投影像素高度自适应。
      */
     void drawFieldCardTexts(GameField f) {
@@ -181,7 +185,13 @@ final class FieldHudRenderer {
         float[] farR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy - hy, 0.02f);
         float[] center = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy, 0.02f);
         if (nearL == null || nearR == null || farL == null || farR == null || center == null) return;
-        float cardHpx = Math.abs(center[1] - nearL[1]) * 2f;
+        // 字号基准：恒按攻击表示的 CARD_H 竖向投影测量——守备表示卡片 hx/hy 对调（长轴
+        // 变横向），若继续用 footprint 的 nearL 量高则基于 CARD_W，守备的 ATK/DEF 与等级
+        // 文字会明显小于攻击表示；文字位置仍锚定旋转后矩形的当前四角（下方 near/far）
+        float[] hTop = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy - FieldGeometry.CARD_H * 0.5f, 0.02f);
+        float[] hBot = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy + FieldGeometry.CARD_H * 0.5f, 0.02f);
+        if (hTop == null || hBot == null) return;
+        float cardHpx = Math.abs(hBot[1] - hTop[1]);
         float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f)) * STAT_SIZE_SCALE;
         boolean ours = (p == 0);
 
@@ -193,15 +203,19 @@ final class FieldHudRenderer {
         float edgeY = (eL[1] + eR[1]) / 2f;
         String[] parts;
         int[] colors;
+        boolean[] boldFlags;
         if (c.isLink()) {
             parts = new String[]{nz(c.atkString), "/", nz(c.linkString)};
             colors = new int[]{statValueColor(c.attack, c.baseAttack), 0xFFFFFFFF, 0xFF99FFFF};
+            boldFlags = new boolean[]{true, false, false};
         } else {
             parts = new String[]{nz(c.atkString), "/", nz(c.defString)};
             colors = new int[]{statValueColor(c.attack, c.baseAttack), 0xFFFFFFFF,
                     statValueColor(c.defense, c.baseDefense)};
+            boldFlags = defense ? new boolean[]{false, false, true}
+                               : new boolean[]{true, false, false};
         }
-        drawScreenText(edgeX, edgeY, parts, colors, hpx);
+        drawScreenText(edgeX, edgeY, parts, colors, boldFlags, hpx);
 
         // 等级(L*/调律黄/阶级攻瑰红)置于卡片矩形「左上角」，左对齐并略压入卡内（贴近顶边）。
         // 我方顶边=屏幕上缘(far)，对方卡旋转 180° 其顶边=屏幕下缘(near)。
@@ -217,6 +231,10 @@ final class FieldHudRenderer {
         }
     }
 
+    /** 灵摆刻度数字：贴卡片矩形屏幕外侧顶角顶点（左侧卡=左上角、右侧卡=右上角），
+     *  与 {@link CardOverlayRenderer} 绿点角位互补（右侧卡绿点让位到左上角）。
+     *  屏幕侧按格子中心 mirrorX 后与场地中轴比较；守备表示卡片足迹 hx/hy 对调；
+     *  字号与攻守文字同源（CARD_H 竖向投影，不受守备旋转影响） */
     private void drawPendulumScaleText(GameField f, int p, int seq, boolean leftScale) {
         GameField.ClientCard c;
         try { c = f.players[p].spellZone.get(seq); } catch (Throwable e) { return; }
@@ -228,28 +246,29 @@ final class FieldHudRenderer {
         float[] r = GameField.getZoneRect(p, 0x08, seq);
         if (r == null) return;
         float cx = r[0], cy = r[1];
-        // 灵摆刻度锚到卡片矩形左上/右上角（非格子矩形），按卡片足迹取半宽半高
-        float hx = FieldGeometry.CARD_W * 0.5f, hy = FieldGeometry.CARD_H * 0.5f;
-        float[] nearL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy + hy, 0.02f);
-        float[] nearR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy + hy, 0.02f);
-        float[] farL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy - hy, 0.02f);
-        float[] farR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy - hy, 0.02f);
-        float[] center = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy, 0.02f);
-        if (nearL == null || nearR == null || farL == null || farR == null || center == null) return;
-        float cardHpx = Math.abs(center[1] - nearL[1]) * 2f;
+        // 锚到卡片矩形而非更大的格子矩形；守备表示绕 Z 转 90°，世界 X/Y 半 extent 对调
+        boolean defense = (c.position & GameField.POS_DEFENSE) != 0;
+        float hx = (defense ? FieldGeometry.CARD_H : FieldGeometry.CARD_W) * 0.5f;
+        float hy = (defense ? FieldGeometry.CARD_W : FieldGeometry.CARD_H) * 0.5f;
+        // 屏幕顶边恒为远端（−y 侧，远离相机）；绘制空间 +x=屏幕左、−x=屏幕右
+        float[] screenTopRight = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy - hy, 0.02f);
+        float[] screenTopLeft = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy - hy, 0.02f);
+        if (screenTopRight == null || screenTopLeft == null) return;
+        // 字号基准：恒按 CARD_H 竖向投影测量（与 drawMonsterStatTexts 同源），
+        // 守备表示下不自适应 footprint，避免刻度文字大小随表示变化
+        float[] hTop = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy - FieldGeometry.CARD_H * 0.5f, 0.02f);
+        float[] hBot = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy + FieldGeometry.CARD_H * 0.5f, 0.02f);
+        if (hTop == null || hBot == null) return;
+        float cardHpx = Math.abs(hBot[1] - hTop[1]);
         float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f));
-        boolean ours = (p == 0);
-        // 顶边：我方屏幕上缘(far)、对方旋转 180° 后顶边=屏幕下缘(near)
-        float[] topL = ours ? farL : nearL;
-        float[] topR = ours ? farR : nearR;
-        // 左刻度→卡片矩形左上角(左对齐)、右刻度→右上角(右对齐)，向卡内压入 hpx*0.4
-        float[] corner = leftScale
-                ? (topL[0] <= topR[0] ? topL : topR)
-                : (topL[0] <= topR[0] ? topR : topL);
-        float ty = corner[1] + (float) Math.signum(center[1] - corner[1]) * (hpx * 0.4f);
-        int align = leftScale ? ALIGN_LEFT : ALIGN_RIGHT;
+        // 屏幕侧：格子中心 mirrorX 后 > 中轴 = 屏幕左（我方 seq0/5、对方 seq6/7 带），
+        // < 中轴 = 屏幕右（我方 seq6/7 带、对方 seq0/5）；左侧卡贴左上角顶点左对齐、
+        // 右侧卡贴右上角顶点右对齐，不压入（文字竖中心坐在顶点线上）
+        boolean screenLeft = FieldGeometry.mirrorX(cx) > FieldGeometry.FIELD_CENTER_X;
+        float[] corner = screenLeft ? screenTopLeft : screenTopRight;
+        int align = screenLeft ? ALIGN_LEFT : ALIGN_RIGHT;
         // 刻度白色（对齐 drawing.cpp 灵摆刻度 0xffffffff）
-        drawScreenTextAligned(corner[0], ty, new String[]{txt}, new int[]{0xFFFFFFFF}, hpx, align);
+        drawScreenTextAligned(corner[0], corner[1], new String[]{txt}, new int[]{0xFFFFFFFF}, hpx, align);
     }
 
     private void drawScreenNumber(float[] screenXY, String text, int color, float heightPx) {
@@ -299,25 +318,36 @@ final class FieldHudRenderer {
     }
 
     /** 多段文字合成位图的宽高比（宽随文本增长、字高恒定），用于绘制时保持不拉伸 */
-    private static float statTextAspect(String[] parts) {
+    private static float statTextAspect(String[] parts, boolean[] boldFlags) {
         float tw = 0f;
-        for (String s : parts) tw += STAT_MEASURE_PAINT.measureText(s);
+        for (int i = 0; i < parts.length; i++) {
+            if (boldFlags != null && i < boldFlags.length && boldFlags[i])
+                STAT_MEASURE_PAINT.setFakeBoldText(true);
+            else
+                STAT_MEASURE_PAINT.setFakeBoldText(false);
+            tw += STAT_MEASURE_PAINT.measureText(parts[i]);
+        }
+        STAT_MEASURE_PAINT.setFakeBoldText(true);
         int w = (int) Math.ceil(tw) + STAT_PAD_X * 2;
         if (w < STAT_BMP_H) w = STAT_BMP_H;
         return (float) w / (float) STAT_BMP_H;
     }
 
-    private int obtainStatTexture(String[] parts, int[] colors) {
+    private int obtainStatTexture(String[] parts, int[] colors, boolean[] boldFlags) {
         FieldTextureManager tex = view.tex;
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < parts.length; i++) sb.append(parts[i]).append('#').append(colors[i]).append('|');
+        for (int i = 0; i < parts.length; i++) {
+            sb.append(parts[i]).append('#').append(colors[i]);
+            if (boldFlags != null && i < boldFlags.length && boldFlags[i]) sb.append('B');
+            sb.append('|');
+        }
         String k = sb.toString();
         Long key = statLabelKeys.get(k);
         if (key == null) {
             key = statLabelKeySeq--;
             statLabelKeys.put(k, key);
             try {
-                tex.offerUpload(new FieldTextureManager.PendingUpload(key, makeColoredTextBitmap(parts, colors), true));
+                tex.offerUpload(new FieldTextureManager.PendingUpload(key, makeColoredTextBitmap(parts, colors, boldFlags), true));
             } catch (Throwable ignored) {
             }
         }
@@ -325,12 +355,14 @@ final class FieldHudRenderer {
         return id != null ? id : -1;
     }
 
-    private static Bitmap makeColoredTextBitmap(String[] parts, int[] colors) {
+    private static Bitmap makeColoredTextBitmap(String[] parts, int[] colors, boolean[] boldFlags) {
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setTextSize(STAT_TEXT_SIZE);
-        p.setFakeBoldText(true);
         float tw = 0f;
-        for (String s : parts) tw += p.measureText(s);
+        for (int i = 0; i < parts.length; i++) {
+            p.setFakeBoldText(boldFlags != null && i < boldFlags.length && boldFlags[i]);
+            tw += p.measureText(parts[i]);
+        }
         int w = (int) Math.ceil(tw) + STAT_PAD_X * 2;
         if (w < STAT_BMP_H) w = STAT_BMP_H;
         int h = STAT_BMP_H;
@@ -338,10 +370,12 @@ final class FieldHudRenderer {
         Canvas cv = new Canvas(bmp);
         p.setTextAlign(Paint.Align.LEFT);
         p.setShadowLayer(3f, 1f, 1f, 0xFF000000);
+        p.setFakeBoldText(true);
         float baseline = h / 2f - (p.ascent() + p.descent()) / 2f;
         float x = (w - tw) / 2f;
         for (int i = 0; i < parts.length; i++) {
             p.setColor(colors[i] | 0xFF000000);
+            p.setFakeBoldText(boldFlags != null && i < boldFlags.length && boldFlags[i]);
             cv.drawText(parts[i], x, baseline, p);
             x += p.measureText(parts[i]);
         }
@@ -349,11 +383,11 @@ final class FieldHudRenderer {
     }
 
     /** 在屏幕点绘制多色分段文字：字高 heightPx，宽 = heightPx × 文本宽高比，整体居中于 (cx,cy) */
-    private void drawScreenText(float cx, float cy, String[] parts, int[] colors, float heightPx) {
+    private void drawScreenText(float cx, float cy, String[] parts, int[] colors, boolean[] boldFlags, float heightPx) {
         if (parts == null || parts.length == 0) return;
-        int tex = obtainStatTexture(parts, colors);
+        int tex = obtainStatTexture(parts, colors, boldFlags);
         if (tex <= 0) return;
-        float w = heightPx * statTextAspect(parts);
+        float w = heightPx * statTextAspect(parts, boldFlags);
         view.drawScreenQuadTex(cx, cy, w, heightPx, tex, 1f);
     }
 
@@ -364,9 +398,9 @@ final class FieldHudRenderer {
     private void drawScreenTextAligned(float anchorX, float cy, String[] parts, int[] colors,
                                        float heightPx, int align) {
         if (parts == null || parts.length == 0) return;
-        int tex = obtainStatTexture(parts, colors);
+        int tex = obtainStatTexture(parts, colors, null);
         if (tex <= 0) return;
-        float w = heightPx * statTextAspect(parts);
+        float w = heightPx * statTextAspect(parts, null);
         float cx = anchorX;
         if (align == ALIGN_LEFT) cx = anchorX + w / 2f;
         else if (align == ALIGN_RIGHT) cx = anchorX - w / 2f;

@@ -169,7 +169,10 @@ class GameFieldGeometry {
                 float[] pr = getPileRect(controler, 0x01);
                 t[0] = pr[0];
                 t[1] = pr[1];
-                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
+                // 堆叠 Z 严格对齐 C++ client_field.cpp（GetCardLocation/ResetSequence 均 0.01+0.01×seq）：
+                // 旧实现 0.012 系数 + min(seq,18) 封顶与本类 resetSequence 不一致，落堆动画目标 Z 与
+                // 堆内其余卡错位，回插/抽离时产生共面与层序漂移
+                t[2] = 0.01f + 0.01f * sequence;
                 boolean back = (field.deckReversed == pcard.is_reversed);
                 t[4] = back ? GameField.PI : 0f;
                 t[5] = controler == 0 ? 0f : GameField.PI;
@@ -254,7 +257,7 @@ class GameFieldGeometry {
                 float[] pr = getPileRect(controler, 0x10);
                 t[0] = pr[0];
                 t[1] = pr[1];
-                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
+                t[2] = 0.01f + 0.01f * sequence;
                 t[5] = controler == 0 ? 0f : GameField.PI;
                 break;
             }
@@ -262,7 +265,7 @@ class GameFieldGeometry {
                 float[] pr = getPileRect(controler, 0x20);
                 t[0] = pr[0];
                 t[1] = pr[1];
-                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
+                t[2] = 0.01f + 0.01f * sequence;
                 t[4] = faceup ? 0f : GameField.PI;
                 t[5] = controler == 0 ? 0f : GameField.PI;
                 break;
@@ -271,7 +274,7 @@ class GameFieldGeometry {
                 float[] pr = getPileRect(controler, 0x40);
                 t[0] = pr[0];
                 t[1] = pr[1];
-                t[2] = 0.01f + 0.012f * Math.min(sequence, 18);
+                t[2] = 0.01f + 0.01f * sequence;
                 t[4] = faceup ? 0f : GameField.PI;
                 t[5] = controler == 0 ? 0f : GameField.PI;
                 break;

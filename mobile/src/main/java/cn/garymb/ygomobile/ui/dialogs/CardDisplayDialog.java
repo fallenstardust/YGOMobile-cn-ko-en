@@ -68,6 +68,31 @@ public class CardDisplayDialog {
         void onDismiss();
     }
 
+    /**
+     * 实时观察提供器：观战/录像堆叠区列表弹窗打开后，宿主区域卡片增删/换位时，
+     * 每次 field 变化都会重新调用本接口获取最新的 CardItem 列表并就地刷新 UI。
+     */
+    public interface CardItemSupplier {
+        List<CardItem> obtain();
+    }
+
+    /** 当前正在展示的实时观察弹窗（弱引用不合适——弹窗自己强保持内容视图）；
+     *  在 show/dismiss 时维护，在 field 变化时由 {@link #refreshLiveDialogs()} 统一刷。*/
+    private static final List<CardDisplayDialog> LIVE_DIALOGS = new ArrayList<>();
+
+    /** 供外部（EngineCallbackDelegate.onFieldChanged / ReplayListener.onReplayFieldChanged）
+     *  在主线程主动刷新所有带 supplier 的展示中弹窗；无 supplier 的弹窗自动从列表中摘除 */
+    public static void refreshLiveDialogs() {
+        for (int i = LIVE_DIALOGS.size() - 1; i >= 0; i--) {
+            CardDisplayDialog d = LIVE_DIALOGS.get(i);
+            if (d == null || d.liveSupplier == null || !d.isShowing()) {
+                LIVE_DIALOGS.remove(i);
+                continue;
+            }
+            d.replaceCards(d.liveSupplier.obtain());
+        }
+    }
+
     private final Context context;
     private final ImageLoader imageLoader;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -98,6 +123,8 @@ public class CardDisplayDialog {
 
     private OnDismissListener dismissListener;
     private OnCardClick cardClickListener;
+    /** 实时观察提供器（非空则弹窗在 show/dismiss 时维护 LIVE_DIALOGS 名单，且 field 变化会重拉列表） */
+    private CardItemSupplier liveSupplier;
 
     // 卡背缓存：对齐 image_manager.cpp tButtonFacedown[0/1]（我方 cover.jpg / 对方 cover2.jpg）
     private static Bitmap coverSelf;
@@ -149,6 +176,37 @@ public class CardDisplayDialog {
         return this;
     }
 
+    /** 安装实时观察 supplier：弹窗展示期间，field 变化会触发重新拉取列表并就地刷新。
+     *  仅 CmdMenuDialog 堆叠区查看列表入口使用（观战/录像），普通确认弹窗不安装。 */
+    public CardDisplayDialog observeLive(CardItemSupplier supplier) {
+        this.liveSupplier = supplier;
+        return this;
+    }
+
+    /** 就地替换卡片列表（不重建 popup / 不重启动画）；保留当前页位（在新页范内时）。
+     *  传入与 setCards 同语义的顺位列表，内部仍取反序。 */
+    public void replaceCards(List<CardItem> newCards) {
+        this.cards = new ArrayList<>();
+        if (newCards != null) {
+            for (int i = newCards.size() - 1; i >= 0; i--) this.cards.add(newCards.get(i));
+        }
+        int maxPage = Math.max(0, this.cards.size() - SLOT_COUNT);
+        if (pageOffset > maxPage) pageOffset = maxPage;
+        if (pageOffset < 0) pageOffset = 0;
+        if (sbPage != null) {
+            if (this.cards.size() > SLOT_COUNT) {
+                sbPage.setMax(maxPage);
+                sbPage.setVisibility(View.VISIBLE);
+                sbPage.setProgress(pageOffset);
+            } else {
+                sbPage.setMax(0);
+                sbPage.setProgress(0);
+                sbPage.setVisibility(View.GONE);
+            }
+        }
+        if (isShowing()) refreshSlots();
+    }
+
     private void build() {
         View root = LayoutInflater.from(context).inflate(R.layout.dialog_card_display, null);
         tvTitle = root.findViewById(R.id.tv_card_display_title);
@@ -183,6 +241,7 @@ public class CardDisplayDialog {
             if (context instanceof YGOProActivity) {
                 ((YGOProActivity) context).notifyGameDialogHidden(this);
             }
+            LIVE_DIALOGS.remove(this);
             if (dismissListener != null) dismissListener.onDismiss();
         });
 
@@ -449,6 +508,12 @@ public class CardDisplayDialog {
             if (anchor == null || anchor.getWindowToken() == null) return;
             refreshSlots();
             try {
+                // 默认居中于 layout_game_right 区域而非整个窗口（与 YesOrNoDialog 同模式，
+                // 拖拽保存过位置时 showPopup 走 NO_GRAVITY 绝对坐标，不受此 margin 影响）
+                if (context instanceof android.app.Activity) {
+                    View region = ((android.app.Activity) context).findViewById(R.id.layout_game_right);
+                    DraggablePopupHelper.centerPopupInRegion(popupWindow, region);
+                }
                 if (draggableHelper != null) {
                     draggableHelper.showPopup(popupWindow, anchor);
                 } else {
@@ -457,6 +522,9 @@ public class CardDisplayDialog {
                 // 对话框显示期间禁用决斗场阶段按钮
                 if (context instanceof YGOProActivity) {
                     ((YGOProActivity) context).notifyGameDialogShown(this);
+                }
+                if (liveSupplier != null && !LIVE_DIALOGS.contains(this)) {
+                    LIVE_DIALOGS.add(this);
                 }
             } catch (Exception e) {
                 // Token expired or window already showing

@@ -421,9 +421,17 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         } else {
             GameField.ClientCard card = engine.field.getCard(oldCtrl, oldLoc, oldSeq);
             if (card == null) card = new GameField.ClientCard();
-            card.code = code;
-            card.position = position;
+            // 对齐 duelclient.cpp MSG_MOVE L2994：仅 code!=0 或回额外卡组(cl==0x40，服务端里侧回插
+            // 时 code=0)才 SetCode；SetCode(0) 会把原卡码存入 chain_code（飞行中仍按原卡面绘制），
+            // 旧实现无条件覆写 code 使其它隐藏信息移动误清卡码
+            if (card.code != code && (code != 0 || newLoc == 0x40))
+                card.setCode(code);
+            // C++ L3018-3020 时序：RemoveCard → 改 position → AddCard。旧实现先覆写 position
+            // 再移除，使额外卡组抽出时 removeCard(0x40) 的 isFaceUp 判定读到新值，
+            // extraPCount 不递减而漂移；后续里侧回插点 (count-extraPCount) 落在错误层序，
+            // 堆叠顺序与服务端分叉 → 额外堆顶部错卡、无法点击弹命令菜单
             engine.field.removeCard(oldCtrl, oldLoc, oldSeq);
+            card.position = position;
             engine.field.addCard(newCtrl, newLoc, newSeq, card);
             // 同区重排（duelclient.cpp MSG_MOVE L3022-3030：pl==cl && pc==cc && cl&0x71）：
             // 先 5 帧每帧横移 ±0.3（对方手卡向右、我方向左抖开），再 5 帧回到新位置，
@@ -532,6 +540,12 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onFieldDisabled(int disabledMask) {
+        // 对齐 duelclient.cpp MSG_FIELD_DISABLED L3226-3231：读入协议侧掩码后，
+        // 本地为后攻（!dInfo.isFirst）时高低 16 位换位（协议 p0/p1 ↔ 本地 我方/对方），
+        // 存 dField.disabled_field 供交叉线绘制；MSG_SWAP 时由 swapField 同步换位
+        int disabled = disabledMask;
+        if (!engine.isDuelFirst()) disabled = (disabled >>> 16) | (disabled << 16);
+        engine.field.disabledField = disabled & 0xFFFFFFFFL;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });

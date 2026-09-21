@@ -646,6 +646,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         } catch (Throwable ignored) {
         }
         board.drawZoneSlots(f);
+        // 不可用格子对角交叉线（drawing.cpp L424-455 disabled_field，z=0.006 高于格子槽、低于卡）
+        try {
+            board.drawDisabledZones(f);
+        } catch (Throwable ignored) {
+        }
         try {
             board.drawTotalAttackBars(f);
         } catch (Throwable ignored) {

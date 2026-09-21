@@ -48,7 +48,7 @@ public class CardDetailPanel {
 
     private LinearLayout layoutBottomActions;
     private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
-    private Button btnCancelOrFinish;
+    private Button btnCancelOrFinish, btnShuffleHand;
 
     private LinearLayout layoutReplayControl;
     private Button btnReplayPlay, btnReplayPause, btnReplayNext, btnReplayLast, btnReplayShuffle, btnReplayQuit;
@@ -98,6 +98,7 @@ public class CardDetailPanel {
         btnIgnoreTiming = activity.findViewById(R.id.btn_ignore_timing);
         btnShowTiming = activity.findViewById(R.id.btn_show_timing);
         btnAvailableTiming = activity.findViewById(R.id.btn_available_timing);
+        btnShuffleHand = activity.findViewById(R.id.btn_shuffle_hand);
         btnCancelOrFinish = activity.findViewById(R.id.btn_cancel_or_finish);
 
         layoutReplayControl = activity.findViewById(R.id.layout_replay_control);
@@ -223,6 +224,15 @@ public class CardDetailPanel {
 
         if (btnCancelOrFinish != null) {
             btnCancelOrFinish.setOnClickListener(v -> cancelOrFinish());
+        }
+
+        // 洗切手卡（对齐 event_handler.cpp BUTTON_CMD_SHUFFLE L495-499）：点击即隐藏并应答 8，
+        // 显隐由 MSG_SELECT_IDLECMD 的 show_shuffle 驱动（duelclient.cpp L1859-1865）
+        if (btnShuffleHand != null) {
+            btnShuffleHand.setOnClickListener(v -> {
+                btnShuffleHand.setVisibility(View.INVISIBLE);
+                activity.sendResponseInt(8);
+            });
         }
 
         if (btnReplayPlay != null) {
@@ -515,9 +525,10 @@ public class CardDetailPanel {
     }
 
     public void closeGameButtons() {
-        // 对齐 game.cpp Game::CloseGameButtons() L2395-2398：隐藏三个时点按钮与取消/完成按钮
+        // 对齐 game.cpp Game::CloseGameButtons() L2395-2400：隐藏时点按钮、取消/完成与洗切手卡按钮
         hideChainButtons();
         hideCancelOrFinishButton();
+        updateShuffleButton(false);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
     }
 
@@ -651,9 +662,23 @@ public class CardDetailPanel {
         }
     }
 
+    /**
+     * 隐藏完成选择/取消按钮：用 INVISIBLE 而非 GONE（同 hideChainButtons）——
+     * layout_bottom_actions 为 weight 布局，GONE 会让其余按钮尺寸跳变
+     */
     public void hideCancelOrFinishButton() {
         if (btnCancelOrFinish != null) {
-            btnCancelOrFinish.setVisibility(View.GONE);
+            btnCancelOrFinish.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    /**
+     * 洗切手卡按钮显隐（对齐 duelclient.cpp MSG_SELECT_IDLECMD L1859-1865：
+     * show_shuffle → btnShuffle->setVisible(true/false)）；同样用 INVISIBLE 保持 weight 布局稳定
+     */
+    public void updateShuffleButton(boolean visible) {
+        if (btnShuffleHand != null) {
+            btnShuffleHand.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
     }
 
@@ -666,7 +691,7 @@ public class CardDetailPanel {
             btnCancelOrFinish.setText("取消");
             btnCancelOrFinish.setVisibility(View.VISIBLE);
         } else {
-            btnCancelOrFinish.setVisibility(View.GONE);
+            btnCancelOrFinish.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -854,6 +879,24 @@ public class CardDetailPanel {
     public void showReplayControls() {
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.VISIBLE);
+        // 初始状态：正在播放（显示暂停，隐藏播放/上一步/下一步）
+        updateReplayButtonStates(false);
+    }
+
+    /**
+     * 录像控制按钮互斥显隐：播放中显示暂停按钮、隐藏播放/上一步/下一步；
+     * 暂停时隐藏暂停、显示播放/上一步/下一步。切换时使用 INVISIBLE 不破坏布局。
+     * 对齐 replay_mode.cpp 中 pause 状态下 UI 元素可用性逻辑。
+     */
+    public void updateReplayButtonStates(boolean isPaused) {
+        if (btnReplayPause != null)
+            btnReplayPause.setVisibility(isPaused ? View.INVISIBLE : View.VISIBLE);
+        if (btnReplayPlay != null)
+            btnReplayPlay.setVisibility(isPaused ? View.VISIBLE : View.INVISIBLE);
+        if (btnReplayLast != null)
+            btnReplayLast.setVisibility(isPaused ? View.VISIBLE : View.INVISIBLE);
+        if (btnReplayNext != null)
+            btnReplayNext.setVisibility(isPaused ? View.VISIBLE : View.INVISIBLE);
     }
 
     public void hideReplayControls() {

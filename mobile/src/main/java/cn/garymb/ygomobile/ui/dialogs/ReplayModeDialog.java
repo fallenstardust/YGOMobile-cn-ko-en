@@ -522,9 +522,11 @@ public class ReplayModeDialog {
                         case PLAYING:
                             activity.getFieldCtl().setPhaseText("▶");
                             activity.getCardDetailPanel().showReplayControls();
+                            activity.getCardDetailPanel().updateReplayButtonStates(false);
                             break;
                         case PAUSED:
                             activity.getFieldCtl().setPhaseText("⏸");
+                            activity.getCardDetailPanel().updateReplayButtonStates(true);
                             break;
                         case FINISHED:
                             activity.getFieldCtl().setPhaseText("⏹");
@@ -545,6 +547,9 @@ public class ReplayModeDialog {
             @Override
             public void onReplayFieldChanged() {
                 activity.getFieldCtl().invalidate();
+                // 录像堆叠区查看列表弹窗即时刷新（与 EngineCallbackDelegate.onFieldChanged 同一入口），
+                // invalidate 在 GL 线程安全，refreshLiveDialogs 回主线程取新列表
+                activity.runOnUiThread(() -> CardDisplayDialog.refreshLiveDialogs());
             }
 
             @Override
@@ -586,6 +591,16 @@ public class ReplayModeDialog {
                     // 用户确认后经 quitReplay 退出回放回录像选择窗（对齐 C++ EndDuel 流程）
                     activity.showReplayResult(winner, reason, winnerName);
                 });
+            }
+
+            @Override
+            public void onReplaySummonAnimation(int code, int summonType) {
+                activity.showReplaySummonAnimation(code, summonType);
+            }
+
+            @Override
+            public void onReplayPhaseText(int textCode) {
+                activity.showReplayPhaseText(textCode);
             }
         });
         replayEngine.loadAndPlay(replayPath, startTurn);

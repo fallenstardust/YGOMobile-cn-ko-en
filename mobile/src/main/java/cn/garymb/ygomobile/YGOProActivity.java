@@ -839,11 +839,17 @@ public class YGOProActivity extends AppCompatActivity {
      */
     public void toggleChatInput() {
         if (chatInputUI != null) {
-            chatInputUI.toggleChatInput(!chatInputUI.isChatEnabled(), () -> {
+            boolean enable = !chatInputUI.isChatEnabled();
+            chatInputUI.toggleChatInput(enable, () -> {
                 if (fieldCtl != null) {
                     fieldCtl.clearChatMessages();
                 }
             });
+            // 点击切换后立即同步图标（对齐 event_handler.cpp BUTTON_CHATTING）：
+            // 停用聊天显示 tShut、启用显示 tTalk，不再依赖设置对话框路径的 applySettingsToEngine
+            if (cardDetailPanel != null) {
+                cardDetailPanel.updateChatIcon(!enable);
+            }
         }
     }
 
@@ -908,6 +914,16 @@ public class YGOProActivity extends AppCompatActivity {
      */
     public void showReplayResult(int winner, int reason, String winnerName) {
         if (engineCallback != null) engineCallback.showReplayResult(winner, reason, winnerName);
+    }
+
+    /** 录像回放召唤动画：委托 EngineCallbackDelegate 的 specEffect 居中卡片动画 */
+    public void showReplaySummonAnimation(int code, int summonType) {
+        if (engineCallback != null) engineCallback.showReplaySummonAnimation(code, summonType);
+    }
+
+    /** 录像回放阶段文字提示 */
+    public void showReplayPhaseText(int textCode) {
+        if (engineCallback != null) engineCallback.showReplayPhaseText(textCode);
     }
 
     public void showHintMessage(String msg) {

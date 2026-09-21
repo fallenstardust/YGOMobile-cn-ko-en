@@ -14,6 +14,7 @@ import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import ocgcore.enums.CardLocation;
+import ocgcore.enums.DuelPhase;
 
 public class ReplayEngine implements GameMessageParser.MessageHandler {
     private static final String TAG = "ReplayEngine";
@@ -29,6 +30,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         void onReplayPhaseChanged(int phase);
         void onReplayHintMessage(String hint);
         void onReplayFinished(int winner, int reason);
+        /** 录像播放召唤动画（对齐正常决斗 drawspec）：summonType 取 SummonAnimationManager 常量 */
+        void onReplaySummonAnimation(int code, int summonType);
+        /** 录像播放阶段文字提示（case 101 DrawSpec showText） */
+        void onReplayPhaseText(int textCode);
     }
 
     private ReplayState state = ReplayState.IDLE;
@@ -48,6 +53,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private volatile boolean isRunning = false;
     private volatile boolean isPaused = false;
     private volatile boolean skipForward = false;
+    /** 步进模式：>0 时处理 N 个可暂停消息后自动暂停（对齐 C++ ReplayMode 单步前进） */
+    private volatile int stepsRemaining = 0;
     private volatile boolean rewindToStart = false;
     private volatile boolean isRestarting = false;
     private volatile boolean isSwapping = false;
@@ -392,7 +399,18 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 }
             }
 
-            if (!skipForward && !isSkipping) {
+            // 步进前进：处理完 N 个可暂停消息后自动暂停
+            if (stepsRemaining > 0) {
+                stepsRemaining--;
+                if (stepsRemaining == 0) {
+                    isPaused = true;
+                    setState(ReplayState.PAUSED);
+                    notifyField();
+                }
+                continue;
+            }
+
+            if (!skipForward && !isSkipping && !isPaused) {
                 try { Thread.sleep(800); } catch (InterruptedException e) { return false; }
             }
         }
@@ -400,10 +418,12 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     }
 
     private boolean isPauseable(int msgType) {
-        // 对齐 replay_mode.cpp ReplayAnalyze 的 pauseable=false 集合（这些消息不计步/不暂停）
+        // 对齐 replay_mode.cpp ReplayAnalyze 的 pauseable=false 集合（这些消息不计步/不暂停）；
+        // 消息号取 common.h 真值：MSG_SET=54、MSG_FIELD_DISABLED=56（旧代码写 52/54 导致 SET/FIELD_DISABLED
+        // 走 default 未识别，游标错位后后续消息全部错解析——即用户报“回放无法显示卡片和动画”根因）
         switch (msgType) {
-            case 52: // MSG_SET
-            case 54: // MSG_FIELD_DISABLED
+            case 54: // MSG_SET
+            case 56: // MSG_FIELD_DISABLED
             case 60: // MSG_SUMMONING
             case 62: // MSG_SPSUMMONING
             case 64: // MSG_FLIPSUMMONING
@@ -460,6 +480,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
     private void performSwapField() {
         field.swapField();
+        field.refreshAllCards();
         notifyField();
     }
 
@@ -646,7 +667,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     }
                     break;
 
-                case 51: // MSG_POS_CHANGE（common.h：51，replay_mode.cpp pbuf+=9）
+                case 53: { // MSG_POS_CHANGE（common.h=53，replay_mode.cpp L540-543 pbuf+=9）
                     if (buf.remaining() < 9) return false;
                     int pcCode = buf.getInt();
                     int pcCtrl = buf.get() & 0xFF;
@@ -656,8 +677,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     int pcNew = buf.get() & 0xFF;
                     onPosChange(pcCode, pcCtrl, pcLoc, pcSeq, pcOld, pcNew);
                     break;
+                }
 
-                case 52: // MSG_SET（pbuf+=8：code + ctrl loc seq pos）
+                case 54: { // MSG_SET（common.h=54，replay_mode.cpp L545-549 pbuf+=8：code + ctrl loc seq pos）
                     if (buf.remaining() < 8) return false;
                     int setCode = buf.getInt();
                     int setCtrl = buf.get() & 0xFF;
@@ -666,17 +688,22 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     buf.get(); // pos
                     onSet(setCode, setCtrl, setLoc, setSeq);
                     break;
+                }
 
-                case 53: // MSG_SWAP（pbuf+=16）
+                case 55: { // MSG_SWAP（common.h=55，replay_mode.cpp L551-554 pbuf+=16）
                     if (buf.remaining() < 16) return false;
                     buf.getInt(); int sw1c = buf.get() & 0xFF; int sw1l = buf.get() & 0xFF; int sw1s = buf.get() & 0xFF; buf.get();
                     buf.getInt(); int sw2c = buf.get() & 0xFF; int sw2l = buf.get() & 0xFF; int sw2s = buf.get() & 0xFF; buf.get();
                     onSwap(sw1c, sw1l, sw1s, sw2c, sw2l, sw2s);
                     break;
+                }
 
-                case 54: // MSG_FIELD_DISABLED（pbuf+=4）
-                    skipBytes(4);
+                case 56: { // MSG_FIELD_DISABLED（common.h=56，replay_mode.cpp L556-560 pbuf+=4）
+                    if (buf.remaining() < 4) return false;
+                    int fdMask = buf.getInt();
+                    onFieldDisabled(fdMask);
                     break;
+                }
 
                 case 60: { // MSG_SUMMONING
                     if (buf.remaining() < 8) return false;
@@ -739,9 +766,11 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     skipBytes(csCount * 4);
                     break;
                 }
-                case 83: { // MSG_BECOME_TARGET
+                case 83: { // MSG_BECOME_TARGET（common.h=83）：count(1) + count×[c1 l1 s1 ss1] → 加入 current_chain.target
                     int btCount = buf.get() & 0xFF;
-                    skipBytes(btCount * 4);
+                    ByteBuffer btData = buf.slice().order(ByteOrder.LITTLE_ENDIAN);
+                    if (buf.remaining() >= btCount * 4) buf.position(buf.position() + btCount * 4);
+                    onBecomeTarget(btCount, btData);
                     break;
                 }
 
@@ -860,7 +889,17 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     if (!selectWithResponse(msgType, buf)) return false;
                     break;
 
-                case 160: skipBytes(9); break; // CARD_HINT
+                case 160: { // MSG_CARD_HINT（common.h=160，duelclient.cpp L4094-4109）
+                    if (buf.remaining() < 9) return false;
+                    int chCtrl = buf.get() & 0xFF;
+                    int chLoc = buf.get() & 0xFF;
+                    int chSeq = buf.get() & 0xFF;
+                    buf.get(); // subseq
+                    int chType = buf.get() & 0xFF;
+                    int chVal = buf.getInt();
+                    onCardHint(chCtrl, chLoc, chSeq, chType, chVal);
+                    break;
+                }
                 case 165: skipBytes(6); break; // PLAYER_HINT
 
                 case 170: // MSG_MATCH_KILL
@@ -1215,11 +1254,12 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     }
 
     public void skipAhead() {
-        skipForward = true;
-        new Thread(() -> {
-            try { Thread.sleep(100); } catch (InterruptedException e) { /* */ }
-            skipForward = false;
-        }).start();
+        // 步进前进：处理下一个可暂停消息（带动画）后自动暂停，对齐 C++ ReplayMode 单步执行
+        if (isPaused && isRunning) {
+            stepsRemaining = 1;
+            isPaused = false;
+            setState(ReplayState.PLAYING);
+        }
     }
 
     public void undo() {
@@ -1329,7 +1369,29 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onNewPhase(int phase) {
         field.currentPhase = phase;
         soundManager.playSoundEffect(SoundManager.SFX.PHASE);
-        mainHandler.post(() -> { if (listener != null) listener.onReplayPhaseChanged(phase); });
+        mainHandler.post(() -> {
+            if (listener != null) {
+                listener.onReplayPhaseChanged(phase);
+                // 对齐 EngineCallbackDelegate.onPhaseChanged：录像也显示阶段文字 drawspec
+                int textCode = replayPhaseTextCode(phase);
+                if (textCode > 0) listener.onReplayPhaseText(textCode);
+            }
+        });
+    }
+
+    /** 录像阶段消息体 phase 値 → SpecEffectOverlay showText 的 case 101 code（对齐 duelclient.cpp L2905-2929） */
+    private static int replayPhaseTextCode(int phase) {
+        DuelPhase dp = DuelPhase.valueOf(phase);
+        if (dp == null) return 0;
+        switch (dp) {
+            case Draw: return 4;
+            case Standby: return 5;
+            case Main1: return 6;
+            case BattleStart: return 7;
+            case Main2: return 8;
+            case End: return 9;
+            default: return 0;
+        }
     }
     @Override public void onMove(int code, int oc, int ol, int os, int opos, int nc, int nl, int ns, int pos, int reason) {
         boolean oldOv = (ol & 0x80) != 0, newOv = (nl & 0x80) != 0;
@@ -1407,9 +1469,13 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         } else {
             GameField.ClientCard card = field.getCard(oc, ol, os);
             if (card == null) card = new GameField.ClientCard();
-            card.code = code;
-            card.position = pos;
+            // 镜像 DuelEventHandler：SetCode 条件与时序对齐 duelclient.cpp MSG_MOVE L2994/L3018-3020
+            //（仅 code!=0 或回额外才改码；先移除、后覆写 position，保 removeCard(0x40) 的
+            // isFaceUp/extraPCount 记账读到的是旧表示）
+            if (card.code != code && (code != 0 || nl == 0x40))
+                card.setCode(code);
             field.removeCard(oc, ol, os);
+            card.position = pos;
             field.addCard(nc, nl, ns, card);
             // 卡组→墓地/除外/额外/场上、额外→场上等全部普通移动：镜像 DuelEventHandler.onMove
             // 同套动画分支（旧实现无任何动画，即用户所报“缺少移动动画”的根因）
@@ -1498,12 +1564,30 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         }
         notifyField();
     }
-    @Override public void onFieldDisabled(int disabledMask) {}
-    @Override public void onSummoning(int code, int ctrl, int loc, int seq) { soundManager.playSoundEffect(SoundManager.SFX.SUMMON); }
+    @Override public void onFieldDisabled(int disabledMask) {
+        // 录像视角不做本地化（与 onEquip/onCardTarget 等同一策略，ctrl/players 恒为录制侧），
+        // 直接存录制侧掩码供不可用格子交叉线绘制
+        field.disabledField = disabledMask & 0xFFFFFFFFL;
+        notifyField();
+    }
+    @Override public void onSummoning(int code, int ctrl, int loc, int seq) {
+        soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+        // 对齐 SummonAnimationManager.onSummoning：录像也触发 drawspec 居中卡片动画
+        final int c = code;
+        mainHandler.post(() -> { if (listener != null) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_NORMAL); });
+    }
     @Override public void onSummoned() { notifyField(); }
-    @Override public void onSpSummoning(int code, int ctrl, int loc, int seq) { soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON); }
+    @Override public void onSpSummoning(int code, int ctrl, int loc, int seq) {
+        soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON);
+        final int c = code;
+        mainHandler.post(() -> { if (listener != null && c != 0) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_SPECIAL); });
+    }
     @Override public void onSpSummoned() { notifyField(); }
-    @Override public void onFlipSummoning(int code, int ctrl, int loc, int seq) { soundManager.playSoundEffect(SoundManager.SFX.FLIP); }
+    @Override public void onFlipSummoning(int code, int ctrl, int loc, int seq) {
+        soundManager.playSoundEffect(SoundManager.SFX.FLIP);
+        final int c = code;
+        mainHandler.post(() -> { if (listener != null) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_FLIP); });
+    }
     @Override public void onFlipSummoned() { notifyField(); }
 
     @Override

@@ -375,7 +375,11 @@ public class CmdMenuDialog {
         GameField field = engine.getField();
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
         String title;
-        if (card.location == LOC_MZONE) {
+        final int obsCtrl = card.controler;
+        final int obsLoc = card.location;
+        final boolean obsIsXyz = (card.location == LOC_MZONE);
+        final int obsHostSeq = obsIsXyz ? card.sequence : -1;
+        if (obsIsXyz) {
             for (int i = 0; i < card.overlayed.size(); i++) {
                 GameField.ClientCard m = card.overlayed.get(i);
                 if (m == null) continue;
@@ -394,7 +398,38 @@ public class CmdMenuDialog {
         } else {
             title = viewListText();
         }
-        showCardListDialog(title, items, null, MODE_VIEW, 0, engine);
+        final GameField liveField = field;
+        CardDisplayDialog.CardItemSupplier supplier = null;
+        if (liveField != null && (obsIsXyz || isPileLocation(obsLoc))) {
+            supplier = () -> {
+                List<CardDisplayDialog.CardItem> fresh = new ArrayList<>();
+                if (obsIsXyz) {
+                    GameField.ClientCard host = liveField.getCard(obsCtrl & 1, LOC_MZONE, obsHostSeq);
+                    if (host != null) {
+                        for (int i = 0; i < host.overlayed.size(); i++) {
+                            GameField.ClientCard m = host.overlayed.get(i);
+                            if (m == null) continue;
+                            fresh.add(new CardDisplayDialog.CardItem(m.code, obsCtrl, LOC_OVERLAY, obsHostSeq, i));
+                        }
+                    }
+                } else {
+                    List<GameField.ClientCard> list = liveField.players[obsCtrl & 1].getLocationList(obsLoc);
+                    if (list != null) {
+                        for (GameField.ClientCard c : list) {
+                            if (c == null) continue;
+                            fresh.add(new CardDisplayDialog.CardItem(c.code, obsCtrl, obsLoc, c.sequence, 0));
+                        }
+                    }
+                }
+                return fresh;
+            };
+        }
+        showCardListDialog(title, items, null, MODE_VIEW, 0, engine, supplier);
+    }
+
+    /** 堆叠区判断：卡组 0x01 / 墓地 0x10 / 除外 0x20 / 额外 0x40（与 GameFieldController.onCardClick isPile 同口径） */
+    private static boolean isPileLocation(int location) {
+        return location == 0x01 || location == 0x10 || location == 0x20 || location == 0x40;
     }
 
     /** 发动 / 特殊召唤列表：单击对应卡片即向通讯发送响应 */
@@ -458,6 +493,12 @@ public class CmdMenuDialog {
      */
     private void showCardListDialog(String title, List<CardDisplayDialog.CardItem> items,
                                     List<Integer> indices, int mode, int cmdContext, GameEngine engine) {
+        showCardListDialog(title, items, indices, mode, cmdContext, engine, null);
+    }
+
+    private void showCardListDialog(String title, List<CardDisplayDialog.CardItem> items,
+                                    List<Integer> indices, int mode, int cmdContext, GameEngine engine,
+                                    CardDisplayDialog.CardItemSupplier liveSupplier) {
         if (items == null || items.isEmpty()) return;
         ImageLoader loader = activity.getImageLoader();
         CardDetailPanel panel = activity.getCardDetailPanel();
@@ -480,8 +521,9 @@ public class CmdMenuDialog {
                 })
                 .setOnDismissListener(() -> {
                     if (panel != null) panel.setCardDisplayDialog(null);
-                })
-                .show();
+                });
+        if (liveSupplier != null) dialog.observeLive(liveSupplier);
+        dialog.show();
     }
 
     /** 发送命令响应：特召=(idx<<16)+1；发动按上下文 idle=(idx<<16)+5 / battle=idx<<16 / chain 走连锁收尾 */

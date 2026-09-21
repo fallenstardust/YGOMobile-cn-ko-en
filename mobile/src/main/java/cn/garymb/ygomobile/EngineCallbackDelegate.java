@@ -18,6 +18,7 @@ import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
+import cn.garymb.ygomobile.game.SummonAnimationManager;
 import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
@@ -138,7 +139,12 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     @Override
     public void onFieldChanged() {
         activity.fieldCtl.invalidate();
-        activity.runOnUiThread(() -> activity.topInfoManager.updateCardCountDisplay(activity.engine.getField()));
+        activity.runOnUiThread(() -> {
+            activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
+            // 堆叠区查看列表弹窗（观战/录像）即时刷新：任何 field 变化后重拉 supplier，
+            // 将宿主区域最新状态同步到已开着的弹窗（如果有）
+            cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog.refreshLiveDialogs();
+        });
     }
 
     @Override
@@ -669,6 +675,22 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
      */
     void setAnimationSpeed(float multiplier) {
         specEffect().setAnimationSpeed(multiplier);
+    }
+
+    /** 录像回放的召唤动画派发（供 ReplayModeDialog 的 ReplayListener 调用） */
+    public void showReplaySummonAnimation(int code, int summonType) {
+        activity.runOnUiThread(() -> {
+            if (summonType == SummonAnimationManager.SUMMON_SPECIAL) {
+                specEffect().showSpecialSummon(code);
+            } else {
+                specEffect().showSummon(code);
+            }
+        });
+    }
+
+    /** 录像回放的阶段文字提示 */
+    public void showReplayPhaseText(int textCode) {
+        activity.runOnUiThread(() -> specEffect().showText(textCode));
     }
 
     /**
