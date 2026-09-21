@@ -32,7 +32,8 @@ import ocgcore.StringManager;
 /**
  * 宣言数字对话框（移植 gframe wANNumber，game.cpp L899-915）：
  * 数值列表同时提供下拉框（cbANNumber）与 12 个快捷按钮（btnANNumber，game.cpp L908-913）；
- * 快捷模式（count<=12 且全部值 ∈[1,12]）隐藏下拉框、点击按钮选中，否则隐藏按钮组（duelclient.cpp L4051-4093）。
+ * 快捷模式（count<=12 且全部值 ∈[1,12]）隐藏下拉框、点击按钮选中，否则隐藏按钮组（duelclient.cpp L4051-4093）；
+ * 不在可选值列表中的数字按钮置为不可用且文字变灰。
  * 响应为选中项索引（event_handler.cpp BUTTON_ANNUMBER_OK L480-484：SetResponseI(cbANNumber->getSelected())）。
  */
 public class AnnounceNumberDialog {
@@ -217,6 +218,14 @@ public class AnnounceNumberDialog {
             Button btn = root.findViewById(GRID_BUTTON_IDS[i]);
             btn.setText(String.valueOf(idx + 1));
             btn.setOnClickListener(v -> onGridButtonClicked(idx));
+            // 不在可选值列表中的数字：按钮置为不可用，文字变灰（对齐禁用按钮文字颜色规范）
+            if (isNumberAllowed(idx + 1)) {
+                btn.setEnabled(true);
+                btn.setTextColor(Color.WHITE);
+            } else {
+                btn.setEnabled(false);
+                btn.setTextColor(Color.GRAY);
+            }
             gridButtons[idx] = btn;
         }
 
@@ -252,6 +261,14 @@ public class AnnounceNumberDialog {
         draggableHelper = new DraggablePopupHelper(context, "announce_number");
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 dp(DIALOG_WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    /** 数字 n 是否在本次 MSG_ANNOUNCE_NUMBER 下发的可选值列表中 */
+    private boolean isNumberAllowed(int n) {
+        for (int v : values) {
+            if (v == n) return true;
+        }
+        return false;
     }
 
     /** event_handler.cpp BUTTON_ANNUMBER_* L455-478：按钮选中下拉框中值相同的项并启用确定 */
