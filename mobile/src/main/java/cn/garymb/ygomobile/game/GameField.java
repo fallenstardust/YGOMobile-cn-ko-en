@@ -288,7 +288,10 @@ public class GameField {
                 int pdata = buf.getInt();
                 if (level != pdata) {
                     level = pdata;
-                    lvString = "L" + level;
+                    // 连接怪兽无等级（引擎查询 level=0，链接值另由 QUERY_LINK 呈现）：
+                    // 左上角不显示等级文本，避免「L0」；其余怪兽照旧（TYPE 在 LEVEL 之前读入，
+                    // 此处 isLink() 已反映本块最新卡型）
+                    lvString = (pdata != 0 && !isLink()) ? "L" + level : "";
                 }
             }
             if ((flag & QUERY_RANK) != 0 && buf.remaining() >= 4) {

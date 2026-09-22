@@ -114,7 +114,8 @@ public class GameMessageParser {
         /** duelclient.cpp MSG_BECOME_TARGET L3486-3497：count(1) + count×[ctrl1 loc1 seq1 ss1(忽略)] */
         void onBecomeTarget(int count, ByteBuffer data);
         void onTagSwap(int player);
-        void onReloadField();
+        /** duelclient.cpp MSG_RELOAD_FIELD L4287-4441：duel_rule(1) + 双方[lp(4) + MZone7×(present+position+ovc) + SZone8×(present+position) + deck/hand/grave/removed/extra各[cnt+cnt×无详情] + extra_p_count(1)] + refreshAll + chains[cnt + cnt×15字节]，载荷解析全部在 handler 内做 */
+        void onReloadField(ByteBuffer data);
         void onAiName(String name);
         void onShowHint(String hint);
         void onMatchKill(int code);
@@ -559,7 +560,7 @@ public class GameMessageParser {
                 handler.onTagSwap(buf.get() & 0xFF);
                 break;
             case ReloadField:
-                handler.onReloadField();
+                handler.onReloadField(buf);
                 break;
             case AiName: {
                 int len = buf.getShort() & 0xFFFF;
@@ -689,7 +690,12 @@ public class GameMessageParser {
         engine.inDuel = true;
         engine.siding = false;
         engine.field.dInfo.duelRule = duelRule;
-        engine.duelIsFirst = (playerType & 1) == 0;
+        // 回放视角恒以录制者为参照（ReplayPlayer.startSession 置恒等映射/切换视角翻转），
+        // 不得由 MSG_START 的先攻方重新推断：undo/从头重放重投本消息时会把用户已切换的
+        // 视角静默翻回（C++ gframe 也仅在 ReplayThread 开始设 isFirst=true，ReplaySwap 翻转）
+        if (!engine.replayMode) {
+            engine.duelIsFirst = (playerType & 1) == 0;
+        }
         int p0 = engine.localPlayer(0);
         int p1 = engine.localPlayer(1);
         engine.playerInfos[p0].lp = lp0;
@@ -704,7 +710,12 @@ public class GameMessageParser {
         // ClientField::Initial：为双方卡组/额外创建全部 ClientCard（背面朝下、带堆叠高度）
         engine.field.initial(p0, deck0, extra0, 0);
         engine.field.initial(p1, deck1, extra1, 0);
-        engine.setState(GameEngine.GameState.DUELING);
+        // 回放（含带消息流录像的 MSG_START）不切 DUELING 状态：该状态会经
+        // EngineCallbackDelegate 弹底部行动区/初始化时点按钮，回放左侧面板只应显示
+        // 录像控制条（旧格式无 MSG_START 重跑天然不触发，带流文件经实况管线建场后必须同样拦截）
+        if (!engine.replayMode) {
+            engine.setState(GameEngine.GameState.DUELING);
+        }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {
                 engine.listener.onFieldChanged();

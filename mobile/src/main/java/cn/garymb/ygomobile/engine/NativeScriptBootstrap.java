@@ -3,10 +3,12 @@ package cn.garymb.ygomobile.engine;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -67,24 +69,34 @@ public final class NativeScriptBootstrap {
     }
 
     /**
-     * 资源根目录缺少 {@code script/init.lua} 时，把 {@code scripts.zip} 解压到资源根目录
-     * （zip 条目自带 script/ 、single/ 前缀，直接按相对路径落盘）。已存在则跳过。
+     * 资源根目录缺少 {@code script/init.lua}，或 {@code scripts.zip} 自上次解压后已更新
+     * （比对 大小+lastModified 指纹标记）时，把 zip 重新解压到资源根目录（zip 条目自带
+     * script/ 、single/ 前缀，直接按相对路径覆写落盘）。
+     *
+     * <p>必须比对指纹而不能只看 init.lua 存在：JNI 侧 engineScriptReader 只认实体文件，而
+     * C++ gframe 的 ScriptReaderEx 优先读 zip 挂载——资源升级后若不解压更新，Java 引擎重跑
+     * 用的是陈旧脚本、行为与录制时代分叉，是旧格式回放中途 MSG_RETRY 的根因之一。
      */
     public static void ensureScriptsExtracted(String resourcePath) {
         if (resourcePath == null || resourcePath.isEmpty()) {
             return;
         }
         File root = new File(resourcePath);
-        File initLua = new File(new File(root, Constants.CORE_SCRIPT_PATH), "init.lua");
-        if (initLua.exists()) {
-            return;
-        }
+        File scriptDir = new File(root, Constants.CORE_SCRIPT_PATH);
+        File initLua = new File(scriptDir, "init.lua");
         File zip = new File(root, Constants.CORE_SCRIPTS_ZIP);
         if (!zip.exists()) {
-            Log.w(TAG, "scripts.zip 不存在，无法解压脚本目录: " + zip.getAbsolutePath());
+            if (!initLua.exists()) {
+                Log.w(TAG, "scripts.zip 不存在，无法解压脚本目录: " + zip.getAbsolutePath());
+            }
+            return;
+        }
+        File marker = new File(scriptDir, ".scripts_zip_mark");
+        if (initLua.exists() && zipFingerprint(zip).equals(readMarker(marker))) {
             return;
         }
         ZipFile zf = null;
+        boolean ok = false;
         try {
             zf = new ZipFile(zip);
             String rootCanonical = root.getCanonicalPath();
@@ -115,6 +127,7 @@ public final class NativeScriptBootstrap {
                 }
                 count++;
             }
+            ok = true;
             Log.i(TAG, "scripts.zip 解压完成，共 " + count + " 个文件 → " + rootCanonical);
         } catch (IOException e) {
             Log.e(TAG, "解压 scripts.zip 失败", e);
@@ -126,6 +139,38 @@ public final class NativeScriptBootstrap {
                     // ignore
                 }
             }
+            if (ok) {
+                writeMarker(marker, zipFingerprint(zip));   // 指纹未落盘则下次仍重解，自愈
+            }
+        }
+    }
+
+    private static String zipFingerprint(File zip) {
+        return zip.length() + ":" + zip.lastModified();
+    }
+
+    private static String readMarker(File marker) {
+        if (!marker.isFile()) {
+            return null;
+        }
+        try (FileInputStream fis = new FileInputStream(marker)) {
+            byte[] buf = new byte[(int) Math.min(marker.length(), 128)];
+            int n = fis.read(buf);
+            return n <= 0 ? null : new String(buf, 0, n, StandardCharsets.UTF_8).trim();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private static void writeMarker(File marker, String fingerprint) {
+        File parent = marker.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            return;
+        }
+        try (OutputStream os = new FileOutputStream(marker)) {
+            os.write(fingerprint.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Log.w(TAG, "写入脚本解压标记失败", e);
         }
     }
 }

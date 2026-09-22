@@ -66,6 +66,24 @@ abstract class ReplaySource {
     /** 旧格式引擎重跑来源（undo/restart 需重跑决斗并复位响应记录），纯消息流为 false */
     abstract boolean engineDriven();
 
+    /**
+     * 转码固化素材：引擎重跑期间产生的完整消息帧列表（每帧 = [消息号][原始卡码消息体]，
+     * 含合成的 UPDATE_DATA/UPDATE_CARD 刷新帧）。播毕无错时 {@link ReplayPlayer} 据此把录像
+     * 重建为带消息流的 V2 文件，此后回放该录像不再需要 ocgcore 重跑。纯消息流无需转码，返回 null。
+     */
+    java.util.List<byte[]> capturedEngineFrames() {
+        return null;
+    }
+
+    /**
+     * 帧界数据源（V2 逐帧消息流）：当前缓冲边界即消息边界。为 true 时 UPDATE_DATA(6)
+     * 的消息体直接取整帧剩余字节，无需 awaitDispatchDrain 与块数切片（录制/回放两侧区域
+     * 卡数不一致导致游标错位、报“消息号0”的根源即在此）；默认 false（原始拼接流/引擎重跑）
+     */
+    protected boolean frameBounded() {
+        return false;
+    }
+
     /** 游标回到起点（回放「上一步/从头重放」）：消息流重置缓冲；引擎重跑重建决斗 */
     abstract void rewind();
 
@@ -87,6 +105,12 @@ abstract class ReplaySource {
                 continue;
             }
             int type = cursor.get() & 0xFF;
+            if (frameBounded() && type == 6) {
+                // V2 帧界：整帧剩余即本条 UPDATE_DATA 载荷，消费后自然换帧
+                byte[] body = new byte[cursor.remaining()];
+                cursor.get(body);
+                return new Msg(type, body);
+            }
             if (type == 6 || type == 7) {
                 // UPDATE_DATA 块数依赖实况侧当前区域的卡片数：先等已投喂消息全部消化，
                 // 否则两侧块数不一致会让游标错位（后续消息全部错解析）

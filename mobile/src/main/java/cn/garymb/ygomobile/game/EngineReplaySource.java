@@ -4,6 +4,8 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 
 import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
@@ -34,8 +36,17 @@ final class EngineReplaySource extends ReplaySource {
     /** set_responseb 要求引擎可读的完整响应缓冲（SIZE_RETURN_VALUE=256，同 ServerDuel） */
     private static final int RESPONSE_BUF_LEN = 256;
 
+    /**
+     * 转码采集预算：防异常会话（引擎空转等）导致 capturedFrames 无限增长 OOM
+     *（曾因 MSG_RETRY 后引擎持续吐消息、pump 无节奏空转采到千万条帧而 OOM）；
+     * 超预算即停采并放弃本会话转码，播放本身不受影响。
+     */
+    private static final int CAPTURE_FRAME_LIMIT = 200000;
+    private static final long CAPTURE_BYTE_LIMIT = 32L * 1024 * 1024;
+
     // ==== 需区域刷新的消息号（replay_mode.cpp::ReplayAnalyze 各 case 的 ReplayRefresh 调用点） ====
-    private static final int MSG_RETRY = 1, MSG_SELECT_BATTLECMD = 10, MSG_SELECT_IDLECMD = 11,
+    private static final int MSG_RETRY = 1, MSG_WAITING = 3, MSG_SELECT_BATTLECMD = 10,
+            MSG_SELECT_IDLECMD = 11,
             MSG_SHUFFLE_DECK = 32, MSG_SWAP_GRAVE_DECK = 35, MSG_REVERSE_DECK = 37,
             MSG_NEW_PHASE = 41, MSG_MOVE = 50, MSG_SUMMONED = 61, MSG_SPSUMMONED = 63,
             MSG_FLIPSUMMONED = 65, MSG_CHAINED = 71, MSG_CHAIN_SOLVED = 73, MSG_CHAIN_END = 74,
@@ -57,8 +68,22 @@ final class EngineReplaySource extends ReplaySource {
     private ByteBuffer responses;
     /** 响应记录区快照，rewind（undo/restart 重跑）时回到起点 */
     private byte[] originalResponses;
-    /** 引擎请求重放（应答与录像不一致）或响应耗尽：终止重跑，不当作正常播毕 */
+    /**
+     * 停止重跑（refill 不再推进引擎）。两类终止共用此标志，语义差异只在是否置 lastError：
+     * 响应记录耗尽/停滞均不置错→与 C++ ReadReplayResponse 失败同样落入
+     * 正常收尾（FINISHED→弹「录像播放结束」）；MSG_RETRY（同一询问被拒后重新等待）
+     * 喂回下一条响应记录继续播放，不走此终止路径。
+     */
     private boolean fatal;
+    /**
+     * 转码固化采集：重跑产生的全部消息帧（[消息号][原始卡码体]，含合成刷新帧），
+     * 均在卡码归一（ReplayCodeMapper）之前抓取副本，保证写回文件的流与 ocgcore 原输出同构；
+     * startDuel（含 rewind 重建决斗）时清空重采，播放成功后由 ReplayPlayer 转写为 V2 消息流录像。
+     */
+    private final List<byte[]> capturedFrames = new ArrayList<>();
+    /** 已采集帧字节总数（含消息号）与预算熔断标志（见 CAPTURE_*） */
+    private long capturedBytes;
+    private boolean captureAbandoned;
 
     EngineReplaySource(ReplayPlayer player) {
         super(player);
@@ -94,6 +119,9 @@ final class EngineReplaySource extends ReplaySource {
     private boolean startDuel() {
         fatal = false;
         synthQueue.clear();
+        capturedFrames.clear();
+        capturedBytes = 0;
+        captureAbandoned = false;
         responses = originalResponses == null ? null
                 : ByteBuffer.wrap(originalResponses).order(ByteOrder.LITTLE_ENDIAN);
         ReplayReader.ExtendedReplayHeader eh = data.header;
@@ -209,9 +237,10 @@ final class EngineReplaySource extends ReplaySource {
                 return false;   // 决斗自然结束（MSG_WIN 已在消息流里，投喂循环另行收尾）
             }
             if (len == 0 && ++idleSpins > 2000) {
-                // 引擎既不产消息也不结束：响应记录与引擎期望失步，停止重跑避免空转
-                setLastError("录像响应记录与引擎不同步（重跑停滞于步数="
-                        + player.getCurrentStep() + "）");
+                // 引擎既不产消息也不结束：投降等中断录制的响应记录已到头而引擎仍在等待，
+                // 对齐 C++ 主循环终止口径静默收尾（不置 lastError，弹正常结束 dialog）
+                Log.i(TAG, "rerun stalled at step=" + player.getCurrentStep()
+                        + ", end silently as normal finish");
                 fatal = true;
                 return false;
             }
@@ -227,16 +256,25 @@ final class EngineReplaySource extends ReplaySource {
     }
 
     /**
-     * SELECT/询问类消息切完后喂回录制响应（对齐 ReadReplayResponse）；MSG_RETRY 说明应答
-     * 非法、重跑无法继续，置错终止（与 C++ 弹 "Error occurs." 同语义）。
-     * 其余按 ReplayAnalyze 各 case 的 ReplayRefresh 调用点合成区域刷新消息。
+     * SELECT/询问类消息切完后喂回录制响应（对齐 ReadReplayResponse）；MSG_RETRY（同一
+     * 询问被拒后的重新等待）喂回下一条响应记录继续重跑，不中断回放。其余按
+     * ReplayAnalyze 各 case 的 ReplayRefresh 调用点合成区域刷新消息。
      */
     @Override
     protected void onSliced(int msgType, byte[] body) {
+        captureFrame(msgType, body);       // 先于任何卡码映射/响应喂回：采集引擎原码帧
         switch (msgType) {
             case MSG_RETRY:
-                setLastError("Error occurs.（引擎请求重放 MSG_RETRY，步数=" + player.getCurrentStep() + "）");
-                fatal = true;
+                // 「要求重新选择」：ocgcore playerop.cpp 各校验分支拒绝应答后仅写 MSG_RETRY
+                // 并 return FALSE——不会重发 SELECT 询问（那条只在 step=0 发），而是对同一
+                // 询问继续等新应答（handler 以 step=1 复跑校验）。原对局里客户端收到 RETRY
+                // 后再发一次应答，且每次已发应答都被录进响应流（一条记录=一次真实应答），
+                // 故正确接续就是立即喂回下一条响应记录；若仍被拒会再来一条 RETRY 再消耗
+                // 一条记录，消耗量以记录数为界；记录耗尽时 feedRecordedResponse 静默收尾，
+                // 不弹异常也不会空转卡死
+                Log.i(TAG, "MSG_RETRY at step=" + player.getCurrentStep()
+                        + ", feeding next recorded response for the pending query");
+                feedRecordedResponse();
                 return;
             case MSG_SELECT_BATTLECMD:
             case MSG_SELECT_IDLECMD:
@@ -337,6 +375,7 @@ final class EngineReplaySource extends ReplaySource {
         body[0] = (byte) enginePlayer;
         body[1] = (byte) location;
         System.arraycopy(blocks, 0, body, 2, blocks.length);
+        captureFrame(6, body);             // 采集原码副本（下方 mapMessage 会就地改写 body）
         ReplayCodeMapper.mapMessage(6, body, UNBOUNDED);
         enqueueSynthetic(new Msg(6, body, true));
     }
@@ -351,6 +390,7 @@ final class EngineReplaySource extends ReplaySource {
         body[1] = (byte) location;
         body[2] = (byte) sequence;
         System.arraycopy(block, 0, body, 3, block.length);
+        captureFrame(7, body);             // 采集原码副本（下方 mapMessage 会就地改写 body）
         ReplayCodeMapper.mapMessage(7, body, UNBOUNDED);
         enqueueSynthetic(new Msg(7, body, true));
     }
@@ -359,7 +399,12 @@ final class EngineReplaySource extends ReplaySource {
     private void feedRecordedResponse() {
         ByteBuffer rp = responses;
         if (rp == null || pduel == 0L || !rp.hasRemaining()) {
-            setLastError("录像响应记录提前耗尽（步数=" + player.getCurrentStep() + "）");
+            // 响应记录耗尽（投降/中断等提前终止的对局，录制者后续操作不再产生响应记录，
+            // 重跑引擎却仍会走到 SELECT 询问）：对齐 replay_mode.cpp::ReadReplayResponse
+            // 返回 false → ReplayAnalyze false → 主循环退出 → EndDuel 弹 sysString 1501
+            // 「录像播放结束」——属正常收尾，不置 lastError（ERROR 只留给真错误）
+            Log.i(TAG, "recorded responses exhausted at step=" + player.getCurrentStep()
+                    + ", treat as normal end (align C++ EndDuel)");
             fatal = true;
             return;
         }
@@ -368,6 +413,32 @@ final class EngineReplaySource extends ReplaySource {
         byte[] resb = new byte[RESPONSE_BUF_LEN];
         rp.get(resb, 0, len);
         OcgDuelEngine.setResponseB(pduel, resb);
+    }
+
+    /** 追加一条转码帧：[消息号][体副本]，与 LAN 录制 YrpWriter.writeMessage 的单帧一消息同构 */
+    private void captureFrame(int msgType, byte[] body) {
+        // 无实质内容、可被引擎无限重发的消息不进转码流（既无画面意义，也是空转时
+        // 采集暴涨的直接来源；纯消息流回放侧对它们本来就 isNoFeed 丢弃）
+        if (msgType == MSG_RETRY || msgType == MSG_WAITING) return;
+        if (captureAbandoned) return;
+        if (capturedFrames.size() >= CAPTURE_FRAME_LIMIT
+                || capturedBytes + body.length + 1 > CAPTURE_BYTE_LIMIT) {
+            Log.w(TAG, "transcode capture budget exceeded, transcode disabled for this session");
+            captureAbandoned = true;
+            capturedFrames.clear();
+            capturedBytes = 0;
+            return;
+        }
+        byte[] frame = new byte[body.length + 1];
+        frame[0] = (byte) msgType;
+        System.arraycopy(body, 0, frame, 1, body.length);
+        capturedFrames.add(frame);
+        capturedBytes += frame.length;
+    }
+
+    @Override
+    java.util.List<byte[]> capturedEngineFrames() {
+        return capturedFrames;
     }
 
     /** 上一步/从头重放：结束当前决斗、响应记录回到起点、以同一 seed 重建决斗（对齐 ReplayMode::Restart） */
@@ -386,6 +457,8 @@ final class EngineReplaySource extends ReplaySource {
         endDuel();
         responses = null;
         originalResponses = null;
+        capturedFrames.clear();
+        capturedBytes = 0;
         super.close();
     }
 

@@ -90,6 +90,13 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 activity.getDialogUtil().showTPSelectDialog();
                 break;
             case DUELING:
+                // 回放中收到状态切换（防带流录像经实况管线残留路径）：不弹底部行动区/
+                // 时点按钮，左侧面板保持录像控制条；onStart 已在回放侧拦截 setState，
+                // 此处为二道防线
+                if (activity.engine.replayMode) {
+                    pendingReplays.clear();
+                    break;
+                }
                 activity.enterDuelingUI();
                 activity.cardDetailPanel.showBottomActions();
                 // 对齐 duelclient.cpp L912-916：STOC_GAME_START 按 chkDefaultShowChain 初始化时点三态
@@ -200,6 +207,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             // player 为本地视角索引（GameEngine.onNewTurn 已做 localPlayer 转换）：0=我方回合
             isMyTurn = (player == 0);
             activity.topInfoManager.updateTurn(activity.engine.getField().turnCount, isMyTurn);
+            // 回放：MSG_NEW_TURN 同样经实况管线投递到此处，但时点按钮只属于真实对局；
+            // 回放左侧面板常驻的是录像控制条（底部行动区未显示时子按钮不可见，
+            // 此处直接不置 VISIBLE 以免带流回放/后续场景露出时点按钮）
+            if (activity.engine.replayMode) return;
             if (activity.cardDetailPanel != null) activity.cardDetailPanel.showChainButtons();
         });
     }

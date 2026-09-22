@@ -81,6 +81,15 @@ class CardSelectController {
      */
     private boolean tryFieldCardSelect(List<CardSelectDialog.CardItem> items,
                                        int min, int max, boolean cancelable) {
+        return tryFieldCardSelect(items, min, max, cancelable, false);
+    }
+
+    /**
+     * @param forceFieldMode 回合结束强制弃牌（HINT_SELECTMSG 501，ocgcore processor.cpp L1257-1288）：
+     *                       豁免手牌拥挤回退，候选全在手牌也走场上蚂蚁线直选
+     */
+    private boolean tryFieldCardSelect(List<CardSelectDialog.CardItem> items,
+                                       int min, int max, boolean cancelable, boolean forceFieldMode) {
         GameFieldController ctl = util.fieldCtl();
         GameEngine eng = util.engine();
         GameField f = (eng != null) ? eng.getField() : null;
@@ -89,7 +98,7 @@ class CardSelectController {
                     + " items=" + (items == null ? "null" : items.size()));
             return false;
         }
-        if (!fieldCandidatesSelectable("tryFieldCardSelect", eng, f, items)) return false;
+        if (!fieldCandidatesSelectable("tryFieldCardSelect", eng, f, items, forceFieldMode)) return false;
         fsLog("tryFieldCardSelect FIELD MODE: count=" + items.size() + " min=" + min + " max=" + max);
         ctl.beginCardSelect(items, min, max, cancelable);
         // 完成/取消按钮沿用 CardDetailPanel（currentSelectType 已由 YGOProActivity 设为 15/20）
@@ -101,10 +110,17 @@ class CardSelectController {
      * 场上/手牌直接选择候选合法性检查（MSG_SELECT_CARD 与 MSG_SELECT_UNSELECT_CARD 共用，
      * 对齐 duelclient.cpp L1945-1961 / L2009-2051 的 panelmode 判定）：任一候选为超量素材、
      * 场地外（卡组/墓地/除外/额外，即 (loc&0xf1)!=0 等价判定 loc&0xe==0）、场上解析不到，
-     * 或手牌拥挤（该方手牌≥10 张且手牌内候选超过 1 张）→ false 回退弹窗
+     * 或手牌拥挤（该方手牌≥10 张且手牌内候选超过 1 张）→ false 回退弹窗；
+     * forceFieldMode=true（回合结束弃牌 501）时拥挤回退豁免，强制场选
      */
     private boolean fieldCandidatesSelectable(String tag, GameEngine eng, GameField f,
                                               List<CardSelectDialog.CardItem> items) {
+        return fieldCandidatesSelectable(tag, eng, f, items, false);
+    }
+
+    private boolean fieldCandidatesSelectable(String tag, GameEngine eng, GameField f,
+                                              List<CardSelectDialog.CardItem> items,
+                                              boolean forceFieldMode) {
         // duelclient.cpp L1934：手牌数以消息解析前的实时张数为基准
         int[] handCount = { f.getCardCount(0, 0x02), f.getCardCount(1, 0x02) };
         int[] selectInHand = new int[2];
@@ -127,8 +143,9 @@ class CardSelectController {
                         + " seq=" + it.sequence);
                 return false;
             }
-            // duelclient.cpp L1957-1961：该方手牌≥ 10 张且候选在手牌内超过 1 张 → 拥挤，回退弹窗
-            if ((loc & 0x02) != 0 && handCount[lp] >= 10 && ++selectInHand[lp] > 1) {
+            // duelclient.cpp L1957-1961：该方手牌≥ 10 张且候选在手牌内超过 1 张 → 拥挤，回退弹窗；
+            // 回合结束强制弃牌(501)按用户要求豁免：候选即全部手牌，必须走场上直选不弹窗
+            if (!forceFieldMode && (loc & 0x02) != 0 && handCount[lp] >= 10 && ++selectInHand[lp] > 1) {
                 fsLog(tag + " SKIP: hand crowded player=" + lp + " handCount=" + handCount[lp]);
                 return false;
             }
@@ -152,7 +169,7 @@ class CardSelectController {
                     + " items=" + (items == null ? "null" : items.size()));
             return false;
         }
-        if (!fieldCandidatesSelectable("tryFieldUnselect", eng, f, items)) return false;
+        if (!fieldCandidatesSelectable("tryFieldUnselect", eng, f, items, false)) return false;
         fsLog("tryFieldUnselect FIELD MODE: count=" + items.size() + " selectable=" + selectableCount
                 + " min=" + min + " max=" + max);
         ctl.beginUnselectCardSelect(items, selectableCount, min, max, finishable, cancelable);
@@ -258,7 +275,25 @@ class CardSelectController {
             util.sendResponseInt(0);
             return;
         }
-        if (tryFieldCardSelect(items, min, max, cancelable != 0)) return;
+        // 回合结束弃牌判据：MSG_HINT(HINT_SELECTMSG, tp, 501) 紧随 MSG_SELECT_CARD
+        //（ocgcore processor.cpp L1257-1288：hd>6 → hint 501 → SELECT_CARD min=max=hd-6）。
+        // 此时无论手牌多拥挤都不弹 CardSelectDialog：血条下已显示 getSystemString(501) 提示
+        //（onSelectCard → selectRangeHint → postDuelHint），候选手牌画蚂蚁线直选，达数自动丢弃。
+        GameField selField = (util.engine() != null) ? util.engine().getField() : null;
+        final boolean discardByRule = selField != null && selField.selectHint == 501;
+        if (tryFieldCardSelect(items, min, max, cancelable != 0, discardByRule)) {
+            // 场选模式不经过 selectTitleText，此处消费并清零 selectHint
+            if (selField != null) selField.selectHint = 0;
+            return;
+        }
+        if (discardByRule) {
+            // 501 硬要求不走弹窗：异常候选仅告警，等待服务端重试/重新下发；
+            // 本会话不再进入 selectTitleText，此处消费并清零 selectHint
+            if (selField != null) selField.selectHint = 0;
+            fsLog("discard(501) field-select unavailable, suppress dialog: count=" + items.size()
+                    + " min=" + min + " max=" + max);
+            return;
+        }
         markFieldCardsForDialog(items);
         final List<CardSelectDialog.CardItem> cardInfos = items;
         CardSelectDialog dialog = new CardSelectDialog(util.activity, util.imageLoader);

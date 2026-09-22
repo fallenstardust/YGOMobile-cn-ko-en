@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ReplayReader {
@@ -21,8 +22,10 @@ public class ReplayReader {
     public static final int REPLAY_DECODED = 0x4;
     public static final int REPLAY_SINGLE_MODE = 0x8;
     public static final int REPLAY_UNIFORM = 0x10;
-    /** 自定义扩展位（与 YrpWriter.REPLAY_MSG_STREAM 对偶）：响应记录前含 [uint32 长度 + 主机视角 MSG 流] 段 */
+    /** 自定义扩展位 V1（旧 Java 录制）：响应记录前含 [uint32 长度 + 主机视角 MSG 流] 段，仅读取不回写 */
     public static final int REPLAY_MSG_STREAM = 0x20;
+    /** 自定义扩展位 V2（与 YrpWriter.REPLAY_MSG_STREAM_V2 对偶）：响应流之后为逐帧 MSG 流 + [uint32 总长] 尾部自描述 */
+    public static final int REPLAY_MSG_STREAM_V2 = 0x40;
     public static final int REPLAY_ID_YRP1 = 0x31707279;
     public static final int REPLAY_ID_YRP2 = 0x32707279;
 
@@ -62,8 +65,10 @@ public class ReplayReader {
         public List<DeckInfo> decks = new ArrayList<>();
         public String scriptName = "";
         public ByteBuffer replayBuffer;
-        /** 主机视角引擎 MSG 字节流（REPLAY_MSG_STREAM 标志文件才有，可为 null） */
+        /** 主机视角引擎 MSG 字节流（V1 旧格式文件才有，可为 null） */
         public ByteBuffer msgBuffer;
+        /** 主机视角引擎 MSG 逐帧列表（V2 文件才有，每帧 = 一条完整引擎消息含消息号；可为 null） */
+        public List<byte[]> msgFrames;
         public boolean isTag = false;
         public boolean isSingleMode = false;
 
@@ -216,8 +221,40 @@ public class ReplayReader {
             }
         }
 
-        // REPLAY_MSG_STREAM：卡组段之后、响应记录段之前插入 [uint32 msgLen][MSG 流]，
-        // 切出 msgBuffer 供纯消息回放；无标志的旧文件完全走原解析
+        // REPLAY_MSG_STREAM_V2（当前写出格式）：数据段 = base + 响应流 + 逐帧 msgBlob + [uint32 blobLen]，
+        // 经解压缓冲末 4 字节反推 msg 段起点（C++ 只顺序消费响应不读尾部，尾段对其透明）；
+        // V1（历史 Java 录制）：msg 段在卡组与响应之间；无标志旧文件完全走原解析
+        if (replay.hasFlag(REPLAY_MSG_STREAM_V2)) {
+            byte[] full = buf.array();
+            int footerPos = full.length - 4;
+            if (footerPos < buf.position()) {
+                Log.e(TAG, "V2 msg footer out of bounds");
+                return false;
+            }
+            int blobLen = ByteBuffer.wrap(full, footerPos, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
+            int msgStart = footerPos - blobLen;
+            if (blobLen < 0 || msgStart < buf.position()) {
+                Log.e(TAG, "Invalid V2 msg blob length: " + blobLen);
+                return false;
+            }
+            List<byte[]> frames = new ArrayList<>();
+            int pos = msgStart;
+            while (pos + 4 <= footerPos) {
+                int frameLen = ByteBuffer.wrap(full, pos, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
+                pos += 4;
+                if (frameLen <= 0 || frameLen > footerPos - pos) {
+                    Log.w(TAG, "V2 msg frame truncated at offset " + pos + ", len=" + frameLen);
+                    break;
+                }
+                frames.add(Arrays.copyOfRange(full, pos, pos + frameLen));
+                pos += frameLen;
+            }
+            replay.msgFrames = frames;
+            replay.replayBuffer = ByteBuffer.wrap(
+                    full, buf.position(), msgStart - buf.position()
+            ).order(ByteOrder.LITTLE_ENDIAN);
+            return true;
+        }
         if (replay.hasFlag(REPLAY_MSG_STREAM)) {
             int msgLen = buf.getInt();
             if (msgLen < 0 || msgLen > buf.remaining()) {
