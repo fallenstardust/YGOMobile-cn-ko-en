@@ -617,6 +617,7 @@ public class GameMessageParser {
     }
 
     public void onRetry() {
+        if (engine.replayMode) return; // 回放：应答已录制在文件里，重放缓存消息无意义
         Log.w(TAG, "Retry message received");
         // 对齐 duelclient.cpp L1320-1404：无效应答后服务端只回 1 字节 MSG_RETRY，
         // 不重发原 SELECT（single_duel.cpp L583-591）——C++ 弹提示后重放缓存的上一条
@@ -677,6 +678,7 @@ public class GameMessageParser {
     }
 
     public void onWaiting() {
+        if (engine.replayMode) return; // 回放：无真实等待方，启动等待轮换提示会悬挂
         Log.d(TAG, "Waiting...");
         // 对齐 duelclient.cpp L1610-1616 + game.cpp L1624-1633：waitFrame=0，显示"等待行动中..."并轮换
         engine.hintManager.startWaitHint();
@@ -713,6 +715,9 @@ public class GameMessageParser {
     }
 
     public void onWin(int player, int reason) {
+        // 回放结算由 ReplayEngine 的 MSG_WIN → listener.onReplayFinished 路径负责，
+        // 不走现网比分累计与结算弹窗
+        if (engine.replayMode) return;
         // 场景 BGM 的胜负切换统一由 UI 层集中决策（对齐 game.cpp Game::playBGM）：
         // 经 onDuelResult 回调 → YGOProActivity.setBgmDuelResult/updateBGM 处理，此处不再直接切歌
         engine.currentMatch++;
@@ -736,10 +741,12 @@ public class GameMessageParser {
     }
 
     public void onRequestDeck(int player) {
+        if (engine.replayMode) return; // 回放：卡组公开由消息流自身保证，不进入 DECK_SELECT 状态
         engine.setState(GameEngine.GameState.DECK_SELECT);
     }
 
     public void onSelectBattleCmd(ByteBuffer data) {
+        if (engine.replayMode) return; // 回放：SELECT 询问已录制应答，不弹选择窗不发提示
         engine.dataParser.parseBattleCmd(data);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(10, null);
@@ -747,6 +754,7 @@ public class GameMessageParser {
     }
 
     public void onSelectIdleCmd(ByteBuffer data) {
+        if (engine.replayMode) return;
         engine.dataParser.parseIdleCmd(data);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(11, null);
@@ -754,24 +762,28 @@ public class GameMessageParser {
     }
 
     public void onSelectEffectYn(ByteBuffer data) {
+        if (engine.replayMode) return;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(12, data);
         });
     }
 
     public void onSelectYesNo(ByteBuffer data) {
+        if (engine.replayMode) return;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(13, data);
         });
     }
 
     public void onSelectOption(ByteBuffer data) {
+        if (engine.replayMode) return;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(14, data);
         });
     }
 
     public void onSelectCard(ByteBuffer data) {
+        if (engine.replayMode) return;
         // 对齐 duelclient.cpp L1964-1974：非 panelmode 时 stHintMsg 显示"提示(min-max)"
         String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片");
         if (hint != null) engine.hintManager.postDuelHint(hint);
@@ -781,6 +793,7 @@ public class GameMessageParser {
     }
 
     public void onSelectChain(ByteBuffer data) {
+        if (engine.replayMode) return;
         // 对齐 duelclient.cpp L2158-2163：存在"发动并作为连锁"项(EDESC_OPERATION=1)时用 556，否则 550
         boolean contiExist = false;
         try {
@@ -809,6 +822,7 @@ public class GameMessageParser {
     }
 
     public void onSelectPlace(int player, int count, int fieldMask) {
+        if (engine.replayMode) return;
         engine.clearCommandFlags();
         engine.selectFieldPlayer = player;
         engine.selectFieldCount = count;
@@ -833,6 +847,7 @@ public class GameMessageParser {
     }
 
     public void onSelectPosition(int player, int code, int positions) {
+        if (engine.replayMode) return; // 单一形式时的自动应答分支也必须拦截，否则会向服务器发 Response
         positions &= 0x0F;
         // duelclient.cpp L2275-2278：仅一种表示形式可选时直接以该形式应答，不弹窗
         if (positions == 0x1 || positions == 0x2 || positions == 0x4 || positions == 0x8) {
@@ -854,6 +869,7 @@ public class GameMessageParser {
     }
 
     public void onSelectTribute(ByteBuffer data) {
+        if (engine.replayMode) return;
         // 对齐 duelclient.cpp L2330-2335：stHintMsg 显示"提示(min-max)"（hint 优先 selectHint，默认 531）
         String hint = engine.hintManager.selectRangeHint(data, 531, "解放选择");
         if (hint != null) engine.hintManager.postDuelHint(hint);
@@ -863,12 +879,14 @@ public class GameMessageParser {
     }
 
     public void onSortChain(ByteBuffer data) {
+        if (engine.replayMode) return;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(21, data);
         });
     }
 
     public void onSelectCounter(ByteBuffer data) {
+        if (engine.replayMode) return;
         // 对齐 duelclient.cpp L2362-2365：stHintMsg 显示 GetSysString(204)（移除 N 个指示物）
         String hint = engine.hintManager.counterHint(data);
         if (hint != null) engine.hintManager.postDuelHint(hint);
@@ -878,6 +896,7 @@ public class GameMessageParser {
     }
 
     public void onSelectSum(ByteBuffer data) {
+        if (engine.replayMode) return;
         // 对齐 client_field.cpp L1090-1115 ShowSelectSum：display_hint = GetDesc(select_hint) 或 GetSysString(560)
         int hint = engine.field.selectHint;
         engine.hintManager.postDuelHint(hint > 0 ? DataManager.get().getDesc(hint, "选择卡片") : engine.hintManager.sysString(560, "选择卡片"));
@@ -887,6 +906,7 @@ public class GameMessageParser {
     }
 
     public void onSelectDisfield(int player, int count, int fieldMask) {
+        if (engine.replayMode) return;
         engine.clearCommandFlags();
         engine.selectFieldPlayer = player;
         engine.selectFieldCount = count;
@@ -903,12 +923,14 @@ public class GameMessageParser {
     }
 
     public void onSortCard(ByteBuffer data) {
+        if (engine.replayMode) return;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(25, data);
         });
     }
 
     public void onSelectUnselectCard(ByteBuffer data) {
+        if (engine.replayMode) return;
         // 对齐 duelclient.cpp L2053-2065：stHintMsg 显示"提示(min-max)"
         String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片");
         if (hint != null) engine.hintManager.postDuelHint(hint);

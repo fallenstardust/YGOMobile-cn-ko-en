@@ -146,7 +146,7 @@ public class GameEngine {
      * 全部逻辑均在主线程执行，无需加锁。
      */
     private final ArrayDeque<Runnable> pendingMsgs = new ArrayDeque<>();
-    private boolean dispatchingMsg = false;    // 正在派发一条消息（防重入）
+    private volatile boolean dispatchingMsg = false;    // 正在派发一条消息（防重入；回放投喂线程亦读取）
     private boolean animGateClosed = false;    // 动画播放期间关闭闸门，暂缓后续消息
     /** 闸门兜底超时：万一特效队列因异常未排空，超时后强制重开，避免消息永久卡死 */
     private static final long ANIM_GATE_TIMEOUT_MS = 8000L;
@@ -672,7 +672,7 @@ public class GameEngine {
      * 任一仍在播放即返回 true；全部空闲才放行后续消息，从而把 GameFieldView 的卡片移动、
      * gameTopInfo 的血量变化纳入与特效、弹窗相同的串行序列。
      */
-    private boolean isAnyAnimationBusy() {
+    public boolean isAnyAnimationBusy() {
         // 定时屏障持有期（MSG_ATTACK 弧光展示等）：未到期一律视为忙，串行化后续消息
         if (System.currentTimeMillis() < animHoldUntilMs) return true;
         boolean fieldBusy = false;
@@ -688,6 +688,39 @@ public class GameEngine {
         } catch (Throwable ignored) {
         }
         return fieldBusy || overlayBusy;
+    }
+
+    /** 待派发消息队列是否仍有存量（回放投喂线程据此等待实况管线消化完再喂下一条） */
+    public boolean hasPendingMsgs() {
+        return !pendingMsgs.isEmpty();
+    }
+
+    /** 队列已空且主线程未处于派发中：实况侧场地数据已追上游标位置（回放切片前对齐卡数用） */
+    public boolean isMsgQueueIdle() {
+        return pendingMsgs.isEmpty() && !dispatchingMsg;
+    }
+
+    /**
+     * 回放快进专用：强制重开动画闸门并在主线程一次性排空 pendingMsgs（忽略动画占用）。
+     * 快进期间 replaySkip+instantPlace 已保证消息处理不产生动画/特效，排空在单个主线程
+     * 消息周期内完成；投喂线程随后轮询 hasPendingMsgs()==false 确认落点。
+     */
+    public void drainReplayQueueNow() {
+        mainHandler.post(() -> {
+            animGateClosed = false;
+            animHoldUntilMs = 0;
+            mainHandler.removeCallbacks(animGatePoller);
+            mainHandler.removeCallbacks(animGateFailsafe);
+            dispatchingMsg = true;
+            try {
+                Runnable r;
+                while ((r = pendingMsgs.poll()) != null) {
+                    r.run();
+                }
+            } finally {
+                dispatchingMsg = false;
+            }
+        });
     }
 
     /**
@@ -713,6 +746,13 @@ public class GameEngine {
     public boolean duelStarted = false;
     public boolean inDuel = false;
     public boolean siding = false;
+
+    /** 回放模式：yrp 消息经 ReplayEngine 切片后投入本引擎实况管线渲染。SELECT 询问/胜负结算
+     *  在 GameMessageParser 侧抑制（应答已录制在文件里，弹选择窗会悬挂流程） */
+    public boolean replayMode = false;
+    /** 回放快进重排中（undo/restart/跳回合）：drawspec 覆盖层与长动画派发丢弃，配合
+     *  GameField.instantPlace 即时落位与音效静默，令闸门不阻塞、队列单帧排空 */
+    public boolean replaySkip = false;
 
     public boolean isStarted() { return duelStarted; }
     public boolean isInDuel() { return inDuel; }

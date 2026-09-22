@@ -311,6 +311,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (cmdMenuDialog != null) cmdMenuDialog.dismiss();
     }
 
+    /** 回放态堆叠区整列表查看（FieldSelectManager 委托）：回放中无命令菜单，
+     *  点双方卡组/额外/墓地/除外直接弹正面卡片列表，复用 CmdMenuDialog 的「查看」实现 */
+    void showReplayPileView(GameField.ClientCard card) {
+        if (cmdMenuDialog == null) {
+            cmdMenuDialog = new CmdMenuDialog(activity);
+        }
+        cmdMenuDialog.showPileViewList(card, engine);
+    }
+
     // === 选择会话转发（FieldSelectManager） ===
 
     public void beginPlaceSelect(boolean isDisfield) {

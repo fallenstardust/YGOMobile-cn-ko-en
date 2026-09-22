@@ -462,6 +462,9 @@ public class GameField {
     public int currentPhase;
     public int turnCount;
     public boolean isTag;
+    /** 回放快进重排期间的即时落位模式：移动/淡入淡出/LP/洗牌动画全部直接到位，
+     *  不产生 aniFrame——动画闸门天然不阻塞，快进队列可单帧排空（GameEngine.drainReplayQueueNow） */
+    public boolean instantPlace = false;
     public List<ChainInfo> chains = new ArrayList<>();
 
     /**

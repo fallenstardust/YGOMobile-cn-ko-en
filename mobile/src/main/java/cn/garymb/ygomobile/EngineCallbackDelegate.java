@@ -152,13 +152,22 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> {
             // player 为本地视角索引（0=我方）；playerInfos 按座位号存储（STOC_HS_PLAYER_ENTER），
             // 我方名称取 selfType 座位、对方取另一座位（1v1），越界座位回退默认名
-            int selfSeat = activity.engine.getClient().selfType;
-            int seat = (player == 0) ? selfSeat : (selfSeat ^ 1);
-            GameEngine.PlayerInfo info = (seat >= 0 && seat < activity.engine.playerInfos.length)
-                    ? activity.engine.playerInfos[seat] : null;
             GameField.PlayerField pf = activity.engine.getField().players[player];
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
-            String name = (info == null || info.name.isEmpty()) ? defaultName : info.name;
+            String name;
+            if (activity.engine.replayMode) {
+                // 回放：无座位概念，ReplayEngine 开始回放时已按本地视角索引（0=录制者）
+                // 将 yrp 头部双方昵称写入 playerInfos，直接按视角索引取名
+                GameEngine.PlayerInfo rinfo = (player >= 0 && player < activity.engine.playerInfos.length)
+                        ? activity.engine.playerInfos[player] : null;
+                name = (rinfo == null || rinfo.name == null || rinfo.name.isEmpty()) ? defaultName : rinfo.name;
+            } else {
+                int selfSeat = activity.engine.getClient().selfType;
+                int seat = (player == 0) ? selfSeat : (selfSeat ^ 1);
+                GameEngine.PlayerInfo info = (seat >= 0 && seat < activity.engine.playerInfos.length)
+                        ? activity.engine.playerInfos[seat] : null;
+                name = (info == null || info.name.isEmpty()) ? defaultName : info.name;
+            }
             activity.topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
             activity.topInfoManager.updateLpBars(activity.engine.getField());
             activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
@@ -174,9 +183,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             isMyTurn = (activity.engine.getField().currentPlayer == 0);
             activity.topInfoManager.updateTurn(activity.engine.getField().turnCount, isMyTurn);
             activity.fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
-            // case 101：阶段文字跟随通讯切换（DuelPhase → showcardcode 4~9）
+            // case 101：阶段文字跟随通讯切换（DuelPhase → showcardcode 4~9）；
+            // 回放快进重排期间丢弃（不入 SpecEffectOverlay 队列，避免占用统一动画屏障）
             int textCode = phaseTextCode(phase);
-            if (textCode > 0) specEffect().showText(textCode);
+            if (textCode > 0 && !activity.engine.replaySkip) specEffect().showText(textCode);
         });
     }
 
@@ -379,6 +389,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
 
     @Override
     public void onChainAnimation(int code, int controler, int location, int sequence) {
+        if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃发动大图
         activity.runOnUiThread(() -> {
             activity.fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500);
             specEffect().showActivate(code);          // case 1：发动卡片大图
@@ -387,6 +398,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
 
     @Override
     public void onSummonAnimation(int code, int summonType) {
+        if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃召唤大图
         activity.runOnUiThread(() -> {
             if (summonType == GameEngine.SUMMON_SPECIAL) {
                 specEffect().showSpecialSummon(code); // case 5：特殊召唤，放大 + 淡入
@@ -398,6 +410,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
 
     @Override
     public void onNegatedAnimation(int code) {
+        if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃无效大图
         // case 3：效果无效（破坏被无效即"不会被破坏"），居中卡片 + 无效图标
         activity.runOnUiThread(() -> specEffect().showNegated(code));
     }
@@ -697,6 +710,22 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     /** 录像回放的阶段文字提示 */
     public void showReplayPhaseText(int textCode) {
         activity.runOnUiThread(() -> specEffect().showText(textCode));
+    }
+
+    /**
+     * 录像回放（MSG 模式）连锁发动动画：选卡高亮 + 发动大图，
+     * 对齐实况 onChainAnimation 链路（selectCardWithAutoClear + showActivate）
+     */
+    public void showReplayChainAnimation(int code, int controler, int location, int sequence) {
+        activity.runOnUiThread(() -> {
+            activity.fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500);
+            specEffect().showActivate(code);
+        });
+    }
+
+    /** 录像回放（MSG 模式）效果无效动画：对齐实况 onNegatedAnimation 链路 */
+    public void showReplayNegateAnimation(int code) {
+        activity.runOnUiThread(() -> specEffect().showNegated(code));
     }
 
     /**

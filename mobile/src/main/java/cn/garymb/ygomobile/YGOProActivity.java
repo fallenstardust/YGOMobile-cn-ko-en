@@ -145,6 +145,15 @@ public class YGOProActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        // singleTop：已在前台时从外部再次打开 .yrp（GameUriManager → YGOStarter 带 -r 转发）
+        // 不会再走 onCreate，必须在此重新派发，否则回放参数被丢弃、停留在主菜单界面
+        handleDirectIntent(intent);
+    }
+
     private void setupFullScreen() {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (getSupportActionBar() != null) {
@@ -987,6 +996,16 @@ public class YGOProActivity extends AppCompatActivity {
     /** 录像回放召唤动画：委托 EngineCallbackDelegate 的 specEffect 居中卡片动画 */
     public void showReplaySummonAnimation(int code, int summonType) {
         if (engineCallback != null) engineCallback.showReplaySummonAnimation(code, summonType);
+    }
+
+    /** 录像回放连锁发动动画（MSG 模式）：选卡高亮 + 发动大图 */
+    public void showReplayChainAnimation(int code, int controler, int location, int sequence) {
+        if (engineCallback != null) engineCallback.showReplayChainAnimation(code, controler, location, sequence);
+    }
+
+    /** 录像回放效果无效动画（MSG 模式）：居中卡片 + 无效图标 */
+    public void showReplayNegateAnimation(int code) {
+        if (engineCallback != null) engineCallback.showReplayNegateAnimation(code);
     }
 
     /** 录像回放阶段文字提示 */

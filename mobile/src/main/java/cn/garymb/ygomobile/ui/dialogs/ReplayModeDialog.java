@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -505,10 +506,20 @@ public class ReplayModeDialog {
 
     public static void startReplayPlayback(YGOProActivity activity, String replayPath, int startTurn) {
         if (activity.getEngine() == null) return;
+        // 重复进入回放（外部再次打开 .yrp / 录像选择窗连续点播）：先静默并停掉旧引擎，
+        // 避免旧回放线程的刷帧/弹窗回调干扰新回放
+        ReplayEngine previous = activity.getCurrentReplayEngine();
+        if (previous != null) {
+            previous.detachListener();
+            previous.stop();
+            activity.setCurrentReplayEngine(null);
+        }
         // 对齐 game.cpp Main::Replay → showFieldWindow：先切入决斗场 UI（隐藏主菜单/局域网弹窗），
         // 否则回放开始后主菜单仍覆盖在画面上
         activity.enterReplayUI();
         ReplayEngine replayEngine = new ReplayEngine(activity.getEngine().getField(), activity.getSoundManager());
+        // 接入实况管线宿主：纯消息录像的切片消息投喂给 GameEngine（卡片动画/音效/大图全由实况侧产生）
+        replayEngine.setEngine(activity.getEngine());
         activity.getEngine().setReplayEngine(replayEngine);
         activity.setCurrentReplayEngine(replayEngine);
         // 结束/错误弹窗只弹一次；quitReplay 触发的二次 FINISHED 状态被此标志拦截
@@ -567,13 +578,16 @@ public class ReplayModeDialog {
             public void onReplayPhaseChanged(int phase) {
                 activity.runOnUiThread(() -> {
                     activity.getFieldCtl().setPhaseByValue(phase);
-                    activity.getTopInfoManager().setTurnText("Turn " + activity.getEngine().getField().turnCount);
+                    // 回合数纯数字显示 + 回合方高亮（对齐实况 updateTurn；修复窄列 "Turn N" 被裁成 "Tu"）
+                    GameField field = activity.getEngine().getField();
+                    activity.getTopInfoManager().updateTurn(field.turnCount, field.currentPlayer == 0);
                 });
             }
 
             @Override
             public void onReplayHintMessage(String hint) {
-                activity.runOnUiThread(() -> activity.getFieldCtl().showHint(hint, 3000));
+                // 回放不显示顶部消息提示（对齐实况无 hint 浮层），仅保留日志便于排查
+                Log.d("ReplayModeDialog", "replay hint: " + hint);
             }
 
             @Override
@@ -602,6 +616,23 @@ public class ReplayModeDialog {
             public void onReplayPhaseText(int textCode) {
                 activity.showReplayPhaseText(textCode);
             }
+
+            @Override
+            public void onReplayChainAnimation(int code, int controler, int location, int sequence) {
+                activity.showReplayChainAnimation(code, controler, location, sequence);
+            }
+
+            @Override
+            public void onReplayNegateAnimation(int code) {
+                activity.showReplayNegateAnimation(code);
+            }
+
+            @Override
+            public void onReplayTurnChanged(int turn, int currentPlayer) {
+                // MSG_NEW_TURN 到达即更新回合数与回合方高亮（先于阶段切换）
+                activity.runOnUiThread(() ->
+                        activity.getTopInfoManager().updateTurn(turn, currentPlayer == 0));
+            }
         });
         replayEngine.loadAndPlay(replayPath, startTurn);
     }
@@ -612,8 +643,9 @@ public class ReplayModeDialog {
      */
     private static void showReplayEndDialog(YGOProActivity activity, ReplayEngine engine,
                                             AtomicBoolean shown, boolean forceError) {
-        // 用户已主动退出（quitReplay 已清空 currentReplayEngine）时不再弹窗，避免重复退出
-        if (activity.getCurrentReplayEngine() == null) return;
+        // 仅当前活跃的回放引擎才弹窗：用户已退出（current 置 null）或已被新回放替换时拦截，
+        // 避免旧引擎的 FINISHED/ERROR 回调对新回放弹出无关提示
+        if (engine == null || activity.getCurrentReplayEngine() != engine) return;
         if (!shown.compareAndSet(false, true)) return;
         String err = engine != null ? engine.getLastErrorMessage() : null;
         if (forceError && err == null) err = "回放未能启动";

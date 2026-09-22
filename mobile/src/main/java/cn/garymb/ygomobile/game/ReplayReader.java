@@ -21,6 +21,8 @@ public class ReplayReader {
     public static final int REPLAY_DECODED = 0x4;
     public static final int REPLAY_SINGLE_MODE = 0x8;
     public static final int REPLAY_UNIFORM = 0x10;
+    /** 自定义扩展位（与 YrpWriter.REPLAY_MSG_STREAM 对偶）：响应记录前含 [uint32 长度 + 主机视角 MSG 流] 段 */
+    public static final int REPLAY_MSG_STREAM = 0x20;
     public static final int REPLAY_ID_YRP1 = 0x31707279;
     public static final int REPLAY_ID_YRP2 = 0x32707279;
 
@@ -60,6 +62,8 @@ public class ReplayReader {
         public List<DeckInfo> decks = new ArrayList<>();
         public String scriptName = "";
         public ByteBuffer replayBuffer;
+        /** 主机视角引擎 MSG 字节流（REPLAY_MSG_STREAM 标志文件才有，可为 null） */
+        public ByteBuffer msgBuffer;
         public boolean isTag = false;
         public boolean isSingleMode = false;
 
@@ -210,6 +214,19 @@ public class ReplayReader {
                 }
                 replay.decks.add(deck);
             }
+        }
+
+        // REPLAY_MSG_STREAM：卡组段之后、响应记录段之前插入 [uint32 msgLen][MSG 流]，
+        // 切出 msgBuffer 供纯消息回放；无标志的旧文件完全走原解析
+        if (replay.hasFlag(REPLAY_MSG_STREAM)) {
+            int msgLen = buf.getInt();
+            if (msgLen < 0 || msgLen > buf.remaining()) {
+                Log.e(TAG, "Invalid msg stream length: " + msgLen);
+                return false;
+            }
+            replay.msgBuffer = ByteBuffer.wrap(buf.array(), buf.position(), msgLen)
+                    .order(ByteOrder.LITTLE_ENDIAN);
+            buf.position(buf.position() + msgLen);
         }
 
         replay.replayBuffer = ByteBuffer.wrap(

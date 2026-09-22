@@ -7,6 +7,7 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -34,17 +35,35 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         void onReplaySummonAnimation(int code, int summonType);
         /** 录像播放阶段文字提示（case 101 DrawSpec showText） */
         void onReplayPhaseText(int textCode);
+        /** 纯消息模式（MSG 流录像）连锁发动：选卡高亮 + 发动大图（对齐实况 onChainAnimation） */
+        void onReplayChainAnimation(int code, int controler, int location, int sequence);
+        /** 纯消息模式效果无效/失效：居中卡片 + 无效图标（对齐实况 onNegatedAnimation） */
+        void onReplayNegateAnimation(int code);
+        /** 回合切换：供顶部信息栏刷新回合数与回合方高亮（对齐实况 onTurnStarted） */
+        void onReplayTurnChanged(int turn, int currentPlayer);
     }
 
     private ReplayState state = ReplayState.IDLE;
     private final GameField field;
     private final SoundManager soundManager;
+    /** 实况管线宿主引擎：纯消息（msgMode）回放把切片后的消息投喂给它的全套动画管线；
+     *  旧格式引擎重跑路径不依赖。由构造方（ReplayModeDialog/ConnectionManager）经 setEngine 接入 */
+    private GameEngine engine;
     private ReplayListener listener;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private ReplayReader.ReplayData replayData;
     /** 响应记录流（uniform 模式消息区全部为 [uint8 len][response] 记录，非消息字节流）。 */
     private ByteBuffer replayBuffer;
+    /** 纯消息模式：录像文件内含主机视角 MSG 字节流，不启动 ocgcore 引擎，动画/卡面全由消息驱动 */
+    private boolean msgMode;
+    /** 纯消息模式的消息流游标缓冲（逐条消费，undo/restart 时重置为 {@link #originalMsgBytes} 副本）。 */
+    private ByteBuffer msgStream;
+    private byte[] originalMsgBytes;
+    /** 动画持闸截止时刻（对齐 GameEngine.animHoldUntilMs）：pauseable 消息后节奏取 max(800ms, 余量)。 */
+    private volatile long animHoldUntilMs;
+    /** 连锁卡码序列（对齐 DuelEventHandler.chainCodes）：MSG_CHAINING 入列，供 NEGATED/DISABLED 取码。 */
+    private final List<Integer> chainCodes = new ArrayList<>();
     /** 当前正在消费的单条引擎消息体缓冲，供 skipBytes 推进游标。 */
     private ByteBuffer msgBuf;
     private long pduel = 0L;
@@ -66,6 +85,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private volatile int restartTargetStep = 0;
     private int restartFromStep = 0;
     private boolean isSkipping = false;
+    /** undo/restart 目标步为 0 时的特殊落点：消费并重投 MSG_START（重建初始场）后即停 */
+    private boolean landAtStart = false;
     private byte[] originalResponseBytes = null;
     /** 回放异常终止原因（对齐 replay_mode.cpp "Error occurs." 与 EndDuel 1501 提示），自然结束为 null。 */
     private volatile String lastErrorMessage;
@@ -77,8 +98,18 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         this.soundManager = soundManager;
     }
 
+    /** 接入实况管线宿主引擎（msgMode 回放必需；旧格式重跑路径可缺省） */
+    public void setEngine(GameEngine engine) {
+        this.engine = engine;
+    }
+
     public void setListener(ReplayListener listener) {
         this.listener = listener;
+    }
+
+    /** 摘除 UI 监听：重复进入回放时先于 {@link #stop()} 调用，使旧实例剩余回调静默 */
+    public void detachListener() {
+        this.listener = null;
     }
 
     public ReplayState getState() { return state; }
@@ -109,8 +140,10 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 return;
             }
 
-            // 回放需要重跑引擎复现消息流（C++ ReplayMode::ReplayThread），先引导卡片/脚本资源
-            if (!NativeScriptBootstrap.ensureEngineReady()) {
+            // 含 MSG 流的纯消息录像完全脱离引擎回放（不重跑 ocgcore+script）；旧格式仍需
+            // 重跑引擎复现消息流（C++ ReplayMode::ReplayThread），先引导卡片/脚本资源
+            msgMode = replayData.msgBuffer != null;
+            if (!msgMode && !NativeScriptBootstrap.ensureEngineReady()) {
                 lastErrorMessage = "决斗引擎或卡片脚本加载失败";
                 setState(ReplayState.ERROR);
                 mainHandler.post(() -> {
@@ -120,7 +153,11 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             }
 
             field.clear();
-            setupInitialField();
+            if (!msgMode) {
+                // 旧格式引擎重跑：手工建初始场；纯消息模式由 MSG_START 经实况管线
+                // messageParser.onStart 统一建场（与 LAN 对局完全同路）
+                setupInitialField();
+            }
 
             replayBuffer = replayData.replayBuffer;
             replayBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -128,6 +165,16 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             originalResponseBytes = new byte[replayBuffer.remaining()];
             ((ByteBuffer) replayBuffer.duplicate().order(ByteOrder.LITTLE_ENDIAN)).get(originalResponseBytes);
             replayWinSeen = false;
+            if (msgMode) {
+                // 纯消息模式：快照并切出消息流，从起点开始逐条回放
+                ByteBuffer ms = replayData.msgBuffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+                originalMsgBytes = new byte[ms.remaining()];
+                ms.get(originalMsgBytes);
+                msgStream = ByteBuffer.wrap(originalMsgBytes).order(ByteOrder.LITTLE_ENDIAN);
+                chainCodes.clear();
+                mapReplayDeckCodes();
+                startReplaySession();
+            }
 
             setState(ReplayState.PLAYING);
             isRunning = true;
@@ -190,6 +237,48 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         }
     }
 
+    /** 回放卡组/额外卡面回填：MSG_START 仅按数量建卡（code=0 背面），此处把 yrp 头部的
+     *  卡组/额外卡码写进对应 ClientCard，使双方卡组/额外可直接点开查看正面（需求1）；
+     *  初始场建立后及每次快进落点后均需调用（重排会重建卡对象） */
+    private void applyReplayDeckCodes() {
+        if (replayData == null || replayData.decks.isEmpty()) return;
+        applyOneDeckCodes(0, replayData.decks.get(0));
+        int p1Index = replayData.isTag ? 2 : 1;
+        if (replayData.decks.size() > p1Index) {
+            applyOneDeckCodes(1, replayData.decks.get(p1Index));
+        }
+        field.refreshAllCards();
+        notifyField();
+    }
+
+    private void applyOneDeckCodes(int player, ReplayReader.DeckInfo deckInfo) {
+        if (deckInfo == null) return;
+        writeZoneCodes(field.players[player].deck, deckInfo.main);
+        writeZoneCodes(field.players[player].extra, deckInfo.extra);
+    }
+
+    /** 先行码录像：头部卡组/额外卡码换成正式码（仅纯消息模式；旧格式引擎重跑需保留
+     *  原卡码以按 seed 复现），与消息流侧 mapMessage 保持同一映射口径 */
+    private void mapReplayDeckCodes() {
+        if (replayData == null) return;
+        for (ReplayReader.DeckInfo deck : replayData.decks) {
+            if (deck == null) continue;
+            ReplayCodeMapper.mapDeck(deck.main);
+            ReplayCodeMapper.mapDeck(deck.extra);
+        }
+    }
+
+    /** 按索引同序对齐（与 setupDeckForPlayer/field.initial 的序列语义一致） */
+    private void writeZoneCodes(List<GameField.ClientCard> list, List<Integer> codes) {
+        if (list == null || codes == null) return;
+        int n = Math.min(list.size(), codes.size());
+        for (int i = 0; i < n; i++) {
+            GameField.ClientCard card = list.get(i);
+            if (card == null) continue;
+            card.code = codes.get(i);
+        }
+    }
+
     private void setupDeckForPlayer(int player, ReplayReader.DeckInfo deckInfo) {
         List<GameField.ClientCard> deckList = field.players[player].deck;
         for (int i = 0; i < deckList.size(); i++) deckList.set(i, null);
@@ -222,6 +311,11 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
     private void replayLoop(int startTurn) {
         try {
+            if (msgMode) {
+                // 纯消息回放：不重建引擎决斗，逐条消费录像内 MSG 流（refresh* 系列因 pduel==0 自动空转）
+                soundManager.playBGM(SoundManager.BGM.DUEL);
+                replayMsgLoop();
+            } else {
             // 对齐 ReplayMode::ReplayThread：重建决斗→逐条 process/get_message→分析，
             // 消息流由引擎以相同 seed 重新产生，文件里只有玩家响应记录
             if (!startReplayDuel()) {
@@ -267,11 +361,17 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     break;
                 }
             }
+            }
         } catch (Exception e) {
             Log.e(TAG, "Replay loop error", e);
         }
 
         endReplayDuel();
+        if (msgMode) {
+            // 纯消息回放结束（MSG_WIN / 流尽 / 切片失败）兜底还原快进与回放标志：
+            // 快进途中结束时 isSkipping 仍为真，不还原会让实况侧持续静默/即时落位
+            clearReplayFlags();
+        }
         isRunning = false;
         setState(ReplayState.FINISHED);
         final boolean winShown = replayWinSeen;
@@ -280,6 +380,464 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             // 回放自然播放完毕（未经 MSG_WIN 判定胜负）：winner=-1 表示无结果，UI 不显示胜负文字
             if (!winShown && listener != null) listener.onReplayFinished(-1, 0);
         });
+    }
+
+    /**
+     * 纯消息模式主循环（切片投喂器）：从 msgStream 按 common.h 长度表逐条切出消息体，
+     * 经 engine.enqueueGameMsg 投入实况管线（pendingMsgs+动画闸门→GameMessageParser→
+     * DuelEventHandler），卡片动画/音效/LP浮字/召唤与连锁大图全部由实况侧产生。
+     * 节奏：仅「可见步」（移动/召唤/连锁/攻击/回合阶段切换等）等待管线排空并留地板间隔，
+     * 其余消息瞬流过；undo/restart/跳回合走 replaySkip+instantPlace 快进重排，落点即暂停。
+     */
+    private void replayMsgLoop() {
+        if (engine == null) {
+            lastErrorMessage = "回放管线未接入实况引擎";
+            mainHandler.post(() -> {
+                if (listener != null) listener.onReplayHintMessage("回放初始化失败：实况引擎未就绪");
+            });
+            return;
+        }
+        // 跳回合快进（startTurn>1 由 loadAndPlay 置 isSkipping+skipTurn）
+        if (isSkipping) {
+            beginInstantSkip();
+        }
+        long fedSincePump = 0;
+        while (isRunning) {
+            if (isPaused && !isRestarting) {
+                try { Thread.sleep(100); } catch (InterruptedException e) { break; }
+                continue;
+            }
+            if (isRestarting) {
+                performRestart();
+                fedSincePump = 0;
+                continue;
+            }
+            if (isSwapping) {
+                performSwapField();
+                isSwapping = false;
+            }
+            if (msgStream == null || !msgStream.hasRemaining()) {
+                return; // 消息流自然播毕
+            }
+            int msgType = msgStream.get() & 0xFF;
+            if (msgType == 5) { // MSG_WIN：结算不走实况管线（messageParser.onWin 回放侧已抑制），
+                // 仍由 ReplayEngine 判定结束并通知 UI
+                if (msgStream.remaining() < 2) return;
+                int winner = msgStream.get() & 0xFF;
+                int reason = msgStream.get() & 0xFF;
+                replayWinSeen = true;
+                if (!isSkipping) {
+                    soundManager.stopBGM();
+                    mainHandler.post(() -> {
+                        if (listener != null) listener.onReplayFinished(winner, reason);
+                    });
+                }
+                return;
+            }
+            int bodyStart = msgStream.position();
+            if (!sliceMsgBody(msgType, msgStream)) {
+                // 消息体不完整/未知消息：游标已不可靠，排空已投喂消息后就地止步（已渲染部分保持有效）
+                Log.w(TAG, "replayMsgLoop: slice failed at msgType=" + msgType);
+                engine.drainReplayQueueNow();
+                waitForPendingDrain();
+                return;
+            }
+            int bodyEnd = msgStream.position();
+            if (!isNoFeedMsg(msgType)) {
+                byte[] body = new byte[bodyEnd - bodyStart];
+                ((ByteBuffer) msgStream.duplicate().order(ByteOrder.LITTLE_ENDIAN)
+                        .position(bodyStart).limit(bodyEnd)).get(body);
+                // 先行码→正式码运行时映射（正式码原样返回），投喂前就地替换副本，不改录像文件
+                ReplayCodeMapper.mapMessage(msgType, body, this::updateBlockCount);
+                feedMessage(msgType, body);
+                fedSincePump++;
+            }
+            if (msgType == 4) {
+                // MSG_START 经实况管线建场（field.initial）后回填卡组/额外卡面（快进/正常路径均适用）
+                waitForDispatchDrain();
+                applyReplayDeckCodes();
+            }
+            boolean visible = isVisibleStep(msgType);
+            if (isSkipping && skipStep == 0 && !landAtStart) {
+                // 跳回合快进：可见步照常计步（保持步号与正常播放一致），不等动画不暂停
+                if (visible) currentStep++;
+                if (msgType == 40 && skipTurn > 0 && --skipTurn == 0) {
+                    endInstantSkip();
+                    isSkipping = false;
+                    mainHandler.post(() -> {
+                        if (listener != null) listener.onReplayHintMessage("快进结束，从当前回合开始正常播放");
+                    });
+                }
+                if (fedSincePump >= 512) { engine.drainReplayQueueNow(); fedSincePump = 0; }
+                continue;
+            }
+            if (isSkipping) {
+                // undo/restart 快进重排：不计数，到达目标可见步（或初始场落点）即停下还原
+                if (skipStep > 0) {
+                    if (visible && --skipStep == 0) landInstantSkip();
+                } else if (landAtStart && msgType == 4) {
+                    landInstantSkip(); // 重投 MSG_START 重建初始场后即停（回到 0 步）
+                }
+                if (fedSincePump >= 512) { engine.drainReplayQueueNow(); fedSincePump = 0; }
+                continue;
+            }
+            if (!visible) continue; // 非可见步瞬流过（需求2：无卡片移动的消息不再停顿）
+            currentStep++;
+            if (stepsRemaining > 0) {
+                stepsRemaining--;
+                if (stepsRemaining == 0) {
+                    isPaused = true;
+                    setState(ReplayState.PAUSED);
+                }
+            }
+            // 等实况管线（动画闸门+pendingMsgs）消化完本步再投喂下一条，动画完成信号由实况闸门提供
+            waitForPipelineIdle();
+            if (stepsRemaining == 0 && !isPaused && !isRestarting) {
+                try { Thread.sleep(field.animationSpeed > 1f ? 40L : 80L); }
+                catch (InterruptedException e) { return; }
+            }
+        }
+    }
+
+    // === msgMode 切片投喂 helper ===
+
+    /** 开始回放会话：置实况管线回放标志；录制者视角恒等映射（duelIsFirst=true），
+     *  yrp 头部双方昵称写入 playerInfos（本地视角索引）供顶部信息栏显示 */
+    private void startReplaySession() {
+        if (engine == null) return;
+        engine.replayMode = true;
+        engine.duelIsFirst = true;
+        engine.inDuel = false;
+        if (replayData != null) {
+            for (int p = 0; p < 2 && p < replayData.playerNames.size()
+                    && p < engine.playerInfos.length; p++) {
+                engine.playerInfos[p].name = replayData.playerNames.get(p);
+            }
+        }
+    }
+
+    /** 退出/停止回放：还原实况管线全部回放标志并复位回放控制状态（MSG_START 重放前也调用以清旧游标） */
+    private void clearReplayFlags() {
+        if (engine != null) {
+            engine.replayMode = false;
+            engine.replaySkip = false;
+            engine.field.instantPlace = false;
+            engine.duelIsFirst = true;
+        }
+        soundManager.setEffectsSuppressed(false);
+        isSkipping = false;
+        skipStep = 0;
+        skipTurn = 0;
+        landAtStart = false;
+        stepsRemaining = 0;
+    }
+
+    /** 快进三标志开启：实况侧抑制动画/特效/音效，消息处理即时落位 */
+    private void beginInstantSkip() {
+        engine.replaySkip = true;
+        field.instantPlace = true;
+        soundManager.setEffectsSuppressed(true);
+    }
+
+    /** 快进三标志还原：恢复正常播放节奏（引擎侧 animHold 残留一并清零） */
+    private void endInstantSkip() {
+        engine.replaySkip = false;
+        field.instantPlace = false;
+        soundManager.setEffectsSuppressed(false);
+        engine.animHoldUntilMs = 0;
+    }
+
+    /** 投喂线程调用：强制排空实况队列并等待消化完毕（落点/终止前保证已投喂消息全部渲染） */
+    private void drainAndSettle() {
+        engine.drainReplayQueueNow();
+        waitForPendingDrain();
+    }
+
+    /** 快进落点：排空、还原标志、暂停并回填卡组卡面 */
+    private void landInstantSkip() {
+        engine.drainReplayQueueNow();
+        waitForPendingDrain();
+        endInstantSkip();
+        isSkipping = false;
+        currentStep = restartFromStep;
+        applyReplayDeckCodes();
+        pause();
+    }
+
+    /** 主线程投递消息进实况管线（enqueueGameMsg 的队列/闸门均为主线程态，必须 post） */
+    private void feedMessage(int msgType, byte[] body) {
+        engine.mainHandler.post(() ->
+                engine.enqueueGameMsg(msgType, ByteBuffer.wrap(body).order(ByteOrder.LITTLE_ENDIAN)));
+    }
+
+    /** 等待实况管线空闲：pendingMsgs 排空且动画闸门开启（动画/特效全部播完）；restart 抢占时提前返回 */
+    private void waitForPipelineIdle() {
+        long deadline = System.currentTimeMillis() + 8000L;
+        while (isRunning && !isRestarting) {
+            if (!engine.hasPendingMsgs() && !engine.isAnyAnimationBusy()) return;
+            if (System.currentTimeMillis() > deadline) return; // 动画兜底超时，防止卡死
+            try { Thread.sleep(16); } catch (InterruptedException e) { return; }
+        }
+    }
+
+    /** 仅等待队列消化（不要求动画空闲），快进落点/终止收尾用 */
+    private void waitForPendingDrain() {
+        long deadline = System.currentTimeMillis() + 3000L;
+        while (isRunning && engine.hasPendingMsgs()
+                && System.currentTimeMillis() < deadline) {
+            try { Thread.sleep(10); } catch (InterruptedException e) { return; }
+        }
+    }
+
+    /** SELECT/询问类与 RETRY/WAITING/REQUEST_DECK：切片推进游标但不投喂实况管线 */
+    private boolean isNoFeedMsg(int msgType) {
+        if (msgType == 1 || msgType == 3 || msgType == 8) return true;
+        return (msgType >= 10 && msgType <= 26) || msgType == 132
+                || (msgType >= 140 && msgType <= 143);
+    }
+
+    /** 可见步（pauseable 收窄）：有卡片移动/大图/回合阶段推进的步才计步并等待节奏 */
+    private boolean isVisibleStep(int msgType) {
+        switch (msgType) {
+            case 40: // NEW_TURN
+            case 41: // NEW_PHASE
+            case 50: // MOVE
+            case 53: // POS_CHANGE
+            case 55: // SWAP
+            case 60: case 61: case 62: case 63: case 64: case 65: // SUMMONING~FLIPSUMMONED
+            case 70: case 71: // CHAINING / CHAINED
+            case 90: // DRAW
+            case 110: // ATTACK
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * 按 common.h 消息长度表推进游标切出消息体（与 gframe replay_mode.cpp ReplayAnalyze 同源，
+     * SELECT 系长度与 selectWithResponse 一致）。投喂给实况管线的 body 为切片区间 [bodyStart,bodyEnd)。
+     * @return false 表示消息体不完整或未知消息（游标不可靠，应终止循环）
+     */
+    private boolean sliceMsgBody(int msgType, ByteBuffer buf) {
+        switch (msgType) {
+            case 1: // RETRY
+            case 3: // WAITING
+            case 61: case 63: case 65: // SUMMONED / SPSUMMONED / FLIPSUMMONED
+            case 74: // CHAIN_END
+            case 112: case 113: case 114: // ATTACK_DISABLED / DAMAGE_STEP_START / DAMAGE_STEP_END
+            case 170: // MATCH_KILL（replay_mode.cpp 不消费 body）
+                return true;
+            case 2: // HINT: type(1) player(1) data(4)
+            case 165: // PLAYER_HINT
+                return takeFixed(buf, 6);
+            case 4: // START: player+duelrule+lp0+lp1+deckc/extrac*2（本机录制的 MSG_START 体为 18 字节）
+                return takeFixed(buf, 18);
+            case 8: // REQUEST_DECK: player
+                return takeFixed(buf, 1);
+            case 6: // UPDATE_DATA: player loc + 区域卡数×[clen(含自身)][payload]（与 parseUpdateData 同口径）
+                return walkUpdateDataBlocks(buf);
+            case 7: // UPDATE_CARD: player loc seq + 单块
+                return takeFixed(buf, 3) && takeQueryBlock(buf);
+            case 10: { // SELECT_BATTLECMD: player cnt + cnt*11 + cnt2*8 + 2
+                if (!takeFixed(buf, 2)) return false;
+                if (!takeFixed(buf, lastU8(buf) * 11 + 1)) return false;
+                return takeFixed(buf, lastU8(buf) * 8 + 2);
+            }
+            case 11: { // SELECT_IDLECMD: player + 5组(cnt*7) + cnt*11 + 3
+                if (!takeFixed(buf, 1)) return false;
+                for (int t = 0; t < 5; t++) {
+                    if (!takeFixed(buf, 1)) return false;
+                    if (!takeFixed(buf, lastU8(buf) * 7)) return false;
+                }
+                if (!takeFixed(buf, 1)) return false;
+                return takeFixed(buf, lastU8(buf) * 11 + 3);
+            }
+            case 12: return takeFixed(buf, 13); // SELECT_EFFECTYN
+            case 13: return takeFixed(buf, 5);  // SELECT_YESNO
+            case 14: // SELECT_OPTION: player cnt + cnt*4
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 4);
+            case 15: case 20: // SELECT_CARD / SELECT_TRIBUTE: player + 3 + cnt + cnt*8
+                return takeFixed(buf, 5) && takeFixed(buf, lastU8(buf) * 8);
+            case 16: // SELECT_CHAIN: player cnt + 9 + cnt*14
+                return takeFixed(buf, 2) && takeFixed(buf, 9 + lastU8(buf) * 14);
+            case 17: // SORT_CHAIN: player cnt + cnt*7
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 7);
+            case 18: case 19: case 24: // PLACE / POSITION / DISFIELD: player + 5
+                return takeFixed(buf, 6);
+            case 22: // SELECT_COUNTER: player + 4 + cnt + cnt*9
+                return takeFixed(buf, 6) && takeFixed(buf, lastU8(buf) * 9);
+            case 23: { // SELECT_SUM: op player + 6 + cnt + cnt*11 + cnt2*11
+                if (!takeFixed(buf, 9)) return false;
+                if (!takeFixed(buf, lastU8(buf) * 11 + 1)) return false;
+                return takeFixed(buf, lastU8(buf) * 11);
+            }
+            case 25: // SORT_CARD: player cnt + cnt*7
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 7);
+            case 26: { // SELECT_UNSELECT_CARD: player + 4 + cnt + cnt*8 + cnt2*8
+                if (!takeFixed(buf, 6)) return false;
+                if (!takeFixed(buf, lastU8(buf) * 8 + 1)) return false;
+                return takeFixed(buf, lastU8(buf) * 8);
+            }
+            case 30: case 42: // CONFIRM_DECKTOP / CONFIRM_EXTRATOP: player cnt + cnt*7
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 7);
+            case 31: // CONFIRM_CARDS: player skip cnt + cnt*7
+                return takeFixed(buf, 3) && takeFixed(buf, lastU8(buf) * 7);
+            case 32: return takeFixed(buf, 1); // SHUFFLE_DECK
+            case 33: // SHUFFLE_HAND: player cnt + cnt*4
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 4);
+            case 34: case 35: // REFRESH_DECK / SWAP_GRAVE_DECK: player
+                return takeFixed(buf, 1);
+            case 37: return true; // REVERSE_DECK（无 body，replay_mode.cpp 不推进）
+            case 36: // SHUFFLE_SET_CARD: player cnt + cnt*8
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 8);
+            case 38: return takeFixed(buf, 6); // DECK_TOP: player seq code
+            case 39: // SHUFFLE_EXTRA: player cnt + cnt*4
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 4);
+            case 40: return takeFixed(buf, 1); // NEW_TURN
+            case 41: return takeFixed(buf, 2); // NEW_PHASE
+            case 50: return takeFixed(buf, 16); // MOVE
+            case 53: return takeFixed(buf, 9);  // POS_CHANGE
+            case 54: return takeFixed(buf, 8);  // SET
+            case 55: return takeFixed(buf, 16); // SWAP
+            case 56: return takeFixed(buf, 4);  // FIELD_DISABLED
+            case 60: case 62: case 64: // SUMMONING / SPSUMMONING / FLIPSUMMONING
+                return takeFixed(buf, 8);
+            case 70: return takeFixed(buf, 16); // CHAINING
+            case 71: case 72: case 73: case 75: case 76: // CHAINED~CHAIN_DISABLED
+                return takeFixed(buf, 1);
+            case 80: case 81: // CARD_SELECTED / RANDOM_SELECTED: player cnt + cnt*4
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 4);
+            case 83: // BECOME_TARGET: cnt + cnt*4
+                return takeFixed(buf, 1) && takeFixed(buf, lastU8(buf) * 4);
+            case 90: // DRAW: player cnt + cnt*4
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 4);
+            case 91: case 92: case 94: case 100: // DAMAGE / RECOVER / LPUPDATE / PAY_LPCOST
+                return takeFixed(buf, 5);
+            case 93: return takeFixed(buf, 8); // EQUIP
+            case 95: return takeFixed(buf, 4); // UNEQUIP
+            case 96: case 97: // CARD_TARGET / CANCEL_TARGET
+                return takeFixed(buf, 8);
+            case 101: case 102: // ADD/REMOVE_COUNTER
+                return takeFixed(buf, 7);
+            case 110: return takeFixed(buf, 8); // ATTACK
+            case 111: return takeFixed(buf, 26); // BATTLE
+            case 120: return takeFixed(buf, 8); // MISSED_EFFECT
+            case 130: case 131: // TOSS_COIN / TOSS_DICE: player cnt + cnt*1
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf));
+            case 132: return takeFixed(buf, 1); // ROCK_PAPER_SCISSORS
+            case 133: return takeFixed(buf, 1); // HAND_RES
+            case 140: case 141: return takeFixed(buf, 6); // ANNOUNCE_RACE / ATTRIB
+            case 142: case 143: // ANNOUNCE_CARD / NUMBER: player cnt + cnt*4
+                return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 4);
+            case 160: return takeFixed(buf, 9); // CARD_HINT
+            case 161: { // TAG_SWAP: player mainc extrac pcount handc + 顶部码4 + handc*4 + extrac*4
+                // 与 replay_mode.cpp `pbuf += pbuf[2]*4 + pbuf[4]*4 + 9` 同口径（body[2]=额外数、body[4]=手卡数）
+                if (!takeFixed(buf, 5)) return false;
+                int extraCount = buf.get(buf.position() - 3) & 0xFF;
+                int handCount = lastU8(buf);
+                return takeFixed(buf, extraCount * 4 + handCount * 4 + 4);
+            }
+            case 162: return sliceReloadField(buf); // RELOAD_FIELD（变长，含空位标记）
+            case 163: case 164: { // AI_NAME / SHOW_HINT: uint16 len + str + nul
+                if (!takeFixed(buf, 2)) return false;
+                return takeFixed(buf, lastU16(buf) + 1);
+            }
+            default:
+                Log.w(TAG, "sliceMsgBody: unknown msg " + msgType);
+                lastErrorMessage = "未知回放消息 " + msgType;
+                return false;
+        }
+    }
+
+    /** 切片时读取刚消费的最后一字节（均为 cnt/val 类字段） */
+    private int lastU8(ByteBuffer buf) {
+        return buf.get(buf.position() - 1) & 0xFF;
+    }
+
+    /** 切片时读取刚消费的两个字节（uint16 小端长度，如 AI_NAME / SHOW_HINT 的字符串长） */
+    private int lastU16(ByteBuffer buf) {
+        int p = buf.position();
+        return (buf.get(p - 2) & 0xFF) | ((buf.get(p - 1) & 0xFF) << 8);
+    }
+
+    /** 定长推进：不足则判定游标不可靠（消息体截断） */
+    private boolean takeFixed(ByteBuffer buf, int n) {
+        if (n < 0 || buf.remaining() < n) return false;
+        buf.position(buf.position() + n);
+        return true;
+    }
+
+    /** MSG_RELOAD_FIELD 变长切片：player + 2×(4 + 7×(1+3标记) + 8×(1+2标记) + 6) + 1，
+     *  与 processMessage case 162 / gframe 定长口径一致（非空位才有附加字节） */
+    private boolean sliceReloadField(ByteBuffer buf) {
+        if (!takeFixed(buf, 1)) return false;
+        for (int p = 0; p < 2; p++) {
+            if (!takeFixed(buf, 4)) return false;
+            for (int s = 0; s < 7; s++) {
+                if (!takeFixed(buf, 1)) return false;
+                if (lastU8(buf) != 0 && !takeFixed(buf, 2)) return false;
+            }
+            for (int s = 0; s < 8; s++) {
+                if (!takeFixed(buf, 1)) return false;
+                if (lastU8(buf) != 0 && !takeFixed(buf, 1)) return false;
+            }
+            if (!takeFixed(buf, 6)) return false;
+        }
+        return takeFixed(buf, 1);
+    }
+
+    /** UPDATE_DATA 体切片：player(1) + location(1) 后按区域条目逐个消费自界长块；
+     *  条目数与实况 CommandDataParser.parseUpdateData 完全同构（固定槽位区域整列计数，
+     *  动态列表只计实际存在的卡），切片前先等实况侧消化完，保证两侧卡数一致 */
+    private boolean walkUpdateDataBlocks(ByteBuffer buf) {
+        // 区域卡数取自实况侧当前场（切片前等其追上游标），否则块数估计与实况 parse 不一致→游标错位
+        waitForDispatchDrain();
+        if (buf.remaining() < 2) return false;
+        int player = buf.get() & 0xFF;
+        int location = buf.get() & 0xFF;
+        List<GameField.ClientCard> list = field.players[engine.localPlayer(player)]
+                .getLocationList(location);
+        if (list == null) return false;
+        boolean fixedSlots = (location == 0x04 || location == 0x08);
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) == null && !fixedSlots) continue;
+            if (!takeQueryBlock(buf)) return false;
+        }
+        return true;
+    }
+
+    /** 切片 UPDATE_DATA 前等实况管线消化完已投喂消息（有限等待，保证区域卡数一致） */
+    private void waitForDispatchDrain() {
+        long deadline = System.currentTimeMillis() + 2000L;
+        while (isRunning && !engine.isMsgQueueIdle()
+                && System.currentTimeMillis() < deadline) {
+            try { Thread.sleep(5); } catch (InterruptedException e) { return; }
+        }
+    }
+
+    /** [int32 clen(含自身)][payload...] 单块游标推进 */
+    private boolean takeQueryBlock(ByteBuffer buf) {
+        if (buf.remaining() < 4) return false;
+        int clen = buf.getInt();
+        int adv = clen - 4;
+        if (adv < 0 || buf.remaining() < adv) return false;
+        buf.position(buf.position() + adv);
+        return true;
+    }
+
+    /** UPDATE_DATA 的 query 块数（与 walkUpdateDataBlocks / 实况 parseUpdateData 同口径）：
+     *  固定槽位区域（怪兽区/魔法区）整列计数，动态列表只计实际存在的卡 */
+    private int updateBlockCount(int player, int location) {
+        List<GameField.ClientCard> list = field.players[engine.localPlayer(player)]
+                .getLocationList(location);
+        if (list == null) return 0;
+        if (location == 0x04 || location == 0x08) return list.size();
+        int count = 0;
+        for (GameField.ClientCard card : list) {
+            if (card != null) count++;
+        }
+        return count;
     }
 
     /** 重建决斗（对齐 ReplayMode::StartDuel）：seed/卡组/参数取录像头，不写任何消息。 */
@@ -364,57 +922,109 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 isSwapping = false;
             }
             int msgType = buf.get() & 0xFF;
-            boolean pauseable = isPauseable(msgType);
+            boolean pauseable = pauseableForMode(msgType);
             if (!processMessage(msgType, buf)) {
                 return false;
             }
             if (!pauseable) {
                 continue;
             }
-
-            if (skipStep > 0) {
-                skipStep--;
-                if (skipStep == 0) {
-                    // 上一步回退：已快进到目标步，停在该步（步进模式）
-                    isSkipping = false;
-                    currentStep = restartFromStep;
-                    pause();
-                    notifyField();
-                }
-                continue;
-            }
-
-            currentStep++;
-
-            if (msgType == 40) { // MSG_NEW_TURN
-                if (isSkipping && skipTurn > 0) {
-                    skipTurn--;
-                    if (skipTurn == 0) {
-                        isSkipping = false;
-                        mainHandler.post(() -> {
-                            if (listener != null) listener.onReplayHintMessage("快进结束，从当前回合开始正常播放");
-                        });
-                    }
-                    continue;
-                }
-            }
-
-            // 步进前进：处理完 N 个可暂停消息后自动暂停
-            if (stepsRemaining > 0) {
-                stepsRemaining--;
-                if (stepsRemaining == 0) {
-                    isPaused = true;
-                    setState(ReplayState.PAUSED);
-                    notifyField();
-                }
-                continue;
-            }
-
-            if (!skipForward && !isSkipping && !isPaused) {
-                try { Thread.sleep(800); } catch (InterruptedException e) { return false; }
+            if (!afterPauseableMessage(msgType)) {
+                return false;
             }
         }
         return true;
+    }
+
+    /**
+     * 可暂停消息后的统一节奏（引擎重跑与纯消息两模式共用）：快进计数/步进自动暂停/
+     * 回合快跳与 800ms 节奏；纯消息模式下额外等待长动画余量（animHoldUntilMs），
+     * 使洗牌/连抽/攻击弧不被下一条消息抢先。@return false 表示终止回放。
+     */
+    private boolean afterPauseableMessage(int msgType) {
+        if (skipStep > 0) {
+            skipStep--;
+            if (skipStep == 0) {
+                // 上一步回退：已快进到目标步，停在该步（步进模式）
+                isSkipping = false;
+                currentStep = restartFromStep;
+                pause();
+                notifyField();
+                // 快进期间回合/阶段/LP 等 UI 派发全部静默，落点后一次性补发，
+                // 顶部信息栏与详情面板同步到回退目标步的真实状态
+                final int sTurn = field.turnCount;
+                final int sCur = field.currentPlayer;
+                final int sPhase = field.currentPhase;
+                mainHandler.post(() -> {
+                    if (listener == null) return;
+                    listener.onReplayTurnChanged(sTurn, sCur);
+                    listener.onReplayPhaseChanged(sPhase);
+                    listener.onReplayPlayerInfoUpdated(0);
+                    listener.onReplayPlayerInfoUpdated(1);
+                });
+            }
+            return true;
+        }
+
+        currentStep++;
+
+        if (msgType == 40) { // MSG_NEW_TURN
+            if (isSkipping && skipTurn > 0) {
+                skipTurn--;
+                if (skipTurn == 0) {
+                    isSkipping = false;
+                    mainHandler.post(() -> {
+                        if (listener != null) listener.onReplayHintMessage("快进结束，从当前回合开始正常播放");
+                    });
+                }
+                return true;
+            }
+        }
+
+        // 步进前进：处理完 N 个可暂停消息后自动暂停
+        if (stepsRemaining > 0) {
+            stepsRemaining--;
+            if (stepsRemaining == 0) {
+                isPaused = true;
+                setState(ReplayState.PAUSED);
+                notifyField();
+            }
+            return true;
+        }
+
+        if (!skipForward && !isSkipping && !isPaused) {
+            // 节奏下限：纯消息模式收紧为 300ms——实况里消息间隔由玩家思考时间决定，
+            // 回放按 800ms 统一等待会明显拖沓（洗牌/连锁等长动画已由 animHoldUntilMs
+            // 持闸兜底）；旧引擎重跑路径维持原 800ms 节奏不变
+            long sleepMs = msgMode ? 300L : 800L;
+            if (msgMode) {
+                long animRemain = animHoldUntilMs - System.currentTimeMillis();
+                if (animRemain > sleepMs) {
+                    sleepMs = animRemain;
+                }
+            }
+            // quick_animation 开启（animationSpeed>1）时步间隔同倍缩短
+            float spd = field.animationSpeed;
+            if (spd > 1f) {
+                sleepMs = (long) (sleepMs / spd);
+            }
+            try {
+                Thread.sleep(sleepMs);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** 纯消息模式下 MSG_RETRY(1)/MSG_WAITING(3)/MSG_HINT(2)/MSG_UPDATE_DATA(6)/
+     *  MSG_UPDATE_CARD(7)/MSG_REQUEST_DECK(8) 不参与步进计数与节奏停顿：服务端每个动作
+     *  都连发多条 UPDATE/HINT，若逐条停顿 800ms 会把回放拖得极慢（用户所报“每一步间隔过长”根因），
+     *  且这些消息本身不改变可见场面节奏 */
+    private boolean pauseableForMode(int msgType) {
+        if (msgMode && (msgType == 1 || msgType == 3 || msgType == 2
+                || msgType == 6 || msgType == 7 || msgType == 8)) return false;
+        return isPauseable(msgType);
     }
 
     private boolean isPauseable(int msgType) {
@@ -449,6 +1059,23 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     private void performRestart() {
         isRestarting = false;
         isSkipping = true;
+
+        if (msgMode) {
+            // 纯消息模式：排空实况队列后 msgStream 回到起点快进重排，无需重跑引擎；
+            // MSG_START 重投即由实况管线重建初始场（landAtStart 落点），目标步>0 时
+            // replayMsgLoop 的 isSkipping 分支投喂至落点后 landInstantSkip 暂停
+            drainAndSettle();
+            msgStream = ByteBuffer.wrap(originalMsgBytes).order(ByteOrder.LITTLE_ENDIAN);
+            chainCodes.clear();
+            replayWinSeen = false;
+            currentStep = 0;
+            skipStep = Math.max(0, restartTargetStep);
+            restartFromStep = skipStep;
+            restartTargetStep = 0;
+            landAtStart = skipStep == 0;
+            beginInstantSkip();
+            return;
+        }
 
         // 对齐 ReplayMode::Restart：end_duel → Rewind（响应流回到起点）→ 重新 StartDuel 重跑
         endReplayDuel();
@@ -491,6 +1118,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         try {
             switch (msgType) {
                 case 1: // MSG_RETRY
+                    if (msgMode) break; // 实况客户端收到 RETRY 仅重新询问；回放无需应答，静默跳过
                     lastErrorMessage = "Error occurs.（引擎请求重放 MSG_RETRY，步数=" + currentStep + "）";
                     mainHandler.post(() -> {
                         if (listener != null) listener.onReplayHintMessage("录像错误: Retry");
@@ -573,8 +1201,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 case 32: // MSG_SHUFFLE_DECK
                     if (buf.remaining() < 1) return false;
                     int sdPlayer = buf.get() & 0xFF;
-                    applyShuffleDeck(sdPlayer);
-                    // 对齐 replay_mode.cpp L458：洗牌后整库重查卡面
+                    applyShuffleDeck(sdPlayer, msgMode && !isSkipping);
+                    // 对齐 replay_mode.cpp L458：洗牌后整库重查卡面（纯消息模式由后续 UPDATE 提供）
                     refreshDeck(sdPlayer);
                     break;
 
@@ -582,8 +1210,15 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     if (buf.remaining() < 2) return false;
                     int shPlayer = buf.get() & 0xFF;
                     int shCount = buf.get() & 0xFF;
-                    skipBytes(shCount * 4);
-                    applyShuffleHand(shPlayer);
+                    if (msgMode) {
+                        // 卡码由消息体提供（对手视角已遮蔽为 0，与实况一致），携入洗手卡动画延迟换面
+                        int[] shCodes = new int[shCount];
+                        for (int i = 0; i < shCount && buf.remaining() >= 4; i++) shCodes[i] = buf.getInt();
+                        applyShuffleHandMsg(shPlayer, shCount, shCodes);
+                    } else {
+                        skipBytes(shCount * 4);
+                        applyShuffleHand(shPlayer);
+                    }
                     break;
 
                 case 34: // MSG_REFRESH_DECK
@@ -753,12 +1388,25 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     int chCt = buf.get() & 0xFF;
                     onChaining(chCode, chPcc, chPcl, chPcs, chSubs, chCc, chCl, chCs, chDesc);
                     break;
-                case 71: skipBytes(1); onChained(0); replayRefresh(); break;
+                case 71: {
+                    int chCount = buf.get() & 0xFF;
+                    onChained(chCount);
+                    replayRefresh();
+                    break;
+                }
                 case 72: skipBytes(1); onChainSolving(0); break;
                 case 73: skipBytes(1); onChainSolved(0); replayRefresh(); break;
                 case 74: onChainEnd(); replayRefresh(); break;
-                case 75: skipBytes(1); onChainNegated(0); break;
-                case 76: skipBytes(1); onChainDisabled(0); break;
+                case 75: {
+                    int negCount = buf.get() & 0xFF;
+                    onChainNegated(negCount);
+                    break;
+                }
+                case 76: {
+                    int disCount = buf.get() & 0xFF;
+                    onChainDisabled(disCount);
+                    break;
+                }
 
                 case 80: case 81: { // MSG_CARD_SELECTED / MSG_RANDOM_SELECTED
                     skipBytes(1);
@@ -840,9 +1488,22 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                     onPayLpCost(costPlayer, costAmt);
                     break;
 
-                case 101: case 102: // ADD_COUNTER / REMOVE_COUNTER
-                    skipBytes(7);
+                case 101: case 102: { // ADD/REMOVE_COUNTER：type(2) + ctrl loc seq + count(2)
+                    if (msgMode) {
+                        // 纯消息模式卡面不经引擎重查，计数器直接由消息体维护
+                        if (buf.remaining() < 7) return false;
+                        int ctrType = buf.getShort() & 0xFFFF;
+                        int ctrCtrl = buf.get() & 0xFF;
+                        int ctrLoc = buf.get() & 0xFF;
+                        int ctrSeq = buf.get() & 0xFF;
+                        int ctrCount = buf.getShort() & 0xFFFF;
+                        if (msgType == 101) onAddCounter(ctrType, ctrCtrl, ctrLoc, ctrSeq, ctrCount);
+                        else onRemoveCounter(ctrType, ctrCtrl, ctrLoc, ctrSeq, ctrCount);
+                    } else {
+                        skipBytes(7);
+                    }
                     break;
+                }
 
                 case 110: // MSG_ATTACK
                     if (buf.remaining() < 8) return false;
@@ -1080,6 +1741,11 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
                 Log.w(TAG, "Unhandled select msg: " + msgType);
                 return false;
         }
+        if (msgMode) {
+            // 纯消息模式：SELECT 消息体已按长度表消耗，动画/卡面全部来自消息流本身，
+            // 不读响应记录也不喂引擎（避免响应耗尽/锁步风险）
+            return true;
+        }
         return feedRecordedResponse();
     }
 
@@ -1120,11 +1786,58 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         int player = buf.get() & 0xFF;
         int location = buf.get() & 0xFF;
         if (msgType == 6) { // UPDATE_DATA
+            if (msgMode) {
+                // 纯消息模式：卡面数据由消息体 [clen][flag...] 块提供（与 LAN 客户端
+                // CommandDataParser.parseUpdateData 同一应用路径），并推进游标避免后续消息错位
+                applyFieldQueryBuf(player & 1, location, buf);
+            }
             onUpdateData(player, location, buf);
         } else { // UPDATE_CARD
             int seq = buf.get() & 0xFF;
+            if (msgMode) {
+                applyUpdateCardBuf(player & 1, location, seq, buf);
+            }
             onUpdateCard(player, location, seq, buf);
         }
+    }
+
+    /** UPDATE_DATA 块序列应用（按区域卡片列表逐块消费，与 applyFieldQuery 同格式） */
+    private void applyFieldQueryBuf(int player, int location, ByteBuffer data) {
+        java.util.List<GameField.ClientCard> list = field.players[player].getLocationList(location);
+        if (list == null) return;
+        boolean fixedSlots = (location == OcgDuelEngine.LOCATION_MZONE
+                || location == OcgDuelEngine.LOCATION_SZONE);
+        for (int i = 0; i < list.size(); i++) {
+            GameField.ClientCard card = list.get(i);
+            if (card == null && !fixedSlots) continue;
+            if (data.remaining() < 4) break;
+            int len = data.getInt();
+            int next = data.position() + (len - 4);
+            if (next < data.position() || next > data.limit()) break;
+            if (len > 8 && card != null) {
+                ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
+                sub.limit(Math.min(sub.limit(), len - 4));
+                card.updateQuery(sub);
+            }
+            data.position(next);
+        }
+    }
+
+    /** UPDATE_CARD 单卡块 [clen][flag...]：updateQuery 后推进游标 */
+    private void applyUpdateCardBuf(int player, int location, int seq, ByteBuffer data) {
+        if (data.remaining() < 4) return;
+        int len = data.getInt();
+        int next = data.position() + Math.max(0, len - 4);
+        if (next > data.limit()) next = data.limit();
+        if (len > 8) {
+            GameField.ClientCard card = field.getCard(player, location & 0x7f, seq);
+            if (card != null) {
+                ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
+                sub.limit(Math.min(sub.limit(), len - 4));
+                card.updateQuery(sub);
+            }
+        }
+        data.position(next);
     }
 
     private ByteBuffer createSubBuffer(int size) {
@@ -1150,25 +1863,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     /** 对齐 ClientField::UpdateFieldCard：blocks 为 [int32 clen(含自身)][int32 flag][...] * N，
      *  怪兽/魔陷区为固定槽位列表（空位也有 clen=4 条目），与 LAN 客户端 parseUpdateData 同格式 */
     private void applyFieldQuery(int player, int location, byte[] blocks) {
-        java.util.List<GameField.ClientCard> list = field.players[player].getLocationList(location);
-        if (list == null) return;
-        ByteBuffer data = ByteBuffer.wrap(blocks).order(ByteOrder.LITTLE_ENDIAN);
-        boolean fixedSlots = (location == OcgDuelEngine.LOCATION_MZONE
-                || location == OcgDuelEngine.LOCATION_SZONE);
-        for (int i = 0; i < list.size(); i++) {
-            GameField.ClientCard card = list.get(i);
-            if (card == null && !fixedSlots) continue;
-            if (data.remaining() < 4) break;
-            int len = data.getInt();
-            int next = data.position() + (len - 4);
-            if (next < data.position() || next > data.limit()) break;
-            if (len > 8 && card != null) {
-                ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
-                sub.limit(Math.min(sub.limit(), len - 4));
-                card.updateQuery(sub);
-            }
-            data.position(next);
-        }
+        applyFieldQueryBuf(player, location, ByteBuffer.wrap(blocks).order(ByteOrder.LITTLE_ENDIAN));
     }
 
     /** 对齐 ReplayRefresh(flag=0xf81fff)：双方 MZONE/SZONE/HAND 六区域重查 */
@@ -1250,6 +1945,8 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         if (replayThread != null) {
             replayThread.interrupt();
         }
+        // 退出回放：还原实况管线全部回放标志（replayMode/replaySkip/instantPlace/音效静默）
+        clearReplayFlags();
         setState(ReplayState.FINISHED);
     }
 
@@ -1294,6 +1991,11 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
 
     @Override public void onRetry() {}
     @Override public void onHint(int type, int player, int data) {
+        // 纯消息模式不弹顶部提示（用户要求：回放不显示消息提示），仅留日志
+        if (msgMode) {
+            Log.d(TAG, "hint(type=" + type + ", player=" + player + ", data=" + data + ")");
+            return;
+        }
         mainHandler.post(() -> { if (listener != null) listener.onReplayHintMessage("提示: " + data); });
     }
     @Override public void onWaiting() {}
@@ -1309,18 +2011,20 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         field.initial(0, deck0, extra0, 0);
         field.initial(1, deck1, extra1, 0);
         soundManager.playBGM(SoundManager.BGM.DUEL);
-        mainHandler.post(() -> { if (listener != null) listener.onReplayFieldChanged(); });
+        notifyField();
     }
     @Override public void onWin(int player, int reason) {
+        // 快进重排途中遇到 WIN（目标步在末尾之前不可能，仅防直播尾粘连）：不弹结果
+        if (isSkipping) return;
         soundManager.stopBGM();
         // 直接把 MSG_WIN 的胜者与胜利原因透传给 UI，由阶段文字（case 101）显示胜负 + !victory 原因
         mainHandler.post(() -> { if (listener != null) listener.onReplayFinished(player, reason); });
     }
     @Override public void onUpdateData(int player, int location, ByteBuffer data) {
-        mainHandler.post(() -> { if (listener != null) listener.onReplayFieldChanged(); });
+        notifyField();
     }
     @Override public void onUpdateCard(int player, int location, int sequence, ByteBuffer data) {
-        mainHandler.post(() -> { if (listener != null) listener.onReplayFieldChanged(); });
+        notifyField();
     }
     @Override public void onRequestDeck(int player) {}
     @Override public void onSelectBattleCmd(ByteBuffer data) {}
@@ -1344,7 +2048,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onConfirmCards(int player, int skipPanel, int count, ByteBuffer data) {}
     @Override public void onShuffleDeck(ByteBuffer data) {
         int player = data.get() & 0xFF;
-        applyShuffleDeck(player);
+        applyShuffleDeck(player, msgMode && !isSkipping);
     }
     @Override public void onShuffleHand(ByteBuffer data) {
         int player = data.get() & 0xFF;
@@ -1352,9 +2056,99 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         if (data.remaining() >= count * 4) data.position(data.position() + count * 4);
         applyShuffleHand(player);
     }
-    // 回放不播洗牌动画（对齐 C++ 录像快进跳过动画分支），仅音效 + 刷面
-    private void applyShuffleDeck(int player) { soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); notifyField(); }
-    private void applyShuffleHand(int player) { soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); notifyField(); }
+    // 引擎重跑模式不播洗牌动画（对齐 C++ 录像快进跳过动画分支），仅音效 + 刷面；
+    // 纯消息模式由 processMessage 传入 withAnim=true 走实况同款动画
+    private void applyShuffleDeck(int player) { applyShuffleDeck(player, false); }
+    private void applyShuffleDeck(int player, boolean withAnim) {
+        if (!withAnim) {
+            playSfx(SoundManager.SFX.SHUFFLE);
+            notifyField();
+            return;
+        }
+        applyShuffleDeckAnim(player);
+    }
+    /** 移植实况 DuelEventHandler.onShuffleDeck（duelclient.cpp MSG_SHUFFLE_DECK L2620-2657）：
+     *  倒转先正向排布→清卡面背面呈现→ 5 轮抖动→恢复倒转回位 */
+    private void applyShuffleDeckAnim(int player) {
+        final int p = player & 1;
+        final List<GameField.ClientCard> deck = field.players[p].deck;
+        if (deck.size() < 2) {
+            notifyField();
+            return;
+        }
+        final boolean rev = field.deckReversed;
+        if (rev) {
+            field.deckReversed = false;
+            for (GameField.ClientCard c : deck) {
+                if (c != null) field.moveCardAnimated(c, 10);
+            }
+        }
+        final long preDelay = rev ? 170L : 0L;
+        mainHandler.postDelayed(() -> {
+            for (GameField.ClientCard c : deck) {
+                if (c != null) {
+                    c.setCode(0);
+                    c.is_reversed = false;
+                }
+            }
+            playSfx(SoundManager.SFX.SHUFFLE);
+            for (GameField.ClientCard c : deck) {
+                if (c != null) field.startDeckShake(c);
+            }
+            if (rev) {
+                field.deckReversed = true;
+                for (GameField.ClientCard c : deck) {
+                    if (c != null) field.moveCardAnimated(c, 10, 30);
+                }
+            }
+            animHoldUntilMs = System.currentTimeMillis() + preDelay + 30L * 17L + 100L;
+            notifyField();
+        }, preDelay);
+    }
+    private void applyShuffleHand(int player) { playSfx(SoundManager.SFX.SHUFFLE); notifyField(); }
+
+    /** 移植实况 DuelEventHandler.onShuffleHand（duelclient.cpp MSG_SHUFFLE_HAND L2659-2701）：
+     *  聚拢→停留→回新布局关键帧动画，停留段末换入新卡面；回放不做对手手卡翻面揭示
+     *  （C++ replay is_replay_need_flip=false 与实况 DuelEventHandler flip 判据一致） */
+    private void applyShuffleHandMsg(int player, int count, int[] newCodes) {
+        final int p = player & 1;
+        if (isSkipping || count == 0) {
+            notifyField();
+            return;
+        }
+        if (count > 1) playSfx(SoundManager.SFX.SHUFFLE);
+        final List<GameField.ClientCard> hand = field.players[p].hand;
+        int maxTotal = 0;
+        for (GameField.ClientCard c : hand) {
+            if (c == null) continue;
+            field.startHandShuffle(c, false);
+            maxTotal = Math.max(maxTotal, c.animTotalFrame);
+        }
+        if (maxTotal > 0) {
+            int returnStart = maxTotal >= 31 ? 26 : 21;
+            final long revealDelay = (returnStart - 1L) * 17L;
+            mainHandler.postDelayed(() -> {
+                int idx = 0;
+                for (GameField.ClientCard c : hand) {
+                    if (c == null) continue;
+                    if (idx < count) c.setCode(newCodes[idx] & 0x7fffffff);
+                    c.clearDescHints();
+                    idx++;
+                }
+                notifyField();
+            }, revealDelay);
+            animHoldUntilMs = System.currentTimeMillis() + (maxTotal + 5L) * 17L;
+        } else {
+            int idx = 0;
+            for (GameField.ClientCard c : hand) {
+                if (c == null) continue;
+                if (idx < count) c.setCode(newCodes[idx] & 0x7fffffff);
+                c.clearDescHints();
+                idx++;
+            }
+            notifyField();
+        }
+    }
     @Override public void onRefreshDeck(int player) { notifyField(); }
     @Override public void onSwapGraveDeck(int player) { notifyField(); }
     @Override public void onShuffleSetCard(int player, int count, ByteBuffer data) { notifyField(); }
@@ -1363,13 +2157,20 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onNewTurn(int player) {
         field.currentPlayer = player;
         field.turnCount++;
-        soundManager.playSoundEffect(SoundManager.SFX.NEXT_TURN);
+        playSfx(SoundManager.SFX.NEXT_TURN);
+        // 回合切换即时刷新顶部信息栏（纯数字回合数 + 回合方高亮，对齐实况 onTurnStarted）；
+        // 快进重排期间静默，落点后由 skipStep 统一补发同步
+        final int turn = field.turnCount;
+        final int cur = field.currentPlayer;
+        if (!isSkipping) mainHandler.post(() -> {
+            if (listener != null) listener.onReplayTurnChanged(turn, cur);
+        });
         notifyField();
     }
     @Override public void onNewPhase(int phase) {
         field.currentPhase = phase;
-        soundManager.playSoundEffect(SoundManager.SFX.PHASE);
-        mainHandler.post(() -> {
+        playSfx(SoundManager.SFX.PHASE);
+        if (!isSkipping) mainHandler.post(() -> {
             if (listener != null) {
                 listener.onReplayPhaseChanged(phase);
                 // 对齐 EngineCallbackDelegate.onPhaseChanged：录像也显示阶段文字 drawspec
@@ -1503,9 +2304,9 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         //（旧实现对每条 MSG_MOVE 无条件播 SUMMON，任何移动都响召唤音）
         if (!skipAnim && nl != ol) {
             if ((nl & 0x20) != 0) {
-                soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
+                playSfx(SoundManager.SFX.BANISHED);
             } else if ((reason & 0x2) != 0 && (nl & 0x10) != 0) {
-                soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);
+                playSfx(SoundManager.SFX.DESTROYED);
             }
         }
         notifyField();
@@ -1544,7 +2345,7 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             field.addCard(ctrl, loc, seq, card);
             field.setCardPos(card);
         }
-        soundManager.playSoundEffect(SoundManager.SFX.SET);
+        playSfx(SoundManager.SFX.SET);
         notifyField();
     }
     @Override public void onSwap(int c1c, int c1l, int c1s, int c2c, int c2l, int c2s) {
@@ -1571,41 +2372,67 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
         notifyField();
     }
     @Override public void onSummoning(int code, int ctrl, int loc, int seq) {
-        soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+        playSfx(SoundManager.SFX.SUMMON);
         // 对齐 SummonAnimationManager.onSummoning：录像也触发 drawspec 居中卡片动画
         final int c = code;
-        mainHandler.post(() -> { if (listener != null) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_NORMAL); });
+        if (!isSkipping) mainHandler.post(() -> { if (listener != null) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_NORMAL); });
     }
     @Override public void onSummoned() { notifyField(); }
     @Override public void onSpSummoning(int code, int ctrl, int loc, int seq) {
-        soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON);
+        playSfx(SoundManager.SFX.SPECIAL_SUMMON);
         final int c = code;
-        mainHandler.post(() -> { if (listener != null && c != 0) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_SPECIAL); });
+        if (!isSkipping) mainHandler.post(() -> { if (listener != null && c != 0) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_SPECIAL); });
     }
     @Override public void onSpSummoned() { notifyField(); }
     @Override public void onFlipSummoning(int code, int ctrl, int loc, int seq) {
-        soundManager.playSoundEffect(SoundManager.SFX.FLIP);
+        playSfx(SoundManager.SFX.FLIP);
         final int c = code;
-        mainHandler.post(() -> { if (listener != null) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_FLIP); });
+        if (!isSkipping) mainHandler.post(() -> { if (listener != null) listener.onReplaySummonAnimation(c, SummonAnimationManager.SUMMON_FLIP); });
     }
     @Override public void onFlipSummoned() { notifyField(); }
 
     @Override
     public void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc) {
-        soundManager.playSoundEffect(SoundManager.SFX.ACTIVATE);
+        playSfx(SoundManager.SFX.ACTIVATE);
+        // 连锁卡码序列（供 MSG_CHAIN_NEGATED/DISABLED 按 ct-1 取被无效卡码，对齐实况 chainCodes）
+        chainCodes.add(code);
         // duelclient.cpp MSG_CHAINING L3345/L3366-3371：录像同样维护 current_chain，
         // 使卡片列表的「在连锁%d发动 / 被连锁%d的[%ls]选择为对象」状态标签在回放中一致
         field.currentChain = new GameField.ChainInfo();
         field.currentChain.chainCard = field.getCard(pcc & 1, pcl, pcs, subs);
+        // 移植实况 DuelEventHandler.onChaining L3346-3349：发动卡（手卡/里侧）卡码揭示时
+        // SetCode + MoveCard(10) 播背面→正面翻面转动动画，并派发发动大图 overlay
+        GameField.ClientCard chainCard = field.currentChain.chainCard;
+        if (msgMode && !isSkipping && chainCard != null && chainCard.code != code) {
+            chainCard.setCode(code);
+            field.moveCardAnimated(chainCard, 10);
+            animHoldUntilMs = System.currentTimeMillis() + 1500L;
+        }
         field.currentChain.code = code;
         field.currentChain.desc = desc;
         field.currentChain.controler = cc & 1;
         field.currentChain.location = cl;
         field.currentChain.sequence = cs;
+        if (msgMode && !isSkipping) {
+            final int fCode = code;
+            final int fCtrl = cc & 1;
+            mainHandler.post(() -> {
+                if (listener != null) listener.onReplayChainAnimation(fCode, fCtrl, cl, cs);
+            });
+        }
     }
 
     @Override public void onChained(int chainCount) {
         if (field.currentChain != null && !field.chains.contains(field.currentChain)) {
+            // 连锁图标位置快照（移植实况 onChained / duelclient.cpp MSG_CHAINED L3408）：
+            // 此刻卡片尚未因结算离开原位，图标此后固定在此处直到连锁消失
+            GameField.ClientCard cc = field.currentChain.chainCard;
+            if (cc != null) {
+                field.currentChain.iconX = cc.curX;
+                field.currentChain.iconY = cc.curY;
+                field.currentChain.iconZ = cc.curZ;
+                field.currentChain.iconPosCaptured = true;
+            }
             field.chains.add(field.currentChain);
         }
         notifyField();
@@ -1619,12 +2446,35 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             if (ch.chainCard != null) ch.chainCard.is_showchaintarget = false;
         }
         field.chains.clear();
+        chainCodes.clear();
         field.currentChain = new GameField.ChainInfo();
         notifyField();
     }
-    @Override public void onChainNegated(int chainCount) { soundManager.playSoundEffect(SoundManager.SFX.NEGATE); }
-    @Override public void onChainDisabled(int chainCount) { soundManager.playSoundEffect(SoundManager.SFX.NEGATE); }
+    @Override public void onChainNegated(int chainCount) {
+        playSfx(SoundManager.SFX.NEGATE);
+        postReplayNegateVisual(chainCount);
+    }
+    @Override public void onChainDisabled(int chainCount) {
+        playSfx(SoundManager.SFX.NEGATE);
+        postReplayNegateVisual(chainCount);
+    }
+    /** 无效/失效卡片居中动画（移植 SummonAnimationManager.postNegatedAnimation：ct 为 1 基连锁序号） */
+    private void postReplayNegateVisual(int chainCount) {
+        if (!msgMode || isSkipping) return;
+        final int code = (chainCount >= 1 && chainCount <= chainCodes.size())
+                ? chainCodes.get(chainCount - 1) : 0;
+        if (code == 0) return;
+        animHoldUntilMs = System.currentTimeMillis() + 1500L;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onReplayNegateAnimation(code);
+        });
+    }
     @Override public void onDraw(int player, int count, int[] codes) {
+        // 纯消息模式非快进：逐张 5 帧节拍抽入（移植实况 onDraw/drawOneCard），消除同帧齐发
+        if (msgMode && !isSkipping) {
+            onDrawStaged(player & 1, count, codes);
+            return;
+        }
         for (int i = 0; i < count; i++) {
             GameField.ClientCard pcard = field.getCard(player, 0x01, field.getCardCount(player, 0x01) - 1 - i);
             if (pcard != null && (!field.deckReversed || codes[i] != 0)) pcard.setCode(codes[i] & 0x7fffffff);
@@ -1639,23 +2489,77 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             }
             field.addCard(player, 0x02, 0, pcard);
             for (GameField.ClientCard hc : field.players[player].hand) {
-                if (hc != null) field.moveCardAnimated(hc, 10);
+                if (hc == null) continue;
+                // 快进重排直接落位不动画（与 onMove 的 skipAnim 同一策略）
+                if (isSkipping) field.setCardPos(hc);
+                else field.moveCardAnimated(hc, 10);
             }
         }
-        soundManager.playSoundEffect(SoundManager.SFX.DRAW);
+        playSfx(SoundManager.SFX.DRAW);
+        notifyField();
+    }
+
+    /**
+     * 逐张抽卡动画（移植 DuelEventHandler.onDraw L669-725，duelclient.cpp MSG_DRAW L3519-3557）：
+     * 先给卡组顶被抽卡设卡码，再按 5 帧节拍逐张入手并让已有手卡重排让位。
+     */
+    private void onDrawStaged(final int p, int count, final int[] codes) {
+        final int deckLoc = CardLocation.Deck.value();
+        int top = field.getCardCount(p, deckLoc) - 1;
+        for (int i = 0; i < count; i++) {
+            GameField.ClientCard pcard = field.getCard(p, deckLoc, top - i);
+            if (pcard != null && (!field.deckReversed || codes[i] != 0)) {
+                pcard.setCode(codes[i] & 0x7fffffff);
+            }
+        }
+        final long stepMs = 5L * 17L;
+        for (int i = 0; i < count; i++) {
+            final int idx = i;
+            mainHandler.postDelayed(() -> drawOneCardMsg(p, deckLoc, codes, idx), idx * stepMs);
+        }
+        // 抽卡展示持闸：最后一张延迟 (count-1)*5 帧启动 + 10 帧飞行 + 尾帧余量
+        animHoldUntilMs = System.currentTimeMillis() + ((count - 1L) * 5L + 15L) * 17L;
+        notifyField();
+    }
+
+    /** 单张抽卡（onDrawStaged 按 5 帧节拍调度，移植实况 drawOneCard） */
+    private void drawOneCardMsg(int p, int deckLoc, int[] codes, int idx) {
+        int t = field.getCardCount(p, deckLoc) - 1;
+        if (t < 0) return;
+        GameField.ClientCard pcard = field.removeCard(p, deckLoc, t);
+        if (pcard == null) {
+            pcard = new GameField.ClientCard();
+            pcard.owner = p;
+            pcard.controler = p;
+            if (idx < codes.length) pcard.setCode(codes[idx] & 0x7fffffff);
+        }
+        field.addCard(p, CardLocation.Hand.value(), 0, pcard);
+        for (GameField.ClientCard hc : field.players[p].hand) {
+            if (hc != null) field.moveCardAnimated(hc, 10);
+        }
+        playSfx(SoundManager.SFX.DRAW);
         notifyField();
     }
     @Override public void onDamage(int player, int amount) {
         field.players[player].lp -= amount;
         if (field.players[player].lp < 0) field.players[player].lp = 0;
+        if (isSkipping) {
+            // 快进重排：LP 直接落值不播浮字动画（等价 C++ isReplaySkiping）
+            field.dInfo.lp[player] = field.players[player].lp;
+            return;
+        }
         field.startLpChange(player, field.players[player].lp, 0xFFFF0000, "-" + amount, true);
-        soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
+        playSfx(SoundManager.SFX.DAMAGE);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
     @Override public void onRecover(int player, int amount) {
         field.players[player].lp += amount;
+        if (isSkipping) {
+            field.dInfo.lp[player] = field.players[player].lp;
+            return;
+        }
         field.startLpChange(player, field.players[player].lp, 0xFF00FF00, "+" + amount, true);
-        soundManager.playSoundEffect(SoundManager.SFX.RECOVER);
+        playSfx(SoundManager.SFX.RECOVER);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
     @Override public void onEquip(int ec, int ecl, int el, int es, int tc, int tl, int ts) {
@@ -1672,10 +2576,16 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
             pc1.equipTarget = pc2;
             if (!pc2.equipped.contains(pc1)) pc2.equipped.add(pc1);
         }
+        // 对齐实况 DuelEventHandler.onEquip L372：装备音效（旧实现缺失）
+        playSfx(SoundManager.SFX.EQUIP);
         notifyField();
     }
     @Override public void onLpUpdate(int player, int lp) {
         field.players[player].lp = lp;
+        if (isSkipping) {
+            field.dInfo.lp[player] = lp;
+            return;
+        }
         field.startLpChange(player, lp, 0, null, false);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
@@ -1715,19 +2625,58 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onPayLpCost(int player, int cost) {
         field.players[player].lp -= cost;
         if (field.players[player].lp < 0) field.players[player].lp = 0;
+        if (isSkipping) {
+            field.dInfo.lp[player] = field.players[player].lp;
+            return;
+        }
         field.startLpChange(player, field.players[player].lp, 0, null, false);
         mainHandler.post(() -> { if (listener != null) listener.onReplayPlayerInfoUpdated(player); });
     }
-    @Override public void onAddCounter(int type, int ctrl, int loc, int seq, int count) {}
-    @Override public void onRemoveCounter(int type, int ctrl, int loc, int seq, int count) {}
-    @Override public void onAttack(int ac, int al, int as, int dc, int dl, int ds) { soundManager.playSoundEffect(SoundManager.SFX.ATTACK); }
+    @Override public void onAddCounter(int type, int ctrl, int loc, int seq, int count) {
+        // 对齐实况 DuelEventHandler.onAddCounter：卡片计数器写入 + 音效（纯消息模式下
+        // 卡面不经引擎重查，计数器只能由此消息维护）
+        GameField.ClientCard card = field.getCard(ctrl & 1, loc, seq);
+        if (card != null) {
+            card.counters.put(type, count);
+        }
+        playSfx(SoundManager.SFX.COUNTER_ADD);
+        notifyField();
+    }
+    @Override public void onRemoveCounter(int type, int ctrl, int loc, int seq, int count) {
+        GameField.ClientCard card = field.getCard(ctrl & 1, loc, seq);
+        if (card != null) {
+            card.counters.remove(type);
+        }
+        playSfx(SoundManager.SFX.COUNTER_REMOVE);
+        notifyField();
+    }
+    @Override public void onAttack(int ac, int al, int as, int dc, int dl, int ds) {
+        // 移植实况 DuelEventHandler.onAttack（duelclient.cpp MSG_ATTACK L3830-3864）：
+        // 有目标攻怪音效 ATTACK + 绿色攻击弧（GameFieldView 约 0.9s 内绘流动弧），
+        // 直接攻击音效 DIRECT_ATTACK 且弧落到对方场地一侧（arcTarget=null）
+        GameField.ClientCard atkCard = field.getCard(ac & 1, al, as);
+        GameField.ClientCard defCard = dl != 0 ? field.getCard(dc & 1, dl, ds) : null;
+        if (dl != 0) {
+            playSfx(SoundManager.SFX.ATTACK);
+        } else {
+            playSfx(SoundManager.SFX.DIRECT_ATTACK);
+        }
+        if (!isSkipping) {
+            field.arcAttacker = atkCard;
+            field.arcTarget = defCard;
+            field.arcStartMs = System.currentTimeMillis();
+            // 对齐实况 WaitFrameSignal(40)+ATTACK_HOLD_MS：弧光展示期内后续消息不得抢先
+            animHoldUntilMs = System.currentTimeMillis() + 900L;
+        }
+        notifyField();
+    }
     @Override public void onBattle(int aa, boolean ap, int da, boolean dp) {}
     @Override public void onAttackDisabled() {}
     @Override public void onDamageStepStart() {}
     @Override public void onDamageStepEnd() { notifyField(); }
     @Override public void onMissedEffect(int code, int ctrl, int loc, int seq, int effectId) {}
-    @Override public void onTossCoin(int player, int count, ByteBuffer results) { soundManager.playSoundEffect(SoundManager.SFX.COIN); }
-    @Override public void onTossDice(int player, int count, ByteBuffer results) { soundManager.playSoundEffect(SoundManager.SFX.DICE); }
+    @Override public void onTossCoin(int player, int count, ByteBuffer results) { playSfx(SoundManager.SFX.COIN); }
+    @Override public void onTossDice(int player, int count, ByteBuffer results) { playSfx(SoundManager.SFX.DICE); }
     @Override public void onAnnounceRace(int player, int count, int availableRaces) {}
     @Override public void onAnnounceAttrib(int player, int count, int availableAttribs) {}
     @Override public void onAnnounceCard(int player, ByteBuffer data) {}
@@ -1749,8 +2698,15 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     }
     @Override public void onTagSwap(int player) { notifyField(); }
     @Override public void onReloadField() { notifyField(); }
-    @Override public void onAiName(String name) {}
+    @Override public void onAiName(String name) {
+        Log.i(TAG, "AI name: " + name);
+    }
     @Override public void onShowHint(String hint) {
+        // 纯消息模式静默（同上），保留日志
+        if (msgMode) {
+            Log.d(TAG, "showHint: " + hint);
+            return;
+        }
         mainHandler.post(() -> { if (listener != null) listener.onReplayHintMessage(hint); });
     }
     @Override public void onMatchKill(int code) {}
@@ -1758,6 +2714,15 @@ public class ReplayEngine implements GameMessageParser.MessageHandler {
     @Override public void onDuelWinner(int player, int reason) { onWin(player, reason); }
 
     private void notifyField() {
+        // 快进/回退重放期间不派发刷帧：上一步对用户应无感（内部不可见地重放，
+        // 落点后统一刷一次），而非看着从头播一遍
+        if (isSkipping) return;
         mainHandler.post(() -> { if (listener != null) listener.onReplayFieldChanged(); });
+    }
+
+    /** 音效派发：快进/回退重放期间全部静默（否则回退一次会把整局音效快进重放） */
+    private void playSfx(SoundManager.SFX sfx) {
+        if (isSkipping) return;
+        soundManager.playSoundEffect(sfx);
     }
 }

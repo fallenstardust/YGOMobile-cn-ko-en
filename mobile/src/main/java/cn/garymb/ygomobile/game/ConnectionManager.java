@@ -346,6 +346,9 @@ public class ConnectionManager {
         if (engine.replayEngine == null) {
             engine.replayEngine = new ReplayEngine(engine.field, engine.soundManager);
         }
+        // 纯消息录像（含 MSG 流）需把切片投喂进本引擎的实况管线，此处兜底接线，
+        // 与 ReplayModeDialog 的装配路径等效（旧格式引擎重跑不依赖 engine）
+        engine.replayEngine.setEngine(engine);
         engine.setState(GameEngine.GameState.CONNECTING);
         engine.replayEngine.loadAndPlay(replayPath);
         engine.setState(GameEngine.GameState.DUELING);

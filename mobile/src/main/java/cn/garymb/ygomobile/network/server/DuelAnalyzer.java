@@ -929,6 +929,11 @@ final class DuelAnalyzer implements YGOProtocol {
 
     private void sendToPlayer(ServerConnection dp, byte[] data) {
         if (dp != null) {
+            // 录像：录制主机（players[0]）视角的完整 STOC_GAME_MSG 字节流（含服务端合成的
+            // UPDATE_DATA/UPDATE_CARD 刷新消息），回放端可据此脱离 ocgcore/script 纯消息回放
+            if (dp == room.players[0] && owner.replay != null) {
+                owner.replay.writeMessage(data, data.length);
+            }
             dp.send(STOC_GAME_MSG, data);
         }
     }

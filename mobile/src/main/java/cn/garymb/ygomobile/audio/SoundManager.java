@@ -139,7 +139,16 @@ public class SoundManager {
         }
     }
 
+    /** 回放快进重排期间的音效静默开关：置位时 playSoundEffect 全部丢弃，
+     *  避免逐帧重放历史消息时音效爆音（ReplayEngine 快进前置位、落点后复位） */
+    private volatile boolean effectsSuppressed = false;
+
+    public void setEffectsSuppressed(boolean suppressed) {
+        this.effectsSuppressed = suppressed;
+    }
+
     public void playSoundEffect(SFX sound) {
+        if (effectsSuppressed) return;
         if (!soundsEnabled || soundPool == null) return;
         Integer id = sfxMap.get(sound);
         if (id != null && id != 0) {

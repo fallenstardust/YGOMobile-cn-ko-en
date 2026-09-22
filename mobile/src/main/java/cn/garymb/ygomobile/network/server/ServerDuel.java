@@ -113,6 +113,8 @@ final class ServerDuel implements YGOProtocol {
         sb.putShort((short) OcgDuelEngine.queryFieldCount(pduel, 0, OcgDuelEngine.LOCATION_EXTRA));
         sb.putShort((short) OcgDuelEngine.queryFieldCount(pduel, 1, OcgDuelEngine.LOCATION_DECK));
         sb.putShort((short) OcgDuelEngine.queryFieldCount(pduel, 1, OcgDuelEngine.LOCATION_EXTRA));
+        // 录像：手工 MSG_START 不经 DuelAnalyzer.sendToPlayer，主机视角变体单独入消息流
+        replay.writeMessage(startBuf, 19);
         room.sendGameMsg(room.players[0], Arrays.copyOf(startBuf, 19));
         startBuf[1] = 1;
         room.sendGameMsg(room.players[1], Arrays.copyOf(startBuf, 19));
@@ -268,6 +270,9 @@ final class ServerDuel implements YGOProtocol {
         int player = dp.type;
         byte[] wbuf = new byte[]{(byte) EngineMessage.MSG_WIN, (byte) (1 - player), (byte) 0};
         room.broadcastGameMsg(wbuf);
+        if (replay != null) {
+            replay.writeMessage(wbuf, wbuf.length);
+        }
         if (room.players[player] == room.pplayer[player]) {
             room.matchResult[room.duelCount++] = 1 - player;
             room.tpPlayer = player;
@@ -289,6 +294,9 @@ final class ServerDuel implements YGOProtocol {
             int player = room.lastResponse;
             byte[] wbuf = new byte[]{(byte) EngineMessage.MSG_WIN, (byte) (1 - player), (byte) 0x3};
             room.broadcastGameMsg(wbuf);
+            if (replay != null) {
+                replay.writeMessage(wbuf, wbuf.length);
+            }
             if (room.players[player] == room.pplayer[player]) {
                 room.matchResult[room.duelCount++] = 1 - player;
                 room.tpPlayer = player;

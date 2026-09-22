@@ -464,6 +464,12 @@ public class CmdMenuDialog {
         showCardListDialog(title, items, null, MODE_VIEW, 0, engine, supplier);
     }
 
+    /** 回放态点击堆叠区：不经命令菜单，直接弹该区卡片正面列表（含实时刷新），
+     *  与菜单内「查看」共用实现（card.controler / card.location 均为视角侧口径） */
+    public void showPileViewList(GameField.ClientCard card, GameEngine engine) {
+        showViewList(card, engine);
+    }
+
     /** 堆叠区判断：卡组 0x01 / 墓地 0x10 / 除外 0x20 / 额外 0x40（与 GameFieldController.onCardClick isPile 同口径） */
     private static boolean isPileLocation(int location) {
         return location == 0x01 || location == 0x10 || location == 0x20 || location == 0x40;

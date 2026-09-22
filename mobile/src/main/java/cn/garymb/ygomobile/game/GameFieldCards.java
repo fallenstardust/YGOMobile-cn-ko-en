@@ -341,6 +341,11 @@ class GameFieldCards {
 
     public void fadeCard(ClientCard pcard, int alpha, int frame) {
         if (pcard == null) return;
+        if (field.instantPlace) {
+            // 回放快进重排：透明度直接到位，不产生 aniFrame
+            pcard.curAlpha = alpha;
+            return;
+        }
         pcard.animFromAlpha = pcard.curAlpha;
         pcard.animToAlpha = alpha;
         pcard.animTotalFrame = frame;

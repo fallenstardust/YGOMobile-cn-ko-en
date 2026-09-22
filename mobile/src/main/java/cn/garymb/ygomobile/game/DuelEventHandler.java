@@ -166,6 +166,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         packed.put(data);
         packed.flip();
         engine.mainHandler.post(() -> {
+            if (engine.replaySkip) return; // 回放快进重排：不叠加确认面板（落点后无需回补，gframe 回放同款面板非必需）
             if (engine.listener != null) engine.listener.onSelectRequired(27, packed);
         });
     }
@@ -188,7 +189,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         // L2633-2636：抖动前逐张清卡码与 is_reversed（卡组以背面呈现）；5 轮抖动延迟到
         // 正向排布到位后启动（30 帧单动画，期间 aniFrame>0 持续占住统一动画闸门）
         final long preDelay = rev ? 170L : 0L;
-        engine.mainHandler.postDelayed(() -> {
+        Runnable shuffleWork = () -> {
             for (GameField.ClientCard c : deck) {
                 if (c != null) {
                     c.setCode(0);
@@ -206,9 +207,17 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                     if (c != null) engine.field.moveCardAnimated(c, 10, 30);
                 }
             }
-            engine.animHoldUntilMs = System.currentTimeMillis()
-                    + preDelay + 30L * 17L + 100L;
-        }, preDelay);
+            // 回放快进重排（即时落位）：不持闸，且整段直接同步执行（见下）
+            if (!engine.field.instantPlace) {
+                engine.animHoldUntilMs = System.currentTimeMillis()
+                        + preDelay + 30L * 17L + 100L;
+            }
+        };
+        if (engine.field.instantPlace) {
+            shuffleWork.run();
+        } else {
+            engine.mainHandler.postDelayed(shuffleWork, preDelay);
+        }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
@@ -226,6 +235,20 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         final int[] newCodes = new int[count];
         for (int i = 0; i < count && data.remaining() >= 4; i++) {
             newCodes[i] = data.getInt();
+        }
+        if (engine.field.instantPlace) {
+            // 回放快进重排：不播聚拢/翻面动画，同步换入洗后新卡面（延迟换面会逃逸到排空后）
+            int sidx = 0;
+            for (GameField.ClientCard c : hand) {
+                if (c == null) continue;
+                if (sidx < count) c.setCode(newCodes[sidx] & 0x7fffffff);
+                c.clearDescHints();
+                sidx++;
+            }
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            });
+            return;
         }
         if (count > 1) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); // L2663-2664
@@ -685,13 +708,19 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         //    令所有卡同时起步、抽卡逐张感被抹平（即“缺少抽卡动画”的根因）。这里把每张卡的入手
         //    按 5 帧节拍用 postDelayed 依次排布，主线程逐帧渲染即可看到一张张抽入的动画。
         final long stepMs = 5L * 17L;
-        for (int i = 0; i < count; i++) {
-            final int idx = i;
-            engine.mainHandler.postDelayed(() -> drawOneCard(p, deckLoc, handLoc, codes, idx), idx * stepMs);
+        if (engine.field.instantPlace) {
+            // 回放快进重排：同步逐张入手，不按 5 帧节拍排布调度、不持闸
+            //（postDelayed 回调会逃逸到排空之后破坏快进落点一致性）
+            for (int i = 0; i < count; i++) drawOneCard(p, deckLoc, handLoc, codes, i);
+        } else {
+            for (int i = 0; i < count; i++) {
+                final int idx = i;
+                engine.mainHandler.postDelayed(() -> drawOneCard(p, deckLoc, handLoc, codes, idx), idx * stepMs);
+            }
+            // 抽卡展示动画持闸：最后一张延迟 (count-1)*5 帧启动 + 10 帧飞行 + 尾帧余量
+            engine.animHoldUntilMs = System.currentTimeMillis() + ((count - 1) * 5L + 15L) * 17L;
         }
         engine.hintManager.setEventString(p == 0 ? 1611 : 1612, p == 0 ? "我方抽了%d张卡" : "对方抽了%d张卡", count);
-        // 抽卡展示动画持闸：最后一张延迟 (count-1)*5 帧启动 + 10 帧飞行 + 尾帧余量
-        engine.animHoldUntilMs = System.currentTimeMillis() + ((count - 1) * 5L + 15L) * 17L;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {
                 engine.listener.onFieldChanged();
@@ -880,27 +909,34 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             Log.w(TAG, "onAttack: attacker card not found ctrl=" + aCtrl + " loc=" + aLoc + " seq=" + aSeq);
         }
         String atkName = atkCard != null ? DataManager.get().getName(atkCard.code) : "";
+        boolean skipArc = engine.field.instantPlace; // 回放快进重排：不写弧线、不持闸
         if (dLoc != 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
             GameField.ClientCard defCard = engine.field.getCard(engine.localPlayer(dCtrl & 1), dLoc, dSeq);
             String defName = defCard != null ? DataManager.get().getName(defCard.code) : "";
             engine.hintManager.setEventString(1619, "[%s]攻击[%s]", atkName, defName);
             // 记录绿色攻击弧端点（攻击者→目标），GameFieldView 在约 0.9s 内绘制流动弧
-            engine.field.arcAttacker = atkCard;
-            engine.field.arcTarget = defCard;
-            engine.field.arcStartMs = System.currentTimeMillis();
+            if (!skipArc) {
+                engine.field.arcAttacker = atkCard;
+                engine.field.arcTarget = defCard;
+                engine.field.arcStartMs = System.currentTimeMillis();
+            }
         } else {
             engine.soundManager.playSoundEffect(SoundManager.SFX.DIRECT_ATTACK);
             engine.hintManager.setEventString(1620, "[%s]直接攻击", atkName);
             // 直接攻击：无目标卡，弧落到对方手牌行一侧（duelclient.cpp L3850-3853）
-            engine.field.arcAttacker = atkCard;
-            engine.field.arcTarget = null;
-            engine.field.arcStartMs = System.currentTimeMillis();
+            if (!skipArc) {
+                engine.field.arcAttacker = atkCard;
+                engine.field.arcTarget = null;
+                engine.field.arcStartMs = System.currentTimeMillis();
+            }
         }
         // 对齐 duelclient.cpp MSG_ATTACK L3864 WaitFrameSignal(40)：弧光展示期内关闭闸门，
         // 后续伤害步骤/询问弹窗不得抢先于弧线展示（直接攻击无卡片动画屏障，旧实现弧被弹窗
         // 遮挡几乎不可见；攻怪因伴随 MSG_MOVE 动画而受影响较小）
-        engine.animHoldUntilMs = System.currentTimeMillis() + GameEngine.ATTACK_HOLD_MS;
+        if (!skipArc) {
+            engine.animHoldUntilMs = System.currentTimeMillis() + GameEngine.ATTACK_HOLD_MS;
+        }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });

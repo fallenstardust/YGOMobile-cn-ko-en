@@ -14,8 +14,11 @@ import java.util.Arrays;
  * 移植 {@code Classes/gframe/replay.cpp}（BeginRecord/WriteHeader/WriteData/WriteInt32/WriteResponse/
  * RemoveData/EndRecord）与 {@code single_duel.cpp::TPResult/GetResponse/EndDuel} 的调用序列。
  *
- * <p>_uniform 模式_只记录初始状态（双方名、参数、卡组）与逐条玩家响应，不记录引擎 MSG 字节流；
- * 回放端用相同 seed_sequence 重跑引擎复现，故本类只缓冲这些定长/变长记录，结束时整体 LZMA 压缩。
+ * <p>除 _uniform 模式的初始状态（双方名、参数、卡组）与逐条玩家响应外，若决斗期间通过
+ * {@link #writeMessage(byte[], int)} 实时录入了主机视角的引擎 MSG 字节流，则在 build 时
+ * 置 {@link #REPLAY_MSG_STREAM} 标志并把该流以 [uint32 长度][原始流] 段插入响应记录之前，
+ * 回放端（{@code ReplayEngine} MSG 模式）可完全脱离 ocgcore/script 重跑直接按消息流回放；
+ * 未录入消息流的旧格式文件不含该标志，回放端自动回退引擎重跑路径。
  *
  * <p>产物为完整 .yrp 字节：ExtendedReplayHeader(80 字节) + LZMA 压缩流。
  */
@@ -25,6 +28,8 @@ public final class YrpWriter {
     public static final int REPLAY_TAG = 0x2;
     public static final int REPLAY_SINGLE_MODE = 0x8;
     public static final int REPLAY_UNIFORM = 0x10;
+    /** 自定义扩展位：数据段内含 [uint32 长度 + 主机视角 MSG 字节流]（C++ 端仅用到 0x10，此位安全） */
+    public static final int REPLAY_MSG_STREAM = 0x20;
     public static final int REPLAY_ID_YRP2 = 0x32707279;
 
     /** ReplayHeader + ExtendedReplayHeader 追加字段 = 80 字节（对齐 replay.h 结构体大小）。 */
@@ -41,8 +46,12 @@ public final class YrpWriter {
     private int flag;
     private final int startTime;
 
-    /** 未压缩记录流（names/params/decks/responses）。 */
-    private final ByteArrayOutputStream record = new ByteArrayOutputStream();
+    /** 初始状态段（names/params/decks），决斗开始前一次性写入。 */
+    private final ByteArrayOutputStream base = new ByteArrayOutputStream();
+    /** 逐条玩家响应记录段（[uint8 len][data]），MSG_RETRY 时由 removeData 回滚尾部。 */
+    private final ByteArrayOutputStream responses = new ByteArrayOutputStream();
+    /** 主机视角引擎 MSG 字节流（含服务端合成的 UPDATE 刷新消息），决斗期间实时追加。 */
+    private final ByteArrayOutputStream messages = new ByteArrayOutputStream();
 
     public YrpWriter(int[] seedSequence, int version, int flag, int startTime) {
         if (seedSequence == null || seedSequence.length != 8) {
@@ -57,11 +66,11 @@ public final class YrpWriter {
     public void writeInt32(int value) {
         ByteBuffer b = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
         b.putInt(value);
-        record.write(b.array(), 0, 4);
+        base.write(b.array(), 0, 4);
     }
 
     public void writeData(byte[] src, int off, int len) {
-        record.write(src, off, len);
+        base.write(src, off, len);
     }
 
     /** 写入 40 字节玩家名（UTF-16LE，20 码元，不足补 0），对齐 WriteData(name, 40)。 */
@@ -74,7 +83,7 @@ public final class YrpWriter {
         for (int i = n; i < 20; i++) {
             b.putChar('\0');
         }
-        record.write(b.array(), 0, 40);
+        base.write(b.array(), 0, 40);
     }
 
     /**
@@ -86,25 +95,50 @@ public final class YrpWriter {
             return 0;
         }
         int rl = Math.min(len, 0xFF);
-        record.write(rl & 0xFF);
-        record.write(data, 0, rl);
+        responses.write(rl & 0xFF);
+        responses.write(data, 0, rl);
         return 1 + rl;
     }
 
-    /** 从记录流尾部移除 length 字节（MSG_RETRY 回滚上一条响应）。 */
+    /**
+     * 记录一条发给主机（players[0]）的完整 STOC_GAME_MSG 字节（含单条或多条消息拼接），
+     * 与响应记录互相独立追加；build 时若非空则置 {@link #REPLAY_MSG_STREAM} 标志。
+     */
+    public void writeMessage(byte[] data, int len) {
+        if (data == null || len <= 0) {
+            return;
+        }
+        messages.write(data, 0, len);
+    }
+
+    /** 从响应记录流尾部移除 length 字节（MSG_RETRY 回滚上一条响应）。 */
     public void removeData(int length) {
         if (length <= 0) {
             return;
         }
-        byte[] cur = record.toByteArray();
+        byte[] cur = responses.toByteArray();
         int newLen = Math.max(0, cur.length - length);
-        record.reset();
-        record.write(cur, 0, newLen);
+        responses.reset();
+        responses.write(cur, 0, newLen);
     }
 
     /** 组装完整 .yrp 文件字节：ExtendedReplayHeader + LZMA 压缩流。 */
     public byte[] build() {
-        byte[] raw = record.toByteArray();
+        byte[] msg = messages.toByteArray();
+        byte[] resp = responses.toByteArray();
+        // 数据段布局：base(names/params/decks) + [uint32 msgLen][msg 流] + 响应记录流
+        // （用 toByteArray+write 而非 writeTo(OutputStream)，后者声明受检 IOException）
+        byte[] baseBytes = base.toByteArray();
+        ByteArrayOutputStream rawStream = new ByteArrayOutputStream(baseBytes.length + 4 + msg.length + resp.length);
+        rawStream.write(baseBytes, 0, baseBytes.length);
+        if (msg.length > 0) {
+            flag |= REPLAY_MSG_STREAM;
+            ByteBuffer lb = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
+            rawStream.write(lb.putInt(msg.length).array(), 0, 4);
+            rawStream.write(msg, 0, msg.length);
+        }
+        rawStream.write(resp, 0, resp.length);
+        byte[] raw = rawStream.toByteArray();
         flag |= REPLAY_COMPRESSED;
         // props：byte0 = LZMA1 属性字节，编码约定 lc + 9*lp + 45*pb（与 XZ LZMAInputStream、
         //   C++ LzmaDec 的解码 lc=prop%9、lp=(prop/9)%5、pb=(prop/9)/5 对偶）；

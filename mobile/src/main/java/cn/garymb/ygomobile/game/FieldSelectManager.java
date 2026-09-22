@@ -195,6 +195,11 @@ class FieldSelectManager {
         // 堆叠区点击：查看卡片信息
         boolean isPile = (location == 0x01 || location == 0x10
                 || location == 0x20 || location == 0x40);
+        // 回放态（纯消息驱动）：无选择通讯故不下发 cmdFlag，双方卡组/额外/墓地/除外
+        // 恒为公开信息（卡码由 MSG_START 回填 + MOVE 携带），点堆叠区直接弹整列表正面查看
+        if (ctl.engine.replayMode && isPile && showReplayPileView(field, player, location)) {
+            return;
+        }
         if (isPile && card != null && card.code > 0) {
             ctl.activity.showCardInfoPanel(card);
             return;
@@ -203,6 +208,23 @@ class FieldSelectManager {
         if (card != null && card.code > 0) {
             ctl.activity.showCardInfoPanel(card);
         }
+    }
+
+    /** 回放态堆叠区查看：取该区首张已知卡作视角侧样本（controler/location 与 players[] 同索引），
+     *  交由列表弹窗展开全部卡片；整区无已知卡码时返回 false 回落原有点单卡逻辑 */
+    private boolean showReplayPileView(GameField field, int player, int location) {
+        List<GameField.ClientCard> list = field.players[player].getLocationList(location);
+        if (list == null || list.isEmpty()) return false;
+        GameField.ClientCard sample = null;
+        for (GameField.ClientCard c : list) {
+            if (c != null && c.code > 0) {
+                sample = c;
+                break;
+            }
+        }
+        if (sample == null) return false;
+        ctl.showReplayPileView(sample);
+        return true;
     }
 
     private void handlePlaceSelection(int player, int location, int sequence) {

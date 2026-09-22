@@ -27,6 +27,13 @@ class GameFieldMotion {
      * @param showText true=伤害/回复（先 30 帧浮字再扣减）；false=LPUPDATE/支付（立即扣减）
      */
     public void startLpChange(int player, int finalLp, int color, String text, boolean showText) {
+        if (field.instantPlace) {
+            // 回放快进重排：LP 直接到位，不播浮字/扣血动画（闸门不阻塞）
+            field.dInfo.lp[player] = finalLp;
+            field.lpPending = false;
+            field.lpcstring = "";
+            return;
+        }
         field.lpplayer = player;
         field.lpFinal = finalLp;
         field.lpd = (field.dInfo.lp[player] - finalLp) / 10;
@@ -414,6 +421,13 @@ class GameFieldMotion {
      */
     public void moveCardAnimated(ClientCard pcard, int frame, int delay) {
         if (pcard == null || frame <= 0) return;
+        if (field.instantPlace) {
+            // 回放快进重排：直接落位不产生 aniFrame，动画闸门天然不阻塞
+            setCardPos(pcard);
+            pcard.is_moving = false;
+            pcard.animDelayFrame = 0;
+            return;
+        }
         float[] loc = field.getCardLocation(pcard);
 
         pcard.animDelayFrame = Math.max(0, delay);
@@ -453,6 +467,11 @@ class GameFieldMotion {
      */
     public void startDeckShake(ClientCard pcard) {
         if (pcard == null) return;
+        if (field.instantPlace) {
+            setCardPos(pcard);
+            pcard.is_deck_shake = false;
+            return;
+        }
         float[] loc = field.getCardLocation(pcard);
         pcard.animToX = loc[0];
         pcard.animToY = loc[1];
@@ -476,6 +495,11 @@ class GameFieldMotion {
      */
     public void startHandShuffle(ClientCard pcard, boolean flip) {
         if (pcard == null) return;
+        if (field.instantPlace) {
+            setCardPos(pcard);
+            pcard.is_hand_shuffle = false;
+            return;
+        }
         float[] loc = field.getCardLocation(pcard);
         pcard.hsFromX = pcard.curX;
         pcard.hsFromY = pcard.curY;
