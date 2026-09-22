@@ -17,7 +17,7 @@ import java.util.Arrays;
  * <p>除 _uniform 模式的初始状态（双方名、参数、卡组）与逐条玩家响应外，若决斗期间通过
  * {@link #writeMessage(byte[], int)} 实时录入了主机视角的引擎 MSG 字节流，则在 build 时
  * 置 {@link #REPLAY_MSG_STREAM} 标志并把该流以 [uint32 长度][原始流] 段插入响应记录之前，
- * 回放端（{@code ReplayEngine} MSG 模式）可完全脱离 ocgcore/script 重跑直接按消息流回放；
+ * 回放端（{@code MsgStreamReplaySource}）可完全脱离 ocgcore/script 重跑直接按消息流回放；
  * 未录入消息流的旧格式文件不含该标志，回放端自动回退引擎重跑路径。
  *
  * <p>产物为完整 .yrp 字节：ExtendedReplayHeader(80 字节) + LZMA 压缩流。

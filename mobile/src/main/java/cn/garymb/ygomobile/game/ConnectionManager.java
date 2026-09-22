@@ -9,6 +9,7 @@ import cn.garymb.ygomobile.GameApplication;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.network.server.LanGameServer;
+import cn.garymb.ygomobile.utils.CrashHandler;
 
 /**
  * === Connection ===
@@ -91,6 +92,16 @@ public class ConnectionManager {
         engine.mainHandler.removeCallbacks(botJoinTimeout);
     }
 
+    /**
+     * 起连接/建主后台线程的统一入口：挂上 {@link CrashHandler} 线程级处理器，
+     * 使横屏对局建立阶段工作线程的未捕获异常先落盘 ygocore/log（带场景名）再走全局崩溃流程。
+     */
+    private void spawn(String threadName, String scene, Runnable body) {
+        Thread t = new Thread(body, threadName);
+        CrashHandler.getInstance().hookThread(t, scene);
+        t.start();
+    }
+
     public void connectToServer(String host, int port, boolean createGame,
                                 String roomName, String password,
                                 int rule, int mode, int duelRule,
@@ -100,7 +111,7 @@ public class ConnectionManager {
         engine.isHost = createGame;
         engine.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
 
-        new Thread(() -> {
+        spawn("GameConnect", "网络-连接服务器", () -> {
             boolean connected = engine.client.connect(host, port);
             if (!connected) {
                 engine.setState(GameEngine.GameState.DISCONNECTED);
@@ -109,7 +120,7 @@ public class ConnectionManager {
             engine.client.sendExternalAddress(host);
             engine.client.sendPlayerInfo(engine.playerName);
             engine.client.sendJoinGame(0x1362, password);
-        }, "GameConnect").start();
+        });
     }
 
     public void startLocalServer() {
@@ -117,7 +128,7 @@ public class ConnectionManager {
         engine.setState(GameEngine.GameState.CONNECTING);
         engine.isHost = true;
         engine.maxMatch = 1;
-        new Thread(() -> {
+        spawn("LocalServer", "网络-局域网建主", () -> {
             try {
                 if (!ensureLocalServer(7911, "局域网建主")) {
                     return;
@@ -138,13 +149,14 @@ public class ConnectionManager {
                         8000, 5, 1, 0,
                         "Local Game", "");
             } catch (Throwable t) {
+                CrashHandler.getInstance().report("网络-建立主机", t);
                 Log.e(TAG, "建立主机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
                 engine.mainHandler.post(() -> {
                     if (engine.listener != null) engine.listener.onHintMessage("建立主机失败: " + t.getMessage());
                 });
             }
-        }, "LocalServer").start();
+        });
     }
 
     public void startLocalServerWithSettings(int lflist, int rule, int mode, int duelRule,
@@ -155,7 +167,7 @@ public class ConnectionManager {
         engine.setState(GameEngine.GameState.CONNECTING);
         engine.isHost = true;
         engine.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
-        new Thread(() -> {
+        spawn("LocalServer", "网络-局域网建主(自定义设置)", () -> {
             try {
                 if (!ensureLocalServer(7911, "局域网建主")) {
                     return;
@@ -176,13 +188,14 @@ public class ConnectionManager {
                         startLp, startHand, drawCount, timeLimit,
                         roomName, password);
             } catch (Throwable t) {
+                CrashHandler.getInstance().report("网络-建立主机", t);
                 Log.e(TAG, "建立主机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
                 engine.mainHandler.post(() -> {
                     if (engine.listener != null) engine.listener.onHintMessage("建立主机失败: " + t.getMessage());
                 });
             }
-        }, "LocalServer").start();
+        });
     }
 
     public void startSingleMode(String luaPath) {
@@ -201,7 +214,7 @@ public class ConnectionManager {
             if (engine.listener != null) engine.listener.onHintMessage("正在加载残局...");
         });
         engine.isBotMode = false;
-        new Thread(() -> {
+        spawn("SingleMode", "网络-启动残局", () -> {
             try {
                 if (!ensureLocalServer(7911, "残局模式")) {
                     return;
@@ -221,13 +234,14 @@ public class ConnectionManager {
                         8000, 5, 1, 0,
                         "Single Play", "");
             } catch (Throwable t) {
+                CrashHandler.getInstance().report("网络-启动残局", t);
                 Log.e(TAG, "启动残局失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
                 engine.mainHandler.post(() -> {
                     if (engine.listener != null) engine.listener.onHintMessage("启动残局失败: " + t.getMessage());
                 });
             }
-        }, "SingleMode").start();
+        });
     }
 
     public void startBotDuel(String host, int port, String botCommand, String deckFile) {
@@ -235,7 +249,7 @@ public class ConnectionManager {
         engine.isBotMode = true;
         engine.setState(GameEngine.GameState.CONNECTING);
 
-        new Thread(() -> {
+        spawn("BotDuel", "网络-启动人机", () -> {
             try {
                 if (!ensureLocalServer(port, "人机模式")) {
                     return;
@@ -274,13 +288,14 @@ public class ConnectionManager {
                     }
                 });
             } catch (Throwable t) {
+                CrashHandler.getInstance().report("网络-启动人机", t);
                 Log.e(TAG, "启动人机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
                 engine.mainHandler.post(() -> {
                     if (engine.listener != null) engine.listener.onHintMessage("启动人机失败: " + t.getMessage());
                 });
             }
-        }, "BotDuel").start();
+        });
     }
 
     /**
@@ -293,7 +308,7 @@ public class ConnectionManager {
      */
     public void launchWindBot(String host, int port, String botCommand, String deckFile) {
         engine.isBotMode = true;
-        new Thread(() -> {
+        spawn("WindBotLauncher", "网络-启动WindBot", () -> {
             // 等待本地主机房间就绪再广播启动 WindBot：startLocalServerWithSettings 的
             // 引擎引导（ensureLocalServer）+ createGame 在另一线程完成，房间未建好时 AI 连入无房可加。
             // isRoomReady() 为权威信号（房间已建且房主已入座），accept 循环已随 start() 启动，
@@ -336,39 +351,35 @@ public class ConnectionManager {
                     if (engine.listener != null) engine.listener.onHintMessage("启动AI失败: " + e.getMessage());
                 }
             });
-        }, "WindBotLauncher").start();
+        });
     }
 
     // ==== 录像回放控制 ====
 
     public void loadReplay(String replayPath) {
         Log.i(TAG, "Loading replay: " + replayPath);
-        if (engine.replayEngine == null) {
-            engine.replayEngine = new ReplayEngine(engine.field, engine.soundManager);
-        }
-        // 纯消息录像（含 MSG 流）需把切片投喂进本引擎的实况管线，此处兜底接线，
-        // 与 ReplayModeDialog 的装配路径等效（旧格式引擎重跑不依赖 engine）
-        engine.replayEngine.setEngine(engine);
+        // 回放唯一入口：ReplayPlayer 作为本引擎协作件构造时就已完成接入（无需逐个 setEngine），
+        // 取出的消息一律投喂本引擎实况管线，与观战同一渲染路径
         engine.setState(GameEngine.GameState.CONNECTING);
-        engine.replayEngine.loadAndPlay(replayPath);
+        engine.replayPlayer.loadAndPlay(replayPath);
         engine.setState(GameEngine.GameState.DUELING);
     }
 
     public void pauseReplay() {
-        if (engine.replayEngine != null) engine.replayEngine.pause();
+        engine.replayPlayer.pause();
     }
 
     public void resumeReplay() {
-        if (engine.replayEngine != null) engine.replayEngine.resume();
+        engine.replayPlayer.resume();
     }
 
     public void stopReplay() {
-        if (engine.replayEngine != null) engine.replayEngine.stop();
+        engine.replayPlayer.stop();
         engine.setState(GameEngine.GameState.IDLE);
     }
 
     public void skipReplayAhead() {
-        if (engine.replayEngine != null) engine.replayEngine.skipAhead();
+        engine.replayPlayer.skipAhead();
     }
 
     public void disconnect() {

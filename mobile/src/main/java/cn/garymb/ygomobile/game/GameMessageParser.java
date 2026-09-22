@@ -715,7 +715,7 @@ public class GameMessageParser {
     }
 
     public void onWin(int player, int reason) {
-        // 回放结算由 ReplayEngine 的 MSG_WIN → listener.onReplayFinished 路径负责，
+        // 回放结算由 ReplayPlayer 的 MSG_WIN → listener.onReplayFinished 路径负责，
         // 不走现网比分累计与结算弹窗
         if (engine.replayMode) return;
         // 场景 BGM 的胜负切换统一由 UI 层集中决策（对齐 game.cpp Game::playBGM）：

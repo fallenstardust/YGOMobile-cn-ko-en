@@ -29,8 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
-import cn.garymb.ygomobile.game.GameField;
-import cn.garymb.ygomobile.game.ReplayEngine;
+import cn.garymb.ygomobile.game.ReplayPlayer;
 import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
@@ -504,83 +503,54 @@ public class ReplayModeDialog {
         dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
     }
 
+    /**
+     * 起播录像：交给 {@link ReplayPlayer}（GameEngine 常驻协作件），本方法只负责
+     * 切入决斗场 UI、挂 UI 回调与异常/结束弹窗。
+     *
+     * <p>不再新建回放专用引擎：回放的场地刷新、玩家信息、回合/阶段文字、召唤与连锁大图
+     * 全部经实况管线（GameEngine → EngineCallbackDelegate）派发，与联机对局、观战同一条路径。
+     */
     public static void startReplayPlayback(YGOProActivity activity, String replayPath, int startTurn) {
-        if (activity.getEngine() == null) return;
-        // 重复进入回放（外部再次打开 .yrp / 录像选择窗连续点播）：先静默并停掉旧引擎，
-        // 避免旧回放线程的刷帧/弹窗回调干扰新回放
-        ReplayEngine previous = activity.getCurrentReplayEngine();
-        if (previous != null) {
-            previous.detachListener();
-            previous.stop();
-            activity.setCurrentReplayEngine(null);
-        }
+        final ReplayPlayer player = activity.getReplayPlayer();
+        if (player == null) return;
+        // 重复进入回放（外部再次打开 .yrp / 录像选择窗连续点播）：先摘掉旧回调，
+        // loadAndPlay 内部会停掉旧投喂线程，剩余回调静默丢弃
+        player.detachListener();
         // 对齐 game.cpp Main::Replay → showFieldWindow：先切入决斗场 UI（隐藏主菜单/局域网弹窗），
         // 否则回放开始后主菜单仍覆盖在画面上
         activity.enterReplayUI();
-        ReplayEngine replayEngine = new ReplayEngine(activity.getEngine().getField(), activity.getSoundManager());
-        // 接入实况管线宿主：纯消息录像的切片消息投喂给 GameEngine（卡片动画/音效/大图全由实况侧产生）
-        replayEngine.setEngine(activity.getEngine());
-        activity.getEngine().setReplayEngine(replayEngine);
-        activity.setCurrentReplayEngine(replayEngine);
         // 结束/错误弹窗只弹一次；quitReplay 触发的二次 FINISHED 状态被此标志拦截
         final AtomicBoolean endDlgShown = new AtomicBoolean(false);
 
-        replayEngine.setListener(new ReplayEngine.ReplayListener() {
+        player.setListener(new ReplayPlayer.Listener() {
             @Override
-            public void onReplayStateChanged(ReplayEngine.ReplayState state) {
+            public void onReplayStateChanged(ReplayPlayer.State state) {
                 activity.runOnUiThread(() -> {
                     switch (state) {
                         case PLAYING:
-                            activity.getFieldCtl().setPhaseText("▶");
+                            activity.getFieldCtl().setPhaseText("\u25b6");
                             activity.getCardDetailPanel().showReplayControls();
                             activity.getCardDetailPanel().updateReplayButtonStates(false);
                             break;
                         case PAUSED:
-                            activity.getFieldCtl().setPhaseText("⏸");
+                            activity.getFieldCtl().setPhaseText("\u23f8");
                             activity.getCardDetailPanel().updateReplayButtonStates(true);
                             break;
                         case FINISHED:
-                            activity.getFieldCtl().setPhaseText("⏹");
+                            activity.getFieldCtl().setPhaseText("\u23f9");
                             // 对齐 EndDuel（replay_mode.cpp L223-251）：结束后先弹提示框，
                             // 确认后才回录像选择窗并隐藏控制条；不再在 FINISHED 立即隐藏
                             // 控制按钮（修复回放提前终止时按钮莫名消失无法继续操作）
-                            showReplayEndDialog(activity, replayEngine, endDlgShown, false);
+                            showReplayEndDialog(activity, player, endDlgShown, false);
                             break;
                         case ERROR:
-                            activity.getFieldCtl().setPhaseText("⏹");
+                            activity.getFieldCtl().setPhaseText("\u23f9");
                             // 对齐 MSG_RETRY 分支 L311-316："Error occurs." 提示后等待确认
-                            showReplayEndDialog(activity, replayEngine, endDlgShown, true);
+                            showReplayEndDialog(activity, player, endDlgShown, true);
+                            break;
+                        default:
                             break;
                     }
-                });
-            }
-
-            @Override
-            public void onReplayFieldChanged() {
-                activity.getFieldCtl().invalidate();
-                // 录像堆叠区查看列表弹窗即时刷新（与 EngineCallbackDelegate.onFieldChanged 同一入口），
-                // invalidate 在 GL 线程安全，refreshLiveDialogs 回主线程取新列表
-                activity.runOnUiThread(() -> CardDisplayDialog.refreshLiveDialogs());
-            }
-
-            @Override
-            public void onReplayPlayerInfoUpdated(int player) {
-                activity.runOnUiThread(() -> {
-                    GameField.PlayerField pf = activity.getEngine().getField().players[player];
-                    ReplayReader.ReplayData rd = replayEngine.getReplayData();
-                    String name = (rd != null && player < rd.playerNames.size()) ? rd.playerNames.get(player) : "Player " + (player + 1);
-                    activity.getTopInfoManager().setPlayerDisplay(player, name, String.valueOf(pf.lp));
-                    activity.getTopInfoManager().updateLpBars(activity.getEngine().getField());
-                });
-            }
-
-            @Override
-            public void onReplayPhaseChanged(int phase) {
-                activity.runOnUiThread(() -> {
-                    activity.getFieldCtl().setPhaseByValue(phase);
-                    // 回合数纯数字显示 + 回合方高亮（对齐实况 updateTurn；修复窄列 "Turn N" 被裁成 "Tu"）
-                    GameField field = activity.getEngine().getField();
-                    activity.getTopInfoManager().updateTurn(field.turnCount, field.currentPlayer == 0);
                 });
             }
 
@@ -596,7 +566,7 @@ public class ReplayModeDialog {
                     // 取回放中胜者的名字，用于胜利说明 "[胜者名] 原因" 前缀（reason<0x10 时）
                     String winnerName = null;
                     if (winner == 0 || winner == 1) {
-                        ReplayReader.ReplayData rd = replayEngine.getReplayData();
+                        ReplayReader.ReplayData rd = player.getReplayData();
                         if (rd != null && winner < rd.playerNames.size()) {
                             winnerName = rd.playerNames.get(winner);
                         }
@@ -606,48 +576,18 @@ public class ReplayModeDialog {
                     activity.showReplayResult(winner, reason, winnerName);
                 });
             }
-
-            @Override
-            public void onReplaySummonAnimation(int code, int summonType) {
-                activity.showReplaySummonAnimation(code, summonType);
-            }
-
-            @Override
-            public void onReplayPhaseText(int textCode) {
-                activity.showReplayPhaseText(textCode);
-            }
-
-            @Override
-            public void onReplayChainAnimation(int code, int controler, int location, int sequence) {
-                activity.showReplayChainAnimation(code, controler, location, sequence);
-            }
-
-            @Override
-            public void onReplayNegateAnimation(int code) {
-                activity.showReplayNegateAnimation(code);
-            }
-
-            @Override
-            public void onReplayTurnChanged(int turn, int currentPlayer) {
-                // MSG_NEW_TURN 到达即更新回合数与回合方高亮（先于阶段切换）
-                activity.runOnUiThread(() ->
-                        activity.getTopInfoManager().updateTurn(turn, currentPlayer == 0));
-            }
         });
-        replayEngine.loadAndPlay(replayPath, startTurn);
+        player.loadAndPlay(replayPath, startTurn);
     }
 
     /**
      * 回放结束提示框（对齐 replay_mode.cpp：EndDuel L228-232 弹系统串 1501、
      * MSG_RETRY L311-316 弹 "Error occurs."）：确认后退出回放回录像选择界面
      */
-    private static void showReplayEndDialog(YGOProActivity activity, ReplayEngine engine,
+    private static void showReplayEndDialog(YGOProActivity activity, ReplayPlayer player,
                                             AtomicBoolean shown, boolean forceError) {
-        // 仅当前活跃的回放引擎才弹窗：用户已退出（current 置 null）或已被新回放替换时拦截，
-        // 避免旧引擎的 FINISHED/ERROR 回调对新回放弹出无关提示
-        if (engine == null || activity.getCurrentReplayEngine() != engine) return;
-        if (!shown.compareAndSet(false, true)) return;
-        String err = engine != null ? engine.getLastErrorMessage() : null;
+        if (player == null || !shown.compareAndSet(false, true)) return;
+        String err = player.getLastErrorMessage();
         if (forceError && err == null) err = "回放未能启动";
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         if (err != null) {
@@ -667,11 +607,14 @@ public class ReplayModeDialog {
 
     public static void hideReplayControls(YGOProActivity activity) {
         activity.getCardDetailPanel().hideReplayControls();
-        activity.setCurrentReplayEngine(null);
     }
 
     public static void quitReplay(YGOProActivity activity) {
-        if (activity.getCurrentReplayEngine() != null) activity.getCurrentReplayEngine().stop();
+        ReplayPlayer player = activity.getReplayPlayer();
+        if (player != null) {
+            player.detachListener();
+            player.stop();
+        }
         hideReplayControls(activity);
         // 退出回放不再直接回主菜单，而是重新打开录像选择界面并还原上次选中的录像：
         // 先做与主菜单显示等价的界面清理（隐藏决斗场/恢复菜单背景/菜单 BGM），

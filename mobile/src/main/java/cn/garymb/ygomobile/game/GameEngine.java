@@ -15,6 +15,7 @@ import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.engine.LuaScriptEngine;
 import cn.garymb.ygomobile.network.DuelClient;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.utils.CrashHandler;
 import ocgcore.enums.GameMessage;
 
 /**
@@ -22,11 +23,13 @@ import ocgcore.enums.GameMessage;
  * 行为逻辑已按 // === 分栏拆分至同包协作类，由构造函数装配并经本类一行转发：
  * - DuelHintManager：stHintMsg 提示栏 + 提示栏文字生成
  * - SummonAnimationManager：召唤/无效居中动画
+ * - DeckHandMotionManager：卡组与手卡堆动画（洗切 / 确认卡组顶 / 确认卡片 / 堆刷新）
  * - ConnectionManager：Connection（联机/本地房/残局/人机/录像）
  * - LobbyActions / GameActions：大厅与对局内主动操作
  * - CommandDataParser：Data parsing helpers（update/battle/idle 命令解析）
  * - DuelEventHandler：场地事件消息 handler（实现 GameMessageParser.MessageHandler）
  * - GameMessageParser：选择/提示类消息实现 + 静态 parse 派发
+ * - ReplayPlayer：录像回放（取消息 + 卡码归一 + 按节奏投喂本引擎实况管线 + 播控）
  * - DuelClient.StocHandler：DuelClient.ClientListener 实现（STOC 回调）
  *
  * 留在本类的仅有：共享状态（命令列表/区域选择/对局标志/游戏参数）、状态机、
@@ -196,7 +199,6 @@ public class GameEngine {
 
     /** tag 模式本方是否已发起投降（等待队友回应）：防止对 STOC_TEAMMATE_SURRENDER 自我弹窗与重复发起 */
     public boolean tagSurrenderInitiated = false;
-    ReplayEngine replayEngine;
     public int gameMode = 0;
     public int gameRule = 0;
     public int gameLflist = 0;
@@ -219,14 +221,6 @@ public class GameEngine {
     public int getGameNoCheckDeck() { return gameNoCheckDeck; }
     public int getGameNoShuffleDeck() { return gameNoShuffleDeck; }
 
-    public ReplayEngine getReplayEngine() {
-        return replayEngine;
-    }
-
-    public void setReplayEngine(ReplayEngine engine) {
-        this.replayEngine = engine;
-    }
-
     public static class PlayerInfo {
         public String name = "";
         public int lp = 8000;
@@ -243,12 +237,17 @@ public class GameEngine {
 
     public final DuelHintManager hintManager;
     public final SummonAnimationManager summonAnim;
+    /** 卡组 / 手卡堆动画（洗切、确认卡组顶/确认卡片、堆刷新）：自 DuelEventHandler 拆出，
+     *  实况与回放共用（回放快进时按 {@code field.instantPlace} 同步落位） */
+    final DeckHandMotionManager deckMotion;
     final CommandDataParser dataParser;
     public final DuelEventHandler duelEvents;
     public final GameMessageParser messageParser;
     final ConnectionManager connection;
     final LobbyActions lobbyActions;
     final GameActions gameActions;
+    /** 录像回放播放器（唯一回放入口：消息投喂本引擎实况管线，与联机/观战同一渲染路径） */
+    public final ReplayPlayer replayPlayer;
 
     public GameEngine(SoundManager soundManager) {
         this.client = new DuelClient();
@@ -258,12 +257,14 @@ public class GameEngine {
         // 装配顺序：hintManager 最早（其余协作类派发链路会用到），最后挂接网络回调
         this.hintManager = new DuelHintManager(this);
         this.summonAnim = new SummonAnimationManager(this);
+        this.deckMotion = new DeckHandMotionManager(this);
         this.dataParser = new CommandDataParser(this);
         this.duelEvents = new DuelEventHandler(this);
         this.messageParser = new GameMessageParser(this);
         this.connection = new ConnectionManager(this);
         this.lobbyActions = new LobbyActions(this);
         this.gameActions = new GameActions(this);
+        this.replayPlayer = new ReplayPlayer(this);
         client.setListener(new DuelClient.StocHandler(this));
     }
 
@@ -612,6 +613,12 @@ public class GameEngine {
             GameMessageParser.parse(msgType, data, duelEvents);
         } catch (BufferUnderflowException e) {
             Log.e(TAG, "Failed to parse game message type=" + msgType + ", remaining=" + data.remaining(), e);
+        } catch (RuntimeException | Error e) {
+            // 崩溃挂钩：主线程派发链路（含回放投喂的每条消息、观战与联机对局）异常先带消息号
+            // 落盘 ygocore/log，再原样抛出交给全局 CrashHandler，既不改变崩溃行为又留下现场
+            CrashHandler.getInstance().report("dispatchGameMsg type=" + msgType
+                    + (replayMode ? " (replay step)" : " (live)"), e);
+            throw e;
         }
     }
 
@@ -747,7 +754,7 @@ public class GameEngine {
     public boolean inDuel = false;
     public boolean siding = false;
 
-    /** 回放模式：yrp 消息经 ReplayEngine 切片后投入本引擎实况管线渲染。SELECT 询问/胜负结算
+    /** 回放模式：录像消息经 ReplayPlayer 切片后投入本引擎实况管线渲染。SELECT 询问/胜负结算
      *  在 GameMessageParser 侧抑制（应答已录制在文件里，弹选择窗会悬挂流程） */
     public boolean replayMode = false;
     /** 回放快进重排中（undo/restart/跳回合）：drawspec 覆盖层与长动画派发丢弃，配合
@@ -770,6 +777,7 @@ public class GameEngine {
     }
 
     public void release() {
+        replayPlayer.stop();
         disconnect();
         scriptEngine.release();
     }

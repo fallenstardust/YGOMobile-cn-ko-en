@@ -20,6 +20,7 @@ import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
 import cn.garymb.ygomobile.network.BufferIO;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.utils.CrashHandler;
 
 /**
  * 纯 Java 局域网决斗主机，移植 {@code Classes/gframe/netserver.cpp} 的单房模型：
@@ -110,10 +111,12 @@ public final class LanGameServer implements YGOProtocol {
             listening = true;
             acceptThread = new Thread(this::acceptLoop, "LanAccept");
             acceptThread.setDaemon(true);
+            CrashHandler.getInstance().hookThread(acceptThread, "局域网主机-接入循环");
             acceptThread.start();
             if (udpSocket != null) {
                 udpThread = new Thread(this::broadcastLoop, "LanBroadcast");
                 udpThread.setDaemon(true);
+                CrashHandler.getInstance().hookThread(udpThread, "局域网主机-UDP广播");
                 udpThread.start();
             }
             Log.i(TAG, "局域网主机已启动，端口 " + serverPort);
@@ -363,6 +366,8 @@ public final class LanGameServer implements YGOProtocol {
         return r -> {
             Thread t = new Thread(r, name);
             t.setDaemon(true);
+            // 局域网主机侧（每客户端读写/引擎推进）线程崩溃先落盘 ygocore/log
+            CrashHandler.getInstance().hookThread(t, "局域网主机-" + name);
             return t;
         };
     }

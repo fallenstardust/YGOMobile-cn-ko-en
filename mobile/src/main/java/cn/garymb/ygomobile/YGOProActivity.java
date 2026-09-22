@@ -35,7 +35,7 @@ import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.GameTopInfoManager;
-import cn.garymb.ygomobile.game.ReplayEngine;
+import cn.garymb.ygomobile.game.ReplayPlayer;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -52,6 +52,7 @@ import cn.garymb.ygomobile.ui.dialogs.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
+import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
 import ocgcore.DataManager;
@@ -61,7 +62,9 @@ import ocgcore.data.Card;
 /**
  * 决斗主界面门面：保留 Activity 生命周期、视图装配、UI 编排与全部对外公共 API，
  * 按 // === 分栏把 GameEngine.EngineListener 回调下沉到 {@link EngineCallbackDelegate}、
- * 三个对话框监听接口下沉到 {@link MainMenuNavigator}（同包，包级私有直连本类共享状态）。
+ * 三个对话框监听接口下沉到 {@link MainMenuNavigator}、场景 BGM 决策下沉到
+ * {@link BgmSceneController}、已保存设置应用下沉到 {@link GameSettingsApplier}、
+ * 卡组编辑器视图切换下沉到 {@link DeckEditorViewHost}（均同包，包级私有直连本类共享状态）。
  */
 public class YGOProActivity extends AppCompatActivity {
 
@@ -72,21 +75,27 @@ public class YGOProActivity extends AppCompatActivity {
      */
     public final StringManager mStringManager = DataManager.get().getStringManager();
 
-    // 以下共享字段被同包协作类（EngineCallbackDelegate / MainMenuNavigator）经包级私有直连访问
+    // 以下共享字段被同包协作类（EngineCallbackDelegate / MainMenuNavigator / BgmSceneController /
+    // GameSettingsApplier / DeckEditorViewHost）经包级私有直连访问
     GameEngine engine;
-    private SoundManager soundManager;
-    private ImageLoader imageLoader;
+    SoundManager soundManager;
+    ImageLoader imageLoader;
     final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    private EngineCallbackDelegate engineCallback;
+    EngineCallbackDelegate engineCallback;
     private MainMenuNavigator menuNav;
 
-    DeckEditorManager deckEditorManager;
-    private View layoutDeckEditor;
+    // 自本门面拆出的同包协作件（构造仅需 this，均为被动委托，无初始化顺序依赖）
+    final BgmSceneController bgmCtl = new BgmSceneController(this);
+    final GameSettingsApplier settingsCtl = new GameSettingsApplier(this);
+    final DeckEditorViewHost deckEditorHost = new DeckEditorViewHost(this);
 
-    private LinearLayout layoutDeckControl;
+    DeckEditorManager deckEditorManager;
+    View layoutDeckEditor;
+
+    LinearLayout layoutDeckControl;
     FrameLayout layoutGameRight;
-    private View layoutGameContent;
+    View layoutGameContent;
 
     FrameLayout dialogContainer;
     private MainMenuDialog mainMenuDialog;
@@ -94,22 +103,12 @@ public class YGOProActivity extends AppCompatActivity {
     CreateHostDialog createHostDialog;
     PlayerWaitingDialog playerWaitingDialog;
 
-    private EditText etChatInput;
+    EditText etChatInput;
     private EmotionDialog emotionDialog;
     private DuelLogDialog duelLogDialog;
 
     volatile boolean isGameStarted = false;
 
-    // 场景 BGM 胜负覆盖（对齐 game.cpp Game::playBGM 的 dInfo.isFinished && showcardcode 判定）：
-    // 决斗场显示时若已判定胜负则优先播放 WIN/LOSE，否则按 LP 差判定 ADVANTAGE/DISADVANTAGE/DUEL
-    private static final int BGM_RESULT_NONE = 0;
-    private static final int BGM_RESULT_WIN = 1;
-    private static final int BGM_RESULT_LOSE = 2;
-    private int bgmDuelResult = BGM_RESULT_NONE;
-    /** 决斗中双方 LP 差达到该阈值时切换优势/劣势 BGM（对齐需求「LP 相差大于等于 4000」） */
-    private static final int BGM_LP_DIFF_THRESHOLD = 4000;
-
-    private ReplayEngine currentReplayEngine;
     CardDetailPanel cardDetailPanel;
     private ChatInputUI chatInputUI;
     GameTopInfoManager topInfoManager;
@@ -130,6 +129,8 @@ public class YGOProActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        // 崩溃诊断场景锚点：本 Activity 全程横屏，未捕获异常经全局 CrashHandler 落盘到 ygocore/log
+        CrashHandler.getInstance().setScene("游戏-启动初始化");
         setupFullScreen();
         setContentView(R.layout.activity_ygo_game);
 
@@ -172,7 +173,7 @@ public class YGOProActivity extends AppCompatActivity {
         layoutGameRight = findViewById(R.id.layout_game_right);
         layoutGameContent = findViewById(R.id.layout_game_content);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
-        EditText etChatInput = findViewById(R.id.et_chat_input);
+        etChatInput = findViewById(R.id.et_chat_input);
 
         // 初始化聊天输入框 UI 管理器
         chatInputUI = new ChatInputUI(this, null);
@@ -250,10 +251,12 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        new Thread(() -> {
+        Thread t = new Thread(() -> {
             DataManager.get().load(false);
             Log.i(TAG, "DataManager loaded");
-        }, "DataLoad").start();
+        }, "DataLoad");
+        CrashHandler.getInstance().hookThread(t, "游戏-卡片数据加载");
+        t.start();
     }
 
     /**
@@ -264,10 +267,12 @@ public class YGOProActivity extends AppCompatActivity {
      * 此处仅确保监听已注册，不会重复进入 Mono 运行时（重复 init 会导致 libmonosgen 崩溃）
      */
     private void startWindbotListener() {
-        new Thread(() -> {
+        Thread t = new Thread(() -> {
             WindBotService.startListening(getApplicationContext());
             Log.i(TAG, "WindBot listener ready");
-        }, "WindBotInit").start();
+        }, "WindBotInit");
+        CrashHandler.getInstance().hookThread(t, "游戏-WindBot初始化");
+        t.start();
     }
 
     /**
@@ -277,10 +282,12 @@ public class YGOProActivity extends AppCompatActivity {
      * 并发时后者会阻塞至预热完成，不会重复加载。
      */
     private void warmUpDuelEngine() {
-        new Thread(() -> {
+        Thread t = new Thread(() -> {
             boolean ready = NativeScriptBootstrap.ensureEngineReady();
             Log.i(TAG, "Duel engine warm-up " + (ready ? "done" : "skipped/failed"));
-        }, "EngineWarmUp").start();
+        }, "EngineWarmUp");
+        CrashHandler.getInstance().hookThread(t, "游戏-引擎预热");
+        t.start();
     }
 
     // === 供三个UI管理类回调的桥接方法 ===
@@ -293,58 +300,28 @@ public class YGOProActivity extends AppCompatActivity {
         return cardDetailPanel.getSelectType();
     }
 
-    public ReplayEngine getCurrentReplayEngine() {
-        return currentReplayEngine;
+    /**
+     * 当前回放播放器（{@link GameEngine} 的常驻协作件，与实况管线共用同一个 GameField /
+     * GameFieldView，故不再需要「当前回放引擎」这种可空引用；未就绪时返回 null）
+     */
+    public ReplayPlayer getReplayPlayer() {
+        return engine != null ? engine.replayPlayer : null;
     }
 
     public void quitReplay() {
         ReplayModeDialog.quitReplay(this);
     }
 
+    /** 声音 / 音乐静音切换（实现见 {@link GameSettingsApplier}） */
     public void toggleSoundMute() {
-        if (soundManager == null) return;
-        // 对齐 gframe imgVol 开关：走 AppsSettings 保存（与 SettingsDialog 的
-        // chkEnableSound/chkEnableMusic 同一存储），避免设置对话框与声音按钮脱节
-        AppsSettings settings = AppsSettings.get();
-        boolean currentSound = settings.getIntSettings("chkEnableSound", 1) == 1;
-        boolean currentMusic = settings.getIntSettings("chkEnableMusic", 1) == 1;
-        boolean muted = currentSound || currentMusic;
-        settings.saveIntSettings("chkEnableSound", muted ? 0 : 1);
-        settings.saveIntSettings("chkEnableMusic", muted ? 0 : 1);
-        soundManager.enableSounds(!muted);
-        soundManager.enableMusic(!muted);
-        if (cardDetailPanel != null) cardDetailPanel.updateSoundIcon(!muted);
+        settingsCtl.toggleSoundMute();
     }
 
     /**
      * 决斗速度开关（对齐 gframe imgQuickAnimation 点击切换 quick_animation 并保存）
      */
     public void toggleQuickAnimation() {
-        AppsSettings settings = AppsSettings.get();
-        boolean quick = settings.getIntSettings("chkQuickAnimation", 0) == 1;
-        settings.saveIntSettings("chkQuickAnimation", quick ? 0 : 1);
-        if (cardDetailPanel != null) cardDetailPanel.updateSpeedIcon(!quick);
-        // 切换后立即应用新速度（对齐 event_handler.cpp BUTTON_QUICK_ANIMIATION 同步设置生效）
-        applyAnimationSpeed();
-    }
-
-    // === 动画速度（对齐 gframe gameConf.quick_animation：WaitFrameSignal 截半、appear 12/20，≈ 2 倍速） ===
-
-    /** 基础动画速度倍率（quick_animation 关闭） */
-    private static final float ANIM_SPEED_NORMAL = 1f;
-    /** 加速动画速度倍率（quick_animation 开启，C++ 等待帧数截半的等价实现） */
-    private static final float ANIM_SPEED_QUICK = 2f;
-
-    /**
-     * 按 chkQuickAnimation 当前值随时调节动画速度：场上卡片移动/淡入淡出
-     * （GameFieldController→GameFieldView）与居中特效（SpecEffectOverlay）两套动画同步，
-     * 设置对话框 checkbox、详情面板按钮与启动时 applySettingsToEngine 均经此入口生效
-     */
-    private void applyAnimationSpeed() {
-        boolean quick = AppsSettings.get().getIntSettings("chkQuickAnimation", 0) == 1;
-        float speed = quick ? ANIM_SPEED_QUICK : ANIM_SPEED_NORMAL;
-        if (fieldCtl != null) fieldCtl.setAnimationSpeed(speed);
-        if (engineCallback != null) engineCallback.setAnimationSpeed(speed);
+        settingsCtl.toggleQuickAnimation();
     }
 
     private boolean handleDirectIntent(Intent intent) {
@@ -507,10 +484,6 @@ public class YGOProActivity extends AppCompatActivity {
         return imageLoader;
     }
 
-    public void setCurrentReplayEngine(ReplayEngine engine) {
-        currentReplayEngine = engine;
-    }
-
     public View getDialogContainer() {
         return dialogContainer;
     }
@@ -549,42 +522,11 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     /**
-     * 集中决策当前场景 BGM 并交 SoundManager 播放（对齐 game.cpp Game::playBGM）：
-     * 依据布局可见性与对局状态计算场景，同场景由 SoundManager 内部去重不重复切歌。
-     * - 决斗场 layout_game_right 显示：胜负已判定 → WIN/LOSE；否则 LP 差≥阈值时
-     *   对方血多 → DISADVANTAGE、我方血多 → ADVANTAGE，其余 → DUEL
-     * - 卡组编辑器 layout_deck_editor 显示（含副卡组替换）→ DECK
-     * - 其他 → MENU
+     * 集中决策当前场景 BGM 并交 SoundManager 播放（实现见 {@link BgmSceneController}），
      * 必须在主线程调用。
      */
     public void updateBGM() {
-        if (soundManager == null) return;
-        SoundManager.BGM scene;
-        boolean gameRightShowing = layoutGameRight != null
-                && layoutGameRight.getVisibility() == View.VISIBLE;
-        boolean deckEditorShowing = layoutDeckEditor != null
-                && layoutDeckEditor.getVisibility() == View.VISIBLE;
-        if (gameRightShowing) {
-            if (bgmDuelResult == BGM_RESULT_WIN) {
-                scene = SoundManager.BGM.WIN;
-            } else if (bgmDuelResult == BGM_RESULT_LOSE) {
-                scene = SoundManager.BGM.LOSE;
-            } else {
-                int myLp = engine != null ? engine.field.players[0].lp : 0;
-                int oppLp = engine != null ? engine.field.players[1].lp : 0;
-                if (Math.abs(myLp - oppLp) >= BGM_LP_DIFF_THRESHOLD) {
-                    scene = oppLp > myLp ? SoundManager.BGM.DISADVANTAGE
-                            : SoundManager.BGM.ADVANTAGE;
-                } else {
-                    scene = SoundManager.BGM.DUEL;
-                }
-            }
-        } else if (deckEditorShowing) {
-            scene = SoundManager.BGM.DECK;
-        } else {
-            scene = SoundManager.BGM.MENU;
-        }
-        soundManager.playBGM(scene);
+        bgmCtl.update();
     }
 
     /**
@@ -592,13 +534,14 @@ public class YGOProActivity extends AppCompatActivity {
      *（对齐 Game::playBGM 的 dInfo.isFinished && showcardcode==1/2/3 分支）
      */
     public void setBgmDuelResult(boolean selfWon) {
-        bgmDuelResult = selfWon ? BGM_RESULT_WIN : BGM_RESULT_LOSE;
-        updateBGM();
+        bgmCtl.setDuelResult(selfWon);
     }
 
     public void hideGameUI() {
+        // 离开决斗场即切出对局/回放语境，崩溃诊断场景跟着回退
+        CrashHandler.getInstance().setScene("游戏-菜单与大厅");
         // 决斗场隐藏即退出本局胜负语境，清空 BGM 胜负覆盖（对齐 dInfo.isFinished 复位）
-        bgmDuelResult = BGM_RESULT_NONE;
+        bgmCtl.resetDuelResult();
         fieldCtl.hide();
         cardDetailPanel.onGameUIHidden();
         // 退出对战（layout_game_right 隐藏）时，一并关闭正在显示的表情面板
@@ -614,8 +557,9 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     private void showGameUI() {
+        CrashHandler.getInstance().setScene("游戏-横屏决斗场");
         // 新开一局/回放：清除上一局残留的 BGM 胜负覆盖
-        bgmDuelResult = BGM_RESULT_NONE;
+        bgmCtl.resetDuelResult();
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG);
         getMainMenuDialog().hideMainMenu();
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
@@ -766,81 +710,9 @@ public class YGOProActivity extends AppCompatActivity {
         }
     }
 
+    /** 卡组编辑器视图切换（实现见 {@link DeckEditorViewHost}） */
     public void showDeckEditorView() {
-        setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
-        getMainMenuDialog().hideMainMenu();
-        hideGameUI();
-        if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
-        if (layoutDeckEditor == null) {
-            layoutDeckEditor = findViewById(R.id.layout_deck_editor);
-        }
-        if (layoutDeckEditor != null) {
-            layoutDeckEditor.setVisibility(View.VISIBLE);
-        }
-
-        // 隐藏右侧决斗场区，让卡组编辑器占据其空间
-        if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
-
-        if (layoutDeckControl == null) layoutDeckControl = findViewById(R.id.layout_deck_control);
-        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
-
-        // 立刻显示左侧卡片详情面板（默认内容），并切换为卡组编辑器模式
-        cardDetailPanel.enterDeckEditorMode();
-
-        if (deckEditorManager == null) {
-            deckEditorManager = new DeckEditorManager(this, imageLoader, cardDetailPanel);
-            deckEditorManager.setListener(new DeckEditorManager.DeckEditorListener() {
-                @Override
-                public void onDeckModified() {
-                }
-
-                @Override
-                public void onDeckSaved() {
-                }
-
-                @Override
-                public void onExitEditor() {
-                    hideDeckEditorView();
-                    getMainMenuDialog().restoreMainMenu();
-                }
-
-                @Override
-                public void onCardSelected(Card card) {
-                }
-
-                @Override
-                public void onSearchResultsUpdated(int count) {
-                }
-
-                @Override
-                public void onSideDeckFinished(List<Integer> main, List<Integer> extra, List<Integer> side) {
-                    if (engine != null) {
-                        engine.sendDeckUpdate(main, extra, side);
-                    }
-                    // 副卡组替换完成：退出副卡组模式并隐藏整个卡组编辑器布局，
-                    // 等待下次 STOC_CHANGE_SIDE 进入副卡组替换模式时再显示
-                    if (deckEditorManager != null) {
-                        deckEditorManager.exitSideMode();
-                    }
-                    hideDeckEditorView();
-                }
-            });
-        }
-        if (layoutDeckEditor != null) {
-            deckEditorManager.initialize(layoutDeckEditor);
-        }
-        // 卡组编辑器（含副卡组替换）布局已显示：切换 DECK 场景（对齐 Game::playBGM 的 is_building 分支）
-        updateBGM();
-    }
-
-    private void hideDeckEditorView() {
-        if (layoutDeckEditor != null) {
-            layoutDeckEditor.setVisibility(View.GONE);
-        }
-        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
-        cardDetailPanel.exitDeckEditorMode();
-        // 卡组编辑器隐藏后重算场景（无其他布局显示 → MENU）
-        updateBGM();
+        deckEditorHost.show();
     }
 
     public void setWindowBackground(String relativePath) {
@@ -878,33 +750,12 @@ public class YGOProActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 按 AppsSettings 当前值统一应用已保存设置（音频 / 侧栏图标 / 动画速度 / 禁限表，
+     * 实现见 {@link GameSettingsApplier}）
+     */
     public void applySettingsToEngine() {
-        AppsSettings appsSettings = AppsSettings.get();
-        boolean enableSound = appsSettings.getIntSettings("chkEnableSound", 1) == 1;
-        boolean enableMusic = appsSettings.getIntSettings("chkEnableMusic", 1) == 1;
-        if (soundManager != null) {
-            soundManager.enableSounds(enableSound);
-            soundManager.enableMusic(enableMusic);
-            soundManager.setSoundVolume(appsSettings.getIntSettings("soundVolume", 50) / 100.0);
-            soundManager.setMusicVolume(appsSettings.getIntSettings("musicVolume", 50) / 100.0);
-            soundManager.setMusicMode(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
-        }
-        if (cardDetailPanel != null) {
-            // 对齐 gframe imgVol/imgQuickAnimation：声音与速度按钮图标同步设置状态
-            cardDetailPanel.updateSoundIcon(enableSound || enableMusic);
-            cardDetailPanel.updateSpeedIcon(appsSettings.getIntSettings("chkQuickAnimation", 0) == 1);
-            // 对齐 gframe BUTTON_CHATTING：聊天按钮图标与输入框可见性同步停用聊天设置
-            boolean chatDisabled = appsSettings.getIntSettings("chkDisableChatting", 0) == 1;
-            cardDetailPanel.updateChatIcon(chatDisabled);
-            if (etChatInput != null) {
-                etChatInput.setVisibility(chatDisabled ? View.GONE : View.VISIBLE);
-            }
-        }
-        // 动画速度随 chkQuickAnimation 即时生效（启动初始化与设置对话框变更均经此）
-        applyAnimationSpeed();
-        if (deckEditorManager != null) {
-            deckEditorManager.refreshLimitList();
-        }
+        settingsCtl.apply();
     }
 
     // === 决斗场内联交互（保留在门面：由卡片详情面板/聊天 UI 等直接调用的公共入口） ===
@@ -993,25 +844,8 @@ public class YGOProActivity extends AppCompatActivity {
         if (engineCallback != null) engineCallback.showReplayResult(winner, reason, winnerName);
     }
 
-    /** 录像回放召唤动画：委托 EngineCallbackDelegate 的 specEffect 居中卡片动画 */
-    public void showReplaySummonAnimation(int code, int summonType) {
-        if (engineCallback != null) engineCallback.showReplaySummonAnimation(code, summonType);
-    }
-
-    /** 录像回放连锁发动动画（MSG 模式）：选卡高亮 + 发动大图 */
-    public void showReplayChainAnimation(int code, int controler, int location, int sequence) {
-        if (engineCallback != null) engineCallback.showReplayChainAnimation(code, controler, location, sequence);
-    }
-
-    /** 录像回放效果无效动画（MSG 模式）：居中卡片 + 无效图标 */
-    public void showReplayNegateAnimation(int code) {
-        if (engineCallback != null) engineCallback.showReplayNegateAnimation(code);
-    }
-
-    /** 录像回放阶段文字提示 */
-    public void showReplayPhaseText(int textCode) {
-        if (engineCallback != null) engineCallback.showReplayPhaseText(textCode);
-    }
+    // 录像回放的召唤/连锁/无效大图与阶段文字已由实况管线（EngineCallbackDelegate 的消息回调）
+    // 直接派发，回放不再需要一套专用转发入口
 
     public void showHintMessage(String msg) {
         fieldCtl.showHint(msg, 3000);
@@ -1037,6 +871,7 @@ public class YGOProActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        CrashHandler.getInstance().setScene("游戏-销毁中");
         if (engineCallback != null) engineCallback.cancelReplayProcessing();
         DraggablePopupHelper.resetAllPositions(this);
         // 释放局域网三对话框，避免持有已销毁的窗口/上下文
@@ -1075,7 +910,8 @@ public class YGOProActivity extends AppCompatActivity {
                     return;
                 }
                 // 回放进行中：返回键 = 退出回放回主菜单（对应 gframe 回放窗口关闭）
-                if (currentReplayEngine != null) {
+                ReplayPlayer rp = getReplayPlayer();
+                if (rp != null && rp.hasActiveSession()) {
                     ReplayModeDialog.quitReplay(YGOProActivity.this);
                     return;
                 }

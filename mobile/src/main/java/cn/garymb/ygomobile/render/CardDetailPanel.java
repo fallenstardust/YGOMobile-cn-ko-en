@@ -17,7 +17,7 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.GameFieldController;
-import cn.garymb.ygomobile.game.ReplayEngine;
+import cn.garymb.ygomobile.game.ReplayPlayer;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -246,37 +246,43 @@ public class CardDetailPanel {
 
         if (btnReplayPlay != null) {
             btnReplayPlay.setOnClickListener(v -> {
-                ReplayEngine re = activity.getCurrentReplayEngine();
-                if (re != null) re.resume();
+                ReplayPlayer rp = replayPlayer();
+                if (rp != null) rp.resume();
             });
         }
         if (btnReplayPause != null) {
             btnReplayPause.setOnClickListener(v -> {
-                ReplayEngine re = activity.getCurrentReplayEngine();
-                if (re != null) re.pause();
+                ReplayPlayer rp = replayPlayer();
+                if (rp != null) rp.pause();
             });
         }
         if (btnReplayNext != null) {
             btnReplayNext.setOnClickListener(v -> {
-                ReplayEngine re = activity.getCurrentReplayEngine();
-                if (re != null) re.skipAhead();
+                ReplayPlayer rp = replayPlayer();
+                if (rp != null) rp.skipAhead();
             });
         }
         if (btnReplayLast != null) {
             btnReplayLast.setOnClickListener(v -> {
-                ReplayEngine re = activity.getCurrentReplayEngine();
-                if (re != null) re.undo();
+                ReplayPlayer rp = replayPlayer();
+                if (rp != null) rp.undo();
             });
         }
         if (btnReplayShuffle != null) {
             btnReplayShuffle.setOnClickListener(v -> {
-                ReplayEngine re = activity.getCurrentReplayEngine();
-                if (re != null) re.swapField();
+                ReplayPlayer rp = replayPlayer();
+                if (rp != null) rp.swapField();
             });
         }
         if (btnReplayQuit != null) {
             btnReplayQuit.setOnClickListener(v -> activity.quitReplay());
         }
+    }
+
+    /** 当前回放播放器（GameEngine 协作件，恒存在；仅在真正有回放会话时返回） */
+    private ReplayPlayer replayPlayer() {
+        ReplayPlayer rp = activity.getReplayPlayer();
+        return rp != null && rp.hasActiveSession() ? rp : null;
     }
 
     // === 卡片详情面板 ===

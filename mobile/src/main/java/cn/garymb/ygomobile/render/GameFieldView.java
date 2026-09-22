@@ -24,6 +24,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.utils.CrashHandler;
 
 /**
  * 与 ClientField::GetCardLocation 数值完全一致。
@@ -535,6 +536,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        // GL 渲染线程由 GLSurfaceView 内部创建、上下文重建时会新建，因此在首次进入回调时挂钩；
+        // 本类 onDrawFrame 对绘制逐块 try/catch，仍漏出的异常（未保护调用/EGL 失败）靠此落盘
+        CrashHandler.getInstance().hookThread(Thread.currentThread(), "游戏-GL渲染线程");
         GLES30.glClearColor(0f, 0f, 0f, 0f);
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
         GLES30.glDisable(GLES30.GL_CULL_FACE);

@@ -24,7 +24,7 @@ import cn.garymb.ygomobile.NativeInitOptions;
  * 因此初始化前必须先把 zip 解压出 script/ 目录，否则 ocgcore 读不到 init.lua 与卡片效果
  * 脚本——表现为卡片无法发动效果（局域网对战）与回放无法重跑引擎。
  *
- * <p>局域网主机（LanGameServer.bootstrapEngine）与录像回放（ReplayEngine）均经
+ * <p>局域网主机（LanGameServer.bootstrapEngine）与旧格式录像回放（EngineReplaySource）均经
  * {@link #ensureEngineReady()} 完成"解压脚本 → OcgDuelEngine.init"引导。
  */
 public final class NativeScriptBootstrap {

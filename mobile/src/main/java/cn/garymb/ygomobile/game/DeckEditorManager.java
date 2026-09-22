@@ -6,13 +6,9 @@ import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.File;
@@ -51,9 +47,15 @@ import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
-import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
+/**
+ * 卡组编辑器门面：视图绑定与装配、卡组数据增删改查/排序/侧换、保存与云端同步、
+ * 读写与副卡组模式切换留在本类；按 // === 分栏拆出同包协作类（经包级私有直连本类共享状态）：
+ * - {@link DeckGridLayoutApplier}：网格卡面尺寸计算与卡包展示模式版面
+ * - {@link DeckStatsPanel}：张数 / 分类计数 / GeneSys 起源点数统计刷新
+ * - {@link DeckDropHandler}：拖放落点（网格内换位、跳网格移动、搜索拖入、拖回搜索区删除）
+ */
 public class DeckEditorManager implements CardDragHelper.DropHandler {
     private static final String TAG = "DeckEditorManager";
 
@@ -71,33 +73,35 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         void onSideDeckFinished(List<Integer> main, List<Integer> extra, List<Integer> side);
     }
 
-    private final Activity activity;
+    // 以下共享字段/方法被同包协作类（DeckGridLayoutApplier / DeckStatsPanel / DeckDropHandler）
+    // 经包级私有直连访问
+    final Activity activity;
     private final ImageLoader imageLoader;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final CardLoader cardLoader;
     private DeckEditorListener listener;
-    private final DeckInfo currentDeck;
+    final DeckInfo currentDeck;
     private final Random random = new Random();
-    private boolean isModified = false;
-    private boolean isReadonly = false;
-    private boolean isPackMode = false;
+    boolean isModified = false;
+    boolean isReadonly = false;
+    boolean isPackMode = false;
     private boolean isSiding = false;
     private int preMainCount = 0, preExtraCount = 0, preSideCount = 0;
-    private int savedNormalCardWidth = 0;
-    private int savedNormalCardHeight = 0;
-    private View rootView;
+    int savedNormalCardWidth = 0;
+    int savedNormalCardHeight = 0;
+    View rootView;
     private CardDetailPanel cardDetailPanel;
-    private TextView tvMainCountNum, tvExtraCountNum, tvSideCountNum;
-    private View llGenesysScoreboard;
-    private TextView tvCreditLimit, tvCreditCount, tvCreditRemain;
-    private TextView tvMainMonsterCount, tvMainSpellCount, tvMainTrapCount;
-    private TextView tvExtraFusionCount, tvExtraSynchroCount, tvExtraXyzCount, tvExtraLinkCount;
-    private TextView tvSideMonsterCount, tvSideSpellCount, tvSideTrapCount;
+    TextView tvMainCountNum, tvExtraCountNum, tvSideCountNum;
+    View llGenesysScoreboard;
+    TextView tvCreditLimit, tvCreditCount, tvCreditRemain;
+    TextView tvMainMonsterCount, tvMainSpellCount, tvMainTrapCount;
+    TextView tvExtraFusionCount, tvExtraSynchroCount, tvExtraXyzCount, tvExtraLinkCount;
+    TextView tvSideMonsterCount, tvSideSpellCount, tvSideTrapCount;
     private TextView tvLabelDeck, tvLabelType, tvLabelAttribute, tvLabelRace;
     private TextView tvLabelStar, tvLabelScale, tvLabelLimit, tvLabelAttack, tvLabelDefense, tvLabelKeyword;
-    private TextView tvLabelMainDeck, tvLabelExtraDeck, tvLabelSideDeck;
-    private CardGroupView cgvMain, cgvExtra, cgvSide;
-    private View layoutExtraStats, layoutSideStats;
+    TextView tvLabelMainDeck, tvLabelExtraDeck, tvLabelSideDeck;
+    CardGroupView cgvMain, cgvExtra, cgvSide;
+    View layoutExtraStats, layoutSideStats;
     private View layoutDeckInfoPanel, layoutFilterPanel;
     private View llSideController, layoutDeckRightPanel;
     private EditText etDeckName;
@@ -109,17 +113,22 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private ImageView ivMainMonsterType, ivMainSpellType, ivMainTrapType;
     private ImageView ivExtraFusionType, ivExtraSynchroType, ivExtraXyzType, ivExtraLinkType;
     private ImageView ivSideMonsterType, ivSideSpellType, ivSideTrapType;
-    private LimitList mLimitList;
-    private String currentDeckCategoryName = "";
-    private String currentDeckName = "";
-    private String currentDeckFilePath = "";
+    LimitList mLimitList;
+    String currentDeckCategoryName = "";
+    String currentDeckName = "";
+    String currentDeckFilePath = "";
     private DeckSelectorDialog deckSelectorDialog;
-    private int touchSlop;
-    private final CardDragHelper dragHelper;
+    int touchSlop;
+    final CardDragHelper dragHelper;
     private int availLm = 0;
-    private final StringManager mStringManager = DataManager.get().getStringManager();
+    final StringManager mStringManager = DataManager.get().getStringManager();
 
-    private CardSearcherManager cardSearcherManager;
+    CardSearcherManager cardSearcherManager;
+
+    // 自本类拆出的同包协作件（构造仅注入本类引用，无额外初始化顺序依赖）
+    private final DeckGridLayoutApplier gridLayout;
+    private final DeckStatsPanel statsPanel;
+    private final DeckDropHandler dropHandler;
 
     public DeckEditorManager(Activity activity, ImageLoader imageLoader, CardDetailPanel cardDetailPanel) {
         this.activity = activity;
@@ -129,6 +138,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         this.currentDeck = new DeckInfo();
         this.dragHelper = new CardDragHelper(activity, this);
         this.cardSearcherManager = new CardSearcherManager(activity);
+        this.gridLayout = new DeckGridLayoutApplier(this);
+        this.statsPanel = new DeckStatsPanel(this);
+        this.dropHandler = new DeckDropHandler(this);
     }
 
     public CardSearcherManager getCardSearcherManager() {
@@ -147,7 +159,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         bindViews(rootView);
         setupLabels();
         setupRecyclerViews();
-        setupDragAndDrop();
+        dropHandler.setup();
         setupButtons();
         cardSearcherManager.bindViews(rootView);
         cardSearcherManager.setupLabels();
@@ -156,7 +168,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         cardSearcherManager.setupButtons();
         setupDeckSelectorDialog();
         loadLastDeck();
-        updateDeckCounts();
+        statsPanel.updateCounts();
         isModified = false;
     }
 
@@ -300,7 +312,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         cgvExtra.setLineLimit(1, 10, 15);
         cgvSide.setImageLoader(imageLoader);
         cgvSide.setLineLimit(1, 10, 15);
-        requestDeckCardSizeUpdate();
+        gridLayout.requestUpdate();
         cardSearcherManager.setLimitList(mLimitList);
     }
 
@@ -309,119 +321,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     /**
-     * 根据主卡组区域的实际测量宽高动态计算卡片尺寸：
-     * 普通模式保证一行放下 {@link Constants#DECK_WIDTH_COUNT} 张且主卡组4行完整显示；
-     * 卡包展示模式主网格铺满可用高度，行数随高度动态计算（不再限制4行/60张）。
+     * 网格卡面尺寸计算与卡包展示模式版面（实现已拆至 {@link DeckGridLayoutApplier}）
      */
-    private void requestDeckCardSizeUpdate() {
-        if (cgvMain == null) return;
-        cgvMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                int mainWidth = cgvMain.getWidth();
-                int mainHeight = cgvMain.getHeight();
-                if (mainWidth <= 0 || mainHeight <= 0) return;
-                cgvMain.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                int extraHeight = cgvExtra != null ? cgvExtra.getHeight() : 0;
-                int sideHeight = cgvSide != null ? cgvSide.getHeight() : 0;
-
-                applyDeckCardSize(mainWidth, mainHeight, extraHeight, sideHeight);
-            }
-        });
-    }
-
-    private void applyDeckCardSize(int mainWidth, int mainHeight, int extraHeight, int sideHeight) {
-        int availWidth = mainWidth - cgvMain.getPaddingLeft() - cgvMain.getPaddingRight();
-        if (availWidth <= 0) return;
-        float ratio = (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[1] / (float) Constants.CORE_SKIN_CARD_SMALL_SIZE[0];
-        int mainAvail = Math.max(0, mainHeight - cgvMain.getPaddingTop() - cgvMain.getPaddingBottom());
-        int extraAvail = extraHeight > 0 && cgvExtra != null
-                ? Math.max(0, extraHeight - cgvExtra.getPaddingTop() - cgvExtra.getPaddingBottom()) : 0;
-        int sideAvail = sideHeight > 0 && cgvSide != null
-                ? Math.max(0, sideHeight - cgvSide.getPaddingTop() - cgvSide.getPaddingBottom()) : 0;
-        if (isPackMode) {
-            int cardWidth, cardHeight;
-            if (savedNormalCardWidth > 0 && savedNormalCardHeight > 0) {
-                cardWidth = savedNormalCardWidth;
-                cardHeight = savedNormalCardHeight;
-            } else {
-                int totalAvail = mainAvail + extraAvail + sideAvail;
-                int wByCol = availWidth / Constants.DECK_WIDTH_COUNT;
-                int wByH = totalAvail > 0 ? (int) ((totalAvail / 6f) / ratio) : Integer.MAX_VALUE;
-                cardWidth = Math.max(1, Math.min(wByCol, wByH));
-                cardHeight = Math.max(1, (int) (cardWidth * ratio));
-            }
-            int rows = Math.max(1, mainAvail / cardHeight);
-            applyCardSizeToAll(cardWidth, cardHeight);
-            cgvMain.setLineLimit(rows, Constants.DECK_WIDTH_COUNT, Constants.DECK_WIDTH_MAX_COUNT);
-            notifyDeckChanged();
-            return;
-        }
-        int totalAvail = mainAvail + extraAvail + sideAvail;
-        int wByCol = availWidth / Constants.DECK_WIDTH_COUNT;
-        int wByH = totalAvail > 0 ? (int) ((totalAvail / 6f) / ratio) : Integer.MAX_VALUE;
-        int cardWidth = Math.max(1, Math.min(wByCol, wByH));
-        int cardHeight = Math.max(1, (int) (cardWidth * ratio));
-        savedNormalCardWidth = cardWidth;
-        savedNormalCardHeight = cardHeight;
-        applyCardSizeToAll(cardWidth, cardHeight);
-        cgvMain.setLineLimit(4, 10, 15);
-        applyGroupExactHeight(cgvMain, cardHeight * 4);
-        applyGroupExactHeight(cgvExtra, cardHeight);
-        applyGroupExactHeight(cgvSide, cardHeight);
-        notifyDeckChanged();
-    }
-
-    private void applyCardSizeToAll(int w, int h) {
-        cgvMain.setCardSize(w, h);
-        cgvExtra.setCardSize(w, h);
-        cgvSide.setCardSize(w, h);
-        cardSearcherManager.setCardSize(w, h);
-    }
-
-    private void applyGroupExactHeight(CardGroupView view, int contentHeight) {
-        if (view == null) return;
-        ViewGroup.LayoutParams lp = view.getLayoutParams();
-        if (lp == null) return;
-        lp.height = contentHeight + view.getPaddingTop() + view.getPaddingBottom();
-        if (lp instanceof LinearLayout.LayoutParams) {
-            ((LinearLayout.LayoutParams) lp).weight = 0;
-        }
-        view.setLayoutParams(lp);
-    }
-
-    /**
-     * 切换卡包展示模式：卡包卡组（ygocore/pack）隐藏额外/副卡组的统计行与网格，
-     * 主卡组网格铺满剩余高度，行数与最大数量随高度动态计算（不再限制4行/60张）。
-     */
-    private void applyPackMode(boolean packMode) {
-        if (isPackMode == packMode) return;
-        isPackMode = packMode;
-        if (tvLabelMainDeck != null) {
-            tvLabelMainDeck.setText(mStringManager.getSystemString(packMode ? 1477 : 1330, "主卡组:"));
-        }
-        int vis = packMode ? View.GONE : View.VISIBLE;
-        if (layoutExtraStats != null) layoutExtraStats.setVisibility(vis);
-        if (cgvExtra != null) cgvExtra.setVisibility(vis);
-        if (layoutSideStats != null) layoutSideStats.setVisibility(vis);
-        if (cgvSide != null) cgvSide.setVisibility(vis);
-        if (packMode) {
-            setMainGridFillHeight();
-        }
-        cardSearcherManager.setDragState(touchSlop, isReadonly || isPackMode);
-        requestDeckCardSizeUpdate();
-    }
-
-    //卡包模式下主卡组网格铺满剩余高度（height=0dp + weight=1），普通模式由applyGroupExactHeight恢复定高
-    private void setMainGridFillHeight() {
-        if (cgvMain == null) return;
-        ViewGroup.LayoutParams lp = cgvMain.getLayoutParams();
-        if (lp instanceof LinearLayout.LayoutParams) {
-            lp.height = 0;
-            ((LinearLayout.LayoutParams) lp).weight = 1;
-            cgvMain.setLayoutParams(lp);
-        }
+    void applyPackMode(boolean packMode) {
+        gridLayout.applyPackMode(packMode);
     }
 
     public void refreshLimitList() {
@@ -434,7 +337,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (cgvExtra != null) cgvExtra.updateTopImage(mImageTop, mLimitList);
         if (cgvSide != null) cgvSide.updateTopImage(mImageTop, mLimitList);
         cardSearcherManager.setLimitList(mLimitList);
-        updateDeckCounts();
+        statsPanel.updateCounts();
     }
 
     /**
@@ -554,7 +457,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             boolean packMode = deckPath.startsWith(packDir)
                     || deckPath.startsWith(cacheDeckDir);
             if (isPackMode != packMode) {
-                applyPackMode(packMode);
+                gridLayout.applyPackMode(packMode);
             } else {
                 notifyDeckChanged();
             }
@@ -630,7 +533,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     //GeneSys模式单卡起源点数：按规则同名卡code（getGameCode）查询，与禁限判断口径一致
-    private int getCardCredit(Card card) {
+    int getCardCredit(Card card) {
         if (card == null || mLimitList == null || mLimitList.getCredits() == null) return 0;
         Integer credit = mLimitList.getCredits().get(card.getGameCode());
         return credit != null ? credit : 0;
@@ -853,42 +756,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         DeckSquareApiUtil.deleteDecks(deckFileList);
     }
 
-    private int getCardClassRank(Card card) {
-        return Card.isType(card.Type, CardType.Monster) ? 0 : Card.isType(card.Type, CardType.Spell) ? 1 : Card.isType(card.Type, CardType.Trap) ? 2 : 3;
-    }
-
-    /**
-     * 子类排序：
-     * 怪兽：通常→效果→仪式→融合→同调→超量→连接
-     * 魔法：通常→仪式→速攻→永续→装备→场地
-     * 陷阱：通常→永续→反击
-     */
-    private int getCardSubTypeRank(Card card, int classRank) {
-        if (classRank == 0) {
-            if (Card.isType(card.Type, CardType.Link)) return 6;
-            if (Card.isType(card.Type, CardType.Xyz)) return 5;
-            if (Card.isType(card.Type, CardType.Synchro)) return 4;
-            if (Card.isType(card.Type, CardType.Fusion)) return 3;
-            if (Card.isType(card.Type, CardType.Ritual)) return 2;
-            if (Card.isType(card.Type, CardType.Normal)) return 0;
-            return 1;
-        }
-        if (classRank == 1) {
-            if (Card.isType(card.Type, CardType.Ritual)) return 1;
-            if (Card.isType(card.Type, CardType.QuickPlay)) return 2;
-            if (Card.isType(card.Type, CardType.Continuous)) return 3;
-            if (Card.isType(card.Type, CardType.Equip)) return 4;
-            if (Card.isType(card.Type, CardType.Field)) return 5;
-            return 0;
-        }
-        if (classRank == 2) {
-            if (Card.isType(card.Type, CardType.Continuous)) return 1;
-            if (Card.isType(card.Type, CardType.Counter)) return 2;
-            return 0;
-        }
-        return 0;
-    }
-
     // === 对应 deck_con.cpp: RefreshReadonly ===
     public void refreshReadonly() {
         boolean disabled = isReadonly || isPackMode;
@@ -941,8 +808,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     // === Private helpers ===
 
-    private void notifyDeckChanged() {
-        updateDeckCounts();
+    // 卡片增删后统一刷新（包级私有：同包协作类 DeckGridLayoutApplier / DeckDropHandler 亦经此刷新）
+    void notifyDeckChanged() {
+        statsPanel.updateCounts();
         refreshCardGroupView(cgvMain, currentDeck.mainCards, DeckInfo.Type.Main);
         refreshCardGroupView(cgvExtra, currentDeck.extraCards, DeckInfo.Type.Extra);
         refreshCardGroupView(cgvSide, currentDeck.sideCards, DeckInfo.Type.Side);
@@ -965,91 +833,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                 cardView.setOnTouchListener(adapter.createDragTouchListener(type, index, cardView.getCard(), touchSlop, isReadonly || isPackMode));
             }
         }
-    }
-
-    private void updateDeckCounts() {
-        currentDeck.syncCounts();
-        int mainCount = currentDeck.getMainCount();
-        int extraCount = currentDeck.getExtraCount();
-        int sideCount = currentDeck.getSideCount();
-        boolean isGenesys = AppsSettings.get().getGenesysMode() == 1
-                && mLimitList != null && mLimitList.getCreditLimits() != null;
-        if (tvMainCountNum != null) tvMainCountNum.setText(String.valueOf(mainCount));
-        if (tvExtraCountNum != null) tvExtraCountNum.setText(String.valueOf(extraCount));
-        if (tvSideCountNum != null) tvSideCountNum.setText(String.valueOf(sideCount));
-        if (llGenesysScoreboard != null)
-            llGenesysScoreboard.setVisibility(isGenesys ? View.VISIBLE : View.GONE);
-        if (isGenesys) {
-            int creditLimit = mLimitList.getCreditLimits();
-            int creditCount = 0;
-            for (Card c : currentDeck.getMainCards()) creditCount += getCardCredit(c);
-            for (Card c : currentDeck.getExtraCards()) creditCount += getCardCredit(c);
-            for (Card c : currentDeck.getSideCards()) creditCount += getCardCredit(c);
-            int creditRemain = creditLimit - creditCount;
-            if (tvCreditLimit != null) tvCreditLimit.setText(String.valueOf(creditLimit));
-            if (tvCreditCount != null) {
-                tvCreditCount.setText(String.valueOf(creditCount));
-                tvCreditCount.setTextColor(creditCount > creditLimit ? Color.RED : Color.WHITE);
-            }
-            if (tvCreditRemain != null) {
-                tvCreditRemain.setText(String.valueOf(creditRemain));
-                tvCreditRemain.setTextColor(creditRemain < 0 ? Color.RED : Color.WHITE);
-            }
-        }
-        int[] mainC = countByType(currentDeck.getMainCards(), false);
-        setTextIfNotNull(tvMainMonsterCount, mainC[0]);
-        setTextIfNotNull(tvMainSpellCount, mainC[1]);
-        setTextIfNotNull(tvMainTrapCount, mainC[2]);
-        int[] extraC = countByType(currentDeck.getExtraCards(), true);
-        setTextIfNotNull(tvExtraFusionCount, extraC[0]);
-        setTextIfNotNull(tvExtraSynchroCount, extraC[1]);
-        setTextIfNotNull(tvExtraXyzCount, extraC[2]);
-        setTextIfNotNull(tvExtraLinkCount, extraC[3]);
-        int[] sideC = countByType(currentDeck.getSideCards(), false);
-        setTextIfNotNull(tvSideMonsterCount, sideC[0]);
-        setTextIfNotNull(tvSideSpellCount, sideC[1]);
-        setTextIfNotNull(tvSideTrapCount, sideC[2]);
-    }
-
-    private int[] countByType(List<Card> cards, boolean isExtra) {
-        if (isExtra) {
-            int fu = 0, sy = 0, xy = 0, li = 0;
-            for (Card c : cards) {
-                if (Card.isType(c.Type, CardType.Fusion)) fu++;
-                else if (Card.isType(c.Type, CardType.Synchro)) sy++;
-                else if (Card.isType(c.Type, CardType.Xyz)) xy++;
-                else if (Card.isType(c.Type, CardType.Link)) li++;
-            }
-            return new int[]{fu, sy, xy, li};
-        }
-        int mo = 0, sp = 0, tr = 0;
-        for (Card c : cards) {
-            if (Card.isType(c.Type, CardType.Monster)) mo++;
-            else if (Card.isType(c.Type, CardType.Spell)) sp++;
-            else if (Card.isType(c.Type, CardType.Trap)) tr++;
-        }
-        return new int[]{mo, sp, tr};
-    }
-
-    private void setTextIfNotNull(TextView tv, int val) {
-        if (tv != null) tv.setText(String.valueOf(val));
-    }
-
-    /**
-     * 统计当前卡组（主+额外+副）已使用的起源点数合计，
-     * 积分查找与其他模块一致：优先按Code，找不到再按Alias。
-     */
-    private int getDeckCreditCount() {
-        if (mLimitList == null || mLimitList.getCredits() == null) return 0;
-        int total = 0;
-        List<Card> allCards = new ArrayList<>();
-        allCards.addAll(currentDeck.getMainCards());
-        allCards.addAll(currentDeck.getExtraCards());
-        allCards.addAll(currentDeck.getSideCards());
-        for (Card card : allCards) {
-            total += getCardCredit(card);
-        }
-        return total;
     }
 
     private void loadLastDeck() {
@@ -1144,110 +927,11 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         });
     }
 
-    // === 拖放：网格内换位、跨网格移动、搜索结果拖入、拖回搜索区删除 ===
+    // === 拖放：网格内换位、跳网格移动、搜索结果拖入、拖回搜索区删除
+    //   （实现已拆至 DeckDropHandler，本类仅作为 CardDragHelper.DropHandler 接收回调并转发）===
 
-    private void setupDragAndDrop() {
-        touchSlop = ViewConfiguration.get(activity).getScaledTouchSlop();
-        cardSearcherManager.setDragState(touchSlop, isReadonly || isPackMode);
-        dragHelper.addDropTarget(cgvMain);
-        dragHelper.addDropTarget(cgvExtra);
-        dragHelper.addDropTarget(cgvSide);
-        if (rootView != null) {
-            View rvSearchResults = rootView.findViewById(R.id.rv_deck_search_results);
-            if (rvSearchResults != null) dragHelper.addDropTarget(rvSearchResults);
-        }
-    }
-
-    /**
-     * 应用内自定义拖拽的落点回调：按落点目标完成卡片的移动/新增/删除。
-     * 来自卡组网格的卡先移出原位再插入落点（复用类型/数量/禁限校验），校验失败还原原位。
-     */
     @Override
     public void onCardDrop(View target, DeckInfo.Type source, int index, Card card, float rawX, float rawY) {
-        if (card == null || isReadonly) return;
-
-        View searchRV = cardSearcherManager.getSearchRecyclerView();
-        if (target == searchRV) {
-            if (source != null) {
-                List<Card> list = getDeckList(source);
-                if (index >= 0 && index < list.size()) {
-                    list.remove(index);
-                    isModified = true;
-                    notifyDeckChanged();
-                }
-            }
-            return;
-        }
-
-        if (!(target instanceof CardGroupView)) return;
-        DeckInfo.Type targetType;
-        if (target == cgvMain) targetType = DeckInfo.Type.Main;
-        else if (target == cgvExtra) targetType = DeckInfo.Type.Extra;
-        else targetType = DeckInfo.Type.Side;
-
-        int[] loc = new int[2];
-        target.getLocationOnScreen(loc);
-        int dropIndex = ((CardGroupView) target).getIndexByPosition(rawX - loc[0], rawY - loc[1]);
-
-        if (source != null) {
-            List<Card> sourceList = getDeckList(source);
-            if (index < 0 || index >= sourceList.size()) return;
-            Card moved = sourceList.remove(index);
-
-            if (source == targetType) {
-                int insert = (index < dropIndex) ? dropIndex - 1 : dropIndex;
-                insert = Math.max(0, Math.min(insert, sourceList.size()));
-                sourceList.add(insert, moved);
-                isModified = true;
-                notifyDeckChanged();
-                return;
-            }
-
-            currentDeck.syncCounts();
-            if (!moveToDeck(targetType, moved, dropIndex)) {
-                sourceList.add(Math.min(index, sourceList.size()), moved);
-                notifyDeckChanged();
-            }
-            return;
-        }
-
-        //搜索结果拖入：直接插入目标网格
-        pushToDeck(targetType, card, dropIndex);
+        dropHandler.onCardDrop(target, source, index, card, rawX, rawY);
     }
-
-    /**
-     * 跨卡组移动：跳过checkLimit禁限/分数校验，仅校验卡片类型兼容性和目标卡组容量。
-     * 卡片已在卡组中（非新增），移动不改变全局同名卡总数和GeneSys总分。
-     */
-    private boolean moveToDeck(DeckInfo.Type type, Card card, int seq) {
-        if (card == null) return false;
-        if (type == DeckInfo.Type.Main && Card.isExtraCard(card.Type)) return false;
-        if (type == DeckInfo.Type.Extra && !Card.isExtraCard(card.Type)) return false;
-        if (type == DeckInfo.Type.Main && !isPackMode
-                && currentDeck.getMainCount() >= Constants.DECK_MAIN_MAX) return false;
-        if (type == DeckInfo.Type.Extra
-                && currentDeck.getExtraCount() >= Constants.DECK_EXTRA_MAX) return false;
-        if (type == DeckInfo.Type.Side
-                && currentDeck.getSideCount() >= Constants.DECK_SIDE_MAX) return false;
-        List<Card> list = getDeckList(type);
-        int insert = Math.max(0, Math.min(seq, list.size()));
-        list.add(insert, card);
-        currentDeck.syncCounts();
-        isModified = true;
-        notifyDeckChanged();
-        return true;
-    }
-
-    private boolean pushToDeck(DeckInfo.Type type, Card card, int seq) {
-        if (type == DeckInfo.Type.Main) return pushMain(card, seq);
-        if (type == DeckInfo.Type.Extra) return pushExtra(card, seq);
-        return pushSide(card, seq);
-    }
-
-    private List<Card> getDeckList(DeckInfo.Type type) {
-        if (type == DeckInfo.Type.Main) return currentDeck.mainCards;
-        if (type == DeckInfo.Type.Extra) return currentDeck.extraCards;
-        return currentDeck.sideCards;
-    }
-
 }

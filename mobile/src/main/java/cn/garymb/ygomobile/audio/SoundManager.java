@@ -7,7 +7,6 @@ import android.media.SoundPool;
 import android.util.Log;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,9 +15,12 @@ import java.util.Random;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.utils.CrashHandler;
 
 public class SoundManager {
     private static final String TAG = "SoundManager";
+    /** 曲池整轮不可播后的重试冷却（ms） */
+    private static final long BGM_RETRY_COOLDOWN_MS = 10000L;
 
     public enum SFX {
         SUMMON("summon.wav"),
@@ -98,6 +100,10 @@ public class SoundManager {
     private String currentBgm = "";
     // 当前已播放的场景（对齐 C++ bgm_scene）：同场景不重复切歌
     private BGM bgmScene = null;
+    // BGM 播放异常仅首次落盘 ygocore/log（避免每次场景刷新重复写）
+    private boolean bgmFailureReported = false;
+    // 整轮选曲全部失败后的重试冷却截止时刻（refreshBGMList 重新扫盘时清零）
+    private long bgmRetryAfterMs = 0L;
 
     public SoundManager(Context context) {
         this.context = context;
@@ -140,7 +146,7 @@ public class SoundManager {
     }
 
     /** 回放快进重排期间的音效静默开关：置位时 playSoundEffect 全部丢弃，
-     *  避免逐帧重放历史消息时音效爆音（ReplayEngine 快进前置位、落点后复位） */
+     *  避免逐帧重放历史消息时音效爆音（ReplayPlayer 快进前置位、落点后复位） */
     private volatile boolean effectsSuppressed = false;
 
     public void setEffectsSuppressed(boolean suppressed) {
@@ -157,6 +163,7 @@ public class SoundManager {
     }
 
     public void refreshBGMList() {
+        bgmRetryAfterMs = 0L;
         bgmList.clear();
         for (BGM scene : BGM.values()) bgmList.put(scene, new ArrayList<>());
         File root = new File(getSoundDir(), "BGM");
@@ -202,39 +209,102 @@ public class SoundManager {
         if (list == null || list.isEmpty()) return;
         // 同场景且仍在播放则不切歌（对齐 C++ scene!=bgm_scene || !exists(current)）
         if (eff == bgmScene && bgmPlayer != null) return;
-        String path = list.get(random.nextInt(list.size()));
-        playMusic(path, true);
-        bgmScene = eff;
+        // 曲池整体不可播时短暂冷却，避免每次场景刷新都扫全表并重建 MediaPlayer
+        if (System.currentTimeMillis() < bgmRetryAfterMs) return;
+        // 从随机起点依次尝试：单个文件损坏 / 格式不支持时不再整体静默失声
+        int start = random.nextInt(list.size());
+        for (int i = 0; i < list.size(); i++) {
+            if (playMusic(list.get((start + i) % list.size()), true)) {
+                bgmScene = eff;
+                return;
+            }
+        }
+        bgmRetryAfterMs = System.currentTimeMillis() + BGM_RETRY_COOLDOWN_MS;
+        Log.w(TAG, "no playable BGM in scene " + eff);
     }
 
-    public void playMusic(String path, boolean loop) {
+    /**
+     * 播放一首 BGM，返回是否成功启动准备。
+     * 失败绝不向上抛（音频异常不应顶掉主线程），并把首次异常经
+     * {@link CrashHandler#report} 落盘 ygocore/log 供定位。
+     */
+    private boolean playMusic(String path, boolean loop) {
         stopBGM();
-        if (!musicEnabled) return;
+        if (!musicEnabled) return false;
+        MediaPlayer mp = null;
         try {
-            bgmPlayer = new MediaPlayer();
-            bgmPlayer.setDataSource(path);
-            bgmPlayer.setLooping(loop);
-            bgmPlayer.setVolume(musicVolume, musicVolume);
-            bgmPlayer.prepareAsync();
-            bgmPlayer.setOnPreparedListener(mp -> mp.start());
+            File file = new File(path);
+            if (!file.isFile() || file.length() == 0) {
+                Log.w(TAG, "BGM file missing or empty: " + path);
+                return false;
+            }
+            mp = new MediaPlayer();
+            mp.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build());
+            mp.setDataSource(path);
+            mp.setLooping(loop);
+            mp.setVolume(musicVolume, musicVolume);
+            // 监听必须在 prepareAsync 之前挂上：异步准备可能在下一行执行前就完成
+            final MediaPlayer player = mp;
+            mp.setOnPreparedListener(m -> {
+                try {
+                    m.start();
+                } catch (IllegalStateException e) {
+                    // 准备完成与停止/释放竞态：忽略即可
+                    Log.w(TAG, "BGM start skipped", e);
+                }
+            });
+            mp.setOnErrorListener((m, what, extra) -> {
+                Log.e(TAG, "BGM error what=" + what + " extra=" + extra + " path=" + path);
+                if (bgmPlayer == player) {
+                    // 复位场景与当前曲，使下一次 updateBGM 能重新选曲
+                    bgmPlayer = null;
+                    currentBgm = "";
+                    bgmScene = null;
+                }
+                releaseQuietly(m);
+                return true;
+            });
+            mp.prepareAsync();
+            bgmPlayer = mp;
             currentBgm = path;
-        } catch (IOException e) {
+            return true;
+        } catch (Exception e) {
+            // IOException / IllegalStateException / IllegalArgumentException 全部兜住
             Log.e(TAG, "Failed to play BGM: " + path, e);
+            if (!bgmFailureReported) {
+                bgmFailureReported = true;
+                CrashHandler.getInstance().report("音频-BGM播放", e);
+            }
+            releaseQuietly(mp);
+            if (bgmPlayer == mp) bgmPlayer = null;
+            currentBgm = "";
+            return false;
         }
     }
 
     public void stopBGM() {
-        if (bgmPlayer != null) {
-            try {
-                if (bgmPlayer.isPlaying()) {
-                    bgmPlayer.stop();
-                }
-                bgmPlayer.release();
-            } catch (Exception e) {
-                // ignore
-            }
-            bgmPlayer = null;
-            currentBgm = "";
+        MediaPlayer mp = bgmPlayer;
+        bgmPlayer = null;
+        currentBgm = "";
+        if (mp == null) return;
+        try {
+            // 未进入 Started 状态（准备中 / 出错）时 stop() 会抛 IllegalStateException，
+            // 旧写法因此跳过 release() 造成原生实例泄漏，泄漏后又使 prepareAsync 抛异常
+            mp.stop();
+        } catch (Exception ignored) {
+        } finally {
+            releaseQuietly(mp);
+        }
+    }
+
+    private static void releaseQuietly(MediaPlayer mp) {
+        if (mp == null) return;
+        try {
+            mp.release();
+        } catch (Exception ignored) {
         }
     }
 
@@ -250,8 +320,12 @@ public class SoundManager {
 
     public void setMusicVolume(double volume) {
         this.musicVolume = (float) volume;
-        if (bgmPlayer != null) {
-            bgmPlayer.setVolume(musicVolume, musicVolume);
+        MediaPlayer mp = bgmPlayer;
+        if (mp != null) {
+            try {
+                mp.setVolume(musicVolume, musicVolume);
+            } catch (Exception ignored) {
+            }
         }
     }
 

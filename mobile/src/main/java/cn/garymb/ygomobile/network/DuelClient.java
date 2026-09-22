@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.LogUtil;
 
 public class DuelClient implements YGOProtocol {
@@ -74,6 +75,8 @@ public class DuelClient implements YGOProtocol {
     private final ExecutorService sendExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "DuelClient-Send");
         t.setDaemon(true);
+        // 发送线程内的未捕获异常（如 ByteBuffer 越界）会直接弄死进程，挂上后先落盘 ygocore/log
+        CrashHandler.getInstance().hookThread(t, "网络-发送线程");
         return t;
     });
 
@@ -103,6 +106,7 @@ public class DuelClient implements YGOProtocol {
 
             readThread = new Thread(this::readLoop, "DuelClient-Read");
             readThread.setDaemon(true);
+            CrashHandler.getInstance().hookThread(readThread, "网络-接收线程");
             readThread.start();
 
             mainHandler.post(() -> {

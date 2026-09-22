@@ -68,8 +68,8 @@ public class GameTopInfoManager {
      *  对齐 drawing.cpp L988 lpplayer==1 的 Resize(400,160,920,210)，y 中心 185/640≈0.29 */
     private static final float LP_FLOAT_FRAC_OPPONENT = 0.29f;
     /** 伤害浮字的引擎侧标识色 RGB（对齐 duelclient.cpp MSG_DAMAGE 的 lpccolor=0xffff0000 纯红）：
-     *  GameEngine/ReplayEngine 的 onDamage 仍以纯红下发「伤害」语义，展示层据此 RGB 识别后改绘为 colorAccent；
-     *  仅匹配 FF0000，回复绿(00ff00)/支付蓝(0000ff) 不受影响，故对两个引擎的伤害一致生效 */
+     *  GameEngine（实况与回放共用同一管线）的 onDamage 仍以纯红下发「伤害」语义，展示层据此 RGB 识别后改绘为 colorAccent；
+     *  仅匹配 FF0000，回复绿(00ff00)/支付蓝(0000ff) 不受影响，故对实况与回放的伤害一致生效 */
     private static final int LP_FLOAT_DAMAGE_RGB = 0x00FF0000;
     /** 伤害数字展示色：colorAccent。类加载时解析一次，避免逐帧心跳重复取色 */
     private static final int LP_FLOAT_DAMAGE_COLOR = YGOUtil.c(R.color.colorAccent);

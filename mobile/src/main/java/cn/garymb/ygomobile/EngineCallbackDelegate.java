@@ -18,7 +18,6 @@ import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
-import cn.garymb.ygomobile.game.SummonAnimationManager;
 import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
 import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
@@ -156,7 +155,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
             String name;
             if (activity.engine.replayMode) {
-                // 回放：无座位概念，ReplayEngine 开始回放时已按本地视角索引（0=录制者）
+                // 回放：无座位概念，ReplayPlayer 开始回放时已按本地视角索引（0=录制者）
                 // 将 yrp 头部双方昵称写入 playerInfos，直接按视角索引取名
                 GameEngine.PlayerInfo rinfo = (player >= 0 && player < activity.engine.playerInfos.length)
                         ? activity.engine.playerInfos[player] : null;
@@ -696,37 +695,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         specEffect().setAnimationSpeed(multiplier);
     }
 
-    /** 录像回放的召唤动画派发（供 ReplayModeDialog 的 ReplayListener 调用） */
-    public void showReplaySummonAnimation(int code, int summonType) {
-        activity.runOnUiThread(() -> {
-            if (summonType == SummonAnimationManager.SUMMON_SPECIAL) {
-                specEffect().showSpecialSummon(code);
-            } else {
-                specEffect().showSummon(code);
-            }
-        });
-    }
-
-    /** 录像回放的阶段文字提示 */
-    public void showReplayPhaseText(int textCode) {
-        activity.runOnUiThread(() -> specEffect().showText(textCode));
-    }
-
-    /**
-     * 录像回放（MSG 模式）连锁发动动画：选卡高亮 + 发动大图，
-     * 对齐实况 onChainAnimation 链路（selectCardWithAutoClear + showActivate）
-     */
-    public void showReplayChainAnimation(int code, int controler, int location, int sequence) {
-        activity.runOnUiThread(() -> {
-            activity.fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500);
-            specEffect().showActivate(code);
-        });
-    }
-
-    /** 录像回放（MSG 模式）效果无效动画：对齐实况 onNegatedAnimation 链路 */
-    public void showReplayNegateAnimation(int code) {
-        activity.runOnUiThread(() -> specEffect().showNegated(code));
-    }
+    /** 录像回放的召唤/连锁/无效大图与阶段文字：回放走实况管线，
+     *  直接经下方 onSummonAnimation / onChainAnimation / onNegatedAnimation / onPhaseChanged
+     *  派发，无需为回放单独开入口（旧 ReplayListener 的四个 showReplay*Animation 转发已删） */
 
     /**
      * MSG_NEW_PHASE 的 phase 値 → DrawSpec case 101 的 showcardcode（对齐 duelclient.cpp L2905-2929）：
