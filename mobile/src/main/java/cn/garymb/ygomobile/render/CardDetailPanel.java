@@ -844,6 +844,12 @@ public class CardDetailPanel {
     // === 整体可见性 ===
 
     public void onGameUIShown() {
+        // 每次进入决斗/回放 UI 先清掉上一场残留的时点三键/洗切手卡/录像控制条，
+        // 后续通讯状态（DUELING / 回放 PLAYING / MSG_NEW_TURN）会重新点亮，
+        // 修复「看完录像再决斗（或反之）一开头显示不该出现的按钮」
+        hideChainButtons();
+        updateShuffleButton(false);
+        hideReplayControls();
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
         // 投降按钮默认隐藏：猜拳(HAND_SELECT)/选先后(TP_SELECT)阶段不显示，
         // 进入决斗(DUELING)且为对战玩家时由 Activity 调用 setSurrenderVisible(true) 显示
@@ -944,9 +950,13 @@ public class CardDetailPanel {
             btnReplayNext.setVisibility(isPaused ? View.VISIBLE : View.INVISIBLE);
     }
 
+    /**
+     * 隐藏录像控制条。不再顺手把 layoutBottomActions 置 VISIBLE：底部按钮区的可见性
+     * 由 onGameUIShown / showBottomActions / closeGameButtons 按场景统一管控，
+     * 避免退出回放瞬间露出不该出现的投降/时点等按钮
+     */
     public void hideReplayControls() {
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
-        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
     }
 
     private Bitmap getCoverBitmap() {

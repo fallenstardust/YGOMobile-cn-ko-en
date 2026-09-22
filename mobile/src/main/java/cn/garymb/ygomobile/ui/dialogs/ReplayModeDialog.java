@@ -516,6 +516,9 @@ public class ReplayModeDialog {
         // 重复进入回放（外部再次打开 .yrp / 录像选择窗连续点播）：先摘掉旧回调，
         // loadAndPlay 内部会停掉旧投喂线程，剩余回调静默丢弃
         player.detachListener();
+        // 进入回放先释放上一局残留的场上卡片局面：清 GameField + 重绘空场，
+        // 避免异步加载窗口期 GameFieldView 仍显示上次决斗/回放的最后一帧（MSG_START 前的空白）
+        activity.getFieldCtl().resetField();
         // 对齐 game.cpp Main::Replay → showFieldWindow：先切入决斗场 UI（隐藏主菜单/局域网弹窗），
         // 否则回放开始后主菜单仍覆盖在画面上
         activity.enterReplayUI();
@@ -538,9 +541,10 @@ public class ReplayModeDialog {
                             break;
                         case FINISHED:
                             activity.getFieldCtl().setPhaseText("\u23f9");
-                            // 对齐 EndDuel（replay_mode.cpp L223-251）：结束后先弹提示框，
-                            // 确认后才回录像选择窗并隐藏控制条；不再在 FINISHED 立即隐藏
-                            // 控制按钮（修复回放提前终止时按钮莫名消失无法继续操作）
+                            // 回放自然结束：即时隐藏录像控制条与残留时点/洗切按钮，
+                            // 再弹结束提示框（确认后才 quitReplay 回录像选择窗）
+                            activity.getCardDetailPanel().hideReplayControls();
+                            activity.getCardDetailPanel().closeGameButtons();
                             showReplayEndDialog(activity, player, endDlgShown, false);
                             break;
                         case ERROR:
@@ -595,7 +599,8 @@ public class ReplayModeDialog {
                     .setMessage("Error occurs.\n" + err);
         } else {
             String endText = DataManager.get().getStringManager().getSystemString(1501, "录像播放结束");
-            dialog.setTitle(endText).setMessage(endText);
+            // 结束提示只用正文，不再把同一句塞进标题重复显示（YesOrNoDialog 标题为空即隐藏）
+            dialog.setMessage(endText);
         }
         dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
                 .setPositiveButtonText("确定")

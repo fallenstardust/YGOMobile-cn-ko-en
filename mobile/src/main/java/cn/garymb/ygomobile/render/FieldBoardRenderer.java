@@ -39,7 +39,7 @@ final class FieldBoardRenderer {
         int code2 = fieldSpellCode(f, 1);
         boolean transparent = code1 > 0 || code2 > 0;
         // 场地魔法背景图先于底板绘制（z=-0.01 底板之下），对齐 drawing.cpp DrawBackGround；
-        // 矩形尺寸随格子布局动态取双方魔法陷阱区包围盒（格子已调整，不再用旧常量）
+        // 矩形范围按需求限制在双方怪兽/魔陷主体区的包围盒内，不外溢到整块 gamefield
         if (transparent) drawFieldSpellArt(code1, code2, rule == 1);
         int tex = view.tex.obtainFieldTexture(rule, transparent);
         // 因魔陷行新增纵向缝隙、卡区整体更外扩，场地底板贴图矩形随之稍微外扩（中心不变、四边各向外
@@ -75,15 +75,25 @@ final class FieldBoardRenderer {
     }
 
     /**
-     * 双方魔法陷阱区（seq0-5，MR3 另含额外灵摆格 seq6/7；场地区 seq5 按 PILE 尺寸参与包围盒）
-     * 的 raw 坐标包围盒 {xMin, xMax, yMin, yMax}：场地魔法背景图横纵范围与本方格子行完全对齐
+     * 双方「怪兽区 + 魔法陷阱区」主体格的 raw 坐标包围盒 {xMin, xMax, yMin, yMax}：
+     * 怪兽区 seq0-4（MR4 含额外怪兽区 seq5/6）+ 魔陷区 seq0-4，
+     * 不含场地区 seq5（PILE 宽格、贴近场地两侧边缘）与 MR3 额外灵摆格 seq6/7 ——
+     * 场地魔法背景图宽度因此限制在双方怪兽/魔陷区的宽度内，不再铺满整块 gamefield
      */
-    private static float[] szoneBounds(boolean mr4) {
+    private static float[] mainZoneBounds(boolean mr4) {
         float xMin = Float.MAX_VALUE, xMax = -Float.MAX_VALUE;
         float yMin = Float.MAX_VALUE, yMax = -Float.MAX_VALUE;
+        int mzoneMax = mr4 ? 6 : 4;
         for (int p = 0; p < 2; p++) {
-            int maxSeq = mr4 ? 5 : 7;
-            for (int s = 0; s <= maxSeq; s++) {
+            for (int s = 0; s <= mzoneMax; s++) {
+                float[] r = GameField.getZoneRect(p, 0x04, s);
+                if (r == null) continue;
+                xMin = Math.min(xMin, r[0] - r[2] / 2f);
+                xMax = Math.max(xMax, r[0] + r[2] / 2f);
+                yMin = Math.min(yMin, r[1] - r[3] / 2f);
+                yMax = Math.max(yMax, r[1] + r[3] / 2f);
+            }
+            for (int s = 0; s <= 4; s++) {
                 float[] r = GameField.getZoneRect(p, 0x08, s);
                 if (r == null) continue;
                 xMin = Math.min(xMin, r[0] - r[2] / 2f);
@@ -99,10 +109,10 @@ final class FieldBoardRenderer {
     /**
      * 场地魔法背景图（image_manager.cpp GetTextureField + materials.cpp vFieldSpell*）：
      * 单方/双方同码 → 整幅 vFieldSpell；双方异码 → 各画半幅（图上半给我方 +y 侧、下半给
-     * 对方 −y 侧，v=1 对应 +y）；矩形取 {@link #szoneBounds} 双方魔陷区包围盒
+     * 对方 −y 侧，v=1 对应 +y）；矩形取 {@link #mainZoneBounds} 双方怪兽/魔陷主体区包围盒
      */
     private void drawFieldSpellArt(int code1, int code2, boolean mr4) {
-        float[] b = szoneBounds(mr4);
+        float[] b = mainZoneBounds(mr4);
         if (b == null) return;
         float w = b[1] - b[0];
         float cx = FieldGeometry.mirrorX((b[0] + b[1]) / 2f);

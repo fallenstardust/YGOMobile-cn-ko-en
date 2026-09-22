@@ -165,7 +165,19 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (topInfoManager != null) topInfoManager.show();
     }
 
+    /**
+     * 清场并强制重绘空场：新一场决斗/回放开始前调用，修复「进入时一开头还显示
+     * 上一场 gamefieldview 的卡片局面」（MSG_START 的 field.clear() 在异步加载之后才到达）
+     */
+    public void resetField() {
+        if (engine != null && engine.getField() != null) engine.getField().clear();
+        if (viewController != null) viewController.invalidate();
+    }
+
     public void hide() {
+        // 决斗/回放离场即释放场面：清空 GameField 数据，下次进入不再残留上一场卡片局面
+        //（showMainMenu/returnToLanMain/quitReplay 等入口均只在非决斗中状态触达本方法）
+        if (engine != null && engine.getField() != null) engine.getField().clear();
         if (viewController != null) viewController.hide();
         if (topInfoManager != null) topInfoManager.hide();
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);

@@ -92,6 +92,12 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     /** undo/restart 目标步为 0：消费并重投 MSG_START（重建初始场）后即停 */
     private boolean landAtStart;
     private volatile String lastErrorMessage;
+    /**
+     * 会话代数：{@link #stop()} / {@link #loadAndPlay} 每次递增，作废旧 load/pump 线程的收尾派发。
+     * 修复「首次点播即弹录像结束」：旧写法 stop() 末尾 setState(FINISHED)，会把上一次会话的
+     * 终态派发给刚挂上的监听器；且 setState 对 FINISHED 去重，导致第二次进入反而不弹。
+     */
+    private volatile long sessionGen;
 
     public ReplayPlayer(GameEngine engine) {
         this.engine = engine;
@@ -177,6 +183,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     }
 
     public void stop() {
+        sessionGen++;             // 作废当前会话：旧 load/pump 线程收尾时静默丢弃
         isRunning = false;
         isPaused = false;
         Thread t = pumpThread;
@@ -185,7 +192,9 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         if (l != null) l.interrupt();
         clearReplayFlags();
         closeSourceQuietly();
-        setState(State.FINISHED);
+        // 停止不派发结束态：「录像已结束」弹窗只来自真实终态（finishSession / fail）；
+        // 状态静默回 IDLE，由下次 loadAndPlay 重新派发 LOADING
+        state = State.IDLE;
     }
 
     // === 加载 ===
@@ -200,20 +209,22 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
      */
     public void loadAndPlay(String replayPath, int startTurn) {
         stop();
+        final long gen = sessionGen;      // 本次会话代数（stop 刚递增过）
         setState(State.LOADING);
         lastErrorMessage = null;
         currentStep = 0;
         replayWinSeen = false;
         ReplayCodeMapper.beginSession();
-        loadThread = new Thread(() -> load(replayPath, startTurn), "ReplayLoad");
+        loadThread = new Thread(() -> load(replayPath, startTurn, gen), "ReplayLoad");
         loadThread.setDaemon(true);
         CrashHandler.getInstance().hookThread(loadThread, "回放-加载");
         loadThread.start();
     }
 
-    private void load(String replayPath, int startTurn) {
+    private void load(String replayPath, int startTurn, long gen) {
         try {
             replayData = ReplayReader.loadReplay(replayPath);
+            if (sessionGen != gen) return;    // 加载期间已被退出/重新点播作废：静默退出
             if (replayData == null) {
                 fail("无法加载录像文件");
                 return;
@@ -226,6 +237,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                 fail(source.getLastError() == null ? "录像数据源初始化失败" : source.getLastError());
                 return;
             }
+            if (sessionGen != gen) return;    // 同上：开源自检期间会话已作废
             prepareDisplayDecks();
             startSession();
             if (source.engineDriven()) {
@@ -239,7 +251,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             skipTurn = startTurn > 1 ? startTurn - 1 : 0;
             isSkipping = skipTurn > 0;
             notifyHint(buildReplayInfo(startTurn));
-            pumpThread = new Thread(this::pump, "ReplayPump");
+            pumpThread = new Thread(() -> pump(gen), "ReplayPump");
             pumpThread.setDaemon(true);
             CrashHandler.getInstance().hookThread(pumpThread, "回放-投喂");
             pumpThread.start();
@@ -303,7 +315,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
 
     // === 投喂主循环（两种消息来源共用） ===
 
-    private void pump() {
+    private void pump(long gen) {
         long fedSincePump = 0;
         try {
             soundManager.playBGM(SoundManager.BGM.DUEL);
@@ -338,8 +350,11 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                     break;
                 }
                 if (!ReplayMessageSlicer.isNoFeed(msg.type)) {
-                    // 卡码归一在投喂副本上就地完成，不改写录像文件
-                    ReplayCodeMapper.mapMessage(msg.type, msg.body, this);
+                    // 卡码归一在投喂副本上就地完成，不改写录像文件；
+                    // 引擎重跑合成的刷新消息已在源头按查询块自界长归一（不依赖实况侧卡数）
+                    if (!msg.synthetic) {
+                        ReplayCodeMapper.mapMessage(msg.type, msg.body, this);
+                    }
                     feedMessage(msg.type, msg.body);
                     fedSincePump++;
                 }
@@ -356,7 +371,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             if (lastErrorMessage == null) lastErrorMessage = "回放投喂异常：" + t;
             Log.e(TAG, "Replay pump error", t);
         } finally {
-            finishSession();
+            finishSession(gen);
         }
     }
 
@@ -521,7 +536,10 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         waitForPendingDrain();
     }
 
-    private void finishSession() {
+    private void finishSession(long gen) {
+        // 旧会话被作废（退出/重新点播）：stop() 已清标志并关源，共享状态归新会话所有，
+        // 此处直接静默退出，不得再派发状态/回调（否则首播即弹「录像已结束」）
+        if (sessionGen != gen) return;
         if (source != null && source.getLastError() != null && lastErrorMessage == null) {
             lastErrorMessage = source.getLastError();
         }

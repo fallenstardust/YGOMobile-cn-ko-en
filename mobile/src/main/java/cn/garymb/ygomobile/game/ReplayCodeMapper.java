@@ -23,9 +23,11 @@ import ocgcore.data.Card;
  * unknown 的同一张表）只认其中一种号，卡图与名称取不到就显示 unknown。
  *
  * <p>因此映射不能无条件按对照表替换：本机卡表已认得的码必须原样保留（否则会把能显示的
- * 码换成卡表里没有的码，反而 more unknown）。规则统一为
- * 「原码查不到 → 换成对照表目标码，且仅当目标码查得到时才换」，双向（先行→正式、
- * 正式→先行）都试一次，取第一个查得到的结果。
+ * 码换成卡表里没有的码，反而 more unknown）。规则统一为三步：①码在对照表内且其正式码
+ * 卡表查得到 → 换正式码（先行号优先：扩展库常已预登记先行号条目但卡图/详情按正式码注册，
+ * 保留原码仍显示 unknown）；②卡表查得到的码原样保留；③否则双向（先行→正式、正式→先行）
+ * 试一次对照表，取第一个查得到的结果。另注意 {@code CardManager.getCard} 对查不到的码会
+ * 造并缓存存根卡（Type=0）且永不返回 null，「卡表认得」必须按真卡判定。
  *
  * <p>各消息的卡码偏移与 {@link ReplayMessageSlicer} 的切片长度、{@code GameMessageParser}
  * 的读取次序逐条对齐（写侧口径见 ocgcore card.cpp / operations.cpp / processor.cpp /
@@ -80,7 +82,8 @@ public final class ReplayCodeMapper {
     }
 
     /**
-     * 单码归一：卡表认得的原码一律保留；否则查对照表，目标码认得才换。
+     * 单码归一（规则见类注释三步）：先行号优先换正式码；否则卡表认得的码保留；
+     * 再否则双向查对照表，目标码认得才换。
      * 码值最高位是回放侧携带的翻面标志（{@code MSG_DRAW} 等），映射时原样保留。
      */
     public static int mapCode(int code) {
@@ -88,22 +91,35 @@ public final class ReplayCodeMapper {
         int faceUpFlag = code & 0x80000000;
         int base = code & 0x7fffffff;
         CardResolver res = resolver;
+        // ① 先行号→正式码优先转换：即使卡表「认得」先行号（扩展库预登记条目），
+        //    卡图与完整详情也只按正式码注册，保留原码仍显示 unknown
+        Map<Integer, Integer> o2n = toNewMap();
+        Integer official = o2n == null ? null : o2n.get(base);
+        if (official != null && official != base && (res == null || res.known(official))) {
+            return mapped(base, official, faceUpFlag);
+        }
         if (res != null && res.known(base)) {
             keptCount++;
             return code;
         }
-        Integer alt = alternate(base);
-        if (alt != null && (res == null || res.known(alt))) {
-            if (mappedSamples.size() < 40) {
-                mappedSamples.put(base, alt);
-            }
-            mappedCount++;
-            return alt | faceUpFlag;
+        // ③ 正式→先行反向（录像里是正式码但本机卡表只有先行库认它）
+        Map<Integer, Integer> n2o = toOldMap();
+        Integer alt = n2o == null ? null : n2o.get(base);
+        if (alt != null && alt != base && (res == null || res.known(alt))) {
+            return mapped(base, alt, faceUpFlag);
         }
         if (unresolved.size() < 200) {
             unresolved.add(base);
         }
         return code;   // 两个号都查不到：保持原码，交给诊断日志定位
+    }
+
+    private static int mapped(int base, int target, int faceUpFlag) {
+        if (mappedSamples.size() < 40) {
+            mappedSamples.put(base, target);
+        }
+        mappedCount++;
+        return target | faceUpFlag;
     }
 
     /** 卡组/额外卡码列表就地归一（ReplayReader.DeckInfo.main/extra） */
@@ -202,20 +218,15 @@ public final class ReplayCodeMapper {
         return index < buf.limit() ? (buf.get(index) & 0xFF) : 0;
     }
 
-    /** 对照表双向候选：先行号给正式号、正式号给先行号；无对照关系返回 null */
-    private static Integer alternate(int base) {
-        Map<Integer, Integer> n2o = toOldMap();
-        Map<Integer, Integer> o2n = toNewMap();
-        Integer cand = o2n == null ? null : o2n.get(base);
-        if (cand != null) return cand;
-        return n2o == null ? null : n2o.get(base);
-    }
+    /** 对照表双向候选已内联到 mapCode（先行→正式优先、正式→先行兜底，见 toNewMap/toOldMap） */
 
     /** 卡表是否认得该码（与 CardDetailPanel 的 unknown 判据一致） */
     private static boolean cardTableHas(int code) {
         try {
+            // 注意：CardManager.getCard 对查不到的码会 new Card(code) 存根（Name="Unknown"、
+            // Type=0）并缓存，永不返回 null；真卡必有非零 type 位，据此判「卡表认得」
             Card card = DataManager.get().getCardManager().getCard(code);
-            return card != null;
+            return card != null && card.Type != 0;
         } catch (Throwable t) {
             // 卡表尚未初始化：视为不可判定，交由 mapCode 的“目标码也要认得”规则兜底
             Log.d(TAG, "card table unavailable: " + t);

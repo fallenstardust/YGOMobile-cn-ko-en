@@ -2,6 +2,8 @@ package cn.garymb.ygomobile.game;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * 回放消息来源抽象：把「录像文件里自带的主机视角 MSG 流」与「旧格式重跑 ocgcore 现产生的
@@ -23,10 +25,18 @@ abstract class ReplaySource {
     static final class Msg {
         final int type;
         final byte[] body;
+        /** 引擎重跑源合成的区域刷新消息（gframe ReplayRefresh 族）：卡码已在源头归一，
+         *  pump 侧不再按实况区域卡数二次映射 */
+        final boolean synthetic;
 
         Msg(int type, byte[] body) {
+            this(type, body, false);
+        }
+
+        Msg(int type, byte[] body, boolean synthetic) {
             this.type = type;
             this.body = body;
+            this.synthetic = synthetic;
         }
     }
 
@@ -35,6 +45,8 @@ abstract class ReplaySource {
 
     /** 当前待消费的消息缓冲：1 字节消息号 + 变/定长消息体，无分隔符，只能按长度表推进 */
     private ByteBuffer cursor;
+    /** 引擎重跑源在触发消息切完后合成的刷新消息：先于下一条真实消息消费 */
+    protected final Deque<Msg> synthQueue = new ArrayDeque<>();
     private String lastError;
 
     ReplaySource(ReplayPlayer player) {
@@ -59,6 +71,7 @@ abstract class ReplaySource {
 
     void close() {
         cursor = null;
+        synthQueue.clear();
     }
 
     /**
@@ -67,6 +80,8 @@ abstract class ReplaySource {
      */
     Msg next() {
         while (player.isPumpAlive()) {
+            Msg synth = synthQueue.poll();
+            if (synth != null) return synth;
             if (cursor == null || !cursor.hasRemaining()) {
                 if (!refill()) return null;
                 continue;
@@ -83,10 +98,10 @@ abstract class ReplaySource {
                 return null;
             }
             int end = cursor.position();
-            onSliced(type);
             byte[] body = new byte[end - start];
             ((ByteBuffer) cursor.duplicate().order(ByteOrder.LITTLE_ENDIAN)
                     .position(start).limit(end)).get(body);
+            onSliced(type, body);
             return new Msg(type, body);
         }
         return null;
@@ -105,10 +120,17 @@ abstract class ReplaySource {
     }
 
     /**
-     * 一条消息切完（游标已在消息体末尾）后的钩子：引擎重跑来源在此把 SELECT 消息对应的
-     * 响应记录喂回引擎（对齐 replay_mode.cpp::ReadReplayResponse），纯消息流无需实现。
+     * 一条消息切完（游标已在消息体末尾、消息体已取出）后的钩子：引擎重跑来源在此把 SELECT
+     * 消息对应的响应记录喂回引擎（对齐 replay_mode.cpp::ReadReplayResponse），并按
+     * ReplayAnalyze 各 case 的 ReplayRefresh 调用点合成区域刷新消息入队（body 供 MSG_MOVE /
+     * TAG_SWAP 等取字段判定刷新目标），纯消息流无需实现。
      */
-    protected void onSliced(int msgType) {
+    protected void onSliced(int msgType, byte[] body) {
+    }
+
+    /** 追加一条合成刷新消息（在下一条真实消息之前被 {@link #next()} 取出投喂） */
+    protected void enqueueSynthetic(Msg msg) {
+        synthQueue.add(msg);
     }
 
     /** 抽取当前缓冲的一段字节为独立小端缓冲（子类 rewind 时重建游标用） */

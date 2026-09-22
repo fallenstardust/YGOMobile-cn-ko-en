@@ -62,6 +62,8 @@ final class CardOverlayRenderer {
     private static final float ICON_Z_OFF = 0.03f;
     /** CardType.Pendulum 位（ocgcore.enums.CardType.Pendulum = 0x1000000） */
     private static final int TYPE_PENDULUM = 0x1000000;
+    // 怪兽卡类型位（ocgcore common.h TYPE_MONSTER）：攻击箭头近似判断只允许作用于怪兽
+    private static final int TYPE_MONSTER = 0x1;
 
     // === 可发动/召唤/特殊召唤卡片角位呼吸绿点（CmdMenuDialog「发动」/「召唤」/「特殊召唤」按钮的可视化提示）===
     // 判据与 CmdMenuDialog.buildCardCommandMenu 一致：cmdFlag 含 COMMAND_ACTIVATE（发动，
@@ -184,7 +186,9 @@ final class CardOverlayRenderer {
                 && (f.currentPhase & BATTLE_DECLARE_MASK) != 0;
         for (int p = 0; p < 2; p++) {
             overlayCardList(f.players[p].monsterZone, mr4, oppAttackHint);
-            overlayCardList(f.players[p].spellZone, mr4, oppAttackHint);
+            // 魔陷区卡一律不套用战斗阶段近似提示：攻击箭头只标记可宣言攻击的怪兽，
+            // 修复「对方战斗阶段连场上非怪兽卡也显示 attack 贴图动画」
+            overlayCardList(f.players[p].spellZone, mr4, false);
         }
     }
 
@@ -322,9 +326,11 @@ final class CardOverlayRenderer {
         // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达；
         // 已选定为攻击目标的对方怪兽（hideAttackTarget）同样不再显示——箭头只标记攻击手。
         // 我方：cmdFlag 含 COMMAND_ATTACK（由 battle cmd 精确置位）；
-        // 对方：战斗宣言阶段的表侧攻击表示怪兽，近似判断（收不到对方 battle cmd）。
+        // 对方：战斗宣言阶段的表侧攻击表示怪兽，近似判断（收不到对方 battle cmd）；
+        // 必须叠加 TYPE_MONSTER 门槛，否则魔陷区盖卡揭开后 position 同为攻击表示会误显示箭头。
         boolean showAttack = (c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0
-                || (oppAttackHint && c.controler == 1 && c.isFaceUp() && c.isAttack());
+                || (oppAttackHint && (c.type & TYPE_MONSTER) != 0
+                    && c.controler == 1 && c.isFaceUp() && c.isAttack());
         if (showAttack && c != hideAttackCard && c != hideAttackTarget) {
             drawAttackIcon(c);
         }
