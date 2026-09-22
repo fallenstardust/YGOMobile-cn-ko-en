@@ -100,6 +100,15 @@ public class YGOProActivity extends AppCompatActivity {
 
     volatile boolean isGameStarted = false;
 
+    // 场景 BGM 胜负覆盖（对齐 game.cpp Game::playBGM 的 dInfo.isFinished && showcardcode 判定）：
+    // 决斗场显示时若已判定胜负则优先播放 WIN/LOSE，否则按 LP 差判定 ADVANTAGE/DISADVANTAGE/DUEL
+    private static final int BGM_RESULT_NONE = 0;
+    private static final int BGM_RESULT_WIN = 1;
+    private static final int BGM_RESULT_LOSE = 2;
+    private int bgmDuelResult = BGM_RESULT_NONE;
+    /** 决斗中双方 LP 差达到该阈值时切换优势/劣势 BGM（对齐需求「LP 相差大于等于 4000」） */
+    private static final int BGM_LP_DIFF_THRESHOLD = 4000;
+
     private ReplayEngine currentReplayEngine;
     CardDetailPanel cardDetailPanel;
     private ChatInputUI chatInputUI;
@@ -530,7 +539,57 @@ public class YGOProActivity extends AppCompatActivity {
         return menuNav;
     }
 
+    /**
+     * 集中决策当前场景 BGM 并交 SoundManager 播放（对齐 game.cpp Game::playBGM）：
+     * 依据布局可见性与对局状态计算场景，同场景由 SoundManager 内部去重不重复切歌。
+     * - 决斗场 layout_game_right 显示：胜负已判定 → WIN/LOSE；否则 LP 差≥阈值时
+     *   对方血多 → DISADVANTAGE、我方血多 → ADVANTAGE，其余 → DUEL
+     * - 卡组编辑器 layout_deck_editor 显示（含副卡组替换）→ DECK
+     * - 其他 → MENU
+     * 必须在主线程调用。
+     */
+    public void updateBGM() {
+        if (soundManager == null) return;
+        SoundManager.BGM scene;
+        boolean gameRightShowing = layoutGameRight != null
+                && layoutGameRight.getVisibility() == View.VISIBLE;
+        boolean deckEditorShowing = layoutDeckEditor != null
+                && layoutDeckEditor.getVisibility() == View.VISIBLE;
+        if (gameRightShowing) {
+            if (bgmDuelResult == BGM_RESULT_WIN) {
+                scene = SoundManager.BGM.WIN;
+            } else if (bgmDuelResult == BGM_RESULT_LOSE) {
+                scene = SoundManager.BGM.LOSE;
+            } else {
+                int myLp = engine != null ? engine.field.players[0].lp : 0;
+                int oppLp = engine != null ? engine.field.players[1].lp : 0;
+                if (Math.abs(myLp - oppLp) >= BGM_LP_DIFF_THRESHOLD) {
+                    scene = oppLp > myLp ? SoundManager.BGM.DISADVANTAGE
+                            : SoundManager.BGM.ADVANTAGE;
+                } else {
+                    scene = SoundManager.BGM.DUEL;
+                }
+            }
+        } else if (deckEditorShowing) {
+            scene = SoundManager.BGM.DECK;
+        } else {
+            scene = SoundManager.BGM.MENU;
+        }
+        soundManager.playBGM(scene);
+    }
+
+    /**
+     * 决斗判定胜负时设置 BGM 胜负覆盖并刷新场景
+     *（对齐 Game::playBGM 的 dInfo.isFinished && showcardcode==1/2/3 分支）
+     */
+    public void setBgmDuelResult(boolean selfWon) {
+        bgmDuelResult = selfWon ? BGM_RESULT_WIN : BGM_RESULT_LOSE;
+        updateBGM();
+    }
+
     public void hideGameUI() {
+        // 决斗场隐藏即退出本局胜负语境，清空 BGM 胜负覆盖（对齐 dInfo.isFinished 复位）
+        bgmDuelResult = BGM_RESULT_NONE;
         fieldCtl.hide();
         cardDetailPanel.onGameUIHidden();
         // 退出对战（layout_game_right 隐藏）时，一并关闭正在显示的表情面板
@@ -546,6 +605,8 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     private void showGameUI() {
+        // 新开一局/回放：清除上一局残留的 BGM 胜负覆盖
+        bgmDuelResult = BGM_RESULT_NONE;
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG);
         getMainMenuDialog().hideMainMenu();
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
@@ -557,6 +618,7 @@ public class YGOProActivity extends AppCompatActivity {
         fieldCtl.show();
         cardDetailPanel.onGameUIShown();
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
+        updateBGM();
     }
 
     void enterDuelingUI() {
@@ -636,6 +698,8 @@ public class YGOProActivity extends AppCompatActivity {
                 lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
                         String.valueOf(lastJoinPort));
             }
+            // 返回局域网主界面属“其他情况”，切 MENU 场景
+            updateBGM();
         }
         if (toastMsg != null && !toastMsg.isEmpty()) {
             Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show();
@@ -756,6 +820,8 @@ public class YGOProActivity extends AppCompatActivity {
         if (layoutDeckEditor != null) {
             deckEditorManager.initialize(layoutDeckEditor);
         }
+        // 卡组编辑器（含副卡组替换）布局已显示：切换 DECK 场景（对齐 Game::playBGM 的 is_building 分支）
+        updateBGM();
     }
 
     private void hideDeckEditorView() {
@@ -764,6 +830,8 @@ public class YGOProActivity extends AppCompatActivity {
         }
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
         cardDetailPanel.exitDeckEditorMode();
+        // 卡组编辑器隐藏后重算场景（无其他布局显示 → MENU）
+        updateBGM();
     }
 
     public void setWindowBackground(String relativePath) {

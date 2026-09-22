@@ -162,6 +162,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             activity.topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
             activity.topInfoManager.updateLpBars(activity.engine.getField());
             activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
+            // LP 变化后重算场景 BGM（胜负未定时按双方 LP 差判定 优势/劣势/决斗，
+            // 对齐 Game::playBGM 的 dInfo.lp 比较分支）
+            activity.updateBGM();
         });
     }
 
@@ -301,6 +304,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                     : playerDisplayName(selfWon ? 1 : 0);
             specEffect().showWinText(code, reason, vicName);
 
+            // BGM 切至胜负场景（对齐 Game::playBGM 的 dInfo.isFinished && showcardcode==1/2/3）；
+            // 平局（winner==2）不改场景，仍按决斗处理
+            if (winner != 2) activity.setBgmDuelResult(selfWon);
         });
     }
 

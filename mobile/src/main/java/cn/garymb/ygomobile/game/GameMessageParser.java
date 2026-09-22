@@ -713,13 +713,8 @@ public class GameMessageParser {
     }
 
     public void onWin(int player, int reason) {
-        if (player == 2) {
-            engine.soundManager.playBGM(SoundManager.BGM.ALL);
-        } else if (engine.isSelfSide(player)) {
-            engine.soundManager.playBGM(SoundManager.BGM.WIN);
-        } else {
-            engine.soundManager.playBGM(SoundManager.BGM.LOSE);
-        }
+        // 场景 BGM 的胜负切换统一由 UI 层集中决策（对齐 game.cpp Game::playBGM）：
+        // 经 onDuelResult 回调 → YGOProActivity.setBgmDuelResult/updateBGM 处理，此处不再直接切歌
         engine.currentMatch++;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onDuelResult(player, reason);

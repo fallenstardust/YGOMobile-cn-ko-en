@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
-import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 
@@ -51,7 +50,7 @@ public class MainMenuDialog {
             draggableHelper.showPopup(popupWindow, decor);
         }
         activity.hideGameUI();
-        activity.getSoundManager().playBGM(SoundManager.BGM.MENU);
+        activity.updateBGM();
         activity.applySettingsToEngine();
     }
 
@@ -59,7 +58,6 @@ public class MainMenuDialog {
         if (popupWindow.isShowing()) {
             popupWindow.dismiss();
         }
-        activity.getSoundManager().playBGM(SoundManager.BGM.DUEL);
     }
 
     public void restoreMainMenu() {
