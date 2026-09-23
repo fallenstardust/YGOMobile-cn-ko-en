@@ -639,6 +639,12 @@ public class GameEngine {
         dispatchingMsg = true;
         try {
             while (true) {
+                // 观战「切换视角」：延迟到消息消费点执行（对齐 duelclient.cpp is_swapping →
+                // ClientAnalyze 内 ReplaySwap），与消息处理同在主线程派发链上，不与字段读写竞争
+                if (pendingSpectatorSwap) {
+                    pendingSpectatorSwap = false;
+                    performSpectatorSwap();
+                }
                 Runnable task = pendingMsgs.poll();
                 if (task == null) break;
                 task.run();
@@ -777,6 +783,54 @@ public class GameEngine {
 
     public int localPlayer(int player) {
         return duelIsFirst ? player : 1 - player;
+    }
+
+    /**
+     * 观战「切换视角」请求（对齐 event_handler.cpp BUTTON_REPLAY_SWAP 观战分支 →
+     * DuelClient::SwapField 仅置 is_swapping，实际交换延迟到消息消费点）：
+     * 实况对局且非回放才有效；置位后投递一次排空，闸门持有期内则在动画结束后执行
+     */
+    volatile boolean pendingSpectatorSwap;
+
+    public void requestSpectatorSwap() {
+        if (replayMode || !inDuel) return;
+        pendingSpectatorSwap = true;
+        mainHandler.post(this::drainPendingMsgs);
+    }
+
+    /**
+     * 观战视角交换（对齐 client_field.cpp ClientField::ReplaySwap，与 ReplayPlayer.performSwapField
+     * 实况版同构）：① duelIsFirst（dInfo.isFirst）翻转——后续消息的 localPlayer 映射随视角翻转；
+     * ② field.swapField() 对调双方各区列表并逐卡重算 controler（含超量素材/连锁/disabledField 高低位）；
+     * ③ 昵称/LP 对调 + currentPlayer 翻转，血条/卡数/回合高亮按新视角重取。
+     * 在主线程派发链（drainPendingMsgs）内调用。
+     */
+    private void performSpectatorSwap() {
+        duelIsFirst = !duelIsFirst;
+        field.swapField();
+        PlayerInfo a = playerInfos[0];
+        PlayerInfo b = playerInfos[1];
+        String tmpName = a.name;
+        a.name = b.name;
+        b.name = tmpName;
+        int tmpLp = a.lp;
+        a.lp = b.lp;
+        b.lp = tmpLp;
+        int tmpStart = a.startLp;
+        a.startLp = b.startLp;
+        b.startLp = tmpStart;
+        field.currentPlayer = 1 - field.currentPlayer;
+        // dInfo.lp 是视角索引的血条显示值：容器已对调，直接按 players[].lp 重新对齐
+        field.dInfo.lp[0] = field.players[0].lp;
+        field.dInfo.lp[1] = field.players[1].lp;
+        field.refreshAllCards();
+        if (listener != null) {
+            listener.onFieldChanged();
+            listener.onPlayerInfoUpdated(0);
+            listener.onPlayerInfoUpdated(1);
+            // 回合方高亮（LPBarFrame 彩色/灰色与名字色）随视角翻转重刷
+            listener.onTurnStarted(field.currentPlayer);
+        }
     }
 
     /** 给定协议侧玩家索引（0/1）是否代表我方（2=平局返回 false） */

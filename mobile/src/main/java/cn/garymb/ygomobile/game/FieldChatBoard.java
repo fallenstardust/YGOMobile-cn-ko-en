@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -14,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
 
 /**
@@ -45,11 +47,11 @@ class FieldChatBoard {
 
     // === 系统/观战消息弹幕（对齐 drawing.cpp DrawChatMsg chatType>=4 分支） ===
 
-    /** 弹幕最大行数：从上到下最多 5 行，超过后循环回第 1 行 */
-    private static final int DANMAKU_MAX_ROWS = 5;
+    /** 弹幕最大行数：屏幕顶部从上往下最多 3 行，超过后循环回第 1 行 */
+    private static final int DANMAKU_MAX_ROWS = 3;
     /** 弹幕匀速（dp/ms）：时长 = 总路程 / 速度，所有消息速度一致 */
     private static final float DANMAKU_SPEED_DP_PER_MS = 0.08f;
-    /** 弹幕行高（dp）：5 行总高约 80dp，与 layout_top_info 高度相当 */
+    /** 弹幕行高（dp）：3 行带总高约 48dp，贴屏幕顶部自上而下排列 */
     private static final float DANMAKU_ROW_HEIGHT_DP = 16f;
     /** 观战弹幕颜色，逐一对齐 drawing.cpp chatColor[11..19]（11=红 12=绿 13=蓝 14=青 15=品红 16=黄 17=白 18=灰 19=深灰） */
     private static final int[] DANMAKU_OBS_COLORS = {
@@ -228,14 +230,19 @@ class FieldChatBoard {
         if (ctl.layoutChatMessages != null) ctl.layoutChatMessages.setVisibility(View.VISIBLE);
     }
 
-    /** 清除全部进行中的弹幕（停止聊天/离开决斗界面时调用） */
+    /** 清除全部进行中的弹幕（停止聊天/离开决斗界面时调用）：从当前宿主容器（drawspec 弹幕层
+     *  或回退的 layout_danmaku）移除，并通知覆盖层空闲收口（无特效时关闭 PopupWindow） */
     private void clearDanmaku() {
         for (TextView tv : danmakuViews) {
             tv.animate().cancel();
-            if (ctl.layoutDanmaku != null) ctl.layoutDanmaku.removeView(tv);
+            Object p = tv.getParent();
+            if (p instanceof ViewGroup) ((ViewGroup) p).removeView(tv);
+            else if (ctl.layoutDanmaku != null) ctl.layoutDanmaku.removeView(tv);
         }
         danmakuViews.clear();
         danmakuRowIndex = 0;
+        SpecEffectOverlay overlay = ctl.activity.getSpecOverlay();
+        if (overlay != null) overlay.notifyDanmakuRemoved();
     }
 
     // === player waiting 大厅聊天模式 ===
@@ -327,14 +334,27 @@ class FieldChatBoard {
      * 8 系统=0xFF8080FF，9 脚本错误/10 隐藏名=0xFFFF4040，11-19 观战=chatColor[11..19] 轮换。
      * 前缀对齐 game.cpp AddChatMsg：8→"[System]: "、9→"[Script Error]: "、10→"[********]: "、
      * 观战 11-19 无前缀（default 分支不追加）。
-     * 弹幕层叠加在 layout_top_info 上一层，行位从上到下循环（最多 5 行）
+     * 弹幕宿主取 drawspec 覆盖层（SpecEffectOverlay 的 PopupWindow 层，不受 GameFieldView
+     * setZOrderOnTop 的 GL 曲面遮挡）：贴屏幕顶部的全屏宽横带，高 = 3 行 × 行高，
+     * 不再依赖 layout_top_info 的布局状态（历史上该依赖导致弹幕落回被遮挡的回退层而永不可见）。
      */
     private void showChatDanmaku(int playerType, String message) {
         if (message == null || message.isEmpty()) return;
-        if (ctl.layoutDanmaku == null) return;
-        if (ctl.layoutDanmaku.getWidth() <= 0) {
-            // 首帧尚未布局完成：延后到布局后再入场
-            ctl.layoutDanmaku.post(() -> showChatDanmaku(playerType, message));
+        SpecEffectOverlay overlay = ctl.activity.obtainSpecOverlay();
+        int bandHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                DANMAKU_ROW_HEIGHT_DP * DANMAKU_MAX_ROWS,
+                ctl.activity.getResources().getDisplayMetrics());
+        FrameLayout layer = overlay != null ? overlay.obtainDanmakuLayer(bandHeight) : null;
+        final FrameLayout parent = layer != null ? layer : ctl.layoutDanmaku;
+        if (parent == null) return;
+        if (parent.getWidth() <= 0 || parent.getHeight() <= 0) {
+            // 首帧尚未布局完成：延后到布局后再入场；回退层本身不可见（GONE/宽 0）时
+            // 不无限重试，直接丢弃本条，避免消息堆积在永不执行的 post 队列里
+            if (layer != null) {
+                parent.post(() -> showChatDanmaku(playerType, message));
+            } else {
+                android.util.Log.d("Danmaku", "skip: no visible host, type=" + playerType);
+            }
             return;
         }
         String text;
@@ -365,26 +385,33 @@ class FieldChatBoard {
         tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
         int row = danmakuRowIndex % DANMAKU_MAX_ROWS; // 超过 5 行循环回第 1 行
         danmakuRowIndex++;
-        int rowHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                DANMAKU_ROW_HEIGHT_DP, ctl.activity.getResources().getDisplayMetrics());
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.TOP | Gravity.START);
-        // 垂直锚定到 LP 血条所在的顶部透明带：GameFieldView 为 setZOrderOnTop(true) 的
-        // GLSurfaceView，血条以下区域被场地/手卡纹理遮挡，弹幕只有落在血条带内才可见
-        lp.topMargin = danmakuRowTopMargin(row, rowHeight);
-        lp.leftMargin = ctl.layoutDanmaku.getWidth();     // 起点：顶部信息区右缘之外
-        ctl.layoutDanmaku.addView(tv, lp);
+        if (layer != null) {
+            // drawspec 层：宿主即屏幕顶部全屏宽横带，3 行均分其高度（行高等于带高/3），
+            // 容器默认裁剪子 View，弹幕恰以该带为界出入
+            lp.topMargin = row * Math.max(1, parent.getHeight() / DANMAKU_MAX_ROWS);
+        } else {
+            int rowHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                    DANMAKU_ROW_HEIGHT_DP, ctl.activity.getResources().getDisplayMetrics());
+            // 回退层：垂直锚定到 LP 血条所在的顶部透明带（历史层级，受 GL 遮挡观感受限）
+            lp.topMargin = danmakuRowTopMargin(row, rowHeight);
+        }
+        lp.leftMargin = parent.getWidth();            // 起点：宿主区右缘之外
+        parent.addView(tv, lp);
         danmakuViews.add(tv);
         float density = ctl.activity.getResources().getDisplayMetrics().density;
         tv.post(() -> {
-            // 匀速：总路程 = 弹幕层宽度 + 自身宽度（一直移动到 activity 最左侧消失）
-            int distance = ctl.layoutDanmaku.getWidth() + tv.getWidth();
+            // 匀速：总路程 = 宿主层宽度 + 自身宽度（一直移动到最左侧消失）
+            int distance = parent.getWidth() + tv.getWidth();
             long duration = Math.max(1, (long) (distance / (DANMAKU_SPEED_DP_PER_MS * density)));
             tv.animate().translationX(-distance).setDuration(duration)
                     .withEndAction(() -> {
                         danmakuViews.remove(tv);
-                        ctl.layoutDanmaku.removeView(tv);
+                        parent.removeView(tv);
+                        // 最后一条弹幕离场且无特效在播 → 覆盖层自行关闭（不占消息闸门）
+                        if (layer != null) overlay.notifyDanmakuRemoved();
                     }).start();
         });
     }

@@ -43,8 +43,9 @@ final class FieldHudRenderer {
     /** 攻守/等级数字尺寸 */
     private static final float STAT_SIZE_SCALE = 0.85f;
     private static final float STAT_SNUG_PX = 2f;
-    /** 灵摆刻度数字抬升系数（×字高 hpx）：把文字从「竖中心坐在顶角」上移到「底边坐在顶角」，
-     *  使两张灵摆卡的刻度数字抬高到卡片矩形顶点、与同角位的可发动绿点对齐。正交屏 y 向下，故减去。 */
+    /** 灵摆刻度/怪兽等级数字抬升系数（×字高 hpx）：把文字从「竖中心坐在顶角」上移到「底边坐在顶角」，
+     *  使文字抬高到卡片矩形顶点外缘、与同角位的可发动绿点对齐。正交屏 y 向下，故沿顶角背离
+     *  卡片中心的一侧偏移。 */
     private static final float SCALE_TOP_LIFT = 0.5f;
 
     // 屏幕空间数字文字纹理键（区域计数 / 总攻击力数字共用，键含颜色；负值递减独立键域）
@@ -149,7 +150,8 @@ final class FieldHudRenderer {
      *   连接怪兽 → 左下攻击力/右下 link 值（连接怪兽 defString 已为 "-"）。
      * - 灵摆刻度：文字贴卡片矩形「屏幕外侧顶角顶点」——屏幕左侧卡左上角(左对齐)、
      *   屏幕右侧卡右上角(右对齐)；rule>=4 用 seq0/seq4，rule<4 用 seq6/seq7（MR3 刻度已烘焙
-     *   进卡图纹理，此处仅补文字定位分支）。
+     *   进卡图纹理，此处仅补文字定位分支）。怪兽等级对准屏幕上所见卡片矩形的顶角顶点
+     *   （文字中心即顶点：我方=左上角、对方倒置卡=右上角，见 {@link #drawMonsterStatTexts}）。
      * 移动中的卡片跳过（对齐 DrawCard is_moving 提前返回），字号随格子投影像素高度自适应。
      */
     void drawFieldCardTexts(GameField f) {
@@ -220,17 +222,16 @@ final class FieldHudRenderer {
         }
         drawScreenText(edgeX, edgeY, parts, colors, boldFlags, hpx);
 
-        // 等级(L*/调律黄/阶级攻瑰红)置于卡片矩形「左上角」，左对齐并略压入卡内（贴近顶边）。
-        // 我方顶边=屏幕上缘(far)，对方卡旋转 180° 其顶边=屏幕下缘(near)。
+        // 等级(L*/调律黄/阶级攻瑰红)对准「屏幕上所见卡片矩形」的顶角顶点：文字竖中心即顶点
+        //（不做底边坐角抬升），我方=左上角 farL 左对齐向右延伸，对方卡旋转 180° 倒置，
+        // 其所见矩形的右上角 farR 右对齐向左延伸。
         if (c.lvString != null && !c.lvString.isEmpty()) {
-            float[] topL = ours ? farL : nearL;
-            float[] topR = ours ? farR : nearR;
-            float[] tl = topL[0] <= topR[0] ? topL : topR;   // 顶边的左角
+            float[] corner = ours ? farL : farR;
             int lvColor = (c.type & TYPE_XYZ) != 0 ? 0xFFFF80FF
                     : (c.type & TYPE_TUNER) != 0 ? 0xFFFFFF00 : 0xFFFFFFFF;
-            // 从顶角向卡片中心方向压入 hpx*0.4（文字竖中心略低于顶边→位于卡片矩形左上角）
-            float lvY = tl[1] + (float) Math.signum(center[1] - tl[1]) * (hpx * 0.4f);
-            drawScreenTextAligned(tl[0], lvY, new String[]{c.lvString}, new int[]{lvColor}, hpx, ALIGN_LEFT);
+            drawScreenTextAligned(corner[0], corner[1],
+                    new String[]{c.lvString}, new int[]{lvColor}, hpx,
+                    ours ? ALIGN_LEFT : ALIGN_RIGHT);
         }
     }
 

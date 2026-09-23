@@ -9,11 +9,16 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
+import android.util.TypedValue;
 import android.view.Choreographer;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayDeque;
@@ -51,6 +56,8 @@ public class SpecEffectOverlay {
     public static final int EFFECT_SUMMON = 7;      // 普通/反转召唤：翻面进入
     public static final int EFFECT_RPS = 100;       // 猜拳手势
     public static final int EFFECT_TEXT = 101;      // 阶段/胜负文字
+    /** 居中动作消息文本（wACMessage/stACMessage）：12sp 小字 + ygopro_base_background + 展开动画 */
+    public static final int EFFECT_ACTION_TEXT = 102;
 
     // === EFFECT_TEXT 的 showcardcode（对齐 drawing.cpp case 101 与 duelclient.cpp） ===
     public static final int TEXT_YOU_WIN = 1;
@@ -74,7 +81,19 @@ public class SpecEffectOverlay {
 
     private final Activity activity;
     private PopupWindow window;
+    private FrameLayout rootLayer;
     private SpecEffectView view;
+    /** 弹幕宿主容器：贴 PopupWindow（drawspec 层）顶边的全屏宽度横带（在 GL 曲面之上），
+     *  高度由 obtainDanmakuLayer(bandHeightPx) 指定，弹幕在其内自上而下分行滚动 */
+    private FrameLayout danmakuLayer;
+    /** 居中动作消息文本区域容器（对齐 layout_game_right 窗口矩形），内部 TextView 随文字自适应居中 */
+    private FrameLayout actionTextHost;
+    private TextView actionText;
+    /** 动作消息文本是否在屏（展开/停留/收起全程）：占用串行队列与动画屏障，与卡片动画同类 */
+    private boolean actionTextActive;
+    private Runnable actionTextCloser;
+    /** layout_game_right 窗口坐标区域（画布特效与动作消息文本的共同基准） */
+    private int regionLeft, regionTop, regionW, regionH;
     private float speed = 1f;
     /** 特效请求队列：保证动画串行播放——上一段完全结束后再播下一段，避免多段动画互相打断/同时播出 */
     private final ArrayDeque<EffectRequest> queue = new ArrayDeque<>();
@@ -102,7 +121,7 @@ public class SpecEffectOverlay {
      * 本方法是任意时刻的状态查询（闸门轮询器每 16ms 调用一次，派发每条消息后也调用一次）。
      */
     public boolean isBusy() {
-        return !queue.isEmpty() || (view != null && view.running);
+        return !queue.isEmpty() || actionTextActive || (view != null && view.running);
     }
 
     // ==================== 对外触发的各 case 动画 ====================
@@ -178,23 +197,47 @@ public class SpecEffectOverlay {
         enqueue(new EffectRequest(EFFECT_TEXT, 0, 0, 0, text, null, 30));
     }
 
+    /**
+     * 居中动作消息文本（MSG_HINT 宣言类，对齐 duelclient.cpp wACMessage 弹出）：
+     * 不走阶段文字（EFFECT_TEXT）的大字横向划过，而是在 layout_game_right 区域中央
+     * 显示 12sp 小字 TextView，背景 ygopro_base_background（对齐 stACMessage 半透明底色），
+     * 入场播放 popup_open 展开动画、退场 popup_close；总时长 holdFrames=40 帧
+     *（17ms/帧，对齐 WaitFrameSignal(40)，按动画倍率速除），汇入串行特效队列。
+     */
+    public void showActionMessage(String text) {
+        if (text == null || text.isEmpty()) return;
+        enqueue(new EffectRequest(EFFECT_ACTION_TEXT, 0, 0, 0, text, null, 40));
+    }
+
     private void showText(int textCode, String subText, int holdLen) {
         String text = (textCode >= 0 && textCode < TEXT_TABLE.length) ? TEXT_TABLE[textCode] : "";
         enqueue(new EffectRequest(EFFECT_TEXT, textCode, 0, 0, text, subText, holdLen));
     }
 
-    /** 立即结束并清空当前特效与待播队列 */
+    /**
+     * 立即结束并清空当前特效与待播队列。注意：不无条件 dismiss——弹幕仍在屏时保留
+     * PopupWindow（弹幕宿主与特效共用同一窗口，历次「弹幕不可见」的根因之一就是
+     * hide() 把带着活跃弹幕的窗口整个 dismiss 掉），仅在全空闲时收口关闭。
+     */
     public void hide() {
         queue.clear();
+        cancelActionText();
         if (view != null) view.stop();
-        dismissWindow();
+        dismissWindowIfIdle();
     }
 
-    /** 对局结束 / Activity 销毁时调用，释放 PopupWindow 防止窗口泄漏 */
+    /** 对局结束 / Activity 销毁时调用，无条件释放 PopupWindow 防止窗口泄漏 */
     public void release() {
-        hide();
+        queue.clear();
+        cancelActionText();
+        if (view != null) view.stop();
+        dismissWindow();
         window = null;
         view = null;
+        rootLayer = null;
+        danmakuLayer = null;
+        actionTextHost = null;
+        actionText = null;
     }
 
     // ==================== 队列驱动：动画串行播放 ====================
@@ -208,18 +251,31 @@ public class SpecEffectOverlay {
 
     /** 仅在无动画播放时取出队首请求开播；队列已空则通知引擎并关闭覆盖层。由 onFinish 逐段驱动，形成序列 */
     private void pumpQueue() {
-        if (view == null || view.running) return;
+        if (view == null || view.running || actionTextActive) return;
         EffectRequest req = queue.poll();
         if (req == null) {
             // 先通知引擎队列已排空（引擎可能在同一调用栈内立即派发下一条消息并入队新动画），
-            // 通知后若仍无动画播放，才关闭覆盖层，避免「关闭→立即重开」的闪烁
+            // 通知后若仍无任何动画/活跃弹幕在屏，才关闭覆盖层，避免「关闭→立即重开」的闪烁
             if (idleListener != null) idleListener.onIdle();
-            if (queue.isEmpty() && (view == null || !view.running)) dismissWindow();
+            dismissWindowIfIdle();
             return;
         }
-        updateRegion(view);
+        updateRegion();
+        if (req.type == EFFECT_ACTION_TEXT) {
+            playActionText(req);
+            return;
+        }
         view.startCard(req.type, req.code, req.param, req.holdFrames,
                 req.text, req.subText, req.difInit);
+    }
+
+    /** 全空闲（队列空、画布动画未播、动作文本不在屏、无活跃弹幕）时关闭覆盖层 */
+    private void dismissWindowIfIdle() {
+        if (view == null) return;
+        if (queue.isEmpty() && !view.running && !actionTextActive
+                && (danmakuLayer == null || danmakuLayer.getChildCount() == 0)) {
+            dismissWindow();
+        }
     }
 
     // ==================== PopupWindow 承载 ====================
@@ -230,7 +286,30 @@ public class SpecEffectOverlay {
             view.speed = speed;
             // 一段动画自然结束 → 驱动队列中的下一段（队列空则关闭覆盖层）
             view.setOnFinishListener(this::pumpQueue);
-            window = new PopupWindow(view,
+            // 根容器：画布视图（卡片/特效动画）+ 弹幕宿主 + 居中动作消息文本，三层叠加于同一 PopupWindow
+            rootLayer = new FrameLayout(activity);
+            rootLayer.addView(view, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            danmakuLayer = new FrameLayout(activity);
+            danmakuLayer.setVisibility(View.GONE);
+            rootLayer.addView(danmakuLayer, new FrameLayout.LayoutParams(0, 0,
+                    Gravity.TOP | Gravity.START));
+            actionTextHost = new FrameLayout(activity);
+            actionTextHost.setVisibility(View.GONE);
+            actionText = new TextView(activity);
+            actionText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            actionText.setTextColor(Color.WHITE);
+            actionText.setGravity(Gravity.CENTER);
+            actionText.setBackgroundResource(R.drawable.ygopro_base_background);
+            int pad = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6,
+                    activity.getResources().getDisplayMetrics());
+            actionText.setPadding(pad, pad / 2, pad, pad / 2);
+            actionTextHost.addView(actionText, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER));
+            rootLayer.addView(actionTextHost, new FrameLayout.LayoutParams(0, 0,
+                    Gravity.TOP | Gravity.START));
+            window = new PopupWindow(rootLayer,
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             // 纯展示层：不抢焦点、不拦截触摸，事件穿透到下层游戏 UI
@@ -259,13 +338,108 @@ public class SpecEffectOverlay {
         }
     }
 
-    /** 计算 layout_game_right 在窗口坐标系中的区域，供特效居中对齐 */
-    private void updateRegion(SpecEffectView v) {
+    /** 计算 layout_game_right 在窗口坐标系中的区域：画布特效居中对齐与动作消息文本定位的共同基准 */
+    private void updateRegion() {
         View gr = activity.findViewById(R.id.layout_game_right);
         if (gr == null || gr.getWidth() <= 0 || gr.getHeight() <= 0) return;
         int[] loc = new int[2];
         gr.getLocationInWindow(loc);
-        v.setRegion(loc[0], loc[1], gr.getWidth(), gr.getHeight());
+        regionLeft = loc[0];
+        regionTop = loc[1];
+        regionW = gr.getWidth();
+        regionH = gr.getHeight();
+        if (view != null) view.setRegion(regionLeft, regionTop, regionW, regionH);
+    }
+
+    // ==================== 居中动作消息文本（wACMessage / stACMessage） ====================
+
+    /** 播一段居中动作文本：展开（popup_open）→ 停留 → 收起（popup_close），总时长 40 帧/倍速 */
+    private void playActionText(EffectRequest req) {
+        if (actionText == null || actionTextHost == null || regionW <= 0) {
+            pumpQueue();
+            return;
+        }
+        actionTextActive = true;
+        actionText.setText(req.text);
+        FrameLayout.LayoutParams hostLp =
+                (FrameLayout.LayoutParams) actionTextHost.getLayoutParams();
+        hostLp.leftMargin = regionLeft;
+        hostLp.topMargin = regionTop;
+        hostLp.width = regionW;
+        hostLp.height = regionH;
+        actionTextHost.setLayoutParams(hostLp);
+        actionTextHost.setVisibility(View.VISIBLE);
+        float sp = Math.max(0.25f, speed);
+        long total = Math.max(1L, Math.round(req.holdFrames * 17L / sp)); // 40 帧 ≈ 680ms
+        long animDur = Math.min(Math.max(1L, Math.round(200L / sp)), total / 3);
+        long hold = Math.max(0L, total - animDur * 2);
+        Animation open = AnimationUtils.loadAnimation(activity, R.anim.popup_open);
+        open.setDuration(animDur);
+        actionText.startAnimation(open);
+        if (actionTextCloser == null) {
+            actionTextCloser = this::startActionTextClose;
+        }
+        actionTextHost.removeCallbacks(actionTextCloser);
+        actionTextHost.postDelayed(actionTextCloser, animDur + hold);
+    }
+
+    /** 停留结束：播放收起动画（popup_close），动画播完即交还队列驱动下一段 */
+    private void startActionTextClose() {
+        if (!actionTextActive) return;
+        float sp = Math.max(0.25f, speed);
+        Animation close = AnimationUtils.loadAnimation(activity, R.anim.popup_close);
+        close.setDuration(Math.max(1L, Math.round(200L / sp)));
+        close.setAnimationListener(new Animation.AnimationListener() {
+            @Override public void onAnimationStart(Animation animation) { }
+            @Override public void onAnimationRepeat(Animation animation) { }
+            @Override public void onAnimationEnd(Animation animation) { endActionText(); }
+        });
+        actionText.startAnimation(close);
+    }
+
+    private void endActionText() {
+        if (!actionTextActive) return;
+        actionTextActive = false;
+        if (actionText != null) actionText.clearAnimation();
+        if (actionTextHost != null) actionTextHost.setVisibility(View.GONE);
+        pumpQueue();
+    }
+
+    /** 立即终止动作文本展示（清空队列/对局结束）：不驱动下一段，由调用方流程接管 */
+    private void cancelActionText() {
+        if (actionTextCloser != null && actionTextHost != null) {
+            actionTextHost.removeCallbacks(actionTextCloser);
+        }
+        actionTextActive = false;
+        if (actionText != null) actionText.clearAnimation();
+        if (actionTextHost != null) actionTextHost.setVisibility(View.GONE);
+    }
+
+    // ==================== 弹幕宿主（观战发言 / 系统消息，drawspec 层） ====================
+
+    /**
+     * 返回弹幕宿主容器（PopupWindow 层，显示在 GL 曲面之上）：贴覆盖层顶边（即屏幕顶部）
+     * 的全屏宽度横带，高度 bandHeightPx 由调用方按「行数 × 行高」给定，弹幕自上而下分行
+     * 自右向左滚动，容器默认裁剪子 View，出入恰以该带为界。
+     * 不再依赖 layout_top_info 的布局状态——历史 bug：top_info 未布局/被隐藏时返回 null，
+     * 弹幕落回受 GL 曲面遮挡的 layout_danmaku 且其宽恒为 0，无限重试永不可见。
+     */
+    public FrameLayout obtainDanmakuLayer(int bandHeightPx) {
+        if (activity.isFinishing()) return null;
+        obtainView();
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) danmakuLayer.getLayoutParams();
+        lp.leftMargin = 0;
+        lp.topMargin = 0;
+        lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        lp.height = Math.max(1, bandHeightPx);
+        danmakuLayer.setLayoutParams(lp);
+        danmakuLayer.setVisibility(View.VISIBLE);
+        return danmakuLayer;
+    }
+
+    /** 弹幕移除后调用：全空闲则关闭覆盖层（弹幕不占 isBusy() 消息闸门，不参与串行动画屏障） */
+    public void notifyDanmakuRemoved() {
+        dismissWindowIfIdle();
     }
 
     private static int clamp(int v, int lo, int hi) {

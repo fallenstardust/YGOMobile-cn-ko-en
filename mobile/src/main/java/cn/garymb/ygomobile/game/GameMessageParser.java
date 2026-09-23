@@ -688,7 +688,8 @@ public class GameMessageParser {
      * MSG_HINT 居中消息文本动画（对齐 duelclient.cpp L1463-1521 各 HINT_* 分支：
      * SetStaticText(stACMessage) + PopupElement(wACMessage) + WaitFrameSignal(40)）：
      * 本方法在网络线程（drainPendingMsgs 的 task.run 内）被调用，文本经 UI 层
-     * SpecEffectOverlay.showCustomText 在 layout_game_right 居中淡入淡出展示；同时设约 40 帧
+     * SpecEffectOverlay.showActionMessage 在 layout_game_right 中央以 12sp 小字
+     *（ygopro_base_background 背景 + 展开动画，对齐 wACMessage 弹窗）展示；同时设约 40 帧
      *（17ms/帧）的定时动画屏障，使紧随的 isAnyAnimationBusy() 在持有期内恒为 true，
      * 从而关闭闸门暂缓后续消息——把居中文本串行插入到动画序列中。
      */

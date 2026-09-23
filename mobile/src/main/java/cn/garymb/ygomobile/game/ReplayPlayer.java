@@ -47,7 +47,8 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
 
     private static final String TAG = "ReplayPlayer";
 
-    /** 消息号（ocgcore common.h）：本类需要特判的两条 */
+    /** 消息号（ocgcore common.h）：本类需要特判的几条 */
+    private static final int MSG_RETRY = 1;
     private static final int MSG_START = 4;
     private static final int MSG_NEW_TURN = 40;
 
@@ -92,6 +93,16 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     private volatile boolean replayWinSeen;
     private volatile int stepsRemaining;
     private volatile int currentStep;
+    /** 本会话消息流是否耗尽（next()==null 且无错 = 自然播毕，finishSession 判定播完态用） */
+    private volatile boolean endOfStream;
+    /** V2 逐帧流预计算的可见步总数（进度/结束弹窗展示用）；旧格式重跑与 V1 原始流无法预知 = -1 */
+    private volatile int totalSteps = -1;
+    /** 本会话被 isNoFeed 跳过不投喂的 MSG_RETRY 条数（结束弹窗 debug 信息） */
+    private volatile int skippedRetryCount;
+    /** 本次会话是否成功播完（无错且 MSG_WIN 或流尽），由 finishSession 落定 */
+    private volatile boolean playbackCompleted;
+    /** 未出错但提前结束时的原因说明（快进重排中止等）；null=不适用 */
+    private volatile String earlyEndNote;
     /** 快进剩余待跳过的可见步 / 待跳过的回合数（落点由 skipStep==0 或 skipTurn==0 判定） */
     private int skipStep;
     private int skipTurn;
@@ -138,6 +149,26 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
 
     public int getCurrentStep() {
         return currentStep;
+    }
+
+    /** 录像可见步总数：V2 逐帧流点播前预计算；旧格式重跑/V1 原始流返回 -1（未知） */
+    public int getTotalSteps() {
+        return totalSteps;
+    }
+
+    /** 本会话跳过不投喂的 MSG_RETRY 步条数（结束弹窗 debug 信息） */
+    public int getSkippedRetryCount() {
+        return skippedRetryCount;
+    }
+
+    /** 本次会话是否播完（无错且到达 MSG_WIN 结算或消息流完整耗尽），由 finishSession 落定 */
+    public boolean isPlaybackCompleted() {
+        return playbackCompleted;
+    }
+
+    /** 未出错但提前结束（未播完）时的原因说明；null=不适用 */
+    public String getEarlyEndNote() {
+        return earlyEndNote;
     }
 
     /** 是否有正在进行的回放会话（UI 判定按钮可用性与退出确认） */
@@ -223,6 +254,11 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         lastErrorMessage = null;
         currentStep = 0;
         replayWinSeen = false;
+        endOfStream = false;
+        totalSteps = -1;
+        skippedRetryCount = 0;
+        playbackCompleted = false;
+        earlyEndNote = null;
         ReplayCodeMapper.beginSession();
         loadThread = new Thread(() -> load(replayPath, startTurn, gen), "ReplayLoad");
         loadThread.setDaemon(true);
@@ -247,6 +283,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                 return;
             }
             if (sessionGen != gen) return;    // 同上：开源自检期间会话已作废
+            totalSteps = computeTotalSteps();
             prepareDisplayDecks();
             startSession();
             if (source.engineDriven()) {
@@ -268,6 +305,22 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             CrashHandler.getInstance().report("replay-load " + replayPath, t);
             fail("录像加载异常：" + t);
         }
+    }
+
+    /**
+     * 预计算可见步总数（结束弹窗 debug 信息/进度展示）：仅 V2 逐帧流可算——每帧首字节即
+     * 消息号，按 {@link ReplayMessageSlicer#isVisibleStep} 计数与投喂侧 currentStep 同口径；
+     * V1 原始拼接流的 UPDATE_DATA 块数依赖实况场况、旧格式重跑消息尚未产生，均无法预算，
+     * 返回 -1（UI 标注「未知」）。
+     */
+    private int computeTotalSteps() {
+        ReplayReader.ReplayData d = replayData;
+        if (d == null || d.msgFrames == null) return -1;
+        int n = 0;
+        for (byte[] f : d.msgFrames) {
+            if (f != null && f.length > 0 && ReplayMessageSlicer.isVisibleStep(f[0] & 0xFF)) n++;
+        }
+        return n;
     }
 
     /** 显示用卡码副本：按本机卡表归一（先行号↔正式号），原始 replayData.decks 留给引擎重跑 */
@@ -355,8 +408,17 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                 ReplaySource.Msg msg = source.next();
                 if (msg == null) {
                     String err = source.getLastError();
-                    if (err != null && lastErrorMessage == null) lastErrorMessage = err;
+                    if (err != null) {
+                        if (lastErrorMessage == null) lastErrorMessage = err;
+                    } else {
+                        endOfStream = true;   // 消息流完整耗尽：自然播毕（finishSession 判定播完态）
+                    }
                     break;
+                }
+                if (msg.type == MSG_RETRY) {
+                    // isNoFeed 跳过不投喂（应答已固化在流里），仅计数供结束弹窗排查失步来源
+                    skippedRetryCount++;
+                    continue;
                 }
                 if (msg.type == ReplayMessageSlicer.MSG_WIN) {
                     // 结算不走实况管线（messageParser.onWin 回放侧已抑制），此处判结束并通知 UI
@@ -625,6 +687,13 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                 responseSnapshot = new byte[rb.remaining()];
                 rb.get(responseSnapshot);
             }
+        }
+        // 落定播完态（须在 clearReplayFlags 复位 isSkipping 之前判定）：无错且 MSG_WIN 结算
+        // 或消息流完整耗尽 = 播完；否则无错的提前结束（快进重排中止、流未读尽）附原因说明，
+        // 由 ReplayModeDialog.showReplayEndDialog 在 FINISHED 分支展示
+        playbackCompleted = lastErrorMessage == null && (replayWinSeen || endOfStream);
+        if (!playbackCompleted && lastErrorMessage == null) {
+            earlyEndNote = isSkipping ? "快进重排中止" : "消息流未播尽";
         }
         clearReplayFlags();
         closeSourceQuietly();

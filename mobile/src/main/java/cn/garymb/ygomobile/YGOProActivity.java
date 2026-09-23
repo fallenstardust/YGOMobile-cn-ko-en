@@ -41,6 +41,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.GameFieldView;
+import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
@@ -468,6 +469,37 @@ public class YGOProActivity extends AppCompatActivity {
 
     public GameTopInfoManager getTopInfoManager() {
         return topInfoManager;
+    }
+
+    // === drawspec 特效覆盖层（居中动作文本 / 观战与系统消息弹幕宿主，委托 EngineCallbackDelegate 持有） ===
+
+    /** drawspec 覆盖层按需创建（弹幕入场用；与特效回调共用同一实例） */
+    public SpecEffectOverlay obtainSpecOverlay() {
+        return engineCallback != null ? engineCallback.ensureSpecOverlay() : null;
+    }
+
+    /** 已存在的 drawspec 覆盖层（不创建）：弹幕全部移除后的空闲收口用 */
+    public SpecEffectOverlay getSpecOverlay() {
+        return engineCallback != null ? engineCallback.peekSpecOverlay() : null;
+    }
+
+    /**
+     * 观战「切换视角」（对齐 event_handler.cpp BUTTON_REPLAY_SWAP player_type==7 分支 →
+     * DuelClient::SwapField）：置位请求由引擎在主线程消息消费点执行 ReplaySwap 同构交换
+     */
+    public void onSpectatorSwapField() {
+        if (engine != null) engine.requestSpectatorSwap();
+    }
+
+    /**
+     * 观战退出（对齐 event_handler.cpp BUTTON_LEAVE_GAME player_type==7：StopClient +
+     * CloseDuelWindow）：断开连接并返回局域网主界面；导航由本入口独占，
+     * 抑制 DISCONNECTED 回调的重复返回
+     */
+    public void quitSpectator() {
+        suppressNextDisconnectedReturn();
+        if (engine != null) engine.disconnect();
+        returnToLanMain(null);
     }
 
     public ShowDialogUtil getDialogUtil() {

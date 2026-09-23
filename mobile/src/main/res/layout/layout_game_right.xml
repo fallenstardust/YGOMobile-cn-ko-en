@@ -386,9 +386,9 @@
         </FrameLayout>
     </LinearLayout>
 
-    <!-- 系统/观战消息弹幕层（对齐 drawing.cpp DrawChatMsg chatType>=4：
-         offsetX = (1200 - chatTiming) * 4 从右往左横向滚动；
-         叠加在 layout_top_info（LPbar 区域）上一层，最多 5 行从上到下循环，颜色对齐 chatColor[]） -->
+    <!-- 系统/观战消息弹幕回退层（仅供 drawspec 覆盖层不可用时兜底；正常弹幕宿主是
+         SpecEffectOverlay PopupWindow 层贴屏幕顶部的全屏横带，最多 3 行，不受 GL 曲面遮挡。
+         本层在 GameFieldView(setZOrderOnTop) 之下，叠在其上仅作历史保留，对齐 drawing.cpp DrawChatMsg） -->
     <FrameLayout
         android:id="@+id/layout_danmaku"
         android:layout_width="match_parent"

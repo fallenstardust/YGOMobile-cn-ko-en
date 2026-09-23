@@ -54,6 +54,10 @@ public class CardDetailPanel {
     private Button btnReplayPlay, btnReplayPause, btnReplayNext, btnReplayLast, btnReplayShuffle, btnReplayQuit;
     private LinearLayout layoutDeckControl;
 
+    /** 观战模式：左侧面板常驻录像控制条但只显示「切换视角/退出」（播控按钮 INVISIBLE），
+     *  两按钮点击分流到观战版视角交换/退出观战（对齐 event_handler.cpp player_type==7 分支） */
+    private boolean spectatorMode;
+
     private int currentCardCode = -1;
     private Bitmap coverBitmap;
     private StringManager mStringManager = DataManager.get().getStringManager();
@@ -270,12 +274,21 @@ public class CardDetailPanel {
         }
         if (btnReplayShuffle != null) {
             btnReplayShuffle.setOnClickListener(v -> {
+                // 观战：实况管线视角交换（DuelClient::SwapField 观战分支）；回放：ReplayPlayer 暂停态交换
+                if (spectatorMode) {
+                    activity.onSpectatorSwapField();
+                    return;
+                }
                 ReplayPlayer rp = replayPlayer();
                 if (rp != null) rp.swapField();
             });
         }
         if (btnReplayQuit != null) {
-            btnReplayQuit.setOnClickListener(v -> activity.quitReplay());
+            btnReplayQuit.setOnClickListener(v -> {
+                // 观战：退出观战断开连接回局域网主界面；回放：退出录像播放
+                if (spectatorMode) activity.quitSpectator();
+                else activity.quitReplay();
+            });
         }
     }
 
@@ -870,6 +883,7 @@ public class CardDetailPanel {
 
     public void onGameUIHidden() {
         hide();
+        spectatorMode = false;
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
         hideCancelOrFinishButton();
     }
@@ -928,10 +942,40 @@ public class CardDetailPanel {
     // === 录像控制条 ===
 
     public void showReplayControls() {
+        spectatorMode = false;
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.VISIBLE);
+        if (btnReplayShuffle != null) btnReplayShuffle.setVisibility(View.VISIBLE);
+        if (btnReplayQuit != null) btnReplayQuit.setVisibility(View.VISIBLE);
         // 初始状态：正在播放（显示暂停，隐藏播放/上一步/下一步）
         updateReplayButtonStates(false);
+    }
+
+    /**
+     * 观战控制面板（对齐 event_handler.cpp：观战无行动/时点权限，btnSwapY 与退出可用）：
+     * 隐藏底部行动区与时点三键，左侧面板常驻录像控制条但只显示「切换视角/退出」，
+     * 播控四键（播放/暂停/上一步/下一步）保持 INVISIBLE 占位不跳变
+     */
+    public void showSpectatorControls() {
+        spectatorMode = true;
+        hideChainButtons();
+        hideCancelOrFinishButton();
+        updateShuffleButton(false);
+        setSurrenderVisible(false);
+        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+        if (layoutReplayControl == null) return;
+        layoutReplayControl.setVisibility(View.VISIBLE);
+        if (btnReplayPlay != null) btnReplayPlay.setVisibility(View.INVISIBLE);
+        if (btnReplayPause != null) btnReplayPause.setVisibility(View.INVISIBLE);
+        if (btnReplayNext != null) btnReplayNext.setVisibility(View.INVISIBLE);
+        if (btnReplayLast != null) btnReplayLast.setVisibility(View.INVISIBLE);
+        if (btnReplayShuffle != null) btnReplayShuffle.setVisibility(View.VISIBLE);
+        if (btnReplayQuit != null) btnReplayQuit.setVisibility(View.VISIBLE);
+    }
+
+    /** 当前是否处于观战控制面板模式 */
+    public boolean isSpectatorMode() {
+        return spectatorMode;
     }
 
     /**
@@ -956,6 +1000,7 @@ public class CardDetailPanel {
      * 避免退出回放瞬间露出不该出现的投降/时点等按钮
      */
     public void hideReplayControls() {
+        spectatorMode = false;
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
     }
 

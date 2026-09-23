@@ -98,13 +98,20 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                     break;
                 }
                 activity.enterDuelingUI();
-                activity.cardDetailPanel.showBottomActions();
-                // 对齐 duelclient.cpp L912-916：STOC_GAME_START 按 chkDefaultShowChain 初始化时点三态
-                activity.cardDetailPanel.onDuelStarted();
-                // 进入决斗后仅对战玩家显示投降按钮（观战者 selfType>=7 不显示）；
-                // 猜拳/选先后阶段保持隐藏（onGameUIShown 已默认隐藏）
                 int selfSeat = activity.engine.getClient().selfType;
-                activity.cardDetailPanel.setSurrenderVisible(selfSeat >= 0 && selfSeat < 7);
+                if (selfSeat >= 7) {
+                    // 观战者（NETPLAYER_TYPE_OBSERVER）：不显示底部行动区与时点按钮，
+                    // 左侧面板常驻录像控制条的「切换视角/退出」两项
+                    //（对齐 event_handler.cpp BUTTON_REPLAY_SWAP / BUTTON_LEAVE_GAME 观战分支）
+                    activity.cardDetailPanel.showSpectatorControls();
+                } else {
+                    activity.cardDetailPanel.showBottomActions();
+                    // 对齐 duelclient.cpp L912-916：STOC_GAME_START 按 chkDefaultShowChain 初始化时点三态
+                    activity.cardDetailPanel.onDuelStarted();
+                    // 进入决斗后仅对战玩家显示投降按钮；猜拳/选先后阶段保持隐藏
+                    //（onGameUIShown 已默认隐藏）
+                    activity.cardDetailPanel.setSurrenderVisible(selfSeat >= 0);
+                }
                 pendingReplays.clear();
                 duelEndHandling = false;
                 break;
@@ -211,6 +218,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             // 回放左侧面板常驻的是录像控制条（底部行动区未显示时子按钮不可见，
             // 此处直接不置 VISIBLE 以免带流回放/后续场景露出时点按钮）
             if (activity.engine.replayMode) return;
+            // 观战者：时点三键属于对战玩家（观战控制面板为左侧「切换视角/退出」，
+            // 见 showSpectatorControls），不点亮；视角交换后本回调重刷回合方高亮亦经此拦截
+            if (activity.engine.getClient().selfType >= 7) return;
             if (activity.cardDetailPanel != null) activity.cardDetailPanel.showChainButtons();
         });
     }
@@ -372,14 +382,15 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
 
     /**
      * MSG_HINT 居中消息文本动画（对齐 duelclient.cpp L1463-1521 的 wACMessage 弹出）：
-     * 将 sys1510/1511/1512 文本交 SpecEffectOverlay.showCustomText 在 layout_game_right 居中淡入淡出，
-     * 天然汇入串行特效队列；回放快进重排期间丢弃（不占用统一动画屏障）
+     * 将宣言文本交 SpecEffectOverlay.showActionMessage 在 layout_game_right 中央以
+     * 12sp 小字 + 展开动画展示 40 帧（不再走阶段文字 EFFECT_TEXT 的大字横向划过）；
+     * 回放快进重排期间丢弃（不占用统一动画屏障）
      */
     @Override
     public void onActionMessage(String text) {
         if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃居中消息文本
         if (text == null || text.isEmpty()) return;
-        activity.runOnUiThread(() -> specEffect().showCustomText(text));
+        activity.runOnUiThread(() -> specEffect().showActionMessage(text));
     }
 
     @Override
@@ -707,6 +718,16 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 if (activity.engine != null) activity.engine.notifySpecEffectIdle();
             });
         }
+        return specEffectOverlay;
+    }
+
+    /** drawspec 覆盖层按需创建（供 YGOProActivity 弹幕入口转发；与特效回调共用同一实例与 idle 闸门接线） */
+    SpecEffectOverlay ensureSpecOverlay() {
+        return specEffect();
+    }
+
+    /** 已存在的覆盖层实例（不创建）：弹幕移除后的空闲收口用 */
+    SpecEffectOverlay peekSpecOverlay() {
         return specEffectOverlay;
     }
 
