@@ -93,22 +93,29 @@ public class DuelLogDialog {
         return sysFormat(1511, "玩家宣言了：%s", what);
     }
 
-    /** HINT_OPSELECTED：desc 经 DataManager.getDesc 解析（系统字符串或卡片脚本提示） */
-    public static void addOpSelectedLog(int desc) {
+    /** HINT_OPSELECTED：desc 经 DataManager.getDesc 解析（系统字符串或卡片脚本提示）；返回记录的文本供居中 AC 动画复用（duelclient.cpp L1464） */
+    public static String addOpSelectedLog(int desc) {
         String what = DataManager.get().getDesc(desc, "");
         if (!what.isEmpty()) {
-            addLog(formatSelected(what));
+            String text = formatSelected(what);
+            addLog(text);
+            return text;
         }
+        return null;
     }
 
-    /** HINT_RACE：宣告种族记入日志（对齐 gframe 用 sys1511「玩家宣言了」，duelclient.cpp L1482） */
-    public static void addSelectedRaceLog(int raceMask) {
-        addLog(formatDeclared(formatRace(raceMask)));
+    /** HINT_RACE：宣告种族记入日志（对齐 gframe 用 sys1511「玩家宣言了」，duelclient.cpp L1482）；返回记录文本供 AC 动画复用 */
+    public static String addSelectedRaceLog(int raceMask) {
+        String text = formatDeclared(formatRace(raceMask));
+        addLog(text);
+        return text;
     }
 
-    /** HINT_ATTRIB：宣告属性记入日志（对齐 gframe 用 sys1511「玩家宣言了」，duelclient.cpp L1493） */
-    public static void addSelectedAttributeLog(int attrMask) {
-        addLog(formatDeclared(formatAttribute(attrMask)));
+    /** HINT_ATTRIB：宣告属性记入日志（对齐 gframe 用 sys1511「玩家宣言了」，duelclient.cpp L1493）；返回记录文本供 AC 动画复用 */
+    public static String addSelectedAttributeLog(int attrMask) {
+        String text = formatDeclared(formatAttribute(attrMask));
+        addLog(text);
+        return text;
     }
 
     /** 对齐 dataManager.FormatRace：种族位掩码转字符串表名称 */

@@ -586,21 +586,37 @@ public class ReplayModeDialog {
 
     /**
      * 回放结束提示框（对齐 replay_mode.cpp：EndDuel L228-232 弹系统串 1501、
-     * MSG_RETRY L311-316 弹 "Error occurs."）：确认后退出回放回录像选择界面
+     * MSG_RETRY L311-316 弹 "Error occurs."）：确认后退出回放回录像选择界面。
+     * 为便于 debug，结束弹窗始终附带总步数与执行到的步数（旧格式重跑无法预知
+     * 总步数时标注未知）；提前结束（重跑失步响应耗尽、截断转码产物等）另附原因
      */
     private static void showReplayEndDialog(YGOProActivity activity, ReplayPlayer player,
                                             AtomicBoolean shown, boolean forceError) {
         if (player == null || !shown.compareAndSet(false, true)) return;
         String err = player.getLastErrorMessage();
         if (forceError && err == null) err = "回放未能启动";
+        // 步数描述：总步数不可知（旧格式重跑/V1 流）时标注未知；另附本会话跳过不播的 MSG_RETRY 条数
+        int step = player.getCurrentStep();
+        int total = player.getTotalSteps();
+        int retries = player.getSkippedRetryCount();
+        String totalText = total >= 0 ? String.valueOf(total) : "未知";
+        String stepInfo = "总步数 " + totalText + "，执行到第 " + step + " 步"
+                + (retries > 0 ? "，已跳过 " + retries + " 个 MSG_RETRY 步" : "");
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         if (err != null) {
+            // 真正开始投喂过（步数大于0或总步数已知）才附带步数定位；加载失败不提示
             dialog.setTitle("回放异常")
-                    .setMessage("Error occurs.\n" + err);
+                    .setMessage("Error occurs.\n" + err
+                            + (step > 0 || total >= 0 ? "\n" + stepInfo + "结束" : ""));
         } else {
             String endText = DataManager.get().getStringManager().getSystemString(1501, "录像播放结束");
-            // 结束提示只用正文，不再把同一句塞进标题重复显示（YesOrNoDialog 标题为空即隐藏）
-            dialog.setMessage(endText);
+            if (player.isPlaybackCompleted()) {
+                dialog.setMessage(endText + "\n" + stepInfo);
+            } else {
+                String note = player.getEarlyEndNote();
+                dialog.setMessage(endText + "：录像未播完，" + stepInfo + "结束"
+                        + (note == null ? "" : "（" + note + "）"));
+            }
         }
         dialog.setType(YesOrNoDialog.TYPE_MESSAGE)
                 .setPositiveButtonText("确定")

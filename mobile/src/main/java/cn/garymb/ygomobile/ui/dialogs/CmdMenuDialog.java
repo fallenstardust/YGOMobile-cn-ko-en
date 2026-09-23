@@ -341,10 +341,17 @@ public class CmdMenuDialog {
                                    List<String> options, List<Runnable> actions) {
         final List<GameEngine.CmdCardInfo> actList = matchCmdCards(engine.activatableCards, card);
         if (!actList.isEmpty()) {
-            // 同一张卡的多个可发动效果（如带素材的超量怪兽）：与 buildCardCommandMenu 一致，
-            // 用 OptionDialog 列出各效果的脚本提示文字供选择，而不是用 CardDisplayDialog
-            // 显示多张相同卡图（视觉上无法区分发动的是哪个效果）。
-            if (allSameCard(actList)) {
+            if (isPileLocation(card.location)) {
+                // 堆叠区（墓地/除外/卡组/额外）点「发动」：始终先弹该区所有可发动卡片的列表，
+                // 单击某张卡后再按该卡可发动效果数分流（单效果直接应答、多效果弹 OptionDialog 选效果），
+                // 对齐 gframe event_handler.cpp BUTTON_CMD_ACTIVATE 的 list_command 分支（L539-585）
+                // → ShowSelectCard 选卡 → BUTTON_CARD_*（list_command==COMMAND_ACTIVATE）选效果。
+                options.add(sysString(SYS_ACTIVATE));
+                final List<GameEngine.CmdCardInfo> infos = actList;
+                actions.add(() -> showPileActivateList(card, cmdContext, infos));
+            } else if (allSameCard(actList)) {
+                // 场上单张卡（如带素材的超量怪兽）的多个可发动效果：用 OptionDialog 列出各效果脚本提示文字，
+                // 而不是用 CardDisplayDialog 显示多张相同卡图（视觉上无法区分发动的是哪个效果）。
                 final List<GameEngine.CmdCardInfo> chosen = filterActivatable(actList);
                 if (!chosen.isEmpty()) {
                     options.add(sysString(SYS_ACTIVATE));
@@ -352,7 +359,8 @@ public class CmdMenuDialog {
                 }
             } else {
                 options.add(sysString(SYS_ACTIVATE));
-                actions.add(() -> showCmdList(card, engine, cmdContext, actList, MODE_ACTIVATE));
+                final List<GameEngine.CmdCardInfo> infos = actList;
+                actions.add(() -> showCmdList(card, engine, cmdContext, infos, MODE_ACTIVATE));
             }
         }
 
@@ -493,6 +501,62 @@ public class CmdMenuDialog {
         String title = (mode == MODE_SPSUMMON)
                 ? sysString(SYS_SELECT_MONSTER, "选择怪兽") : sysString(SYS_ACTIVATE);
         showCardListDialog(title, items, indices, mode, cmdContext, engine);
+    }
+
+    /**
+     * 堆叠区「发动」列表：弹出该区所有可发动卡片（按卡去重），单击某张卡后按该卡可发动效果数分流——
+     * 单效果直接应答、多效果弹 OptionDialog 列出各效果脚本提示文字供选择。
+     * 对齐 gframe event_handler.cpp BUTTON_CMD_ACTIVATE 的 list_command 分支
+     *（ShowSelectCard 列卡 → BUTTON_CARD_* 选卡 → 单效果 SetResponseI / 多效果 ShowSelectOption）。
+     */
+    private void showPileActivateList(GameField.ClientCard card, int cmdContext,
+                                       List<GameEngine.CmdCardInfo> infos) {
+        java.util.Map<GameField.ClientCard, List<GameEngine.CmdCardInfo>> byCard =
+                new java.util.LinkedHashMap<>();
+        for (GameEngine.CmdCardInfo info : infos) {
+            if (info.card == null) continue;
+            List<GameEngine.CmdCardInfo> list = byCard.get(info.card);
+            if (list == null) {
+                list = new ArrayList<>();
+                byCard.put(info.card, list);
+            }
+            list.add(info);
+        }
+        List<CardDisplayDialog.CardItem> items = new ArrayList<>();
+        final List<List<GameEngine.CmdCardInfo>> cardEffects = new ArrayList<>();
+        for (java.util.Map.Entry<GameField.ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
+            GameField.ClientCard c = e.getKey();
+            int code = c.code;
+            for (GameEngine.CmdCardInfo info : e.getValue()) {
+                if (info.code != 0) { code = info.code; break; }
+            }
+            items.add(new CardDisplayDialog.CardItem(code, card.controler, c.location, c.sequence, 0));
+            cardEffects.add(filterActivatable(e.getValue()));
+        }
+        if (items.isEmpty()) return;
+        ImageLoader loader = activity.getImageLoader();
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        final CardDisplayDialog dialog = new CardDisplayDialog(activity, loader);
+        if (panel != null) panel.setCardDisplayDialog(dialog);
+        dialog.setTitle(sysString(SYS_ACTIVATE))
+                .setCards(items)
+                .setLocalPlayer(0)
+                .setControlerProtocolSide(false)
+                .setCardClickListener(item -> {
+                    int pos = items.indexOf(item);
+                    dialog.dismiss();
+                    if (pos < 0 || pos >= cardEffects.size()) return;
+                    List<GameEngine.CmdCardInfo> effects = cardEffects.get(pos);
+                    if (effects.size() == 1) {
+                        sendCmdResponse(MODE_ACTIVATE, cmdContext, effects.get(0).index);
+                    } else if (effects.size() > 1) {
+                        showActivateOptions(cmdContext, effects);
+                    }
+                })
+                .setOnDismissListener(() -> {
+                    if (panel != null) panel.setCardDisplayDialog(null);
+                });
+        dialog.show();
     }
 
     /**

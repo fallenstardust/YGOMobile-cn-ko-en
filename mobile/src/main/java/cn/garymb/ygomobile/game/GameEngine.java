@@ -76,6 +76,14 @@ public class GameEngine {
 
         void onHintMessage(String hint);
 
+        /**
+         * MSG_HINT 的 HINT_OPSELECTED/RACE/ATTRIB/CODE/NUMBER 居中消息文本动画
+         *（对齐 duelclient.cpp L1463-1521 各分支：SetStaticText(stACMessage) + PopupElement(wACMessage)
+         * + WaitFrameSignal(40)）：text 为已格式化的 sys1510/1511/1512 文本，宿主据此在
+         * layout_game_right 居中淡入淡出展示（复用 SpecEffectOverlay 串行队列）。
+         */
+        default void onActionMessage(String text) {}
+
         /** 通讯提示栏（对齐 gframe stHintMsg）：显示后持续，直到下一条消息或显式隐藏 */
         void onDuelHint(String hint);
 

@@ -644,30 +644,36 @@ public class GameMessageParser {
                 // 消费语义与 gframe select_hint 一致（duelclient.cpp L1458-1461）
                 engine.field.selectHint = data;
                 return;
-            // HINT_OPSELECTED（对齐 duelclient.cpp L1463-1472）：记录"已选择"日志
+            // HINT_OPSELECTED（对齐 duelclient.cpp L1463-1472）：记「已选择」日志 + 居中 AC 文本动画
             case 4:
-                DuelLogDialog.addOpSelectedLog(data);
+                showActionMessage(DuelLogDialog.addOpSelectedLog(data));
                 return;
             case 5:
                 hintText = "当前连锁: " + data;
                 break;
-            // HINT_RACE（对齐 duelclient.cpp L1480-1490）：宣告种族选择记入日志
+            // HINT_RACE（对齐 duelclient.cpp L1480-1490）：宣告种族记日志 + 居中 AC 文本动画
             case 6:
-                DuelLogDialog.addSelectedRaceLog(data);
+                showActionMessage(DuelLogDialog.addSelectedRaceLog(data));
                 return;
-            // HINT_ATTRIB（对齐 duelclient.cpp L1491-1501）：宣告属性选择记入日志
+            // HINT_ATTRIB（对齐 duelclient.cpp L1491-1501）：宣告属性记日志 + 居中 AC 文本动画
             case 7:
-                DuelLogDialog.addSelectedAttributeLog(data);
+                showActionMessage(DuelLogDialog.addSelectedAttributeLog(data));
                 return;
-            // HINT_CODE（对齐 duelclient.cpp L1502-1511）：宣言卡名记入日志（sys1511「玩家宣言了」），携带卡代码供点击查看
-            case 8:
-                DuelLogDialog.addLog(DuelLogDialog.formatDeclared(DataManager.get().getName(data)), data);
+            // HINT_CODE（对齐 duelclient.cpp L1502-1511）：宣言卡名记日志（sys1511「玩家宣言了」），携带卡代码供点击查看 + 居中 AC 文本动画
+            case 8: {
+                String acText = DuelLogDialog.formatDeclared(DataManager.get().getName(data));
+                DuelLogDialog.addLog(acText, data);
+                showActionMessage(acText);
                 return;
-            // HINT_NUMBER（对齐 duelclient.cpp L1512-1521）：宣告数字记入日志
-            case 9:
-                DuelLogDialog.addLog(DuelLogDialog.sysFormat(1512, "已选择数字：%d", data));
+            }
+            // HINT_NUMBER（对齐 duelclient.cpp L1512-1521）：宣告数字记日志（sys1512「玩家选择了」）+ 居中 AC 文本动画
+            case 9: {
+                String acText = DuelLogDialog.sysFormat(1512, "已选择数字：%d", data);
+                DuelLogDialog.addLog(acText);
                 engine.soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
+                showActionMessage(acText);
                 return;
+            }
             default:
                 hintText = "Hint type=" + type + " data=" + data;
                 break;
@@ -676,6 +682,25 @@ public class GameMessageParser {
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onHintMessage(finalHint);
         });
+    }
+
+    /**
+     * MSG_HINT 居中消息文本动画（对齐 duelclient.cpp L1463-1521 各 HINT_* 分支：
+     * SetStaticText(stACMessage) + PopupElement(wACMessage) + WaitFrameSignal(40)）：
+     * 本方法在网络线程（drainPendingMsgs 的 task.run 内）被调用，文本经 UI 层
+     * SpecEffectOverlay.showCustomText 在 layout_game_right 居中淡入淡出展示；同时设约 40 帧
+     *（17ms/帧）的定时动画屏障，使紧随的 isAnyAnimationBusy() 在持有期内恒为 true，
+     * 从而关闭闸门暂缓后续消息——把居中文本串行插入到动画序列中。
+     */
+    private void showActionMessage(String text) {
+        if (text == null || text.isEmpty()) return;
+        if (engine.replaySkip) return; // 回放快进：丢弃居中消息文本，不占用动画屏障
+        final String acText = text;
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onActionMessage(acText);
+        });
+        engine.animHoldUntilMs = Math.max(engine.animHoldUntilMs,
+                System.currentTimeMillis() + 40L * 17L);
     }
 
     public void onWaiting() {

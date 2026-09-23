@@ -370,6 +370,18 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> activity.fieldCtl.showHint(hint, 2000));
     }
 
+    /**
+     * MSG_HINT 居中消息文本动画（对齐 duelclient.cpp L1463-1521 的 wACMessage 弹出）：
+     * 将 sys1510/1511/1512 文本交 SpecEffectOverlay.showCustomText 在 layout_game_right 居中淡入淡出，
+     * 天然汇入串行特效队列；回放快进重排期间丢弃（不占用统一动画屏障）
+     */
+    @Override
+    public void onActionMessage(String text) {
+        if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃居中消息文本
+        if (text == null || text.isEmpty()) return;
+        activity.runOnUiThread(() -> specEffect().showCustomText(text));
+    }
+
     @Override
     public void onDuelHint(String hint) {
         activity.runOnUiThread(() -> activity.fieldCtl.showDuelHint(hint));
