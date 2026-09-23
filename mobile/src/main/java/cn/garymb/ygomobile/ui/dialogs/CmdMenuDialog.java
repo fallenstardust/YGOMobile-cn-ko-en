@@ -55,6 +55,7 @@ public class CmdMenuDialog {
     private static final int SYS_RESET = 1162;       // 表示重置(Reset Effect)
     private static final int SYS_SHOW_LIST = 1158;   // 查看列表（对齐 game.cpp btnShowList）
     private static final int SYS_SELECT_OPTION = 555;// 请选择一项
+    private static final int SYS_SELECT_MONSTER = 509;// 选择怪兽（对齐 event_handler.cpp BUTTON_CMD_SPSUMMON list_command 标题）
 
     /** client_field.h EDESC_*：duelclient.cpp L2120-2121 连锁项 flag 分流 */
     private static final int EDESC_OPERATION = 0x1;  // 继续（不弹发动菜单）
@@ -358,12 +359,12 @@ public class CmdMenuDialog {
         final List<GameEngine.CmdCardInfo> spList = matchCmdCards(engine.spsummonableCards, card);
         if (!spList.isEmpty()) {
             options.add(sysString(SYS_SPSUMMON));
-            if (allSameCard(spList)) {
-                final List<GameEngine.CmdCardInfo> chosen = spList;
-                actions.add(() -> showOptionListForMode(cmdContext, chosen, MODE_SPSUMMON));
-            } else {
-                actions.add(() -> showCmdList(card, engine, cmdContext, spList, MODE_SPSUMMON));
-            }
+            // 对齐 event_handler.cpp BUTTON_CMD_SPSUMMON 的 list_command 分支（L628-665）：
+            // 堆叠区（卡组/墓地/除外/额外）点「特殊召唤」始终以「选择怪兽」列表弹窗
+            // 列出该区所有可特殊召唤的卡供玩家逐个点选，即使只有一张也要展示列表，
+            // 不能走 allSameCard→showOptionListForMode 的直接应答捷径（否则点特殊召唤无任何列表出现）。
+            final List<GameEngine.CmdCardInfo> chosen = spList;
+            actions.add(() -> showCmdList(card, engine, cmdContext, chosen, MODE_SPSUMMON));
         }
 
         options.add(viewListText());
@@ -488,7 +489,9 @@ public class CmdMenuDialog {
             items.add(new CardDisplayDialog.CardItem(code, card.controler, loc, seq, 0));
             indices.add(info.index);
         }
-        String title = (mode == MODE_SPSUMMON) ? sysString(SYS_SPSUMMON) : sysString(SYS_ACTIVATE);
+        // 特殊召唤列表标题对齐 gframe「选择怪兽」(509)；发动列表沿用「发动」(1150)
+        String title = (mode == MODE_SPSUMMON)
+                ? sysString(SYS_SELECT_MONSTER, "选择怪兽") : sysString(SYS_ACTIVATE);
         showCardListDialog(title, items, indices, mode, cmdContext, engine);
     }
 
