@@ -99,6 +99,10 @@ public final class EngineMessage {
     public static final int MSG_ANNOUNCE_CARD = 142;
     public static final int MSG_ANNOUNCE_NUMBER = 143;
     public static final int MSG_CARD_HINT = 160;
+    public static final int MSG_TAG_SWAP = 161;
+    public static final int MSG_RELOAD_FIELD = 162;
+    public static final int MSG_AI_NAME = 163;
+    public static final int MSG_SHOW_HINT = 164;
     public static final int MSG_PLAYER_HINT = 165;
     public static final int MSG_MATCH_KILL = 170;
 

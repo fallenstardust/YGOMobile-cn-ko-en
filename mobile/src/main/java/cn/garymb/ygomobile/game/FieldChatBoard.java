@@ -51,6 +51,9 @@ class FieldChatBoard {
     private static final int DANMAKU_MAX_ROWS = 3;
     /** 弹幕匀速（dp/ms）：时长 = 总路程 / 速度，所有消息速度一致 */
     private static final float DANMAKU_SPEED_DP_PER_MS = 0.08f;
+    /** 首帧未布局时的最大重试次数（每次 post 约一帧，≈ 2 秒），防止窗口 token
+     *  不可用时无限 post 黑洞堆消息 */
+    private static final int DANMAKU_MAX_LAYOUT_RETRIES = 120;
     /** 弹幕行高（dp）：3 行带总高约 48dp，贴屏幕顶部自上而下排列 */
     private static final float DANMAKU_ROW_HEIGHT_DP = 16f;
     /** 观战弹幕颜色，逐一对齐 drawing.cpp chatColor[11..19]（11=红 12=绿 13=蓝 14=青 15=品红 16=黄 17=白 18=灰 19=深灰） */
@@ -207,27 +210,20 @@ class FieldChatBoard {
         return "Player" + (origSeat + 1);
     }
 
-    /** 我方/对方聊天各占一个 TextView：每条换行，超过 5 行清除第一条（向上滚动），宽度不超过上方 LPbar */
+    /**
+     * 我方/对方侧玩家聊天：tv_chat_message_1/2 是普通 View，被 setZOrderOnTop(true) 的
+     * GameFieldView GL 曲面整层遮挡（历史「聊天消息不显示」根因：非屏幕外也非宽高为 0，
+     * 而是被盖住），与 LP 浮动文字/RPS 弹窗同源问题。统一改走 SpecEffectOverlay 的
+     * PopupWindow 弹幕带；颜色对齐 drawing.cpp chatColor[0..3]（玩家消息白色），
+     * 行数/滚动/半透明黑底与系统弹幕一致，前缀已由调用方拼好「昵称: 内容」。
+     */
     private void appendSideChat(boolean selfSide, String line) {
-        TextView tv = selfSide ? ctl.tvChatMessage1 : ctl.tvChatMessage2;
-        if (tv == null) return;
         LinkedList<String> lines = selfSide ? myChatLines : opChatLines;
         lines.addLast(line);
         while (lines.size() > MAX_CHAT_LINES) {
             lines.removeFirst();
         }
-        // 对齐 drawing.cpp 玩家聊天 maxwidth：最大长度不超过上方 LPbar
-        int maxW = selfSide ? ctl.topInfoManager.getPlayerLpBarWidth()
-                : ctl.topInfoManager.getOpponentLpBarWidth();
-        if (maxW > 0) tv.setMaxWidth(maxW);
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < lines.size(); i++) {
-            if (i > 0) sb.append('\n');
-            sb.append(lines.get(i));
-        }
-        tv.setText(sb.toString());
-        tv.setVisibility(View.VISIBLE);
-        if (ctl.layoutChatMessages != null) ctl.layoutChatMessages.setVisibility(View.VISIBLE);
+        showDanmakuLine(line, 0xFFFFFFFF, 0);
     }
 
     /** 清除全部进行中的弹幕（停止聊天/离开决斗界面时调用）：从当前宿主容器（drawspec 弹幕层
@@ -340,23 +336,6 @@ class FieldChatBoard {
      */
     private void showChatDanmaku(int playerType, String message) {
         if (message == null || message.isEmpty()) return;
-        SpecEffectOverlay overlay = ctl.activity.obtainSpecOverlay();
-        int bandHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                DANMAKU_ROW_HEIGHT_DP * DANMAKU_MAX_ROWS,
-                ctl.activity.getResources().getDisplayMetrics());
-        FrameLayout layer = overlay != null ? overlay.obtainDanmakuLayer(bandHeight) : null;
-        final FrameLayout parent = layer != null ? layer : ctl.layoutDanmaku;
-        if (parent == null) return;
-        if (parent.getWidth() <= 0 || parent.getHeight() <= 0) {
-            // 首帧尚未布局完成：延后到布局后再入场；回退层本身不可见（GONE/宽 0）时
-            // 不无限重试，直接丢弃本条，避免消息堆积在永不执行的 post 队列里
-            if (layer != null) {
-                parent.post(() -> showChatDanmaku(playerType, message));
-            } else {
-                android.util.Log.d("Danmaku", "skip: no visible host, type=" + playerType);
-            }
-            return;
-        }
         String text;
         int color;
         if (playerType == 8) {
@@ -373,6 +352,32 @@ class FieldChatBoard {
             color = (playerType >= 11 && playerType <= 19)
                     ? DANMAKU_OBS_COLORS[playerType - 11] : 0xFFFFFFFF;
         }
+        showDanmakuLine(text, color, 0);
+    }
+
+    /**
+     * 弹幕入场（系统/观战/玩家聊天共用）：宿主取 drawspec 覆盖层弹幕带，首帧未布局时
+     * 有限次 post 重试（上限 DANMAKU_MAX_LAYOUT_RETRIES，防窗口 token 不可用时无限重试黑洞）。
+     */
+    private void showDanmakuLine(String text, int color, int retries) {
+        SpecEffectOverlay overlay = ctl.activity.obtainSpecOverlay();
+        int bandHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                DANMAKU_ROW_HEIGHT_DP * DANMAKU_MAX_ROWS,
+                ctl.activity.getResources().getDisplayMetrics());
+        FrameLayout layer = overlay != null ? overlay.obtainDanmakuLayer(bandHeight) : null;
+        final FrameLayout parent = layer != null ? layer : ctl.layoutDanmaku;
+        if (parent == null) return;
+        if (parent.getWidth() <= 0 || parent.getHeight() <= 0) {
+            // 首帧尚未布局完成：延后到布局后再入场；重试用尽或回退层本身不可见
+            //（GONE/宽 0）时丢弃本条，避免消息堆积在永不执行的 post 队列里
+            if (layer != null && retries < DANMAKU_MAX_LAYOUT_RETRIES) {
+                final int next = retries + 1;
+                parent.post(() -> showDanmakuLine(text, color, next));
+            } else {
+                android.util.Log.d("Danmaku", "skip: no laid-out host, retries=" + retries);
+            }
+            return;
+        }
         TextView tv = new TextView(ctl.activity);
         tv.setText(text);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与 tv_chat_message 统一 9sp
@@ -383,7 +388,7 @@ class FieldChatBoard {
         tv.setPadding(hPadding, 0, hPadding, 0);
         // 对齐 drawing.cpp shadowloc：黑色 1px 偏移阴影，保证血条背景上可读
         tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
-        int row = danmakuRowIndex % DANMAKU_MAX_ROWS; // 超过 5 行循环回第 1 行
+        int row = danmakuRowIndex % DANMAKU_MAX_ROWS; // 超过 3 行循环回第 1 行
         danmakuRowIndex++;
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,

@@ -145,6 +145,8 @@ public class YGOProActivity extends AppCompatActivity {
         if (!handleDirectIntent(getIntent())) {
             getMainMenuDialog().showMainMenu();
         }
+        // 启动主菜单：布局就绪后触发 MENU 场景 BGM（否则启动后无声，直到下一次显式 updateBGM）
+        mainHandler.post(this::updateBGM);
     }
 
     @Override
@@ -229,7 +231,9 @@ public class YGOProActivity extends AppCompatActivity {
                 appsSettings.getIntSettings("musicVolume", 50) / 100.0,
                 appsSettings.getIntSettings("chkEnableSound", 1) == 1,
                 appsSettings.getIntSettings("chkEnableMusic", 1) == 1);
-        soundManager.setMusicMode(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
+        soundManager.setMusicMode(appsSettings.getIntSettings("chkSwitchBGM", 1) == 1);
+        // 召唤主题歌（chants）播完：按当前场景重新选曲恢复 BGM
+        soundManager.setOnChantFinishListener(this::updateBGM);
 
         imageLoader = new ImageLoader(true);
 
@@ -406,7 +410,7 @@ public class YGOProActivity extends AppCompatActivity {
                     File singleFile = new File(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_SINGLE_PATH, singleName);
                     if (singleFile.exists()) {
                         getMainMenuDialog().hideMainMenu();
-                        engine.startSingleMode(singleFile.getAbsolutePath());
+                        engine.startSingleMode(singleFile.getAbsolutePath(), false); // 默认不使用顶端返回
                         return true;
                     }
                 } else {
@@ -572,8 +576,9 @@ public class YGOProActivity extends AppCompatActivity {
     public void hideGameUI() {
         // 离开决斗场即切出对局/回放语境，崩溃诊断场景跟着回退
         CrashHandler.getInstance().setScene("游戏-菜单与大厅");
-        // 决斗场隐藏即退出本局胜负语境，清空 BGM 胜负覆盖（对齐 dInfo.isFinished 复位）
-        bgmCtl.resetDuelResult();
+        // 退出对战（layout_game_right 隐藏）即离开决斗语境：清除 BGM 决斗进行标志与
+        // 上一局残留的胜负覆盖（对齐 dInfo.isStarted / isFinished 复位），末尾 updateBGM 切回 MENU/DECK
+        bgmCtl.leaveDuel();
         fieldCtl.hide();
         cardDetailPanel.onGameUIHidden();
         // 退出对战（layout_game_right 隐藏）时，一并关闭正在显示的表情面板
@@ -586,12 +591,15 @@ public class YGOProActivity extends AppCompatActivity {
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
+        // 离开决斗场后重算场景：duelActive 已置假 → 非卡组编辑则回 MENU（修正结束一局后
+        // WIN/LOSE 音乐残留不回菜单的问题）
+        updateBGM();
     }
 
     private void showGameUI() {
         CrashHandler.getInstance().setScene("游戏-横屏决斗场");
-        // 新开一局/回放：清除上一局残留的 BGM 胜负覆盖
-        bgmCtl.resetDuelResult();
+        // 新开一局/回放：置决斗进行标志并清除上一局残留的 BGM 胜负覆盖（刚开局按 DUEL 走）
+        bgmCtl.enterDuel();
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG);
         getMainMenuDialog().hideMainMenu();
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
@@ -726,6 +734,10 @@ public class YGOProActivity extends AppCompatActivity {
         }
 
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
+        // 玩家等待/大厅聊天尚未进入真正决斗（对齐 C++ dInfo.isStarted 仍为假）：
+        // 虽让 layout_game_right 可见以承载聊天区，但 BGM 场景应为 MENU，故清决斗标志并刷新
+        bgmCtl.leaveDuel();
+        updateBGM();
     }
 
     /**
@@ -898,6 +910,8 @@ public class YGOProActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         setupFullScreen();
+        // 回前台重算场景 BGM（同场景且仍在播时 SoundManager 内部去重，不会重新起曲）
+        mainHandler.post(this::updateBGM);
     }
 
     @Override

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import java.io.File;
@@ -16,6 +18,8 @@ import java.util.Random;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import ocgcore.DataManager;
+import ocgcore.data.Card;
 
 public class SoundManager {
     private static final String TAG = "SoundManager";
@@ -92,8 +96,10 @@ public class SoundManager {
     private boolean soundsEnabled = true;
     private boolean musicEnabled = true;
     // 对齐 C++ chkMusicMode（strings.conf 1281「按场景切换音乐」）：
-    // true=各场景从自己子目录选曲；false=所有场景统一走 ALL 曲池
-    private boolean musicMode = false;
+    // true=各场景从自己子目录选曲；false=所有场景统一走 ALL 曲池。
+    // 默认 true：未显式设置时也按场景切换（菜单/卡组/决斗/胜负各自子目录），
+    // 否则所有场景统一走 ALL 且被去重锁定，表现为「BGM 不随场景切换」。
+    private boolean musicMode = true;
     private float soundVolume = 1.0f;
     private float musicVolume = 1.0f;
     private final Map<BGM, List<String>> bgmList = new HashMap<>();
@@ -104,6 +110,14 @@ public class SoundManager {
     private boolean bgmFailureReported = false;
     // 整轮选曲全部失败后的重试冷却截止时刻（refreshBGMList 重新扫盘时清零）
     private long bgmRetryAfterMs = 0L;
+    // === 召唤主题歌（chants，对齐 C++ ChantsList / bgm_process）===
+    /** code（文件名数字，含 alias）→ 主题歌文件绝对路径 */
+    private final Map<Integer, String> chantsMap = new HashMap<>();
+    /** 主题歌播放期间禁止场景切歌打断（对齐 C++ bgm_process=false） */
+    private boolean chantPlaying = false;
+    /** 主题歌播完回调：由外部（Activity）重算场景恢复 BGM */
+    private Runnable chantFinishListener;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public SoundManager(Context context) {
         this.context = context;
@@ -186,6 +200,62 @@ public class SoundManager {
                 }
             }
         }
+        refreshChantsList();
+    }
+
+    /**
+     * 扫描召唤主题歌目录（对齐 C++ RefreshChantsList 扫 ./sound/chants；
+     * 按需求支持 sound/BGM/chants，两个目录都扫）。文件名（去扩展名）解析为
+     * int 卡码/alias 存入曲表；非数字文件名忽略。
+     */
+    private void refreshChantsList() {
+        chantsMap.clear();
+        String soundDir = getSoundDir();
+        scanChantsDir(new File(soundDir, "BGM/chants"));
+        scanChantsDir(new File(soundDir, "chants"));
+    }
+
+    private void scanChantsDir(File dir) {
+        if (dir == null || !dir.isDirectory()) return;
+        for (File f : listMusicFiles(dir)) {
+            String name = f.getName();
+            int dot = name.lastIndexOf('.');
+            if (dot <= 0) continue;
+            try {
+                int code = Integer.parseInt(name.substring(0, dot));
+                if (code != 0 && !chantsMap.containsKey(code))
+                    chantsMap.put(code, f.getAbsolutePath());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+    }
+
+    /**
+     * 召唤主题歌（对齐 C++ SoundManager::PlayChant）：卡片有 alias 时优先用 alias
+     * 查曲表（兼容直接以本卡 code 命名），命中且非当前曲则切 BGM 播放该曲（不循环），
+     * 置 chantPlaying 阻止场景切歌打断，播完后经回调恢复场景 BGM。返回是否成功播放。
+     */
+    public boolean playChant(int code) {
+        if (!musicEnabled || chantsMap.isEmpty()) return false;
+        int key = code;
+        try {
+            Card card = DataManager.get().getCardManager().getCard(code);
+            if (card != null && card.Alias != 0) key = card.Alias;
+        } catch (Exception ignored) {
+        }
+        String path = chantsMap.get(key);
+        if (path == null && key != code) path = chantsMap.get(code);
+        if (path == null || path.equals(currentBgm)) return false;
+        if (!playMusic(path, false)) return false;
+        chantPlaying = true;
+        // 主题歌不属于任何场景曲池：置空场景使播完后按当前场景重新选曲
+        bgmScene = null;
+        return true;
+    }
+
+    /** 主题歌播放结束回调（主线程）：外部据此重算并恢复场景 BGM */
+    public void setOnChantFinishListener(Runnable listener) {
+        this.chantFinishListener = listener;
     }
 
     /** 目录下音频文件（mp3/ogg/wav，忽略大小写） */
@@ -199,6 +269,8 @@ public class SoundManager {
 
     public void playBGM(BGM scene) {
         if (!musicEnabled) return;
+        // 召唤主题歌播放期间不允许场景切歌打断（对齐 C++ PlayBGM 的 bgm_process 条件）
+        if (chantPlaying && bgmPlayer != null) return;
         // 对齐 C++ PlayBGM：未勾选「按场景切换音乐」时所有场景统一走 ALL 曲池
         BGM eff = musicMode ? scene : BGM.ALL;
         List<String> list = bgmList.get(eff);
@@ -263,10 +335,25 @@ public class SoundManager {
                     bgmPlayer = null;
                     currentBgm = "";
                     bgmScene = null;
+                    chantPlaying = false;
                 }
                 releaseQuietly(m);
                 return true;
             });
+            // 非循环曲目（chants 主题歌）播完：复位状态并回调恢复场景 BGM
+            if (!loop) {
+                mp.setOnCompletionListener(m -> {
+                    if (bgmPlayer == player) {
+                        bgmPlayer = null;
+                        currentBgm = "";
+                        bgmScene = null;
+                        chantPlaying = false;
+                    }
+                    releaseQuietly(m);
+                    final Runnable r = chantFinishListener;
+                    if (r != null) mainHandler.post(r);
+                });
+            }
             mp.prepareAsync();
             bgmPlayer = mp;
             currentBgm = path;
@@ -289,6 +376,7 @@ public class SoundManager {
         MediaPlayer mp = bgmPlayer;
         bgmPlayer = null;
         currentBgm = "";
+        chantPlaying = false;
         if (mp == null) return;
         try {
             // 未进入 Started 状态（准备中 / 出错）时 stop() 会抛 IllegalStateException，
@@ -339,9 +427,13 @@ public class SoundManager {
     }
 
     /** 「按场景切换音乐」开关（chkMusicMode，strings.conf 1281）：
-     *  true=各场景从自己子目录选曲；false=统一 ALL 曲池 */
+     *  true=各场景从自己子目录选曲；false=统一 ALL 曲池。
+     *  切换后由调用方 updateBGM 重算场景立即生效 */
     public void setMusicMode(boolean musicMode) {
+        if (this.musicMode == musicMode) return;
         this.musicMode = musicMode;
+        // 曲池语义变化：清场景锁定使下一帧按新池重新选曲
+        bgmScene = null;
     }
 
     public void release() {

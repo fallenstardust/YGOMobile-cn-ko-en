@@ -45,7 +45,9 @@ public class DeckHandMotionManager {
 
     public void applyConfirmDecktop(int player, int count, ByteBuffer data) {
         Log.d(TAG, "ConfirmDecktop: player=" + player + " count=" + count);
-        // 对齐 duelclient.cpp MSG_CONFIRM_DECKTOP L2443-2480：翻开卡组上方N张卡记入日志
+        // 对齐 duelclient.cpp MSG_CONFIRM_DECKTOP L2456-2458：非回放快进时播 reveal 音效 + 记日志
+        if (!engine.replaySkip)
+            engine.soundManager.playSoundEffect(SoundManager.SFX.REVEAL);
         DuelLogDialog.addLog(DuelLogDialog.sysFormat(207, "翻开卡组上方%d张卡：", count));
 
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
@@ -56,7 +58,9 @@ public class DeckHandMotionManager {
     }
 
     public void applyConfirmCards(int player, int skipPanel, int count, ByteBuffer data) {
-        // 对齐 duelclient.cpp MSG_CONFIRM_CARDS L2518-2545：确认N张卡记入日志
+        // 对齐 duelclient.cpp MSG_CONFIRM_CARDS L2527-2532：非回放快进时播 reveal 音效 + 记日志
+        if (!engine.replaySkip)
+            engine.soundManager.playSoundEffect(SoundManager.SFX.REVEAL);
         DuelLogDialog.addLog(DuelLogDialog.sysFormat(208, "确认%d张卡：", count));
 
         int start = data.position();
