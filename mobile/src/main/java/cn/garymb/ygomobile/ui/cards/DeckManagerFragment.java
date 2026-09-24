@@ -47,6 +47,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.AppCompatSpinner;
 import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelperPlus;
 import androidx.recyclerview.widget.OnItemDragListener;
@@ -1111,11 +1112,17 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         currentCardSearchMessage = keyword;
         CardSearchInfo searchInfo = new CardSearchInfo.Builder().keyword(keyword).cardTypes(new ArrayList<>()).build();//构建CardSearchInfo时type不能为null
         mCardLoader.search(searchInfo);
+        //点击卡片详情中的高亮文字进行的关键词搜索，同样计入搜索历史
+        mCardSearcher.recordHistoryKeyword(keyword);
     }
 
     private void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
             onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
+            //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
+            if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {
+                mCardSearcher.recordHistoryKeyword(mCardDetail.getCardInfo().Name);
+            }
         } else {
             Log.w("cc", "No card found");
         }
@@ -1436,6 +1443,9 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
                     builder.setLeftButtonListener((dlg, rs) -> {
                         if (mDeckAdapater.getYdkFile() != null) {
+                            // 记录被删除卡组所属分类目录，删除后据此定位该分类的第一个卡组
+                            String categoryDir = mDeckAdapater.getYdkFile().getParent();
+
                             // 先删除在线卡组
                             List<DeckFile> deckFileList = new ArrayList<>();
                             deckFileList.add(new DeckFile(mDeckAdapater.getYdkFile()));
@@ -1445,8 +1455,21 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                             FileUtils.deleteFile(mDeckAdapater.getYdkFile());
                             YGOUtil.showTextToast(R.string.done);
                             dlg.dismiss();
-                            File file = getFirstYdk();
+
+                            // 优先加载被删除卡组所属分类的第一个卡组，保持分类一致；
+                            // 若该分类已无卡组，则回退到全局第一个卡组
+                            File file = getFirstYdkInCategory(categoryDir);
+                            if (file == null) {
+                                file = getFirstYdk();
+                            }
+                            if (file != null) {
+                                // loadDeckFromFile 内部异步才更新“最后卡组路径”，这里先同步写入，
+                                // 保证随后刷新对话框时能正确定位到该分类并高亮该卡组
+                                mSettings.setLastDeckPath(file.getAbsolutePath());
+                            }
                             loadDeckFromFile(file);
+                            // 同步刷新卡组管理对话框的本地卡组列表
+                            syncDeckManageDialog();
                         }
                     });
                     builder.show();
@@ -1505,6 +1528,38 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private File getFirstYdk() {
         List<File> files = getYdkFiles();
         return files == null || files.size() == 0 ? null : files.get(0);
+    }
+
+    /**
+     * 获取指定卡组分类目录下的第一个ydk卡组文件，其顺序与卡组管理对话框右列一致（DeckUtil.getDeckList，按名称排序）。
+     *
+     * @param categoryDir 卡组分类目录的绝对路径
+     * @return 该分类下的第一个卡组文件，若该分类无卡组则返回null
+     */
+    private File getFirstYdkInCategory(String categoryDir) {
+        if (TextUtils.isEmpty(categoryDir)) {
+            return null;
+        }
+        List<DeckFile> deckFiles = DeckUtil.getDeckList(categoryDir);
+        if (deckFiles != null && !deckFiles.isEmpty()) {
+            return deckFiles.get(0).getPathFile();
+        }
+        return null;
+    }
+
+    /**
+     * 卡组新建/重命名/删除后，同步刷新卡组管理对话框中的本地卡组列表，使其与磁盘保持一致。
+     * 若对话框当前不存在，则下次创建时会以最新数据构建，无需处理。
+     */
+    private void syncDeckManageDialog() {
+        if (!isAdded()) {
+            return;
+        }
+        Fragment fragment = requireActivity().getSupportFragmentManager()
+                .findFragmentByTag(DeckManageDialog.DIALOG_TAG);
+        if (fragment instanceof DeckManageDialog) {
+            ((DeckManageDialog) fragment).refreshLocalDeckList();
+        }
     }
 
     private void shareDeck() {
@@ -1728,7 +1783,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                 if (!keepOld && oldYdk != null && oldYdk.exists()) {
                     if (oldYdk.renameTo(ydk)) {
                         dlg.dismiss();
+                        // loadDeckFromFile 内部异步才更新“最后卡组路径”，这里先同步写入，
+                        // 保证随后刷新对话框时能正确定位到重命名后卡组所在的分类并高亮该卡组
+                        mSettings.setLastDeckPath(ydk.getAbsolutePath());
                         loadDeckFromFile(ydk);
+                        // 重命名后同步刷新卡组管理对话框
+                        syncDeckManageDialog();
                     }
                 } else {
                     if (oldYdk == mPreLoadFile) {
@@ -1741,7 +1801,12 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     }
                     //新建卡组保留卡片不保留卡组id
                     save(ydk, true);
+                    // loadDeckFromFile 内部异步才更新“最后卡组路径”，这里先同步写入，
+                    // 保证随后刷新对话框时能正确定位到新卡组所在的分类并高亮该卡组
+                    mSettings.setLastDeckPath(ydk.getAbsolutePath());
                     loadDeckFromFile(ydk);
+                    // 新建卡组后同步刷新卡组管理对话框
+                    syncDeckManageDialog();
                     //为新建卡组请求云端deckid并上传
                     if (SharedPreferenceUtil.getServerToken() != null) {
                         LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(), SharedPreferenceUtil.getServerToken());

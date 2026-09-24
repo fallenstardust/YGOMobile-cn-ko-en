@@ -12,8 +12,10 @@ import android.graphics.drawable.LayerDrawable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -46,6 +48,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardSearchInfo;
 import cn.garymb.ygomobile.loader.ICardSearcher;
+import cn.garymb.ygomobile.ui.adapters.KeywordHistoryAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
@@ -182,6 +185,8 @@ public class CardSearcher implements View.OnClickListener {
 
     private CallBack mCallBack;
     private boolean mShowFavorite;
+    // 关键词历史记录下拉适配器（支持每条记录右侧删除图标）
+    private KeywordHistoryAdapter keywordHistoryAdapter;
 
     public CardSearcher(View view, ICardSearcher iCardSearcher) {
         this.view = view;
@@ -2002,6 +2007,32 @@ public class CardSearcher implements View.OnClickListener {
         updateSearchNavButtons();
     }
 
+    /**
+     * 将一次由卡片详情触发的外部关键词搜索（点击高亮文字、点击关联卡片按钮）记入搜索历史。
+     * 仅更新历史列表与导航按钮状态，不重新执行搜索、不改动搜索面板的筛选条件，
+     * 以保持各调用方当前的结果展示不变。记录的条目为仅含关键词的 CardSearchInfo，
+     * 因此通过“上一次/下一次”导航可复现为对该关键词的普通搜索。
+     *
+     * @param keyword 关键词；为空时不记录
+     */
+    public void recordHistoryKeyword(String keyword) {
+        if (TextUtils.isEmpty(keyword)) {
+            return;
+        }
+        CardSearchInfo info = new CardSearchInfo.Builder()
+                .keyword(keyword)
+                .cardTypes(new ArrayList<>())
+                .build();
+        // 与 performSearch 保持一致的去重：若已存在相同条件则将其移到末尾，避免重复条目
+        int sameIndex = findSameSearchInfo(searchHistory, info);
+        if (sameIndex >= 0) {
+            searchHistory.remove(sameIndex);
+        }
+        searchHistory.add(info);
+        searchIndex = searchHistory.size() - 1;
+        updateSearchNavButtons();
+    }
+
     private boolean isDefaultSearch(CardSearchInfo info) {
         if (info.getKeyWord() != null && !TextUtils.isEmpty(info.getKeyWord().getValue())) {
             return false;
@@ -2202,10 +2233,23 @@ public class CardSearcher implements View.OnClickListener {
      */
     private boolean refreshKeywordHistory() {
         List<String> history = SharedPreferenceUtil.getKeywordHistory();
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(mContext,
-                android.R.layout.simple_list_item_1, history);
-        keyWord.setAdapter(adapter);
+        keywordHistoryAdapter = new KeywordHistoryAdapter(mContext, history, this::removeKeywordHistory);
+        keyWord.setAdapter(keywordHistoryAdapter);
         return !history.isEmpty();
+    }
+
+    /**
+     * 删除指定的关键词历史记录：持久化移除后，就地更新下拉列表数据，
+     * 保持下拉展开状态以便连续删除；若已无记录则收起下拉。
+     */
+    private void removeKeywordHistory(String keyword) {
+        SharedPreferenceUtil.removeKeywordHistory(keyword);
+        if (keywordHistoryAdapter != null) {
+            keywordHistoryAdapter.remove(keyword);
+        }
+        if (keywordHistoryAdapter == null || keywordHistoryAdapter.getCount() == 0) {
+            keyWord.dismissDropDown();
+        }
     }
 
     private void showKeywordDropdown() {
