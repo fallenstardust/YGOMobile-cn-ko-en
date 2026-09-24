@@ -1331,6 +1331,8 @@ bool DeckBuilder::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::EMIE_MOUSE_WHEEL: {
+			if(event.MouseInput.Wheel == 0)
+				break;
 			irr::gui::IGUIElement* root = mainGame->env->getRootGUIElement();
 			if(!mainGame->scrFilter->isVisible())
 				break;
