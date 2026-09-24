@@ -14,10 +14,7 @@ import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_SYSTEM_PATH;
 import static cn.garymb.ygomobile.Constants.DATABASE_NAME;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -38,13 +35,13 @@ import java.util.List;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.AppsSettings.languageEnum;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.WindBotService;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SystemUtils;
-import libwindbot.windbot.WindBot;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -61,7 +58,6 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private final Handler handler;
     protected int mError = ERROR_NONE;
     private Exception taskException = null;
-    MessageReceiver mReceiver = new MessageReceiver();
     Handler han = new Handler() {
 
         @Override
@@ -69,7 +65,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:
-                    checkWindbot();
+                    // 资源更新后强制重初始化，按最新 bot.conf / cards.cdb 重建 WindBot 状态
+                    checkWindbot(true);
                     break;
             }
         }
@@ -158,7 +155,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     }
 
     public void unregisterMReceiver() {
-        mContext.unregisterReceiver(mReceiver);
+        // RUN_WINDBOT 接收器已改为 WindBotService 进程级常驻监听，此处无需注销
     }
 
     /**
@@ -307,9 +304,9 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         copyKorData(true);
                     } else if (language.equals(languageEnum.Spanish.name)) {
                         copyEsData(true);
-                    } else if (language.equals(languageEnum.Japanese)) {
+                    } else if (language.equals(languageEnum.Japanese.name)) {
                         copyJpData(true);
-                    } else if (language.equals(languageEnum.Portuguese)) {
+                    } else if (language.equals(languageEnum.Portuguese.name)) {
                         copyPtData(true);
                     } else {
                         copyEnData(true);
@@ -601,32 +598,17 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     }
 
     public void checkWindbot() {
-        Log.i("路径", mContext.getFilesDir().getPath());
-        Log.i("路径2", mSettings.getDataBasePath() + "/" + DATABASE_NAME);
-        try {
-            WindBot.initAndroid(mSettings.getResourcePath(),
-                    mSettings.getDataBasePath() + "/" + DATABASE_NAME,
-                    mSettings.getResourcePath() + "/" + CORE_BOT_CONF_PATH);
-        } catch (Throwable e) {
-            LogUtil.e(TAG, "init windbot error " + e.getMessage());
-        }
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("RUN_WINDBOT");
-        mContext.registerReceiver(mReceiver, filter);
+        checkWindbot(false);
+    }
+
+    public void checkWindbot(boolean forceReinit) {
+        // windbot 初始化与 RUN_WINDBOT 监听已抽取到 WindBotService：
+        // 接收器进程级只注册一次；initAndroid 进程内仅成功执行一次，
+        // 资源更新后(han case 0)以 forceReinit=true 强制重初始化
+        WindBotService.startListening(mContext, forceReinit);
     }
 
     public interface ResCheckListener {
         void onResCheckFinished(int result, boolean isNewVersion);
-    }
-
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("RUN_WINDBOT")) {
-                String args = intent.getStringExtra("args");
-                WindBot.runAndroid(args);
-            }
-        }
     }
 }

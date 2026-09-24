@@ -1,0 +1,709 @@
+package cn.garymb.ygomobile.ui.dialogs;
+
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.render.CardDetailPanel;
+import ocgcore.DataManager;
+import ocgcore.enums.CardType;
+
+/**
+ * 卡片命令菜单（对应桌面版 gframe 的 wCmdMenu）：
+ * 点击场上/手卡卡片时，以点击位置作为菜单左下角弹出，尺寸较小；
+ * 点击菜单以外区域自动关闭。菜单项由卡片 cmdFlag 动态生成。
+ * 无标题栏/滚动区：弹窗总高度随菜单项数量动态变化；
+ * 不追加“取消”项（点击菜单外或返回键即关闭）；
+ * 菜单构建逻辑（showCardCommandMenu）已迁入本类：
+ * 卡片信息直接显示到 CardDetailPanel，菜单仅承载可执行命令；
+ * 按钮文字统一只从 StringManager 的系统字符串索引获取（与 gframe ShowMenu 一致），不附加其他文本符号。
+ */
+public class CmdMenuDialog {
+
+    private static final int MENU_WIDTH_DP = 120;
+
+    /** 命令上下文（与 GameFieldController.CMD_CONTEXT_* 保持同值） */
+    public static final int CMD_CONTEXT_IDLE = 1;
+    public static final int CMD_CONTEXT_BATTLE = 2;
+    public static final int CMD_CONTEXT_CHAIN = 3;
+
+    /** 系统字符串索引（对应 strings.conf #actions 段，与 gframe wCmdMenu 按钮文本一致） */
+    private static final int SYS_ACTIVATE = 1150;    // 发动
+    private static final int SYS_SUMMON = 1151;      // 召唤
+    private static final int SYS_SPSUMMON = 1152;    // 特殊召唤
+    private static final int SYS_SET = 1153;         // 盖放
+    private static final int SYS_FLIP = 1154;        // 反转召唤
+    private static final int SYS_TO_DEFENSE = 1155;  // 守备表示
+    private static final int SYS_TO_ATTACK = 1156;   // 攻击表示
+    private static final int SYS_ATTACK = 1157;      // 攻击
+    private static final int SYS_SET_MONSTER = 1159; // 怪兽卡设置到魔陷区
+    private static final int SYS_RESET = 1162;       // 表示重置(Reset Effect)
+    private static final int SYS_SHOW_LIST = 1158;   // 查看列表（对齐 game.cpp btnShowList）
+    private static final int SYS_SELECT_OPTION = 555;// 请选择一项
+    private static final int SYS_SELECT_MONSTER = 509;// 选择怪兽（对齐 event_handler.cpp BUTTON_CMD_SPSUMMON list_command 标题）
+
+    /** client_field.h EDESC_*：duelclient.cpp L2120-2121 连锁项 flag 分流 */
+    private static final int EDESC_OPERATION = 0x1;  // 继续（不弹发动菜单）
+    private static final int EDESC_RESET = 0x2;      // 表示重置（走 btnReset）
+
+    /** 「查看列表」入口：文字取系统字符串 1158（对齐 gframe game.cpp btnShowList），
+     *  排列在发动/特殊召唤下方（对齐 event_handler.cpp ShowMenu 中 btnShowList 的固定槽位） */
+    private String viewListText() {
+        return sysString(SYS_SHOW_LIST, "查看列表");
+    }
+
+    // 位置卡片列表的三种模式（查看 / 发动 / 特殊召唤）
+    private static final int MODE_VIEW = 0;
+    private static final int MODE_ACTIVATE = 1;
+    private static final int MODE_SPSUMMON = 2;
+    private static final int LOC_MZONE = 0x04;
+    private static final int LOC_OVERLAY = 0x80;
+
+    private final YGOProActivity activity;
+    private final PopupWindow popupWindow;
+    private final View contentView;
+    private final LinearLayout layoutItems;
+
+    public CmdMenuDialog(YGOProActivity activity) {
+        this.activity = activity;
+        contentView = LayoutInflater.from(activity).inflate(R.layout.popup_window_cmd_menu, null);
+        layoutItems = contentView.findViewById(R.id.layout_cmd_menu_items);
+
+        popupWindow = new PopupWindow(contentView, dp(MENU_WIDTH_DP),
+                ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setFocusable(true);
+        popupWindow.setOutsideTouchable(true);
+        // 菜单隐藏后恢复决斗场阶段按钮
+        popupWindow.setOnDismissListener(() -> activity.notifyGameDialogHidden(this));
+    }
+
+    /**
+     * 菜单项与动作一一对应；不追加“取消”项（点击菜单外/返回键即关闭），
+     * 弹窗总高度随条目数量动态变化
+     */
+    public void setItems(List<String> labels, List<Runnable> actions) {
+        layoutItems.removeAllViews();
+        int count = Math.min(labels.size(), actions.size());
+        for (int i = 0; i < count; i++) {
+            final Runnable action = actions.get(i);
+            Button btn = createItemButton(labels.get(i));
+            btn.setOnClickListener(v -> {
+                dismiss();
+                if (action != null) action.run();
+            });
+            layoutItems.addView(btn);
+        }
+    }
+
+    /**
+     * 以点击位置为菜单左下角显示
+     *
+     * @param anchorView 接收点击的场地 View（用于把触点换算为屏幕坐标）
+     * @param tapX       相对 anchorView 的点击 X
+     * @param tapY       相对 anchorView 的点击 Y
+     */
+    public void show(View anchorView, float tapX, float tapY) {
+        if (anchorView == null || anchorView.getWindowToken() == null) return;
+        if (popupWindow.isShowing()) {
+            popupWindow.dismiss();
+        }
+
+        View decor = activity.getWindow().getDecorView();
+        int screenW = decor.getWidth() > 0 ? decor.getWidth()
+                : activity.getResources().getDisplayMetrics().widthPixels;
+        int screenH = decor.getHeight() > 0 ? decor.getHeight()
+                : activity.getResources().getDisplayMetrics().heightPixels;
+
+        int widthPx = dp(MENU_WIDTH_DP);
+        // 按自然高度测量：总高度随菜单项数量动态增减（无标题/滚动区）
+        contentView.measure(
+                View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        int menuHeight = contentView.getMeasuredHeight();
+        // 仅封顶屏幕高度防止窗口出界（常规项数下即内容自然高度）
+        if (menuHeight > screenH) menuHeight = screenH;
+        popupWindow.setHeight(menuHeight);
+
+        int[] loc = new int[2];
+        anchorView.getLocationOnScreen(loc);
+        int clickX = loc[0] + (int) tapX;
+        int clickY = loc[1] + (int) tapY;
+
+        // 点击点=菜单左下角：底边对齐触点；上方放不下则翻转到触点下方显示，并钳制四边
+        int left = clickX;
+        int top = clickY - menuHeight;
+        if (top < 0) top = clickY;
+        if (left + widthPx > screenW) left = screenW - widthPx;
+        if (left < 0) left = 0;
+        if (top + menuHeight > screenH) top = screenH - menuHeight;
+        if (top < 0) top = 0;
+
+        popupWindow.showAtLocation(decor, Gravity.TOP | Gravity.START, left, top);
+        // 菜单显示期间禁用决斗场阶段按钮
+        activity.notifyGameDialogShown(this);
+    }
+
+    public boolean isShowing() {
+        return popupWindow.isShowing();
+    }
+
+    public void dismiss() {
+        if (popupWindow.isShowing()) {
+            popupWindow.dismiss();
+        }
+    }
+
+    /**
+     * 根据卡片 cmdFlag 构建命令菜单并弹出（由 GameFieldController.showCardCommandMenu 迁移）。
+     * 卡片信息直接同步到 CardDetailPanel，菜单仅承载可执行命令；
+     * 按钮文字统一只取 StringManager 对应索引的字符串，不附加其他文本符号。
+     *
+     * @param card        被点击的卡片
+     * @param engine      游戏引擎（命令列表来源）
+     * @param cmdContext  {@link #CMD_CONTEXT_IDLE} / {@link #CMD_CONTEXT_BATTLE}
+     * @param anchorView  接收点击的场地 View
+     * @param tapX        相对 anchorView 的点击 X
+     * @param tapY        相对 anchorView 的点击 Y
+     */
+    public void showCardCommandMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
+                                    View anchorView, float tapX, float tapY) {
+        showCardCommandMenu(card, engine, cmdContext, anchorView, tapX, tapY, false);
+    }
+
+    /**
+     * @param viewButton 为 true 时（点击持有超量素材的怪兽 / 卡组 / 额外 / 墓地 / 除外），
+     *                   菜单始终提供「查看」入口且不因无命令而自动关闭；卡片信息改由「查看」按钮触发。
+     */
+    public void showCardCommandMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
+                                    View anchorView, float tapX, float tapY, boolean viewButton) {
+        if (card == null || engine == null) return;
+
+        List<String> options = new ArrayList<>();
+        List<Runnable> actions = new ArrayList<>();
+
+        if (viewButton) {
+            // 点击持有超量素材的怪兽 / 卡组 / 额外 / 墓地 / 除外——
+            // 查看/发动/特殊召唤按钮均打开 CardDisplayDialog 列出该位置对应卡片
+            buildPositionMenu(card, engine, cmdContext, options, actions);
+            // 堆叠区顶部是正面卡（墓地/除外/额外可见卡面）时，菜单弹出的同时
+            // 即时在左侧 CardDetailPanel 显示该卡详情（卡组/超量素材背面被
+            // isFaceUp 自然过滤，不触发）
+            int loc = card.location;
+            if (card.code > 0 && card.isFaceUp()
+                    && (loc == 0x10 || loc == 0x20 || loc == 0x40 || loc == 0x01)) {
+                activity.showCardInfoPanel(card);
+            }
+        } else {
+            if (card.code > 0) activity.showCardInfoPanel(card);
+            buildCardCommandMenu(card, engine, cmdContext, options, actions);
+        }
+
+        if (options.isEmpty()) {
+            dismiss();
+            return;
+        }
+        setItems(options, actions);
+        show(anchorView, tapX, tapY);
+    }
+
+    /** 单卡命令菜单（非堆叠/超量入口）：按 card.cmdFlag 逐条构建可执行命令 */
+    private void buildCardCommandMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
+                                      List<String> options, List<Runnable> actions) {
+        int flag = card.cmdFlag;
+        boolean idlePhase = (cmdContext == CMD_CONTEXT_IDLE);
+
+        String activateText = sysString(SYS_ACTIVATE);
+
+        // 卡片有多个可发动效果时也只生成一个「发动」按钮，按钮文字仅取系统字符串 1150，
+        // 不再拼接该卡的脚本提示文字；点击后用 OptionDialog 列出各效果文字供选择。
+        // 对齐 event_handler.cpp BUTTON_CMD_ACTIVATE L501-538：
+        //   flag & EDESC_OPERATION → continue（由「继续/放弃」链路处理）
+        //   select_options.size()==1 时直接应答，否则 command_card = menu_card; ShowSelectOption()
+        List<GameEngine.CmdCardInfo> activateList = new ArrayList<>();
+        if ((flag & GameEngine.COMMAND_ACTIVATE) != 0) {
+            for (GameEngine.CmdCardInfo info : engine.activatableCards) {
+                if (info.card != card) continue;
+                if ((info.flag & EDESC_OPERATION) != 0) continue;
+                if ((info.flag & EDESC_RESET) != 0) continue;
+                activateList.add(info);
+            }
+        }
+        if (!activateList.isEmpty()) {
+            options.add(activateText);
+            final List<GameEngine.CmdCardInfo> chosen = activateList;
+            actions.add(() -> showActivateOptions(cmdContext, chosen));
+        }
+
+        // duelclient.cpp L2121 / event_handler.cpp BUTTON_CMD_RESET L501-538：
+        // EDESC_RESET 项只由「表示重置」处理，Java 无 COMMAND_RESET 标记，故单独收集，避免无处可点导致通讯卡住
+        List<GameEngine.CmdCardInfo> resetList = new ArrayList<>();
+        if ((flag & GameEngine.COMMAND_ACTIVATE) != 0) {
+            for (GameEngine.CmdCardInfo info : engine.activatableCards) {
+                if (info.card != card) continue;
+                if ((info.flag & EDESC_RESET) == 0) continue;
+                resetList.add(info);
+            }
+        }
+        if (!resetList.isEmpty()) {
+            options.add(sysString(SYS_RESET, "表示重置"));
+            final List<GameEngine.CmdCardInfo> chosen = resetList;
+            actions.add(() -> showActivateOptions(cmdContext, chosen));
+        }
+
+        if ((flag & GameEngine.COMMAND_ATTACK) != 0) {
+            int idx = findCmdIndex(engine.attackableCards, card);
+            if (idx >= 0) {
+                options.add(sysString(SYS_ATTACK));
+                final int attackIdx = idx;
+                actions.add(() -> activity.sendResponseInt((attackIdx << 16) + 1));
+            }
+        }
+
+        if (idlePhase) {
+            if ((flag & GameEngine.COMMAND_SUMMON) != 0) {
+                int idx = findCmdIndex(engine.summonableCards, card);
+                if (idx >= 0) {
+                    options.add(sysString(SYS_SUMMON));
+                    final int summonIdx = idx;
+                    actions.add(() -> activity.sendResponseInt(summonIdx << 16));
+                }
+            }
+
+            if ((flag & GameEngine.COMMAND_SPSUMMON) != 0) {
+                int idx = findCmdIndex(engine.spsummonableCards, card);
+                if (idx >= 0) {
+                    options.add(sysString(SYS_SPSUMMON));
+                    final int spIdx = idx;
+                    actions.add(() -> activity.sendResponseInt((spIdx << 16) + 1));
+                }
+            }
+
+            if ((flag & GameEngine.COMMAND_REPOS) != 0) {
+                int idx = findCmdIndex(engine.reposableCards, card);
+                if (idx >= 0) {
+                    int stringId;
+                    if ((card.position & 0xA) != 0) {
+                        stringId = SYS_FLIP;
+                    } else if (card.isAttack()) {
+                        stringId = SYS_TO_DEFENSE;
+                    } else {
+                        stringId = SYS_TO_ATTACK;
+                    }
+                    options.add(sysString(stringId));
+                    final int reposIdx = idx;
+                    actions.add(() -> activity.sendResponseInt((reposIdx << 16) + 2));
+                }
+            }
+
+            if ((flag & GameEngine.COMMAND_MSET) != 0) {
+                int idx = findCmdIndex(engine.msetableCards, card);
+                if (idx >= 0) {
+                    options.add(sysString(SYS_SET));
+                    final int msetIdx = idx;
+                    actions.add(() -> activity.sendResponseInt((msetIdx << 16) + 3));
+                }
+            }
+
+            if ((flag & GameEngine.COMMAND_SSET) != 0) {
+                int idx = findCmdIndex(engine.ssetableCards, card);
+                if (idx >= 0) {
+                    boolean isMonster = (card.type & CardType.Monster.getId()) != 0;
+                    options.add(sysString(isMonster ? SYS_SET_MONSTER : SYS_SET));
+                    final int ssetIdx = idx;
+                    actions.add(() -> activity.sendResponseInt((ssetIdx << 16) + 4));
+                }
+            }
+        }
+    }
+
+    /**
+     * 堆叠区 / 超量怪兽入口的「位置命令」菜单。
+     * 发动 / 特殊召唤 → 列出该位置对应可操作卡片，单击即向通讯发送对应响应进入下一步；
+     * 「查看列表」统一排列在发动/特殊召唤下方，列出该位置全部卡片。
+     */
+    private void buildPositionMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
+                                   List<String> options, List<Runnable> actions) {
+        final List<GameEngine.CmdCardInfo> actList = matchCmdCards(engine.activatableCards, card);
+        if (!actList.isEmpty()) {
+            if (isPileLocation(card.location)) {
+                // 堆叠区（墓地/除外/卡组/额外）点「发动」：始终先弹该区所有可发动卡片的列表，
+                // 单击某张卡后再按该卡可发动效果数分流（单效果直接应答、多效果弹 OptionDialog 选效果），
+                // 对齐 gframe event_handler.cpp BUTTON_CMD_ACTIVATE 的 list_command 分支（L539-585）
+                // → ShowSelectCard 选卡 → BUTTON_CARD_*（list_command==COMMAND_ACTIVATE）选效果。
+                options.add(sysString(SYS_ACTIVATE));
+                final List<GameEngine.CmdCardInfo> infos = actList;
+                actions.add(() -> showPileActivateList(card, cmdContext, infos));
+            } else if (allSameCard(actList)) {
+                // 场上单张卡（如带素材的超量怪兽）的多个可发动效果：用 OptionDialog 列出各效果脚本提示文字，
+                // 而不是用 CardDisplayDialog 显示多张相同卡图（视觉上无法区分发动的是哪个效果）。
+                final List<GameEngine.CmdCardInfo> chosen = filterActivatable(actList);
+                if (!chosen.isEmpty()) {
+                    options.add(sysString(SYS_ACTIVATE));
+                    actions.add(() -> showActivateOptions(cmdContext, chosen));
+                }
+            } else {
+                options.add(sysString(SYS_ACTIVATE));
+                final List<GameEngine.CmdCardInfo> infos = actList;
+                actions.add(() -> showCmdList(card, engine, cmdContext, infos, MODE_ACTIVATE));
+            }
+        }
+
+        final List<GameEngine.CmdCardInfo> spList = matchCmdCards(engine.spsummonableCards, card);
+        if (!spList.isEmpty()) {
+            options.add(sysString(SYS_SPSUMMON));
+            // 对齐 event_handler.cpp BUTTON_CMD_SPSUMMON 的 list_command 分支（L628-665）：
+            // 堆叠区（卡组/墓地/除外/额外）点「特殊召唤」始终以「选择怪兽」列表弹窗
+            // 列出该区所有可特殊召唤的卡供玩家逐个点选，即使只有一张也要展示列表，
+            // 不能走 allSameCard→showOptionListForMode 的直接应答捷径（否则点特殊召唤无任何列表出现）。
+            final List<GameEngine.CmdCardInfo> chosen = spList;
+            actions.add(() -> showCmdList(card, engine, cmdContext, chosen, MODE_SPSUMMON));
+        }
+
+        options.add(viewListText());
+        actions.add(() -> showViewList(card, engine));
+    }
+
+    /** 是否列表中全部命令项都属于同一张卡（多则同卡多效果，少则堆叠区不同卡） */
+    private static boolean allSameCard(List<GameEngine.CmdCardInfo> infos) {
+        if (infos.size() <= 1) return true;
+        GameField.ClientCard c0 = infos.get(0).card;
+        for (GameEngine.CmdCardInfo info : infos) {
+            if (info.card != c0) return false;
+        }
+        return true;
+    }
+
+    /** 过滤掉 EDESC_OPERATION / EDESC_RESET 项（与 buildCardCommandMenu 发动收集口径一致） */
+    private static List<GameEngine.CmdCardInfo> filterActivatable(List<GameEngine.CmdCardInfo> src) {
+        List<GameEngine.CmdCardInfo> out = new ArrayList<>();
+        for (GameEngine.CmdCardInfo info : src) {
+            if ((info.flag & EDESC_OPERATION) != 0) continue;
+            if ((info.flag & EDESC_RESET) != 0) continue;
+            out.add(info);
+        }
+        return out;
+    }
+
+    /** 过滤出与被点位置匹配的命令卡：超量怪兽按格序列匹配，堆叠区匹配整堆（controler+location） */
+    private static List<GameEngine.CmdCardInfo> matchCmdCards(List<GameEngine.CmdCardInfo> src,
+                                                              GameField.ClientCard card) {
+        List<GameEngine.CmdCardInfo> out = new ArrayList<>();
+        if (src == null) return out;
+        boolean mzone = (card.location == LOC_MZONE);
+        for (GameEngine.CmdCardInfo info : src) {
+            GameField.ClientCard c = info.card;
+            if (c == null) continue;
+            if (c.controler != card.controler || c.location != card.location) continue;
+            if (mzone && c.sequence != card.sequence) continue;
+            out.add(info);
+        }
+        return out;
+    }
+
+    /** 查看列表：超量怪兽 → 其素材；堆叠区 → 该区全部卡片 */
+    private void showViewList(GameField.ClientCard card, GameEngine engine) {
+        GameField field = engine.getField();
+        List<CardDisplayDialog.CardItem> items = new ArrayList<>();
+        String title;
+        final int obsCtrl = card.controler;
+        final int obsLoc = card.location;
+        final boolean obsIsXyz = (card.location == LOC_MZONE);
+        final int obsHostSeq = obsIsXyz ? card.sequence : -1;
+        if (obsIsXyz) {
+            for (int i = 0; i < card.overlayed.size(); i++) {
+                GameField.ClientCard m = card.overlayed.get(i);
+                if (m == null) continue;
+                items.add(new CardDisplayDialog.CardItem(m.code, card.controler, LOC_OVERLAY, card.sequence, i));
+            }
+            title = sidePrefix(card.controler) + "超量素材";
+        } else if (field != null) {
+            List<GameField.ClientCard> list = field.players[card.controler].getLocationList(card.location);
+            if (list != null) {
+                for (GameField.ClientCard c : list) {
+                    if (c == null) continue;
+                    items.add(new CardDisplayDialog.CardItem(c.code, card.controler, card.location, c.sequence, 0));
+                }
+            }
+            title = sidePrefix(card.controler) + pileName(card.location);
+        } else {
+            title = viewListText();
+        }
+        final GameField liveField = field;
+        CardDisplayDialog.CardItemSupplier supplier = null;
+        if (liveField != null && (obsIsXyz || isPileLocation(obsLoc))) {
+            supplier = () -> {
+                List<CardDisplayDialog.CardItem> fresh = new ArrayList<>();
+                if (obsIsXyz) {
+                    GameField.ClientCard host = liveField.getCard(obsCtrl & 1, LOC_MZONE, obsHostSeq);
+                    if (host != null) {
+                        for (int i = 0; i < host.overlayed.size(); i++) {
+                            GameField.ClientCard m = host.overlayed.get(i);
+                            if (m == null) continue;
+                            fresh.add(new CardDisplayDialog.CardItem(m.code, obsCtrl, LOC_OVERLAY, obsHostSeq, i));
+                        }
+                    }
+                } else {
+                    List<GameField.ClientCard> list = liveField.players[obsCtrl & 1].getLocationList(obsLoc);
+                    if (list != null) {
+                        for (GameField.ClientCard c : list) {
+                            if (c == null) continue;
+                            fresh.add(new CardDisplayDialog.CardItem(c.code, obsCtrl, obsLoc, c.sequence, 0));
+                        }
+                    }
+                }
+                return fresh;
+            };
+        }
+        showCardListDialog(title, items, null, MODE_VIEW, 0, engine, supplier);
+    }
+
+    /** 回放态点击堆叠区：不经命令菜单，直接弹该区卡片正面列表（含实时刷新），
+     *  与菜单内「查看」共用实现（card.controler / card.location 均为视角侧口径） */
+    public void showPileViewList(GameField.ClientCard card, GameEngine engine) {
+        showViewList(card, engine);
+    }
+
+    /** 堆叠区判断：卡组 0x01 / 墓地 0x10 / 除外 0x20 / 额外 0x40（与 GameFieldController.onCardClick isPile 同口径） */
+    private static boolean isPileLocation(int location) {
+        return location == 0x01 || location == 0x10 || location == 0x20 || location == 0x40;
+    }
+
+    /** 发动 / 特殊召唤列表：单击对应卡片即向通讯发送响应 */
+    private void showCmdList(GameField.ClientCard card, GameEngine engine, int cmdContext,
+                             List<GameEngine.CmdCardInfo> infos, int mode) {
+        List<CardDisplayDialog.CardItem> items = new ArrayList<>();
+        List<Integer> indices = new ArrayList<>();
+        for (GameEngine.CmdCardInfo info : infos) {
+            GameField.ClientCard c = info.card;
+            int code = info.code != 0 ? info.code : (c != null ? c.code : 0);
+            int loc = c != null ? c.location : card.location;
+            int seq = c != null ? c.sequence : card.sequence;
+            items.add(new CardDisplayDialog.CardItem(code, card.controler, loc, seq, 0));
+            indices.add(info.index);
+        }
+        // 特殊召唤列表标题对齐 gframe「选择怪兽」(509)；发动列表沿用「发动」(1150)
+        String title = (mode == MODE_SPSUMMON)
+                ? sysString(SYS_SELECT_MONSTER, "选择怪兽") : sysString(SYS_ACTIVATE);
+        showCardListDialog(title, items, indices, mode, cmdContext, engine);
+    }
+
+    /**
+     * 堆叠区「发动」列表：弹出该区所有可发动卡片（按卡去重），单击某张卡后按该卡可发动效果数分流——
+     * 单效果直接应答、多效果弹 OptionDialog 列出各效果脚本提示文字供选择。
+     * 对齐 gframe event_handler.cpp BUTTON_CMD_ACTIVATE 的 list_command 分支
+     *（ShowSelectCard 列卡 → BUTTON_CARD_* 选卡 → 单效果 SetResponseI / 多效果 ShowSelectOption）。
+     */
+    private void showPileActivateList(GameField.ClientCard card, int cmdContext,
+                                       List<GameEngine.CmdCardInfo> infos) {
+        java.util.Map<GameField.ClientCard, List<GameEngine.CmdCardInfo>> byCard =
+                new java.util.LinkedHashMap<>();
+        for (GameEngine.CmdCardInfo info : infos) {
+            if (info.card == null) continue;
+            List<GameEngine.CmdCardInfo> list = byCard.get(info.card);
+            if (list == null) {
+                list = new ArrayList<>();
+                byCard.put(info.card, list);
+            }
+            list.add(info);
+        }
+        List<CardDisplayDialog.CardItem> items = new ArrayList<>();
+        final List<List<GameEngine.CmdCardInfo>> cardEffects = new ArrayList<>();
+        for (java.util.Map.Entry<GameField.ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
+            GameField.ClientCard c = e.getKey();
+            int code = c.code;
+            for (GameEngine.CmdCardInfo info : e.getValue()) {
+                if (info.code != 0) { code = info.code; break; }
+            }
+            items.add(new CardDisplayDialog.CardItem(code, card.controler, c.location, c.sequence, 0));
+            cardEffects.add(filterActivatable(e.getValue()));
+        }
+        if (items.isEmpty()) return;
+        ImageLoader loader = activity.getImageLoader();
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        final CardDisplayDialog dialog = new CardDisplayDialog(activity, loader);
+        if (panel != null) panel.setCardDisplayDialog(dialog);
+        dialog.setTitle(sysString(SYS_ACTIVATE))
+                .setCards(items)
+                .setLocalPlayer(0)
+                .setControlerProtocolSide(false)
+                .setCardClickListener(item -> {
+                    int pos = items.indexOf(item);
+                    dialog.dismiss();
+                    if (pos < 0 || pos >= cardEffects.size()) return;
+                    List<GameEngine.CmdCardInfo> effects = cardEffects.get(pos);
+                    if (effects.size() == 1) {
+                        sendCmdResponse(MODE_ACTIVATE, cmdContext, effects.get(0).index);
+                    } else if (effects.size() > 1) {
+                        showActivateOptions(cmdContext, effects);
+                    }
+                })
+                .setOnDismissListener(() -> {
+                    if (panel != null) panel.setCardDisplayDialog(null);
+                });
+        dialog.show();
+    }
+
+    /**
+     * 发动：单条直接应答，多条弹 OptionDialog 列出各效果脚本提示文字
+     *（对齐 client_field.cpp ShowSelectOption + event_handler.cpp BUTTON_OPTION → SetResponseSelectedOption）。
+     */
+    private void showActivateOptions(int cmdContext, List<GameEngine.CmdCardInfo> infos) {
+        showOptionListForMode(cmdContext, infos, MODE_ACTIVATE);
+    }
+
+    /**
+     * 单卡多命令（发动 / 特殊召唤）选择：仅 1 项直接应答，多项弹 OptionDialog 列出各效果
+     * 脚本提示文字供选择；应答编码统一走 sendCmdResponse(mode, …)（与单卡菜单一致）。
+     */
+    private void showOptionListForMode(int cmdContext, List<GameEngine.CmdCardInfo> infos, int mode) {
+        if (infos == null || infos.isEmpty()) return;
+        if (infos.size() == 1) {
+            sendCmdResponse(mode, cmdContext, infos.get(0).index);
+            return;
+        }
+        String fallback = sysString(mode == MODE_SPSUMMON ? SYS_SPSUMMON : SYS_ACTIVATE);
+        List<String> texts = new ArrayList<>();
+        for (GameEngine.CmdCardInfo info : infos) {
+            texts.add(info.desc > 0 ? DataManager.get().getDesc(info.desc, fallback) : fallback);
+        }
+        final List<GameEngine.CmdCardInfo> targets = infos;
+        new OptionDialog(activity)
+                .setTitle(sysString(SYS_SELECT_OPTION, "请选择一项"))
+                .setOptions(texts)
+                .setOnOptionSelectedListener(index -> {
+                    if (index >= 0 && index < targets.size()) {
+                        sendCmdResponse(mode, cmdContext, targets.get(index).index);
+                    }
+                })
+                .show();
+    }
+
+    /**
+     * 构建并弹出 CardDisplayDialog：单击 → 命令模式发送响应；
+     * 按下即在 CardDetailPanel 显示详情、按住悬浮显示通讯状态标签（由 CardDisplayDialog 内部接管）。
+     */
+    private void showCardListDialog(String title, List<CardDisplayDialog.CardItem> items,
+                                    List<Integer> indices, int mode, int cmdContext, GameEngine engine) {
+        showCardListDialog(title, items, indices, mode, cmdContext, engine, null);
+    }
+
+    private void showCardListDialog(String title, List<CardDisplayDialog.CardItem> items,
+                                    List<Integer> indices, int mode, int cmdContext, GameEngine engine,
+                                    CardDisplayDialog.CardItemSupplier liveSupplier) {
+        if (items == null || items.isEmpty()) return;
+        ImageLoader loader = activity.getImageLoader();
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        final CardDisplayDialog dialog = new CardDisplayDialog(activity, loader);
+        if (panel != null) panel.setCardDisplayDialog(dialog);
+        dialog.setTitle(title)
+                .setCards(items)
+                .setLocalPlayer(0)   // item.controler 已是视角侧（0=我方）
+                .setControlerProtocolSide(false)
+                .setCardClickListener(item -> {
+                    if (mode == MODE_VIEW) {
+                        activity.showCardInfoPanel(clientCardFromItem(item));
+                    } else {
+                        int pos = items.indexOf(item);
+                        if (pos >= 0 && indices != null && pos < indices.size()) {
+                            sendCmdResponse(mode, cmdContext, indices.get(pos));
+                        }
+                        dialog.dismiss();
+                    }
+                })
+                .setOnDismissListener(() -> {
+                    if (panel != null) panel.setCardDisplayDialog(null);
+                });
+        if (liveSupplier != null) dialog.observeLive(liveSupplier);
+        dialog.show();
+    }
+
+    /** 发送命令响应：特召=(idx<<16)+1；发动按上下文 idle=(idx<<16)+5 / battle=idx<<16 / chain 走连锁收尾 */
+    private void sendCmdResponse(int mode, int cmdContext, int idx) {
+        if (mode == MODE_SPSUMMON) {
+            activity.sendResponseInt((idx << 16) + 1);
+        } else if (cmdContext == CMD_CONTEXT_CHAIN) {
+            activity.getDialogUtil().activateChainOption(idx);
+        } else if (cmdContext == CMD_CONTEXT_BATTLE) {
+            activity.sendResponseInt(idx << 16);
+        } else {
+            activity.sendResponseInt((idx << 16) + 5);
+        }
+    }
+
+    private GameField.ClientCard clientCardFromItem(CardDisplayDialog.CardItem item) {
+        GameField.ClientCard c = new GameField.ClientCard();
+        c.code = item.code & 0x7fffffff;
+        c.controler = item.controler;
+        c.location = item.location;
+        c.sequence = item.sequence;
+        c.position = 0x1;
+        return c;
+    }
+
+    /** 标题标注是哪一方（card.controler 已是视角侧，0=我方） */
+    private static String sidePrefix(int controler) {
+        return controler == 0 ? "我方" : "对方";
+    }
+
+    /** 卡组/额外/墓地/除外区名称（与 YGOProActivity.getLocationName 一致） */
+    private static String pileName(int location) {
+        switch (location) {
+            case 0x01: return "卡组";
+            case 0x40: return "额外卡组";
+            case 0x10: return "墓地";
+            case 0x20: return "除外区";
+            default: return "卡片";
+        }
+    }
+
+    private static int findCmdIndex(List<GameEngine.CmdCardInfo> list, GameField.ClientCard card) {
+        for (GameEngine.CmdCardInfo info : list) {
+            if (info.card == card) return info.index;
+        }
+        return -1;
+    }
+
+    private static String sysString(int index) {
+        return DataManager.get().getStringManager().getSystemString(index, "");
+    }
+
+    private static String sysString(int index, String def) {
+        return DataManager.get().getStringManager().getSystemString(index, def);
+    }
+
+    private Button createItemButton(String text) {
+        Button btn = new Button(activity);
+        btn.setText(text);
+        btn.setTextColor(0xFFFFFFFF);
+        btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        btn.setAllCaps(false);
+        btn.setBackgroundResource(R.drawable.button3_bg);
+        btn.setMinHeight(dp(28));
+        btn.setPadding(dp(6), dp(2), dp(6), dp(2));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(2);
+        btn.setLayoutParams(lp);
+        return btn;
+    }
+
+    private int dp(int value) {
+        return Math.round(value * activity.getResources().getDisplayMetrics().density);
+    }
+}

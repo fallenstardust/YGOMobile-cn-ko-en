@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 表情气泡背景：七边形 = 顶部三角尖（指向头像）+ 圆角矩形主体，
+     表情图由 ImageView 以不对称 padding 在主体内居中显示（顶部 padding = 三角尖高度 + 内衬） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="44dp"
+    android:height="52dp"
+    android:viewportWidth="44"
+    android:viewportHeight="52">
+    <path
+        android:fillColor="@color/transparent"
+        android:strokeColor="@color/white"
+        android:strokeWidth="0.5"
+        android:pathData="M22,0 L30,10 L38,10 A6,6 0 0 1 44,16 L44,46 A6,6 0 0 1 38,52 L6,52 A6,6 0 0 1 0,46 L0,16 A6,6 0 0 1 6,10 L14,10 Z" />
+</vector>

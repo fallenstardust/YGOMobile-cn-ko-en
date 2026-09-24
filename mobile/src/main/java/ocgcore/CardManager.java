@@ -38,6 +38,12 @@ public class CardManager {
     private final String exDbPath;
     private static final String TAG = String.valueOf(CardManager.class);
 
+    /** texts 表脚本提示文字列（str1~str16），对齐 C++ data_manager.cpp SELECT_STMT；
+     * 供 MSG_SELECT_OPTION 按 卡号*16+n 解析卡片脚本提示文字 */
+    private static final String STR_COLUMNS =
+            ", str1, str2, str3, str4, str5, str6, str7, str8" +
+            ", str9, str10, str11, str12, str13, str14, str15, str16";
+
     /**
      * @see DataManager#getCardManager()
      * @param dbDir
@@ -207,13 +213,25 @@ public class CardManager {
         int i = 0;
         Cursor reader = null;
         SQLiteDatabase db = null;
+        boolean hasStrs = false;
         try {
             db = openDatabase(file.getPath());
             try {
-                reader = db.rawQuery("select datas.id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\" from datas,texts where datas.id = texts.id;", null);
+                reader = db.rawQuery("select datas.id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\"" + STR_COLUMNS + " from datas,texts where datas.id = texts.id;", null);
+                hasStrs = true;
             } catch (Throwable e) {
-                //ignore
-                reader = db.rawQuery("select datas._id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\" from datas,texts where datas._id = texts._id;", null);
+                try {
+                    reader = db.rawQuery("select datas._id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\"" + STR_COLUMNS + " from datas,texts where datas._id = texts._id;", null);
+                    hasStrs = true;
+                } catch (Throwable e2) {
+                    //ignore
+                    // 旧版无 str1~str16 的 cdb：退化为原查询，不缓存脚本提示文字
+                    try {
+                        reader = db.rawQuery("select datas.id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\" from datas,texts where datas.id = texts.id;", null);
+                    } catch (Throwable e3) {
+                        reader = db.rawQuery("select datas._id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\" from datas,texts where datas._id = texts._id;", null);
+                    }
+                }
             }
             if (reader != null && reader.moveToFirst()) {
                 do {
@@ -234,6 +252,19 @@ public class CardManager {
                     cardData.Category = reader.getLong(10);
                     cardData.Name = reader.getString(11);
                     cardData.Desc = reader.getString(12);
+                    if (hasStrs) {
+                        String[] strs = new String[16];
+                        boolean any = false;
+                        for (int s = 0; s < 16; s++) {
+                            String str = reader.getString(13 + s);
+                            strs[s] = str;
+                            if (!TextUtils.isEmpty(str)) {
+                                any = true;
+                            }
+                        }
+                        // 仅在存在非空脚本提示文字时缓存，避免全空卡占用空数组内存
+                        cardData.Strs = any ? strs : null;
+                    }
                     //put
                     i++;
                     cardMap.put(cardData.Code, cardData);

@@ -108,11 +108,12 @@ public class ImageLoader implements Closeable {
 
     /**
      * 按卡号查找并读取卡图数据。
-     * 该方法由CardImageFetcher在Glide后台线程调用，请勿在主线程调用。
+     * 该方法由CardImageFetcher在Glide后台线程调用，请勿在主线程调用；
+     * 亦供TextureLoader后台解码线程复用，保证GL卡图与bindImage同源同字节。
      * 查找顺序与原逻辑一致：expansions下的zip/ypk -> pics/expansions/pics文件夹 -> pics.zip
      */
     @Nullable
-    static byte[] findCardImageData(long code) {
+    public static byte[] findCardImageData(long code) {
         String name = Constants.CORE_IMAGE_PATH + "/" + code;
         String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
         //1.zips(包括ypk)
@@ -175,6 +176,54 @@ public class ImageLoader implements Closeable {
             //按未找到处理，由Glide显示error占位图
         } finally {
             IOUtils.close(inputStream);
+        }
+        return null;
+    }
+
+    /**
+     * 按场地魔法卡号查找场地背景图数据（image_manager.cpp GetTextureField 同源路径）：
+     * expansions zip -> expansions/pics/field -> pics/field -> pics.zip
+     */
+    @Nullable
+    public static byte[] findFieldImageData(long code) {
+        String name = Constants.CORE_IMAGE_PATH + "/" + Constants.CORE_IMAGE_FIELD_PATH + "/" + code;
+        String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + Constants.CORE_IMAGE_FIELD_PATH + "/" + code;
+        File[] files = AppsSettings.get().getExpansionFiles();
+        if (files != null) {
+            for (File file : files) {
+                ZipFile zipFile = openZip(file);
+                if (zipFile == null) {
+                    continue;
+                }
+                byte[] data = readZipEntry(zipFile, name);
+                if (data != null) {
+                    return data;
+                }
+            }
+        }
+        String resourcePath = AppsSettings.get().getResourcePath();
+        for (String ex : Constants.IMAGE_EX) {
+            File file_ex = new File(resourcePath, name_ex + ex);
+            File file = new File(resourcePath, name + ex);
+            File target;
+            if (file_ex.exists()) {
+                target = file_ex;
+            } else if (file.exists()) {
+                target = file;
+            } else {
+                continue;
+            }
+            byte[] data = readFile(target);
+            if (data != null) {
+                return data;
+            }
+        }
+        ZipFile pics = openZip(new File(resourcePath, Constants.CORE_PICS_ZIP));
+        if (pics != null) {
+            byte[] data = readZipEntry(pics, name);
+            if (data != null) {
+                return data;
+            }
         }
         return null;
     }

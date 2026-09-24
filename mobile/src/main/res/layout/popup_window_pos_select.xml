@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 表示形式选择弹窗（效仿 gframe game.cpp L853-864 wPosSelect）：
+     标题 + 一行方形表示形式按钮，按 positions 位掩码控制各按钮可见性 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/sdialogl"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- 表侧攻击表示（btnPSAU）：显示卡图 -->
+        <ImageButton
+            android:id="@+id/btn_pos_select_au"
+            android:layout_width="85dp"
+            android:layout_height="85dp"
+            android:background="@drawable/btn_sci_fi_bg"
+            android:contentDescription="表侧攻击表示"
+            android:padding="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/unknown"
+            android:visibility="gone" />
+
+        <!-- 里侧攻击表示（btnPSAD）：显示卡背 -->
+        <ImageButton
+            android:id="@+id/btn_pos_select_ad"
+            android:layout_width="85dp"
+            android:layout_height="85dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/btn_sci_fi_bg"
+            android:contentDescription="里侧攻击表示"
+            android:padding="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/unknown"
+            android:visibility="gone" />
+
+        <!-- 表侧守备表示（btnPSDU）：卡图逆时针旋转90°（代码中设置） -->
+        <ImageButton
+            android:id="@+id/btn_pos_select_du"
+            android:layout_width="85dp"
+            android:layout_height="85dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/btn_sci_fi_bg"
+            android:contentDescription="表侧守备表示"
+            android:padding="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/unknown"
+            android:visibility="gone" />
+
+        <!-- 里侧守备表示（btnPSDD）：卡背逆时针旋转90°（代码中设置） -->
+        <ImageButton
+            android:id="@+id/btn_pos_select_dd"
+            android:layout_width="85dp"
+            android:layout_height="85dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/btn_sci_fi_bg"
+            android:contentDescription="里侧守备表示"
+            android:padding="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/unknown"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>

@@ -173,7 +173,7 @@ public class DeckInfo {
         if (mainCards != null) {
             this.mainCards.addAll(mainCards);
         }
-        mainCount = Math.min(mainCards.size(), Constants.DECK_MAIN_MAX);
+        mainCount = mainCards != null ? mainCards.size() : 0;
     }
 
     public void setExtraCards(Collection<Card> extraCards) {
@@ -210,6 +210,11 @@ public class DeckInfo {
         return sideCount;
     }
 
+    public void syncCounts() {
+        mainCount = mainCards.size();
+        extraCount = extraCards.size();
+        sideCount = sideCards.size();
+    }
 
     public Card getMainCard(int index) {
         if (index >= 0 && index < getMainCount()) {

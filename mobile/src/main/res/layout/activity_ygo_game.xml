@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 主内容区：左侧卡片详情 + 右侧（玩家信息 + 决斗场） -->
+    <LinearLayout
+        android:id="@+id/layout_game_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <!-- 左侧卡片详情面板（常驻显示） -->
+        <include
+            android:id="@+id/layout_card_detail_panel"
+            layout="@layout/layout_card_detail_panel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.3" />
+
+        <!-- 卡组编辑器视图 -->
+        <include
+            android:id="@+id/layout_deck_editor"
+            layout="@layout/layout_deck_editor"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.7"
+            android:visibility="gone" />
+
+        <!-- 右侧区域（垂直）：顶部玩家信息 + 决斗场 -->
+        <include
+            android:id="@+id/layout_game_right"
+            layout="@layout/layout_game_right"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.7" />
+    </LinearLayout>
+
+    <!-- 对话框容器 -->
+    <FrameLayout
+        android:id="@+id/dialog_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- 左上角 FPS 实时帧率显示（覆盖于决斗场之上，随 GameFieldView 每秒刷新） -->
+    <TextView
+        android:id="@+id/tv_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="1dp"
+        android:background="@drawable/button_radius_black_transparents"
+        android:text="FPS --"
+        android:textColor="@color/white"
+        android:textSize="6sp" />
+
+</FrameLayout>

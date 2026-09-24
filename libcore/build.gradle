@@ -35,11 +35,11 @@ dependencies {
 
 def ndkBuildCmd = org.gradle.internal.os.OperatingSystem.current().windows ? "ndk-build.cmd" : "ndk-build"
 
-// 编译ygo内核: 在 jni 目录执行 ndk-build -j4, 产物输出到 libs/<abi>/libYGOMobile.so
+// 编译ygo内核: 在 jni 目录执行 ndk-build -j, 一次产出 libYGOMobile.so 与 libygoengine.so 到 libs/<abi>/
 // 使用: ./gradlew :libcore:buildYgoCore  或在 Android Studio Gradle 面板双击
 task buildYgoCore(type: Exec) {
     group = 'ygo'
-    description = '使用 ndk-build 编译 libYGOMobile.so'
+    description = '使用 ndk-build 编译 libYGOMobile.so 与 libygoengine.so'
     workingDir file('jni')
     commandLine "${android.ndkDirectory}/${ndkBuildCmd}", '-j'
 }

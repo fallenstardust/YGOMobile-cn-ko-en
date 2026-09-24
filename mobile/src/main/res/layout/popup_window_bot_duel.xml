@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/window2"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <!-- 左侧：模式选择和AI列表 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.55"
+        android:orientation="vertical">
+
+        <!-- 模式选择Tab -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout_mode"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.1"
+            app:tabGravity="fill"
+            app:tabMode="fixed"
+            app:tabSelectedTextColor="@color/white"
+            app:tabTextAppearance="@style/wallet_third_tab_layout"
+            app:tabTextColor="@color/grayDark2" />
+
+        <!-- AI列表 -->
+        <ListView
+            android:id="@+id/lv_bot_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.9"
+            android:background="@drawable/ygopro_base_background" />
+    </LinearLayout>
+
+    <!-- 右侧：AI信息和设置 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.45"
+        android:layout_marginEnd="5dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp"
+            android:orientation="vertical">
+
+            <!-- AI信息标题 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:text="人机信息："
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <!-- AI描述 -->
+            <TextView
+                android:id="@+id/tv_bot_desc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:lineSpacingExtra="4dp"
+                android:text="人机卡组由你选择。随缘出牌。暂不支持使用扩展卡。"
+                android:textColor="@color/white"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- 选择卡组按钮 -->
+            <Button
+                android:id="@+id/btn_select_deck"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:background="@drawable/button3_bg"
+                android:text="@string/select_deck"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="10sp" />
+
+            <!-- 规则选择 -->
+            <Spinner
+                android:id="@+id/spinner_rule"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:layout_marginVertical="2dp"
+                android:background="@drawable/ygopro_spinner" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="2"
+                android:orientation="horizontal">
+
+                <!-- 选项复选框 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <CheckBox
+                        android:id="@+id/chk_ai_only_scissors"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:checked="false"
+                        android:text="AI只出剪刀"
+                        android:textSize="9dp"
+                        android:textColor="@color/white" />
+
+                    <CheckBox
+                        android:id="@+id/chk_no_check_deck"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:layout_marginVertical="2dp"
+                        android:checked="false"
+                        android:textSize="9dp"
+                        android:text="不检查卡组"
+                        android:textColor="@color/white" />
+
+                    <CheckBox
+                        android:id="@+id/chk_no_shuffle_deck"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:checked="false"
+                        android:textSize="9dp"
+                        android:text="不洗切卡组"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+
+                <!-- 按钮区域 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_gravity="bottom"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/btn_start_bot_duel"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:layout_marginBottom="2dp"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/OK"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btn_exit_bot"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/quit"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

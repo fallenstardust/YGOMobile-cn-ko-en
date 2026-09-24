@@ -1,0 +1,967 @@
+package cn.garymb.ygomobile.network;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.LogUtil;
+
+public class DuelClient implements YGOProtocol {
+    private static final String TAG = "DuelClient";
+    private static final int CONNECT_TIMEOUT = 5000;
+    private static final int BUFFER_SIZE = 0x20000;
+
+    public interface ClientListener {
+        void onConnected();
+        void onDisconnected();
+        void onError(String message);
+        void onPacketReceived(int proto, ByteBuffer data);
+        // STOC_CHAT playerType 为发送方座位号：0/1 我方队（队首+tag）、2/3 对方队、8 系统、9 脚本错误、11-19 观战者
+        void onChatMessage(int playerType, String message);
+        void onPlayerEnter(String name, int pos);
+        void onPlayerChange(int status);
+        void onWatchChange(int watchCount);
+        // STOC_DECK_COUNT 双方卡组/额外/副卡组数量（本地视角 0/1），供猜拳阶段场地堆叠展示
+        void onDeckCount(int deck0, int extra0, int side0, int deck1, int extra1, int side1);
+        void onDuelStart();
+        void onDuelEnd();
+        void onReplay(byte[] data);
+        void onGameMsg(int msgType, ByteBuffer data);
+        void onHandSelect();
+        void onTPSelect();
+        void onHandResult(int res1, int res2);
+        void onChangeSide();
+        void onWaitingSide();
+        void onTimeLimit(int player, int leftTime);
+        void onErrorMsg(int msg, int code);
+        void onTypeChange(int type);
+        // STOC_TEAMMATE_SURRENDER：tag 模式队友请求投降（对齐 duelclient.cpp STOC_TEAMMATE_SURRENDER / tag_duel.cpp Surrender）
+        default void onTeammateSurrender() {}
+        void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                        int noCheckDeck, int noShuffleDeck,
+                        int startLp, int startHand, int drawCount, int timeLimit);
+    }
+
+    private Socket socket;
+    private InputStream input;
+    private OutputStream output;
+    private Thread readThread;
+    private final AtomicBoolean connected = new AtomicBoolean(false);
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private ClientListener listener;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final ExecutorService sendExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "DuelClient-Send");
+        t.setDaemon(true);
+        // 发送线程内的未捕获异常（如 ByteBuffer 越界）会直接弄死进程，挂上后先落盘 ygocore/log
+        CrashHandler.getInstance().hookThread(t, "网络-发送线程");
+        return t;
+    });
+
+    public int selfType = -1;
+
+    public void setListener(ClientListener listener) {
+        this.listener = listener;
+    }
+
+    public boolean isConnected() {
+        return connected.get();
+    }
+
+    public boolean connect(String host, int port) {
+        if (connected.get()) {
+            disconnect();
+        }
+        try {
+            socket = new Socket();
+            socket.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT);
+            socket.setTcpNoDelay(true);
+            socket.setKeepAlive(true);
+            input = socket.getInputStream();
+            output = socket.getOutputStream();
+            connected.set(true);
+            running.set(true);
+
+            readThread = new Thread(this::readLoop, "DuelClient-Read");
+            readThread.setDaemon(true);
+            CrashHandler.getInstance().hookThread(readThread, "网络-接收线程");
+            readThread.start();
+
+            mainHandler.post(() -> {
+                if (listener != null) listener.onConnected();
+            });
+            return true;
+        } catch (IOException e) {
+            Log.e(TAG, "Connect failed", e);
+            mainHandler.post(() -> {
+                if (listener != null) listener.onError("连接失败: " + e.getMessage());
+            });
+            return false;
+        }
+    }
+
+    public void disconnect() {
+        if (!running.compareAndSet(true, false)) {
+            return;
+        }
+        connected.set(false);
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            // ignore
+        }
+        socket = null;
+        input = null;
+        output = null;
+        mainHandler.post(() -> {
+            if (listener != null) listener.onDisconnected();
+        });
+    }
+
+    private void readLoop() {
+        byte[] headerBuf = new byte[2];
+        try {
+            while (running.get()) {
+                int read = readFully(input, headerBuf, 0, 2);
+                if (read < 2) break;
+
+                int packetLen = (headerBuf[0] & 0xFF) | ((headerBuf[1] & 0xFF) << 8);
+                if (packetLen <= 0 || packetLen > BUFFER_SIZE) {
+                    Log.e(TAG, "Invalid packet length: " + packetLen);
+                    break;
+                }
+
+                byte[] data = new byte[packetLen];
+                read = readFully(input, data, 0, packetLen);
+                if (read < packetLen) break;
+
+                handlePacket(data);
+            }
+        } catch (java.net.SocketException e) {
+            if (running.get()) {
+                Log.w(TAG, "Connection aborted by remote: " + e.getMessage());
+            }
+        } catch (java.io.EOFException e) {
+            if (running.get()) {
+                Log.w(TAG, "Connection closed by remote (EOF)");
+            }
+        } catch (Exception e) {
+            if (running.get()) {
+                Log.e(TAG, "Read loop error", e);
+            }
+        } finally {
+            if (running.get()) {
+                disconnect();
+            }
+        }
+    }
+
+    private int readFully(InputStream is, byte[] buf, int off, int len) throws IOException {
+        int total = 0;
+        while (total < len) {
+            int r = is.read(buf, off + total, len - total);
+            if (r < 0) {
+                if (total == 0) return -1;
+                return total;
+            }
+            total += r;
+        }
+        return total;
+    }
+
+    private void handlePacket(byte[] data) {
+        ByteBuffer buf = ByteBuffer.wrap(data);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        int proto = buf.get() & 0xFF;
+
+        if (Constants.DEBUG) {
+            LogUtil.d(TAG, "◀ RECV [" + stocName(proto) + " 0x" + Integer.toHexString(proto) + "] len=" + data.length + " data=" + bytesToHex(data));
+        }
+
+        mainHandler.post(() -> {
+            if (listener == null) return;
+            switch (proto) {
+                case STOC_GAME_MSG:
+                    handleGameMsg(buf);
+                    break;
+                case STOC_ERROR_MSG:
+                    handleErrorMsg(buf);
+                    break;
+                case STOC_SELECT_HAND:
+                    listener.onHandSelect();
+                    break;
+                case STOC_SELECT_TP:
+                    listener.onTPSelect();
+                    break;
+                case STOC_HAND_RESULT:
+                    listener.onHandResult(buf.get() & 0xFF, buf.get() & 0xFF);
+                    break;
+                case STOC_TYPE_CHANGE:
+                    handleTypeChange(buf);
+                    break;
+                case STOC_JOIN_GAME:
+                    handleJoinGame(buf);
+                    break;
+                case STOC_DUEL_START:
+                    listener.onDuelStart();
+                    break;
+                case STOC_DUEL_END:
+                    listener.onDuelEnd();
+                    break;
+                case STOC_REPLAY: {
+                    // 包体即完整的 .yrp 录像文件字节流（ExtendedReplayHeader + 数据）
+                    if (buf.remaining() < 24) break;
+                    byte[] replayData = new byte[buf.remaining()];
+                    buf.get(replayData);
+                    listener.onReplay(replayData);
+                    break;
+                }
+                case STOC_CHANGE_SIDE:
+                    listener.onChangeSide();
+                    break;
+                case STOC_WAITING_SIDE:
+                    listener.onWaitingSide();
+                    break;
+                case STOC_TIME_LIMIT:
+                    handleTimeLimit(buf);
+                    break;
+                case STOC_CHAT:
+                    handleChat(buf);
+                    break;
+                case STOC_HS_PLAYER_ENTER:
+                    handlePlayerEnter(buf);
+                    break;
+                case STOC_HS_PLAYER_CHANGE:
+                    listener.onPlayerChange(buf.get() & 0xFF);
+                    break;
+                case STOC_HS_WATCH_CHANGE:
+                    handleWatchChange(buf);
+                    break;
+                case STOC_DECK_COUNT:
+                    handleDeckCount(buf);
+                    break;
+                case STOC_TEAMMATE_SURRENDER:
+                    listener.onTeammateSurrender();
+                    break;
+                case STOC_TP_RESULT:
+                case STOC_LEAVE_GAME:
+                case STOC_FIELD_FINISH:
+                    break;
+                default:
+                    listener.onPacketReceived(proto, buf);
+                    break;
+            }
+        });
+    }
+
+    private void handleGameMsg(ByteBuffer buf) {
+        if (buf.remaining() < 1) return;
+        int msgType = buf.get() & 0xFF;
+        if (listener != null) {
+            listener.onGameMsg(msgType, buf);
+        }
+    }
+
+    private void handleErrorMsg(ByteBuffer buf) {
+        if (buf.remaining() < 5) return;
+        int msg = buf.get() & 0xFF;
+        buf.position(buf.position() + 3);
+        int code = buf.getInt();
+        if (listener != null) {
+            listener.onErrorMsg(msg, code);
+        }
+    }
+
+    private void handleTypeChange(ByteBuffer buf) {
+        if (buf.remaining() < 1) return;
+        int typeVal = buf.get() & 0xFF;
+        selfType = typeVal & 0xf;
+        if (listener != null) {
+            listener.onTypeChange(typeVal);
+        }
+    }
+
+    private void handleJoinGame(ByteBuffer buf) {
+        if (buf.remaining() < 20) return;
+        int lflist = buf.getInt();
+        int rule = buf.get() & 0xFF;
+        int mode = buf.get() & 0xFF;
+        int duelRule = buf.get() & 0xFF;
+        int noCheckDeck = buf.get() & 0xFF;
+        int noShuffleDeck = buf.get() & 0xFF;
+        buf.position(buf.position() + 3);
+        int startLp = buf.getInt();
+        int startHand = buf.get() & 0xFF;
+        int drawCount = buf.get() & 0xFF;
+        int timeLimit = buf.getShort() & 0xFFFF;
+        if (listener != null) {
+            listener.onJoinGame(lflist, rule, mode, duelRule,
+                    noCheckDeck, noShuffleDeck,
+                    startLp, startHand, drawCount, timeLimit);
+        }
+    }
+
+    private void handleTimeLimit(ByteBuffer buf) {
+        if (buf.remaining() < 4) return;
+        int player = buf.get() & 0xFF;
+        buf.position(buf.position() + 1);
+        int leftTime = buf.getShort() & 0xFFFF;
+        if (listener != null) {
+            listener.onTimeLimit(player, leftTime);
+        }
+    }
+
+    private void handleChat(ByteBuffer buf) {
+        if (buf.remaining() < 2) return;
+        int playerType = buf.getShort() & 0xFFFF;
+        int remaining = buf.remaining();
+        if (remaining < 2) return;
+        int charCount = remaining / 2;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < charCount && buf.remaining() >= 2; i++) {
+            char c = buf.getChar();
+            if (c == 0) break;
+            sb.append(c);
+        }
+        // 原样下发座位号（对齐 gframe duelclient.cpp STOC_CHAT：chat_player_type 即发送方座位），
+        // 由 UI 层按 game.cpp AddChatMsg 的 player 规则区分我方/对方/系统/观战
+        if (listener != null) {
+            listener.onChatMessage(playerType, sb.toString());
+        }
+    }
+
+    private void handlePlayerEnter(ByteBuffer buf) {
+        if (buf.remaining() < 41) return;
+        StringBuilder nameBuilder = new StringBuilder();
+        for (int i = 0; i < 20 && buf.remaining() >= 2; i++) {
+            char c = buf.getChar();
+            if (c == 0) {
+                buf.position(buf.position() + (19 - i) * 2);
+                break;
+            }
+            nameBuilder.append(c);
+        }
+        int pos = buf.get() & 0xFF;
+        if (listener != null) {
+            listener.onPlayerEnter(nameBuilder.toString(), pos);
+        }
+    }
+
+    private void handleWatchChange(ByteBuffer buf) {
+        if (buf.remaining() < 2) return;
+        int watchCount = buf.getShort() & 0xFFFF;
+        if (listener != null) {
+            listener.onWatchChange(watchCount);
+        }
+    }
+
+    private void handleDeckCount(ByteBuffer buf) {
+        if (buf.remaining() < 12) return;
+        int deck0 = buf.getShort() & 0xFFFF;
+        int extra0 = buf.getShort() & 0xFFFF;
+        int side0 = buf.getShort() & 0xFFFF;
+        int deck1 = buf.getShort() & 0xFFFF;
+        int extra1 = buf.getShort() & 0xFFFF;
+        int side1 = buf.getShort() & 0xFFFF;
+        if (listener != null) {
+            // 原实现把游标已越过的 buf 交给 onPacketReceived，6 个数量被丢弃；
+            // 改为直接回调解析结果（对齐 duelclient.cpp STOC_DECK_COUNT L584-598）。
+            listener.onDeckCount(deck0, extra0, side0, deck1, extra1, side1);
+        }
+    }
+
+    // === Send methods ===
+
+    public void sendExternalAddress(String address) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_EXTERNAL_ADDRESS);
+        buf.position(buf.position() + 4);
+        BufferIO.writeUTF16(buf, address, address.length());
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendPlayerInfo(String playerName) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_PLAYER_INFO);
+        BufferIO.writeUTF16(buf, playerName, 20);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendCreateGame(int lflist, int rule, int mode, int duelRule,
+                                boolean noCheckDeck, boolean noShuffleDeck,
+                                int startLp, int startHand, int drawCount, int timeLimit,
+                                String name, String pass) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_CREATE_GAME);
+        buf.putInt(lflist);
+        buf.put((byte) rule);
+        buf.put((byte) mode);
+        buf.put((byte) duelRule);
+        buf.put((byte) (noCheckDeck ? 1 : 0));
+        buf.put((byte) (noShuffleDeck ? 1 : 0));
+        buf.put((byte) 0);
+        buf.put((byte) 0);
+        buf.put((byte) 0);
+        buf.putInt(startLp);
+        buf.put((byte) startHand);
+        buf.put((byte) drawCount);
+        buf.putShort((short) timeLimit);
+        BufferIO.writeUTF16(buf, name, 20);
+        BufferIO.writeUTF16(buf, pass, 20);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendJoinGame(int version, String pass) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_JOIN_GAME);
+        buf.putShort((short) version);
+        buf.putShort((short) 0);
+        buf.putInt(0);
+        BufferIO.writeUTF16(buf, pass, 20);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendHandResult(int result) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_HAND_RESULT);
+        buf.put((byte) result);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendTPResult(boolean chooseFirst) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_TP_RESULT);
+        buf.put((byte) (chooseFirst ? 1 : 0));
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendUpdateDeck(List<Integer> main, List<Integer> extra, List<Integer> side) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_UPDATE_DECK);
+        buf.putInt(main.size() + extra.size());
+        buf.putInt(side.size());
+        for (int code : main) buf.putInt(code);
+        for (int code : extra) buf.putInt(code);
+        for (int code : side) buf.putInt(code);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendResponse(byte[] responseData) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_RESPONSE);
+        buf.put(responseData);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendSurrender() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_SURRENDER);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendLeaveGame() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_LEAVE_GAME);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendChat(String message) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_CHAT);
+        byte[] bytes = message.getBytes(StandardCharsets.UTF_16LE);
+        int charCount = Math.min(message.length(), 255);
+        for (int i = 0; i < charCount; i++) {
+            buf.putChar(message.charAt(i));
+        }
+        buf.putChar('\0');
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendReady() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_HS_READY);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendNotReady() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_HS_NOTREADY);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendToDuelist() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_HS_TODUELIST);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendToObserver() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_HS_TOOBSERVER);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendKick(int pos) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_HS_KICK);
+        buf.put((byte) pos);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendStart() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_HS_START);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    public void sendTimeConfirm() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_TIME_CONFIRM);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    private void sendRaw(byte[] data) {
+        if (!connected.get() || output == null) return;
+
+        if (Constants.DEBUG) {
+            int proto = (data.length > 0) ? (data[0] & 0xFF) : -1;
+            LogUtil.d(TAG, "▶ SEND [" + ctosName(proto) + " 0x" + Integer.toHexString(proto >= 0 ? proto : 0) + "] len=" + data.length + " data=" + bytesToHex(data));
+        }
+
+        sendExecutor.execute(() -> {
+            try {
+                synchronized (this) {
+                    output.write(data);
+                    output.flush();
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Send failed", e);
+                disconnect();
+            }
+        });
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) return "";
+        StringBuilder sb = new StringBuilder();
+        int limit = Math.min(bytes.length, 128);
+        for (int i = 0; i < limit; i++) {
+            if (i > 0) sb.append(' ');
+            sb.append(String.format("%02X", bytes[i] & 0xFF));
+        }
+        if (bytes.length > 128) sb.append("...");
+        return sb.toString();
+    }
+
+    private static String stocName(int proto) {
+        switch (proto) {
+            case STOC_GAME_MSG: return "STOC_GAME_MSG";
+            case STOC_ERROR_MSG: return "STOC_ERROR_MSG";
+            case STOC_SELECT_HAND: return "STOC_SELECT_HAND";
+            case STOC_SELECT_TP: return "STOC_SELECT_TP";
+            case STOC_HAND_RESULT: return "STOC_HAND_RESULT";
+            case STOC_CHANGE_SIDE: return "STOC_CHANGE_SIDE";
+            case STOC_WAITING_SIDE: return "STOC_WAITING_SIDE";
+            case STOC_CREATE_GAME: return "STOC_CREATE_GAME";
+            case STOC_JOIN_GAME: return "STOC_JOIN_GAME";
+            case STOC_TYPE_CHANGE: return "STOC_TYPE_CHANGE";
+            case STOC_DUEL_START: return "STOC_DUEL_START";
+            case STOC_DUEL_END: return "STOC_DUEL_END";
+            case STOC_REPLAY: return "STOC_REPLAY";
+            case STOC_TIME_LIMIT: return "STOC_TIME_LIMIT";
+            case STOC_CHAT: return "STOC_CHAT";
+            case STOC_HS_PLAYER_ENTER: return "STOC_HS_PLAYER_ENTER";
+            case STOC_HS_PLAYER_CHANGE: return "STOC_HS_PLAYER_CHANGE";
+            case STOC_HS_WATCH_CHANGE: return "STOC_HS_WATCH_CHANGE";
+            default: return "UNKNOWN_STOC";
+        }
+    }
+
+    private static String ctosName(int proto) {
+        switch (proto) {
+            case CTOS_RESPONSE: return "CTOS_RESPONSE";
+            case CTOS_UPDATE_DECK: return "CTOS_UPDATE_DECK";
+            case CTOS_HAND_RESULT: return "CTOS_HAND_RESULT";
+            case CTOS_TP_RESULT: return "CTOS_TP_RESULT";
+            case CTOS_PLAYER_INFO: return "CTOS_PLAYER_INFO";
+            case CTOS_CREATE_GAME: return "CTOS_CREATE_GAME";
+            case CTOS_JOIN_GAME: return "CTOS_JOIN_GAME";
+            case CTOS_LEAVE_GAME: return "CTOS_LEAVE_GAME";
+            case CTOS_SURRENDER: return "CTOS_SURRENDER";
+            case CTOS_TIME_CONFIRM: return "CTOS_TIME_CONFIRM";
+            case CTOS_CHAT: return "CTOS_CHAT";
+            case CTOS_EXTERNAL_ADDRESS: return "CTOS_EXTERNAL_ADDRESS";
+            case CTOS_HS_TODUELIST: return "CTOS_HS_TODUELIST";
+            case CTOS_HS_TOOBSERVER: return "CTOS_HS_TOOBSERVER";
+            case CTOS_HS_READY: return "CTOS_HS_READY";
+            case CTOS_HS_NOTREADY: return "CTOS_HS_NOTREADY";
+            case CTOS_HS_KICK: return "CTOS_HS_KICK";
+            case CTOS_HS_START: return "CTOS_HS_START";
+            default: return "UNKNOWN_CTOS";
+        }
+    }
+
+    // === LAN Discovery ===
+
+    public interface HostDiscoveryListener {
+        void onHostFound(String host, int port, String name, int[] hostInfo);
+        void onDiscoveryComplete();
+    }
+
+    public static void discoverHosts(int port, int timeoutMs, HostDiscoveryListener listener) {
+        Thread thread = new Thread(() -> {
+            try {
+                DatagramSocket ds = new DatagramSocket();
+                ds.setBroadcast(true);
+                ds.setSoTimeout(timeoutMs);
+
+                byte[] request = new byte[]{(byte) (NETWORK_CLIENT_ID & 0xFF),
+                        (byte) ((NETWORK_CLIENT_ID >> 8) & 0xFF)};
+                DatagramPacket sendPkt = new DatagramPacket(request, request.length,
+                        InetAddress.getByName("255.255.255.255"), port);
+                ds.send(sendPkt);
+
+                byte[] recvBuf = new byte[256];
+                long startTime = System.currentTimeMillis();
+                while (System.currentTimeMillis() - startTime < timeoutMs) {
+                    try {
+                        DatagramPacket recvPkt = new DatagramPacket(recvBuf, recvBuf.length);
+                        ds.receive(recvPkt);
+                        ByteBuffer buf = ByteBuffer.wrap(recvPkt.getData(), 0, recvPkt.getLength());
+                        buf.order(ByteOrder.LITTLE_ENDIAN);
+                        if (buf.remaining() < 72) continue;
+
+                        int identifier = buf.getShort() & 0xFFFF;
+                        if (identifier != NETWORK_SERVER_ID) continue;
+
+                        int version = buf.getShort() & 0xFFFF;
+                        int hostPort = buf.getShort() & 0xFFFF;
+                        buf.position(buf.position() + 2);
+                        int ip = buf.getInt();
+                        StringBuilder nameBuilder = new StringBuilder();
+                        for (int i = 0; i < 20 && buf.remaining() >= 2; i++) {
+                            char c = buf.getChar();
+                            if (c == 0) {
+                                buf.position(buf.position() + (19 - i) * 2);
+                                break;
+                            }
+                            nameBuilder.append(c);
+                        }
+                        String hostAddr = recvPkt.getAddress().getHostAddress();
+                        int[] hostInfo = new int[]{version, hostPort};
+                        final String fname = nameBuilder.toString();
+                        final String fhost = hostAddr;
+                        if (listener != null) {
+                            listener.onHostFound(fhost, hostPort, fname, hostInfo);
+                        }
+                    } catch (SocketTimeoutException e) {
+                        break;
+                    }
+                }
+                ds.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Host discovery failed", e);
+            } finally {
+                if (listener != null) {
+                    listener.onDiscoveryComplete();
+                }
+            }
+        }, "HostDiscovery");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    // === DuelClient.ClientListener ===
+    // STOC 通讯回调处理（自 GameEngine 合并，对齐 gframe duelclient.cpp ClientAnalyze 的 STOC_* 处理）：
+    // 共享状态经 GameEngine 访问；游戏消息（onGameMsg）交由 GameEngine 的「消息串行闸门」排队派发。
+    public static class StocHandler implements ClientListener {
+        // 保持拆分前日志标识，便于与旧版日志比对
+        private static final String TAG = "GameEngine";
+
+        private final GameEngine engine;
+
+        public StocHandler(GameEngine engine) {
+            this.engine = engine;
+        }
+
+        @Override
+        public void onConnected() {
+            Log.i(TAG, "Connected to server");
+            // 新会话建立时作废上一次连接的房间信息缓存，避免等待界面补发陈旧规则
+            engine.hasJoinRoomInfoCache = false;
+        }
+
+        @Override
+        public void onDisconnected() {
+            Log.i(TAG, "Disconnected from server");
+            if (engine.getState() != GameEngine.GameState.DUEL_END) {
+                engine.setEngineState(GameEngine.GameState.DISCONNECTED);
+            }
+        }
+
+        @Override
+        public void onError(String message) {
+            Log.e(TAG, "Network error: " + message);
+        }
+
+        @Override
+        public void onPacketReceived(int proto, ByteBuffer data) {
+            Log.d(TAG, "Unhandled packet: " + String.format("0x%02X", proto));
+        }
+
+        @Override
+        public void onChatMessage(int playerType, String message) {
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onChatReceived(playerType, message);
+            });
+            engine.soundManager.playSoundEffect(SoundManager.SFX.CHAT);
+        }
+
+        @Override
+        public void onPlayerEnter(String name, int pos) {
+            Log.i(TAG, "Player entered: " + name + " at pos " + pos);
+            if (pos < engine.playerInfos.length) {
+                engine.playerInfos[pos].name = name;
+            }
+            // 座位 0-3 全量记录：tag 模式下 pos1/pos3 为双方 tag 同伴，聊天昵称需要
+            if (pos >= 0 && pos < engine.seatNames.length) {
+                engine.seatNames[pos] = name;
+            }
+            engine.soundManager.playSoundEffect(SoundManager.SFX.PLAYER_ENTER);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onPlayerEnter(name, pos);
+            });
+        }
+
+        @Override
+        public void onPlayerChange(int status) {
+            Log.i(TAG, "Player change: " + String.format("0x%02X", status));
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onPlayerChange(status);
+            });
+        }
+
+        @Override
+        public void onWatchChange(int watchCount) {
+            Log.i(TAG, "Watch count changed: " + watchCount);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onWatchChange(watchCount);
+            });
+        }
+
+        @Override
+        public void onDeckCount(int deck0, int extra0, int side0, int deck1, int extra1, int side1) {
+            // STOC_DECK_COUNT 在 STOC_DUEL_START 之后、MSG_START 之前下发双方卡组/额外/副卡组数量，
+            // 供猜拳阶段在场地展示「卡组堆叠 / 额外卡组堆叠 / 除外区堆叠(显示副卡组数量)」。
+            // 对齐 duelclient.cpp STOC_DECK_COUNT L584-598：C++ 用字面量 Initial(0)/Initial(1)（本地视角），
+            // 故此处不经 localPlayer 映射；field 已由 onDuelStart 清空，这里只填充不重复 clear。
+            engine.field.initial(0, deck0, extra0, side0);
+            engine.field.initial(1, deck1, extra1, side1);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            });
+        }
+
+        @Override
+        public void onDuelStart() {
+            engine.field.clear();
+            engine.duelStarted = true;
+            engine.inDuel = false;
+            engine.siding = false;
+            engine.tagSurrenderInitiated = false;
+            engine.duelStage = YGOProtocol.DUEL_STAGE_DUELING;
+            engine.setEngineState(GameEngine.GameState.DUELING);
+            engine.soundManager.playBGM(SoundManager.BGM.DUEL);
+            // 对局开场清理残留提示（对齐 game.cpp CloseGameWindow L2426 stHintMsg->setVisible(false)）
+            engine.hintManager.stopWaitHint();
+            engine.hintManager.postDuelHintHide();
+        }
+
+        @Override
+        public void onDuelEnd() {
+            engine.duelStarted = false;
+            engine.inDuel = false;
+            engine.siding = false;
+            engine.tagSurrenderInitiated = false;
+            engine.duelStage = YGOProtocol.DUEL_STAGE_END;
+            engine.setEngineState(GameEngine.GameState.DUEL_END);
+            engine.soundManager.stopBGM();
+            engine.hintManager.stopWaitHint();
+            engine.hintManager.postDuelHintHide();
+        }
+
+        @Override
+        public void onReplay(byte[] data) {
+            Log.i(TAG, "Replay data received from server, size=" + data.length);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onReplayData(data);
+            });
+        }
+
+        @Override
+        public void onGameMsg(int msgType, ByteBuffer data) {
+            // 入队后由 GameEngine 闸门串行派发：动画消息会关闭闸门，暂缓后续消息
+            // （对齐 C++ WaitFrameSignal 阻塞语义，队列/闸门逻辑在 GameEngine）
+            engine.enqueueGameMsg(msgType, data);
+        }
+
+        @Override
+        public void onHandSelect() {
+            engine.setEngineState(GameEngine.GameState.HAND_SELECT);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onSelectRequired(0, null);
+            });
+        }
+
+        @Override
+        public void onTPSelect() {
+            engine.setEngineState(GameEngine.GameState.TP_SELECT);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onSelectRequired(1, null);
+            });
+        }
+
+        @Override
+        public void onHandResult(int res1, int res2) {
+            Log.i(TAG, "Hand result: " + res1 + " vs " + res2);
+            // 对齐 duelclient.cpp L528：STOC_HAND_RESULT 公布猜拳结果时隐藏提示
+            engine.hintManager.postDuelHintHide();
+            // STOC_HAND_RESULT 按服务器视角下发 player0/player1 手势，转换为本方视角
+            int self = engine.client.selfType;
+            final int myHand = (self == 1) ? res2 : res1;
+            final int oppHand = (self == 1) ? res1 : res2;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onHandResult(myHand, oppHand);
+            });
+        }
+
+        @Override
+        public void onChangeSide() {
+            engine.duelStarted = false;
+            engine.inDuel = false;
+            engine.siding = true;
+            engine.duelStage = YGOProtocol.DUEL_STAGE_SIDING;
+            engine.setEngineState(GameEngine.GameState.SIDING);
+        }
+
+        @Override
+        public void onWaitingSide() {
+            engine.inDuel = false;
+            Log.i(TAG, "Waiting for side change");
+            // 对齐 duelclient.cpp L575-580：STOC_WAITING_SIDE 显示"等待换备卡"
+            engine.hintManager.stopWaitHint();
+            engine.hintManager.postDuelHint(engine.hintManager.sysString(1409, "等待对方换备卡..."));
+        }
+
+        @Override
+        public void onTimeLimit(int player, int leftTime) {
+            // 协议侧玩家索引统一转本地视角（0=我方），我方为后攻时倒计时也落入我方布局
+            final int p = engine.localPlayer(player & 1);
+            // 对齐 duelclient.cpp L1091-1093：限时局收到 STOC_TIME_LIMIT 且轮到我方时立即回
+            // CTOS_TIME_CONFIRM——服务端 WaitforResponse 在限时把 state 置 CTOS_TIME_CONFIRM
+            // （single_duel.cpp L1480），包门控（netserver.cpp L417）会静默丢弃此后我方的一切
+            // CTOS_RESPONSE，直到 TimeConfirm 把 state 改回 CTOS_RESPONSE；漏发即表现为
+            // “操作一两个发动后卡死、无断线提示”（233 等开限时的服务器必现）
+            if (p == 0) engine.sendTimeConfirm();
+            if (engine.field.dInfo.timeLimit <= 0) {
+                engine.field.dInfo.timeLimit = Math.max(engine.gameTimeLimit, leftTime);
+            }
+            engine.field.dInfo.timePlayer = p;
+            engine.field.dInfo.timeLeft[p] = leftTime;
+            engine.field.resetTimeTick();
+            engine.field.refreshTimeDisplay();
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onTimeLimitUpdate(p, leftTime);
+            });
+        }
+
+        @Override
+        public void onErrorMsg(int msg, int code) {
+            String errorMsg;
+            switch (msg) {
+                case YGOProtocol.ERRMSG_JOINERROR:
+                    errorMsg = "无法加入房间";
+                    break;
+                case YGOProtocol.ERRMSG_DECKERROR: {
+                    int errorType = (code >> 28) & 0xF;
+                    int cardCode = code & 0x0FFFFFFF;
+                    engine.mainHandler.post(() -> {
+                        if (engine.listener != null) engine.listener.onDeckError(errorType, cardCode);
+                    });
+                    return;
+                }
+                case YGOProtocol.ERRMSG_SIDEERROR:
+                    errorMsg = "副卡组错误";
+                    break;
+                case YGOProtocol.ERRMSG_VERERROR:
+                    errorMsg = "版本不匹配";
+                    break;
+                default:
+                    errorMsg = "未知错误: " + msg;
+                    break;
+            }
+            Log.e(TAG, "Server error: " + errorMsg);
+            final String finalMsg = errorMsg;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onHintMessage(finalMsg);
+            });
+        }
+
+        @Override
+        public void onTypeChange(int type) {
+            Log.i(TAG, "Type changed to: " + type);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onTypeChange(type);
+            });
+            engine.setEngineState(GameEngine.GameState.LOBBY);
+        }
+
+        @Override
+        public void onTeammateSurrender() {
+            // tag_duel.cpp Surrender 会把 STOC_TEAMMATE_SURRENDER 同时发给发起方与队友；
+            // 发起方只是知会（已在等待队友，不再弹窗），未发起的队友才弹出“是否同意投降”确认框
+            if (engine.tagSurrenderInitiated) return;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onTeammateSurrenderRequest();
+            });
+        }
+
+        @Override
+        public void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                               int noCheckDeck, int noShuffleDeck,
+                               int startLp, int startHand, int drawCount, int timeLimit) {
+            engine.playerInfos[0].startLp = startLp;
+            engine.playerInfos[1].startLp = startLp;
+            engine.playerInfos[0].lp = startLp;
+            engine.playerInfos[1].lp = startLp;
+            engine.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
+            engine.gameMode = mode;
+            engine.gameRule = rule;
+            engine.gameLflist = lflist;
+            engine.gameStartLp = startLp;
+            engine.gameStartHand = startHand;
+            engine.gameDrawCount = drawCount;
+            engine.gameTimeLimit = timeLimit;
+            engine.gameNoCheckDeck = noCheckDeck;
+            engine.gameNoShuffleDeck = noShuffleDeck;
+            engine.field.dInfo.timeLimit = timeLimit;
+            engine.field.dInfo.startLp = startLp;
+            engine.field.dInfo.lp[0] = startLp;
+            engine.field.dInfo.lp[1] = startLp;
+            // 缓存完整房间信息（含 duelRule 已写入 dInfo），供 PlayerWaitingDialog 就绪后补发
+            engine.hasJoinRoomInfoCache = true;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onJoinGame(lflist, rule, mode, duelRule,
+                        noCheckDeck, noShuffleDeck,
+                        startLp, startHand, drawCount, timeLimit);
+            });
+            engine.setEngineState(GameEngine.GameState.LOBBY);
+        }
+    }
+}
