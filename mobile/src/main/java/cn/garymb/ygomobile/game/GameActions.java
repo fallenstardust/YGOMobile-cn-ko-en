@@ -41,6 +41,11 @@ public class GameActions {
     }
 
     public void sendResponse(byte[] responseData) {
+        // 残局：无网络，应答经引擎泵线程喂回本地决斗引擎（对齐 SingleMode::SetResponse）
+        if (engine.isSingleMode) {
+            engine.singleRunner.submitResponse(responseData);
+            return;
+        }
         engine.client.sendResponse(responseData);
     }
 

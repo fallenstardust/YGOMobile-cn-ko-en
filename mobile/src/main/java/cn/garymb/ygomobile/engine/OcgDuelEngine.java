@@ -60,6 +60,8 @@ public final class OcgDuelEngine {
     // ===== 决斗规则位（对齐 common.h DUEL_*） =====
     public static final int DUEL_PSEUDO_SHUFFLE = 0x10;
     public static final int DUEL_TAG_MODE = 0x20;
+    /** common.h L426：残局/单机结束把场上卡送回卡组顶（gframe chkSinglePlayReturnDeckTop） */
+    public static final int DUEL_RETURN_DECK_TOP = 0x80;
 
     // ===== 查询字段掩码（对齐 common.h QUERY_*） =====
     public static final int QUERY_CODE = 0x1;

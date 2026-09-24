@@ -59,7 +59,7 @@ public class SingleModeDialog {
         void onStartBotDuel(String botCommand, String deckFile,
                             int duelRule, boolean noCheckDeck, boolean noShuffleDeck);
 
-        void onStartSingleMode(String luaFilePath);
+        void onStartSingleMode(String luaFilePath, boolean noShuffleToDeck);
     }
 
     private OnSingleModeListener listener;
@@ -86,6 +86,9 @@ public class SingleModeDialog {
         CheckBox chkAiOnlyScissors = customView.findViewById(R.id.chk_ai_only_scissors);
         CheckBox chkNoCheckDeck = customView.findViewById(R.id.chk_no_check_deck);
         CheckBox chkNoShuffleDeck = customView.findViewById(R.id.chk_no_shuffle_deck);
+        CheckBox chkReturnToTop = customView.findViewById(R.id.chk_return_to_top);
+        // 设置残局模式的 checkbox 文本
+        chkReturnToTop.setText(mStringManager.getSystemString(1238, "不洗切时回卡组改为回顶端"));
         Button btnStartBotDuel = customView.findViewById(R.id.btn_start_bot_duel);
         Button btnExitBot = customView.findViewById(R.id.btn_exit_bot);
 
@@ -193,6 +196,8 @@ public class SingleModeDialog {
                     chkAiOnlyScissors.setVisibility(View.VISIBLE);
                     chkNoCheckDeck.setVisibility(View.VISIBLE);
                     chkNoShuffleDeck.setVisibility(View.VISIBLE);
+                    // 残局专属选项在人机模式隐藏
+                    chkReturnToTop.setVisibility(View.GONE);
                 } else {
                     lvBotList.setAdapter(puzzleAdapter);
                     puzzleAdapter.setSelectedPosition(-1);
@@ -205,6 +210,7 @@ public class SingleModeDialog {
                     chkAiOnlyScissors.setVisibility(View.GONE);
                     chkNoCheckDeck.setVisibility(View.GONE);
                     chkNoShuffleDeck.setVisibility(View.GONE);
+                    chkReturnToTop.setVisibility(View.VISIBLE);
                 }
             }
 
@@ -268,9 +274,11 @@ public class SingleModeDialog {
                 }
 
                 PuzzleUtil.PuzzleInfo selectedPuzzle = puzzleList.get(selectedPosition[0]);
-                popupWindow.dismiss();
+                // 残局开局属内部跳转：抑制 dismiss → restoreMainMenu，否则主菜单会
+                // 叠在残局决斗界面上层再次弹出（与 bot 分支同一处理）
+                hideForNavigation();
                 if (listener != null) {
-                    listener.onStartSingleMode(selectedPuzzle.filePath);
+                    listener.onStartSingleMode(selectedPuzzle.filePath, chkReturnToTop.isChecked());
                 }
             }
         });
@@ -355,8 +363,8 @@ public class SingleModeDialog {
             }
 
             @Override
-            public void onStartSingleMode(String luaFilePath) {
-                activity.getEngine().startSingleMode(luaFilePath);
+            public void onStartSingleMode(String luaFilePath, boolean noShuffleToDeck) {
+                activity.getEngine().startSingleMode(luaFilePath, noShuffleToDeck);
             }
         });
         dialog.show(activity.getDialogContainer(), botList, puzzleList);

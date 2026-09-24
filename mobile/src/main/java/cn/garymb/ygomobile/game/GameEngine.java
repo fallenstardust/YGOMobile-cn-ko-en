@@ -256,6 +256,8 @@ public class GameEngine {
     final GameActions gameActions;
     /** 录像回放播放器（唯一回放入口：消息投喂本引擎实况管线，与联机/观战同一渲染路径） */
     public final ReplayPlayer replayPlayer;
+    /** 残局播放器（本地引擎直驱残局 lua，消息投喂本引擎实况管线，实现见 {@link SingleModeRunner}） */
+    public final SingleModeRunner singleRunner;
 
     public GameEngine(SoundManager soundManager) {
         this.client = new DuelClient();
@@ -273,6 +275,7 @@ public class GameEngine {
         this.lobbyActions = new LobbyActions(this);
         this.gameActions = new GameActions(this);
         this.replayPlayer = new ReplayPlayer(this);
+        this.singleRunner = new SingleModeRunner(this);
         client.setListener(new DuelClient.StocHandler(this));
     }
 
@@ -432,8 +435,11 @@ public class GameEngine {
                 roomName, password);
     }
 
-    public void startSingleMode(String luaPath) {
-        connection.startSingleMode(luaPath);
+    /** 启动残局（对齐 single_mode.cpp SinglePlayThread）。
+     * @param luaPath 残局脚本路径
+     * @param noShuffleToDeck 是否启用「不洗切时回卡组改为回顶端」标志 */
+    public void startSingleMode(String luaPath, boolean noShuffleToDeck) {
+        connection.startSingleMode(luaPath, noShuffleToDeck);
     }
 
     public void startBotDuel(String host, int port, String botCommand, String deckFile) {
@@ -771,6 +777,12 @@ public class GameEngine {
     /** 回放模式：录像消息经 ReplayPlayer 切片后投入本引擎实况管线渲染。SELECT 询问/胜负结算
      *  在 GameMessageParser 侧抑制（应答已录制在文件里，弹选择窗会悬挂流程） */
     public boolean replayMode = false;
+    /**
+     * 残局（single mode）模式：本地引擎直驱残局 lua（{@link SingleModeRunner}），消息投喂本引擎
+     * 实况管线。与 {@code replayMode} 互斥：残局需真实交互（弹选择窗、路由应答到引擎、显示投降），
+     * 故不置 replayMode；由 {@link GameActions#sendResponse} / {@code EngineCallbackDelegate} 按本标志分支。
+     */
+    public boolean isSingleMode = false;
     /** 回放快进重排中（undo/restart/跳回合）：drawspec 覆盖层与长动画派发丢弃，配合
      *  GameField.instantPlace 即时落位与音效静默，令闸门不阻塞、队列单帧排空 */
     public boolean replaySkip = false;
@@ -840,6 +852,7 @@ public class GameEngine {
 
     public void release() {
         replayPlayer.stop();
+        singleRunner.stop();
         disconnect();
         scriptEngine.release();
     }

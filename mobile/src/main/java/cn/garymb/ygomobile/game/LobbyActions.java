@@ -37,6 +37,11 @@ public class LobbyActions {
     }
 
     public void sendSurrender() {
+        // 残局：无服务器可发投降包，等价于判定本方负并收尾（对齐 gframe 残局LeaveGame）
+        if (engine.isSingleMode) {
+            engine.singleRunner.quit();
+            return;
+        }
         if (isTagMode()) engine.tagSurrenderInitiated = true;
         engine.client.sendSurrender();
     }

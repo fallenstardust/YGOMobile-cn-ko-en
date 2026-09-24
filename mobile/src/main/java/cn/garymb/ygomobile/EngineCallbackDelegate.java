@@ -109,8 +109,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                     // 对齐 duelclient.cpp L912-916：STOC_GAME_START 按 chkDefaultShowChain 初始化时点三态
                     activity.cardDetailPanel.onDuelStarted();
                     // 进入决斗后仅对战玩家显示投降按钮；猜拳/选先后阶段保持隐藏
-                    //（onGameUIShown 已默认隐藏）
-                    activity.cardDetailPanel.setSurrenderVisible(selfSeat >= 0);
+                    //（onGameUIShown 已默认隐藏）；残局恒为我方参战，直接显示
+                    activity.cardDetailPanel.setSurrenderVisible(selfSeat >= 0
+                            || activity.engine.isSingleMode);
                 }
                 pendingReplays.clear();
                 duelEndHandling = false;
@@ -168,9 +169,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             GameField.PlayerField pf = activity.engine.getField().players[player];
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
             String name;
-            if (activity.engine.replayMode) {
+            if (activity.engine.replayMode || activity.engine.isSingleMode) {
                 // 回放：无座位概念，ReplayPlayer 开始回放时已按本地视角索引（0=录制者）
-                // 将 yrp 头部双方昵称写入 playerInfos，直接按视角索引取名
+                // 将 yrp 头部双方昵称写入 playerInfos，直接按视角索引取名；
+                // 残局：无座位握手，SingleModeRunner 已按视角索引填名（0=我方、1=AI 名）
                 GameEngine.PlayerInfo rinfo = (player >= 0 && player < activity.engine.playerInfos.length)
                         ? activity.engine.playerInfos[player] : null;
                 name = (rinfo == null || rinfo.name == null || rinfo.name.isEmpty()) ? defaultName : rinfo.name;
@@ -345,11 +347,17 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
      * 用于 MSG_WIN 胜利说明的 "[败者名] 原因" 前缀（对齐 duelclient.cpp L1586-1599）
      */
     private String playerDisplayName(int localIndex) {
+        String defaultName = (localIndex == 0) ? Constants.PlayerName : "Opponent";
+        if (activity.engine.replayMode || activity.engine.isSingleMode) {
+            // 回放/残局：无座位映射，playerInfos 已按本地视角索引存好（残局 AI 名由 runner 填入）
+            GameEngine.PlayerInfo rinfo = (localIndex >= 0 && localIndex < activity.engine.playerInfos.length)
+                    ? activity.engine.playerInfos[localIndex] : null;
+            return (rinfo == null || rinfo.name == null || rinfo.name.isEmpty()) ? defaultName : rinfo.name;
+        }
         int selfSeat = activity.engine.getClient().selfType;
         int seat = (localIndex == 0) ? selfSeat : (selfSeat ^ 1);
         GameEngine.PlayerInfo info = (seat >= 0 && seat < activity.engine.playerInfos.length)
                 ? activity.engine.playerInfos[seat] : null;
-        String defaultName = (localIndex == 0) ? Constants.PlayerName : "Opponent";
         return (info == null || info.name.isEmpty()) ? defaultName : info.name;
     }
 

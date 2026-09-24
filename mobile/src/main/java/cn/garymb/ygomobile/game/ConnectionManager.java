@@ -3,7 +3,6 @@ package cn.garymb.ygomobile.game;
 import android.content.Intent;
 import android.util.Log;
 
-import java.io.File;
 
 import cn.garymb.ygomobile.GameApplication;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
@@ -198,50 +197,24 @@ public class ConnectionManager {
         });
     }
 
-    public void startSingleMode(String luaPath) {
+    /**
+     * 启动残局（对齐 gframe SingleMode::StartPlay）：不经局域网主机，由
+     * {@link SingleModeRunner} 泵线程直驱本地引擎跑 ./single/xxx.lua，消息投喂实况管线。
+     *
+     * @param luaPath 残局脚本绝对路径（资源目录 single/ 下）
+     * @param noShuffleToDeck 是否启用「不洗切时回卡组改为回顶端」标志：勾选时使用
+     *        {@code OcgDuelEngine.DUEL_RETURN_DECK_TOP(0x80)} 而非默认 0
+     */
+    public void startSingleMode(String luaPath, boolean noShuffleToDeck) {
         Log.i(TAG, "Starting single mode: " + luaPath);
-        byte[] scriptData = engine.scriptEngine.loadSingleScript(new File(luaPath).getName());
-        if (scriptData == null || scriptData.length == 0) {
-            Log.e(TAG, "Failed to load single mode script: " + luaPath);
-            engine.setState(GameEngine.GameState.IDLE);
-            engine.mainHandler.post(() -> {
-                if (engine.listener != null) engine.listener.onHintMessage("无法加载残局脚本: " + new File(luaPath).getName());
-            });
-            return;
-        }
+        engine.isBotMode = false;
+        engine.isHost = false;
         engine.setState(GameEngine.GameState.CONNECTING);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onHintMessage("正在加载残局...");
         });
-        engine.isBotMode = false;
-        spawn("SingleMode", "网络-启动残局", () -> {
-            try {
-                if (!ensureLocalServer(7911, "残局模式")) {
-                    return;
-                }
-                try { Thread.sleep(500); } catch (InterruptedException e) { /* ignore */ }
-                boolean connected = engine.client.connect("127.0.0.1", 7911);
-                if (!connected) {
-                    engine.setState(GameEngine.GameState.DISCONNECTED);
-                    engine.mainHandler.post(() -> {
-                        if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器");
-                    });
-                    return;
-                }
-                engine.client.sendPlayerInfo(engine.playerName);
-                engine.client.sendCreateGame(0, 0, 1, 5,
-                        true, false,
-                        8000, 5, 1, 0,
-                        "Single Play", "");
-            } catch (Throwable t) {
-                CrashHandler.getInstance().report("网络-启动残局", t);
-                Log.e(TAG, "启动残局失败", t);
-                engine.setState(GameEngine.GameState.DISCONNECTED);
-                engine.mainHandler.post(() -> {
-                    if (engine.listener != null) engine.listener.onHintMessage("启动残局失败: " + t.getMessage());
-                });
-            }
-        });
+        // 失败/终止路径（脚本缺失、引擎不可用等）由 runner 内部提示并回 IDLE
+        engine.singleRunner.start(luaPath, noShuffleToDeck);
     }
 
     public void startBotDuel(String host, int port, String botCommand, String deckFile) {
@@ -383,6 +356,7 @@ public class ConnectionManager {
     }
 
     public void disconnect() {
+        engine.singleRunner.stop();
         engine.client.disconnect();
         cancelBotJoinTimeout();
         if (engine.isHost) {

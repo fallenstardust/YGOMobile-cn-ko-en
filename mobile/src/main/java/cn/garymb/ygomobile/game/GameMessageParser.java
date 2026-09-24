@@ -891,7 +891,9 @@ public class GameMessageParser {
             ByteBuffer resp = ByteBuffer.allocate(4);
             resp.order(ByteOrder.LITTLE_ENDIAN);
             resp.putInt(positions);
-            engine.client.sendResponse(resp.array());
+            // 经 engine.sendResponse 统一路由：残局态转 singleRunner.submitResponse 喂引擎，
+            // 直连 client.sendResponse 会掉应答（未连接）导致单一姿态时永久悬挂
+            engine.sendResponse(resp.array());
             return;
         }
         // 打包 code(4) + positions(4) 传给 UI 层：用于显示卡图与按位掩码显示形式按钮

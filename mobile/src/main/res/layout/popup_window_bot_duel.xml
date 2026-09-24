@@ -144,6 +144,15 @@
                         android:textSize="9dp"
                         android:text="不洗切卡组"
                         android:textColor="@color/white" />
+
+                    <CheckBox
+                        android:id="@+id/chk_return_to_top"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:checked="false"
+                        android:textSize="9dp"
+                        android:textColor="@color/white" />
                 </LinearLayout>
 
                 <!-- 按钮区域 -->
