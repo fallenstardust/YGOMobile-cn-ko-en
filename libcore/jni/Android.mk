@@ -120,7 +120,7 @@ $(call import-module,android/native_app_glue)
 # 薄 JNI 决斗引擎 libygoengine.so —— 与 libYGOMobile.so 共用同一次 ndk-build 产出。
 # 仅链接 ocgcore + lua + sqlite3，不引入 irrlicht/渲染/音频/网络栈；
 # 录像 LZMA 压缩在 Java 侧（org.tukaani）完成，故本 .so 无需 lzma/spmemvfs。
-# 供局域网主机 / 残局 / 人机 复用，源码位于 ../engine/jni。
+# 供局域网主机 / 残局 / 人机 复用，源码位于 jni/。
 # ==========================================================================
 include $(CLEAR_VARS)
 # 注意：不能再用 $(call my-dir)，因为前面多次 import-module 后 my-dir 已指向 NDK core 目录；
@@ -152,7 +152,7 @@ endif
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../Classes/ocgcore
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../Classes/sqlite3
 
-LOCAL_SRC_FILES := $(LOCAL_PATH)/../engine/jni/ygo_engine_jni.cpp
+LOCAL_SRC_FILES := ygo_engine_jni.cpp
 
 LOCAL_LDLIBS := -llog
 
