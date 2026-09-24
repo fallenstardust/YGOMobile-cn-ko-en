@@ -820,7 +820,11 @@ public class SpecEffectOverlay {
             Bitmap card = card();
             if (card == null) return;
             float y = (float) Math.sin(dif * Math.PI / 180.0) * CARD_VH * s;
-            float baseY = cardTop + 254 * s;
+            // 底边锚定 cardBottom（虚拟 437）：C++ 原式为 404*yScale（drawing.cpp case 7），
+            // 使通常召唤完成态整体比发动/无效（[150,437]）偏高约 33 虚拟单位；
+            // 按需求微调为与特殊召唤/效果发动/效果无效居中大图完全一致的位置，
+            // dif=90 时顶边 = cardBottom - cardH = cardTop，终态矩形与 cardRect() 重合
+            float baseY = cardBottom;
             float spread = (cardH - y) * 0.3f;
             float[] src = {0, 0, card.getWidth(), 0, 0, card.getHeight(), card.getWidth(), card.getHeight()};
             float[] dst = {

@@ -367,6 +367,17 @@ public class YesOrNoDialog {
                 } else {
                     popupWindow.showAtLocation(anchor, Gravity.CENTER, 0, 0);
                 }
+                // 对齐 C++ SoundManager::PlayDialogSound：询问/确认类（wQuery/wSurrender/
+                // wOptions/wAN* 等）弹 question 音效，纯消息类（wMessage）弹 info 音效
+                if (context instanceof YGOProActivity) {
+                    cn.garymb.ygomobile.audio.SoundManager sm =
+                            ((YGOProActivity) context).getSoundManager();
+                    if (sm != null) {
+                        sm.playSoundEffect(type == TYPE_YES_NO
+                                ? cn.garymb.ygomobile.audio.SoundManager.SFX.QUESTION
+                                : cn.garymb.ygomobile.audio.SoundManager.SFX.INFO);
+                    }
+                }
                 // 对话框显示期间禁用决斗场阶段按钮
                 if (context instanceof YGOProActivity) {
                     ((YGOProActivity) context).notifyGameDialogShown(this);

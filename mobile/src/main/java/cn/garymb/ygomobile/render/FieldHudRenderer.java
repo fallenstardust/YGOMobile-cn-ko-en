@@ -150,8 +150,8 @@ final class FieldHudRenderer {
      *   连接怪兽 → 左下攻击力/右下 link 值（连接怪兽 defString 已为 "-"）。
      * - 灵摆刻度：文字贴卡片矩形「屏幕外侧顶角顶点」——屏幕左侧卡左上角(左对齐)、
      *   屏幕右侧卡右上角(右对齐)；rule>=4 用 seq0/seq4，rule<4 用 seq6/seq7（MR3 刻度已烘焙
-     *   进卡图纹理，此处仅补文字定位分支）。怪兽等级对准屏幕上所见卡片矩形的顶角顶点
-     *   （文字中心即顶点：我方=左上角、对方倒置卡=右上角，见 {@link #drawMonsterStatTexts}）。
+     *   进卡图纹理，此处仅补文字定位分支）。怪兽等级对准屏幕上所见卡片矩形的角顶点
+     *   （文字中心即顶点：我方=左上角；对方倒置卡攻击=右上角、守备=右下角，见 {@link #drawMonsterStatTexts}）。
      * 移动中的卡片跳过（对齐 DrawCard is_moving 提前返回），字号随格子投影像素高度自适应。
      */
     void drawFieldCardTexts(GameField f) {
@@ -222,16 +222,27 @@ final class FieldHudRenderer {
         }
         drawScreenText(edgeX, edgeY, parts, colors, boldFlags, hpx);
 
-        // 等级(L*/调律黄/阶级攻瑰红)对准「屏幕上所见卡片矩形」的顶角顶点：文字竖中心即顶点
-        //（不做底边坐角抬升），我方=左上角 farL 左对齐向右延伸，对方卡旋转 180° 倒置，
-        // 其所见矩形的右上角 farR 右对齐向左延伸。
+        // 等级(L*/调律黄/阶级玫红)对准「屏幕上所见卡片矩形」的角顶点：文字中心即顶点
+        //（不做底边坐角抬升）。我方=左上角 farL 左对齐向右延伸；对方卡旋转 180° 倒置且
+        // 近端透压缩成「尖端」，故按表示区分角位并令顶点=文字中心（居中对齐）：
+        //   对方攻击表示 → 右上角 farR、对方守备表示 → 右下角 nearR。
         if (c.lvString != null && !c.lvString.isEmpty()) {
-            float[] corner = ours ? farL : farR;
+            float[] corner;
+            int align;
+            if (ours) {
+                corner = farL;
+                align = ALIGN_LEFT;
+            } else if (defense) {
+                corner = nearR;
+                align = ALIGN_CENTER;
+            } else {
+                corner = farR;
+                align = ALIGN_CENTER;
+            }
             int lvColor = (c.type & TYPE_XYZ) != 0 ? 0xFFFF80FF
                     : (c.type & TYPE_TUNER) != 0 ? 0xFFFFFF00 : 0xFFFFFFFF;
             drawScreenTextAligned(corner[0], corner[1],
-                    new String[]{c.lvString}, new int[]{lvColor}, hpx,
-                    ours ? ALIGN_LEFT : ALIGN_RIGHT);
+                    new String[]{c.lvString}, new int[]{lvColor}, hpx, align);
         }
     }
 

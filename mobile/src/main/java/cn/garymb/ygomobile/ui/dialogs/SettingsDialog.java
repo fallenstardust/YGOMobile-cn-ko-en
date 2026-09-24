@@ -139,7 +139,7 @@ public class SettingsDialog {
         chkMuteSpectators.setChecked(appsSettings.getIntSettings("chkMuteSpectators", 0) == 1);
         chkDisableChatting.setChecked(appsSettings.getIntSettings("chkDisableChatting", 0) == 1);
         chkAutoSaveReplay.setChecked(appsSettings.getIntSettings("chkAutoSaveReplay", 0) == 1);
-        chkSwitchBGM.setChecked(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
+        chkSwitchBGM.setChecked(appsSettings.getIntSettings("chkSwitchBGM", 1) == 1);
         chkEnableSound.setChecked(appsSettings.getIntSettings("chkEnableSound", 1) == 1);
         seekbarSound.setProgress(appsSettings.getIntSettings("soundVolume", 50));
         chkEnableMusic.setChecked(appsSettings.getIntSettings("chkEnableMusic", 1) == 1);

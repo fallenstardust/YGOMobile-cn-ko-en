@@ -15,6 +15,9 @@ public class SummonAnimationManager {
     public static final int SUMMON_SPECIAL = 1;  // 特殊召唤（MSG_SPSUMMONING，case 5 放大淡入）
     public static final int SUMMON_FLIP = 2;     // 反转召唤（MSG_FLIPSUMMONING，case 7 翻面）
 
+    /** ocgcore common.h：TYPE_TOKEN 0x4000（衍生物特殊召唤只放 token 音效） */
+    private static final long TYPE_TOKEN = 0x4000L;
+
     private final GameEngine engine;
 
     public SummonAnimationManager(GameEngine engine) {
@@ -45,21 +48,33 @@ public class SummonAnimationManager {
     // ==== 召唤类消息（MSG_SUMMONING/MSG_SPSUMMONING/MSG_FLIPSUMMONING）====
 
     public void onSummoning(int code, int ctrl, int loc, int seq) {
-        engine.soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+        // duelclient.cpp MSG_SUMMONING L3247-3248：先试召唤主题歌（chants，按 code/alias），
+        // 无对应曲目才回退普通召唤音效
+        if (!engine.soundManager.playChant(code))
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
         // duelclient.cpp MSG_SUMMONING L3250/3252-3258：event_string=sys1603「[%ls]召唤中」+ showcard=7（翻面进入）
         engine.hintManager.setEventString(1603, "[%s]召唤中", DataManager.get().getName(code));
         postSummonAnimation(code, SUMMON_NORMAL);
     }
 
     public void onSpSummoning(int code, int ctrl, int loc, int seq) {
-        engine.soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON);
+        // duelclient.cpp MSG_SPSUMMONING L3280-3285：衍生物（TYPE_TOKEN）放 token 音效；
+        // 否则先试召唤主题歌，无对应曲目才回退特殊召唤音效
+        ocgcore.data.Card card = DataManager.get().getCardManager().getCard(code);
+        if (card != null && (card.Type & TYPE_TOKEN) != 0) {
+            engine.soundManager.playSoundEffect(SoundManager.SFX.TOKEN);
+        } else if (!engine.soundManager.playChant(code)) {
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON);
+        }
         // duelclient.cpp MSG_SPSUMMONING L3286-3290：event_string=sys1605「[%ls]特殊召唤中」+ if(code) showcard=5（放大淡入）
         engine.hintManager.setEventString(1605, "[%s]特殊召唤中", DataManager.get().getName(code));
         if (code != 0) postSummonAnimation(code, SUMMON_SPECIAL);
     }
 
     public void onFlipSummoning(int code, int ctrl, int loc, int seq) {
-        engine.soundManager.playSoundEffect(SoundManager.SFX.FLIP);
+        // duelclient.cpp MSG_FLIPSUMMONING L3312-3313：先试召唤主题歌，无对应曲目才回退 flip 音效
+        if (!engine.soundManager.playChant(code))
+            engine.soundManager.playSoundEffect(SoundManager.SFX.FLIP);
         // duelclient.cpp MSG_FLIPSUMMONING L3314-3320：event_string=sys1607「[%ls]反转召唤中」+ showcard=7（翻面进入）
         engine.hintManager.setEventString(1607, "[%s]反转召唤中", DataManager.get().getName(code));
         postSummonAnimation(code, SUMMON_FLIP);

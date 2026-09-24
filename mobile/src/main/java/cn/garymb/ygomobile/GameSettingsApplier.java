@@ -39,7 +39,10 @@ class GameSettingsApplier {
             soundManager.enableMusic(enableMusic);
             soundManager.setSoundVolume(appsSettings.getIntSettings("soundVolume", 50) / 100.0);
             soundManager.setMusicVolume(appsSettings.getIntSettings("musicVolume", 50) / 100.0);
-            soundManager.setMusicMode(appsSettings.getIntSettings("chkSwitchBGM", 0) == 1);
+            soundManager.setMusicMode(appsSettings.getIntSettings("chkSwitchBGM", 1) == 1);
+            // 音频开关/场景切换模式变更后立即重算场景：勾选「随场景切换」即时切曲，
+            // 重新启用音乐时恢复播放（同场景由 SoundManager 去重不重复起曲）
+            activity.updateBGM();
         }
         if (activity.cardDetailPanel != null) {
             // 对齐 gframe imgVol/imgQuickAnimation：声音与速度按钮图标同步设置状态

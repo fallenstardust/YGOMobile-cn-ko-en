@@ -20,8 +20,16 @@ class BgmSceneController {
     private static final int BGM_RESULT_WIN = 1;
     private static final int BGM_RESULT_LOSE = 2;
     private int bgmDuelResult = BGM_RESULT_NONE;
-    /** 决斗中双方 LP 差达到该阈值时切换优势/劣势 BGM（对齐需求「LP 相差大于等于 4000」） */
+    /** 优势/劣势 LP 差阈值（对齐需求「LP 相差大于等于 4000」） */
     private static final int BGM_LP_DIFF_THRESHOLD = 4000;
+    /**
+     * 决斗是否真正进行中（对齐 C++ Game::playBGM 的 dInfo.isStarted 闸门）：
+     * 只在进入决斗场 UI（{@link #enterDuel()}，含实况/观战/录像/残局）时置真、
+     * 离开（{@link #leaveDuel()}）时置假。以此而非 layout_game_right 可见性判定场景，
+     * 因为玩家等待/大厅聊天（enterLobbyChatUI）也会让 game_right 可见，若据此判定
+     * 会把等待大厅误当作决斗场景；而等待/建主/各模式 dialog 应走 MENU。
+     */
+    private boolean duelActive = false;
 
     private final YGOProActivity activity;
 
@@ -31,19 +39,17 @@ class BgmSceneController {
 
     /**
      * 依据当前布局与对局状态选择 BGM 场景：
-     * - 决斗场 layout_game_right 显示：胜负已判定 → WIN/LOSE；否则 LP 差≥阈值时
-     *   对方血多 → DISADVANTAGE、我方血多 → ADVANTAGE，其余 → DUEL
+     * - 决斗真正进行中（duelActive，含观战/录像/残局）：胜负已判定 → WIN/LOSE；否则 LP 差≥阈值时
+     *   对方血多 → DISADVANTAGE、我方血多 → ADVANTAGE，其余（含刚开局）→ DUEL
      * - 卡组编辑器 layout_deck_editor 显示（含副卡组替换）→ DECK
-     * - 其他 → MENU
+     * - 其他（主菜单 / 建主 / 各模式 dialog / 玩家等待大厅）→ MENU
      */
     void update() {
         if (activity.soundManager == null) return;
         SoundManager.BGM scene;
-        boolean gameRightShowing = activity.layoutGameRight != null
-                && activity.layoutGameRight.getVisibility() == View.VISIBLE;
         boolean deckEditorShowing = activity.layoutDeckEditor != null
                 && activity.layoutDeckEditor.getVisibility() == View.VISIBLE;
-        if (gameRightShowing) {
+        if (duelActive) {
             if (bgmDuelResult == BGM_RESULT_WIN) {
                 scene = SoundManager.BGM.WIN;
             } else if (bgmDuelResult == BGM_RESULT_LOSE) {
@@ -64,6 +70,21 @@ class BgmSceneController {
             scene = SoundManager.BGM.MENU;
         }
         activity.soundManager.playBGM(scene);
+    }
+
+    /**
+     * 进入决斗场 UI（实况/观战/录像/残局开局）：置决斗进行标志并清除上一局残留的胜负覆盖，
+     * 使刚开局按 LP 初始差（通常为 0）走 DUEL。调用方随后 updateBGM 生效。
+     */
+    void enterDuel() {
+        duelActive = true;
+        bgmDuelResult = BGM_RESULT_NONE;
+    }
+
+    /** 离开决斗场 / 进入等待大厅：清除决斗进行标志与胜负覆盖（下一帧按 MENU/DECK 重算） */
+    void leaveDuel() {
+        duelActive = false;
+        bgmDuelResult = BGM_RESULT_NONE;
     }
 
     /**
