@@ -110,6 +110,9 @@ public class SoundManager {
     private boolean bgmFailureReported = false;
     // 整轮选曲全部失败后的重试冷却截止时刻（refreshBGMList 重新扫盘时清零）
     private long bgmRetryAfterMs = 0L;
+    /** 退后台暂停标志（onPause 置位 / onResume 清零）：暂停不释放播放器，
+     *  置位期间 prepareAsync 完成也不起播，避免切到新曲时后台外声 */
+    private boolean bgmPausedByBackground = false;
     // === 召唤主题歌（chants，对齐 C++ ChantsList / bgm_process）===
     /** code（文件名数字，含 alias）→ 主题歌文件绝对路径 */
     private final Map<Integer, String> chantsMap = new HashMap<>();
@@ -189,9 +192,11 @@ public class SoundManager {
             all.add(f.getAbsolutePath());
             duel.add(f.getAbsolutePath());
         }
-        // 各场景子目录：同时计入 ALL 与对应场景（对齐 RefreshBGMDir(sub, scene)）
+        // 各场景子目录：同时计入 ALL 与对应场景（对齐 RefreshBGMDir(sub, scene)）。
+        // DUEL 子目录同样要扫（对齐 sound_manager.cpp L39 RefreshBGMDir("duel", DUEL)）：
+        // 此前跳过 DUEL 使 sound/BGM/duel 下的音乐从未入曲池，决斗场景只能播根目录曲或回退 ALL
         for (BGM scene : BGM.values()) {
-            if (scene == BGM.ALL || scene == BGM.DUEL) continue;
+            if (scene == BGM.ALL) continue;
             File sub = new File(root, scene.dirName);
             if (sub.exists() && sub.isDirectory()) {
                 for (File f : listMusicFiles(sub)) {
@@ -322,6 +327,8 @@ public class SoundManager {
             final MediaPlayer player = mp;
             mp.setOnPreparedListener(m -> {
                 try {
+                    // 已退后台：不起播，回前台经 resumeBGM 从 Prepared 状态续播
+                    if (bgmPausedByBackground) return;
                     m.start();
                 } catch (IllegalStateException e) {
                     // 准备完成与停止/释放竞态：忽略即可
@@ -369,6 +376,36 @@ public class SoundManager {
             if (bgmPlayer == mp) bgmPlayer = null;
             currentBgm = "";
             return false;
+        }
+    }
+
+    /**
+     * 退出应用（桌面/其他应用，Activity onPause）：暂停 BGM 而不释放播放器，
+     * 保留 bgmScene/currentBgm 使回前台原曲续播（updateBGM 同场景去重不会重新选曲）；
+     * 播放器尚未就绪（prepareAsync 未完成）时仅置标志，onPrepared 据此不起播
+     */
+    public void pauseBGM() {
+        bgmPausedByBackground = true;
+        MediaPlayer mp = bgmPlayer;
+        if (mp == null) return;
+        try {
+            if (mp.isPlaying()) mp.pause();
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** 回前台（onResume）：续播 pauseBGM 暂停的曲目；无播放器/状态异常时复位标志，
+     *  由调用方随后的 updateBGM 按当前场景重算（无曲起新曲、异常清场景锁重新选曲） */
+    public void resumeBGM() {
+        if (!bgmPausedByBackground) return;
+        bgmPausedByBackground = false;
+        MediaPlayer mp = bgmPlayer;
+        if (mp == null) return;
+        try {
+            mp.start();
+        } catch (Exception e) {
+            // 错误/已释放等异常态：清场景锁使 updateBGM 能重新选曲起播
+            bgmScene = null;
         }
     }
 

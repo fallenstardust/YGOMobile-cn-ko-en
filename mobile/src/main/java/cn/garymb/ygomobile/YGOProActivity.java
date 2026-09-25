@@ -907,10 +907,19 @@ public class YGOProActivity extends AppCompatActivity {
     // === Lifecycle ===
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        // 切到桌面/其他应用：暂停 BGM（不释放播放器，回前台原曲续播）
+        if (soundManager != null) soundManager.pauseBGM();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         setupFullScreen();
-        // 回前台重算场景 BGM（同场景且仍在播时 SoundManager 内部去重，不会重新起曲）
+        // 回前台：先续播后台暂停的曲目，再重算场景 BGM（同场景且仍在播时
+        // SoundManager 内部去重，不会重新起曲）
+        if (soundManager != null) soundManager.resumeBGM();
         mainHandler.post(this::updateBGM);
     }
 

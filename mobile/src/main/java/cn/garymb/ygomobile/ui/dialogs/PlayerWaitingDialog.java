@@ -25,7 +25,6 @@ import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
-import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.network.YGOProtocol;
@@ -1150,7 +1149,6 @@ public class PlayerWaitingDialog {
             dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
             dialog.show(anchor);
             dialog.setPlayerName(0, playerName);
-            activity.getSoundManager().playBGM(SoundManager.BGM.DUEL);
         });
     }
 
@@ -1165,7 +1163,6 @@ public class PlayerWaitingDialog {
             dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
             dialog.show(anchor);
             dialog.setPlayerName(0, playerName);
-            activity.getSoundManager().playBGM(SoundManager.BGM.DUEL);
-        });
+		});
     }
 }

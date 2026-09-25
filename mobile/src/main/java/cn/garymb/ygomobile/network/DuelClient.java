@@ -777,7 +777,9 @@ public class DuelClient implements YGOProtocol {
             engine.tagSurrenderInitiated = false;
             engine.duelStage = YGOProtocol.DUEL_STAGE_DUELING;
             engine.setEngineState(GameEngine.GameState.DUELING);
-            engine.soundManager.playBGM(SoundManager.BGM.DUEL);
+            // 不在此直接切决斗曲：STOC_DUEL_START 时仍停留在玩家等待界面（猜拳前），
+            // 紧接的 DUELING 状态回调 enterDuelingUI→showGameUI 显示 layout_game_right 时
+            // 经 updateBGM 按 DUEL 场景起播（等待大厅不切 BGM 的需求）
             // 对局开场清理残留提示（对齐 game.cpp CloseGameWindow L2426 stHintMsg->setVisible(false)）
             engine.hintManager.stopWaitHint();
             engine.hintManager.postDuelHintHide();
