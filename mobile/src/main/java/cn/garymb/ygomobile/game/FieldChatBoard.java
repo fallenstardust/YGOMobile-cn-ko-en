@@ -81,10 +81,20 @@ class FieldChatBoard {
     // === 聊天消息（对齐 gframe game.cpp AddChatMsg + drawing.cpp DrawChatMsg） ===
 
     void appendChat(int playerType, String message) {
-        // player waiting 大厅模式：所有系统消息与玩家聊天进入 layout_danmaku 静态列表，
-        // 不走决斗内的分侧聊天/弹幕逻辑（决斗开始时由 exitLobbyChatMode 切回）
+        // player waiting 大厅模式：玩家聊天(0-3)进 layout_danmaku 静态列表；
+        // 系统消息(8/9/10)与观战消息(11-19)走 drawspec 覆盖层弹幕宿主——
+        // 等待界面 PlayerWaitingDialog 是 PopupWindow，盖在 Activity 内容层之上，
+        // 大厅列表里的系统/观战消息会被其遮挡而不可见（历史「看不到主机系统消息」根因）；
+        // 弹幕带与阶段文字/actionmessage 同在被最上层 PopupWindow 承载，悬浮于等待界面之上
         if (lobbyChatMode) {
-            appendLobbyChat(playerType, message);
+            if (playerType >= 0 && playerType < 4) {
+                appendLobbyChat(playerType, message);
+                return;
+            }
+            // 观战屏蔽设置与决斗内一致（对齐 chkIgnore2）
+            if (playerType >= 11 && playerType <= 19
+                    && AppsSettings.get().getIntSettings("chkMuteSpectators", 0) == 1) return;
+            showChatDanmaku(playerType, message);
             return;
         }
         AppsSettings settings = AppsSettings.get();
@@ -244,9 +254,10 @@ class FieldChatBoard {
     // === player waiting 大厅聊天模式 ===
 
     /**
-     * 进入大厅聊天模式：所有系统消息与玩家聊天在 layout_danmaku 中按
+     * 进入大厅聊天模式：玩家聊天在 layout_danmaku 中按
      * 从上往下、旧到新的静态列表显示（每条一个 TextView、半透明黑底），
-     * 最多 10 条，超出移除最上方最旧的一条；
+     * 最多 10 条，超出移除最上方最旧的一条；系统/观战消息不走本列表
+     * （改由 appendChat 大厅分支进 drawspec 弹幕层，避免被等待界面 PopupWindow 遮挡）；
      * 决斗内分侧聊天（tv_chat_message_1/2）与弹幕滚动在此期间停用
      */
     void enterLobbyChatMode() {

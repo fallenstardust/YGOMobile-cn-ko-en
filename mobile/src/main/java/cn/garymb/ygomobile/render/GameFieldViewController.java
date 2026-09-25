@@ -225,6 +225,12 @@ public class GameFieldViewController
         if (l != null) l.onFieldLongPressEnd();
     }
 
+    @Override
+    public void onContiActClick(float tapX, float tapY) {
+        GameFieldView.OnCardClickListener l = cardClickDelegate;
+        if (l != null) l.onContiActClick(tapX, tapY);
+    }
+
     // ==================== GameFieldView.OnPhaseButtonListener（统一转发委托） ====================
 
     @Override

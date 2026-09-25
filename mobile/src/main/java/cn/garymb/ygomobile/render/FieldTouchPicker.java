@@ -71,6 +71,11 @@ final class FieldTouchPicker {
                 } catch (Throwable ignored2) {
                 }
                 listener.onCardClick(hit[0], hit[1], hit[2], x, y);
+            } else if (hitContiAct(ray, f)) {
+                // gframe event_handler.cpp POSITION_HINT（L2583-2586 悬停 / L1386-1393 点击 ShowMenu）：
+                // 点击场地中央 conti_act（待效果结算）堆叠，弹出「效果处理」命令菜单；
+                // 优先级在卡片拾取之后、空格子拾取之前（与 gframe 卡 hover 优先于 hint 区一致）
+                listener.onContiActClick(x, y);
             } else {
                 // 空格子拾取：命中场上格时仍置选中区，使 selfield/连接箭头随点击显示
                 int[] zone = pickFieldZone(ray, f);
@@ -263,6 +268,20 @@ final class FieldTouchPicker {
         } catch (Throwable ignored) {
         }
         return null;
+    }
+
+    /**
+     * 中央 conti_act（待效果结算）堆叠命中：矩形与 {@link FieldBoardRenderer#drawContiGrid}
+     * 同源——中心 (FIELD_CENTER_X, 0)、宽 0.9 × 高 0.9×254/177。卡堆在绘制空间直接以
+     * FIELD_CENTER_X 平移绘制（不经 mirrorX），故命中在绘制空间直接比较，不做镜像还原；
+     * z 平面取卡堆中上层（0.05），保证在堆叠厚度范围内射线能稳定求交。
+     */
+    private boolean hitContiAct(float[] ray, GameField f) {
+        if (!f.contiAct || f.contiCards == null || f.contiCards.isEmpty()) return false;
+        float[] g = new float[2];
+        if (!planeHit(ray, 0.05f, g)) return false;
+        return Math.abs(g[0] - FieldGeometry.FIELD_CENTER_X) <= 0.45f
+                && Math.abs(g[1]) <= 0.45f * 254f / 177f;
     }
 
     /**

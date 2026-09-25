@@ -61,6 +61,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
         /** 长按手势结束（抬手/取消）：宿主据此隐藏状态悬浮标签 */
         void onFieldLongPressEnd();
+
+        /** 点击场地中央 conti_act（待效果结算）堆叠：宿主弹出「效果处理」命令菜单
+         *（对齐 gframe event_handler.cpp POSITION_HINT 悬停菜单） */
+        void onContiActClick(float tapX, float tapY);
     }
 
     /**

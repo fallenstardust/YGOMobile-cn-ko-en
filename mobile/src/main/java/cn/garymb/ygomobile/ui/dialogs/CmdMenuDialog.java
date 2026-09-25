@@ -53,6 +53,7 @@ public class CmdMenuDialog {
     private static final int SYS_ATTACK = 1157;      // 攻击
     private static final int SYS_SET_MONSTER = 1159; // 怪兽卡设置到魔陷区
     private static final int SYS_RESET = 1162;       // 表示重置(Reset Effect)
+    private static final int SYS_OPERATION = 1161;   // 效果处理（gframe btnOperation，game.cpp L979）
     private static final int SYS_SHOW_LIST = 1158;   // 查看列表（对齐 game.cpp btnShowList）
     private static final int SYS_SELECT_OPTION = 555;// 请选择一项
     private static final int SYS_SELECT_MONSTER = 509;// 选择怪兽（对齐 event_handler.cpp BUTTON_CMD_SPSUMMON list_command 标题）
@@ -551,6 +552,77 @@ public class CmdMenuDialog {
                         sendCmdResponse(MODE_ACTIVATE, cmdContext, effects.get(0).index);
                     } else if (effects.size() > 1) {
                         showActivateOptions(cmdContext, effects);
+                    }
+                })
+                .setOnDismissListener(() -> {
+                    if (panel != null) panel.setCardDisplayDialog(null);
+                });
+        dialog.show();
+    }
+
+    /**
+     * 中央 conti_act（待效果结算）堆叠被点击：菜单仅一个「效果处理」按钮
+     *（对齐 gframe event_handler.cpp POSITION_HINT 悬停 ShowMenu(COMMAND_OPERATION) → btnOperation，
+     * 按钮文字取系统字符串 1161）。点击后进入选卡列表 {@link #showContiOperationList}。
+     *
+     * @param cmdContext 当前命令上下文（idle/battle/chain），决定最终应答编码
+     */
+    public void showContiOperationMenu(GameEngine engine, int cmdContext,
+                                       View anchorView, float tapX, float tapY) {
+        if (engine == null || anchorView == null) return;
+        GameField field = engine.getField();
+        if (field == null || !field.contiAct || field.contiCards.isEmpty()) return;
+        List<String> options = new ArrayList<>();
+        List<Runnable> actions = new ArrayList<>();
+        options.add(sysString(SYS_OPERATION, "效果处理"));
+        actions.add(() -> showContiOperationList(engine, cmdContext));
+        setItems(options, actions);
+        show(anchorView, tapX, tapY);
+    }
+
+    /**
+     * 效果处理选卡列表（对齐 gframe BUTTON_CMD_ACTIVATE case POSITION_HINT L567-584：
+     * selectable_cards = conti_cards 去重 → ShowSelectCard(is_continuous)，列表标题取 1161）：
+     * 单击某张卡 → 在 engine.activatableCards 中收集该卡的 EDESC_OPERATION 项
+     *（对应 L822-832：list_command==COMMAND_OPERATION 时仅保留 OPERATION 项），
+     * 单效果直接应答、多效果弹 OptionDialog 选效果，应答编码按上下文分流（L833-841，
+     * 复用 {@link #sendCmdResponse}：idle=(idx<<16)+5 / battle=idx<<16 / chain=idx）。
+     */
+    private void showContiOperationList(GameEngine engine, int cmdContext) {
+        GameField field = engine.getField();
+        if (field == null) return;
+        // 去重保序（gframe sort+unique：同一卡的多个待处理效果在列表中只占一张卡位）
+        List<GameField.ClientCard> uniq = new ArrayList<>();
+        for (GameField.ClientCard c : field.contiCards) {
+            if (c != null && !uniq.contains(c)) uniq.add(c);
+        }
+        List<CardDisplayDialog.CardItem> items = new ArrayList<>();
+        for (GameField.ClientCard c : uniq) {
+            int code = c.code != 0 ? c.code : c.chain_code;
+            items.add(new CardDisplayDialog.CardItem(code, c.controler, c.location, c.sequence, 0));
+        }
+        if (items.isEmpty()) return;
+        ImageLoader loader = activity.getImageLoader();
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        final CardDisplayDialog dialog = new CardDisplayDialog(activity, loader);
+        if (panel != null) panel.setCardDisplayDialog(dialog);
+        dialog.setTitle(sysString(SYS_OPERATION, "效果处理"))
+                .setCards(items)
+                .setLocalPlayer(0)
+                .setControlerProtocolSide(false)
+                .setCardClickListener(item -> {
+                    int pos = items.indexOf(item);
+                    dialog.dismiss();
+                    if (pos < 0 || pos >= uniq.size()) return;
+                    GameField.ClientCard card = uniq.get(pos);
+                    List<GameEngine.CmdCardInfo> ops = new ArrayList<>();
+                    for (GameEngine.CmdCardInfo info : engine.activatableCards) {
+                        if (info.card == card && (info.flag & EDESC_OPERATION) != 0) ops.add(info);
+                    }
+                    if (ops.size() == 1) {
+                        sendCmdResponse(MODE_ACTIVATE, cmdContext, ops.get(0).index);
+                    } else if (ops.size() > 1) {
+                        showActivateOptions(cmdContext, ops);
                     }
                 })
                 .setOnDismissListener(() -> {

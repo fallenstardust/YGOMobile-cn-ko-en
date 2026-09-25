@@ -72,33 +72,39 @@ class ChainSelectController {
             // duelclient.cpp L2133-2134：LOCATION_OVERLAY 连锁项 → panelmode（overlay 单元无法在场上单独点击）
             if ((loc & 0x80) != 0) panelmode = true;
 
-            // 填充场上卡片状态（对齐 duelclient.cpp L2106-2135）：把可发动卡片标记 is_selectable
+            // 填充场上卡片状态（对齐 duelclient.cpp L2106-2135）：非 conti 项标记 is_selectable
             //（GameFieldView 经 activatableCards 绘制黄色蚂蚁线轮廓）并挂 COMMAND_ACTIVATE，使玩家点击高亮卡片经
-            // onCardClick→CmdMenuDialog 发动；连锁发动响应仅发送连锁项索引（index=i）
+            // onCardClick→CmdMenuDialog 发动；连锁发动响应仅发送连锁项索引（index=i）。
+            // EDESC_OPERATION（conti）项对齐 duelclient.cpp L2116-2122：只进中央 conti_cards 堆叠
+            //（drawContiGrid 绘制 + FieldTouchPicker 中央点击「效果处理」发动），绝不在卡片自身所在区域
+            // 置 is_selectable/COMMAND_ACTIVATE/区域 act 旋转提示——修复「除外区等自身位置也出现 conti_act
+            // 动画且点击无效」：待处理卡的唯一发动入口是场地中央的堆叠。
             if (field != null && e != null) {
                 int localCtrl = e.localPlayer(ctrl & 1);
                 GameField.ClientCard card = field.getCard(localCtrl, loc, seq, subSeq);
                 if (card != null) {
                     card.is_selected = false;
-                    card.is_selectable = true;
-                    card.cmdFlag |= GameEngine.COMMAND_ACTIVATE;
                     int pureLoc = loc & 0x7f;
                     if (conti) {
                         card.chain_code = code;
                         field.contiCards.add(card);
                         field.contiAct = true;
+                    } else {
+                        card.is_selectable = true;
+                        card.cmdFlag |= GameEngine.COMMAND_ACTIVATE;
+                        if (pureLoc == 0x01) {
+                            card.setCode(code);
+                            field.deckAct[localCtrl] = true;
+                        } else if (pureLoc == 0x10) {
+                            field.graveAct[localCtrl] = true;
+                        } else if (pureLoc == 0x20) {
+                            field.removeAct[localCtrl] = true;
+                        } else if (pureLoc == 0x40) {
+                            field.extraAct[localCtrl] = true;
+                        }
+                        field.activatableCards.add(card);
                     }
-                    if (pureLoc == 0x01) {
-                        card.setCode(code);
-                        field.deckAct[localCtrl] = true;
-                    } else if (pureLoc == 0x10) {
-                        field.graveAct[localCtrl] = true;
-                    } else if (pureLoc == 0x20) {
-                        field.removeAct[localCtrl] = true;
-                    } else if (pureLoc == 0x40) {
-                        field.extraAct[localCtrl] = true;
-                    }
-                    field.activatableCards.add(card);
+                    // conti 项同样进 engine 侧列表：点击中央堆叠「效果处理」时按协议索引 i 应答
                     e.activatableCards.add(new GameEngine.CmdCardInfo(card, code, desc, flag, i));
                 }
             }

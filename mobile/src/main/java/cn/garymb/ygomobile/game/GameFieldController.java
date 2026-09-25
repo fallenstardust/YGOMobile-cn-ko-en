@@ -464,4 +464,21 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     public void onFieldLongPressEnd() {
         CardStatusTipHelper.FieldTip.hide();
     }
+
+    /**
+     * 点击场地中央 conti_act（待效果结算）堆叠：仅在命令上下文（主阶/战斗/连锁）内有效，
+     * 弹出含「效果处理」按钮的命令菜单（对齐 gframe event_handler.cpp POSITION_HINT →
+     * ShowMenu(COMMAND_OPERATION) → btnOperation），后续选卡/应答见 CmdMenuDialog
+     */
+    @Override
+    public void onContiActClick(float tapX, float tapY) {
+        if (engine == null || cmdContext == 0) return;
+        GameField field = engine.getField();
+        if (field == null || !field.contiAct || field.contiCards.isEmpty()) return;
+        if (cmdMenuDialog == null) {
+            cmdMenuDialog = new CmdMenuDialog(activity);
+        }
+        cmdMenuDialog.showContiOperationMenu(engine, cmdContext,
+                viewController != null ? viewController.getView() : null, tapX, tapY);
+    }
 }
