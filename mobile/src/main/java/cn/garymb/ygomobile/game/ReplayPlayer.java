@@ -420,6 +420,11 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                     }
                     break;
                 }
+                if (msg.type == GameEngine.REPLAY_CHAT_FRAME) {
+                    // 聊天/观战发言伪帧：非引擎消息，不计步、不参与节奏、不投喂管线，独立派发显示
+                    dispatchReplayChat(msg.body);
+                    continue;
+                }
                 if (msg.type == MSG_RETRY) {
                     // isNoFeed 跳过不投喂（应答已固化在流里），仅计数供结束弹窗排查失步来源
                     skippedRetryCount++;
@@ -454,6 +459,23 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         } finally {
             finishSession(gen);
         }
+    }
+
+    /**
+     * 0xF1 聊天帧派发（帧体 = playerType(1)+UTF-8 文本）：快进重排期间丢弃（rewind 已清屏，
+     * 落点后聊天随流重新流入）；否则经实况唯一聊天入口 engine.listener.onChatReceived 按
+     * 时间线重现——分侧聊天行/系统弹幕/表情气泡与实况完全同一渲染路径（录制侧在回放模式
+     * 自动丢弃，不会自录循环）。
+     */
+    private void dispatchReplayChat(byte[] body) {
+        if (isSkipping || body == null || body.length < 2) return;
+        final int playerType = body[0] & 0xFF;
+        final String text = new String(body, 1, body.length - 1,
+                java.nio.charset.StandardCharsets.UTF_8);
+        if (text.isEmpty()) return;
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onChatReceived(playerType, text);
+        });
     }
 
     /**
@@ -546,6 +568,10 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         isSkipping = true;
         drainAndSettle();
         source.rewind();
+        // 聊天/弹幕帧随消息流回卷重新流入：先清空现有显示，防重复行/重复弹幕
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onReplayChatReset();
+        });
         ReplayCodeMapper.beginSession();
         replayWinSeen = false;
         currentStep = 0;

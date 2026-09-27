@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 横屏（默认）占位变体：横屏卡片详情与操作按钮均在左侧
+     layout_card_detail_panel 内，本布局仅在竖屏 layout-port 变体中真正参与布局
+     （activity_ygo_game.xml 竖屏版 include）。此文件保证资源在任意配置下可解析，
+     避免 MissingDefaultResource 崩溃风险；横屏无代码按 ID 引用本容器。 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_game_top_panel"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:visibility="gone" />

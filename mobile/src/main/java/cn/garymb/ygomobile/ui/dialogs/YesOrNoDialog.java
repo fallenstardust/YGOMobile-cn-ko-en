@@ -361,7 +361,13 @@ public class YesOrNoDialog {
             }
             if (anchor == null || anchor.getWindowToken() == null) return;
             try {
-                DraggablePopupHelper.centerPopupInRegion(popupWindow, centerInView);
+                // 未显式指定居中区域的路径（卡组/计数器选择等）回退到 layout_game_right，
+                // 保证竖屏下弹窗居中在决斗场区域而非整屏（用户规格）
+                View centerRegion = centerInView;
+                if (centerRegion == null && context instanceof YGOProActivity) {
+                    centerRegion = ((YGOProActivity) context).findViewById(R.id.layout_game_right);
+                }
+                DraggablePopupHelper.centerPopupInRegion(popupWindow, centerRegion);
                 if (draggableHelper != null) {
                     draggableHelper.showPopup(popupWindow, anchor);
                 } else {

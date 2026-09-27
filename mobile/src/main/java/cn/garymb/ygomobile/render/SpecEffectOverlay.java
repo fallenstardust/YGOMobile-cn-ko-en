@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -83,9 +84,16 @@ public class SpecEffectOverlay {
     private PopupWindow window;
     private FrameLayout rootLayer;
     private SpecEffectView view;
-    /** 弹幕宿主容器：贴 PopupWindow（drawspec 层）顶边的全屏宽度横带（在 GL 曲面之上），
-     *  高度由 obtainDanmakuLayer(bandHeightPx) 指定，弹幕在其内自上而下分行滚动 */
+    /** 弹幕宿主容器（仅系统/观战消息）：位于 PopupWindow（drawspec 层）内、双方 LP 血条
+     *  正下方的全屏宽横带（在 GL 曲面之上），横竖屏同规格，自右向左滚动直至离开屏幕；
+     *  高度与带顶由 obtainDanmakuLayer(bandHeightPx, bandTopPx) 指定。
+     *  对局玩家的聊天不是弹幕，走下方 selfChatLayer/oppChatLayer 分侧行式显示 */
     private FrameLayout danmakuLayer;
+    /** 我方聊天行容器：我方 LP 血条正下方的纵向 LinearLayout（VERTICAL），每条聊天一个
+     *  TextView，自上而下追加、超行移除最旧（PopupWindow 层，在 GL 曲面之上，横竖屏同规格） */
+    private LinearLayout selfChatLayer;
+    /** 对方聊天行容器：对方 LP 血条正下方，规格同 selfChatLayer（含双方 tag 队友消息） */
+    private LinearLayout oppChatLayer;
     /** 居中动作消息文本区域容器（对齐 layout_game_right 窗口矩形），内部 TextView 随文字自适应居中 */
     private FrameLayout actionTextHost;
     private TextView actionText;
@@ -215,9 +223,10 @@ public class SpecEffectOverlay {
     }
 
     /**
-     * 立即结束并清空当前特效与待播队列。注意：不无条件 dismiss——弹幕仍在屏时保留
-     * PopupWindow（弹幕宿主与特效共用同一窗口，历次「弹幕不可见」的根因之一就是
-     * hide() 把带着活跃弹幕的窗口整个 dismiss 掉），仅在全空闲时收口关闭。
+     * 立即结束并清空当前特效与待播队列。注意：不无条件 dismiss——弹幕/分侧聊天行仍在屏时
+     * 保留 PopupWindow（弹幕与特效共用同一窗口，历次「弹幕不可见」的根因之一就是
+     * hide() 把带着活跃弹幕的窗口整个 dismiss 掉），仅在全空闲时收口关闭；
+     * 聊天行不属于特效，不随本方法清空（由 clearChatRowLayers/对局结束流程清理）。
      */
     public void hide() {
         queue.clear();
@@ -236,6 +245,8 @@ public class SpecEffectOverlay {
         view = null;
         rootLayer = null;
         danmakuLayer = null;
+        selfChatLayer = null;
+        oppChatLayer = null;
         actionTextHost = null;
         actionText = null;
     }
@@ -269,11 +280,13 @@ public class SpecEffectOverlay {
                 req.text, req.subText, req.difInit);
     }
 
-    /** 全空闲（队列空、画布动画未播、动作文本不在屏、无活跃弹幕）时关闭覆盖层 */
+    /** 全空闲（队列空、画布动画未播、动作文本不在屏、无活跃弹幕且无在屏聊天行）时关闭覆盖层 */
     private void dismissWindowIfIdle() {
         if (view == null) return;
         if (queue.isEmpty() && !view.running && !actionTextActive
-                && (danmakuLayer == null || danmakuLayer.getChildCount() == 0)) {
+                && (danmakuLayer == null || danmakuLayer.getChildCount() == 0)
+                && (selfChatLayer == null || selfChatLayer.getChildCount() == 0)
+                && (oppChatLayer == null || oppChatLayer.getChildCount() == 0)) {
             dismissWindow();
         }
     }
@@ -309,6 +322,17 @@ public class SpecEffectOverlay {
                     Gravity.CENTER));
             rootLayer.addView(actionTextHost, new FrameLayout.LayoutParams(0, 0,
                     Gravity.TOP | Gravity.START));
+            // 分侧聊天行容器：我方/对方 LP 血条正下方各一纵向列表，位置由 obtainChatRowLayer 设定
+            selfChatLayer = new LinearLayout(activity);
+            selfChatLayer.setOrientation(LinearLayout.VERTICAL);
+            selfChatLayer.setVisibility(View.GONE);
+            rootLayer.addView(selfChatLayer, new FrameLayout.LayoutParams(0, 0,
+                    Gravity.TOP | Gravity.START));
+            oppChatLayer = new LinearLayout(activity);
+            oppChatLayer.setOrientation(LinearLayout.VERTICAL);
+            oppChatLayer.setVisibility(View.GONE);
+            rootLayer.addView(oppChatLayer, new FrameLayout.LayoutParams(0, 0,
+                    Gravity.TOP | Gravity.START));
             window = new PopupWindow(rootLayer,
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -324,10 +348,18 @@ public class SpecEffectOverlay {
     private void showWindow() {
         if (window == null || window.isShowing()) return;
         View decor = activity.getWindow().getDecorView();
-        if (decor == null || decor.getWindowToken() == null) return;
+        if (decor == null) return;
+        if (decor.getWindowToken() == null) {
+            // 窗口 token 未就绪（首帧前/重建中）：延后一帧重试，避免弹幕宿主 View 永远
+            // 不附着窗口而宽高恒为 0（历史「弹幕/聊天滚动文字不可见」根因之一）
+            decor.post(this::showWindow);
+            return;
+        }
         try {
             window.showAtLocation(decor, Gravity.NO_GRAVITY, 0, 0);
         } catch (Exception ignored) {
+            // 显示失败同样下一帧重试一次（ obtainView 每次触发都会再走 showWindow 入口）
+            decor.post(this::showWindow);
         }
     }
 
@@ -418,18 +450,21 @@ public class SpecEffectOverlay {
     // ==================== 弹幕宿主（观战发言 / 系统消息，drawspec 层） ====================
 
     /**
-     * 返回弹幕宿主容器（PopupWindow 层，显示在 GL 曲面之上）：贴覆盖层顶边（即屏幕顶部）
-     * 的全屏宽度横带，高度 bandHeightPx 由调用方按「行数 × 行高」给定，弹幕自上而下分行
-     * 自右向左滚动，容器默认裁剪子 View，出入恰以该带为界。
+     * 返回弹幕宿主容器（PopupWindow 层，显示在 GL 曲面之上）：按调用方给定的带顶
+     * 窗口坐标 bandTopPx（双方 LP 血条底边，横竖屏同规格——对齐 gframe 聊天在血条
+     * 下方滚动）全屏宽定位；bandTopPx<0（血条尚未布局）时回退 layout_game_right 区域顶边，
+     * 高度 bandHeightPx 由调用方按「行数 × 行高」给定，弹幕自上分行自右向左滚动，
+     * 容器默认裁剪子 View，出入恰以该带为界。
      * 不再依赖 layout_top_info 的布局状态——历史 bug：top_info 未布局/被隐藏时返回 null，
      * 弹幕落回受 GL 曲面遮挡的 layout_danmaku 且其宽恒为 0，无限重试永不可见。
      */
-    public FrameLayout obtainDanmakuLayer(int bandHeightPx) {
+    public FrameLayout obtainDanmakuLayer(int bandHeightPx, int bandTopPx) {
         if (activity.isFinishing()) return null;
         obtainView();
+        updateRegion();
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) danmakuLayer.getLayoutParams();
         lp.leftMargin = 0;
-        lp.topMargin = 0;
+        lp.topMargin = Math.max(0, bandTopPx >= 0 ? bandTopPx : regionTop);
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
         lp.height = Math.max(1, bandHeightPx);
         danmakuLayer.setLayoutParams(lp);
@@ -439,6 +474,36 @@ public class SpecEffectOverlay {
 
     /** 弹幕移除后调用：全空闲则关闭覆盖层（弹幕不占 isBusy() 消息闸门，不参与串行动画屏障） */
     public void notifyDanmakuRemoved() {
+        dismissWindowIfIdle();
+    }
+
+    // ==================== 血条下方聊天行（对局玩家分侧聊天，非弹幕滚动） ====================
+
+    /**
+     * 取得指定侧的聊天行容器（VERTICAL LinearLayout，PopupWindow 层在 GL 曲面之上）：
+     * 以窗口坐标 leftPx/topPx（调用方传入：该侧 LP 血条底边）/widthPx（血条宽）定位到
+     * 血条正下方，每条聊天一个 TextView 自上而下追加，超过最大行数由调用方移除最旧一条。
+     * 对局玩家（含同队 tag 队友）聊天走本容器；系统/观战消息仍走弹幕带横向滚动。
+     */
+    public LinearLayout obtainChatRowLayer(boolean selfSide, int leftPx, int topPx, int widthPx) {
+        if (activity.isFinishing()) return null;
+        obtainView();
+        LinearLayout layer = selfSide ? selfChatLayer : oppChatLayer;
+        if (layer == null) return null;
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) layer.getLayoutParams();
+        lp.leftMargin = Math.max(0, leftPx);
+        lp.topMargin = Math.max(0, topPx);
+        lp.width = Math.max(1, widthPx);
+        lp.height = FrameLayout.LayoutParams.WRAP_CONTENT;
+        layer.setLayoutParams(lp);
+        layer.setVisibility(View.VISIBLE);
+        return layer;
+    }
+
+    /** 清空双方聊天行（停止聊天/离开决斗界面时调用），并尝试空闲收口关闭覆盖层 */
+    public void clearChatRowLayers() {
+        if (selfChatLayer != null) selfChatLayer.removeAllViews();
+        if (oppChatLayer != null) oppChatLayer.removeAllViews();
         dismissWindowIfIdle();
     }
 

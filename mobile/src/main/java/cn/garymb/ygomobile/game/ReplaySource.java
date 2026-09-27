@@ -105,6 +105,17 @@ abstract class ReplaySource {
                 continue;
             }
             int type = cursor.get() & 0xFF;
+            if (type == GameEngine.REPLAY_CHAT_FRAME) {
+                // 聊天/观战发言伪帧（本工程专用，仅存在于 V2 帧界流）：整帧剩余 =
+                // playerType(1)+UTF-8 文本，原样交回投喂循环特判派发，不进长度表切片
+                if (!frameBounded()) {
+                    lastError = "录像消息流含非帧界的聊天帧（0xF1）";
+                    return null;
+                }
+                byte[] body = new byte[cursor.remaining()];
+                cursor.get(body);
+                return new Msg(type, body);
+            }
             if (frameBounded() && type == 6) {
                 // V2 帧界：整帧剩余即本条 UPDATE_DATA 载荷，消费后自然换帧
                 byte[] body = new byte[cursor.remaining()];

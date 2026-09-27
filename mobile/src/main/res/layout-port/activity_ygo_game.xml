@@ -1,32 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?><!-- 竖屏主布局：只显示 layout_game_right（满屏），卡组编辑器按需覆盖；
-     不加载左侧 card_detail_panel（竖屏卡详情改由 layout_game_right 内底部全宽详情栏展示，
-     同 ID 结构由 CardDetailPanel 直接驱动，见 layout-port/layout_game_right.xml） -->
+     不加载左侧 card_detail_panel（竖屏卡详情改由顶部 layout_game_top_panel 承载，
+     同 ID 结构由 CardDetailPanel 直接驱动，见 layout-port/layout_game_top_panel.xml） -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 主内容区：竖屏下决斗场区满屏，卡组编辑器同位叠加（gone 时不占位） -->
+    <!-- 主内容区（竖屏垂直三层）：顶部面板（卡片详情+时点/录像/卡组按钮行）占屏高 1/3，
+         layout_game_right 占满剩余 2/3；卡组编辑器与决斗场同位互斥（gone 时不占位，
+         顶部面板 GONE 时 layout_game_right / 编辑器升为整屏） -->
     <LinearLayout
         android:id="@+id/layout_game_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <!-- 决斗场区域（满屏）：血条/聊天/按钮全部整合在 layout_game_right 竖屏变体内 -->
+        <!-- 顶部面板（1/3）：carddetailpanel 名称在上 + 三组互斥横向按钮行，
+             显隐与决斗/卡组编辑器生命周期同步（YGOProActivity.setGameTopPanelVisible） -->
+        <include
+            android:id="@+id/layout_game_top_panel"
+            layout="@layout/layout_game_top_panel"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- 决斗场区域（下方 2/3）：血条/聊天/弹幕/底部按钮全部整合在竖屏变体内，
+             决斗背景图仅平铺显示于本区域（RightAlignedTiledDrawable） -->
         <include
             android:id="@+id/layout_game_right"
             layout="@layout/layout_game_right"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="2" />
 
-        <!-- 卡组编辑器视图（与决斗场同位互斥显示） -->
+        <!-- 卡组编辑器视图（与决斗场同位互斥显示：决斗场 GONE 时占满顶部面板以下的空间） -->
         <include
             android:id="@+id/layout_deck_editor"
             layout="@layout/layout_deck_editor"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="2"
             android:visibility="gone" />
     </LinearLayout>
 

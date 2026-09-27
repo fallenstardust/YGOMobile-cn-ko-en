@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 竖屏顶部面板（占屏高 1/3，与下方 layout_game_right 2/3 共同构成主流程）：
+     上＝卡片详情栏 layout_card_detail（卡片名称独立顶行，其下左卡图右详情文字，weight=1 吃满剩余高度，
+     无选中卡片时 GONE 不占位）；下＝时点/录像/卡组三组互斥操作按钮行（横向排列，
+     三组统一 weightSum=6 按最大按钮数量等分屏宽，每按钮 0dp+weight=1 占 1/6、minWidth=0，
+     卡组 5 按钮行尾留一格空白，任何屏宽下都完整显示且三组按钮宽度一致）。
+     不透明背景：竖屏决斗背景图只平铺显示在下方 layout_game_right 区域，顶部不透出。
+     全部控件 ID 与横屏版一致（CardDetailPanel/DeckEditorViewHost 按 ID 驱动），
+     显隐由 YGOProActivity.setGameTopPanelVisible 与决斗/卡组编辑器生命周期同步 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_game_top_panel"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/ygopro_base_background"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <!-- 卡片详情栏（点击/长按场上、手卡、墓地、除外、额外、卡组卡片时显示）：
+         名称显示到卡图和其余详情的上方（垂直：名称行 → 下方[卡图 | 属性/等级/字段/效果文]） -->
+    <LinearLayout
+        android:id="@+id/layout_card_detail"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="2dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_card_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_sci_fi_bg"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:padding="2dp"
+            android:text="Unknown[999999999]"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/iv_card_image"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/unknown" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/window3"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_card_attr"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="[怪兽|效果] 种族/属性"
+                    android:textColor="@color/holo_green_bright"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/tv_card_level"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="[★13] 5000/5000"
+                    android:textColor="@color/yellow"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/tv_card_setname"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="字段：????"
+                    android:textColor="@color/holo_orange_bright"
+                    android:textSize="10sp"
+                    android:visibility="visible" />
+
+                <ScrollView
+                    android:id="@+id/sv_card_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:id="@+id/tv_card_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+                </ScrollView>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 时点/录像/卡组按钮行：三组同位互斥（layout_bottom_actions ↔
+         layout_replay_control ↔ layout_deck_control），各按钮 0dp+weight=1 且组 weightSum=6
+         ——三组按最大按钮数量（6）统一等分屏宽，每格宽度与当前可见按钮数无关
+         （minWidth=0 取消 Button 默认 88dp 下限；gone 按钮不占格，invisible 占格） -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
+        android:clipChildren="false">
+
+        <!-- 时点按钮（投降/时点控制） -->
+        <LinearLayout
+            android:id="@+id/layout_bottom_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:orientation="horizontal"
+            android:weightSum="6"
+            android:visibility="visible">
+
+            <Button
+                android:id="@+id/btn_surrender"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="投降"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_ignore_timing"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="忽略时点"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/btn_show_timing"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="显示时点"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/btn_available_timing"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="可用时点"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/btn_shuffle_hand"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="洗切手卡"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/btn_cancel_or_finish"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="完成选择"
+                android:textColor="@color/white"
+                android:textSize="9sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- 录像控制按钮 -->
+        <LinearLayout
+            android:id="@+id/layout_replay_control"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:orientation="horizontal"
+            android:weightSum="6"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/btn_replay_play"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="播放"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_replay_pause"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="暂停"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_replay_next"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="下一步"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_replay_last"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="上一步"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_replay_shuffle"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="切换视角"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_replay_quit"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="退出"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+        </LinearLayout>
+
+        <!-- 卡组操作按钮 -->
+        <LinearLayout
+            android:id="@+id/layout_deck_control"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:orientation="horizontal"
+            android:weightSum="6"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/btn_deck_exit"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/quit"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_deck_shuffle"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/unsort"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_deck_sort"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/sort"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_deck_clear"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/clear_deck"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_deck_delete"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/delete"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>

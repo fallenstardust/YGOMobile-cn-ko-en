@@ -57,6 +57,7 @@ import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
+import cn.garymb.ygomobile.utils.RightAlignedTiledDrawable;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -97,6 +98,8 @@ public class YGOProActivity extends AppCompatActivity {
 
     LinearLayout layoutDeckControl;
     FrameLayout layoutGameRight;
+    /** 竖屏顶部面板（卡片详情+时点/录像/卡组按钮行，占屏高 1/3）；横屏无此节点，全程空保护 */
+    View layoutGameTopPanel;
     View layoutGameContent;
 
     FrameLayout dialogContainer;
@@ -120,6 +123,8 @@ public class YGOProActivity extends AppCompatActivity {
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
     private FullScreenUtils mFullScreenUtils;
     private String currentBgPath;
+    /** 最近一次解码成功的背景图（竖屏下另挂到 layout_game_right 区域平铺背景，旋转重建后据此重贴） */
+    private Bitmap lastBgBitmap;
 
     // 最近一次加入/创建房间的连接信息：断线或决斗结束返回局域网主界面时回显
     String lastJoinNickname = "";
@@ -177,6 +182,7 @@ public class YGOProActivity extends AppCompatActivity {
         dialogContainer = findViewById(R.id.dialog_container);
         layoutDeckControl = findViewById(R.id.layout_deck_control);
         layoutGameRight = findViewById(R.id.layout_game_right);
+        layoutGameTopPanel = findViewById(R.id.layout_game_top_panel);
         layoutGameContent = findViewById(R.id.layout_game_content);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
         etChatInput = findViewById(R.id.et_chat_input);
@@ -237,6 +243,8 @@ public class YGOProActivity extends AppCompatActivity {
         boolean duelUiVisible = !deckEditorVisible && layoutGameRight != null
                 && layoutGameRight.getVisibility() == View.VISIBLE;
         boolean lobbyChat = duelUiVisible && playerWaitingDialog != null && playerWaitingDialog.isShowing();
+        // 卡片详情回显快照（旧视图树）：旋转前正在显示某张卡详情则重建后继续显示同一张（用户规格）
+        boolean detailShowing = cardDetailPanel != null && cardDetailPanel.isShowing();
 
         // 2) 关闭挂在旧视图树上的瞬态浮层：表情面板/drawspec 覆盖层（LP浮字/弹幕/居中特效）/
         // 卡片命令菜单；后续特效/弹幕经懒建新实例回到新树
@@ -252,6 +260,7 @@ public class YGOProActivity extends AppCompatActivity {
         dialogContainer = findViewById(R.id.dialog_container);
         layoutDeckControl = findViewById(R.id.layout_deck_control);
         layoutGameRight = findViewById(R.id.layout_game_right);
+        layoutGameTopPanel = findViewById(R.id.layout_game_top_panel);
         layoutGameContent = findViewById(R.id.layout_game_content);
         layoutDeckEditor = findViewById(R.id.layout_deck_editor);
         etChatInput = findViewById(R.id.et_chat_input);
@@ -289,6 +298,7 @@ public class YGOProActivity extends AppCompatActivity {
         } else if (duelUiVisible) {
             if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
             if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
+            setGameTopPanelVisible(true);
             if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
             if (topInfoManager != null) {
                 topInfoManager.prepareForDisplay();
@@ -314,8 +324,11 @@ public class YGOProActivity extends AppCompatActivity {
                     cardDetailPanel.showChainButtons();
                     cardDetailPanel.setSurrenderVisible(true);
                 }
+                cardDetailPanel.restoreAfterRebind(detailShowing);
             }
         }
+        // 旋转后新视图树的 layout_game_right 背景随旧树销毁，按最近背景图重贴区域平铺背景
+        updateFieldRegionBackground();
         // 主菜单阶段：MainMenuDialog 是独立窗口不受 setContentView 影响，无需回显
     }
 
@@ -695,6 +708,7 @@ public class YGOProActivity extends AppCompatActivity {
         DuelLogDialog.clearLogs();
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
+        setGameTopPanelVisible(false);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
         // 离开决斗场后重算场景：duelActive 已置假 → 非卡组编辑则回 MENU（修正结束一局后
         // WIN/LOSE 音乐残留不回菜单的问题）
@@ -709,6 +723,8 @@ public class YGOProActivity extends AppCompatActivity {
         getMainMenuDialog().hideMainMenu();
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
+        // 竖屏顶部面板（卡片详情 + 时点/录像/卡组按钮行）与决斗场同进同退
+        setGameTopPanelVisible(true);
 
         // layout_game_right 显示第一时间初始化顶部信息：头像/玩家名称/房间血量（猜拳前可见）
         if (topInfoManager != null) topInfoManager.prepareForDisplay();
@@ -827,6 +843,8 @@ public class YGOProActivity extends AppCompatActivity {
     void enterLobbyChatUI() {
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
+        // 大厅聊天非决斗阶段：顶部面板隐藏，layout_game_right 升为整屏承载聊天区
+        setGameTopPanelVisible(false);
         // 大厅聊天期间隐藏决斗场 GL 渲染（GLSurfaceView 置 GONE，决斗开始时恢复）
         View gameFieldView = findViewById(R.id.game_field_view);
         if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
@@ -867,6 +885,8 @@ public class YGOProActivity extends AppCompatActivity {
     public void setWindowBackground(String relativePath) {
         String path = AppsSettings.get().getResourcePath() + "/" + relativePath;
         if (TextUtils.equals(path, currentBgPath)) {
+            // 命中缓存也要重贴区域背景：旋转重建后 layout_game_right 是新视图树实例，背景已丢
+            updateFieldRegionBackground();
             return;
         }
         File file = new File(path);
@@ -876,11 +896,45 @@ public class YGOProActivity extends AppCompatActivity {
                 if (bitmap != null) {
                     getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), bitmap));
                     currentBgPath = path;
+                    lastBgBitmap = bitmap;
+                    // 竖屏：决斗背景只平铺显示在下方 2/3 的 layout_game_right 区域（用户规格）
+                    updateFieldRegionBackground();
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load background: " + relativePath, e);
             }
         }
+    }
+
+    /**
+     * 竖屏决斗场区域背景（用户规格）：背景图只显示在下方 2/3 的 layout_game_right 上，
+     * 按区域高平铺、右缘对齐（左侧超出屏幕部分忽略）；顶部 1/3 由不透明的
+     * layout_game_top_panel 遮盖窗口背景。横屏不设 View 背景，仍走窗口背景原机制。
+     * 旋转 setContentView 后新视图树背景丢失，由 rebuildUiForOrientation / setWindowBackground
+     * 缓存命中路径重新调用本方法恢复。
+     */
+    void updateFieldRegionBackground() {
+        if (layoutGameRight == null) return;
+        boolean portrait = getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_PORTRAIT;
+        if (portrait && lastBgBitmap != null && !lastBgBitmap.isRecycled()) {
+            layoutGameRight.setBackground(new RightAlignedTiledDrawable(lastBgBitmap));
+        } else {
+            layoutGameRight.setBackground(null);
+        }
+    }
+
+    /**
+     * 竖屏顶部面板显隐（与 layout_game_right 的决斗/卡组编辑器生命周期同步）：
+     * 决斗场显示/卡组编辑器（需卡片详情+卡组按钮）→ VISIBLE（占屏高 1/3，
+     * layout_game_right 余 2/3）；菜单/大厅聊天 → GONE（不占位，区域升为整屏）。
+     * 横屏布局无该节点，findViewById 为 null 时静默跳过。
+     */
+    void setGameTopPanelVisible(boolean visible) {
+        if (layoutGameTopPanel == null)
+            layoutGameTopPanel = findViewById(R.id.layout_game_top_panel);
+        if (layoutGameTopPanel != null)
+            layoutGameTopPanel.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
 

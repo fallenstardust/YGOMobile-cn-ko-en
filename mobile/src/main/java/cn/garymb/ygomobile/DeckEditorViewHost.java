@@ -36,8 +36,10 @@ class DeckEditorViewHost {
             activity.layoutDeckEditor.setVisibility(View.VISIBLE);
         }
 
-        // 隐藏右侧决斗场区，让卡组编辑器占据其空间
+        // 隐藏右侧决斗场区，让卡组编辑器占据其空间；
+        // 竖屏顶部面板保留可见（承载卡片详情栏与 layout_deck_control 卡组操作按钮）
         if (activity.layoutGameRight != null) activity.layoutGameRight.setVisibility(View.GONE);
+        activity.setGameTopPanelVisible(true);
 
         if (activity.layoutDeckControl == null) {
             activity.layoutDeckControl = activity.findViewById(R.id.layout_deck_control);

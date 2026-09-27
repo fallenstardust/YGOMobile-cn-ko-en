@@ -58,7 +58,8 @@ final class FieldCamera {
     /** 近/远裁剪面：由 0.5/100 收紧到 1/60，同等深度位宽下精度提升约 20 倍 */
     private static final float CAM_NEAR = 1.0f;
     private static final float CAM_FAR = 60.0f;
-    /** 竖屏（h>w）专用仰角：场地几乎垂直于视角（用户规格 85°），横屏恢复设置仰角 */
+    /** 竖屏（h>w）专用仰角：85° 近俯视（用户规格，保留轻微透视又使左侧我方额外卡组不出屏），
+     *  横屏恢复设置仰角 */
     private static final float PORTRAIT_ELEVATION = 85f;
 
     /**
@@ -96,19 +97,24 @@ final class FieldCamera {
     }
 
     /**
-     * 竖屏取景锚点（用户规格：「以我方的额外卡组格子左下角和卡组格子的右下角贴住屏幕边缘」）：
-     * 取我方堆叠区（额外 0x40 / 卡组 0x01）近端底缘行 y（无 CONTENT_PAD）与两角相对场地中轴的
-     * 横向半宽；两角关于 CAM_X 基本对称，同一 y 行上同时贴住屏幕底缘与左右缘。
-     * @return {近端底缘 y, 横向半宽}；几何未就绪返回 null
+     * 竖屏取景锚点（用户规格：「以我方的额外卡组格子左下角和卡组格子的右下角贴住屏幕边缘」
+     * 且格子水平居中）：精确取我方两个堆叠列（额外 0x40 / 卡组 0x01）的近端下角对
+     * （无 CONTENT_PAD、不含外侧灵摆/场地区纵列——允许被视锥裁切），视锥横向中心取两角
+     * 中点而非 CAM_X，两侧同时贴住屏幕左右缘且内容不左偏；半宽收窄到两角间距之半，
+     * 等效把场地/场上卡片/手卡整体拉近变大。
+     * @return {近端底缘 y, 横向半宽, 横向中心 x}；几何未就绪返回 null
      */
     private static float[] portraitNearCorners() {
-        float[] extra = GameField.getPileRect(0, 0x40);
-        float[] deck = GameField.getPileRect(0, 0x01);
+        float[] extra = GameField.getPileRect(0, 0x40);   // 我方左侧：额外卡组格子
+        float[] deck = GameField.getPileRect(0, 0x01);    // 我方右侧：卡组格子
         if (extra == null || deck == null) return null;
+        float leftX = extra[0] - extra[2] * 0.5f;         // 额外格子左下角 x
+        float rightX = deck[0] + deck[2] * 0.5f;          // 卡组格子右下角 x
         float nearY = Math.max(extra[1] + extra[3] * 0.5f, deck[1] + deck[3] * 0.5f);
-        float halfW = Math.max(Math.abs((extra[0] - extra[2] * 0.5f) - CAM_X),
-                Math.abs((deck[0] + deck[2] * 0.5f) - CAM_X));
-        return new float[]{nearY, halfW};
+        float midX = (leftX + rightX) * 0.5f;
+        float halfW = Math.max(midX - leftX, rightX - midX);
+        if (halfW <= 0.1f) return null;
+        return new float[]{nearY, halfW, midX};
     }
 
     // === 矩阵与相机缓存 ===
@@ -133,6 +139,7 @@ final class FieldCamera {
      */
     static final class CameraSolve {
         boolean valid;
+        float eyeX = CAM_X;       // 视点横向位置（横屏恒为场地中轴 CAM_X；竖屏取内容极值中点使格子居中）
         float eyeY, eyeZ;       // 视点（eyeX 恒为 CAM_X）
         float dirY, dirZ;       // 视线前向（YZ 平面内单位向量）
         float tanV;             // tan(fovy/2)（对称基准）
@@ -165,9 +172,13 @@ final class FieldCamera {
         float aspect = (float) w / h;
         float th = (float) Math.toRadians(cameraElevationDeg);
         float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
-        if (sth < 1e-3f || cth < 1e-3f) return s;
+        if (sth < 1e-3f) return s;
+        // 90° 正俯视：cos(90°) 浮点残差≈6e-17，钳到极小正数按正俯视参与后续解算（而非判无效回退）
+        if (cth < 1e-3f) cth = 1e-3f;
         // 竖屏贴边取景锚点（几何未就绪时回退横屏同构路径）
         final float[] corners = portrait ? portraitNearCorners() : null;
+        // 竖屏视锥横向中心 = 全部内容横向极值中点（映射到屏幕中心），横屏维持 CAM_X
+        s.eyeX = corners != null ? corners[2] : CAM_X;
         // 手卡平行屏幕，相机 up≈(0,-sinθ,cosθ)：卡片半高在世界 Y/Z 上的投影
         float hY = FieldGeometry.CARD_H * 0.5f * sth;
         float hZ = FieldGeometry.CARD_H * 0.5f * cth;
@@ -203,9 +214,11 @@ final class FieldCamera {
             dY = by / bl;
             dZ = bz / bl;
             s.valid = true;
-            float needH = corners != null
-                    ? corners[1] / Math.max(0.2f, (corners[0] - eyeY) * dY - eyeZ * dZ)
-                    : contentHalfTan(eyeY, eyeZ, dY, dZ);
+            // 竖屏（corners 贴边取景路径）：视点绝不退让——退让循环在竖屏纵横比下恒不满足，
+            // 会把 D 一路推到 MAX_CAM_D 拉平透视、卡片整体缩小（用户反馈「缩得太小」根因）。
+            // 取景尺寸由下方横向贴边公式唯一决定，不再纵向兜底放大。
+            if (corners != null) break;
+            float needH = contentHalfTan(eyeY, eyeZ, dY, dZ);
             if (needH * fieldZoom <= tanV * aspect) break;
             if (D >= MAX_CAM_D - 1e-3f) break;
             D = Math.min(MAX_CAM_D, D * 1.35f);
@@ -214,13 +227,16 @@ final class FieldCamera {
 
         float hh, c;
         if (corners != null) {
-            // 竖屏「居中+贴左右缘」取景：横向半宽 tan 由近端两角精确决定（fRight=hh·aspect·near），
-            // x 映射与离轴量 c 无关，故取 c=0 使视锥关于视轴（两锚点角平分线）对称：
-            // 内容上下留白均行→决斗场整体居中（不再钉底缘被我方 LP 条遮挡手卡），
-            // 近端两角仍精确落在屏幕左右缘；hh≥tanV 保证顶/底平面不裁切锚点范围
+            // 竖屏「居中+贴左右缘」取景（用户真机规格：我方左侧额外卡组格子左下角、
+            // 右侧卡组格子右下角分别落在 layout_game_right 左/右边缘上，卡片尽量大）：
+            // 横向半宽 tan 由近端两角精确决定（fRight=hh·aspect·near），x 映射与离轴量 c
+            // 无关，故取 c=0 使视锥关于视轴（两锚点角平分线）对称：内容上下留白均行、
+            // 决斗场整体居中，近端两角精确落在屏幕左右缘。
+            // 不再做 hh≥tanV 纵向兜底——85° 近俯视下纵向锚点 tanV 远大于横向贴边所需，
+            // 兜底会把视野抬回纵向容纳、卡片缩得与修改前一样小（真机反馈根因）；
+            // 以横向贴边为唯一基准，纵向超出视锥的部分按 c=0 均分裁切，用户规格优先。
             float depthCorner = Math.max(0.2f, (corners[0] - eyeY) * dY - eyeZ * dZ);
             hh = corners[1] * fieldZoom / depthCorner / aspect;
-            if (hh < tanV) hh = tanV;
             c = 0f;
         } else {
             float need = contentHalfTan(eyeY, eyeZ, dY, dZ) * fieldZoom;
@@ -284,7 +300,7 @@ final class FieldCamera {
         if (!s.valid) return;
         float aspect = (float) viewW / viewH;
 
-        camEyeX = CAM_X;
+        camEyeX = s.eyeX;
         camEyeY = s.eyeY;
         camEyeZ = s.eyeZ;
         selfHandShift = s.selfHandShift;
@@ -299,8 +315,8 @@ final class FieldCamera {
         float fBottom = (s.frustumC - s.frustumHH) * near;
         float fRight = s.frustumHH * aspect * near;
         Matrix.frustumM(mProj, 0, -fRight, fRight, fBottom, fTop, near, CAM_FAR);
-        Matrix.setLookAtM(mView, 0, CAM_X, s.eyeY, s.eyeZ,
-                CAM_X, s.eyeY + s.dirY, s.eyeZ + s.dirZ, 0f, 0f, 1f);
+        Matrix.setLookAtM(mView, 0, s.eyeX, s.eyeY, s.eyeZ,
+                s.eyeX, s.eyeY + s.dirY, s.eyeZ + s.dirZ, 0f, 0f, 1f);
         Matrix.multiplyMM(mVP, 0, mProj, 0, mView, 0);
 
         synchronized (camLock) {

@@ -182,7 +182,7 @@ final class FieldEditPreview {
         if (!s.valid) return null;
         float aspect = (float) w / h;
         EditCamera cam = new EditCamera();
-        cam.eyeX = FieldCamera.CAM_X;
+        cam.eyeX = s.eyeX;   // 竖屏视锥横向中心为内容极值中点（与运行期 updateCamera 一致）
         cam.eyeY = s.eyeY;
         cam.eyeZ = s.eyeZ;
         cam.fx = 0f;

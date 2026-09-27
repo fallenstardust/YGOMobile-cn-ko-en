@@ -142,20 +142,41 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      */
     private void setupOverlayAnchoring() {
         if (viewController == null) return;
-        if (layoutTopInfo != null) {
-            layoutTopInfo.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
-                int hgt = v.getHeight();
-                // 竖屏顶部 HUD 经 layout_hud_top 整体等比缩小（r1）：相机顶部内缩取视觉实际高度
-                if (layoutHudTop != null) hgt = (int) (hgt * layoutHudTop.getScaleY());
-                if (hgt > 0) viewController.setTopInsetPx(hgt);
-            });
-        }
+        final View.OnLayoutChangeListener insetListener =
+                (v, l, t, r, b, ol, ot, or, ob) -> updateCameraTopInset();
+        if (layoutTopInfo != null) layoutTopInfo.addOnLayoutChangeListener(insetListener);
+        // 竖屏顶部流容器 layout_top_stack（gameTopInfo 血条行→聊天/提示行）：聊天行数
+        // 变化等把 HUD 内容撑高时靠 stack 布局变更重算（顶部 1/3 面板在 layout_game_right
+        // 之外，其显隐直接改变决斗场区域尺寸并由 onSurfaceChanged 重解相机，无需内缩补偿）
+        View stack = activity.findViewById(R.id.layout_top_stack);
+        if (stack != null) stack.addOnLayoutChangeListener(insetListener);
         viewController.setOnCameraChangedListener(this::anchorChatAboveOpponentHand);
+    }
+
+    /** 相机顶部内缩 = layout_top_info 视觉底边（相对决斗场视图）距场顶的距离：
+     *  横屏生效；竖屏决斗场已排在详情栏下方的内容区内且解算居中，传入值被 FieldCamera 忽略 */
+    private void updateCameraTopInset() {
+        if (viewController == null || layoutTopInfo == null) return;
+        int rawH = layoutTopInfo.getHeight();
+        if (rawH <= 0) return;
+        float scale = layoutHudTop != null ? layoutHudTop.getScaleY() : 1f; // 现均 1，保留兼容
+        int hgt;
+        View field = activity.findViewById(R.id.game_field_view);
+        if (field != null) {
+            int[] a = new int[2];
+            int[] b = new int[2];
+            layoutTopInfo.getLocationInWindow(a);
+            field.getLocationInWindow(b);
+            hgt = (a[1] - b[1]) + (int) (rawH * scale);
+        } else {
+            hgt = (int) (rawH * scale);
+        }
+        if (hgt > 0) viewController.setTopInsetPx(hgt);
     }
 
     private void anchorChatAboveOpponentHand() {
         if (viewController == null || layoutChatMessages == null) return;
-        // 竖屏（layout-port）聊天区在缩放容器内自然流式位于双方血条行正下方（r1 与横屏同构），
+        // 竖屏（layout-port）聊天区在顶部流内自然位于双方血条行正下方（与横屏同构），
         // 不再叠加横屏的 translationY 动态锚定，复位后直接返回
         if (activity.getResources().getConfiguration().orientation
                 == android.content.res.Configuration.ORIENTATION_PORTRAIT) {

@@ -514,6 +514,10 @@ public class AnnounceCardDialog {
             if (anchor == null || anchor.getWindowToken() == null) return;
             // 对齐 duelclient.cpp：弹窗前先执行一次 UpdateDeclarableList（空输入列出全部可宣言卡）
             updateList(etInput.getText().toString());
+            // 竖屏：弹窗居中到 layout_game_right（下方 2/3 决斗场区域）而非整屏（用户规格）
+            DraggablePopupHelper.centerPopupInRegion(popupWindow,
+                    context instanceof YGOProActivity
+                            ? ((YGOProActivity) context).findViewById(R.id.layout_game_right) : null);
             try {
                 if (draggableHelper != null) {
                     draggableHelper.showPopup(popupWindow, anchor);

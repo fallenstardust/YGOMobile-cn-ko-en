@@ -219,7 +219,17 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
 
     @Override
     public void onChatReceived(int playerType, String message) {
+        // 决斗中的聊天/观战发言以 0xF1 伪帧录入当前 MSG 段（回放模式与决斗外场景自动丢弃，
+        // 见 GameEngine::recordChatFrame），保存录像时随 V2 尾段并入 yrp，无引擎回放按时间线重现；
+        // libygo 不读尾段，兼容性不受影响
+        if (activity.engine != null) activity.engine.recordChatFrame(playerType, message);
         activity.runOnUiThread(() -> activity.fieldCtl.appendChat(playerType, message));
+    }
+
+    /** 回放 rewind 重排（上一步/从头重放）：聊天随消息流重新流入，先清空现有显示防重复 */
+    @Override
+    public void onReplayChatReset() {
+        activity.runOnUiThread(() -> activity.fieldCtl.clearChatMessages());
     }
 
     @Override

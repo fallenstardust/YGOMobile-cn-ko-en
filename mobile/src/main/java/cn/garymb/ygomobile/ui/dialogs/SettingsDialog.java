@@ -380,6 +380,10 @@ public class SettingsDialog {
         });
 
         anchorView.setVisibility(View.GONE);
+        // 竖屏：设置弹窗居中到 layout_game_right（下方 2/3 决斗场区域）而非整个 Activity（用户规格）
+        DraggablePopupHelper.centerPopupInRegion(popupWindow,
+                context instanceof cn.garymb.ygomobile.YGOProActivity
+                        ? ((cn.garymb.ygomobile.YGOProActivity) context).findViewById(R.id.layout_game_right) : null);
         draggableHelper.showPopup(popupWindow, anchorView);
     }
 

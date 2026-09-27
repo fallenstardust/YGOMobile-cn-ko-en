@@ -146,12 +146,12 @@ final class FieldHudRenderer {
 
     /**
      * 场上卡片数值文字（正交 HUD 通道，关深度测试，与 drawFieldNumbers 同一套投影）：
-     * - 表侧怪兽：攻击表示 → 左下攻击力/右下守备力；守备表示 → 左下守备力/右下攻击力；
-     *   连接怪兽 → 左下攻击力/右下 link 值（连接怪兽 defString 已为 "-"）。
+     * - 表侧怪兽：文字锚定恒取攻击表示（竖置）卡片矩形四角，不随守备表示 90° 旋转移动——
+     *   我方攻/守值在卡底边中点、等级在左上角；对方等级在卡身左下角（屏幕右上，180° 倒置），
+     *   攻/守值在卡顶边中点；守备表示仅改变攻/守串的粗体强调位（连接怪兽 defString 已为 "-"）。
      * - 灵摆刻度：文字贴卡片矩形「屏幕外侧顶角顶点」——屏幕左侧卡左上角(左对齐)、
      *   屏幕右侧卡右上角(右对齐)；rule>=4 用 seq0/seq4，rule<4 用 seq6/seq7（MR3 刻度已烘焙
-     *   进卡图纹理，此处仅补文字定位分支）。怪兽等级对准屏幕上所见卡片矩形的角顶点
-     *   （文字中心即顶点：我方=左上角；对方倒置卡攻击=右上角、守备=右下角，见 {@link #drawMonsterStatTexts}）。
+     *   进卡图纹理，此处仅补文字定位分支）。
      * 移动中的卡片跳过（对齐 DrawCard is_moving 提前返回），字号随格子投影像素高度自适应。
      */
     void drawFieldCardTexts(GameField f) {
@@ -178,11 +178,11 @@ final class FieldHudRenderer {
         float[] r = GameField.getZoneRect(p, 0x04, seq);
         if (r == null) return;
         float cx = r[0], cy = r[1];
-        // 文字锚定到「卡片矩形」而非更大的格子矩形——按卡片自身足迹取半宽半高；
-        // 守备表示卡片绕 Z 旋转 90°，其世界 X/Y 半 extent 对调。
         boolean defense = (c.position & GameField.POS_DEFENSE) != 0;
-        float hx = (defense ? FieldGeometry.CARD_H : FieldGeometry.CARD_W) * 0.5f;
-        float hy = (defense ? FieldGeometry.CARD_W : FieldGeometry.CARD_H) * 0.5f;
+        // 用户规格：文字锚定不随守备表示的 90° 旋转改变位置——恒按攻击表示（竖置）
+        // 卡片矩形取四角，等级/攻守文字永远固定在竖置时的角位与底边
+        float hx = FieldGeometry.CARD_W * 0.5f;
+        float hy = FieldGeometry.CARD_H * 0.5f;
         // 四角 + 中心投影（world +y 靠相机 → 屏幕更下）
         float[] nearL = view.projectWorldPoint(FieldGeometry.mirrorX(cx - hx), cy + hy, 0.02f);
         float[] nearR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy + hy, 0.02f);
@@ -190,9 +190,7 @@ final class FieldHudRenderer {
         float[] farR = view.projectWorldPoint(FieldGeometry.mirrorX(cx + hx), cy - hy, 0.02f);
         float[] center = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy, 0.02f);
         if (nearL == null || nearR == null || farL == null || farR == null || center == null) return;
-        // 字号基准：恒按攻击表示的 CARD_H 竖向投影测量——守备表示卡片 hx/hy 对调（长轴
-        // 变横向），若继续用 footprint 的 nearL 量高则基于 CARD_W，守备的 ATK/DEF 与等级
-        // 文字会明显小于攻击表示；文字位置仍锚定旋转后矩形的当前四角（下方 near/far）
+        // 字号基准：与锚定四角同一基准（攻击表示 CARD_H 竖向投影），守备旋转不改变文字大小
         float[] hTop = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy - FieldGeometry.CARD_H * 0.5f, 0.02f);
         float[] hBot = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy + FieldGeometry.CARD_H * 0.5f, 0.02f);
         if (hTop == null || hBot == null) return;
@@ -200,8 +198,8 @@ final class FieldHudRenderer {
         float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f)) * STAT_SIZE_SCALE;
         boolean ours = (p == 0);
 
-        // ATK/DEF（连接值为 ATK/L-n）居中压在卡片「视角相对底边」线上——字高一半在卡上、
-        // 一半垂在卡外，与卡片略微重叠而不整体显示在卡面内。
+        // ATK/DEF（连接值为 ATK/L-n）居中压在攻击表示卡片的底边线上（视角相对，
+        // 守备旋转不移动锚点）——字高一半在卡上、一半垂在卡外，与卡片略微重叠而不整体显示在卡面内。
         float[] eL = ours ? nearL : farL;
         float[] eR = ours ? nearR : farR;
         float edgeX = (eL[0] + eR[0]) / 2f;
@@ -222,19 +220,15 @@ final class FieldHudRenderer {
         }
         drawScreenText(edgeX, edgeY, parts, colors, boldFlags, hpx);
 
-        // 等级(L*/调律黄/阶级玫红)对准「屏幕上所见卡片矩形」的角顶点：文字中心即顶点
-        //（不做底边坐角抬升）。我方=左上角 farL 左对齐向右延伸；对方卡旋转 180° 倒置且
-        // 近端透压缩成「尖端」，故按表示区分角位并令顶点=文字中心（居中对齐）：
-        //   对方攻击表示 → 右上角 farR、对方守备表示 → 右下角 nearR。
+        // 等级(L*/调律黄/阶级玫红)锚定攻击表示卡片矩形的角顶点（不随守备旋转移动）：
+        // 我方=左上角 farL 左对齐向右延伸；对方卡旋转 180° 倒置，其卡身左下角=屏幕右上角
+        // farR（文字中心即顶点，居中对齐），攻守表示均固定于此。
         if (c.lvString != null && !c.lvString.isEmpty()) {
             float[] corner;
             int align;
             if (ours) {
                 corner = farL;
                 align = ALIGN_LEFT;
-            } else if (defense) {
-                corner = nearR;
-                align = ALIGN_CENTER;
             } else {
                 corner = farR;
                 align = ALIGN_CENTER;

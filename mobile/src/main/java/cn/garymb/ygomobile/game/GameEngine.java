@@ -7,6 +7,7 @@ import android.util.Log;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,6 +136,12 @@ public class GameEngine {
 
         /** tag 模式：队友请求投降，本方需确认是否同意（对齐 STOC_TEAMMATE_SURRENDER + sysString 1355） */
         default void onTeammateSurrenderRequest() {}
+
+        /**
+         * 回放 rewind 重排（上一步/从头重放）：聊天/弹幕伪帧（{@link #REPLAY_CHAT_FRAME}）随
+         * 消息流回卷后会重新派发，宿主应清空当前聊天显示（分侧聊天行与弹幕）防重复
+         */
+        default void onReplayChatReset() {}
     }
 
     // 核心状态与基础设施（协作类经 engine. 引用访问：同包类用包级私有，
@@ -698,6 +705,37 @@ public class GameEngine {
         synchronized (msgRecLock) {
             msgSegFrames.clear();
             msgSegDone.clear();
+        }
+    }
+
+    /**
+     * 回放聊天伪帧消息号：ocgcore common.h 消息号表之外（0xF1，引擎永不产出），本工程专用。
+     * 帧格式 [0xF1][playerType(1B)][UTF-8 文本]，随引擎 MSG 帧一并录进录像 V2 消息流尾段——
+     * libygo（ocgcore+script 重跑）只顺序消费响应段、不读尾段，天然保持兼容可播；
+     * 无引擎回放由 ReplaySource::next 在帧界流中拦截、ReplayPlayer 独立派发显示（不投喂管线）。
+     */
+    public static final int REPLAY_CHAT_FRAME = 0xF1;
+
+    /**
+     * 录制一条聊天/观战发言为 0xF1 伪帧（EngineCallbackDelegate.onChatReceived 调用，
+     * 实况唯一的聊天派发入口，覆盖对局玩家/队友/观战/系统全部类型）：
+     * 回放模式丢弃（防自录循环）；当前段在录则追加段尾（与引擎帧按到达序交错，回放时序还原）；
+     * 本局已 MSG_WIN 完结而 STOC_REPLAY 尚未取走时追加最近完结段（决胜局后 "gg" 类聊天入录像）；
+     * 决斗外（大厅/两段之间无待存录像）无对应录像可依附，丢弃。
+     */
+    public void recordChatFrame(int playerType, String message) {
+        if (replayMode || message == null || message.isEmpty()) return;
+        byte[] text = message.getBytes(StandardCharsets.UTF_8);
+        byte[] frame = new byte[text.length + 2];
+        frame[0] = (byte) REPLAY_CHAT_FRAME;
+        frame[1] = (byte) playerType;
+        System.arraycopy(text, 0, frame, 2, text.length);
+        synchronized (msgRecLock) {
+            if (!msgSegFrames.isEmpty()) {
+                msgSegFrames.add(frame);
+            } else if (!msgSegDone.isEmpty()) {
+                msgSegDone.get(msgSegDone.size() - 1).add(frame);
+            }
         }
     }
 

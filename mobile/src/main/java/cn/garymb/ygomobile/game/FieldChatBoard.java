@@ -35,6 +35,11 @@ class FieldChatBoard {
     private final LinkedList<String> myChatLines = new LinkedList<>();
     private final LinkedList<String> opChatLines = new LinkedList<>();
 
+    /** 尚未落进血条下方聊天行容器的我方/对方消息（血条/覆盖层未就绪时暂存，
+     *  容器可用后按旧→新顺序补挂；每侧暂存不超 MAX_CHAT_LINES 条） */
+    private final LinkedList<String> myChatPending = new LinkedList<>();
+    private final LinkedList<String> opChatPending = new LinkedList<>();
+
     // 表情气泡：显示在发送方头像下方（对齐 gframe drawing.cpp DrawEmoticon），超时自动隐藏
     private static final long EMOTE_BUBBLE_DURATION_MS = 3000;
     ImageView ivPlayerEmoteBubble, ivOpponentEmoteBubble;
@@ -221,11 +226,13 @@ class FieldChatBoard {
     }
 
     /**
-     * 我方/对方侧玩家聊天：tv_chat_message_1/2 是普通 View，被 setZOrderOnTop(true) 的
-     * GameFieldView GL 曲面整层遮挡（历史「聊天消息不显示」根因：非屏幕外也非宽高为 0，
-     * 而是被盖住），与 LP 浮动文字/RPS 弹窗同源问题。统一改走 SpecEffectOverlay 的
-     * PopupWindow 弹幕带；颜色对齐 drawing.cpp chatColor[0..3]（玩家消息白色），
-     * 行数/滚动/半透明黑底与系统弹幕一致，前缀已由调用方拼好「昵称: 内容」。
+     * 我方/对方侧玩家聊天（含同队 tag 队友）：对局玩家聊天不是弹幕——在发送方
+     * LP 血条正下方自上而下逐行显示（我方队→我方血条下、对方队→对方血条下，
+     * 横竖屏同规格），最多 MAX_CHAT_LINES 行、超出移除最上方最旧一条（等效上滚）。
+     * 容器由 SpecEffectOverlay 的 PopupWindow 承载（在 GL 曲面之上；tv_chat_message_1/2
+     * 是普通 View，会被 setZOrderOnTop(true) 的 GameFieldView 整层遮挡，历史根因），
+     * 颜色对齐 drawing.cpp chatColor[0..3]（玩家消息白色），前缀已由调用方拼好「昵称: 内容」。
+     * 仅系统/观战消息在 showChatDanmaku 中以弹幕形式横向滚动。
      */
     private void appendSideChat(boolean selfSide, String line) {
         LinkedList<String> lines = selfSide ? myChatLines : opChatLines;
@@ -233,12 +240,80 @@ class FieldChatBoard {
         while (lines.size() > MAX_CHAT_LINES) {
             lines.removeFirst();
         }
-        showDanmakuLine(line, 0xFFFFFFFF, 0);
+        LinkedList<String> pending = selfSide ? myChatPending : opChatPending;
+        pending.addLast(line);
+        while (pending.size() > MAX_CHAT_LINES) {
+            pending.removeFirst();
+        }
+        rebuildSideChatLayer(selfSide, 0);
     }
 
-    /** 清除全部进行中的弹幕（停止聊天/离开决斗界面时调用）：从当前宿主容器（drawspec 弹幕层
-     *  或回退的 layout_danmaku）移除，并通知覆盖层空闲收口（无特效时关闭 PopupWindow） */
+    /** 重建指定侧聊天行容器：把 pending 消息自上而下追加到该侧血条正下方；
+     *  血条尚未布局时经 mainHandler 延后重试（上限同弹幕），重试用尽/容器不可用
+     *  则回退为弹幕带显示，不丢消息 */
+    private void rebuildSideChatLayer(boolean selfSide, int retries) {
+        SpecEffectOverlay overlay = ctl.activity.obtainSpecOverlay();
+        if (overlay == null) {
+            flushSideChatPendingToDanmaku(selfSide);
+            return;
+        }
+        int[] bar = ctl.topInfoManager != null
+                ? ctl.topInfoManager.getLpBarRectInWindow(selfSide ? 0 : 1) : null;
+        if (bar == null || bar[2] <= 0 || bar[3] <= 0) {
+            if (retries < DANMAKU_MAX_LAYOUT_RETRIES) {
+                final int next = retries + 1;
+                ctl.mainHandler.post(() -> rebuildSideChatLayer(selfSide, next));
+            } else {
+                flushSideChatPendingToDanmaku(selfSide);
+            }
+            return;
+        }
+        LinearLayout layer = overlay.obtainChatRowLayer(
+                selfSide, bar[0], bar[1] + bar[3], bar[2]);
+        if (layer == null) {
+            flushSideChatPendingToDanmaku(selfSide);
+            return;
+        }
+        LinkedList<String> pending = selfSide ? myChatPending : opChatPending;
+        if (pending.isEmpty()) return;
+        float density = ctl.activity.getResources().getDisplayMetrics().density;
+        for (String line : pending) {
+            TextView tv = new TextView(ctl.activity);
+            tv.setText(line);
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与系统弹幕/大厅聊天统一 9sp
+            tv.setTextColor(0xFFFFFFFF);                     // chatColor[0..3] 玩家消息白色
+            tv.setMaxLines(2);
+            tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            tv.setBackgroundColor(CHAT_BG_COLOR);            // 半透明黑底，对齐 drawing.cpp 0xa0000000
+            int hPadding = (int) (3 * density);
+            tv.setPadding(hPadding, 0, hPadding, 0);
+            tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = (int) (2 * density);
+            layer.addView(tv, lp);
+        }
+        pending.clear();
+        // 在屏不超 MAX_CHAT_LINES 行：超出时最上方最旧一条消失（等效上滚）
+        while (layer.getChildCount() > MAX_CHAT_LINES) {
+            layer.removeViewAt(0);
+        }
+    }
+
+    /** 聊天行容器不可用（无覆盖层/重试用尽）时，把未落容器的消息回退为弹幕显示，不丢消息 */
+    private void flushSideChatPendingToDanmaku(boolean selfSide) {
+        LinkedList<String> pending = selfSide ? myChatPending : opChatPending;
+        if (pending.isEmpty()) return;
+        for (String line : pending) showDanmakuLine(line, 0xFFFFFFFF, 0);
+        pending.clear();
+    }
+
+    /** 清除全部进行中的弹幕与分侧聊天行（停止聊天/离开决斗界面时调用）：从当前宿主容器
+     *  （drawspec 弹幕层/聊天行层或回退的 layout_danmaku）移除，并通知覆盖层空闲收口
+     *  （无特效时关闭 PopupWindow） */
     private void clearDanmaku() {
+        myChatPending.clear();
+        opChatPending.clear();
         for (TextView tv : danmakuViews) {
             tv.animate().cancel();
             Object p = tv.getParent();
@@ -248,7 +323,7 @@ class FieldChatBoard {
         danmakuViews.clear();
         danmakuRowIndex = 0;
         SpecEffectOverlay overlay = ctl.activity.getSpecOverlay();
-        if (overlay != null) overlay.notifyDanmakuRemoved();
+        if (overlay != null) overlay.clearChatRowLayers();
     }
 
     // === player waiting 大厅聊天模式 ===
@@ -342,7 +417,7 @@ class FieldChatBoard {
      * 前缀对齐 game.cpp AddChatMsg：8→"[System]: "、9→"[Script Error]: "、10→"[********]: "、
      * 观战 11-19 无前缀（default 分支不追加）。
      * 弹幕宿主取 drawspec 覆盖层（SpecEffectOverlay 的 PopupWindow 层，不受 GameFieldView
-     * setZOrderOnTop 的 GL 曲面遮挡）：贴屏幕顶部的全屏宽横带，高 = 3 行 × 行高，
+     * setZOrderOnTop 的 GL 曲面遮挡）：双方 LP 血条正下方的全屏宽横带，高 = 3 行 × 行高，
      * 不再依赖 layout_top_info 的布局状态（历史上该依赖导致弹幕落回被遮挡的回退层而永不可见）。
      */
     private void showChatDanmaku(int playerType, String message) {
@@ -375,7 +450,12 @@ class FieldChatBoard {
         int bandHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 DANMAKU_ROW_HEIGHT_DP * DANMAKU_MAX_ROWS,
                 ctl.activity.getResources().getDisplayMetrics());
-        FrameLayout layer = overlay != null ? overlay.obtainDanmakuLayer(bandHeight) : null;
+        // 带顶 = 双方 LP 血条底边（窗口坐标）：聊天/弹幕统一在血条正下方滚动
+        //（对齐 gframe DrawChatMsg，横竖屏同规格；血条未布局时传 -1 由覆盖层回退区域顶边）
+        int bandTop = -1;
+        int[] lpBar = ctl.topInfoManager != null ? ctl.topInfoManager.getLpBarPositionAndHeight() : null;
+        if (lpBar != null) bandTop = lpBar[0] + lpBar[1];
+        FrameLayout layer = overlay != null ? overlay.obtainDanmakuLayer(bandHeight, bandTop) : null;
         final FrameLayout parent = layer != null ? layer : ctl.layoutDanmaku;
         if (parent == null) return;
         if (parent.getWidth() <= 0 || parent.getHeight() <= 0) {
@@ -405,7 +485,7 @@ class FieldChatBoard {
                 FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.TOP | Gravity.START);
         if (layer != null) {
-            // drawspec 层：宿主即屏幕顶部全屏宽横带，3 行均分其高度（行高等于带高/3），
+            // drawspec 层：宿主即血条下方全屏宽横带，3 行均分其高度（行高等于带高/3），
             // 容器默认裁剪子 View，弹幕恰以该带为界出入
             lp.topMargin = row * Math.max(1, parent.getHeight() / DANMAKU_MAX_ROWS);
         } else {

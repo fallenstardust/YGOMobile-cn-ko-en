@@ -13,7 +13,8 @@ import cn.garymb.ygomobile.game.GameField;
  * {@code dispatchTap}/{@code dispatchLongPress}/{@code dispatchLongPressEnd} 回调本类完成拾取与
  * 业务回调分发，拾取逻辑与旧 Canvas 版一致。绘制做了 X 镜像：命中点须镜像还原到真实场地坐标
  * 后再与卡数据比较。射线反投影用 {@link FieldCamera#pickInvVPSnapshot()} 的视逆投影快照，
- * 手卡 billboard 命中沿用相机 up 轴抬升量；阶段按钮命中优先转发达 {@link PhaseButtonRenderer}。
+ * 手卡 billboard 命中：与卡片所在屏幕平行平面精确求交后投到 right/up 轴得局部 uv（与绘制同源）；
+ * 阶段按钮命中优先转发达 {@link PhaseButtonRenderer}。
  */
 final class FieldTouchPicker {
 
@@ -235,7 +236,11 @@ final class FieldTouchPicker {
                         }
                     }
                 }
-                // 手卡平行屏幕：按各卡所在 y 平面求交（抬高沿相机 up 轴，需计入其 y/z 分量）
+                // 手卡 billboard 命中：与卡片所在屏幕平行平面（法线=相机后向轴 cam[8..10]）求交，
+                // 再投到 right/up 轴得局部 uv。旧实现用固定 y 平面求交再比 (x,z)±0.45/0.75：
+                // 在竖屏 90° 正俯视下手卡平面趋于水平，任意屏幕纵深的射线都穿过该平面，
+                // 命中区与视觉卡框严重错位（点不中卡、误中邻卡）——改为精确平面求交后
+                // 命中区与绘制四边形（buildCardModel：同中心/同轴向/同 CARD_W×CARD_H）逐像素一致
                 List<GameField.ClientCard> hand = f.players[p].hand;
                 for (int i = hand.size() - 1; i >= 0; i--) {
                     GameField.ClientCard c;
@@ -246,11 +251,22 @@ final class FieldTouchPicker {
                     }
                     if (c == null) continue;
                     float lift = view.handLift(c);
-                    float[] hz = new float[2];
-                    if (!planeHitY(ray, view.handY(c) + cam[5] * lift, hz)) continue;
-                    hz[0] = FieldGeometry.mirrorX(hz[0]);
-                    if (Math.abs(hz[0] - c.curX) <= 0.45f
-                            && Math.abs(hz[1] - (c.curZ + cam[6] * lift)) <= 0.75f) {
+                    // 卡中心（绘制空间，与 buildCardModel 同源：X 镜像、抬高沿相机 up 轴）
+                    float cx = FieldGeometry.mirrorX(c.curX);
+                    float cy = view.handY(c) + cam[5] * lift;
+                    float cz = c.curZ + cam[6] * lift;
+                    float nx = cam[8], ny = cam[9], nz = cam[10];
+                    float denom = nx * ray[3] + ny * ray[4] + nz * ray[5];
+                    if (Math.abs(denom) < 1e-6f) continue;
+                    float t = (nx * (cx - ray[0]) + ny * (cy - ray[1]) + nz * (cz - ray[2])) / denom;
+                    if (t < 0) continue;
+                    float dx = ray[0] + ray[3] * t - cx;
+                    float dy = ray[1] + ray[4] * t - cy;
+                    float dz = ray[2] + ray[5] * t - cz;
+                    // right 轴 cam[0..2] / up 轴 cam[4..6]（billboard 正交归一）：局部坐标归一到 ±0.5
+                    float u = (dx * cam[0] + dy * cam[1] + dz * cam[2]) / FieldGeometry.CARD_W;
+                    float v = (dx * cam[4] + dy * cam[5] + dz * cam[6]) / FieldGeometry.CARD_H;
+                    if (Math.abs(u) <= 0.53f && Math.abs(v) <= 0.53f) {
                         return new int[]{p, 0x02, i};
                     }
                 }

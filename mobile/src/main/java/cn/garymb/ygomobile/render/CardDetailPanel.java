@@ -430,6 +430,26 @@ public class CardDetailPanel {
         return layout != null && layout.getVisibility() == View.VISIBLE;
     }
 
+    /**
+     * 旋转重建后回显卡片详情（用户规格：横竖屏切换前若详情正在显示，切换后继续显示同一张卡，
+     * 不重置为隐藏态）。在 bindViews() 重绑新视图树之后调用；currentCardCode 跨重建保留在实例上。
+     *
+     * @param wasShowingBeforeRebind 重建前详情栏是否可见（旧视图树上采集）
+     */
+    public void restoreAfterRebind(boolean wasShowingBeforeRebind) {
+        if (!wasShowingBeforeRebind) return;
+        if (currentCardCode > 0) {
+            Card cardData = DataManager.get().getCardManager().getCard(currentCardCode);
+            if (cardData != null) {
+                showCard(cardData);
+            } else {
+                showUnknownCard();
+            }
+        } else {
+            showDefault();
+        }
+    }
+
     private void showUnknownCard() {
         currentCardCode = -1;
         if (layout != null) {
