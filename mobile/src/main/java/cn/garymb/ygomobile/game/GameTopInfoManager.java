@@ -7,6 +7,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -78,7 +79,8 @@ public class GameTopInfoManager {
     private final Handler mainHandler;
 
     private FrameLayout layoutGameRight;
-    private LinearLayout layoutTopInfo;
+    // 横竖屏同为水平 LinearLayout（我方5:计数器1:对方5），但仅作可见性控制故声明为 View
+    private View layoutTopInfo;
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
     private ImageView ivPlayerCardBack, ivOpponentCardBack;
     private ImageView ivPlayerLpFrame, ivOpponentLpFrame;
@@ -161,7 +163,34 @@ public class GameTopInfoManager {
 
         setupAvatarImages();
         setupCardBackImages();
+        applyPortraitHudScale();
         reset();
+    }
+
+    /**
+     * 竖屏顶部 HUD 等比例适配（r1）：layout_hud_top（双方血条行+聊天/提示行）与横屏同构，
+     * 横屏 dp 尺寸以机型长边屏宽为设计基准；竖屏先把容器布局宽度置为机型长边像素，
+     * 再整体 scaleX=scaleY=短边/长边：可视宽度恰好等于竖屏屏宽，显示高度随当前
+     * 屏幕宽度等比例适配（与横屏显示比例一致）。横屏无 layout_hud_top 节点，自然跳过。
+     */
+    private void applyPortraitHudScale() {
+        View hud = activity.findViewById(R.id.layout_hud_top);
+        if (hud == null) return;
+        if (activity.getResources().getConfiguration().orientation
+                != android.content.res.Configuration.ORIENTATION_PORTRAIT) return;
+        DisplayMetrics dm = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+        int longSide = Math.max(dm.widthPixels, dm.heightPixels);
+        int shortSide = Math.min(dm.widthPixels, dm.heightPixels);
+        if (longSide <= 0 || shortSide <= 0 || longSide <= shortSide) return;
+        ViewGroup.LayoutParams lp = hud.getLayoutParams();
+        lp.width = longSide;
+        hud.setLayoutParams(lp);
+        float scale = (float) shortSide / longSide;
+        hud.setPivotX(0f);
+        hud.setPivotY(0f);
+        hud.setScaleX(scale);
+        hud.setScaleY(scale);
     }
 
     /** 恢复对局开始前的初始显示 */
@@ -200,18 +229,13 @@ public class GameTopInfoManager {
         String myName = cn.garymb.ygomobile.Constants.PlayerName;
         String oppName = "Opponent";
         if (engine != null) {
-            // playerInfos 按座位号存储：我方取 selfType 座位、对方取另一座位（1v1），
-            // 先后攻交换只影响协议玩家索引，不影响座位与名称的对应
-            int selfSeat = engine.getClient().selfType;
-            int oppSeat = selfSeat ^ 1;
-            if (selfSeat >= 0 && selfSeat < engine.playerInfos.length
-                    && !engine.playerInfos[selfSeat].name.isEmpty()) {
-                myName = engine.playerInfos[selfSeat].name;
-            }
-            if (oppSeat >= 0 && oppSeat < engine.playerInfos.length
-                    && !engine.playerInfos[oppSeat].name.isEmpty()) {
-                oppName = engine.playerInfos[oppSeat].name;
-            }
+            // 统一取视角绑定显示名（对战方 STOC_DUEL_START bindViewNames、回放/残局由各自 runner
+            // 按视角写入，观战同样可得，修复观战进入时无玩家名称）；
+            // tag 模式当前行动者为队友时自动切队友名（对齐 drawing.cpp L1036-1049）
+            String en = engine.displayName(0);
+            if (en != null && !en.isEmpty()) myName = en;
+            en = engine.displayName(1);
+            if (en != null && !en.isEmpty()) oppName = en;
         }
         setPlayerDisplay(0, myName, String.valueOf(startLp));
         setPlayerDisplay(1, oppName, String.valueOf(startLp));

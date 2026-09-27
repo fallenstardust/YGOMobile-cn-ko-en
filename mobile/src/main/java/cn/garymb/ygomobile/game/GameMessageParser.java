@@ -113,7 +113,9 @@ public class GameMessageParser {
         void onCardHint(int player, int location, int sequence, int hintType, int value);
         /** duelclient.cpp MSG_BECOME_TARGET L3486-3497：count(1) + count×[ctrl1 loc1 seq1 ss1(忽略)] */
         void onBecomeTarget(int count, ByteBuffer data);
-        void onTagSwap(int player);
+        /** duelclient.cpp MSG_TAG_SWAP L4175-4287：player(1) mcount(1) ecount(1) pcount(1) hcount(1)
+         *  topcode(4) + hcount×code(4) + ecount×code(4)，整段载荷交 handler 重建双方堆区 */
+        void onTagSwap(ByteBuffer data);
         /** duelclient.cpp MSG_RELOAD_FIELD L4287-4441：duel_rule(1) + 双方[lp(4) + MZone7×(present+position+ovc) + SZone8×(present+position) + deck/hand/grave/removed/extra各[cnt+cnt×无详情] + extra_p_count(1)] + refreshAll + chains[cnt + cnt×15字节]，载荷解析全部在 handler 内做 */
         void onReloadField(ByteBuffer data);
         void onAiName(String name);
@@ -557,7 +559,9 @@ public class GameMessageParser {
                 break;
             }
             case TagSwap:
-                handler.onTagSwap(buf.get() & 0xFF);
+                // 整段载荷下发（player 为首字节）：C++ 同步动画 + 卡组/手卡/额外重建
+                // 都在本消息处理内完成，旧实现只取 player 字节致队友手卡矩形不重建不显示
+                handler.onTagSwap(buf);
                 break;
             case ReloadField:
                 handler.onReloadField(buf);
@@ -721,6 +725,17 @@ public class GameMessageParser {
         // 视角静默翻回（C++ gframe 也仅在 ReplayThread 开始设 isFirst=true，ReplaySwap 翻转）
         if (!engine.replayMode) {
             engine.duelIsFirst = (playerType & 1) == 0;
+        }
+        // tag_player 初始化（对齐 duelclient.cpp MSG_START L1644-1649：isTag 时非先动队
+        // 首回合由队友先打，tag_player[非先动侧]=true），后续由 MSG_NEW_TURN 逐回合翻转
+        if (engine.field.isTag) {
+            engine.tagPlayer[0] = false;
+            engine.tagPlayer[1] = false;
+            if (engine.duelIsFirst) {
+                engine.tagPlayer[1] = true;
+            } else {
+                engine.tagPlayer[0] = true;
+            }
         }
         int p0 = engine.localPlayer(0);
         int p1 = engine.localPlayer(1);

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 竖屏主布局：只显示 layout_game_right（满屏），卡组编辑器按需覆盖；
+     不加载左侧 card_detail_panel（竖屏卡详情改由 layout_game_right 内底部全宽详情栏展示，
+     同 ID 结构由 CardDetailPanel 直接驱动，见 layout-port/layout_game_right.xml） -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 主内容区：竖屏下决斗场区满屏，卡组编辑器同位叠加（gone 时不占位） -->
+    <LinearLayout
+        android:id="@+id/layout_game_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <!-- 决斗场区域（满屏）：血条/聊天/按钮全部整合在 layout_game_right 竖屏变体内 -->
+        <include
+            android:id="@+id/layout_game_right"
+            layout="@layout/layout_game_right"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <!-- 卡组编辑器视图（与决斗场同位互斥显示） -->
+        <include
+            android:id="@+id/layout_deck_editor"
+            layout="@layout/layout_deck_editor"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- 对话框容器 -->
+    <FrameLayout
+        android:id="@+id/dialog_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- 左上角 FPS 实时帧率显示（覆盖于决斗场之上，随 GameFieldView 每秒刷新） -->
+    <TextView
+        android:id="@+id/tv_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="1dp"
+        android:background="@drawable/button_radius_black_transparents"
+        android:text="FPS --"
+        android:textColor="@color/white"
+        android:textSize="6sp" />
+
+</FrameLayout>

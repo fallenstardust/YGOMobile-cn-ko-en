@@ -2,6 +2,7 @@ package cn.garymb.ygomobile;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -129,8 +130,10 @@ public class YGOProActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        // 崩溃诊断场景锚点：本 Activity 全程横屏，未捕获异常经全局 CrashHandler 落盘到 ygocore/log
+        // 竖屏/横屏随系统自动旋转切换（manifest 同步改为 user）：configChanges 已声明
+        // orientation|screenSize，旋转不重建 Activity，由 onConfigurationChanged 运行时重载布局变体
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+        // 崩溃诊断场景锚点：未捕获异常经全局 CrashHandler 落盘到 ygocore/log
         CrashHandler.getInstance().setScene("游戏-启动初始化");
         setupFullScreen();
         setContentView(R.layout.activity_ygo_game);
@@ -212,6 +215,108 @@ public class YGOProActivity extends AppCompatActivity {
         }
 
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (isFinishing() || isDestroyed()) return;
+        rebuildUiForOrientation();
+    }
+
+    /**
+     * 屏幕旋转后运行时重建 UI（不重建引擎/通讯/场面数据，决斗不断线）：
+     * setContentView 按当前方向取 res/layout-port（竖屏：我方血条左下/对方右上/聊天自下而上/
+     * 按钮列左上）或默认 res/layout（横屏：左侧 cardDetailPanel + 右侧决斗场），
+     * 再把各管理器重新绑定到新视图树并按重建前阶段回显。
+     */
+    private void rebuildUiForOrientation() {
+        // 1) 重建前阶段快照（setContentView 后据此回显）
+        boolean deckEditorVisible = layoutDeckEditor != null
+                && layoutDeckEditor.getVisibility() == View.VISIBLE;
+        boolean duelUiVisible = !deckEditorVisible && layoutGameRight != null
+                && layoutGameRight.getVisibility() == View.VISIBLE;
+        boolean lobbyChat = duelUiVisible && playerWaitingDialog != null && playerWaitingDialog.isShowing();
+
+        // 2) 关闭挂在旧视图树上的瞬态浮层：表情面板/drawspec 覆盖层（LP浮字/弹幕/居中特效）/
+        // 卡片命令菜单；后续特效/弹幕经懒建新实例回到新树
+        if (emotionDialog != null) emotionDialog.dismiss();
+        if (engineCallback != null) engineCallback.releaseSpecOverlayForRebuild();
+        if (fieldCtl != null) fieldCtl.releaseForRebuild();
+
+        // 3) 重新加载布局变体并恢复沉浸式全屏
+        setContentView(R.layout.activity_ygo_game);
+        setupFullScreen();
+
+        // 4) Activity 共享视图引用重新绑定新树
+        dialogContainer = findViewById(R.id.dialog_container);
+        layoutDeckControl = findViewById(R.id.layout_deck_control);
+        layoutGameRight = findViewById(R.id.layout_game_right);
+        layoutGameContent = findViewById(R.id.layout_game_content);
+        layoutDeckEditor = findViewById(R.id.layout_deck_editor);
+        etChatInput = findViewById(R.id.et_chat_input);
+        if (chatInputUI != null) chatInputUI.bindChatInput(etChatInput);
+        // 聊天输入框初始可见性跟随停用聊天设置（与 initViews 同步）
+        if (etChatInput != null
+                && AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1) {
+            etChatInput.setVisibility(View.GONE);
+        }
+        // 三大管理器复用实例只重绑视图（保留 ignoreChain 时点三态/大厅聊天等业务状态），
+        // 严禁触达 fieldCtl.hide()——会 clear 场面数据
+        if (cardDetailPanel != null) {
+            cardDetailPanel.bindViews();
+            cardDetailPanel.setImageLoader(imageLoader);
+            cardDetailPanel.bindSideButtonIcons();
+        }
+        if (topInfoManager != null) topInfoManager.initViews();
+        if (fieldCtl != null) fieldCtl.rebindAfterRotation();
+        // FPS 回调重接线（tv_fps 与 game_field_view 均为新视图树实例）
+        final TextView tvFps = findViewById(R.id.tv_fps);
+        if (tvFps != null) {
+            View gv = findViewById(R.id.game_field_view);
+            if (gv instanceof GameFieldView) {
+                ((GameFieldView) gv).setOnFpsListener(fps -> tvFps.setText("FPS " + fps));
+            }
+        }
+
+        // 5) 按重建前阶段回显
+        if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
+        if (deckEditorVisible) {
+            // 卡组/副卡组编辑器：host.show() 幂等（懒建 manager + initialize 重绑新视图）
+            deckEditorHost.show();
+        } else if (lobbyChat) {
+            enterLobbyChatUI();
+        } else if (duelUiVisible) {
+            if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
+            if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
+            if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
+            if (topInfoManager != null) {
+                topInfoManager.prepareForDisplay();
+                GameField field = engine != null ? engine.getField() : null;
+                if (field != null) {
+                    // 回合数/回合方高亮/LP血条/卡数对齐实时场面（initViews 仅重置为默认值）
+                    topInfoManager.updateTurn(field.turnCount, field.currentPlayer == 0);
+                    topInfoManager.updateLpBars(field);
+                    topInfoManager.updateCardCountDisplay(field);
+                }
+            }
+            if (fieldCtl != null) fieldCtl.show();
+            if (cardDetailPanel != null) {
+                boolean replayActive = engine != null && engine.replayMode
+                        && engine.replayPlayer != null && engine.replayPlayer.hasActiveSession();
+                cardDetailPanel.onGameUIShown(); // 先复位按钮组到默认态再按模式覆盖
+                if (replayActive) {
+                    cardDetailPanel.showReplayControls();
+                    cardDetailPanel.updateReplayButtonStates(engine.replayPlayer.isPaused());
+                } else if (engine != null && engine.isSpectator()) {
+                    cardDetailPanel.showSpectatorControls();
+                } else if (isGameStarted) {
+                    cardDetailPanel.showChainButtons();
+                    cardDetailPanel.setSurrenderVisible(true);
+                }
+            }
+        }
+        // 主菜单阶段：MainMenuDialog 是独立窗口不受 setContentView 影响，无需回显
     }
 
     public void toggleEmotionDialog(View anchor) {

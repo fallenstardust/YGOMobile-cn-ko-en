@@ -231,6 +231,8 @@ public class GameEngine {
 
     public static class PlayerInfo {
         public String name = "";
+        /** tag 模式同队队友昵称（对齐 dInfo.hostname_tag / clientname_tag，座位 pos1/pos3） */
+        public String nameTag = "";
         public int lp = 8000;
         public int startLp = 8000;
         public int cardCount = 0;
@@ -240,6 +242,58 @@ public class GameEngine {
     /** 按大厅座位号存储昵称（STOC_HS_PLAYER_ENTER pos 0-3）：0/1 我方队、2/3 对方队，
      *  供 STOC_CHAT 显示"昵称: 内容"（对齐 game.cpp AddChatMsg 的 hostname/clientname/hostname_tag/clientname_tag 前缀） */
     public final String[] seatNames = new String[]{"", "", "", ""};
+
+    /** 对齐 dInfo.tag_player[2]：tag 模式该队当前轮到哪位选手行动（true=队友在打，
+     *  名字按 hostname_tag/clientname_tag 显示，drawing.cpp L1036-1049）；
+     *  MSG_START 初始化（非先动队置 true）、MSG_NEW_TURN(turn!=1) 逐回合翻转 */
+    public final boolean[] tagPlayer = new boolean[2];
+
+    /** 本地视角（0=我方/1=对方，或观战视角的左右侧）显示名：
+     *  playerInfos 已按视角绑定（{@link #bindViewNames} / 回放 startSession），
+     *  tag 模式该队 tag_player 在打时取队友名 nameTag（对齐 drawing.cpp 的 hostname/hostname_tag 分支） */
+    public String displayName(int localIdx) {
+        if (localIdx < 0 || localIdx >= playerInfos.length) return "";
+        PlayerInfo info = playerInfos[localIdx];
+        if (field.isTag && localIdx < tagPlayer.length && tagPlayer[localIdx]
+                && info.nameTag != null && !info.nameTag.isEmpty()) {
+            return info.nameTag;
+        }
+        return info.name == null ? "" : info.name;
+    }
+
+    /** 是否观战位（对齐 duelclient.cpp STOC_DUEL_START 观战判定：非 tag selftype>1、tag selftype>3；
+     *  与 gframe player_type=7 等价的本地视角参照） */
+    public boolean isSpectator() {
+        if (replayMode || isSingleMode) return false;
+        int st = client.selfType;
+        return field.isTag ? st > 3 : st > 1;
+    }
+
+    /** 进决斗前按大厅座位（seatNames）绑定本地视角昵称：
+     *  1v1 对战方 左=座位 selfType、右=另一座位；观战方恒以座位 0 侧为左；
+     *  tag 每侧取该队主位（pos0/pos2）与队友位（pos1/pos3）；
+     *  对齐 duelclient.cpp STOC_HS_PLAYER_ENTER 填 hostname/hostname_tag/clientname/clientname_tag 的语义，
+     *  使观战进入时 topInfo 也能显示对战双方名字（修复观战无名字 bug） */
+    public void bindViewNames() {
+        if (replayMode || isSingleMode) return; // 回放/残局由各自 runner 按视角直写 playerInfos
+        int st = client.selfType;
+        boolean tag = field.isTag;
+        int myMain;
+        if (tag) {
+            myMain = (st > 3) ? 0 : (st & ~1);   // 观战以 A 队为左；玩家以自己队伍主位为左
+        } else {
+            myMain = (st > 1) ? 0 : st;          // 观战固定座位 0 侧在左；玩家取自己座位
+        }
+        int oppMain = tag ? (myMain ^ 2) : (myMain ^ 1);
+        playerInfos[0].name = seatAt(myMain);
+        playerInfos[1].name = seatAt(oppMain);
+        playerInfos[0].nameTag = tag ? seatAt(myMain | 1) : "";
+        playerInfos[1].nameTag = tag ? seatAt(oppMain | 1) : "";
+    }
+
+    private String seatAt(int seat) {
+        return (seat >= 0 && seat < seatNames.length) ? seatNames[seat] : "";
+    }
 
     // ==== 协作类（按 // === 分栏拆分，构造注入本引擎引用） ====
 
@@ -583,6 +637,7 @@ public class GameEngine {
             lastGameMsgType = msgType;
             lastGameMsgBody = body;
             retryReplayCount = 0;
+            recordMsgFrame(msgType, body);
         }
         // 入队后由闸门串行派发：动画消息会关闭闸门，暂缓后续消息（对齐 C++ WaitFrameSignal 阻塞语义）
         pendingMsgs.offer(() -> dispatchGameMsg(msgType, data));
@@ -593,6 +648,58 @@ public class GameEngine {
     private int lastGameMsgType = -1;
     private byte[] lastGameMsgBody;
     private int retryReplayCount = 0;
+
+    // === 逐局 MSG 录制（STOC_REPLAY 保存时合并出双兼容 V2 文件，见 ReplayMsgMerger） ===
+
+    /** 当前局已录帧（每帧 = [消息号字节]+payload，与服务端→players[0] 的完整引擎消息同构） */
+    private final List<byte[]> msgSegFrames = new ArrayList<>();
+    /** 已完结的分局段（match 三局每局一段），与 STOC_REPLAY 到达顺序 FIFO 配对 */
+    private final List<List<byte[]>> msgSegDone = new ArrayList<>();
+    private final Object msgRecLock = new Object();
+
+    /**
+     * 录制一条引擎消息（网络线程在 enqueueGameMsg 快照处调用，与响应流同序）：
+     * MSG_START 分局（上一段非空则先完结入队），MSG_WIN/MSG_MATCH_KILL/MSG_DUEL_WINNER 完结本段；
+     * MSG_RETRY 不入帧（对齐 C++ 录像不记 retry；其本地重放经 replayLastGameMsg 不经此入口，不会重复）
+     */
+    private void recordMsgFrame(int msgType, byte[] body) {
+        synchronized (msgRecLock) {
+            if (msgType == GameMessage.Start.value() && !msgSegFrames.isEmpty()) {
+                msgSegDone.add(new ArrayList<>(msgSegFrames));
+                msgSegFrames.clear();
+            }
+            byte[] frame = new byte[body.length + 1];
+            frame[0] = (byte) msgType;
+            System.arraycopy(body, 0, frame, 1, body.length);
+            msgSegFrames.add(frame);
+            if (msgType == GameMessage.Win.value() || msgType == GameMessage.MatchKill.value()
+                    || msgType == GameMessage.DuelWinner.value()) {
+                msgSegDone.add(new ArrayList<>(msgSegFrames));
+                msgSegFrames.clear();
+            }
+        }
+    }
+
+    /** 取最早已完结的 MSG 段（与到过的 STOC_REPLAY 按序配对）；无完结段时退而取当前段 */
+    public List<byte[]> takeRecordedMsgSegment() {
+        synchronized (msgRecLock) {
+            if (!msgSegDone.isEmpty()) return msgSegDone.remove(0);
+            if (!msgSegFrames.isEmpty()) {
+                List<byte[]> cur = new ArrayList<>(msgSegFrames);
+                msgSegFrames.clear();
+                return cur;
+            }
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    /** 新一场决斗开始（STOC_DUEL_START）：丢弃上一场残留段，防串局 */
+    public void resetMsgRecording() {
+        synchronized (msgRecLock) {
+            msgSegFrames.clear();
+            msgSegDone.clear();
+        }
+    }
 
     /**
      * 收到 MSG_RETRY 后重放上一条消息（对齐 duelclient.cpp L1351-1404 的
@@ -825,6 +932,10 @@ public class GameEngine {
         String tmpName = a.name;
         a.name = b.name;
         b.name = tmpName;
+        // tag 队友名随视角一并左右对调（对齐 C++ ReplaySwap 的 hostname_tag↔clientname_tag swap）
+        String tmpNameTag = a.nameTag;
+        a.nameTag = b.nameTag;
+        b.nameTag = tmpNameTag;
         int tmpLp = a.lp;
         a.lp = b.lp;
         b.lp = tmpLp;

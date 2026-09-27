@@ -194,45 +194,67 @@ public class CardDetailPanel {
     }
 
     private void setupListeners() {
+        // 竖屏布局（layout-port）同样保留全部按钮 ID，但旋转/裁剪场景仍可能取到 null，统一空保护
         // 点击投降不再直接发送通讯：交由 Activity 弹 YesOrNoDialog 二次确认
         //（对齐 event_handler.cpp BUTTON_LEAVE_GAME → PopupElement(wSurrender) → BUTTON_SURRENDER_YES → CTOS_SURRENDER）
-        btnSurrender.setOnClickListener(v -> {
-            playButtonSound();
-            activity.requestSurrender();
-        });
+        if (btnSurrender != null) {
+            btnSurrender.setOnClickListener(v -> {
+                playButtonSound();
+                activity.requestSurrender();
+            });
+        }
         // 时点按钮（对齐 event_handler.cpp L297-320 BUTTON_CHAIN_IGNORE/ALWAYS/WHENAVAIL）：
         // gframe 用 setIsPushButton(true) 实现"推送式开关"，点击后 isPressed() 即为新状态；
         // 这里等价为翻转自身标志，并强制清掉另外两态（三态互斥），最后刷新按下态显示
-        btnIgnoreTiming.setOnClickListener(v -> {
-            playButtonSound();
-            ignoreChain = !ignoreChain;
-            alwaysChain = false;
-            chainWhenAvail = false;
-            updateChainButtons();
-        });
-        btnShowTiming.setOnClickListener(v -> {
-            playButtonSound();
-            alwaysChain = !alwaysChain;
-            ignoreChain = false;
-            chainWhenAvail = false;
-            updateChainButtons();
-        });
-        btnAvailableTiming.setOnClickListener(v -> {
-            playButtonSound();
-            chainWhenAvail = !chainWhenAvail;
-            alwaysChain = false;
-            ignoreChain = false;
-            updateChainButtons();
-        });
-        btnSettings.setOnClickListener(v -> activity.showSettingsDialog());
-        btnChat.setOnClickListener(v -> activity.toggleChatInput());
-        btnSound.setOnClickListener(v -> activity.toggleSoundMute());
+        if (btnIgnoreTiming != null) {
+            btnIgnoreTiming.setOnClickListener(v -> {
+                playButtonSound();
+                ignoreChain = !ignoreChain;
+                alwaysChain = false;
+                chainWhenAvail = false;
+                updateChainButtons();
+            });
+        }
+        if (btnShowTiming != null) {
+            btnShowTiming.setOnClickListener(v -> {
+                playButtonSound();
+                alwaysChain = !alwaysChain;
+                ignoreChain = false;
+                chainWhenAvail = false;
+                updateChainButtons();
+            });
+        }
+        if (btnAvailableTiming != null) {
+            btnAvailableTiming.setOnClickListener(v -> {
+                playButtonSound();
+                chainWhenAvail = !chainWhenAvail;
+                alwaysChain = false;
+                ignoreChain = false;
+                updateChainButtons();
+            });
+        }
+        if (btnSettings != null) {
+            btnSettings.setOnClickListener(v -> activity.showSettingsDialog());
+        }
+        if (btnChat != null) {
+            btnChat.setOnClickListener(v -> activity.toggleChatInput());
+        }
+        if (btnSound != null) {
+            btnSound.setOnClickListener(v -> activity.toggleSoundMute());
+        }
         // 速度开关（对齐 gframe imgQuickAnimation 点击切换 quick_animation）
-        btnSpeed.setOnClickListener(v -> activity.toggleQuickAnimation());
+        if (btnSpeed != null) {
+            btnSpeed.setOnClickListener(v -> activity.toggleQuickAnimation());
+        }
         // 表情入口（对齐 gframe BUTTON_EMOTICON）：开关切换 4x4 表情面板
-        btnEmote.setOnClickListener(v -> activity.toggleEmotionDialog(btnEmote));
+        if (btnEmote != null) {
+            final ImageButton emoteBtn = btnEmote;
+            btnEmote.setOnClickListener(v -> activity.toggleEmotionDialog(emoteBtn));
+        }
         // 日志入口（对齐 gframe imgLog 开关 wLogs）：切换决斗日志面板显示/隐藏
-        btnNote.setOnClickListener(v -> activity.showDuelLogDialog());
+        if (btnNote != null) {
+            btnNote.setOnClickListener(v -> activity.showDuelLogDialog());
+        }
 
         if (btnCancelOrFinish != null) {
             btnCancelOrFinish.setOnClickListener(v -> cancelOrFinish());

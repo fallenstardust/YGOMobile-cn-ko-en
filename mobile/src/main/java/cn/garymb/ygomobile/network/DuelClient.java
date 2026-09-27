@@ -771,6 +771,16 @@ public class DuelClient implements YGOProtocol {
         @Override
         public void onDuelStart() {
             engine.field.clear();
+            // 新一场决斗（含 match 三局的开场包）：丢弃上一场未与录像配对的残留 MSG 段
+            engine.resetMsgRecording();
+            // 对齐 STOC_JOIN_GAME 的 dInfo.isTag = (mode==2)：field.isTag 此前无实况侧赋值点，
+            // 进决斗时按已缓存的房间 gameMode 显式置位（tag 名字/手卡切换与 LP 减半显示的前提），
+            // 并复位上一局的 tag_player（对齐 replay_mode.cpp 的 tag_player 复位），
+            // 再按大厅座位绑定本地视角昵称（对齐 STOC_DUEL_START 填 hostname/clientname）
+            engine.field.isTag = engine.gameMode == 2;
+            engine.tagPlayer[0] = false;
+            engine.tagPlayer[1] = false;
+            engine.bindViewNames();
             engine.duelStarted = true;
             engine.inDuel = false;
             engine.siding = false;

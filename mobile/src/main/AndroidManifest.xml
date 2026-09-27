@@ -139,8 +139,8 @@
             tools:replace="android:theme" />
         <activity
             android:name="cn.garymb.ygomobile.YGOProActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden|navigation|screenSize|screenLayout|smallestScreenSize|density"
+            android:screenOrientation="user"
             android:theme="@style/AppTheme.NativeGame"
             android:launchMode="singleTop"
             tools:replace="android:theme" />

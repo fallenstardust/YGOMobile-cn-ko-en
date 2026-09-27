@@ -58,6 +58,8 @@ final class FieldCamera {
     /** 近/远裁剪面：由 0.5/100 收紧到 1/60，同等深度位宽下精度提升约 20 倍 */
     private static final float CAM_NEAR = 1.0f;
     private static final float CAM_FAR = 60.0f;
+    /** 竖屏（h>w）专用仰角：场地几乎垂直于视角（用户规格 85°），横屏恢复设置仰角 */
+    private static final float PORTRAIT_ELEVATION = 85f;
 
     /**
      * 需要完整入镜的可交互内容（怪兽区 / 魔陷区 / 堆叠区）→ {横向半宽(相对场地中轴), 所在 y 行}。
@@ -91,6 +93,22 @@ final class FieldCamera {
         float hw = Math.max(Math.abs(rect[0] + half - CAM_X), Math.abs(rect[0] - half - CAM_X)) + CONTENT_PAD;
         dst[idx] = new float[]{hw, rect[1]};
         return idx + 1;
+    }
+
+    /**
+     * 竖屏取景锚点（用户规格：「以我方的额外卡组格子左下角和卡组格子的右下角贴住屏幕边缘」）：
+     * 取我方堆叠区（额外 0x40 / 卡组 0x01）近端底缘行 y（无 CONTENT_PAD）与两角相对场地中轴的
+     * 横向半宽；两角关于 CAM_X 基本对称，同一 y 行上同时贴住屏幕底缘与左右缘。
+     * @return {近端底缘 y, 横向半宽}；几何未就绪返回 null
+     */
+    private static float[] portraitNearCorners() {
+        float[] extra = GameField.getPileRect(0, 0x40);
+        float[] deck = GameField.getPileRect(0, 0x01);
+        if (extra == null || deck == null) return null;
+        float nearY = Math.max(extra[1] + extra[3] * 0.5f, deck[1] + deck[3] * 0.5f);
+        float halfW = Math.max(Math.abs((extra[0] - extra[2] * 0.5f) - CAM_X),
+                Math.abs((deck[0] + deck[2] * 0.5f) - CAM_X));
+        return new float[]{nearY, halfW};
     }
 
     // === 矩阵与相机缓存 ===
@@ -135,17 +153,21 @@ final class FieldCamera {
      * </ol>
      */
     CameraSolve solveCamera(int w, int h) {
-        final float cameraElevationDeg = view.cameraElevationDeg;
+        CameraSolve s = new CameraSolve();
+        if (w <= 1 || h <= 1) return s;
+        final boolean portrait = (float) w / h < 1f;
+        // 竖屏：仰角固定 85°（几乎垂直于视角）；横屏恢复设置仰角（随旋转重建相机自然切换）
+        final float cameraElevationDeg = portrait ? PORTRAIT_ELEVATION : view.cameraElevationDeg;
         final float cameraDistance = view.cameraDistance;
         final float fieldZoom = view.fieldZoom;
         final float handSelfYShift = view.handSelfYShift;
-        final float topInsetPx = view.topInsetPx;
-        CameraSolve s = new CameraSolve();
-        if (w <= 1 || h <= 1) return s;
+        final float topInsetPx = portrait ? 0f : view.topInsetPx;
         float aspect = (float) w / h;
         float th = (float) Math.toRadians(cameraElevationDeg);
         float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
         if (sth < 1e-3f || cth < 1e-3f) return s;
+        // 竖屏贴边取景锚点（几何未就绪时回退横屏同构路径）
+        final float[] corners = portrait ? portraitNearCorners() : null;
         // 手卡平行屏幕，相机 up≈(0,-sinθ,cosθ)：卡片半高在世界 Y/Z 上的投影
         float hY = FieldGeometry.CARD_H * 0.5f * sth;
         float hZ = FieldGeometry.CARD_H * 0.5f * cth;
@@ -160,7 +182,15 @@ final class FieldCamera {
             eyeZ = sth * D;
             selfCy = solveSelfHandY(eyeY, eyeZ, hY, topZ);
             float v1y = (OPP_HAND_Y - hY) - eyeY, v1z = topZ - eyeZ;
-            float v2y = (selfCy + hY) - eyeY, v2z = bottomZ - eyeZ;
+            float v2y, v2z;
+            if (corners != null) {
+                // 竖屏下锚点不用我方手卡下缘，改为我方场地近端底缘线（额外/卡组下角所在行，z=0）
+                v2y = corners[0] - eyeY;
+                v2z = 0f - eyeZ;
+            } else {
+                v2y = (selfCy + hY) - eyeY;
+                v2z = bottomZ - eyeZ;
+            }
             float l1 = (float) Math.sqrt(v1y * v1y + v1z * v1z);
             float l2 = (float) Math.sqrt(v2y * v2y + v2z * v2z);
             if (l1 < 1e-4f || l2 < 1e-4f) break;
@@ -173,25 +203,41 @@ final class FieldCamera {
             dY = by / bl;
             dZ = bz / bl;
             s.valid = true;
-            if (contentHalfTan(eyeY, eyeZ, dY, dZ) * fieldZoom <= tanV * aspect) break;
+            float needH = corners != null
+                    ? corners[1] / Math.max(0.2f, (corners[0] - eyeY) * dY - eyeZ * dZ)
+                    : contentHalfTan(eyeY, eyeZ, dY, dZ);
+            if (needH * fieldZoom <= tanV * aspect) break;
             if (D >= MAX_CAM_D - 1e-3f) break;
             D = Math.min(MAX_CAM_D, D * 1.35f);
         }
         if (!s.valid) return s;
 
-        float need = contentHalfTan(eyeY, eyeZ, dY, dZ) * fieldZoom;
-        if (need / aspect > tanV) tanV = need / aspect;
-        if (tanV > 1.6f) tanV = 1.6f;
+        float hh, c;
+        if (corners != null) {
+            // 竖屏「居中+贴左右缘」取景：横向半宽 tan 由近端两角精确决定（fRight=hh·aspect·near），
+            // x 映射与离轴量 c 无关，故取 c=0 使视锥关于视轴（两锚点角平分线）对称：
+            // 内容上下留白均行→决斗场整体居中（不再钉底缘被我方 LP 条遮挡手卡），
+            // 近端两角仍精确落在屏幕左右缘；hh≥tanV 保证顶/底平面不裁切锚点范围
+            float depthCorner = Math.max(0.2f, (corners[0] - eyeY) * dY - eyeZ * dZ);
+            hh = corners[1] * fieldZoom / depthCorner / aspect;
+            if (hh < tanV) hh = tanV;
+            c = 0f;
+        } else {
+            float need = contentHalfTan(eyeY, eyeZ, dY, dZ) * fieldZoom;
+            if (need / aspect > tanV) tanV = need / aspect;
+            if (tanV > 1.6f) tanV = 1.6f;
 
-        // 顶部内缩（问题1）：用离轴视锥把「对方手卡上缘」锚到屏幕顶部内缩线 ndcTop 之下，
-        // 我方手卡下缘仍锚到 ndc=-1（屏幕底），从而在不裁掉任何一方的前提下为 gameTopInfo 让出顶部空间。
-        // 由对称半角 tanV 解离轴参数：hh = 2·tanV/(1+ndcTop)，c = hh - tanV（推导见类注释）。
-        float inset = Math.max(0f, Math.min(topInsetPx, h * 0.45f));
-        float ndcTop = (h > 1f) ? (1f - 2f * inset / h) : 1f;
-        if (ndcTop < 0.05f) ndcTop = 0.05f;
-        float hh = 2f * tanV / (1f + ndcTop);
+            // 顶部内缩（问题1）：用离轴视锥把「对方手卡上缘」锚到屏幕顶部内缩线 ndcTop 之下，
+            // 我方手卡下缘仍锚到 ndc=-1（屏幕底），从而在不裁掉任何一方的前提下为 gameTopInfo 让出顶部空间。
+            // 由对称半角 tanV 解离轴参数：hh = 2·tanV/(1+ndcTop)，c = hh - tanV（推导见类注释）。
+            float inset = Math.max(0f, Math.min(topInsetPx, h * 0.45f));
+            float ndcTop = (h > 1f) ? (1f - 2f * inset / h) : 1f;
+            if (ndcTop < 0.05f) ndcTop = 0.05f;
+            hh = 2f * tanV / (1f + ndcTop);
+            c = hh - tanV;
+        }
         s.frustumHH = hh;
-        s.frustumC = hh - tanV;
+        s.frustumC = c;
 
         float shift = SELF_HAND_Y - selfCy + handSelfYShift;
         s.eyeY = eyeY;

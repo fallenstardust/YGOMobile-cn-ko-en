@@ -172,6 +172,20 @@ public interface Constants {
     int DIALOG_POPUP_WIDTH_DP = 420;
     int DIALOG_POPUP_HEIGHT_DP = 280;
 
+    /**
+     * 弹窗尺寸竖屏自适应：宽度超出屏幕宽度时限制为屏幕宽度，高度按原宽高比等比缩小；
+     * 横屏（宽度未超屏）时原样返回，各 Dialog 的 PopupWindow 与 DraggablePopupHelper 共用返回值
+     * @return int[]{调整后宽, 调整后高}
+     */
+    static int[] fitPopupSizeToScreen(android.content.Context context, int width, int height) {
+        int maxWidth = context.getResources().getDisplayMetrics().widthPixels;
+        if (width > maxWidth && width > 0 && height > 0) {
+            height = (int) ((long) height * maxWidth / width);
+            width = maxWidth;
+        }
+        return new int[]{width, height};
+    }
+
     int DEFAULT_CARD_COUNT = 500;
     int DECK_WIDTH_MAX_COUNT = 15;
     int DECK_WIDTH_COUNT = 10;

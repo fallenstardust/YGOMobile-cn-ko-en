@@ -7,7 +7,6 @@ import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -33,7 +32,6 @@ import cn.garymb.ygomobile.render.GameFieldViewController;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.CmdMenuDialog;
-import ocgcore.DataManager;
 import ocgcore.enums.DuelPhase;
 
 /**
@@ -58,6 +56,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     final GameTopInfoManager topInfoManager;
     GameFieldViewController viewController;
     GameEngine engine;
+    /** init() 时留存：旋转重建新视图树时重新接线渲染器需要（不清场不重建引擎） */
+    private ImageLoader imageLoaderRef;
     int cmdContext = 0;
 
     private CmdMenuDialog cmdMenuDialog;
@@ -66,8 +66,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     FrameLayout layoutChatMessages;
     TextView tvChatMessage1, tvChatMessage2;
     FrameLayout layoutDanmaku;
-    /** 顶部信息条（gameTopInfo）：其实测高度作为相机顶部内缩量，确保对方手卡不遮挡（问题1） */
+    /** 顶部信息条（gameTopInfo）：其实测高度作为相机顶部内缩（确保对方手卡不遮挡，问题1）；
+     *  竖屏另经父容器 layout_hud_top 整体等比缩放，内缩量需乘缩放系数 */
     private View layoutTopInfo;
+    /** 竖屏顶部 HUD 缩放容器（横屏无此节点，恒 null） */
+    private View layoutHudTop;
 
     /** 正在显示的模态对话框集合（是/否、卡片选择/确认、命令菜单）。
      *  非空时禁用决斗场三个阶段按钮，全部隐藏后恢复。 */
@@ -94,6 +97,32 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         setupOverlayAnchoring();
     }
 
+    /**
+     * 屏幕旋转后重新绑定新视图树（YGOProActivity.onConfigurationChanged 已 setContentView 重载
+     * layout-port/layout 变体）：只重建 viewController 与三个协作件并重新接线渲染器，
+     * 引擎/通讯/GameField 卡局数据原样保留——严禁触达 hide()（会 clear 场面）。
+     */
+    public void rebindAfterRotation() {
+        viewController = new GameFieldViewController(activity);
+        select = new FieldSelectManager(this);
+        chat = new FieldChatBoard(this);
+        phaseBar = new FieldPhaseBar(this);
+        bindChatViews();
+        phaseBar.setupPhaseButtons();
+        setupOverlayAnchoring();
+        if (engine != null && imageLoaderRef != null) {
+            viewController.init(engine.getField(), imageLoaderRef, this);
+        }
+    }
+
+    /** 旋转重建前的收尾：关闭挂旧视图树上的命令菜单（重建后不再回显） */
+    public void releaseForRebuild() {
+        if (cmdMenuDialog != null) {
+            cmdMenuDialog.dismiss();
+            cmdMenuDialog = null;
+        }
+    }
+
     private void bindChatViews() {
         tvHintMessage = activity.findViewById(R.id.tv_hint_message);
         layoutChatMessages = activity.findViewById(R.id.layout_chat_messages);
@@ -103,6 +132,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         chat.ivPlayerEmoteBubble = activity.findViewById(R.id.iv_player_emote_bubble);
         chat.ivOpponentEmoteBubble = activity.findViewById(R.id.iv_opponent_emote_bubble);
         layoutTopInfo = activity.findViewById(R.id.layout_top_info);
+        layoutHudTop = activity.findViewById(R.id.layout_hud_top);
     }
 
     /**
@@ -115,6 +145,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (layoutTopInfo != null) {
             layoutTopInfo.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
                 int hgt = v.getHeight();
+                // 竖屏顶部 HUD 经 layout_hud_top 整体等比缩小（r1）：相机顶部内缩取视觉实际高度
+                if (layoutHudTop != null) hgt = (int) (hgt * layoutHudTop.getScaleY());
                 if (hgt > 0) viewController.setTopInsetPx(hgt);
             });
         }
@@ -123,6 +155,13 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     private void anchorChatAboveOpponentHand() {
         if (viewController == null || layoutChatMessages == null) return;
+        // 竖屏（layout-port）聊天区在缩放容器内自然流式位于双方血条行正下方（r1 与横屏同构），
+        // 不再叠加横屏的 translationY 动态锚定，复位后直接返回
+        if (activity.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
+            layoutChatMessages.setTranslationY(0f);
+            return;
+        }
         final float oppTopY = viewController.getOpponentHandTopScreenY();
         final int topH = layoutTopInfo != null ? layoutTopInfo.getHeight() : 0;
         layoutChatMessages.post(() -> {
@@ -157,6 +196,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     public void init(GameEngine engine, ImageLoader imageLoader) {
         this.engine = engine;
+        this.imageLoaderRef = imageLoader;
         viewController.init(engine.getField(), imageLoader, this);
     }
 
@@ -425,7 +465,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             return;
         }
         // 点击场上/手卡卡片，无论是否有可执行命令（是否弹命令菜单），
-        // 都先把该卡详情显示到左侧 cardDetailPanel
+        // 都先把该卡详情显示到卡片详情面板：横屏左侧 cardDetailPanel，
+        // 竖屏底部详情栏（layout-port 同 ID 结构，CardDetailPanel.showCard 自动显隐）
         activity.showCardInfoPanel(card);
         // 持有超量素材的怪兽，以及卡组/额外/墓地/除外堆叠区，弹出含「查看」的命令菜单，
         // 并把该卡在通讯中可执行的其他命令（发动/特殊召唤/攻击等）一并列出
@@ -448,6 +489,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (card == null) return;
         // 详情面板只显卡表原始数据；通讯当前值与原始值的差异行走悬浮标签
         // （对应 gframe：ShowCardInfo(code) 原值详情 + DrawStatus/标签状态信息）
+        // 横屏/竖屏统一走卡片详情面板（竖屏为底部详情栏，r2 取消旧长按小窗）
         activity.showCardInfoPanel(card);
         String tip = CardStatusTipHelper.buildStatusText(field, card);
         if (tip != null && !tip.isEmpty() && viewController != null
@@ -463,6 +505,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     @Override
     public void onFieldLongPressEnd() {
         CardStatusTipHelper.FieldTip.hide();
+    }
+
+    /** 当前是否竖屏（聊天/详情等展示形态分支保留入口，供其余分栏代码使用） */
+    private boolean isPortrait() {
+        return activity.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
     }
 
     /**

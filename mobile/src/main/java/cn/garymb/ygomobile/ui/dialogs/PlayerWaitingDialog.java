@@ -122,6 +122,10 @@ public class PlayerWaitingDialog {
         float density = context.getResources().getDisplayMetrics().density;
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
+        // 竖屏：限宽不超屏幕宽，高度按原宽高比等比缩小
+        int[] fittedSize = Constants.fitPopupSizeToScreen(context, popupWidth, popupHeight);
+        popupWidth = fittedSize[0];
+        popupHeight = fittedSize[1];
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         // 等待界面自身无输入控件：改为非获焦弹窗（同 MainMenuDialog），把窗口焦点留给 Activity，

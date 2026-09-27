@@ -485,6 +485,8 @@ public class SpecEffectOverlay {
         // 卡面在 640 高虚拟空间中的占比（drawing.cpp：top=150、CARD_IMG_HEIGHT=287、CARD_IMG_WIDTH=200）
         private static final float V_CARD_TOP = 150f;
         private static final float V_SPACE_H = 640f;
+        // 虚拟空间宽度基准：与高度同基准（方形虚拟空间），保证横屏不受宽度约束、竖屏按宽度自动缩小
+        private static final float V_SPACE_W = 640f;
         private static final float CARD_VW = 200f;
         private static final float CARD_VH = 287f;
 
@@ -513,6 +515,7 @@ public class SpecEffectOverlay {
         private int regionLeft, regionTop, regionW, regionH;
         private float cardW, cardH, cardLeft, cardTop, cardRight, cardBottom, cx, s;
         private float textCenterY;
+        private float vOriginY;      // 虚拟空间 y=0 对应的窗口坐标（宽度受限缩小时垂直居中）
 
         private OnFinishListener finishListener;
 
@@ -540,15 +543,19 @@ public class SpecEffectOverlay {
 
         private void computeGeometry() {
             if (regionW <= 0 || regionH <= 0) return;
-            cardH = regionH * (CARD_VH / V_SPACE_H);
-            cardW = cardH * (CARD_VW / CARD_VH);
+            // 竖屏：大图/阶段文字按区域宽度自动缩小（取高/宽两基准的较小者）；
+            // 横屏区域宽度充裕（≥ 高度基准所需）时不触发限宽，数值与原纯高度基准完全等价
+            s = Math.min(regionH / V_SPACE_H, regionW / V_SPACE_W);
+            // 缩小时内容在区域内垂直居中（卡片大图/阶段文字不再钉顶部），横屏时偏移为 0
+            vOriginY = regionTop + (regionH - s * V_SPACE_H) / 2f;
+            cardH = s * CARD_VH;
+            cardW = s * CARD_VW;
             cx = regionLeft + regionW / 2f;
             cardLeft = cx - cardW / 2f;
             cardRight = cx + cardW / 2f;
-            cardTop = regionTop + regionH * (V_CARD_TOP / V_SPACE_H);
+            cardTop = vOriginY + s * V_CARD_TOP;
             cardBottom = cardTop + cardH;
-            s = cardH / CARD_VH;                 // 虚拟单位 → 像素（宽高同比例）
-            textCenterY = regionTop + regionH * (330f / V_SPACE_H);
+            textCenterY = vOriginY + s * 330f;
         }
 
         /** 启动一个特效（对齐 duelclient.cpp 各分支的初值设置） */
@@ -688,6 +695,11 @@ public class SpecEffectOverlay {
 
         private Bitmap card() {
             return cardCode > 0 ? TextureLoader.get().getCardBitmap(cardCode) : null;
+        }
+
+        /** 当前特效卡码（0=无）：供竖屏底部卡片详情栏同步展示大图对应卡片 */
+        public int getCardCode() {
+            return effectType == EFFECT_NONE || !needsCard(effectType) ? 0 : cardCode;
         }
 
         @Override
@@ -843,11 +855,11 @@ public class SpecEffectOverlay {
             int oppIdx = clamp(param & 0x3, 0, 2);
             Bitmap my = skin("f" + (myIdx + 1) + ".jpg");
             Bitmap opp = skin("f" + (oppIdx + 1) + ".jpg");
-            float handH = regionH * (128f / V_SPACE_H);
+            float handH = s * 128f;
             float handW = handH * (89f / 128f);
             float left = cx - handW / 2f, right = cx + handW / 2f;
-            float myTop = regionTop + (dif / V_SPACE_H) * regionH;
-            float oppTop = regionTop + ((540f - dif) / V_SPACE_H) * regionH;
+            float myTop = vOriginY + dif * s;
+            float oppTop = vOriginY + (540f - dif) * s;
             if (my != null)
                 canvas.drawBitmap(my, null, new RectF(left, myTop, right, myTop + handH), bmpPaint);
             if (opp != null)
@@ -874,7 +886,7 @@ public class SpecEffectOverlay {
             }
             int a = clamp((int) (alpha * 255), 0, 255);
             if (a <= 0) return;
-            float size = regionH * 0.09f;   // 略微缩小阶段文字
+            float size = s * 0.09f * V_SPACE_H;   // 略微缩小阶段文字（高度基准 0.09×640，改经 s 派生随宽度缩放）
             float x = cx + off;
             textPaint.setTextSize(size);
             textPaint.setAlpha(a);
@@ -888,10 +900,10 @@ public class SpecEffectOverlay {
             if (subText != null && subText.length() > 0
                     && (cardCode == TEXT_YOU_WIN || cardCode == TEXT_YOU_LOSE)) {
                 // 胜负说明文字缩小（原 0.045），并整体上移更靠近上方的 YOU WIN/YOU LOSE（原 0.09）
-                float subSize = regionH * 0.036f;
+                float subSize = s * 0.036f * V_SPACE_H;
                 textPaint.setTextSize(subSize);
                 float subW = Math.max(textPaint.measureText(subText) + 24, regionW * 0.2f);
-                float subY = baseline + regionH * 0.066f;
+                float subY = baseline + s * 0.066f * V_SPACE_H;
                 bmpPaint.setAlpha(a);
                 RectF box = new RectF(cx - subW / 2f, subY - subSize, cx + subW / 2f, subY + subSize * 0.6f);
                 Paint boxPaint = new Paint();

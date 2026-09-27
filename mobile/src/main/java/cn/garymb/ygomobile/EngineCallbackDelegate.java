@@ -16,6 +16,7 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ReplayMsgMerger;
 import cn.garymb.ygomobile.game.ReplayReader;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
 import cn.garymb.ygomobile.render.SpecEffectOverlay;
@@ -164,25 +165,14 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     @Override
     public void onPlayerInfoUpdated(int player) {
         activity.runOnUiThread(() -> {
-            // player 为本地视角索引（0=我方）；playerInfos 按座位号存储（STOC_HS_PLAYER_ENTER），
-            // 我方名称取 selfType 座位、对方取另一座位（1v1），越界座位回退默认名
+            // player 为本地视角索引（0=我方）；playerInfos 已按视角绑定（对战方 STOC_DUEL_START
+            // bindViewNames，回放 ReplayPlayer.startSession），tag 模式当前行动者为队友时
+            // 取其昵称（对齐 drawing.cpp L1036-1049 的 hostname/hostname_tag 分支），
+            // 观战同样走此路径使 topInfo 显示对战双方名字，缺省回退默认名
             GameField.PlayerField pf = activity.engine.getField().players[player];
             String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
-            String name;
-            if (activity.engine.replayMode || activity.engine.isSingleMode) {
-                // 回放：无座位概念，ReplayPlayer 开始回放时已按本地视角索引（0=录制者）
-                // 将 yrp 头部双方昵称写入 playerInfos，直接按视角索引取名；
-                // 残局：无座位握手，SingleModeRunner 已按视角索引填名（0=我方、1=AI 名）
-                GameEngine.PlayerInfo rinfo = (player >= 0 && player < activity.engine.playerInfos.length)
-                        ? activity.engine.playerInfos[player] : null;
-                name = (rinfo == null || rinfo.name == null || rinfo.name.isEmpty()) ? defaultName : rinfo.name;
-            } else {
-                int selfSeat = activity.engine.getClient().selfType;
-                int seat = (player == 0) ? selfSeat : (selfSeat ^ 1);
-                GameEngine.PlayerInfo info = (seat >= 0 && seat < activity.engine.playerInfos.length)
-                        ? activity.engine.playerInfos[seat] : null;
-                name = (info == null || info.name.isEmpty()) ? defaultName : info.name;
-            }
+            String engineName = activity.engine.displayName(player);
+            String name = (engineName == null || engineName.isEmpty()) ? defaultName : engineName;
             activity.topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
             activity.topInfoManager.updateLpBars(activity.engine.getField());
             activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
@@ -337,8 +327,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             specEffect().showWinText(code, reason, vicName);
 
             // BGM 切至胜负场景（对齐 Game::playBGM 的 dInfo.isFinished && showcardcode==1/2/3）；
-            // 平局（winner==2）不改场景，仍按决斗处理
-            if (winner != 2) activity.setBgmDuelResult(selfWon);
+            // 平局（winner==2）不改场景，仍按决斗处理；
+            // 观战不设胜负覆盖：观战者无「我方胜/负」语义，BGM 继续按 LP 差切
+            // 优势/劣势/决斗曲（是否随场景切歌由 chkSwitchBGM 在 SoundManager 层控制）
+            if (winner != 2 && !activity.engine.isSpectator()) activity.setBgmDuelResult(selfWon);
         });
     }
 
@@ -348,17 +340,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
      */
     private String playerDisplayName(int localIndex) {
         String defaultName = (localIndex == 0) ? Constants.PlayerName : "Opponent";
-        if (activity.engine.replayMode || activity.engine.isSingleMode) {
-            // 回放/残局：无座位映射，playerInfos 已按本地视角索引存好（残局 AI 名由 runner 填入）
-            GameEngine.PlayerInfo rinfo = (localIndex >= 0 && localIndex < activity.engine.playerInfos.length)
-                    ? activity.engine.playerInfos[localIndex] : null;
-            return (rinfo == null || rinfo.name == null || rinfo.name.isEmpty()) ? defaultName : rinfo.name;
-        }
-        int selfSeat = activity.engine.getClient().selfType;
-        int seat = (localIndex == 0) ? selfSeat : (selfSeat ^ 1);
-        GameEngine.PlayerInfo info = (seat >= 0 && seat < activity.engine.playerInfos.length)
-                ? activity.engine.playerInfos[seat] : null;
-        return (info == null || info.name.isEmpty()) ? defaultName : info.name;
+        // 统一走视角绑定的显示名（含 tag 队友切换与观战名字），空回退默认
+        String name = activity.engine.displayName(localIndex);
+        return (name == null || name.isEmpty()) ? defaultName : name;
     }
 
     /**
@@ -414,8 +398,15 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     @Override
     public void onReplayData(byte[] data) {
         Log.i(TAG, "Replay data received, size=" + data.length);
+        // 双兼容合并（读包线程顺序保证：本局全部 MSG 帧先于 STOC_REPLAY 入队）：
+        // 取最早已完结的逐局录制段 FIFO 配对，把引擎 MSG 尾段并入原录像字节，
+        // 产物 libygo（ocgcore+script 重跑）与 MsgStreamReplaySource（无引擎）均可播放；
+        // 无本地段/已是 V2/合并失败时原样返回（见 ReplayMsgMerger）
+        final byte[] merged = ReplayMsgMerger.appendMsgFrames(data,
+                activity.engine != null ? activity.engine.takeRecordedMsgSegment()
+                        : java.util.Collections.emptyList());
         activity.runOnUiThread(() -> {
-            pendingReplays.add(data);
+            pendingReplays.add(merged);
             // 决斗结束流程中通讯仍在补发录像：重置等待窗口，确保队列收全后再开始处理
             if (duelEndHandling) {
                 scheduleReplayProcessing();
@@ -737,6 +728,19 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     /** 已存在的覆盖层实例（不创建）：弹幕移除后的空闲收口用 */
     SpecEffectOverlay peekSpecOverlay() {
         return specEffectOverlay;
+    }
+
+    /**
+     * 屏幕旋转重建前释放 drawspec 覆盖层：其 PopupWindow 锚在旧视图树上，
+     * setContentView 后必须整层释放并置空，下一次特效/弹幕经 specEffect() 懒建新实例；
+     * 特效队列被中断不会排空 idle 回调，同步通知引擎解除动画闸门防卡死
+     */
+    void releaseSpecOverlayForRebuild() {
+        if (specEffectOverlay != null) {
+            specEffectOverlay.release();
+            specEffectOverlay = null;
+        }
+        if (activity.engine != null) activity.engine.notifySpecEffectIdle();
     }
 
     /**

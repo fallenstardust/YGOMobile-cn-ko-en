@@ -181,6 +181,11 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         setState(State.PAUSED);
     }
 
+    /** 当前是否处于暂停态（旋转重建后恢复录像控制条按钮互斥显隐用） */
+    public boolean isPaused() {
+        return isPaused;
+    }
+
     public void resume() {
         isPaused = false;
         setState(State.PLAYING);
@@ -580,6 +585,10 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         String tmpName = a.name;
         a.name = b.name;
         b.name = tmpName;
+        // tag 队友名随视角一并左右对调（对齐 C++ ReplaySwap 的 hostname_tag↔clientname_tag swap）
+        String tmpNameTag = a.nameTag;
+        a.nameTag = b.nameTag;
+        b.nameTag = tmpNameTag;
         int tmpLp = a.lp;
         a.lp = b.lp;
         b.lp = tmpLp;
@@ -608,9 +617,26 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         engine.duelIsFirst = true;
         engine.inDuel = false;
         if (replayData != null) {
-            for (int p = 0; p < 2 && p < replayData.playerNames.size()
-                    && p < engine.playerInfos.length; p++) {
-                engine.playerInfos[p].name = replayData.playerNames.get(p);
+            // 对齐 replay_mode.cpp 名字装载：非 tag 时 names[0/1] 为对戦双方；
+            // tag 时 names[0..3] = hostname/hostname_tag/clientname/clientname_tag
+            //（座位 0/1 同队、2/3 同队），录制者视角左=座位 0 队、右=座位 2 队；
+            // 并同步 isTag/tag_player 复位（对齐 replay_mode.cpp L66-67/L260-261）
+            field.isTag = replayData.isTag;
+            engine.tagPlayer[0] = false;
+            engine.tagPlayer[1] = false;
+            engine.playerInfos[0].nameTag = "";
+            engine.playerInfos[1].nameTag = "";
+            List<String> names = replayData.playerNames;
+            if (replayData.isTag && names.size() >= 4) {
+                engine.playerInfos[0].name = names.get(0);
+                engine.playerInfos[0].nameTag = names.get(1);
+                engine.playerInfos[1].name = names.get(2);
+                engine.playerInfos[1].nameTag = names.get(3);
+            } else {
+                for (int p = 0; p < 2 && p < names.size()
+                        && p < engine.playerInfos.length; p++) {
+                    engine.playerInfos[p].name = names.get(p);
+                }
             }
         }
     }
