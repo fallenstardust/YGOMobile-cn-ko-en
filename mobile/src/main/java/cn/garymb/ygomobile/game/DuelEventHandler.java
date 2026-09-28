@@ -347,6 +347,21 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             engine.field.updateHandLayout(0, 10);
             engine.field.updateHandLayout(1, 10);
         }
+        // 需求3a：卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，先让新卡亮出到手牌中
+        // 展示片刻，再对该侧手牌整体播放一次洗切动画（样式对齐 duelclient.cpp MSG_SHUFFLE_HAND）。
+        // 普通抽卡走 MSG_DRAW 不经本 MSG_MOVE 分支，故这里只捕获「效果把手牌外的卡加回手卡」，
+        // 不会误挂在每次正常抽卡上；newCtrl 已在方法开头经 localPlayer 转为本地视角索引。
+        {
+            int oldLocBase = oldLoc & 0x7f;
+            int newLocBase = newLoc & 0x7f;
+            if (newLocBase == CardLocation.Hand.value() && oldLocBase != newLocBase
+                    && (oldLocBase == CardLocation.Deck.value()
+                            || oldLocBase == CardLocation.Grave.value()
+                            || oldLocBase == CardLocation.Removed.value()
+                            || oldLocBase == CardLocation.Extra.value())) {
+                engine.deckMotion.applyMoveToHandShuffle(newCtrl);
+            }
+        }
         // 音效严格对齐 duelclient.cpp MSG_MOVE L2952-2957：仅在真正发生移动（pl!=cl）时，
         // 除外（目标含 LOCATION_REMOVED=0x20）播 BANISHED，否则因效果破坏（REASON_DESTROY=0x2）播 DESTROYED。
         // C++ 此分支不要求目的地是墓地（破坏回手/回卡组等同样播 DESTROYED），也没有 SUMMON 分支——

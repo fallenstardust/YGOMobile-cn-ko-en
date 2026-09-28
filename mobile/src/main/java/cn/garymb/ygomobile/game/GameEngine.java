@@ -142,6 +142,12 @@ public class GameEngine {
          * 消息流回卷后会重新派发，宿主应清空当前聊天显示（分侧聊天行与弹幕）防重复
          */
         default void onReplayChatReset() {}
+
+        /**
+         * 观战/录像切换视角（{@code ReplaySwap}）：昵称/LP/场面已左右对调，宿主应同步把双方
+         * 聊天内容也左右对调（需求1），避免 player1 的消息因切视角错显示到 player2 一侧。
+         */
+        default void onViewpointSwapped() {}
     }
 
     // 核心状态与基础设施（协作类经 engine. 引用访问：同包类用包级私有，
@@ -1003,6 +1009,8 @@ public class GameEngine {
             listener.onPlayerInfoUpdated(1);
             // 回合方高亮（LPBarFrame 彩色/灰色与名字色）随视角翻转重刷
             listener.onTurnStarted(field.currentPlayer);
+            // 切视角同步左右对调双方聊天内容（需求1）
+            listener.onViewpointSwapped();
         }
     }
 

@@ -76,11 +76,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         void onPhaseEpClicked();
     }
 
-    // === 堆叠区厚度（问题4）：可见层在 PILE_BASE_Z 之上按张数均匀抬升，形成侧视厚度 ===
-    // 卡片核心 drawPile 与 FieldBoardRenderer 的 act 图标抬升共用，故集中于门面（包级静态）。
-    static final float PILE_BASE_Z = 0.02f;
-    static final int PILE_MAX_LAYERS = 14;
-    static final float PILE_LAYER_THICK = 0.012f;
+    // === 堆叠区厚度（问题4）：卡组/墓地/除外/额外每张卡按真实 sequence 的线性 curZ
+    //（GameFieldGeometry：0.01+0.01×seq，不封顶）绘制，堆顶 z = 0.01×张数，侧视厚度随张数
+    // 线性增长（对齐 client_field.cpp：每张卡 Z 抬升 0.01）。旧实现把可见层封顶 14 层并重排
+    // 均匀层高（0.012/层），导致 60/40/15 张视觉厚度几乎相同，故移除该封顶。
 
     // 选中手卡抬高量
     private static final float HAND_LIFT = 0.3f;
@@ -774,22 +773,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     private void drawPile(List<GameField.ClientCard> pile) {
         if (pile == null) return;
         try {
-            int n = 0;
-            for (int i = 0, s = pile.size(); i < s; i++) {
-                try {
-                    if (pile.get(i) != null) n++;
-                } catch (Throwable e) {
-                    break;
-                }
-            }
-            if (n == 0) return;
-            // 问题4：GameField 对 seq>18 的 curZ 封顶，旧实现绘制的顶部多层全部共面 → 无厚度且 z-fighting。
-            // 改为仅绘最上 PILE_MAX_LAYERS 层，并在 PILE_BASE_Z 之上按张数均匀抬升显式层高，形成随数量增长的厚度。
-            int layers = Math.min(n, PILE_MAX_LAYERS);
-            int skip = n - layers;
-            float thick = layers * PILE_LAYER_THICK;
-            float step = layers > 1 ? thick / (layers - 1) : 0f;
-            int drawn = 0;
+            // 堆叠厚度严格对齐 C++ client_field.cpp：每张卡按真实 sequence 的线性 curZ
+            //（GameFieldGeometry：0.01+0.01×seq，不封顶）逐张绘制，堆顶 z = 0.01×张数，
+            // 侧视厚度随张数线性增长（60 张 ≈0.60 > 40 张 ≈0.40 ≈ 15 张 ≈0.15 的 3 倍）。
+            // 飞行中的卡保留自身动画的 Z 插值（从来源堆高度飞至目标堆高度），绘出立体弧线。
             for (int i = 0, s = pile.size(); i < s; i++) {
                 GameField.ClientCard c;
                 try {
@@ -798,12 +785,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     continue;
                 }
                 if (c == null) continue;
-                if (skip-- > 0) continue;
-                float targetZ = PILE_BASE_Z + drawn * step;
-                // 飞行中的卡不施加堆叠层 zBias 吸附：保留自身动画的 Z 插值（从来源堆高度
-                // 飞至目标堆高度），否则卡组→墓地/除外等移动只有平面滑移、无立体弧线
-                drawCard(c, c.is_moving ? 0f : targetZ - c.curZ);
-                drawn++;
+                drawCard(c);
             }
         } catch (Throwable ignored) {
         }

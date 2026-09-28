@@ -192,6 +192,18 @@ class FieldChatBoard {
      */
     private String chatNameByLocalType(int chatType) {
         if (ctl.engine == null) return "Player" + (chatType + 1);
+        // 回放：录像不经 STOC_HS_PLAYER_ENTER，seatNames 恒空，昵称改取 playerInfos——
+        // 其名字由 ReplayPlayer.startSession 从录像头部（等价于通讯下发的玩家名）写入，
+        // 左右侧映射 chatType0/2=左(playerInfos[0])、1/3=右(playerInfos[1])；chatType2/3 为该队
+        // tag 队友，优先取 nameTag（对齐 hostname_tag/clientname_tag）。修复切横竖屏/重渲染后
+        // 聊天前缀退化为 Player1/Player2（用户反馈：玩家名称丢失只显示默认名）。
+        if (ctl.engine.replayMode) {
+            int localIdx = (chatType == 0 || chatType == 2) ? 0 : 1;
+            GameEngine.PlayerInfo info = ctl.engine.playerInfos[localIdx];
+            String rn = (chatType >= 2 && info.nameTag != null && !info.nameTag.isEmpty())
+                    ? info.nameTag : info.name;
+            if (rn != null && !rn.isEmpty()) return rn;
+        }
         boolean isTag = ctl.engine.getGameMode() == 2;
         int selftype = ctl.engine.getSelfType();
         int origSeat;
@@ -276,27 +288,102 @@ class FieldChatBoard {
         }
         LinkedList<String> pending = selfSide ? myChatPending : opChatPending;
         if (pending.isEmpty()) return;
-        float density = ctl.activity.getResources().getDisplayMetrics().density;
         for (String line : pending) {
-            TextView tv = new TextView(ctl.activity);
-            tv.setText(line);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与系统弹幕/大厅聊天统一 9sp
-            tv.setTextColor(0xFFFFFFFF);                     // chatColor[0..3] 玩家消息白色
-            tv.setMaxLines(2);
-            tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            tv.setBackgroundColor(CHAT_BG_COLOR);            // 半透明黑底，对齐 drawing.cpp 0xa0000000
-            int hPadding = (int) (3 * density);
-            tv.setPadding(hPadding, 0, hPadding, 0);
-            tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = (int) (2 * density);
-            layer.addView(tv, lp);
+            layer.addView(createChatRowView(line));
         }
         pending.clear();
         // 在屏不超 MAX_CHAT_LINES 行：超出时最上方最旧一条消失（等效上滚）
         while (layer.getChildCount() > MAX_CHAT_LINES) {
             layer.removeViewAt(0);
+        }
+    }
+
+    /** 构造一条血条下方聊天行 TextView（昵称前缀已由调用方拼好入 line）：9sp 白字 + 半透明黑底，
+     *  规格对齐 drawing.cpp chatColor[0..3] 玩家消息白色 / draw2DRectangle 0xa0000000 */
+    private TextView createChatRowView(String line) {
+        float density = ctl.activity.getResources().getDisplayMetrics().density;
+        TextView tv = new TextView(ctl.activity);
+        tv.setText(line);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与系统弹幕/大厅聊天统一 9sp
+        tv.setTextColor(0xFFFFFFFF);                     // chatColor[0..3] 玩家消息白色
+        tv.setMaxLines(2);
+        tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        tv.setBackgroundColor(CHAT_BG_COLOR);            // 半透明黑底，对齐 drawing.cpp 0xa0000000
+        int hPadding = (int) (3 * density);
+        tv.setPadding(hPadding, 0, hPadding, 0);
+        tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = (int) (2 * density);
+        tv.setLayoutParams(lp);
+        return tv;
+    }
+
+    /**
+     * 整列重建指定侧血条下方聊天容器：清空后按该侧 myChatLines/opChatLines 全量重挂，
+     * 用真实数据（非仅 pending）渲染——视角切换左右对调、旋转重建回灌共用。
+     * 血条未布局时经 mainHandler 延后重试（上限同弹幕），容器不可用则静默跳过（数据不丢）。
+     */
+    private void relayoutSideChatRows(boolean selfSide, int retries) {
+        SpecEffectOverlay overlay = ctl.activity.obtainSpecOverlay();
+        if (overlay == null) return;
+        int[] bar = ctl.topInfoManager != null
+                ? ctl.topInfoManager.getLpBarRectInWindow(selfSide ? 0 : 1) : null;
+        if (bar == null || bar[2] <= 0 || bar[3] <= 0) {
+            if (retries < DANMAKU_MAX_LAYOUT_RETRIES) {
+                final int next = retries + 1;
+                ctl.mainHandler.post(() -> relayoutSideChatRows(selfSide, next));
+            }
+            return;
+        }
+        LinearLayout layer = overlay.obtainChatRowLayer(
+                selfSide, bar[0], bar[1] + bar[3], bar[2]);
+        if (layer == null) return;
+        layer.removeAllViews();
+        LinkedList<String> lines = selfSide ? myChatLines : opChatLines;
+        for (String line : lines) layer.addView(createChatRowView(line));
+        // lines 已含全部在屏消息（pending 与 lines 同源），全量重挂后清 pending 防重复补挂
+        (selfSide ? myChatPending : opChatPending).clear();
+    }
+
+    /**
+     * 切换视角（观战/录像 ReplaySwap）时左右对调双方聊天内容：仅对调 gametopinfo 昵称会让
+     * player1 的消息错显示到 player2 一侧，故连同两侧聊天行一并对调，再按新视角整列重挂。
+     * 聊天行文本内已内嵌发送者昵称前缀，整行随左右搬迁即与对调后的玩家名天然对齐。
+     */
+    void swapChatSides() {
+        swapListContent(myChatLines, opChatLines);
+        swapListContent(myChatPending, opChatPending);
+        relayoutSideChatRows(true, 0);
+        relayoutSideChatRows(false, 0);
+    }
+
+    private static void swapListContent(LinkedList<String> a, LinkedList<String> b) {
+        java.util.List<String> tmp = new ArrayList<>(a);
+        a.clear();
+        a.addAll(b);
+        b.clear();
+        b.addAll(tmp);
+    }
+
+    /**
+     * 屏幕旋转（rebindAfterRotation 复用同一实例）后回灌双方聊天：覆盖层/回退层旧视图随旋转销毁，
+     * 撤销本类持有的弹幕视图引用与暂存（不丢 myChatLines/opChatLines 聊天历史），
+     * 再把保存的双方聊天行整列重挂到新覆盖层，避免横竖屏切换后聊天记录丢失（用户反馈）。
+     */
+    void retainAcrossRotation() {
+        for (TextView tv : danmakuViews) {
+            tv.animate().cancel();
+        }
+        danmakuViews.clear();
+        danmakuRowIndex = 0;
+        myChatPending.clear();
+        opChatPending.clear();
+        // 大厅聊天容器挂在旧 layout_danmaku 上，重建后失效：置空待下次 enterLobbyChatMode 重建
+        lobbyChatContainer = null;
+        if (!lobbyChatMode) {
+            relayoutSideChatRows(true, 0);
+            relayoutSideChatRows(false, 0);
         }
     }
 

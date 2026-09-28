@@ -105,11 +105,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     public void rebindAfterRotation() {
         viewController = new GameFieldViewController(activity);
         select = new FieldSelectManager(this);
-        chat = new FieldChatBoard(this);
+        // 聊天协作类跨旋转复用同一实例：myChatLines/opChatLines 是纯数据，随实例保留即保住
+        // 双方聊天记录（历史新建实例导致横竖屏切换后聊天内容全丢失，用户反馈）；
+        // bindChatViews 后把保存的聊天行整列回灌到新覆盖层（旧覆盖层随旋转销毁）
+        if (chat == null) chat = new FieldChatBoard(this);
         phaseBar = new FieldPhaseBar(this);
         bindChatViews();
         phaseBar.setupPhaseButtons();
         setupOverlayAnchoring();
+        chat.retainAcrossRotation();
         if (engine != null && imageLoaderRef != null) {
             viewController.init(engine.getField(), imageLoaderRef, this);
         }
@@ -434,6 +438,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     public void appendChat(int playerType, String message) {
         chat.appendChat(playerType, message);
+    }
+
+    /** 切换视角（观战/录像 ReplaySwap）：左右对调双方聊天内容（需求1，与 gametopinfo 昵称同步对调） */
+    public void swapChatSides() {
+        if (chat != null) chat.swapChatSides();
     }
 
     public void clearChatMessages() {

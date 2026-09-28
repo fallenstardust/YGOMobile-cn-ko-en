@@ -197,4 +197,44 @@ public class DeckHandMotionManager {
         }
         postFieldChanged();
     }
+
+    /**
+     * 需求3a：通讯中有卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡后，先把入手的新卡亮出
+     * 到手牌中（{@code onMove} 的 moveCardAnimated(10) 飞入 + updateHandLayout(10) 重排已完成），
+     * 展示片刻后再对该侧手牌整体播放一次洗切动画——聚拢到中线 X=3.9 摊开展示全部卡面、停留、
+     * 再回新布局，样式对齐 gframe duelclient.cpp MSG_SHUFFLE_HAND L2659-2701（复用
+     * {@code startHandShuffle} 关键帧，非翻面段 total=26）。普通抽卡走 MSG_DRAW 不经 MSG_MOVE，
+     * 故本方法只在效果把手牌外的卡加回手卡时触发，与实况/回放管线共用同一动画闸门。
+     */
+    public void applyMoveToHandShuffle(int localPlayer) {
+        // 回放快进重排：同步落位即可，不叠加洗切动画（与 applyShuffleHand 的 instantPlace 分支一致）
+        if (engine.field.instantPlace) return;
+        final List<GameField.ClientCard> hand = engine.field.players[localPlayer].hand;
+        if (hand == null || hand.size() <= 1) return; // 不足 2 张无洗切意义
+        // 已在洗切中的手牌不重复触发（连续多张入手时避免动画叠加错乱）；刚入手的卡此刻仍在
+        // moveCardAnimated 飞入中（is_moving），但其飞入会在延时洗切启动前落定，故不据 is_moving 拦截
+        for (GameField.ClientCard c : hand) {
+            if (c != null && c.is_hand_shuffle) return;
+        }
+        // 先让入手的卡飞入并展示：moveCardAnimated(10) 飞入 + updateHandLayout(10) 重排约 10 帧，
+        // 再停 ~5 帧看清卡面，之后启动洗切；整段持统一动画闸门（move+展示+洗切）防后续消息抢跑
+        final long startDelay = 15L * 17L;
+        engine.animHoldUntilMs = System.currentTimeMillis() + startDelay + (26L + 5L) * 17L;
+        engine.mainHandler.postDelayed(() -> {
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+            int maxTotal = 0;
+            for (GameField.ClientCard c : hand) {
+                if (c == null) continue;
+                // 非翻面洗切：卡已正面展示，仅做聚拢→回位（对齐 C++ 己方/回放 is_replay_need_flip=false）
+                engine.field.startHandShuffle(c, false);
+                maxTotal = Math.max(maxTotal, c.animTotalFrame);
+            }
+            if (maxTotal > 0) {
+                engine.animHoldUntilMs = Math.max(engine.animHoldUntilMs,
+                        System.currentTimeMillis() + (maxTotal + 5L) * 17L);
+            }
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, startDelay);
+        postFieldChanged();
+    }
 }

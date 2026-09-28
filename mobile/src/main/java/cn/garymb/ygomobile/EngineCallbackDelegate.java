@@ -232,6 +232,12 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> activity.fieldCtl.clearChatMessages());
     }
 
+    /** 观战/录像切换视角（需求1）：与 gametopinfo 昵称左右对调同步，把双方聊天内容也左右对调 */
+    @Override
+    public void onViewpointSwapped() {
+        activity.runOnUiThread(() -> activity.fieldCtl.swapChatSides());
+    }
+
     @Override
     public void onSelectRequired(int selectType, ByteBuffer data) {
         activity.runOnUiThread(() -> {

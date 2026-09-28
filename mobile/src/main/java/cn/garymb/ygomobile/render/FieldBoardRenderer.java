@@ -319,13 +319,11 @@ final class FieldBoardRenderer {
         if (!on) return;
         float[] c = FieldGeometry.pileCenter(p, loc);
         if (c == null) return;
-        // 按该堆叠当前显示厚度抬到「最高层之上一层」：Java drawPile 顶部 z =
-        // PILE_BASE_Z + layers*PILE_LAYER_THICK，再加一层作为图标高度。
-        // （对齐 drawing.cpp deck/grave/remove/extra_act 的 pile.size()*0.01+0.02 语义，
-        //   但换算到本工程的堆叠模型，避免被卡片堆压住）
-        int cnt = f.getCardCount(p, loc);
-        int layers = Math.min(Math.max(cnt, 1), GameFieldView.PILE_MAX_LAYERS);
-        float z = GameFieldView.PILE_BASE_Z + layers * GameFieldView.PILE_LAYER_THICK + GameFieldView.PILE_LAYER_THICK;
+        // act 图标抬到「最高层之上一层」：本渲染器每张卡按线性 curZ(0.01+0.01×seq，见
+        // GameFieldGeometry/drawPile) 堆叠，堆顶 z = 0.01×张数，图标再抬一张厚度 0.01，
+        // 与卡片堆顶部保持同阶（对齐 client_field.cpp GetChainLocation 的 pile.size()×0.01 + 抬升）。
+        int cnt = Math.max(1, f.getCardCount(p, loc));
+        float z = 0.01f * (cnt + 1);
         drawActIconAt(tex, FieldGeometry.mirrorX(c[0]), c[1], z, sz, spin);
     }
 
