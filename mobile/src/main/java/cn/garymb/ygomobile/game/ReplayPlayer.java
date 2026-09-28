@@ -108,6 +108,8 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     private int skipTurn;
     private volatile int restartTargetStep;
     private int restartFromStep;
+    /** 本次会话录像文件 V2 尾段内的 0xF1 聊天伪帧条数（加载时统计，随开场信息展示供录制验证）；-1=非逐帧流无从统计 */
+    private int chatFrameCount = -1;
     /** undo/restart 目标步为 0：消费并重投 MSG_START（重建初始场）后即停 */
     private boolean landAtStart;
     private volatile String lastErrorMessage;
@@ -290,6 +292,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             if (sessionGen != gen) return;    // 同上：开源自检期间会话已作废
             totalSteps = computeTotalSteps();
             prepareDisplayDecks();
+            chatFrameCount = countChatFrames();
             startSession();
             if (source.engineDriven()) {
                 // 旧格式重跑不产 MSG_START（gframe 由 dField.Initial 建场），此处自行建初始场
@@ -324,6 +327,17 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         int n = 0;
         for (byte[] f : d.msgFrames) {
             if (f != null && f.length > 0 && ReplayMessageSlicer.isVisibleStep(f[0] & 0xFF)) n++;
+        }
+        return n;
+    }
+
+    /** 本会话消息流内 0xF1 聊天伪帧条数（V2 逐帧流加载时统计）：开场信息展示用，
+     *  使用户无需逐条比对即可确认聊天是否真的录进了录像；V1 原始流/引擎重跑源返回 -1 */
+    private int countChatFrames() {
+        if (replayData == null || replayData.msgFrames == null) return -1;
+        int n = 0;
+        for (byte[] f : replayData.msgFrames) {
+            if (f != null && f.length >= 2 && (f[0] & 0xFF) == GameEngine.REPLAY_CHAT_FRAME) n++;
         }
         return n;
     }
@@ -473,6 +487,8 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         final String text = new String(body, 1, body.length - 1,
                 java.nio.charset.StandardCharsets.UTF_8);
         if (text.isEmpty()) return;
+        Log.i(TAG, "replay chat dispatch: type=" + playerType + " len=" + text.length()
+                + (isSkipping ? " (skipped)" : ""));
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onChatReceived(playerType, text);
         });
@@ -998,6 +1014,22 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         }
     }
 
+    /**
+     * 录像头部（ReplayReader 自 .yrp 解出的双方卡组/额外卡组全部卡码，已按本机卡表归一）
+     * 权威取数入口：viewPlayer 为本地视角容器索引（0=我方/1=对方，与 field.players[] 同索引），
+     * 经 engine.localPlayer 对合映射换算回录制侧下标，视角互换后自动跟随。
+     * 回放态堆叠区查看直接以该列表展开全部卡面，不依赖实况 ClientCard 是否已被
+     * {@link #applyReplayDeckCodes()} 回填——修复回填时序竞争/抽卡换位导致的卡组、额外
+     * 里侧卡「时灵时不灵」；非卡组(0x01)/额外(0x40)区域或头部无数据时返回 null（调用方回落实况列表）。
+     */
+    public List<Integer> getReplayZoneCodes(int viewPlayer, int location) {
+        if (replayData == null || viewPlayer < 0 || viewPlayer > 1) return null;
+        if (location != 0x01 && location != 0x40) return null;
+        int proto = engine.localPlayer(viewPlayer);
+        if (location == 0x01) return proto == 0 ? displayMain0 : displayMain1;
+        return proto == 0 ? displayExtra0 : displayExtra1;
+    }
+
     // === UI 通知 ===
 
     private void setState(State newState) {
@@ -1033,6 +1065,9 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         if (replayData.isTag) sb.append(" [双打]");
         if (replayData.isSingleMode) sb.append(" [残局]");
         if (startTurn > 1) sb.append(" | 从第").append(startTurn).append("回合开始");
+        // 聊天录制验证：开场信息直接标注文件内聊天伪帧条数，0 条=录制侧未落盘，
+        // -1=非逐帧流无法统计（旧格式重跑/ V1）
+        if (chatFrameCount >= 0) sb.append(" | 聊天").append(chatFrameCount).append("条");
         return sb.toString();
     }
 

@@ -35,6 +35,9 @@ public final class YrpWriter {
     public static final int REPLAY_MSG_STREAM = 0x20;
     /** 自定义扩展位 V2：响应记录流之后含逐帧成帧的主机视角 MSG 流 + [uint32 总长] 尾部自描述（C++ 不读尾部，天然透明） */
     public static final int REPLAY_MSG_STREAM_V2 = 0x40;
+    /** 回放聊天伪帧消息号：ocgcore 消息号表之外（0xF1，引擎永不产出），本工程专用，
+     *  与 {@code cn.garymb.ygomobile.game.GameEngine.REPLAY_CHAT_FRAME} 对偶（帧体 [playerType(1B)][UTF-8]） */
+    public static final int REPLAY_CHAT_FRAME = 0xF1;
     public static final int REPLAY_ID_YRP2 = 0x32707279;
 
     /** ReplayHeader + ExtendedReplayHeader 追加字段 = 80 字节（对齐 replay.h 结构体大小）。 */
@@ -139,6 +142,24 @@ public final class YrpWriter {
             return;
         }
         msgFrames.add(Arrays.copyOf(data, len));
+    }
+
+    /**
+     * 记录一条对局聊天为 0xF1 伪帧（帧体 = [REPLAY_CHAT_FRAME][playerType(1B)][UTF-8 文本]）：
+     * 与 {@link #writeMessage} 一样追加进 msgFrames，随 V2 尾段逐帧成帧，与引擎消息按到达序交错；
+     * ocgcore 消息号表无 0xF1，重跑模式只顺序消费响应段、不读尾段，C++ 侧天然透明忽略；
+     * 无引擎回放由 ReplayPlayer 在帧界流拦截 0xF1、独立派发显示（不投喂管线）。
+     */
+    public void writeChatFrame(int playerType, String text) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        byte[] utf = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] frame = new byte[utf.length + 2];
+        frame[0] = (byte) REPLAY_CHAT_FRAME;
+        frame[1] = (byte) playerType;
+        System.arraycopy(utf, 0, frame, 2, utf.length);
+        msgFrames.add(frame);
     }
 
     /** 从响应记录流尾部移除 length 字节（MSG_RETRY 回滚上一条响应）。 */

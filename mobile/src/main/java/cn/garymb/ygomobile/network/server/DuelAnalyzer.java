@@ -342,13 +342,12 @@ final class DuelAnalyzer implements YGOProtocol {
                     cursor++;
                     int codeBase = cursor;
                     cursor += count * 4;
-                    sendToPlayer(room.players[player], range(msg, start, cursor));
+                    byte[] full = range(msg, start, cursor);
                     for (int i = 0; i < count; i++) {
                         writeInt32(msg, codeBase + i * 4, 0);
                     }
                     byte[] masked = range(msg, start, cursor);
-                    sendToPlayer(room.players[1 - player], masked);
-                    sendToObservers(masked);
+                    sendDualViewAndRecord(player, full, masked);
                     refreshHand(player, SHUFFLE_HAND_FLAG, 0);
                     break;
                 }
@@ -359,13 +358,12 @@ final class DuelAnalyzer implements YGOProtocol {
                     cursor++;
                     int codeBase = cursor;
                     cursor += count * 4;
-                    sendToPlayer(room.players[player], range(msg, start, cursor));
+                    byte[] full = range(msg, start, cursor);
                     for (int i = 0; i < count; i++) {
                         writeInt32(msg, codeBase + i * 4, 0);
                     }
                     byte[] masked = range(msg, start, cursor);
-                    sendToPlayer(room.players[1 - player], masked);
-                    sendToObservers(masked);
+                    sendDualViewAndRecord(player, full, masked);
                     refreshExtra(player);
                     break;
                 }
@@ -443,14 +441,13 @@ final class DuelAnalyzer implements YGOProtocol {
                         cp = EngineMessage.stripRevealFlag(msg, body + 8);
                     }
                     cursor = body + 16;
-                    sendToPlayer(room.players[cc], range(msg, start, cursor));
+                    byte[] full = range(msg, start, cursor);
                     if ((cl & (OcgDuelEngine.LOCATION_GRAVE | EngineMessage.LOCATION_OVERLAY)) == 0
                             && (((cl & (OcgDuelEngine.LOCATION_DECK | OcgDuelEngine.LOCATION_HAND)) != 0) || hide)) {
                         writeInt32(msg, body, 0);
                     }
-                    byte[] opp = range(msg, start, cursor);
-                    sendToPlayer(room.players[1 - cc], opp);
-                    sendToObservers(opp);
+                    byte[] masked = range(msg, start, cursor);
+                    sendDualViewAndRecord(cc, full, masked);
                     if (cl != 0 && (cl & EngineMessage.LOCATION_OVERLAY) == 0 && (cl != pl || pc != cc)) {
                         refreshSingle(cc, cl, cs);
                     }
@@ -475,9 +472,18 @@ final class DuelAnalyzer implements YGOProtocol {
                     // 再 pbuf += 4 跳过 ctrl/loc/seq/position，共消费 engType+8 字节、发包 9 字节。
                     // Java writeInt32 不移游标，此处必须 cursor += 8；旧值 +=4 导致游标错位、
                     // 后续消息被误解析（等待消息被跳过 → process() 空转占死 roomExecutor → 卡死）。
+                    byte[] full = range(msg, start, cursor + 8);
+                    recordFrame(full);
                     writeInt32(msg, cursor, 0);
                     cursor += 8;
-                    broadcastMsg(range(msg, start, cursor));
+                    byte[] masked = range(msg, start, cursor);
+                    if (room.players[0] != null) {
+                        room.players[0].send(STOC_GAME_MSG, masked);
+                    }
+                    if (room.players[1] != null) {
+                        room.players[1].send(STOC_GAME_MSG, masked);
+                    }
+                    sendToObservers(masked);
                     break;
                 }
                 case EngineMessage.MSG_SWAP: {
@@ -519,13 +525,12 @@ final class DuelAnalyzer implements YGOProtocol {
                     boolean hide = EngineMessage.shouldHideFacedownCode(cp);
                     EngineMessage.stripRevealFlag(msg, body + 4);
                     cursor = body + 8;
-                    sendToPlayer(room.players[cc], range(msg, start, cursor));
+                    byte[] full = range(msg, start, cursor);
                     if (hide) {
                         writeInt32(msg, body, 0);
                     }
-                    byte[] opp = range(msg, start, cursor);
-                    sendToPlayer(room.players[1 - cc], opp);
-                    sendToObservers(opp);
+                    byte[] masked = range(msg, start, cursor);
+                    sendDualViewAndRecord(cc, full, masked);
                     break;
                 }
                 case EngineMessage.MSG_SPSUMMONED: {
@@ -632,7 +637,7 @@ final class DuelAnalyzer implements YGOProtocol {
                     cursor++;
                     int codeBase = cursor;
                     cursor += count * 4;
-                    sendToPlayer(room.players[player], range(msg, start, cursor));
+                    byte[] full = range(msg, start, cursor);
                     int p = codeBase;
                     for (int i = 0; i < count; i++) {
                         if ((msg[p + 3] & 0x80) == 0) {
@@ -641,8 +646,7 @@ final class DuelAnalyzer implements YGOProtocol {
                         p += 4;
                     }
                     byte[] masked = range(msg, start, cursor);
-                    sendToPlayer(room.players[1 - player], masked);
-                    sendToObservers(masked);
+                    sendDualViewAndRecord(player, full, masked);
                     break;
                 }
                 case EngineMessage.MSG_DAMAGE:
@@ -836,13 +840,12 @@ final class DuelAnalyzer implements YGOProtocol {
             }
             qpos += clen - 4;
         }
-        sendToPlayer(room.players[player], updateDataPayload(player, location, blocks, len));
+        byte[] full = updateDataPayload(player, location, blocks, len);
         for (int[] seg : hidden) {
             zeroRange(blocks, seg[0], seg[1] - 4);
         }
-        byte[] opp = updateDataPayload(player, location, blocks, len);
-        sendToPlayer(room.players[1 - player], opp);
-        sendToObservers(opp);
+        byte[] masked = updateDataPayload(player, location, blocks, len);
+        sendDualViewAndRecord(player, full, masked);
     }
 
     void refreshHand(int player) {
@@ -852,8 +855,7 @@ final class DuelAnalyzer implements YGOProtocol {
     void refreshHand(int player, int flag, int useCache) {
         byte[] blocks = OcgDuelEngine.queryFieldCard(pduel(), player, OcgDuelEngine.LOCATION_HAND, flag, useCache);
         int len = blocks.length;
-        sendToPlayer(room.players[player],
-                updateDataPayload(player, OcgDuelEngine.LOCATION_HAND, blocks, len));
+        byte[] full = updateDataPayload(player, OcgDuelEngine.LOCATION_HAND, blocks, len);
         int qpos = 0;
         int qlen = 0;
         while (qlen < len && qpos + 4 <= len) {
@@ -869,9 +871,8 @@ final class DuelAnalyzer implements YGOProtocol {
             }
             qpos += slen - 4;
         }
-        byte[] opp = updateDataPayload(player, OcgDuelEngine.LOCATION_HAND, blocks, len);
-        sendToPlayer(room.players[1 - player], opp);
-        sendToObservers(opp);
+        byte[] masked = updateDataPayload(player, OcgDuelEngine.LOCATION_HAND, blocks, len);
+        sendDualViewAndRecord(player, full, masked);
     }
 
     void refreshGrave(int player) {
@@ -910,7 +911,7 @@ final class DuelAnalyzer implements YGOProtocol {
             hide = EngineMessage.shouldHideFacedownCode(position);
             EngineMessage.stripRevealFlag(blocks, 12);
         }
-        sendToPlayer(room.players[player], updateCardPayload(player, location, sequence, blocks, len));
+        byte[] full = updateCardPayload(player, location, sequence, blocks, len);
         int sendLen = len;
         if (hide) {
             writeInt32(blocks, 0, 16);
@@ -918,19 +919,46 @@ final class DuelAnalyzer implements YGOProtocol {
             writeInt32(blocks, 8, 0); // 清零 code，保留 12..15 姿态
             sendLen = 16;
         }
-        byte[] opp = updateCardPayload(player, location, sequence, blocks, sendLen);
-        sendToPlayer(room.players[1 - player], opp);
-        sendToObservers(opp);
+        byte[] masked = updateCardPayload(player, location, sequence, blocks, sendLen);
+        sendDualViewAndRecord(player, full, masked);
     }
 
     // ==================================================================
     // 发送 / 字节工具
     // ==================================================================
 
+    /**
+     * 录制一帧权威（未遮蔽）引擎消息：联机录像保存双方完整卡码，使纯消息流回放
+     * 能正面显示对方手牌/暗盖/除外卡；仅由需要替代 players[0] 遮蔽视角的分支调用。
+     */
+    private void recordFrame(byte[] full) {
+        if (owner.replay != null) {
+            owner.replay.writeMessage(full, full.length);
+        }
+    }
+
+    /**
+     * 双视角发送并录制完整帧：owner 收 full、对手与观战收 masked；录像仅存 full 一条。
+     * 取代这些分支原先的 sendToPlayer(owner, full) + sendToPlayer(opp, masked) +
+     * sendToObservers(masked)，使录像不再泄漏 players[0] 遮蔽视图；实时发送语义与原逻辑一致。
+     */
+    private void sendDualViewAndRecord(int ownerPlayer, byte[] full, byte[] masked) {
+        recordFrame(full);
+        ServerConnection op = room.players[ownerPlayer];
+        ServerConnection opp = room.players[1 - ownerPlayer];
+        if (op != null) {
+            op.send(STOC_GAME_MSG, full);
+        }
+        if (opp != null) {
+            opp.send(STOC_GAME_MSG, masked);
+        }
+        sendToObservers(masked);
+    }
+
     private void sendToPlayer(ServerConnection dp, byte[] data) {
         if (dp != null) {
-            // 录像：录制主机（players[0]）视角的完整 STOC_GAME_MSG 字节流（含服务端合成的
-            // UPDATE_DATA/UPDATE_CARD 刷新消息），回放端可据此脱离 ocgcore/script 纯消息回放
+            // 录像：广播类与发给 players[0] 的提示/选择消息在此按主机视角录制（本就含完整
+            // 公开信息）；含隐藏卡码的遮蔽类分支不经此路径，改由 sendDualViewAndRecord 录全量帧
             if (dp == room.players[0] && owner.replay != null) {
                 owner.replay.writeMessage(data, data.length);
             }

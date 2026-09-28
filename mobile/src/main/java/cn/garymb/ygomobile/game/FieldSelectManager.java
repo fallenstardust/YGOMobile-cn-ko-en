@@ -210,19 +210,27 @@ class FieldSelectManager {
         }
     }
 
-    /** 回放态堆叠区查看：取该区首张已知卡作视角侧样本（controler/location 与 players[] 同索引），
-     *  交由列表弹窗展开全部卡片；整区无已知卡码时返回 false 回落原有点单卡逻辑 */
+    /** 回放态堆叠区查看：取该区首张已知卡（实况卡码或前卡码 chain_code）作视角侧样本
+     *  （controler/location 与 players[] 同索引），交由列表弹窗展开全部卡片；
+     *  卡组/额外整区无已知卡码时仍问录像头部权威卡码（ReplayPlayer.getReplayZoneCodes）：
+     *  头部有数据即弹窗展开全部，不再回落「无卡可看」（修复回填时序竞争导致的时灵时不灵） */
     private boolean showReplayPileView(GameField field, int player, int location) {
         List<GameField.ClientCard> list = field.players[player].getLocationList(location);
         if (list == null || list.isEmpty()) return false;
         GameField.ClientCard sample = null;
         for (GameField.ClientCard c : list) {
-            if (c != null && c.code > 0) {
+            if (c == null) continue;
+            if (sample == null) sample = c;
+            if (c.code > 0 || c.chain_code > 0) {
                 sample = c;
                 break;
             }
         }
         if (sample == null) return false;
+        if (sample.code <= 0 && sample.chain_code <= 0) {
+            List<Integer> auth = ctl.engine.getReplayZoneCodes(player, location);
+            if (auth == null || auth.isEmpty()) return false;
+        }
         ctl.showReplayPileView(sample);
         return true;
     }

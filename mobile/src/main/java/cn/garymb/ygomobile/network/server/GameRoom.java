@@ -588,6 +588,23 @@ public final class GameRoom implements YGOProtocol {
         for (ServerConnection o : observers) {
             o.send(STOC_CHAT, payload);
         }
+        // 录像：对局中把玩家/观战发言录为 0xF1 伪帧，使纯消息流回放血条下按时间线重现；
+        // 与引擎消息同处单线程房间执行器，追加顺序即时序。playerType 取 dp.type（与实时
+        // STOC_CHAT 首字节同值，回放分侧/命名一致）；文本取 UTF-16LE 并去除尾部 NUL 码元。
+        if (isDueling() && duel != null && duel.replay != null) {
+            int units = msg.length / 2;
+            while (units > 0 && ((msg[units * 2 - 2] & 0xFF) | ((msg[units * 2 - 1] & 0xFF) << 8)) == 0) {
+                units--;
+            }
+            String text = new String(msg, 0, units * 2, java.nio.charset.StandardCharsets.UTF_16LE);
+            duel.replay.writeChatFrame(dp.type, text);
+            // 录制验证落点：每条对局聊天录为 0xF1 伪帧均留痕，logcat 过滤 "GameRoom" 即可
+            // 确认聊天已落盘；回放开场信息另标注文件内聊天帧总条数（ReplayPlayer.buildReplayInfo）
+            Log.i(TAG, "replay chat frame recorded: type=" + dp.type + " len=" + text.length());
+        } else if (dp.type < 4) {
+            Log.d(TAG, "chat not recorded (dueling=" + isDueling()
+                    + " duel=" + (duel != null) + "): stage not in-duel");
+        }
     }
 
     // ==================================================================

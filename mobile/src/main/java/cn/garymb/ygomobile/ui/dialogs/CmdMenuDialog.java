@@ -417,11 +417,15 @@ public class CmdMenuDialog {
         return out;
     }
 
-    /** 查看列表：超量怪兽 → 其素材；堆叠区 → 该区全部卡片 */
+    /** 查看列表：超量怪兽 → 其素材；堆叠区 → 该区全部卡片。
+     *  回放态卡组/额外直接从录像头部（ReplayReader 解出的双方全部卡片 code）构造列表，
+     *  不依赖实况 ClientCard 是否已回填；墓地/除外等动态区实况卡码为 0（里侧移动）时用
+     *  前卡码 chain_code 兜底。实时决斗/观战不受影响（getReplayZoneCodes 非回放态返回 null）。 */
     private void showViewList(GameField.ClientCard card, GameEngine engine) {
         GameField field = engine.getField();
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
         String title;
+        final GameEngine eng = engine;
         final int obsCtrl = card.controler;
         final int obsLoc = card.location;
         final boolean obsIsXyz = (card.location == LOC_MZONE);
@@ -434,11 +438,22 @@ public class CmdMenuDialog {
             }
             title = sidePrefix(card.controler) + "超量素材";
         } else if (field != null) {
-            List<GameField.ClientCard> list = field.players[card.controler].getLocationList(card.location);
-            if (list != null) {
-                for (GameField.ClientCard c : list) {
-                    if (c == null) continue;
-                    items.add(new CardDisplayDialog.CardItem(c.code, card.controler, card.location, c.sequence, 0));
+            List<Integer> auth = eng.getReplayZoneCodes(obsCtrl, obsLoc);
+            if (auth != null && !auth.isEmpty()) {
+                for (int i = 0; i < auth.size(); i++) {
+                    Integer code = auth.get(i);
+                    items.add(new CardDisplayDialog.CardItem(code == null ? 0 : code,
+                            obsCtrl, obsLoc, i, 0));
+                }
+            } else {
+                List<GameField.ClientCard> list = field.players[card.controler].getLocationList(card.location);
+                if (list != null) {
+                    for (GameField.ClientCard c : list) {
+                        if (c == null) continue;
+                        // 回放态里侧移动实况卡码可为 0：用前卡码 chain_code 兜底；实况不兜底保持原行为
+                        int code = c.code != 0 ? c.code : (eng.replayMode ? c.chain_code : 0);
+                        items.add(new CardDisplayDialog.CardItem(code, card.controler, card.location, c.sequence, 0));
+                    }
                 }
             }
             title = sidePrefix(card.controler) + pileName(card.location);
@@ -460,11 +475,21 @@ public class CmdMenuDialog {
                         }
                     }
                 } else {
+                    List<Integer> auth = eng.getReplayZoneCodes(obsCtrl, obsLoc);
+                    if (auth != null && !auth.isEmpty()) {
+                        for (int i = 0; i < auth.size(); i++) {
+                            Integer code = auth.get(i);
+                            fresh.add(new CardDisplayDialog.CardItem(code == null ? 0 : code,
+                                    obsCtrl, obsLoc, i, 0));
+                        }
+                        return fresh;
+                    }
                     List<GameField.ClientCard> list = liveField.players[obsCtrl & 1].getLocationList(obsLoc);
                     if (list != null) {
                         for (GameField.ClientCard c : list) {
                             if (c == null) continue;
-                            fresh.add(new CardDisplayDialog.CardItem(c.code, obsCtrl, obsLoc, c.sequence, 0));
+                            int code = c.code != 0 ? c.code : (eng.replayMode ? c.chain_code : 0);
+                            fresh.add(new CardDisplayDialog.CardItem(code, obsCtrl, obsLoc, c.sequence, 0));
                         }
                     }
                 }

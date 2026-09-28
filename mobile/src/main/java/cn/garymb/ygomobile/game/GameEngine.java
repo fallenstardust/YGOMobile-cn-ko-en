@@ -943,6 +943,18 @@ public class GameEngine {
     }
 
     /**
+     * 回放态专用：从录像文件头部（{@link ReplayReader} 解出的 .yrp 保存的双方全部卡片 code，
+     * 已按本机卡表归一）直取卡组(0x01)/额外卡组(0x40)卡码列表，供堆叠区查看弹窗不经实况
+     * ClientCard 回填展开全部卡面（修复回填时序/索引脆弱导致的里侧卡时隐时现）。
+     * viewPlayer 为本地视角容器索引（0=我方/1=对方）；非回放模式、非卡组/额外区域或
+     * 头部无数据时返回 null，调用方回落到实况区域列表，实时决斗/观战行为不变。
+     */
+    public List<Integer> getReplayZoneCodes(int viewPlayer, int location) {
+        if (!replayMode || replayPlayer == null) return null;
+        return replayPlayer.getReplayZoneCodes(viewPlayer, location);
+    }
+
+    /**
      * 观战「切换视角」请求（对齐 event_handler.cpp BUTTON_REPLAY_SWAP 观战分支 →
      * DuelClient::SwapField 仅置 is_swapping，实际交换延迟到消息消费点）：
      * 实况对局且非回放才有效；置位后投递一次排空，闸门持有期内则在动画结束后执行
