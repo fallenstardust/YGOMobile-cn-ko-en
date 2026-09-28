@@ -3,12 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 主内容区：左侧卡片详情 + 右侧（玩家信息 + 决斗场） -->
+    <!-- 主内容区：左侧卡片详情 + 右侧（玩家信息 + 决斗场）。
+         默认 GONE：与竖屏变体一致，仅决斗/录像/卡组编辑场景由代码点亮，
+         其他场景 setContentView 重建后不得默认显示决斗场 UI -->
     <LinearLayout
         android:id="@+id/layout_game_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="gone">
 
         <!-- 左侧卡片详情面板（常驻显示） -->
         <include

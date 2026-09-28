@@ -445,6 +445,9 @@ public class CardSelectDialog {
         applyCardImageSize(dialogWidth);
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        // 宽度按 layout_game_right 区域实时解算且据此烘焙每张卡图，通用重排无法同步子视图尺寸：
+        // 注册自定义旋转重排，切换方向时重解区域宽、重烘焙卡图、重设弹窗宽并重新居中
+        draggableHelper.registerOrientationRelayout(popupWindow, this::applyOrientationRelayout);
 
         // 直接以内容根构建，包装层由 findTipOverlay 向上解析
         tipHelper = new CardStatusTipHelper(context, root);
@@ -521,6 +524,41 @@ public class CardSelectDialog {
 
     private int dp2px(float dp) {
         return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    /**
+     * 屏幕旋转后重排本弹窗：宽度是 <code>layout_game_right</code> 区域宽度的函数，每张卡图
+     * 尺寸又据此宽度烘焙，故须重新解算区域宽、重烘焙卡图、按当前屏宽限宽弹窗，最后在区域
+     * 布局完成后重新居中；通用重排仅改弹窗宽不动卡图会致横竖屏切换后卡片被裁剪或显示过小。
+     */
+    private void applyOrientationRelayout() {
+        if (popupWindow == null) return;
+        final View content = popupWindow.getContentView();
+        if (!(content instanceof ViewGroup) || ((ViewGroup) content).getChildCount() == 0) return;
+        final View inner = ((ViewGroup) content).getChildAt(0);
+        final android.app.Activity act = context instanceof android.app.Activity
+                ? (android.app.Activity) context : null;
+        final View region = act != null ? act.findViewById(R.id.layout_game_right) : null;
+        Runnable apply = () -> {
+            int width = resolveDialogWidth();
+            applyCardImageSize(width);
+            ViewGroup.LayoutParams raw = inner.getLayoutParams();
+            if (raw instanceof android.widget.FrameLayout.LayoutParams) {
+                android.widget.FrameLayout.LayoutParams flp =
+                        (android.widget.FrameLayout.LayoutParams) raw;
+                int[] fitted = DraggablePopupHelper.fitSizeToScreen(context, width,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                flp.width = fitted[0];
+                inner.setLayoutParams(flp);
+            }
+            inner.requestLayout();
+            if (region != null) {
+                DraggablePopupHelper.centerPopupInRegion(popupWindow, region);
+            }
+        };
+        // 旋转后区域宽高尚未更新，post 一帧让新视图树完成 measure/layout 再按实际区域宽重解
+        if (region != null) region.post(apply);
+        else inner.post(apply);
     }
 
     /**

@@ -7,12 +7,15 @@
 
     <!-- 主内容区（竖屏垂直三层）：顶部面板（卡片详情+时点/录像/卡组按钮行）占屏高 1/3，
          layout_game_right 占满剩余 2/3；卡组编辑器与决斗场同位互斥（gone 时不占位，
-         顶部面板 GONE 时 layout_game_right / 编辑器升为整屏） -->
+         顶部面板 GONE 时 layout_game_right / 编辑器升为整屏）。
+         默认 GONE（用户规格）：仅决斗/录像/卡组编辑场景由代码点亮，主菜单/大厅聊天/
+         登录等待等其他场景旋转重建后不得显示卡详与决斗场区 -->
     <LinearLayout
         android:id="@+id/layout_game_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <!-- 顶部面板（1/3）：carddetailpanel 名称在上 + 三组互斥横向按钮行，
              显隐与决斗/卡组编辑器生命周期同步（YGOProActivity.setGameTopPanelVisible） -->

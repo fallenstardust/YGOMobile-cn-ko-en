@@ -147,8 +147,9 @@ final class FieldHudRenderer {
     /**
      * 场上卡片数值文字（正交 HUD 通道，关深度测试，与 drawFieldNumbers 同一套投影）：
      * - 表侧怪兽：文字锚定恒取攻击表示（竖置）卡片矩形四角，不随守备表示 90° 旋转移动——
-     *   我方攻/守值在卡底边中点、等级在左上角；对方等级在卡身左下角（屏幕右上，180° 倒置），
-     *   攻/守值在卡顶边中点；守备表示仅改变攻/守串的粗体强调位（连接怪兽 defString 已为 "-"）。
+     *   我方攻/守值在卡底边中点、等级在卡左上角；对方等级在卡格子左下角
+     *   （屏幕左下，与我方左上角镜像对应，用户规格），攻/守值在卡顶边中点；
+     *   守备表示仅改变攻/守串的粗体强调位（连接怪兽 defString 已为 "-"）。
      * - 灵摆刻度：文字贴卡片矩形「屏幕外侧顶角顶点」——屏幕左侧卡左上角(左对齐)、
      *   屏幕右侧卡右上角(右对齐)；rule>=4 用 seq0/seq4，rule<4 用 seq6/seq7（MR3 刻度已烘焙
      *   进卡图纹理，此处仅补文字定位分支）。
@@ -221,8 +222,9 @@ final class FieldHudRenderer {
         drawScreenText(edgeX, edgeY, parts, colors, boldFlags, hpx);
 
         // 等级(L*/调律黄/阶级玫红)锚定攻击表示卡片矩形的角顶点（不随守备旋转移动）：
-        // 我方=左上角 farL 左对齐向右延伸；对方卡旋转 180° 倒置，其卡身左下角=屏幕右上角
-        // farR（文字中心即顶点，居中对齐），攻守表示均固定于此。
+        // 我方=屏幕左上角 farL 左对齐向右延伸；对方=屏幕左下角 nearL 左对齐，
+        // 与我方左上角镜像对应（用户规格，不再按对方卡 180° 倒置取屏幕右上角），
+        // 攻守表示均固定于此。
         if (c.lvString != null && !c.lvString.isEmpty()) {
             float[] corner;
             int align;
@@ -230,8 +232,8 @@ final class FieldHudRenderer {
                 corner = farL;
                 align = ALIGN_LEFT;
             } else {
-                corner = farR;
-                align = ALIGN_CENTER;
+                corner = nearL;
+                align = ALIGN_LEFT;
             }
             int lvColor = (c.type & TYPE_XYZ) != 0 ? 0xFFFF80FF
                     : (c.type & TYPE_TUNER) != 0 ? 0xFFFFFF00 : 0xFFFFFFFF;

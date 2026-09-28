@@ -74,7 +74,7 @@ public class DraggablePopupHelper {
     }
 
     public void setupDraggablePopup(PopupWindow popupWindow, View contentView,
-                                     int contentW, int contentH) {
+                                     int designW, int designH) {
         if (!ENABLE_DRAG) return;
 
         ViewGroup originalParent = (ViewGroup) contentView.getParent();
@@ -87,12 +87,16 @@ public class DraggablePopupHelper {
 
         DragFrameLayout wrapper = new DragFrameLayout(
                 contentView.getContext(), prefs, dialogId);
-        // 包装层铺满窗口，内容区之外的触摸需转发给下层弹窗或 Activity 窗口，
+        // 包装层铺满窗口，内部对话框以 Gravity.CENTER 居中，内容区之外的触摸需转发给下层弹窗或 Activity 窗口，
         // 否则弹窗显示期间决斗场、双方手卡公开面板等下层 UI 无法响应点击
         wrapper.setHostPopup(popupWindow);
         wrapper.setPassThroughTarget(resolveActivityDecorView(contentView.getContext()));
+        // 记录设计尺寸：屏幕旋转后按新屏宽重新解算弹窗宽度（见 relayoutActivePopupsForOrientation），
+        // 故此处入参语义为“设计（未限宽）尺寸”，由本方法统一按当前屏宽解算实际显示尺寸
+        wrapper.setDesignSize(designW, designH);
 
-        FrameLayout.LayoutParams centerLp = new FrameLayout.LayoutParams(contentW, contentH);
+        int[] fitted = fitSizeToScreen(contentView.getContext(), designW, designH);
+        FrameLayout.LayoutParams centerLp = new FrameLayout.LayoutParams(fitted[0], fitted[1]);
         centerLp.gravity = Gravity.CENTER;
         contentView.setLayoutParams(centerLp);
         wrapper.addView(contentView);
@@ -108,6 +112,19 @@ public class DraggablePopupHelper {
             popupWindow.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
             popupWindow.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
         }
+    }
+
+    /**
+     * 为经 {@link #setupDraggablePopup} 包装的弹窗注册自定义旋转重排逻辑：默认重排只按设计
+     * 尺寸重解弹窗显示宽度，而选卡/卡片确认类弹窗宽度由 <code>layout_game_right</code> 区域
+     * 实时解算并据此烘焙每张卡图尺寸，默认重排无法同步子视图尺寸，会导致横竖屏切换后卡片被裁剪。
+     * 注册后旋转重排改由传入的 runnable 全权负责（重解宽度、重烘焙子视图、重新限宽与居中）。
+     */
+    public void registerOrientationRelayout(PopupWindow popupWindow, Runnable handler) {
+        if (popupWindow == null || !(popupWindow.getContentView() instanceof DragFrameLayout)) {
+            return;
+        }
+        ((DragFrameLayout) popupWindow.getContentView()).setCustomRelayout(handler);
     }
 
     public void setupDraggablePopup(PopupWindow popupWindow, View contentView, View handle) {
@@ -178,6 +195,46 @@ public class DraggablePopupHelper {
         return null;
     }
 
+    /** 从 Context 链解析 Activity（供旋转重排按 id 重新查找重建后的居中区域） */
+    private static Activity resolveActivity(Context context) {
+        while (context instanceof ContextWrapper) {
+            if (context instanceof Activity) return (Activity) context;
+            context = ((ContextWrapper) context).getBaseContext();
+        }
+        return null;
+    }
+
+    /**
+     * 按当前屏幕宽度解算弹窗实际显示尺寸：设计宽度超出屏宽时限为屏宽，
+     * 具体高度（designH&gt;0）按原宽高比等比缩小；高度为 WRAP_CONTENT/MATCH_PARENT
+     * （&lt;=0）时仅限宽不改高度；设计宽度 &lt;=0（如 MATCH_PARENT）原样返回。
+     * 弹窗创建与屏幕旋转重排共用同一解算，保证两个方向下宽度均正确。
+     */
+    public static int[] fitSizeToScreen(Context context, int designW, int designH) {
+        if (designW <= 0) return new int[]{designW, designH};
+        int maxWidth = context.getResources().getDisplayMetrics().widthPixels;
+        int w = designW;
+        int h = designH;
+        if (w > maxWidth) {
+            if (h > 0) h = (int) ((long) h * maxWidth / w);
+            w = maxWidth;
+        }
+        return new int[]{w, h};
+    }
+
+    /**
+     * 屏幕旋转后重解所有活动拖拽弹窗的显示宽度（供 YGOProActivity.onConfigurationChanged
+     * 重建视图树后调用）：横屏转竖屏限宽不超屏避免文字截断，竖屏转横屏按设计宽度回弹
+     * 避免显示过小；对声明了居中区域的弹窗同步按新视图树中的同 id 区域重新居中。
+     */
+    public static void relayoutActivePopupsForOrientation(Context context) {
+        if (ACTIVE_LAYERS.isEmpty()) return;
+        // 遍历副本：重排可能触发 requestLayout/重新居中，避免边遍历边改集合
+        for (DragFrameLayout layer : new ArrayList<>(ACTIVE_LAYERS)) {
+            if (layer != null) layer.relayoutForOrientation();
+        }
+    }
+
     private static class DragFrameLayout extends FrameLayout {
         private static final String PREF_X = "_x";
         private static final String PREF_Y = "_y";
@@ -198,6 +255,14 @@ public class DraggablePopupHelper {
         private float forwardedX, forwardedY;
         /** 正在处理由其他弹窗层转发进来的事件：跳过归属判定，避免二次转发 */
         private boolean receivingForwarded;
+        /** 弹窗设计（未限宽）尺寸，旋转后据此按新屏宽重新解算显示宽度 */
+        private int designW = 0;
+        private int designH = 0;
+        /** 居中区域（如 layout_game_right）的视图 id 与弱引用，旋转重建后按 id 重新解析新实例 */
+        private int centerRegionId = View.NO_ID;
+        private java.lang.ref.WeakReference<View> centerRegionRef;
+        /** 自定义旋转重排逻辑；非空时 {@link #relayoutForOrientation} 完全交由其处理，跳过默认限宽 */
+        private Runnable customRelayout;
 
         DragFrameLayout(Context context, SharedPreferences prefs, String dialogId) {
             super(context);
@@ -212,6 +277,57 @@ public class DraggablePopupHelper {
 
         void setPassThroughTarget(View target) {
             this.passThroughTarget = target;
+        }
+
+        void setDesignSize(int w, int h) {
+            this.designW = w;
+            this.designH = h;
+        }
+
+        void setCustomRelayout(Runnable handler) {
+            this.customRelayout = handler;
+        }
+
+        /** 记录居中区域（供旋转后按新视图树同 id 区域重新居中） */
+        void setCenterRegion(View region) {
+            if (region != null) {
+                this.centerRegionId = region.getId();
+                this.centerRegionRef = new java.lang.ref.WeakReference<>(region);
+            }
+        }
+
+        /**
+         * 屏幕旋转后按新屏宽重新解算并应用弹窗显示宽度；若记录了居中区域，旋转重建后
+         * 旧区域实例已脱离视图树，按 id 从当前 Activity 视图树重新解析同 id 新实例并重算居中偏移。
+         */
+        void relayoutForOrientation() {
+            // 子视图尺寸依赖外部解算的弹窗（如选卡/卡片确认按区域宽烘焙卡图）→ 交由自定义重排全权处理
+            if (customRelayout != null) {
+                customRelayout.run();
+                return;
+            }
+            if (getChildCount() == 0) return;
+            View content = getChildAt(0);
+            int[] fitted = fitSizeToScreen(getContext(), designW, designH);
+            ViewGroup.LayoutParams raw = content.getLayoutParams();
+            if (raw instanceof FrameLayout.LayoutParams) {
+                FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) raw;
+                flp.width = fitted[0];
+                // 具体高度才按比例重解；WRAP_CONTENT/MATCH_PARENT 保持不变交由内容自适应
+                if (designH > 0) flp.height = fitted[1];
+                content.setLayoutParams(flp);
+            }
+            content.requestLayout();
+            if (centerRegionId != View.NO_ID && hostPopup != null) {
+                View region = centerRegionRef != null ? centerRegionRef.get() : null;
+                if (region == null || !region.isAttachedToWindow()) {
+                    Activity act = resolveActivity(getContext());
+                    region = act != null ? act.findViewById(centerRegionId) : null;
+                }
+                if (region != null) {
+                    centerPopupInRegion(hostPopup, region);
+                }
+            }
         }
 
         @Override
@@ -670,6 +786,10 @@ public class DraggablePopupHelper {
      */
     public static void centerPopupInRegion(PopupWindow popupWindow, View region) {
         if (popupWindow == null || region == null) return;
+        // 记录居中区域到底层包装层，供屏幕旋转重建视图树后按同 id 重新解析并再次居中
+        if (popupWindow.getContentView() instanceof DragFrameLayout) {
+            ((DragFrameLayout) popupWindow.getContentView()).setCenterRegion(region);
+        }
         if (region.getWidth() <= 0 || region.getHeight() <= 0) {
             region.getViewTreeObserver().addOnGlobalLayoutListener(
                     new ViewTreeObserver.OnGlobalLayoutListener() {

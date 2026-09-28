@@ -135,9 +135,10 @@ public class YGOProActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 竖屏/横屏随系统自动旋转切换（manifest 同步改为 user）：configChanges 已声明
-        // orientation|screenSize，旋转不重建 Activity，由 onConfigurationChanged 运行时重载布局变体
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+        // 启动方向按“游戏横屏锁定”设置决定（见 applyOrientationLock）：
+        // 锁定启用→始终横屏（SENSOR_LANDSCAPE 仍可左右横屏对调旋转，不自动转竖屏）；
+        // 未启用→SCREEN_ORIENTATION_USER 跟随系统当前屏幕方向直接以对应方向启动
+        applyOrientationLock();
         // 崩溃诊断场景锚点：未捕获异常经全局 CrashHandler 落盘到 ygocore/log
         CrashHandler.getInstance().setScene("游戏-启动初始化");
         setupFullScreen();
@@ -155,6 +156,20 @@ public class YGOProActivity extends AppCompatActivity {
         }
         // 启动主菜单：布局就绪后触发 MENU 场景 BGM（否则启动后无声，直到下一次显式 updateBGM）
         mainHandler.post(this::updateBGM);
+    }
+
+    /**
+     * 按“游戏横屏锁定”设置应用启动显示方向：
+     * 启用时锁定为横屏但保留左右横屏 180° 对调旋转（SENSOR_LANDSCAPE，不会自动转竖屏）；
+     * 未启用时取 SCREEN_ORIENTATION_USER，按系统当前屏幕方向（竖/横）直接以对应方向显示，
+     * 并随系统自动旋转切换。configChanges 已声明 orientation|screenSize，旋转不重建 Activity。
+     */
+    private void applyOrientationLock() {
+        if (AppsSettings.get().isLockSreenOrientation()) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+        }
     }
 
     @Override
@@ -240,9 +255,18 @@ public class YGOProActivity extends AppCompatActivity {
         // 1) 重建前阶段快照（setContentView 后据此回显）
         boolean deckEditorVisible = layoutDeckEditor != null
                 && layoutDeckEditor.getVisibility() == View.VISIBLE;
-        boolean duelUiVisible = !deckEditorVisible && layoutGameRight != null
-                && layoutGameRight.getVisibility() == View.VISIBLE;
-        boolean lobbyChat = duelUiVisible && playerWaitingDialog != null && playerWaitingDialog.isShowing();
+        // 决斗语境（决斗进行中/副卡组替换/残局/观战/录像回放）：用户规格，竖屏的卡片详情
+        // 布局与 layout_game_right 只在录像、决斗、卡组编辑场景回显；大厅聊天（玩家等待）
+        // 虽借 layout_game_right 承载聊天区但不属决斗，不得回显卡详面板与决斗场
+        GameEngine eng = engine;
+        boolean replaySessionActive = eng != null && eng.replayMode
+                && eng.replayPlayer != null && eng.replayPlayer.hasActiveSession();
+        boolean duelContext = eng != null && (eng.isStarted() || eng.isSiding()
+                || eng.isSingleMode || eng.isSpectator() || replaySessionActive);
+        boolean lobbyChat = !deckEditorVisible && !duelContext
+                && playerWaitingDialog != null && playerWaitingDialog.isShowing();
+        boolean duelUiVisible = !deckEditorVisible && duelContext && !lobbyChat
+                && layoutGameRight != null && layoutGameRight.getVisibility() == View.VISIBLE;
         // 卡片详情回显快照（旧视图树）：旋转前正在显示某张卡详情则重建后继续显示同一张（用户规格）
         boolean detailShowing = cardDetailPanel != null && cardDetailPanel.isShowing();
 
@@ -326,9 +350,20 @@ public class YGOProActivity extends AppCompatActivity {
                 }
                 cardDetailPanel.restoreAfterRebind(detailShowing);
             }
+        } else {
+            // 其他场景（主菜单/局域网与建主等待弹窗/设置等，用户规格）：竖屏布局变体的
+            // layout_game_right 默认 VISIBLE（XML visibility=gone 双重保险），非决斗分支
+            // 不得回显卡片详情布局与决斗场区：整棵内容树隐藏；严禁触达 fieldCtl.hide()
+            //（旋转仅是视图重建，场面数据必须保留）
+            if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
+            if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
+            setGameTopPanelVisible(false);
         }
         // 旋转后新视图树的 layout_game_right 背景随旧树销毁，按最近背景图重贴区域平铺背景
         updateFieldRegionBackground();
+        // gameEngine 相关对话框（PopupWindow 独立窗口，不随 setContentView 重建）按新屏宽
+        // 重新解算显示宽度并重新居中，避免横转竖宽度超屏文字截断、竖转横显示过小（用户规格）
+        DraggablePopupHelper.relayoutActivePopupsForOrientation(this);
         // 主菜单阶段：MainMenuDialog 是独立窗口不受 setContentView 影响，无需回显
     }
 

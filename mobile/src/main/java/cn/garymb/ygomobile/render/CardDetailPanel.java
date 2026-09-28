@@ -599,7 +599,9 @@ public class CardDetailPanel {
         hideChainButtons();
         hideCancelOrFinishButton();
         updateShuffleButton(false);
-        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+        // 决斗结束隐藏按钮行用 INVISIBLE 而非 GONE（用户规格）：竖屏顶部按钮行为 weight 布局，
+        // GONE 会整行塌陷/其他控件跳位，INVISIBLE 保持占位稳定
+        if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.INVISIBLE);
     }
 
     // === 时点按钮 (对应 C++ btnChainIgnore / btnChainAlways / btnChainWhenAvail) ===

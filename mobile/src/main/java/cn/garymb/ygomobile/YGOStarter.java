@@ -91,7 +91,12 @@ public class YGOStarter {
         } else {
             GlideCompat.with(activity.getApplicationContext()).load(R.drawable.bg).into(activityShowInfo.mViewTarget);
         }
-        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
+        // 仅当“游戏横屏锁定”启用时强制横屏（与 YGOProActivity 启动方向逻辑一致，
+        // SENSOR_LANDSCAPE 保留左右横屏对调旋转）；未启用则不强制，保持当前启动页方向，
+        // 使游戏按系统当前竖/横屏方向直接启动
+        if (AppsSettings.get().isLockSreenOrientation()) {
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
         setFullScreen(activity, activityShowInfo);
     }
 

@@ -124,10 +124,7 @@ public class CreateHostDialog {
         float density = context.getResources().getDisplayMetrics().density;
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
-        // 竖屏：限宽不超屏幕宽，高度按原宽高比等比缩小
-        int[] fittedSize = Constants.fitPopupSizeToScreen(context, popupWidth, popupHeight);
-        popupWidth = fittedSize[0];
-        popupHeight = fittedSize[1];
+        // 传设计尺寸给 setupDraggablePopup：由其按当前屏宽统一限宽，并在屏幕旋转后按新屏宽重新解算
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
