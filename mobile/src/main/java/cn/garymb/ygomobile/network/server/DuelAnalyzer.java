@@ -39,10 +39,12 @@ final class DuelAnalyzer implements YGOProtocol {
 
     private final ServerDuel owner;
     private final GameRoom room;
+    private final boolean soloMode;
 
     DuelAnalyzer(ServerDuel owner) {
         this.owner = owner;
         this.room = owner.room;
+        this.soloMode = room.soloMode;
     }
 
     private long pduel() {
@@ -323,7 +325,10 @@ final class DuelAnalyzer implements YGOProtocol {
                     byte[] slice = range(msg, start, cursor);
                     if (locByte != OcgDuelEngine.LOCATION_DECK) {
                         sendToPlayer(room.players[player], slice);
-                        sendToPlayer(room.players[1 - player], slice);
+                        // Solo dedupe: the two slots share one connection.
+                        if (room.players[1 - player] != room.players[player]) {
+                            sendToPlayer(room.players[1 - player], slice);
+                        }
                         sendToObservers(slice);
                     } else {
                         sendToPlayer(room.players[player], slice);
@@ -480,7 +485,8 @@ final class DuelAnalyzer implements YGOProtocol {
                     if (room.players[0] != null) {
                         room.players[0].send(STOC_GAME_MSG, masked);
                     }
-                    if (room.players[1] != null) {
+                    // Solo dedupe: players[1] may be the same connection as players[0].
+                    if (room.players[1] != null && room.players[1] != room.players[0]) {
                         room.players[1].send(STOC_GAME_MSG, masked);
                     }
                     sendToObservers(masked);
@@ -618,8 +624,13 @@ final class DuelAnalyzer implements YGOProtocol {
                     cursor++;
                     cursor += count * 4;
                     byte[] slice = range(msg, start, cursor);
-                    sendToPlayer(room.players[player], slice);
-                    sendToPlayer(room.players[1], slice);
+                    if (soloMode) {
+                        // Single connection: send once
+                        sendToPlayer(room.players[player], slice);
+                    } else {
+                        sendToPlayer(room.players[player], slice);
+                        sendToPlayer(room.players[1], slice);
+                    }
                     sendToObservers(slice);
                     break;
                 }
@@ -772,6 +783,11 @@ final class DuelAnalyzer implements YGOProtocol {
 
     private void waitforResponse(int playerid) {
         room.lastResponse = playerid;
+        if (soloMode && room.players[0] == room.players[1]) {
+            // Solo mode: same connection; no MSG_WAITING needed, just set state
+            room.players[playerid].state = CTOS_RESPONSE;
+            return;
+        }
         byte[] waiting = new byte[]{(byte) EngineMessage.MSG_WAITING};
         if (room.players[1 - playerid] != null) {
             room.players[1 - playerid].send(STOC_GAME_MSG, waiting);
@@ -946,6 +962,14 @@ final class DuelAnalyzer implements YGOProtocol {
         recordFrame(full);
         ServerConnection op = room.players[ownerPlayer];
         ServerConnection opp = room.players[1 - ownerPlayer];
+        if (soloMode && op == opp) {
+            // Solo mode: same connection is both players; send full only (masked would overwrite)
+            if (op != null) {
+                op.send(STOC_GAME_MSG, full);
+            }
+            sendToObservers(masked);
+            return;
+        }
         if (op != null) {
             op.send(STOC_GAME_MSG, full);
         }
@@ -974,7 +998,13 @@ final class DuelAnalyzer implements YGOProtocol {
 
     private void broadcastMsg(byte[] data) {
         sendToPlayer(room.players[0], data);
-        sendToPlayer(room.players[1], data);
+        // Solo mode: players[1] == players[0] is the same connection. Sending to both
+        // slots would deliver animation-bearing messages (new phase / summoning / turn)
+        // twice to the host, so SpecEffectOverlay queues and plays each effect twice.
+        // Dedupe by connection identity so a solo host receives exactly one copy.
+        if (room.players[1] != room.players[0]) {
+            sendToPlayer(room.players[1], data);
+        }
         sendToObservers(data);
     }
 

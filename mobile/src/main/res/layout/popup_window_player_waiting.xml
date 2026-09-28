@@ -253,6 +253,18 @@
                 android:text="@string/select_deck"
                 android:textColor="@color/white"
                 android:textSize="10sp" />
+
+            <Button
+                android:id="@+id/btn_deck_select_opponent"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:gravity="center"
+                android:text="选择对方卡组"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <LinearLayout

@@ -58,6 +58,7 @@ public class CreateHostDialog {
     private EditText etDrawCount;
     private CheckBox chkNoCheckDeck;
     private CheckBox chkNoShuffleDeck;
+    private CheckBox chkSoloMode;
     private EditText etHostName;
     private EditText etHostPassword;
 
@@ -69,6 +70,7 @@ public class CreateHostDialog {
         void onCreateHostConfirmed(int lflist, int cardAllowed, int modeIdx, int duelRule,
                                    int startLP, int startHand, int drawCount, int timeLimit,
                                    boolean noCheckDeck, boolean noShuffleDeck,
+                                   boolean soloMode,
                                    String hostName, String password, String nickname);
 
         /** 点击“取消”：交由外部返回局域网主界面 */
@@ -114,6 +116,7 @@ public class CreateHostDialog {
         etDrawCount = customView.findViewById(R.id.et_draw_count);
         chkNoCheckDeck = customView.findViewById(R.id.chk_no_check_deck);
         chkNoShuffleDeck = customView.findViewById(R.id.chk_no_shuffle_deck);
+        chkSoloMode = customView.findViewById(R.id.chk_solo_mode);
         etHostName = customView.findViewById(R.id.et_host_name);
         etHostPassword = customView.findViewById(R.id.et_host_password);
         Button btnConfirmCreate = customView.findViewById(R.id.btn_confirm_create);
@@ -153,6 +156,7 @@ public class CreateHostDialog {
             String drawCountStr = etDrawCount.getText().toString();
             boolean noCheckDeck = chkNoCheckDeck.isChecked();
             boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
+            boolean soloMode = chkSoloMode != null && chkSoloMode.isChecked();
             String hostName = etHostName.getText().toString();
             String password = etHostPassword.getText().toString();
             String nick = nickname != null ? nickname : "";
@@ -171,7 +175,7 @@ public class CreateHostDialog {
             if (listener != null) {
                 listener.onCreateHostConfirmed(lflist, cardAllowed, modeIdx, duelRule,
                         lp, hand, draw, time,
-                        noCheckDeck, noShuffleDeck, hostName, password, nick);
+                        noCheckDeck, noShuffleDeck, soloMode, hostName, password, nick);
             }
 
             String localIp = LanDiscoveryManager.getLocalIpAddress();
@@ -242,6 +246,8 @@ public class CreateHostDialog {
         setSysText(root, R.id.tv_draw_count_label, 1233, "每回合抽卡：");
         setSysText(root, R.id.chk_no_check_deck, 1229, "不检查卡组");
         setSysText(root, R.id.chk_no_shuffle_deck, 1230, "不洗切卡组");
+        // 纯单人模式：自定义编号 1710（无 gframe 对应系统串，中文直取默认）
+        setSysText(root, R.id.chk_solo_mode, 1710, "纯单人模式");
         setSysText(root, R.id.tv_room_name_label, 1234, "房间名称：");
         setSysText(root, R.id.tv_room_pwd_label, 1235, "房间密码：");
         setSysTextOn(btnConfirm, 1211, "确认");

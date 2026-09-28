@@ -948,12 +948,16 @@ public class DuelClient implements YGOProtocol {
         public void onJoinGame(int lflist, int rule, int mode, int duelRule,
                                int noCheckDeck, int noShuffleDeck,
                                int startLp, int startHand, int drawCount, int timeLimit) {
+            // Solo mode is encoded in mode bit 4 (0x10). Strip it before storing gameMode so
+            // existing comparisons (gameMode==2 for tag / ==MODE_MATCH etc.) keep working.
+            engine.soloMode = (mode & 0x10) != 0;
+            int duelModeOnly = mode & 0x0F;
             engine.playerInfos[0].startLp = startLp;
             engine.playerInfos[1].startLp = startLp;
             engine.playerInfos[0].lp = startLp;
             engine.playerInfos[1].lp = startLp;
-            engine.maxMatch = (mode == YGOProtocol.MODE_MATCH) ? 3 : 1;
-            engine.gameMode = mode;
+            engine.maxMatch = (duelModeOnly == YGOProtocol.MODE_MATCH) ? 3 : 1;
+            engine.gameMode = duelModeOnly;
             engine.gameRule = rule;
             engine.gameLflist = lflist;
             engine.gameStartLp = startLp;
@@ -968,8 +972,9 @@ public class DuelClient implements YGOProtocol {
             engine.field.dInfo.lp[1] = startLp;
             // 缓存完整房间信息（含 duelRule 已写入 dInfo），供 PlayerWaitingDialog 就绪后补发
             engine.hasJoinRoomInfoCache = true;
+            final int fwdMode = duelModeOnly;
             engine.mainHandler.post(() -> {
-                if (engine.listener != null) engine.listener.onJoinGame(lflist, rule, mode, duelRule,
+                if (engine.listener != null) engine.listener.onJoinGame(lflist, rule, fwdMode, duelRule,
                         noCheckDeck, noShuffleDeck,
                         startLp, startHand, drawCount, timeLimit);
             });

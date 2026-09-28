@@ -220,7 +220,16 @@
             android:id="@+id/chk_no_shuffle_deck"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:layout_marginEnd="20dp"
             android:text="不洗切卡组"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/chk_solo_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="纯单人模式"
             android:textColor="@color/white"
             android:textSize="10sp" />
     </LinearLayout>

@@ -934,6 +934,14 @@ public class GameEngine {
      * 故不置 replayMode；由 {@link GameActions#sendResponse} / {@code EngineCallbackDelegate} 按本标志分支。
      */
     public boolean isSingleMode = false;
+
+    /**
+     * 局域网纯单人模式（房主一人同时操控双方）：服务端 HostInfo.mode bit4=0x10 时，本连接收到
+     * 双方完整信息，select 消息均弹本方 UI，回合切换自动 performSpectatorSwap 翻转视角，
+     * 卡片可点击性 isSelfSide 恒为 true。由 {@code EngineCallbackDelegate.onJoinGame} 解析 STOC_JOIN_GAME
+     * 中的 mode 字段置位；不影响 replayMode/isSingleMode 的现有含义。
+     */
+    public boolean soloMode = false;
     /** 回放快进重排中（undo/restart/跳回合）：drawspec 覆盖层与长动画派发丢弃，配合
      *  GameField.instantPlace 即时落位与音效静默，令闸门不阻塞、队列单帧排空 */
     public boolean replaySkip = false;
@@ -1014,8 +1022,9 @@ public class GameEngine {
         }
     }
 
-    /** 给定协议侧玩家索引（0/1）是否代表我方（2=平局返回 false） */
+    /** 给定协议侧玩家索引（0/1）是否代表我方（2=平局返回 false）；单人模式下双方均为我方 */
     public boolean isSelfSide(int player) {
+        if (soloMode) return player != 2;
         return player != 2 && localPlayer(player & 1) == 0;
     }
 

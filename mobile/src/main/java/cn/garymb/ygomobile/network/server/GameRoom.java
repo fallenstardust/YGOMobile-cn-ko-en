@@ -73,6 +73,11 @@ public final class GameRoom implements YGOProtocol {
     int timeElapsed = 0;
     int lastResponse = 0;
 
+    /** Solo mode flag (decoded from hostInfo.mode & 0x10). */
+    boolean soloMode = false;
+    /** Track how many decks have been submitted in solo mode (expect 2). */
+    int soloDeckCount = 0;
+
     /** 进行中的决斗引擎，TPResult 时创建，EndDuel 后置空。 */
     ServerDuel duel;
 
@@ -205,10 +210,11 @@ public final class GameRoom implements YGOProtocol {
         if (hostInfo.rule > CURRENT_RULE) {
             hostInfo.rule = CURRENT_RULE;
         }
-        if (hostInfo.mode > MODE_TAG) {
-            hostInfo.mode = MODE_SINGLE;
+        if (hostInfo.duelMode() > MODE_TAG) {
+            hostInfo.mode = MODE_SINGLE | (hostInfo.mode & 0x10); // preserve solo bit
         }
-        matchMode = hostInfo.mode == MODE_MATCH;
+        soloMode = hostInfo.soloMode();
+        matchMode = hostInfo.duelMode() == MODE_MATCH;
         roomName = BufferIO.readUTF16(body, 20);
         roomPass = BufferIO.readUTF16(body, 20);
         conn.host = true;
@@ -409,6 +415,11 @@ public final class GameRoom implements YGOProtocol {
         if (dp.type > 1 || ready[dp.type] == isReady) {
             return;
         }
+        if (soloMode && isReady) {
+            // In solo mode, ready is managed by updateDeck (auto-set after 2 decks loaded);
+            // explicit CTOS_HS_READY is ignored to avoid premature ready before both decks
+            return;
+        }
         if (isReady) {
             int deckError2 = 0;
             if (hostInfo.noCheckDeck == 0) {
@@ -449,7 +460,7 @@ public final class GameRoom implements YGOProtocol {
     // ==================================================================
 
     void updateDeck(ServerConnection dp, ByteBuffer body) {
-        if (dp.type > 1 || ready[dp.type]) {
+        if (dp.type > 1 || (soloMode ? (soloDeckCount >= 2 && ready[0]) : ready[dp.type])) {
             return;
         }
         if (body.remaining() < 8) {
@@ -468,21 +479,47 @@ public final class GameRoom implements YGOProtocol {
         for (int i = 0; i < buf.length; i++) {
             buf[i] = body.getInt();
         }
+        // Solo mode: first deck goes to slot 0, second to slot 1
+        int targetSlot = soloMode ? soloDeckCount : dp.type;
         if (duelCount == 0) {
-            deckError[dp.type] = decks[dp.type].load(buf, mainc, sidec);
+            deckError[targetSlot] = decks[targetSlot].load(buf, mainc, sidec);
         } else {
             // match 换边（side）
             PlayerDeck nd = new PlayerDeck();
             int err = nd.load(buf, mainc, sidec);
-            if (err == 0 && nd.canSwapTo(decks[dp.type])) {
-                decks[dp.type] = nd;
-                ready[dp.type] = true;
+            if (err == 0 && nd.canSwapTo(decks[targetSlot])) {
+                decks[targetSlot] = nd;
+                ready[targetSlot] = true;
                 dp.send(STOC_DUEL_START, null);
                 if (ready[0] && ready[1] && duel != null) {
                     duel.startNextDuelFromSide();
                 }
             } else {
                 sendError(dp, ERRMSG_SIDEERROR, 0);
+            }
+            return;
+        }
+        if (soloMode) {
+            soloDeckCount++;
+            if (soloDeckCount >= 2 && deckError[0] == 0 && deckError[1] == 0) {
+                // Both decks valid: auto-ready
+                ready[0] = true;
+                byte[] pc = new byte[]{(byte) ((0 << 4) | PLAYERCHANGE_READY)};
+                dp.send(STOC_HS_PLAYER_CHANGE, pc);
+                for (ServerConnection o : observers) {
+                    o.send(STOC_HS_PLAYER_CHANGE, pc);
+                }
+            } else if (deckError[targetSlot] != 0) {
+                // Deck error on current slot: notify and reset counter
+                dp.send(STOC_HS_PLAYER_CHANGE, new byte[]{(byte) ((dp.type << 4) | PLAYERCHANGE_NOTREADY)});
+                sendError(dp, ERRMSG_DECKERROR, deckError[targetSlot]);
+                soloDeckCount = 0; // restart deck selection
+            }
+        } else {
+            // Notify self of deck state (original logic)
+            if (deckError[dp.type] != 0) {
+                dp.send(STOC_HS_PLAYER_CHANGE, new byte[]{(byte) ((dp.type << 4) | PLAYERCHANGE_NOTREADY)});
+                sendError(dp, ERRMSG_DECKERROR, deckError[dp.type]);
             }
         }
     }
@@ -492,25 +529,51 @@ public final class GameRoom implements YGOProtocol {
     // ==================================================================
 
     void startDuel(ServerConnection dp) {
-        if (dp != hostPlayer || !ready[0] || !ready[1]) {
+        if (dp != hostPlayer) {
             return;
+        }
+        if (soloMode) {
+            // Solo mode: only player 0 needs to be ready; assign same connection to both slots
+            if (!ready[0]) {
+                return;
+            }
+            if (players[1] == null) {
+                players[1] = players[0];
+            }
+            ready[1] = true;
+        } else {
+            if (!ready[0] || !ready[1]) {
+                return;
+            }
         }
         server.stopListen();
         players[0].send(STOC_DUEL_START, null);
-        players[1].send(STOC_DUEL_START, null);
+        if (!soloMode) {
+            players[1].send(STOC_DUEL_START, null);
+        }
         for (ServerConnection o : observers) {
             o.state = CTOS_LEAVE_GAME;
             o.send(STOC_DUEL_START, null);
         }
         players[0].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[1], 0));
-        players[1].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[1], 1));
-        players[0].send(STOC_SELECT_HAND, null);
-        players[1].send(STOC_SELECT_HAND, null);
-        handResult[0] = 0;
-        handResult[1] = 0;
-        players[0].state = CTOS_HAND_RESULT;
-        players[1].state = CTOS_HAND_RESULT;
-        duelStage = DUEL_STAGE_FINGER;
+        if (!soloMode) {
+            players[1].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[1], 1));
+        }
+        if (soloMode) {
+            // Skip rock-paper-scissors: directly ask host to choose first/second
+            players[0].send(STOC_SELECT_TP, null);
+            tpPlayer = 0;
+            players[0].state = CTOS_TP_RESULT;
+            duelStage = DUEL_STAGE_FIRSTGO;
+        } else {
+            players[0].send(STOC_SELECT_HAND, null);
+            players[1].send(STOC_SELECT_HAND, null);
+            handResult[0] = 0;
+            handResult[1] = 0;
+            players[0].state = CTOS_HAND_RESULT;
+            players[1].state = CTOS_HAND_RESULT;
+            duelStage = DUEL_STAGE_FINGER;
+        }
     }
 
     void handResult(ServerConnection dp, int res) {
@@ -631,11 +694,15 @@ public final class GameRoom implements YGOProtocol {
 
     /** 向双方玩家与观战广播同一条 GAME_MSG（对齐 SendBufferToPlayer + ReSendToPlayer）。 */
     void broadcastGameMsg(byte[] data) {
-        if (players[0] != null) {
-            players[0].send(STOC_GAME_MSG, data);
+        ServerConnection p0 = players[0];
+        ServerConnection p1 = players[1];
+        if (p0 != null) {
+            p0.send(STOC_GAME_MSG, data);
         }
-        if (players[1] != null) {
-            players[1].send(STOC_GAME_MSG, data);
+        // Solo mode: p1 == p0 is the same connection; sending to both would deliver the
+        // message (e.g. MSG_WIN overlay) twice, so dedupe by connection identity.
+        if (p1 != null && p1 != p0) {
+            p1.send(STOC_GAME_MSG, data);
         }
         for (ServerConnection o : observers) {
             o.send(STOC_GAME_MSG, data);
@@ -655,11 +722,14 @@ public final class GameRoom implements YGOProtocol {
     }
 
     private void sendToAllPresent(int proto, byte[] payload) {
-        if (players[0] != null) {
-            players[0].send(proto, payload);
+        ServerConnection p0 = players[0];
+        ServerConnection p1 = players[1];
+        if (p0 != null) {
+            p0.send(proto, payload);
         }
-        if (players[1] != null) {
-            players[1].send(proto, payload);
+        // Solo mode: p1 == p0 is the same connection; dedupe by identity.
+        if (p1 != null && p1 != p0) {
+            p1.send(proto, payload);
         }
         for (ServerConnection o : observers) {
             o.send(proto, payload);
@@ -709,6 +779,11 @@ public final class GameRoom implements YGOProtocol {
         int startHand;
         int drawCount;
         int timeLimit;
+
+        /** Solo mode is encoded in mode bit 4 (0x10); original mode values 0/1/2 use lower bits only. */
+        boolean soloMode() { return (mode & 0x10) != 0; }
+        /** Duel mode without the solo bit (0=Single, 1=Match, 2=Tag). */
+        int duelMode() { return mode & 0x0F; }
 
         void read(ByteBuffer b) {
             lflist = b.getInt();

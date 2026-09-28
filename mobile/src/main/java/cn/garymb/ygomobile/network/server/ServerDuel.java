@@ -115,10 +115,18 @@ final class ServerDuel implements YGOProtocol {
         sb.putShort((short) OcgDuelEngine.queryFieldCount(pduel, 1, OcgDuelEngine.LOCATION_EXTRA));
         // 录像：手工 MSG_START 不经 DuelAnalyzer.sendToPlayer，主机视角变体单独入消息流
         replay.writeMessage(startBuf, 19);
-        room.sendGameMsg(room.players[0], Arrays.copyOf(startBuf, 19));
-        startBuf[1] = 1;
-        room.sendGameMsg(room.players[1], Arrays.copyOf(startBuf, 19));
-        startBuf[1] = (byte) (swapped ? 0x11 : 0x10);
+        if (room.soloMode) {
+            // Solo mode: players[0] == players[1] (same connection). Send only the player=0
+            // variant once so client's onStart runs exactly once and duelIsFirst stays true.
+            // Perspective will auto-flip on turn changes via solo branch in DuelEventHandler.
+            room.sendGameMsg(room.players[0], Arrays.copyOf(startBuf, 19));
+            startBuf[1] = (byte) (swapped ? 0x11 : 0x10);
+        } else {
+            room.sendGameMsg(room.players[0], Arrays.copyOf(startBuf, 19));
+            startBuf[1] = 1;
+            room.sendGameMsg(room.players[1], Arrays.copyOf(startBuf, 19));
+            startBuf[1] = (byte) (swapped ? 0x11 : 0x10);
+        }
         for (ServerConnection o : room.observers) {
             o.send(STOC_GAME_MSG, Arrays.copyOf(startBuf, 19));
         }
@@ -235,17 +243,19 @@ final class ServerDuel implements YGOProtocol {
         if (pduel == 0L) {
             return;
         }
+        // Solo mode: dp.type is always 0 (same connection), but engine may wait for player 1's response
+        int responder = room.soloMode ? room.lastResponse : dp.type;
         int len = Math.min(resp.length, EngineMessage.SIZE_RETURN_VALUE - 1);
         byte[] resb = new byte[EngineMessage.SIZE_RETURN_VALUE];
         System.arraycopy(resp, 0, resb, 0, len);
         lastReplayResponseSize = replay.writeResponse(resb, len);
         OcgDuelEngine.setResponseB(pduel, resb);
-        room.players[dp.type].state = ServerConnection.STATE_NONE;
+        room.players[responder].state = ServerConnection.STATE_NONE;
         if (room.hostInfo.timeLimit != 0) {
-            if (room.timeLimit[dp.type] >= room.timeElapsed) {
-                room.timeLimit[dp.type] -= room.timeElapsed;
+            if (room.timeLimit[responder] >= room.timeElapsed) {
+                room.timeLimit[responder] -= room.timeElapsed;
             } else {
-                room.timeLimit[dp.type] = 0;
+                room.timeLimit[responder] = 0;
             }
             room.timeElapsed = 0;
         }
@@ -337,7 +347,8 @@ final class ServerDuel implements YGOProtocol {
         if (room.players[0] != null) {
             room.players[0].send(STOC_REPLAY, yrp);
         }
-        if (room.players[1] != null) {
+        // Solo mode: players[1] == players[0] is the same connection; send replay once.
+        if (room.players[1] != null && room.players[1] != room.players[0]) {
             room.players[1].send(STOC_REPLAY, yrp);
         }
         for (ServerConnection o : room.observers) {

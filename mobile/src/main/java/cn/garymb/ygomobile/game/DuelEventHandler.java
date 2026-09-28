@@ -182,6 +182,15 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onNewTurn(int player) {
+        // Solo mode: the acting player must always sit at localPlayer==0 (bottom of screen).
+        // If MSG_NEW_TURN targets the side currently shown as "opponent", request a perspective
+        // flip. requestSpectatorSwap defers the flip to the next drainPendingMsgs boundary, so
+        // pending animations of the previous turn finish before the view is swapped — same path
+        // as the manual spectator "switch view" button.
+        if (engine.soloMode && !engine.replayMode && engine.inDuel
+                && engine.localPlayer(player & 1) == 1) {
+            engine.requestSpectatorSwap();
+        }
         engine.field.currentPlayer = engine.localPlayer(player);
         engine.field.turnCount++;
         // tag 队友切换（对齐 duelclient.cpp MSG_NEW_TURN L2879-2885：isTag 且非首回合时，

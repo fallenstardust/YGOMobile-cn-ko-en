@@ -38,6 +38,7 @@ class MainMenuNavigator implements
     public void onCreateHostConfirmed(int lflist, int cardAllowed, int modeIdx, int duelRule,
                                       int startLP, int startHand, int drawCount, int timeLimit,
                                       boolean noCheckDeck, boolean noShuffleDeck,
+                                      boolean soloMode,
                                       String hostName, String password, String nickname) {
         String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
         String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
@@ -48,8 +49,10 @@ class MainMenuNavigator implements
 
         activity.engine.setPlayerName(userName);
         // cardAllowed 即协议 HostInfo.rule（卡片允许 0..5，对齐 duelclient.cpp cscg.info.rule），
-        // duelRule 为协议 HostInfo.duel_rule（1..5）
-        activity.engine.startLocalServerWithSettings(lflist, cardAllowed, modeIdx, duelRule,
+        // duelRule 为协议 HostInfo.duel_rule（1..5）；soloMode 编码到 mode bit4 (0x10)，
+        // 服务端 GameRoom.createGame 从 hostInfo.soloMode() 读取，同一连接归位 players[0]==players[1]
+        int modeWithSolo = soloMode ? (modeIdx | 0x10) : modeIdx;
+        activity.engine.startLocalServerWithSettings(lflist, cardAllowed, modeWithSolo, duelRule,
                 noCheckDeck, noShuffleDeck,
                 startLP, startHand, drawCount, timeLimit,
                 roomName, password != null ? password : "");
@@ -61,7 +64,8 @@ class MainMenuNavigator implements
         // wHostPrepare 即用已知设置刷新 stHostPrepRule）；随后环回 STOC_JOIN_GAME 回传相同值幂等覆盖。
         activity.engine.gameLflist = lflist;
         activity.engine.gameRule = cardAllowed;
-        activity.engine.gameMode = modeIdx;
+        activity.engine.gameMode = modeIdx; // store stripped duel mode locally (SINGLE/MATCH/TAG)
+        activity.engine.soloMode = soloMode; // early-enable solo UI (dual-deck pick) before loop-back
         activity.engine.field.dInfo.duelRule = duelRule;
         activity.engine.gameNoCheckDeck = noCheckDeck ? 1 : 0;
         activity.engine.gameNoShuffleDeck = noShuffleDeck ? 1 : 0;
@@ -217,5 +221,8 @@ class MainMenuNavigator implements
         String name = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
         dialog.setPlayerName(0, name);
         dialog.setTagPlayersVisible(tagMode);
+        // Solo mode: 建主时房主预先开关 “选择对方卡组” UI（非房主加入房间时 engine.soloMode
+        // 由 StocHandler.onJoinGame 在 STOC_JOIN_GAME 回环中自动置位，下次重新打开时同步）
+        dialog.setSoloMode(activity.engine != null && activity.engine.soloMode);
     }
 }
