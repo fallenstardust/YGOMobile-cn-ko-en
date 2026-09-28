@@ -10,6 +10,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
 import ocgcore.DataManager;
+import ocgcore.enums.CardType;
 
 /**
  * 场上/手牌选择会话协作类（由 GameFieldController 按 // === 分栏拆分而来）：
@@ -54,6 +55,71 @@ class FieldSelectManager {
     // === 放置区域选择 ===
 
     void beginPlaceSelect(boolean isDisfield) {
+        // 需求B：灵摆召唤的位置选择先播放“左灵摆刻度卡蚂蚁线 → 右灵摆刻度卡蚂蚁线 →
+        // 场上可放置区蚂蚁线供选点”的预演（对齐用户描述的灵摆召唤动画）；非灵摆召唤直接
+        // 进入真正的位置选择会话（参考实现：C++ 无此分阶段动画，于本移植版自行编排）
+        if (!isDisfield && startPendulumScalePrelude()) {
+            return; // 预演结束后会自动回调 doBeginPlaceSelect
+        }
+        doBeginPlaceSelect(isDisfield);
+    }
+
+    /**
+     * 需求B：若本次 MSG_SELECT_PLACE 为灵摆召唤（灵摆召唤方两侧灵摆区都立着灵摆怪、
+     * 且放置掩码含主怪兽区），则先对左刻度（spellZone[6]）后对右刻度（spellZone[7]）施加
+     * 行进蚂蚁线（复用 revealHighlightCards，与需求A 同一绘制通道），再高亮场上可放置区。
+     *
+     * @return true=已启动预演（真正的选择会话将在预演末尾开启）；false=非灵摆召唤，需直接选择
+     */
+    private boolean startPendulumScalePrelude() {
+        GameEngine engine = ctl.engine;
+        if (engine == null) return false;
+        GameField field = engine.getField();
+        int summonLocal = engine.localPlayer(engine.selectFieldPlayer & 1);
+        if (summonLocal < 0 || summonLocal > 1) return false;
+        GameField.PlayerField pf = field.players[summonLocal];
+        if (pf == null) return false;
+        // 本移植版灵摆区固定 spellZone[6]=左刻度、spellZone[7]=右刻度（见 tryAutoPlaceSelect 注释）
+        GameField.ClientCard left = asActivePendulumScale(pf, 6);
+        GameField.ClientCard right = asActivePendulumScale(pf, 7);
+        if (left == null || right == null) return false; // 灵摆召唤需两侧刻度都立着
+        // 放置掩码须含主怪兽区（0-4 我方 / 16-20 对方），排除魔陷/灵摆区放置
+        int mask = engine.selectFieldMask;
+        if ((mask & (0x1f | 0x1f0000)) == 0) return false;
+        final long stepMs = 480L;
+        field.revealHighlightCards.clear();
+        field.revealHighlightCards.add(left);
+        if (ctl.viewController != null) ctl.viewController.invalidate();
+        engine.mainHandler.postDelayed(() -> {
+            field.revealHighlightCards.clear();
+            field.revealHighlightCards.add(right);
+            if (ctl.viewController != null) ctl.viewController.invalidate();
+            engine.mainHandler.postDelayed(() -> {
+                field.revealHighlightCards.clear();
+                if (ctl.viewController != null) ctl.viewController.invalidate();
+                doBeginPlaceSelect(false);
+            }, stepMs);
+        }, stepMs);
+        return true;
+    }
+
+    /** 取灵摆区指定序号上已揭示的灵摆怪（非空、code!=0、TYPE_PENDULUM），否则 null */
+    private static GameField.ClientCard asActivePendulumScale(GameField.PlayerField pf, int seq) {
+        if (pf.spellZone.size() <= seq) return null;
+        GameField.ClientCard c = pf.spellZone.get(seq);
+        if (c == null || c.code == 0) return null;
+        // ClientCard.type may remain 0: C++ ClientCard::SetCode queries local DB for type,
+        // but this Java port's setCode only writes code. Fallback to DB lookup to align.
+        long type = c.type;
+        if (type == 0) {
+            ocgcore.data.Card cardData = DataManager.get().getCardManager().getCard(c.code);
+            if (cardData != null) type = cardData.Type;
+        }
+        if ((type & CardType.Pendulum.getId()) == 0) return null;
+        return c;
+    }
+
+    private void doBeginPlaceSelect(boolean isDisfield) {
         isPlaceSelecting = true;
         int mask = ctl.engine.selectFieldMask;
         int count = ctl.engine.selectFieldCount;

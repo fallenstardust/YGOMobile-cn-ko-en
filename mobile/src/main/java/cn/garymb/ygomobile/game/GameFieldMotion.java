@@ -258,10 +258,30 @@ class GameFieldMotion {
                     pcard.curRotY += pcard.hsFlipRotY * flipv;
                 }
             }
+            // 需求A：入手揭示（洗切前的展示段）——位置保持在手牌落点，仅推进旋转：
+            // 前 5 帧翻入(卡背→正面)、中间停留展示、末 5 帧翻出回布局姿态。
+            // 非翻面（己方卡本就正面）时 flipv 恒 0，全程保持正面，只由蚂蚁线高亮承担“展示”，
+            // 与对方卡取得同样的展示时长（关键帧总帧数一致）。
+            if (pcard.is_hand_reveal) {
+                int total = Math.max(1, pcard.hrTotal);
+                int el = Math.max(0, Math.min(total, total - (int) pcard.aniFrame));
+                int holdEnd = total - 5;
+                float flipv;
+                if (el <= 5) flipv = el / 5f;
+                else if (el <= holdEnd) flipv = 1f;
+                else flipv = 1f - (el - holdEnd) / (float) Math.max(1, total - holdEnd);
+                if (!pcard.hrFlip) flipv = 0f;
+                pcard.curX = pcard.hrToX;
+                pcard.curY = pcard.hrToY;
+                pcard.curZ = pcard.hrToZ;
+                pcard.curRotZ = pcard.hrLayoutRotZ;
+                pcard.curRotX = pcard.hrLayoutRotX + (pcard.hrFaceUpRotX - pcard.hrLayoutRotX) * flipv;
+                pcard.curRotY = pcard.hrLayoutRotY + (pcard.hrFaceUpRotY - pcard.hrLayoutRotY) * flipv;
+            }
             // 线性插值：严格对齐 drawing.cpp DrawCard 的 curPos += dPos（dPos=(target-cur)/frame）——
             // gframe 卡片移动/淡入淡出均为每帧等速线性累加，无缓动。按剩余帧比例线性求值以在
             // 变帧率下保持恒定速度（dt*60 驱动的 aniFrame 递减）。
-            if (pcard.is_moving && !pcard.is_deck_shake && !pcard.is_hand_shuffle) {
+            if (pcard.is_moving && !pcard.is_deck_shake && !pcard.is_hand_shuffle && !pcard.is_hand_reveal) {
                 int total = Math.max(1, pcard.animTotalFrame);
                 if (pcard.animJitterX != 0f) {
                     // 同区重排抖动（duelclient.cpp MSG_MOVE L3022-3030）：前 5 帧每帧恒定横移
@@ -334,6 +354,17 @@ class GameFieldMotion {
                     pcard.curZ = pcard.hsToZ;
                     pcard.curRotX = pcard.hsToRotX;
                     pcard.curRotY = pcard.hsToRotY;
+                }
+                if (pcard.is_hand_reveal) {
+                    // 揭示结束：精确落回布局姿态（对方卡回到卡背、己方卡保持正面），
+                    // 随后由 DeckHandMotionManager 排程的洗切接管整列手牌
+                    pcard.is_hand_reveal = false;
+                    pcard.curX = pcard.hrToX;
+                    pcard.curY = pcard.hrToY;
+                    pcard.curZ = pcard.hrToZ;
+                    pcard.curRotX = pcard.hrLayoutRotX;
+                    pcard.curRotY = pcard.hrLayoutRotY;
+                    pcard.curRotZ = pcard.hrLayoutRotZ;
                 }
                 pcard.chain_code = 0;
             }
@@ -520,6 +551,42 @@ class GameFieldMotion {
         // 全局时序统一：flip 为真时整列多一段 5 帧翻面（L2677-2678 if(flip) Wait(5)）
         pcard.animTotalFrame = flip ? 31 : 26;
         pcard.aniFrame = pcard.animTotalFrame;
+    }
+
+    /**
+     * 需求A：卡片经效果入手时的揭示动画（洗切前的展示段）。
+     * 对齐 duelclient.cpp MSG_SHUFFLE_HAND L2666-2679 翻面揭示语义：对方卡（flip=true）从卡背
+     * 翻到正面展示、蚂蚁线高亮由 SelectionOutlineRenderer 施加，展示结束后回卡背；己方卡本就正面
+     * （flip=false、不翻给对面看）仅停留展示同样时长。位置保持在手牌落点不聚拢，关键帧由
+     * updateListAnimation 的 is_hand_reveal 段推进；洗切由 DeckHandMotionManager 另行排程。
+     */
+    public void startHandReveal(ClientCard pcard, boolean flip) {
+        if (pcard == null) return;
+        if (field.instantPlace) {
+            setCardPos(pcard);
+            pcard.is_hand_reveal = false;
+            return;
+        }
+        float[] loc = field.getCardLocation(pcard);
+        pcard.hrToX = loc[0];
+        pcard.hrToY = loc[1];
+        pcard.hrToZ = loc[2];
+        pcard.hrLayoutRotX = loc[3];
+        pcard.hrLayoutRotY = loc[4];
+        pcard.hrLayoutRotZ = loc[5];
+        // 手牌正面姿态：rotX=-0.798056、rotY=0（对齐 getCardLocation code!=0 分支）
+        pcard.hrFaceUpRotX = -0.798056f;
+        pcard.hrFaceUpRotY = 0f;
+        pcard.hrFlip = flip;
+        // 翻入 5 + 展示停留 24 + 翻出 5 = 34；己方卡 flipv 恒 0，同样 34 帧纯展示，与对方展示时长一致
+        pcard.hrTotal = 34;
+        // 揭示接管姿态：打断可能仍在进行的飞入/其它手牌动画，避免多段插值互覆
+        pcard.is_moving = false;
+        pcard.is_deck_shake = false;
+        pcard.is_hand_shuffle = false;
+        pcard.is_hand_reveal = true;
+        pcard.animDelayFrame = 0;
+        pcard.aniFrame = pcard.hrTotal;
     }
 
     public void setAnimationSpeed(float speed) {

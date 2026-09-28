@@ -359,7 +359,10 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                             || oldLocBase == CardLocation.Grave.value()
                             || oldLocBase == CardLocation.Removed.value()
                             || oldLocBase == CardLocation.Extra.value())) {
-                engine.deckMotion.applyMoveToHandShuffle(newCtrl);
+                // 需求A：把本次入手的那张卡（现位于 newCtrl/Hand/newSeq）一并交下去——用于揭示阶段
+                // 只对该卡施加蚂蚁线高亮（对方翻面到正面 / 我方仅高亮），展示结束后再整体洗切
+                GameField.ClientCard arriving = engine.field.getCard(newCtrl, newLocBase, newSeq);
+                engine.deckMotion.applyMoveToHandShuffle(newCtrl, arriving);
             }
         }
         // 音效严格对齐 duelclient.cpp MSG_MOVE L2952-2957：仅在真正发生移动（pl!=cl）时，
@@ -786,16 +789,19 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onAttack(int aCtrl, int aLoc, int aSeq, int dCtrl, int dLoc, int dSeq) {
         // 对齐 duelclient.cpp MSG_ATTACK L3830-3860：有目标攻怪音效 ATTACK，直接攻击音效 DIRECT_ATTACK
-        GameField.ClientCard atkCard = engine.field.getCard(engine.localPlayer(aCtrl & 1), aLoc, aSeq);
+        GameField.ClientCard atkCard = engine.field.getCard(engine.localPlayer(aCtrl & 1), aLoc & 0x7f, aSeq);
         if (atkCard == null) {
-            // 留痕诊断：攻击者卡查不到时弧线无起点、整条不绘（duelclient.cpp L3822 attacker 总可查到）
+            // Fallback: try raw controler (in case localPlayer mapping edge case)
+            atkCard = engine.field.getCard(aCtrl & 1, aLoc & 0x7f, aSeq);
+        }
+        if (atkCard == null) {
             Log.w(TAG, "onAttack: attacker card not found ctrl=" + aCtrl + " loc=" + aLoc + " seq=" + aSeq);
         }
         String atkName = atkCard != null ? DataManager.get().getName(atkCard.code) : "";
         boolean skipArc = engine.field.instantPlace; // 回放快进重排：不写弧线、不持闸
         if (dLoc != 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
-            GameField.ClientCard defCard = engine.field.getCard(engine.localPlayer(dCtrl & 1), dLoc, dSeq);
+            GameField.ClientCard defCard = engine.field.getCard(engine.localPlayer(dCtrl & 1), dLoc & 0x7f, dSeq);
             String defName = defCard != null ? DataManager.get().getName(defCard.code) : "";
             engine.hintManager.setEventString(1619, "[%s]攻击[%s]", atkName, defName);
             // 记录绿色攻击弧端点（攻击者→目标），GameFieldView 在约 0.9s 内绘制流动弧

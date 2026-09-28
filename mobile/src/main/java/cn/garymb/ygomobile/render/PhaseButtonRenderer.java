@@ -23,8 +23,9 @@ final class PhaseButtonRenderer {
     private final GameFieldView view;
 
     // 阶段按钮屏幕尺寸（dp）：按钮平行屏幕，与两个额外怪兽区错开摆放（左/中/右三个锚点）
-    private static final float PHASE_BTN_W_DP = 32f;
-    private static final float PHASE_BTN_H_DP = 18f;
+    // 需求C：在原 32×18 基础上略微放大
+    private static final float PHASE_BTN_W_DP = 37f;
+    private static final float PHASE_BTN_H_DP = 21f;
     private static final int PHASE_CURRENT = 0, PHASE_NEXT = 1, PHASE_EP = 2;
 
     // 阶段按钮标签文字纹理键（仅 GL 线程访问，负值递减，与卡图/场地/卡背键域不冲突）
@@ -66,11 +67,12 @@ final class PhaseButtonRenderer {
         float bw = Math.min(PHASE_BTN_W_DP * d, Math.max(24f, gapPx - 10f));
         float bh = PHASE_BTN_H_DP * d;
         float halfW = bw / pxPerWorld / 2f;
-        float margin = 0.12f;
+        // 需求C：最左（当前阶段）与最右（EP）按钮向外平移的间距，加大使两者分别向左/右分开
+        float margin = 0.24f;
         if (curVisible) {
             // 左侧额外怪兽区左缘再向外（屏幕更左 = 绘制空间 x 更大）
             float ax = emzL + FieldGeometry.ZONE_W / 2f + margin + halfW;
-            ax = Math.min(ax, FieldGeometry.FIELD_X_MAX - 0.1f - halfW);
+            ax = Math.min(ax, FieldGeometry.FIELD_X_MAX - 0.02f - halfW);
             float[] s = view.projectWorldPoint(ax, 0f, 0f);
             if (s != null) out[PHASE_CURRENT] = new float[]{s[0], s[1], bw, bh};
         }
@@ -81,7 +83,7 @@ final class PhaseButtonRenderer {
         if (epVisible) {
             // 右侧额外怪兽区右缘再向外（屏幕更右 = 绘制空间 x 更小）
             float ax = emzR - FieldGeometry.ZONE_W / 2f - margin - halfW;
-            ax = Math.max(ax, FieldGeometry.FIELD_X_MIN + 0.1f + halfW);
+            ax = Math.max(ax, FieldGeometry.FIELD_X_MIN + 0.02f + halfW);
             float[] s = view.projectWorldPoint(ax, 0f, 0f);
             if (s != null) out[PHASE_EP] = new float[]{s[0], s[1], bw, bh};
         }

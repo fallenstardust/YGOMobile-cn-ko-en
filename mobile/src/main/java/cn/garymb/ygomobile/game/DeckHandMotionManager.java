@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -40,6 +41,11 @@ public class DeckHandMotionManager {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
     }
+
+    // ==== Batch accumulator for simultaneous hand-card reveals ====
+    private final List<GameField.ClientCard> handRevealBatch = new ArrayList<>();
+    private int handRevealBatchPlayer = -1;
+    private Runnable handRevealFlushRunnable = null;
 
     // ==== MSG_CONFIRM_DECKTOP / MSG_CONFIRM_CARDS ====
 
@@ -199,42 +205,89 @@ public class DeckHandMotionManager {
     }
 
     /**
-     * 需求3a：通讯中有卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡后，先把入手的新卡亮出
-     * 到手牌中（{@code onMove} 的 moveCardAnimated(10) 飞入 + updateHandLayout(10) 重排已完成），
-     * 展示片刻后再对该侧手牌整体播放一次洗切动画——聚拢到中线 X=3.9 摊开展示全部卡面、停留、
-     * 再回新布局，样式对齐 gframe duelclient.cpp MSG_SHUFFLE_HAND L2659-2701（复用
-     * {@code startHandShuffle} 关键帧，非翻面段 total=26）。普通抽卡走 MSG_DRAW 不经 MSG_MOVE，
-     * 故本方法只在效果把手牌外的卡加回手卡时触发，与实况/回放管线共用同一动画闸门。
+     * 需求3a + 需求A + 批量：卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，
+     * 把同时入手的**全部**卡片作为一组统一揭示并施加行进蚂蚁线高亮，展示结束后再洗切。
+     *
+     * 批量机制：同一轮 drainPendingMsgs 中连续多张 MSG_MOVE 入手时，每张只加入 batch
+     * 而不设 animHoldUntilMs（避免闸门阻塞后续消息导致串行），50ms 去抖后 flush
+     * 整组统一播放。参考 C++ MSG_SHUFFLE_HAND L2659-2701 count 张卡片整体动画。
      */
-    public void applyMoveToHandShuffle(int localPlayer) {
-        // 回放快进重排：同步落位即可，不叠加洗切动画（与 applyShuffleHand 的 instantPlace 分支一致）
+    public void applyMoveToHandShuffle(int localPlayer, GameField.ClientCard arrivingCard) {
         if (engine.field.instantPlace) return;
+        if (arrivingCard == null) return;
         final List<GameField.ClientCard> hand = engine.field.players[localPlayer].hand;
-        if (hand == null || hand.size() <= 1) return; // 不足 2 张无洗切意义
-        // 已在洗切中的手牌不重复触发（连续多张入手时避免动画叠加错乱）；刚入手的卡此刻仍在
-        // moveCardAnimated 飞入中（is_moving），但其飞入会在延时洗切启动前落定，故不据 is_moving 拦截
-        for (GameField.ClientCard c : hand) {
-            if (c != null && c.is_hand_shuffle) return;
+        if (hand == null || hand.isEmpty()) return;
+        // Different player? Flush previous batch first
+        if (handRevealBatchPlayer != localPlayer && !handRevealBatch.isEmpty()) {
+            flushHandRevealBatch();
         }
-        // 先让入手的卡飞入并展示：moveCardAnimated(10) 飞入 + updateHandLayout(10) 重排约 10 帧，
-        // 再停 ~5 帧看清卡面，之后启动洗切；整段持统一动画闸门（move+展示+洗切）防后续消息抢跑
-        final long startDelay = 15L * 17L;
-        engine.animHoldUntilMs = System.currentTimeMillis() + startDelay + (26L + 5L) * 17L;
+        handRevealBatchPlayer = localPlayer;
+        if (!handRevealBatch.contains(arrivingCard)) {
+            handRevealBatch.add(arrivingCard);
+        }
+        // Debounce: 50ms after last card arrives, flush the batch as one group
+        if (handRevealFlushRunnable != null) {
+            engine.mainHandler.removeCallbacks(handRevealFlushRunnable);
+        }
+        handRevealFlushRunnable = this::flushHandRevealBatch;
+        engine.mainHandler.postDelayed(handRevealFlushRunnable, 50L);
+        postFieldChanged();
+    }
+
+    /**
+     * Flush accumulated batch: reveal all cards together with marching ants, then single shuffle.
+     * Animation gate is set HERE (not per-card) so all cards in the batch process in one
+     * drain cycle without the gate blocking subsequent MSG_MOVEs.
+     */
+    private void flushHandRevealBatch() {
+        handRevealFlushRunnable = null;
+        if (handRevealBatch.isEmpty()) return;
+        final List<GameField.ClientCard> batch = new ArrayList<>(handRevealBatch);
+        handRevealBatch.clear();
+        final int localPlayer = handRevealBatchPlayer;
+        handRevealBatchPlayer = -1;
+        final List<GameField.ClientCard> hand = engine.field.players[localPlayer].hand;
+        if (hand == null || hand.isEmpty()) return;
+        final boolean flip = localPlayer == 1 && !engine.replayMode;
+        final int revealFrames = 34;
+        final long flyInDelay = 10L * 17L;
+        final long revealMs = revealFrames * 17L;
+        engine.animHoldUntilMs = System.currentTimeMillis()
+                + flyInDelay + revealMs + (26L + 5L) * 17L;
+        // Phase 1: after fly-in, reveal ALL batch cards together + marching ants highlight
         engine.mainHandler.postDelayed(() -> {
-            engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
-            int maxTotal = 0;
-            for (GameField.ClientCard c : hand) {
-                if (c == null) continue;
-                // 非翻面洗切：卡已正面展示，仅做聚拢→回位（对齐 C++ 己方/回放 is_replay_need_flip=false）
-                engine.field.startHandShuffle(c, false);
-                maxTotal = Math.max(maxTotal, c.animTotalFrame);
-            }
-            if (maxTotal > 0) {
-                engine.animHoldUntilMs = Math.max(engine.animHoldUntilMs,
-                        System.currentTimeMillis() + (maxTotal + 5L) * 17L);
+            engine.field.revealHighlightCards.clear();
+            for (GameField.ClientCard card : batch) {
+                if (card != null && !card.is_hand_shuffle && !card.is_hand_reveal) {
+                    engine.field.startHandReveal(card, flip);
+                    engine.field.revealHighlightCards.add(card);
+                }
             }
             if (engine.listener != null) engine.listener.onFieldChanged();
-        }, startDelay);
-        postFieldChanged();
+        }, flyInDelay);
+        // Phase 2: after reveal, clear highlights and shuffle entire hand (skip if < 2 cards)
+        engine.mainHandler.postDelayed(() -> {
+            engine.field.revealHighlightCards.clear();
+            if (hand.size() > 1) {
+                engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+                int maxTotal = 0;
+                for (GameField.ClientCard c : hand) {
+                    if (c == null) continue;
+                    c.is_hand_reveal = false;
+                    engine.field.startHandShuffle(c, false);
+                    maxTotal = Math.max(maxTotal, c.animTotalFrame);
+                }
+                if (maxTotal > 0) {
+                    engine.animHoldUntilMs = Math.max(engine.animHoldUntilMs,
+                            System.currentTimeMillis() + (maxTotal + 5L) * 17L);
+                }
+            } else {
+                // Single card: just clear reveal state, no shuffle
+                for (GameField.ClientCard c : hand) {
+                    if (c != null) c.is_hand_reveal = false;
+                }
+            }
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, flyInDelay + revealMs);
     }
 }

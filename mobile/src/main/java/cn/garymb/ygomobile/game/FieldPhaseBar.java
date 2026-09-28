@@ -85,7 +85,8 @@ class FieldPhaseBar {
         DuelPhase dp = DuelPhase.valueOf(phase);
         if (dp == null) return;
 
-        phaseCurrentVisible = isMyTurn;
+        // Always show current phase indicator for both players' turns (communication-driven phase display)
+        phaseCurrentVisible = true;
         // 阶段切换即重置：下一阶段/结束阶段按钮由通讯（阶段与指令请求）重新驱动
         phaseNextLabel = "";
         phaseEpVisible = false;

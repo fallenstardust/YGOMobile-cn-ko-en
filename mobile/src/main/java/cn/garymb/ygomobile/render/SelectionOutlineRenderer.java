@@ -168,6 +168,26 @@ final class SelectionOutlineRenderer {
         float phase = marchPhase();
         drawSelectOutlineList(f.selectableCards, phase, null);
         drawSelectOutlineList(f.activatableCards, phase, f.selectableCards);
+        // 需求A/B：揭示展示（入手手卡）与灵摆刻度预演的卡以行进蚂蚁线高亮，
+        // 不走 is_selectable 会话门控（与真实可选卡解耦），恒为虚线行进
+        drawRevealOutlineList(f.revealHighlightCards, phase);
+    }
+
+    private void drawRevealOutlineList(List<GameField.ClientCard> list, float phase) {
+        if (list == null) return;
+        for (int i = 0, n = list.size(); i < n; i++) {
+            GameField.ClientCard c;
+            try {
+                c = list.get(i);
+            } catch (Throwable e) {
+                continue;
+            }
+            if (c == null || c.curAlpha <= 2f) continue;
+            try {
+                drawCardMarchingOutline(c, false, phase);
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     private void drawSelectOutlineList(List<GameField.ClientCard> list, float phase,

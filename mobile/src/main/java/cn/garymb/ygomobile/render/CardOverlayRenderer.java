@@ -182,8 +182,9 @@ final class CardOverlayRenderer {
         // 下发到本地（其 SELECT_BATTLE_CMD 只发给操作方），故对方怪兽 cmdFlag 恒为 0、无法走常规
         // COMMAND_ATTACK 分支。此处以「对方回合 + 战斗宣言阶段 + 表侧攻击表示」近似判断其可攻击怪兽，
         // 补绘与我方一致的 attack.png 浮动箭头。
-        boolean oppAttackHint = f.currentPlayer != 0
-                && (f.currentPhase & BATTLE_DECLARE_MASK) != 0;
+        // Do not show attack.png floating arrow on opponent's monsters during their battle phase;
+        // the green attack arc (drawAttackArc) already communicates attack actions clearly.
+        boolean oppAttackHint = false;
         for (int p = 0; p < 2; p++) {
             overlayCardList(f.players[p].monsterZone, mr4, oppAttackHint);
             // 魔陷区卡一律不套用战斗阶段近似提示：攻击箭头只标记可宣言攻击的怪兽，

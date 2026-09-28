@@ -93,9 +93,10 @@ class GameSettingsApplier {
     /**
      * 按 chkQuickAnimation 当前值随时调节动画速度：场上卡片移动/淡入淡出
      * （GameFieldController→GameFieldView）与居中特效（SpecEffectOverlay）两套动画同步，
-     * 设置对话框 checkbox、详情面板按钮与启动时 applySettingsToEngine 均经此入口生效
+     * 设置对话框 checkbox、详情面板按钮与启动时 applySettingsToEngine 均经此入口生效。
+     * 屏幕旋转重建视图树后也需重新调用（新 GameFieldView 实例的 animSpeedMultiplier 默认 1f）。
      */
-    private void applyAnimationSpeed() {
+    void applyAnimationSpeed() {
         boolean quick = AppsSettings.get().getIntSettings("chkQuickAnimation", 0) == 1;
         float speed = quick ? ANIM_SPEED_QUICK : ANIM_SPEED_NORMAL;
         if (activity.fieldCtl != null) activity.fieldCtl.setAnimationSpeed(speed);

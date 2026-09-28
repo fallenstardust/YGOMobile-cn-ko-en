@@ -311,6 +311,9 @@ public class YGOProActivity extends AppCompatActivity {
         }
         if (topInfoManager != null) topInfoManager.initViews();
         if (fieldCtl != null) fieldCtl.rebindAfterRotation();
+        // 旋转后新 GameFieldView 实例的 animSpeedMultiplier 重置为默认 1f，
+        // 按当前设置重新应用动画速率（chkQuickAnimation 2x / 正常 1x）
+        settingsCtl.applyAnimationSpeed();
         // FPS 回调重接线（tv_fps 与 game_field_view 均为新视图树实例）
         final TextView tvFps = findViewById(R.id.tv_fps);
         if (tvFps != null) {

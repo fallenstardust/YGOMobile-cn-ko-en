@@ -167,6 +167,23 @@ public class GameField {
         public float hsGatherX, hsFlipRotX, hsFlipRotY;
         /** 洗手卡是否含对手手卡翻面段（duelclient.cpp L2666-2679：player==1 且非回放非单机） */
         public boolean hsFlip;
+        /**
+         * 需求A：卡片经效果入手时的「揭示」动画进行中标记——在洗切之前先把入手的卡亮出到手牌
+         * 并施加行进蚂蚁线高亮：对方卡（flip=true）按 duelclient.cpp MSG_SHUFFLE_HAND L2666-2679
+         * 的翻面语义从卡背转到正面展示，己方卡本就正面（不翻给对面看）仅停留高亮同样时长；
+         * 展示（含蚂蚁线）结束后才对该侧手牌整体播放洗切。关键帧轨迹由 GameFieldMotion
+         * .updateListAnimation 的 is_hand_reveal 段推进，见 startHandReveal。
+         */
+        public boolean is_hand_reveal;
+        /** 揭示是否含翻面段（仅对方卡为 true；己方卡本就正面，不翻动） */
+        public boolean hrFlip;
+        /** 揭示结束后回归的布局姿态（对方 code==0 为卡背、己方 code!=0 为正面）与手牌落点 */
+        public float hrLayoutRotX, hrLayoutRotY, hrLayoutRotZ;
+        public float hrToX, hrToY, hrToZ;
+        /** 揭示翻面目标：手牌正面姿态（rotX=-0.798056、rotY=0，对齐 getCardLocation code!=0 分支） */
+        public float hrFaceUpRotX, hrFaceUpRotY;
+        /** 揭示关键帧总帧数（停顿/翻入 + 展示停留 + 翻出） */
+        public int hrTotal;
 
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
@@ -515,12 +532,19 @@ public class GameField {
      * onAttack 时写入攻击者/目标卡与起始时间戳，GameFieldView.drawAttackArc 读取并在约 0.9s 内绘制。
      * arcTarget 为 null 表示直接攻击，绘制时落到对方场地一侧的固定点。
      */
-    public ClientCard arcAttacker;
-    public ClientCard arcTarget;
+    public volatile ClientCard arcAttacker;
+    public volatile ClientCard arcTarget;
     public volatile long arcStartMs;
 
     public List<ClientCard> selectableCards = new ArrayList<>();
     public List<ClientCard> selectedCards = new ArrayList<>();
+    /**
+     * 需求A：正在「揭示」展示的手牌卡——由 DeckHandMotionManager.applyMoveToHandShuffle 在洗切前
+     * 加入入手卡，SelectionOutlineRenderer.drawCardSelectOutlines 对其绘制行进蚂蚁线（不受
+     * is_selectable 会话门控，避免污染真实可选卡会话）；展示结束/洗切启动前清空。
+     * 需求B 复用本列表为灵摆召唤的两张刻度卡按左右次序绘制蚂蚁线预演。
+     */
+    public final List<ClientCard> revealHighlightCards = new ArrayList<>();
     public List<ClientCard> selectsumCards = new ArrayList<>();
     public List<ClientCard> selectsumAll = new ArrayList<>();
     public List<ClientCard> displayCards = new ArrayList<>();
@@ -624,6 +648,7 @@ public class GameField {
         reposableCards.clear();
         attackableCards.clear();
         contiCards.clear();
+        revealHighlightCards.clear();
         contiAct = false;
         disabledField = 0;
         deckReversed = false;
@@ -865,6 +890,11 @@ public class GameField {
     /** 洗手卡聚拢/翻面单动画（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699） */
     public void startHandShuffle(ClientCard pcard, boolean flip) {
         motion.startHandShuffle(pcard, flip);
+    }
+
+    /** 需求A：卡片经效果入手时的揭示动画（翻面到正面/停留展示，展示结束后再洗切） */
+    public void startHandReveal(ClientCard pcard, boolean flip) {
+        motion.startHandReveal(pcard, flip);
     }
 
     public void setAnimationSpeed(float speed) {
