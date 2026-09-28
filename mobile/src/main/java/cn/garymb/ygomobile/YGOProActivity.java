@@ -14,9 +14,9 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -25,7 +25,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -60,7 +59,6 @@ import cn.garymb.ygomobile.utils.FullScreenUtils;
 import cn.garymb.ygomobile.utils.RightAlignedTiledDrawable;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
-import ocgcore.data.Card;
 
 /**
  * 决斗主界面门面：保留 Activity 生命周期、视图装配、UI 编排与全部对外公共 API，
@@ -98,7 +96,9 @@ public class YGOProActivity extends AppCompatActivity {
 
     LinearLayout layoutDeckControl;
     FrameLayout layoutGameRight;
-    /** 竖屏顶部面板（卡片详情+时点/录像/卡组按钮行，占屏高 1/3）；横屏无此节点，全程空保护 */
+    /**
+     * 竖屏顶部面板（卡片详情+时点/录像/卡组按钮行，占屏高 1/3）；横屏无此节点，全程空保护
+     */
     View layoutGameTopPanel;
     View layoutGameContent;
 
@@ -111,6 +111,10 @@ public class YGOProActivity extends AppCompatActivity {
     EditText etChatInput;
     private EmotionDialog emotionDialog;
     private DuelLogDialog duelLogDialog;
+    /**
+     * 当前设置弹窗实例：显示中再次点击设置按钮应隐藏它而非叠开新的（横竖屏同一入口）
+     */
+    private SettingsDialog settingsDialog;
 
     volatile boolean isGameStarted = false;
 
@@ -123,7 +127,9 @@ public class YGOProActivity extends AppCompatActivity {
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
     private FullScreenUtils mFullScreenUtils;
     private String currentBgPath;
-    /** 最近一次解码成功的背景图（竖屏下另挂到 layout_game_right 区域平铺背景，旋转重建后据此重贴） */
+    /**
+     * 最近一次解码成功的背景图（竖屏下另挂到 layout_game_right 区域平铺背景，旋转重建后据此重贴）
+     */
     private Bitmap lastBgBitmap;
 
     // 最近一次加入/创建房间的连接信息：断线或决斗结束返回局域网主界面时回显
@@ -131,6 +137,8 @@ public class YGOProActivity extends AppCompatActivity {
     String lastJoinHost = "";
     int lastJoinPort = 0;
     String lastJoinRoomName = "";
+    // 上一局主机/加入密码：决斗结束或退出玩家等待重新显示 LanModeDialog 时回填房间密码（用户规格，不清空）
+    String lastJoinPassword = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -470,7 +478,9 @@ public class YGOProActivity extends AppCompatActivity {
         ReplayModeDialog.quitReplay(this);
     }
 
-    /** 声音 / 音乐静音切换（实现见 {@link GameSettingsApplier}） */
+    /**
+     * 声音 / 音乐静音切换（实现见 {@link GameSettingsApplier}）
+     */
     public void toggleSoundMute() {
         settingsCtl.toggleSoundMute();
     }
@@ -504,7 +514,7 @@ public class YGOProActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(host)) {
             int port = intent.getIntExtra("port", 7911);
             String room = intent.getStringExtra("room");
-            saveLastConnectionInfo(Constants.PlayerName, host, port, room);
+            saveLastConnectionInfo(Constants.PlayerName, host, port, room, "");
             engine.connectToServer(host, port, false,
                     room != null ? room : "", "",
                     0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -595,7 +605,7 @@ public class YGOProActivity extends AppCompatActivity {
         String room = options.mRoomName != null ? options.mRoomName : "";
         String user = options.mUserName != null ? options.mUserName : Constants.PlayerName;
         String password = options.mRoomName != null ? options.mRoomName : "";
-        saveLastConnectionInfo(user, host, port, room);
+        saveLastConnectionInfo(user, host, port, room, password);
         engine.setPlayerName(user);
         engine.connectToServer(host, port, false, room, password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -614,12 +624,16 @@ public class YGOProActivity extends AppCompatActivity {
         return fieldCtl;
     }
 
-    /** 模态对话框（是/否、卡片选择/确认、命令菜单）显示——禁用决斗场三个阶段按钮 */
+    /**
+     * 模态对话框（是/否、卡片选择/确认、命令菜单）显示——禁用决斗场三个阶段按钮
+     */
     public void notifyGameDialogShown(Object dialog) {
         if (fieldCtl != null) fieldCtl.onModalDialogShown(dialog);
     }
 
-    /** 模态对话框隐藏——恢复决斗场三个阶段按钮 */
+    /**
+     * 模态对话框隐藏——恢复决斗场三个阶段按钮
+     */
     public void notifyGameDialogHidden(Object dialog) {
         if (fieldCtl != null) fieldCtl.onModalDialogHidden(dialog);
     }
@@ -630,12 +644,16 @@ public class YGOProActivity extends AppCompatActivity {
 
     // === drawspec 特效覆盖层（居中动作文本 / 观战与系统消息弹幕宿主，委托 EngineCallbackDelegate 持有） ===
 
-    /** drawspec 覆盖层按需创建（弹幕入场用；与特效回调共用同一实例） */
+    /**
+     * drawspec 覆盖层按需创建（弹幕入场用；与特效回调共用同一实例）
+     */
     public SpecEffectOverlay obtainSpecOverlay() {
         return engineCallback != null ? engineCallback.ensureSpecOverlay() : null;
     }
 
-    /** 已存在的 drawspec 覆盖层（不创建）：弹幕全部移除后的空闲收口用 */
+    /**
+     * 已存在的 drawspec 覆盖层（不创建）：弹幕全部移除后的空闲收口用
+     */
     public SpecEffectOverlay getSpecOverlay() {
         return engineCallback != null ? engineCallback.peekSpecOverlay() : null;
     }
@@ -669,6 +687,7 @@ public class YGOProActivity extends AppCompatActivity {
     public CardDetailPanel getCardDetailPanel() {
         return cardDetailPanel;
     }
+
     public ImageLoader getImageLoader() {
         return imageLoader;
     }
@@ -700,12 +719,16 @@ public class YGOProActivity extends AppCompatActivity {
         return soundManager;
     }
 
-    /** 供 LanModeDialog 静态入口构造时接线：返回承载 OnLanModeListener 的协作实例 */
+    /**
+     * 供 LanModeDialog 静态入口构造时接线：返回承载 OnLanModeListener 的协作实例
+     */
     public LanModeDialog.OnLanModeListener getDialogNavListener() {
         return menuNav;
     }
 
-    /** 供 PlayerWaitingDialog 静态入口构造时接线：返回承载 OnPlayerWaitingListener 的协作实例 */
+    /**
+     * 供 PlayerWaitingDialog 静态入口构造时接线：返回承载 OnPlayerWaitingListener 的协作实例
+     */
     public PlayerWaitingDialog.OnPlayerWaitingListener getPlayerWaitingListener() {
         return menuNav;
     }
@@ -720,7 +743,7 @@ public class YGOProActivity extends AppCompatActivity {
 
     /**
      * 决斗判定胜负时设置 BGM 胜负覆盖并刷新场景
-     *（对齐 Game::playBGM 的 dInfo.isFinished && showcardcode==1/2/3 分支）
+     * （对齐 Game::playBGM 的 dInfo.isFinished && showcardcode==1/2/3 分支）
      */
     public void setBgmDuelResult(boolean selfWon) {
         bgmCtl.setDuelResult(selfWon);
@@ -843,9 +866,9 @@ public class YGOProActivity extends AppCompatActivity {
         } else {
             LanModeDialog.showLanModeDialog(this);
             if (lanModeDialog != null) {
-                // 房间密码不自动回显，由玩家自行输入
+                // 保留上一局主机密码：重新显示局域网主界面时回填房间密码（用户规格，不再清空）
                 lanModeDialog.preFillConnectionFields(lastJoinNickname, lastJoinHost,
-                        String.valueOf(lastJoinPort));
+                        String.valueOf(lastJoinPort), lastJoinPassword);
             }
             // 返回局域网主界面属“其他情况”，切 MENU 场景
             updateBGM();
@@ -855,11 +878,12 @@ public class YGOProActivity extends AppCompatActivity {
         }
     }
 
-    void saveLastConnectionInfo(String nickname, String host, int port, String roomName) {
+    void saveLastConnectionInfo(String nickname, String host, int port, String roomName, String password) {
         lastJoinNickname = nickname != null ? nickname : "";
         lastJoinHost = host != null ? host : "";
         lastJoinPort = port;
         lastJoinRoomName = roomName != null ? roomName : "";
+        lastJoinPassword = password != null ? password : "";
     }
 
     /**
@@ -912,7 +936,9 @@ public class YGOProActivity extends AppCompatActivity {
         }
     }
 
-    /** 卡组编辑器视图切换（实现见 {@link DeckEditorViewHost}） */
+    /**
+     * 卡组编辑器视图切换（实现见 {@link DeckEditorViewHost}）
+     */
     public void showDeckEditorView() {
         deckEditorHost.show();
     }
@@ -974,10 +1000,18 @@ public class YGOProActivity extends AppCompatActivity {
 
 
     public void showSettingsDialog() {
+        // 设置弹窗已在显示中：再次点击设置按钮改为隐藏当前弹窗，不新建叠加
+        //（CardDetailPanel 设置按钮横竖屏共用本入口，故横竖屏行为一致）
+        if (settingsDialog != null && settingsDialog.isShowing()) {
+            settingsDialog.dismiss();
+            return;
+        }
         getMainMenuDialog().hideMainMenu();
         SettingsDialog dialog = new SettingsDialog(this, () -> applySettingsToEngine());
+        settingsDialog = dialog;
         dialog.show(dialogContainer);
         dialog.setOnDismissListener(() -> {
+            if (settingsDialog == dialog) settingsDialog = null;
             boolean deckEditorShowing = layoutDeckEditor != null
                     && layoutDeckEditor.getVisibility() == View.VISIBLE;
             boolean gameRightShowing = layoutGameRight != null
@@ -1128,6 +1162,11 @@ public class YGOProActivity extends AppCompatActivity {
         lanModeDialog = null;
         createHostDialog = null;
         playerWaitingDialog = null;
+        // 释放设置弹窗（独立 PopupWindow，显示中销毁会 WindowLeaked）并清引用
+        if (settingsDialog != null) {
+            settingsDialog.dismiss();
+            settingsDialog = null;
+        }
         // 关闭主菜单弹窗：其 PopupWindow 可能因 restoreMainMenu 恢复后仍未 dismiss，
         // Activity 销毁时会触发 android.view.WindowLeaked
         if (mainMenuDialog != null) {

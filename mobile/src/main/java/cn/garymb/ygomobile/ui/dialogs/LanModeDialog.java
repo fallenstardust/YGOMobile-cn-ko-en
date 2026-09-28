@@ -127,7 +127,8 @@ public class LanModeDialog {
         customView.requestFocus();
 
         draggableHelper = new DraggablePopupHelper(context, "lan_mode_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
+        // 竖屏交换宽高比为高大于宽（与横屏宽大于高对称），旋转自动恢复（用户规格）
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
 
         btnCreateHost.setOnClickListener(v -> {
             if (listener != null) {
@@ -200,13 +201,14 @@ public class LanModeDialog {
     }
 
     /**
-     * 回显上次连接信息：仅昵称/主机/端口，
-     * 房间密码不自动填充（对齐 gframe 选择局域网房间只填地址端口，密码由玩家自行输入）
+     * 回显上次连接信息：昵称/主机/端口，并回填上一局主机密码（用户规格：决斗结束或
+     * 退出玩家等待重新显示时保留上一局密码于房间密码输入框，不清空）。
      */
-    public void preFillConnectionFields(String nickname, String hostIp, String port) {
+    public void preFillConnectionFields(String nickname, String hostIp, String port, String password) {
         if (nickname != null && !nickname.isEmpty() && etNickname != null) etNickname.setText(nickname);
         if (hostIp != null && !hostIp.isEmpty() && etHostIp != null) etHostIp.setText(hostIp);
         if (port != null && !port.isEmpty() && etHostPort != null) etHostPort.setText(port);
+        if (etRoomPassword != null) etRoomPassword.setText(password != null ? password : "");
     }
 
     public boolean isShowing() {

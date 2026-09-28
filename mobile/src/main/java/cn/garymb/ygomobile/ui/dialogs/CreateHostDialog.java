@@ -138,7 +138,8 @@ public class CreateHostDialog {
         customView.requestFocus();
 
         draggableHelper = new DraggablePopupHelper(context, "create_host_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
+        // 竖屏交换宽高比为高大于宽（与横屏宽大于高对称），旋转自动恢复（用户规格）
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
 
         setupSpinners(spinnerBanlist, spinnerRule, spinnerCardAllowed, spinnerDuelMode);
 

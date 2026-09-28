@@ -390,6 +390,11 @@ public class SettingsDialog {
         }
     }
 
+    /** 弹窗当前是否正在显示（供设置按钮“显示中→再次点击隐藏”切换判定） */
+    public boolean isShowing() {
+        return popupWindow != null && popupWindow.isShowing();
+    }
+
     private SimpleSpinnerAdapter createBanListAdapter(List<String> names) {
         SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(context);
         adapter.setColor(Color.WHITE);

@@ -75,6 +75,16 @@ public class DraggablePopupHelper {
 
     public void setupDraggablePopup(PopupWindow popupWindow, View contentView,
                                      int designW, int designH) {
+        setupDraggablePopup(popupWindow, contentView, designW, designH, false);
+    }
+
+    /**
+     * @param swapForPortrait 竖屏宽高比重排（供建主/局域网/单机/录像/玩家等待这类横屏设计为宽大于高的弹窗使用）：
+     *                        竖屏宽铺满屏宽（与 Activity 同宽）且高与宽相等（正方形），转回横屏
+     *                        恢复设计宽高比（宽大于高）；其余弹窗传 false 行为不变。
+     */
+    public void setupDraggablePopup(PopupWindow popupWindow, View contentView,
+                                     int designW, int designH, boolean swapForPortrait) {
         if (!ENABLE_DRAG) return;
 
         ViewGroup originalParent = (ViewGroup) contentView.getParent();
@@ -94,8 +104,9 @@ public class DraggablePopupHelper {
         // 记录设计尺寸：屏幕旋转后按新屏宽重新解算弹窗宽度（见 relayoutActivePopupsForOrientation），
         // 故此处入参语义为“设计（未限宽）尺寸”，由本方法统一按当前屏宽解算实际显示尺寸
         wrapper.setDesignSize(designW, designH);
+        wrapper.setSwapForPortrait(swapForPortrait);
 
-        int[] fitted = fitSizeToScreen(contentView.getContext(), designW, designH);
+        int[] fitted = orientedFitSize(contentView.getContext(), designW, designH, swapForPortrait);
         FrameLayout.LayoutParams centerLp = new FrameLayout.LayoutParams(fitted[0], fitted[1]);
         centerLp.gravity = Gravity.CENTER;
         contentView.setLayoutParams(centerLp);
@@ -222,6 +233,28 @@ public class DraggablePopupHelper {
         return new int[]{w, h};
     }
 
+    /** 当前显示是否为竖屏（高大于宽）：以 Activity 上下文的实时屏幕度量为准 */
+    private static boolean isPortrait(Context context) {
+        android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        return dm.heightPixels > dm.widthPixels;
+    }
+
+    /**
+     * 按当前方向解算弹窗显示尺寸。swapForPortrait 且竖屏时（供建主/局域网/单机/录像/玩家等待这类
+     * 横屏设计为宽大于高的弹窗）：宽度铺满屏宽（与 Activity 同宽，避免按钮/表单文字被挤得换行），
+     * 高度取与宽度一致的正方形比例（边长=屏宽，不超过屏高）；横屏（含转回）走 {@link #fitSizeToScreen}
+     * 按设计宽高恢复横屏比例。弹窗创建与旋转重排共用。
+     */
+    private static int[] orientedFitSize(Context context, int designW, int designH, boolean swapForPortrait) {
+        if (swapForPortrait && designW > 0 && designH > 0 && isPortrait(context)) {
+            android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+            // 竖屏：正方形，边长取屏宽（竖屏下屏宽≤屏高，自然不超屏高）
+            int side = Math.min(dm.widthPixels, dm.heightPixels);
+            return new int[]{side, side};
+        }
+        return fitSizeToScreen(context, designW, designH);
+    }
+
     /**
      * 屏幕旋转后重解所有活动拖拽弹窗的显示宽度（供 YGOProActivity.onConfigurationChanged
      * 重建视图树后调用）：横屏转竖屏限宽不超屏避免文字截断，竖屏转横屏按设计宽度回弹
@@ -258,6 +291,8 @@ public class DraggablePopupHelper {
         /** 弹窗设计（未限宽）尺寸，旋转后据此按新屏宽重新解算显示宽度 */
         private int designW = 0;
         private int designH = 0;
+        /** 竖屏时交换宽高基准（与创建期一致），供建主/局域网/单机弹窗旋转后重解使用 */
+        private boolean swapForPortrait = false;
         /** 居中区域（如 layout_game_right）的视图 id 与弱引用，旋转重建后按 id 重新解析新实例 */
         private int centerRegionId = View.NO_ID;
         private java.lang.ref.WeakReference<View> centerRegionRef;
@@ -284,6 +319,10 @@ public class DraggablePopupHelper {
             this.designH = h;
         }
 
+        void setSwapForPortrait(boolean swap) {
+            this.swapForPortrait = swap;
+        }
+
         void setCustomRelayout(Runnable handler) {
             this.customRelayout = handler;
         }
@@ -308,7 +347,7 @@ public class DraggablePopupHelper {
             }
             if (getChildCount() == 0) return;
             View content = getChildAt(0);
-            int[] fitted = fitSizeToScreen(getContext(), designW, designH);
+            int[] fitted = orientedFitSize(getContext(), designW, designH, swapForPortrait);
             ViewGroup.LayoutParams raw = content.getLayoutParams();
             if (raw instanceof FrameLayout.LayoutParams) {
                 FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) raw;

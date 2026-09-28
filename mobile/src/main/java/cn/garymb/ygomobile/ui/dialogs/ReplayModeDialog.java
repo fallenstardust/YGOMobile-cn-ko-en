@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.dialogs;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -36,7 +37,6 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.activities.ShareFileActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.Constants;
 import ocgcore.DataManager;
@@ -112,7 +112,8 @@ public class ReplayModeDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "replay_mode_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
+        // 竖屏宽铺满屏宽（与 Activity 同宽，按钮文字不被挤换行）并按高大于宽比例解算，转回横屏恢复（用户规格）
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
 
         // 初始状态下禁用所有按钮（除了退出按钮）和EditText
         updateControlsState(false);
@@ -291,100 +292,85 @@ public class ReplayModeDialog {
             playerNames.add(ReplayReader.getPlayerName(replayData, i));
         }
 
-        DialogPlus dialog = new DialogPlus(context);
-        dialog.setTitle("选择要提取的卡组（可多选）");
-        
+        float density = context.getResources().getDisplayMetrics().density;
         SimpleListAdapter adapter = new SimpleListAdapter(context);
         adapter.set(playerNames);
         adapter.setMultiSelectMode(true);
-        
+
         ListView listView = new ListView(context);
         listView.setAdapter(adapter);
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 
-                (int) (200 * context.getResources().getDisplayMetrics().density));
-        listView.setLayoutParams(lp);
-        
-        dialog.setContentView(listView);
-        dialog.setLeftButtonText("确定");
-        dialog.setRightButtonText("取消");
-        
-        // 获取确定按钮并初始化为禁用状态
-        Button btnOk = dialog.findViewById(android.R.id.button1);
-        if (btnOk == null) {
-            // 尝试通过布局ID获取
-            View contentView = dialog.getContentView();
-            if (contentView != null) {
-                btnOk = contentView.findViewById(R.id.button_ok);
-            }
-        }
-        
-        final Button finalBtnOk = btnOk;
-        if (finalBtnOk != null) {
-            finalBtnOk.setEnabled(false);
-            finalBtnOk.setTextColor(0x88FFFFFF);
-        }
-        
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            adapter.toggleSelection(position);
-            
-            // 根据选中数量更新确定按钮状态
-            Set<Integer> selectedPositions = adapter.getMultiSelectedPositions();
-            boolean hasSelection = !selectedPositions.isEmpty();
-            
-            if (finalBtnOk != null) {
-                finalBtnOk.setEnabled(hasSelection);
-                finalBtnOk.setTextColor(hasSelection ? 0xFFFFFFFF : 0x88FFFFFF);
-            }
-        });
-        
-        dialog.setLeftButtonListener((d, w) -> {
-            Set<Integer> selectedPositions = adapter.getMultiSelectedPositions();
-            
-            int successCount = 0;
-            for (int pos : selectedPositions) {
-                String deckFileName = replayFile.getName().replace(".yrp", "") + "_" + playerNames.get(pos) + ".ydk";
-                File deckFile = new File(replayDir.getParentFile(), "deck/" + deckFileName);
-                deckFile.getParentFile().mkdirs();
+        listView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                (int) (200 * density)));
+        listView.setOnItemClickListener((parent, view, position, id) -> adapter.toggleSelection(position));
 
-                boolean success = ReplayReader.saveDeck(replayData, pos, deckFile.getAbsolutePath());
-                if (success) {
-                    successCount++;
-                }
-            }
-            
-            if (successCount > 0) {
-                Toast.makeText(context, "成功提取 " + successCount + " 个卡组", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(context, "提取失败", Toast.LENGTH_SHORT).show();
-            }
-            d.dismiss();
-        });
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
+        // 外层容器承载 ListView 的固定高度：YesOrNoDialog 会把直接内容视图的 LayoutParams 覆盖为
+        // MATCH_PARENT，用容器保留 200dp 多选列表高度，避免被撑满整屏
+        LinearLayout box = new LinearLayout(context);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.addView(listView);
+
+        YesOrNoDialog dialog = new YesOrNoDialog(context);
+        dialog.setTitle("选择要提取的卡组（可多选）")
+                .setContentView(box)
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText("确定")
+                .setNegativeButtonText("取消")
+                .setCenterInView(windowCenterRegion())
+                .setPositiveButton(v -> {
+                    Set<Integer> selectedPositions = adapter.getMultiSelectedPositions();
+                    if (selectedPositions.isEmpty()) {
+                        Toast.makeText(context, "未选择要提取的卡组", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    int successCount = 0;
+                    for (int pos : selectedPositions) {
+                        String deckFileName = replayFile.getName().replace(".yrp", "") + "_" + playerNames.get(pos) + ".ydk";
+                        File deckFile = new File(replayDir.getParentFile(), "deck/" + deckFileName);
+                        deckFile.getParentFile().mkdirs();
+                        if (ReplayReader.saveDeck(replayData, pos, deckFile.getAbsolutePath())) {
+                            successCount++;
+                        }
+                    }
+                    Toast.makeText(context, successCount > 0
+                            ? "成功提取 " + successCount + " 个卡组" : "提取失败",
+                            Toast.LENGTH_SHORT).show();
+                });
         dialog.show();
     }
 
     private void confirmDeleteReplay(File replayFile, ListView listView) {
-        DialogPlus dialog = new DialogPlus(context);
-        dialog.setTitle("确认删除");
-        dialog.setMessage("确定要删除录像 \"" + replayFile.getName() + "\" 吗？");
-        dialog.setLeftButtonText("删除");
-        dialog.setLeftButtonListener((d, w) -> {
-            boolean deleted = ReplayReader.deleteReplay(replayFile.getAbsolutePath());
-            if (deleted) {
-                Toast.makeText(context, "已删除: " + replayFile.getName(), Toast.LENGTH_SHORT).show();
-                selectedReplayFile = null;
-                refreshReplayList();
-            } else {
-                Toast.makeText(context, "删除失败", Toast.LENGTH_SHORT).show();
-            }
-            d.dismiss();
-        });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
+        YesOrNoDialog dialog = new YesOrNoDialog(context);
+        dialog.setTitle("确认删除")
+                .setMessage("确定要删除录像 \"" + replayFile.getName() + "\" 吗？")
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText("删除")
+                .setNegativeButtonText("取消")
+                .setCenterInView(windowCenterRegion())
+                .setPositiveButton(v -> {
+                    boolean deleted = ReplayReader.deleteReplay(replayFile.getAbsolutePath());
+                    if (deleted) {
+                        Toast.makeText(context, "已删除: " + replayFile.getName(), Toast.LENGTH_SHORT).show();
+                        selectedReplayFile = null;
+                        refreshReplayList();
+                    } else {
+                        Toast.makeText(context, "删除失败", Toast.LENGTH_SHORT).show();
+                    }
+                });
         dialog.show();
+    }
+
+    /**
+     * 录像选择处于菜单语境（layout_game_right 隐藏），YesOrNoDialog 默认居中到该区域会错位，
+     * 故取 Activity 内容根视图作为居中区域，使提取/删除/重命名子弹窗按整屏居中（对齐原 DialogPlus）
+     */
+    private View windowCenterRegion() {
+        if (context instanceof Activity) {
+            View content = ((Activity) context).findViewById(android.R.id.content);
+            if (content != null) return content;
+        }
+        return null;
     }
 
     private void loadReplay(File replayFile) {
@@ -408,28 +394,29 @@ public class ReplayModeDialog {
         editText.setTextColor(0xFFFFFFFF);
         editText.setHintTextColor(0x88FFFFFF);
 
-        DialogPlus dialog = new DialogPlus(context);
-        dialog.setTitle("重命名录像");
-        dialog.setContentView(editText);
-        dialog.setLeftButtonText("确定");
-        dialog.setLeftButtonListener((d, w) -> {
-            String newName = editText.getText().toString().trim();
-            if (newName.isEmpty()) {
-                Toast.makeText(context, "名称不能为空", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            boolean success = ReplayReader.renameReplay(replayFile.getAbsolutePath(), newName);
-            if (success) {
-                Toast.makeText(context, "重命名成功", Toast.LENGTH_SHORT).show();
-                selectedReplayFile = null;
-                refreshReplayList();
-            } else {
-                Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
-            }
-            d.dismiss();
-        });
-        dialog.setRightButtonText("取消");
-        dialog.setRightButtonListener((d, w) -> d.dismiss());
+        YesOrNoDialog dialog = new YesOrNoDialog(context);
+        dialog.setTitle("重命名录像")
+                .setContentView(editText)
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText("确定")
+                .setNegativeButtonText("取消")
+                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                .setCenterInView(windowCenterRegion())
+                .setPositiveButton(v -> {
+                    String newName = editText.getText().toString().trim();
+                    if (newName.isEmpty()) {
+                        Toast.makeText(context, "名称不能为空", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    boolean success = ReplayReader.renameReplay(replayFile.getAbsolutePath(), newName);
+                    if (success) {
+                        Toast.makeText(context, "重命名成功", Toast.LENGTH_SHORT).show();
+                        selectedReplayFile = null;
+                        refreshReplayList();
+                    } else {
+                        Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
+                    }
+                });
         dialog.show();
     }
 

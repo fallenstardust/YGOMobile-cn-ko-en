@@ -131,6 +131,9 @@ public class SingleModeDialog {
         chkAiOnlyScissors.setVisibility(View.VISIBLE);
         chkNoCheckDeck.setVisibility(View.VISIBLE);
         chkNoShuffleDeck.setVisibility(View.VISIBLE);
+        // 初始即人机模式（首个 tab）：残局专属"不洗切时回卡顶"复选框直接隐藏，
+        // 无需等到切到残局再切回人机才触发隐藏逻辑
+        chkReturnToTop.setVisibility(View.GONE);
 
         loadLastDeckInfo(btnSelectDeck);
 
@@ -206,7 +209,9 @@ public class SingleModeDialog {
                     btnSelectDeck.setVisibility(View.INVISIBLE);
                     btnStartBotDuel.setEnabled(false);
                     btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
-                    spinnerRule.setVisibility(View.INVISIBLE);
+                    // 残局模式：规则下拉与"回卡顶"复选框同行，下拉直接隐藏（GONE）让复选框占满整行，
+                    // 避免半行留白并保证较长文本完整显示
+                    spinnerRule.setVisibility(View.GONE);
                     chkAiOnlyScissors.setVisibility(View.GONE);
                     chkNoCheckDeck.setVisibility(View.GONE);
                     chkNoShuffleDeck.setVisibility(View.GONE);
@@ -240,7 +245,8 @@ public class SingleModeDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(context, "single_mode_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
+        // 竖屏交换宽高比为高大于宽（与横屏宽大于高对称），旋转自动恢复（用户规格）
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
 
         btnStartBotDuel.setOnClickListener(v -> {
             if (currentMode[0] == 0) {

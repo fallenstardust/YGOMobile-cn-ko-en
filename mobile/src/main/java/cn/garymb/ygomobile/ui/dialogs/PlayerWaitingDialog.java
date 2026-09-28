@@ -141,7 +141,8 @@ public class PlayerWaitingDialog {
         popupWindow.setTouchModal(false);
 
         draggableHelper = new DraggablePopupHelper(context, DIALOG_ID);
-        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight);
+        // 竖屏宽铺满屏宽且高与宽相等（正方形），转回横屏恢复设计宽高比（用户规格）
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
 
         loadLastDeckInfo();
 

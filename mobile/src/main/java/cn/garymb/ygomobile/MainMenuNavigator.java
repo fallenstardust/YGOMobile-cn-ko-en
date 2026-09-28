@@ -43,7 +43,8 @@ class MainMenuNavigator implements
         String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
 
         String localIp = LanDiscoveryManager.getLocalIpAddress();
-        activity.saveLastConnectionInfo(userName, localIp != null ? localIp : "127.0.0.1", 7911, roomName);
+        activity.saveLastConnectionInfo(userName, localIp != null ? localIp : "127.0.0.1", 7911, roomName,
+                password != null ? password : "");
 
         activity.engine.setPlayerName(userName);
         // cardAllowed 即协议 HostInfo.rule（卡片允许 0..5，对齐 duelclient.cpp cscg.info.rule），
@@ -89,7 +90,7 @@ class MainMenuNavigator implements
             portNum = 7911;
         }
         String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
-        activity.saveLastConnectionInfo(userName, ip, portNum, password);
+        activity.saveLastConnectionInfo(userName, ip, portNum, "", password);
         activity.engine.setPlayerName(userName);
         activity.engine.connectToServer(ip, portNum, false, "", password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
@@ -144,9 +145,9 @@ class MainMenuNavigator implements
         }
         LanModeDialog.showLanModeDialog(activity);
         if (activity.lanModeDialog != null) {
-            // 房间密码不自动回显，由玩家自行输入
+            // 保留上一局主机密码：退出玩家等待重新显示局域网主界面时回填房间密码（用户规格，不清空）
             activity.lanModeDialog.preFillConnectionFields(activity.lastJoinNickname, activity.lastJoinHost,
-                    String.valueOf(activity.lastJoinPort));
+                    String.valueOf(activity.lastJoinPort), activity.lastJoinPassword);
         }
     }
 
