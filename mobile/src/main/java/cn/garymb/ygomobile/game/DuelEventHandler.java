@@ -519,6 +519,16 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             chainCard.setCode(code);
             engine.field.moveCardAnimated(chainCard, 10);
         }
+        // 对齐 duelclient.cpp MSG_CHAINING L3357-3365：墓地/除外（location & 0x30）的卡在原地发动效果时
+        // 并不离开堆叠区、核心也不下发 MSG_MOVE，其「向侧边滑出展示→马上滑回同一堆叠层」的动画只能挂在
+        // 本消息处理器内。上一版误把滑出挂在 onMove 的同区分支，而该场景根本没有 MSG_MOVE，导致发动滑出
+        // 动画完全不显示（即用户反馈的「第二点动画没出来」根因）。卡片位置不变使 animFrom==animTo，
+        // 用 ±0.15/帧的两阶段 jitter 轨迹滑出再滑回，方向随控制方（同 C++ 的 cc==1 取 +0.15）。
+        // C++ 此段与上方翻面分支相互独立（slide 会覆盖 flip 动画状态），墓地/除外卡通常已亮明故不冲突。
+        if (chainCard != null && (chainCard.location & 0x30) != 0) {
+            float shift = (localCc == 1) ? 0.15f : -0.15f;
+            engine.field.moveCardAnimated(chainCard, 10, 0, shift);
+        }
         engine.field.currentChain.code = code;
         engine.field.currentChain.desc = desc;
         engine.field.currentChain.controler = localCc;
@@ -960,7 +970,17 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             data.get();
-            engine.field.addChainTarget(engine.localPlayer(ctrl & 1), loc, seq);
+            int localCtrl = engine.localPlayer(ctrl & 1);
+            engine.field.addChainTarget(localCtrl, loc, seq);
+            // 对齐 duelclient.cpp MSG_BECOME_TARGET L3511-3519：墓地/除外（location & 0x30）的卡被选为效果
+            // 对象时卡片同样不移动、核心只发本消息，故滑出动画必须挂在这里（与 onChaining 同源，上一版误挂
+            // onMove 永不触发）。场上目标（L & 0xc）C++ 做 FadeCard 闪烁，已由蚂蚁线高亮承担，此处只补堆叠区
+            // 滑出；±0.15/帧两阶段轨迹、方向随控制方（同 C++ 的 c==1 取 +0.15）。
+            GameField.ClientCard tcard = engine.field.getCard(localCtrl, loc, seq);
+            if (tcard != null && (tcard.location & 0x30) != 0) {
+                float shift = (localCtrl == 1) ? 0.15f : -0.15f;
+                engine.field.moveCardAnimated(tcard, 10, 0, shift);
+            }
         }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
