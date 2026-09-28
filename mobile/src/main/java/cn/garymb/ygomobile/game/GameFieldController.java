@@ -236,13 +236,32 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      */
     public void resetField() {
         if (engine != null && engine.getField() != null) engine.getField().clear();
+        // 兜底复位视图侧格子蚂蚁线 mask：field.clear() 不触及视图状态，
+        // 上一局选格询问残留的 highlightFieldMask 会跨局继续绘制
+        if (viewController != null) viewController.clearHighlight();
         if (viewController != null) viewController.invalidate();
+    }
+
+    /**
+     * 决斗结束/断开连接时清除蚂蚁线显示（不清场）：复位选择态列表与卡片标记、
+     * 清引擎选格残留（selectFieldMask 等），并把视图格子高亮 mask 归零、重绘。
+     */
+    public void clearSelectionVisuals() {
+        if (engine == null) return;
+        if (engine.getField() != null) engine.getField().clearSelectionVisuals();
+        engine.clearCommandFlags();
+        if (viewController != null) {
+            viewController.clearHighlight();
+            viewController.invalidate();
+        }
     }
 
     public void hide() {
         // 决斗/回放离场即释放场面：清空 GameField 数据，下次进入不再残留上一场卡片局面
         //（showMainMenu/returnToLanMain/quitReplay 等入口均只在非决斗中状态触达本方法）
         if (engine != null && engine.getField() != null) engine.getField().clear();
+        // 离场同样复位视图蚂蚁线 mask，下次进入决斗不残留上局格子高亮
+        if (viewController != null) viewController.clearHighlight();
         if (viewController != null) viewController.hide();
         if (topInfoManager != null) topInfoManager.hide();
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);

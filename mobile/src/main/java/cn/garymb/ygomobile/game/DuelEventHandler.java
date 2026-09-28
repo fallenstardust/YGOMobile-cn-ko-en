@@ -341,12 +341,18 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             //（本体延迟 10 帧）——消除「素材盖在怪兽上面」的共面观感；其余普通移动本体
             // 10 帧。addCard 0x04 内的 flushPendingOverlays 已把先到的待挂素材挂入 overlayed，此处一并跟动。
             if (oldLoc == newLoc && oldCtrl == newCtrl && (newLoc & 0x71) != 0) {
-                engine.field.moveCardAnimated(card, 10);
-                card.animJitterX = oldCtrl == 1 ? 0.3f : -0.3f;
+                // 堆叠区（DECK/GRAVE/REMOVED/EXTRA，0x71）卡发动/成为对象时同区重序：
+                // jitterX 随动画启动原子设置（先动画后赋值的旧写法会被渲染线程抢先以
+                // jitter=0 收敛，滑出被吞）
+                engine.field.moveCardAnimated(card, 10, 0, oldCtrl == 1 ? 0.3f : -0.3f);
             } else if (newLoc == CardLocation.MonsterZone.value() && !card.overlayed.isEmpty()) {
                 engine.field.moveOverlayMaterials(card, 10);
                 engine.field.moveCardAnimated(card, 10, 10);
             } else {
+                // 飞行起点兜底：异常/新建路径的卡从未定位过（cur*=0）时先从旧区域
+                // 落位，避免从世界原点飞向墓地/除外而无可见飞行过程
+                if (card.curX == 0f && card.curY == 0f && card.curZ == 0f && oldLoc != 0)
+                    engine.field.setCardPosForMove(card, oldCtrl, oldLoc & 0x7f, oldSeq);
                 engine.field.moveCardAnimated(card, 10);
             }
         }

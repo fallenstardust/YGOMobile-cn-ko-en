@@ -124,6 +124,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 }
                 break;
             case DUEL_END:
+                // 决斗结束：先清除仍在显示的蚂蚁线（选格 mask/选择态列表），
+                // 再走结算/录像/断开流程，避免结算窗背后残留可选高亮
+                activity.fieldCtl.clearSelectionVisuals();
                 activity.cardDetailPanel.closeGameButtons();
                 duelEndHandling = true;
                 if (activity.dialogUtil != null) activity.dialogUtil.dismissOpenGameDialogs();
@@ -136,6 +139,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 scheduleReplayProcessing();
                 break;
             case DISCONNECTED:
+                // 断开通讯同样立即清除残留蚂蚁线（包括早退分支，
+                // 后续界面切换不依赖选择态高亮）
+                activity.fieldCtl.clearSelectionVisuals();
                 if (duelEndHandling) break; // 决斗结束流程已接管返回逻辑，避免重复
                 if (suppressDisconnectedReturn) {
                     suppressDisconnectedReturn = false; // 退出入口已接管导航，单次消费
@@ -329,6 +335,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     @Override
     public void onDuelResult(int winner, int reason) {
         activity.topInfoManager.stopTimer();
+        // MSG_WIN 结算即清除场上所有蚂蚁线高亮（选择态列表 + 格子 mask），
+        // 胜负文字/结算窗照常展示；多局制下一局结束时也不残留上局高亮
+        activity.runOnUiThread(() -> activity.fieldCtl.clearSelectionVisuals());
         activity.runOnUiThread(() -> {
             boolean selfWon = winner != 2 && activity.engine.isSelfSide(winner);
             int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME

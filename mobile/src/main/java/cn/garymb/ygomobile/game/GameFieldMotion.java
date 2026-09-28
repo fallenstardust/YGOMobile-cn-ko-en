@@ -443,24 +443,33 @@ class GameFieldMotion {
     }
 
     public void moveCardAnimated(ClientCard pcard, int frame) {
-        moveCardAnimated(pcard, frame, 0);
+        moveCardAnimated(pcard, frame, 0, 0f);
+    }
+
+    public void moveCardAnimated(ClientCard pcard, int frame, int delay) {
+        moveCardAnimated(pcard, frame, delay, 0f);
     }
 
     /**
      * delay 帧后启动的 frame 帧移动动画（对齐 duelclient.cpp MSG_MOVE L3032-3046：
      * 素材 MoveCard(10)+WaitFrameSignal(10) 后本体才 MoveCard(10)）。
+     * jitterX 非 0 时为同区重排滑出滑回（L3025-3033：±0.3/帧滑 5 帧再 MoveCard(5) 回位），
+     * 必须在 is_moving/aniFrame 曝光给渲染线程之前原子设置：旧实现先启动动画后补
+     * animJitterX，渲染线程可能抢先以 jitter=0 线性收敛，滑出被吞。
      */
-    public void moveCardAnimated(ClientCard pcard, int frame, int delay) {
+    public void moveCardAnimated(ClientCard pcard, int frame, int delay, float jitterX) {
         if (pcard == null || frame <= 0) return;
         if (field.instantPlace) {
             // 回放快进重排：直接落位不产生 aniFrame，动画闸门天然不阻塞
             setCardPos(pcard);
             pcard.is_moving = false;
             pcard.animDelayFrame = 0;
+            pcard.animJitterX = 0f;
             return;
         }
         float[] loc = field.getCardLocation(pcard);
 
+        pcard.animJitterX = jitterX;
         pcard.animDelayFrame = Math.max(0, delay);
         pcard.animFromX = pcard.curX;
         pcard.animFromY = pcard.curY;

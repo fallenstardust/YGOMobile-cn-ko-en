@@ -649,6 +649,14 @@ public class GameField {
         attackableCards.clear();
         contiCards.clear();
         revealHighlightCards.clear();
+        // 断线/结束/新开一局时选择态列表必须随场一并清空：旧实现漏清，
+        // 残留的 ClientCard 引用 is_selectable 仍为 true，SelectionOutlineRenderer
+        // 继续对其绘制蚂蚁线 → 「重现开局蚂蚁线依旧显示」
+        selectableCards.clear();
+        selectedCards.clear();
+        selectsumCards.clear();
+        selectsumAll.clear();
+        displayCards.clear();
         contiAct = false;
         disabledField = 0;
         deckReversed = false;
@@ -661,6 +669,37 @@ public class GameField {
         extraPCount[0] = 0;
         extraPCount[1] = 0;
         eventString = "";
+    }
+
+    /**
+     * 决斗结束（MSG_WIN/STOC_DUEL_END）与断开连接时清除全部选择态蚂蚁线显示：
+     * 不清场（场上卡片保持显示），仅复位选择标记并清空轮廓渲染器读取的各列表——
+     * selectableCards/activatableCards/selectedCards/selectsumCards/selectsumAll/
+     * revealHighlightCards；视图侧格子高亮 mask 由 GameFieldController.clearSelectionVisuals
+     * 经 GameFieldViewController.clearHighlight() 归零。
+     */
+    public void clearSelectionVisuals() {
+        resetSelectFlags(selectableCards);
+        resetSelectFlags(activatableCards);
+        resetSelectFlags(selectedCards);
+        resetSelectFlags(selectsumCards);
+        resetSelectFlags(selectsumAll);
+        revealHighlightCards.clear();
+        selectableCards.clear();
+        activatableCards.clear();
+        selectedCards.clear();
+        selectsumCards.clear();
+        selectsumAll.clear();
+        displayCards.clear();
+    }
+
+    private static void resetSelectFlags(List<ClientCard> list) {
+        if (list == null) return;
+        for (ClientCard c : list) {
+            if (c == null) continue;
+            c.is_selectable = false;
+            c.is_selected = false;
+        }
     }
 
     public void initial(int player, int deckc, int extrac, int sidec) {
@@ -874,12 +913,37 @@ public class GameField {
         motion.setCardPos(pcard);
     }
 
+    /**
+     * 飞行起点兜底落位（仅供从未定位过的卡使用）：临时回写旧 c/l/s 求旧区域几何位置，
+     * 再恢复 addCard 已写入的新值，使后续 moveCardAnimated 从旧位置飞向新位置；
+     * 正常链路（卡已在旧区域定位）不会触达此路径。
+     */
+    public void setCardPosForMove(ClientCard pcard, int oldCtrl, int oldLocBase, int oldSeq) {
+        if (pcard == null || oldLocBase == 0) return;
+        int keepCtrl = pcard.controler;
+        int keepLoc = pcard.location;
+        int keepSeq = pcard.sequence;
+        pcard.controler = oldCtrl;
+        pcard.location = oldLocBase;
+        pcard.sequence = oldSeq;
+        motion.setCardPos(pcard);
+        pcard.controler = keepCtrl;
+        pcard.location = keepLoc;
+        pcard.sequence = keepSeq;
+    }
+
     public void moveCardAnimated(ClientCard pcard, int frame) {
         motion.moveCardAnimated(pcard, frame);
     }
 
     public void moveCardAnimated(ClientCard pcard, int frame, int delay) {
         motion.moveCardAnimated(pcard, frame, delay);
+    }
+
+    /** 带同区滑出抖动（±0.3/帧，对齐 duelclient.cpp MSG_MOVE L3025-3033）的移动动画，
+     *  jitterX 与动画启动原子设置，消除渲染线程抢先以 jitter=0 收敛的竞态 */
+    public void moveCardAnimated(ClientCard pcard, int frame, int delay, float jitterX) {
+        motion.moveCardAnimated(pcard, frame, delay, jitterX);
     }
 
     /** 卡组抖动单动画（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650：5 轮 × (3 帧抖开 + 3 帧回位)） */
