@@ -229,7 +229,7 @@
             android:id="@+id/chk_solo_mode"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:text="纯单人模式"
+            android:text="@string/solo_mode"
             android:textColor="@color/white"
             android:textSize="10sp" />
     </LinearLayout>

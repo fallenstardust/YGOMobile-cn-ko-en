@@ -182,6 +182,7 @@
     <string name="donation">寄付</string>
     <string name="refresh">リフレッシュ</string>
     <string name="select_deck">デッキを選択</string>
+    <string name="solo_mode">ソロモード</string>
     <string name="quit_deck_tip">変更を破棄しますか？</string>
     <string name="deck_delete_text">デッキ削除</string>
     <string name="question_keep_cur_deck">現在のカードを残す？</string>

@@ -90,7 +90,8 @@
                     android:background="@drawable/ygopro_selected_background"
                     android:gravity="center"
                     android:text="player2"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:textColorHint="#FF888888" />
 
                 <CheckBox
                     android:id="@+id/chk_player2_ready"
@@ -159,7 +160,8 @@
                         android:background="@drawable/ygopro_selected_background"
                         android:gravity="center"
                         android:text="player3"
-                        android:textColor="@color/white" />
+                        android:textColor="@color/white"
+                        android:textColorHint="#FF888888" />
 
                     <CheckBox
                         android:id="@+id/chk_player3_ready"
@@ -193,7 +195,8 @@
                         android:background="@drawable/ygopro_selected_background"
                         android:gravity="center"
                         android:text="player4"
-                        android:textColor="@color/white" />
+                        android:textColor="@color/white"
+                        android:textColorHint="#FF888888" />
 
                     <CheckBox
                         android:id="@+id/chk_player4_ready"
@@ -244,66 +247,17 @@
                 android:textColor="@color/white"
                 android:textSize="10sp" />
 
-            <LinearLayout
+            <!-- N1：solo 与非 solo 均由本按钮选己方卡组，席位代选接管对方卡组，恢复整行原始尺寸 -->
+            <Button
+                android:id="@+id/btn_deck_select"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="5dp">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tv_deck_self_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="我方卡组"
-                        android:textColor="@color/white"
-                        android:textSize="9sp"
-                        android:layout_marginBottom="2dp" />
-
-                    <Button
-                        android:id="@+id/btn_deck_select"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/btn_sci_fi_bg"
-                        android:gravity="center"
-                        android:text="@string/select_deck"
-                        android:textColor="@color/white"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="8dp">
-
-                    <TextView
-                        android:id="@+id/tv_deck_opponent_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="对方卡组"
-                        android:textColor="@color/white"
-                        android:textSize="9sp"
-                        android:layout_marginBottom="2dp" />
-
-                    <Button
-                        android:id="@+id/btn_deck_select_opponent"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/btn_sci_fi_bg"
-                        android:gravity="center"
-                        android:text="选择对方卡组"
-                        android:textColor="@color/white"
-                        android:textSize="10sp"
-                        android:visibility="gone" />
-                </LinearLayout>
-            </LinearLayout>
+                android:layout_marginTop="5dp"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:gravity="center"
+                android:text="@string/select_deck"
+                android:textColor="@color/white"
+                android:textSize="10sp" />
         </LinearLayout>
 
         <LinearLayout

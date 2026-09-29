@@ -246,8 +246,9 @@ public class CreateHostDialog {
         setSysText(root, R.id.tv_draw_count_label, 1233, "每回合抽卡：");
         setSysText(root, R.id.chk_no_check_deck, 1229, "不检查卡组");
         setSysText(root, R.id.chk_no_shuffle_deck, 1230, "不洗切卡组");
-        // 纯单人模式：自定义编号 1710（无 gframe 对应系统串，中文直取默认）
-        setSysText(root, R.id.chk_solo_mode, 1710, "纯单人模式");
+        // 纯单人模式：无 gframe 对应系统串，改走 Android 资源多语言（各 values-*/strings.xml 的 solo_mode）
+        View soloChk = root.findViewById(R.id.chk_solo_mode);
+        if (soloChk instanceof TextView) ((TextView) soloChk).setText(R.string.solo_mode);
         setSysText(root, R.id.tv_room_name_label, 1234, "房间名称：");
         setSysText(root, R.id.tv_room_pwd_label, 1235, "房间密码：");
         setSysTextOn(btnConfirm, 1211, "确认");
