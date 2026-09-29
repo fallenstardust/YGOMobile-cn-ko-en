@@ -573,7 +573,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         GLES30.glVertexAttribPointer(1, 2, GLES30.GL_FLOAT, false, 16, 8);
         GLES30.glBindVertexArray(0);
 
-        // 需求3：攻击弧 3D 逐顶点色程序与动态 VAO/VBO（CardOverlayRenderer 独占）
+        // 攻击弧 3D 逐顶点色程序与动态 VAO/VBO（CardOverlayRenderer 独占）
         overlays.initArrow();
 
         // 上下文（重新）创建：纹理缓存全部失效，重新按需加载；阶段标签键序列复位
@@ -604,7 +604,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         if (dt > 0.1f) dt = 0.1f;
         animTimeMs = System.currentTimeMillis();
 
-        // 需求2：帧率统计窗口，每累计满 1 秒把整窗口平均帧率回调到主线程
+        // 帧率统计窗口，每累计满 1 秒把整窗口平均帧率回调到主线程
         if (fpsWindowStartNs == 0) fpsWindowStartNs = now;
         fpsFrames++;
         long fpsElapsed = now - fpsWindowStartNs;

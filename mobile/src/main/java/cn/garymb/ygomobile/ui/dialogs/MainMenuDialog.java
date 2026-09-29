@@ -12,8 +12,13 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
 
 public class MainMenuDialog {
+
+    /** 系统字符串管理器：主菜单按钮文字从 strings.conf 取（复用 gframe 既有索引） */
+    private static final StringManager mStringManager = DataManager.get().getStringManager();
 
     private final YGOProActivity activity;
     private PopupWindow popupWindow;
@@ -77,6 +82,15 @@ public class MainMenuDialog {
     }
 
     private void bindButtons(View root) {
+        // 按钮文字走 gframe 既有系统字符串（对齐 game.cpp wMainMenu）：
+        // 1200 本地联机 / 1201 单人游戏 / 1202 观看录像 / 1204 编辑卡组 / 1273 系统设定 / 1210 退出
+        setSysText(root, R.id.tv_menu_lan, 1200, "本地联机");
+        setSysText(root, R.id.tv_menu_single, 1201, "单人游戏");
+        setSysText(root, R.id.tv_menu_replay, 1202, "观看录像");
+        setSysText(root, R.id.tv_menu_deck, 1204, "编辑卡组");
+        setSysText(root, R.id.tv_menu_settings, 1273, "系统设定");
+        setSysText(root, R.id.tv_menu_exit, 1210, "退出");
+
         root.findViewById(R.id.btn_menu_lan).setOnClickListener(v -> LanModeDialog.showLanModeDialog(activity));
         root.findViewById(R.id.btn_menu_single).setOnClickListener(v -> SingleModeDialog.showSingleModeDialog(activity));
         root.findViewById(R.id.btn_menu_replay).setOnClickListener(v -> ReplayModeDialog.showReplayModeDialog(activity));
@@ -86,6 +100,11 @@ public class MainMenuDialog {
             activity.getSoundManager().stopBGM();
             activity.finish();
         });
+    }
+
+    private void setSysText(View root, int viewId, int sysIdx, String def) {
+        TextView tv = root.findViewById(viewId);
+        if (tv != null) tv.setText(mStringManager.getSystemString(sysIdx, def));
     }
 
     private String getVersionText() {

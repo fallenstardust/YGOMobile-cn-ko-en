@@ -150,6 +150,10 @@ public class CardSearcherManager {
 
     public void setupLabels() {
         searchResultPrefix = mStringManager.getSystemString(1333, "搜索结果:");
+        // 筛选按钮文字复用 gframe 既有系统字符串（对齐 game.cpp wFilter）：
+        // btnEffectFilter 1326 效果 / btnMarksFilter 1374 连接标记
+        if (btnFilterEffect != null) btnFilterEffect.setText(mStringManager.getSystemString(1326, "效果"));
+        if (btnFilterMarks != null) btnFilterMarks.setText(mStringManager.getSystemString(1374, "连接标记"));
     }
 
     public void setupSearchRecyclerView(ImageLoader imageLoader, CardDragHelper dragHelper,

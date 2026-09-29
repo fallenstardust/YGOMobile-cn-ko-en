@@ -7,6 +7,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.util.SparseArray;
 import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -25,8 +27,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -213,8 +217,8 @@ public class YesOrNoDialog {
     /** 预设为“是/否询问”样式（对齐 gframe wQuery）：TYPE_YES_NO + 按钮“是”/“否” + 不可取消。 */
     public YesOrNoDialog asYesNo() {
         return setType(TYPE_YES_NO)
-                .setPositiveButtonText("是")
-                .setNegativeButtonText("否")
+                .setPositiveButtonText(sysText(1213, "是"))
+                .setNegativeButtonText(sysText(1214, "否"))
                 .setCancelable(false);
     }
 
@@ -250,6 +254,58 @@ public class YesOrNoDialog {
         return 0;
     }
 
+    /** 卡名→着色缓存：命中/未命中都缓存（未命中存 0），避免每次弹窗重复全表扫描 */
+    private static final Map<String, Integer> sCardNameColorCache = new HashMap<>();
+
+    /**
+     * 通用着色：扫描文本中每一处 "[...]"，若方括号内的文字恰好是某张卡的名字，
+     * 则按卡片类型给该卡名着色（只染名称本身，不含方括号）。
+     * 位置名/计数器名等匹配不到卡片的名字不着色，天然被排除。用于覆盖所有 YesOrNoDialog
+     * 显示的含 [%ls] 卡名的文本，而非仅个别已知卡名的场景。
+     */
+    private static CharSequence colorizeBracketedCardNames(CharSequence text) {
+        if (text == null) return null;
+        String s = text.toString();
+        SpannableStringBuilder sb = new SpannableStringBuilder(text);
+        int i = 0;
+        final int n = s.length();
+        while (i < n) {
+            if (s.charAt(i) == '[') {
+                int j = s.indexOf(']', i + 1);
+                if (j > i + 1) { // 至少含 1 个字符的非空卡名
+                    String name = s.substring(i + 1, j);
+                    int color = cardColorByName(name);
+                    if (color != 0) {
+                        sb.setSpan(new ForegroundColorSpan(color), i + 1, j,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                    i = j + 1;
+                    continue;
+                }
+            }
+            i++;
+        }
+        return sb;
+    }
+
+    /** 依卡名查类型着色：魔法=淡绿、陷阱=淡粉、怪兽=黄；非卡或未知返回 0（不着色） */
+    private static int cardColorByName(String name) {
+        Integer cached = sCardNameColorCache.get(name);
+        if (cached != null) return cached;
+        int color = 0;
+        SparseArray<Card> all = DataManager.get().getCardManager().getAllCards();
+        for (int i = 0; i < all.size(); i++) {
+            Card c = all.valueAt(i);
+            if (c == null || !name.equals(c.Name)) continue;
+            if (c.isType(CardType.Spell)) color = CARD_NAME_COLOR_SPELL;
+            else if (c.isType(CardType.Trap)) color = CARD_NAME_COLOR_TRAP;
+            else if (c.isType(CardType.Monster)) color = CARD_NAME_COLOR_MONSTER;
+            break;
+        }
+        sCardNameColorCache.put(name, color);
+        return color;
+    }
+
     private void build() {
         float density = context.getResources().getDisplayMetrics().density;
         int dialogWidth = (int) (280 * density);
@@ -267,7 +323,7 @@ public class YesOrNoDialog {
 
         if (title != null && !title.isEmpty()) {
             tvTitle.setVisibility(View.VISIBLE);
-            tvTitle.setText(title);
+            tvTitle.setText(colorizeBracketedCardNames(title));
         } else {
             tvTitle.setVisibility(View.GONE);
         }
@@ -280,7 +336,7 @@ public class YesOrNoDialog {
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT));
         } else {
-            tvMessage.setText(message);
+            tvMessage.setText(colorizeBracketedCardNames(message));
             if (messageBgColor != 0) {
                 tvMessage.setBackgroundColor(messageBgColor);
             }
@@ -494,7 +550,7 @@ public class YesOrNoDialog {
                     panel(activity).hideCancelOrFinishButton();
                     panel(activity).setCurrentDialog(null);
                 });
-        panel(activity).showCancelOrFinishButton("否");
+        panel(activity).showCancelOrFinishButton(sysText(1214, "否"));
         dialog.show();
     }
 

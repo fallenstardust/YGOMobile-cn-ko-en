@@ -31,6 +31,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tv_replay_info_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
@@ -57,6 +58,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tv_start_turn_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="播放起始于回合："

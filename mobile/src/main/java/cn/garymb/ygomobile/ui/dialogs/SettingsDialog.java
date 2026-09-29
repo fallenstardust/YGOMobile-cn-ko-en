@@ -111,6 +111,7 @@ public class SettingsDialog {
         chkBanList.setText(stringManager.getSystemString(1288, ""));
         Spinner spinnerBanList = rootLayout.findViewById(R.id.spinner_banlist);
         CheckBox chkMuteSpectators = rootLayout.findViewById(R.id.chkMuteSpectators);
+        chkMuteSpectators.setText(stringManager.getSystemString(1291, ""));
         CheckBox chkDisableChatting = rootLayout.findViewById(R.id.chkDisableChatting);
         chkDisableChatting.setText(stringManager.getSystemString(1290, ""));
         CheckBox chkAutoSaveReplay = rootLayout.findViewById(R.id.chkAutoSaveReplay);

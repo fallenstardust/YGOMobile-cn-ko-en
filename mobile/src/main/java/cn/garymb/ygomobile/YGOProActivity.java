@@ -804,6 +804,18 @@ public class YGOProActivity extends AppCompatActivity {
         showGameUI();
         dismissAllLanDialogs();
         isGameStarted = true;
+        // Solo 模式：席位上房主代选的卡组名优先写回 GameTopInfo，代替默认玩家昵称展示（
+        // 非 TAG solo 仅 slot0/1；TAG solo 同样取 slot0/1 写回两列、slot2/3 留在等待面板上）
+        if (engine != null && engine.soloMode && topInfoManager != null) {
+            String selfName = engine.soloSeatDeckNames[0];
+            String oppName = engine.soloSeatDeckNames[1];
+            if (selfName != null && !selfName.isEmpty()) {
+                topInfoManager.setPlayerDisplay(0, selfName, null);
+            }
+            if (oppName != null && !oppName.isEmpty()) {
+                topInfoManager.setPlayerDisplay(1, oppName, null);
+            }
+        }
     }
 
     /**
@@ -907,6 +919,10 @@ public class YGOProActivity extends AppCompatActivity {
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
         // 大厅聊天非决斗阶段：顶部面板隐藏，layout_game_right 升为整屏承载聊天区
         setGameTopPanelVisible(false);
+        // 大厅聊天尚未进入决斗：卡片详情列（include 根 layout_card_detail_panel）与侧边图标栏
+        // 均不得展示，修复横屏下进入 PlayerWaitingDialog 时 CardDetailPanel 错误可见
+        //（旋转重建后 bindViews 会重绑默认 VISIBLE 的新视图树，因此需显式 hide）
+        if (cardDetailPanel != null) cardDetailPanel.hide();
         // 大厅聊天期间隐藏决斗场 GL 渲染（GLSurfaceView 置 GONE，决斗开始时恢复）
         View gameFieldView = findViewById(R.id.game_field_view);
         if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);

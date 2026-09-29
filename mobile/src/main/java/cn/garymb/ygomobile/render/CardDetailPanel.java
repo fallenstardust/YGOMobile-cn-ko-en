@@ -40,6 +40,10 @@ public class CardDetailPanel {
     private ImageLoader imageLoader;
 
     private LinearLayout layout;
+    /** include 根（activity_ygo_game.xml 中 layout_card_detail_panel）：
+     *  本字段与 layout 并行控制，避免 PlayerWaitingDialog 进入时（hideGameUI）
+     *  仅 layout_card_detail 子列隐去、左侧侧图标栏所在根仍默认可见。 */
+    private LinearLayout panelRoot;
     private ImageView ivCardImage;
     private TextView tvCardName, tvCardSetname, tvCardAttr, tvCardLevel, tvCardDesc;
     private ScrollView svCardDesc;
@@ -90,6 +94,7 @@ public class CardDetailPanel {
 
     public void bindViews() {
         layout = activity.findViewById(R.id.layout_card_detail);
+        panelRoot = activity.findViewById(R.id.layout_card_detail_panel);
         ivCardImage = activity.findViewById(R.id.iv_card_image);
         tvCardName = activity.findViewById(R.id.tv_card_name);
         tvCardSetname = activity.findViewById(R.id.tv_card_setname);
@@ -113,6 +118,13 @@ public class CardDetailPanel {
         btnShuffleHand = activity.findViewById(R.id.btn_shuffle_hand);
         btnCancelOrFinish = activity.findViewById(R.id.btn_cancel_or_finish);
 
+        // 投降/洗切手卡按钮文本复用 gframe 既有系统字符串（1351 投降、1297 洗切手卡），
+        // XML 中的中文仅作兜底，切换语言后由对应语言覆盖
+        if (btnSurrender != null)
+            btnSurrender.setText(mStringManager.getSystemString(1351, "投降"));
+        if (btnShuffleHand != null)
+            btnShuffleHand.setText(mStringManager.getSystemString(1297, "洗切手卡"));
+
         layoutReplayControl = activity.findViewById(R.id.layout_replay_control);
         btnReplayPlay = activity.findViewById(R.id.btn_replay_play);
         btnReplayPause = activity.findViewById(R.id.btn_replay_pause);
@@ -121,6 +133,12 @@ public class CardDetailPanel {
         btnReplayShuffle = activity.findViewById(R.id.btn_replay_shuffle);
         btnReplayQuit = activity.findViewById(R.id.btn_replay_quit);
         layoutDeckControl = activity.findViewById(R.id.layout_deck_control);
+
+        // 录像控制按钮文字复用 gframe 既有系统字符串（对齐 game.cpp wReplayControl）：
+        // 播放 1343 / 暂停 1344 / 下一步 1345 / 上一步 1360 / 切换视角 1346 / 退出 1347
+        applyReplayButtonTitles();
+        // 时点三键文字在此先行着色（对齐 game.cpp 1292/1293/1294），MSG_NEW_TURN 的 showChainButtons 会再次刷新
+        applyChainButtonTitles();
 
         // 对齐 game.cpp L1357-1359：三个时点按钮创建后默认隐藏，MSG_NEW_TURN 时才显示
         hideChainButtons();
@@ -334,6 +352,7 @@ public class CardDetailPanel {
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
         }
+        if (panelRoot != null) panelRoot.setVisibility(View.VISIBLE);
         if (ivCardImage != null) {
             Bitmap cover = getCoverBitmap();
             if (cover != null) {
@@ -379,6 +398,7 @@ public class CardDetailPanel {
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
         }
+        if (panelRoot != null) panelRoot.setVisibility(View.VISIBLE);
 
         bindCardImage(code);
         bindCardName(cardData, code);
@@ -406,6 +426,7 @@ public class CardDetailPanel {
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
         }
+        if (panelRoot != null) panelRoot.setVisibility(View.VISIBLE);
 
         bindCardImage(imageCode);
         bindCardNameByGameCode(card);
@@ -423,6 +444,10 @@ public class CardDetailPanel {
         currentCardCode = -1;
         if (layout != null) {
             layout.setVisibility(View.GONE);
+        }
+        // 同时收起 include 根，修复横屏下 PlayerWaitingDialog 进入时左侧侧栏图标仍默认可见
+        if (panelRoot != null) {
+            panelRoot.setVisibility(View.GONE);
         }
     }
 
@@ -455,6 +480,7 @@ public class CardDetailPanel {
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
         }
+        if (panelRoot != null) panelRoot.setVisibility(View.VISIBLE);
         if (ivCardImage != null) {
             ivCardImage.setImageResource(R.drawable.unknown);
         }
@@ -633,6 +659,23 @@ public class CardDetailPanel {
         if (btnAvailableTiming != null) btnAvailableTiming.setSelected(chainWhenAvail);
     }
 
+    /** 按钮文字取自 strings.conf（对齐 game.cpp L1343/1344/1345/1360/1346/1347 的录像控制按钮） */
+    private void applyReplayButtonTitles() {
+        mStringManager = DataManager.get().getStringManager();
+        if (btnReplayPlay != null)
+            btnReplayPlay.setText(mStringManager.getSystemString(1343, "播放"));
+        if (btnReplayPause != null)
+            btnReplayPause.setText(mStringManager.getSystemString(1344, "暂停"));
+        if (btnReplayNext != null)
+            btnReplayNext.setText(mStringManager.getSystemString(1345, "下一步"));
+        if (btnReplayLast != null)
+            btnReplayLast.setText(mStringManager.getSystemString(1360, "上一步"));
+        if (btnReplayShuffle != null)
+            btnReplayShuffle.setText(mStringManager.getSystemString(1346, "切换视角"));
+        if (btnReplayQuit != null)
+            btnReplayQuit.setText(mStringManager.getSystemString(1347, "退出"));
+    }
+
     /** 按钮文字取自 strings.conf（对齐 game.cpp L1348/1350/1352 的 GetSysString(1292/1293/1294)） */
     private void applyChainButtonTitles() {
         mStringManager = DataManager.get().getStringManager();
@@ -788,10 +831,13 @@ public class CardDetailPanel {
 
     public void updateCancelOrFinishButton(boolean ready, boolean cancelable, boolean hasSelection) {
         if (btnCancelOrFinish == null) return;
+        mStringManager = DataManager.get().getStringManager();
         if (ready) {
-            setCancelOrFinishShown(true, "完成选择");
+            // 完成选择（对齐 game.cpp 1296）
+            setCancelOrFinishShown(true, mStringManager.getSystemString(1296, "完成选择"));
         } else if (cancelable && !hasSelection) {
-            setCancelOrFinishShown(true, "取消");
+            // 取消操作（对齐 game.cpp 1295）
+            setCancelOrFinishShown(true, mStringManager.getSystemString(1295, "取消操作"));
         } else {
             setCancelOrFinishShown(false, null);
         }
@@ -899,6 +945,14 @@ public class CardDetailPanel {
     }
 
     // === 整体可见性 ===
+    
+    public void stopAntsHighlightImmediately() {
+        if (antsHighlight != null) {
+            antsHighlight.stop();
+            btnCancelOrFinish.setForeground(null);
+            antsHighlight = null;
+        }
+    }
 
     public void onGameUIShown() {
         // 每次进入决斗/回放 UI 先清掉上一场残留的时点三键/洗切手卡/录像控制条，

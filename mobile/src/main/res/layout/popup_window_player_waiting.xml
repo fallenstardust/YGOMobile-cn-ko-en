@@ -237,34 +237,73 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tv_deck_select_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="卡组选择："
                 android:textColor="@color/white"
                 android:textSize="10sp" />
 
-            <Button
-                android:id="@+id/btn_deck_select"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:gravity="center"
-                android:text="@string/select_deck"
-                android:textColor="@color/white"
-                android:textSize="10sp" />
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="5dp">
 
-            <Button
-                android:id="@+id/btn_deck_select_opponent"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:gravity="center"
-                android:text="选择对方卡组"
-                android:textColor="@color/white"
-                android:textSize="10sp"
-                android:visibility="gone" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_deck_self_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="我方卡组"
+                        android:textColor="@color/white"
+                        android:textSize="9sp"
+                        android:layout_marginBottom="2dp" />
+
+                    <Button
+                        android:id="@+id/btn_deck_select"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/btn_sci_fi_bg"
+                        android:gravity="center"
+                        android:text="@string/select_deck"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:id="@+id/tv_deck_opponent_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="对方卡组"
+                        android:textColor="@color/white"
+                        android:textSize="9sp"
+                        android:layout_marginBottom="2dp" />
+
+                    <Button
+                        android:id="@+id/btn_deck_select_opponent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/btn_sci_fi_bg"
+                        android:gravity="center"
+                        android:text="选择对方卡组"
+                        android:textColor="@color/white"
+                        android:textSize="10sp"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout

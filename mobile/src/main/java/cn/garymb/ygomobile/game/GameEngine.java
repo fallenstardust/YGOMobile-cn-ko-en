@@ -266,6 +266,12 @@ public class GameEngine {
      *  tag 模式该队 tag_player 在打时取队友名 nameTag（对齐 drawing.cpp 的 hostname/hostname_tag 分支） */
     public String displayName(int localIdx) {
         if (localIdx < 0 || localIdx >= playerInfos.length) return "";
+        // Solo 模式下优先取等待面板中房主为席位代选的卡组名（slot0=我方、slot1=对方）；
+        // 未选卡时回落到协议回显的玩家昵称，避免空列
+        if (soloMode && localIdx < soloSeatDeckNames.length
+                && soloSeatDeckNames[localIdx] != null && !soloSeatDeckNames[localIdx].isEmpty()) {
+            return soloSeatDeckNames[localIdx];
+        }
         PlayerInfo info = playerInfos[localIdx];
         if (field.isTag && localIdx < tagPlayer.length && tagPlayer[localIdx]
                 && info.nameTag != null && !info.nameTag.isEmpty()) {
@@ -942,6 +948,10 @@ public class GameEngine {
      * 中的 mode 字段置位；不影响 replayMode/isSingleMode 的现有含义。
      */
     public boolean soloMode = false;
+    /** Solo 模式下四个席位展示的卡组名（index 0..3）：由 PlayerWaitingDialog 在房主为
+     *  席位 1/2/3 选卡时回填，enterDuelingUI 会优先用 slot0/slot1 名称写回 GameTopInfo，
+     *  代替默认玩家昵称。非 solo 模式不写入。 */
+    public final String[] soloSeatDeckNames = new String[]{"", "", "", ""};
     /** 回放快进重排中（undo/restart/跳回合）：drawspec 覆盖层与长动画派发丢弃，配合
      *  GameField.instantPlace 即时落位与音效静默，令闸门不阻塞、队列单帧排空 */
     public boolean replaySkip = false;

@@ -95,6 +95,17 @@ public class LanModeDialog {
         Button btnExitLan = customView.findViewById(R.id.btn_exit_lan);
         ListView lvHostList = customView.findViewById(R.id.lv_host_list);
 
+        // 行内标签与“加入游戏”按钮文字统一复用 gframe 既有系统字符串（对齐 game.cpp wLanWindow），
+        // XML 中的 @string 与中文仅作兵底：
+        // 昵称： 1220 / 主机信息： 1221 / 房间密码： 1222 / 加入游戏 1223
+        android.widget.TextView tvNickLabel = customView.findViewById(R.id.tv_lan_nickname_label);
+        android.widget.TextView tvHostInfoLabel = customView.findViewById(R.id.tv_lan_host_info_label);
+        android.widget.TextView tvRoomPwdLabel = customView.findViewById(R.id.tv_lan_room_password_label);
+        if (tvNickLabel != null) tvNickLabel.setText(mStringManager.getSystemString(1220, "昵称："));
+        if (tvHostInfoLabel != null) tvHostInfoLabel.setText(mStringManager.getSystemString(1221, "主机信息："));
+        if (tvRoomPwdLabel != null) tvRoomPwdLabel.setText(mStringManager.getSystemString(1222, "房间密码："));
+        if (btnJoinGame != null) btnJoinGame.setText(mStringManager.getSystemString(1223, "加入游戏"));
+
         discoveryManager = new LanDiscoveryManager();
         hostListAdapter = new HostListAdapter(context);
         lvHostList.setAdapter(hostListAdapter);
@@ -135,6 +146,10 @@ public class LanModeDialog {
                 listener.onCreateHostRequested(etNickname.getText().toString().trim());
             }
         });
+
+        // 建主/退出按钮文本复用 gframe 既有系统字符串（1224 局域网建主、1210 退出）
+        btnCreateHost.setText(mStringManager.getSystemString(1224, "局域网建主"));
+        btnExitLan.setText(mStringManager.getSystemString(1210, "退出"));
 
         btnExitLan.setOnClickListener(v -> hide());
 

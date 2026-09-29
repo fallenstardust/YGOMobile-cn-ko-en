@@ -357,6 +357,14 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private void setupButtons() {
         if (btnSave != null) btnSave.setText(mStringManager.getSystemString(1302, "保存"));
         if (btnSaveAs != null) btnSaveAs.setText(mStringManager.getSystemString(1303, "另存"));
+        // 卡组操作按钮文字复用 gframe 既有系统字符串（对齐 game.cpp wDeckEdit 各按钮）：
+        // 洗牌(打乱) 1307 / 排序 1305 / 清空 1304 / 删除 1308 / 退出编辑 1306
+        // （btnDeckManager 文本由 updateDeckManagerButtonText 动态维护，缺省用 1460 卡组管理）
+        if (btnShuffle != null) btnShuffle.setText(mStringManager.getSystemString(1307, "打乱"));
+        if (btnSort != null) btnSort.setText(mStringManager.getSystemString(1305, "排序"));
+        if (btnClear != null) btnClear.setText(mStringManager.getSystemString(1304, "清空"));
+        if (btnDelete != null) btnDelete.setText(mStringManager.getSystemString(1308, "删除"));
+        if (btnExit != null) btnExit.setText(mStringManager.getSystemString(1306, "退出编辑"));
         setClickListener(btnExit, v -> terminate());
         setClickListener(btnShuffle, v -> shuffleDeck());
         setClickListener(btnSort, v -> sortDeck());

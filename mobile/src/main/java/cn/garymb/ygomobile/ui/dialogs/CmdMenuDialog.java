@@ -753,18 +753,18 @@ public class CmdMenuDialog {
         return c;
     }
 
-    /** 标题标注是哪一方（card.controler 已是视角侧，0=我方） */
+    /** 标题标注是哪一方（card.controler 已是视角侧，0=我方）：文字走系统字符串 102/103 */
     private static String sidePrefix(int controler) {
-        return controler == 0 ? "我方" : "对方";
+        return controler == 0 ? sysString(102, "我方") : sysString(103, "对方");
     }
 
-    /** 卡组/额外/墓地/除外区名称（与 YGOProActivity.getLocationName 一致） */
+    /** 卡组/额外/墓地/除外区名称（走系统字符串 1000/1006/1004/1005，与 gframe STRING_LOCATION 一致） */
     private static String pileName(int location) {
         switch (location) {
-            case 0x01: return "卡组";
-            case 0x40: return "额外卡组";
-            case 0x10: return "墓地";
-            case 0x20: return "除外区";
+            case 0x01: return sysString(1000, "卡组");
+            case 0x40: return sysString(1006, "额外卡组");
+            case 0x10: return sysString(1004, "墓地");
+            case 0x20: return sysString(1005, "除外区");
             default: return "卡片";
         }
     }

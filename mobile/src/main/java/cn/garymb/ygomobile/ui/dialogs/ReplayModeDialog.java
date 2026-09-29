@@ -90,6 +90,8 @@ public class ReplayModeDialog {
         btnRenameReplay = customView.findViewById(R.id.btn_rename_replay);
         btnExitReplay = customView.findViewById(R.id.btn_exit_replay);
 
+        setupLabels(customView);
+
         replayAdapter = new SimpleListAdapter(context);
         refreshReplayList();
         lvReplayList.setAdapter(replayAdapter);
@@ -193,6 +195,21 @@ public class ReplayModeDialog {
 
         anchorView.setVisibility(View.GONE);
         draggableHelper.showPopup(popupWindow, anchorView);
+    }
+
+    /** 界面文字统一复用 gframe 既有系统字符串（对齐 game.cpp wReplay），XML 中的中文仅作兜底 */
+    private void setupLabels(View root) {
+        ocgcore.StringManager sm = DataManager.get().getStringManager();
+        TextView tvInfoTitle = root.findViewById(R.id.tv_replay_info_title);
+        if (tvInfoTitle != null) tvInfoTitle.setText(sm.getSystemString(1349, "录像信息："));
+        TextView tvStartTurn = root.findViewById(R.id.tv_start_turn_label);
+        if (tvStartTurn != null) tvStartTurn.setText(sm.getSystemString(1353, "播放起始于回合："));
+        if (btnShareReplay != null) btnShareReplay.setText(sm.getSystemString(1368, "分享录像"));
+        if (btnExtractDeck != null) btnExtractDeck.setText(sm.getSystemString(1369, "提取卡组"));
+        if (btnDeleteReplay != null) btnDeleteReplay.setText(sm.getSystemString(1361, "删除录像"));
+        if (btnLoadReplay != null) btnLoadReplay.setText(sm.getSystemString(1348, "载入录像"));
+        if (btnRenameReplay != null) btnRenameReplay.setText(sm.getSystemString(1362, "重命名"));
+        if (btnExitReplay != null) btnExitReplay.setText(sm.getSystemString(1347, "退出"));
     }
 
     /** 若存在退出回放前播放过的录像且文件仍在列表中，则还原其选中与信息展示 */

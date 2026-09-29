@@ -106,7 +106,7 @@ public class CardDisplayDialog {
     private CardStatusTipHelper tipHelper;
 
     private List<CardItem> cards = new ArrayList<>();
-    private String title = "卡片确认";
+    private String titlePrefix = "卡片确认"; // 默认区域名称前缀（不依赖 conf，实际调用均会 setTitle 覆盖）
     private int pageOffset = 0;
     private int localPlayer = -1;
     /**
@@ -136,8 +136,16 @@ public class CardDisplayDialog {
     }
 
     public CardDisplayDialog setTitle(String title) {
-        this.title = title;
+        this.titlePrefix = title;
+        updateTitle();
         return this;
+    }
+
+    /** 更新标题为「区域名称 (卡片数量)」格式 */
+    private void updateTitle() {
+        if (tvTitle != null) {
+            tvTitle.setText(titlePrefix + "(" + cards.size() + ")");
+        }
     }
 
     public CardDisplayDialog setCards(List<CardItem> cardList) {
@@ -151,6 +159,7 @@ public class CardDisplayDialog {
             }
         }
         this.pageOffset = 0;
+        updateTitle(); // 卡片数量变化时更新标题
         return this;
     }
 
@@ -177,7 +186,9 @@ public class CardDisplayDialog {
     }
 
     /** 安装实时观察 supplier：弹窗展示期间，field 变化会触发重新拉取列表并就地刷新。
-     *  仅 CmdMenuDialog 堆叠区查看列表入口使用（观战/录像），普通确认弹窗不安装。 */
+     *  仅 CmdMenuDialog 堆叠区查看列表入口使用（观战/录像），普通确认弹窗不安装。
+     *  同时会在每次 pullFresh() 后自动更新标题中的卡片数量统计。
+     */
     public CardDisplayDialog observeLive(CardItemSupplier supplier) {
         this.liveSupplier = supplier;
         return this;
@@ -205,6 +216,8 @@ public class CardDisplayDialog {
             }
         }
         if (isShowing()) refreshSlots();
+        // 实时更新标题中的卡片数量
+        updateTitle();
     }
 
     private void build() {
@@ -229,7 +242,7 @@ public class CardDisplayDialog {
         tvPositions[4] = root.findViewById(R.id.tv_display_pos_4);
         ivCards[4] = root.findViewById(R.id.iv_display_4);
 
-        tvTitle.setText(title);
+        updateTitle();
         popupWindow = new PopupWindow(root,
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));

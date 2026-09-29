@@ -31,6 +31,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_menu_lan"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -57,6 +58,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_menu_single"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -83,6 +85,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_menu_replay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -109,6 +112,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_menu_deck"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -135,6 +139,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_menu_settings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -160,6 +165,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_menu_exit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"

@@ -81,16 +81,26 @@ public class SingleModeDialog {
         TabLayout tabLayoutMode = customView.findViewById(R.id.tab_layout_mode);
         ListView lvBotList = customView.findViewById(R.id.lv_bot_list);
         TextView tvBotDesc = customView.findViewById(R.id.tv_bot_desc);
+        TextView tvBotInfoHeader = customView.findViewById(R.id.tv_bot_info_header);
         Button btnSelectDeck = customView.findViewById(R.id.btn_select_deck);
         Spinner spinnerRule = customView.findViewById(R.id.spinner_rule);
         CheckBox chkAiOnlyScissors = customView.findViewById(R.id.chk_ai_only_scissors);
         CheckBox chkNoCheckDeck = customView.findViewById(R.id.chk_no_check_deck);
         CheckBox chkNoShuffleDeck = customView.findViewById(R.id.chk_no_shuffle_deck);
         CheckBox chkReturnToTop = customView.findViewById(R.id.chk_return_to_top);
+        // 人机/残局设置项与按钮文字统一复用 gframe 既有系统字符串（对齐 game.cpp tabBot / wSingle）：
+        // 1382 人机信息：(tvBotInfoHeader) / 1384 AI只出剪刀(chkBotHand) / 1229 不检查卡组 / 1230 不洗切卡组
+        // / 1238 不洗切时回卡组改为回顶端 / 1211 确定(btnStartBot) / 1210 退出(btnBotCancel)
+        if (tvBotInfoHeader != null) tvBotInfoHeader.setText(mStringManager.getSystemString(1382, "人机信息："));
+        chkAiOnlyScissors.setText(mStringManager.getSystemString(1384, "AI只出剪刀"));
+        chkNoCheckDeck.setText(mStringManager.getSystemString(1229, "不检查卡组"));
+        chkNoShuffleDeck.setText(mStringManager.getSystemString(1230, "不洗切卡组"));
         // 设置残局模式的 checkbox 文本
         chkReturnToTop.setText(mStringManager.getSystemString(1238, "不洗切时回卡组改为回顶端"));
         Button btnStartBotDuel = customView.findViewById(R.id.btn_start_bot_duel);
         Button btnExitBot = customView.findViewById(R.id.btn_exit_bot);
+        btnStartBotDuel.setText(mStringManager.getSystemString(1211, "确定"));
+        btnExitBot.setText(mStringManager.getSystemString(1210, "退出"));
 
         List<SimpleSpinnerItem> ruleItems = new ArrayList<>();
         ruleItems.add(new SimpleSpinnerItem(5, mStringManager.getSystemString(1264, "大师规则（2020）")));
@@ -191,7 +201,7 @@ public class SingleModeDialog {
                     lvBotList.setAdapter(botAdapter);
                     botAdapter.setSelectedPosition(-1);
                     puzzleAdapter.setSelectedPosition(-1);
-                    tvBotDesc.setText("请选择一个AI查看信息");
+                    tvBotDesc.setText(mStringManager.getSystemString(1382, "请选择一个AI查看信息"));
                     btnSelectDeck.setVisibility(View.INVISIBLE);
                     btnStartBotDuel.setEnabled(false);
                     btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
