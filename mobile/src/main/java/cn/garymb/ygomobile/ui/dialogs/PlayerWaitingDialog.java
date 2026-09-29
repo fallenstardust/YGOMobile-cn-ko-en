@@ -1027,9 +1027,23 @@ public class PlayerWaitingDialog {
         // solo 时席位自行接收选卡交互，非 solo 时则当任何玩家自己发送 STC_DECK_UPDATE。
         if (solo) {
             setupSoloSeatClickHandlers();
+            // 席位 0（房主自身）的卡组路径此前只在 onDeckSelected 且当时 soloMode 已为 true 时
+            // 写入；而本方法由建主流程在 show()（含 loadLastDeckInfo）之后才调用，沿用“上次卡组”
+            // 开局时房主不会再点一次选卡，soloSeatDeckPaths[0] 便恒为空 → soloAllSeatsHaveDeck()
+            // 永假 → 全部席位准备后开始按钮仍永久置灰。故在此把已加载的 currentDeck* 回填到席位 0。
+            if (!soloSeatHasDeck(0) && currentDeckPath != null && !currentDeckPath.isEmpty()) {
+                soloSeatDeckPaths[0] = currentDeckPath;
+                soloSeatDeckNames[0] = currentDeckName == null ? "" : currentDeckName;
+                // 席位“准备”= 已选卡组：回填后同步打勾，避免视觉上“席位 0 没准备”
+                setSoloSeatChecked(0, true);
+                if (listener != null)
+                    listener.onSoloSeatDeckUpdated(0, soloSeatDeckNames[0], soloSeatDeckPaths[0]);
+            }
         } else {
             clearSoloSeatClickHandlers();
         }
+        // 无论回填是否发生都要重估：非 solo→solo 的切换本身就会改变判定分支
+        updateStartButtonState();
     }
 
     /** Solo 模式下给 etPwPlayer2/3/4Name 三个席位名字框安装点击选卡回调：

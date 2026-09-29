@@ -156,34 +156,27 @@ public class GameField {
         /** 卡组抖动动画进行中标记（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650 的 5 轮抖动，
          *  轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startDeckShake） */
         public boolean is_deck_shake;
-        /** 洗手卡聚拢/翻面动画进行中标记（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699，
+        /** 洗手卡聚拢动画进行中标记（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699，
          *  轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startHandShuffle） */
         public boolean is_hand_shuffle;
         /** 卡组抖动每轮随机幅度（对应 C++ 每轮 dPos = real_dist(rnd)*0.4-0.2，3 帧总位移 = 3×dPos） */
         public final float[] deckShakeDx = new float[5];
-        /** 洗手卡关键帧基准：起始姿态 / 新布局落点 / 聚拢中线位置与翻面终值 */
-        public float hsFromX, hsFromY, hsFromZ, hsFromRotX, hsFromRotY;
+        /** 洗手卡关键帧基准：新布局落点与聚拢中线位置 */
         public float hsToX, hsToY, hsToZ, hsToRotX, hsToRotY;
-        public float hsGatherX, hsFlipRotX, hsFlipRotY;
-        /** 洗手卡是否含对手手卡翻面段（duelclient.cpp L2666-2679：player==1 且非回放非单机） */
-        public boolean hsFlip;
+        public float hsGatherX;
         /**
-         * 卡片经效果入手时的「揭示」动画进行中标记——在洗切之前先把入手的卡亮出到手牌
-         * 并施加行进蚂蚁线高亮：对方卡（flip=true）按 duelclient.cpp MSG_SHUFFLE_HAND L2666-2679
-         * 的翻面语义从卡背转到正面展示，己方卡本就正面（不翻给对面看）仅停留高亮同样时长；
-         * 展示（含蚂蚁线）结束后才对该侧手牌整体播放洗切。关键帧轨迹由 GameFieldMotion
-         * .updateListAnimation 的 is_hand_reveal 段推进，见 startHandReveal。
+         * 手卡翻面进度：1=正面（贴卡面）、0=卡背、-1=尚未参与翻面（首次落位按目标值直接吸附）。
+         * <p>目标值恒由卡码决定（{@code code != 0} → 1），GameFieldMotion.updateHandFlip 每帧以
+         * 0.2/帧靠拢（5 帧翻完，等价 duelclient.cpp MSG_SHUFFLE_HAND L2672 的 dRot 步进
+         * 1.322/5 与 π/5）。之所以是渲染级进度而非 curRot*：手卡走相机 billboard
+         *（GameFieldView.buildCardModel 手卡分支不读 curRotX/Y/Z），任何旋转关键帧对手卡都是视觉
+         * 空转，只有本值驱动的 X 轴挤压 + 正/背面贴图切换才能真正「把卡翻过来」。
+         * <p>卡片经效果入手时（DeckHandMotionManager.applyMoveToHandReveal）把<b>对方</b>手卡置 0，
+         * 于是随真实卡码到达（服务端已对 MSG_MOVE→HAND 解除遮蔽）从卡背翻到正面供对手确认；
+         * 己方卡不置 0，本就正面、不翻给对方看。洗切 / 阶段切换把遮蔽视图的卡码清零后，
+         * 本值自动翻回卡背。
          */
-        public boolean is_hand_reveal;
-        /** 揭示是否含翻面段（仅对方卡为 true；己方卡本就正面，不翻动） */
-        public boolean hrFlip;
-        /** 揭示结束后回归的布局姿态（对方 code==0 为卡背、己方 code!=0 为正面）与手牌落点 */
-        public float hrLayoutRotX, hrLayoutRotY, hrLayoutRotZ;
-        public float hrToX, hrToY, hrToZ;
-        /** 揭示翻面目标：手牌正面姿态（rotX=-0.798056、rotY=0，对齐 getCardLocation code!=0 分支） */
-        public float hrFaceUpRotX, hrFaceUpRotY;
-        /** 揭示关键帧总帧数（停顿/翻入 + 展示停留 + 翻出） */
-        public int hrTotal;
+        public float handFlipT = -1f;
 
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
@@ -539,9 +532,9 @@ public class GameField {
     public List<ClientCard> selectableCards = new ArrayList<>();
     public List<ClientCard> selectedCards = new ArrayList<>();
     /**
-     * 正在「揭示」展示的手牌卡——由 DeckHandMotionManager.applyMoveToHandShuffle 在洗切前
-     * 加入入手卡，SelectionOutlineRenderer.drawCardSelectOutlines 对其绘制行进蚂蚁线（不受
-     * is_selectable 会话门控，避免污染真实可选卡会话）；展示结束/洗切启动前清空。
+     * 正在「揭示」展示的手牌卡——由 DeckHandMotionManager.applyMoveToHandReveal 加入入手卡，
+     * SelectionOutlineRenderer.drawCardSelectOutlines 对其绘制行进蚂蚁线（不受
+     * is_selectable 会话门控，避免污染真实可选卡会话）；展示结束 / 洗切接管时清空。
      * 复用本列表为灵摆召唤的两张刻度卡按左右次序绘制蚂蚁线预演。
      */
     public final List<ClientCard> revealHighlightCards = new ArrayList<>();
@@ -951,12 +944,12 @@ public class GameField {
         motion.startDeckShake(pcard);
     }
 
-    /** 洗手卡聚拢/翻面单动画（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699） */
-    public void startHandShuffle(ClientCard pcard, boolean flip) {
-        motion.startHandShuffle(pcard, flip);
+    /** 洗手卡聚拢单动画（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699） */
+    public void startHandShuffle(ClientCard pcard) {
+        motion.startHandShuffle(pcard);
     }
 
-    /** 卡片经效果入手时的揭示动画（翻面到正面/停留展示，展示结束后再洗切） */
+    /** 卡片经效果入手的揭示：对方手卡从卡背翻到正面供对手确认，己方卡仅亮出不翻面 */
     public void startHandReveal(ClientCard pcard, boolean flip) {
         motion.startHandReveal(pcard, flip);
     }

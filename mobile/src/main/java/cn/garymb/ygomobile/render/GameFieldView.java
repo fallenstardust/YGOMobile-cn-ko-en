@@ -706,7 +706,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     /**
      * 构建卡片模型矩阵（drawCard 与选择轮廓共用，避免姿态计算分叉）：
-     * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)
+     * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)；
+     * 手卡额外按 handFlipT 做 X 轴挤压以呈现「绕竖轴翻面」的视觉效果
      */
     void buildCardModel(GameField.ClientCard c, float[] out) {
         buildCardModel(c, out, 0f);
@@ -719,7 +720,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
                     handY(c) + cam.mCamRot[5] * handLift(c), c.curZ + handLiftZ(c));
             Matrix.multiplyMM(mModelTmp, 0, out, 0, cam.mCamRot, 0);
             System.arraycopy(mModelTmp, 0, out, 0, 16);
-            Matrix.scaleM(out, 0, FieldGeometry.CARD_W, FieldGeometry.CARD_H, 1f);
+            Matrix.scaleM(out, 0, FieldGeometry.CARD_W * handFlipSqueeze(c), FieldGeometry.CARD_H, 1f);
         } else {
             boolean isPile = c.location == 0x01 || c.location == 0x10
                     || c.location == 0x20 || c.location == 0x40;
@@ -731,6 +732,21 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotZ), 0f, 0f, 1f);
             Matrix.scaleM(out, 0, FieldGeometry.CARD_W, FieldGeometry.CARD_H, 1f);
         }
+    }
+
+    /**
+     * 手卡翻面的 X 轴挤压系数：handFlipT 由 1（正面）→ 0.5（侧立）→ 0（卡背）对应绕竖轴
+     * 转半圈的投影宽度，先压到 0 再展开；留 0.06 下限避免完全退化成一条线（billboard 无厚度）。
+     * handFlipT<0（尚未参与翻面）不挤压。
+     */
+    static float handFlipSqueeze(GameField.ClientCard c) {
+        if (c.handFlipT < 0f) return 1f;
+        return Math.max(0.06f, Math.abs(c.handFlipT - 0.5f) * 2f);
+    }
+
+    /** 手卡当前该贴卡面还是卡背：翻面进度过半才算正面（未参与翻面时按卡码直接判定） */
+    static boolean handShowsFace(GameField.ClientCard c) {
+        return c.handFlipT < 0f || c.handFlipT >= 0.5f;
     }
 
     private void drawFieldCards(GameField f) {
@@ -819,13 +835,14 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
         int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
         if (isHand) {
-            // 手卡为 billboard，恒正面朝向相机。
-            // 对齐 client_field.cpp GetCardLocation 手卡分支 L866-895：手卡正/背面仅由
-            // code 决定（code!=0 → 正面），与 controler/position 无关——录像由本地引擎
-            // 重跑产生消息，双方手卡 code 均已知 → 对方手卡自然正面展示；
-            // 实时对局服务端已把对方手卡 code 清零（DuelAnalyzer MSG_DRAW/MSG_MOVE/refreshHand），
-            // 未泄露信息仍为卡背
-            if (code > 0) {
+            // 手卡为 billboard，恒正面朝向相机，故正/背面不能靠面朝判定，只能由翻面进度
+            // handFlipT 与卡码共同决定：翻过半（>=0.5）才贴卡面，翻面途中先绘卡背再绘卡面，
+            // 与 buildCardModel 的 X 轴挤压合成「把卡翻过来」的完整过程。
+            // 对齐 client_field.cpp GetCardLocation 手卡分支 L866-895：手卡正/背面最终仅由
+            // code 决定（code!=0 → 正面）——录像由本地引擎重跑产生消息，双方手卡 code 均已知
+            // → 对方手卡自然正面展示；实时对局服务端已把对方暗手卡 code 清零（DuelAnalyzer
+            // MSG_DRAW/MSG_SHUFFLE_HAND/refreshHand），未解除遮蔽的卡仍为卡背。
+            if (code > 0 && handShowsFace(c)) {
                 int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
                 if (tex > 0) {
                     drawQuadTex(mModel, tex, alpha, 0f, 1f);

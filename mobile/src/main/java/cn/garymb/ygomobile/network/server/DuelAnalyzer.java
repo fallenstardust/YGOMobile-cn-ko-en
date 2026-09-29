@@ -445,9 +445,17 @@ final class DuelAnalyzer implements YGOProtocol {
                     if ((cl & EngineMessage.LOCATION_ONFIELD) != 0) {
                         cp = EngineMessage.stripRevealFlag(msg, body + 8);
                     }
+                    // 效果把手牌外的卡加入手卡（非抽卡入手）必须向对手公开卡码：
+                    // PSCT 与实卡规则要求“以非抽卡方式入手的卡需向对手展示”，客户端据此
+                    // 才能把对方的那张卡翻面确认（见 DeckHandMotionManager.applyMoveToHandReveal）。
+                    // 正常抽卡由引擎发 MSG_DRAW、不经此分支，故不会泄露抽卡信息；
+                    // pl 已含手卡时不公开（同手卡内的位置/表示形式变动不算“入手”）。
+                    // 公开仅限这一瞬间：随后的 MSG_SHUFFLE_HAND / refreshHand 会把里侧手卡卡码重新清零。
+                    boolean toHand = (cl & EngineMessage.LOCATION_HAND) != 0
+                            && (pl & EngineMessage.LOCATION_HAND) == 0;
                     cursor = body + 16;
                     byte[] full = range(msg, start, cursor);
-                    if ((cl & (OcgDuelEngine.LOCATION_GRAVE | EngineMessage.LOCATION_OVERLAY)) == 0
+                    if (!toHand && (cl & (OcgDuelEngine.LOCATION_GRAVE | EngineMessage.LOCATION_OVERLAY)) == 0
                             && (((cl & (OcgDuelEngine.LOCATION_DECK | OcgDuelEngine.LOCATION_HAND)) != 0) || hide)) {
                         writeInt32(msg, body, 0);
                     }
@@ -941,7 +949,12 @@ final class DuelAnalyzer implements YGOProtocol {
             return;
         }
         int position = EngineMessage.getPosition(blocks, 12);
-        boolean hide = (position & EngineMessage.POS_FACEDOWN) != 0;
+        // 手卡位置在本端口是里侧（POS_FACEDOWN），但“效果入手需向对手展示”已经由 MSG_MOVE
+        // 分支公开了卡码；紧随其后的这次 refreshSingle 若仍按里侧清零，会把刚解除的卡码
+        // 再次盖掉，对手侧永远拿不到入手卡的卡面 → 翻面确认无从渲染。故手卡不按里侧遮蔽。
+        // （C++ single_duel.cpp RefreshSingle L1586-1616 对非场上位置一律 hide，此处为有意增强）
+        boolean hide = (position & EngineMessage.POS_FACEDOWN) != 0
+                && (location & EngineMessage.LOCATION_HAND) == 0;
         if ((location & EngineMessage.LOCATION_ONFIELD) != 0) {
             hide = EngineMessage.shouldHideFacedownCode(position);
             EngineMessage.stripRevealFlag(blocks, 12);

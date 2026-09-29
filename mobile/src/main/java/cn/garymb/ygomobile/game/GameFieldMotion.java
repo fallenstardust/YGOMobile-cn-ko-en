@@ -170,6 +170,10 @@ class GameFieldMotion {
             updateListAnimation(field.players[p].removed);
             updateListAnimation(field.players[p].extra);
         }
+        // 手卡翻面进度逐帧推进：与 aniFrame 关键帧解耦（手卡渲染走 billboard，翻面只能是
+        // handFlipT 驱动的挤压 + 换面），故本推进不受 aniFrame>0 限制，每帧都跑
+        updateHandFlip(field.players[0].hand);
+        updateHandFlip(field.players[1].hand);
         updateListAnimation(field.overlayCards);
         // 淡出卡已脱离区域列表（duelclient.cpp MSG_MOVE cl==0：FadeCard 播完才
         // RemoveCard+DestroyCard），单独驱动并在动画结束后从暂存列表移除
@@ -228,16 +232,16 @@ class GameFieldMotion {
                 pcard.curX = pcard.animToX + pcard.deckShakeDx[round] * u;
             }
             // 洗手卡（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699）：全局时序——初始停顿 5 帧
-            // →(仅对手)翻面 5 帧 → 向中线 X=3.9 聚拢 5 帧 → 停留(主线程换入新卡面) → 回新布局
-            // 5 帧。含翻面 global total=31（停顿5+翻面5+聚拢5+停留11+回位5），否则 26（无翻面段）。
-            // 位置仅沿 X 移动（C++ dPos Y=0,Z=0），旋转保持布局基准，翻面段叠加 rotX/rotY。
+            // → 向中线 X=3.9 聚拢 5 帧 → 停留(主线程换入新卡面) → 回新布局 5 帧，共 26 帧。
+            // 位置仅沿 X 移动（C++ dPos Y=0,Z=0），旋转保持布局基准；对手手卡的「翻面盖回」
+            // 不再叠加 curRot* 关键帧（手卡渲染是相机 billboard，curRot* 无视觉意义），
+            // 而由 updateHandFlip 依换入后的卡码推进 handFlipT 自动翻回卡背。
             if (pcard.is_hand_shuffle) {
                 int total = Math.max(1, pcard.animTotalFrame);
                 int el = Math.max(0, Math.min(total, total - (int) pcard.aniFrame));
-                boolean flipGlobal = total >= 31;
-                int gatherStart = flipGlobal ? 10 : 5;
+                int gatherStart = 5;
                 int holdStart = gatherStart + 5;
-                int returnStart = flipGlobal ? 26 : 21;
+                int returnStart = total - 5;
                 float curv;
                 if (el <= gatherStart) curv = 0f;
                 else if (el <= holdStart) curv = (el - gatherStart) / 5f;
@@ -248,40 +252,11 @@ class GameFieldMotion {
                 pcard.curZ = pcard.hsToZ;
                 pcard.curRotX = pcard.hsToRotX;
                 pcard.curRotY = pcard.hsToRotY;
-                if (pcard.hsFlip) {
-                    float flipv;
-                    if (el <= 5) flipv = 0f;
-                    else if (el <= 10) flipv = (el - 5) / 5f;
-                    else if (el <= returnStart) flipv = 1f;
-                    else flipv = 1f - (el - returnStart) / (float) Math.max(1, total - returnStart);
-                    pcard.curRotX += pcard.hsFlipRotX * flipv;
-                    pcard.curRotY += pcard.hsFlipRotY * flipv;
-                }
-            }
-            // 入手揭示（洗切前的展示段）——位置保持在手牌落点，仅推进旋转：
-            // 前 5 帧翻入(卡背→正面)、中间停留展示、末 5 帧翻出回布局姿态。
-            // 非翻面（己方卡本就正面）时 flipv 恒 0，全程保持正面，只由蚂蚁线高亮承担“展示”，
-            // 与对方卡取得同样的展示时长（关键帧总帧数一致）。
-            if (pcard.is_hand_reveal) {
-                int total = Math.max(1, pcard.hrTotal);
-                int el = Math.max(0, Math.min(total, total - (int) pcard.aniFrame));
-                int holdEnd = total - 5;
-                float flipv;
-                if (el <= 5) flipv = el / 5f;
-                else if (el <= holdEnd) flipv = 1f;
-                else flipv = 1f - (el - holdEnd) / (float) Math.max(1, total - holdEnd);
-                if (!pcard.hrFlip) flipv = 0f;
-                pcard.curX = pcard.hrToX;
-                pcard.curY = pcard.hrToY;
-                pcard.curZ = pcard.hrToZ;
-                pcard.curRotZ = pcard.hrLayoutRotZ;
-                pcard.curRotX = pcard.hrLayoutRotX + (pcard.hrFaceUpRotX - pcard.hrLayoutRotX) * flipv;
-                pcard.curRotY = pcard.hrLayoutRotY + (pcard.hrFaceUpRotY - pcard.hrLayoutRotY) * flipv;
             }
             // 线性插值：严格对齐 drawing.cpp DrawCard 的 curPos += dPos（dPos=(target-cur)/frame）——
             // gframe 卡片移动/淡入淡出均为每帧等速线性累加，无缓动。按剩余帧比例线性求值以在
             // 变帧率下保持恒定速度（dt*60 驱动的 aniFrame 递减）。
-            if (pcard.is_moving && !pcard.is_deck_shake && !pcard.is_hand_shuffle && !pcard.is_hand_reveal) {
+            if (pcard.is_moving && !pcard.is_deck_shake && !pcard.is_hand_shuffle) {
                 int total = Math.max(1, pcard.animTotalFrame);
                 if (pcard.animJitterX != 0f) {
                     // 同区重排抖动（duelclient.cpp MSG_MOVE L3022-3030）：前 5 帧每帧恒定横移
@@ -354,17 +329,6 @@ class GameFieldMotion {
                     pcard.curZ = pcard.hsToZ;
                     pcard.curRotX = pcard.hsToRotX;
                     pcard.curRotY = pcard.hsToRotY;
-                }
-                if (pcard.is_hand_reveal) {
-                    // 揭示结束：精确落回布局姿态（对方卡回到卡背、己方卡保持正面），
-                    // 随后由 DeckHandMotionManager 排程的洗切接管整列手牌
-                    pcard.is_hand_reveal = false;
-                    pcard.curX = pcard.hrToX;
-                    pcard.curY = pcard.hrToY;
-                    pcard.curZ = pcard.hrToZ;
-                    pcard.curRotX = pcard.hrLayoutRotX;
-                    pcard.curRotY = pcard.hrLayoutRotY;
-                    pcard.curRotZ = pcard.hrLayoutRotZ;
                 }
                 pcard.chain_code = 0;
             }
@@ -440,6 +404,11 @@ class GameFieldMotion {
         pcard.curRotX = loc[3];
         pcard.curRotY = loc[4];
         pcard.curRotZ = loc[5];
+        // 首次进入手牌的卡在此吸附翻面终态（addCard 的手卡分支不调 setCardPos，故主要
+        // 服务回放 / initial 等直接落位路径）；已参与翻面的卡不在此抢进度，否则会把
+        // startHandReveal 刚置 0 的卡背起手姿态直接抹成正面
+        if (pcard.location == 0x02 && pcard.handFlipT < 0f)
+            pcard.handFlipT = pcard.code != 0 ? 1f : 0f;
     }
 
     public void moveCardAnimated(ClientCard pcard, int frame) {
@@ -527,13 +496,14 @@ class GameFieldMotion {
     }
 
     /**
-     * 洗手卡聚拢/翻面单动画（对齐 duelclient.cpp MSG_SHUFFLE_HAND L2662-2699）：
-     * 对手手卡（flip=true，player==1 且非回放非单机）先 5 帧翻面（rotX+1.322、rotY+π 揭示
-     * 新卡面）；随后全部手卡 5 帧向中线 X=3.9 聚拢（L2681 dPos=(3.9-curPos.X)/5）；
-     * 停留段中部外部换入新卡面（对应 L2689-2692 SetCode）；最后 5 帧回新布局（L2694-2697
-     * MoveCard(5)）。无翻面段 25 帧，含翻面段 30 帧。
+     * 洗手卡聚拢单动画（对齐 duelclient.cpp MSG_SHUFFLE_HAND L2662-2699）：全部手卡 5 帧
+     * 向中线 X=3.9 聚拢（L2681 dPos=(3.9-curPos.X)/5）；停留段中部外部换入新卡面（对应
+     * L2689-2692 SetCode）；最后 5 帧回新布局（L2694-2697 MoveCard(5)），共 26 帧。
+     * C++ 在聚拢前的 5 帧翻面（L2672 dRot=(1.322/5, π/5)）在此不重建：手卡渲染是相机
+     * billboard、不读 curRot*，旋转关键帧无视觉意义；洗后卡面换入时由 updateHandFlip
+     * 依卡码推进 handFlipT 自然完成正面→卡背的翻面。
      */
-    public void startHandShuffle(ClientCard pcard, boolean flip) {
+    public void startHandShuffle(ClientCard pcard) {
         if (pcard == null) return;
         if (field.instantPlace) {
             setCardPos(pcard);
@@ -541,61 +511,61 @@ class GameFieldMotion {
             return;
         }
         float[] loc = field.getCardLocation(pcard);
-        pcard.hsFromX = pcard.curX;
-        pcard.hsFromY = pcard.curY;
-        pcard.hsFromZ = pcard.curZ;
-        pcard.hsFromRotX = pcard.curRotX;
-        pcard.hsFromRotY = pcard.curRotY;
         pcard.hsToX = loc[0];
         pcard.hsToY = loc[1];
         pcard.hsToZ = loc[2];
         pcard.hsToRotX = loc[3];
         pcard.hsToRotY = loc[4];
         pcard.hsGatherX = 3.9f;
-        pcard.hsFlipRotX = 1.322f;
-        pcard.hsFlipRotY = (float) Math.PI;
-        pcard.hsFlip = flip && pcard.code != 0; // L2669：仅 code!=0 的卡参与翻面
         pcard.is_hand_shuffle = true;
         pcard.animDelayFrame = 0;
-        // 全局时序统一：flip 为真时整列多一段 5 帧翻面（L2677-2678 if(flip) Wait(5)）
-        pcard.animTotalFrame = flip ? 31 : 26;
-        pcard.aniFrame = pcard.animTotalFrame;
+        pcard.animTotalFrame = 26;
+        pcard.aniFrame = 26;
     }
 
     /**
-     * 卡片经效果入手时的揭示动画（洗切前的展示段）。
-     * 对齐 duelclient.cpp MSG_SHUFFLE_HAND L2666-2679 翻面揭示语义：对方卡（flip=true）从卡背
-     * 翻到正面展示、蚂蚁线高亮由 SelectionOutlineRenderer 施加，展示结束后回卡背；己方卡本就正面
-     * （flip=false、不翻给对面看）仅停留展示同样时长。位置保持在手牌落点不聚拢，关键帧由
-     * updateListAnimation 的 is_hand_reveal 段推进；洗切由 DeckHandMotionManager 另行排程。
+     * 卡片经效果入手的揭示：把<b>对方</b>手卡的翻面进度归零（卡背起手），随后 updateHandFlip
+     * 依服务端已解除遮蔽的卡码在 5 帧内翻到正面，供对手确认“这张卡是什么”；己方卡本就正面
+     *（不翻给对方看），flip=false 时不动翻面进度，展示仅由蚂蚁线高亮承担。
+     * 不占用 aniFrame / 关键帧：翻面是渲染级进度（见 ClientCard.handFlipT），与卡片飞入手牌的
+     * is_moving 动画可并行，也不会打断它；洗切一律等引擎的 MSG_SHUFFLE_HAND，此处不合成。
      */
     public void startHandReveal(ClientCard pcard, boolean flip) {
         if (pcard == null) return;
         if (field.instantPlace) {
-            setCardPos(pcard);
-            pcard.is_hand_reveal = false;
+            // 回放快进重排：不产生翻面过程，直接按卡码吸附终态
+            pcard.handFlipT = pcard.code != 0 ? 1f : 0f;
             return;
         }
-        float[] loc = field.getCardLocation(pcard);
-        pcard.hrToX = loc[0];
-        pcard.hrToY = loc[1];
-        pcard.hrToZ = loc[2];
-        pcard.hrLayoutRotX = loc[3];
-        pcard.hrLayoutRotY = loc[4];
-        pcard.hrLayoutRotZ = loc[5];
-        // 手牌正面姿态：rotX=-0.798056、rotY=0（对齐 getCardLocation code!=0 分支）
-        pcard.hrFaceUpRotX = -0.798056f;
-        pcard.hrFaceUpRotY = 0f;
-        pcard.hrFlip = flip;
-        // 翻入 5 + 展示停留 24 + 翻出 5 = 34；己方卡 flipv 恒 0，同样 34 帧纯展示，与对方展示时长一致
-        pcard.hrTotal = 34;
-        // 揭示接管姿态：打断可能仍在进行的飞入/其它手牌动画，避免多段插值互覆
-        pcard.is_moving = false;
-        pcard.is_deck_shake = false;
-        pcard.is_hand_shuffle = false;
-        pcard.is_hand_reveal = true;
-        pcard.animDelayFrame = 0;
-        pcard.aniFrame = pcard.hrTotal;
+        if (flip) {
+            pcard.handFlipT = 0f;
+        } else if (pcard.handFlipT < 0f) {
+            pcard.handFlipT = pcard.code != 0 ? 1f : 0f;
+        }
+    }
+
+    /**
+     * 逐帧推进一侧手卡的翻面进度：目标恒由卡码决定（code!=0 → 正面，否则卡背），以
+     * 0.2/帧的恒定速率靠拢（5 帧翻完，对应 duelclient.cpp MSG_SHUFFLE_HAND L2672 的
+     * dRot 步进 1.322/5 与 π/5）；handFlipT<0 为尚未参与翻面，首帧直接吸附目标值，
+     * 因而正常抽卡 / 开局握手牌不会多出一次翻面动画。
+     */
+    private void updateHandFlip(List<ClientCard> hand) {
+        if (hand == null) return;
+        float step = 0.2f * field.animationSpeed;
+        for (ClientCard pcard : hand) {
+            if (pcard == null) continue;
+            float target = pcard.code != 0 ? 1f : 0f;
+            if (pcard.handFlipT < 0f) {
+                pcard.handFlipT = target;
+                continue;
+            }
+            if (pcard.handFlipT < target) {
+                pcard.handFlipT = Math.min(target, pcard.handFlipT + step);
+            } else if (pcard.handFlipT > target) {
+                pcard.handFlipT = Math.max(target, pcard.handFlipT - step);
+            }
+        }
     }
 
     public void setAnimationSpeed(float speed) {

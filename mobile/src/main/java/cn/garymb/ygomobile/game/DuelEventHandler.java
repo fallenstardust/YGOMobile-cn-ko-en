@@ -362,10 +362,11 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             engine.field.updateHandLayout(0, 10);
             engine.field.updateHandLayout(1, 10);
         }
-        // 卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，先让新卡亮出到手牌中
-        // 展示片刻，再对该侧手牌整体播放一次洗切动画（样式对齐 duelclient.cpp MSG_SHUFFLE_HAND）。
+        // 卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，把入手的卡亮出到手牌展示片刻。
         // 普通抽卡走 MSG_DRAW 不经本 MSG_MOVE 分支，故这里只捕获「效果把手牌外的卡加回手卡」，
         // 不会误挂在每次正常抽卡上；newCtrl 已在方法开头经 localPlayer 转为本地视角索引。
+        // 洗切不在此处播放：引擎会为「非抽卡入手」置 shuffle_hand_check 并发出
+        // MSG_SHUFFLE_HAND，由 DeckHandMotionManager.applyShuffleHand 唯一播放一次。
         {
             int oldLocBase = oldLoc & 0x7f;
             int newLocBase = newLoc & 0x7f;
@@ -374,10 +375,10 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                             || oldLocBase == CardLocation.Grave.value()
                             || oldLocBase == CardLocation.Removed.value()
                             || oldLocBase == CardLocation.Extra.value())) {
-                // 把本次入手的那张卡（现位于 newCtrl/Hand/newSeq）一并交下去——用于揭示阶段
-                // 只对该卡施加蚂蚁线高亮（对方翻面到正面 / 我方仅高亮），展示结束后再整体洗切
+                // 只对本次入手的那张卡揭示：对方卡从卡背翻到正面供对手确认、我方卡本就正面
+                // 不翻给对方看，两者均施加行进蚂蚁线高亮，展示结束后由引擎的洗切接管
                 GameField.ClientCard arriving = engine.field.getCard(newCtrl, newLocBase, newSeq);
-                engine.deckMotion.applyMoveToHandShuffle(newCtrl, arriving);
+                engine.deckMotion.applyMoveToHandReveal(newCtrl, arriving);
             }
         }
         // 音效严格对齐 duelclient.cpp MSG_MOVE L2952-2957：仅在真正发生移动（pl!=cl）时，
