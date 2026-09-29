@@ -256,6 +256,19 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
     }
 
+    /**
+     * 撤回后中断一切进行中的场上交互（命令上下文 / 命令菜单 / 选格与选卡会话）：
+     * 这些状态由已被撤销的询问建立（连锁点击模式的 cmdContext=CHAIN、灵摆/放置询问的选格会话等），
+     * 而回退后的新局面会重新下发询问并按新语义重建它们；任其存活则下一次的卡片/格子点击
+     * 会拿旧询问的编码去应答新局面（仅索引、选格三元组等）→ 非法应答 → MSG_RETRY 风暴。
+     * 本方法只复位状态，不发出任何应答（区别于 cancelPlaceSelect / finishChainPass）。
+     */
+    public void abortPendingSelectSessions() {
+        setCmdContext(0);
+        dismissCmdMenu();
+        select.abortSelectSessions();
+    }
+
     public void hide() {
         // 决斗/回放离场即释放场面：清空 GameField 数据，下次进入不再残留上一场卡片局面
         //（showMainMenu/returnToLanMain/quitReplay 等入口均只在非决斗中状态触达本方法）

@@ -113,6 +113,11 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                     //（onGameUIShown 已默认隐藏）；残局恒为我方参战，直接显示
                     activity.cardDetailPanel.setSurrenderVisible(selfSeat >= 0
                             || activity.engine.isSingleMode);
+                    // 撤回入口已移到顶部信息条中央回合数下方（iv_undo），进决斗时按当前
+                    // 可撤回状态点亮；能否真的回退由服务端裁决（无锚点 → STOC_UNDO_ACK=DENIED）
+                    if (activity.topInfoManager != null) {
+                        activity.topInfoManager.setUndoPrompt(activity.engine.isUndoPromptActive());
+                    }
                 }
                 pendingReplays.clear();
                 duelEndHandling = false;
@@ -269,8 +274,61 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> activity.fieldCtl.swapChatSides());
     }
 
+    /**
+     * 服务端可撤回状态变更（STOC_UNDO_STATE）：驱动顶部回合数下方 ic_undo 的闪动发光。
+     * 与房间能力（isHost / serverCapsUndo）、非残局、非回放一并判定，避免观战与回放误亮。
+     */
+    @Override
+    public void onUndoStateChanged(boolean available) {
+        activity.runOnUiThread(() -> {
+            if (activity.topInfoManager != null)
+                activity.topInfoManager.setUndoPrompt(available
+                        && activity.engine != null && activity.engine.isUndoPromptActive());
+        });
+    }
+
+    /**
+     * 局域网撤回被服务端接受（STOC_UNDO_ACK = OK/REBUILT）：被撤回的那条询问已不存在，
+     * 服务端接下来会下发 MSG_RELOAD_FIELD + 各区域 refresh + 重新挂回回退点的询问。
+     * 本方法由 {@code GameEngine.onUndoAck} 在主线程**同步**调用，故严格早于重同步那一批包
+     * 的派发：此处先把仍在显示的询问/选择弹窗、选择态蚂蚁线与进行中的交互会话关掉，
+     * 避免旧询问的应答（点击、选格、连锁索引）打到回退后的新局面上。
+     */
+    @Override
+    public void onUndoResync() {
+        activity.runOnUiThread(() -> {
+            if (activity.dialogUtil != null) activity.dialogUtil.dismissOpenGameDialogs();
+            if (activity.cardDetailPanel != null) activity.cardDetailPanel.dismissOpenDialogs();
+            // 连锁必发标志：旧强制连锁询问遗留它会使「取消操作」被吞掉（handleChainCancel 直接 return）
+            YesOrNoDialog.setChainForcedMode(false);
+            // 连锁询问窗静态引用作废：被撤销的那次询问的窗体已被 dismiss，但静态引用还在，
+            // handleChainCancel 会把它当成“还挂着”而去 show 一个已死弹窗，或直接放弃处理使取消无效
+            YesOrNoDialog.setChainQueryDialog(null);
+            if (activity.cardDetailPanel != null) {
+                // 面板的选择上下文必须一并作废：「取消操作 / 完成选择」按钮按 currentSelectType
+                // 直接编码应答（case 16 连锁→ -1、case 15/20/23/26 → confirm/‑1），撤回后新询问
+                // 已到达、应答屏障已放行，此时误触这个旧按钮就是把一份旧询问的答复打到新局面上，
+                // 连锁项与引擎期望对不上 → retry 风暴或直接走偏，决斗再也推不下去
+                activity.cardDetailPanel.setSelectType(-1);
+                activity.cardDetailPanel.hideCancelOrFinishButton();
+                activity.cardDetailPanel.setCurrentDialog(null);
+                activity.cardDetailPanel.setCardSelectDialog(null);
+                activity.cardDetailPanel.setCardDisplayDialog(null);
+            }
+            if (activity.fieldCtl != null) {
+                activity.fieldCtl.abortPendingSelectSessions();
+                activity.fieldCtl.clearSelectionVisuals();
+                activity.fieldCtl.invalidate();
+            }
+        });
+    }
+
     @Override
     public void onSelectRequired(int selectType, ByteBuffer data) {
+        // 询问代次推进（撤回应答屏障的唯一放行点）：必须在投给 UI 之前同步执行。
+        // 撤回布防记下的是「被撤销的那次询问」的代次，唯有本次新询问把代次推过屏障下界，
+        // 界面上的选择/命令应答才会重新发往服务端；屏障只压住新询问到达之前那一段
+        if (activity.engine != null) activity.engine.onQuestionDispatched();
         activity.runOnUiThread(() -> {
             // 结束阶段按钮仅在通讯允许进入 EP 时有效：
             // 空闲指令(11)/战斗指令(10) 路径内会按指令可用性重新启用；其余请求一律隐藏

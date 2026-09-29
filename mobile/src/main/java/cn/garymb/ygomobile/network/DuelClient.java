@@ -59,9 +59,22 @@ public class DuelClient implements YGOProtocol {
         void onTypeChange(int type);
         // STOC_TEAMMATE_SURRENDER：tag 模式队友请求投降（对齐 duelclient.cpp STOC_TEAMMATE_SURRENDER / tag_duel.cpp Surrender）
         default void onTeammateSurrender() {}
+        /**
+         * STOC_UNDO_ACK（本工程扩展）：服务端对 CTOS_UNDO 的结果。
+         * result 为 {@code YGOProtocol.UNDO_ACK_*}；turn/currentPlayer/phase 为回退后的回合数、
+         * 当前回合玩家（协议侧 0/1）与阶段，随随后的 MSG_RELOAD_FIELD 一同生效。
+         */
+        default void onUndoResult(int result, int turn, int currentPlayer, int phase) {}
+        /**
+         * STOC_UNDO_STATE（本工程扩展）：服务端按本连接身份告知「现在是否还有可撤回的动作」。
+         * 1 = 本席位（或房主可代撤范围内）存在动作锚点，客户端据此让撤回图标闪动发光；
+         * 0 = 无可撤回动作（刚开局、或本段只有抽卡/连锁等被动应答），图标不亮。
+         */
+        default void onUndoState(int canUndo) {}
         void onJoinGame(int lflist, int rule, int mode, int duelRule,
                         int noCheckDeck, int noShuffleDeck,
-                        int startLp, int startHand, int drawCount, int timeLimit);
+                        int startLp, int startHand, int drawCount, int timeLimit,
+                        int extCaps);
     }
 
     private Socket socket;
@@ -267,6 +280,12 @@ public class DuelClient implements YGOProtocol {
                 case STOC_TEAMMATE_SURRENDER:
                     listener.onTeammateSurrender();
                     break;
+                case STOC_UNDO_ACK:
+                    handleUndoAck(buf);
+                    break;
+                case STOC_UNDO_STATE:
+                    handleUndoState(buf);
+                    break;
                 case STOC_TP_RESULT:
                 case STOC_LEAVE_GAME:
                 case STOC_FIELD_FINISH:
@@ -313,7 +332,12 @@ public class DuelClient implements YGOProtocol {
         int duelRule = buf.get() & 0xFF;
         int noCheckDeck = buf.get() & 0xFF;
         int noShuffleDeck = buf.get() & 0xFF;
-        buf.position(buf.position() + 3);
+        // HostInfo pad[0..1]（本工程私有扩展）：pad[0] 命中魔术字节时，pad[1] 为服务端能力位
+        //（bit0 = 支持 CTOS_UNDO）；gframe 等第三方服务端此处为未定义填充，不命中则一律视为无扩展
+        int extMagic = buf.get() & 0xFF;
+        int extCaps = (buf.get() & 0xFF);
+        if (extMagic != HOST_EXT_MAGIC) extCaps = 0;
+        buf.position(buf.position() + 1); // pad[2]
         int startLp = buf.getInt();
         int startHand = buf.get() & 0xFF;
         int drawCount = buf.get() & 0xFF;
@@ -321,7 +345,7 @@ public class DuelClient implements YGOProtocol {
         if (listener != null) {
             listener.onJoinGame(lflist, rule, mode, duelRule,
                     noCheckDeck, noShuffleDeck,
-                    startLp, startHand, drawCount, timeLimit);
+                    startLp, startHand, drawCount, timeLimit, extCaps);
         }
     }
 
@@ -332,6 +356,26 @@ public class DuelClient implements YGOProtocol {
         int leftTime = buf.getShort() & 0xFFFF;
         if (listener != null) {
             listener.onTimeLimit(player, leftTime);
+        }
+    }
+
+    /** STOC_UNDO_ACK 载荷：{@code [result(1B)][turn(1B)][currentPlayer(1B)][phase(u16 LE)]}。 */
+    private void handleUndoAck(ByteBuffer buf) {
+        if (buf.remaining() < 5) return;
+        int result = buf.get() & 0xFF;
+        int turn = buf.get() & 0xFF;
+        int currentPlayer = buf.get() & 0xFF;
+        int phase = buf.getShort() & 0xFFFF;
+        if (listener != null) {
+            listener.onUndoResult(result, turn, currentPlayer, phase);
+        }
+    }
+
+    /** STOC_UNDO_STATE 载荷：[canUndo(1B)]，1 = 本席位当前有可撤回的动作锚点。 */
+    private void handleUndoState(ByteBuffer buf) {
+        int canUndo = buf.remaining() > 0 ? (buf.get() & 0xFF) : 0;
+        if (listener != null) {
+            listener.onUndoState(canUndo);
         }
     }
 
@@ -474,6 +518,25 @@ public class DuelClient implements YGOProtocol {
         sendRaw(BufferIO.finalizePacket(buf));
     }
 
+    /**
+     * CTOS_UNDO：请求服务端回退最近一次玩家操作（局域网房主房间与人机房间可用）。
+     * 无载荷；结果以 STOC_UNDO_ACK + MSG_RELOAD_FIELD 全量重同步返回。
+     */
+    public void sendUndo() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_UNDO);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    /**
+     * CTOS_ASK_RESEND：请服务端重发它此刻挂在本席位上的那条询问（询问丢失自愈）。
+     * 无载荷；只在服务端声明 {@code HOST_CAP_ASK_RESEND} 且本机确实「答完之后什么也没收到」时
+     * 由 {@code GameEngine} 的看门狗发出，服务端只会原样重发当前询问，不改引擎、不写录像。
+     */
+    public void sendAskResend() {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_ASK_RESEND);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
     public void sendLeaveGame() {
         ByteBuffer buf = BufferIO.createPacket(CTOS_LEAVE_GAME);
         sendRaw(BufferIO.finalizePacket(buf));
@@ -579,6 +642,9 @@ public class DuelClient implements YGOProtocol {
             case STOC_HS_PLAYER_ENTER: return "STOC_HS_PLAYER_ENTER";
             case STOC_HS_PLAYER_CHANGE: return "STOC_HS_PLAYER_CHANGE";
             case STOC_HS_WATCH_CHANGE: return "STOC_HS_WATCH_CHANGE";
+            case STOC_TEAMMATE_SURRENDER: return "STOC_TEAMMATE_SURRENDER";
+            case STOC_UNDO_ACK: return "STOC_UNDO_ACK";
+            case STOC_UNDO_STATE: return "STOC_UNDO_STATE";
             default: return "UNKNOWN_STOC";
         }
     }
@@ -603,6 +669,8 @@ public class DuelClient implements YGOProtocol {
             case CTOS_HS_NOTREADY: return "CTOS_HS_NOTREADY";
             case CTOS_HS_KICK: return "CTOS_HS_KICK";
             case CTOS_HS_START: return "CTOS_HS_START";
+            case CTOS_UNDO: return "CTOS_UNDO";
+            case CTOS_ASK_RESEND: return "CTOS_ASK_RESEND";
             default: return "UNKNOWN_CTOS";
         }
     }
@@ -695,6 +763,10 @@ public class DuelClient implements YGOProtocol {
             Log.i(TAG, "Connected to server");
             // 新会话建立时作废上一次连接的房间信息缓存，避免等待界面补发陈旧规则
             engine.hasJoinRoomInfoCache = false;
+            // 同理丢弃上一会话的服务端能力位（换成不支持撤回的服务器时不得残留按钮）
+            engine.serverCapsUndo = false;
+            engine.serverCapsAskResend = false;
+            engine.undoAvailable = false;
         }
 
         @Override
@@ -773,6 +845,13 @@ public class DuelClient implements YGOProtocol {
             engine.field.clear();
             // 新一场决斗（含 match 三局的开场包）：丢弃上一场未与录像配对的残留 MSG 段
             engine.resetMsgRecording();
+            // 作废上一局可能残留的撤回 latch（ACK 先到、reload 因断线未落地），
+            // 否则下一局的普通 MSG_RELOAD_FIELD 会把陈旧的回合数回填进去
+            engine.clearUndoResync();
+            // 新一局：服务端会在 startDuel 末尾重新下发可撤回状态，此处先复位避免带入上一局
+            engine.undoAvailable = false;
+            // 新一局重新开始：作废上一局的应答/询问时戳与求援计数，避免局间残留误发 CTOS_ASK_RESEND
+            engine.resetAskWatchdog();
             // 对齐 STOC_JOIN_GAME 的 dInfo.isTag = (mode==2)：field.isTag 此前无实况侧赋值点，
             // 进决斗时按已缓存的房间 gameMode 显式置位（tag 名字/手卡切换与 LP 减半显示的前提），
             // 并复位上一局的 tag_player（对齐 replay_mode.cpp 的 tag_player 复位），
@@ -955,9 +1034,34 @@ public class DuelClient implements YGOProtocol {
         }
 
         @Override
+        public void onUndoResult(int result, int turn, int currentPlayer, int phase) {
+            // ACK 不进动画闸门（它不是对局消息），直接把回退后的回合/阶段 latch 到引擎，
+            // 由随后的 MSG_RELOAD_FIELD 落地时消费（reload 不带回合号，也不重发 MSG_START）
+            Log.i(TAG, "Undo ack: result=" + result + " turn=" + turn + " player=" + currentPlayer
+                    + " phase=0x" + Integer.toHexString(phase));
+            engine.onUndoAck(result, turn, currentPlayer, phase);
+        }
+
+        @Override
+        public void onUndoState(int canUndo) {
+            // 不进动画闸门：它只是提示状态，不改变局面。落到引擎后由宿主驱动撤回图标的闪动，
+            // 使「能点」与「点了可能被拒绝」不再靠猜（服务端只在本席位确有动作锚点时才回 1）
+            engine.undoAvailable = canUndo != 0;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onUndoStateChanged(engine.undoAvailable);
+            });
+        }
+
+        @Override
         public void onJoinGame(int lflist, int rule, int mode, int duelRule,
                                int noCheckDeck, int noShuffleDeck,
-                               int startLp, int startHand, int drawCount, int timeLimit) {
+                               int startLp, int startHand, int drawCount, int timeLimit,
+                               int extCaps) {
+            // 服务端能力位（HostInfo pad 扩展）：支持撤回时在连入方也点亮撤回按钮，
+            // 让“谁操作谁撤回”在两台设备对局时同样成立（房主端另经 isHost 保证）
+            engine.serverCapsUndo = (extCaps & HOST_CAP_UNDO) != 0;
+            // bit1：服务端会在询问可能被丢掉时重发（CTOS_ASK_RESEND），看门狗仅在它为真时布防
+            engine.serverCapsAskResend = (extCaps & HOST_CAP_ASK_RESEND) != 0;
             // Solo mode is encoded in mode bit 4 (0x10). Strip it before storing gameMode so
             // existing comparisons (gameMode==2 for tag / ==MODE_MATCH etc.) keep working.
             engine.soloMode = (mode & 0x10) != 0;

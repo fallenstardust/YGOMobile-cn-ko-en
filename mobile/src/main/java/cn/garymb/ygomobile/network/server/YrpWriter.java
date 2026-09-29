@@ -173,6 +173,17 @@ public final class YrpWriter {
         responses.write(cur, 0, newLen);
     }
 
+    /**
+     * 撤回重放专用：丢弃已录的响应记录流与消息帧流，但保留 base（names/params/decks）——
+     * 撤回会把引擎从开局整体重建并静默重放到回退点，重放过程中逐条重新 writeResponse /
+     * writeMessage，产物与“玩家从未做过那一步”的干净录像完全等价（同一 seed + 同一应答序列
+     * 的决定性引擎），故无需按字节/帧数做部分截断，也不存在前后帧错位。
+     */
+    public void resetRecordStream() {
+        responses.reset();
+        msgFrames.clear();
+    }
+
     /** 小端 uint32 字节序列（android.jar 低版本 ByteBuffer.clear() 返回 Buffer 无法链式 putInt，单独成方法） */
     private static byte[] int32Le(int value) {
         ByteBuffer b = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);

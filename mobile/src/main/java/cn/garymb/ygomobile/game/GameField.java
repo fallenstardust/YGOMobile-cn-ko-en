@@ -182,6 +182,18 @@ public class GameField {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
         }
 
+        /**
+         * 本卡是否为叠在下层的超量素材（location == LOCATION_OVERLAY）。
+         * 素材恒为表侧公开信息，而引擎的任何查询都只携<b>宿主</b>的姿态（get_infos 的
+         * QUERY_OVERLAY_CARD 只给素材卡码、query_field_info 只给素材张数），故素材自身的
+         * position 全凭客户端本地补齐；渲染层以 position 判正/反面（C++ Game::DrawCard 只看
+         * m22 与卡码，不看 position），凡需判「这张卡一定朝上」的场合统一经此取值，避免某条
+         * 路径新建/复用的占位卡带 0 姿态而被画成卡背。
+         */
+        public boolean isOverlayMaterial() {
+            return location == CardLocation.Overlay.value();
+        }
+
         public boolean isAttack() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceDownAttack.value())) != 0;
         }
@@ -358,7 +370,13 @@ public class GameField {
                         xcard.owner = controler;
                         xcard.controler = controler;
                     }
-                    overlayed.get(i).setCode(ocode);
+                    ClientCard mat = overlayed.get(i);
+                    // 本块查询不携素材姿态（引擎只给宿主的），而渲染层靠 isFaceUp() 决定正/背面，
+                    // 故凡从本块认得的素材一律钉成表侧：新建的占位如此，MSG_RELOAD_FIELD 已建的
+                    // 占位（此处只补卡码的那条路径）也如此——后者若不重设，一旦占位来自未带姿态的
+                    // 旧数据就会被画成卡背，而卡码明明存在（查看详情可见卡面讯息）
+                    mat.position = POS_FACEUP;
+                    mat.setCode(ocode);
                 }
             }
             if ((flag & QUERY_COUNTERS) != 0 && buf.remaining() >= 4) {

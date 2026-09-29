@@ -855,7 +855,11 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             return;
         }
 
-        boolean faceUp = c.isFaceUp();
+        // 超量素材恒为表侧（引擎从不下发素材自身的姿态，只给宿主的），而叠放下层的素材
+        // 模型由 getCardLocation 的 OVERLAY 分支单独求出（恒平放朝上），故此处不依赖 position
+        // 一律视为表侧；否则一个 position 未被补齐的素材占位会带着卡码却被画成卡背
+        //（C++ Game::DrawCard 只看 m22 与卡码、从不读 position）
+        boolean faceUp = c.isFaceUp() || c.isOverlayMaterial();
         if (!front) {
             // 背面朝向相机（盖放/守备盖放/卡组背面）：绕局部 Y 翻 180° 后绘卡背，
             // 卡背自身正面朝相机，贴图方向与 gframe 一致且不与任何面共面

@@ -198,23 +198,45 @@
                     </LinearLayout>
                 </FrameLayout>
 
-                <!-- 中央回合计数器（与横屏一致占行内权重 1，字号随面板高度等比放大） -->
-                <TextView
-                    android:id="@+id/tv_turn_counter"
+                <!-- 中央回合计数器（与横屏一致占行内权重 1，字号随面板高度等比放大）：
+                     外层 FrameLayout 承接背景，撤回提示图标叠加在回合数字下方 -->
+                <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="2dp"
                     android:layout_weight="1"
                     android:background="@drawable/veil_mid_vertical"
-                    android:gravity="center"
-                    android:shadowColor="@color/white"
-                    android:shadowDx="-2"
-                    android:shadowDy="-1"
-                    android:shadowRadius="1"
-                    android:text="99"
-                    android:textColor="@color/ygopro_list_background"
-                    android:textSize="30sp"
-                    android:textStyle="bold" />
+                    android:clipChildren="false">
+
+                    <TextView
+                        android:id="@+id/tv_turn_counter"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:shadowColor="@color/white"
+                        android:shadowDx="-2"
+                        android:shadowDy="-1"
+                        android:shadowRadius="1"
+                        android:text="99"
+                        android:textColor="@color/ygopro_list_background"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
+
+                    <!-- 局域网撤回入口（尺寸随 applyPortraitLpBarSize 的 f 系数放大） -->
+                    <ImageView
+                        android:id="@+id/iv_undo"
+                        android:layout_width="26dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:layout_marginBottom="1dp"
+                        android:background="@drawable/undo_glow"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_undo"
+                        android:visibility="invisible" />
+                </FrameLayout>
 
                 <!-- 对方信息面板（右上，镜像我方：血条在左、头像在右） -->
                 <FrameLayout

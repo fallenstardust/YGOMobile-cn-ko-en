@@ -26,6 +26,15 @@ public interface YGOProtocol {
     int CTOS_HS_NOTREADY = 0x23;
     int CTOS_HS_KICK = 0x24;
     int CTOS_HS_START = 0x25;
+    /** 撤回上一步操作（本工程扩展包号，gframe 无对应）：局域网房间内由房主或刚应答的一方发起。 */
+    int CTOS_UNDO = 0x26;
+    /**
+     * 索取询问重发（本工程扩展包号）：客户端已经答完上一步、但之后一段时间再没有任何消息进来
+     * （既没有新询问也没有等待提示）时发此包，请服务端把引擎此刻挂在它席位上的那条询问
+     * 原样重发一次。无载荷、不改引擎、不写录像，仅在服务端声明 {@code HOST_CAP_ASK_RESEND}
+     * 时才会发出，因此不会误落在不了解该包号的第三方 gframe 服务器上。
+     */
+    int CTOS_ASK_RESEND = 0x27;
 
     int STOC_GAME_MSG = 0x1;
     int STOC_ERROR_MSG = 0x2;
@@ -50,6 +59,12 @@ public interface YGOProtocol {
     int STOC_HS_WATCH_CHANGE = 0x22;
     int STOC_TEAMMATE_SURRENDER = 0x23;
     int STOC_FIELD_FINISH = 0x30;
+    /** 撤回结果（本工程扩展包号）：载荷 [result(1B)][turn(1B)][currentPlayer(1B)][phase(u16 LE)]，
+     *  result 为 UNDO_ACK_* 之一；除拒绝外，每种结果之后紧跟一条 MSG_RELOAD_FIELD 全量重同步。 */
+    int STOC_UNDO_ACK = 0x24;
+    /** 可撤回状态（本工程扩展包号）：1 字节 [0|1]，按连接身份分别下发——1 = 本席位（或房主可
+     *  代撤的范围内）存在可回退的动作锚点，客户端据此让撤回图标闪动发光提示「现在可以撤回」。 */
+    int STOC_UNDO_STATE = 0x25;
 
     int ERRMSG_JOINERROR = 0x1;
     int ERRMSG_DECKERROR = 0x2;
@@ -69,6 +84,23 @@ public interface YGOProtocol {
     int MODE_SINGLE = 0x0;
     int MODE_MATCH = 0x1;
     int MODE_TAG = 0x2;
+
+    /** STOC_UNDO_ACK.result：撤回成功，随后是全场重载重同步（回合号/阶段随载荷回填）。 */
+    int UNDO_ACK_OK = 0;
+    /** STOC_UNDO_ACK.result：回退重建失败，已按撤回前的局面整体重建并重同步（界面不变、告知失败）。 */
+    int UNDO_ACK_REBUILT = 1;
+    /** STOC_UNDO_ACK.result：拒绝撤回（无记录/无权限/观战者），无后续重同步。 */
+    int UNDO_ACK_DENIED = 2;
+
+    /**
+     * HostInfo pad[0] 的本工程私有扩展魔术字节（gframe 侧该 3 字节为未定义填充，
+     * 第三方服务器不会写出此值）：只有等于该值时 pad[1] 才被当作服务器能力位。
+     */
+    int HOST_EXT_MAGIC = 0x55;
+    /** HostInfo pad[1] 能力位：bit0 = 本机服务端实现了 CTOS_UNDO（撤回上一步操作）。 */
+    int HOST_CAP_UNDO = 0x1;
+    /** HostInfo pad[1] 能力位：bit1 = 本机服务端实现了 CTOS_ASK_RESEND（询问丢失自愈重挂）。 */
+    int HOST_CAP_ASK_RESEND = 0x2;
 
     int DUEL_STAGE_BEGIN = 0;
     int DUEL_STAGE_FINGER = 1;

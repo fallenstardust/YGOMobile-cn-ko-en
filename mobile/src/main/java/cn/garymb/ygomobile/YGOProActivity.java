@@ -358,6 +358,11 @@ public class YGOProActivity extends AppCompatActivity {
                 } else if (isGameStarted) {
                     cardDetailPanel.showChainButtons();
                     cardDetailPanel.setSurrenderVisible(true);
+                    // 撤回入口在顶部回合数下方（iv_undo）：旋转/重进决斗界面后按当前可撤回
+                    // 状态重建图标闪动（initViews 里的 reset 会先停掉动画）
+                    if (topInfoManager != null) {
+                        topInfoManager.setUndoPrompt(engine != null && engine.isUndoPromptActive());
+                    }
                 }
                 cardDetailPanel.restoreAfterRebind(detailShowing);
             }
@@ -1092,6 +1097,17 @@ public class YGOProActivity extends AppCompatActivity {
                 .setCenterInView(layoutGameRight)
                 .setCancelable(false);
         dialog.show();
+    }
+
+    /**
+     * 撤回入口（本工程扩展，gframe 无对应交互）：向局域网房间的服务端发 CTOS_UNDO，
+     * 请其回退本方最近一次应答。不做二次确认：撤回本身是可逆的回退动作，误触后可再次
+     * 发起或由对方重新操作；结果（已回退 / 重建失败 / 不可撤回）由服务端经 STOC_UNDO_ACK
+     * 回报，走 {@code GameEngine.onUndoAck} 提示并在随后的 MSG_RELOAD_FIELD 重同步场面
+     */
+    public void requestUndo() {
+        if (engine == null || !engine.isInDuel() || !engine.canUndo()) return;
+        engine.sendUndo();
     }
 
     public String getCardDisplayName(int code) {

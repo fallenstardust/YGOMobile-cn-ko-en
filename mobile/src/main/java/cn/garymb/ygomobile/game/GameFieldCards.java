@@ -323,6 +323,10 @@ class GameFieldCards {
                     o.controler = p;
                     o.location = CardLocation.Overlay.value();
                     o.sequence = i;
+                    // 登记表重建时同样钉上表侧姿态：本循环只重设 overlayTarget/控制者/区域/序号，
+                    // 若不补 position，一个由本路径首次纳入绘制的素材会带着 0 姿态被渲染层
+                    // 判为里侧而画成卡背（素材恒表侧，引擎从不下发素材姿态）
+                    o.position = GameField.POS_FACEUP;
                     field.overlayCards.add(o);
                 }
             }

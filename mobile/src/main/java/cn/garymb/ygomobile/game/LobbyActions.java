@@ -46,6 +46,13 @@ public class LobbyActions {
         engine.client.sendSurrender();
     }
 
+    public void sendUndo() {
+        // 撤回只对“服务端引擎跑局”的局域网房间有意义：残局（本地引擎直驱）与回放无此概念，
+        // 具体能否回退、是否有权限由服务端校验（不合法时回 STOC_UNDO_ACK = DENIED）
+        if (engine.isSingleMode || engine.replayMode) return;
+        engine.client.sendUndo();
+    }
+
     /** 是否 tag 双人模式（gameMode == MODE_TAG） */
     public boolean isTagMode() {
         return engine.gameMode == YGOProtocol.MODE_TAG;

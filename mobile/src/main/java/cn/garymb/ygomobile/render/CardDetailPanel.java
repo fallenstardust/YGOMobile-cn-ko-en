@@ -53,6 +53,8 @@ public class CardDetailPanel {
     private LinearLayout layoutBottomActions;
     private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
     private Button btnCancelOrFinish, btnShuffleHand;
+    // 撤回入口不在本面板：已按用户规格改放顶部信息条中央回合数下方的发光 ic_undo
+    //（layout_game_right 的 iv_undo，由 GameTopInfoManager.setUndoPrompt 按 STOC_UNDO_STATE 闪动）
 
     private LinearLayout layoutReplayControl;
     private Button btnReplayPlay, btnReplayPause, btnReplayNext, btnReplayLast, btnReplayShuffle, btnReplayQuit;
@@ -221,6 +223,8 @@ public class CardDetailPanel {
                 activity.requestSurrender();
             });
         }
+        // 撤回不做二次确认且入口已移到顶部回合数下方的 ic_undo（点击由 GameTopInfoManager 转发）；
+        // 结果（成功 / 重建 / 不可撤回）由服务端经 STOC_UNDO_ACK 提示
         // 时点按钮（对齐 event_handler.cpp L297-320 BUTTON_CHAIN_IGNORE/ALWAYS/WHENAVAIL）：
         // gframe 用 setIsPushButton(true) 实现"推送式开关"，点击后 isPressed() 即为新状态；
         // 这里等价为翻转自身标志，并强制清掉另外两态（三态互斥），最后刷新按下态显示
@@ -978,6 +982,8 @@ public class CardDetailPanel {
         if (btnSurrender != null)
             btnSurrender.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
     }
+
+    // 撤回图标的显隐/闪动已下沉到 {@code GameTopInfoManager.setUndoPrompt}（顶部回合数下方）
 
     public void onGameUIHidden() {
         hide();

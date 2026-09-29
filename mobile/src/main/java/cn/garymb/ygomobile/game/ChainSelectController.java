@@ -54,6 +54,12 @@ class ChainSelectController {
         boolean chainForced = false;
         boolean contiExist = false;
         boolean panelmode = false;
+        // 本次询问里是否有「场上找不到的卡」：连锁项靠 (ctrl, loc, seq, subSeq) 在本地场地定位卡片，
+        // 撤回走全量重载后个别占位卡可能与询问载荷对不上（素材下标/手卡遮蔽/跨区时序）。
+        // 此时该连锁项无从点击也进不了 activatableCards，玩家既不能发动也无法选中，强制连锁下
+        // 界面彻底无解（表现为连锁处理不下去）。把它降级为列表窗（panelmode）：列表窗直接按
+        // 报文里的卡名/效果文字建项，不依赖场上卡片，任何情况下都能选。
+        boolean missingCard = false;
         for (int i = 0; i < count && data.remaining() >= 14; i++) {
             int flag = data.get() & 0xFF;
             int forced = data.get() & 0xFF;
@@ -106,7 +112,14 @@ class ChainSelectController {
                     }
                     // conti 项同样进 engine 侧列表：点击中央堆叠「效果处理」时按协议索引 i 应答
                     e.activatableCards.add(new GameEngine.CmdCardInfo(card, code, desc, flag, i));
+                } else if (!conti) {
+                    missingCard = true;
+                    android.util.Log.w("ChainSelect", "chain entry card not found on field:"
+                            + " ctrl=" + localCtrl + " loc=0x" + Integer.toHexString(loc)
+                            + " seq=" + seq + " sub=" + subSeq + " code=" + code);
                 }
+            } else if (field == null || e == null) {
+                missingCard = true;
             }
 
             String cardName = util.activity.getCardDisplayName(code);
@@ -135,7 +148,16 @@ class ChainSelectController {
             Handler mainHandler = util.mainHandler;
             Random random = util.random;
             if (settings.getIntSettings("chkWaitChain", 0) == 1 && !ignoreChain) {
-                mainHandler.postDelayed(() -> util.sendResponseInt(-1), 320 + random.nextInt(321));
+                // 等待期间本次连锁询问可能已被撤回（局面回退、询问重挂）。撤回屏障只压住
+                // 「新询问到达之前」那一段，而这段延迟恰好可能在新询问到达之后才到期（彼时屏障已失效），
+                // 却仍带着旧连锁询问的意志去答复新局面（应答 -1 在空闲/战斗询问下就是非法应答 → RETRY 风暴），
+                // 故把询问代次快照进闭包，到期时代次已变即认定本连锁询问身份不再，放弃应答。
+                final long token = e != null ? e.captureQuestionToken() : -1L;
+                final GameEngine ge = e;
+                mainHandler.postDelayed(() -> {
+                    if (ge != null && ge.isQuestionStale(token)) return;
+                    util.sendResponseInt(-1);
+                }, 320 + random.nextInt(321));
             } else {
                 util.sendResponseInt(-1);
             }
@@ -167,6 +189,8 @@ class ChainSelectController {
         }
 
         // panelmode（overlay 连锁项）不进入场上点击模式；强制连锁不可取消
+        // 场上定位失败的连锁项同样走列表窗：列表项直接取自报文，不依赖卡片对象，保证永远可选
+        if (missingCard) panelmode = true;
         YesOrNoDialog.setChainForcedMode(chainForced && !panelmode);
 
         // duelclient.cpp L2164-2170：panelmode → 保留列表对话框（overlay 单元无法在场上单独点击发动）

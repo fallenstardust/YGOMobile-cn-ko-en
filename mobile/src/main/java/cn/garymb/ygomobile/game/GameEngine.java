@@ -148,6 +148,20 @@ public class GameEngine {
          * 聊天内容也左右对调，避免 player1 的消息因切视角错显示到 player2 一侧。
          */
         default void onViewpointSwapped() {}
+
+        /**
+         * 局域网撤回（CTOS_UNDO）已被服务端接受（STOC_UNDO_ACK = OK/REBUILT）：紧接会来一条
+         * MSG_RELOAD_FIELD 全量重载。宿主应在此关掉旧询问弹窗与选择态蚂蚁线（该询问已被回退，
+         * 重同步完成后服务端会重新挂回回退点的那一条询问），避免残留弹窗与新局面错位。
+         */
+        default void onUndoResync() {}
+
+        /**
+         * 局域网可撤回状态变更（STOC_UNDO_STATE）：服务端只在自上一个「行动宣言」（召唤 / 反转召唤 /
+         * 特殊召唤 / 盖卡 / 发动效果 / 攻击宣言 / 切换阶段）之后存在可整段回退的动作时回 true。
+         * 宿主据此让顶部回合数下方的撤回图标闪动发光；false 时静止隐藏（仍可点击时不提示）。
+         */
+        default void onUndoStateChanged(boolean available) {}
     }
 
     // 核心状态与基础设施（协作类经 engine. 引用访问：同包类用包级私有，
@@ -217,6 +231,23 @@ public class GameEngine {
     public int maxMatch = 1;
     public boolean isHost = false;
     public boolean isBotMode = false;
+    /**
+     * 本次连接的服务端声明支持 CTOS_UNDO（撤回）：由 STOC_JOIN_GAME 回显的 HostInfo pad
+     * 能力位解出（见 {@code YGOProtocol.HOST_CAP_UNDO}）。房主端（{@link #isHost}）自带该能力，
+     * 本标志让连入本机房间的另一台设备同样能发起自己一方的撤回。
+     */
+    public boolean serverCapsUndo = false;
+    /**
+     * 本次连接的服务端支持询问重发请求（{@code CTOS_ASK_RESEND}，见
+     * {@code YGOProtocol.HOST_CAP_ASK_RESEND}）：只有它为真（或本机就是房主）时，
+     * 「答完话却始终等不到回包」的看门狗才会去求援（见 {@link #notifyResponseSent}）。
+     */
+    public boolean serverCapsAskResend = false;
+    /**
+     * 服务端告知的「当前有可整段回退的动作锚点」（STOC_UNDO_STATE）。与 {@link #canUndo()} 相与
+     * 后才是撤回图标闪动的条件：前者说明房间支持撤回，后者说明真的有一步可撤。
+     */
+    public boolean undoAvailable = false;
 
     /** tag 模式本方是否已发起投降（等待队友回应）：防止对 STOC_TEAMMATE_SURRENDER 自我弹窗与重复发起 */
     public boolean tagSurrenderInitiated = false;
@@ -576,6 +607,336 @@ public class GameEngine {
         lobbyActions.sendSurrender();
     }
 
+    /** CTOS_UNDO：请求服务端回退最近一次操作（仅局域网房主/人机房间，实现见 {@code LobbyActions}）。 */
+    public void sendUndo() {
+        // 先在本机布下应答屏障，再发出请求：TCP 保序保证服务端一定先处理 CTOS_UNDO、
+        // 再处理此后到达的任何 CTOS_RESPONSE，故「撤回请求已送出、ACK 尚未回来」这段窗口里不会
+        // 再有应答漏网（旧询问的自动应答/点击若在此刻发出，会被服务端当作回退后新询问的答复，
+        // 直接把回退点之后的局面又推进一步）。若服务端拒收（DENIED），局面未变，随即解除布防
+        // 并用询问快照重建界面，期间被丢弃的应答会随重派发重新发出
+        armUndoResponseBarrier();
+        lobbyActions.sendUndo();
+    }
+
+    /**
+     * 本房间是否可用撤回：本机建立主机的房间（CreateHostDialog 建主与人机/WindBot 建主，
+     * {@link #isHost}）或连入的服务端声明支持 CTOS_UNDO（{@link #serverCapsUndo}）。
+     * 第三方 gframe 服务器两者均为 false，撤回按钮不出现。
+     */
+    public boolean canUndo() {
+        return (isHost || serverCapsUndo) && !isSingleMode && !replayMode;
+    }
+
+    // === 撤回（undo）重同步：STOC_UNDO_ACK 暂存的回合信息，到 MSG_RELOAD_FIELD 落地时消费 ===
+
+    /** 待消费的撤回重同步回合数；-1 = 无待消费 latch（非撤回触发的 reload 不动现有值）。 */
+    volatile int undoResyncTurn = -1;
+    /** 回退后的当前回合玩家（协议侧 0/1）与阶段值。 */
+    volatile int undoResyncPlayer = -1;
+    volatile int undoResyncPhase = -1;
+
+    /**
+     * STOC_UNDO_ACK 落地（已由 {@code DuelClient.StocHandler} 投到主线程）：成功/重建两类结果
+     * 之后必定紧跟一条 MSG_RELOAD_FIELD，故此处只暂存回退后的回合/阶段，交由
+     * {@link #applyUndoResync} 在重载结束时写回 field——reload 载荷不含回合号与阶段，
+     * 且不能重发 MSG_START（那会走 {@code field.clear()} 把回合计数归零）。
+     * 拒绝结果不改变局面（故不动派发链），只解除本机布防并提示；若布防期间吞过应答，
+     * 则重派发最近一条询问，给被吞的自动应答第二次机会。
+     */
+    public void onUndoAck(int result, int turn, int currentPlayer, int phase) {
+        if (result == YGOProtocol.UNDO_ACK_DENIED) {
+            undoResyncTurn = -1;
+            // 撤回未成立：局面与待应答询问都还在，解除布防并用询问快照重建选择 UI——
+            // 仅当确实丢弃过应答才重派发（否则重派发一个已不属于现在的询问会凭空弹出幽灵窗）：
+            // 弹窗从未因拒绝而关闭过，普通点击只需重新一击；但 chkAutoChain / 放弃连锁那类不经点击的
+            // 自动应答被丢弃后无人再触发，必须靠重派发给它第二次机会
+            boolean droppedWhileArmed = undoBarrierDropped;
+            releaseUndoResponseBarrier();
+            if (droppedWhileArmed) restorePendingQuestionUi();
+            postUndoHint("撤回不可用：没有可撤回的操作，或该操作不是你这方做出的");
+            return;
+        }
+        // 本局客户端侧消息帧流已含被撤销的动画帧与重同步帧，无法与响应段对齐 →
+        // 作废本局 MSG 尾段（退回服务端已重建的 .yrp 单文件，仍可按脚本重放完整观看）
+        invalidateCurrentMsgSegment();
+        // 清掉「被撤销片段」留在客户端派发链与应答出口上的残留（详见方法注释）
+        clearStaleMsgStateAfterUndo();
+        undoResyncTurn = turn;
+        undoResyncPlayer = currentPlayer;
+        undoResyncPhase = phase;
+        postUndoHint(result == YGOProtocol.UNDO_ACK_REBUILT
+                ? "撤回失败：已按原局面重建并重同步" : "已撤回上一步操作");
+        // 关弹窗/复位交互会话必须同步做（本方法已在主线程，且严格早于紧随其后的 reload/refresh/
+        // 新询问的派发 runnable）：若 post 到队列尾，它会排到整批重同步包之后才执行，把服务端
+        // 刚重挂的新询问弹窗一并 dismiss 掉 → 界面再也拿不到待应答询问，决斗无法继续
+        if (listener != null) listener.onUndoResync();
+    }
+
+    private void postUndoHint(String text) {
+        mainHandler.post(() -> {
+            if (listener != null) listener.onHintMessage(text);
+        });
+    }
+
+    /**
+     * 撤回重同步落点（{@code DuelEventHandler.onReloadField} 末尾调用）：把 STOC_UNDO_ACK
+     * 暂存的回合数/当前回合玩家/阶段写回 field 并消费 latch；无 latch 时什么都不做。
+     *
+     * @return true = 本次重载确实来自撤回（调用方需额外重刷回合高亮/阶段文本）
+     */
+    boolean applyUndoResync(GameField field) {
+        int turn = undoResyncTurn;
+        if (turn < 0) return false;
+        undoResyncTurn = -1;
+        field.turnCount = turn;
+        if (undoResyncPlayer >= 0) {
+            field.currentPlayer = localPlayer(undoResyncPlayer & 1);
+        }
+        if (undoResyncPhase >= 0) {
+            field.currentPhase = undoResyncPhase;
+        }
+        return true;
+    }
+
+    /** 决斗结束/断线/重新开局：丢弃残留 latch，避免下一局的普通 reload 误消费 */
+    public void clearUndoResync() {
+        undoResyncTurn = -1;
+        undoResyncPlayer = -1;
+        undoResyncPhase = -1;
+        releaseUndoResponseBarrier();
+    }
+
+    /**
+     * 撤回成立后清理「被撤销片段」在客户端留下的三类残留（在 STOC_UNDO_ACK 落地时执行，主线程）：
+     * ① 尚未派发的排队消息——动画闸门关闭时被暂缓的消息里就有被撤销的动画帧与旧询问，闸门一开
+     *    它们会重新播动画/重新弹窗，把界面带回已被回退的场面；服务端紧接着会重发
+     *    MSG_RELOAD_FIELD + 各区域 refresh 全量覆盖，故丢弃这些消息不会留下缺口；
+     * ② lastGameMsg 快照——服务端下一次 MSG_RETRY 会经 {@link #replayLastGameMsg()} 重放它，
+     *    重放的正是被撤销的那条旧询问 UI；
+     * ③ 动画闸门与定时屏障——被撤销片段的动画可能正把闸门关着，不强制重开的话 reload 与重挂的
+     *    询问会一直排到 8s 超时兜底，期间界面拿不到新询问。
+     * 最后布应答代次屏障（{@link #armUndoResponseBarrier()}）。
+     */
+    private void clearStaleMsgStateAfterUndo() {
+        pendingMsgs.clear();
+        lastGameMsgType = -1;
+        lastGameMsgBody = null;
+        retryReplayCount = 0;
+        // 询问快照同步作废：被撤销的那条询问已不存在，往后的 DENIED/兜底不得再把它重派回界面
+        lastQuestionType = -1;
+        lastQuestionBody = null;
+        animGateClosed = false;
+        animHoldUntilMs = 0;
+        mainHandler.removeCallbacks(animGatePoller);
+        mainHandler.removeCallbacks(animGateFailsafe);
+        // 本方命令标记与待应答列表一并作废：服务端重挂询问前会先留一段空白（丢弃在路上的迟到
+        // 应答），这期间若留着被撤销那一段算出的命令列表，点卡仍能弹出「发动 / 召唤 / 特殊召唤」
+        // 菜单并按旧索引编码应答——新询问一到手就会把这份错拍应答喂进引擎
+        if (field != null) {
+            clearCommandFlags();
+            resetFieldCommandHints();
+            field.clearSelectionVisuals();
+        }
+        armUndoResponseBarrier();
+    }
+
+    // === 撤回后的应答代次屏障 ===
+    // 撤回把一段已完成的动作连同其后的所有询问一起抹掉，但客户端可能仍握着旧询问的产物：
+    // 尚未关闭的弹窗、未取消的延迟自动应答、按旧命令列表编出的点击。这些应答打到回退后的
+    // 新局面上就是「错拍应答」——服务端把它当作当前待应答询问的答复喂给引擎，轻则非法应答
+    // 引发 MSG_RETRY 风暴（表现为通讯中断、无法继续决斗），重则旧列表里的合法指令（切换阶段等）
+    // 直接作用在新局面上（表现为凭空进入下个回合，本方失去操作机会）。故以询问代次为准绳拦掉。
+
+    /** 询问代次计数：每向 UI 派发一条 SELECT 类询问（{@code EngineCallbackDelegate.onSelectRequired}）
+     * 自增一次，标识「界面上此刻挂着的是第几次询问」。
+     */
+    private volatile long questionSeq;
+    /**
+     * 应答屏障下界：撤回成立时记为当时的 questionSeq；此后代次未前进（还没有新询问派发下来）
+     * 则丢弃一切出口应答。新询问一到，代越此界，屏障自动失效直到下次撤回。-1 = 未布防。
+     */
+    private volatile long undoBarrierSeq = -1L;
+    /**
+     * 布防兜底超时：万一服务端不受理 CTOS_UNDO（一个 ACK 都不回），屏障至多持有 5s 即自动解除，
+     * 避免“按了撤回就再也发不出应答”的死锁。解除时不重派询问：未收到 ACK 就没有走过
+     * 重同步路径，弹窗从未被关闭，界面仍在原地等玩家应答；而回退后的询问属于对方席位时
+     * 本就没有自己的询问，重派会凭空弹出旧询问的幽灵窗。
+     */
+    private static final long UNDO_BARRIER_TIMEOUT_MS = 5000L;
+    private final Runnable undoBarrierFailsafe = () -> {
+        if (!isResponseBlocked()) return;
+        Log.w(TAG, "undo response barrier timed out: release");
+        releaseUndoResponseBarrier();
+    };
+    /** 最近一条询问（MSG_SELECT_* 10..26）快照，供撤回被拒时重派发询问、重建 UI */
+    private int lastQuestionType = -1;
+    private byte[] lastQuestionBody;
+
+    /** 询问派发点调用：推进询问代次（在投给 UI 之前同步执行，确保与应答出口之间的先后可见） */
+    public void onQuestionDispatched() {
+        questionSeq++;
+    }
+
+    /** 撤回成立：以当前询问代次为下界布防，此后至新询问到达之间的应答一律丢弃 */
+    private void armUndoResponseBarrier() {
+        undoBarrierSeq = questionSeq;
+        undoBarrierDropped = false;
+        mainHandler.removeCallbacks(undoBarrierFailsafe);
+        mainHandler.postDelayed(undoBarrierFailsafe, UNDO_BARRIER_TIMEOUT_MS);
+    }
+
+    /** 解除应答屏障（撤回被拒/超时：局面未变，界面上的询问照常应答） */
+    private void releaseUndoResponseBarrier() {
+        undoBarrierSeq = -1L;
+        mainHandler.removeCallbacks(undoBarrierFailsafe);
+    }
+
+    /**
+     * 重派发最近一条询问快照（对齐 {@link #replayLastGameMsg()} 的 RETRY 重建路径）：
+     * 走同一套解析→弹窗→（可按时）自动应答链，使选择 UI 与被丢掉的应答都重新获得机会。
+     */
+    private void restorePendingQuestionUi() {
+        int type = lastQuestionType;
+        byte[] body = lastQuestionBody;
+        if (type < 0 || body == null) return;
+        ByteBuffer buf = ByteBuffer.wrap(body);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        pendingMsgs.offer(() -> dispatchGameMsg(type, buf));
+        drainPendingMsgs();
+    }
+
+    /**
+     * 应答出口拦截（{@code GameActions.sendResponse}）：屏障已布防且询问代次尚未前进，
+     * 说明本次应答来自已被撤销的旧询问，丢弃即可——回退后的新局面会在服务端重挂询问，
+     * 正常应答流程随即恢复。屏障只压住「新询问到达之前」这一段，不会误伤新询问的合法应答。
+     */
+    public boolean isResponseBlocked() {
+        long barrier = undoBarrierSeq;
+        if (barrier < 0 || questionSeq > barrier) return false;
+        // 记下确实丢过一次：服务端若拒收撤回，这些被吞的应答需要一次重派发机会
+        undoBarrierDropped = true;
+        return true;
+    }
+
+    /** 本次布防期间是否丢弃过出口应答（决定撤回被拒后要不要重派发询问） */
+    private volatile boolean undoBarrierDropped;
+
+    /**
+     * 捕获当前询问代次令牌，供「延迟若干毫秒之后才发出应答」的路径（放弃连锁的随机等待）
+     * 在回调触发时自检：屏障拦得住新询问到达之前的应答，而这类定时器可能恰在新询问到达之后
+     * 才到期（彼时代次已前进、屏障失效），却仍带着旧询问的意志去答复新局面，故必须由发起方把
+     * 代次快照进闭包，到期发现代次已变即放弃本次应答。
+     */
+    public long captureQuestionToken() {
+        return questionSeq;
+    }
+
+    /** 令牌所对应的询问是否已被更晚到达的询问取代（true = 该次应答作废） */
+    public boolean isQuestionStale(long token) {
+        return token != questionSeq;
+    }
+
+    // === 询问丢失自愈：答完上一步却收不到下一条询问时的看门狗 ===
+
+    /**
+     * 最近一次收到「挂给本席位的询问」或「等对方」提示（MSG_SELECT_* / MSG_ANNOUNCE_* /
+     * 猜拳 / MSG_WAITING）的时刻。 正常的服务端在每次收到应答后必会下发二者之一，
+     * 所以它们一到就等于界面重新有了可应答项，不需要任何求援。
+     */
+    private volatile long lastAskRxAt;
+    /** 最近一次真正向服务端发出 CTOS_RESPONSE 的时刻（被应答屏障丢弃的不算）。 */
+    private volatile long lastResponseTxAt;
+    private int askProbeCount;
+    private long askProbeAt;
+    private boolean askWatchdogRunning;
+    /** 应答发出后多久仍收不到任何询问/等待提示，即判定询问丢在半路。局域网里这个间隔约等于一次往返的数十倍。 */
+    private static final long ASK_STUCK_GRACE_MS = 2500L;
+    /** 同一次卡死最多求援几次（用完仍无回包则交服务端保活心跳与日志，不再刷盘）。 */
+    private static final int ASK_PROBE_MAX = 3;
+    /** 两次求援之间的最小间隔。 */
+    private static final long ASK_PROBE_INTERVAL_MS = 1500L;
+    /** 看门狗复查周期。 */
+    private static final long ASK_WATCHDOG_TICK_MS = 500L;
+
+    private final Runnable askWatchdogTask = new Runnable() {
+        @Override
+        public void run() {
+            if (!askWatchdogRunning) {
+                return;
+            }
+            long tx = lastResponseTxAt;
+            if (tx == 0L || tx <= lastAskRxAt || !canProbeAsk() || askProbeCount >= ASK_PROBE_MAX) {
+                // 新询问（或等待提示）已到手、或已不在决斗中、或求援已用尽：停止复查
+                askWatchdogRunning = false;
+                return;
+            }
+            long now = System.currentTimeMillis();
+            if (now - tx >= ASK_STUCK_GRACE_MS && now - askProbeAt >= ASK_PROBE_INTERVAL_MS) {
+                askProbeCount++;
+                askProbeAt = now;
+                Log.w(TAG, "no question or waiting hint arrived " + (now - tx)
+                        + "ms after our response: ask server to re-hang (try " + askProbeCount + ")");
+                client.sendAskResend();
+            }
+            mainHandler.postDelayed(this, ASK_WATCHDOG_TICK_MS);
+        }
+    };
+
+    /** 本端可以发求援包：联机决斗中、非回放/残局/观战，且服务端认得这个包号。 */
+    private boolean canProbeAsk() {
+        return duelStarted && !replayMode && !isSingleMode && !isSpectator()
+                && (isHost || serverCapsAskResend);
+    }
+
+    /** 由 {@link GameActions} 在实际发出 CTOS_RESPONSE 后回调：开始看门狗计时。 */
+    public void notifyResponseSent() {
+        lastResponseTxAt = System.currentTimeMillis();
+        if (!canProbeAsk() || askWatchdogRunning) {
+            return;
+        }
+        askWatchdogRunning = true;
+        mainHandler.postDelayed(askWatchdogTask, ASK_WATCHDOG_TICK_MS);
+    }
+
+    /** 询问/等待提示到达：界面重新有事可做，求援计数作废。 */
+    private void notifyAskReceived() {
+        lastAskRxAt = System.currentTimeMillis();
+        askProbeCount = 0;
+    }
+
+    /** 新一局开始（STOC_DUEL_START）：作废上一局的应答/询问时戳与求援计数，避免局间残留误发求援包。 */
+    public void resetAskWatchdog() {
+        lastAskRxAt = 0L;
+        lastResponseTxAt = 0L;
+        askProbeCount = 0;
+        askProbeAt = 0L;
+        askWatchdogRunning = false;
+        mainHandler.removeCallbacks(askWatchdogTask);
+    }
+
+    /** 这条消息是否让本界面重新有了可应答项：挂给本席位的询问，或告知「轮到对方」的等待提示。 */
+    private static boolean isAskOrWaitingMessage(int msgType) {
+        if (msgType == GameMessage.Waiting.value()) {
+            return true;
+        }
+        if (msgType >= GameMessage.SelectBattleCmd.value()
+                && msgType <= GameMessage.SelectUnselectCard.value()) {
+            return true;
+        }
+        // 宣言类与猜拳同样要本席位应答（消息号在 10..26 之外，服务端一样会挂出它们）
+        return msgType == GameMessage.RockPaperScissors.value()
+                || (msgType >= GameMessage.AnnounceRace.value()
+                && msgType <= GameMessage.AnnounceNumber.value());
+    }
+
+    /**
+     * 本席位当前是否真的可撤回：房间支持撤回（{@link #canUndo()}）且服务端确认存在
+     * 可回退的动作锚点（{@link #undoAvailable}）。UI 仅在二者同时成立时闪动发光提示。
+     */
+    public boolean isUndoPromptActive() {
+        return canUndo() && undoAvailable;
+    }
+
     /** 是否 tag 双人模式（gameMode == MODE_TAG） */
     public boolean isTagMode() {
         return lobbyActions.isTagMode();
@@ -655,6 +1016,11 @@ public class GameEngine {
      */
     public void enqueueGameMsg(int msgType, ByteBuffer data) {
         data.order(ByteOrder.LITTLE_ENDIAN);
+        // 询问自愈：只要收到挂给本席位的询问或「等对方」提示，就说明服务端仍在正常推进对局，
+        // 看门狗的求援计时就此作废（否则一次正常的长考会被误认为卡死）
+        if (isAskOrWaitingMessage(msgType)) {
+            notifyAskReceived();
+        }
         // 对齐 duelclient.cpp L1298-1303：除 MSG_RETRY 外每条消息均缓存一份快照，
         // 供服务端下发 RETRY（无效应答）后重放重建选择 UI（服务端不会重发原 SELECT）
         if (msgType != GameMessage.Retry.value()) {
@@ -664,6 +1030,12 @@ public class GameEngine {
             lastGameMsgType = msgType;
             lastGameMsgBody = body;
             retryReplayCount = 0;
+            // 单独留存最近一条询问（MSG_SELECT_* = 10..26）快照：撤回被拒/超时时据此重派发询问
+            if (msgType >= GameMessage.SelectBattleCmd.value()
+                    && msgType <= GameMessage.SelectUnselectCard.value()) {
+                lastQuestionType = msgType;
+                lastQuestionBody = body;
+            }
             recordMsgFrame(msgType, body);
         }
         // 入队后由闸门串行派发：动画消息会关闭闸门，暂缓后续消息（对齐 C++ WaitFrameSignal 阻塞语义）
@@ -691,6 +1063,14 @@ public class GameEngine {
      */
     private void recordMsgFrame(int msgType, byte[] body) {
         synchronized (msgRecLock) {
+            // 撤回作废旧段：丢弃已录帧，直到下一局 MSG_START 才重新开段
+            if (msgSegInvalid) {
+                msgSegFrames.clear();
+                if (msgType != GameMessage.Start.value()) {
+                    return;
+                }
+                msgSegInvalid = false;
+            }
             if (msgType == GameMessage.Start.value() && !msgSegFrames.isEmpty()) {
                 msgSegDone.add(new ArrayList<>(msgSegFrames));
                 msgSegFrames.clear();
@@ -725,6 +1105,21 @@ public class GameEngine {
         synchronized (msgRecLock) {
             msgSegFrames.clear();
             msgSegDone.clear();
+            msgSegInvalid = false;
+        }
+    }
+
+    /** 本局消息帧流是否已因撤回而作废（作废期间不再累计帧，直到下一局 MSG_START） */
+    private boolean msgSegInvalid;
+
+    /**
+     * 撤回成功后作废本局的 MSG 尾段录制（见 {@link #onUndoAck}）：被撤销的动画帧已写入段内、
+     * 随后又是 reload/refresh 重同步帧，与重建后的响应段不再对齐，强行保存会得到错位的增强录像。
+     */
+    void invalidateCurrentMsgSegment() {
+        synchronized (msgRecLock) {
+            msgSegInvalid = true;
+            msgSegFrames.clear();
         }
     }
 
@@ -765,7 +1160,16 @@ public class GameEngine {
      * 连续重放设上限防“自动非法应答 ↔ 服务端 RETRY”热循环，收到新消息即清零。
      */
     public void replayLastGameMsg() {
-        if (lastGameMsgType < 0 || lastGameMsgBody == null) return;
+        if (lastGameMsgType < 0 || lastGameMsgBody == null) {
+            // 服务端现在会直接重发询问（见 DuelAnalyzer 的 MSG_RETRY 分支），本方法仅剩兜底作用；
+            // 兜底也拿不到任何快照时界面将再也等不到询问，此处必须落盘现场而非静默 return
+            if (lastQuestionType >= 0 && lastQuestionBody != null) {
+                restorePendingQuestionUi();
+                return;
+            }
+            Log.w(TAG, "retry: no cached message to replay (undo cleared it and no question snapshot)");
+            return;
+        }
         if (++retryReplayCount > 3) {
             Log.e(TAG, "replayLastGameMsg: retry replay limit exceeded, give up (msgType="
                     + lastGameMsgType + ")");

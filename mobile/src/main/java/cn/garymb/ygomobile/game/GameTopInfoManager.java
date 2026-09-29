@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.game;
 
+import android.animation.ValueAnimator;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Shader;
@@ -11,6 +12,7 @@ import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -95,6 +97,20 @@ public class GameTopInfoManager {
     private TextView tvOpponentName, tvOpponentTime, tvOpponentCardCount;
     private TextView tvPlayerLpNumber, tvOpponentLpNumber;
     private TextView tvTurnCounter;
+    /**
+     * 局域网撤回入口（用户规格：置于中央回合数字下方，平时隐藏）：
+     * 收到服务端 STOC_UNDO_STATE=1（本席位有一个已处理完整、可整段回退的行动宣言）时
+     * 点亮并循环播放呼吸式闪动发光，点击即发起 CTOS_UNDO。
+     */
+    private ImageView ivUndo;
+    /** iv_undo 的呼吸动画（可撤回期间常驻循环）；null = 未播放 */
+    private ValueAnimator undoPulse;
+    /** 撤回提示图标 XML 基准尺寸（dp，f=1）与内边距（露出 undo_glow 光晕） */
+    private static final float UNDO_BASE_WIDTH_DP = 26f;
+    private static final float UNDO_BASE_HEIGHT_DP = 20f;
+    private static final float UNDO_BASE_PADDING_DP = 5f;
+    /** 呼吸动画单程时长（REVERSE 循环，一个完整明暗周期 ≈ 2×此值） */
+    private static final long UNDO_PULSE_HALF_MS = 620L;
     /** LP 变化浮字（-1000/+500，对齐 drawing.cpp L984-990 lpcstring/lpccolor）：
      *  GameFieldView 是 setZOrderOnTop(true) 的 GLSurfaceView，GL 曲面合成在 Activity 窗口之上，
      *  作为 layout_game_right 子 View 的浮字会被场地/卡片纹理遮挡；故改由「透明、不抢焦点、不拦截触摸的
@@ -168,6 +184,11 @@ public class GameTopInfoManager {
         tvPlayerLpNumber = activity.findViewById(R.id.tv_player_lp_number);
         tvOpponentLpNumber = activity.findViewById(R.id.tv_opponent_lp_number);
         tvTurnCounter = activity.findViewById(R.id.tv_turn_counter);
+        ivUndo = activity.findViewById(R.id.iv_undo);
+        if (ivUndo != null) {
+            // 点击即请求回退本方最近一个动作（服务端按锚点整段回退并重挂该动作前的询问）
+            ivUndo.setOnClickListener(v -> activity.requestUndo());
+        }
         ivPlayerCardBack = activity.findViewById(R.id.iv_player_card_back);
         ivOpponentCardBack = activity.findViewById(R.id.iv_opponent_card_back);
 
@@ -228,6 +249,13 @@ public class GameTopInfoManager {
         setTextSp(tvPlayerTime, 10f * f);
         setTextSp(tvOpponentTime, 10f * f);
         setTextSp(tvTurnCounter, 30f * f);
+        // 撤回提示图标随面板高度等比放大（含光晕内边距，保持光晕与图标的比例）
+        if (ivUndo != null) {
+            setSize(ivUndo, Math.round(UNDO_BASE_WIDTH_DP * f * dm.density),
+                    Math.round(UNDO_BASE_HEIGHT_DP * f * dm.density));
+            int pad = Math.round(UNDO_BASE_PADDING_DP * f * dm.density);
+            ivUndo.setPadding(pad, pad, pad, pad);
+        }
         int cardBackH = Math.round(10f * f * dm.scaledDensity); // XML 基准高 10sp
         setSize(ivPlayerCardBack, -1, cardBackH);
         setSize(ivOpponentCardBack, -1, cardBackH);
@@ -254,6 +282,7 @@ public class GameTopInfoManager {
     /** 恢复对局开始前的初始显示 */
     public void reset() {
         stopTimer();
+        stopUndoPulse();
         setPlayerDisplay(0, cn.garymb.ygomobile.Constants.PlayerName, DEFAULT_LP_TEXT);
         setPlayerDisplay(1, "Opponent", DEFAULT_LP_TEXT);
         setTurnText(DEFAULT_TURN_TEXT);
@@ -303,6 +332,7 @@ public class GameTopInfoManager {
 
     public void hide() {
         stopTimer();
+        stopUndoPulse();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
     }
 
@@ -389,6 +419,56 @@ public class GameTopInfoManager {
 
     public void setTurnText(String text) {
         if (tvTurnCounter != null) tvTurnCounter.setText(text);
+    }
+
+    // === 局域网撤回提示（回合数下方 ic_undo：闪动发光 = 当前有可整段回退的动作） ===
+
+    /**
+     * 按服务端下发的可撤回状态切换撤回图标（STOC_UNDO_STATE）：
+     * <p>available=true：点亮回合数下方的 ic_undo 并循环播放「变亮放大 → 变暗缩小」的呼吸动画，
+     * {@code @drawable/undo_glow} 的光晕底随之明暗，表示本方上一个行动宣言（召唤 / 反转召唤 /
+     * 特殊召唤 / 盖卡 / 发动效果 / 攻击宣言 / 切换阶段）已全部处理完毕、可整段撤回重做；
+     * <p>available=false：停止动画并隐藏（不可撤回时不留可点击的空图标）。
+     * <p>已处于闪动状态时重复调用不重启动画，避免每步应答都让呼吸相位归零。
+     */
+    public void setUndoPrompt(boolean available) {
+        if (ivUndo == null) return;
+        if (!available) {
+            stopUndoPulse();
+            return;
+        }
+        if (undoPulse != null && undoPulse.isRunning()) return;
+        ivUndo.setVisibility(View.VISIBLE);
+        undoPulse = ValueAnimator.ofFloat(0f, 1f);
+        undoPulse.setDuration(UNDO_PULSE_HALF_MS);
+        undoPulse.setRepeatCount(ValueAnimator.INFINITE);
+        undoPulse.setRepeatMode(ValueAnimator.REVERSE);
+        undoPulse.setInterpolator(new AccelerateDecelerateInterpolator());
+        undoPulse.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator a) {
+                float p = (float) a.getAnimatedValue();
+                ivUndo.setAlpha(0.35f + 0.65f * p);
+                float s = 0.9f + 0.2f * p;
+                ivUndo.setScaleX(s);
+                ivUndo.setScaleY(s);
+            }
+        });
+        undoPulse.start();
+    }
+
+    /** 停止闪动并隐藏撤回图标（不可撤回、重开一局、顶部信息条隐藏时均经此）。 */
+    private void stopUndoPulse() {
+        if (undoPulse != null) {
+            undoPulse.cancel();
+            undoPulse = null;
+        }
+        if (ivUndo != null) {
+            ivUndo.setAlpha(1f);
+            ivUndo.setScaleX(1f);
+            ivUndo.setScaleY(1f);
+            ivUndo.setVisibility(View.INVISIBLE);
+        }
     }
 
     /**

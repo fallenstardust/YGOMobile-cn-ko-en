@@ -1128,7 +1128,8 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                 card.position = data.get() & 0xFF;
                 int ovc = data.get() & 0xFF;
                 for (int xyz = 0; xyz < ovc; xyz++) {
-                    // C++ L4316-4328：素材仅作占位（不读卡码），sequence 为 overlayed 内索引
+                    // C++ L4316-4328：素材仅作占位（reload 载荷不携卡码），sequence 为 overlayed 内索引；
+                    // 卡码由紧随其后的 refreshMzone（服务端携 QUERY_OVERLAY_CARD）填入同一占位对象
                     GameField.ClientCard x = new GameField.ClientCard();
                     card.overlayed.add(x);
                     field.overlayCards.add(x);
@@ -1137,6 +1138,11 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                     x.sequence = card.overlayed.size() - 1;
                     x.owner = p;
                     x.controler = p;
+                    // 超量素材恒为表侧公开信息，而 query_field_info 不写素材姿态：留 position=0 会被
+                    // 渲染层 isFaceUp() 判为里侧而统一画成卡背（同 onMove 叠放分支对新建素材的
+                    // position==0 兼容处理）；叠放层序与旋转由 getCardLocation 的 OVERLAY 分支单独求出，
+                    // 此处只影响正/背面贴图的选择
+                    x.position = GameField.POS_FACEUP;
                 }
             }
             // 魔法陷阱区 8 格：present(1) → [position(1)]（无叠放字段）
@@ -1204,11 +1210,19 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             field.eventString = DataManager.get().formatSystemString(1609,
                     "【%s】的连锁发动", DataManager.get().getName(lastChain.code));
         }
+        // 撤回（CTOS_UNDO）重同步：field.clear() 已把回合数/阶段归零，而 MSG_RELOAD_FIELD 本身
+        // 不携这两项，故从 STOC_UNDO_ACK 暂存值回填（非撤回触发的 reload 不会有 latch，行为不变）
+        final boolean undoResync = engine.applyUndoResync(field);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {
                 engine.listener.onFieldChanged();
                 engine.listener.onPlayerInfoUpdated(0);
                 engine.listener.onPlayerInfoUpdated(1);
+                if (undoResync) {
+                    // 回合方高亮与阶段文本随回退后的值重刷（同 performSpectatorSwap 的收尾三连）
+                    engine.listener.onTurnStarted(field.currentPlayer);
+                    engine.listener.onPhaseChanged(field.currentPhase);
+                }
             }
         });
     }

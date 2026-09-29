@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.game;
 
+import android.util.Log;
+
 import java.util.List;
 
 import cn.garymb.ygomobile.render.TextureLoader;
@@ -41,12 +43,24 @@ public class GameActions {
     }
 
     public void sendResponse(byte[] responseData) {
+        // 撤回后的应答代次屏障：被撤销询问的迟到应答（弹窗关闭前的点击、未取消的自动应答、
+        // 按旧命令列表编码的指令）一律不发。服务端已把待应答席位转到回退后的新局面，错拍应答
+        // 轻则被引擎判为非法引发 MSG_RETRY 风暴（表现为通讯中断），重则旧列表里的合法指令凭空
+        // 推进新局面（表现为直接跳到下个回合）；新询问到达后本出口自动恢复放行
+        if (engine.isResponseBlocked()) {
+            Log.w("GameActions", "response dropped by undo barrier, len="
+                    + (responseData == null ? 0 : responseData.length));
+            return;
+        }
         // 残局：无网络，应答经引擎泵线程喂回本地决斗引擎（对齐 SingleMode::SetResponse）
         if (engine.isSingleMode) {
             engine.singleRunner.submitResponse(responseData);
             return;
         }
         engine.client.sendResponse(responseData);
+        // 应答确实发出去了：从此刻起服务端应当要么把下一条询问挂给本席位、要么回一条 MSG_WAITING。
+        // 两者都没到的看门狗会请服务端重发（询问丢失自愈，见 GameEngine#notifyResponseSent）
+        engine.notifyResponseSent();
     }
 
     public void sendTimeConfirm() {

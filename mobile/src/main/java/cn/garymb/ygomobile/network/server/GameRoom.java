@@ -126,10 +126,28 @@ public final class GameRoom implements YGOProtocol {
      * {@link LanGameServer} 在房间创建前后先行处理。
      */
     void handlePacket(ServerConnection conn, int proto, ByteBuffer body) {
-        // 状态门：投降/聊天不受限；其余包要求 state==自由(0) 或 state==本包类型
-        if (proto != CTOS_SURRENDER && proto != CTOS_CHAT
+        // 状态门：投降/聊天/撤回不受限；其余包要求 state==自由(0) 或 state==本包类型。
+        // CTOS_UNDO 必须豁免：发起撤回的连接此刻处于 STATE_NONE（它刚应答完，或对方正在等待），
+        // 按常规门会被直接丢弃；撤回的合法条件（决斗中/有可撤回记录/权限）全部在服务端内部校验。
+        // CTOS_ASK_RESEND 同理豁免：它恰恰是在「本席位没被问到」时发出的求援包，
+        // 要能递到对局手里才能把那条丢失的询问重新挂出来
+        if (proto != CTOS_SURRENDER && proto != CTOS_CHAT && proto != CTOS_UNDO
+                && proto != CTOS_ASK_RESEND
                 && (conn.state == ServerConnection.STATE_NONE
                 || (conn.state != ServerConnection.STATE_FREE && conn.state != proto))) {
+            // 决斗中应答被状态门吞掉：此刻该席位并没有被问到（多为撤回后延后重挂留白期内
+            // 迟到的旧应答，或非应答席位误发）；落盘现场以便事后判定“错拍应答”类卡死
+            if (proto == CTOS_RESPONSE && duelStage == DUEL_STAGE_DUELING) {
+                Log.i(TAG, "CTOS_RESPONSE dropped by state gate: seat=" + conn.type
+                        + " state=0x" + Integer.toHexString(conn.state & 0xFF)
+                        + " lastResponse=" + lastResponse);
+                // 交对局自愈：若引擎此刻等的正是这个席位，说明它手上那个询问并未被答掉，而客户端
+                // 已以为自己答过、界面不再挂任何询问（点卡弹不出命令菜单，决斗永久互等），
+                // 重挂该询问即可恢复；其余情形的被吞应答属于已回退的那一段，照旧丢弃
+                if (duel != null) {
+                    duel.onResponseDropped(conn);
+                }
+            }
             return;
         }
         switch (proto) {
@@ -139,6 +157,21 @@ public final class GameRoom implements YGOProtocol {
                 }
                 byte[] resp = remaining(body);
                 duel.getResponse(conn, resp);
+                break;
+            }
+            case CTOS_UNDO: {
+                // 撤回上一步操作（本工程扩展）：局域网房主房间与人机（WindBot）房间同走此通路
+                if (duel != null) {
+                    duel.undoLastResponse(conn);
+                }
+                break;
+            }
+            case CTOS_ASK_RESEND: {
+                // 询问丢失自愈（本工程扩展）：客户端答完上一步后长时间再无任何消息进来，
+                // 说明它那一头的询问没能挂住；请服务端把引擎此刻等的那一条原样重发
+                if (duel != null) {
+                    duel.onAskResendRequest(conn);
+                }
                 break;
             }
             case CTOS_TIME_CONFIRM: {
@@ -246,6 +279,11 @@ public final class GameRoom implements YGOProtocol {
             hostInfo.mode = MODE_SINGLE | (hostInfo.mode & 0x10); // preserve solo bit
         }
         soloMode = hostInfo.soloMode();
+        // 本内置服务端实现了 CTOS_UNDO（撤回）：在 HostInfo 的 pad 扩展位上打能力标记，
+        // 该标记经 STOC_JOIN_GAME / 局域网房间列表回显给连入方，使其也能显示撤回按钮
+        //（gframe 等第三方服务端该 3 字节为未定义填充，不会凑出这个魔术字节）
+        hostInfo.extMagic = HOST_EXT_MAGIC;
+        hostInfo.extCaps = HOST_CAP_UNDO | HOST_CAP_ASK_RESEND;
         matchMode = hostInfo.duelMode() == MODE_MATCH;
         tagMode = soloMode && hostInfo.duelMode() == MODE_TAG;
         roomName = BufferIO.readUTF16(body, 20);
@@ -854,6 +892,11 @@ public final class GameRoom implements YGOProtocol {
         int startHand;
         int drawCount;
         int timeLimit;
+        /** HostInfo pad[0]：本工程私有扩展魔术字节（见 {@code YGOProtocol.HOST_EXT_MAGIC}），
+         *  服务端建房时强制置位，用于向连入方声明“本房间服务端为本工程内置服务端”。 */
+        int extMagic;
+        /** HostInfo pad[1]：服务端能力位掩码（见 {@code YGOProtocol.HOST_CAP_*}）。 */
+        int extCaps;
 
         /** Solo mode is encoded in mode bit 4 (0x10); original mode values 0/1/2 use lower bits only. */
         boolean soloMode() { return (mode & 0x10) != 0; }
@@ -867,9 +910,9 @@ public final class GameRoom implements YGOProtocol {
             duelRule = b.get() & 0xFF;
             noCheckDeck = b.get() & 0xFF;
             noShuffleDeck = b.get() & 0xFF;
-            b.get();
-            b.get();
-            b.get(); // pad[3]
+            extMagic = b.get() & 0xFF;
+            extCaps = b.get() & 0xFF;
+            b.get(); // pad[2]（保留未用）
             startLp = b.getInt();
             startHand = b.get() & 0xFF;
             drawCount = b.get() & 0xFF;
@@ -884,7 +927,9 @@ public final class GameRoom implements YGOProtocol {
             b.put((byte) duelRule);
             b.put((byte) noCheckDeck);
             b.put((byte) noShuffleDeck);
-            b.put(new byte[3]); // pad
+            b.put((byte) extMagic);
+            b.put((byte) extCaps);
+            b.put((byte) 0); // pad[2]（保留未用）
             b.putInt(startLp);
             b.put((byte) startHand);
             b.put((byte) drawCount);

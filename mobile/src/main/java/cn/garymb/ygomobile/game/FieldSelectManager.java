@@ -87,16 +87,26 @@ class FieldSelectManager {
         int mask = engine.selectFieldMask;
         if ((mask & (0x1f | 0x1f0000)) == 0) return false;
         final long stepMs = 480L;
+        // 预演共耗时约 1s（两个 480ms 台阶），其间本次询问可能被撤回（局面回退、询问重挂）：
+        // 捕获询问代次令牌，到期时代次已变则整段预演作废——否则它会拿已失效的 selectFieldMask
+        // 开启一个旧询问语义的选格会话，玩家随后的点击会把选格应答发进新到达的其他询问里
+        final long token = engine.captureQuestionToken();
         field.revealHighlightCards.clear();
         field.revealHighlightCards.add(left);
         if (ctl.viewController != null) ctl.viewController.invalidate();
         engine.mainHandler.postDelayed(() -> {
+            if (engine.isQuestionStale(token)) {
+                field.revealHighlightCards.clear();
+                if (ctl.viewController != null) ctl.viewController.invalidate();
+                return;
+            }
             field.revealHighlightCards.clear();
             field.revealHighlightCards.add(right);
             if (ctl.viewController != null) ctl.viewController.invalidate();
             engine.mainHandler.postDelayed(() -> {
                 field.revealHighlightCards.clear();
                 if (ctl.viewController != null) ctl.viewController.invalidate();
+                if (engine.isQuestionStale(token)) return;
                 doBeginPlaceSelect(false);
             }, stepMs);
         }, stepMs);
@@ -240,6 +250,18 @@ class FieldSelectManager {
         ctl.engine.sendResponse(buf.array());
         finishPlaceSelect();
         return true;
+    }
+
+    /**
+     * 撤回后无应答复位一切进行中的选择会话（选格 / 选卡 / 合计 / UNSELECT）。
+     * 与 {@link #cancelPlaceSelect()} 的区别：本方法只清状态，绝不对服务端发任何应答——
+     * 这些会话由已被撤销的询问建立，任其存活则下一次点击会把旧询问语义的应答（选格三元组、
+     * 选卡索引）发进回退后的新局面 → 非法应答 → MSG_RETRY。回退后的新局面若仍是个询问，
+     * 会由新到达的 SELECT 重新开启自己的会话。
+     */
+    void abortSelectSessions() {
+        if (isPlaceSelecting) finishPlaceSelect();
+        if (isCardSelecting || isUnselectSelecting || isSumSelecting) endCardSelect();
     }
 
     // === 区域点击处理（来自 DuelFieldManager） ===
