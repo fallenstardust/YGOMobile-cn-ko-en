@@ -362,7 +362,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             engine.field.updateHandLayout(0, 10);
             engine.field.updateHandLayout(1, 10);
         }
-        // 需求3a：卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，先让新卡亮出到手牌中
+        // 卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，先让新卡亮出到手牌中
         // 展示片刻，再对该侧手牌整体播放一次洗切动画（样式对齐 duelclient.cpp MSG_SHUFFLE_HAND）。
         // 普通抽卡走 MSG_DRAW 不经本 MSG_MOVE 分支，故这里只捕获「效果把手牌外的卡加回手卡」，
         // 不会误挂在每次正常抽卡上；newCtrl 已在方法开头经 localPlayer 转为本地视角索引。
@@ -374,7 +374,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                             || oldLocBase == CardLocation.Grave.value()
                             || oldLocBase == CardLocation.Removed.value()
                             || oldLocBase == CardLocation.Extra.value())) {
-                // 需求A：把本次入手的那张卡（现位于 newCtrl/Hand/newSeq）一并交下去——用于揭示阶段
+                // 把本次入手的那张卡（现位于 newCtrl/Hand/newSeq）一并交下去——用于揭示阶段
                 // 只对该卡施加蚂蚁线高亮（对方翻面到正面 / 我方仅高亮），展示结束后再整体洗切
                 GameField.ClientCard arriving = engine.field.getCard(newCtrl, newLocBase, newSeq);
                 engine.deckMotion.applyMoveToHandShuffle(newCtrl, arriving);

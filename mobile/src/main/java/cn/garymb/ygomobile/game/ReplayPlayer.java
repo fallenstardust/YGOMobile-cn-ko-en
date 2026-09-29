@@ -649,7 +649,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {
                 engine.listener.onTurnStarted(field.currentPlayer);
-                // 切视角同步左右对调双方聊天内容（需求1）：与昵称/LP 对调同一批次，
+                // 切视角同步左右对调双方聊天内容：与昵称/LP 对调同一批次，
                 // 使 player1 的消息随其所在侧一并搬到对调后的对应血条下方
                 engine.listener.onViewpointSwapped();
             }

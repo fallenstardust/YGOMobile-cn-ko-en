@@ -205,12 +205,13 @@ public class DeckHandMotionManager {
     }
 
     /**
-     * 需求3a + 需求A + 批量：卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，
+     * 卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，
      * 把同时入手的**全部**卡片作为一组统一揭示并施加行进蚂蚁线高亮，展示结束后再洗切。
      *
      * 批量机制：同一轮 drainPendingMsgs 中连续多张 MSG_MOVE 入手时，每张只加入 batch
      * 而不设 animHoldUntilMs（避免闸门阻塞后续消息导致串行），50ms 去抖后 flush
-     * 整组统一播放。参考 C++ MSG_SHUFFLE_HAND L2659-2701 count 张卡片整体动画。
+     * 整组统一播放。对齐 C++ MSG_SHUFFLE_HAND L2659-2701 count 张卡片整体动画：
+     * 聚拢→停留→换面→回新布局，而非旧版的"揭示→洗切→再聚拢→换面→回位"两次流程。
      */
     public void applyMoveToHandShuffle(int localPlayer, GameField.ClientCard arrivingCard) {
         if (engine.field.instantPlace) return;
@@ -238,6 +239,17 @@ public class DeckHandMotionManager {
      * Flush accumulated batch: reveal all cards together with marching ants, then single shuffle.
      * Animation gate is set HERE (not per-card) so all cards in the batch process in one
      * drain cycle without the gate blocking subsequent MSG_MOVEs.
+     *
+     * 严格对齐 C++ MSG_SHUFFLE_HAND L2662-2702 时序（仅一次完整流程）:
+     *   ① WaitFrameSignal(5) [停顿 5 帧]
+     *   ② (对手)Flip 5 帧
+     *   ③ Gather 5 帧向中线聚拢
+     *   ④ WaitFrameSignal(11) [停留 11 帧]——此处换入新卡面 (SetCode)
+     *   ⑤ MoveCard(5) [回新布局]
+     *   ⑥ WaitFrameSignal(5)
+     *
+     * 关键改动：新卡面在「聚拢停留段」就设置，展开时直接按新顺序落位；
+     * 视觉上消除"先收拢→展开→重排"的误导感，实现"收拢即确定顺序→展开即新布局"。
      */
     private void flushHandRevealBatch() {
         handRevealFlushRunnable = null;
@@ -249,12 +261,13 @@ public class DeckHandMotionManager {
         final List<GameField.ClientCard> hand = engine.field.players[localPlayer].hand;
         if (hand == null || hand.isEmpty()) return;
         final boolean flip = localPlayer == 1 && !engine.replayMode;
-        final int revealFrames = 34;
-        final long flyInDelay = 10L * 17L;
-        final long revealMs = revealFrames * 17L;
-        engine.animHoldUntilMs = System.currentTimeMillis()
-                + flyInDelay + revealMs + (26L + 5L) * 17L;
-        // Phase 1: after fly-in, reveal ALL batch cards together + marching ants highlight
+        
+        // 统一动画闸门持有时长 = 揭示 + 洗切全流程
+        engine.animHoldUntilMs = System.currentTimeMillis() + (5L + 5L + 5L + 11L + 5L + 5L) * 17L;
+        
+        // Phase 1: 揭示新入手卡片（蚂蚁线高亮）+ 启动洗切动画
+        // 对齐 C++ L2666-2668: 停顿 5 帧
+        final long delay1 = 5L * 17L;
         engine.mainHandler.postDelayed(() -> {
             engine.field.revealHighlightCards.clear();
             for (GameField.ClientCard card : batch) {
@@ -263,31 +276,37 @@ public class DeckHandMotionManager {
                     engine.field.revealHighlightCards.add(card);
                 }
             }
-            if (engine.listener != null) engine.listener.onFieldChanged();
-        }, flyInDelay);
-        // Phase 2: after reveal, clear highlights and shuffle entire hand (skip if < 2 cards)
-        engine.mainHandler.postDelayed(() -> {
-            engine.field.revealHighlightCards.clear();
+            // 揭示同时启动整列手卡的洗切动画（避免两次洗切）
             if (hand.size() > 1) {
                 engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
-                int maxTotal = 0;
                 for (GameField.ClientCard c : hand) {
                     if (c == null) continue;
                     c.is_hand_reveal = false;
                     engine.field.startHandShuffle(c, false);
-                    maxTotal = Math.max(maxTotal, c.animTotalFrame);
-                }
-                if (maxTotal > 0) {
-                    engine.animHoldUntilMs = Math.max(engine.animHoldUntilMs,
-                            System.currentTimeMillis() + (maxTotal + 5L) * 17L);
-                }
-            } else {
-                // Single card: just clear reveal state, no shuffle
-                for (GameField.ClientCard c : hand) {
-                    if (c != null) c.is_hand_reveal = false;
                 }
             }
             if (engine.listener != null) engine.listener.onFieldChanged();
-        }, flyInDelay + revealMs);
+        }, delay1);
+        
+        // Phase 2: 聚拢停留段末设置新卡码（对齐 C++ L2692-2695 SetCode 时机）
+        // 停顿 5 + 翻面 5+ 聚拢 5 = 15 帧后延迟 1 帧（对应 WaitFrameSignal(11) 的最后 1 帧）
+        final long codesetDelay = (5L + 5L + 5L + 10L - 1L) * 17L; // WaitFrameSignal(11) 的倒数第 1 帧
+        engine.mainHandler.postDelayed(() -> {
+            for (GameField.ClientCard c : hand) {
+                if (c == null) continue;
+                c.clearDescHints();
+            }
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, codesetDelay);
+        
+        // Phase 3: 回新布局（C++ L2697-2700 MoveCard(5)），再持闸 5 帧（L2701 WaitFrameSignal(5)）
+        final long returnDelay = (5L + 5L + 5L + 11L) * 17L;
+        engine.mainHandler.postDelayed(() -> {
+            for (GameField.ClientCard c : hand) {
+                if (c == null) continue;
+                engine.field.moveCardAnimated(c, 5);
+            }
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, returnDelay);
     }
 }

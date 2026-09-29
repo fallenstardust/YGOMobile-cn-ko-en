@@ -23,7 +23,7 @@ final class PhaseButtonRenderer {
     private final GameFieldView view;
 
     // 阶段按钮屏幕尺寸（dp）：按钮平行屏幕，与两个额外怪兽区错开摆放（左/中/右三个锚点）
-    // 需求C：在原 32×18 基础上略微放大
+    // 在原 32×18 基础上略微放大
     private static final float PHASE_BTN_W_DP = 37f;
     private static final float PHASE_BTN_H_DP = 21f;
     private static final int PHASE_CURRENT = 0, PHASE_NEXT = 1, PHASE_EP = 2;
@@ -67,7 +67,7 @@ final class PhaseButtonRenderer {
         float bw = Math.min(PHASE_BTN_W_DP * d, Math.max(24f, gapPx - 10f));
         float bh = PHASE_BTN_H_DP * d;
         float halfW = bw / pxPerWorld / 2f;
-        // 需求C：最左（当前阶段）与最右（EP）按钮向外平移的间距，加大使两者分别向左/右分开
+        // 最左（当前阶段）与最右（EP）按钮向外平移的间距，加大使两者分别向左/右分开
         float margin = 0.24f;
         if (curVisible) {
             // 左侧额外怪兽区左缘再向外（屏幕更左 = 绘制空间 x 更大）

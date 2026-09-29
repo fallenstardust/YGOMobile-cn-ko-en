@@ -168,7 +168,7 @@ public class GameField {
         /** 洗手卡是否含对手手卡翻面段（duelclient.cpp L2666-2679：player==1 且非回放非单机） */
         public boolean hsFlip;
         /**
-         * 需求A：卡片经效果入手时的「揭示」动画进行中标记——在洗切之前先把入手的卡亮出到手牌
+         * 卡片经效果入手时的「揭示」动画进行中标记——在洗切之前先把入手的卡亮出到手牌
          * 并施加行进蚂蚁线高亮：对方卡（flip=true）按 duelclient.cpp MSG_SHUFFLE_HAND L2666-2679
          * 的翻面语义从卡背转到正面展示，己方卡本就正面（不翻给对面看）仅停留高亮同样时长；
          * 展示（含蚂蚁线）结束后才对该侧手牌整体播放洗切。关键帧轨迹由 GameFieldMotion
@@ -539,10 +539,10 @@ public class GameField {
     public List<ClientCard> selectableCards = new ArrayList<>();
     public List<ClientCard> selectedCards = new ArrayList<>();
     /**
-     * 需求A：正在「揭示」展示的手牌卡——由 DeckHandMotionManager.applyMoveToHandShuffle 在洗切前
+     * 正在「揭示」展示的手牌卡——由 DeckHandMotionManager.applyMoveToHandShuffle 在洗切前
      * 加入入手卡，SelectionOutlineRenderer.drawCardSelectOutlines 对其绘制行进蚂蚁线（不受
      * is_selectable 会话门控，避免污染真实可选卡会话）；展示结束/洗切启动前清空。
-     * 需求B 复用本列表为灵摆召唤的两张刻度卡按左右次序绘制蚂蚁线预演。
+     * 复用本列表为灵摆召唤的两张刻度卡按左右次序绘制蚂蚁线预演。
      */
     public final List<ClientCard> revealHighlightCards = new ArrayList<>();
     public List<ClientCard> selectsumCards = new ArrayList<>();
@@ -956,7 +956,7 @@ public class GameField {
         motion.startHandShuffle(pcard, flip);
     }
 
-    /** 需求A：卡片经效果入手时的揭示动画（翻面到正面/停留展示，展示结束后再洗切） */
+    /** 卡片经效果入手时的揭示动画（翻面到正面/停留展示，展示结束后再洗切） */
     public void startHandReveal(ClientCard pcard, boolean flip) {
         motion.startHandReveal(pcard, flip);
     }

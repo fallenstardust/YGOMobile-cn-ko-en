@@ -20,7 +20,7 @@ class BgmSceneController {
     private static final int BGM_RESULT_WIN = 1;
     private static final int BGM_RESULT_LOSE = 2;
     private int bgmDuelResult = BGM_RESULT_NONE;
-    /** 优势/劣势 LP 差阈值（对齐需求「LP 相差大于等于 4000」） */
+    /** 优势/劣势 LP 差阈值 */
     private static final int BGM_LP_DIFF_THRESHOLD = 4000;
     /**
      * 决斗是否真正进行中（对齐 C++ Game::playBGM 的 dInfo.isStarted 闸门）：

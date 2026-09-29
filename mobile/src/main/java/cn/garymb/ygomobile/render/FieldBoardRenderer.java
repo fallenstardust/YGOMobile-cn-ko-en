@@ -43,7 +43,7 @@ final class FieldBoardRenderer {
         if (transparent) drawFieldSpellArt(code1, code2, rule == 1);
         int tex = view.tex.obtainFieldTexture(rule, transparent);
         // 因魔陷行新增纵向缝隙、卡区整体更外扩，场地底板贴图矩形随之稍微外扩（中心不变、四边各向外
-        // 放大 BOARD_MARGIN），使卡片区仍完整落在底板内；底板网格与格子的错位已在需求中明确忽略。
+        // 放大 BOARD_MARGIN），使卡片区仍完整落在底板内。
         final float boardMargin = 0.25f;
         float w = (FieldGeometry.FIELD_X_MAX - FieldGeometry.FIELD_X_MIN) + boardMargin * 2f;
         float h = (FieldGeometry.FIELD_Y_MAX - FieldGeometry.FIELD_Y_MIN) + boardMargin * 2f;

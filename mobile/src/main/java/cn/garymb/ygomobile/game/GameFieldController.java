@@ -459,7 +459,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         chat.appendChat(playerType, message);
     }
 
-    /** 切换视角（观战/录像 ReplaySwap）：左右对调双方聊天内容（需求1，与 gametopinfo 昵称同步对调） */
+    /** 切换视角（观战/录像 ReplaySwap）：左右对调双方聊天内容（与 gametopinfo 昵称同步对调） */
     public void swapChatSides() {
         if (chat != null) chat.swapChatSides();
     }

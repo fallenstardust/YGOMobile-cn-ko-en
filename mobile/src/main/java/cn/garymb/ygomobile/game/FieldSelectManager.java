@@ -55,7 +55,7 @@ class FieldSelectManager {
     // === 放置区域选择 ===
 
     void beginPlaceSelect(boolean isDisfield) {
-        // 需求B：灵摆召唤的位置选择先播放“左灵摆刻度卡蚂蚁线 → 右灵摆刻度卡蚂蚁线 →
+        // 灵摆召唤的位置选择先播放“左灵摆刻度卡蚂蚁线 → 右灵摆刻度卡蚂蚁线 →
         // 场上可放置区蚂蚁线供选点”的预演（对齐用户描述的灵摆召唤动画）；非灵摆召唤直接
         // 进入真正的位置选择会话（参考实现：C++ 无此分阶段动画，于本移植版自行编排）
         if (!isDisfield && startPendulumScalePrelude()) {
@@ -65,9 +65,9 @@ class FieldSelectManager {
     }
 
     /**
-     * 需求B：若本次 MSG_SELECT_PLACE 为灵摆召唤（灵摆召唤方两侧灵摆区都立着灵摆怪、
+     * 若本次 MSG_SELECT_PLACE 为灵摆召唤（灵摆召唤方两侧灵摆区都立着灵摆怪、
      * 且放置掩码含主怪兽区），则先对左刻度（spellZone[6]）后对右刻度（spellZone[7]）施加
-     * 行进蚂蚁线（复用 revealHighlightCards，与需求A 同一绘制通道），再高亮场上可放置区。
+     * 行进蚂蚁线（复用 revealHighlightCards），再高亮场上可放置区。
      *
      * @return true=已启动预演（真正的选择会话将在预演末尾开启）；false=非灵摆召唤，需直接选择
      */
@@ -538,6 +538,11 @@ class FieldSelectManager {
         }
         ctl.engine.sendResponse(buf.array());
         endCardSelect();
+        // 立即停止蚂蚁线动画（先于网络应答）
+        CardDetailPanel panel = ctl.activity.getCardDetailPanel();
+        if (panel != null) {
+            panel.stopAntsHighlightImmediately();
+        }
         return true;
     }
 
