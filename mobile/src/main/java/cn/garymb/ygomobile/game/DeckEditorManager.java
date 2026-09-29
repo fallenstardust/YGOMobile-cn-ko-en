@@ -473,6 +473,13 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         refreshReadonly();
     }
 
+    /** Solo match 换 side：按席位卡组文件路径载入该副卡组到编辑器，
+     *  供 {@code EngineCallbackDelegate} 在 SIDING 时先载入再 enterSideMode。路径为空则不动。 */
+    public void loadDeckForSideSwap(String deckPath) {
+        if (deckPath == null || deckPath.isEmpty()) return;
+        loadDeckFromPath(deckPath);
+    }
+
     // === 对应 deck_con.cpp: push_main ===
     public boolean pushMain(Card card, int seq) {
         if (card == null || Card.isExtraCard(card.Type)) return false;

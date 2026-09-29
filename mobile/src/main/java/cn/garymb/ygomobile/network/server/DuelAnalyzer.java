@@ -760,6 +760,25 @@ final class DuelAnalyzer implements YGOProtocol {
                     broadcastMsg(range(msg, start, cursor));
                     break;
                 }
+                case EngineMessage.MSG_TAG_SWAP: {
+                    // 头 5×u8 = player, mcount, ecount, pcount, hcount；
+                    // 载荷 = top card(4B) + hand(hcount×4B) + extra(ecount×4B)（对齐 field::tag_swap 写入序）。
+                    int swapPlayer = msg[cursor] & 0xFF;
+                    int tsEcount = msg[cursor + 2] & 0xFF;
+                    int tsHcount = msg[cursor + 4] & 0xFF;
+                    cursor += 5 + 4 + tsHcount * 4 + tsEcount * 4;
+                    // solo：4 席位同一连接由房主一人操控，全量下发即无信息泄漏；
+                    // sendToPlayer 在 dp==players[0] 时录帧，players[1]==players[0] 故只发一条全量帧。
+                    sendToPlayer(room.players[swapPlayer & 1], range(msg, start, cursor));
+                    refreshExtra(swapPlayer & 1);
+                    refreshMzone(0, 0x81fff, 0);
+                    refreshMzone(1, 0x81fff, 0);
+                    refreshSzone(0, 0x681fff, 0);
+                    refreshSzone(1, 0x681fff, 0);
+                    refreshHand(0, 0x781fff, 0);
+                    refreshHand(1, 0x781fff, 0);
+                    break;
+                }
                 case EngineMessage.MSG_MATCH_KILL: {
                     int code = readInt32(msg, cursor);
                     cursor += 4;

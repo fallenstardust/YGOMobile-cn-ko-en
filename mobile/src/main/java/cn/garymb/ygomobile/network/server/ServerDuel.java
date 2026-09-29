@@ -50,14 +50,19 @@ final class ServerDuel implements YGOProtocol {
 
     void startDuel(ServerConnection dp, int tp) {
         GameRoom.HostInfo hi = room.hostInfo;
+        boolean tag = room.tagMode;
         room.duelStage = DUEL_STAGE_DUELING;
         boolean swapped = false;
         room.pplayer[0] = room.players[0];
         room.pplayer[1] = room.players[1];
-        // 选对方先攻时交换座位（含各自卡组）
+        // 选对方先攻时交换座位（含各自卡组）；TAG 下 4 席位同一连接，只整体交换两队卡组
         boolean chooseFirst = tp != 0;
         if ((chooseFirst && dp.type == 1) || (!chooseFirst && dp.type == 0)) {
-            swapPlayersAndDecks();
+            if (tag) {
+                swapTagDecks();
+            } else {
+                swapPlayersAndDecks();
+            }
             swapped = true;
         }
         dp.state = CTOS_RESPONSE;
@@ -68,14 +73,24 @@ final class ServerDuel implements YGOProtocol {
             seed[i] = rnd.nextInt();
         }
         int startTime = (int) (System.currentTimeMillis() / 1000L);
-        replay = new YrpWriter(seed, Constants.PRO_VERSION, YrpWriter.REPLAY_UNIFORM, startTime);
+        int replayFlag = YrpWriter.REPLAY_UNIFORM | (tag ? YrpWriter.REPLAY_TAG : 0);
+        replay = new YrpWriter(seed, Constants.PRO_VERSION, replayFlag, startTime);
         replay.writeName(room.players[0].name);
         replay.writeName(room.players[1].name);
+        if (tag) {
+            // TAG 录像头需 4 个席位名；solo 下协议不上传各席位卡组名，服务器不可知，统一写房主名
+            replay.writeName(room.players[0].name);
+            replay.writeName(room.players[1].name);
+        }
 
         // no_shuffle 时保持卡组原序（引擎以 DUEL_PSEUDO_SHUFFLE 处理），否则服务端洗牌
         if (hi.noShuffleDeck == 0) {
             java.util.Collections.shuffle(room.decks[0].main);
             java.util.Collections.shuffle(room.decks[1].main);
+            if (tag) {
+                java.util.Collections.shuffle(room.decks[2].main);
+                java.util.Collections.shuffle(room.decks[3].main);
+            }
         }
         room.timeLimit[0] = hi.timeLimit;
         room.timeLimit[1] = hi.timeLimit;
@@ -93,13 +108,29 @@ final class ServerDuel implements YGOProtocol {
         if (hi.noShuffleDeck != 0) {
             opt |= OcgDuelEngine.DUEL_PSEUDO_SHUFFLE;
         }
+        if (tag) {
+            opt |= OcgDuelEngine.DUEL_TAG_MODE;
+        }
         replay.writeInt32(hi.startLp);
         replay.writeInt32(hi.startHand);
         replay.writeInt32(hi.drawCount);
         replay.writeInt32(opt);
 
-        loadDeckToEngine(room.decks[0], 0);
-        loadDeckToEngine(room.decks[1], 1);
+        if (tag) {
+            // 装载顺序对齐 TagDuel::TPResult：引擎玩家 0 = decks[0](single)+decks[1](tag)，
+            // 引擎玩家 1 = decks[3](single)+decks[2](tag)。
+            loadOneZone(room.decks[0].main, 0, OcgDuelEngine.LOCATION_DECK);
+            loadOneZone(room.decks[0].extra, 0, OcgDuelEngine.LOCATION_EXTRA);
+            loadOneZoneTag(room.decks[1].main, 0, OcgDuelEngine.LOCATION_DECK);
+            loadOneZoneTag(room.decks[1].extra, 0, OcgDuelEngine.LOCATION_EXTRA);
+            loadOneZone(room.decks[3].main, 1, OcgDuelEngine.LOCATION_DECK);
+            loadOneZone(room.decks[3].extra, 1, OcgDuelEngine.LOCATION_EXTRA);
+            loadOneZoneTag(room.decks[2].main, 1, OcgDuelEngine.LOCATION_DECK);
+            loadOneZoneTag(room.decks[2].extra, 1, OcgDuelEngine.LOCATION_EXTRA);
+        } else {
+            loadDeckToEngine(room.decks[0], 0);
+            loadDeckToEngine(room.decks[1], 1);
+        }
 
         // MSG_START（19 字节）
         byte[] startBuf = new byte[19];
@@ -151,6 +182,16 @@ final class ServerDuel implements YGOProtocol {
         room.decks[1] = d;
     }
 
+    /** TAG 选后攻时整队交换卡组槽位（对齐 TagDuel::TPResult 的 pdeck0↔2/pdeck1↔3）。 */
+    private void swapTagDecks() {
+        PlayerDeck a = room.decks[0];
+        room.decks[0] = room.decks[2];
+        room.decks[2] = a;
+        PlayerDeck b = room.decks[1];
+        room.decks[1] = room.decks[3];
+        room.decks[3] = b;
+    }
+
     private void loadDeckToEngine(PlayerDeck deck, int player) {
         loadOneZone(deck.main, player, OcgDuelEngine.LOCATION_DECK);
         loadOneZone(deck.extra, player, OcgDuelEngine.LOCATION_EXTRA);
@@ -163,6 +204,16 @@ final class ServerDuel implements YGOProtocol {
             int code = cards.get(i);
             OcgDuelEngine.newCard(pduel, code, player, player, location, 0,
                     OcgDuelEngine.POS_FACEDOWN_DEFENSE);
+            replay.writeInt32(code);
+        }
+    }
+
+    /** TAG 队友共享卡组装载：new_tag_card(duel, code, owner, location)，逆序并写录像。 */
+    private void loadOneZoneTag(List<Integer> cards, int owner, int location) {
+        replay.writeInt32(cards.size());
+        for (int i = cards.size() - 1; i >= 0; i--) {
+            int code = cards.get(i);
+            OcgDuelEngine.newTagCard(pduel, code, owner, location);
             replay.writeInt32(code);
         }
     }
@@ -217,8 +268,13 @@ final class ServerDuel implements YGOProtocol {
                 room.ready[1] = false;
                 room.players[0].state = CTOS_UPDATE_DECK;
                 room.players[1].state = CTOS_UPDATE_DECK;
+                room.soloSideCount = 0;
+                java.util.Arrays.fill(room.soloSideFilled, false);
                 room.players[0].send(STOC_CHANGE_SIDE, null);
-                room.players[1].send(STOC_CHANGE_SIDE, null);
+                // solo：同一连接不能一次叠两个换 side 编辑器，第二份由 updateDeck 提交后逐份引导
+                if (room.players[1] != room.players[0]) {
+                    room.players[1].send(STOC_CHANGE_SIDE, null);
+                }
                 for (ServerConnection o : room.observers) {
                     o.send(STOC_WAITING_SIDE, null);
                 }

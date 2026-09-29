@@ -639,6 +639,14 @@ public class GameEngine {
         setState(newState);
     }
 
+    /**
+     * 强制重新派发一次状态回调（不做状态去重）：用于 solo 连续换 side 等“状态未变但需
+     * 重建界面”的场景——setState 对相同状态会早退不回调，此处直接走 onStateChanged 分发。
+     */
+    public void redispatchState(GameState state) {
+        if (listener != null) listener.onStateChanged(state);
+    }
+
     // === 游戏消息串行闸门（原 DuelClient.ClientListener.onGameMsg 投递口，实现见 StocHandler） ===
 
     /**
@@ -952,6 +960,12 @@ public class GameEngine {
      *  席位 1/2/3 选卡时回填，enterDuelingUI 会优先用 slot0/slot1 名称写回 GameTopInfo，
      *  代替默认玩家昵称。非 solo 模式不写入。 */
     public final String[] soloSeatDeckNames = new String[]{"", "", "", ""};
+    /** Solo 模式下四个席位选定的卡组文件路径（index 0..3）：与 {@link #soloSeatDeckNames} 同源，
+     *  由 PlayerWaitingDialog 回填；match 换 side 时按席位顺序载入对应卡组供编辑。非 solo 不写入。 */
+    public final String[] soloSeatDeckPaths = new String[]{"", "", "", ""};
+    /** Solo match 换 side 会话内已弹出的换 side 界面计数：每次进入 SIDING 载入
+     *  {@link #soloSeatDeckPaths} 的下一席位卡组并自增，新局开局（onDuelStart）复位为 0。 */
+    public int soloSideSession = 0;
     /** 回放快进重排中（undo/restart/跳回合）：drawspec 覆盖层与长动画派发丢弃，配合
      *  GameField.instantPlace 即时落位与音效静默，令闸门不阻塞、队列单帧排空 */
     public boolean replaySkip = false;

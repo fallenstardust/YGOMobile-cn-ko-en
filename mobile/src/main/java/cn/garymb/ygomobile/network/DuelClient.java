@@ -780,6 +780,8 @@ public class DuelClient implements YGOProtocol {
             engine.field.isTag = engine.gameMode == 2;
             engine.tagPlayer[0] = false;
             engine.tagPlayer[1] = false;
+            // 新一局开始复位 solo 换 side 席位会话计数（match 每局之间的换 side 从席位 0 重新引导）
+            engine.soloSideSession = 0;
             engine.bindViewNames();
             engine.duelStarted = true;
             engine.inDuel = false;
@@ -859,7 +861,15 @@ public class DuelClient implements YGOProtocol {
             engine.inDuel = false;
             engine.siding = true;
             engine.duelStage = YGOProtocol.DUEL_STAGE_SIDING;
-            engine.setEngineState(GameEngine.GameState.SIDING);
+            // Solo 连续换 side：上一份 side 提交后编辑器已隐藏但引擎状态仍停留在 SIDING，
+            // 服务端随即下发第二条 CHANGE_SIDE。setEngineState 因状态未变会去重、不回调，
+            // 导致下一席位换 side 界面无法重新载入（表现为编辑器消失后不再出现）。
+            // 此处识别重入，强制重新派发 SIDING 回调以重建界面；首次进入（状态非 SIDING）仍走状态回调。
+            if (engine.getState() == GameEngine.GameState.SIDING) {
+                engine.redispatchState(GameEngine.GameState.SIDING);
+            } else {
+                engine.setEngineState(GameEngine.GameState.SIDING);
+            }
         }
 
         @Override

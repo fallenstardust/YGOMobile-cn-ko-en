@@ -76,6 +76,42 @@ final class PlayerDeck {
                 && side.size() == old.side.size();
     }
 
+    /**
+     * 主 + 额外 + 副三区合并后的卡码多重集是否与原卡组一致。
+     *
+     * <p>side 交换只在三区之间移动卡片，合并多重集恒定不变——据此可在 solo 换 side 时
+     * 按卡组内容归位到正确槽位，鲁棒于先后手轮转 {@code swapPlayersAndDecks} 造成的
+     * {@code decks[0]/decks[1]} 槽位错位（此时仅按提交顺序写槽位会把卡组落到对面）。
+     */
+    boolean sameCardUnion(PlayerDeck o) {
+        if (o == null) {
+            return false;
+        }
+        if (main.size() + extra.size() + side.size()
+                != o.main.size() + o.extra.size() + o.side.size()) {
+            return false;
+        }
+        java.util.Map<Integer, Integer> diff = new java.util.HashMap<>();
+        bump(diff, main, 1);
+        bump(diff, extra, 1);
+        bump(diff, side, 1);
+        bump(diff, o.main, -1);
+        bump(diff, o.extra, -1);
+        bump(diff, o.side, -1);
+        for (int v : diff.values()) {
+            if (v != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void bump(java.util.Map<Integer, Integer> m, List<Integer> codes, int delta) {
+        for (int code : codes) {
+            m.merge(code, delta, Integer::sum);
+        }
+    }
+
     int mainCount() {
         return main.size();
     }

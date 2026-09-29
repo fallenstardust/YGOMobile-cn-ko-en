@@ -195,12 +195,13 @@ class MainMenuNavigator implements
     }
 
     @Override
-    public void onSoloSeatDeckUpdated(int seat, String deckName) {
-        // Solo 席位卡组选定：缓存到 engine，enterDuelingUI 时写回 GameTopInfo；
-        // 当前处于大厅阶段时 topInfo 面板隐藏，无需即时刷新。slot0 为房主自身
+    public void onSoloSeatDeckUpdated(int seat, String deckName, String deckPath) {
+        // Solo 席位卡组选定：缓存名称与路径到 engine，enterDuelingUI 时写回 GameTopInfo；
+        // match 换 side 时按路径载入对应席位卡组。当前处于大厅阶段时 topInfo 面板隐藏，无需即时刷新。
         if (activity.engine == null) return;
         if (seat < 0 || seat >= activity.engine.soloSeatDeckNames.length) return;
         activity.engine.soloSeatDeckNames[seat] = deckName == null ? "" : deckName;
+        activity.engine.soloSeatDeckPaths[seat] = deckPath == null ? "" : deckPath;
     }
 
     // === 建主 / 玩家等待对话框显示入口 ===

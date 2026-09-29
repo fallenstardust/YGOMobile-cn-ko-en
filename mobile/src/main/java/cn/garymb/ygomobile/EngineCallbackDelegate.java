@@ -118,10 +118,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 duelEndHandling = false;
                 break;
             case SIDING:
-                activity.showDeckEditorView();              // 打开卡组编辑器
-                if (activity.deckEditorManager != null) {
-                    activity.deckEditorManager.enterSideMode();  // 记录替换前张数并允许编辑
-                }
+                applySidingScreen();
                 break;
             case DUEL_END:
                 // 决斗结束：先清除仍在显示的蚂蚁线（选格 mask/选择态列表），
@@ -149,6 +146,34 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 }
                 activity.returnToLanMain(activity.isGameStarted ? "与服务器连接已断开" : null);
                 break;
+        }
+    }
+
+    /**
+     * 进入 / 重入换 side 界面：打开卡组编辑器；solo 下按席位顺序 soloSideSession
+     * 载入对应席位卡组，再进入副卡组替换模式。
+     *
+     * <p>调用点：① 首次进入 SIDING（服务端 duelEndProc 下发的一条 CHANGE_SIDE →
+     * {@code onStateChanged} 的 SIDING 分支）载入席位 0；② solo 后续席位由客户端本地逐席位
+     * 驱动——{@code DeckEditorViewHost.onSideDeckFinished} 提交一份后直接经 mainHandler 投递
+     * 本方法载入下一席位，不再依赖服务端每提交一份回一条 CHANGE_SIDE 的跨端回环。
+     */
+    void applySidingScreen() {
+        activity.showDeckEditorView();              // 打开卡组编辑器
+        if (activity.deckEditorManager == null) return;
+        boolean solo = activity.engine != null && activity.engine.soloMode;
+        if (solo) {
+            // Solo match 换 side：客户端本地逐席位驱动，按席位顺序 soloSideSession
+            // 载入对应席位卡组，再进入 side 编辑。
+            int seat = activity.engine.soloSideSession;
+            String[] paths = activity.engine.soloSeatDeckPaths;
+            if (seat >= 0 && seat < paths.length && paths[seat] != null && !paths[seat].isEmpty()) {
+                activity.deckEditorManager.loadDeckForSideSwap(paths[seat]);
+            }
+        }
+        activity.deckEditorManager.enterSideMode();  // 记录替换前张数并允许编辑
+        if (solo) {
+            activity.engine.soloSideSession++;
         }
     }
 

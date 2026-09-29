@@ -54,8 +54,9 @@ public final class GameRoom implements YGOProtocol {
     final Set<ServerConnection> observers = new LinkedHashSet<>();
 
     // —— 卡组（校验后按 main/extra 拆分，见 ServerDuel 装载）——
-    final PlayerDeck[] decks = new PlayerDeck[]{new PlayerDeck(), new PlayerDeck()};
-    final int[] deckError = new int[2];
+    // TAG 赛制需 4 副（4 席位），其余 2 副；统一按 4 槽分配，多余的槽位不使用。
+    final PlayerDeck[] decks = new PlayerDeck[]{new PlayerDeck(), new PlayerDeck(), new PlayerDeck(), new PlayerDeck()};
+    final int[] deckError = new int[4];
 
     // —— 开局前猜拳/先攻 ——
     final int[] handResult = new int[2];
@@ -75,8 +76,39 @@ public final class GameRoom implements YGOProtocol {
 
     /** Solo mode flag (decoded from hostInfo.mode & 0x10). */
     boolean soloMode = false;
-    /** Track how many decks have been submitted in solo mode (expect 2). */
+    /** Solo 房间且赛制为 TAG：4 席位全部由房主一人操控（对齐 TagDuel 的 4 副卡组装载）。 */
+    boolean tagMode = false;
+    /** Track how many decks have been submitted in solo mode (expect 2, or 4 for TAG). */
     int soloDeckCount = 0;
+    /** match 换 side 阶段已提交的备牌卡组份数（solo 逐席位引导，非 solo 不使用）。 */
+    int soloSideCount = 0;
+    /** 本局换 side 会话内各 decks 槽位是否已被写回：solo 按内容归位后占位，
+     *  防止同一槽位被重复写回；每局 duelEndProc 复位。 */
+    final boolean[] soloSideFilled = new boolean[4];
+
+    /** solo 开局前需收集的卡组份数：TAG 4 份、其余 2 份。 */
+    int requiredSoloDecks() {
+        return tagMode ? 4 : 2;
+    }
+
+    /**
+     * solo 换 side：按提交卡组“主+额外+副整体多重集”在未写回的槽位中定位归属，
+     * 鲁棒于先后手轮转造成的槽位错位；内容均不匹配（如双方卡组完全一致）时回退首个未写回槽位。
+     * 无可用槽位（已全部写回）返回 -1。
+     */
+    int resolveSoloSideSlot(PlayerDeck nd, int required) {
+        for (int i = 0; i < required; i++) {
+            if (!soloSideFilled[i] && nd.sameCardUnion(decks[i])) {
+                return i;
+            }
+        }
+        for (int i = 0; i < required; i++) {
+            if (!soloSideFilled[i]) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     /** 进行中的决斗引擎，TPResult 时创建，EndDuel 后置空。 */
     ServerDuel duel;
@@ -215,6 +247,7 @@ public final class GameRoom implements YGOProtocol {
         }
         soloMode = hostInfo.soloMode();
         matchMode = hostInfo.duelMode() == MODE_MATCH;
+        tagMode = soloMode && hostInfo.duelMode() == MODE_TAG;
         roomName = BufferIO.readUTF16(body, 20);
         roomPass = BufferIO.readUTF16(body, 20);
         conn.host = true;
@@ -460,7 +493,10 @@ public final class GameRoom implements YGOProtocol {
     // ==================================================================
 
     void updateDeck(ServerConnection dp, ByteBuffer body) {
-        if (dp.type > 1 || (soloMode ? (soloDeckCount >= 2 && ready[0]) : ready[dp.type])) {
+        int required = requiredSoloDecks();
+        // solo：首局按已收集份数门槛；换 side 阶段按已提交备牌份数；非 solo：按座位就绪位
+        boolean full = duelCount > 0 ? soloSideCount >= required : soloDeckCount >= required && ready[0];
+        if (dp.type > 1 || (soloMode ? full : ready[dp.type])) {
             return;
         }
         if (body.remaining() < 8) {
@@ -479,30 +515,64 @@ public final class GameRoom implements YGOProtocol {
         for (int i = 0; i < buf.length; i++) {
             buf[i] = body.getInt();
         }
-        // Solo mode: first deck goes to slot 0, second to slot 1
-        int targetSlot = soloMode ? soloDeckCount : dp.type;
+        // Solo mode: decks fill seats in submission order 0..required-1 (TAG=4, else 2).
+        int targetSlot = soloMode ? (duelCount > 0 ? soloSideCount : soloDeckCount) : dp.type;
         if (duelCount == 0) {
             deckError[targetSlot] = decks[targetSlot].load(buf, mainc, sidec);
         } else {
             // match 换边（side）
             PlayerDeck nd = new PlayerDeck();
             int err = nd.load(buf, mainc, sidec);
-            if (err == 0 && nd.canSwapTo(decks[targetSlot])) {
-                decks[targetSlot] = nd;
-                ready[targetSlot] = true;
-                dp.send(STOC_DUEL_START, null);
-                if (ready[0] && ready[1] && duel != null) {
-                    duel.startNextDuelFromSide();
-                }
-            } else {
+            if (err != 0) {
                 sendError(dp, ERRMSG_SIDEERROR, 0);
+                return;
+            }
+            if (soloMode) {
+                // solo：换 side 改由客户端本地逐席位驱动（不再依赖服务端每提交一份回一条
+                // CHANGE_SIDE 的跨端回环）。服务端按卡组“主+额外+副整体多重集”将提交内容归位
+                // 到对应槽位（soloSideFilled 占位、鲁棒于先后手轮转的槽位错位），
+                // 收齐 required 份后统一置 ready 并进入下一局；中途不下发 CHANGE_SIDE。
+                int slot = resolveSoloSideSlot(nd, required);
+                if (slot < 0 || !nd.canSwapTo(decks[slot])) {
+                    sendError(dp, ERRMSG_SIDEERROR, 0);
+                    return;
+                }
+                soloSideFilled[slot] = true;
+                decks[slot] = nd;
+                soloSideCount++;
+                if (soloSideCount >= required) {
+                    ready[0] = true;
+                    ready[1] = true;
+                    dp.send(STOC_DUEL_START, null);
+                    if (duel != null) {
+                        duel.startNextDuelFromSide();
+                    }
+                }
+                return;
+            }
+            if (!nd.canSwapTo(decks[targetSlot])) {
+                sendError(dp, ERRMSG_SIDEERROR, 0);
+                return;
+            }
+            decks[targetSlot] = nd;
+            ready[targetSlot] = true;
+            dp.send(STOC_DUEL_START, null);
+            if (ready[0] && ready[1] && duel != null) {
+                duel.startNextDuelFromSide();
             }
             return;
         }
         if (soloMode) {
             soloDeckCount++;
-            if (soloDeckCount >= 2 && deckError[0] == 0 && deckError[1] == 0) {
-                // Both decks valid: auto-ready
+            boolean allValid = true;
+            for (int i = 0; i < required; i++) {
+                if (deckError[i] != 0) {
+                    allValid = false;
+                    break;
+                }
+            }
+            if (soloDeckCount >= required && allValid) {
+                // All decks valid: auto-ready
                 ready[0] = true;
                 byte[] pc = new byte[]{(byte) ((0 << 4) | PLAYERCHANGE_READY)};
                 dp.send(STOC_HS_PLAYER_CHANGE, pc);
@@ -555,7 +625,12 @@ public final class GameRoom implements YGOProtocol {
             o.state = CTOS_LEAVE_GAME;
             o.send(STOC_DUEL_START, null);
         }
-        players[0].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[1], 0));
+        if (tagMode) {
+            // TAG：房主（players[0]）看自席 decks[0] 与队友席 decks[2]（对齐 TagDuel::StartDuel）
+            players[0].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[2], 0));
+        } else {
+            players[0].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[1], 0));
+        }
         if (!soloMode) {
             players[1].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[1], 1));
         }

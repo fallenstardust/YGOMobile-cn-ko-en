@@ -80,8 +80,28 @@ class DeckEditorViewHost {
                     if (activity.engine != null) {
                         activity.engine.sendDeckUpdate(main, extra, side);
                     }
-                    // 副卡组替换完成：退出副卡组模式并隐藏整个卡组编辑器布局，
-                    // 等待下次 STOC_CHANGE_SIDE 进入副卡组替换模式时再显示
+                    // Solo match 换 side：改由客户端本地逐席位驱动，不再依赖服务端每提交一份
+                    // 回一条 CHANGE_SIDE 的跨端回环（该回环在共享连接上重入时序脆弱，导致点“完成”
+                    // 后无响应、无法切到下一席位）。提交一份后，若仍有席位待换，直接延后重新载入
+                    // 下一席位；required 与服务端一致：TAG 4 份、其余 2 份。
+                    boolean solo = activity.engine != null && activity.engine.soloMode;
+                    if (solo) {
+                        int required = activity.engine.gameMode == 2 ? 4 : 2;
+                        if (activity.engine.soloSideSession < required) {
+                            // applySidingScreen 内含 showDeckEditorView → deckEditorManager.initialize，
+                            // 直接在点击回调栈内重入会破坏当前布局，故延后到本帧之后执行。
+                            activity.engine.mainHandler.post(() -> {
+                                if (activity.engineCallback != null) {
+                                    activity.engineCallback.applySidingScreen();
+                                }
+                            });
+                            return;
+                        }
+                    }
+                    // 副卡组替换完成（非 solo，或 solo 已全部席位提交完毕）：
+                    // 退出副卡组模式并隐藏整个卡组编辑器布局，等待服务端就绪后的下一局 STOC_DUEL_START
+                    //（非 solo 则等待对侧玩家换完）。全部席位换完后服务端收齐 required 份会直接下发
+                    // DUEL_START 进入 match 下一局。
                     if (activity.deckEditorManager != null) {
                         activity.deckEditorManager.exitSideMode();
                     }

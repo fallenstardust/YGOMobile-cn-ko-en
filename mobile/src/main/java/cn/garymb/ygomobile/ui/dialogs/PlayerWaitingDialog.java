@@ -61,8 +61,6 @@ public class PlayerWaitingDialog {
     // 非 TAG solo 只用到 slot1。
     private boolean soloMode = false;
     private int deckPickTarget = 0;
-    private String currentOpponentDeckPath = "";
-    private String currentOpponentDeckName = "";
     /** slot 1..3 席位卡组路径（solo 模式专用）；index 0 保留未用 */
     private final String[] soloSeatDeckPaths = new String[]{"", "", "", ""};
     /** slot 1..3 席位卡组名（solo 模式专用），选好后作为玩家名展示在席位与 GameTopInfo 上 */
@@ -71,16 +69,11 @@ public class PlayerWaitingDialog {
     private TextView etPwPlayer1Name, etPwPlayer2Name, etPwPlayer3Name, etPwPlayer4Name;
     private CheckBox chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready;
     private Button btnPwDuelistMode, btnPwSpectatorMode, btnPwReady, btnPwDeckSelect, btnPwExitWaiting;
-    private Button btnPwDeckSelectOpponent;
     private Button btnPwStartGame;
     private ImageButton btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
     private TextView tvRoomInfo;
     private TextView tvWatchCount;
     private TextView tvDeckSelectLabel;
-    /** "我方卡组"子标签：仅在非 solo 且需要区分时展示；solo 下改由席位点击选卡组，故 GONE 释放空间 */
-    private TextView tvDeckSelfLabel;
-    /** "对方卡组"子标签：非 solo 与 solo 均 GONE（对方选卡组由席位点击接管） */
-    private TextView tvDeckOpponentLabel;
     private View layoutTagPlayers;
     private int selfPos = 0;
     private boolean isSelfReady = false;
@@ -110,9 +103,10 @@ public class PlayerWaitingDialog {
         /** player waiting 界面已显示：Activity 切换到大厅聊天显示 */
         void onPlayerWaitingShown();
 
-        /** Solo 模式下某个非首席（slot 1/2/3）已选定卡组：
-         *  seat 为席位下标，deckName 需同步回填到 GameTopInfo 展示 */
-        void onSoloSeatDeckUpdated(int seat, String deckName);
+        /** Solo 模式下某个席位（slot 0..3）已选定卡组：
+         *  seat 为席位下标，deckName 需同步回填到 GameTopInfo 展示；
+         *  deckPath 为该席位卡组文件路径，match 换 side 时据此载入对应卡组供编辑 */
+        void onSoloSeatDeckUpdated(int seat, String deckName, String deckPath);
     }
 
     private final OnPlayerWaitingListener listener;
@@ -181,13 +175,13 @@ public class PlayerWaitingDialog {
                     int seat = deckPickTarget;
                     soloSeatDeckPaths[seat] = deckPath;
                     soloSeatDeckNames[seat] = deckName;
-                    if (seat == 1) {
-                        currentOpponentDeckPath = deckPath;
-                        currentOpponentDeckName = deckName;
-                    }
                     // 将卡组名作为玩家名展示在席位上（代替默认玩家名，对齐需求描述）
                     setPlayerName(seat, deckName);
-                    if (listener != null) listener.onSoloSeatDeckUpdated(seat, deckName);
+                    // 席位已选定卡组 → 其后的准备勾选框自动打勾（solo 席位“准备”=已选卡组）；
+                    // 重估开始按钮：所有所需席位选齐即可开始
+                    setSoloSeatChecked(seat, true);
+                    updateStartButtonState();
+                    if (listener != null) listener.onSoloSeatDeckUpdated(seat, deckName, deckPath);
                     return;
                 }
                 currentDeckPath = deckPath;
@@ -199,7 +193,9 @@ public class PlayerWaitingDialog {
                 // slot1 一并写回 GameTopInfo（非 solo 不写，不影响协议回显昵称）
                 if (soloMode) {
                     soloSeatDeckNames[0] = deckName;
-                    if (listener != null) listener.onSoloSeatDeckUpdated(0, deckName);
+                    soloSeatDeckPaths[0] = deckPath;
+                    updateStartButtonState();
+                    if (listener != null) listener.onSoloSeatDeckUpdated(0, deckName, deckPath);
                 }
                 // 选择卡组仅更新本地状态，不再自动发卡/进入准备流程；
                 // 发卡（准备第一步）推迟到点击"准备"(btnPwReady) 或勾选自选框时由 sendDeckIfLoaded() 统一触发
@@ -221,20 +217,6 @@ public class PlayerWaitingDialog {
                 deckSelectorDialog.show(btnPwDeckSelect);
             }
         });
-
-        // Solo mode 专用：为对方选卡（写入 slot1），开启前 pre-set deckPickTarget=1
-        if (btnPwDeckSelectOpponent != null) {
-            btnPwDeckSelectOpponent.setOnClickListener(v -> {
-                if (deckSelectorDialog == null) return;
-                if (deckSelectorDialog.isShowing() && deckPickTarget == 1) {
-                    deckSelectorDialog.dismiss();
-                } else {
-                    if (deckSelectorDialog.isShowing()) deckSelectorDialog.dismiss();
-                    deckPickTarget = 1;
-                    deckSelectorDialog.show(btnPwDeckSelectOpponent);
-                }
-            });
-        }
 
         btnPwExitWaiting.setOnClickListener(v -> {
             if (listener != null) listener.onExitWaiting();
@@ -320,7 +302,6 @@ public class PlayerWaitingDialog {
         btnPwSpectatorMode = root.findViewById(R.id.btn_spectator_mode);
         btnPwReady = root.findViewById(R.id.btn_ready);
         btnPwDeckSelect = root.findViewById(R.id.btn_deck_select);
-        btnPwDeckSelectOpponent = root.findViewById(R.id.btn_deck_select_opponent);
         btnPwExitWaiting = root.findViewById(R.id.btn_exit_waiting);
         btnPwStartGame = root.findViewById(R.id.btn_start_game);
         btnPwKickPlayer1 = root.findViewById(R.id.btn_kick_player1);
@@ -330,8 +311,6 @@ public class PlayerWaitingDialog {
         tvRoomInfo = root.findViewById(R.id.tv_room_info);
         tvWatchCount = root.findViewById(R.id.tv_watch_count);
         tvDeckSelectLabel = root.findViewById(R.id.tv_deck_select_label);
-        tvDeckSelfLabel = root.findViewById(R.id.tv_deck_self_label);
-        tvDeckOpponentLabel = root.findViewById(R.id.tv_deck_opponent_label);
         layoutTagPlayers = root.findViewById(R.id.layout_tag_players);
 
         // 界面文字统一复用 gframe 既有系统字符串（1251 →决斗者、1252 →观战、
@@ -350,14 +329,6 @@ public class PlayerWaitingDialog {
         if (tvWatchCount != null) {
             tvWatchCount.setOnClickListener(v -> showWatchersToast());
         }
-
-        // Q3 非纯单人隐藏我方/对方子标签与对方选卡按钮；Q4 solo 时同样隐藏，
-        // 改由 etPwPlayer2/3/4Name 席位点击代选卡组。
-        // 两类场景一致处理，避免临时闪现；
-        // btn_deck_select_opponent 默认 XML 已是 gone，额外在代码中确认。
-        if (tvDeckSelfLabel != null) tvDeckSelfLabel.setVisibility(View.GONE);
-        if (tvDeckOpponentLabel != null) tvDeckOpponentLabel.setVisibility(View.GONE);
-        if (btnPwDeckSelectOpponent != null) btnPwDeckSelectOpponent.setVisibility(View.GONE);
     }
 
     private void showWatchersToast() {
@@ -951,110 +922,100 @@ public class PlayerWaitingDialog {
         }
     }
 
+    /**
+     * 非 solo：点击准备即上传房主自身卡组（单一 currentDeckPath）。
+     * solo：卡组在点击“开始”时由 {@link #soloCommitDecksForStart()} 按席位顺序统一上传，
+     * 此处不发卡（避免“先上传席位0、其余席位未选→return false”造成的服务端部分上传脏状态），
+     * 准备仅作为本地标记，返回 true。
+     */
     private boolean sendDeckIfLoaded() {
-        if (currentDeckPath == null || currentDeckPath.isEmpty()) return false;
-        File ydkFile = new File(currentDeckPath);
-        if (!ydkFile.exists()) return false;
+        if (soloMode) return true;
+        List<List<Integer>> sec = parseDeckSections(currentDeckPath);
+        if (sec == null) {
+            Toast.makeText(context, mStringManager.getSystemString(1406, "无效卡组"), Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (listener != null) listener.onPlayerWaitingDeckUpdate(sec.get(0), sec.get(1), sec.get(2));
+        return true;
+    }
 
+    /**
+     * 解析 ydk 卡组文件为 [主卡组, 额外卡组, 副卡组] 三列表；路径为空/文件不存在/主卡组为空
+     * 时返回 null。供准备上传与 solo 开始时统一上传共用。
+     */
+    private List<List<Integer>> parseDeckSections(String path) {
+        if (path == null || path.isEmpty()) return null;
+        File ydkFile = new File(path);
+        if (!ydkFile.exists()) return null;
         List<Integer> main = new ArrayList<>();
         List<Integer> extra = new ArrayList<>();
         List<Integer> side = new ArrayList<>();
-
         try (BufferedReader reader = new BufferedReader(new FileReader(ydkFile))) {
             String line;
             int section = 0;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty()) continue;
-                if (line.equalsIgnoreCase("#main")) {
-                    section = 1;
-                    continue;
-                }
-                if (line.equalsIgnoreCase("#extra")) {
-                    section = 2;
-                    continue;
-                }
-                if (line.equalsIgnoreCase("!side")) {
-                    section = 3;
-                    continue;
-                }
+                if (line.equalsIgnoreCase("#main")) { section = 1; continue; }
+                if (line.equalsIgnoreCase("#extra")) { section = 2; continue; }
+                if (line.equalsIgnoreCase("!side")) { section = 3; continue; }
                 if (line.startsWith("#")) continue;
                 try {
                     int code = Integer.parseInt(line);
                     switch (section) {
-                        case 1:
-                            main.add(code);
-                            break;
-                        case 2:
-                            extra.add(code);
-                            break;
-                        case 3:
-                            side.add(code);
-                            break;
+                        case 1: main.add(code); break;
+                        case 2: extra.add(code); break;
+                        case 3: side.add(code); break;
                     }
                 } catch (NumberFormatException e) { /* skip */ }
             }
         } catch (Exception e) {
-            Toast.makeText(context, mStringManager.getSystemString(1406, "无效卡组"), Toast.LENGTH_SHORT).show();
-            return false;
+            return null;
         }
+        if (main.isEmpty()) return null;
+        List<List<Integer>> out = new ArrayList<>(3);
+        out.add(main);
+        out.add(extra);
+        out.add(side);
+        return out;
+    }
 
-        if (main.isEmpty()) return false;
+    /** solo：席位 seat（0..required-1）是否已选定卡组。 */
+    private boolean soloSeatHasDeck(int seat) {
+        return seat >= 0 && seat < soloSeatDeckPaths.length
+                && soloSeatDeckPaths[seat] != null && !soloSeatDeckPaths[seat].isEmpty();
+    }
 
-        if (listener != null) {
-            listener.onPlayerWaitingDeckUpdate(main, extra, side);
+    /** solo：开局所需的全部席位（0..requiredSoloSeats()-1）是否都已选定卡组。 */
+    private boolean soloAllSeatsHaveDeck() {
+        int required = requiredSoloSeats();
+        for (int seat = 0; seat < required; seat++) {
+            if (!soloSeatHasDeck(seat)) return false;
         }
+        return true;
+    }
 
-        // Solo mode: server 按接收序将同一连接的份卡包写入 slot0/1/2/3，
-        // 非 TAG 需 slot1，TAG 需 slot1/2/3；不足则提示且返回 false
-        if (soloMode) {
-            int seatEnd = requiredSoloSeats();
-            for (int seat = 1; seat < seatEnd; seat++) {
-                String seatPath = soloSeatDeckPaths[seat];
-                if (seat == 1 && (seatPath == null || seatPath.isEmpty())) {
-                    // 兼容旧有 currentOpponentDeckPath 入口（如尚存留旧的默认对方卡组字段写入）
-                    seatPath = currentOpponentDeckPath;
-                }
-                if (seatPath == null || seatPath.isEmpty()) {
-                    Toast.makeText(context, mStringManager.getSystemString(1301, "请先选择卡组"), Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-                File seatFile = new File(seatPath);
-                if (!seatFile.exists()) {
-                    Toast.makeText(context, mStringManager.getSystemString(1406, "无效卡组"), Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-                List<Integer> sMain = new ArrayList<>();
-                List<Integer> sExtra = new ArrayList<>();
-                List<Integer> sSide = new ArrayList<>();
-                try (BufferedReader reader = new BufferedReader(new FileReader(seatFile))) {
-                    String line;
-                    int section = 0;
-                    while ((line = reader.readLine()) != null) {
-                        line = line.trim();
-                        if (line.isEmpty()) continue;
-                        if (line.equalsIgnoreCase("#main")) { section = 1; continue; }
-                        if (line.equalsIgnoreCase("#extra")) { section = 2; continue; }
-                        if (line.equalsIgnoreCase("!side")) { section = 3; continue; }
-                        if (line.startsWith("#")) continue;
-                        try {
-                            int code = Integer.parseInt(line);
-                            switch (section) {
-                                case 1: sMain.add(code); break;
-                                case 2: sExtra.add(code); break;
-                                case 3: sSide.add(code); break;
-                            }
-                        } catch (NumberFormatException e) { /* skip */ }
-                    }
-                } catch (Exception e) {
-                    Toast.makeText(context, mStringManager.getSystemString(1406, "无效卡组"), Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-                if (sMain.isEmpty()) return false;
-                if (listener != null) {
-                    listener.onPlayerWaitingDeckUpdate(sMain, sExtra, sSide);
-                }
+    /**
+     * solo：点击开始时按席位顺序 0..required-1 原子上传全部卡组。
+     * 先全部解析校验（任一无效即整体失败、不发送任何一份），再依序发送，确保服务端
+     * decks[targetSlot=soloDeckCount++] 按席位顺序落位并在收齐 required 份后自动 ready。
+     */
+    private boolean soloCommitDecksForStart() {
+        int required = requiredSoloSeats();
+        List<List<List<Integer>>> parsed = new ArrayList<>(required);
+        for (int seat = 0; seat < required; seat++) {
+            List<List<Integer>> sec = parseDeckSections(soloSeatDeckPaths[seat]);
+            if (sec == null) {
+                Toast.makeText(context, soloSeatHasDeck(seat)
+                        ? mStringManager.getSystemString(1406, "无效卡组")
+                        : mStringManager.getSystemString(1301, "请先选择卡组"), Toast.LENGTH_SHORT).show();
+                return false;
             }
+            parsed.add(sec);
+        }
+        for (int seat = 0; seat < required; seat++) {
+            List<List<Integer>> sec = parsed.get(seat);
+            if (listener != null) listener.onPlayerWaitingDeckUpdate(sec.get(0), sec.get(1), sec.get(2));
         }
         return true;
     }
@@ -1077,22 +1038,25 @@ public class PlayerWaitingDialog {
     private void setupSoloSeatClickHandlers() {
         if (etPwPlayer2Name != null) {
             etPwPlayer2Name.setClickable(true);
+            etPwPlayer2Name.setHint(R.string.select_deck);
             etPwPlayer2Name.setOnClickListener(v -> openDeckSelectorForSeat(1));
         }
         if (etPwPlayer3Name != null) {
             etPwPlayer3Name.setClickable(true);
+            etPwPlayer3Name.setHint(R.string.select_deck);
             etPwPlayer3Name.setOnClickListener(v -> openDeckSelectorForSeat(2));
         }
         if (etPwPlayer4Name != null) {
             etPwPlayer4Name.setClickable(true);
+            etPwPlayer4Name.setHint(R.string.select_deck);
             etPwPlayer4Name.setOnClickListener(v -> openDeckSelectorForSeat(3));
         }
     }
 
     private void clearSoloSeatClickHandlers() {
-        if (etPwPlayer2Name != null) { etPwPlayer2Name.setOnClickListener(null); etPwPlayer2Name.setClickable(false); }
-        if (etPwPlayer3Name != null) { etPwPlayer3Name.setOnClickListener(null); etPwPlayer3Name.setClickable(false); }
-        if (etPwPlayer4Name != null) { etPwPlayer4Name.setOnClickListener(null); etPwPlayer4Name.setClickable(false); }
+        if (etPwPlayer2Name != null) { etPwPlayer2Name.setOnClickListener(null); etPwPlayer2Name.setClickable(false); etPwPlayer2Name.setHint((CharSequence) null); }
+        if (etPwPlayer3Name != null) { etPwPlayer3Name.setOnClickListener(null); etPwPlayer3Name.setClickable(false); etPwPlayer3Name.setHint((CharSequence) null); }
+        if (etPwPlayer4Name != null) { etPwPlayer4Name.setOnClickListener(null); etPwPlayer4Name.setClickable(false); etPwPlayer4Name.setHint((CharSequence) null); }
     }
 
     private void openDeckSelectorForSeat(int seat) {
@@ -1112,16 +1076,6 @@ public class PlayerWaitingDialog {
         return isTagMode ? 4 : 2;
     }
 
-    private void updateOpponentDeckButtonText() {
-        if (btnPwDeckSelectOpponent == null) return;
-        // 单人模式时对方卡组文本移到按钮上方的 TextView，按钮本身只显示选中状态
-        if (currentOpponentDeckName != null && !currentOpponentDeckName.isEmpty()) {
-            btnPwDeckSelectOpponent.setText("已选：" + currentOpponentDeckName);
-        } else {
-            btnPwDeckSelectOpponent.setText(mStringManager.getSystemString(1711, "选择对方卡组"));
-        }
-    }
-
     private void setupKickButtons() {
         if (btnPwKickPlayer1 != null) btnPwKickPlayer1.setOnClickListener(v -> sendKickPacket(0));
         if (btnPwKickPlayer2 != null) btnPwKickPlayer2.setOnClickListener(v -> sendKickPacket(1));
@@ -1131,15 +1085,60 @@ public class PlayerWaitingDialog {
 
     private void sendKickPacket(int pos) {
         if (!isHost) return;
+        if (soloMode) {
+            // solo 虚拟席位无真实玩家可踢：kick 按钮 = 清除该席位已选卡组与展示名、
+            // 取消打勾，并重估开始按钮（不再发送网络踢人包）
+            clearSoloSeatDeck(pos);
+            return;
+        }
         String playerName = getPlayerName(pos);
         if (playerName.isEmpty()) return;
         if (pos == selfPos) return;
         if (listener != null) listener.onKickPlayerRequested(pos);
     }
 
+    /** solo：清除席位 seat 的卡组选择（路径/名称置空、席位名清空恢复 hint、取消勾选）并重估开始按钮。 */
+    private void clearSoloSeatDeck(int seat) {
+        if (seat < 0 || seat >= soloSeatDeckPaths.length) return;
+        if (seat == 0) {
+            // 房主自身席位：清空本地卡组选择（卡组选择按钮回到“请选择卡组”）
+            soloSeatDeckPaths[0] = "";
+            soloSeatDeckNames[0] = "";
+            currentDeckPath = "";
+            currentDeckName = "";
+            currentDeckCategory = "";
+            updateDeckButtonText();
+        } else {
+            soloSeatDeckPaths[seat] = "";
+            soloSeatDeckNames[seat] = "";
+            setPlayerName(seat, "");
+        }
+        setSoloSeatChecked(seat, false);
+        updateStartButtonState();
+        // 同步引擎侧席位名/路径缓存（换 side 载入、GameTopInfo 展示）一并清空
+        if (listener != null) listener.onSoloSeatDeckUpdated(seat, "", "");
+    }
+
+    /** solo：设置某席位“准备”勾选框的勾选态（席位“准备”=已选卡组）；先摘监听避免触发上传回调。 */
+    private void setSoloSeatChecked(int seat, boolean checked) {
+        if (seat < 0) return;
+        CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
+        if (seat >= checkboxes.length) return;
+        CheckBox cb = checkboxes[seat];
+        if (cb == null) return;
+        cb.setOnCheckedChangeListener(null);
+        cb.setChecked(checked);
+        updateSelfCheckboxInteractivity();
+    }
+
     private void setupStartButton() {
         if (btnPwStartGame != null) {
             btnPwStartGame.setOnClickListener(v -> {
+                // Solo：开始即按席位顺序原子上传全部所需卡组（服务端收齐后自动 ready），
+                // 再发开始；任一席位缺卡/无效则中止并不发送，保持按钮可再次点击。
+                if (soloMode && !soloCommitDecksForStart()) {
+                    return;
+                }
                 if (listener != null) listener.onStartGameRequested();
             });
             btnPwStartGame.setEnabled(false);
@@ -1155,10 +1154,15 @@ public class PlayerWaitingDialog {
             return;
         }
         int duelistCount = isTagMode ? 4 : 2;
-        // Solo mode: 房主一个连接同时占两座位，server 自动将 ready[1]=true，
-        // 无需等待 slot1 自身的 STOC_HS_PLAYER_CHANGE 回显（事实上它不会到来）；
-        // 只看 slot0 勾选即可开放开始按钮。
-        if (soloMode) duelistCount = 1;
+        // Solo 模式：房主一人代控全部席位，开始按钮以“开局所需的全部席位都已选定卡组”为准，
+        // 与房主自身的“准备”解耦（solo 准备不再上传卡组，卡组在开始时按席位顺序统一上传），
+        // 避免“未选齐就先点准备→上传失败/部分脏状态→之后选齐仍无法开始”。
+        if (soloMode) {
+            boolean ok = soloAllSeatsHaveDeck();
+            btnPwStartGame.setEnabled(ok);
+            btnPwStartGame.setTextColor(ok ? Color.WHITE : Color.GRAY);
+            return;
+        }
         CheckBox[] checkboxes = {chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready};
         // 对齐 duelclient.cpp STOC_HS_PLAYER_CHANGE L1238-1243：开始按钮仅以各座位准备勾选判定，
         // 不附加玩家名非空门槛——名字回显缺失/时序异常时曾导致全员准备后按钮仍永久置灰

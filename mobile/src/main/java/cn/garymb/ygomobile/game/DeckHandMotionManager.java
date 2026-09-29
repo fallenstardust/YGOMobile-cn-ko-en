@@ -302,6 +302,9 @@ public class DeckHandMotionManager {
         // Phase 3: 回新布局（C++ L2697-2700 MoveCard(5)），再持闸 5 帧（L2701 WaitFrameSignal(5)）
         final long returnDelay = (5L + 5L + 5L + 11L) * 17L;
         engine.mainHandler.postDelayed(() -> {
+            // 揭示展示结束（停留段完毕、卡片回新布局）：清除入手的行进蚂蚁线高亮，
+            // 否则 revealHighlightCards 永不清空 → 蚂蚁线一直跟在该卡上（含其后续移动）。
+            engine.field.revealHighlightCards.clear();
             for (GameField.ClientCard c : hand) {
                 if (c == null) continue;
                 engine.field.moveCardAnimated(c, 5);
