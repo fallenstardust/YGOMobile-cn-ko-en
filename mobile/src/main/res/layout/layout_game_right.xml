@@ -35,40 +35,58 @@
             android:layout_gravity="top"
             android:orientation="horizontal">
 
-            <!-- 我方信息面板（左上）：三层叠放，底层头像+血条，中层 lpbarf 框，顶层名字/总卡数/倒计时 -->
+            <!-- 我方信息面板（左上）：底层头像框+血条框（lpbarf 拆分为头像框/血条框两部分，
+                 头像框单独适配头像尺寸、血条框自由拉伸），顶层名字/总卡数/倒计时 -->
             <FrameLayout
                 android:id="@+id/layout_player_panel"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="5">
 
-                <!-- 底层：头像 + LP 血条 -->
+                <!-- 底层：头像框 + 血条框 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:id="@+id/iv_player_avatar"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_margin="5dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/avatar" />
-
-                    <!-- LP 血条（drawing.cpp L936-973 tLPBar，我方自左向右填充；每 8000 一节，超出部分叠加下一节颜色层） -->
+                    <!-- 头像框容器：头像贴图 + 叠加其上的头像框（lpbarf 行首 64px 镂空框），
+                         容器尺寸由 GameTopInfoManager 按面板高度与 64:70 比例设定 -->
                     <FrameLayout
+                        android:id="@+id/layout_player_avatar_box"
+                        android:layout_width="50dp"
+                        android:layout_height="match_parent">
+
+                        <ImageView
+                            android:id="@+id/iv_player_avatar"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="4dp"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/avatar" />
+
+                        <ImageView
+                            android:id="@+id/iv_player_avatar_frame"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY" />
+                    </FrameLayout>
+
+                    <!-- 血条框容器：LP 血条填充 + 叠加其上的血条框（lpbarf 行尾 241px 中段，自由拉伸）。
+                         LP 血条（drawing.cpp L936-973 tLPBar，我方自左向右填充；每 8000 一节，超出部分叠加下一节颜色层） -->
+                    <FrameLayout
+                        android:id="@+id/layout_player_bar_box"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginVertical="4dp"
-                        android:layout_marginEnd="4dp"
                         android:layout_weight="1">
 
                         <ImageView
                             android:id="@+id/iv_player_lp_bar"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
+                            android:layout_marginVertical="4dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginEnd="4dp"
                             android:scaleType="fitXY"
                             android:src="@drawable/ygopro_selected_background" />
 
@@ -76,20 +94,23 @@
                             android:id="@+id/iv_player_lp_bar_layer"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
+                            android:layout_marginVertical="4dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginEnd="4dp"
                             android:scaleType="fitXY"
                             android:visibility="gone" />
+
+                        <ImageView
+                            android:id="@+id/iv_player_bar_frame"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY" />
                     </FrameLayout>
                 </LinearLayout>
 
-                <!-- 中层：lpbarf 框（drawing.cpp L996-1003 tLPBarFrame），覆盖整个面板 -->
-                <ImageView
-                    android:id="@+id/iv_player_lp_frame"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="fitXY" />
-
-                <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时 -->
+                <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（paddingStart 由 Java 随头像框宽同步） -->
                 <LinearLayout
+                    android:id="@+id/layout_player_info_col"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
@@ -222,25 +243,28 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5">
 
-                <!-- 底层：LP 血条 + 头像（镜像我方：血条在左、头像在右） -->
+                <!-- 底层：血条框 + 头像框（镜像我方：血条框在左、头像框在右） -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <!-- LP 血条（drawing.cpp L936-973 tLPBar，对方自右向左填充；每 8000 一节，超出部分叠加下一节颜色层） -->
+                    <!-- 血条框容器：LP 血条填充 + 叠加其上的血条框（lpbarf 行首 241px 中段，自由拉伸）。
+                         LP 血条（drawing.cpp L936-973 tLPBar，对方自右向左填充；每 8000 一节，超出部分叠加下一节颜色层） -->
                     <FrameLayout
+                        android:id="@+id/layout_opponent_bar_box"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginVertical="4dp"
-                        android:layout_marginStart="5dp"
                         android:layout_weight="1">
 
                         <ImageView
                             android:id="@+id/iv_opponent_lp_bar"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
+                            android:layout_marginVertical="4dp"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="2dp"
                             android:scaleType="fitXY"
                             android:src="@drawable/ygopro_selected_background" />
 
@@ -248,28 +272,44 @@
                             android:id="@+id/iv_opponent_lp_bar_layer"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
+                            android:layout_marginVertical="4dp"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="2dp"
                             android:scaleType="fitXY"
                             android:visibility="gone" />
+
+                        <ImageView
+                            android:id="@+id/iv_opponent_bar_frame"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY" />
                     </FrameLayout>
 
-                    <ImageView
-                        android:id="@+id/iv_opponent_avatar"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_margin="5dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/avatar" />
+                    <!-- 头像框容器：头像贴图 + 叠加其上的头像框（lpbarf 行尾 64px 镂空框） -->
+                    <FrameLayout
+                        android:id="@+id/layout_opponent_avatar_box"
+                        android:layout_width="50dp"
+                        android:layout_height="match_parent">
+
+                        <ImageView
+                            android:id="@+id/iv_opponent_avatar"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="4dp"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/avatar" />
+
+                        <ImageView
+                            android:id="@+id/iv_opponent_avatar_frame"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY" />
+                    </FrameLayout>
                 </LinearLayout>
 
-                <!-- 中层：lpbarf 框（drawing.cpp L996-1003 tLPBarFrame），覆盖整个面板 -->
-                <ImageView
-                    android:id="@+id/iv_opponent_lp_frame"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="fitXY" />
-
-                <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（镜像我方：名字靠右，第二行左对齐 倒计时/总卡数/卡背图标） -->
+                <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（镜像我方：名字靠右，第二行左对齐 倒计时/总卡数/卡背图标；paddingEnd 由 Java 随头像框宽同步） -->
                 <LinearLayout
+                    android:id="@+id/layout_opponent_info_col"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical"

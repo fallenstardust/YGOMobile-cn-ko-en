@@ -2,8 +2,8 @@
      GameFieldView 满铺本区域（竖屏仰角 90°/贴边取景由 FieldCamera 按区域尺寸解算，onSurfaceChanged 自动重解居中），
      顶部流＝gameTopInfo（双方血条 5:1:5 行 + 其正下方聊天/提示行，与横屏同构；血条面板高度由
      GameTopInfoManager 按 lpbarf 305:70 宽高比反推、头像/文字随同放大）；
-     弹幕回退层/表情气泡锚血条下方；底部＝功能图标行（设置/日志/声音/速度/表情，横向右对齐）
-     与其下方的聊天输入行（最左聊天按钮 + 输入框）。
+     弹幕回退层/表情气泡锚血条下方；底部＝聊天输入行（输入框占满整行宽度），
+     其下一行为全部功能按钮（聊天/设置/日志/声音/速度/表情，横向、全部正方形）。
      决斗背景图仅平铺显示于本区域（YGOProActivity.updateFieldRegionBackground →
      RightAlignedTiledDrawable，右对齐平铺、左侧超屏部分忽略）。
      卡片详情栏与时点/录像/卡组按钮行已迁至 layout_game_top_panel.xml（同 ID 结构不变）。
@@ -56,7 +56,8 @@
                 android:layout_gravity="top"
                 android:orientation="horizontal">
 
-                <!-- 我方信息面板（左上）：三层叠放，底层头像+血条，中层 lpbarf 框，顶层名字/总卡数/倒计时。
+                <!-- 我方信息面板（左上）：底层头像框+血条框（lpbarf 拆分为头像框/血条框两部分，
+                     头像框单独适配头像尺寸、血条框自由拉伸），顶层名字/总卡数/倒计时。
                      面板高度由 GameTopInfoManager 按 lpbarf(305:70) 由屏宽反推，wrap_content 仅作缺省 -->
                 <FrameLayout
                     android:id="@+id/layout_player_panel"
@@ -64,33 +65,50 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="5">
 
-                    <!-- 底层：头像 + LP 血条 -->
+                    <!-- 底层：头像框 + 血条框 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <ImageView
-                            android:id="@+id/iv_player_avatar"
-                            android:layout_width="34dp"
-                            android:layout_height="34dp"
-                            android:layout_margin="5dp"
-                            android:scaleType="fitCenter"
-                            android:src="@drawable/avatar" />
-
-                        <!-- LP 血条（drawing.cpp tLPBar，我方自左向右填充） -->
+                    <!-- 头像框容器：头像贴图 + 叠加其上的头像框（lpbarf 行首 64px 镂空框），
+                         容器尺寸由 GameTopInfoManager 按面板高度与 64:70 比例设定 -->
                         <FrameLayout
+                            android:id="@+id/layout_player_avatar_box"
+                            android:layout_width="44dp"
+                            android:layout_height="match_parent">
+
+                            <ImageView
+                                android:id="@+id/iv_player_avatar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:padding="3dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/avatar" />
+
+                            <ImageView
+                                android:id="@+id/iv_player_avatar_frame"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="fitXY" />
+                        </FrameLayout>
+
+                        <!-- 血条框容器：LP 血条填充 + 叠加其上的血条框（lpbarf 行尾 241px 中段，自由拉伸）。
+                             LP 血条（drawing.cpp tLPBar，我方自左向右填充） -->
+                        <FrameLayout
+                            android:id="@+id/layout_player_bar_box"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_marginVertical="4dp"
-                            android:layout_marginEnd="4dp"
                             android:layout_weight="1">
 
                             <ImageView
                                 android:id="@+id/iv_player_lp_bar"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
+                                android:layout_marginVertical="4dp"
+                                android:layout_marginStart="2dp"
+                                android:layout_marginEnd="4dp"
                                 android:scaleType="fitXY"
                                 android:src="@drawable/ygopro_selected_background" />
 
@@ -98,17 +116,19 @@
                                 android:id="@+id/iv_player_lp_bar_layer"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
+                                android:layout_marginVertical="4dp"
+                                android:layout_marginStart="2dp"
+                                android:layout_marginEnd="4dp"
                                 android:scaleType="fitXY"
                                 android:visibility="gone" />
+
+                            <ImageView
+                                android:id="@+id/iv_player_bar_frame"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="fitXY" />
                         </FrameLayout>
                     </LinearLayout>
-
-                    <!-- 中层：lpbarf 框（drawing.cpp tLPBarFrame），覆盖整个面板 -->
-                    <ImageView
-                        android:id="@+id/iv_player_lp_frame"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitXY" />
 
                     <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（字号/留白随面板高度由 Java 等比放大） -->
                     <LinearLayout
@@ -245,24 +265,27 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="5">
 
-                    <!-- 底层：LP 血条 + 头像（match_parent 填满按 lpbarf 比例设定的面板高度） -->
+                    <!-- 底层：血条框 + 头像框（镜像我方：血条框在左、头像框在右，match_parent 填满面板高度） -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
+                        <!-- 血条框容器：LP 血条填充 + 叠加其上的血条框（lpbarf 行首 241px 中段，自由拉伸） -->
                         <FrameLayout
+                            android:id="@+id/layout_opponent_bar_box"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_marginVertical="4dp"
-                            android:layout_marginStart="5dp"
                             android:layout_weight="1">
 
                             <ImageView
                                 android:id="@+id/iv_opponent_lp_bar"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
+                                android:layout_marginVertical="4dp"
+                                android:layout_marginStart="4dp"
+                                android:layout_marginEnd="2dp"
                                 android:scaleType="fitXY"
                                 android:src="@drawable/ygopro_selected_background" />
 
@@ -270,25 +293,40 @@
                                 android:id="@+id/iv_opponent_lp_bar_layer"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
+                                android:layout_marginVertical="4dp"
+                                android:layout_marginStart="4dp"
+                                android:layout_marginEnd="2dp"
                                 android:scaleType="fitXY"
                                 android:visibility="gone" />
+
+                            <ImageView
+                                android:id="@+id/iv_opponent_bar_frame"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="fitXY" />
                         </FrameLayout>
 
-                        <ImageView
-                            android:id="@+id/iv_opponent_avatar"
-                            android:layout_width="34dp"
-                            android:layout_height="34dp"
-                            android:layout_margin="5dp"
-                            android:scaleType="fitCenter"
-                            android:src="@drawable/avatar" />
-                    </LinearLayout>
+                        <!-- 头像框容器：头像贴图 + 叠加其上的头像框（lpbarf 行尾 64px 镂空框） -->
+                        <FrameLayout
+                            android:id="@+id/layout_opponent_avatar_box"
+                            android:layout_width="44dp"
+                            android:layout_height="match_parent">
 
-                    <!-- 中层：lpbarf 框（drawing.cpp tLPBarFrame），覆盖整个面板 -->
-                    <ImageView
-                        android:id="@+id/iv_opponent_lp_frame"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitXY" />
+                            <ImageView
+                                android:id="@+id/iv_opponent_avatar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:padding="3dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/avatar" />
+
+                            <ImageView
+                                android:id="@+id/iv_opponent_avatar_frame"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="fitXY" />
+                        </FrameLayout>
+                    </LinearLayout>
 
                     <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（镜像我方） -->
                     <LinearLayout
@@ -478,8 +516,8 @@
         android:scaleType="fitCenter"
         android:visibility="gone" />
 
-    <!-- 底部区域（贴本区域底缘，自下而上）：聊天输入行（最左聊天按钮 + 输入框占余宽），
-         其上一行为功能图标（设置/日志/声音/速度/表情）横向右对齐 -->
+    <!-- 底部区域（贴本区域底缘，自下而上）：功能按钮行（聊天/设置/日志/声音/速度/表情，
+         同一行横向排布、全部保持正方形），其上一行为聊天输入框（占满整行宽度） -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -487,92 +525,17 @@
         android:clipChildren="false"
         android:orientation="vertical">
 
-        <!-- 功能图标行（设置/日志/声音/速度/表情）：横向、右对齐，位于聊天输入框上方 -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginBottom="3dp"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btn_settings"
-                android:layout_width="40dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="4dp"
-                android:adjustViewBounds="true"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:padding="3dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/setting" />
-
-            <ImageButton
-                android:id="@+id/btn_note"
-                android:layout_width="40dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="4dp"
-                android:adjustViewBounds="true"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:padding="3dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_note" />
-
-            <ImageButton
-                android:id="@+id/btn_sound"
-                android:layout_width="40dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="4dp"
-                android:adjustViewBounds="true"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:padding="3dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_volume_on" />
-
-            <ImageButton
-                android:id="@+id/btn_speed"
-                android:layout_width="40dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="4dp"
-                android:adjustViewBounds="true"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:padding="3dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_speed" />
-
-            <ImageButton
-                android:id="@+id/btn_emote"
-                android:layout_width="40dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="4dp"
-                android:adjustViewBounds="true"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:padding="3dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_emoticon" />
-        </LinearLayout>
-
-        <!-- 聊天输入行：聊天图标按钮固定在输入框最左（用户规格），输入框占余宽 -->
+        <!-- 聊天输入行：竖屏下聊天按钮移至下方按钮行，输入框占满整行宽度 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/btn_chat"
-                android:layout_width="40dp"
-                android:layout_height="32dp"
-                android:adjustViewBounds="true"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:padding="3dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/rename" />
-
             <EditText
                 android:id="@+id/et_chat_input"
                 android:layout_width="0dp"
                 android:layout_height="32dp"
-                android:layout_marginStart="2dp"
                 android:layout_weight="1"
                 android:background="@drawable/ygopro_base_background"
                 android:gravity="center_vertical"
@@ -583,6 +546,79 @@
                 android:maxLines="1"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
+        </LinearLayout>
+
+        <!-- 功能按钮行（聊天/设置/日志/声音/速度/表情）：同一行横向排布，全部正方形（40×40dp） -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_chat"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/rename" />
+
+            <ImageButton
+                android:id="@+id/btn_settings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/setting" />
+
+            <ImageButton
+                android:id="@+id/btn_note"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_note" />
+
+            <ImageButton
+                android:id="@+id/btn_sound"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_volume_on" />
+
+            <ImageButton
+                android:id="@+id/btn_speed"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_speed" />
+
+            <ImageButton
+                android:id="@+id/btn_emote"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_emoticon" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

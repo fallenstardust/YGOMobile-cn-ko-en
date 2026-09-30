@@ -83,7 +83,7 @@ public class GameTopInfoManager {
     private FrameLayout layoutGameRight;
     // 横竖屏同为水平 LinearLayout（我方5:计数器1:对方5），但仅作可见性控制故声明为 View
     private View layoutTopInfo;
-    // 双方血条面板（lpbarf 容器）：竖屏运行时按 lpbarf 宽高比反推面板高度与内容尺寸（applyPortraitLpBarSize）
+    // 双方血条面板（lpbarf 容器）：运行时按 layout_game_right 尺寸等比缩放面板高度与内容尺寸（applyTopInfoSize）
     private View layoutPlayerPanel;
     private View layoutOpponentPanel;
     // 双方顶层信息列（名字/卡数/倒计时）：头像尺寸随面板高度变化后同步调整避开头像的内边距
@@ -91,7 +91,11 @@ public class GameTopInfoManager {
     private View layoutOpponentInfoCol;
     private ImageView ivPlayerAvatar, ivOpponentAvatar;
     private ImageView ivPlayerCardBack, ivOpponentCardBack;
-    private ImageView ivPlayerLpFrame, ivOpponentLpFrame;
+    // 头像框容器（含头像贴图 + 叠加的头像框）：宽度按面板高 × 64/70 设定，令头像框贴合头像不横向拉伸
+    private View layoutPlayerAvatarBox, layoutOpponentAvatarBox;
+    // lpbarf 拆分后的头像框与血条框（分别叠加在头像容器与血条容器之上，取代旧的整面板单框）
+    private ImageView ivPlayerAvatarFrame, ivPlayerBarFrame;
+    private ImageView ivOpponentAvatarFrame, ivOpponentBarFrame;
     private ImageView ivPlayerLpBar, ivPlayerLpBarLayer, ivOpponentLpBar, ivOpponentLpBarLayer;
     private TextView tvPlayerName, tvPlayerTime, tvPlayerCardCount;
     private TextView tvOpponentName, tvOpponentTime, tvOpponentCardCount;
@@ -169,8 +173,12 @@ public class GameTopInfoManager {
         layoutOpponentInfoCol = activity.findViewById(R.id.layout_opponent_info_col);
         ivPlayerAvatar = activity.findViewById(R.id.iv_player_avatar);
         ivOpponentAvatar = activity.findViewById(R.id.iv_opponent_avatar);
-        ivPlayerLpFrame = activity.findViewById(R.id.iv_player_lp_frame);
-        ivOpponentLpFrame = activity.findViewById(R.id.iv_opponent_lp_frame);
+        layoutPlayerAvatarBox = activity.findViewById(R.id.layout_player_avatar_box);
+        layoutOpponentAvatarBox = activity.findViewById(R.id.layout_opponent_avatar_box);
+        ivPlayerAvatarFrame = activity.findViewById(R.id.iv_player_avatar_frame);
+        ivPlayerBarFrame = activity.findViewById(R.id.iv_player_bar_frame);
+        ivOpponentAvatarFrame = activity.findViewById(R.id.iv_opponent_avatar_frame);
+        ivOpponentBarFrame = activity.findViewById(R.id.iv_opponent_bar_frame);
         ivPlayerLpBar = activity.findViewById(R.id.iv_player_lp_bar);
         ivPlayerLpBarLayer = activity.findViewById(R.id.iv_player_lp_bar_layer);
         ivOpponentLpBar = activity.findViewById(R.id.iv_opponent_lp_bar);
@@ -194,52 +202,74 @@ public class GameTopInfoManager {
 
         setupAvatarImages();
         setupCardBackImages();
-        applyPortraitLpBarSize();
+        applyTopInfoSize();
+        // layout_game_right 尺寸变化（旋转/分屏/平板高分辨率）时重新等比缩放 gameTopInfo
+        if (layoutGameRight != null) {
+            layoutGameRight.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+                int w = r - l, hgt = b - t;
+                int ow = or - ol, oh = ob - ot;
+                if ((w != ow || hgt != oh) && w > 0 && hgt > 0) applyTopInfoSize();
+            });
+        }
         reset();
     }
 
     /** lpbarf.png 单格框图尺寸 305×70（drawing.cpp tLPBarFrame recti(0,0,305,70)）的宽高比 */
     private static final float LPBARF_ASPECT = 305f / 70f;
+    /** 头像框方块宽高比 64:70（lpbarf 行首/行尾 64px 宽、70px 高的方形镂空框） */
+    private static final float AVATAR_FRAME_ASPECT = 64f / 70f;
     /** 竖屏血条面板基准高度（dp）：对应 XML 内置头像 34dp/字号基准，放大系数 f=面板高/基准高 */
     private static final float HUD_BASE_HEIGHT_DP = 44f;
+    /** 横屏血条面板基准高度（dp）：对应旧布局头像 40dp + 上下 5dp 边距，f=1 时的设计高度 */
+    private static final float LANDSCAPE_BASE_HEIGHT_DP = 50f;
+    /** 横屏面板高占 layout_game_right 实测高度的比例（对齐 drawing.cpp 70/640≈0.109 的窗口高度占比） */
+    private static final float LANDSCAPE_PANEL_HEIGHT_FRACTION = 0.11f;
 
     /**
-     * 竖屏顶部血条按 lpbarf 裁切适配（r1 修订，替换整体等比缩放方案）：
-     * 双方面板按权重 5:1:5 分屏宽（面板宽≈屏宽×5/11），面板高度由 lpbarf 原始
-     * 宽高比反推：h = 面板宽 ÷ (305/70) —— fitXY 后的框图不再横向拉扁；
-     * 头像/昵称/LP数字/卡数/倒计时按 f=h/44dp 随面板高度等比放大（XML 尺寸为 f=1 基准）。
-     * 聊天/提示行不缩放，恢复横屏原尺寸显示。
+     * gameTopInfo 随 layout_game_right 尺寸等比缩放（横竖屏通用）：
+     * <p>面板高度 h 决定整条 HUD 的缩放基准 f = h / 基准高，头像框/昵称/LP数字/卡数/倒计时/
+     * 回合数/撤回图标/卡背图标均乘 f，故不论 layout_game_right 多大（如 >1080p 平板）比例恒定。
+     * <p>竖屏：面板宽≈屏宽×5/11，h 由 lpbarf 305:70 宽高比反推并夹在 [44dp,72dp]（保持原竖屏表现）。
+     * <p>横屏：h = layout_game_right 实测高 × 0.11，下限为基准高（手机不缩），上限 150dp（平板不过厚）。
+     * <p>头像框容器宽度按 64:70 比例随 h 设定，使头像框贴合头像、血条框（占余宽）自由横向拉伸。
      */
-    private void applyPortraitLpBarSize() {
+    private void applyTopInfoSize() {
         if (layoutPlayerPanel == null || layoutOpponentPanel == null) return;
-        if (activity.getResources().getConfiguration().orientation
-                != android.content.res.Configuration.ORIENTATION_PORTRAIT) return;
         DisplayMetrics dm = activity.getResources().getDisplayMetrics();
-        float panelWidthPx = dm.widthPixels * 5f / 11f;
-        int h = Math.round(panelWidthPx / LPBARF_ASPECT);
-        // 上下限保护：不低于头像行可读基准高度，平板竖屏不致血条过厚
-        int min = Math.round(HUD_BASE_HEIGHT_DP * dm.density);
-        int max = Math.round(72f * dm.density);
-        h = Math.max(min, Math.min(max, h));
-        ViewGroup.LayoutParams lp0 = layoutPlayerPanel.getLayoutParams();
-        ViewGroup.LayoutParams lp1 = layoutOpponentPanel.getLayoutParams();
-        if (lp0 != null && lp0.height != h) {
-            lp0.height = h;
-            layoutPlayerPanel.setLayoutParams(lp0);
+        boolean portrait = activity.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        int h;
+        float baseH;
+        if (portrait) {
+            int gw = (layoutGameRight != null && layoutGameRight.getWidth() > 0)
+                    ? layoutGameRight.getWidth() : dm.widthPixels;
+            float panelWidthPx = gw * 5f / 11f;
+            h = Math.round(panelWidthPx / LPBARF_ASPECT);
+            int min = Math.round(HUD_BASE_HEIGHT_DP * dm.density);
+            int max = Math.round(72f * dm.density);
+            h = Math.max(min, Math.min(max, h));
+            baseH = min;
+        } else {
+            int gh = (layoutGameRight != null && layoutGameRight.getHeight() > 0)
+                    ? layoutGameRight.getHeight() : dm.heightPixels;
+            int min = Math.round(LANDSCAPE_BASE_HEIGHT_DP * dm.density);
+            int max = Math.round(150f * dm.density);
+            h = Math.round(gh * LANDSCAPE_PANEL_HEIGHT_FRACTION);
+            h = Math.max(min, Math.min(max, h));
+            baseH = min;
         }
-        if (lp1 != null && lp1.height != h) {
-            lp1.height = h;
-            layoutOpponentPanel.setLayoutParams(lp1);
-        }
-        // 内容随面板高度等比放大（头像充满面板垂直空间，文字字号/卡背图标/计数器同乘 f）
-        float f = (float) h / min; // 基准档 f=1，宽屏竖机最高≈72/44≈1.64
-        int avatar = Math.max(0, h - Math.round(10f * dm.density)); // 头像+上下5dp边距=面板高
-        setSize(ivPlayerAvatar, avatar);
-        setSize(ivOpponentAvatar, avatar);
+        setPanelHeight(layoutPlayerPanel, h);
+        setPanelHeight(layoutOpponentPanel, h);
+        // 内容随面板高度等比放大（f=1 为各自基准档）
+        float f = h / baseH;
+        // 头像框容器：宽 = h × 64/70（贴合头像框方形比例），高 = h；头像贴图 match_parent 填满容器（内边距避让边框）
+        int boxW = Math.round(h * AVATAR_FRAME_ASPECT);
+        setSize(layoutPlayerAvatarBox, boxW, h);
+        setSize(layoutOpponentAvatarBox, boxW, h);
         if (layoutPlayerInfoCol != null)
-            layoutPlayerInfoCol.setPadding(avatar + Math.round(10f * dm.density), 0, 0, 0);
+            layoutPlayerInfoCol.setPadding(boxW, 0, 0, 0);
         if (layoutOpponentInfoCol != null)
-            layoutOpponentInfoCol.setPadding(0, 0, avatar + Math.round(10f * dm.density), 0);
+            layoutOpponentInfoCol.setPadding(0, 0, boxW, 0);
         setTextSp(tvPlayerName, 10f * f);
         setTextSp(tvOpponentName, 10f * f);
         setTextSp(tvPlayerLpNumber, 12f * f);
@@ -259,6 +289,15 @@ public class GameTopInfoManager {
         int cardBackH = Math.round(10f * f * dm.scaledDensity); // XML 基准高 10sp
         setSize(ivPlayerCardBack, -1, cardBackH);
         setSize(ivOpponentCardBack, -1, cardBackH);
+    }
+
+    /** 设置面板（lpbarf 容器）固定高度，令整条 HUD 高度由 h 主导、内容 match_parent 填满 */
+    private void setPanelHeight(View panel, int h) {
+        ViewGroup.LayoutParams lp = panel.getLayoutParams();
+        if (lp != null && lp.height != h) {
+            lp.height = h;
+            panel.setLayoutParams(lp);
+        }
     }
 
     private void setSize(View v, int size) {
@@ -706,20 +745,22 @@ public class GameTopInfoManager {
      * turnPlayer 为 {@link #TURN_PLAYER_NONE} 时双方都取灰色行；贴图缺失时保留原图层
      */
     private void applyLpBarFrames(int turnPlayer) {
-        if (ivPlayerLpFrame != null) {
-            BitmapDrawable d = newFrameDrawable(
-                    turnPlayer == TURN_PLAYER_ME ? FRAME_ROW_ME_ACTIVE : FRAME_ROW_ME_INACTIVE);
-            if (d != null) ivPlayerLpFrame.setImageDrawable(d);
-        }
-        if (ivOpponentLpFrame != null) {
-            BitmapDrawable d = newFrameDrawable(
-                    turnPlayer == TURN_PLAYER_OPP ? FRAME_ROW_OPP_ACTIVE : FRAME_ROW_OPP_INACTIVE);
-            if (d != null) ivOpponentLpFrame.setImageDrawable(d);
-        }
+        int meRow = turnPlayer == TURN_PLAYER_ME ? FRAME_ROW_ME_ACTIVE : FRAME_ROW_ME_INACTIVE;
+        int oppRow = turnPlayer == TURN_PLAYER_OPP ? FRAME_ROW_OPP_ACTIVE : FRAME_ROW_OPP_INACTIVE;
+        // 我方头像框在行首（左），对方头像框在行尾（右）
+        applyFramePair(ivPlayerAvatarFrame, ivPlayerBarFrame, meRow, true);
+        applyFramePair(ivOpponentAvatarFrame, ivOpponentBarFrame, oppRow, false);
     }
 
-    private BitmapDrawable newFrameDrawable(int row) {
-        Bitmap bmp = TextureLoader.get().getLpBarFrameRow(row);
+    /** 将 lpbarf 第 row 行拆出的头像框与血条框分别贴到对应 ImageView（贴图缺失时保留原图层） */
+    private void applyFramePair(ImageView avatarFrameView, ImageView barFrameView, int row, boolean avatarOnLeft) {
+        BitmapDrawable af = newDrawable(TextureLoader.get().getLpBarAvatarFrame(row, avatarOnLeft));
+        if (af != null && avatarFrameView != null) avatarFrameView.setImageDrawable(af);
+        BitmapDrawable bf = newDrawable(TextureLoader.get().getLpBarBarFrame(row, avatarOnLeft));
+        if (bf != null && barFrameView != null) barFrameView.setImageDrawable(bf);
+    }
+
+    private BitmapDrawable newDrawable(Bitmap bmp) {
         if (bmp == null) return null;
         return new BitmapDrawable(activity.getResources(), bmp);
     }

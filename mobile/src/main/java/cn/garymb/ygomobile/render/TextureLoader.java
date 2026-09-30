@@ -370,6 +370,16 @@ public class TextureLoader {
     private final Map<Integer, Bitmap> lpBarRowCache = new ConcurrentHashMap<>();
     /** lpbarf.png 行裁剪缓存：回合切换时取行 */
     private final Map<Integer, Bitmap> lpFrameRowCache = new ConcurrentHashMap<>();
+    /**
+     * lpbarf.png 单行（305×70）中头像框占比：头像框为行首（我方）/行尾（对方）的方形镂空框，
+     * 经像素分析其宽度为 64/305（我方 x∈[0,64)，对方 x∈[241,305)），血条框为其余 241/305。
+     * 拆分后头像框按头像尺寸单独适配（不再随整面板横向拉伸变形），血条框自由拉伸。
+     */
+    private static final float LP_AVATAR_FRAME_FRAC = 64f / 305f;
+    /** 头像框裁剪缓存：key = row*2 + (avatarOnLeft?0:1) */
+    private final Map<Integer, Bitmap> lpAvatarFrameCache = new ConcurrentHashMap<>();
+    /** 血条框裁剪缓存：key = row*2 + (avatarOnLeft?0:1) */
+    private final Map<Integer, Bitmap> lpBarFrameCache = new ConcurrentHashMap<>();
 
     /**
      * lp3.png 的第 colorRow 行颜色条（对齐 drawing.cpp L946-971：source recti(0, row*60, 60, (row+1)*60)）。
@@ -400,6 +410,73 @@ public class TextureLoader {
         Bitmap r = cropRow(getTexture("lpbarf.png"), row, LP_FRAME_ROWS);
         if (r != null) lpFrameRowCache.put(row, r);
         return r;
+    }
+
+    /**
+     * lpbarf.png 第 row 行的「头像框」部分（方形镂空框）：我方（avatarOnLeft=true）取行首
+     * x∈[0, 305×64/305)，对方取行尾 x∈(305-64, 305]。裁剪后单独按头像尺寸适配，避免整框横向拉伸。
+     */
+    public Bitmap getLpBarAvatarFrame(int row, boolean avatarOnLeft) {
+        row = clampFrameRow(row);
+        int key = row * 2 + (avatarOnLeft ? 0 : 1);
+        Bitmap cached = lpAvatarFrameCache.get(key);
+        if (cached != null && !cached.isRecycled()) return cached;
+        Bitmap r = cropFrameX(row, avatarOnLeft, true);
+        if (r != null) lpAvatarFrameCache.put(key, r);
+        return r;
+    }
+
+    /**
+     * lpbarf.png 第 row 行的「血条框」部分（可自由拉伸的中段）：我方取 x∈[64, 305)，对方取 x∈(0, 241]。
+     */
+    public Bitmap getLpBarBarFrame(int row, boolean avatarOnLeft) {
+        row = clampFrameRow(row);
+        int key = row * 2 + (avatarOnLeft ? 0 : 1);
+        Bitmap cached = lpBarFrameCache.get(key);
+        if (cached != null && !cached.isRecycled()) return cached;
+        Bitmap r = cropFrameX(row, avatarOnLeft, false);
+        if (r != null) lpBarFrameCache.put(key, r);
+        return r;
+    }
+
+    private int clampFrameRow(int row) {
+        if (row < 0) return 0;
+        if (row >= LP_FRAME_ROWS) return LP_FRAME_ROWS - 1;
+        return row;
+    }
+
+    /**
+     * 从 lpbarf.png 第 row 行按横向区域裁剪：avatar=true 取头像框方块、false 取血条框中段；
+     * avatarOnLeft 决定头像框位于行首（我方）还是行尾（对方）。按 64/305 比例切分，兼容非 305 宽图源。
+     */
+    private Bitmap cropFrameX(int row, boolean avatarOnLeft, boolean avatar) {
+        Bitmap sheet = getTexture("lpbarf.png");
+        if (sheet == null || sheet.isRecycled()) return null;
+        int w = sheet.getWidth();
+        int h = sheet.getHeight();
+        int rowH = h / LP_FRAME_ROWS;
+        if (w <= 0 || rowH <= 0) return null;
+        int top = row * rowH;
+        int bottom = (row == LP_FRAME_ROWS - 1) ? h : top + rowH;
+        int block = Math.round(w * LP_AVATAR_FRAME_FRAC); // 头像框宽（≈64）
+        if (block <= 0 || block >= w) block = Math.min(64, w - 1);
+        int left, right;
+        if (avatarOnLeft) {
+            left = avatar ? 0 : block;
+            right = avatar ? block : w;
+        } else {
+            left = avatar ? w - block : 0;
+            right = avatar ? w : w - block;
+        }
+        int cw = right - left;
+        int ch = bottom - top;
+        if (cw <= 0 || ch <= 0) return null;
+        try {
+            return Bitmap.createBitmap(sheet, left, top, cw, ch);
+        } catch (Exception e) {
+            Log.e(TAG, "cropFrameX failed: row=" + row + " left=" + avatarOnLeft + " avatar=" + avatar, e);
+            return null;
+        }
     }
 
     /** 将 sheet 纵向均分为 rows 份取第 index 份（末行吃掉除不尽的余数；越界/失败返回 null） */
