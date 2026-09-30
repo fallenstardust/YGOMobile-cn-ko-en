@@ -106,11 +106,7 @@ public class GameField {
         public ClientCard overlayTarget;
         public int status;
 
-        /**
-         * duelclient.cpp MSG_CARD_HINT 的 desc_hints：效果文字描述 id → 引用计数。
-         * TreeMap 保证与 C++ std::map 一致按 desc 升序遍历（event_handler.cpp L2933-2936）。
-         * 注意：C++ ClientCard::ClearData() 不清 desc_hints，故此处 clearData 也不清。
-         */
+        /** duelclient.cpp MSG_CARD_HINT 的 desc_hints：效果文字 id→引用计数；TreeMap 对齐 C++ std::map 升序遍历，ClearData 不清（与 C++ 一致）。 */
         public final Map<Integer, Integer> descHints = new TreeMap<>();
 
         public boolean is_moving;
@@ -135,9 +131,7 @@ public class GameField {
         public int aniFrame;
         public float curAlpha = 255;
         public float dAlpha;
-        /** 手卡点击抬高动画进度（0=原位，1=完全抬高）：由 GameFieldView 渲染线程逐帧线性推进，
-         *  对齐 client_card.cpp SetCode 手卡 MoveCard(5)（约 5 帧 ≈ 0.083s 线性抬升），
-         *  取代此前按选中状态瞬时跳变，使抬高过程更丝滑 */
+        /** 手卡点击抬高动画进度（0=原位，1=完全抬高）：渲染线程逐帧线性推进，对齐 client_card.cpp 手卡 MoveCard(5)（约 5 帧）。 */
         public float handLiftAnim;
         // 动画插值起点/终点与总帧数（缓动轨迹）
         public float animFromX, animFromY, animFromZ;
@@ -146,12 +140,9 @@ public class GameField {
         public float animToRotX, animToRotY, animToRotZ;
         public float animFromAlpha, animToAlpha;
         public int animTotalFrame;
-        /** 同区重排抖动横向速度（对齐 duelclient.cpp MSG_MOVE L3022-3030 重排分支的
-         *  dPos=(±0.3,0,0)×5 帧侧移后 MoveCard(5) 回正）：非零时 updateListAnimation 对
-         *  is_moving 卡片改用「先侧移后归位」两阶段轨迹，符号按 C++ pc==1 时取正 */
+        /** 同区重排抖动横向速度（对齐 MSG_MOVE L3022-3030 侧移后回正）：非零时改用「先侧移后归位」两阶段轨迹，符号 pc==1 取正。 */
         public float animJitterX;
-        /** 动画启动延迟帧（对齐 duelclient.cpp MSG_MOVE L3032-3038 的 WaitFrameSignal(10)：
-         *  带素材怪兽移动时素材先归位，本体延迟若干帧再落上去），延迟期内不插值不扣 aniFrame */
+        /** 动画启动延迟帧（对齐 MSG_MOVE L3032-3038 WaitFrameSignal(10)：素材先归位、本体延迟再落），延迟期内不插值不扣 aniFrame。 */
         public float animDelayFrame;
         /** 卡组抖动动画进行中标记（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650 的 5 轮抖动，
          *  轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startDeckShake） */
@@ -165,16 +156,8 @@ public class GameField {
         public float hsToX, hsToY, hsToZ, hsToRotX, hsToRotY;
         public float hsGatherX;
         /**
-         * 手卡翻面进度：1=正面（贴卡面）、0=卡背、-1=尚未参与翻面（首次落位按目标值直接吸附）。
-         * <p>目标值恒由卡码决定（{@code code != 0} → 1），GameFieldMotion.updateHandFlip 每帧以
-         * 0.2/帧靠拢（5 帧翻完，等价 duelclient.cpp MSG_SHUFFLE_HAND L2672 的 dRot 步进
-         * 1.322/5 与 π/5）。之所以是渲染级进度而非 curRot*：手卡走相机 billboard
-         *（GameFieldView.buildCardModel 手卡分支不读 curRotX/Y/Z），任何旋转关键帧对手卡都是视觉
-         * 空转，只有本值驱动的 X 轴挤压 + 正/背面贴图切换才能真正「把卡翻过来」。
-         * <p>卡片经效果入手时（DeckHandMotionManager.applyMoveToHandReveal）把<b>对方</b>手卡置 0，
-         * 于是随真实卡码到达（服务端已对 MSG_MOVE→HAND 解除遮蔽）从卡背翻到正面供对手确认；
-         * 己方卡不置 0，本就正面、不翻给对方看。洗切 / 阶段切换把遮蔽视图的卡码清零后，
-         * 本值自动翻回卡背。
+         * 手卡翻面进度：1=正面、0=卡背、-1=未参与翻面；目标值恒由卡码决定（code!=0→1），updateHandFlip 每帧 0.2 靠拢（5 帧，对齐 MSG_SHUFFLE_HAND L2672 dRot 步进）。
+         * 手卡走相机 billboard 不读 curRot*，只有本值驱动的 X 轴挤压+正/背面贴图切换才能真正翻面；效果入手时把对方手卡置 0 供其确认，洗切清零后自动翻回卡背。
          */
         public float handFlipT = -1f;
 
@@ -183,12 +166,7 @@ public class GameField {
         }
 
         /**
-         * 本卡是否为叠在下层的超量素材（location == LOCATION_OVERLAY）。
-         * 素材恒为表侧公开信息，而引擎的任何查询都只携<b>宿主</b>的姿态（get_infos 的
-         * QUERY_OVERLAY_CARD 只给素材卡码、query_field_info 只给素材张数），故素材自身的
-         * position 全凭客户端本地补齐；渲染层以 position 判正/反面（C++ Game::DrawCard 只看
-         * m22 与卡码，不看 position），凡需判「这张卡一定朝上」的场合统一经此取值，避免某条
-         * 路径新建/复用的占位卡带 0 姿态而被画成卡背。
+         * 本卡是否为叠在下层的超量素材（location==OVERLAY）：素材恒表侧公开，但引擎查询只携宿主姿态，position 全凭客户端补齐；凡需判「这张卡一定朝上」统一经此，避免占位卡带 0 姿态被画成卡背。
          */
         public boolean isOverlayMaterial() {
             return location == CardLocation.Overlay.value();
@@ -466,10 +444,7 @@ public class GameField {
         public boolean solved;
         public boolean needDistinguish;
         public List<ClientCard> targets = new ArrayList<>();
-        /**
-         * 连锁图标（chain 旋转图 / number 序号）位置快照：连锁成立（MSG_CHAINED）时捕捉发动卡
-         * 所在 xyz，此后卡片因结算等离开原位时图标不跟随移动，停留在原地直到连锁消失。
-         */
+        /** 连锁图标（chain 旋转图 / number 序号）位置快照：MSG_CHAINED 时捕捉发动卡 xyz，卡因结算离开原位时图标不跟随，停在原地直到连锁消失。 */
         public boolean iconPosCaptured;
         public float iconX, iconY, iconZ;
     }
@@ -499,16 +474,12 @@ public class GameField {
     public List<ChainInfo> chains = new ArrayList<>();
 
     /**
-     * 正在构建中的连锁（对齐 duelclient.cpp dField.current_chain）：
-     * MSG_CHAINING 重建、MSG_BECOME_TARGET 追加 target、MSG_CHAINED 压入 chains。
-     * 供 ClientField::ShowCardInfoInList 生成「在连锁%d发动」「被连锁%d的[%ls]选择为对象」标签。
+     * 正在构建中的连锁（对齐 dField.current_chain）：MSG_CHAINING 重建、BECOME_TARGET 追加 target、CHAINED 压入 chains；供生成「在连锁%d发动」等标签。
      */
     public ChainInfo currentChain = new ChainInfo();
     public List<ClientCard> overlayCards = new ArrayList<>();
     /**
-     * 淡出中的已离场卡片（duelclient.cpp MSG_MOVE cl==0 分支 L2973-2990：FadeCard(→5,appear)
-     * 后 RemoveCard/DestroyCard）：Java 结构性移除同步完成，卡片暂存于本列表继续渲染，
-     * 动画播完（aniFrame≤0）由 GameFieldMotion.updateCardAnimation purge，避免消失卡瞬间掉帧。
+     * 淡出中的已离场卡片（对齐 MSG_MOVE cl==0 FadeCard 后 RemoveCard）：结构性移除同步完成、卡片暂存本列表继续渲染，动画播完由 updateCardAnimation purge，避免消失卡瞬间掉帧。
      */
     public final List<ClientCard> fadingCards = new ArrayList<>();
     /** C++ duelclient.cpp L2958 appear = quick_animation ? 12 : 20（本工程无快动画开关，取 20）：
@@ -538,10 +509,7 @@ public class GameField {
     public boolean contiAct;
 
     /**
-     * 攻击宣言绿色弧形流动动画状态（对齐 duelclient.cpp MSG_ATTACK L3817-3866 +
-     * materials.cpp GenArrow + drawing.cpp L1504-1513 attack_sv 窗口流动）。
-     * onAttack 时写入攻击者/目标卡与起始时间戳，GameFieldView.drawAttackArc 读取并在约 0.9s 内绘制。
-     * arcTarget 为 null 表示直接攻击，绘制时落到对方场地一侧的固定点。
+     * 攻击宣言绿色弧形流动动画状态（对齐 MSG_ATTACK L3817-3866 + GenArrow/drawing attack_sv）：onAttack 写入攻击者/目标卡与时间戳，drawAttackArc 在约 0.9s 内绘制；arcTarget==null 表示直接攻击。
      */
     public volatile ClientCard arcAttacker;
     public volatile ClientCard arcTarget;
@@ -550,10 +518,7 @@ public class GameField {
     public List<ClientCard> selectableCards = new ArrayList<>();
     public List<ClientCard> selectedCards = new ArrayList<>();
     /**
-     * 正在「揭示」展示的手牌卡——由 DeckHandMotionManager.applyMoveToHandReveal 加入入手卡，
-     * SelectionOutlineRenderer.drawCardSelectOutlines 对其绘制行进蚂蚁线（不受
-     * is_selectable 会话门控，避免污染真实可选卡会话）；展示结束 / 洗切接管时清空。
-     * 复用本列表为灵摆召唤的两张刻度卡按左右次序绘制蚂蚁线预演。
+     * 正在「揭示」展示的手牌卡——由 applyMoveToHandReveal 加入，SelectionOutlineRenderer 对其绘行进蚂蚁线（不受 is_selectable 门控）；展示结束/洗切时清空，亦复用为灵摆召唤两张刻度卡。 
      */
     public final List<ClientCard> revealHighlightCards = new ArrayList<>();
     public List<ClientCard> selectsumCards = new ArrayList<>();

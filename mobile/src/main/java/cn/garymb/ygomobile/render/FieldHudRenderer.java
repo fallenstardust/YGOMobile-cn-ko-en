@@ -288,7 +288,7 @@ final class FieldHudRenderer {
         if (screenXY == null || text == null || text.isEmpty()) return;
         int tex = obtainNumberTexture(text, color);
         if (tex <= 0) return;
-        view.drawScreenQuadTex(screenXY[0], screenXY[1], heightPx * 2f, heightPx, tex, 1f);
+        view.quad.drawScreenQuadTex(screenXY[0], screenXY[1], heightPx * 2f, heightPx, tex, 1f);
     }
 
     private int obtainNumberTexture(String text, int color) {
@@ -401,7 +401,7 @@ final class FieldHudRenderer {
         int tex = obtainStatTexture(parts, colors, boldFlags);
         if (tex <= 0) return;
         float w = heightPx * statTextAspect(parts, boldFlags);
-        view.drawScreenQuadTex(cx, cy, w, heightPx, tex, 1f);
+        view.quad.drawScreenQuadTex(cx, cy, w, heightPx, tex, 1f);
     }
 
     /**
@@ -417,7 +417,7 @@ final class FieldHudRenderer {
         float cx = anchorX;
         if (align == ALIGN_LEFT) cx = anchorX + w / 2f;
         else if (align == ALIGN_RIGHT) cx = anchorX - w / 2f;
-        view.drawScreenQuadTex(cx, cy, w, heightPx, tex, 1f);
+        view.quad.drawScreenQuadTex(cx, cy, w, heightPx, tex, 1f);
     }
 
     /** 攻/守数值颜色（对齐 drawing.cpp DrawStatus：高于原值黄、低于原值粉、等于白） */

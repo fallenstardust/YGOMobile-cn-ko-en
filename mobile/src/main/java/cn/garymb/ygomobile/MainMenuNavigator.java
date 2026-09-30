@@ -232,7 +232,7 @@ class MainMenuNavigator implements
         dialog.setPlayerName(0, name);
         dialog.setTagPlayersVisible(tagMode);
         // Solo mode: 建主时房主预先开关 “选择对方卡组” UI（非房主加入房间时 engine.soloMode
-        // 由 StocHandler.onJoinGame 在 STOC_JOIN_GAME 回环中自动置位，下次重新打开时同步）
+        // 由 DuelStocHandler.onJoinGame 在 STOC_JOIN_GAME 回环中自动置位，下次重新打开时同步）
         dialog.setSoloMode(activity.engine != null && activity.engine.soloMode);
     }
 }

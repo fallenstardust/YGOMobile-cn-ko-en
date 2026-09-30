@@ -7,14 +7,10 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
-import android.opengl.Matrix;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -36,7 +32,8 @@ import cn.garymb.ygomobile.utils.CrashHandler;
  * {@link FieldTextureManager}（纹理）、{@link FieldBoardRenderer}（底板/格子/总攻击力/act/conti）、
  * {@link CardOverlayRenderer}（状态图标/连锁/攻击弧）、{@link FieldHudRenderer}（数字/属性文字/灵摆刻度）、
  * {@link SelectionOutlineRenderer}（高亮虚线/选择轮廓）、{@link PhaseButtonRenderer}（阶段按钮）、
- * {@link FieldTouchPicker}（射线拾取）、{@link FieldEditPreview}（设计时预览）。协作类经构造注入本视图，
+ * {@link FieldTouchPicker}（射线拾取）、{@link FieldEditPreview}（设计时预览）、
+ * {@link GLQuadBatch}（底层四边形绘制原语）、{@link FieldCardRenderer}（卡片绘制核心）。协作类经构造注入本视图，
  * 以同包包级私有直连共享 GL 状态与绘制原语。
  * <p>
  * 监听收口：卡片/区域点击与长按、阶段按钮、相机变化等所有 listener 均由
@@ -81,8 +78,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     // 线性增长（对齐 client_field.cpp：每张卡 Z 抬升 0.01）。旧实现把可见层封顶 14 层并重排
     // 均匀层高（0.012/层），导致 60/40/15 张视觉厚度几乎相同，故移除该封顶。
 
-    // 选中手卡抬高量
-    private static final float HAND_LIFT = 0.3f;
+    // 选中手卡抬高量等手卡动画参数已随卡片绘制核心平移至 FieldCardRenderer
     // 场地视觉倍率：1.0=全部可交互格子/堆叠区恰好完整入镜；<1 裁掉边缘换取更大的卡片；>1 留更多边距
     private static final float FIELD_ZOOM = 1.0f;
     // 我方手卡手动微调偏置基准（正值=再向场地外侧后移）；基准后移量由 solveCamera 按俯仰角动态解算
@@ -109,52 +105,14 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     float cameraElevationDeg = DEFAULT_CAMERA_ELEVATION;
     private volatile boolean cameraDirty = false;
 
-    // === 着色器（ES 3.0 / GLSL 300 es）：纹理贴图（含 UV 翻转子矩形）与纯色 ===
-    private static final String VS =
-            "#version 300 es\n" +
-                    "layout(location=0) in vec2 aPos;\n" +
-                    "layout(location=1) in vec2 aUV;\n" +
-                    "uniform mat4 uMVP;\n" +
-                    "uniform float uFlipU;\n" +
-                    "uniform float uFlipV;\n" +
-                    "uniform vec4 uUVRect;\n" +
-                    "out vec2 vUV;\n" +
-                    "void main(){ vec2 uv=vec2(mix(aUV.x,1.0-aUV.x,uFlipU),mix(aUV.y,1.0-aUV.y,uFlipV)); vUV=uUVRect.xy+uv*uUVRect.zw; gl_Position=uMVP*vec4(aPos,0.0,1.0); }\n";
-
-    private static final String FS_TEX =
-            "#version 300 es\n" +
-                    "precision mediump float;\n" +
-                    "in vec2 vUV;\n" +
-                    "uniform sampler2D uTex;\n" +
-                    "uniform vec4 uTint;\n" +
-                    "out vec4 fragColor;\n" +
-                    "void main(){ fragColor=texture(uTex,vUV)*uTint; }\n";
-
-    private static final String FS_COLOR =
-            "#version 300 es\n" +
-                    "precision mediump float;\n" +
-                    "uniform vec4 uColor;\n" +
-                    "out vec4 fragColor;\n" +
-                    "void main(){ fragColor=uColor; }\n";
-
-    // 单位矩形（XY 平面，法线 +Z；v=0 在局部 -Y 边即 Bitmap 顶部；u 为标准布局。
-    // 场地卡 uFlipU=1 抵消相机 +X→屏幕左 镜像；手卡 billboard 局部+Y=屏幕上方，
-    // 需 uFlipU=0 + uFlipV=1 恢复正向贴图）
-    private static final float[] QUAD = {
-            -0.5f, -0.5f, 0f, 0f,
-            0.5f, -0.5f, 1f, 0f,
-            -0.5f, 0.5f, 0f, 1f,
-            0.5f, 0.5f, 1f, 1f,
-    };
-
     // === 业务状态（公开 API 写入，GL 线程读取；部分供协作类包级直连）===
     volatile GameField field;
     private volatile ImageLoader imageLoader;
     volatile OnCardClickListener cardClickListener;
     volatile int highlightFieldMask = 0;
-    private volatile int selectedPlayer = -1;
-    private volatile int selectedLocation = -1;
-    private volatile int selectedSequence = -1;
+    volatile int selectedPlayer = -1;
+    volatile int selectedLocation = -1;
+    volatile int selectedSequence = -1;
     // 动画倍率：1=原速，2=2 倍速（时间驱动，帧率无关）
     private volatile float animSpeedMultiplier = 1f;
 
@@ -166,12 +124,6 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     volatile boolean phaseEpVisible = false;
     // 模态对话框（是/否、卡片选择/确认、命令菜单）显示期间禁用三个阶段按钮
     volatile boolean phaseButtonsEnabled = true;
-
-    // === GL 资源（着色器程序句柄 / uniform 位置 / 单位矩形 VAO，仅底层绘制原语使用）===
-    private int texProg, colorProg;
-    private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV, texLocUVRect;
-    private int colorLocMVP, colorLocColor;
-    private int vao;
 
     // === 矩阵 scratch：mModel/mMVP/mModelTmp 供卡片核心与底层原语；mOrthoVP 供 HUD/阶段按钮屏幕绘制 ===
     final float[] mMVP = new float[16];
@@ -196,6 +148,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     // === 协作类（按功能分栏委派，构造注入本视图，同包包级私有直连共享 GL 状态）===
     FieldCamera cam;
     FieldTextureManager tex;
+    GLQuadBatch quad;
+    FieldCardRenderer card;
     FieldBoardRenderer board;
     CardOverlayRenderer overlays;
     FieldHudRenderer hud;
@@ -218,13 +172,15 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 装配 10 个协作类（FieldGeometry 为纯静态工具无需实例）。所有协作类仅持有本视图引用、
+     * 装配全部协作类（FieldGeometry 为纯静态工具无需实例）。所有协作类仅持有本视图引用、
      * 通过包级私有直连读取共享 GL 状态，构造顺序无依赖（真正使用时机在 onSurfaceCreated/onDrawFrame/
      * onTouchEvent/draw 之后）。
      */
     private void wire() {
         cam = new FieldCamera(this);
         tex = new FieldTextureManager(this);
+        quad = new GLQuadBatch(this);
+        card = new FieldCardRenderer(this);
         board = new FieldBoardRenderer(this);
         overlays = new CardOverlayRenderer(this);
         hud = new FieldHudRenderer(this);
@@ -546,32 +502,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
         GLES30.glDisable(GLES30.GL_CULL_FACE);
 
-        texProg = createProgram(VS, FS_TEX);
-        colorProg = createProgram(VS, FS_COLOR);
-        texLocMVP = GLES30.glGetUniformLocation(texProg, "uMVP");
-        texLocTint = GLES30.glGetUniformLocation(texProg, "uTint");
-        texLocTex = GLES30.glGetUniformLocation(texProg, "uTex");
-        texLocFlipU = GLES30.glGetUniformLocation(texProg, "uFlipU");
-        texLocFlipV = GLES30.glGetUniformLocation(texProg, "uFlipV");
-        texLocUVRect = GLES30.glGetUniformLocation(texProg, "uUVRect");
-        colorLocMVP = GLES30.glGetUniformLocation(colorProg, "uMVP");
-        colorLocColor = GLES30.glGetUniformLocation(colorProg, "uColor");
-
-        FloatBuffer fb = ByteBuffer.allocateDirect(QUAD.length * 4)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        fb.put(QUAD).position(0);
-        int[] vaos = new int[1], vbos = new int[1];
-        GLES30.glGenVertexArrays(1, vaos, 0);
-        vao = vaos[0];
-        GLES30.glGenBuffers(1, vbos, 0);
-        GLES30.glBindVertexArray(vao);
-        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbos[0]);
-        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, fb.capacity() * 4, fb, GLES30.GL_STATIC_DRAW);
-        GLES30.glEnableVertexAttribArray(0);
-        GLES30.glVertexAttribPointer(0, 2, GLES30.GL_FLOAT, false, 16, 0);
-        GLES30.glEnableVertexAttribArray(1);
-        GLES30.glVertexAttribPointer(1, 2, GLES30.GL_FLOAT, false, 16, 8);
-        GLES30.glBindVertexArray(0);
+        quad.init();
 
         // 攻击弧 3D 逐顶点色程序与动态 VAO/VBO（CardOverlayRenderer 独占）
         overlays.initArrow();
@@ -640,7 +571,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             // 手卡抬高动画：逐帧线性推进每张手卡的 handLiftAnim（目标=当前选中卡），
             // 使点击抬高/回落呈约 5 帧的线性缓动，对齐 drawing.cpp 手卡移动动画样式
             try {
-                updateHandLift(dt);
+                card.updateHandLift(dt);
             } catch (Throwable ignored) {
             }
         }
@@ -668,7 +599,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         } catch (Throwable ignored) {
         }
         try {
-            drawFieldCards(f);
+            card.drawFieldCards(f);
         } catch (Throwable ignored) {
         }
         try {
@@ -702,402 +633,34 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         GLES30.glDepthMask(true);
     }
 
-    // ==================== 卡片绘制核心（位置取 getCardLocation 动画值并做 X 镜像）====================
-
-    /**
-     * 构建卡片模型矩阵（drawCard 与选择轮廓共用，避免姿态计算分叉）：
-     * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)；
-     * 手卡额外按 handFlipT 做 X 轴挤压以呈现「绕竖轴翻面」的视觉效果
-     */
+    // ==================== 卡片绘制核心：已平移至 FieldCardRenderer（下列为协作类依赖的薄委托）====================
+    
+    /** 构建卡片模型矩阵：委托 {@link FieldCardRenderer#buildCardModel}（选择轮廓/可发动绿点与拾取共用姿态） */
     void buildCardModel(GameField.ClientCard c, float[] out) {
-        buildCardModel(c, out, 0f);
+        card.buildCardModel(c, out);
     }
-
-    private void buildCardModel(GameField.ClientCard c, float[] out, float zBias) {
-        Matrix.setIdentityM(out, 0);
-        if (c.location == 0x02) {
-            Matrix.translateM(out, 0, FieldGeometry.mirrorX(c.curX),
-                    handY(c) + cam.mCamRot[5] * handLift(c), c.curZ + handLiftZ(c));
-            Matrix.multiplyMM(mModelTmp, 0, out, 0, cam.mCamRot, 0);
-            System.arraycopy(mModelTmp, 0, out, 0, 16);
-            Matrix.scaleM(out, 0, FieldGeometry.CARD_W * handFlipSqueeze(c), FieldGeometry.CARD_H, 1f);
-        } else {
-            boolean isPile = c.location == 0x01 || c.location == 0x10
-                    || c.location == 0x20 || c.location == 0x40;
-            float jx = isPile ? ((c.sequence % 3) - 1) * 0.012f : 0f;
-            float jy = isPile ? (((c.sequence / 3) % 3) - 1) * 0.012f : 0f;
-            Matrix.translateM(out, 0, FieldGeometry.mirrorX(c.curX) + jx, c.curY + jy, c.curZ + zBias);
-            Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotY), 0f, 1f, 0f);
-            Matrix.rotateM(out, 0, (float) Math.toDegrees(c.curRotX), 1f, 0f, 0f);
-            Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotZ), 0f, 0f, 1f);
-            Matrix.scaleM(out, 0, FieldGeometry.CARD_W, FieldGeometry.CARD_H, 1f);
-        }
-    }
-
-    /**
-     * 手卡翻面的 X 轴挤压系数：handFlipT 由 1（正面）→ 0.5（侧立）→ 0（卡背）对应绕竖轴
-     * 转半圈的投影宽度，先压到 0 再展开；留 0.06 下限避免完全退化成一条线（billboard 无厚度）。
-     * handFlipT<0（尚未参与翻面）不挤压。
-     */
-    static float handFlipSqueeze(GameField.ClientCard c) {
-        if (c.handFlipT < 0f) return 1f;
-        return Math.max(0.06f, Math.abs(c.handFlipT - 0.5f) * 2f);
-    }
-
-    /** 手卡当前该贴卡面还是卡背：翻面进度过半才算正面（未参与翻面时按卡码直接判定） */
-    static boolean handShowsFace(GameField.ClientCard c) {
-        return c.handFlipT < 0f || c.handFlipT >= 0.5f;
-    }
-
-    private void drawFieldCards(GameField f) {
-        for (int p = 0; p < 2; p++) {
-            drawCardList(f.players[p].monsterZone);
-            drawCardList(f.players[p].spellZone);
-            drawPile(f.players[p].deck);
-            drawPile(f.players[p].grave);
-            drawPile(f.players[p].removed);
-            drawPile(f.players[p].extra);
-        }
-        // 手卡最后绘制（半透明排序靠上）
-        for (int p = 1; p >= 0; p--) {
-            drawCardList(f.players[p].hand);
-        }
-        drawCardList(f.overlayCards);
-        // 离场淡出卡已脱离区域列表（cl==0：FadeCard 播完才 RemoveCard），单独绘制直到淡出完成
-        drawCardList(f.fadingCards);
-    }
-
-    /**
-     * 线程安全遍历：索引式 + 全量兜底，网络线程并发增删时最多丢一帧
-     */
-    private void drawCardList(List<GameField.ClientCard> list) {
-        if (list == null) return;
-        try {
-            for (int i = 0, n = list.size(); i < n; i++) {
-                GameField.ClientCard c;
-                try {
-                    c = list.get(i);
-                } catch (Throwable e) {
-                    continue;
-                }
-                drawCard(c);
-            }
-        } catch (Throwable ignored) {
-        }
-    }
-
-    private void drawPile(List<GameField.ClientCard> pile) {
-        if (pile == null) return;
-        try {
-            // 堆叠厚度严格对齐 C++ client_field.cpp：每张卡按真实 sequence 的线性 curZ
-            //（GameFieldGeometry：0.01+0.01×seq，不封顶）逐张绘制，堆顶 z = 0.01×张数，
-            // 侧视厚度随张数线性增长（60 张 ≈0.60 > 40 张 ≈0.40 ≈ 15 张 ≈0.15 的 3 倍）。
-            // 飞行中的卡保留自身动画的 Z 插值（从来源堆高度飞至目标堆高度），绘出立体弧线。
-            for (int i = 0, s = pile.size(); i < s; i++) {
-                GameField.ClientCard c;
-                try {
-                    c = pile.get(i);
-                } catch (Throwable e) {
-                    continue;
-                }
-                if (c == null) continue;
-                drawCard(c);
-            }
-        } catch (Throwable ignored) {
-        }
-    }
-
-    /**
-     * 单面卡片绘制（对齐 gframe drawing.cpp：每张卡只画朝向相机的那一面）。
-     * 位置取 getCardLocation 动画值并做 X 镜像；旋转按 Y→X→Z 合成、Y/Z 轴取反
-     * （空间镜像使绕 Y/Z 旋转反向），保证 gframe 各位置的面朝：
-     * 对方暗手牌（rotX+rotY=π）卡背朝相机、守备/盖放/堆叠区朝向均正确。
-     * <p>
-     * 不再正反两面同绘：两面只差 0.002 的层间距，在远视点下不足一个深度台阶，
-     * 会出现“半张卡图 + 半张卡背”的 z-fighting，盖放卡还会被底板吞掉；
-     * 单面绘制同时把 overdraw 减半。
-     */
-    private void drawCard(GameField.ClientCard c) {
-        drawCard(c, 0f);
-    }
-
-    private void drawCard(GameField.ClientCard c, float zBias) {
-        if (c == null) return;
-        float alpha = Math.max(0f, Math.min(1f, c.curAlpha / 255f));
-        if (alpha <= 0.01f) return;
-
-        boolean isHand = c.location == 0x02;
-        buildCardModel(c, mModel, zBias);
-        boolean front = isFrontFacing(mModel);
-
-        int glow = pickGlowColor(c);
-        if (glow != 0) drawGlow(glow, alpha, front);
-
-        int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
-        if (isHand) {
-            // 手卡为 billboard，恒正面朝向相机，故正/背面不能靠面朝判定，只能由翻面进度
-            // handFlipT 与卡码共同决定：翻过半（>=0.5）才贴卡面，翻面途中先绘卡背再绘卡面，
-            // 与 buildCardModel 的 X 轴挤压合成「把卡翻过来」的完整过程。
-            // 对齐 client_field.cpp GetCardLocation 手卡分支 L866-895：手卡正/背面最终仅由
-            // code 决定（code!=0 → 正面）——录像由本地引擎重跑产生消息，双方手卡 code 均已知
-            // → 对方手卡自然正面展示；实时对局服务端已把对方暗手卡 code 清零（DuelAnalyzer
-            // MSG_DRAW/MSG_SHUFFLE_HAND/refreshHand），未解除遮蔽的卡仍为卡背。
-            if (code > 0 && handShowsFace(c)) {
-                int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
-                if (tex > 0) {
-                    drawQuadTex(mModel, tex, alpha, 0f, 1f);
-                } else {
-                    drawQuadColor(mModel, 0.35f, 0.35f, 0.40f, alpha);
-                }
-            } else {
-                drawCoverQuad(mModel, true, alpha, 0f, 1f);
-            }
-            return;
-        }
-
-        // 超量素材恒为表侧（引擎从不下发素材自身的姿态，只给宿主的），而叠放下层的素材
-        // 模型由 getCardLocation 的 OVERLAY 分支单独求出（恒平放朝上），故此处不依赖 position
-        // 一律视为表侧；否则一个 position 未被补齐的素材占位会带着卡码却被画成卡背
-        //（C++ Game::DrawCard 只看 m22 与卡码、从不读 position）
-        boolean faceUp = c.isFaceUp() || c.isOverlayMaterial();
-        if (!front) {
-            // 背面朝向相机（盖放/守备盖放/卡组背面）：绕局部 Y 翻 180° 后绘卡背，
-            // 卡背自身正面朝相机，贴图方向与 gframe 一致且不与任何面共面
-            System.arraycopy(mModel, 0, mModelTmp, 0, 16);
-            Matrix.rotateM(mModelTmp, 0, 180f, 0f, 1f, 0f);
-            drawCoverQuad(mModelTmp, c.owner != 0, alpha, 1f, 0f);
-        } else if (faceUp && code > 0) {
-            int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
-            if (tex > 0) {
-                drawQuadTex(mModel, tex, alpha);
-            } else {
-                drawQuadColor(mModel, 0.35f, 0.35f, 0.40f, alpha);
-            }
-        } else {
-            // 正面朝向相机但非表侧表示（卡组顶等）：gframe 同样贴卡背材质
-            drawCoverQuad(mModel, c.owner != 0, alpha, 1f, 0f);
-        }
-    }
-
-    /**
-     * 卡片正面（局部 +Z）是否朝向视点：model 第 3 列为正面法线（Z 缩放恒为 1，仍是单位向量）、
-     * 第 4 列为卡片中心
-     */
+    
+    /** 卡片正面是否朝向视点：委托 {@link FieldCardRenderer#isFrontFacing} */
     boolean isFrontFacing(float[] model) {
-        float nx = model[8], ny = model[9], nz = model[10];
-        return (cam.camEyeX - model[12]) * nx + (cam.camEyeY - model[13]) * ny + (cam.camEyeZ - model[14]) * nz >= 0f;
+        return card.isFrontFacing(model);
     }
-
-    private void drawCoverQuad(float[] model, boolean opponent, float alpha, float flipU, float flipV) {
-        int coverTex = obtainCover(opponent);
-        if (coverTex > 0) {
-            drawQuadTex(model, coverTex, alpha, flipU, flipV);
-        } else {
-            drawQuadColor(model, 0.24f, 0.18f, 0.13f, alpha);
-        }
-    }
-
-    private int pickGlowColor(GameField.ClientCard c) {
-        if (isSelectedCard(c)) return 0xFFFFFF00;
-        if (c.is_selected) return 0xFFFFFF00;
-        if (c.is_highlighting) return 0xFF00FFFF;
-        if (c.is_showequip || c.is_showtarget || c.is_showchaintarget) return 0xFFFF4444;
-        // is_selectable 不再绘制金色脉冲外框：候选/可发动高亮统一改由
-        // SelectionOutlineRenderer.drawCardSelectOutlines 的黄色蚂蚁线轮廓承担
-        return 0;
-    }
-
-    private boolean isSelectedCard(GameField.ClientCard c) {
-        return c.controler == selectedPlayer && c.location == selectedLocation
-                && c.sequence == selectedSequence;
-    }
-
-    /**
-     * 我方手卡后移量：基准量由 solveCamera 按俯仰角动态解算（保证不遮挡魔陷区），
-     * 再叠加 XML field_hand_shift 的手动微调；对方手卡保持 gframe 原位
-     */
+    
+    /** 我方手卡后移量：委托 {@link FieldCardRenderer#handY}（拾取与绘制同源） */
     float handY(GameField.ClientCard c) {
-        return c.curY - (c.controler == 0 ? cam.selfHandShift : 0f);
+        return card.handY(c);
     }
-
-    /**
-     * 逐帧推进双方手卡的抬高动画进度：向目标（当前选中卡→1，其余→0）以恒定速率线性靠拢，
-     * 速率取 1/0.083s≈12/s，对应 client_card.cpp 手卡 MoveCard(5)（60fps 下 5 帧 ≈ 0.083s 完成）。
-     * 新选中的卡渐升、上一个被取消的卡渐降，二者进度独立过渡不跳变。
-     */
-    private void updateHandLift(float dt) {
-        GameField f = field;
-        if (f == null) return;
-        float step = dt * 12f;
-        for (int p = 0; p < 2; p++) {
-            java.util.List<GameField.ClientCard> hand = f.players[p].hand;
-            if (hand == null) continue;
-            try {
-                for (int i = 0, n = hand.size(); i < n; i++) {
-                    GameField.ClientCard c;
-                    try {
-                        c = hand.get(i);
-                    } catch (Throwable e) {
-                        continue;
-                    }
-                    if (c == null) continue;
-                    float target = isSelectedCard(c) ? 1f : 0f;
-                    if (c.handLiftAnim < target) {
-                        c.handLiftAnim = Math.min(target, c.handLiftAnim + step);
-                    } else if (c.handLiftAnim > target) {
-                        c.handLiftAnim = Math.max(target, c.handLiftAnim - step);
-                    }
-                }
-            } catch (Throwable ignored) {
-            }
-        }
-    }
-
-    /**
-     * 选中手卡抬升量：按动画进度 c.handLiftAnim(0..1) 线性插值（对齐 drawing.cpp 手卡
-     * MoveCard(5) 的线性抬升），而非按选中状态瞬时跳变；进度由 updateHandLift 逐帧推进。
-     */
+    
+    /** 选中手卡抬升量：委托 {@link FieldCardRenderer#handLift} */
     float handLift(GameField.ClientCard c) {
-        return HAND_LIFT * c.handLiftAnim;
+        return card.handLift(c);
     }
-
-    /**
-     * 选中手卡抬升的 Z 分量：沿相机 up 轴抬升，Z 分量 = mCamRot[6] × 抬升量
-     */
+    
+    /** 选中手卡抬升的 Z 分量：委托 {@link FieldCardRenderer#handLiftZ} */
     float handLiftZ(GameField.ClientCard c) {
-        return cam.mCamRot[6] * handLift(c);
+        return card.handLiftZ(c);
     }
-
-    private void drawGlow(int color, float cardAlpha, boolean front) {
-        System.arraycopy(mModel, 0, mModelTmp, 0, 16);
-        // 背面朝向相机时偏移取反，保证光晕恒落在卡片之下（否则会给卡背染色）
-        Matrix.translateM(mModelTmp, 0, mModelTmp, 0, 0f, 0f, front ? -0.004f : 0.004f);
-        Matrix.scaleM(mModelTmp, 0, mModelTmp, 0, 1.10f, 1.10f, 1f);
-        float a = cardAlpha * (0.55f + 0.30f * (float) Math.sin(animTimeMs * 0.005));
-        drawQuadColor(mModelTmp, ((color >> 16) & 0xFF) / 255f,
-                ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f, a);
-    }
-
-    // 卡图 / 卡背纹理由 FieldTextureManager 提供，门面卡片核心经此薄委派访问（保持 drawCard 原样）
-    private int obtainTexture(int code, int mode, int scale) {
-        return tex.obtainTexture(code, mode, scale);
-    }
-
-    private int obtainCover(boolean opponent) {
-        return tex.obtainCover(opponent);
-    }
-
-    // ==================== 底层绘制原语（单位矩形 + 世界 / 屏幕正交投影，供各 renderer 复用）====================
-
-    void drawFlatQuad(float cx, float cy, float z, float w, float h,
-                      float r, float g, float b, float a) {
-        Matrix.setIdentityM(mModel, 0);
-        Matrix.translateM(mModel, 0, cx, cy, z);
-        Matrix.scaleM(mModel, 0, w, h, 1f);
-        drawQuadColor(mModel, r, g, b, a);
-    }
-
-    void drawQuadTex(float[] model, int texId, float alpha) {
-        drawQuadTex(model, texId, alpha, 1f, 0f);
-    }
-
-    void drawQuadTex(float[] model, int texId, float alpha, float flipU, float flipV) {
-        drawQuadTexUV(model, texId, alpha, flipU, flipV, 0f, 0f, 1f, 1f);
-    }
-
-    void drawQuadTexUV(float[] model, int texId, float alpha, float flipU, float flipV,
-                       float offU, float offV, float scU, float scV) {
-        if (texId <= 0) return;
-        GLES30.glUseProgram(texProg);
-        Matrix.multiplyMM(mMVP, 0, cam.mVP, 0, model, 0);
-        GLES30.glUniformMatrix4fv(texLocMVP, 1, false, mMVP, 0);
-        GLES30.glUniform4f(texLocTint, 1f, 1f, 1f, alpha);
-        GLES30.glUniform1f(texLocFlipU, flipU);
-        GLES30.glUniform1f(texLocFlipV, flipV);
-        GLES30.glUniform4f(texLocUVRect, offU, offV, scU, scV);
-        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texId);
-        GLES30.glUniform1i(texLocTex, 0);
-        glBindQuadVao();
-    }
-
-    private void glBindQuadVao() {
-        GLES30.glBindVertexArray(vao);
-        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
-        GLES30.glBindVertexArray(0);
-    }
-
-    void drawQuadColor(float[] model, float r, float g, float b, float a) {
-        GLES30.glUseProgram(colorProg);
-        Matrix.multiplyMM(mMVP, 0, cam.mVP, 0, model, 0);
-        GLES30.glUniformMatrix4fv(colorLocMVP, 1, false, mMVP, 0);
-        GLES30.glUniform4f(colorLocColor, r, g, b, a);
-        glBindQuadVao();
-    }
-
-    /** 屏幕像素正交空间绘纯色四边形（阶段按钮底板，供 PhaseButtonRenderer 复用） */
-    void drawScreenQuadColor(float cx, float cy, float w, float h,
-                             float r, float g, float b, float a) {
-        GLES30.glUseProgram(colorProg);
-        Matrix.setIdentityM(mModel, 0);
-        Matrix.translateM(mModel, 0, cx, cy, 0f);
-        Matrix.scaleM(mModel, 0, w, h, 1f);
-        Matrix.multiplyMM(mMVP, 0, mOrthoVP, 0, mModel, 0);
-        GLES30.glUniformMatrix4fv(colorLocMVP, 1, false, mMVP, 0);
-        GLES30.glUniform4f(colorLocColor, r, g, b, a);
-        glBindQuadVao();
-    }
-
-    /** 屏幕像素正交空间绘贴图四边形（阶段按钮标签 / HUD 数字，供各 renderer 复用） */
-    void drawScreenQuadTex(float cx, float cy, float w, float h, int texId, float alpha) {
-        if (texId <= 0) return;
-        GLES30.glUseProgram(texProg);
-        Matrix.setIdentityM(mModel, 0);
-        Matrix.translateM(mModel, 0, cx, cy, 0f);
-        Matrix.scaleM(mModel, 0, w, h, 1f);
-        Matrix.multiplyMM(mMVP, 0, mOrthoVP, 0, mModel, 0);
-        GLES30.glUniformMatrix4fv(texLocMVP, 1, false, mMVP, 0);
-        GLES30.glUniform4f(texLocTint, 1f, 1f, 1f, alpha);
-        GLES30.glUniform1f(texLocFlipU, 0f);
-        GLES30.glUniform1f(texLocFlipV, 0f);
-        GLES30.glUniform4f(texLocUVRect, 0f, 0f, 1f, 1f);
-        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texId);
-        GLES30.glUniform1i(texLocTex, 0);
-        glBindQuadVao();
-    }
-
-    // ==================== 着色器工具 / 高刷新率 / 生命周期 ====================
-
-    private static int loadShader(int type, String src) {
-        int s = GLES30.glCreateShader(type);
-        GLES30.glShaderSource(s, src);
-        GLES30.glCompileShader(s);
-        int[] st = new int[1];
-        GLES30.glGetShaderiv(s, GLES30.GL_COMPILE_STATUS, st, 0);
-        if (st[0] == 0) {
-            String log = GLES30.glGetShaderInfoLog(s);
-            GLES30.glDeleteShader(s);
-            throw new RuntimeException("Shader compile failed: " + log);
-        }
-        return s;
-    }
-
-    /** 供 CardOverlayRenderer 构建攻击弧 3D 逐顶点色程序（同包包级私有） */
-    static int createProgram(String vs, String fs) {
-        int p = GLES30.glCreateProgram();
-        GLES30.glAttachShader(p, loadShader(GLES30.GL_VERTEX_SHADER, vs));
-        GLES30.glAttachShader(p, loadShader(GLES30.GL_FRAGMENT_SHADER, fs));
-        GLES30.glLinkProgram(p);
-        int[] st = new int[1];
-        GLES30.glGetProgramiv(p, GLES30.GL_LINK_STATUS, st, 0);
-        if (st[0] == 0) {
-            String log = GLES30.glGetProgramInfoLog(p);
-            GLES30.glDeleteProgram(p);
-            throw new RuntimeException("Program link failed: " + log);
-        }
-        return p;
-    }
+    
+    // ==================== 底层绘制原语与着色器工具：已平移至 GLQuadBatch（view.quad 直接调用）====================
 
     /**
      * 布局编辑器下无法启动 GL/EGL，这里用 Canvas 绘制等效预览（FieldEditPreview 复用同一相机解算）；

@@ -5,8 +5,6 @@ import android.os.Looper;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -15,7 +13,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import cn.garymb.ygomobile.audio.SoundManager;
-import cn.garymb.ygomobile.network.server.YrpWriter;
 import cn.garymb.ygomobile.utils.CrashHandler;
 
 /**
@@ -67,20 +64,22 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         void onReplayFinished(int winner, int reason);
     }
 
-    private final GameEngine engine;
+    final GameEngine engine;
     private final SoundManager soundManager;
     private final GameField field;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    // 区域计数与卡面回填协作类（同包，持本实例反向引用）
+    private final ReplayZoneCounter zoneCounter = new ReplayZoneCounter(this);
 
     private Listener listener;
     private volatile State state = State.IDLE;
 
     private ReplaySource source;
-    private ReplayReader.ReplayData replayData;
-    /** 当前会话录像文件路径：旧格式重跑成功播毕后据此转码固化写回（见 {@link #transcodeToMsgStream}） */
+    ReplayReader.ReplayData replayData;
+    /** 当前会话录像文件路径：旧格式重跑成功播毕后据此转码固化写回（见 {@link ReplayTranscoder}） */
     private volatile String replayFilePath;
     /** 显示用卡组/额外卡码（已按本机卡表归一）；引擎重跑仍用 replayData.decks 的原码 */
-    private List<Integer> displayMain0, displayExtra0, displayMain1, displayExtra1;
+    List<Integer> displayMain0, displayExtra0, displayMain1, displayExtra1;
 
     private Thread loadThread;
     private Thread pumpThread;
@@ -297,7 +296,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             if (source.engineDriven()) {
                 // 旧格式重跑不产 MSG_START（gframe 由 dField.Initial 建场），此处自行建初始场
                 buildInitialField();
-                applyReplayDeckCodes();
+                zoneCounter.applyReplayDeckCodes();
             }
             setState(State.PLAYING);
             isRunning = true;
@@ -461,7 +460,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                 if (msg.type == MSG_START) {
                     // MSG_START 经实况管线建场（field.initial）后回填卡组/额外卡面（快进/正常路径均适用）
                     awaitDispatchDrain();
-                    applyReplayDeckCodes();
+                    zoneCounter.applyReplayDeckCodes();
                 }
                 fedSincePump = paceAfter(msg.type, fedSincePump);
                 if (fedSincePump < 0) break;
@@ -599,7 +598,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         if (engineDriven) {
             // 重跑无 MSG_START：初始场与卡面就地重建（与 load 路径同口径）
             buildInitialField();
-            applyReplayDeckCodes();
+            zoneCounter.applyReplayDeckCodes();
             landAtStart = false;
         }
         if (engineDriven && skipStep == 0) {
@@ -723,7 +722,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         endInstantSkip();
         isSkipping = false;
         currentStep = restartFromStep;
-        applyReplayDeckCodes();
+        zoneCounter.applyReplayDeckCodes();
         pause();
     }
 
@@ -780,101 +779,12 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         });
         writeDiagnostics();
         if (transcodeFrames != null) {
-            transcodeToMsgStream(replayFilePath, replayData, responseSnapshot, transcodeFrames);
+            ReplayTranscoder.transcodeToMsgStream(TAG, MSG_START,
+                    replayFilePath, replayData, responseSnapshot, transcodeFrames);
         }
     }
 
-    // === 转码固化：重跑成功的旧格式录像重写为带消息流的 V2 文件 ===
-
-    /**
-     * 把本次重跑采集的完整消息帧流（含合成 UPDATE 刷新帧与头部合成的 MSG_START 帧）用
-     * {@link YrpWriter} 重建为 V2 带流录像并原地替换（原文件改名 *.yrp.bak 备份）：
-     * 下次播放同一文件时 {@code ReplayReader} 解出 msgFrames → 直接走 MsgStreamReplaySource，
-     * 零引擎、秒载、不再可能遇 MSG_RETRY；尾段设 V2 标志对 C++ gframe 回放透明（它只顺序
-     * 消费响应不读尾部，YrpWriter 同源设计）。残局/tag/YRP1/播放失败不转码（素材不完整或
-     * 种子构造不对称，写回会破坏兼容性）。后台守护线程执行，失败仅记日志不影响已完成的播放。
-     */
-    private void transcodeToMsgStream(final String path, final ReplayReader.ReplayData d,
-                                      final byte[] responses, final List<byte[]> frames) {
-        if (path == null || path.isEmpty() || d == null) return;
-        Thread t = new Thread(() -> {
-            try {
-                doTranscode(path, d, responses, frames);
-            } catch (Throwable e) {
-                Log.w(TAG, "replay transcode failed: " + path, e);
-            }
-        }, "ReplayTranscode");
-        t.setDaemon(true);
-        CrashHandler.getInstance().hookThread(t, "回放-转码固化");
-        t.start();
-    }
-
-    private static void doTranscode(String path, ReplayReader.ReplayData d,
-                                    byte[] responses, List<byte[]> frames) throws IOException {
-        File file = new File(path);
-        if (!file.isFile()) return;
-        YrpWriter w = new YrpWriter(d.header.seedSequence, d.header.base.version,
-                d.header.base.flag, d.header.base.startTime);
-        // 扩展头尾字段原样保留（header_version/value1..3）：C++（libygomobile.so 的
-        // ocgcore+script 重跑）侧只按位检查已知 flag、顺序消费响应不读尾部，种子序列/
-        // 参数/卡组/响应与原文件逐字节一致即可照常重跑——转码产物同时支持
-        // Java 零引擎播放与 C++ 跨端传看
-        w.setExtendedHeaderValues(d.header.headerVersion, d.header.value1,
-                d.header.value2, d.header.value3);
-        for (String name : d.playerNames) {
-            w.writeName(name == null ? "" : name);
-        }
-        w.writeInt32(d.params.startLp);
-        w.writeInt32(d.params.startHand);
-        w.writeInt32(d.params.drawCount);
-        w.writeInt32(d.params.duelFlag);
-        // 卡组段按文件原序回写（readInfo 读入顺序即文件字节序；ServerDuel 录制时的
-        // 逆序装载只发生在写入前，与转码无关）
-        for (ReplayReader.DeckInfo deck : d.decks) {
-            w.writeInt32(deck.main.size());
-            for (Integer c : deck.main) w.writeInt32(c == null ? 0 : c);
-            w.writeInt32(deck.extra.size());
-            for (Integer c : deck.extra) w.writeInt32(c == null ? 0 : c);
-        }
-        w.writeResponseRaw(responses);
-        // 重跑不产 MSG_START（gframe 由 dField.Initial 建场）：按 ServerDuel 19 字节模板
-        // 合成头帧，使转码产物在纯消息流路径下也能经实况管线建初始场并回填卡组卡面
-        byte[] startFrame = buildStartFrame(d);
-        w.writeMessage(startFrame, startFrame.length);
-        for (byte[] f : frames) {
-            w.writeMessage(f, f.length);
-        }
-        byte[] out = w.build();
-        File bak = new File(file.getParentFile(), file.getName() + ".bak");
-        if (bak.exists() && !bak.delete()) return;
-        if (!file.renameTo(bak)) return;      // 无法备份：不动原文件
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(out);
-        } catch (IOException e) {
-            if (!file.exists()) bak.renameTo(file);   // 写失败回滚备份，原录像不丢
-            throw e;
-        }
-        Log.i(TAG, "replay transcoded to msg-stream V2: " + path
-                + " (frames=" + (frames.size() + 1) + ", backup=" + bak.getName() + ")");
-    }
-
-    /** MSG_START 头帧（ServerDuel L104-117 同模板）：[4][player=0][duelRule][lp0][lp1][deck/extra 数×4] */
-    private static byte[] buildStartFrame(ReplayReader.ReplayData d) {
-        byte[] buf = new byte[19];
-        ByteBuffer sb = ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN);
-        sb.put((byte) MSG_START);
-        sb.put((byte) 0);
-        sb.put((byte) (d.params.duelFlag >> 16));
-        sb.putInt(d.params.startLp);
-        sb.putInt(d.params.startLp);
-        ReplayReader.DeckInfo p0 = d.decks.size() > 0 ? d.decks.get(0) : null;
-        ReplayReader.DeckInfo p1 = d.decks.size() > 1 ? d.decks.get(1) : null;
-        sb.putShort((short) (p0 == null ? 0 : p0.main.size()));
-        sb.putShort((short) (p0 == null ? 0 : p0.extra.size()));
-        sb.putShort((short) (p1 == null ? 0 : p1.main.size()));
-        sb.putShort((short) (p1 == null ? 0 : p1.extra.size()));
-        return buf;
-    }
+    // === 转码固化（实现已平移至 ReplayTranscoder） ===
 
     private void closeSourceQuietly() {
         try {
@@ -963,76 +873,19 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         return isRunning;
     }
 
-    /**
-     * 某区域当前卡片数（UPDATE_DATA 的 query 块数），口径同实况
-     * {@code CommandDataParser.parseUpdateData}：固定槽位区域（怪兽区/魔法区）整列计数，
-     * 动态列表只计实际存在的卡。
-     */
-    private int zoneBlockCount(int player, int location) {
-        List<GameField.ClientCard> list = field.players[engine.localPlayer(player)]
-                .getLocationList(location);
-        if (list == null) return 0;
-        if (location == 0x04 || location == 0x08) return list.size();
-        int count = 0;
-        for (GameField.ClientCard card : list) {
-            if (card != null) count++;
-        }
-        return count;
-    }
-
     @Override
     public int count(int player, int location) {
-        return zoneBlockCount(player, location);
+        return zoneCounter.zoneBlockCount(player, location);
     }
 
     @Override
     public int blockCount(int player, int location) {
-        return zoneBlockCount(player, location);
+        return zoneCounter.zoneBlockCount(player, location);
     }
 
-    // === 卡面回填 ===
-
-    /**
-     * 录像头部卡组/额外卡码回填：MSG_START 与 {@code field.initial} 只按数量建背面卡
-     * （code=0），此处把已归一的卡码按索引同序写进 ClientCard，使双方卡组/额外可直接点开
-     * 查看正面（修复手卡/卡组 unknown）；初始场建立后及每次快进落点后均需调用（重排会重建卡对象）
-     */
-    private void applyReplayDeckCodes() {
-        if (replayData == null) return;
-        // 回填与 field.initial 同一套视角映射：录制者（引擎 P0）卡组写 localPlayer(0) 容器
-        int l0 = engine.localPlayer(0);
-        int l1 = engine.localPlayer(1);
-        writeZoneCodes(field.players[l0].deck, displayMain0);
-        writeZoneCodes(field.players[l0].extra, displayExtra0);
-        writeZoneCodes(field.players[l1].deck, displayMain1);
-        writeZoneCodes(field.players[l1].extra, displayExtra1);
-        field.refreshAllCards();
-    }
-
-    private void writeZoneCodes(List<GameField.ClientCard> list, List<Integer> codes) {
-        if (list == null || codes == null) return;
-        int n = Math.min(list.size(), codes.size());
-        for (int i = 0; i < n; i++) {
-            GameField.ClientCard card = list.get(i);
-            if (card == null) continue;
-            card.code = codes.get(i);
-        }
-    }
-
-    /**
-     * 录像头部（ReplayReader 自 .yrp 解出的双方卡组/额外卡组全部卡码，已按本机卡表归一）
-     * 权威取数入口：viewPlayer 为本地视角容器索引（0=我方/1=对方，与 field.players[] 同索引），
-     * 经 engine.localPlayer 对合映射换算回录制侧下标，视角互换后自动跟随。
-     * 回放态堆叠区查看直接以该列表展开全部卡面，不依赖实况 ClientCard 是否已被
-     * {@link #applyReplayDeckCodes()} 回填——修复回填时序竞争/抽卡换位导致的卡组、额外
-     * 里侧卡「时灵时不灵」；非卡组(0x01)/额外(0x40)区域或头部无数据时返回 null（调用方回落实况列表）。
-     */
+    /** 录像头部卡组/额外卡码取数（实现在 ReplayZoneCounter）：视角互换后自动跟随，非卡组区域返回 null */
     public List<Integer> getReplayZoneCodes(int viewPlayer, int location) {
-        if (replayData == null || viewPlayer < 0 || viewPlayer > 1) return null;
-        if (location != 0x01 && location != 0x40) return null;
-        int proto = engine.localPlayer(viewPlayer);
-        if (location == 0x01) return proto == 0 ? displayMain0 : displayMain1;
-        return proto == 0 ? displayExtra0 : displayExtra1;
+        return zoneCounter.getReplayZoneCodes(viewPlayer, location);
     }
 
     // === UI 通知 ===

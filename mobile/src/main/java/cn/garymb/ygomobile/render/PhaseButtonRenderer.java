@@ -152,19 +152,19 @@ final class PhaseButtonRenderer {
         boolean enabled = view.phaseButtonsEnabled;
         float a = enabled ? 1f : 0.4f;   // 禁用时整体变暗
         float cx = rect[0], cy = rect[1], bw = rect[2], bh = rect[3];
-        view.drawScreenQuadColor(cx, cy, bw + 3f, bh + 3f, 0.04f, 0.08f, 0.12f, 0.92f * a);
+        view.quad.drawScreenQuadColor(cx, cy, bw + 3f, bh + 3f, 0.04f, 0.08f, 0.12f, 0.92f * a);
         if (pressed) {
-            view.drawScreenQuadColor(cx, cy, bw, bh, 0.15f, 0.22f, 0.32f, 0.94f * a);
+            view.quad.drawScreenQuadColor(cx, cy, bw, bh, 0.15f, 0.22f, 0.32f, 0.94f * a);
         } else if (enabled) {
-            view.drawScreenQuadColor(cx, cy, bw, bh, 0.30f, 0.44f, 0.58f, 0.90f);
+            view.quad.drawScreenQuadColor(cx, cy, bw, bh, 0.30f, 0.44f, 0.58f, 0.90f);
         } else {
-            view.drawScreenQuadColor(cx, cy, bw, bh, 0.16f, 0.24f, 0.32f, 0.90f);
+            view.quad.drawScreenQuadColor(cx, cy, bw, bh, 0.16f, 0.24f, 0.32f, 0.90f);
         }
         int tex = obtainPhaseLabelTexture(label);
         if (tex > 0) {
             // 标签位图固定 256×80：按 3.2:1 铺展，宽度封顶按钮内宽（短文字两侧留透明区）
             float tw = Math.min(bh * 3.2f, bw * 0.96f);
-            view.drawScreenQuadTex(cx, cy, tw, tw / 3.2f, tex, a);
+            view.quad.drawScreenQuadTex(cx, cy, tw, tw / 3.2f, tex, a);
         }
     }
 

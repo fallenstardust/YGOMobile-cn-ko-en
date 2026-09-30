@@ -1,16 +1,9 @@
 package cn.garymb.ygomobile.render;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
 import android.util.TypedValue;
-import android.view.Choreographer;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,14 +14,9 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import java.io.File;
 import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.Map;
 
-import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.BitmapUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 
@@ -39,10 +27,9 @@ import ocgcore.StringManager;
  *
  * 图层约定（对齐 RPSDialog）：GameFieldView 是 setZOrderOnTop(true) 的 GLSurfaceView，
  * GL 曲面合成在 Activity 窗口之上，普通 View 会被场地遮挡，故本层使用全屏透明、
- * 不拦截触摸的 PopupWindow 承载 Canvas 绘制视图，稳定显示在 GL 曲面之上。
+ * 不拦截触摸的 PopupWindow 承载 Canvas 绘制视图（SpecEffectView），稳定显示在 GL 曲面之上。
  *
- * 动画驱动：Choreographer 逐帧回调，按 dt*60*speed 推进 showcarddif/showcardp，
- * 刷新率无关且与 GameFieldView 时间驱动动画速度一致。
+ * 动画驱动：SpecEffectView 内 Choreographer 逐帧回调，按 dt*60*speed 推进 showcarddif/showcardp。
  */
 public class SpecEffectOverlay {
 
@@ -84,28 +71,24 @@ public class SpecEffectOverlay {
     private PopupWindow window;
     private FrameLayout rootLayer;
     private SpecEffectView view;
-    /** 弹幕宿主容器（仅系统/观战消息）：位于 PopupWindow（drawspec 层）内、双方 LP 血条
-     *  正下方的全屏宽横带（在 GL 曲面之上），横竖屏同规格，自右向左滚动直至离开屏幕；
-     *  高度与带顶由 obtainDanmakuLayer(bandHeightPx, bandTopPx) 指定。
-     *  对局玩家的聊天不是弹幕，走下方 selfChatLayer/oppChatLayer 分侧行式显示 */
+    /** 弹幕宿主容器（仅系统/观战消息）：位于 PopupWindow 内、双方 LP 血条正下方横带，
+     *  自右向左滚动；对局玩家聊天不走弹幕，见 selfChatLayer/oppChatLayer */
     private FrameLayout danmakuLayer;
-    /** 我方聊天行容器：我方 LP 血条正下方的纵向 LinearLayout（VERTICAL），每条聊天一个
-     *  TextView，自上而下追加、超行移除最旧（PopupWindow 层，在 GL 曲面之上，横竖屏同规格） */
+    /** 我方/对方聊天行容器：各自 LP 血条正下方纵向 LinearLayout，自上而下追加 */
     private LinearLayout selfChatLayer;
-    /** 对方聊天行容器：对方 LP 血条正下方，规格同 selfChatLayer（含双方 tag 队友消息） */
     private LinearLayout oppChatLayer;
     /** 居中动作消息文本区域容器（对齐 layout_game_right 窗口矩形），内部 TextView 随文字自适应居中 */
     private FrameLayout actionTextHost;
     private TextView actionText;
-    /** 动作消息文本是否在屏（展开/停留/收起全程）：占用串行队列与动画屏障，与卡片动画同类 */
+    /** 动作消息文本是否在屏（展开/停留/收起全程）：占用串行队列与动画屏障 */
     private boolean actionTextActive;
     private Runnable actionTextCloser;
     /** layout_game_right 窗口坐标区域（画布特效与动作消息文本的共同基准） */
     private int regionLeft, regionTop, regionW, regionH;
     private float speed = 1f;
-    /** 特效请求队列：保证动画串行播放——上一段完全结束后再播下一段，避免多段动画互相打断/同时播出 */
+    /** 特效请求队列：保证动画串行播放——上一段完全结束后再播下一段 */
     private final ArrayDeque<EffectRequest> queue = new ArrayDeque<>();
-    /** 特效队列排空（无动画播放）回调：供 GameEngine 重开消息闸门，实现「动画播完再弹窗」的串行序列 */
+    /** 特效队列排空（无动画播放）回调：供 GameEngine 重开消息闸门 */
     private OnIdleListener idleListener;
 
     public SpecEffectOverlay(Activity activity) {
@@ -125,8 +108,7 @@ public class SpecEffectOverlay {
 
     /**
      * 特效层是否仍在播放：队列有待播动画，或当前视图正在逐帧绘制（running）。
-     * 供 GameEngine 统一动画屏障即时查询——与 OnIdleListener 互补：idle 是「排空瞬间」的快路径通知，
-     * 本方法是任意时刻的状态查询（闸门轮询器每 16ms 调用一次，派发每条消息后也调用一次）。
+     * 供 GameEngine 统一动画屏障即时查询（idle 回调是排空瞬间的快路径，本方法是任意时刻的状态查询）。
      */
     public boolean isBusy() {
         return !queue.isEmpty() || actionTextActive || (view != null && view.running);
@@ -149,9 +131,9 @@ public class SpecEffectOverlay {
         enqueue(new EffectRequest(EFFECT_FADEIN, code, 0, 20, null, null, 0));
     }
 
-    /** case 5：特殊召唤，卡片大图自中心放大并淡入（MSG_SPSUMMONING） */
+    /** case 5：特殊召唤，卡片大图自中心放大并淡入（MSG_SPSUMMONING）。
+     *  C++ showcarddif 初值为 1（第 7 参才是 difInit；此前误把 1 传入 param 槽导致 dif 初值为 0） */
     public void showSpecialSummon(int code) {
-        // C++ showcarddif 初值为 1（第 7 参才是 difInit；此前误把 1 传入 param 槽导致 dif 初值为 0）
         enqueue(new EffectRequest(EFFECT_SPSUMMON, code, 0, 20, null, null, 1));
     }
 
@@ -178,10 +160,8 @@ public class SpecEffectOverlay {
     }
 
     /**
-     * case 101：MSG_WIN 胜负文字，停留时长对齐 C++ 的 110 帧。
-     * reason 为通讯中的 victory reason（MSG_WIN 第二字节），vicName 为“败方”昵称（可空）。
-     * 胜利说明对齐 duelclient.cpp L1596-1602：reason<0x10 → "[败者名] 原因"，否则仅"原因"，
-     * 原因文本取自 strings.conf 的 !victory 段（StringManager.getVictoryString）。
+     * case 101：MSG_WIN 胜负文字，停留 110 帧对齐 C++。
+     * 胜利说明对齐 duelclient.cpp L1596-1602：reason<0x10 → "[败者名] 原因"，否则仅"原因"。
      */
     public void showWinText(int textCode, int reason, String vicName) {
         showText(textCode, buildVictoryString(reason, vicName), 110);
@@ -207,10 +187,8 @@ public class SpecEffectOverlay {
 
     /**
      * 居中动作消息文本（MSG_HINT 宣言类，对齐 duelclient.cpp wACMessage 弹出）：
-     * 不走阶段文字（EFFECT_TEXT）的大字横向划过，而是在 layout_game_right 区域中央
-     * 显示 12sp 小字 TextView，背景 ygopro_base_background（对齐 stACMessage 半透明底色），
-     * 入场播放 popup_open 展开动画、退场 popup_close；总时长 holdFrames=40 帧
-     *（17ms/帧，对齐 WaitFrameSignal(40)，按动画倍率速除），汇入串行特效队列。
+     * 12sp 小字 TextView + ygopro_base_background 底框，popup_open 展开 → 停留 → popup_close 收起，
+     * 总时长 holdFrames=40 帧（17ms/帧，对齐 WaitFrameSignal(40)，按动画倍率速除），汇入串行特效队列。
      */
     public void showActionMessage(String text) {
         if (text == null || text.isEmpty()) return;
@@ -223,10 +201,9 @@ public class SpecEffectOverlay {
     }
 
     /**
-     * 立即结束并清空当前特效与待播队列。注意：不无条件 dismiss——弹幕/分侧聊天行仍在屏时
-     * 保留 PopupWindow（弹幕与特效共用同一窗口，历次「弹幕不可见」的根因之一就是
-     * hide() 把带着活跃弹幕的窗口整个 dismiss 掉），仅在全空闲时收口关闭；
-     * 聊天行不属于特效，不随本方法清空（由 clearChatRowLayers/对局结束流程清理）。
+     * 立即结束并清空当前特效与待播队列。不无条件 dismiss——弹幕/聊天行仍在屏时保留
+     * PopupWindow（弹幕与特效共用同一窗口），仅在全空闲时收口关闭；聊天行由
+     * clearChatRowLayers/对局结束流程清理。
      */
     public void hide() {
         queue.clear();
@@ -260,13 +237,13 @@ public class SpecEffectOverlay {
         pumpQueue();
     }
 
-    /** 仅在无动画播放时取出队首请求开播；队列已空则通知引擎并关闭覆盖层。由 onFinish 逐段驱动，形成序列 */
+    /** 仅在无动画播放时取出队首请求开播；队列已空则通知引擎并关闭覆盖层。由 onFinish 逐段驱动 */
     private void pumpQueue() {
         if (view == null || view.running || actionTextActive) return;
         EffectRequest req = queue.poll();
         if (req == null) {
-            // 先通知引擎队列已排空（引擎可能在同一调用栈内立即派发下一条消息并入队新动画），
-            // 通知后若仍无任何动画/活跃弹幕在屏，才关闭覆盖层，避免「关闭→立即重开」的闪烁
+            // 先通知引擎队列已排空（引擎可能立即派发下一条消息并入队新动画），
+            // 通知后若仍无任何动画/活跃弹幕在屏才关闭覆盖层，避免「关闭→立即重开」闪烁
             if (idleListener != null) idleListener.onIdle();
             dismissWindowIfIdle();
             return;
@@ -350,15 +327,14 @@ public class SpecEffectOverlay {
         View decor = activity.getWindow().getDecorView();
         if (decor == null) return;
         if (decor.getWindowToken() == null) {
-            // 窗口 token 未就绪（首帧前/重建中）：延后一帧重试，避免弹幕宿主 View 永远
-            // 不附着窗口而宽高恒为 0（历史「弹幕/聊天滚动文字不可见」根因之一）
+            // 窗口 token 未就绪（首帧前/重建中）：延后一帧重试，避免弹幕宿主 View 宽高恒为 0
             decor.post(this::showWindow);
             return;
         }
         try {
             window.showAtLocation(decor, Gravity.NO_GRAVITY, 0, 0);
         } catch (Exception ignored) {
-            // 显示失败同样下一帧重试一次（ obtainView 每次触发都会再走 showWindow 入口）
+            // 显示失败同样下一帧重试一次（obtainView 每次触发都会再走 showWindow 入口）
             decor.post(this::showWindow);
         }
     }
@@ -451,12 +427,10 @@ public class SpecEffectOverlay {
 
     /**
      * 返回弹幕宿主容器（PopupWindow 层，显示在 GL 曲面之上）：按调用方给定的带顶
-     * 窗口坐标 bandTopPx（双方 LP 血条底边，横竖屏同规格——对齐 gframe 聊天在血条
-     * 下方滚动）全屏宽定位；bandTopPx<0（血条尚未布局）时回退 layout_game_right 区域顶边，
-     * 高度 bandHeightPx 由调用方按「行数 × 行高」给定，弹幕自上分行自右向左滚动，
-     * 容器默认裁剪子 View，出入恰以该带为界。
-     * 不再依赖 layout_top_info 的布局状态——历史 bug：top_info 未布局/被隐藏时返回 null，
-     * 弹幕落回受 GL 曲面遮挡的 layout_danmaku 且其宽恒为 0，无限重试永不可见。
+     * 窗口坐标 bandTopPx（双方 LP 血条底边）全屏宽定位；bandTopPx<0 时回退 layout_game_right
+     * 区域顶边，高度 bandHeightPx 由调用方按「行数 × 行高」给定。
+     * 不再依赖 layout_top_info 的布局状态——历史 bug：top_info 未布局时弹幕落回
+     * 受 GL 曲面遮挡的 layout_danmaku 且宽恒为 0，永不可见。
      */
     public FrameLayout obtainDanmakuLayer(int bandHeightPx, int bandTopPx) {
         if (activity.isFinishing()) return null;
@@ -481,9 +455,8 @@ public class SpecEffectOverlay {
 
     /**
      * 取得指定侧的聊天行容器（VERTICAL LinearLayout，PopupWindow 层在 GL 曲面之上）：
-     * 以窗口坐标 leftPx/topPx（调用方传入：该侧 LP 血条底边）/widthPx（血条宽）定位到
-     * 血条正下方，每条聊天一个 TextView 自上而下追加，超过最大行数由调用方移除最旧一条。
-     * 对局玩家（含同队 tag 队友）聊天走本容器；系统/观战消息仍走弹幕带横向滚动。
+     * 以窗口坐标 leftPx/topPx（该侧 LP 血条底边）/widthPx（血条宽）定位，每条聊天一个
+     * TextView 自上而下追加。对局玩家（含同队 tag 队友）聊天走本容器；系统/观战消息走弹幕带。
      */
     public LinearLayout obtainChatRowLayer(boolean selfSide, int leftPx, int topPx, int widthPx) {
         if (activity.isFinishing()) return null;
@@ -519,500 +492,5 @@ public class SpecEffectOverlay {
     /** 特效队列排空、当前无动画播放时触发一次的回调 */
     public interface OnIdleListener {
         void onIdle();
-    }
-
-    /** 一次特效播放请求（队列元素），字段与 SpecEffectView.startCard 参数一一对应 */
-    private static final class EffectRequest {
-        final int type, code, param;
-        final float holdFrames, difInit;
-        final String text, subText;
-
-        EffectRequest(int type, int code, int param, float holdFrames,
-                      String text, String subText, float difInit) {
-            this.type = type;
-            this.code = code;
-            this.param = param;
-            this.holdFrames = holdFrames;
-            this.text = text;
-            this.subText = subText;
-            this.difInit = difInit;
-        }
-    }
-
-    // ==================== 绘制视图 ====================
-
-    /**
-     * Canvas 逐帧绘制视图：内部状态对应 gframe 的 showcard / showcardcode / showcarddif / showcardp，
-     * 坐标以 layout_game_right 区域为基准，卡片大图居中显示。
-     */
-    private class SpecEffectView extends View {
-
-        // 卡面在 640 高虚拟空间中的占比（drawing.cpp：top=150、CARD_IMG_HEIGHT=287、CARD_IMG_WIDTH=200）
-        private static final float V_CARD_TOP = 150f;
-        private static final float V_SPACE_H = 640f;
-        // 虚拟空间宽度基准：与高度同基准（方形虚拟空间），保证横屏不受宽度约束、竖屏按宽度自动缩小
-        private static final float V_SPACE_W = 640f;
-        private static final float CARD_VW = 200f;
-        private static final float CARD_VH = 287f;
-
-        private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
-        private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Matrix flipMatrix = new Matrix();
-        private final Map<String, Bitmap> skinCache = new HashMap<>();
-
-        private int effectType = EFFECT_NONE;
-        private int cardCode = 0;
-        private int param = 0;       // 计数器数字 / 猜拳手势打包 / 文字 code
-        private String text = null;
-        private String subText = null;
-        private float dif = 0f;      // showcarddif
-        private float p = 0f;        // showcardp
-        private float holdFrames = 0f;
-        private float holdCount = 0f;
-        private float cardWaitFrames = 0f;   // 卡图迟迟未解码完成的累计帧数（兜底防止动画/闸门永久卡住）
-        private float speed = 1f;
-        private boolean running = false;
-        private boolean frameScheduled = false;
-        private long lastNs = 0L;
-
-        // layout_game_right 区域（窗口坐标）与派生的卡片大图表象
-        private int regionLeft, regionTop, regionW, regionH;
-        private float cardW, cardH, cardLeft, cardTop, cardRight, cardBottom, cx, s;
-        private float textCenterY;
-        private float vOriginY;      // 虚拟空间 y=0 对应的窗口坐标（宽度受限缩小时垂直居中）
-
-        private OnFinishListener finishListener;
-
-        SpecEffectView(android.content.Context context) {
-            super(context);
-            textPaint.setColor(Color.WHITE);
-            textPaint.setTextAlign(Paint.Align.CENTER);
-            textPaint.setFakeBoldText(false);
-            shadowPaint.setColor(Color.BLACK);
-            shadowPaint.setTextAlign(Paint.Align.CENTER);
-            shadowPaint.setFakeBoldText(false);
-        }
-
-        void setOnFinishListener(OnFinishListener l) {
-            this.finishListener = l;
-        }
-
-        void setRegion(int left, int top, int w, int h) {
-            this.regionLeft = left;
-            this.regionTop = top;
-            this.regionW = w;
-            this.regionH = h;
-            computeGeometry();
-        }
-
-        private void computeGeometry() {
-            if (regionW <= 0 || regionH <= 0) return;
-            // 竖屏：大图/阶段文字按区域宽度自动缩小（取高/宽两基准的较小者）；
-            // 横屏区域宽度充裕（≥ 高度基准所需）时不触发限宽，数值与原纯高度基准完全等价
-            s = Math.min(regionH / V_SPACE_H, regionW / V_SPACE_W);
-            // 缩小时内容在区域内垂直居中（卡片大图/阶段文字不再钉顶部），横屏时偏移为 0
-            vOriginY = regionTop + (regionH - s * V_SPACE_H) / 2f;
-            cardH = s * CARD_VH;
-            cardW = s * CARD_VW;
-            cx = regionLeft + regionW / 2f;
-            cardLeft = cx - cardW / 2f;
-            cardRight = cx + cardW / 2f;
-            cardTop = vOriginY + s * V_CARD_TOP;
-            cardBottom = cardTop + cardH;
-            textCenterY = vOriginY + s * 330f;
-        }
-
-        /** 启动一个特效（对齐 duelclient.cpp 各分支的初值设置） */
-        void startCard(int type, int code, int param, float holdFrames,
-                       String text, String subText, float difInit) {
-            this.effectType = type;
-            this.cardCode = code;
-            this.param = param;
-            this.holdFrames = holdFrames;
-            this.holdCount = 0f;
-            this.text = text;
-            this.subText = subText;
-            this.dif = difInit;
-            this.p = 0f;
-            computeGeometry();
-            startLoop();
-            invalidate();
-        }
-
-        void stop() {
-            running = false;
-            effectType = EFFECT_NONE;
-            dif = 0f;
-            p = 0f;
-            holdCount = 0f;
-            invalidate();
-        }
-
-        private void startLoop() {
-            running = true;
-            lastNs = 0L;
-            scheduleFrame();
-        }
-
-        /** 确保同一时刻只有一个 Choreographer 回调在排队，避免动画切换（同帧 finish→start）时重复投递 */
-        private void scheduleFrame() {
-            if (!frameScheduled) {
-                frameScheduled = true;
-                Choreographer.getInstance().postFrameCallback(frameCallback);
-            }
-        }
-
-        private void finish() {
-            running = false;
-            effectType = EFFECT_NONE;
-            dif = 0f;
-            p = 0f;
-            holdCount = 0f;
-            cardWaitFrames = 0f;
-            invalidate();
-            if (finishListener != null) finishListener.onFinish();
-        }
-
-        private final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
-            @Override
-            public void doFrame(long frameTimeNanos) {
-                frameScheduled = false;
-                if (!running) return;
-                float dt = lastNs == 0 ? 1f / 60f : (frameTimeNanos - lastNs) / 1e9f;
-                lastNs = frameTimeNanos;
-                if (dt > 0.1f) dt = 0.1f;
-                step(dt * 60f * speed);
-                invalidate();
-                if (running) scheduleFrame();
-            }
-        };
-
-        /** 按帧推进动画状态（对齐 DrawSpec 每帧对 showcarddif/showcardp 的递增） */
-        private void step(float fr) {
-            if (effectType == EFFECT_NONE) return;
-            // 卡片大图未解码完成前不推进（对齐 C++ if(showimg==NULL) return）
-            if (needsCard(effectType) && card() == null) {
-                // 卡图始终解码失败（如卡片不存在）时不能无限等待，否则 GameEngine 消息闸门被永久关闭：
-                // 累计约 40 帧后强制结束本段动画，交还控制权（正常卡图解码极快，不会误触发）
-                cardWaitFrames += fr;
-                if (cardWaitFrames >= 40f) finish();
-                return;
-            }
-            cardWaitFrames = 0f;
-            boolean done = false;
-            switch (effectType) {
-                case EFFECT_ACTIVATE:
-                    dif += 15 * fr;
-                    if (dif >= CARD_VH) {
-                        effectType = EFFECT_ACTIVATE2;
-                        dif = 0;
-                    }
-                    break;
-                case EFFECT_ACTIVATE2:
-                    dif += 15 * fr;
-                    if (dif >= CARD_VW) done = true;
-                    break;
-                case EFFECT_NEGATED:
-                case EFFECT_COUNTER:
-                    if (dif < 64) dif += 4 * fr;
-                    else done = true;
-                    break;
-                case EFFECT_FADEIN:
-                    if (dif < 255) dif += 17 * fr;
-                    else done = true;
-                    break;
-                case EFFECT_SPSUMMON:
-                    if (dif < 127) dif += 9 * fr;
-                    else done = true;
-                    break;
-                case EFFECT_SUMMON:
-                    dif += 9 * fr;
-                    if (dif > 90) dif = 90;
-                    p += fr;
-                    if (p >= 60) done = true;
-                    break;
-                case EFFECT_RPS:
-                    if (p < 60) {
-                        float dy = -0.333333f * p + 10f;
-                        p += fr;
-                        if (p < 30) dif += dy * fr;
-                    } else done = true;
-                    break;
-                case EFFECT_TEXT:
-                    p += fr;
-                    if (p >= dif + 10) done = true;
-                    break;
-            }
-            if (done) {
-                if (holdFrames > 0) {
-                    holdCount += fr;
-                    if (holdCount >= holdFrames) finish();
-                } else {
-                    finish();
-                }
-            }
-        }
-
-        private boolean needsCard(int type) {
-            return type >= EFFECT_ACTIVATE && type <= EFFECT_SUMMON;
-        }
-
-        private Bitmap card() {
-            return cardCode > 0 ? TextureLoader.get().getCardBitmap(cardCode) : null;
-        }
-
-        /** 当前特效卡码（0=无）：供竖屏底部卡片详情栏同步展示大图对应卡片 */
-        public int getCardCode() {
-            return effectType == EFFECT_NONE || !needsCard(effectType) ? 0 : cardCode;
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            if (effectType == EFFECT_NONE || regionW <= 0 || regionH <= 0) return;
-            switch (effectType) {
-                case EFFECT_ACTIVATE:
-                    drawActivate1(canvas);
-                    break;
-                case EFFECT_ACTIVATE2:
-                    drawActivate2(canvas);
-                    break;
-                case EFFECT_NEGATED:
-                    drawNegated(canvas);
-                    break;
-                case EFFECT_FADEIN:
-                    drawFadeIn(canvas);
-                    break;
-                case EFFECT_SPSUMMON:
-                    drawSpSummon(canvas);
-                    break;
-                case EFFECT_COUNTER:
-                    drawCounter(canvas);
-                    break;
-                case EFFECT_SUMMON:
-                    drawSummonFlip(canvas);
-                    break;
-                case EFFECT_RPS:
-                    drawRps(canvas);
-                    break;
-                case EFFECT_TEXT:
-                    drawPhaseText(canvas);
-                    break;
-            }
-            bmpPaint.setAlpha(255);
-        }
-
-        // --- case 1：卡片大图 + 遮罩光带自左揭开 ---
-        private void drawActivate1(Canvas canvas) {
-            Bitmap card = card();
-            if (card == null) return;
-            canvas.drawBitmap(card, null, cardRect(), bmpPaint);
-            Bitmap mask = skin("mask.png");
-            if (mask != null) {
-                float maskScale = mask.getWidth() / CARD_VH;
-                int srcL = clamp((int) ((CARD_VH - dif) * maskScale), 0, mask.getWidth());
-                float over = dif > CARD_VW ? dif - CARD_VW : 0;
-                int srcR = clamp((int) ((CARD_VH - over) * maskScale), 0, mask.getWidth());
-                if (srcR > srcL) {
-                    float dstR = cardLeft + Math.min(dif, CARD_VW) * s;
-                    Rect src = new Rect(srcL, 0, srcR, mask.getHeight());
-                    RectF dst = new RectF(cardLeft, cardTop, dstR, cardBottom);
-                    canvas.drawBitmap(mask, src, dst, bmpPaint);
-                }
-            }
-        }
-
-        // --- case 2：遮罩继续向右消失 ---
-        private void drawActivate2(Canvas canvas) {
-            Bitmap card = card();
-            if (card == null) return;
-            canvas.drawBitmap(card, null, cardRect(), bmpPaint);
-            Bitmap mask = skin("mask.png");
-            if (mask != null) {
-                float maskScale = mask.getWidth() / CARD_VH;
-                int srcR = clamp((int) ((CARD_VW - dif) * maskScale), 0, mask.getWidth());
-                if (srcR > 0) {
-                    Rect src = new Rect(0, 0, srcR, mask.getHeight());
-                    RectF dst = new RectF(cardLeft + dif * s, cardTop, cardRight, cardBottom);
-                    canvas.drawBitmap(mask, src, dst, bmpPaint);
-                }
-            }
-        }
-
-        // --- case 3：中央缩小无效图标 ---
-        private void drawNegated(Canvas canvas) {
-            Bitmap card = card();
-            if (card == null) return;
-            canvas.drawBitmap(card, null, cardRect(), bmpPaint);
-            Bitmap neg = skin("negated.png");
-            if (neg != null) {
-                Rect src = new Rect(0, 0, neg.getWidth(), neg.getHeight());
-                canvas.drawBitmap(neg, src, shrinkRect(), bmpPaint);
-            }
-        }
-
-        // --- case 4：淡入 ---
-        private void drawFadeIn(Canvas canvas) {
-            Bitmap card = card();
-            if (card == null) return;
-            bmpPaint.setAlpha(clamp((int) dif, 0, 255));
-            // C++ 使用 154~404 的矩形（略小于整卡）
-            RectF dst = new RectF(cardLeft, cardTop + 4 * s, cardRight, cardTop + 254 * s);
-            canvas.drawBitmap(card, null, dst, bmpPaint);
-            bmpPaint.setAlpha(255);
-        }
-
-        // --- case 5：特殊召唤放大 + 淡入 ---
-        private void drawSpSummon(Canvas canvas) {
-            Bitmap card = card();
-            if (card == null) return;
-            // (dif<<25)>>24 == dif*2，透明度以两倍速升至不透明
-            bmpPaint.setAlpha(clamp((int) (dif * 2), 0, 255));
-            float hw = dif * 0.69685f * s;
-            float hh = dif * s;
-            float ccx = cardLeft + 100 * s;   // regionX(660)
-            float ccy = cardTop + 127 * s;    // regionY(277)
-            RectF dst = new RectF(ccx - hw, ccy - hh, ccx + hw, ccy + hh);
-            canvas.drawBitmap(card, null, dst, bmpPaint);
-            bmpPaint.setAlpha(255);
-        }
-
-        // --- case 6：计数器数字（number.png 5×5 图集，param 选格） ---
-        private void drawCounter(Canvas canvas) {
-            Bitmap card = card();
-            if (card == null) return;
-            canvas.drawBitmap(card, null, cardRect(), bmpPaint);
-            Bitmap num = skin("number.png");
-            if (num != null) {
-                int cell = clamp(param, 0, 24);
-                int cw = num.getWidth() / 5, ch = num.getHeight() / 5;
-                int col = cell % 5, row = cell / 5;
-                Rect src = new Rect(col * cw, row * ch, (col + 1) * cw, (row + 1) * ch);
-                canvas.drawBitmap(num, src, shrinkRect(), bmpPaint);
-            }
-        }
-
-        // --- case 7：翻面进入（透视四边形，Matrix.setPolyToPoly 复现 Draw2DImageQuad） ---
-        private void drawSummonFlip(Canvas canvas) {
-            Bitmap card = card();
-            if (card == null) return;
-            float y = (float) Math.sin(dif * Math.PI / 180.0) * CARD_VH * s;
-            // 底边锚定 cardBottom（虚拟 437）：C++ 原式为 404*yScale（drawing.cpp case 7），
-            // 使通常召唤完成态整体比发动/无效（[150,437]）偏高约 33 虚拟单位；
-            // 按需求微调为与特殊召唤/效果发动/效果无效居中大图完全一致的位置，
-            // dif=90 时顶边 = cardBottom - cardH = cardTop，终态矩形与 cardRect() 重合
-            float baseY = cardBottom;
-            float spread = (cardH - y) * 0.3f;
-            float[] src = {0, 0, card.getWidth(), 0, 0, card.getHeight(), card.getWidth(), card.getHeight()};
-            float[] dst = {
-                    cardLeft - spread, baseY - y,   // 左上
-                    cardRight + spread, baseY - y,  // 右上
-                    cardLeft, baseY,                // 左下
-                    cardRight, baseY                // 右下
-            };
-            flipMatrix.setPolyToPoly(src, 0, dst, 0, 4);
-            canvas.drawBitmap(card, flipMatrix, bmpPaint);
-        }
-
-        // --- case 100：猜拳双手势自上下向中央靠拢 ---
-        private void drawRps(Canvas canvas) {
-            int myIdx = clamp((param >> 16) & 0x3, 0, 2);
-            int oppIdx = clamp(param & 0x3, 0, 2);
-            Bitmap my = skin("f" + (myIdx + 1) + ".jpg");
-            Bitmap opp = skin("f" + (oppIdx + 1) + ".jpg");
-            float handH = s * 128f;
-            float handW = handH * (89f / 128f);
-            float left = cx - handW / 2f, right = cx + handW / 2f;
-            float myTop = vOriginY + dif * s;
-            float oppTop = vOriginY + (540f - dif) * s;
-            if (my != null)
-                canvas.drawBitmap(my, null, new RectF(left, myTop, right, myTop + handH), bmpPaint);
-            if (opp != null)
-                canvas.drawBitmap(opp, null, new RectF(left, oppTop, right, oppTop + handH), bmpPaint);
-        }
-
-        // --- case 101：阶段/胜负文字，淡入→停留→淡出并横向滑入滑出 ---
-        private void drawPhaseText(Canvas canvas) {
-            String str = text != null ? text : "";
-            float alpha, off;
-            if (p < 10) {
-                alpha = p / 10f;
-                off = -(1f - p / 10f) * 0.36f * regionW;
-            } else if (p < dif) {
-                alpha = 1f;
-                off = 0f;
-            } else if (p < dif + 10) {
-                float t = (p - dif) / 10f;
-                alpha = 1f - t;
-                off = t * 0.36f * regionW;
-            } else {
-                alpha = 0f;
-                off = 0f;
-            }
-            int a = clamp((int) (alpha * 255), 0, 255);
-            if (a <= 0) return;
-            float size = s * 0.09f * V_SPACE_H;   // 略微缩小阶段文字（高度基准 0.09×640，改经 s 派生随宽度缩放）
-            float x = cx + off;
-            textPaint.setTextSize(size);
-            textPaint.setAlpha(a);
-            shadowPaint.setTextSize(size);
-            shadowPaint.setAlpha(a);
-            float baseline = textCenterY - (textPaint.ascent() + textPaint.descent()) / 2f;
-            canvas.drawText(str, x + 2, baseline + 2, shadowPaint);
-            canvas.drawText(str, x, baseline, textPaint);
-
-            // 胜利说明（vic_string）：胜负文字下方半透明底框 + 文本（对齐 drawing.cpp L1486-1491）
-            if (subText != null && subText.length() > 0
-                    && (cardCode == TEXT_YOU_WIN || cardCode == TEXT_YOU_LOSE)) {
-                // 胜负说明文字缩小（原 0.045），并整体上移更靠近上方的 YOU WIN/YOU LOSE（原 0.09）
-                float subSize = s * 0.036f * V_SPACE_H;
-                textPaint.setTextSize(subSize);
-                float subW = Math.max(textPaint.measureText(subText) + 24, regionW * 0.2f);
-                float subY = baseline + s * 0.066f * V_SPACE_H;
-                bmpPaint.setAlpha(a);
-                RectF box = new RectF(cx - subW / 2f, subY - subSize, cx + subW / 2f, subY + subSize * 0.6f);
-                Paint boxPaint = new Paint();
-                boxPaint.setColor(0xA0000000);
-                boxPaint.setAlpha((int) (a * 0.63f));
-                canvas.drawRect(box, boxPaint);
-                shadowPaint.setTextSize(subSize);
-                canvas.drawText(subText, cx + 1, subY + 1, shadowPaint);
-                canvas.drawText(subText, cx, subY, textPaint);
-                bmpPaint.setAlpha(255);
-            }
-        }
-
-        // 整卡显示矩形（case 1/2/3/6）
-        private RectF cardRect() {
-            return new RectF(cardLeft, cardTop, cardRight, cardBottom);
-        }
-
-        // 无效/计数器图标的缩小矩形：对齐 drawing.cpp [660±(130-dif), (141+dif)~(397-dif)]
-        private RectF shrinkRect() {
-            return new RectF(
-                    cardLeft + (dif - 30) * s,
-                    cardTop + (dif - 9) * s,
-                    cardLeft + (230 - dif) * s,
-                    cardTop + (247 - dif) * s);
-        }
-
-        /**
-         * 带 alpha 的皮肤贴图（mask/negated/number/hand）：TextureLoader 默认按 RGB_565 解码会丢失
-         * 透明通道，故此处经 BitmapUtil 按默认 ARGB_8888 解码，优先 core skin 目录，回退 assets。
-         */
-        private Bitmap skin(String name) {
-            Bitmap b = skinCache.get(name);
-            if (b != null && !b.isRecycled()) return b;
-            try {
-                b = BitmapUtil.getBitmapFromFile(
-                        new File(AppsSettings.get().getCoreSkinPath(), name).getAbsolutePath(), 0, 0);
-            } catch (Throwable ignored) {
-            }
-            if (b == null) {
-                b = BitmapUtil.getBitmapFormAssets(getContext(), "data/textures/" + name, 0, 0);
-            }
-            if (b != null) skinCache.put(name, b);
-            return b;
-        }
     }
 }

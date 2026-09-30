@@ -14,7 +14,7 @@ import cn.garymb.ygomobile.game.GameField;
  * 逐行对齐 gframe drawing.cpp DrawSelectionLine + game.cpp linePattern/stippleMask（16bit
  * 0x0f0f 蚂蚁线）：四角投影到屏幕取像素边长，沿周长走像素，亮段换算回世界/卡片局部空间画粗线段，
  * patternCursor 跨边累积、phase 随时间推进 → 行进蚂蚁线。复用门面底层绘制原语、
- * {@link GameFieldView#buildCardModel}（与卡片绘制共用姿态）、{@link FieldGeometry} 几何。
+ * {@link FieldCardRenderer#buildCardModel}（与卡片绘制共用姿态）、{@link FieldGeometry} 几何。
  */
 final class SelectionOutlineRenderer {
 
@@ -154,7 +154,7 @@ final class SelectionOutlineRenderer {
         } else {
             w = thick;
         }
-        view.drawFlatQuad((x0 + x1) / 2f, (y0 + y1) / 2f, 0.03f, w, h, r, g, b, 0.95f);
+        view.quad.drawFlatQuad((x0 + x1) / 2f, (y0 + y1) / 2f, 0.03f, w, h, r, g, b, 0.95f);
     }
 
     /**
@@ -216,14 +216,14 @@ final class SelectionOutlineRenderer {
      * 线宽按局部 x/y 轴的世界缩放换算，保证屏幕像素宽度恒定
      */
     private void drawCardMarchingOutline(GameField.ClientCard c, boolean solid, float phase) {
-        view.buildCardModel(c, mOutlineModel);
+        view.card.buildCardModel(c, mOutlineModel);
         float sx = (float) Math.sqrt(mOutlineModel[0] * mOutlineModel[0]
                 + mOutlineModel[1] * mOutlineModel[1] + mOutlineModel[2] * mOutlineModel[2]);
         float sy = (float) Math.sqrt(mOutlineModel[4] * mOutlineModel[4]
                 + mOutlineModel[5] * mOutlineModel[5] + mOutlineModel[6] * mOutlineModel[6]);
         if (sx < 1e-5f || sy < 1e-5f) return;
         // 轮廓线始终抬到朝向相机的一侧，否则盖放卡（背面朝相机）的轮廓会被卡背遮住
-        float outZ = view.isFrontFacing(mOutlineModel) ? 0.002f : -0.002f;
+        float outZ = view.card.isFrontFacing(mOutlineModel) ? 0.002f : -0.002f;
         float[] lx = {-0.5f, 0.5f, -0.5f, 0.5f};
         float[] ly = {-0.5f, -0.5f, 0.5f, 0.5f};
         // 与格子行进框同理：局部 -y=屏幕上、局部 +x=屏幕左，c0=右上 c1=左上 c2=右下 c3=左下，
@@ -274,7 +274,7 @@ final class SelectionOutlineRenderer {
                     Matrix.rotateM(mDashLocal, 0, ang, 0f, 0f, 1f);
                     Matrix.scaleM(mDashLocal, 0, segLen, thickLocal, 1f);
                     Matrix.multiplyMM(mDashWorld, 0, mOutlineModel, 0, mDashLocal, 0);
-                    view.drawQuadColor(mDashWorld, 1f, 1f, 0f, 0.95f);
+                    view.quad.drawQuadColor(mDashWorld, 1f, 1f, 0f, 0.95f);
                 }
                 cursor = runEnd;
             }
@@ -370,7 +370,7 @@ final class SelectionOutlineRenderer {
         Matrix.translateM(mSelModel, 0, FieldGeometry.mirrorX(rect[0]), rect[1], SEL_FIELD_Z);
         if (reverse) Matrix.rotateM(mSelModel, 0, 180f, 0f, 0f, 1f);
         Matrix.scaleM(mSelModel, 0, rect[2], rect[3], 1f);
-        view.drawQuadTex(mSelModel, texId, 1f);
+        view.quad.drawQuadTex(mSelModel, texId, 1f);
     }
 
     /** selfield.png / link_marker_on_N.png 整图纹理：首次异步上传，未就绪返回 -1 */

@@ -6,7 +6,7 @@ import cn.garymb.ygomobile.network.YGOProtocol;
  * === Lobby Actions ===
  * 自 GameEngine 拆分而来：大厅（房间等待页）操作——准备/开始/踢人/聊天/投降/观战切换。
  * tag 投降发起标志 tagSurrenderInitiated 为共享状态，保留在 GameEngine
- * （StocHandler 的 onTeammateSurrender 与对局开始清理也会读写）。
+ * （DuelStocHandler 的 onTeammateSurrender 与对局开始清理也会读写）。
  */
 public class LobbyActions {
 

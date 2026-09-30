@@ -52,10 +52,10 @@ final class FieldBoardRenderer {
             Matrix.setIdentityM(view.mModel, 0);
             Matrix.translateM(view.mModel, 0, cx, 0f, 0f);
             Matrix.scaleM(view.mModel, 0, w, h, 1f);
-            view.drawQuadTex(view.mModel, tex, 1f);
+            view.quad.drawQuadTex(view.mModel, tex, 1f);
         } else {
-            // 贴图加载完成前的兜底：半透明底色，不遮挡窗口背景
-            view.drawFlatQuad(cx, 0f, 0f, w, h, 0.05f, 0.09f, 0.16f, 0.55f);
+            // 贴图加载完成前的回退底色：半透明底色，不遮挡窗口背景
+            view.quad.drawFlatQuad(cx, 0f, 0f, w, h, 0.05f, 0.09f, 0.16f, 0.55f);
         }
     }
 
@@ -135,7 +135,7 @@ final class FieldBoardRenderer {
         Matrix.setIdentityM(view.mModel, 0);
         Matrix.translateM(view.mModel, 0, cx, (yMin + yMax) / 2f, -0.01f);
         Matrix.scaleM(view.mModel, 0, w, yMax - yMin, 1f);
-        view.drawQuadTexUV(view.mModel, tex, 1f, flipU, 0f, offU, offV, scU, scV);
+        view.quad.drawQuadTexUV(view.mModel, tex, 1f, flipU, 0f, offU, offV, scU, scV);
     }
 
     /**
@@ -150,7 +150,7 @@ final class FieldBoardRenderer {
         for (int p = 0; p < 2; p++) {
             for (int i = 0; i < (mr4 ? 7 : 5); i++) {
                 float[] c = FieldGeometry.zoneCenter(p, 0x04, i);
-                view.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
+                view.quad.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
                         FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, 0f, 0.78f, 0.94f, pulse);
             }
             for (int i = 0; i <= 5; i++) {
@@ -158,21 +158,21 @@ final class FieldBoardRenderer {
                 // 场地区（seq5）绘制为与墓地一致的长方形（PILE_W×PILE_H），其余魔陷格保持方格
                 float zw = (i == 5) ? FieldGeometry.PILE_W : FieldGeometry.ZONE_W;
                 float zh = (i == 5) ? FieldGeometry.PILE_H : FieldGeometry.ZONE_H;
-                view.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
+                view.quad.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
                         zw, zh, 0f, 0.78f, 0.94f, pulse);
             }
             if (!mr4) {
                 // MR<4：field2 底板额外魔法陷阱格（左下/右下，几何真值见 GameFieldGeometry s==6/7 分支）
                 for (int i = 6; i <= 7; i++) {
                     float[] c = FieldGeometry.zoneCenter(p, 0x08, i);
-                    view.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
+                    view.quad.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
                             FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, 0f, 0.78f, 0.94f, pulse);
                 }
             }
             for (int loc : new int[]{0x01, 0x10, 0x20, 0x40}) {
                 float[] c = FieldGeometry.pileCenter(p, loc);
                 if (c == null) continue;
-                view.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
+                view.quad.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
                         FieldGeometry.PILE_W, FieldGeometry.PILE_H, 0f, 0.78f, 0.94f, pulse);
             }
         }
@@ -220,7 +220,7 @@ final class FieldBoardRenderer {
         Matrix.translateM(view.mModel, 0, (x0 + x1) / 2f, (y0 + y1) / 2f, 0.006f);
         Matrix.rotateM(view.mModel, 0, (float) Math.toDegrees(Math.atan2(dy, dx)), 0f, 0f, 1f);
         Matrix.scaleM(view.mModel, 0, len, thick, 1f);
-        view.drawQuadColor(view.mModel, 1f, 1f, 1f, 0.85f);
+        view.quad.drawQuadColor(view.mModel, 1f, 1f, 1f, 0.85f);
     }
 
     private static float[] totalAtkRect(int p, boolean mr4) {
@@ -245,8 +245,8 @@ final class FieldBoardRenderer {
             Matrix.setIdentityM(view.mModel, 0);
             Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(cxw), cyw, 0.006f);
             Matrix.scaleM(view.mModel, 0, w, h, 1f);
-            if (tex > 0) view.drawQuadTex(view.mModel, tex, 1f);
-            else view.drawQuadColor(view.mModel, 0.85f, 0.62f, 0.12f, 0.80f);
+            if (tex > 0) view.quad.drawQuadTex(view.mModel, tex, 1f);
+            else view.quad.drawQuadColor(view.mModel, 0.85f, 0.62f, 0.12f, 0.80f);
         }
     }
 
@@ -333,7 +333,7 @@ final class FieldBoardRenderer {
         Matrix.translateM(view.mModel, 0, cx, cy, z);
         Matrix.rotateM(view.mModel, 0, spin, 0f, 0f, 1f);
         Matrix.scaleM(view.mModel, 0, sz, sz, 1f);
-        view.drawQuadTex(view.mModel, tex, 0.92f);
+        view.quad.drawQuadTex(view.mModel, tex, 0.92f);
     }
 
     /**
@@ -365,11 +365,11 @@ final class FieldBoardRenderer {
             Matrix.scaleM(view.mModel, 0, cardW, cardH, 1f);
             if (code > 0) {
                 int ct = view.tex.obtainTexture(code, 0, 0);
-                if (ct > 0) view.drawQuadTex(view.mModel, ct, 1f);
-                else view.drawQuadColor(view.mModel, 0.35f, 0.35f, 0.40f, 1f);
+                if (ct > 0) view.quad.drawQuadTex(view.mModel, ct, 1f);
+                else view.quad.drawQuadColor(view.mModel, 0.35f, 0.35f, 0.40f, 1f);
             } else {
                 int cover = view.tex.obtainCover(false);
-                if (cover > 0) view.drawQuadTex(view.mModel, cover, 1f);
+                if (cover > 0) view.quad.drawQuadTex(view.mModel, cover, 1f);
             }
             n++;
         }

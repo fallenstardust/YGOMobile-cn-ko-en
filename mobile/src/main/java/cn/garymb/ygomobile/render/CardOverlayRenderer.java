@@ -135,7 +135,7 @@ final class CardOverlayRenderer {
      * 攻击弧 3D 逐顶点色程序与动态 VAO/VBO（每帧 glBufferSubData 更新顶点）：由门面 onSurfaceCreated 调用。
      */
     void initArrow() {
-        arrowProg = GameFieldView.createProgram(VS_ARROW, FS_ARROW);
+        arrowProg = GLQuadBatch.createProgram(VS_ARROW, FS_ARROW);
         arrowLocMVP = GLES30.glGetUniformLocation(arrowProg, "uMVP");
         int[] avaos = new int[1], avbos = new int[1];
         GLES30.glGenVertexArrays(1, avaos, 0);
@@ -240,7 +240,7 @@ final class CardOverlayRenderer {
         int tex = obtainActivatableDotTexture();
         if (tex <= 0) return;
         final float[] m = dotModel;
-        view.buildCardModel(c, m);
+        view.card.buildCardModel(c, m);
         // 屏幕右上角：绘制空间经 mirrorX 后 +x=屏幕左、−y=屏幕上（+y 靠相机），故取
         // 世界 y 最小（屏幕顶）的角、其中世界 x 最小（屏幕右）者为屏幕右上顶点；
         // 需同时计入绕 Z 旋转（对方 180°、守备 ±90°）与绕 X 翻面（盖放卡 cos(rotX)<0
@@ -284,7 +284,7 @@ final class CardOverlayRenderer {
         Matrix.translateM(m, 0, cornerX, cornerY, 0f);
         Matrix.scaleM(m, 0, sx, sy, 1f);
         m[14] += ACT_DOT_LIFT; // 平移分量已含卡片姿态，直接沿世界 +z 抬升恒朝向相机一侧
-        view.drawQuadTex(m, tex, alpha);
+        view.quad.drawQuadTex(m, tex, alpha);
     }
 
     private void overlayCardList(List<GameField.ClientCard> list, boolean mr4, boolean oppAttackHint) {
@@ -353,7 +353,7 @@ final class CardOverlayRenderer {
         Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(c.curX), c.curY + yOff, c.curZ + ICON_Z_OFF + 0.01f);
         if (rotDeg != 0f) Matrix.rotateM(view.mModel, 0, rotDeg, 0f, 0f, 1f);
         Matrix.scaleM(view.mModel, 0, FieldGeometry.CARD_W, FieldGeometry.CARD_H * SYMBOL_H_FRAC, 1f);
-        view.drawQuadTex(view.mModel, tex, 1f);
+        view.quad.drawQuadTex(view.mModel, tex, 1f);
     }
 
     private static int clampScale(int s) {
@@ -404,7 +404,7 @@ final class CardOverlayRenderer {
         Matrix.setIdentityM(view.mModel, 0);
         Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(c.curX), c.curY + yOff, c.curZ + zOff);
         Matrix.scaleM(view.mModel, 0, FieldGeometry.CARD_W * wFrac, FieldGeometry.CARD_H * hFrac, 1f);
-        view.drawQuadTex(view.mModel, tex, 1f);
+        view.quad.drawQuadTex(view.mModel, tex, 1f);
     }
 
     /**
@@ -473,7 +473,7 @@ final class CardOverlayRenderer {
                 Matrix.translateM(view.mModel, 0, cx, cy, cz);
                 Matrix.rotateM(view.mModel, 0, spin, 0f, 0f, 1f);
                 Matrix.scaleM(view.mModel, 0, FieldGeometry.CARD_W, FieldGeometry.CARD_W, 1f);
-                view.drawQuadTex(view.mModel, chainTex, 0.92f);
+                view.quad.drawQuadTex(view.mModel, chainTex, 0.92f);
             }
             // number 序号：vChainNum 0.7×0.7 按 it.setScale(0.6) → 0.42 见方，取 number.png 5 列网格子矩形，不自旋
             if (numTex > 0) {
@@ -483,7 +483,7 @@ final class CardOverlayRenderer {
                 Matrix.setIdentityM(view.mModel, 0);
                 Matrix.translateM(view.mModel, 0, cx, cy, cz + 0.01f);
                 Matrix.scaleM(view.mModel, 0, numSz, numSz, 1f);
-                view.drawQuadTexUV(view.mModel, numTex, 1f, 1f, 0f, offU, offV, CHAIN_NUM_U_CELL, CHAIN_NUM_V_CELL);
+                view.quad.drawQuadTexUV(view.mModel, numTex, 1f, 1f, 0f, offU, offV, CHAIN_NUM_U_CELL, CHAIN_NUM_V_CELL);
             }
         }
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
