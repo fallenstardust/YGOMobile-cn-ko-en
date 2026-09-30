@@ -767,6 +767,9 @@ public class DuelClient implements YGOProtocol {
             engine.serverCapsUndo = false;
             engine.serverCapsAskResend = false;
             engine.undoAvailable = false;
+            // 新连接同样复位撤回闩锁（onConnected 早于 onDuelStart）：上一局残留的
+            // 「已撤回、等待新操作」状态不得带入新会话，否则本局按钮会被永久压住
+            engine.undoBlockedUntilNewAction = false;
         }
 
         @Override

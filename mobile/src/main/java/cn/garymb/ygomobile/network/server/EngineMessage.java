@@ -120,6 +120,10 @@ public final class EngineMessage {
     public static final int POS_FACEDOWN = 0xa;
     public static final int POS_REVEAL = 0x80;
 
+    // ===== 阶段位（common.h L407-408 PHASE_*，infos.phase 为其中单一位） =====
+    public static final int PHASE_DRAW = 0x01;
+    public static final int PHASE_STANDBY = 0x02;
+
     /** common.h LEN_HEADER */
     public static final int LEN_HEADER = 8;
     /** common.h SIZE_RETURN_VALUE */

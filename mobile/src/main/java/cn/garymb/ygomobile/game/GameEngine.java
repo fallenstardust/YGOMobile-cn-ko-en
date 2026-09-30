@@ -248,6 +248,17 @@ public class GameEngine {
      * 后才是撤回图标闪动的条件：前者说明房间支持撤回，后者说明真的有一步可撤。
      */
     public boolean undoAvailable = false;
+    /**
+     * 撤回一次性闩锁（客户端防连续撤回护栏）：发出 CTOS_UNDO 时置位，本方真实发出
+     * 一条应答（{@link #notifyResponseSent}，即有了新的操作）时清除。置位期间
+     * {@link #isUndoPromptActive()} 恒为 false——即使撤回成功后服务端因锚点栈中仍有
+     * 更早的旧锚点而继续下发 STOC_UNDO_STATE=1，撤回按钮也保持隐藏。
+     * <p>服务端设计上允许连续撤回，但连续点击会让多轮 ACK/重同步/屏障布防叠加，
+     * 破坏客户端消息派发链（表现为点卡仍能弹「发动」但应答被吞、阶段按钮不再出现，
+     * 决斗无法继续）。故按「一次操作只许撤回一次」限制：本方有了新的操作后，
+     * 服务端下一次状态刷新才会重新点亮按钮。
+     */
+    public volatile boolean undoBlockedUntilNewAction = false;
 
     /** tag 模式本方是否已发起投降（等待队友回应）：防止对 STOC_TEAMMATE_SURRENDER 自我弹窗与重复发起 */
     public boolean tagSurrenderInitiated = false;
@@ -609,6 +620,10 @@ public class GameEngine {
 
     /** CTOS_UNDO：请求服务端回退最近一次操作（仅局域网房主/人机房间，实现见 {@code LobbyActions}）。 */
     public void sendUndo() {
+        // 一次性闩锁：已请求过一次撤回且本方尚未做出新操作时，后续点击（含连点残尾，
+        // 按钮隐藏前的同一帧内重复触发）直接忽略，绝不允许第二次 CTOS_UNDO 上路
+        if (undoBlockedUntilNewAction) return;
+        undoBlockedUntilNewAction = true;
         // 先在本机布下应答屏障，再发出请求：TCP 保序保证服务端一定先处理 CTOS_UNDO、
         // 再处理此后到达的任何 CTOS_RESPONSE，故「撤回请求已送出、ACK 尚未回来」这段窗口里不会
         // 再有应答漏网（旧询问的自动应答/点击若在此刻发出，会被服务端当作回退后新询问的答复，
@@ -616,6 +631,11 @@ public class GameEngine {
         // 并用询问快照重建界面，期间被丢弃的应答会随重派发重新发出
         armUndoResponseBarrier();
         lobbyActions.sendUndo();
+        // 立即走一次状态回调让按钮收起（不等 ACK）：isUndoPromptActive 已因闩锁为 false，
+        // delegate 侧 setUndoPrompt(available && isUndoPromptActive()) 自然熄灭图标
+        mainHandler.post(() -> {
+            if (listener != null) listener.onUndoStateChanged(undoAvailable);
+        });
     }
 
     /**
@@ -695,6 +715,14 @@ public class GameEngine {
         if (undoResyncPhase >= 0) {
             field.currentPhase = undoResyncPhase;
         }
+        // 单人模式视角恒随行动方（同 DuelEventHandler.onNewTurn 的自动翻视角）：撤回把回合
+        // 所有权翻回另一席位时（典型：刚跨过回合就撤回 EP 宣言，回退到自己按 EP 之前），
+        // ACK 里的回合玩家按当前视角映射落在上方（currentPlayer==1），必须把视角翻回
+        // 行动方在下半屏。走 requestSpectatorSwap 同一延迟路径：交换在下一消息消费点执行，
+        // 先于重同步批次的后续消息（refresh/重挂询问），容器对调与消息换算不竞争。
+        if (soloMode && !replayMode && inDuel && field.currentPlayer == 1) {
+            requestSpectatorSwap();
+        }
         return true;
     }
 
@@ -704,6 +732,9 @@ public class GameEngine {
         undoResyncPlayer = -1;
         undoResyncPhase = -1;
         releaseUndoResponseBarrier();
+        // 新一局不存在「等本方新操作」的历史包袱：闩锁一并复位
+        // （本方法在 STOC_DUEL_START 的 onDuelStart 中调用，服务端随后会重新下发可撤回状态）
+        undoBlockedUntilNewAction = false;
     }
 
     /**
@@ -890,6 +921,9 @@ public class GameEngine {
 
     /** 由 {@link GameActions} 在实际发出 CTOS_RESPONSE 后回调：开始看门狗计时。 */
     public void notifyResponseSent() {
+        // 本方有了新的操作（应答真实发出，未被屏障丢弃）：解除撤回一次性闩锁。此后服务端
+        // 处理完这条应答会重新下发 STOC_UNDO_STATE，按钮按真实可撤回状态恢复显示
+        undoBlockedUntilNewAction = false;
         lastResponseTxAt = System.currentTimeMillis();
         if (!canProbeAsk() || askWatchdogRunning) {
             return;
@@ -930,11 +964,13 @@ public class GameEngine {
     }
 
     /**
-     * 本席位当前是否真的可撤回：房间支持撤回（{@link #canUndo()}）且服务端确认存在
-     * 可回退的动作锚点（{@link #undoAvailable}）。UI 仅在二者同时成立时闪动发光提示。
+     * 本席位当前是否真的可撤回：房间支持撤回（{@link #canUndo()}）、服务端确认存在
+     * 可回退的动作锚点（{@link #undoAvailable}），且本方尚未处于「已撤回、等待新操作」
+     * 的闩锁期（{@link #undoBlockedUntilNewAction}）。UI 仅在三者同时成立时显示撤回按钮；
+     * 闩锁期内服务端复发的 state=1 会被这里压住，按钮保持隐藏。
      */
     public boolean isUndoPromptActive() {
-        return canUndo() && undoAvailable;
+        return canUndo() && undoAvailable && !undoBlockedUntilNewAction;
     }
 
     /** 是否 tag 双人模式（gameMode == MODE_TAG） */

@@ -536,21 +536,16 @@ public class YesOrNoDialog {
         } else {
             dialog.setMessage(message);
         }
+        // 对齐 gframe wQuery（MSG_SELECT_YESNO/EFFECTYN）：只有「是/否」两键，不显示也不联动
+        // cancelOrFinish 按钮——旧代码在此弹出文字为「否」的取消/完成按钮属残留错误交互
         dialog.asYesNo()
-                .setPositiveButton(v -> {
-                    activity.sendResponseInt(1);
-                    panel(activity).hideCancelOrFinishButton();
-                })
-                .setNegativeButton(v -> {
-                    activity.sendResponseInt(0);
-                    panel(activity).hideCancelOrFinishButton();
-                })
+                .setPositiveButton(v -> activity.sendResponseInt(1))
+                .setNegativeButton(v -> activity.sendResponseInt(0))
                 .setCenterInView(gameDialogRegion(activity))
-                .setOnDismissListener(() -> {
-                    panel(activity).hideCancelOrFinishButton();
-                    panel(activity).setCurrentDialog(null);
-                });
-        panel(activity).showCancelOrFinishButton(sysText(1214, "否"));
+                .setOnDismissListener(() -> panel(activity).setCurrentDialog(null));
+        // 收起早前选择会话可能残留可见的 cancelOrFinish：是/否询问期间不参与，
+        // 也不留一个点击后无法正确代答的旧按钮（旧代码在此弹「否」字按钮属残留交互）
+        panel(activity).hideCancelOrFinishButton();
         dialog.show();
     }
 

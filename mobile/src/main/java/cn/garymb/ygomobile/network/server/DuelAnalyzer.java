@@ -140,6 +140,16 @@ final class DuelAnalyzer implements YGOProtocol {
      * 由 {@link ServerDuel#getResponse} 消费后清零；MSG_RETRY 重问同一询问时由被弹出的快照回填。
      */
     int pendingActionQuestion;
+    /**
+     * 最近一条 MSG_NEW_PHASE 的阶段值（协议侧位掩码）。live 与静默重放均更新，
+     * 重放结束后自然与回退点一致；供 {@link #isPhaseActivationAnchor} 判定是否处于抽卡/准备阶段。
+     */
+    private int livePhase;
+    /** 最近一条 MSG_NEW_TURN 的当前回合玩家（协议侧，-1=未定）。live 与重放均更新。 */
+    private int liveTurnPlayer = -1;
+    /** 是否正处于连锁结算中（MSG_CHAINING 置真、MSG_CHAIN_END/新回合/新阶段复位）。
+     *  DP/SP 的发动询问仅在「不在连锁中」时才是本方发起的新动作，据此避免把连锁中途的再发动记成第二个锚点。 */
+    private boolean liveChainActive;
 
     DuelAnalyzer(ServerDuel owner) {
         this.owner = owner;
@@ -152,6 +162,8 @@ final class DuelAnalyzer implements YGOProtocol {
         silentTerminal = null;
         silentWaitPending = false;
         undoAskResponder = -1;
+        // 静默重放从开局重写引擎状态：连锁进行标志先复位，livePhase/liveTurnPlayer 随后由重放消息流重新导出
+        liveChainActive = false;
         // 引擎即将重建：旧的 liveQuestion 属于要被抹掉的那一段，保活绝不能再把它重发出去
         liveQuestion = null;
         liveQuestionGeneration = -1;
@@ -344,6 +356,10 @@ final class DuelAnalyzer implements YGOProtocol {
                     cursor++;
                     cursor += 12;
                     waitforResponse(player);
+                    // DP/SP 本方主动发动的是/否询问：预挂锚点属性（应答为「发动」才真正记锚，见 ServerDuel.getResponse）
+                    if (isPhaseActivationAnchor(player, EngineMessage.MSG_SELECT_EFFECTYN)) {
+                        pendingActionQuestion = EngineMessage.MSG_SELECT_EFFECTYN;
+                    }
                     sendToPlayer(room.players[player], range(msg, start, cursor));
                     return 1;
                 }
@@ -425,6 +441,10 @@ final class DuelAnalyzer implements YGOProtocol {
                     cursor++;
                     cursor += 9 + count * 14;
                     waitforResponse(player);
+                    // DP/SP 本方主动发动的连锁列表询问：预挂锚点属性（选中连锁项才真正记锚，见 ServerDuel.getResponse）
+                    if (isPhaseActivationAnchor(player, EngineMessage.MSG_SELECT_CHAIN)) {
+                        pendingActionQuestion = EngineMessage.MSG_SELECT_CHAIN;
+                    }
                     sendToPlayer(room.players[player], range(msg, start, cursor));
                     return 1;
                 }
@@ -593,6 +613,9 @@ final class DuelAnalyzer implements YGOProtocol {
                     refreshHand(0);
                     refreshHand(1);
                     cursor++;
+                    // live 与重放均记录当前回合玩家（协议侧）与连锁态，供 DP/SP 发动锚点判定（见 isPhaseActivationAnchor）
+                    liveTurnPlayer = msg[start + 1] & 0xFF;
+                    liveChainActive = false;
                     if (silent) {
                         // 重放只统计回合数与回合方，不重置限时（由 ServerDuel 从弹出步的快照回填）
                         silentTurnCount++;
@@ -606,8 +629,12 @@ final class DuelAnalyzer implements YGOProtocol {
                 }
                 case EngineMessage.MSG_NEW_PHASE: {
                     cursor += 2;
+                    int ph = (msg[start + 1] & 0xFF) | ((msg[start + 2] & 0xFF) << 8);
+                    livePhase = ph;
+                    // 连锁不跨阶段：阶段切换复位连锁进行标志（防漏收 MSG_CHAIN_END 的防御）
+                    liveChainActive = false;
                     if (silent) {
-                        silentPhase = (msg[start + 1] & 0xFF) | ((msg[start + 2] & 0xFF) << 8);
+                        silentPhase = ph;
                     }
                     broadcastMsg(range(msg, start, cursor));
                     refreshMzone(0);
@@ -757,6 +784,7 @@ final class DuelAnalyzer implements YGOProtocol {
                 }
                 case EngineMessage.MSG_CHAINING: {
                     cursor += 16;
+                    liveChainActive = true;
                     broadcastMsg(range(msg, start, cursor));
                     break;
                 }
@@ -788,6 +816,7 @@ final class DuelAnalyzer implements YGOProtocol {
                     break;
                 }
                 case EngineMessage.MSG_CHAIN_END: {
+                    liveChainActive = false;
                     broadcastMsg(range(msg, start, cursor));
                     refreshMzone(0);
                     refreshMzone(1);
@@ -1365,11 +1394,18 @@ final class DuelAnalyzer implements YGOProtocol {
             // 的 IDLE/BATTLE 分支也会给它赋值（那一段里每一条行动询问都赋一次），重放到回退点后
             // 停下时手上留的是中途某条询问的残留值；若终端询问不是行动询问（例如选卡、连锁），
             // 残留值会把紧接着的那个普通应答错记成可回退锚点，下一次撤回就落错位置
-            pendingActionQuestion =
-                    terminal[0] == (byte) EngineMessage.MSG_SELECT_IDLECMD
-                            ? EngineMessage.MSG_SELECT_IDLECMD
-                            : terminal[0] == (byte) EngineMessage.MSG_SELECT_BATTLECMD
-                            ? EngineMessage.MSG_SELECT_BATTLECMD : 0;
+            int tq = terminal[0] & 0xFF;
+            if (tq == EngineMessage.MSG_SELECT_IDLECMD) {
+                pendingActionQuestion = EngineMessage.MSG_SELECT_IDLECMD;
+            } else if (tq == EngineMessage.MSG_SELECT_BATTLECMD) {
+                pendingActionQuestion = EngineMessage.MSG_SELECT_BATTLECMD;
+            } else if (isPhaseActivationAnchor(responder, tq)) {
+                // 回退点是 DP/SP 的发动询问：该询问本身就是本次撤回的锚点，须同样恢复其锚点属性，
+                // 否则撤回后重答这一问会被记成普通步骤、这一次发动将再也撤不回
+                pendingActionQuestion = tq;
+            } else {
+                pendingActionQuestion = 0;
+            }
             // 本条询问来自撤回重挂：交给保活心跳复查（见 beatPendingQuestion），直到它被真正答掉
             liveQuestionFromUndo = true;
             Log.i(TAG, "undo: re-hang question type=" + (terminal[0] & 0xFF)
@@ -1386,6 +1422,40 @@ final class DuelAnalyzer implements YGOProtocol {
      */
     boolean hasLiveAsk() {
         return liveQuestion != null && liveQuestionGeneration == askGeneration;
+    }
+
+    /**
+     * 这条发动询问（应答它应被记为可整段撤回的「动作锚点」）是否为回合玩家在抽卡/准备阶段
+     * （DP/SP）发起的新连锁。
+     * <p>引擎的空闲命令 {@code MSG_SELECT_IDLECMD} 只在主要阶段与战斗阶段挂出（processor.cpp
+     * case 8/case 14），DP/SP（case 2/case 5 经 {@code PROCESSOR_PHASE_EVENT}）里回合玩家的起效
+     * 主动发动不是 IDLECMD、而是以 {@code MSG_SELECT_CHAIN} / {@code MSG_SELECT_EFFECTYN} 抛出；
+     * 此前这类应答不被记为锚点（anchorType=0），导致撤回按钮不亮、这些发动无法撤回。此处补齐锚点判定。
+     * <p>仅当同时满足三条才计为锚点：①应答方是当前回合玩家（排除本阶段对方连锁响应陷阱）；
+     * ②当前阶段为 DP 或 SP（不改动主要/战斗阶段既有 IDLE/BATTLE CMD 的锚点语义）；
+     * ③此刻不在连锁结算中（排除回合玩家在连锁中途的再发动，避免一个动作被记成多个锚点）。
+     * <p>这里只标记「该询问具备锚点资格」；是否真正落锚由应答内容裁决：EFFECTYN 答「发动」、
+     * CHAIN 选中连锁项才记锚，答「否」/「不连锁」是被动放弃、不记（见 ServerDuel.getResponse），
+     * 以保证本方 DP/SP/M1 未做任何发动/召唤操作时撤回按钮不显示。
+     */
+    private boolean isPhaseActivationAnchor(int responderPlayer, int questionType) {
+        if (questionType != EngineMessage.MSG_SELECT_CHAIN
+                && questionType != EngineMessage.MSG_SELECT_EFFECTYN) {
+            return false;
+        }
+        if (liveChainActive || liveTurnPlayer < 0 || responderPlayer != liveTurnPlayer) {
+            return false;
+        }
+        if ((livePhase & (EngineMessage.PHASE_DRAW | EngineMessage.PHASE_STANDBY)) == 0) {
+            return false;
+        }
+        if (!silent) {
+            // 留一条可核对的足迹：DP/SP 发动询问被记为锚点时打点，实测若按钮不亮可先查
+            // logcat（本 TAG）有无此行，以区分「锚点未记」与「状态未下发」两类故障
+            Log.i(TAG, "DP/SP activation anchor: responder=" + responderPlayer
+                    + " question=" + questionType + " phase=0x" + Integer.toHexString(livePhase));
+        }
+        return true;
     }
 
     /**

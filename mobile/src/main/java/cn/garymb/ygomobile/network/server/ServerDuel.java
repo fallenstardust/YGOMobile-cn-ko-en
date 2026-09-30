@@ -368,6 +368,18 @@ final class ServerDuel implements YGOProtocol {
         // 是否行动宣言锚点）；引擎若回以 MSG_RETRY（应答不合法重问）则由 discardPendingUndoStep() 弹出
         int anchorType = analyzer.pendingActionQuestion;
         analyzer.pendingActionQuestion = 0;
+        // DP/SP 的发动询问（EFFECTYN/CHAIN）只有答出「肯定发动」才算行动锚点：EFFECTYN 答 1、
+        // CHAIN 答 ≥0（选中连锁项）才是本方发起的新动作；答「否」(0)/「不连锁」(-1) 是被动放弃，
+        // 不构成可重做的动作、不记锚点——保证本方 DP/SP/M1 没有任何发动/召唤操作时撤回按钮不显示。
+        // 主要/战斗阶段的 IDLECMD/BATTLECMD 应答（含切阶段按钮）不受此限：切阶段正是
+        // BP/M2/EP「回退到前一阶段」的锚点。
+        if (anchorType == EngineMessage.MSG_SELECT_EFFECTYN
+                || anchorType == EngineMessage.MSG_SELECT_CHAIN) {
+            int choice = ByteBuffer.wrap(resb, 0, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
+            if (anchorType == EngineMessage.MSG_SELECT_EFFECTYN ? choice != 1 : choice < 0) {
+                anchorType = 0;
+            }
+        }
         undoSteps.add(new UndoStep(resb, len, responder,
                 room.timeLimit[0], room.timeLimit[1], room.timeElapsed, anchorType));
         lastReplayResponseSize = replay.writeResponse(resb, len);
@@ -440,14 +452,16 @@ final class ServerDuel implements YGOProtocol {
      * 也不支持跨局 match 换 side 后的往局回撤——每局一个新 {@code ServerDuel}，栈天然隔离）。
      *
      * <p>撤回单位：不是逐条应答，而是一个完整动作。栈中只有应答
-     * {@code MSG_SELECT_IDLECMD} / {@code MSG_SELECT_BATTLECMD} 的那几步是「动作锚点」，分别对应
+     * {@code MSG_SELECT_IDLECMD} / {@code MSG_SELECT_BATTLECMD}，以及回合玩家在抽卡/准备阶段发动时以
+     * {@code MSG_SELECT_CHAIN} / {@code MSG_SELECT_EFFECTYN} 挂出的那几步是「动作锚点」，分别对应
      * 召唤 / 反转召唤 / 特殊召唤 / 盖卡 / 发动效果 / 攻击宣言 / 切换阶段；锚点之后的连锁询问、
      * 选格、表示形式、对方应答全属于该动作的处理过程，故一次撤回会连带丢弃多步，回到玩家做出
      * 这个动作之前的空闲询问，使其能重新对卡片进行这些操作。
      *
-     * <p>权限：默认只回退请求者席位自己宣言的最近一个锚点（谁操作谁撤回）；房主
-     * （{@code room.hostPlayer}）在本方无锚点时可代撤对方的锚点；观战连接（type &gt; 1）一律拒绝；
-     * solo 一条连接占两席位，任何锚点都算本方。
+     * <p>权限：栈中**最近一个**动作锚点由请求者席位宣言时才回退（谁操作谁撤回；我方发动后对方在
+     * 连锁中的应答不是锚点、不关闭本方撤回窗口，但对方一旦做出新的动作宣言，本方撤回窗口随即
+     * 关闭，绝不越过对方的操作去回退我方更早的动作）；solo 一条连接占两席位，任何锚点都算本方；
+     * 观战连接（type &gt; 1）一律拒绝。
      *
      * <p>同步：不重发 MSG_START（客户端 onStart 会 {@code field.clear()} 把回合数归零），
      * 而是先发 STOC_UNDO_ACK（带回合数/当前回合玩家/阶段）再发 MSG_RELOAD_FIELD 全量重载
@@ -464,15 +478,11 @@ final class ServerDuel implements YGOProtocol {
             denyUndo(requester);
             return;
         }
-        // 回退目标 = 本席位最近一个动作锚点（该锚点及其之后的全部步骤一并丢弃）；
-        // 房主在本方没有锚点时代撤对方的锚点。栈中一个锚点也没有（只有抽卡/连锁等被动应答）
-        // 时无可重做的动作，直接拒绝。
+        // 回退目标 = 栈中最近一个动作锚点，且必须由本席位宣言（该锚点及其之后的全部步骤一并丢弃）；
+        // 最近锚点属对方（单纯对方操作）或栈中根本无锚点（只有抽卡/连锁应答等非宣言步骤）时拒绝。
         int target = lastIndexOfOwnAnchor(requester);
-        if (target < 0 && requester == room.hostPlayer) {
-            target = lastIndexOfAnyAnchor();
-        }
         if (target < 0) {
-            Log.i(TAG, "undo 不受理：栈中无可撤回的动作锚点（steps=" + undoSteps.size()
+            Log.i(TAG, "undo 不受理：最近锚点非本方宣言或栈中无动作锚点（steps=" + undoSteps.size()
                     + ", requester=" + requester.type + "）");
             denyUndo(requester);
             return;
@@ -483,7 +493,7 @@ final class ServerDuel implements YGOProtocol {
         // 错拍应答使引擎喂入非法值引发 retry 风暴或直接走偏。solo（一条连接占两席位）与本方自己被
         // 询问均不受此限。
         //
-        // 例外（不得误杀“房主代撤”）：当待答席位正是本次要回退的那个锚点的应答方，且该锚点就是
+        // 例外（防御性放行）：当待答席位正是本次要回退的那个锚点的应答方，且该锚点就是
         // 栈中最后一步（玩家就盯着自己那个行动询问按了撤回），重挂出去的询问与它手上那条逐字节相同，
         // 它的答复对新局面依旧合法有效，此时放行撤回不会造成错拍。
         UndoStep targetStep = undoSteps.get(target);
@@ -543,19 +553,19 @@ final class ServerDuel implements YGOProtocol {
     }
 
     /**
-     * 栈中由请求者席位宣言的最近一个动作锚点下标；solo 下任何锚点都属本方。没有则 -1。
+     * 栈中最近一个动作锚点（不分席位）的下标，且必须由请求者席位宣言才返回，否则 -1；solo 下任何锚点都算本方。
      * 人机（WindBot）局的 AI 以独立连接入座（type=1），故按应答席位严格区分，
-     * 不会把 AI 的召唤当成人类玩家自己的可撤回动作。
+     * 不会把 AI 的召唤当成人类玩家自己的可撤回动作；反之，对方在我方锚点之后做出过新的动作宣言时，
+     * 本方法不越过对方锚点去翻出我方更早的旧锚点——撤回窗口只认「最后一个动手的是不是我」。
+     * 连锁中对方的应答不是锚点（anchorType=0），不影响本方「最后操作」的成立。
      */
     private int lastIndexOfOwnAnchor(ServerConnection requester) {
-        for (int i = undoSteps.size() - 1; i >= 0; i--) {
-            UndoStep s = undoSteps.get(i);
-            if (s.anchorType == 0) {
-                continue;
-            }
-            if (room.soloMode || s.responder == requester.type) {
-                return i;
-            }
+        int anchor = lastIndexOfAnyAnchor();
+        if (anchor < 0) {
+            return -1;
+        }
+        if (room.soloMode || undoSteps.get(anchor).responder == requester.type) {
+            return anchor;
         }
         return -1;
     }
@@ -570,15 +580,12 @@ final class ServerDuel implements YGOProtocol {
         return -1;
     }
 
-    /** 本连接当前是否有可撤回的动作（决定客户端撤回图标是否闪动发光提示）。 */
+    /** 本连接当前是否有可撤回的动作（决定客户端撤回图标是否闪动发光提示）：仅当最近一个动作锚点由本方宣言。 */
     private boolean canUndoFor(ServerConnection conn) {
         if (conn == null || conn.type > 1) {
             return false;
         }
-        if (lastIndexOfOwnAnchor(conn) >= 0) {
-            return true;
-        }
-        return conn == room.hostPlayer && lastIndexOfAnyAnchor() >= 0;
+        return lastIndexOfOwnAnchor(conn) >= 0;
     }
 
     /**

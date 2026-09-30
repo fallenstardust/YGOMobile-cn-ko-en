@@ -516,60 +516,29 @@
         android:scaleType="fitCenter"
         android:visibility="gone" />
 
-    <!-- 底部区域（贴本区域底缘，自下而上）：功能按钮行（聊天/设置/日志/声音/速度/表情，
-         同一行横向排布、全部保持正方形），其上一行为聊天输入框（占满整行宽度） -->
+    <!-- 底部功能行（贴本区域底缘，同一行）：前 5 个功能按钮（设置/记录/音乐/加速/表情）
+         统一移到聊天开关左侧，6 按钮成组按 weight 恰好占总宽一半，聊天输入框占另一半 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:clipChildren="false"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <!-- 聊天输入行：竖屏下聊天按钮移至下方按钮行，输入框占满整行宽度 -->
+        <!-- 6 按钮组：与输入框各权重 1，恰好共占一半总宽；组内每键再等分，
+             图标 fitCenter 缩放保持近正方形外观 -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:layout_weight="1"
             android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/et_chat_input"
-                android:layout_width="0dp"
-                android:layout_height="32dp"
-                android:layout_weight="1"
-                android:background="@drawable/ygopro_base_background"
-                android:gravity="center_vertical"
-                android:paddingStart="6dp"
-                android:paddingEnd="6dp"
-                android:imeOptions="actionSend|flagNoExtractUi"
-                android:inputType="text"
-                android:maxLines="1"
-                android:textColor="@color/white"
-                android:textSize="9sp" />
-        </LinearLayout>
-
-        <!-- 功能按钮行（聊天/设置/日志/声音/速度/表情）：同一行横向排布，全部正方形（40×40dp） -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btn_chat"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:adjustViewBounds="true"
-                android:background="@drawable/btn_sci_fi_bg"
-                android:padding="3dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/rename" />
 
             <ImageButton
                 android:id="@+id/btn_settings"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
                 android:adjustViewBounds="true"
                 android:background="@drawable/btn_sci_fi_bg"
                 android:padding="3dp"
@@ -578,9 +547,10 @@
 
             <ImageButton
                 android:id="@+id/btn_note"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
                 android:adjustViewBounds="true"
                 android:background="@drawable/btn_sci_fi_bg"
                 android:padding="3dp"
@@ -589,9 +559,10 @@
 
             <ImageButton
                 android:id="@+id/btn_sound"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
                 android:adjustViewBounds="true"
                 android:background="@drawable/btn_sci_fi_bg"
                 android:padding="3dp"
@@ -600,9 +571,10 @@
 
             <ImageButton
                 android:id="@+id/btn_speed"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
                 android:adjustViewBounds="true"
                 android:background="@drawable/btn_sci_fi_bg"
                 android:padding="3dp"
@@ -611,14 +583,44 @@
 
             <ImageButton
                 android:id="@+id/btn_emote"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
                 android:adjustViewBounds="true"
                 android:background="@drawable/btn_sci_fi_bg"
                 android:padding="3dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_emoticon" />
+
+            <ImageButton
+                android:id="@+id/btn_chat"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/rename" />
         </LinearLayout>
+
+        <!-- 聊天输入框：与按钮组同占该行另外一半宽度 -->
+        <EditText
+            android:id="@+id/et_chat_input"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/ygopro_base_background"
+            android:gravity="center_vertical"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:imeOptions="actionSend|flagNoExtractUi"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="9sp" />
     </LinearLayout>
 </FrameLayout>

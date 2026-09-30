@@ -849,14 +849,9 @@ public class CardDetailPanel {
 
     // 对齐 C++ ClientField::CancelOrFinish：按当前选择类型执行完成/取消
     public void cancelOrFinish() {
+        // 注：selectType 12/13（EFFECTYN/YESNO 是/否询问）不在此列——对齐 gframe wQuery，
+        // 该询问只有弹窗内「是/否」两键，cancelOrFinish 按钮不参与也不显示
         switch (currentSelectType) {
-            case 13:
-            case 12: {
-                activity.sendResponseInt(0);
-                hideCancelOrFinishButton();
-                if (currentDialog != null) currentDialog.dismiss();
-                break;
-            }
             case 15:
             case 20: {
                 if (cardSelectDialog != null) {
