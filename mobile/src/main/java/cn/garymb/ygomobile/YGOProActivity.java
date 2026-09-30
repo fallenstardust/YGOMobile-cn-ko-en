@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -979,10 +980,11 @@ public class YGOProActivity extends AppCompatActivity {
             try {
                 Bitmap bitmap = BitmapFactory.decodeFile(path);
                 if (bitmap != null) {
-                    getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), bitmap));
                     currentBgPath = path;
+                    // 存原始解码位图（不预旋转）；窗口/区域背景的实际朝向由
+                    // updateFieldRegionBackground 按当前屏幕方向派生，旋转切换时自动重算
                     lastBgBitmap = bitmap;
-                    // 竖屏：决斗背景只平铺显示在下方 2/3 的 layout_game_right 区域（用户规格）
+                    // 按当前方向应用背景（竖屏旋转为纵向，横屏用原图）
                     updateFieldRegionBackground();
                 }
             } catch (Exception e) {
@@ -992,21 +994,32 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     /**
-     * 竖屏决斗场区域背景（用户规格）：背景图只显示在下方 2/3 的 layout_game_right 上，
-     * 按区域高平铺、右缘对齐（左侧超出屏幕部分忽略）；顶部 1/3 由不透明的
-     * layout_game_top_panel 遮盖窗口背景。横屏不设 View 背景，仍走窗口背景原机制。
-     * 旋转 setContentView 后新视图树背景丢失，由 rebuildUiForOrientation / setWindowBackground
-     * 缓存命中路径重新调用本方法恢复。
+     * 按当前屏幕方向应用背景图（用户规格：竖屏把横向背景图旋转为纵向显示，消除非等比拉伸压扁）：
+     * 竖屏时把 lastBgBitmap 顺时针旋转 90° 得到纵向副本，同时挂到窗口背景与下方 2/3 的
+     * layout_game_right 区域（区域仍走 RightAlignedTiledDrawable 等比平铺）；横屏用原图、
+     * 不设 View 区域背景（走窗口背景原机制）。原始解码位图不改动，旋转副本仅在使用时派生，
+     * 故旋转切换（rebuildUiForOrientation）与缓存命中（setWindowBackground）都会按新朝向重算。
      */
     void updateFieldRegionBackground() {
-        if (layoutGameRight == null) return;
+        if (lastBgBitmap == null || lastBgBitmap.isRecycled()) {
+            if (layoutGameRight != null) layoutGameRight.setBackground(null);
+            return;
+        }
         boolean portrait = getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_PORTRAIT;
-        if (portrait && lastBgBitmap != null && !lastBgBitmap.isRecycled()) {
-            layoutGameRight.setBackground(new RightAlignedTiledDrawable(lastBgBitmap));
-        } else {
-            layoutGameRight.setBackground(null);
+        // 竖屏：横向背景图顺时针旋转 90° 为纵向显示；横屏直接用原图
+        Bitmap shown = portrait ? rotate90Clockwise(lastBgBitmap) : lastBgBitmap;
+        getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), shown));
+        if (layoutGameRight != null) {
+            layoutGameRight.setBackground(portrait ? new RightAlignedTiledDrawable(shown) : null);
         }
+    }
+
+    /** 生成横向位图顺时针旋转 90° 后的纵向副本（原图不改动，仅供竖屏背景显示）。 */
+    private static Bitmap rotate90Clockwise(Bitmap src) {
+        Matrix m = new Matrix();
+        m.postRotate(90f);
+        return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), m, true);
     }
 
     /**
