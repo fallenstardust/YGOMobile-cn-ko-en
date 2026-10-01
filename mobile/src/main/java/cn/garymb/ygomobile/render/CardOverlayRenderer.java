@@ -107,11 +107,12 @@ final class CardOverlayRenderer {
     // GenArrow 共 40 顶点（i=0..18 两侧绿带 + 36/37 箭头翼 + 38/39 箭头尖），stride=3+4=7 float
     private static final int ARROW_MAX_VERTS = 40;
     private static final int ARROW_STRIDE_FLOATS = 7;
-    private static final long ATTACK_ARC_MS = 900L;   // 对齐 WaitFrameSignal(40)≈667ms，略放宽
+    private static final long ATTACK_ARC_MS = 620L;   // 对齐 WaitFrameSignal(40)≈667ms，按要求略缩短以加快整体演出
     // drawing.cpp L1510：每帧仅绘制 12 个顶点（6 对绿带）的滑动窗口；此处把窗口起点按展示时长
-    // 连续推进（消除 C++ attack_sv 每帧+4 离散跳档的掉帧观感），沿弧循环跳跃 3 次。
+    // 连续推进（消除 C++ attack_sv 每帧+4 离散跳档的掉帧观感），沿弧循环跳跃 ARROW_JUMP_TIMES 次。
+    // 跳跃次数由 3 增至 5、展示时长由 900 缩至 620：箭头沿弧流速约为原 3/900 的 2.4 倍（5/620）。
     private static final int ARROW_WINDOW_VERTS = 12;
-    private static final int ARROW_JUMP_TIMES = 3;
+    private static final int ARROW_JUMP_TIMES = 5;
     private static final float ARROW_COLOR_A = 0xc0 / 255f; // materials.cpp GenArrow 0xc000ff00 alpha
 
     // 攻击弧 3D 逐顶点色程序 / 动态 VAO-VBO / 顶点暂存缓冲（仅 GL 线程访问）
@@ -172,7 +173,8 @@ final class CardOverlayRenderer {
         hideAttackTarget = null;
         if (f.arcAttacker != null) {
             long el = view.animTimeMs - f.arcStartMs;
-            if (el >= 0 && el <= ATTACK_ARC_MS) {
+            // 与 drawAttackArc 同源：小负值视为窗口内（竞态首帧仍抑制 attack.png，避免闪一帧浮动箭头）
+            if (el <= ATTACK_ARC_MS) {
                 hideAttackCard = f.arcAttacker;
                 hideAttackTarget = f.arcTarget;
             }
@@ -493,18 +495,23 @@ final class CardOverlayRenderer {
      * 攻击宣言绿色弧形流动动画（materials.cpp GenArrow L243-258 +
      * drawing.cpp L1504-1513 attack_sv 窗口流动 + duelclient.cpp MSG_ATTACK L3817-3866 锚点/旋转解算）。
      * 从攻击者到目标构建一条在场地上方拱起（中点最高）的弧形绿带，逐顶点 alpha 随流动窗口
-     * 从攻击者向目标滑动（对应 C++ attack_sv 0→28），显示约 0.9s 后自动清除。关深度测试置顶。
+     * 从攻击者向目标滑动（对应 C++ attack_sv 0→28），显示约 0.6s 后自动清除。关深度测试置顶。
      */
     void drawAttackArc(GameField f) {
         if (f == null || arrowProg == 0 || arrowBuf == null) return;
         GameField.ClientCard atk = f.arcAttacker;
         if (atk == null) return;
         long elapsed = view.animTimeMs - f.arcStartMs;
-        if (elapsed < 0 || elapsed > ATTACK_ARC_MS) {
+        if (elapsed > ATTACK_ARC_MS) {
             f.arcAttacker = null;
             f.arcTarget = null;
             return;
         }
+        // 跨线程时钟竞态：arcStartMs 由网络线程 onAttack 写入，而本帧 animTimeMs 是 GL 线程在
+        // onDrawFrame 起始处抓取的快照；当本帧快照早于 arcStartMs 时 elapsed 为小负值。旧实现此
+        // 处一并把 arcAttacker 归零，导致这次攻击的绿色弧被永久清除（是否触发取决于消息与帧的
+        // 时序运气，表现为某些攻击/某些格子的弧随机不显示）。负值按 0 进度继续绘制，仅真正超时才清弧。
+        if (elapsed < 0) elapsed = 0;
         // 攻击弧显示期间攻击者的 tAttack(attack.png) 浮动箭头我方/对方都绘制——
         // 对方攻击手收不到 battle cmd（cmdFlag 恒为 0），此处统一补绘；overlayCardStatus
         // 已用 hideAttackCard 抑制该卡常规绘制，避免我方攻击手重复叠加。
@@ -526,9 +533,10 @@ final class CardOverlayRenderer {
         }
         float vx = ax - dx, vy = ay - dy;
         float len = (float) Math.sqrt(vx * vx + vy * vy);
-        if (len < 1e-3f) {
-            f.arcAttacker = null;
-            f.arcTarget = null;
+        // 端点退化或非有限坐标（NaN/Inf，!(len>=1e-3) 同时覆盖二者）时绝不清弧：卡片可能恰处于
+        // 落位动画首帧、坐标尚未收敛，跳过当帧绘制留待后续帧补绘；若在此清弧会把单帧退化误判为
+        // 整条弧失效，同样造成随机丢弧。
+        if (!(len >= 1e-3f)) {
             return;
         }
         float sy = len * 0.5f;

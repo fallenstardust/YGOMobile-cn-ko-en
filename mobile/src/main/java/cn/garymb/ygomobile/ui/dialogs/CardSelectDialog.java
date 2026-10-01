@@ -30,6 +30,7 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardStatusTipHelper;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -404,7 +405,7 @@ public class CardSelectDialog {
     }
 
     private void build() {
-        View root = LayoutInflater.from(context).inflate(R.layout.dialog_card_select, null);
+        View root = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_card_select, null);
         tvTitle = root.findViewById(R.id.tv_card_select_title);
         sbPage = root.findViewById(R.id.sb_card_page);
         btnOk = root.findViewById(R.id.btn_card_select_ok);
@@ -448,6 +449,8 @@ public class CardSelectDialog {
         // 宽度按 layout_game_right 区域实时解算且据此烘焙每张卡图，通用重排无法同步子视图尺寸：
         // 注册自定义旋转重排，切换方向时重解区域宽、重烘焙卡图、重设弹窗宽并重新居中
         draggableHelper.registerOrientationRelayout(popupWindow, this::applyOrientationRelayout);
+        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
+        DraggablePopupHelper.enableCollapse(popupWindow, title);
 
         // 直接以内容根构建，包装层由 findTipOverlay 向上解析
         tipHelper = new CardStatusTipHelper(context, root);
@@ -523,7 +526,7 @@ public class CardSelectDialog {
     }
 
     private int dp2px(float dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
+        return DialogScale.dpToPx(context, dp);
     }
 
     /**
@@ -595,11 +598,11 @@ public class CardSelectDialog {
      */
     private void updateTitle(String statusText) {
         if (tvTitle == null) return;
-        if (statusText == null || statusText.isEmpty()) {
-            tvTitle.setText(title);
-        } else {
-            tvTitle.setText(title + "  " + statusText);
-        }
+        String text = (statusText == null || statusText.isEmpty())
+                ? title : title + "  " + statusText;
+        tvTitle.setText(text);
+        // 收缩横条与弹窗内标题同源，选择进度变化时同步文案
+        DraggablePopupHelper.setCollapseBarTitle(popupWindow, text);
     }
 
     private void onSlotClicked(int slot) {

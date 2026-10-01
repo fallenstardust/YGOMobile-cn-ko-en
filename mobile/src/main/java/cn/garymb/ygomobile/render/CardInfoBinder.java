@@ -168,14 +168,18 @@ class CardInfoBinder {
 
     /**
      * 旋转重建后回显卡片详情（用户规格：横竖屏切换前若详情正在显示，切换后继续显示同一张卡，
-     * 不重置为隐藏态）。在 bindViews() 重绑新视图树之后调用；currentCardCode 跨重建保留在本类实例上。
+     * 不重置为隐藏态）。在 bindViews() 重绑新视图树之后调用；本方法在 onGameUIShown()
+     * 之后执行，而其内部的 showDefault() 已把 currentCardCode 清零，故卡码以重建前
+     * 快照 savedCode 为准（<=0 时回退到实例字段）。
      *
      * @param wasShowingBeforeRebind 重建前详情栏是否可见（旧视图树上采集）
+     * @param savedCode              重建前正在展示的卡码（无则 <=0）
      */
-    void restoreAfterRebind(boolean wasShowingBeforeRebind) {
+    void restoreAfterRebind(boolean wasShowingBeforeRebind, int savedCode) {
         if (!wasShowingBeforeRebind) return;
-        if (currentCardCode > 0) {
-            Card cardData = DataManager.get().getCardManager().getCard(currentCardCode);
+        int code = savedCode > 0 ? savedCode : currentCardCode;
+        if (code > 0) {
+            Card cardData = DataManager.get().getCardManager().getCard(code);
             if (cardData != null) {
                 showCard(cardData);
             } else {

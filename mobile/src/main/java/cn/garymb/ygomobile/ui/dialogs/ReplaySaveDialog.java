@@ -17,6 +17,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 
@@ -66,10 +67,10 @@ public class ReplaySaveDialog {
     }
 
     private void build() {
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
         int dialogWidth = (int) (310 * density);
 
-        LinearLayout root = (LinearLayout) LayoutInflater.from(context)
+        LinearLayout root = (LinearLayout) LayoutInflater.from(DialogScale.wrap(context))
                 .inflate(R.layout.dialog_replay_save, null);
 
         TextView tvTitle = root.findViewById(R.id.tv_title);

@@ -32,13 +32,35 @@ class FieldChatBoard {
     /** 每侧玩家聊天最大行数：超过 5 行向上滚动（清除第一条，最新一条落在最下行） */
     private static final int MAX_CHAT_LINES = 5;
 
-    private final LinkedList<String> myChatLines = new LinkedList<>();
-    private final LinkedList<String> opChatLines = new LinkedList<>();
+    /**
+     * 单条玩家聊天在屏存活时长（毫秒），超时后从最早一行开始自动清除——对齐
+     * drawing.cpp DrawChatMsg：addChatMsg 置 chatTiming=1200，绘制每帧 chatTiming-- 至 0 即不再绘制，
+     * 约 1200 帧 @60fps ≈ 20s。轮询周期 CHAT_EXPIRE_CHECK_MS 到点即移除已超时最旧行。
+     */
+    private static final long CHAT_LINE_LIFETIME_MS = 20000L;
+    /** 聊天过期轮询周期（毫秒）：每 500ms 检查一次是否有最旧行超时需清除 */
+    private static final long CHAT_EXPIRE_CHECK_MS = 500L;
+
+    /** 一条带入场时间戳的血条下方聊天行（供按时间从最早行自动清除） */
+    private static final class TimedLine {
+        final String text;
+        final long addedAt;
+        TimedLine(String text, long addedAt) {
+            this.text = text;
+            this.addedAt = addedAt;
+        }
+    }
+
+    private final LinkedList<TimedLine> myChatLines = new LinkedList<>();
+    private final LinkedList<TimedLine> opChatLines = new LinkedList<>();
 
     /** 尚未落进血条下方聊天行容器的我方/对方消息（血条/覆盖层未就绪时暂存，
      *  容器可用后按旧→新顺序补挂；每侧暂存不超 MAX_CHAT_LINES 条） */
-    private final LinkedList<String> myChatPending = new LinkedList<>();
-    private final LinkedList<String> opChatPending = new LinkedList<>();
+    private final LinkedList<TimedLine> myChatPending = new LinkedList<>();
+    private final LinkedList<TimedLine> opChatPending = new LinkedList<>();
+
+    /** 聊天按时间清除的轮询任务是否在排：保证只挂一个 postDelayed 链 */
+    private boolean chatExpireScheduled = false;
 
     // 表情气泡：显示在发送方头像下方（对齐 gframe drawing.cpp DrawEmoticon），超时自动隐藏
     private static final long EMOTE_BUBBLE_DURATION_MS = 3000;
@@ -167,7 +189,14 @@ class FieldChatBoard {
         if (ctl.engine == null) return player;
         boolean isTag = ctl.engine.getGameMode() == 2;
         int selftype = ctl.engine.getSelfType();
-        if (ctl.engine.isStarted() || ctl.engine.isSiding()) {
+        if (ctl.engine.replayMode) {
+            // 回放：0xF1 聊天帧 body[0] 恒为协议侧发送者座位（绝对值），分边只随先攻视角走——
+            // duelIsFirst 由 ReplayPlayer.performSwapField 翻转（playerInfos 昵称已同步对调），
+            // 映射式与实况对局内分支一致；不走 isStarted 门是因为回放恒不置 duelStarted/inDuel
+            // （ReplayPlayer.startSession 依 C++ 回放态不置 dInfo.isStarted），修复切视角后聊天
+            // 消息漂移到另一侧血条下（用户反馈：聊天记录切换视角后变成另一方发送）
+            player = ctl.engine.isDuelFirst() ? player : oppositeChatPlayer(player, isTag);
+        } else if (ctl.engine.isStarted() || ctl.engine.isSiding()) {
             if (ctl.engine.isInDuel()) {
                 // 对局中：按先攻判定是否需要换边
                 player = ctl.engine.isDuelFirst() ? player : oppositeChatPlayer(player, isTag);
@@ -247,17 +276,59 @@ class FieldChatBoard {
      * 仅系统/观战消息在 showChatDanmaku 中以弹幕形式横向滚动。
      */
     private void appendSideChat(boolean selfSide, String line) {
-        LinkedList<String> lines = selfSide ? myChatLines : opChatLines;
-        lines.addLast(line);
+        TimedLine entry = new TimedLine(line, System.currentTimeMillis());
+        LinkedList<TimedLine> lines = selfSide ? myChatLines : opChatLines;
+        lines.addLast(entry);
         while (lines.size() > MAX_CHAT_LINES) {
             lines.removeFirst();
         }
-        LinkedList<String> pending = selfSide ? myChatPending : opChatPending;
-        pending.addLast(line);
+        LinkedList<TimedLine> pending = selfSide ? myChatPending : opChatPending;
+        pending.addLast(entry);
         while (pending.size() > MAX_CHAT_LINES) {
             pending.removeFirst();
         }
         rebuildSideChatLayer(selfSide, 0);
+        // 启动/维持按时间从最早行自动清除的轮询（对齐 drawing.cpp chatTiming 逐帧倒计时清除）
+        scheduleChatExpire();
+    }
+
+    /** 安排/维持聊天按时间清除的轮询：每 CHAT_EXPIRE_CHECK_MS 移除超时最旧行，两侧均空时停止。 */
+    private void scheduleChatExpire() {
+        if (chatExpireScheduled) return;
+        chatExpireScheduled = true;
+        ctl.mainHandler.postDelayed(chatExpireTask, CHAT_EXPIRE_CHECK_MS);
+    }
+
+    private final Runnable chatExpireTask = new Runnable() {
+        @Override
+        public void run() {
+            long now = System.currentTimeMillis();
+            boolean changed = trimExpiredChat(myChatLines, myChatPending, now);
+            changed |= trimExpiredChat(opChatLines, opChatPending, now);
+            if (changed) {
+                // 有行超时：整列重建两侧血条下方聊天容器，使被移除的最旧行同步离场
+                relayoutSideChatRows(true, 0);
+                relayoutSideChatRows(false, 0);
+            }
+            if (!myChatLines.isEmpty() || !opChatLines.isEmpty()) {
+                ctl.mainHandler.postDelayed(this, CHAT_EXPIRE_CHECK_MS);
+            } else {
+                chatExpireScheduled = false;
+            }
+        }
+    };
+
+    /** 移除 lines/pending 队首已超时（addedAt + 存活时长 ≤ now）的行，返回 lines 是否有移除。 */
+    private static boolean trimExpiredChat(LinkedList<TimedLine> lines, LinkedList<TimedLine> pending, long now) {
+        boolean removed = false;
+        while (!lines.isEmpty() && now - lines.peekFirst().addedAt >= CHAT_LINE_LIFETIME_MS) {
+            lines.removeFirst();
+            removed = true;
+        }
+        while (!pending.isEmpty() && now - pending.peekFirst().addedAt >= CHAT_LINE_LIFETIME_MS) {
+            pending.removeFirst();
+        }
+        return removed;
     }
 
     /** 重建指定侧聊天行容器：把 pending 消息自上而下追加到该侧血条正下方；
@@ -286,10 +357,10 @@ class FieldChatBoard {
             flushSideChatPendingToDanmaku(selfSide);
             return;
         }
-        LinkedList<String> pending = selfSide ? myChatPending : opChatPending;
+        LinkedList<TimedLine> pending = selfSide ? myChatPending : opChatPending;
         if (pending.isEmpty()) return;
-        for (String line : pending) {
-            layer.addView(createChatRowView(line));
+        for (TimedLine entry : pending) {
+            layer.addView(createChatRowView(entry));
         }
         pending.clear();
         // 在屏不超 MAX_CHAT_LINES 行：超出时最上方最旧一条消失（等效上滚）
@@ -300,10 +371,10 @@ class FieldChatBoard {
 
     /** 构造一条血条下方聊天行 TextView（昵称前缀已由调用方拼好入 line）：9sp 白字 + 半透明黑底，
      *  规格对齐 drawing.cpp chatColor[0..3] 玩家消息白色 / draw2DRectangle 0xa0000000 */
-    private TextView createChatRowView(String line) {
+    private TextView createChatRowView(TimedLine entry) {
         float density = ctl.activity.getResources().getDisplayMetrics().density;
         TextView tv = new TextView(ctl.activity);
-        tv.setText(line);
+        tv.setText(entry.text);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与系统弹幕/大厅聊天统一 9sp
         tv.setTextColor(0xFFFFFFFF);                     // chatColor[0..3] 玩家消息白色
         tv.setMaxLines(2);
@@ -340,8 +411,8 @@ class FieldChatBoard {
                 selfSide, bar[0], bar[1] + bar[3], bar[2]);
         if (layer == null) return;
         layer.removeAllViews();
-        LinkedList<String> lines = selfSide ? myChatLines : opChatLines;
-        for (String line : lines) layer.addView(createChatRowView(line));
+        LinkedList<TimedLine> lines = selfSide ? myChatLines : opChatLines;
+        for (TimedLine entry : lines) layer.addView(createChatRowView(entry));
         // lines 已含全部在屏消息（pending 与 lines 同源），全量重挂后清 pending 防重复补挂
         (selfSide ? myChatPending : opChatPending).clear();
     }
@@ -358,8 +429,8 @@ class FieldChatBoard {
         relayoutSideChatRows(false, 0);
     }
 
-    private static void swapListContent(LinkedList<String> a, LinkedList<String> b) {
-        java.util.List<String> tmp = new ArrayList<>(a);
+    private static <T> void swapListContent(LinkedList<T> a, LinkedList<T> b) {
+        java.util.List<T> tmp = new ArrayList<>(a);
         a.clear();
         a.addAll(b);
         b.clear();
@@ -389,9 +460,9 @@ class FieldChatBoard {
 
     /** 聊天行容器不可用（无覆盖层/重试用尽）时，把未落容器的消息回退为弹幕显示，不丢消息 */
     private void flushSideChatPendingToDanmaku(boolean selfSide) {
-        LinkedList<String> pending = selfSide ? myChatPending : opChatPending;
+        LinkedList<TimedLine> pending = selfSide ? myChatPending : opChatPending;
         if (pending.isEmpty()) return;
-        for (String line : pending) showDanmakuLine(line, 0xFFFFFFFF, 0);
+        for (TimedLine entry : pending) showDanmakuLine(entry.text, 0xFFFFFFFF, 0);
         pending.clear();
     }
 
@@ -399,6 +470,9 @@ class FieldChatBoard {
      *  （drawspec 弹幕层/聊天行层或回退的 layout_danmaku）移除，并通知覆盖层空闲收口
      *  （无特效时关闭 PopupWindow） */
     private void clearDanmaku() {
+        // 停止聊天/离开决斗/进大厅：取消按时间清除的轮询链，避免残留 postDelayed
+        ctl.mainHandler.removeCallbacks(chatExpireTask);
+        chatExpireScheduled = false;
         myChatPending.clear();
         opChatPending.clear();
         for (TextView tv : danmakuViews) {
@@ -537,11 +611,11 @@ class FieldChatBoard {
         int bandHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 DANMAKU_ROW_HEIGHT_DP * DANMAKU_MAX_ROWS,
                 ctl.activity.getResources().getDisplayMetrics());
-        // 带顶 = 双方 LP 血条底边（窗口坐标）：聊天/弹幕统一在血条正下方滚动
-        //（对齐 gframe DrawChatMsg，横竖屏同规格；血条未布局时传 -1 由覆盖层回退区域顶边）
-        int bandTop = -1;
-        int[] lpBar = ctl.topInfoManager != null ? ctl.topInfoManager.getLpBarPositionAndHeight() : null;
-        if (lpBar != null) bandTop = lpBar[0] + lpBar[1];
+        // 带顶 = 屏幕竖直居中（用户规格：系统/观战消息在屏幕中央自右向左平移）：
+        // 整条弹幕带在屏幕上垂直居中，消息自屏幕右缘入场、匀速左移，直至整个文本
+        // 完全从屏幕最左侧离场后移除（见下方 distance = parent宽 + 自身宽的动画）。
+        // 不再锚定 LP 血条底边（历史上带顶贴顶部，被上方 HUD/等待界面遮挡而「看不到滚动」）。
+        int bandTop = ctl.activity.getResources().getDisplayMetrics().heightPixels / 2 - bandHeight / 2;
         FrameLayout layer = overlay != null ? overlay.obtainDanmakuLayer(bandHeight, bandTop) : null;
         final FrameLayout parent = layer != null ? layer : ctl.layoutDanmaku;
         if (parent == null) return;

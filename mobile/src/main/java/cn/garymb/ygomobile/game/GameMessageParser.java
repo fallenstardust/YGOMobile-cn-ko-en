@@ -626,10 +626,9 @@ public class GameMessageParser {
         Log.w(TAG, "Retry message received");
         // 对齐 duelclient.cpp L1320-1404：无效应答后服务端只回 1 字节 MSG_RETRY，
         // 不重发原 SELECT（single_duel.cpp L583-591）——C++ 弹提示后重放缓存的上一条
-        // 消息重建选择 UI 供玩家重新应答；此前仅打日志导致选择弹窗永久丢失、对局冻结
-        engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onHintMessage("操作无效，请重新选择");
-        });
+        // 消息重建选择 UI 供玩家重新应答；此前仅打日志导致选择弹窗永久丢失、对局冻结。
+        // 桌面端不显示任何提示栏文本（重放重建选择 UI 本身即反馈），
+        // 硬编码知会文本不上提示栏，避免显示 strings.conf 以外的内容
         engine.replayLastGameMsg();
     }
 
@@ -640,8 +639,10 @@ public class GameMessageParser {
             case 1:
                 engine.field.eventString = DataManager.get().getDesc(data, "");
                 return;
+            // HINT_MESSAGE（对齐 duelclient.cpp L1449-1456）：文本为 GetDesc(data)，
+            // 系统字符串取自 strings.conf，上提示栏展示
             case 2:
-                hintText = "请选择";
+                hintText = DataManager.get().getDesc(data, "");
                 break;
             case 3:
                 // HINT_SELECTMSG：保存下一条选择对话框标题的 sys 字符串索引，
@@ -652,9 +653,10 @@ public class GameMessageParser {
             case 4:
                 showActionMessage(DuelLogDialog.addOpSelectedLog(data));
                 return;
+            // HINT_EFFECT（对齐 duelclient.cpp L1473-1478）：桌面端播效果图标动画，
+            // 无提示栏文本，不显示
             case 5:
-                hintText = "当前连锁: " + data;
-                break;
+                return;
             // HINT_RACE（对齐 duelclient.cpp L1480-1490）：宣告种族记日志 + 居中 AC 文本动画
             case 6:
                 showActionMessage(DuelLogDialog.addSelectedRaceLog(data));
@@ -678,9 +680,11 @@ public class GameMessageParser {
                 showActionMessage(acText);
                 return;
             }
+            // 其余 HINT（HINT_CARD=10/HINT_ZONE=11 及未知类型）：桌面端为图标动画/
+            // 区域高亮/日志（GetSysString 取自 strings.conf），不弹调试文本
             default:
-                hintText = "Hint type=" + type + " data=" + data;
-                break;
+                Log.d(TAG, "Unhandled hint type=" + type + " data=" + data);
+                return;
         }
         final String finalHint = hintText;
         engine.mainHandler.post(() -> {
@@ -836,9 +840,12 @@ public class GameMessageParser {
 
     public void onSelectCard(ByteBuffer data) {
         if (engine.replayMode) return;
-        // 对齐 duelclient.cpp L1964-1974：非 panelmode 时 stHintMsg 显示"提示(min-max)"
-        String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片");
-        if (hint != null) engine.hintManager.postDuelHint(hint);
+        // 对齐 duelclient.cpp L1958-1978：panelmode（候选含非场上区卡/手牌拥挤）时文案
+        // 进弹窗标题（stCardSelect），仅非 panelmode 才由 stHintMsg 显示"提示(min-max)"
+        if (!engine.hintManager.selectCardPanelMode(data, 4, 1)) {
+            String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片");
+            if (hint != null) engine.hintManager.postDuelHint(hint);
+        }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(15, data);
         });
@@ -951,9 +958,10 @@ public class GameMessageParser {
 
     public void onSelectSum(ByteBuffer data) {
         if (engine.replayMode) return;
-        // 对齐 client_field.cpp L1090-1115 ShowSelectSum：display_hint = GetDesc(select_hint) 或 GetSysString(560)
-        int hint = engine.field.selectHint;
-        engine.hintManager.postDuelHint(hint > 0 ? DataManager.get().getDesc(hint, "选择卡片") : engine.hintManager.sysString(560, "选择卡片"));
+        // 对齐 client_field.cpp L1092-1118 ShowSelectSum：提示栏/弹窗标题文案为完整格式
+        // "hint(当前值/目标值)"，由选择会话建立时展示（场选见
+        // FieldSelectManager.showSelectSumSession，弹窗模式标题自带），此处不预先显示
+        // 裸标题（C++ 无此行为，避免目标值未知时先显示不完整文本）
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(23, data);
         });
@@ -985,9 +993,12 @@ public class GameMessageParser {
 
     public void onSelectUnselectCard(ByteBuffer data) {
         if (engine.replayMode) return;
-        // 对齐 duelclient.cpp L2053-2065：stHintMsg 显示"提示(min-max)"
-        String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片");
-        if (hint != null) engine.hintManager.postDuelHint(hint);
+        // 对齐 duelclient.cpp L2022-2069：panelmode 判定遍历两批候选（L1989-1994 头为
+        // player/finishable/cancelable/min/max，min/max 前跳 3 字节），仅非 panelmode 显示提示栏
+        if (!engine.hintManager.selectCardPanelMode(data, 5, 2)) {
+            String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片", 3);
+            if (hint != null) engine.hintManager.postDuelHint(hint);
+        }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(26, data);
         });

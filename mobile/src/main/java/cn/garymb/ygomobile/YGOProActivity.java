@@ -222,16 +222,15 @@ public class YGOProActivity extends AppCompatActivity {
             }
         });
 
-        // 聊天输入框初始可见性跟随停用聊天设置（对齐 gframe wChat：停用聊天时隐藏）
-        if (etChatInput != null
-                && AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1) {
-            etChatInput.setVisibility(View.GONE);
-        }
-
         cardDetailPanel = new CardDetailPanel(this);
         cardDetailPanel.bindViews();
+        // 聊天输入框/聊天开关初始可见性：停用聊天设置与抑制场景（卡组编辑/录像/残局）
+        // 统一核算（对齐 gframe wChat：停用聊天与无聊天对象场景均隐藏）
+        updateChatUIVisibility();
         topInfoManager = new GameTopInfoManager(this, mainHandler);
         topInfoManager.initViews();
+        // 聊天输入框随 gameTopInfo 同一 HUD 系数等比例缩放（平板上固定 dp 输入框极细难点）
+        if (chatInputUI != null) chatInputUI.bindHudScale(topInfoManager);
         fieldCtl = new GameFieldController(this, mainHandler, topInfoManager);
         fieldCtl.create();
 
@@ -276,8 +275,11 @@ public class YGOProActivity extends AppCompatActivity {
                 && playerWaitingDialog != null && playerWaitingDialog.isShowing();
         boolean duelUiVisible = !deckEditorVisible && duelContext && !lobbyChat
                 && layoutGameRight != null && layoutGameRight.getVisibility() == View.VISIBLE;
-        // 卡片详情回显快照（旧视图树）：旋转前正在显示某张卡详情则重建后继续显示同一张（用户规格）
+        // 卡片详情回显快照（旧视图树）：旋转前正在显示某张卡详情则重建后继续显示同一张（用户规格）；
+        // 卡码一并快照：回显前 onGameUIShown() 会 showDefault() 清掉面板内的当前卡码，不能事后取
         boolean detailShowing = cardDetailPanel != null && cardDetailPanel.isShowing();
+        int detailCardCode = (detailShowing && cardDetailPanel != null)
+                ? cardDetailPanel.getCurrentCardCode() : -1;
 
         // 2) 关闭挂在旧视图树上的瞬态浮层：表情面板/drawspec 覆盖层（LP浮字/弹幕/居中特效）/
         // 卡片命令菜单；后续特效/弹幕经懒建新实例回到新树
@@ -298,11 +300,7 @@ public class YGOProActivity extends AppCompatActivity {
         layoutDeckEditor = findViewById(R.id.layout_deck_editor);
         etChatInput = findViewById(R.id.et_chat_input);
         if (chatInputUI != null) chatInputUI.bindChatInput(etChatInput);
-        // 聊天输入框初始可见性跟随停用聊天设置（与 initViews 同步）
-        if (etChatInput != null
-                && AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1) {
-            etChatInput.setVisibility(View.GONE);
-        }
+        // 聊天 UI 可见性在重建尾部统一重算（须等 layoutDeckEditor 等新引用就绪，见方法尾）
         // 三大管理器复用实例只重绑视图（保留 ignoreChain 时点三态/大厅聊天等业务状态），
         // 严禁触达 fieldCtl.hide()——会 clear 场面数据
         if (cardDetailPanel != null) {
@@ -365,7 +363,7 @@ public class YGOProActivity extends AppCompatActivity {
                         topInfoManager.setUndoPrompt(engine != null && engine.isUndoPromptActive());
                     }
                 }
-                cardDetailPanel.restoreAfterRebind(detailShowing);
+                cardDetailPanel.restoreAfterRebind(detailShowing, detailCardCode);
             }
         } else {
             // 其他场景（主菜单/局域网与建主等待弹窗/设置等，用户规格）：竖屏布局变体的
@@ -376,6 +374,9 @@ public class YGOProActivity extends AppCompatActivity {
             if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
             setGameTopPanelVisible(false);
         }
+        // 聊天输入框/开关在新视图树回显完成后按当前场景重算（卡组编辑分支经 deckEditorHost.show
+        // 已算一次，此处覆盖决斗/大厅/菜单各分支，避免旋转后新树默认 VISIBLE 漏显抑制态）
+        updateChatUIVisibility();
         // 旋转后新视图树的 layout_game_right 背景随旧树销毁，按最近背景图重贴区域平铺背景
         updateFieldRegionBackground();
         // gameEngine 相关对话框（PopupWindow 独立窗口，不随 setContentView 重建）按新屏宽
@@ -777,6 +778,8 @@ public class YGOProActivity extends AppCompatActivity {
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
         setGameTopPanelVisible(false);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
+        // 离开决斗场后重算聊天 UI：layoutDeckEditor 显隐此时已定型，输入框/开关按场景归位
+        updateChatUIVisibility();
         // 离开决斗场后重算场景：duelActive 已置假 → 非卡组编辑则回 MENU（修正结束一局后
         // WIN/LOSE 音乐残留不回菜单的问题）
         updateBGM();
@@ -799,6 +802,9 @@ public class YGOProActivity extends AppCompatActivity {
         fieldCtl.show();
         cardDetailPanel.onGameUIShown();
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
+        // 进入决斗场重算聊天 UI（对齐 gframe：回放/残局这些无聊天对象的场景显示 GameUI 时
+        // 隐藏 wChat；正常决斗/观战显示），覆盖退出录像后残留的隐藏态
+        updateChatUIVisibility();
         updateBGM();
     }
 
@@ -994,11 +1000,16 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     /**
-     * 按当前屏幕方向应用背景图（用户规格：竖屏把横向背景图旋转为纵向显示，消除非等比拉伸压扁）：
-     * 竖屏时把 lastBgBitmap 顺时针旋转 90° 得到纵向副本，同时挂到窗口背景与下方 2/3 的
-     * layout_game_right 区域（区域仍走 RightAlignedTiledDrawable 等比平铺）；横屏用原图、
-     * 不设 View 区域背景（走窗口背景原机制）。原始解码位图不改动，旋转副本仅在使用时派生，
-     * 故旋转切换（rebuildUiForOrientation）与缓存命中（setWindowBackground）都会按新朝向重算。
+     * 按当前屏幕方向应用背景图（用户规格）：
+     * <ul>
+     * <li>横屏：直接用原始横向图作窗口背景，layout_game_right 不设区域背景（透出窗口原图）；</li>
+     * <li>竖屏：不再把横向图旋转 90° 后按高等比 REPEAT 平铺——旋转得到的纵向图窄于屏宽，
+     * 平铺补边会在屏幕正中留下可见的图片拼贴边（历史 PlayerWaitingDialog 竖屏背景“正中显示
+     * 图片边缘”根因）。改为保持原本横向图，用 {@link RightAlignedTiledDrawable} 按 bounds 高等比
+     * 缩放并右对齐：横向图缩放到屏高后宽度恒大于屏宽，于是屏幕只显示图片最右侧的部分、左侧
+     * 超出屏幕的部分自然裁剪掉（无平铺缝）——决斗(bg.jpg)/卡组编辑(bg_deck.jpg)/大厅等待界面同规格。</li>
+     * </ul>
+     * 原始解码位图不改动，故旋转切换（rebuildUiForOrientation）与缓存命中（setWindowBackground）都会重算。
      */
     void updateFieldRegionBackground() {
         if (lastBgBitmap == null || lastBgBitmap.isRecycled()) {
@@ -1007,19 +1018,16 @@ public class YGOProActivity extends AppCompatActivity {
         }
         boolean portrait = getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_PORTRAIT;
-        // 竖屏：横向背景图顺时针旋转 90° 为纵向显示；横屏直接用原图
-        Bitmap shown = portrait ? rotate90Clockwise(lastBgBitmap) : lastBgBitmap;
-        getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), shown));
-        if (layoutGameRight != null) {
-            layoutGameRight.setBackground(portrait ? new RightAlignedTiledDrawable(shown) : null);
+        if (portrait) {
+            // 竖屏：保持原本横向图，右对齐裁剪左侧超出（每张单独实例，避免窗口背景与区域背景共享）
+            getWindow().setBackgroundDrawable(new RightAlignedTiledDrawable(lastBgBitmap));
+            if (layoutGameRight != null) {
+                layoutGameRight.setBackground(new RightAlignedTiledDrawable(lastBgBitmap));
+            }
+        } else {
+            getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), lastBgBitmap));
+            if (layoutGameRight != null) layoutGameRight.setBackground(null);
         }
-    }
-
-    /** 生成横向位图顺时针旋转 90° 后的纵向副本（原图不改动，仅供竖屏背景显示）。 */
-    private static Bitmap rotate90Clockwise(Bitmap src) {
-        Matrix m = new Matrix();
-        m.postRotate(90f);
-        return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), m, true);
     }
 
     /**
@@ -1087,6 +1095,41 @@ public class YGOProActivity extends AppCompatActivity {
             if (cardDetailPanel != null) {
                 cardDetailPanel.updateChatIcon(!enable);
             }
+            // 切换后走统一场景核算重置输入框可见性（ChatInputUI 内的直接显隐不感知抑制场景）
+            updateChatUIVisibility();
+        }
+    }
+
+    /**
+     * 聊天 UI 抑制场景（用户规格对齐 gframe：这些场景不显示 wChat 聊天框）：
+     * 卡组/副卡组编辑器、残局（single mode）、录像回放观看。观战不抑制（仍有聊天/弹幕对象）。
+     */
+    private boolean isChatUiSuppressedScene() {
+        if (layoutDeckEditor != null && layoutDeckEditor.getVisibility() == View.VISIBLE)
+            return true;
+        GameEngine eng = engine;
+        if (eng == null) return false;
+        if (eng.isSingleMode) return true;
+        return eng.replayMode && eng.replayPlayer != null && eng.replayPlayer.hasActiveSession();
+    }
+
+    /**
+     * 聊天输入框与聊天开关按钮可见性统一核算：输入框需设置允许（未停用聊天）且非抑制场景；
+     * 开关按钮（用户规格）不受停用聊天设置影响、仅抑制场景隐藏——停用后必须留着入口才能点回启用。
+     * 卡组编辑/录像/残局进入与退出、旋转重建、设置变更均经此刷新（用户规格）。
+     */
+    public void updateChatUIVisibility() {
+        boolean settingAllow = AppsSettings.get().getIntSettings("chkDisableChatting", 0) != 1;
+        boolean suppressed = isChatUiSuppressedScene();
+        if (etChatInput != null) {
+            // 大厅等待界面例外：输入框是聊天主入口，即使停用聊天设置也无条件显示
+            //（与 chatInputUI.enterLobbyChatUI 的无条件可见语义一致，旋转重建经此不得回退）
+            boolean lobby = playerWaitingDialog != null && playerWaitingDialog.isShowing();
+            etChatInput.setVisibility(lobby || (settingAllow && !suppressed) ? View.VISIBLE : View.GONE);
+        }
+        if (cardDetailPanel != null) {
+            // 停用聊天只隐藏输入框与聊天信息，开关恒可见（非抑制场景）
+            cardDetailPanel.setChatToggleVisible(!suppressed);
         }
     }
 
@@ -1166,10 +1209,6 @@ public class YGOProActivity extends AppCompatActivity {
 
     // 录像回放的召唤/连锁/无效大图与阶段文字已由实况管线（EngineCallbackDelegate 的消息回调）
     // 直接派发，回放不再需要一套专用转发入口
-
-    public void showHintMessage(String msg) {
-        fieldCtl.showHint(msg, 3000);
-    }
 
     // === Response helpers ===
 

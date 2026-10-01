@@ -14,6 +14,7 @@ import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.TextureLoader;
+import cn.garymb.ygomobile.utils.DialogScale;
 
 /**
  * 表情面板（对应桌面版 gframe 的 wEmoticon）：
@@ -39,7 +40,7 @@ public class EmotionDialog {
 
     public EmotionDialog(YGOProActivity activity) {
         this.activity = activity;
-        contentView = LayoutInflater.from(activity).inflate(R.layout.popup_window_emotion, null);
+        contentView = LayoutInflater.from(DialogScale.wrap(activity)).inflate(R.layout.popup_window_emotion, null);
         bindEmoticonButtons();
 
         popupWindow = new PopupWindow(contentView,
@@ -127,6 +128,6 @@ public class EmotionDialog {
     }
 
     private int dp(int value) {
-        return Math.round(value * activity.getResources().getDisplayMetrics().density);
+        return DialogScale.dpToPx(activity, value);
     }
 }

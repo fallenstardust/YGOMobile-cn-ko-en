@@ -793,7 +793,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onShowHint(String hint) {
         engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onHintMessage(hint);
+            if (engine.listener != null) engine.listener.onNoticeMessage(hint);
         });
     }
 
@@ -805,7 +805,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onCustomMsg(String msg) {
         engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onHintMessage(msg);
+            if (engine.listener != null) engine.listener.onNoticeMessage(msg);
         });
     }
 

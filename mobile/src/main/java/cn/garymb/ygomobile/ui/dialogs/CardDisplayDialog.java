@@ -28,6 +28,7 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardStatusTipHelper;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -143,9 +144,11 @@ public class CardDisplayDialog {
 
     /** 更新标题为「区域名称 (卡片数量)」格式 */
     private void updateTitle() {
-        if (tvTitle != null) {
-            tvTitle.setText(titlePrefix + "(" + cards.size() + ")");
-        }
+        if (tvTitle == null) return;
+        String text = titlePrefix + "(" + cards.size() + ")";
+        tvTitle.setText(text);
+        // 收缩横条与弹窗内标题同源，卡片数量变化时同步文案
+        DraggablePopupHelper.setCollapseBarTitle(popupWindow, text);
     }
 
     public CardDisplayDialog setCards(List<CardItem> cardList) {
@@ -221,7 +224,7 @@ public class CardDisplayDialog {
     }
 
     private void build() {
-        View root = LayoutInflater.from(context).inflate(R.layout.dialog_card_display, null);
+        View root = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_card_display, null);
         tvTitle = root.findViewById(R.id.tv_card_display_title);
         sbPage = root.findViewById(R.id.sb_display_page);
         btnOk = root.findViewById(R.id.btn_card_display_ok);
@@ -266,6 +269,8 @@ public class CardDisplayDialog {
         // 宽度按 layout_game_right 区域实时解算且据此烘焙每张卡图，通用重排无法同步子视图尺寸：
         // 注册自定义旋转重排，切换方向时重解区域宽、重烘焙卡图、重设弹窗宽并重新居中
         draggableHelper.registerOrientationRelayout(popupWindow, this::applyOrientationRelayout);
+        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
+        DraggablePopupHelper.enableCollapse(popupWindow, titlePrefix);
 
         // 按下即在 CardDetailPanel 显示详情；按住超过 0.3 秒悬浮显示通讯状态标签且抬手不视为点击
         tipHelper = new CardStatusTipHelper(context, root);
@@ -341,7 +346,7 @@ public class CardDisplayDialog {
     }
 
     private int dp2px(float dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
+        return DialogScale.dpToPx(context, dp);
     }
 
     /**

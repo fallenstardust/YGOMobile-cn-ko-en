@@ -48,12 +48,16 @@ class GameSettingsApplier {
             // 对齐 gframe imgVol/imgQuickAnimation：声音与速度按钮图标同步设置状态
             activity.cardDetailPanel.updateSoundIcon(enableSound || enableMusic);
             activity.cardDetailPanel.updateSpeedIcon(appsSettings.getIntSettings("chkQuickAnimation", 0) == 1);
-            // 对齐 gframe BUTTON_CHATTING：聊天按钮图标与输入框可见性同步停用聊天设置
-            boolean chatDisabled = appsSettings.getIntSettings("chkDisableChatting", 0) == 1;
-            activity.cardDetailPanel.updateChatIcon(chatDisabled);
-            if (activity.etChatInput != null) {
-                activity.etChatInput.setVisibility(chatDisabled ? View.GONE : View.VISIBLE);
-            }
+            // 对齐 gframe BUTTON_CHATTING：聊天按钮图标同步停用聊天设置；
+            // 输入框与开关可见性交集中场景核算（停用设置 + 卡组编辑/录像/残局抑制场景）
+            activity.cardDetailPanel.updateChatIcon(
+                    appsSettings.getIntSettings("chkDisableChatting", 0) == 1);
+            activity.updateChatUIVisibility();
+        }
+        // 用户规格：停用聊天要隐藏聊天信息。经开关按钮停用已在 toggleChatInput 回调清屏，
+        // 经设置对话框停用则在此补清已显示的聊天行（新消息的丢弃由 FieldChatBoard 承担）
+        if (appsSettings.getIntSettings("chkDisableChatting", 0) == 1 && activity.fieldCtl != null) {
+            activity.fieldCtl.clearChatMessages();
         }
         // 动画速度随 chkQuickAnimation 即时生效（启动初始化与设置对话框变更均经此）
         applyAnimationSpeed();

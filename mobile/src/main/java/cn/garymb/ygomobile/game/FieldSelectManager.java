@@ -137,13 +137,8 @@ class FieldSelectManager {
         placeSelectCancelable = count == 0;
         selectedFieldBits = 0;
         ctl.viewController.highlightField(mask);
-        String msg = isDisfield ? "请选择要禁用的区域" : "请选择放置位置";
-        if (placeSelectCancelable) {
-            msg += "（可不选，点「取消」跳过）";
-        } else if (placeSelectRemain > 1) {
-            msg += "（需选择 " + placeSelectRemain + " 个区域）";
-        }
-        ctl.showHint(msg, 3000);
+        // 提示栏文本由 GameMessageParser 的 onSelectPlace/onSelectDisfield 走 strings.conf
+        // 系统字符串下发，此处不再叠加硬编码引导（对齐 gframe：仅 stHintMsg 一处来源）
         // count==0（select_cancelable）→ 显示「取消」按钮（对齐 gframe ShowCancelOrFinishButton(1)）
         CardDetailPanel panel = ctl.activity.getCardDetailPanel();
         if (panel != null) panel.updateCancelOrFinishButton(false, placeSelectCancelable, false);
@@ -326,20 +321,17 @@ class FieldSelectManager {
     private void handlePlaceSelection(int player, int location, int sequence) {
         int bitPos = getZoneBitPos(player, location, sequence);
         if (bitPos < 0 || (ctl.engine.selectFieldMask & (1 << bitPos)) == 0) {
-            ctl.showHint("该区域不可选择", 3000);
             return;
         }
         // 点击已选区域 → 取消该位（对齐 gframe：selected_field 位取反，select_min 回升）
         if ((selectedFieldBits & (1 << bitPos)) != 0) {
             selectedFieldBits &= ~(1 << bitPos);
             placeSelectRemain++;
-            ctl.showHint("还需选择 " + placeSelectRemain + " 个区域", 2500);
             return;
         }
         selectedFieldBits |= (1 << bitPos);
         placeSelectRemain--;
         if (placeSelectRemain > 0) {
-            ctl.showHint("还需选择 " + placeSelectRemain + " 个区域", 2500);
             return;
         }
         // 数量满足：按 gframe 固定次序组装多条应答并发送
@@ -418,7 +410,6 @@ class FieldSelectManager {
         }
         isCardSelecting = true;
         if (ctl.viewController != null) ctl.viewController.invalidate();
-        ctl.showHint("点击高亮的卡片进行选择", 3000);
     }
 
     /**
@@ -457,7 +448,6 @@ class FieldSelectManager {
             field.selectableCards.add(card);
         }
         if (ctl.viewController != null) ctl.viewController.invalidate();
-        ctl.showHint("点击高亮的卡片进行选择", 3000);
         CardDetailPanel panel = ctl.activity.getCardDetailPanel();
         if (panel != null) {
             // gframe L2067-2077：finishable → 「完成」，否则 cancelable → 「取消」，皆无 → 隐藏
@@ -488,7 +478,6 @@ class FieldSelectManager {
             return;
         }
         if (card == null || !card.is_selectable) {
-            ctl.showHint("该卡片不可选择", 2000);
             return;
         }
         if (card.is_selected) {
@@ -497,7 +486,6 @@ class FieldSelectManager {
             cardSelectClickOrder.remove(Integer.valueOf(card.select_seq));
         } else {
             if (cardSelectMax > 0 && cardSelectClickOrder.size() >= cardSelectMax) {
-                ctl.showHint("已达到最大可选数量", 2000);
                 return;
             }
             card.is_selected = true;
@@ -548,7 +536,6 @@ class FieldSelectManager {
     private boolean confirmCardSelect() {
         if (!isCardSelecting || ctl.engine == null) return false;
         if (cardSelectClickOrder.size() < cardSelectMin) {
-            ctl.showHint("至少需要选择 " + cardSelectMin + " 张卡片", 2000);
             return false;
         }
         // C++ SetResponseSelectedCards：respbuf[0]=len，其后按点击顺序填 select_seq
@@ -676,7 +663,6 @@ class FieldSelectManager {
     private void handleSumSelectionClick(GameField.ClientCard card) {
         if (card == null || !card.is_selectable) {
             // must 卡（is_selectable=false）与不在当前可行解集合内的卡不可点（C++ 静默忽略）
-            ctl.showHint("该卡片不可选择", 2000);
             return;
         }
         GameField field = ctl.engine.getField();

@@ -12,6 +12,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.DialogScale;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 
@@ -27,7 +28,7 @@ public class MainMenuDialog {
     public MainMenuDialog(YGOProActivity activity) {
         this.activity = activity;
 
-        View layoutMainMenu = LayoutInflater.from(activity).inflate(R.layout.popup_window_main_menu, null);
+        View layoutMainMenu = LayoutInflater.from(DialogScale.wrap(activity)).inflate(R.layout.popup_window_main_menu, null);
         TextView tvVersion = layoutMainMenu.findViewById(R.id.tv_version);
         tvVersion.setText(getVersionText());
 

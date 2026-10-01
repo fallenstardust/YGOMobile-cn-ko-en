@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -157,7 +158,7 @@ public class AnnounceRaceDialog {
     };
 
     private void build() {
-        View root = LayoutInflater.from(context).inflate(R.layout.dialog_announce_race, null);
+        View root = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_announce_race, null);
         tvTitle = root.findViewById(R.id.tv_anrace_title);
         tvTitle.setText(title);
 
@@ -183,6 +184,8 @@ public class AnnounceRaceDialog {
         draggableHelper = new DraggablePopupHelper(context, "announce_race");
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 dp(DIALOG_WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT);
+        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
+        DraggablePopupHelper.enableCollapse(popupWindow, title);
     }
 
     /** event_handler.cpp CHECK_RACE L1003-1015：统计勾选掩码与数量，数量达标即应答并关闭 */
@@ -211,7 +214,7 @@ public class AnnounceRaceDialog {
     }
 
     private int dp(int value) {
-        return Math.round(value * context.getResources().getDisplayMetrics().density);
+        return DialogScale.dpToPx(context, value);
     }
 
     public void show() {

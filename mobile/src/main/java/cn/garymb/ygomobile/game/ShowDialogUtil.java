@@ -292,14 +292,10 @@ public class ShowDialogUtil {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load deck: " + ydkFile.getName(), e);
-                mainHandler.post(() -> activity.showHintMessage("卡组加载失败"));
                 return;
             }
 
             engine().sendDeckUpdate(main, extra, side);
-            mainHandler.post(() -> {
-                activity.showHintMessage("卡组已发送: " + main.size() + "+" + extra.size() + "+" + side.size());
-            });
         }, "DeckLoad").start();
     }
 

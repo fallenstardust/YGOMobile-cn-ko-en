@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -161,7 +162,7 @@ public class YesOrNoDialog {
     }
 
     public YesOrNoDialog setContentView(int layoutId) {
-        this.customContentView = LayoutInflater.from(context).inflate(layoutId, null);
+        this.customContentView = LayoutInflater.from(DialogScale.wrap(context)).inflate(layoutId, null);
         return this;
     }
 
@@ -184,7 +185,7 @@ public class YesOrNoDialog {
      * 仅保留 layout_options 选项容器；随后通过 {@link #addOption} 逐项添加按钮。
      */
     public YesOrNoDialog setOptionsContentView() {
-        View content = LayoutInflater.from(context).inflate(R.layout.dialog_game_select, null);
+        View content = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_game_select, null);
         content.findViewById(R.id.tv_select_title).setVisibility(View.GONE);
         content.findViewById(R.id.tv_select_hint).setVisibility(View.GONE);
         content.findViewById(R.id.layout_select_buttons).setVisibility(View.GONE);
@@ -198,7 +199,7 @@ public class YesOrNoDialog {
      */
     public YesOrNoDialog addOption(CharSequence text, int backgroundColor, Runnable onClick) {
         if (optionsContainer == null) setOptionsContentView();
-        Button btn = new Button(context);
+        Button btn = new Button(DialogScale.wrap(context));
         btn.setText(text);
         btn.setTextColor(0xFFFFFFFF);
         btn.setBackgroundColor(backgroundColor);
@@ -307,10 +308,10 @@ public class YesOrNoDialog {
     }
 
     private void build() {
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
         int dialogWidth = (int) (280 * density);
 
-        LinearLayout root = (LinearLayout) LayoutInflater.from(context)
+        LinearLayout root = (LinearLayout) LayoutInflater.from(DialogScale.wrap(context))
                 .inflate(R.layout.dialog_yes_or_no, null);
 
         TextView tvTitle = root.findViewById(R.id.tv_yes_no_title);
@@ -377,7 +378,11 @@ public class YesOrNoDialog {
         popupWindow = new PopupWindow(contentView, dialogWidth,
                 LinearLayout.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(cancelable);
+        // 始终非触摸模态：弹窗窗口仅包裹内容大小，若随 cancelable 置为模态
+        // （连锁询问窗 asYesNo 即 cancelable=false）会吞掉全屏所有触摸，导致询问期间
+        // 点击场上/手卡/墓地/除外/额外无法显示详情与查看列表；窗外点击产生的
+        // ACTION_OUTSIDE 由下方 setTouchInterceptor 消费，不会因本改动误关不可取消弹窗
+        popupWindow.setOutsideTouchable(true);
         popupWindow.setFocusable(true);
         popupWindow.setSoftInputMode(softInputMode);
         popupWindow.setTouchInterceptor((v, event) -> {
@@ -396,6 +401,8 @@ public class YesOrNoDialog {
         draggableHelper = new DraggablePopupHelper(context, "game_dialog_" + title);
         draggableHelper.setupDraggablePopup(popupWindow, root, dialogWidth,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
+        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
+        DraggablePopupHelper.enableCollapse(popupWindow, title);
     }
 
     public void show() {

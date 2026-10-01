@@ -23,6 +23,10 @@ public class ChatInputUI {
     
     private EditText etChatInput;
     private boolean isChatEnabled = true;
+    /** 绑定时捕获的 XML 基准高度（px，<=0 表示 wrap/自适应），缩放不叠乘 */
+    private int baseInputHeight = -2;
+    /** 当前 HUD 等比缩放系数（与 gameTopInfo 同源，见 GameTopInfoManager.applyTopInfoSize） */
+    private float hudScaleFactor = 1f;
     
     /**
      * 监听器接口：用于处理发送消息事件
@@ -45,7 +49,42 @@ public class ChatInputUI {
      */
     public void bindChatInput(EditText chatInput) {
         this.etChatInput = chatInput;
+        if (etChatInput != null) {
+            android.view.ViewGroup.LayoutParams lp = etChatInput.getLayoutParams();
+            baseInputHeight = (lp != null) ? lp.height : -2;
+        }
         setupChatInput();
+        applyChatInputScale(hudScaleFactor);
+    }
+
+    /**
+     * 接入 gameTopInfo 的 HUD 缩放体系：输入框字号/高度/边距与血条面板按同一系数
+     * 随 layout_game_right 实测尺寸等比缩放（修复平板高分辨率下固定 dp 显得极细、难点）
+     */
+    public void bindHudScale(GameTopInfoManager topInfoManager) {
+        if (topInfoManager == null) return;
+        hudScaleFactor = topInfoManager.getHudScaleFactor();
+        applyChatInputScale(hudScaleFactor);
+        topInfoManager.addHudScaleObserver(f -> {
+            hudScaleFactor = f;
+            applyChatInputScale(f);
+        });
+    }
+
+    /** 按 HUD 系数缩放输入框：基准与 XML 一致（字号 9sp、左右边距 6dp、竖屏固定高 32dp）；
+     *  手机上系数≈1 保持原样，上限 3 倍防平板过度放大 */
+    private void applyChatInputScale(float f) {
+        if (etChatInput == null) return;
+        float scale = Math.max(1f, Math.min(3f, f));
+        etChatInput.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 9f * scale);
+        float density = context.getResources().getDisplayMetrics().density;
+        int pad = Math.round(6f * scale * density);
+        etChatInput.setPadding(pad, 0, pad, 0);
+        android.view.ViewGroup.LayoutParams lp = etChatInput.getLayoutParams();
+        if (lp != null && baseInputHeight > 0) {
+            lp.height = Math.round(baseInputHeight * scale);
+            etChatInput.setLayoutParams(lp);
+        }
     }
     
     /**

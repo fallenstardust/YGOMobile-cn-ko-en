@@ -41,7 +41,7 @@ import cn.garymb.ygomobile.utils.CrashHandler;
  *   <li>C++ 单线程内用 {@code singleSignal.Wait()} 阻塞等待应答，Java 改为应答队列：UI 经
  *       {@code engine.sendResponse → submitResponse} 入队，pump 线程在 {@code process} 循环间
  *       排空并 {@code set_responseb}，引擎随即推进；</li>
- *   <li>MSG_SHOW_HINT（C++ 模态弹窗）近似为非阻塞提示（{@code onHintMessage}）。</li>
+ *   <li>MSG_SHOW_HINT（C++ 模态弹窗）近似为非阻塞提示（{@code onNoticeMessage}）。</li>
  * </ul>
  */
 public final class SingleModeRunner {
@@ -300,7 +300,7 @@ public final class SingleModeRunner {
             case MSG_SHOW_HINT: {
                 String hint = decodeUtf8Payload(body);
                 engine.mainHandler.post(() -> {
-                    if (engine.listener != null) engine.listener.onHintMessage(hint);
+                    if (engine.listener != null) engine.listener.onNoticeMessage(hint);
                 });
                 return;
             }
@@ -506,7 +506,7 @@ public final class SingleModeRunner {
         running = false;
         finished = true;
         engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onHintMessage(message);
+            if (engine.listener != null) engine.listener.onNoticeMessage(message);
         });
     }
 

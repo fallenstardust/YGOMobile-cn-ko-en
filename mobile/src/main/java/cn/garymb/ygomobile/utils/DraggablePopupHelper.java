@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.os.SystemClock;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -101,9 +102,10 @@ public class DraggablePopupHelper {
         // 否则弹窗显示期间决斗场、双方手卡公开面板等下层 UI 无法响应点击
         wrapper.setHostPopup(popupWindow);
         wrapper.setPassThroughTarget(resolveActivityDecorView(contentView.getContext()));
-        // 记录设计尺寸：屏幕旋转后按新屏宽重新解算弹窗宽度（见 relayoutActivePopupsForOrientation），
+        // 记录设计尺寸与创建时的等比系数：屏幕旋转后按新屏宽重新解算弹窗显示宽度、并按
+        // 当前方向系数相对创建系数的比例重缩放弹窗（见 relayoutActivePopupsForOrientation），
         // 故此处入参语义为“设计（未限宽）尺寸”，由本方法统一按当前屏宽解算实际显示尺寸
-        wrapper.setDesignSize(designW, designH);
+        wrapper.setDesignSize(designW, designH, DialogScale.factor(contentView.getContext()));
         wrapper.setSwapForPortrait(swapForPortrait);
 
         int[] fitted = orientedFitSize(contentView.getContext(), designW, designH, swapForPortrait);
@@ -136,6 +138,24 @@ public class DraggablePopupHelper {
             return;
         }
         ((DragFrameLayout) popupWindow.getContentView()).setCustomRelayout(handler);
+    }
+
+    /**
+     * 为经 {@link #setupDraggablePopup} 包装的弹窗启用收缩模式：初始照常展开（内容左上角
+     * 带「▼」把手），点击把手收缩为贴屏幕底部、与聊天输入框同高同位、保持对话框
+     * 原宽与原背景贴图的横条（横条左侧「▲」箭头 + 标题，点击横条恢复原始尺寸），供临时确认场地。
+     */
+    public static void enableCollapse(PopupWindow popupWindow, String barTitle) {
+        if (popupWindow != null && popupWindow.getContentView() instanceof DragFrameLayout) {
+            ((DragFrameLayout) popupWindow.getContentView()).makeCollapsible(barTitle);
+        }
+    }
+
+    /** 同步弹窗显示期间的横条标题（选卡/卡片确认等动态标题弹窗在 setText 后调用） */
+    public static void setCollapseBarTitle(PopupWindow popupWindow, String barTitle) {
+        if (popupWindow != null && popupWindow.getContentView() instanceof DragFrameLayout) {
+            ((DragFrameLayout) popupWindow.getContentView()).setCollapseTitle(barTitle);
+        }
     }
 
     public void setupDraggablePopup(PopupWindow popupWindow, View contentView, View handle) {
@@ -217,25 +237,33 @@ public class DraggablePopupHelper {
 
     /**
      * 按当前屏幕宽度解算弹窗实际显示尺寸：设计宽度超出屏宽时限为屏宽，
-     * 具体高度（designH&gt;0）按原宽高比等比缩小；高度为 WRAP_CONTENT/MATCH_PARENT
-     * （&lt;=0）时仅限宽不改高度；设计宽度 &lt;=0（如 MATCH_PARENT）原样返回。
-     * 弹窗创建与屏幕旋转重排共用同一解算，保证两个方向下宽度均正确。
+     * 具体高度（designH&gt;0）按原宽高比等比缩小；高度同样限幅：超出屏高时按宽高比
+     * 整体缩回屏内（竖屏解算的设计尺寸转横屏后屏高只剩短边，避免弹窗超屏被放大
+     * 到不合当前 activity 比例）；高度为 WRAP_CONTENT/MATCH_PARENT（&lt;=0）时不改高度；
+     * 设计宽度 &lt;=0（如 MATCH_PARENT）原样返回。度量一律取实时显示度量（见
+     * {@link DialogScale#screenMetrics}），不受弹窗携带的缩放上下文派生值影响；
+     * 弹窗创建与屏幕旋转重排共用同一解算，保证两个方向下尺寸均正确。
      */
     public static int[] fitSizeToScreen(Context context, int designW, int designH) {
         if (designW <= 0) return new int[]{designW, designH};
-        int maxWidth = context.getResources().getDisplayMetrics().widthPixels;
+        DisplayMetrics screen = DialogScale.screenMetrics(context);
         int w = designW;
         int h = designH;
-        if (w > maxWidth) {
-            if (h > 0) h = (int) ((long) h * maxWidth / w);
-            w = maxWidth;
+        if (w > screen.widthPixels) {
+            if (h > 0) h = (int) ((long) h * screen.widthPixels / w);
+            w = screen.widthPixels;
+        }
+        if (h > screen.heightPixels) {
+            w = (int) ((long) w * screen.heightPixels / h);
+            if (w > screen.widthPixels) w = screen.widthPixels;
+            h = screen.heightPixels;
         }
         return new int[]{w, h};
     }
 
-    /** 当前显示是否为竖屏（高大于宽）：以 Activity 上下文的实时屏幕度量为准 */
+    /** 当前显示是否为竖屏（高大于宽）：以实时显示度量为准，不受缩放上下文快照影响 */
     private static boolean isPortrait(Context context) {
-        android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        DisplayMetrics dm = DialogScale.screenMetrics(context);
         return dm.heightPixels > dm.widthPixels;
     }
 
@@ -247,7 +275,7 @@ public class DraggablePopupHelper {
      */
     private static int[] orientedFitSize(Context context, int designW, int designH, boolean swapForPortrait) {
         if (swapForPortrait && designW > 0 && designH > 0 && isPortrait(context)) {
-            android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+            DisplayMetrics dm = DialogScale.screenMetrics(context);
             // 竖屏：正方形，边长取屏宽（竖屏下屏宽≤屏高，自然不超屏高）
             int side = Math.min(dm.widthPixels, dm.heightPixels);
             return new int[]{side, side};
@@ -291,6 +319,10 @@ public class DraggablePopupHelper {
         /** 弹窗设计（未限宽）尺寸，旋转后据此按新屏宽重新解算显示宽度 */
         private int designW = 0;
         private int designH = 0;
+        /** 创建弹窗时的横屏等比系数（与内容 inflate 密度一致）：旋转重排时按
+         *  当前方向系数/创建系数的比例重缩放弹窗可视尺寸（用户规格：竖屏转横屏后
+         *  dialog 仍按横屏时的高度比例显示，幸存弹窗无法重 inflate 密度，整体缩放等效） */
+        private float createdFactor = 1f;
         /** 竖屏时交换宽高基准（与创建期一致），供建主/局域网/单机弹窗旋转后重解使用 */
         private boolean swapForPortrait = false;
         /** 居中区域（如 layout_game_right）的视图 id 与弱引用，旋转重建后按 id 重新解析新实例 */
@@ -298,6 +330,19 @@ public class DraggablePopupHelper {
         private java.lang.ref.WeakReference<View> centerRegionRef;
         /** 自定义旋转重排逻辑；非空时 {@link #relayoutForOrientation} 完全交由其处理，跳过默认限宽 */
         private Runnable customRelayout;
+        // ── 收缩到底部横条模式（CollapsiblePopupShell，经 enableCollapse 启用）──
+        /** 底部收缩横条：与聊天输入框同高同位、保持对话框原宽/原位/原背景贴图的横条，点击恢复原始尺寸；
+         *  作为包装层后加子视图，child 0 始终保持为对话框内容 */
+        private View collapseBar;
+        /** 收缩态横条几何快照：展开可见时取对话框内容的原宽与左缘，横条不再拉伸为整屏宽 */
+        private int collapseBarWidth;
+        private int collapseBarLeft;
+        /** 展开态收缩把手：内容左上角「▼」小按钮，点击收缩为横条 */
+        private View collapseHandle;
+        private boolean collapsible;
+        private boolean collapsed;
+        /** 本次手势 DOWN 是否落在收缩横条/把手上：是则整体禁用拖拽逻辑 */
+        private boolean touchOnCollapseWidget;
 
         DragFrameLayout(Context context, SharedPreferences prefs, String dialogId) {
             super(context);
@@ -314,9 +359,10 @@ public class DraggablePopupHelper {
             this.passThroughTarget = target;
         }
 
-        void setDesignSize(int w, int h) {
+        void setDesignSize(int w, int h, float createdF) {
             this.designW = w;
             this.designH = h;
+            this.createdFactor = createdF > 0f ? createdF : 1f;
         }
 
         void setSwapForPortrait(boolean swap) {
@@ -336,6 +382,118 @@ public class DraggablePopupHelper {
         }
 
         /**
+         * 启用收缩模式：包装层底部加与聊天输入框同高同位、保持对话框原宽与原背景贴图的
+         * 横条、内容左上角加「▼」收缩把手；收缩态内容 GONE 仅剩横条，横条以外触摸照旧透传给 Activity，
+         * 供玩家临时确认场地，点击横条恢复。横条与把手作为后加子视图，child 0 始终
+         * 是对话框内容，{@link #centerPopupInRegion} 的 margin 居中与旋转限宽逻辑不受影响。
+         */
+        void makeCollapsible(String title) {
+            if (getChildCount() == 0) return;
+            final View content = getChildAt(0);
+            collapsible = true;
+
+            collapseBar = CollapsiblePopupShell.createCollapseBar(getContext(), title);
+            CollapsiblePopupShell.styleBarWithDialogContent(collapseBar, content);
+            FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    CollapsiblePopupShell.barMetrics(getContext())[2],
+                    Gravity.TOP | Gravity.START);
+            collapseBar.setVisibility(GONE);
+            collapseBar.setOnClickListener(v -> setCollapsed(false));
+            addView(collapseBar, blp);
+
+            collapseHandle = CollapsiblePopupShell.createCollapseHandle(getContext());
+            FrameLayout.LayoutParams hlp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.TOP | Gravity.START);
+            collapseHandle.setOnClickListener(v -> setCollapsed(true));
+            addView(collapseHandle, hlp);
+
+            // 内容经居中 margin / 旋转重解宽度而移动，把手跟随同步
+            content.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> syncCollapseHandle());
+            syncCollapseHandle();
+        }
+
+        void setCollapseTitle(String title) {
+            CollapsiblePopupShell.setCollapseBarTitle(collapseBar, title);
+        }
+
+        private void setCollapsed(boolean doCollapse) {
+            if (!collapsible || getChildCount() == 0) return;
+            View content = getChildAt(0);
+            if (doCollapse) {
+                refreshCollapseAnchors();
+            }
+            collapsed = doCollapse;
+            content.setVisibility(doCollapse ? GONE : VISIBLE);
+            collapseHandle.setVisibility(doCollapse ? GONE : VISIBLE);
+            collapseBar.setVisibility(doCollapse ? VISIBLE : GONE);
+            if (!doCollapse) {
+                syncCollapseHandle();
+            }
+        }
+
+        /**
+         * 横条与聊天输入框对齐：把窗口坐标系的底部目标换算为包装层内 topMargin
+         *（showPopup 拖拽记忆位会让整个窗口偏移，纯底部 gravity 不能对齐屏幕底部）；
+         * 并取内容原宽/左缘快照使横条保持对话框展开时的宽度与水平位置
+         */
+        private void refreshCollapseAnchors() {
+            if (collapseBar == null) return;
+            int[] m = CollapsiblePopupShell.barMetrics(getContext());
+            FrameLayout.LayoutParams blp = (FrameLayout.LayoutParams) collapseBar.getLayoutParams();
+            blp.height = m[2];
+            // 内容可见已布局时取快照（含旋转重缩放系数：横条保持展开态弹窗的可视宽度）；
+            // 收缩态内容 GONE 不参与布局，沿用上一次的快照值
+            if (getChildCount() > 0) {
+                View content = getChildAt(0);
+                if (content.getVisibility() == VISIBLE && content.getWidth() > 0) {
+                    float sx = content.getScaleX();
+                    collapseBarWidth = Math.round(content.getWidth() * sx);
+                    collapseBarLeft = Math.max(0, Math.round(
+                            content.getLeft() - content.getWidth() * (sx - 1f) / 2f));
+                }
+            }
+            blp.width = collapseBarWidth > 0 ? collapseBarWidth : ViewGroup.LayoutParams.MATCH_PARENT;
+            blp.leftMargin = Math.max(0, collapseBarLeft);
+            int top = -1;
+            View decor = resolveActivityDecorView(getContext());
+            if (decor != null && isAttachedToWindow()) {
+                int[] decorLoc = new int[2];
+                decor.getLocationOnScreen(decorLoc);
+                int[] myLoc = new int[2];
+                getLocationOnScreen(myLoc);
+                top = decorLoc[1] + m[1] - m[3] - m[2] - myLoc[1];
+                if (top < 0) top = 0;
+            }
+            if (top >= 0) {
+                blp.gravity = Gravity.TOP | Gravity.START;
+                blp.topMargin = top;
+            } else {
+                blp.gravity = Gravity.BOTTOM | Gravity.START;
+                blp.topMargin = 0;
+            }
+            collapseBar.setLayoutParams(blp);
+        }
+
+        /** 把手贴住内容左上角（把手与内容同处于包装层坐标系） */
+        private void syncCollapseHandle() {
+            if (collapseHandle == null || getChildCount() == 0) return;
+            View content = getChildAt(0);
+            FrameLayout.LayoutParams hlp =
+                    (FrameLayout.LayoutParams) collapseHandle.getLayoutParams();
+            int inset = CollapsiblePopupShell.dp(getContext(), 2);
+            // 把手贴缩放后内容的可视左上角（pivot 默认在中心，可视边界由缩放比例外扩/内缩）
+            float sx = content.getScaleX();
+            float sy = content.getScaleY();
+            hlp.leftMargin = Math.round(
+                    content.getLeft() - content.getWidth() * (sx - 1f) / 2f) + inset;
+            hlp.topMargin = Math.round(
+                    content.getTop() - content.getHeight() * (sy - 1f) / 2f) + inset;
+            collapseHandle.setLayoutParams(hlp);
+        }
+
+        /**
          * 屏幕旋转后按新屏宽重新解算并应用弹窗显示宽度；若记录了居中区域，旋转重建后
          * 旧区域实例已脱离视图树，按 id 从当前 Activity 视图树重新解析同 id 新实例并重算居中偏移。
          */
@@ -343,11 +501,32 @@ public class DraggablePopupHelper {
             // 子视图尺寸依赖外部解算的弹窗（如选卡/卡片确认按区域宽烘焙卡图）→ 交由自定义重排全权处理
             if (customRelayout != null) {
                 customRelayout.run();
+                if (collapsible) post(this::refreshCollapseAnchors);
                 return;
             }
             if (getChildCount() == 0) return;
             View content = getChildAt(0);
             int[] fitted = orientedFitSize(getContext(), designW, designH, swapForPortrait);
+            // 按当前方向等比系数相对创建系数的比例整体重缩放弹窗：内容以创建方向
+            // 系数（如竖屏 1.0）inflate 且旋转后无法重 inflate，缩放后竖屏创建的弹窗
+            // 转横屏即按横屏高度比例显示；限幅使缩放后的可视尺寸不超出当前屏幕；
+            // swapForPortrait（正方形重排）与铺宽内容（designW<=0）不参与，保持原行为
+            float s = 1f;
+            if (!swapForPortrait && designW > 0 && createdFactor > 0f) {
+                s = DialogScale.factor(getContext()) / createdFactor;
+                if (Float.compare(s, 1f) != 0) {
+                    DisplayMetrics m = DialogScale.screenMetrics(getContext());
+                    int refW = fitted[0] > 0 ? fitted[0] : designW;
+                    if (refW > 0) s = Math.min(s, (float) m.widthPixels / refW);
+                    int refH = fitted[1] > 0 ? fitted[1]
+                            : (content.getHeight() > 0 ? content.getHeight() : 0);
+                    if (refH > 0) s = Math.min(s, (float) m.heightPixels / refH);
+                    if (s < 0.5f) s = 0.5f;
+                    else if (s > 2f) s = 2f;
+                }
+            }
+            content.setScaleX(s);
+            content.setScaleY(s);
             ViewGroup.LayoutParams raw = content.getLayoutParams();
             if (raw instanceof FrameLayout.LayoutParams) {
                 FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) raw;
@@ -367,6 +546,7 @@ public class DraggablePopupHelper {
                     centerPopupInRegion(hostPopup, region);
                 }
             }
+            if (collapsible) refreshCollapseAnchors();
         }
 
         @Override
@@ -377,34 +557,52 @@ public class DraggablePopupHelper {
             }
             ACTIVE_LAYERS.remove(this);
             ACTIVE_LAYERS.add(this);
+            if (collapsible) post(this::refreshCollapseAnchors);
         }
 
         /**
-         * 触点是否落在对话框内容区（唯一子视图）内；
-         * 内容尚未布局（宽高为 0）时视为不在内，避免误吞事件
+         * 触点是否落在任一可见已布局子视图（对话框内容 / 收缩横条 / 收缩把手）内，
+         * 隐藏中的不计；子视图尚未布局（宽高为 0）时视为不在内，避免误吞事件
          */
         private boolean isTouchInsideContent(float x, float y) {
-            if (getChildCount() == 0) return false;
-            View content = getChildAt(0);
-            if (content.getWidth() <= 0 || content.getHeight() <= 0) return false;
-            float left = content.getLeft() + content.getTranslationX();
-            float top = content.getTop() + content.getTranslationY();
-            return x >= left && x < left + content.getWidth()
-                    && y >= top && y < top + content.getHeight();
+            for (int i = 0; i < getChildCount(); i++) {
+                if (isTouchInView(getChildAt(i), x, y)) return true;
+            }
+            return false;
         }
 
-        /** 本层内容区是否覆盖该屏幕坐标（跨弹窗归属判定用） */
+        /** 触点是否落在指定子视图的可见已布局区域内（包装层本地坐标） */
+        private static boolean isTouchInView(View child, float x, float y) {
+            if (child == null || child.getVisibility() != VISIBLE) return false;
+            if (child.getWidth() <= 0 || child.getHeight() <= 0) return false;
+            float left = child.getLeft() + child.getTranslationX();
+            float top = child.getTop() + child.getTranslationY();
+            return x >= left && x < left + child.getWidth()
+                    && y >= top && y < top + child.getHeight();
+        }
+
+        /** 触点是否落在收缩横条/把手上：自行消费（普通子视图点击），不参与拖拽 */
+        private boolean isTouchOnCollapseWidget(float x, float y) {
+            return isTouchInView(collapseBar, x, y) || isTouchInView(collapseHandle, x, y);
+        }
+
+        /** 本层内容区是否覆盖该屏幕坐标（跨弹窗归属判定用；含收缩横条/把手区域） */
         private boolean containsScreenPoint(float rawX, float rawY) {
             if (!isAttachedToWindow() || getChildCount() == 0) return false;
-            View content = getChildAt(0);
-            if (content.getVisibility() != View.VISIBLE) return false;
-            if (content.getWidth() <= 0 || content.getHeight() <= 0) return false;
             int[] loc = new int[2];
             getLocationOnScreen(loc);
-            float left = loc[0] + content.getLeft() + content.getTranslationX();
-            float top = loc[1] + content.getTop() + content.getTranslationY();
-            return rawX >= left && rawX < left + content.getWidth()
-                    && rawY >= top && rawY < top + content.getHeight();
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                if (child.getVisibility() != VISIBLE) continue;
+                if (child.getWidth() <= 0 || child.getHeight() <= 0) continue;
+                float left = loc[0] + child.getLeft() + child.getTranslationX();
+                float top = loc[1] + child.getTop() + child.getTranslationY();
+                if (rawX >= left && rawX < left + child.getWidth()
+                        && rawY >= top && rawY < top + child.getHeight()) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /** 由最上层往下查找触点所属的弹窗层，都不命中返回 null */
@@ -524,6 +722,7 @@ public class DraggablePopupHelper {
         private boolean isTouchOnScrollableView(float x, float y) {
             if (getChildCount() == 0) return false;
             View contentView = getChildAt(0);
+            if (contentView.getVisibility() != VISIBLE) return false;
             if (!(contentView instanceof ViewGroup)) return false;
             float cx = x - contentView.getLeft() + contentView.getScrollX();
             float cy = y - contentView.getTop() + contentView.getScrollY();
@@ -652,6 +851,12 @@ public class DraggablePopupHelper {
 
             switch (ev.getAction()) {
                 case MotionEvent.ACTION_DOWN:
+                    touchOnCollapseWidget = isTouchOnCollapseWidget(ev.getX(), ev.getY());
+                    if (touchOnCollapseWidget) {
+                        // 收缩横条/把手上的触点只作普通子视图点击：禁用拖拽避免移动整个包装层
+                        childConsumedDown = false;
+                        return super.dispatchTouchEvent(ev);
+                    }
                     touchOnScrollable = isTouchOnScrollableView(ev.getX(), ev.getY());
                     if (touchOnScrollable) {
                         childConsumedDown = false;
@@ -663,7 +868,7 @@ public class DraggablePopupHelper {
                     return result || true;
 
                 case MotionEvent.ACTION_MOVE:
-                    if (!touchOnScrollable) {
+                    if (!touchOnScrollable && !touchOnCollapseWidget) {
                         handleDrag(ev);
                         if (dragging) {
                             if (childConsumedDown) {
@@ -679,12 +884,13 @@ public class DraggablePopupHelper {
 
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    if (!touchOnScrollable) {
+                    if (!touchOnScrollable && !touchOnCollapseWidget) {
                         handleDrag(ev);
                     }
                     boolean upResult = super.dispatchTouchEvent(ev);
                     dragging = false;
                     touchOnScrollable = false;
+                    touchOnCollapseWidget = false;
                     childConsumedDown = false;
                     return childConsumedDown ? upResult : (upResult || true);
             }

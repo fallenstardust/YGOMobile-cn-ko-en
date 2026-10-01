@@ -419,7 +419,7 @@
                 android:ellipsize="end"
                 android:background="#A0000000"
                 android:textColor="@color/white"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:visibility="gone" />
 
             <!-- 提示信息 -->
@@ -428,10 +428,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center|top"
-                android:background="@color/colorNavy"
-                android:text="请选择要特殊召唤的怪兽（9-9）"
+                android:background="@drawable/btn_sci_fi_bg"
                 android:textColor="@color/white"
-                android:textSize="9sp"
+                android:padding="2dp"
+                android:textSize="12sp"
                 android:visibility="invisible" />
 
             <TextView
@@ -444,7 +444,7 @@
                 android:maxLines="5"
                 android:ellipsize="end"
                 android:textColor="@color/white"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

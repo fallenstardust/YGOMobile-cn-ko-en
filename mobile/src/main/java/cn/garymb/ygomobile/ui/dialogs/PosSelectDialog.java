@@ -19,6 +19,8 @@ import java.nio.ByteBuffer;
 
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.CollapsiblePopupShell;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.TextureLoader;
 
@@ -64,6 +66,8 @@ public class PosSelectDialog {
 
     private PopupWindow popupWindow;
     private View contentView;
+    /** 收缩模式壳层：原内容 + 底部收缩横条 + 左上收缩把手 */
+    private CollapsiblePopupShell collapseShell;
     private String title;
     private OnPositionSelectedListener selectListener;
     private OnDismissListener dismissListener;
@@ -139,8 +143,11 @@ public class PosSelectDialog {
         if (!(context instanceof Activity)) return;
 
         build(code, positions);
-        popupWindow = new PopupWindow(contentView,
+        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
+        collapseShell = new CollapsiblePopupShell(context, contentView, title, false);
+        popupWindow = new PopupWindow(collapseShell.getView(),
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        collapseShell.attachPopup(popupWindow);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         // 不可取消：对齐 gframe wPosSelect 无关闭按钮，必须点击形式按钮才能关闭
         // 1) outsideTouchable=false 外部点击不关闭；2) focusable=false BACK 键无法 dismiss；
@@ -200,10 +207,12 @@ public class PosSelectDialog {
         if (y < 0) y = 0;
 
         popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, x, y);
+        // 记住展开态几何，收缩把手/恢复据此在展开与底部横条间 resize 窗口
+        if (collapseShell != null) collapseShell.rememberExpanded(x, y, popupW, popupH);
     }
 
     private void build(int code, int positions) {
-        contentView = LayoutInflater.from(context).inflate(R.layout.popup_window_pos_select, null);
+        contentView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_pos_select, null);
 
         ImageButton btnAU = contentView.findViewById(R.id.btn_pos_select_au);
         ImageButton btnAD = contentView.findViewById(R.id.btn_pos_select_ad);
@@ -312,6 +321,6 @@ public class PosSelectDialog {
     }
 
     private int dp2px(float dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
+        return DialogScale.dpToPx(context, dp);
     }
 }

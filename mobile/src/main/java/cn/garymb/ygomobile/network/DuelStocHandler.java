@@ -277,7 +277,7 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         Log.e(TAG, "Server error: " + errorMsg);
         final String finalMsg = errorMsg;
         engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onHintMessage(finalMsg);
+            if (engine.listener != null) engine.listener.onNoticeMessage(finalMsg);
         });
     }
 

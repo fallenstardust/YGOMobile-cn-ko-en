@@ -114,6 +114,8 @@ class DeckEditorViewHost {
         }
         // 卡组编辑器（含副卡组替换）布局已显示：切换 DECK 场景（对齐 Game::playBGM 的 is_building 分支）
         activity.updateBGM();
+        // 卡组编辑属聊天抑制场景（对齐 gframe is_building 隐藏 wChat）：隐藏聊天输入框与开关
+        activity.updateChatUIVisibility();
     }
 
     void hide() {
@@ -124,5 +126,8 @@ class DeckEditorViewHost {
         activity.cardDetailPanel.exitDeckEditorMode();
         // 卡组编辑器隐藏后重算场景（无其他布局显示 → MENU）
         activity.updateBGM();
+        // layoutDeckEditor 已置 GONE、btnChat 被 exitDeckEditorMode 重绑为默认可见：
+        // 按退出后的实际场景重算聊天输入框与开关显隐
+        activity.updateChatUIVisibility();
     }
 }

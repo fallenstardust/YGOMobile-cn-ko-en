@@ -270,13 +270,21 @@ public class GameField {
             if (buf.remaining() < 4) return;
             int flag = buf.getInt();
             if (flag == 0) {
-                clearData();
+                // 回放遮蔽保护：整块清零的遮蔽刷新不清掉手卡区已有的真实卡码
+                if (!(preserveMaskedHandCode && (location & 0x02) != 0 && code != 0)) {
+                    clearData();
+                }
                 return;
             }
             if ((flag & QUERY_CODE) != 0 && buf.remaining() >= 4) {
                 int pdata = buf.getInt();
-                if (pdata == 0) clearData();
-                setCode(pdata);
+                // 回放遮蔽保护：仅卡码被服务器置零的手卡块——保留流内已揭示的真实卡码
+                if (pdata == 0 && preserveMaskedHandCode && (location & 0x02) != 0 && code != 0) {
+                    // 跳过 clearData/setCode(0)，其余字段照旧解析
+                } else {
+                    if (pdata == 0) clearData();
+                    setCode(pdata);
+                }
             }
             if ((flag & QUERY_POSITION) != 0 && buf.remaining() >= 4) {
                 int pdata = (buf.getInt() >> 24) & 0xff;
@@ -471,6 +479,13 @@ public class GameField {
     /** 回放快进重排期间的即时落位模式：移动/淡入淡出/LP/洗牌动画全部直接到位，
      *  不产生 aniFrame——动画闸门天然不阻塞，快进队列可单帧排空（GameEngine.drainReplayQueueNow） */
     public boolean instantPlace = false;
+    /** 回放态遮蔽保护（用户规格：不引擎重跑也要对方手卡正面）：合并的客户端视角录像里，
+     *  对方手卡的 UPDATE_DATA/UPDATE_CARD 块被服务器中继遮蔽（整块清零或 code=0），
+     *  而同一张卡的真实卡码已由流内 MSG_DRAW/MSG_MOVE 未遮蔽中继写入卡对象；若再让
+     *  零块覆盖会把对方手卡永远压成背面。置位时手卡区已有卡码的卡忽略零块
+     *  （ClientCard 为 static 内嵌类，故本开关也为 static；仅随回放会话置位/复位，
+     *  实况遮蔽语义不受影响） */
+    public static boolean preserveMaskedHandCode = false;
     public List<ChainInfo> chains = new ArrayList<>();
 
     /**

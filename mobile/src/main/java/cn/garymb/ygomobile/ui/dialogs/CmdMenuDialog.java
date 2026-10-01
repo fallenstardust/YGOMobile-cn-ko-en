@@ -18,6 +18,7 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import ocgcore.DataManager;
@@ -82,7 +83,7 @@ public class CmdMenuDialog {
 
     public CmdMenuDialog(YGOProActivity activity) {
         this.activity = activity;
-        contentView = LayoutInflater.from(activity).inflate(R.layout.popup_window_cmd_menu, null);
+        contentView = LayoutInflater.from(DialogScale.wrap(activity)).inflate(R.layout.popup_window_cmd_menu, null);
         layoutItems = contentView.findViewById(R.id.layout_cmd_menu_items);
 
         popupWindow = new PopupWindow(contentView, dp(MENU_WIDTH_DP),
@@ -374,6 +375,18 @@ public class CmdMenuDialog {
             // 不能走 allSameCard→showOptionListForMode 的直接应答捷径（否则点特殊召唤无任何列表出现）。
             final List<GameEngine.CmdCardInfo> chosen = spList;
             actions.add(() -> showCmdList(card, engine, cmdContext, chosen, MODE_SPSUMMON));
+        }
+
+        // 场上超量怪兽（带素材走本菜单而非 buildCardCommandMenu）在战斗阶段可攻击时，
+        // 须与单卡菜单一样列出「攻击」，编码同为 (attackableCards索引<<16)+1
+        // （对齐 event_handler.cpp COMMAND_ATTACK → myvideo 攻击应答）
+        if (card.location == LOC_MZONE && (card.cmdFlag & GameEngine.COMMAND_ATTACK) != 0) {
+            int idx = findCmdIndex(engine.attackableCards, card);
+            if (idx >= 0) {
+                options.add(sysString(SYS_ATTACK));
+                final int attackIdx = idx;
+                actions.add(() -> activity.sendResponseInt((attackIdx << 16) + 1));
+            }
         }
 
         options.add(viewListText());
@@ -785,7 +798,7 @@ public class CmdMenuDialog {
     }
 
     private Button createItemButton(String text) {
-        Button btn = new Button(activity);
+        Button btn = new Button(DialogScale.wrap(activity));
         btn.setText(text);
         btn.setTextColor(0xFFFFFFFF);
         btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
@@ -801,6 +814,6 @@ public class CmdMenuDialog {
     }
 
     private int dp(int value) {
-        return Math.round(value * activity.getResources().getDisplayMetrics().density);
+        return DialogScale.dpToPx(activity, value);
     }
 }

@@ -22,6 +22,7 @@ import java.util.List;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.DialogScale;
 
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -159,12 +160,12 @@ public class DuelLogDialog {
 
     public DuelLogDialog(YGOProActivity activity) {
         this.activity = activity;
-        this.adapter = new LogAdapter(activity);
+        this.adapter = new LogAdapter(DialogScale.wrap(activity));
         build();
     }
 
     private void build() {
-        View root = LayoutInflater.from(activity).inflate(R.layout.dialog_duel_log, null);
+        View root = LayoutInflater.from(DialogScale.wrap(activity)).inflate(R.layout.dialog_duel_log, null);
         lvLog = root.findViewById(R.id.lv_duel_log);
         Button btnClear = root.findViewById(R.id.btn_duel_log_clear);
         Button btnClose = root.findViewById(R.id.btn_duel_log_close);
@@ -275,7 +276,7 @@ public class DuelLogDialog {
     }
 
     private int dp(int value) {
-        return Math.round(value * activity.getResources().getDisplayMetrics().density);
+        return DialogScale.dpToPx(activity, value);
     }
 
     private static class LogAdapter extends BaseAdapter {

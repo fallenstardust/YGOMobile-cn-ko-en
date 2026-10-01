@@ -21,6 +21,7 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.ui.adapters.HostListAdapter;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -83,7 +84,7 @@ public class LanModeDialog {
     }
 
     public void show(View anchorView) {
-        View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_lan_main, null);
+        View customView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_lan_main, null);
 
         etNickname = customView.findViewById(R.id.et_nickname);
         etHostIp = customView.findViewById(R.id.et_host_ip);
@@ -121,7 +122,7 @@ public class LanModeDialog {
             }
         });
 
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         // 传设计尺寸给 setupDraggablePopup：由其按当前屏宽统一限宽，并在屏幕旋转后按新屏宽重新解算

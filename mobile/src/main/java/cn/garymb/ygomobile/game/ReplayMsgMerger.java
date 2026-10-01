@@ -22,6 +22,9 @@ import cn.garymb.ygomobile.network.server.YrpWriter;
  * {@link YrpWriter#REPLAY_MSG_STREAM_V2}(0x40) 标志位，数据段布局与
  * {@link YrpWriter#build()} 完全一致：base(names/params/decks) + 响应记录流 + msgBlob + [uint32 blobLen]。
  *
+ * <p>头部字段偏移（小端）：id=0, version=4, flag=8, seed=12, datasize=16, startTime=20, props=24..31，
+ * YRP1 头 32B；YRP2 另有 48B 扩展（seedSequence[8]/headerVersion/value1..3）共 80B。
+ *
  * <p>原文件头（id/version/seed/startTime/props，YRP2 另含 seedSequence/headerVersion/value1..3）
  * 与 base、响应段全部逐字节保留，仅回写 flag |= 0x40 与 datasize（未压缩长度），因此：
  * <ul>
@@ -70,6 +73,10 @@ public final class ReplayMsgMerger {
                 // 已是 V2（如本地房主 YrpWriter 产物），不重复追加
                 return yrp;
             }
+            // 头字段顺序与 ReplayReader.parseReplay 严格对偶：
+            // id(0) version(4) flag(8) seed(12) datasize(16) startTime(20) props(24..31)；
+            // 曾把 seed 误当 datasize、props 从 20 起读，外部服务端录像合并必败（聊天因此丢失）
+            buf.getInt(); // seed 原样保留，不参与合并
             int datasize = buf.getInt();
             if (datasize <= 0 || datasize > (1 << 26)) {
                 return yrp;
@@ -78,7 +85,8 @@ public final class ReplayMsgMerger {
             byte[] props = new byte[8];
             buf.get(props);
             int headerSize = (id == ReplayReader.REPLAY_ID_YRP2) ? EXTENDED_HEADER_SIZE : BASE_HEADER_SIZE;
-            if (yrp.length <= headerSize) {
+            if (yrp.length <= headerSize || buf.remaining() < 8) {
+                // 头短于声明的 headerSize / props 越界：非法包体，原样返回
                 return yrp;
             }
             byte[] body = Arrays.copyOfRange(yrp, headerSize, yrp.length);

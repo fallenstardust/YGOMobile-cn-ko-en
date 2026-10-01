@@ -228,6 +228,16 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     public void show() {
         if (viewController != null) viewController.show();
         if (topInfoManager != null) topInfoManager.show();
+        // 离场 hide() 把聊天/提示容器置 GONE，进入决斗必须恢复：提示栏 tv_hint_message
+        // 寄宿其中，父容器 GONE 时 showDuelHint 的 setText+VISIBLE 全部无效
+        ensureHintContainerVisible();
+    }
+
+    /** 恢复 stHintMsg 宿主容器可见（hide() 离场置 GONE 后的对称还原）；
+     *  子视图（聊天行/提示栏）各自仍按自身显隐控制，容器还原不产生多余内容 */
+    private void ensureHintContainerVisible() {
+        if (layoutChatMessages != null && layoutChatMessages.getVisibility() != View.VISIBLE)
+            layoutChatMessages.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -330,7 +340,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (panel != null) panel.updateShuffleButton(engine.showShuffle);
         // 通讯（MSG_SELECT_IDLE_CMD）允许进入结束阶段
         phaseBar.setEpButtonAllowed(true);
-        showHint("点击手牌或场上卡片进行操作", 2500);
     }
 
     public void beginBattleCommand() {
@@ -347,7 +356,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (panel != null) panel.updateShuffleButton(false);
         // 通讯（MSG_SELECT_BATTLE_CMD）允许进入结束阶段
         phaseBar.setEpButtonAllowed(true);
-        showHint("点击卡片进行攻击或发动", 2500);
     }
 
     /**
@@ -358,7 +366,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      */
     public void beginChainCommand() {
         setCmdContext(CMD_CONTEXT_CHAIN);
-        showHint("点击场上高亮的卡片发动效果", 2500);
     }
 
     /** 退出连锁发动模式：复位命令上下文并关闭残留命令菜单 */
@@ -369,16 +376,41 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     // === 提示信息 ===
 
-    /** 提示定时隐藏任务：showHint 与 showDuelHint 共用，避免多次延时任务叠加导致提前隐藏 */
-    private final Runnable hideHintRunnable = () -> {
-        if (tvHintMessage != null) tvHintMessage.setVisibility(View.GONE);
-    };
+    /** 临时提示到时隐藏 Runnable（仅隐藏本通道文本；存续的 stHintMsg 文本到时恢复显示） */
+    private Runnable hideHintRunnable;
+    /** 当前存续的 stHintMsg 文本（showDuelHint 记录，hideDuelHint/下一条消息清空），
+     *  供临时提示超时隐藏时恢复，不被临时知会顺带抹掉 */
+    private String pendingDuelHint;
 
+    /**
+     * 临时知会类提示（撤回结果、HINT_MESSAGE、服务器知会等）：显示在 tvHintMessage
+     * 原本位置，durationMs 到时自动隐藏；选择/等待类通讯提示（对齐 gframe stHintMsg，
+     * 文本均来自 strings.conf 系统字符串）仍走 showDuelHint 持续显示通道，互不影响。
+     * 决斗界面未显示（大厅/建主机流程）时退回 Toast，避免知会文本丢失。
+     */
     public void showHint(String msg, int durationMs) {
+        View gameRight = activity.findViewById(R.id.layout_game_right);
+        if (tvHintMessage == null || gameRight == null || !gameRight.isShown()) {
+            android.widget.Toast.makeText(activity, msg,
+                    durationMs > 2000 ? android.widget.Toast.LENGTH_LONG : android.widget.Toast.LENGTH_SHORT)
+                    .show();
+            return;
+        }
+        if (hideHintRunnable == null) {
+            hideHintRunnable = () -> {
+                // 临时知会到期：若仍有存续的选择/等待类提示（stHintMsg）则恢复其文本，否则隐藏
+                if (pendingDuelHint != null) {
+                    tvHintMessage.setText(pendingDuelHint);
+                } else {
+                    tvHintMessage.setVisibility(View.GONE);
+                }
+            };
+        }
         mainHandler.removeCallbacks(hideHintRunnable);
+        ensureHintContainerVisible();
         tvHintMessage.setText(msg);
         tvHintMessage.setVisibility(View.VISIBLE);
-        mainHandler.postDelayed(hideHintRunnable, durationMs);
+        mainHandler.postDelayed(hideHintRunnable, Math.max(durationMs, 500));
     }
 
     /**
@@ -386,14 +418,16 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      * （调用方 GameEngine.onGameMsg / onWaiting / onSelectXxx，见 stHintMsg 调用点）
      */
     public void showDuelHint(String text) {
-        mainHandler.removeCallbacks(hideHintRunnable);
+        if (tvHintMessage == null) return;
+        ensureHintContainerVisible();
+        pendingDuelHint = text;
         tvHintMessage.setText(text);
         tvHintMessage.setVisibility(View.VISIBLE);
     }
 
     /** 隐藏通讯提示（对齐 duelclient.cpp ClientAnalyze 开头 stHintMsg->setVisible(false)） */
     public void hideDuelHint() {
-        mainHandler.removeCallbacks(hideHintRunnable);
+        pendingDuelHint = null;
         if (tvHintMessage != null) tvHintMessage.setVisibility(View.GONE);
     }
 

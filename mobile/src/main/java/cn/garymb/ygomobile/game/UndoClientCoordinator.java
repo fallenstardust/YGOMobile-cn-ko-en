@@ -87,7 +87,7 @@ class UndoClientCoordinator {
 
     private void postUndoHint(String text) {
         engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onHintMessage(text);
+            if (engine.listener != null) engine.listener.onNoticeMessage(text);
         });
     }
 

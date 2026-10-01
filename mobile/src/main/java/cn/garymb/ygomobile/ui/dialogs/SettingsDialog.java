@@ -22,6 +22,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -80,8 +81,8 @@ public class SettingsDialog {
 
     public void show(View anchorView) {
         AppsSettings appsSettings = AppsSettings.get();
-        float density = context.getResources().getDisplayMetrics().density;
-        View rootLayout = LayoutInflater.from(context).inflate(R.layout.popup_window_settings, null);
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
+        View rootLayout = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_settings, null);
 
         StringManager stringManager = DataManager.get().getStringManager();
 

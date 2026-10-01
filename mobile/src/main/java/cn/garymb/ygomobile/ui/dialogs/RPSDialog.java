@@ -20,6 +20,7 @@ import java.io.File;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 
 /*开局猜拳的弹窗*/
@@ -89,7 +90,7 @@ public class RPSDialog {
 
     public void show() {
         if (isShowing()) return;
-        contentView = LayoutInflater.from(context).inflate(R.layout.popup_window_rps, null);
+        contentView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_rps, null);
         bindHandButton(R.id.btn_rps_scissors, HAND_SCISSORS);
         bindHandButton(R.id.btn_rps_rock, HAND_ROCK);
         bindHandButton(R.id.btn_rps_paper, HAND_PAPER);
@@ -350,6 +351,6 @@ public class RPSDialog {
 
 
     private int dp2px(float dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
+        return DialogScale.dpToPx(context, dp);
     }
 }

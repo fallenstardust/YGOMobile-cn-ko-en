@@ -109,6 +109,11 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     private int restartFromStep;
     /** 本次会话录像文件 V2 尾段内的 0xF1 聊天伪帧条数（加载时统计，随开场信息展示供录制验证）；-1=非逐帧流无从统计 */
     private int chatFrameCount = -1;
+    /** 聊天时间线（逐帧流含 0xF1 帧时加载构建）：帧体与前置可见步计数。引擎重跑流内无 0xF1、
+     *  快进重排丢弃内联帧，两者都靠落点后按步号补齐，undo 不再丢聊天历史 */
+    private final List<ChatTimelineEntry> chatTimeline = new ArrayList<>();
+    /** 聊天时间线游标（单调前移，performRestart 回卷时复位） */
+    private int chatCursor;
     /** undo/restart 目标步为 0：消费并重投 MSG_START（重建初始场）后即停 */
     private boolean landAtStart;
     private volatile String lastErrorMessage;
@@ -280,7 +285,11 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                 fail("无法加载录像文件");
                 return;
             }
-            // 含 MSG 流的录像（V2 逐帧 / V1 原始流）直接消费消息流；旧格式重跑引擎复现消息流（ReplaySource 内部自适应）
+            // 回放源（用户规格）：文件内含 MSG 流（V2 逐帧 / V1 原始流）就恒直接播流——
+            // 脱离 ocgcore/scripts 即可播放，不做引擎重跑；仅无流的旧格式才重跑引擎复现消息流。
+            // 对方手卡正面改由回放遮蔽保留支撑（GameField.preserveMaskedHandCode）：流内
+            // MSG_DRAW/MSG_MOVE 已写入的真实卡码不再被遮蔽零块覆盖，合并的客户端视角文件
+            // 照样正面显示手卡（文件本身保持原样不改写，C++ libygomobile.so 重跑兼容不受影响）
             source = (replayData.msgFrames != null || replayData.msgBuffer != null)
                     ? new MsgStreamReplaySource(this)
                     : new EngineReplaySource(this);
@@ -292,6 +301,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             totalSteps = computeTotalSteps();
             prepareDisplayDecks();
             chatFrameCount = countChatFrames();
+            buildChatTimeline();
             startSession();
             if (source.engineDriven()) {
                 // 旧格式重跑不产 MSG_START（gframe 由 dField.Initial 建场），此处自行建初始场
@@ -339,6 +349,83 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             if (f != null && f.length >= 2 && (f[0] & 0xFF) == GameEngine.REPLAY_CHAT_FRAME) n++;
         }
         return n;
+    }
+
+    /** 聊天时间线条目：0xF1 帧的帧体（不含帧号）与其前置可见步计数 */
+    private static final class ChatTimelineEntry {
+        final int step;
+        final byte[] body;
+
+        ChatTimelineEntry(int step, byte[] body) {
+            this.step = step;
+            this.body = body;
+        }
+    }
+
+    /**
+     * 构建聊天时间线：扫描逐帧流，0xF1 帧记「前置可见步计数 + 帧体」，其余帧按 isVisibleStep
+     * 推进计数（计步口径与 computeTotalSteps/pump 的 currentStep 完全一致）。引擎重跑源流内
+     * 无 0xF1、快进重排途中内联帧被丢弃，两者都靠落点后 dispatchChatUpTo 按步号落地。
+     */
+    private void buildChatTimeline() {
+        chatTimeline.clear();
+        chatCursor = 0;
+        List<byte[]> frames = replayData == null ? null : replayData.msgFrames;
+        if (frames == null) return;
+        int step = 0;
+        for (byte[] f : frames) {
+            if (f == null || f.length == 0) continue;
+            int type = f[0] & 0xFF;
+            if (type == GameEngine.REPLAY_CHAT_FRAME) {
+                if (f.length >= 2) {
+                    byte[] body = new byte[f.length - 1];
+                    System.arraycopy(f, 1, body, 0, body.length);
+                    chatTimeline.add(new ChatTimelineEntry(step, body));
+                }
+            } else if (ReplayMessageSlicer.isVisibleStep(type)) {
+                step++;
+            }
+        }
+    }
+
+    /** 派发时间线上步号 ≤ uptoStep 的全部聊天（游标单调前移，重复调用幂等） */
+    private void dispatchChatUpTo(int uptoStep) {
+        while (chatCursor < chatTimeline.size()
+                && chatTimeline.get(chatCursor).step <= uptoStep) {
+            dispatchReplayChat(chatTimeline.get(chatCursor).body);
+            chatCursor++;
+        }
+    }
+
+    /**
+     * 转码产物帧列表：把时间线聊天帧按步号交错并回重跑 captured 帧（ReplayTranscoder 只写
+     * 响应+合成 MSG_START+给定帧，不并回则遮蔽文件重跑转码后 0xF1 被抹掉、固化文件丢聊天）。
+     * MSG_START 非可见步：步数从 0 起算，与 buildChatTimeline 口径一致。
+     */
+    private List<byte[]> buildTranscodeFrames(List<byte[]> captured) {
+        List<byte[]> out = new ArrayList<>(captured.size() + chatTimeline.size());
+        if (chatTimeline.isEmpty()) {
+            out.addAll(captured);
+            return out;
+        }
+        int step = 0, ci = 0;
+        for (byte[] f : captured) {
+            while (ci < chatTimeline.size() && chatTimeline.get(ci).step <= step) {
+                out.add(chatFrameToWire(chatTimeline.get(ci++).body));
+            }
+            out.add(f);
+            if (f != null && f.length > 0 && ReplayMessageSlicer.isVisibleStep(f[0] & 0xFF)) step++;
+        }
+        while (ci < chatTimeline.size()) out.add(chatFrameToWire(chatTimeline.get(ci++).body));
+        return out;
+    }
+
+    /** 帧体 → 完整 0xF1 帧（帧号+playerType+UTF-8 文本），与录制侧 writeMessage 落盘布局一致 */
+    private static byte[] chatFrameToWire(byte[] body) {
+        byte[] wire = new byte[body.length + 1];
+        wire[0] = (byte) GameEngine.REPLAY_CHAT_FRAME;
+        System.arraycopy(body, 0, wire, 1, body.length);
+        return wire;
     }
 
     /** 显示用卡码副本：按本机卡表归一（先行号↔正式号），原始 replayData.decks 留给引擎重跑 */
@@ -434,8 +521,10 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                     break;
                 }
                 if (msg.type == GameEngine.REPLAY_CHAT_FRAME) {
-                    // 聊天/观战发言伪帧：非引擎消息，不计步、不参与节奏、不投喂管线，独立派发显示
-                    dispatchReplayChat(msg.body);
+                    // 聊天/观战发言伪帧：非引擎消息，不计步、不参与节奏、不投喂管线。有时间线
+                    // （逐帧流）时统一按步号在节奏点/快进落点落地（见 paceAfter 后补齐），无时间线
+                    // 的 V1 原始拼接流才内联即时派发
+                    if (chatTimeline.isEmpty()) dispatchReplayChat(msg.body);
                     continue;
                 }
                 if (msg.type == MSG_RETRY) {
@@ -463,6 +552,9 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                     zoneCounter.applyReplayDeckCodes();
                 }
                 fedSincePump = paceAfter(msg.type, fedSincePump);
+                // 聊天按步号落地：正常节奏=currentStep 刚推进；快进落点=isSkipping 刚复位且
+                // currentStep 已回填目标步 → 批量补齐落点前全部聊天，undo 不再清空历史
+                if (!isSkipping && !chatTimeline.isEmpty()) dispatchChatUpTo(currentStep);
                 if (fedSincePump < 0) break;
             }
         } catch (Throwable t) {
@@ -590,6 +682,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         ReplayCodeMapper.beginSession();
         replayWinSeen = false;
         currentStep = 0;
+        chatCursor = 0;      // 聊天时间线随回卷重放（落点后按步号批量补齐）
         skipStep = Math.max(0, restartTargetStep);
         restartFromStep = skipStep;
         restartTargetStep = 0;
@@ -660,6 +753,9 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     /** 开始回放会话：置实况管线回放标志；录制者视角恒等映射（duelIsFirst=true），双方昵称写 playerInfos */
     private void startSession() {
         engine.replayMode = true;
+        // 回放遮蔽保护：手卡区的遮蔽零块（合并客户端视角流里对方手码被服务器置零）
+        // 不再覆盖流内 MSG_DRAW/MSG_MOVE 已写入的真实卡码→对方手卡保持正面
+        GameField.preserveMaskedHandCode = true;
         engine.duelIsFirst = true;
         engine.inDuel = false;
         if (replayData != null) {
@@ -690,6 +786,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     /** 退出/停止回放：还原实况管线全部回放标志并复位播控状态（MSG_START 重放前也调用以清旧游标） */
     private void clearReplayFlags() {
         engine.replayMode = false;
+        GameField.preserveMaskedHandCode = false;
         engine.replaySkip = false;
         field.instantPlace = false;
         engine.duelIsFirst = true;
@@ -754,7 +851,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             if (d != null && d.header.base.id == ReplayReader.REPLAY_ID_YRP2
                     && !d.isSingleMode && !d.isTag && d.replayBuffer != null
                     && captured != null && !captured.isEmpty()) {
-                transcodeFrames = new ArrayList<>(captured);
+                transcodeFrames = buildTranscodeFrames(captured);   // 聊天 0xF1 帧按步号并回，转码不丢聊天
                 ByteBuffer rb = d.replayBuffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
                 responseSnapshot = new byte[rb.remaining()];
                 rb.get(responseSnapshot);
@@ -767,6 +864,8 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         if (!playbackCompleted && lastErrorMessage == null) {
             earlyEndNote = isSkipping ? "快进重排中止" : "消息流未播尽";
         }
+        // 自然播毕补齐：最后可见步之后的聊天帧（结算后发言/引擎重跑尾部时基）按时间线落地
+        if (!isSkipping && (endOfStream || replayWinSeen)) dispatchChatUpTo(Integer.MAX_VALUE);
         clearReplayFlags();
         closeSourceQuietly();
         isRunning = false;

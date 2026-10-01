@@ -33,7 +33,7 @@ public class ConnectionManager {
                 return;
             }
             if (!server.isSecondPlayerJoined() && engine.listener != null) {
-                engine.listener.onHintMessage("AI 连接失败：WindBot 未在预期时间内加入");
+                engine.listener.onNoticeMessage("AI 连接失败：WindBot 未在预期时间内加入");
             }
         };
     }
@@ -67,7 +67,7 @@ public class ConnectionManager {
             engine.setState(GameEngine.GameState.DISCONNECTED);
             engine.mainHandler.post(() -> {
                 if (engine.listener != null) {
-                    engine.listener.onHintMessage(reason);
+                    engine.listener.onNoticeMessage(reason);
                 }
             });
         }
@@ -138,7 +138,7 @@ public class ConnectionManager {
                 if (!connected) {
                     engine.setState(GameEngine.GameState.DISCONNECTED);
                     engine.mainHandler.post(() -> {
-                        if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器");
+                        if (engine.listener != null) engine.listener.onNoticeMessage("无法连接到本地游戏服务器");
                     });
                     return;
                 }
@@ -152,7 +152,7 @@ public class ConnectionManager {
                 Log.e(TAG, "建立主机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
                 engine.mainHandler.post(() -> {
-                    if (engine.listener != null) engine.listener.onHintMessage("建立主机失败: " + t.getMessage());
+                    if (engine.listener != null) engine.listener.onNoticeMessage("建立主机失败: " + t.getMessage());
                 });
             }
         });
@@ -177,7 +177,7 @@ public class ConnectionManager {
                 if (!connected) {
                     engine.setState(GameEngine.GameState.DISCONNECTED);
                     engine.mainHandler.post(() -> {
-                        if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器");
+                        if (engine.listener != null) engine.listener.onNoticeMessage("无法连接到本地游戏服务器");
                     });
                     return;
                 }
@@ -191,7 +191,7 @@ public class ConnectionManager {
                 Log.e(TAG, "建立主机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
                 engine.mainHandler.post(() -> {
-                    if (engine.listener != null) engine.listener.onHintMessage("建立主机失败: " + t.getMessage());
+                    if (engine.listener != null) engine.listener.onNoticeMessage("建立主机失败: " + t.getMessage());
                 });
             }
         });
@@ -211,7 +211,7 @@ public class ConnectionManager {
         engine.isHost = false;
         engine.setState(GameEngine.GameState.CONNECTING);
         engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onHintMessage("正在加载残局...");
+            if (engine.listener != null) engine.listener.onNoticeMessage("正在加载残局...");
         });
         // 失败/终止路径（脚本缺失、引擎不可用等）由 runner 内部提示并回 IDLE
         engine.singleRunner.start(luaPath, noShuffleToDeck);
@@ -233,7 +233,7 @@ public class ConnectionManager {
                 if (!connected) {
                     engine.setState(GameEngine.GameState.DISCONNECTED);
                     engine.mainHandler.post(() -> {
-                        if (engine.listener != null) engine.listener.onHintMessage("无法连接到本地游戏服务器"); });
+                        if (engine.listener != null) engine.listener.onNoticeMessage("无法连接到本地游戏服务器"); });
                     return;
                 }
                 engine.client.sendPlayerInfo(engine.playerName);
@@ -257,7 +257,7 @@ public class ConnectionManager {
                         scheduleBotJoinTimeout();
                     } catch (Exception e) {
                         Log.e(TAG, "Failed to launch WindBot", e);
-                        if (engine.listener != null) engine.listener.onHintMessage("启动AI失败: " + e.getMessage());
+                        if (engine.listener != null) engine.listener.onNoticeMessage("启动AI失败: " + e.getMessage());
                     }
                 });
             } catch (Throwable t) {
@@ -265,7 +265,7 @@ public class ConnectionManager {
                 Log.e(TAG, "启动人机失败", t);
                 engine.setState(GameEngine.GameState.DISCONNECTED);
                 engine.mainHandler.post(() -> {
-                    if (engine.listener != null) engine.listener.onHintMessage("启动人机失败: " + t.getMessage());
+                    if (engine.listener != null) engine.listener.onNoticeMessage("启动人机失败: " + t.getMessage());
                 });
             }
         });
@@ -321,7 +321,7 @@ public class ConnectionManager {
                     scheduleBotJoinTimeout();
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to launch WindBot", e);
-                    if (engine.listener != null) engine.listener.onHintMessage("启动AI失败: " + e.getMessage());
+                    if (engine.listener != null) engine.listener.onNoticeMessage("启动AI失败: " + e.getMessage());
                 }
             });
         });

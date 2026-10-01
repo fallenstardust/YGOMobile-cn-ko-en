@@ -154,7 +154,7 @@ public class DeckHandMotionManager {
             int sidx = 0;
             for (GameField.ClientCard c : hand) {
                 if (c == null) continue;
-                if (sidx < count) c.setCode(newCodes[sidx] & 0x7fffffff);
+                if (sidx < count) setHandCode(c, newCodes[sidx] & 0x7fffffff);
                 c.clearDescHints();
                 sidx++;
             }
@@ -178,7 +178,7 @@ public class DeckHandMotionManager {
                 int idx = 0;
                 for (GameField.ClientCard c : hand) {
                     if (c == null) continue;
-                    if (idx < count) c.setCode(newCodes[idx] & 0x7fffffff);
+                    if (idx < count) setHandCode(c, newCodes[idx] & 0x7fffffff);
                     c.clearDescHints(); // L2691：desc_hints.clear()
                     idx++;
                 }
@@ -191,12 +191,19 @@ public class DeckHandMotionManager {
             int idx = 0;
             for (GameField.ClientCard c : hand) {
                 if (c == null) continue;
-                if (idx < count) c.setCode(newCodes[idx] & 0x7fffffff);
+                if (idx < count) setHandCode(c, newCodes[idx] & 0x7fffffff);
                 c.clearDescHints();
                 idx++;
             }
         }
         postFieldChanged();
+    }
+
+    /** 洗切换面写码：回放遮蔽保护态下，合并流里对方手卡的洗后码全为遮蔽零——
+     *  不用零码盖掉流内已揭示的真实卡码（实况遮蔽语义不变，开关仅随回放会话置位） */
+    private static void setHandCode(GameField.ClientCard c, int newCode) {
+        if (newCode == 0 && GameField.preserveMaskedHandCode && c.code != 0) return;
+        c.setCode(newCode);
     }
 
     /**

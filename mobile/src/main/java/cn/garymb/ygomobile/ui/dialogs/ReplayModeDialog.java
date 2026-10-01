@@ -37,6 +37,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.ui.activities.ShareFileActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.Constants;
 import ocgcore.DataManager;
@@ -78,7 +79,7 @@ public class ReplayModeDialog {
 
     public void show(View anchorView, File replayDir) {
         this.replayDir = replayDir;
-        View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_replay_mode, null);
+        View customView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_replay_mode, null);
 
         ListView lvReplayList = customView.findViewById(R.id.lv_replay_list);
         TextView tvReplayInfo = customView.findViewById(R.id.tv_replay_info);
@@ -96,7 +97,7 @@ public class ReplayModeDialog {
         refreshReplayList();
         lvReplayList.setAdapter(replayAdapter);
 
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         // 传设计尺寸给 setupDraggablePopup：由其按当前屏宽统一限宽，并在屏幕旋转后按新屏宽重新解算
@@ -309,7 +310,7 @@ public class ReplayModeDialog {
             playerNames.add(ReplayReader.getPlayerName(replayData, i));
         }
 
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
         SimpleListAdapter adapter = new SimpleListAdapter(context);
         adapter.set(playerNames);
         adapter.setMultiSelectMode(true);
@@ -405,7 +406,7 @@ public class ReplayModeDialog {
     }
 
     private void showRenameDialog(File replayFile, ListView listView) {
-        EditText editText = new EditText(context);
+        EditText editText = new EditText(DialogScale.wrap(context));
         editText.setText(replayFile.getName().replace(".yrp", ""));
         editText.selectAll();
         editText.setTextColor(0xFFFFFFFF);
@@ -539,6 +540,10 @@ public class ReplayModeDialog {
                             activity.getFieldCtl().setPhaseText("\u25b6");
                             activity.getCardDetailPanel().showReplayControls();
                             activity.getCardDetailPanel().updateReplayButtonStates(false);
+                            // 回放会话直到本回调才真正建立（startSession 置 replayMode 在
+                            // 加载线程，晚于 enterReplayUI 的聊天 UI 核算）：起播后重算，
+                            // 录像观看属抑制场景隐藏聊天输入框与开关（对齐 gframe）
+                            activity.updateChatUIVisibility();
                             break;
                         case PAUSED:
                             activity.getFieldCtl().setPhaseText("\u23f8");

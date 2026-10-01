@@ -31,6 +31,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.utils.BotUtil;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -74,8 +75,13 @@ public class SingleModeDialog {
     }
 
     public void show(View anchorView, List<BotUtil.BotInfo> botList, List<PuzzleUtil.PuzzleInfo> puzzleList) {
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
 
+        // 本弹窗含 Material TabLayout，必须用 Activity（AppCompat）原始 Context 填充：
+        // DialogScale.wrap 走 createConfigurationContext 返回的是脱离 AppCompat delegate 的裸
+        // ContextImpl，会丢失委派主题/ViewFactory 导致 TabLayout 构造抛 InflateException。
+        // 等比缩放改由下方 popupWidth/Height（density×factor）配合布局根 match_parent+weight 实现，
+        // 内容随放大后的窗口按比例填满。
         View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_bot_duel, null);
 
         TabLayout tabLayoutMode = customView.findViewById(R.id.tab_layout_mode);

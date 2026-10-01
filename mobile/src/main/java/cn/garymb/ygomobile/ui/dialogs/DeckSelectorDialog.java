@@ -36,6 +36,7 @@ import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckSelectorUtil;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -129,7 +130,7 @@ public class DeckSelectorDialog {
     }
 
     public void show(View anchorView) {
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
 
         String uncatLocalName = context.getString(R.string.category_Uncategorized);
         String uncatAiName = context.getString(R.string.category_windbot_deck);
@@ -139,7 +140,7 @@ public class DeckSelectorDialog {
 
         buildCategoryData(uncatLocalName, uncatAiName);
 
-        View contentView = LayoutInflater.from(context).inflate(R.layout.popup_window_deck_selector, null);
+        View contentView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_deck_selector, null);
 
         lvCategories = contentView.findViewById(R.id.lv_categories);
         lvDecks = contentView.findViewById(R.id.lv_decks);
@@ -559,7 +560,7 @@ public class DeckSelectorDialog {
         Activity activity = getActivity();
         if (activity == null) return;
 
-        EditText editText = new EditText(context);
+        EditText editText = new EditText(DialogScale.wrap(context));
         editText.setGravity(Gravity.CENTER);
         editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
@@ -606,7 +607,7 @@ public class DeckSelectorDialog {
             return;
         }
 
-        EditText editText = new EditText(context);
+        EditText editText = new EditText(DialogScale.wrap(context));
         editText.setGravity(Gravity.CENTER);
         editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
@@ -688,7 +689,7 @@ public class DeckSelectorDialog {
         Activity activity = getActivity();
         if (activity == null) return;
         CategoryInfo ci = getSelectedCategoryInfo();
-        EditText editText = new EditText(context);
+        EditText editText = new EditText(DialogScale.wrap(context));
         editText.setGravity(Gravity.CENTER);
         editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
@@ -738,7 +739,7 @@ public class DeckSelectorDialog {
             return;
         }
 
-        EditText editText = new EditText(context);
+        EditText editText = new EditText(DialogScale.wrap(context));
         editText.setGravity(Gravity.CENTER);
         editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
@@ -1121,7 +1122,7 @@ public class DeckSelectorDialog {
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
             if (convertView == null) {
-                convertView = LayoutInflater.from(context).inflate(R.layout.item_bot_list, parent, false);
+                convertView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.item_bot_list, parent, false);
                 holder = new ViewHolder();
                 holder.textView = convertView.findViewById(R.id.tv_bot_item);
                 convertView.setTag(holder);
@@ -1175,7 +1176,7 @@ public class DeckSelectorDialog {
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
             if (convertView == null) {
-                convertView = LayoutInflater.from(context).inflate(R.layout.item_bot_list, parent, false);
+                convertView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.item_bot_list, parent, false);
                 holder = new ViewHolder();
                 holder.textView = convertView.findViewById(R.id.tv_bot_item);
                 convertView.setTag(holder);

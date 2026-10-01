@@ -149,19 +149,18 @@ class MoveEventApplier {
             engine.field.updateHandLayout(0, 10);
             engine.field.updateHandLayout(1, 10);
         }
-        // 卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡时，把入手的卡亮出到手牌展示片刻。
-        // 普通抽卡走 MSG_DRAW 不经本 MSG_MOVE 分支，故这里只捕获「效果把手牌外的卡加回手卡」，
-        // 不会误挂在每次正常抽卡上；newCtrl 已在方法开头经 localPlayer 转为本地视角索引。
-        // 洗切不在此处播放：引擎会为「非抽卡入手」置 shuffle_hand_check 并发出
-        // MSG_SHUFFLE_HAND，由 DeckHandMotionManager.applyShuffleHand 唯一播放一次。
+        // 卡片从任意非手卡区域（卡组 / 墓地 / 除外 / 额外 / 场上 / 超量素材）经效果加入手卡时，
+        // 把入手的卡亮出到手牌展示片刻。普通抽卡走 MSG_DRAW 不经本 MSG_MOVE 分支，故这里不会
+        // 误挂在正常抽卡上；newCtrl 已在方法开头经 localPlayer 转为本地视角索引。
+        // 揭示范围与服务端解遮蔽条件严格对齐（DuelAnalyzer MSG_MOVE：toHand = cl&HAND && !(pl&HAND)
+        // 即对「任意非手卡→手卡」的移动到对手公开真实卡码），旧实现只覆盖卡组/墓地/除外/额外
+        // 四个来源，导致对方「场上怪兽/魔陷回手」「超量素材回手」等入手不播揭示动画、直接背面入手
+        //（用户反馈：对面加入手卡的卡必须全部展示动画）。洗切不在此处播放：引擎会为「非抽卡入手」
+        // 置 shuffle_hand_check 并发出 MSG_SHUFFLE_HAND，由 DeckHandMotionManager.applyShuffleHand 唯一播放一次。
         {
             int oldLocBase = oldLoc & 0x7f;
             int newLocBase = newLoc & 0x7f;
-            if (newLocBase == CardLocation.Hand.value() && oldLocBase != newLocBase
-                    && (oldLocBase == CardLocation.Deck.value()
-                            || oldLocBase == CardLocation.Grave.value()
-                            || oldLocBase == CardLocation.Removed.value()
-                            || oldLocBase == CardLocation.Extra.value())) {
+            if (newLocBase == CardLocation.Hand.value() && oldLocBase != CardLocation.Hand.value()) {
                 // 只对本次入手的那张卡揭示：对方卡从卡背翻到正面供对手确认、我方卡本就正面
                 // 不翻给对方看，两者均施加行进蚂蚁线高亮，展示结束后由引擎的洗切接管
                 GameField.ClientCard arriving = engine.field.getCard(newCtrl, newLocBase, newSeq);

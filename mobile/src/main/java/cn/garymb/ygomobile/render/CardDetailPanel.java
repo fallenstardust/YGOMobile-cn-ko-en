@@ -189,6 +189,15 @@ public class CardDetailPanel {
         if (bmp != null) btnChat.setImageBitmap(bmp);
     }
 
+    /**
+     * 聊天开关按钮显隐（由 YGOProActivity.updateChatUIVisibility 按场景集中控制：
+     * 卡组编辑/录像/残局这些无聊天对象场景隐藏，对齐 gframe 隐藏 wChat；
+     * enter/exitDeckEditorMode 不再直接操作，避免与集中控制冲突）
+     */
+    public void setChatToggleVisible(boolean visible) {
+        if (btnChat != null) btnChat.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
     /** 更新声音按钮图标（对齐 gframe imgVol：声音开启显示 tPlay、静音显示 tMute） */
     public void updateSoundIcon(boolean enabled) {
         if (btnSound == null) return;
@@ -365,9 +374,9 @@ public class CardDetailPanel {
         return layout != null && layout.getVisibility() == View.VISIBLE;
     }
 
-    /** 旋转重建后回显卡片详情（委托 CardInfoBinder，currentCardCode 跨重建保留在绑定器实例上） */
-    public void restoreAfterRebind(boolean wasShowingBeforeRebind) {
-        binder.restoreAfterRebind(wasShowingBeforeRebind);
+    /** 旋转重建后回显卡片详情（委托 CardInfoBinder；savedCode 为重建前快照的卡码，无则 <=0） */
+    public void restoreAfterRebind(boolean wasShowingBeforeRebind, int savedCode) {
+        binder.restoreAfterRebind(wasShowingBeforeRebind, savedCode);
     }
 
     public int getCurrentCardCode() {
@@ -762,7 +771,8 @@ public class CardDetailPanel {
         if (btnNote != null) btnNote.setVisibility(View.INVISIBLE);
         if (btnSpeed != null) btnSpeed.setVisibility(View.INVISIBLE);
         if (btnEmote != null) btnEmote.setVisibility(View.INVISIBLE);
-        if (btnChat != null) btnChat.setVisibility(View.INVISIBLE);
+        // btnChat 不再在此直接隐藏：聊天开关由 YGOProActivity.updateChatUIVisibility
+        // 集中按场景核算（卡组编辑属抑制场景），避免 enter/exit 与集中控制互相覆盖
         showDefault();
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
@@ -775,7 +785,7 @@ public class CardDetailPanel {
         if (btnNote != null) btnNote.setVisibility(View.VISIBLE);
         if (btnSpeed != null) btnSpeed.setVisibility(View.VISIBLE);
         if (btnEmote != null) btnEmote.setVisibility(View.VISIBLE);
-        if (btnChat != null) btnChat.setVisibility(View.VISIBLE);
+        // btnChat 同 enterDeckEditorMode：由集中核算按退出后的实际场景重定显隐
     }
 
     /** 副卡组替换模式下隐藏卡组编辑控制栏（洗牌/排序/清空/删除/退出按钮区） */

@@ -323,7 +323,6 @@ class ChainSelectController {
             util.sendResponseInt(0);
             return;
         }
-        util.activity.showHintMessage("连锁排序: 自动排序");
         util.sendResponseInt(0);
     }
 }

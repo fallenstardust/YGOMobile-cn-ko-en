@@ -62,6 +62,10 @@ public class GameEngine {
 
         void onHintMessage(String hint);
 
+        /** Android 特有知会通道（连接/错误/撤回/操作反馈等非通讯文本）：文本显示功能已彻底移除，
+         *  默认空实现，既有调用点不再产生任何展示 */
+        default void onNoticeMessage(String msg) {}
+
         /** MSG_HINT 居中文本动画（duelclient.cpp L1463-1521）：sys1510/1511/1512，SpecEffectOverlay 串行队列展示 */
         default void onActionMessage(String text) {}
 
@@ -704,9 +708,10 @@ public class GameEngine {
 
     /** 实际派发单条通讯消息（对齐 duelclient.cpp ClientAnalyze 主体） */
     void dispatchGameMsg(int msgType, ByteBuffer data) {
-        // 对齐 duelclient.cpp L1307-1311：除 MSG_WAITING/MSG_CARD_SELECTED 外，
-        // 每条通讯消息开始先停止等待动画并隐藏 stHintMsg（提示栏随通讯推进实时显隐）
-        if (msgType != GameMessage.Waiting.value() && msgType != GameMessage.CardSelected.value()) {
+        // 对齐 duelclient.cpp L1307-1311：仅非回放时，除 MSG_WAITING/MSG_CARD_SELECTED 外，
+        // 每条通讯消息开始先停止等待动画并隐藏 stHintMsg（提示栏随通讯推进实时显隐；
+        // 回放链路上 C++ 不走此通用隐藏，Java 回放也不显示决斗提示，保持一致）
+        if (!replayMode && msgType != GameMessage.Waiting.value() && msgType != GameMessage.CardSelected.value()) {
             hintManager.stopWaitHint();
             hintManager.postDuelHintHide();
         }
@@ -743,7 +748,9 @@ public class GameEngine {
                 // 泛化动画屏障：本条消息若同步触发了场地卡片移动/淡入淡出（moveCardAnimated 立即置
                 // aniFrame）或居中特效（startCard→startLoop 立即置 running），随即关闭闸门暂缓后续消息，
                 // 待动画播完（轮询器或 idle 快路径重开）再继续——对齐 C++ 每条动画消息后的 WaitFrameSignal。
-                if (isAnyAnimationBusy()) {
+                // 回放快进（replaySkip）中无视残留动画持续排空：落点即终态、instantPlace 已把旧动画掐掉，
+                // 若此处关闸会让投喂线程的 awaitDispatchDrain 陪动画节奏爬行，undo 呈现为「从头重播动画」
+                if (!replaySkip && isAnyAnimationBusy()) {
                     closeAnimGate();
                     break;
                 }

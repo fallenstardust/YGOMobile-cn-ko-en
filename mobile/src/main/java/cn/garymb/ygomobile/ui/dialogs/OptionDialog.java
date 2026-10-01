@@ -23,6 +23,8 @@ import java.util.List;
 
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.CollapsiblePopupShell;
+import cn.garymb.ygomobile.utils.DialogScale;
 
 import ocgcore.DataManager;
 
@@ -62,6 +64,8 @@ public class OptionDialog {
     private final Context context;
     private PopupWindow popupWindow;
     private View contentView;
+    /** 收缩模式壳层：原内容 + 底部收缩横条 + 左上收缩把手 */
+    private CollapsiblePopupShell collapseShell;
     private String title = "";
     private List<String> options;
     private OnOptionSelectedListener selectListener;
@@ -144,8 +148,11 @@ public class OptionDialog {
         if (!(context instanceof Activity)) return;
 
         build();
-        popupWindow = new PopupWindow(contentView, dp2px(DIALOG_WIDTH_DP),
+        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
+        collapseShell = new CollapsiblePopupShell(context, contentView, title, true);
+        popupWindow = new PopupWindow(collapseShell.getView(), dp2px(DIALOG_WIDTH_DP),
                 ViewGroup.LayoutParams.WRAP_CONTENT);
+        collapseShell.attachPopup(popupWindow);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         // 不可取消：对齐 gframe wOptions 无关闭按钮，必须点击选项才能关闭
         // 1) outsideTouchable=false 外部点击不关闭；2) focusable=false BACK 键无法 dismiss；
@@ -189,7 +196,7 @@ public class OptionDialog {
     }
 
     private void build() {
-        contentView = LayoutInflater.from(context)
+        contentView = LayoutInflater.from(DialogScale.wrap(context))
                 .inflate(R.layout.popup_window_option, null);
         TextView tvTitle = contentView.findViewById(R.id.tv_option_title);
         if (title != null && !title.isEmpty()) {
@@ -201,7 +208,7 @@ public class OptionDialog {
         LinearLayout container = contentView.findViewById(R.id.layout_option_items);
         container.removeAllViews();
         for (int i = 0; i < options.size(); i++) {
-            Button btn = new Button(context);
+            Button btn = new Button(DialogScale.wrap(context));
             btn.setText(options.get(i));
             btn.setTextColor(Color.WHITE);
             btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
@@ -281,6 +288,8 @@ public class OptionDialog {
         if (x < loc[0]) x = loc[0];
         if (y < loc[1]) y = loc[1];
         popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, x, y);
+        // 记住展开态几何，收缩把手/恢复据此在展开与底部横条间 resize 窗口
+        if (collapseShell != null) collapseShell.rememberExpanded(x, y, popupW, popupH);
     }
 
     public void dismiss() {
@@ -292,6 +301,6 @@ public class OptionDialog {
     }
 
     private int dp2px(float dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
+        return DialogScale.dpToPx(context, dp);
     }
 }

@@ -84,6 +84,9 @@ class DeckGridLayoutApplier {
         applyGroupExactHeight(owner.cgvMain, cardHeight * 4);
         applyGroupExactHeight(owner.cgvExtra, cardHeight);
         applyGroupExactHeight(owner.cgvSide, cardHeight);
+        // 竖屏宽度小→卡面小→左列定高生效后比容器矮，右侧搜索结果列表（match_parent）
+        // 底边低于副卡组网格；定高布局完成后按实测把列表底边对齐副卡组网格底边
+        scheduleSearchListSideBottomAlign();
         owner.notifyDeckChanged();
     }
 
@@ -103,6 +106,42 @@ class DeckGridLayoutApplier {
             ((LinearLayout.LayoutParams) lp).weight = 0;
         }
         view.setLayoutParams(lp);
+    }
+
+    /** 在网格定高触发的下一次布局完成后，把搜索结果列表底边对齐副卡组网格底边（一次性监听） */
+    private void scheduleSearchListSideBottomAlign() {
+        if (owner.cgvSide == null) return;
+        final View rv = owner.cardSearcherManager.getSearchRecyclerView();
+        if (rv == null) return;
+        owner.cgvSide.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        if (owner.cgvSide == null) return;
+                        owner.cgvSide.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        alignSearchListToSideBottom(rv);
+                    }
+                });
+    }
+
+    /**
+     * 搜索结果列表高度 = 副卡组网格底缘 − 列表顶缘（同窗口坐标实测，横屏本就对齐时
+     * delta=0 不动；列表高度改为定值后下次定高流程再按实测重新求差，不叠加）
+     */
+    private void alignSearchListToSideBottom(View rv) {
+        View side = owner.cgvSide;
+        if (side == null || rv == null || side.getVisibility() != View.VISIBLE
+                || side.getHeight() <= 0 || rv.getHeight() <= 0) return;
+        int[] sp = new int[2], rp = new int[2];
+        side.getLocationInWindow(sp);
+        rv.getLocationInWindow(rp);
+        int delta = (sp[1] + side.getHeight()) - (rp[1] + rv.getHeight());
+        if (delta == 0) return;
+        ViewGroup.LayoutParams lp = rv.getLayoutParams();
+        int target = (lp.height > 0 ? lp.height : rv.getHeight()) + delta;
+        if (target <= 0) return;
+        lp.height = target;
+        rv.setLayoutParams(lp);
     }
 
     /**

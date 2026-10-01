@@ -29,6 +29,7 @@ import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.utils.DeckUtil;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
@@ -132,11 +133,11 @@ public class PlayerWaitingDialog {
     }
 
     public void show(View anchorView) {
-        View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_player_waiting, null);
+        View customView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_player_waiting, null);
 
         initPlayerWaitingViews(customView);
 
-        float density = context.getResources().getDisplayMetrics().density;
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         // 传设计尺寸给 setupDraggablePopup：由其按当前屏宽统一限宽，并在屏幕旋转后按新屏宽重新解算

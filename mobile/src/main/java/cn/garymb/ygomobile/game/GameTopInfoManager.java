@@ -19,6 +19,8 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
@@ -225,6 +227,20 @@ public class GameTopInfoManager {
     /** 横屏面板高占 layout_game_right 实测高度的比例（对齐 drawing.cpp 70/640≈0.109 的窗口高度占比） */
     private static final float LANDSCAPE_PANEL_HEIGHT_FRACTION = 0.11f;
 
+    /** 最近一次 applyTopInfoSize 解算出的 HUD 等比系数（f=面板高/基准高），供聊天输入框等游戏内 UI 同源缩放 */
+    private float hudScaleFactor = 1f;
+    /** HUD 缩放系数观察者（layout_game_right 尺寸变化重解后同步回调） */
+    private final java.util.List<java.util.function.Consumer<Float>> hudScaleObservers = new ArrayList<>();
+
+    public float getHudScaleFactor() {
+        return hudScaleFactor;
+    }
+
+    /** 注册 HUD 缩放系数变化监听；当前值由调用方自行 getHudScaleFactor 取用 */
+    public void addHudScaleObserver(java.util.function.Consumer<Float> observer) {
+        if (observer != null) hudScaleObservers.add(observer);
+    }
+
     /**
      * gameTopInfo 随 layout_game_right 尺寸等比缩放（横竖屏通用）：
      * <p>面板高度 h 决定整条 HUD 的缩放基准 f = h / 基准高，头像框/昵称/LP数字/卡数/倒计时/
@@ -289,6 +305,13 @@ public class GameTopInfoManager {
         int cardBackH = Math.round(10f * f * dm.scaledDensity); // XML 基准高 10sp
         setSize(ivPlayerCardBack, -1, cardBackH);
         setSize(ivOpponentCardBack, -1, cardBackH);
+        // 缓存系数并通知观察者（聊天输入框等随 HUD 同源等比例缩放）；
+        // 遍历副本：观察者回调内可能触发 requestLayout 连带重入本方法
+        hudScaleFactor = f;
+        for (java.util.function.Consumer<Float> obs :
+                new ArrayList<>(hudScaleObservers)) {
+            obs.accept(f);
+        }
     }
 
     /** 设置面板（lpbarf 容器）固定高度，令整条 HUD 高度由 h 主导、内容 match_parent 填满 */
