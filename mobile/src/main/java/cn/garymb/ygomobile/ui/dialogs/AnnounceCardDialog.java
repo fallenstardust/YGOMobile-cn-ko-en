@@ -32,7 +32,6 @@ import java.util.Locale;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.CardManager;
 import ocgcore.DataManager;
@@ -174,7 +173,7 @@ public class AnnounceCardDialog {
     }
 
     private void build() {
-        View root = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_announce_card, null);
+        View root = LayoutInflater.from(context).inflate(R.layout.dialog_announce_card, null);
         tvTitle = root.findViewById(R.id.tv_ancard_title);
         etInput = root.findViewById(R.id.et_ancard_input);
         lvCards = root.findViewById(R.id.lv_ancard);
@@ -456,7 +455,7 @@ public class AnnounceCardDialog {
     }
 
     private int dp(int value) {
-        return DialogScale.dpToPx(context, value);
+        return (int) context.getResources().getDisplayMetrics().density * value;
     }
 
     private class NameAdapter extends BaseAdapter {
@@ -479,7 +478,7 @@ public class AnnounceCardDialog {
         public View getView(int position, View convertView, ViewGroup parent) {
             TextView tv;
             if (convertView == null) {
-                tv = new TextView(DialogScale.wrap(context));
+                tv = new TextView(context);
                 tv.setTextSize(12);
                 tv.setSingleLine(true);
                 tv.setPadding(dp(8), dp(4), dp(8), dp(4));

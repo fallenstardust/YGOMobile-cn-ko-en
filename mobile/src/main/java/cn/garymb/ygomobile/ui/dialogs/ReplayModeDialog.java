@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -97,9 +98,33 @@ public class ReplayModeDialog {
         refreshReplayList();
         lvReplayList.setAdapter(replayAdapter);
 
-        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
+        float density = context.getResources().getDisplayMetrics().density;
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
+        
+        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏保持正方形样式
+        final android.app.Activity act = context instanceof android.app.Activity
+                ? (android.app.Activity) context : null;
+        if (act != null && act.getWindow() != null && act.getWindow().getAttributes() != null) {
+            DisplayMetrics screen = new DisplayMetrics();
+            act.getWindowManager().getDefaultDisplay().getRealMetrics(screen);
+            // 判断横屏还是竖屏
+            boolean isLandscape = screen.widthPixels >= screen.heightPixels;
+            if (isLandscape) {
+                // 横屏：宽度取屏幕宽度的 2/3
+                int maxWidth = (int) (screen.widthPixels * 0.66f);
+                int[] fitted = DraggablePopupHelper.fitSizeToScreen(context, popupWidth, popupHeight);
+                if (fitted[0] > maxWidth) {
+                    // 按比例缩小高度
+                    float ratio = (float) maxWidth / fitted[0];
+                    fitted[0] = maxWidth;
+                    fitted[1] = (int) (fitted[1] * ratio);
+                }
+                popupWidth = fitted[0];
+                popupHeight = fitted[1];
+            }
+            // 竖屏：保持原有设计尺寸不变（已适配正方形）
+        }
         // 传设计尺寸给 setupDraggablePopup：由其按当前屏宽统一限宽，并在屏幕旋转后按新屏宽重新解算
         popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));

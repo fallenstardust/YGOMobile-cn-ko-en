@@ -165,6 +165,17 @@ public class ShowDialogUtil {
     }
 
     /**
+     * 屏幕旋转后重新定位猜拳弹窗（由 YGOProActivity.rebuildUiForOrientation 末尾调用）：
+     * RPSDialog 以绝对坐标定位、不经 DraggablePopupHelper 包装，故需在旋转重建后按其转发重定位，
+     * 保证竖屏转横屏时弹窗仍在 layout_game_right 底部居中而非停留在左下角。
+     */
+    public void repositionHandSelectDialog() {
+        if (handSelectDialog != null && handSelectDialog.isShowing()) {
+            handSelectDialog.repositionAfterRotation();
+        }
+    }
+
+    /**
      * STOC_HAND_RESULT：播放猜拳结果动画（本方手势自底上升、对方手势倒置自 layout_game_right 顶部下降）。
      * 动画期间置 rpsAnimating，期间到达的 MSG_SELECT_HAND 会被 showHandSelectDialog 挂起；
      * 动画完全结束后在回调里清除标志，并按需（平局）重新显示弹窗——胜负则因 rpsResultShown 不再显示。

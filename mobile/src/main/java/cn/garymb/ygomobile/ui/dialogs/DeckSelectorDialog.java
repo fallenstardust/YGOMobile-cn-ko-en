@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -130,7 +131,7 @@ public class DeckSelectorDialog {
     }
 
     public void show(View anchorView) {
-        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
+        float density = context.getResources().getDisplayMetrics().density;
 
         String uncatLocalName = context.getString(R.string.category_Uncategorized);
         String uncatAiName = context.getString(R.string.category_windbot_deck);
@@ -140,7 +141,7 @@ public class DeckSelectorDialog {
 
         buildCategoryData(uncatLocalName, uncatAiName);
 
-        View contentView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_deck_selector, null);
+        View contentView = LayoutInflater.from(context).inflate(R.layout.popup_window_deck_selector, null);
 
         lvCategories = contentView.findViewById(R.id.lv_categories);
         lvDecks = contentView.findViewById(R.id.lv_decks);
@@ -240,6 +241,30 @@ public class DeckSelectorDialog {
 
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density * 0.7);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
+        
+        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏保持正方形样式
+        final android.app.Activity act = context instanceof android.app.Activity
+                ? (android.app.Activity) context : null;
+        if (act != null && act.getWindow() != null && act.getWindow().getAttributes() != null) {
+            DisplayMetrics screen = new DisplayMetrics();
+            act.getWindowManager().getDefaultDisplay().getRealMetrics(screen);
+            // 判断横屏还是竖屏
+            boolean isLandscape = screen.widthPixels >= screen.heightPixels;
+            if (isLandscape) {
+                // 横屏：宽度取屏幕宽度的 2/3
+                int maxWidth = (int) (screen.widthPixels * 0.66f);
+                int[] fitted = DraggablePopupHelper.fitSizeToScreen(context, popupWidth, popupHeight);
+                if (fitted[0] > maxWidth) {
+                    // 按比例缩小高度
+                    float ratio = (float) maxWidth / fitted[0];
+                    fitted[0] = maxWidth;
+                    fitted[1] = (int) (fitted[1] * ratio);
+                }
+                popupWidth = fitted[0];
+                popupHeight = fitted[1];
+            }
+            // 竖屏：保持原有设计尺寸不变（已适配正方形）
+        }
         popupWindow = new PopupWindow(contentView, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
@@ -560,7 +585,7 @@ public class DeckSelectorDialog {
         Activity activity = getActivity();
         if (activity == null) return;
 
-        EditText editText = new EditText(DialogScale.wrap(context));
+        EditText editText = new EditText(activity);
         editText.setGravity(Gravity.CENTER);
         editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
@@ -607,7 +632,7 @@ public class DeckSelectorDialog {
             return;
         }
 
-        EditText editText = new EditText(DialogScale.wrap(context));
+        EditText editText = new EditText(activity);
         editText.setGravity(Gravity.CENTER);
         editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
@@ -689,7 +714,7 @@ public class DeckSelectorDialog {
         Activity activity = getActivity();
         if (activity == null) return;
         CategoryInfo ci = getSelectedCategoryInfo();
-        EditText editText = new EditText(DialogScale.wrap(context));
+        EditText editText = new EditText(activity);
         editText.setGravity(Gravity.CENTER);
         editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();
@@ -739,7 +764,7 @@ public class DeckSelectorDialog {
             return;
         }
 
-        EditText editText = new EditText(DialogScale.wrap(context));
+        EditText editText = new EditText(activity);
         editText.setGravity(Gravity.CENTER);
         editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
         editText.setSingleLine();

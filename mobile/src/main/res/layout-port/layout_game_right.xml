@@ -182,6 +182,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
+                                android:layout_marginEnd="2dp"
                                 android:gravity="right|center_vertical"
                                 android:orientation="horizontal">
 
@@ -366,6 +367,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
+                                android:layout_marginStart="2dp"
                                 android:gravity="left|center_vertical"
                                 android:orientation="horizontal">
 
@@ -438,9 +440,9 @@
                     android:layout_marginStart="50dp"
                     android:maxLines="5"
                     android:ellipsize="end"
-                    android:background="#A0000000"
+                    android:background="@color/blackLinght"
                     android:textColor="@color/white"
-                    android:textSize="8sp"
+                    android:textSize="7sp"
                     android:visibility="gone" />
 
                 <!-- 提示信息 -->
@@ -460,12 +462,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:background="#A0000000"
+                    android:background="@color/blackLinght"
                     android:layout_marginEnd="50dp"
                     android:maxLines="5"
                     android:ellipsize="end"
                     android:textColor="@color/white"
-                    android:textSize="8sp"
+                    android:textSize="7sp"
                     android:visibility="gone" />
             </FrameLayout>
         </LinearLayout><!-- /layout_hud_top -->

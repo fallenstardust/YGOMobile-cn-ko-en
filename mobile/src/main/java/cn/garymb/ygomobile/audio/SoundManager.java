@@ -241,6 +241,11 @@ public class SoundManager {
      * 置 chantPlaying 阻止场景切歌打断，播完后经回调恢复场景 BGM。返回是否成功播放。
      */
     public boolean playChant(int code) {
+        // 回放快进重排（点「上一步」）期间静默：主题歌走 MediaPlayer/BGM 通道，
+        // 不受 playSoundEffect 的 effectsSuppressed 约束，需在此单独短路——
+        // 返回 false 使 onSummoning/onSpSummoning/onFlipSummoning 回退到 playSoundEffect
+        // （已被 effectsSuppressed 抑制），令快进重排既不大图也不出声，观感即「直接回到上一步」
+        if (effectsSuppressed) return false;
         if (!musicEnabled || chantsMap.isEmpty()) return false;
         int key = code;
         try {

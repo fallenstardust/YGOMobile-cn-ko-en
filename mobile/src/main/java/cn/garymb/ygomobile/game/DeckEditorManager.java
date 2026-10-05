@@ -28,6 +28,7 @@ import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.ui.cards.deck.CardTypeImage;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
@@ -122,6 +123,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     final CardDragHelper dragHelper;
     private int availLm = 0;
     final StringManager mStringManager = DataManager.get().getStringManager();
+    private final SoundManager soundManager;
 
     CardSearcherManager cardSearcherManager;
 
@@ -141,6 +143,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         this.gridLayout = new DeckGridLayoutApplier(this);
         this.statsPanel = new DeckStatsPanel(this);
         this.dropHandler = new DeckDropHandler(this);
+        // 获取 SoundManager（对齐 C++ deck_con.cpp 中的音效调用）
+        this.soundManager = ((cn.garymb.ygomobile.YGOProActivity) activity).getSoundManager();
     }
 
     public CardSearcherManager getCardSearcherManager() {
@@ -163,6 +167,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         setupButtons();
         cardSearcherManager.bindViews(rootView);
         cardSearcherManager.setupLabels();
+        // 传递 soundManager 给 CardSearcherManager
+        if (soundManager != null) {
+            cardSearcherManager.setSoundManager(soundManager);
+        }
         cardSearcherManager.setupSearchRecyclerView(imageLoader, dragHelper, this);
         cardSearcherManager.setupSpinners();
         cardSearcherManager.setupButtons();
@@ -252,20 +260,28 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     private void setupLabels() {
         if (btnSideFinish != null) {
-            btnSideFinish.setText(mStringManager.getSystemString(1334, "副卡组替换完成"));
-            btnSideFinish.setOnClickListener(v -> sideFinish());
+            btnSideFinish.setOnClickListener(v -> {
+                if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+                sideFinish();
+            });
         }
         if (btnSideShuffle != null) {
-            btnSideShuffle.setText(mStringManager.getSystemString(1307, "打乱"));
-            btnSideShuffle.setOnClickListener(v -> shuffleDeck());
+            btnSideShuffle.setOnClickListener(v -> {
+                if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+                shuffleDeck();
+            });
         }
         if (btnSideSort != null) {
-            btnSideSort.setText(mStringManager.getSystemString(1305, "排序"));
-            btnSideSort.setOnClickListener(v -> sortDeck());
+            btnSideSort.setOnClickListener(v -> {
+                if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+                sortDeck();
+            });
         }
         if (btnSideReset != null) {
-            btnSideReset.setText(mStringManager.getSystemString(1309, "重置"));
-            btnSideReset.setOnClickListener(v -> sideReset());
+            btnSideReset.setOnClickListener(v -> {
+                if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+                sideReset();
+            });
         }
         setSystemLabel(tvLabelDeck, 1300, "卡组:");
         setSystemLabel(tvLabelType, 1311, "种类:");
@@ -366,12 +382,24 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         if (btnDelete != null) btnDelete.setText(mStringManager.getSystemString(1308, "删除"));
         if (btnExit != null) btnExit.setText(mStringManager.getSystemString(1306, "退出编辑"));
         setClickListener(btnExit, v -> terminate());
-        setClickListener(btnShuffle, v -> shuffleDeck());
-        setClickListener(btnSort, v -> sortDeck());
+        setClickListener(btnShuffle, v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+            shuffleDeck();
+        });
+        setClickListener(btnSort, v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            sortDeck();
+        });
         setClickListener(btnClear, v -> clearDeck());
         setClickListener(btnDelete, v -> deleteDeck());
-        setClickListener(btnSave, v -> saveDeck());
-        setClickListener(btnSaveAs, v -> saveDeckAs());
+        setClickListener(btnSave, v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            saveDeck();
+        });
+        setClickListener(btnSaveAs, v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            saveDeckAs();
+        });
     }
 
     private void setClickListener(Button btn, View.OnClickListener l) {
@@ -400,6 +428,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             // 再次点击"选择卡组/卡组管理"按钮收起已展开的卡组选择窗（切换式交互，
             // 与 PlayerWaitingDialog 的 btnPwDeckSelect 行为一致）
             btnDeckManager.setOnClickListener(v -> {
+                if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
                 if (deckSelectorDialog == null) return;
                 if (deckSelectorDialog.isShowing()) {
                     deckSelectorDialog.dismiss();
@@ -627,6 +656,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     public void clearDeck() {
         if (isReadonly) return;
         showConfirmDialog(mStringManager.getSystemString(1339, "是否清空正在编辑的卡组？"), () -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
             currentDeck.mainCards.clear();
             currentDeck.extraCards.clear();
             currentDeck.sideCards.clear();
@@ -682,6 +712,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
                     updateDeckManagerButtonText();
                 }
 
+                if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
                 YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1338, "删除成功"));
             }
         });
@@ -697,6 +728,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         boolean result = DeckUtils.save(currentDeck, deckFile);
         if (result) {
             isModified = false;
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
             YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1335, "保存成功"));
             if (listener != null) listener.onDeckSaved();
             //保存到本地成功后，同步上传到卡组广场云端（萌卡账号已登录时）
@@ -723,7 +755,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             updateDeckManagerButtonText();
             AppsSettings.get().saveSettings("lastcategory", uncatName);
             AppsSettings.get().saveSettings("lastdeck", name);
-            YGOUtil.showTextToast("卡组已保存为: " + name);
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            YGOUtil.showTextToast("卡组已保存为：" + name);
             if (listener != null) listener.onDeckSaved();
             //另存为相当于新建卡组：向云端申请新的 deckId 后再上传（萌卡账号已登录时）
             syncDeckUploadToCloud(deckFile, true);

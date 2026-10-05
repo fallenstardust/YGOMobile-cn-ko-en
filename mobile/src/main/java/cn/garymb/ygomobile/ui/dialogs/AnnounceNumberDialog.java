@@ -25,7 +25,6 @@ import java.util.List;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -168,7 +167,7 @@ public class AnnounceNumberDialog {
     }
 
     private void build() {
-        View root = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_announce_number, null);
+        View root = LayoutInflater.from(context).inflate(R.layout.dialog_announce_number, null);
         tvTitle = root.findViewById(R.id.tv_announce_number_title);
         spNumber = root.findViewById(R.id.sp_announce_number);
         layoutButtons = root.findViewById(R.id.layout_annumber_buttons);
@@ -181,7 +180,7 @@ public class AnnounceNumberDialog {
         for (int v : values) {
             texts.add(String.valueOf(v));
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(DialogScale.wrap(context),
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
                 android.R.layout.simple_spinner_item, texts) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
@@ -308,7 +307,7 @@ public class AnnounceNumberDialog {
     }
 
     private int dp(int value) {
-        return DialogScale.dpToPx(context, value);
+        return (int) context.getResources().getDisplayMetrics().density * value;
     }
 
     public void show() {

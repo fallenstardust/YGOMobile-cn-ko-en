@@ -14,7 +14,6 @@ import android.widget.Button;
 import android.widget.PopupWindow;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DialogScale;
 import ocgcore.DataManager;
 
 /**
@@ -58,7 +57,7 @@ public class FirstOrSecondDialog {
 
     public void show() {
         if (isShowing()) return;
-        contentView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_first_or_second, null);
+        contentView = LayoutInflater.from(context).inflate(R.layout.popup_window_first_or_second, null);
         Button btnFirst = contentView.findViewById(R.id.btn_ft_first);
         Button btnSecond = contentView.findViewById(R.id.btn_ft_second);
         btnFirst.setText(DataManager.get().getStringManager().getSystemString(100, "先攻"));

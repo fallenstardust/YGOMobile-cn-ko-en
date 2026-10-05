@@ -9,7 +9,6 @@ import android.widget.Button;
 import android.widget.PopupWindow;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DialogScale;
 
 public class LinkMarkerPopupWindow extends PopupWindow {
 
@@ -55,7 +54,7 @@ public class LinkMarkerPopupWindow extends PopupWindow {
         setOutsideTouchable(true);
         setFocusable(true);
 
-        View popupView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.item_searcher_linkmarker, null);
+        View popupView = LayoutInflater.from(context).inflate(R.layout.item_searcher_linkmarker, null);
 
         Button[] buttons = new Button[]{
                 popupView.findViewById(R.id.button_1),

@@ -164,6 +164,22 @@ public class DeckHandMotionManager {
         if (count > 1) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); // L2663-2664
         }
+        // 对齐 C++ L2669-2681：对方手卡先进行一次整体翻面（聚拢 + 卡背朝外）
+        boolean needFlipForOpponent = (p == 1) && !engine.replayMode && !engine.isSingleMode;
+        if (needFlipForOpponent) {
+            for (GameField.ClientCard c : hand) {
+                if (c == null || c.code == 0) continue;
+                // 对齐 C++ L2673-2674：向玩家侧聚拢并旋转至卡背朝向观众
+                // Java 用 curX/curY 移动，通过 updateHandFlip 控制翻转
+                c.curX += (0.0f - c.curX) / 5.0f; // 向中心聚拢
+                // 对手手卡的翻转由 handFlipT 自动推进，此处不直接修改旋转角度
+                c.is_moving = true;
+                c.aniFrame = 5;
+            }
+            if (!engine.field.instantPlace) {
+                engine.animHoldUntilMs = System.currentTimeMillis() + 5L * 17L;
+            }
+        }
         int maxTotal = 0;
         for (GameField.ClientCard c : hand) {
             if (c == null) continue;
@@ -231,6 +247,17 @@ public class DeckHandMotionManager {
         engine.field.startHandReveal(arrivingCard, flip);
         if (!engine.replaySkip)
             engine.soundManager.playSoundEffect(SoundManager.SFX.REVEAL);
+        
+        // 对齐 C++ L2669-2681：对方手卡先进行一次整体聚拢 + 卡背朝外的翻面动画
+        if (flip) {
+            arrivingCard.curX += (0.0f - arrivingCard.curX) / 5.0f; // 向中心聚拢
+            arrivingCard.is_moving = true;
+            arrivingCard.aniFrame = 5;
+            if (!engine.field.instantPlace) {
+                engine.animHoldUntilMs = System.currentTimeMillis() + 5L * 17L;
+            }
+        }
+        
         // 揭示持闸：飞入 10 帧 + 亮出展示 14 帧（对齐 C++ 翻面后 WaitFrameSignal 的停留段）。
         // 持闸期间后续消息（含引擎的 MSG_SHUFFLE_HAND）不放行，洗切紧接在揭示之后播一次
         final long hold = 24L * 17L;

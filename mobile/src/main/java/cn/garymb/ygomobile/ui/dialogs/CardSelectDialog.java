@@ -30,7 +30,7 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardStatusTipHelper;
-import cn.garymb.ygomobile.utils.DialogScale;
+
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -405,7 +405,7 @@ public class CardSelectDialog {
     }
 
     private void build() {
-        View root = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_card_select, null);
+        View root = LayoutInflater.from(context).inflate(R.layout.dialog_card_select, null);
         tvTitle = root.findViewById(R.id.tv_card_select_title);
         sbPage = root.findViewById(R.id.sb_card_page);
         btnOk = root.findViewById(R.id.btn_card_select_ok);
@@ -526,7 +526,7 @@ public class CardSelectDialog {
     }
 
     private int dp2px(float dp) {
-        return DialogScale.dpToPx(context, dp);
+        return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
 
     /**

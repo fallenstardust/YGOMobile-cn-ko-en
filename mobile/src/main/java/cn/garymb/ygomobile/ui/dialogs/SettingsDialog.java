@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,7 +23,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
-import cn.garymb.ygomobile.utils.DialogScale;
+
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -81,8 +82,36 @@ public class SettingsDialog {
 
     public void show(View anchorView) {
         AppsSettings appsSettings = AppsSettings.get();
-        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
-        View rootLayout = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_window_settings, null);
+        float density = context.getResources().getDisplayMetrics().density;
+        View rootLayout = LayoutInflater.from(context).inflate(R.layout.popup_window_settings, null);
+
+        // 先定义基础尺寸
+        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
+        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
+        
+        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏保持正方形样式
+        final android.app.Activity act = context instanceof android.app.Activity
+                ? (android.app.Activity) context : null;
+        if (act != null && act.getWindow() != null && act.getWindow().getAttributes() != null) {
+            DisplayMetrics screen = new DisplayMetrics();
+            act.getWindowManager().getDefaultDisplay().getRealMetrics(screen);
+            // 判断横屏还是竖屏
+            boolean isLandscape = screen.widthPixels >= screen.heightPixels;
+            if (isLandscape) {
+                // 横屏：宽度取屏幕宽度的 2/3
+                int maxWidth = (int) (screen.widthPixels * 0.66f);
+                int[] fitted = DraggablePopupHelper.fitSizeToScreen(context, popupWidth, popupHeight);
+                if (fitted[0] > maxWidth) {
+                    // 按比例缩小高度
+                    float ratio = (float) maxWidth / fitted[0];
+                    fitted[0] = maxWidth;
+                    fitted[1] = (int) (fitted[1] * ratio);
+                }
+                popupWidth = fitted[0];
+                popupHeight = fitted[1];
+            }
+            // 竖屏：保持原有设计尺寸不变（已适配正方形）
+        }
 
         StringManager stringManager = DataManager.get().getStringManager();
 
@@ -354,8 +383,6 @@ public class SettingsDialog {
             }
         });
 
-        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
-        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
         // 传设计尺寸给 setupDraggablePopup：由其按当前屏宽统一限宽，并在屏幕旋转后按新屏宽重新解算
         popupWindow = new PopupWindow(rootLayout, popupWidth, popupHeight, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));

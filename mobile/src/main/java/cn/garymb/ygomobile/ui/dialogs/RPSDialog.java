@@ -1,6 +1,5 @@
 package cn.garymb.ygomobile.ui.dialogs;
 
-import android.animation.TimeInterpolator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -23,7 +22,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 
-/*开局猜拳的弹窗*/
+/*开局猜拳的弹窗 - 固定在 layout_game_right 底部、聊天输入框上方显示*/
 public class RPSDialog {
 
     public interface OnResultListener {
@@ -42,19 +41,6 @@ public class RPSDialog {
 
     /** 猜拳弹窗底边与聊天输入框（et_chat_input）上沿的间距（dp）：上移避免遮挡输入框 */
     private static final float CHAT_INPUT_GAP_DP = 6f;
-
-    /**
-     * 位移速度曲线（参考 drawing.cpp 短帧快动画设计）：
-     * 前 50% 时间为较快匀速段（走完 70% 路程），后 50% 时间平方减速直至停止，
-     * 分段点处位移连续（0.5 → 0.7）
-     */
-    private static final TimeInterpolator MOVE_INTERPOLATOR = input -> {
-        if (input <= 0.5f) {
-            return input * 1.4f;
-        }
-        float t = (input - 0.5f) * 2f;
-        return 0.7f + 0.3f * (1f - (1f - t) * (1f - t));
-    };
 
     private final Context context;
     private PopupWindow popupWindow;
@@ -149,6 +135,19 @@ public class RPSDialog {
      * 垂直：弹窗底边停在聊天输入框（et_chat_input）上沿之上，避免遮挡输入框
      */
     private void showAlignedToField(View gameRight) {
+        int[] pos = computePosition(gameRight);
+        popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, pos[0], pos[1]);
+    }
+
+    /**
+     * 解算弹窗在窗口坐标系下的左上角 (x, y)：
+     * 水平在 gameRight（game_field_view）实际宽度内居中，
+     * 垂直底边停在聊天输入框上沿之上（输入框不可用时退化为与 layout_game_right 底边齐平）。
+     * 供首次显示与屏幕旋转后重定位复用，保证旋转后仍按新方向的 layout_game_right 宽度重新居中。
+     *
+     * @return int[]{x, y}
+     */
+    private int[] computePosition(View gameRight) {
         contentView.measure(
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
@@ -177,8 +176,42 @@ public class RPSDialog {
         }
         if (x < 0) x = 0;
         if (y < 0) y = 0;
+        return new int[]{x, y};
+    }
 
-        popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, x, y);
+    /**
+     * 屏幕旋转后重新定位：RPSDialog 以绝对坐标 showAtLocation 定位，不经 DraggablePopupHelper 包装，
+     * 故 relayoutActivePopupsForOrientation 不会重排它；旋转后 layout_game_right/game_field_view 的宽度
+     * 与新窗口位置都变了，若沿用旧绝对 x 会偏到左下角。本方法按重建后的新视图重新解算居中坐标并 update。
+     * 由 YGOProActivity 旋转重建末尾经 ShowDialogUtil 调用；新视图树此刻可能尚未完成布局（宽度为 0），
+     * 则注册一次性布局监听待完成后再重定位。
+     */
+    public void repositionAfterRotation() {
+        if (!showing || popupWindow == null || !popupWindow.isShowing()) return;
+        if (!(context instanceof Activity)) return;
+        final Activity activity = (Activity) context;
+        final View anchor = activity.findViewById(R.id.game_field_view);
+        if (anchor == null) return;
+        if (anchor.getWidth() > 0) {
+            doReposition(anchor);
+        } else {
+            anchor.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            anchor.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            if (showing && popupWindow != null && popupWindow.isShowing()) {
+                                doReposition(anchor);
+                            }
+                        }
+                    });
+        }
+    }
+
+    /** 按当前 gameRight（game_field_view）重新解算居中坐标并更新已显示弹窗位置（保持原尺寸） */
+    private void doReposition(View gameRight) {
+        int[] pos = computePosition(gameRight);
+        popupWindow.update(pos[0], pos[1], -1, -1);
     }
 
     public void dismiss() {
@@ -266,11 +299,9 @@ public class RPSDialog {
         window.showAtLocation(activity.getWindow().getDecorView(), Gravity.NO_GRAVITY, 0, 0);
 
         // 我方：自底边上升，顶边停在中心线
-        myIv.animate().translationY(myStopTop - myStartTop).setDuration(MOVE_MS)
-                .setInterpolator(MOVE_INTERPOLATOR).start();
+        myIv.animate().translationY(myStopTop - myStartTop).setDuration(MOVE_MS).start();
         // 对方：倒置图自 layout_game_right 顶部下降，底边停在中心线
         oppIv.animate().translationY(oppStopBottom - oppStartTop - imgH).setDuration(MOVE_MS)
-                .setInterpolator(MOVE_INTERPOLATOR)
                 .withEndAction(() -> overlay.postDelayed(() -> {
                     myIv.animate().alpha(0f).setDuration(FADE_MS).start();
                     oppIv.animate().alpha(0f).setDuration(FADE_MS)

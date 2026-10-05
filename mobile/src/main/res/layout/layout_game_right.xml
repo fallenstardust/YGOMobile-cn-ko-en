@@ -419,7 +419,7 @@
                 android:ellipsize="end"
                 android:background="#A0000000"
                 android:textColor="@color/white"
-                android:textSize="8sp"
+                android:textSize="7sp"
                 android:visibility="gone" />
 
             <!-- 提示信息 -->
@@ -444,7 +444,7 @@
                 android:maxLines="5"
                 android:ellipsize="end"
                 android:textColor="@color/white"
-                android:textSize="8sp"
+                android:textSize="7sp"
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>

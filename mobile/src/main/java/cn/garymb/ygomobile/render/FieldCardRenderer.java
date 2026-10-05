@@ -158,9 +158,10 @@ class FieldCardRenderer {
             // handFlipT 与卡码共同决定：翻过半（>=0.5）才贴卡面，翻面途中先绘卡背再绘卡面，
             // 与 buildCardModel 的 X 轴挤压合成「把卡翻过来」的完整过程。
             // 对齐 client_field.cpp GetCardLocation 手卡分支 L866-895：手卡正/背面最终仅由
-            // code 决定（code!=0 → 正面）——录像由本地引擎重跑产生消息，双方手卡 code 均已知
-            // → 对方手卡自然正面展示；实时对局服务端已把对方暗手卡 code 清零（DuelAnalyzer
-            // MSG_DRAW/MSG_SHUFFLE_HAND/refreshHand），未解除遮蔽的卡仍为卡背。
+            // code 决定（code!=0 → 正面）。本工程自建录像经 DuelViewBroadcaster.recordFrame(full)
+            // 只录未遮蔽全量帧（MSG_DRAW/MSG_MOVE/refreshHand 含双方手卡真实卡码），纯消息流
+            // 回放不重跑引擎亦能把对方手卡 code 写入→正面展示，切视角后卡码随卡对象迁移仍保持正面；
+            // 实况对局服务端已把对方暗手卡 code 清零（DuelAnalyzer 遮蔽分支），未解除遮蔽的卡仍为卡背。
             if (code > 0 && handShowsFace(c)) {
                 int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
                 if (tex > 0) {

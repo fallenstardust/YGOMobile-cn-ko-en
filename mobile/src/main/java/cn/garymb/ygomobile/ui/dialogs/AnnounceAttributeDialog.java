@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -146,7 +145,7 @@ public class AnnounceAttributeDialog {
     };
 
     private void build() {
-        View root = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_announce_attribute, null);
+        View root = LayoutInflater.from(context).inflate(R.layout.dialog_announce_attribute, null);
         tvTitle = root.findViewById(R.id.tv_anattrib_title);
         tvTitle.setText(title);
 
@@ -159,7 +158,17 @@ public class AnnounceAttributeDialog {
             chkAttributes[i] = cb;
         }
 
-        popupWindow = new PopupWindow(root, dp(DIALOG_WIDTH_DP),
+        // 使用 layout_game_right 宽度的 75% 作为对话框宽度（与 CardDisplayDialog/CardSelectDialog 一致）
+        android.app.Activity act = context instanceof android.app.Activity ? (android.app.Activity) context : null;
+        int dialogWidth = dp(DIALOG_WIDTH_DP);
+        if (act != null && !act.isFinishing() && !act.isDestroyed()) {
+            View gameRight = act.findViewById(R.id.layout_game_right);
+            if (gameRight != null && gameRight.getWidth() > 0) {
+                dialogWidth = Math.round(gameRight.getWidth() * 0.75f);
+            }
+        }
+
+        popupWindow = new PopupWindow(root, dialogWidth,
                 ViewGroup.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
@@ -171,7 +180,7 @@ public class AnnounceAttributeDialog {
 
         draggableHelper = new DraggablePopupHelper(context, "announce_attribute");
         draggableHelper.setupDraggablePopup(popupWindow, root,
-                dp(DIALOG_WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT);
+                dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
         // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
         DraggablePopupHelper.enableCollapse(popupWindow, title);
     }
@@ -202,7 +211,7 @@ public class AnnounceAttributeDialog {
     }
 
     private int dp(int value) {
-        return DialogScale.dpToPx(context, value);
+        return (int) context.getResources().getDisplayMetrics().density * value;
     }
 
     public void show() {

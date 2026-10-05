@@ -11,7 +11,6 @@ import android.widget.CheckBox;
 import android.widget.PopupWindow;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DialogScale;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.enums.CardCategory;
@@ -34,7 +33,7 @@ public class EffectCategoryPopupWindow extends PopupWindow {
         setOutsideTouchable(true);
         setFocusable(true);
 
-        View contentView = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.popup_effect_category, null);
+        View contentView = LayoutInflater.from(context).inflate(R.layout.popup_effect_category, null);
         Button btnOk = contentView.findViewById(R.id.btn_effect_category_ok);
 
         StringManager sm = DataManager.get().getStringManager();

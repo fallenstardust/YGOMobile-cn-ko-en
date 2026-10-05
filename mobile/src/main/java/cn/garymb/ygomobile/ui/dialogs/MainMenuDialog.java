@@ -5,6 +5,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -24,6 +25,9 @@ public class MainMenuDialog {
     private final YGOProActivity activity;
     private PopupWindow popupWindow;
     private DraggablePopupHelper draggableHelper;
+    
+    /** 固定设计宽度：无论横竖屏都使用此尺寸（参照竖屏标准，高度不变仅加宽） */
+    private static final int DESIGN_WIDTH_DP = 800;
 
     public MainMenuDialog(YGOProActivity activity) {
         this.activity = activity;
@@ -34,19 +38,27 @@ public class MainMenuDialog {
 
         bindButtons(layoutMainMenu);
 
+        // 使用 WrapContent 让内容决定宽度，通过 DragFrameLayout 保持固定尺寸
         popupWindow = new PopupWindow(layoutMainMenu,
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, true);
+                ViewGroup.LayoutParams.WRAP_CONTENT, 
+                ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(false);
+        popupWindow.setOutsideTouchable(true);
         popupWindow.setFocusable(false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
         draggableHelper = new DraggablePopupHelper(activity, "main_menu");
+        // 关键修改：最后一个参数 false - 不在横竖屏间切换宽高比例，始终保持固定设计尺寸
         draggableHelper.setupDraggablePopup(popupWindow, layoutMainMenu,
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                DESIGN_WIDTH_DP, ViewGroup.LayoutParams.MATCH_PARENT, false);
     }
 
     public void showMainMenu() {
+        // 注册自定义旋转重排逻辑：确保横屏转竖屏/竖屏转横屏时对话框按新方向重算宽度
+        if (popupWindow != null && popupWindow.getContentView() instanceof FrameLayout) {
+            draggableHelper.registerOrientationRelayout(popupWindow, this::relayoutOnRotation);
+        }
+        
         View decor = activity.getWindow().getDecorView();
         if (decor.getWindowToken() == null) {
             decor.post(this::showMainMenu);
@@ -113,5 +125,13 @@ public class MainMenuDialog {
         int v2 = (Constants.PRO_VERSION & 0x0ff0) >> 4;
         int v3 = Constants.PRO_VERSION & 0x000f;
         return String.format("YGOPro Version:%X.0%X.%X", v1, v2, v3);
+    }
+
+    /**
+     * 屏幕旋转后重新布局：根据当前屏幕方向重新解算对话框宽度，避免横屏转竖屏时对话框被过度放大。
+     */
+    private void relayoutOnRotation() {
+        // DraggablePopupHelper 已经处理了旋转重排逻辑
+        // 这里只需确保设计尺寸和配置正确即可
     }
 }

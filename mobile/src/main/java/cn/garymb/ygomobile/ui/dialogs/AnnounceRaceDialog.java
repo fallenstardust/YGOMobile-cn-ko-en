@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,7 +19,6 @@ import java.nio.ByteBuffer;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -158,7 +158,7 @@ public class AnnounceRaceDialog {
     };
 
     private void build() {
-        View root = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_announce_race, null);
+        View root = LayoutInflater.from(context).inflate(R.layout.dialog_announce_race, null);
         tvTitle = root.findViewById(R.id.tv_anrace_title);
         tvTitle.setText(title);
 
@@ -173,6 +173,24 @@ public class AnnounceRaceDialog {
 
         popupWindow = new PopupWindow(root, dp(DIALOG_WIDTH_DP),
                 ViewGroup.LayoutParams.WRAP_CONTENT, false);
+        
+        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏保持原有样式
+        final android.app.Activity act = context instanceof android.app.Activity
+                ? (android.app.Activity) context : null;
+        int dialogWidth = dp(DIALOG_WIDTH_DP);
+        if (act != null && act.getWindow() != null && act.getWindow().getAttributes() != null) {
+            DisplayMetrics screen = new DisplayMetrics();
+            act.getWindowManager().getDefaultDisplay().getRealMetrics(screen);
+            boolean isLandscape = screen.widthPixels >= screen.heightPixels;
+            if (isLandscape) {
+                int maxWidth = (int) (screen.widthPixels * 0.66f);
+                int[] fitted = DraggablePopupHelper.fitSizeToScreen(context, dialogWidth, 0);
+                if (fitted[0] > maxWidth) {
+                    fitted[0] = maxWidth;
+                }
+                dialogWidth = fitted[0];
+            }
+        }
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
         popupWindow.setFocusable(true);
@@ -183,7 +201,7 @@ public class AnnounceRaceDialog {
 
         draggableHelper = new DraggablePopupHelper(context, "announce_race");
         draggableHelper.setupDraggablePopup(popupWindow, root,
-                dp(DIALOG_WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT);
+                dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
         // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
         DraggablePopupHelper.enableCollapse(popupWindow, title);
     }
@@ -214,7 +232,7 @@ public class AnnounceRaceDialog {
     }
 
     private int dp(int value) {
-        return DialogScale.dpToPx(context, value);
+        return (int) context.getResources().getDisplayMetrics().density * value;
     }
 
     public void show() {

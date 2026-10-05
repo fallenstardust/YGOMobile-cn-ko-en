@@ -84,18 +84,13 @@ public final class DialogScale {
     }
 
     /**
-     * 横屏等比缩放系数：竖屏或无法测量时返回 1.0；横屏时按屏幕宽高相对设计基准取
-     * 较小比例（保证不超短边）并限制在 [{@link #MIN_SCALE}, {@link #MAX_SCALE}]。
+     * 横屏等比缩放系数：
+     * 【需求变更】以竖屏显示尺寸为统一标准——无论横屏还是竖屏都返回 1.0，
+     * 使横屏启动时对话框不会因 density 覆写而被放大，保证横竖屏对话框物理尺寸一致，
+     * 避免玩家旋转屏幕时的视觉不适应感。
      */
     public static float factor(Context context) {
-        if (context == null) return MIN_SCALE;
-        if (!isLandscape(context)) return MIN_SCALE;
-        DisplayMetrics dm = screenMetrics(context);
-        if (dm.widthPixels <= 0 || dm.heightPixels <= 0) return MIN_SCALE;
-        float s = Math.min(dm.widthPixels / BASE_W, dm.heightPixels / BASE_H);
-        if (s < MIN_SCALE) s = MIN_SCALE;
-        if (s > MAX_SCALE) s = MAX_SCALE;
-        return s;
+        return MIN_SCALE;
     }
 
     /**

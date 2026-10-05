@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.ui.dialogs.EffectCategoryPopupWindow;
@@ -55,6 +56,7 @@ public class CardSearcherManager {
     private final Activity activity;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final StringManager mStringManager = DataManager.get().getStringManager();
+    private SoundManager soundManager;
 
     private final List<Card> searchResults = new ArrayList<>();
     private SearchListener listener;
@@ -97,6 +99,11 @@ public class CardSearcherManager {
 
     public CardSearcherManager(Activity activity) {
         this.activity = activity;
+    }
+
+    // 从 DeckEditorManager 获取 SoundManager 引用
+    public void setSoundManager(SoundManager soundManager) {
+        this.soundManager = soundManager;
     }
 
     public void setListener(SearchListener listener) {
@@ -248,10 +255,22 @@ public class CardSearcherManager {
     }
 
     public void setupButtons() {
-        setClickListener(btnFilterEffect, v -> showEffectCategoryPopup());
-        setClickListener(btnFilterMarks, v -> showLinkMarkerPopup());
-        setClickListener(btnFilterSearch, v -> startFilter());
-        setClickListener(btnFilterClear, v -> clearSearch());
+        setClickListener(btnFilterEffect, v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            showEffectCategoryPopup();
+        });
+        setClickListener(btnFilterMarks, v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            showLinkMarkerPopup();
+        });
+        setClickListener(btnFilterSearch, v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            startFilter();
+        });
+        setClickListener(btnFilterClear, v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            clearSearch();
+        });
         setupKeywordInput();
     }
 

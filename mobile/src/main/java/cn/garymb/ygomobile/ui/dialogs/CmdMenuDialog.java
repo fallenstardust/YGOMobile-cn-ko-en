@@ -18,7 +18,6 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import ocgcore.DataManager;
@@ -83,7 +82,7 @@ public class CmdMenuDialog {
 
     public CmdMenuDialog(YGOProActivity activity) {
         this.activity = activity;
-        contentView = LayoutInflater.from(DialogScale.wrap(activity)).inflate(R.layout.popup_window_cmd_menu, null);
+        contentView = LayoutInflater.from(activity).inflate(R.layout.popup_window_cmd_menu, null);
         layoutItems = contentView.findViewById(R.id.layout_cmd_menu_items);
 
         popupWindow = new PopupWindow(contentView, dp(MENU_WIDTH_DP),
@@ -798,7 +797,7 @@ public class CmdMenuDialog {
     }
 
     private Button createItemButton(String text) {
-        Button btn = new Button(DialogScale.wrap(activity));
+        Button btn = new Button(activity);
         btn.setText(text);
         btn.setTextColor(0xFFFFFFFF);
         btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
@@ -814,6 +813,6 @@ public class CmdMenuDialog {
     }
 
     private int dp(int value) {
-        return DialogScale.dpToPx(activity, value);
+        return (int) (value * activity.getResources().getDisplayMetrics().density);
     }
 }
