@@ -123,6 +123,8 @@ class DeckEditorViewHost {
             activity.layoutDeckEditor.setVisibility(View.GONE);
         }
         if (activity.layoutDeckControl != null) activity.layoutDeckControl.setVisibility(View.GONE);
+        // 退出卡组编辑：清除关键词导航器，使卡详描述高亮词点击恢复为决斗态的 KeywordCardListDialog 弹窗
+        if (activity.cardDetailPanel != null) activity.cardDetailPanel.setDeckKeywordNavigator(null);
         activity.cardDetailPanel.exitDeckEditorMode();
         // 卡组编辑器隐藏后重算场景（无其他布局显示 → MENU）
         activity.updateBGM();

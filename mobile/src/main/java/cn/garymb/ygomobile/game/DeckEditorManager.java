@@ -174,6 +174,11 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         cardSearcherManager.setupSearchRecyclerView(imageLoader, dragHelper, this);
         cardSearcherManager.setupSpinners();
         cardSearcherManager.setupButtons();
+        // 卡组编辑态：卡详描述里高亮词点击直接填入卡组检索词并搜索（结果呈现在 rv_deck_search_results），
+        // 不再另弹 KeywordCardListDialog；退出卡组编辑（DeckEditorViewHost.hide）时置空恢复决斗态弹窗行为
+        if (cardDetailPanel != null) {
+            cardDetailPanel.setDeckKeywordNavigator(cardSearcherManager::searchByKeyword);
+        }
         setupDeckSelectorDialog();
         loadLastDeck();
         statsPanel.updateCounts();

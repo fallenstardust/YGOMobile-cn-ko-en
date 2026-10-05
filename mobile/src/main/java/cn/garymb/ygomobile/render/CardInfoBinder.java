@@ -58,6 +58,22 @@ class CardInfoBinder {
     private View anchor;
     private Card currentDisplayCard;
     private KeywordCardListDialog keywordDialog;
+    /**
+     * 卡组编辑模式下的关键词导航器：非空时点击高亮词不再弹 {@link KeywordCardListDialog}，
+     * 而是把关键词交由此处理器（由 {@code DeckEditorManager} 注入为填入卡组搜索框并搜索，
+     * 结果显示在卡组编辑搜索结果列表上）。进入卡组编辑时注入、退出时置空恢复决斗态弹窗行为。
+     */
+    private KeywordNavigator deckKeywordNavigator;
+
+    /** 关键词点击导航回调（卡组编辑模式复用卡详高亮，点击直接作用到卡组搜索列表） */
+    public interface KeywordNavigator {
+        void onKeywordClick(String keyword);
+    }
+
+    /** 由 CardDetailPanel 转发 DeckEditorManager 的注入：非空即视为处于卡组编辑模式 */
+    public void setDeckKeywordNavigator(KeywordNavigator navigator) {
+        this.deckKeywordNavigator = navigator;
+    }
 
     /** bindViews() 重绑新视图树后注入详情控件（旋转重建场景）；anchor 为关键词卡片列表停靠的 layout_game_right */
     void attachViews(LinearLayout layout, LinearLayout panelRoot, ImageView ivCardImage,
@@ -449,6 +465,11 @@ class CardInfoBinder {
 
     /** 在 layout_game_right 最左侧停靠显示命中该关键词的卡片纵向列表（复用卡组编辑搜索结果同款 adapter） */
     private void openKeywordList(String keyword) {
+        // 卡组编辑模式：点高亮词直接作用到卡组搜索列表（填入检索词并搜索），不弹关键词卡片列表弹窗
+        if (deckKeywordNavigator != null) {
+            deckKeywordNavigator.onKeywordClick(keyword);
+            return;
+        }
         if (context == null || anchor == null) return;
         List<Card> cards = KeywordCardListDialog.queryCardsByKeyword(keyword);
         // 排序与卡组编辑搜索结果同源：怪兽(通常→效果→仪式→融合→同调→超量→连接)→魔法→陷阱，

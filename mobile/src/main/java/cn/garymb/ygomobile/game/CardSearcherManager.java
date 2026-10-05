@@ -879,6 +879,19 @@ public class CardSearcherManager {
         if (rvSearchResults != null) rvSearchResults.scrollToPosition(0);
     }
 
+    /**
+     * 卡组编辑模式下点击卡片描述高亮关键词时的搜索入口：把关键词填入检索词输入框并立即搜索，
+     * 结果直接呈现在卡组编辑的搜索结果列表（{@code rv_deck_search_results}）上，不再另弹关键词列表弹窗。
+     * 保留当前其他筛选条件（与手动在输入框输入后回车搜索完全一致）。setText 会触发
+     * keywordTextWatcher 的防抖搜索，随后 startFilter 会取消其 pending 并立即执行，故只跑一次。
+     */
+    public void searchByKeyword(String keyword) {
+        if (etKeyword == null) return;
+        etKeyword.setText(keyword == null ? "" : keyword);
+        etKeyword.setSelection(etKeyword.getText().length());
+        startFilter();
+    }
+
     public int getFilterMarks() {
         return filterMarks;
     }

@@ -73,9 +73,14 @@ public class KeywordCardListDialog {
         adapter.setCards(cards);
         rv.setAdapter(adapter);
 
-        // 标题「数量-关键词」：数量前置，避免关键词过长把命中数挤出可视区（收缩横条标题同步）
-        String title = (cards == null ? 0 : cards.size()) + "-" + (keyword == null ? "" : keyword);
-        tvTitle.setText(title);
+        // 标题“关键词（数量）”：关键词与数量分属两个 TextView——关键词过长在自身尾部省略（weight=1+ellipsize），
+        // 数量 TextView 固定完整显示（不被挤出）；收缩横条为单串，沿用“关键词（数量）”由其自身省略
+        String keywordText = keyword == null ? "" : keyword;
+        String countText = "\uFF08" + (cards == null ? 0 : cards.size()) + "\uFF09";
+        tvTitle.setText(keywordText);
+        TextView tvCount = root.findViewById(R.id.tv_keyword_card_count);
+        tvCount.setText(countText);
+        String title = keywordText + countText;
 
         root.findViewById(R.id.btn_keyword_card_close).setOnClickListener(v -> dismiss());
 

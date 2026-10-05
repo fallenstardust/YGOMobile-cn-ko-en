@@ -145,6 +145,14 @@ public class CardDetailPanel {
     }
 
     /**
+     * 注入/清除卡组编辑关键词导航器（{@code DeckEditorManager} 在进入时注入搜索到卡组列表、退出时置空）：
+     * 非空时卡详描述里的高亮词点击不再弹关键词列表弹窗，而是填入卡组检索并搜索。
+     */
+    public void setDeckKeywordNavigator(CardInfoBinder.KeywordNavigator navigator) {
+        binder.setDeckKeywordNavigator(navigator);
+    }
+
+    /**
      * 面板初始化时统一从 TextureLoader 获取侧边功能按钮图标
      * （对齐 gframe image_manager.cpp extra 图标：tSettings/tLogs/tPlay/tOneX/tEmoticon/tTalk），
      * 必须在 TextureLoader.init() 之后调用；纹理缺失时保留 XML 默认图兜底

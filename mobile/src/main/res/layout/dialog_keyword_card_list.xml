@@ -27,7 +27,17 @@
             android:maxLines="1"
             android:text="@string/searchresult"
             android:textColor="@color/white"
-            android:textSize="11sp" />
+            android:textSize="9sp" />
+
+        <!-- 命中数量：不参与 weight 伸缩、固定完整显示（关键词过长只省略前面的关键词） -->
+        <TextView
+            android:id="@+id/tv_keyword_card_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:maxLines="1"
+            android:textColor="@color/holo_blue_bright"
+            android:textSize="9sp" />
 
         <ImageButton
             android:id="@+id/btn_keyword_card_close"
