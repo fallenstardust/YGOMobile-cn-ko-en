@@ -328,6 +328,9 @@ public class DraggablePopupHelper {
         /** 居中区域（如 layout_game_right）的视图 id 与弱引用，旋转重建后按 id 重新解析新实例 */
         private int centerRegionId = View.NO_ID;
         private java.lang.ref.WeakReference<View> centerRegionRef;
+        /** 停靠模式：true=内容贴区域左缘+垂直居中（{@link #dockPopupInRegionLeft}），
+         *  false=区域居中（{@link #centerPopupInRegion}）；旋转重排按此标志重新定位 */
+        private boolean dockLeftInRegion = false;
         /** 自定义旋转重排逻辑；非空时 {@link #relayoutForOrientation} 完全交由其处理，跳过默认限宽 */
         private Runnable customRelayout;
         // ── 收缩到底部横条模式（CollapsiblePopupShell，经 enableCollapse 启用）──
@@ -375,9 +378,15 @@ public class DraggablePopupHelper {
 
         /** 记录居中区域（供旋转后按新视图树同 id 区域重新居中） */
         void setCenterRegion(View region) {
+            setCenterRegion(region, false);
+        }
+
+        /** 记录居中/停靠区域与停靠模式（dockLeft=true 贴区域左缘，false 居中） */
+        void setCenterRegion(View region, boolean dockLeft) {
             if (region != null) {
                 this.centerRegionId = region.getId();
                 this.centerRegionRef = new java.lang.ref.WeakReference<>(region);
+                this.dockLeftInRegion = dockLeft;
             }
         }
 
@@ -543,7 +552,8 @@ public class DraggablePopupHelper {
                     region = act != null ? act.findViewById(centerRegionId) : null;
                 }
                 if (region != null) {
-                    centerPopupInRegion(hostPopup, region);
+                    if (dockLeftInRegion) dockPopupInRegionLeft(hostPopup, region);
+                    else centerPopupInRegion(hostPopup, region);
                 }
             }
             if (collapsible) refreshCollapseAnchors();
@@ -1065,6 +1075,61 @@ public class DraggablePopupHelper {
         window.getLocationInWindow(winLoc);
         // CENTER gravity 下 leftMargin/topMargin 将内容整体平移该偏移量
         lp.leftMargin = (regionLoc[0] + region.getWidth() / 2) - (winLoc[0] + winW / 2);
+        lp.rightMargin = 0;
+        lp.topMargin = (regionLoc[1] + region.getHeight() / 2) - (winLoc[1] + winH / 2);
+        lp.bottomMargin = 0;
+        content.setLayoutParams(lp);
+    }
+
+    /**
+     * 将经 {@link #setupDraggablePopup} 包装为全窗口的 popup 内容贴到指定区域（如 layout_game_right）
+     * 的**左缘**、区域内垂直居中（区别于 {@link #centerPopupInRegion} 的水平居中）：
+     * 包装层内对话框内容以 Gravity.CENTER 布局，左缘基准 = 窗口左 +（窗口宽 - 内容宽）/2，
+     * 据此反推 leftMargin 使内容左缘 = 区域左缘；topMargin 与居中同式使内容垂直居中于区域。
+     * 同时把区域与 dockLeft 模式记入包装层，旋转重建后由 {@link DragFrameLayout#relayoutForOrientation}
+     * 按同 id 新实例重新贴回左缘。区域尚未布局（宽高为 0）时注册一次性布局监听待完成后应用。
+     */
+    public static void dockPopupInRegionLeft(PopupWindow popupWindow, View region) {
+        if (popupWindow == null || region == null) return;
+        if (popupWindow.getContentView() instanceof DragFrameLayout) {
+            ((DragFrameLayout) popupWindow.getContentView()).setCenterRegion(region, true);
+        }
+        if (region.getWidth() <= 0 || region.getHeight() <= 0) {
+            region.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            region.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            dockPopupInRegionLeft(popupWindow, region);
+                        }
+                    });
+            return;
+        }
+        View wrapper = popupWindow.getContentView();
+        if (!(wrapper instanceof ViewGroup)) return;
+        ViewGroup wrapperGroup = (ViewGroup) wrapper;
+        if (wrapperGroup.getChildCount() == 0) return;
+        // 归零拖拽期间对整层施加的平移：本模式语义是“每次停靠绝对贴区域左缘”，
+        // 避免上次拖拽的 translation 叠加 margin 使内容偏离左缘（旋转载荷时同属此路）
+        wrapper.setTranslationX(0f);
+        wrapper.setTranslationY(0f);
+        View content = wrapperGroup.getChildAt(0);
+        ViewGroup.LayoutParams raw = content.getLayoutParams();
+        if (!(raw instanceof FrameLayout.LayoutParams)) return;
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) raw;
+
+        View window = region.getRootView();
+        int winW = window.getWidth();
+        int winH = window.getHeight();
+        if (winW <= 0 || winH <= 0) return;
+        int[] regionLoc = new int[2];
+        region.getLocationInWindow(regionLoc);
+        int[] winLoc = new int[2];
+        window.getLocationInWindow(winLoc);
+        // 内容宽：优先用已解算的布局宽（旋转重排前已置为 fitted 宽），未布局时退回实测宽
+        int contentW = lp.width > 0 ? lp.width : content.getWidth();
+        // CENTER 下左缘 = winLeft + (winW - contentW)/2，叠加 leftMargin 后贴区域左缘
+        lp.leftMargin = regionLoc[0] - (winLoc[0] + (winW - contentW) / 2);
         lp.rightMargin = 0;
         lp.topMargin = (regionLoc[1] + region.getHeight() / 2) - (winLoc[1] + winH / 2);
         lp.bottomMargin = 0;

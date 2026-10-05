@@ -40,6 +40,11 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private final DeckEditorManager editorManager;
     private final DeckInfo.Type deckType;
     private final CardDragHelper dragHelper;
+    /**
+     * 独立模式条目点击回调（供决斗内关键词卡片列表弹窗复用本 adapter：
+     * 无 DeckEditorManager / CardDragHelper，点击仅回调外部，不触发任何卡组/拖拽逻辑）。
+     */
+    private final OnCardItemClickListener standaloneListener;
     private final List<Card> cards = new ArrayList<>();
     private ImageTop mImageTop;
     private LimitList mLimitList;
@@ -55,6 +60,25 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         this.editorManager = editorManager;
         this.deckType = deckType;
         this.dragHelper = dragHelper;
+        this.standaloneListener = null;
+    }
+
+    /**
+     * 独立模式构造：仅传图片加载器与条目点击回调，editorManager / dragHelper 均为空。
+     * 卡组编辑搜索结果以外的场景（如决斗内关键词卡片列表）复用同款 item/adapter 时使用；
+     * 此模式下不附加拖拽触摸监听，条目点击只回调 standaloneListener。
+     */
+    public DeckCardAdapter(ImageLoader imageLoader, OnCardItemClickListener listener) {
+        this.imageLoader = imageLoader;
+        this.editorManager = null;
+        this.deckType = null;
+        this.dragHelper = null;
+        this.standaloneListener = listener;
+    }
+
+    /** 独立模式（无 DeckEditorManager）下的条目点击回调 */
+    public interface OnCardItemClickListener {
+        void onCardClick(Card card);
     }
 
     public void setLimitList(LimitList limitList) {
@@ -140,17 +164,24 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             if (pos == RecyclerView.NO_POSITION) return;
             setSelectedPosition(pos);
             if (deckType == null) {
-                editorManager.onSearchCardClicked(card);
+                if (editorManager != null) {
+                    editorManager.onSearchCardClicked(card);
+                } else if (standaloneListener != null) {
+                    standaloneListener.onCardClick(card);
+                }
             } else {
                 editorManager.onDeckCardClicked(deckType, pos);
             }
         });
 
         if (deckType == null) {
-            //整个item可横向拖动触发拖拽，但拖拽阴影统一用卡图生成
-            holder.itemView.setOnTouchListener(createSearchDragTouchListener(card, holder.ivCard, mTouchSlop, mReadonly));
-            //卡图作为拖拽把手：任意方向拖动即可触发拖拽；点击卡图仍等同点击整个item
-            holder.ivCard.setOnTouchListener(createSearchImageDragTouchListener(card, mTouchSlop, mReadonly));
+            // 拖拽触摸仅在存在拖拽助手（卡组编辑场景）时附加；独立模式（dragHelper 为空）不响应拖拽
+            if (dragHelper != null) {
+                //整个item可横向拖动触发拖拽，但拖拽阴影统一用卡图生成
+                holder.itemView.setOnTouchListener(createSearchDragTouchListener(card, holder.ivCard, mTouchSlop, mReadonly));
+                //卡图作为拖拽把手：任意方向拖动即可触发拖拽；点击卡图仍等同点击整个item
+                holder.ivCard.setOnTouchListener(createSearchImageDragTouchListener(card, mTouchSlop, mReadonly));
+            }
             holder.ivCard.setOnClickListener(v -> holder.itemView.performClick());
         }
     }

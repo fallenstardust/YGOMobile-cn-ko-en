@@ -344,6 +344,19 @@ public class CardSearcherManager {
 
     public Comparator<Card> buildSortComparator() {
         int sortSel = spinnerSortType != null ? spinnerSortType.getSelectedItemPosition() : 0;
+        return makeComparator(sortSel);
+    }
+
+    /**
+     * 卡组编辑搜索结果的默认排序（sortSel=0）：怪兽(通常→效果→仪式→融合→同调→超量→连接)→
+     * 魔法→陷阱，各类内部按子类/等级。供关键词卡片列表等外部复用，保证两处排序逻辑同源、观感一致。
+     */
+    public static Comparator<Card> defaultSearchComparator() {
+        return makeComparator(0);
+    }
+
+    /** 排序比较器统一实现：类秩(怪兽→魔法→陷阱)优先，再按 sortSel 解算子类/攻守/名称，末尾以卡码兜底 */
+    private static Comparator<Card> makeComparator(int sortSel) {
         return (a, b) -> {
             int classA = getCardClassRank(a), classB = getCardClassRank(b);
             if (classA != classB) return Integer.compare(classA, classB);
@@ -440,11 +453,11 @@ public class CardSearcherManager {
         Collections.sort(searchResults, buildSortComparator());
     }
 
-    private int getCardClassRank(Card card) {
+    private static int getCardClassRank(Card card) {
         return Card.isType(card.Type, CardType.Monster) ? 0 : Card.isType(card.Type, CardType.Spell) ? 1 : Card.isType(card.Type, CardType.Trap) ? 2 : 3;
     }
 
-    private int getCardSubTypeRank(Card card, int classRank) {
+    private static int getCardSubTypeRank(Card card, int classRank) {
         if (classRank == 0) {
             if (Card.isType(card.Type, CardType.Link)) return 6;
             if (Card.isType(card.Type, CardType.Xyz)) return 5;
@@ -470,7 +483,7 @@ public class CardSearcherManager {
         return 0;
     }
 
-    private int compareMonsterBySortType(Card a, Card b, int sortSel) {
+    private static int compareMonsterBySortType(Card a, Card b, int sortSel) {
         int subA = getCardSubTypeRank(a, 0), subB = getCardSubTypeRank(b, 0);
         if (sortSel == 3) {
             String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";

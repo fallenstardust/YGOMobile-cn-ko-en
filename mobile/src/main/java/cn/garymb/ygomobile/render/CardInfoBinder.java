@@ -1,7 +1,14 @@
 package cn.garymb.ygomobile.render;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.text.SpannableString;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -9,12 +16,18 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.Stack;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.game.CardSearcherManager;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.ui.dialogs.KeywordCardListDialog;
 import cn.garymb.ygomobile.utils.CardUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -39,10 +52,17 @@ class CardInfoBinder {
     private Bitmap coverBitmap;
     private StringManager mStringManager = DataManager.get().getStringManager();
 
-    /** bindViews() 重绑新视图树后注入详情控件（旋转重建场景） */
+    // 关键词卡片列表弹窗支撑（详情描述「」/""高亮点击后在 layout_game_right 最左侧停靠显示命中列表）：
+    // context/anchor 由 attachViews 注入，currentDisplayCard 用于 queryable 判定（唯一命中即自身则不可点）
+    private Context context;
+    private View anchor;
+    private Card currentDisplayCard;
+    private KeywordCardListDialog keywordDialog;
+
+    /** bindViews() 重绑新视图树后注入详情控件（旋转重建场景）；anchor 为关键词卡片列表停靠的 layout_game_right */
     void attachViews(LinearLayout layout, LinearLayout panelRoot, ImageView ivCardImage,
                      TextView tvCardName, TextView tvCardSetname, TextView tvCardAttr,
-                     TextView tvCardLevel, TextView tvCardDesc, ScrollView svCardDesc) {
+                     TextView tvCardLevel, TextView tvCardDesc, ScrollView svCardDesc, View anchor) {
         this.layout = layout;
         this.panelRoot = panelRoot;
         this.ivCardImage = ivCardImage;
@@ -52,6 +72,11 @@ class CardInfoBinder {
         this.tvCardLevel = tvCardLevel;
         this.tvCardDesc = tvCardDesc;
         this.svCardDesc = svCardDesc;
+        this.anchor = anchor;
+        this.context = layout != null ? layout.getContext()
+                : (panelRoot != null ? panelRoot.getContext() : null);
+        // 关键词卡片列表弹窗已改用 DraggablePopupHelper：旋转重排/重居中由其 relayoutActivePopupsForOrientation
+        //（YGOProActivity 旋转重建末尾统一调用）按 dialogId 处理，本处无需再手动重锚。
     }
 
     void setImageLoader(ImageLoader imageLoader) {
@@ -66,6 +91,12 @@ class CardInfoBinder {
         currentCardCode = code;
     }
 
+    /** 面板隐藏时由 CardDetailPanel.hide() 调用：收起关键词卡片列表弹窗并清理当前卡引用 */
+    void dismissKeywordListDialog() {
+        dismissKeywordDialog();
+        currentDisplayCard = null;
+    }
+
     void showCardInfo(GameField.ClientCard card) {
         // 移除 code<=0 检查：对于 CardSelectDialog 中的已知 code 的暗卡（里侧怪兽、卡组表侧等），
         // 只要能读取到卡片图案就应该显示详细信息，而不是当作未知卡处理
@@ -75,6 +106,9 @@ class CardInfoBinder {
 
     void showDefault() {
         currentCardCode = -1;
+        currentDisplayCard = null;
+        // 不在此收起关键词卡片列表弹窗：旋转重建流程会先经 onGameUIShown→showDefault 再回显，
+        // 若此处 dismiss 会使命中列表在横竖屏切换时消失（用户要求切换方向不隐藏）。
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
         }
@@ -192,6 +226,7 @@ class CardInfoBinder {
 
     void showUnknownCard() {
         currentCardCode = -1;
+        currentDisplayCard = null;
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
         }
@@ -323,13 +358,118 @@ class CardInfoBinder {
 
     private void bindCardDesc(Card cardData) {
         if (tvCardDesc == null) return;
+        // 记录当前展示的卡，供关键词 queryable 判定（唯一命中即当前卡自身时视为不可查）
+        currentDisplayCard = cardData;
         String desc = cardData.Desc;
         if (desc == null || desc.isEmpty()) {
             tvCardDesc.setText("");
         } else {
-            tvCardDesc.setText(desc);
+            setHighlightTextWithClickableSpans(desc);
         }
     }
+
+    /**
+     * 将描述中「」与 "" 之间的文本渲染为高亮可点击文字（对齐 CardDetail.setHighlightTextWithClickableSpans）：
+     * 命中卡集合可查（多于一个、或唯一命中非当前卡）→ holo_blue_bright 蓝色带下划线，点击在
+     * layout_game_right 最左侧停靠弹出关键词卡片列表；不可查 → 白色带下划线，点击仅提示已到结尾。
+     */
+    private void setHighlightTextWithClickableSpans(String text) {
+        SpannableString spannableString = new SpannableString(text);
+        QuoteType currentQuoteType = QuoteType.NONE;
+        Stack<Integer> stack = new Stack<>();
+        int start = -1;
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            switch (currentQuoteType) {
+                case NONE:
+                    if (c == '「') {
+                        currentQuoteType = QuoteType.ANGLE_QUOTE;
+                        start = i + 1;
+                        stack.push(i);
+                    } else if (c == '"') {
+                        currentQuoteType = QuoteType.DOUBLE_QUOTE;
+                        start = i + 1;
+                        stack.push(i);
+                    }
+                    break;
+                case ANGLE_QUOTE:
+                    if (c == '「') {
+                        stack.push(i);
+                    } else if (c == '」' && !stack.isEmpty()) {
+                        stack.pop();
+                        if (stack.isEmpty()) {
+                            String quotedText = text.substring(start, i).trim();
+                            applySpan(spannableString, start, i, quotedText,
+                                    KeywordCardListDialog.isQueryable(quotedText, currentDisplayCard)
+                                            ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            currentQuoteType = QuoteType.NONE;
+                        }
+                    }
+                    break;
+                case DOUBLE_QUOTE:
+                    if (c == '"' && !stack.isEmpty()) {
+                        stack.pop();
+                        if (stack.isEmpty()) {
+                            String quotedText = text.substring(start, i).trim();
+                            applySpan(spannableString, start, i, quotedText,
+                                    KeywordCardListDialog.isQueryable(quotedText, currentDisplayCard)
+                                            ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            currentQuoteType = QuoteType.NONE;
+                        } else {
+                            stack.push(i);
+                        }
+                    }
+                    break;
+            }
+        }
+        tvCardDesc.setText(spannableString);
+        tvCardDesc.setMovementMethod(LinkMovementMethod.getInstance());
+    }
+
+    /** 为一段引用文本着色并挂点击：蓝色→点击弹出关键词卡片列表，白色→点击提示已到结尾 */
+    private void applySpan(SpannableString spannableString, int start, int end, String keyword, int color) {
+        spannableString.setSpan(new ForegroundColorSpan(color), start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                if (color != Color.WHITE) {
+                    openKeywordList(keyword);
+                } else if (context != null) {
+                    YGOUtil.showTextToast(context.getString(R.string.searchresult) + context.getString(R.string.already_end));
+                }
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                ds.setUnderlineText(true);
+            }
+        }, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    /** 在 layout_game_right 最左侧停靠显示命中该关键词的卡片纵向列表（复用卡组编辑搜索结果同款 adapter） */
+    private void openKeywordList(String keyword) {
+        if (context == null || anchor == null) return;
+        List<Card> cards = KeywordCardListDialog.queryCardsByKeyword(keyword);
+        // 排序与卡组编辑搜索结果同源：怪兽(通常→效果→仪式→融合→同调→超量→连接)→魔法→陷阱，
+        // 复用 CardSearcherManager 默认比较器，使玩家对两处排序逻辑有一致的亲和力
+        Collections.sort(cards, CardSearcherManager.defaultSearchComparator());
+        if (keywordDialog != null) keywordDialog.dismiss();
+        // 条目点击刷新左侧详情面板（this::showCard），弹窗保持打开以便继续链式点关键词
+        keywordDialog = new KeywordCardListDialog(context, imageLoader, anchor, cards, keyword, this::showCard);
+        keywordDialog.show();
+    }
+
+    /** 关闭关键词卡片列表弹窗（切换/隐藏卡详时调用，避免残留遮挡） */
+    private void dismissKeywordDialog() {
+        if (keywordDialog != null) {
+            keywordDialog.dismiss();
+            keywordDialog = null;
+        }
+    }
+
+    // 引用文本解析状态（对齐 CardDetail.QuoteType）
+    private enum QuoteType {NONE, DOUBLE_QUOTE, ANGLE_QUOTE}
 
     private Bitmap getCoverBitmap() {
         if (coverBitmap == null || coverBitmap.isRecycled()) {

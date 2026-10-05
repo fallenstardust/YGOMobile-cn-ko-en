@@ -93,7 +93,9 @@ public class CardDetailPanel {
                 activity.findViewById(R.id.tv_card_attr),
                 activity.findViewById(R.id.tv_card_level),
                 activity.findViewById(R.id.tv_card_desc),
-                activity.findViewById(R.id.sv_card_desc));
+                activity.findViewById(R.id.sv_card_desc),
+                // 关键词卡片列表弹窗停靠锚点：详情描述高亮关键词点击后显示在本区域最左侧
+                activity.findViewById(R.id.layout_game_right));
 
         btnSettings = activity.findViewById(R.id.btn_settings);
         btnChat = activity.findViewById(R.id.btn_chat);
@@ -361,6 +363,8 @@ public class CardDetailPanel {
 
     public void hide() {
         binder.setCurrentCardCode(-1);
+        // 面板隐藏同时收起关键词卡片列表弹窗，避免残留遮挡
+        binder.dismissKeywordListDialog();
         if (layout != null) {
             layout.setVisibility(View.GONE);
         }
