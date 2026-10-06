@@ -170,6 +170,7 @@ public class PosSelectDialog {
         });
         popupWindow.setOnDismissListener(() -> {
             showing = false;
+            if (collapseShell != null) collapseShell.detach();
             if (dismissListener != null) dismissListener.onDismiss();
         });
 
@@ -361,6 +362,11 @@ public class PosSelectDialog {
         private final View bar;
         private final View handle;
         private PopupWindow popup;
+        /** 旋转/布局变化重锚回调的宿主 decor 与监听（detach 时摘除） */
+        private View decorView;
+        private ViewTreeObserver.OnGlobalLayoutListener reanchorListener;
+        /** 最近一次已应用的横条几何（相等则跳过重复 popup.update，防全局布局回调高频触发） */
+        private int lastBarLeft = -1, lastBarWidth, lastBarTop;
         /** 展开态几何（showCenteredInGameRight 定位成功后传入，窗口坐标） */
         private boolean geometrySaved;
         private int savedX, savedY, savedW, savedH;
@@ -392,6 +398,23 @@ public class PosSelectDialog {
 
         void attachPopup(PopupWindow popupWindow) {
             this.popup = popupWindow;
+            // 旋转重建视图树后聊天输入框/区域重新排布，收缩态经 Activity decor 的全局布局
+            // 回调重锚横条，保持与聊天输入框同高同位、在 layout_game_right 内居中
+            if (context instanceof Activity) {
+                decorView = ((Activity) context).getWindow().getDecorView();
+                reanchorListener = this::reanchor;
+                decorView.getViewTreeObserver().addOnGlobalLayoutListener(reanchorListener);
+            }
+        }
+
+        /** 弹窗关闭时摘除重锚回调 */
+        void detach() {
+            if (decorView != null && reanchorListener != null) {
+                ViewTreeObserver vto = decorView.getViewTreeObserver();
+                if (vto.isAlive()) vto.removeOnGlobalLayoutListener(reanchorListener);
+            }
+            decorView = null;
+            reanchorListener = null;
         }
 
         /** 记录展开态几何：showAtLocation 定位成功后调用，把手自此可收缩 */
@@ -403,20 +426,62 @@ public class PosSelectDialog {
             geometrySaved = true;
         }
 
-        /** 收缩：窗口 resize 为与聊天输入框同高同位的横条，内容隐藏；
-         *  横条保持展开态的弹窗原宽与水平位置 */
+        /** 收缩：窗口 resize 为与聊天输入框同高同位、在 layout_game_right 内居中的横条，内容隐藏 */
         void collapse() {
             if (collapsed || popup == null || !popup.isShowing() || !geometrySaved) return;
-            int[] m = barMetrics();
-            int bw = savedW > 0 ? savedW : m[0];
-            int by = m[1] - m[3] - m[2];
-            if (by < 0) by = 0;
+            int[] g = resolveBarGeometry();
             try {
-                popup.update(savedX, by, bw, m[2]);
+                popup.update(g[0], g[2], g[1], g[3]);
             } catch (Exception ignored) {
                 return;
             }
+            lastBarLeft = g[0];
+            lastBarWidth = g[1];
+            lastBarTop = g[2];
             applyState(true);
+        }
+
+        /** 收缩态遇旋转/布局变化重锚：重解底部横条几何并应用（不变则跳过） */
+        void reanchor() {
+            if (!collapsed || popup == null || !popup.isShowing()) return;
+            int[] g = resolveBarGeometry();
+            if (g[0] == lastBarLeft && g[1] == lastBarWidth && g[2] == lastBarTop) return;
+            try {
+                popup.update(g[0], g[2], g[1], g[3]);
+            } catch (Exception ignored) {
+                return;
+            }
+            lastBarLeft = g[0];
+            lastBarWidth = g[1];
+            lastBarTop = g[2];
+        }
+
+        /**
+         * 底部横条几何 {left, width, top, barHeight}（窗口坐标，供 popup.update）：
+         * 水平在 layout_game_right 区域内居中（区域未布局时退回展开态原位），
+         * 高度与底边按 barMetrics 与聊天输入框对齐；宽度保持展开态弹窗原宽
+         * 并限幅到区域宽，使横条始终留在区域内
+         */
+        private int[] resolveBarGeometry() {
+            int[] m = barMetrics();
+            Activity activity = context instanceof Activity ? (Activity) context : null;
+            View gameRight = activity != null ? activity.findViewById(R.id.layout_game_right) : null;
+            int regionLeft = 0;
+            int regionW = m[0];
+            if (gameRight != null && gameRight.getWidth() > 0) {
+                int[] loc = new int[2];
+                gameRight.getLocationInWindow(loc);
+                regionLeft = loc[0];
+                regionW = Math.min(gameRight.getWidth(), m[0]);
+            }
+            int bw = savedW > 0 ? Math.min(savedW, regionW) : regionW;
+            int left = gameRight != null && gameRight.getWidth() > 0
+                    ? regionLeft + (regionW - bw) / 2 : savedX;
+            if (left < 0) left = 0;
+            if (left + bw > m[0]) left = Math.max(0, m[0] - bw);
+            int top = m[1] - m[3] - m[2];
+            if (top < 0) top = 0;
+            return new int[]{left, bw, top, m[2]};
         }
 
         /** 恢复：窗口回到展开几何，内容重新显示 */

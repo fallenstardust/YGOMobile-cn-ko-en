@@ -565,6 +565,8 @@ public class DraggablePopupHelper {
         private boolean collapsed;
         /** 本次手势 DOWN 是否落在收缩横条/把手上：是则整体禁用拖拽逻辑 */
         private boolean touchOnCollapseWidget;
+        /** 收缩横条的布局补偿监听目标（旋转重建后聊天输入框/区域尚未布局时挂一次性重锚，按实例去重） */
+        private final List<View> collapseAnchorWatches = new ArrayList<>();
 
         DragFrameLayout(Context context, SharedPreferences prefs, String dialogId) {
             super(context);
@@ -679,9 +681,14 @@ public class DraggablePopupHelper {
         }
 
         /**
-         * 横条与聊天输入框对齐：把窗口坐标系的底部目标换算为包装层内 topMargin
-         *（showPopup 拖拽记忆位会让整个窗口偏移，纯底部 gravity 不能对齐屏幕底部）；
-         * 并取内容原宽/左缘快照使横条保持对话框展开时的宽度与水平位置
+         * 横条与聊天输入框对齐并在 layout_game_right 区域内水平居中。垂直用包装层底部锚定
+         *（Gravity.BOTTOM + bottomMargin=gap，gap 为聊天输入框底边到窗口底边的距离），
+         * 与真实窗口底边对齐而不依赖包装层当前测得高度：旋转重建瞬间（onConfigurationChanged
+         * 内同步跑 relayoutForOrientation）包装层/区域/聊天输入框尚未完成布局，旧的按
+         * decor+屏高反推 topMargin 的写法会以旧方向屏高为基准算出越界的 topMargin，把横条
+         * 顶出窗口底边之外而整条看不见（表现为横屏最小化转竖屏后横条消失、无法点击还原）。
+         * 改底部锚定后即便此刻度量退化横条也稳定显示在屏幕底部，横向按区域实时坐标居中并
+         * 限幅到屏宽（区域未布局时退回快照亦不越屏），配合一次性重锚监听在布局完成后精确对齐
          */
         private void refreshCollapseAnchors() {
             if (collapseBar == null) return;
@@ -699,26 +706,74 @@ public class DraggablePopupHelper {
                             content.getLeft() - content.getWidth() * (sx - 1f) / 2f));
                 }
             }
-            blp.width = collapseBarWidth > 0 ? collapseBarWidth : ViewGroup.LayoutParams.MATCH_PARENT;
-            blp.leftMargin = Math.max(0, collapseBarLeft);
-            int top = -1;
-            View decor = resolveActivityDecorView(getContext());
-            if (decor != null && isAttachedToWindow()) {
+            // 水平：在区域内居中（旋转重建后按新坐标重解）；无宽度快照时取区域宽；
+            // 区域不可用才退回内容原左缘快照；两种情形都限幅到屏宽，杜绝转屏后横条整条偏出屏外
+            int barW = collapseBarWidth;
+            int left;
+            View region = resolveCollapseRegion();
+            if (region != null) {
+                if (barW <= 0 || barW > region.getWidth()) barW = region.getWidth();
+                int[] regLoc = new int[2];
+                region.getLocationInWindow(regLoc);
+                View decor = resolveActivityDecorView(getContext());
                 int[] decorLoc = new int[2];
-                decor.getLocationOnScreen(decorLoc);
+                if (decor != null) decor.getLocationOnScreen(decorLoc);
                 int[] myLoc = new int[2];
                 getLocationOnScreen(myLoc);
-                top = decorLoc[1] + m[1] - m[3] - m[2] - myLoc[1];
-                if (top < 0) top = 0;
-            }
-            if (top >= 0) {
-                blp.gravity = Gravity.TOP | Gravity.START;
-                blp.topMargin = top;
+                left = decorLoc[0] + regLoc[0] + (region.getWidth() - barW) / 2 - myLoc[0];
             } else {
-                blp.gravity = Gravity.BOTTOM | Gravity.START;
-                blp.topMargin = 0;
+                left = Math.max(0, collapseBarLeft);
             }
+            if (left < 0) left = 0;
+            if (left + barW > m[0]) left = Math.max(0, m[0] - barW);
+            blp.width = barW > 0 ? barW : ViewGroup.LayoutParams.MATCH_PARENT;
+            blp.leftMargin = blp.width == ViewGroup.LayoutParams.MATCH_PARENT ? 0 : left;
+            // 垂直：底部锚定与聊天输入框底边对齐（bottomMargin=gap），不依赖包装层高度，
+            // 免疫旋转时窗口高度滞后导致的横条被顶出屏外
+            blp.gravity = Gravity.BOTTOM | Gravity.START;
+            blp.topMargin = 0;
+            blp.bottomMargin = m[3];
             collapseBar.setLayoutParams(blp);
+            requestCollapseAnchorRetry();
+        }
+
+        /** 横条水平居中参照的区域：优先记录的居中区域，旋转重建旧实例脱离视图树后按 id 重解析；
+         *  未登记/不可用时回退 layout_game_right；仍未布局返回 null 由调用方降级 */
+        private View resolveCollapseRegion() {
+            View region = centerRegionRef != null ? centerRegionRef.get() : null;
+            if (region == null || !region.isAttachedToWindow()) {
+                Activity act = resolveActivity(getContext());
+                int id = centerRegionId != View.NO_ID ? centerRegionId : R.id.layout_game_right;
+                region = act != null ? act.findViewById(id) : null;
+            }
+            return region != null && region.getWidth() > 0 && region.getHeight() > 0 ? region : null;
+        }
+
+        /** 旋转重建视图树时聊天输入框/区域常尚未完成布局，度量退化为兜底值：
+         *  给未布局的目标挂一次性布局监听补重锚，目标布局完成后横条才真正与
+         *  聊天输入框同高同位、在区域内居中 */
+        private void requestCollapseAnchorRetry() {
+            if (!collapsible) return;
+            Activity act = resolveActivity(getContext());
+            if (act == null) return;
+            watchLayoutOnce(act.findViewById(R.id.et_chat_input));
+            watchLayoutOnce(act.findViewById(R.id.layout_game_right));
+        }
+
+        /** 给目标挂一次性「布局完成后重锚横条」监听（按实例去重，触发即摘） */
+        private void watchLayoutOnce(View target) {
+            if (target == null || target.getHeight() > 0 || collapseAnchorWatches.contains(target)) return;
+            collapseAnchorWatches.add(target);
+            target.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int l, int t, int r, int b,
+                                           int oldL, int oldT, int oldR, int oldB) {
+                    if (b - t <= 0) return;
+                    collapseAnchorWatches.remove(v);
+                    v.removeOnLayoutChangeListener(this);
+                    refreshCollapseAnchors();
+                }
+            });
         }
 
         /** 把手位置：XML 声明的 btn_dialog_collapse 由布局自行定位不参与贴位；
