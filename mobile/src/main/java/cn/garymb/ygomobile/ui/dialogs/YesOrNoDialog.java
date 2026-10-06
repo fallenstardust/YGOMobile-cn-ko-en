@@ -401,8 +401,11 @@ public class YesOrNoDialog {
         draggableHelper = new DraggablePopupHelper(context, "game_dialog_" + title);
         draggableHelper.setupDraggablePopup(popupWindow, root, dialogWidth,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
-        DraggablePopupHelper.enableCollapse(popupWindow, title);
+        // 收缩模式：有标题时把手贴标题左侧、横条用标题；无标题（tvTitle 已 GONE）时把手
+        // 维持左上角悬浮、横条改显示 message 文本，恢复原 dialog 后 message 回内容区、横条消失
+        String collapseBarTitle = (title != null && !title.isEmpty())
+                ? title : (message != null ? message.toString() : "");
+        DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, collapseBarTitle);
     }
 
     public void show() {

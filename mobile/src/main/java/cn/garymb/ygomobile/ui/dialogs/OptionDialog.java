@@ -3,7 +3,11 @@ package cn.garymb.ygomobile.ui.dialogs;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -12,6 +16,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
@@ -23,7 +30,6 @@ import java.util.List;
 
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.utils.CollapsiblePopupShell;
 import cn.garymb.ygomobile.utils.DialogScale;
 
 import ocgcore.DataManager;
@@ -64,8 +70,8 @@ public class OptionDialog {
     private final Context context;
     private PopupWindow popupWindow;
     private View contentView;
-    /** 收缩模式壳层：原内容 + 底部收缩横条 + 左上收缩把手 */
-    private CollapsiblePopupShell collapseShell;
+    /** 收缩模式壳层（本 dialog 私有实现）：原内容 + 底部收缩横条 + 左上收缩把手 */
+    private CollapseShell collapseShell;
     private String title = "";
     private List<String> options;
     private OnOptionSelectedListener selectListener;
@@ -148,8 +154,9 @@ public class OptionDialog {
         if (!(context instanceof Activity)) return;
 
         build();
-        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
-        collapseShell = new CollapsiblePopupShell(context, contentView, title, true);
+        // 收缩模式：本 dialog 自带的壳层实现，把手用内容 XML 声明的 btn_dialog_collapse，
+        // 收缩后与聊天输入框同高同位，点横条恢复
+        collapseShell = new CollapseShell(contentView, title, true);
         popupWindow = new PopupWindow(collapseShell.getView(), dp2px(DIALOG_WIDTH_DP),
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         collapseShell.attachPopup(popupWindow);
@@ -302,5 +309,200 @@ public class OptionDialog {
 
     private int dp2px(float dp) {
         return DialogScale.dpToPx(context, dp);
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // 本 dialog 的收缩模式实现：把弹窗临时缩小成贴屏幕底部、与聊天输入框
+    // 同高同位的横条（横条左侧「▲」箭头 + 标题，点击恢复），展开态由内容布局
+    // XML 声明的 btn_dialog_collapse 作收缩把手；收缩/恢复经 popup.update 在
+    // 「展开几何」与「底部横条几何」之间切换窗口尺寸与位置。
+    // 横条保持对话框原宽与水平位置（不拉伸整屏宽）；聊天输入框不可见时
+    // 兜底固定高度贴窗口底部。
+    // ════════════════════════════════════════════════════════════════════
+
+    /** 横条内标题 TextView 的 tag，供创建/更新横条标题时定位 */
+    private static final String TAG_BAR_TITLE = "collapse_bar_title";
+    /** 聊天输入框不可见时的横条兜底高度（dp） */
+    private static final int FALLBACK_BAR_HEIGHT_DP = 40;
+    /** 横条最小高度（dp），保证可点击目标不小于舒适触控尺寸 */
+    private static final int MIN_BAR_HEIGHT_DP = 28;
+
+    private class CollapseShell {
+        private final FrameLayout shell;
+        private final View original;
+        private final View bar;
+        private final View handle;
+        private PopupWindow popup;
+        /** 展开态几何（showCenteredInGameRight 定位成功后传入，窗口坐标） */
+        private boolean geometrySaved;
+        private int savedX, savedY, savedW, savedH;
+        private boolean collapsed;
+
+        CollapseShell(View originalContent, String barTitle, boolean matchParentWidth) {
+            this.original = originalContent;
+            shell = new FrameLayout(context);
+            shell.addView(originalContent, new FrameLayout.LayoutParams(
+                    matchParentWidth ? ViewGroup.LayoutParams.MATCH_PARENT
+                            : ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            bar = createCollapseBar((barTitle == null || barTitle.isEmpty()) ? "点击展开" : barTitle);
+            styleBarWithDialogContent(bar, originalContent);
+            bar.setVisibility(View.GONE);
+            bar.setOnClickListener(v -> expand());
+            shell.addView(bar, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+            // 把手来自 dialog 布局 XML（btn_dialog_collapse）：位置由布局声明，免程序化贴位
+            handle = originalContent.findViewById(R.id.btn_dialog_collapse);
+            handle.setOnClickListener(v -> collapse());
+        }
+
+        View getView() {
+            return shell;
+        }
+
+        void attachPopup(PopupWindow popupWindow) {
+            this.popup = popupWindow;
+        }
+
+        /** 记录展开态几何：showAtLocation 定位成功后调用，把手自此可收缩 */
+        void rememberExpanded(int x, int y, int w, int h) {
+            savedX = x;
+            savedY = y;
+            savedW = w;
+            savedH = h;
+            geometrySaved = true;
+        }
+
+        /** 收缩：窗口 resize 为与聊天输入框同高同位的横条，内容隐藏；
+         *  横条保持展开态的弹窗原宽与水平位置 */
+        void collapse() {
+            if (collapsed || popup == null || !popup.isShowing() || !geometrySaved) return;
+            int[] m = barMetrics();
+            int bw = savedW > 0 ? savedW : m[0];
+            int by = m[1] - m[3] - m[2];
+            if (by < 0) by = 0;
+            try {
+                popup.update(savedX, by, bw, m[2]);
+            } catch (Exception ignored) {
+                return;
+            }
+            applyState(true);
+        }
+
+        /** 恢复：窗口回到展开几何，内容重新显示 */
+        void expand() {
+            if (!collapsed || popup == null || !popup.isShowing()) return;
+            try {
+                popup.update(savedX, savedY, savedW, savedH);
+            } catch (Exception ignored) {
+                return;
+            }
+            applyState(false);
+        }
+
+        private void applyState(boolean doCollapse) {
+            collapsed = doCollapse;
+            original.setVisibility(doCollapse ? View.GONE : View.VISIBLE);
+            handle.setVisibility(doCollapse ? View.GONE : View.VISIBLE);
+            bar.setVisibility(doCollapse ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    /** 收缩横条：圆角条，左侧「▲」向上箭头图标 + 标题文本，点击恢复原始尺寸；
+     *  实际使用时叠加内容根背景贴图，程序化圆角条仅作内容根无背景时的兜底 */
+    private LinearLayout createCollapseBar(String title) {
+        LinearLayout bar = new LinearLayout(context);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xE0303030);
+        bg.setCornerRadius(dp2px(6));
+        bg.setStroke(dp2px(1), 0xFF7A7A7A);
+        bar.setBackground(bg);
+        bar.setClickable(true);
+        int padH = dp2px(8);
+        bar.setPadding(padH, 0, padH, 0);
+
+        ImageView arrow = createArrowButton(R.drawable.baseline_keyboard_arrow_up_24);
+        // 箭头仅作“按钮”外观的指示：不可点击，否则它会吞掉横条本身的恢复点击（整条可点即恢复）
+        arrow.setClickable(false);
+        arrow.setFocusable(false);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(
+                dp2px(22), LinearLayout.LayoutParams.MATCH_PARENT);
+        // 箭头按钮始终维持正方形：横条高（贴聊天输入框）常小于 22dp 名义宽，固定宽会把
+        // 「▲」左右压窄；宽度恒等于横条实际高度（宽=高 的正方形），图标居中不裁切
+        bar.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> {
+            int h = b - t;
+            if (h > 0 && alp.width != h) {
+                alp.width = h;
+                arrow.setLayoutParams(alp);
+            }
+        });
+        bar.addView(arrow, alp);
+
+        TextView tvTitle = new TextView(context);
+        tvTitle.setTag(TAG_BAR_TITLE);
+        tvTitle.setText(title == null ? "" : title);
+        tvTitle.setTextColor(Color.WHITE);
+        tvTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        tvTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        tvTitle.setSingleLine(true);
+        tvTitle.setEllipsize(TextUtils.TruncateAt.END);
+        tvTitle.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        tlp.leftMargin = dp2px(6);
+        bar.addView(tvTitle, tlp);
+        return bar;
+    }
+
+    /** 收缩态箭头按钮：selected_light 描边圆角底 + 指定箭头图标，图标居中自适应缩放 */
+    private ImageView createArrowButton(int iconRes) {
+        ImageButton button = new ImageButton(context);
+        button.setBackgroundResource(R.drawable.selected_light);
+        button.setImageResource(iconRes);
+        button.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        int pad = dp2px(2);
+        button.setPadding(pad, pad, pad, pad);
+        button.setMinimumWidth(0);
+        button.setMinimumHeight(0);
+        button.setAdjustViewBounds(true);
+        return button;
+    }
+
+    /** 收缩横条复用对话框内容根的背景贴图与左右内边距（克隆独立实例避免 bounds 互串） */
+    private void styleBarWithDialogContent(View bar, View content) {
+        Drawable bg = content.getBackground();
+        if (bg != null) {
+            Drawable.ConstantState st = bg.getConstantState();
+            bar.setBackground(st != null ? st.newDrawable() : bg);
+        }
+        bar.setPadding(content.getPaddingLeft(), 0, content.getPaddingRight(), 0);
+    }
+
+    /**
+     * 横条布局几何：{窗口宽, 窗口高, 横条高, 横条底边与窗口底边的间隙}（均为 px）。
+     * 聊天输入框（et_chat_input）可见时与其同高、底边对齐；不可见时兜底固定高度贴窗口底部。
+     */
+    private int[] barMetrics() {
+        Activity activity = context instanceof Activity ? (Activity) context : null;
+        View decor = activity != null ? activity.getWindow().getDecorView() : null;
+        int winW = decor != null && decor.getWidth() > 0
+                ? decor.getWidth() : context.getResources().getDisplayMetrics().widthPixels;
+        int winH = decor != null && decor.getHeight() > 0
+                ? decor.getHeight() : context.getResources().getDisplayMetrics().heightPixels;
+        int barH = dp2px(FALLBACK_BAR_HEIGHT_DP);
+        int gap = 0;
+        View chat = activity != null ? activity.findViewById(R.id.et_chat_input) : null;
+        if (chat != null && chat.isShown() && chat.getHeight() > 0) {
+            barH = Math.max(chat.getHeight(), dp2px(MIN_BAR_HEIGHT_DP));
+            int[] loc = new int[2];
+            chat.getLocationInWindow(loc);
+            gap = winH - (loc[1] + chat.getHeight());
+            if (gap < 0) gap = 0;
+        }
+        return new int[]{winW, winH, barH, gap};
     }
 }

@@ -450,7 +450,7 @@ public class CardSelectDialog {
         // 注册自定义旋转重排，切换方向时重解区域宽、重烘焙卡图、重设弹窗宽并重新居中
         draggableHelper.registerOrientationRelayout(popupWindow, this::applyOrientationRelayout);
         // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
-        DraggablePopupHelper.enableCollapse(popupWindow, title);
+        DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, title);
 
         // 直接以内容根构建，包装层由 findTipOverlay 向上解析
         tipHelper = new CardStatusTipHelper(context, root);

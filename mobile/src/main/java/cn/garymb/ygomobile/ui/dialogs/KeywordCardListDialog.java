@@ -14,8 +14,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import cn.garymb.ygomobile.game.DeckCardAdapter;
@@ -94,8 +96,8 @@ public class KeywordCardListDialog {
         draggableHelper = new DraggablePopupHelper(context, DIALOG_ID);
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 panelWidthPx, ViewGroup.LayoutParams.WRAP_CONTENT);
-        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条（「▲」+标题），点横条恢复
-        DraggablePopupHelper.enableCollapse(popupWindow, title);
+        // 收缩模式：点标题左侧「▼」把手缩为与聊天输入框同高的底部横条（「▲」+标题），点横条恢复
+        DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, title);
     }
 
     /**
@@ -132,10 +134,19 @@ public class KeywordCardListDialog {
     /**
      * 按关键词查询命中卡片：字段码匹配 + 卡名/描述包含关键词，结果去重。
      * 与 {@code CardDetail.queryList} 一致，用于详情描述高亮与列表展示同源。
+     *
+     * <p>性能：卡表在一次决斗内静态不变，而卡详描述里的高亮关键词高度重复（同一召唤条件/
+     * 字段名在多张卡间反复出现），故按关键词缓存命中结果，避免每次卡详绑定都对全卡表重复
+     * 扫描（原本会在点击卡片的同一 UI 线程消息里阻塞命令菜单弹出）。返回结果列表的拷贝，
+     * 使调用方（如 openKeywordList 会排序）可自由修改而不污染缓存。
      */
+    private static final Map<String, List<Card>> KEYWORD_QUERY_CACHE = new HashMap<>();
+
     public static List<Card> queryCardsByKeyword(String keyword) {
+        if (keyword == null || keyword.isEmpty()) return new ArrayList<>();
+        List<Card> cached = KEYWORD_QUERY_CACHE.get(keyword);
+        if (cached != null) return new ArrayList<>(cached);
         List<Card> results = new ArrayList<>();
-        if (keyword == null || keyword.isEmpty()) return results;
         StringManager stringManager = DataManager.get().getStringManager();
         SparseArray<Card> cards = DataManager.get().getCardManager().getAllCards();
         if (cards == null) return results;
@@ -158,7 +169,13 @@ public class KeywordCardListDialog {
             }
         }
         results.addAll(matchingCards);
-        return results;
+        KEYWORD_QUERY_CACHE.put(keyword, results);
+        return new ArrayList<>(results);
+    }
+
+    /** 卡表重新加载（换卡包/数据热重载）时清空关键词命中缓存，避免返回过期结果。 */
+    public static void clearKeywordQueryCache() {
+        KEYWORD_QUERY_CACHE.clear();
     }
 
     /**

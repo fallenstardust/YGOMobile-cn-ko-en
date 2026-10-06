@@ -560,10 +560,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             dismissCmdMenu();
             return;
         }
-        // 点击场上/手卡卡片，无论是否有可执行命令（是否弹命令菜单），
-        // 都先把该卡详情显示到卡片详情面板：横屏左侧 cardDetailPanel，
-        // 竖屏底部详情栏（layout-port 同 ID 结构，CardDetailPanel.showCard 自动显隐）
-        activity.showCardInfoPanel(card);
         // 持有超量素材的怪兽，以及卡组/额外/墓地/除外堆叠区，弹出含「查看」的命令菜单，
         // 并把该卡在通讯中可执行的其他命令（发动/特殊召唤/攻击等）一并列出
         boolean isPile = (location == 0x01 || location == 0x40
@@ -571,10 +567,18 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         boolean xyzWithMats = (location == 0x04) && !card.overlayed.isEmpty();
         if (card.cmdFlag != 0 || isPile || xyzWithMats) {
             showCardCommandMenu(card, tapX, tapY, isPile || xyzWithMats);
-            return;
+        } else {
+            // 无可执行命令：关闭残留的命令菜单（详情面板已在下方延后显示，手卡确认动画由场内完成）
+            dismissCmdMenu();
         }
-        // 无可执行命令：关闭残留的命令菜单（详情面板已在上方显示，手卡确认动画由场内完成）
-        dismissCmdMenu();
+        // 点击场上/手卡卡片都刷新卡片详情面板；但详情绑定含关键词可查判定（全卡表扫描，已按关键词
+        // 缓存），放到下一帧执行，避免与命令菜单弹出抢占同一 UI 线程消息而拖慢菜单弹出的体感响应
+        View fieldView = viewController != null ? viewController.getView() : null;
+        if (fieldView != null) {
+            fieldView.post(() -> activity.showCardInfoPanel(card));
+        } else {
+            activity.showCardInfoPanel(card);
+        }
     }
 
     @Override

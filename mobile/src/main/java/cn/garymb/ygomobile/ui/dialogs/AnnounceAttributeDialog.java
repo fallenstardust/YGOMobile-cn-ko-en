@@ -181,8 +181,8 @@ public class AnnounceAttributeDialog {
         draggableHelper = new DraggablePopupHelper(context, "announce_attribute");
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
-        // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
-        DraggablePopupHelper.enableCollapse(popupWindow, title);
+        // 收缩模式：点标题左侧「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
+        DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, title);
     }
 
     /** event_handler.cpp CHECK_ATTRIBUTE L989-1001：统计勾选掩码与数量，数量达标即应答并关闭 */

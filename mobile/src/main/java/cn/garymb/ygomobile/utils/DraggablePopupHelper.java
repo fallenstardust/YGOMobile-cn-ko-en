@@ -4,8 +4,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,11 +20,15 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.HorizontalScrollView;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.core.view.ScrollingView;
 import androidx.core.widget.NestedScrollView;
@@ -27,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.lite.R;
 
 public class DraggablePopupHelper {
     private static final String PREF_NAME = "popup_positions";
@@ -34,6 +45,13 @@ public class DraggablePopupHelper {
     private static final String KEY_Y = "_y";
     private static final boolean ENABLE_DRAG = true;
     private static final int DRAG_THRESHOLD = 8;
+
+    /** 收缩横条内标题 TextView 的 tag，供 {@link #setBarTitle} 定位 */
+    private static final String TAG_BAR_TITLE = "collapse_bar_title";
+    /** 聊天输入框不可见时收缩横条的兜底高度（dp） */
+    private static final int FALLBACK_BAR_HEIGHT_DP = 40;
+    /** 收缩横条最小高度（dp），保证可点击目标不小于舒适触控尺寸 */
+    private static final int MIN_BAR_HEIGHT_DP = 28;
 
     /**
      * 已显示的拖拽弹窗层，按窗口层级由下到上排列（末尾 = 最上层）。
@@ -141,13 +159,26 @@ public class DraggablePopupHelper {
     }
 
     /**
-     * 为经 {@link #setupDraggablePopup} 包装的弹窗启用收缩模式：初始照常展开（内容左上角
-     * 带「▼」把手），点击把手收缩为贴屏幕底部、与聊天输入框同高同位、保持对话框
+     * 为经 {@link #setupDraggablePopup} 包装、内容布局带 btn_dialog_collapse 收缩按钮的
+     * dialog 启用收缩模式：点按钮把弹窗缩为贴屏幕底部、与聊天输入框同高同位、保持对话框
      * 原宽与原背景贴图的横条（横条左侧「▲」箭头 + 标题，点击横条恢复原始尺寸），供临时确认场地。
+     * 横条与把手作为包装层（DragFrameLayout）的额外子视图，靠显隐切换实现收缩，
+     * 收缩态窗口仍铺满全屏：横条以外触摸照旧透传，旋转重排照常按新屏尺寸复位。
      */
     public static void enableCollapse(PopupWindow popupWindow, String barTitle) {
+        enableCollapse(popupWindow, null, barTitle);
+    }
+
+    /**
+     * 启用收缩模式：内容布局声明了 btn_dialog_collapse 的 dialog 直接用它作收缩把手；
+     * 未声明时创建程序化「▼」把手并嵌入 {@code titleView} 左侧（标题可见时）。
+     * @param titleView 该 dialog 的标题视图（可空/可 GONE）：可见时程序化把手贴其左侧、颜色随标题；
+     *                  为空或不可见时把手维持内容左上角悬浮
+     * @param barTitle  收缩横条标题（无标题的 dialog 传其 message 文本）
+     */
+    public static void enableCollapse(PopupWindow popupWindow, View titleView, String barTitle) {
         if (popupWindow != null && popupWindow.getContentView() instanceof DragFrameLayout) {
-            ((DragFrameLayout) popupWindow.getContentView()).makeCollapsible(barTitle);
+            ((DragFrameLayout) popupWindow.getContentView()).makeCollapsible(titleView, barTitle);
         }
     }
 
@@ -156,6 +187,189 @@ public class DraggablePopupHelper {
         if (popupWindow != null && popupWindow.getContentView() instanceof DragFrameLayout) {
             ((DragFrameLayout) popupWindow.getContentView()).setCollapseTitle(barTitle);
         }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 收缩到底部横条的视图与几何辅助（供 DragFrameLayout 的收缩模式使用）：
+    // 各 dialog 布局 XML 声明的 btn_dialog_collapse 作收缩把手，横条与聊天输入框
+    // （et_chat_input）同高同位；几何解算一律按本文件 DragFrameLayout 的显隐切换方式。
+    // ══════════════════════════════════════════════════════════════════════
+
+    /**
+     * 收缩横条：圆角条，左侧「▲」向上箭头图标 + 标题文本，点击恢复原始尺寸。
+     * 实际使用时由 {@link #styleBarWithDialogContent} 叠加对话框内容根的背景贴图
+     * 与左右内边距，本方法的程序化圆角条仅作内容根无背景时的兜底。
+     * 高度与底部位置由调用方按 {@link #barMetrics} 结果设置（与聊天输入框同高同位）。
+     */
+    private static LinearLayout createCollapseBar(Context context, String title) {
+        LinearLayout bar = new LinearLayout(context);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xE0303030);
+        bg.setCornerRadius(dp(context, 6));
+        bg.setStroke(dp(context, 1), 0xFF7A7A7A);
+        bar.setBackground(bg);
+        bar.setClickable(true);
+        int padH = dp(context, 8);
+        bar.setPadding(padH, 0, padH, 0);
+
+        ImageView arrow = createArrowButton(context, R.drawable.baseline_keyboard_arrow_up_24);
+        // 箭头仅作“按钮”外观的指示：不可点击，否则它会吞掉横条本身的恢复点击（整条可点即恢复）
+        arrow.setClickable(false);
+        arrow.setFocusable(false);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(
+                dp(context, 22), LinearLayout.LayoutParams.MATCH_PARENT);
+        // 箭头按钮始终维持正方形：横条高（贴聊天输入框）常小于 22dp 名义宽，固定宽会把
+        // 「▲」左右压窄；宽度恒等于横条实际高度（宽=高 的正方形），图标居中不裁切
+        bar.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> {
+            int h = b - t;
+            if (h > 0 && alp.width != h) {
+                alp.width = h;
+                arrow.setLayoutParams(alp);
+            }
+        });
+        bar.addView(arrow, alp);
+
+        TextView tvTitle = new TextView(context);
+        tvTitle.setTag(TAG_BAR_TITLE);
+        tvTitle.setText(title == null ? "" : title);
+        tvTitle.setTextColor(Color.WHITE);
+        tvTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        tvTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        tvTitle.setSingleLine(true);
+        tvTitle.setEllipsize(TextUtils.TruncateAt.END);
+        tvTitle.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        tlp.leftMargin = dp(context, 6);
+        bar.addView(tvTitle, tlp);
+        return bar;
+    }
+
+    /** 收缩态箭头按钮：selected_light 描边圆角底 + 指定箭头图标，图标居中自适应缩放 */
+    private static ImageView createArrowButton(Context context, int iconRes) {
+        ImageButton button = new ImageButton(context);
+        button.setBackgroundResource(R.drawable.selected_light);
+        button.setImageResource(iconRes);
+        button.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        int pad = dp(context, 2);
+        button.setPadding(pad, pad, pad, pad);
+        button.setMinimumWidth(0);
+        button.setMinimumHeight(0);
+        button.setAdjustViewBounds(true);
+        return button;
+    }
+
+    /** 展开态收缩把手（仅内容未声明 btn_dialog_collapse 时程序化创建）：
+     *  selected_light 描边圆角底 + 向下箭头图标，贴内容左上角为兜底位，
+     *  有可见标题时由 {@link #positionHandleBesideTitle} 移到标题左侧 */
+    private static ImageView createCollapseHandle(Context context) {
+        ImageButton handle = (ImageButton) createArrowButton(
+                context, R.drawable.baseline_keyboard_arrow_down_24);
+        handle.setMinimumWidth(dp(context, 22));
+        handle.setMinimumHeight(dp(context, 22));
+        handle.setClickable(true);
+        return handle;
+    }
+
+    /**
+     * 把收缩把手贴到标题行左侧：水平贴内容可视左缘 + 小 inset，垂直与标题文字居中对齐。
+     * handle 与 content 同处一个父层（包装层）坐标系，用 FrameLayout.LayoutParams 的
+     * leftMargin/topMargin 定位；颜色跟随标题文字色以适配深浅背景。
+     * titleView 不可见、非 TextView、或未布局（宽高为 0）时返回 false，调用方回退左上角。
+     */
+    private static boolean positionHandleBesideTitle(View handle, View content, View titleView) {
+        if (handle == null || content == null || titleView == null) return false;
+        if (!(handle instanceof ImageView)) return false;
+        if (!(handle.getLayoutParams() instanceof FrameLayout.LayoutParams)) return false;
+        ViewGroup parent = (ViewGroup) handle.getParent();
+        if (parent == null) return false;
+        if (titleView.getVisibility() != View.VISIBLE
+                || titleView.getWidth() <= 0 || titleView.getHeight() <= 0
+                || content.getWidth() <= 0) {
+            return false;
+        }
+        FrameLayout.LayoutParams hlp = (FrameLayout.LayoutParams) handle.getLayoutParams();
+        int inset = dp(handle.getContext(), 4);
+        // 内容可视左缘（考虑缩放：pivot 默认中心）
+        float sx = content.getScaleX();
+        int contentVisLeft = Math.round(content.getLeft() - content.getWidth() * (sx - 1f) / 2f);
+        // 标题中心 Y 换算到父层坐标，减去把手半高实现垂直居中
+        int[] tvLoc = new int[2];
+        int[] parentLoc = new int[2];
+        titleView.getLocationInWindow(tvLoc);
+        parent.getLocationInWindow(parentLoc);
+        int titleCenterY = tvLoc[1] + titleView.getHeight() / 2 - parentLoc[1];
+        int handleH = handle.getHeight() > 0 ? handle.getHeight() : dp(handle.getContext(), 22);
+        // 钉在父层可视范围内：旋转/缩放过程中坐标快照可能瞬时不一致，不钉住会把把手推出屏外，
+        // 表现为「▼」图标转屏后消失
+        int maxLeft = Math.max(0, parent.getWidth() - handle.getWidth());
+        int maxTop = Math.max(0, parent.getHeight() - handleH);
+        hlp.leftMargin = Math.max(0, Math.min(maxLeft, Math.max(0, contentVisLeft) + inset));
+        hlp.topMargin = Math.max(0, Math.min(maxTop, titleCenterY - handleH / 2));
+        hlp.gravity = Gravity.TOP | Gravity.START;
+        handle.setLayoutParams(hlp);
+        // 箭头图标着色跟随标题文字色，适配深浅背景（图标本体为白色 tint）
+        int titleColor = ((TextView) titleView).getCurrentTextColor();
+        if (titleColor != 0) ((ImageView) handle).setColorFilter(titleColor);
+        return true;
+    }
+
+    /** 更新横条标题（选卡/卡片确认等动态标题弹窗在 setText 后同步调用） */
+    private static void setBarTitle(View bar, String title) {
+        if (!(bar instanceof ViewGroup)) return;
+        ViewGroup group = (ViewGroup) bar;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (TAG_BAR_TITLE.equals(child.getTag()) && child instanceof TextView) {
+                ((TextView) child).setText(title == null ? "" : title);
+                return;
+            }
+        }
+    }
+
+    /** 收缩横条复用对话框内容根的背景贴图与左右内边距：各 dialog 背景来自其布局
+     *  android:background（如 sdialogl/window2s），运行时从 content.getBackground() 克隆
+     *  一份独立实例（避免两视图共享同一 Drawable 造成 bounds 互串）；内容根无背景时
+     *  保留默认圆角半透明条 */
+    private static void styleBarWithDialogContent(View bar, View content) {
+        if (bar == null || content == null) return;
+        Drawable bg = content.getBackground();
+        if (bg != null) {
+            Drawable.ConstantState st = bg.getConstantState();
+            bar.setBackground(st != null ? st.newDrawable() : bg);
+        }
+        bar.setPadding(content.getPaddingLeft(), 0, content.getPaddingRight(), 0);
+    }
+
+    /**
+     * 横条布局几何：{窗口宽, 窗口高, 横条高, 横条底边与窗口底边的间隙}（均为 px）。
+     * 聊天输入框（et_chat_input）可见时与其同高、底边对齐；不可见时兜底固定高度贴窗口底部。
+     */
+    private static int[] barMetrics(Context context) {
+        Activity activity = resolveActivity(context);
+        View decor = activity != null ? activity.getWindow().getDecorView() : null;
+        int winW = decor != null && decor.getWidth() > 0
+                ? decor.getWidth() : context.getResources().getDisplayMetrics().widthPixels;
+        int winH = decor != null && decor.getHeight() > 0
+                ? decor.getHeight() : context.getResources().getDisplayMetrics().heightPixels;
+        int barH = dp(context, FALLBACK_BAR_HEIGHT_DP);
+        int gap = 0;
+        View chat = activity != null ? activity.findViewById(R.id.et_chat_input) : null;
+        if (chat != null && chat.isShown() && chat.getHeight() > 0) {
+            barH = Math.max(chat.getHeight(), dp(context, MIN_BAR_HEIGHT_DP));
+            int[] loc = new int[2];
+            chat.getLocationInWindow(loc);
+            gap = winH - (loc[1] + chat.getHeight());
+            if (gap < 0) gap = 0;
+        }
+        return new int[]{winW, winH, barH, gap};
+    }
+
+    /** dp 转 px（按弹窗创建时的 DialogScale 密度上下文换算） */
+    private static int dp(Context context, float value) {
+        return DialogScale.dpToPx(context, value);
     }
 
     public void setupDraggablePopup(PopupWindow popupWindow, View contentView, View handle) {
@@ -333,15 +547,20 @@ public class DraggablePopupHelper {
         private boolean dockLeftInRegion = false;
         /** 自定义旋转重排逻辑；非空时 {@link #relayoutForOrientation} 完全交由其处理，跳过默认限宽 */
         private Runnable customRelayout;
-        // ── 收缩到底部横条模式（CollapsiblePopupShell，经 enableCollapse 启用）──
+        // ── 收缩到底部横条模式（经 enableCollapse 启用，视图与几何由本类静态辅助解算）──
         /** 底部收缩横条：与聊天输入框同高同位、保持对话框原宽/原位/原背景贴图的横条，点击恢复原始尺寸；
          *  作为包装层后加子视图，child 0 始终保持为对话框内容 */
         private View collapseBar;
         /** 收缩态横条几何快照：展开可见时取对话框内容的原宽与左缘，横条不再拉伸为整屏宽 */
         private int collapseBarWidth;
         private int collapseBarLeft;
-        /** 展开态收缩把手：内容左上角「▼」小按钮，点击收缩为横条 */
+        /** 展开态收缩把手：优先为内容布局 XML 声明的 btn_dialog_collapse（位置由布局
+         *  声明，免程序化贴位），内容未声明时才是包装层左上角的程序化「▼」小按钮 */
         private View collapseHandle;
+        /** 收缩按钮来自 dialog 布局 XML（btn_dialog_collapse）：不参与程序化把手贴位 */
+        private boolean handleInContent;
+        /** 把手嵌入目标：该弹窗标题视图（可空/可 GONE），可见时把手贴其左侧，否则左上角悬浮 */
+        private View collapseTitleView;
         private boolean collapsible;
         private boolean collapsed;
         /** 本次手势 DOWN 是否落在收缩横条/把手上：是则整体禁用拖拽逻辑 */
@@ -392,39 +611,56 @@ public class DraggablePopupHelper {
 
         /**
          * 启用收缩模式：包装层底部加与聊天输入框同高同位、保持对话框原宽与原背景贴图的
-         * 横条、内容左上角加「▼」收缩把手；收缩态内容 GONE 仅剩横条，横条以外触摸照旧透传给 Activity，
-         * 供玩家临时确认场地，点击横条恢复。横条与把手作为后加子视图，child 0 始终
-         * 是对话框内容，{@link #centerPopupInRegion} 的 margin 居中与旋转限宽逻辑不受影响。
+         * 横条；收缩把手优先复用内容布局 XML 声明的 btn_dialog_collapse（各 dialog 自带，
+         * 位置由布局声明），内容未声明时才在左上角加程序化「▼」把手；收缩态内容 GONE 仅剩横条，
+         * 横条以外触摸照旧透传给 Activity，供玩家临时确认场地，点击横条恢复。横条与把手作为
+         * 后加子视图，child 0 始终是对话框内容，{@link #centerPopupInRegion} 的 margin 居中与
+         * 旋转限宽逻辑不受影响。
          */
-        void makeCollapsible(String title) {
+        void makeCollapsible(View titleView, String title) {
             if (getChildCount() == 0) return;
             final View content = getChildAt(0);
             collapsible = true;
+            collapseTitleView = titleView;
 
-            collapseBar = CollapsiblePopupShell.createCollapseBar(getContext(), title);
-            CollapsiblePopupShell.styleBarWithDialogContent(collapseBar, content);
+            collapseBar = createCollapseBar(getContext(), title);
+            styleBarWithDialogContent(collapseBar, content);
             FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    CollapsiblePopupShell.barMetrics(getContext())[2],
+                    barMetrics(getContext())[2],
                     Gravity.TOP | Gravity.START);
             collapseBar.setVisibility(GONE);
             collapseBar.setOnClickListener(v -> setCollapsed(false));
             addView(collapseBar, blp);
 
-            collapseHandle = CollapsiblePopupShell.createCollapseHandle(getContext());
-            FrameLayout.LayoutParams hlp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                    Gravity.TOP | Gravity.START);
+            // 收缩触发器：内容声明的 btn_dialog_collapse 作把手（点击即收缩），
+            // 未声明时回落程序化「▼」把手并同步贴位
+            View xmlBtn = content.findViewById(R.id.btn_dialog_collapse);
+            if (xmlBtn != null) {
+                handleInContent = true;
+                collapseHandle = xmlBtn;
+            } else {
+                collapseHandle = createCollapseHandle(getContext());
+                FrameLayout.LayoutParams hlp = new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                        Gravity.TOP | Gravity.START);
+                hlp.leftMargin = dp(getContext(), 2);
+                hlp.topMargin = dp(getContext(), 2);
+                addView(collapseHandle, hlp);
+            }
             collapseHandle.setOnClickListener(v -> setCollapsed(true));
-            addView(collapseHandle, hlp);
 
             // 内容经居中 margin / 旋转重解宽度而移动，把手跟随同步
             content.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> syncCollapseHandle());
+            // 标题自身尺寸/可见变化（如 setText、横竖屏重建）时也需重算把手位置
+            if (titleView != null) {
+                titleView.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> syncCollapseHandle());
+            }
             syncCollapseHandle();
         }
 
         void setCollapseTitle(String title) {
-            CollapsiblePopupShell.setCollapseBarTitle(collapseBar, title);
+            setBarTitle(collapseBar, title);
         }
 
         private void setCollapsed(boolean doCollapse) {
@@ -449,7 +685,7 @@ public class DraggablePopupHelper {
          */
         private void refreshCollapseAnchors() {
             if (collapseBar == null) return;
-            int[] m = CollapsiblePopupShell.barMetrics(getContext());
+            int[] m = barMetrics(getContext());
             FrameLayout.LayoutParams blp = (FrameLayout.LayoutParams) collapseBar.getLayoutParams();
             blp.height = m[2];
             // 内容可见已布局时取快照（含旋转重缩放系数：横条保持展开态弹窗的可视宽度）；
@@ -485,20 +721,33 @@ public class DraggablePopupHelper {
             collapseBar.setLayoutParams(blp);
         }
 
-        /** 把手贴住内容左上角（把手与内容同处于包装层坐标系） */
+        /** 把手位置：XML 声明的 btn_dialog_collapse 由布局自行定位不参与贴位；
+         *  程序化把手优先贴标题左侧（标题可见且已布局），否则贴内容左上角 */
         private void syncCollapseHandle() {
-            if (collapseHandle == null || getChildCount() == 0) return;
+            if (handleInContent || collapseHandle == null || getChildCount() == 0) return;
             View content = getChildAt(0);
+            // 标题可见时把手移到标题行左侧、垂直居中，颜色随标题（positionHandleBesideTitle 内部处理）
+            if (positionHandleBesideTitle(collapseHandle, content, collapseTitleView)) {
+                return;
+            }
             FrameLayout.LayoutParams hlp =
                     (FrameLayout.LayoutParams) collapseHandle.getLayoutParams();
-            int inset = CollapsiblePopupShell.dp(getContext(), 2);
+            int inset = dp(getContext(), 2);
             // 把手贴缩放后内容的可视左上角（pivot 默认在中心，可视边界由缩放比例外扩/内缩）
             float sx = content.getScaleX();
             float sy = content.getScaleY();
-            hlp.leftMargin = Math.round(
+            int handleW = collapseHandle.getWidth();
+            int handleH = collapseHandle.getHeight();
+            int left = Math.round(
                     content.getLeft() - content.getWidth() * (sx - 1f) / 2f) + inset;
-            hlp.topMargin = Math.round(
+            int top = Math.round(
                     content.getTop() - content.getHeight() * (sy - 1f) / 2f) + inset;
+            // 钉在本层可视范围内，避免旋转瞬时坐标不一致把手被推到屏外而“看不见”
+            hlp.leftMargin = Math.max(0,
+                    Math.min(Math.max(0, getWidth() - handleW), left));
+            hlp.topMargin = Math.max(0,
+                    Math.min(Math.max(0, getHeight() - handleH), top));
+            hlp.gravity = Gravity.TOP | Gravity.START;
             collapseHandle.setLayoutParams(hlp);
         }
 
@@ -507,10 +756,17 @@ public class DraggablePopupHelper {
          * 旧区域实例已脱离视图树，按 id 从当前 Activity 视图树重新解析同 id 新实例并重算居中偏移。
          */
         void relayoutForOrientation() {
+            // 旋转一律重新按区域定位：先归零拖拽残留的整层平移（与 centerPopupInRegion/dock 同语义），
+            // 否则旧方向的平移叠加新 margin 会把内容与把手推出可视区（标题缺顶、「▼」消失、询问窗无法取消）
+            setTranslationX(0f);
+            setTranslationY(0f);
             // 子视图尺寸依赖外部解算的弹窗（如选卡/卡片确认按区域宽烘焙卡图）→ 交由自定义重排全权处理
             if (customRelayout != null) {
                 customRelayout.run();
-                if (collapsible) post(this::refreshCollapseAnchors);
+                if (collapsible) {
+                    post(this::refreshCollapseAnchors);
+                    post(this::syncCollapseHandle);
+                }
                 return;
             }
             if (getChildCount() == 0) return;
@@ -556,7 +812,10 @@ public class DraggablePopupHelper {
                     else centerPopupInRegion(hostPopup, region);
                 }
             }
-            if (collapsible) refreshCollapseAnchors();
+            if (collapsible) {
+                refreshCollapseAnchors();
+                post(this::syncCollapseHandle);
+            }
         }
 
         @Override
@@ -567,7 +826,10 @@ public class DraggablePopupHelper {
             }
             ACTIVE_LAYERS.remove(this);
             ACTIVE_LAYERS.add(this);
-            if (collapsible) post(this::refreshCollapseAnchors);
+            if (collapsible) {
+                post(this::refreshCollapseAnchors);
+                post(this::syncCollapseHandle);
+            }
         }
 
         /**
@@ -806,24 +1068,58 @@ public class DraggablePopupHelper {
                         getLocationOnScreen(cur);
                         int laidX = (int) (cur[0] - getTranslationX());
                         int laidY = (int) (cur[1] - getTranslationY());
-                        setTranslationX(ev.getRawX() - grabDX - laidX);
-                        setTranslationY(ev.getRawY() - grabDY - laidY);
+                        float[] clamped = clampLayerTranslation(
+                                ev.getRawX() - grabDX - laidX,
+                                ev.getRawY() - grabDY - laidY);
+                        setTranslationX(clamped[0]);
+                        setTranslationY(clamped[1]);
                     }
                     break;
 
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     if (dragging) {
-                        int[] finalLoc = new int[2];
-                        getLocationOnScreen(finalLoc);
-                        prefs.edit()
-                                .putInt(dialogId + PREF_X, finalLoc[0])
-                                .putInt(dialogId + PREF_Y, finalLoc[1])
-                                .apply();
+                        // 区域锚定弹窗不持久化整层偏移：下次显示/旋转都按区域重算定位，
+                        // 旧方向的绝对屏幕坐标重放到新方向会把内容推到屏外
+                        if (centerRegionId == View.NO_ID) {
+                            int[] finalLoc = new int[2];
+                            getLocationOnScreen(finalLoc);
+                            prefs.edit()
+                                    .putInt(dialogId + PREF_X, finalLoc[0])
+                                    .putInt(dialogId + PREF_Y, finalLoc[1])
+                                    .apply();
+                        }
                     }
                     dragging = false;
                     break;
             }
+        }
+
+        /**
+         * 限定整层平移幅度：保证对话框内容至少保留 {@code keep} 像素在屏内。区域锚定弹窗一旦被
+         * 整层平移到屏外将无法再与其交互（询问窗丢失即死锁），因此拖拽不允许把内容拖到不可恢复的位置。
+         */
+        private float[] clampLayerTranslation(float tx, float ty) {
+            if (getChildCount() == 0 || getWidth() <= 0 || getHeight() <= 0) {
+                return new float[]{tx, ty};
+            }
+            View content = getChildAt(0);
+            if (content.getVisibility() != VISIBLE || content.getWidth() <= 0
+                    || content.getHeight() <= 0) {
+                return new float[]{tx, ty};
+            }
+            int keep = dp(getContext(), 32);
+            float w = content.getWidth() * content.getScaleX();
+            float h = content.getHeight() * content.getScaleY();
+            float visLeft = content.getLeft() + (content.getWidth() - w) / 2f;
+            float visTop = content.getTop() + (content.getHeight() - h) / 2f;
+            float minTx = keep - (visLeft + w);
+            float maxTx = getWidth() - keep - visLeft;
+            float minTy = keep - (visTop + h);
+            float maxTy = getHeight() - keep - visTop;
+            return new float[]{
+                    Math.max(minTx, Math.min(maxTx, tx)),
+                    Math.max(minTy, Math.min(maxTy, ty))};
         }
 
         @Override
@@ -1060,6 +1356,11 @@ public class DraggablePopupHelper {
         if (!(wrapper instanceof ViewGroup)) return;
         ViewGroup wrapperGroup = (ViewGroup) wrapper;
         if (wrapperGroup.getChildCount() == 0) return;
+        // 区域锚定与贴左缘同义：“每次绝对贴区域中心”，归零上次拖拽对整层施加的平移；
+        // 不归零时残留平移与本处 margin 叠加，旋转/重显后内容与把手被整体推出可视区
+        //（表现为标题缺顶、转屏后「▼」消失、再转一次弹窗彻底不可见且无法取消）
+        wrapper.setTranslationX(0f);
+        wrapper.setTranslationY(0f);
         View content = wrapperGroup.getChildAt(0);
         ViewGroup.LayoutParams raw = content.getLayoutParams();
         if (!(raw instanceof FrameLayout.LayoutParams)) return;
@@ -1158,14 +1459,29 @@ public class DraggablePopupHelper {
         }
 
         try {
-            if (hasSavedPosition) {
+            if (hasSavedPosition && !isRegionAnchoredPopup(popupWindow)) {
                 popupWindow.showAtLocation(effectiveAnchor, Gravity.NO_GRAVITY, lastX, lastY);
             } else {
+                // 区域锚定的全窗口包装层不接受“整窗绝对偏移”式记忆位：那是上一方向的屏幕坐标，
+                // 在新方向重放会把铺满整屏的层连同 margin 定位一起推出屏外，故忽略并清除
+                if (hasSavedPosition) clearSavedPosition();
                 popupWindow.showAtLocation(effectiveAnchor, gravity, xOffset, yOffset);
             }
         } catch (Exception e) {
             // Token may become invalid (e.g. OPPO ColorOS OplusViewRootImplHooks$ColorW)
         }
+    }
+
+    /**
+     * 该弹窗是否为“内容按区域定位”的全窗口包装层（已由 {@link #centerPopupInRegion} /
+     * {@link #dockPopupInRegionLeft} 记下过居中区）：这类弹窗每次显示/旋转都重算区域定位，
+     * 拖拽位置仅作会话内平移，不应以窗口绝对偏移形式恢复。
+     */
+    private static boolean isRegionAnchoredPopup(PopupWindow popupWindow) {
+        if (popupWindow == null) return false;
+        View content = popupWindow.getContentView();
+        return content instanceof DragFrameLayout
+                && ((DragFrameLayout) content).centerRegionId != View.NO_ID;
     }
 
     /** 清除本弹窗持久化的拖拽位置，下次显示回到默认居中布局。 */

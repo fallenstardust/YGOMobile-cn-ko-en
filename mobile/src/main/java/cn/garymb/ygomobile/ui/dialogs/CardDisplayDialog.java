@@ -269,7 +269,7 @@ public class CardDisplayDialog {
         // 注册自定义旋转重排，切换方向时重解区域宽、重烘焙卡图、重设弹窗宽并重新居中
         draggableHelper.registerOrientationRelayout(popupWindow, this::applyOrientationRelayout);
         // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
-        DraggablePopupHelper.enableCollapse(popupWindow, titlePrefix);
+        DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, titlePrefix);
 
         // 按下即在 CardDetailPanel 显示详情；按住超过 0.3 秒悬浮显示通讯状态标签且抬手不视为点击
         tipHelper = new CardStatusTipHelper(context, root);

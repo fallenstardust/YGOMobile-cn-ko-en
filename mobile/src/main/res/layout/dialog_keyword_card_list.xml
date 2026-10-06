@@ -18,6 +18,15 @@
         android:paddingHorizontal="4dp"
         android:paddingBottom="4dp">
 
+        <ImageButton
+            android:id="@+id/btn_dialog_collapse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_keyboard_arrow_down_24"
+            android:background="@drawable/selected_light"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"/>
+
         <TextView
             android:id="@+id/tv_keyword_card_title"
             android:layout_width="0dp"

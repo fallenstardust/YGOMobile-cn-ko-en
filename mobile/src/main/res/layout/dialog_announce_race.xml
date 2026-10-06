@@ -7,14 +7,30 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/tv_anrace_title"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="选择种族"
-        android:textColor="@color/white"
-        android:textSize="11sp" />
+        android:layout_height="wrap_content">
+
+        <ImageButton
+            android:id="@+id/btn_dialog_collapse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_keyboard_arrow_down_24"
+            android:background="@drawable/selected_light"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:layout_gravity="start"/>
+
+        <TextView
+            android:id="@+id/tv_anrace_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="选择种族"
+            android:textColor="@color/white"
+            android:textSize="11sp" />
+
+    </LinearLayout>
 
     <GridLayout
         android:id="@+id/layout_anrace_checks"

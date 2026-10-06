@@ -262,7 +262,7 @@ public class AnnounceNumberDialog {
         draggableHelper.setupDraggablePopup(popupWindow, root,
                 dp(DIALOG_WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT);
         // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
-        DraggablePopupHelper.enableCollapse(popupWindow, title);
+        DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, title);
     }
 
     /** 数字 n 是否在本次 MSG_ANNOUNCE_NUMBER 下发的可选值列表中 */
