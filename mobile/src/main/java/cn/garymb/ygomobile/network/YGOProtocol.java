@@ -8,6 +8,15 @@ public interface YGOProtocol {
     int NETPLAYER_TYPE_PLAYER2 = 1;
     int NETPLAYER_TYPE_OBSERVER = 7;
 
+    /**
+     * STOC_CHAT 载荷首字节 u16（chat_player_type）语义，对齐 gframe duelclient.cpp STOC_CHAT：
+     * 0-3=决斗座位、4-6=备用位、7=观战（{@code NETPLAYER_TYPE_OBSERVER}）、8=服务端系统消息、
+     * 9=脚本错误、10=隐藏名；除 8 与 11-19 外的非玩家类型在客户端一律归一为 10 显示。
+     */
+    int CHAT_PLAYER_TYPE_SYSTEM = 8;
+    int CHAT_PLAYER_TYPE_SCRIPT_ERROR = 9;
+    int CHAT_PLAYER_TYPE_HIDDEN_NAME = 10;
+
     int CTOS_RESPONSE = 0x1;
     int CTOS_UPDATE_DECK = 0x2;
     int CTOS_HAND_RESULT = 0x3;

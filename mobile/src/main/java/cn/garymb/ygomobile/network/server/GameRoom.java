@@ -367,6 +367,14 @@ public final class GameRoom implements YGOProtocol {
                 o.send(STOC_HS_WATCH_CHANGE, wc);
             }
         }
+        // 系统消息（chat_player_type=8）广播：非建房者入位/入观战时在聊天流里通报，
+        // 客户端以「[System]: xxx」弹幕展示（对齐 gframe AddChatMsg 的 8 号语义）。
+        // 历史上内置服务端从不产生 8/9/10 类型消息，故系统消息从不显示——本处即生产方。
+        // 此时 dp 已入位（players[pos] 或 observers），sendToAllPresent 会连本人一并送达。
+        if (!isCreater) {
+            broadcastSystemChat(displayName(dp)
+                    + (dp.type <= 1 ? " 加入了房间" : " 加入观战"));
+        }
         // 回执本人：房间信息 + 自身座位
         dp.send(STOC_JOIN_GAME, hostInfo.toBytes());
         dp.send(STOC_TYPE_CHANGE, new byte[]{(byte) typeChange});
@@ -385,6 +393,15 @@ public final class GameRoom implements YGOProtocol {
     }
 
     void leaveGame(ServerConnection dp) {
+        leaveGame(dp, false);
+    }
+
+    /**
+     * 离开房间。{@code kicked} 为真时由房主踢出触发（{@link #playerKick}），系统消息文案区分
+     * 「离开 / 被踢」；两种路径都要向在场所有人广播 type 8 系统消息（弹幕可见）。
+     */
+    void leaveGame(ServerConnection dp, boolean kicked) {
+        String leftText = displayName(dp) + (kicked ? " 被踢出房间" : " 离开了房间");
         if (dp == hostPlayer) {
             if (duel != null) {
                 duel.endDuel();
@@ -398,6 +415,7 @@ public final class GameRoom implements YGOProtocol {
                 byte[] wc = watchChangePayload(observers.size());
                 broadcastPlayersAndObservers(STOC_HS_WATCH_CHANGE, wc);
             }
+            broadcastSystemChat(displayName(dp) + (kicked ? " 被踢出房间" : " 退出观战"));
             dp.close();
             return;
         }
@@ -418,8 +436,11 @@ public final class GameRoom implements YGOProtocol {
             for (ServerConnection o : observers) {
                 o.send(STOC_HS_PLAYER_CHANGE, pc);
             }
+            // 席位已置空，广播不再回给离开者本人
+            broadcastSystemChat(leftText);
             dp.close();
         } else {
+            broadcastSystemChat(leftText);
             if (duel != null) {
                 duel.onOpponentLeft(dp);
             }
@@ -523,7 +544,7 @@ public final class GameRoom implements YGOProtocol {
         if (pos > 1 || dp != hostPlayer || dp == players[pos] || players[pos] == null) {
             return;
         }
-        leaveGame(players[pos]);
+        leaveGame(players[pos], true);
     }
 
     // ==================================================================
@@ -751,19 +772,15 @@ public final class GameRoom implements YGOProtocol {
         if (lastChar != 0) {
             return;
         }
-        byte[] payload = new byte[2 + msg.length];
-        payload[0] = (byte) (dp.type & 0xFF);
-        payload[1] = 0;
-        System.arraycopy(msg, 0, payload, 2, msg.length);
-        if (players[0] != null) {
-            players[0].send(STOC_CHAT, payload);
-        }
-        if (players[1] != null) {
-            players[1].send(STOC_CHAT, payload);
-        }
-        for (ServerConnection o : observers) {
-            o.send(STOC_CHAT, payload);
-        }
+        byte[] payload = chatPayload(dp.type, msg);
+        // 中继统一走 sendToAllPresent：solo 模式下 players[1] == players[0] 为同一连接，
+        // 按连接身份去重，避免同一条聊天被双发（历史缺陷：双端收到重复消息/重复弹幕）
+        // ChatRoute 追踪：决斗中观战发言(type=7→客户端归一10)是弹幕的主要实时来源
+        //（startDuel 已 stopListen，新客户端决斗中途连不进来，不会产生「加入观战」type=8）
+        Log.d("ChatRoute", "server relay CTOS_CHAT->STOC_CHAT: senderType=" + dp.type
+                + " stage=" + duelStage + " p0=" + (players[0] != null) + " p1=" + (players[1] != null)
+                + " observers=" + observers.size());
+        sendToAllPresent(STOC_CHAT, payload);
         // 录像：对局中把玩家/观战发言录为 0xF1 伪帧，使纯消息流回放血条下按时间线重现；
         // 与引擎消息同处单线程房间执行器，追加顺序即时序。playerType 取 dp.type（与实时
         // STOC_CHAT 首字节同值，回放分侧/命名一致）；文本取 UTF-16LE 并去除尾部 NUL 码元。
@@ -851,6 +868,56 @@ public final class GameRoom implements YGOProtocol {
 
     private void broadcastPlayersAndObservers(int proto, byte[] payload) {
         sendToAllPresent(proto, payload);
+    }
+
+    /**
+     * 组装 STOC_CHAT 载荷：[u16 LE chat_player_type][UTF-16LE 文本码元 + 结尾 NUL]
+     * （对齐 netserver.cpp CreateChatPacket 与 gframe 客户端 STOC_CHAT 解析）。
+     */
+    static byte[] chatPayload(int playerType, byte[] utf16WithNul) {
+        byte[] payload = new byte[2 + utf16WithNul.length];
+        payload[0] = (byte) (playerType & 0xFF);
+        payload[1] = (byte) ((playerType >> 8) & 0xFF);
+        System.arraycopy(utf16WithNul, 0, payload, 2, utf16WithNul.length);
+        return payload;
+    }
+
+    /** 文本版 {@link #chatPayload(int, byte[])}：自动转 UTF-16LE 并补结尾 NUL，长文本按 LEN_CHAT_MSG 截断。 */
+    static byte[] chatPayload(int playerType, String text) {
+        String s = text == null ? "" : text;
+        // 载荷上限：LEN_CHAT_MSG 个 u16（含结尾 NUL），逐字编码后补两字节 NUL
+        int maxUnits = 256 - 1;
+        if (s.length() > maxUnits) {
+            s = s.substring(0, maxUnits);
+        }
+        byte[] payload = new byte[2 + (s.length() + 1) * 2];
+        payload[0] = (byte) (playerType & 0xFF);
+        payload[1] = (byte) ((playerType >> 8) & 0xFF);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            payload[2 + i * 2] = (byte) (c & 0xFF);
+            payload[3 + i * 2] = (byte) ((c >> 8) & 0xFF);
+        }
+        // 末尾两字节保持 0：新 byte[] 默认即 NUL 终止符
+        return payload;
+    }
+
+    /** 显示名：连接未携昵称时兜底，避免系统消息里出现空白主语。 */
+    static String displayName(ServerConnection dp) {
+        if (dp == null || dp.name == null || dp.name.isEmpty()) {
+            return "Player";
+        }
+        return dp.name;
+    }
+
+    /**
+     * 广播一条服务端系统消息（chat_player_type=8）给在场决斗位与观战：
+     * 客户端在等待界面与对局中均以「[System]: 内容」弹幕展示。
+     */
+    void broadcastSystemChat(String text) {
+        Log.d("ChatRoute", "server broadcastSystemChat(type=8): " + text
+                + " stage=" + duelStage + " observers=" + observers.size());
+        sendToAllPresent(STOC_CHAT, chatPayload(CHAT_PLAYER_TYPE_SYSTEM, text));
     }
 
     static byte[] playerEnterPayload(String name, int pos) {
