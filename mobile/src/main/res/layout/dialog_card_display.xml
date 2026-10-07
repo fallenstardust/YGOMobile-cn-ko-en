@@ -24,6 +24,8 @@
             android:id="@+id/tv_card_display_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_gravity="center"
             android:gravity="center"
             android:text="卡片确认"
             android:textColor="@color/white"
