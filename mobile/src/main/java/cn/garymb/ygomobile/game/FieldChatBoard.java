@@ -76,8 +76,9 @@ class FieldChatBoard {
 
     /** 弹幕最大行数：屏幕顶部从上往下最多 3 行，超过后循环回第 1 行 */
     private static final int DANMAKU_MAX_ROWS = 3;
-    /** 弹幕匀速（dp/ms）：时长 = 总路程 / 速度，所有消息速度一致 */
-    private static final float DANMAKU_SPEED_DP_PER_MS = 0.08f;
+    /** 弹幕匀速（dp/ms）：时长 = 总路程 / 速度，所有消息速度一致；
+     *  0.04（约 14 秒横滚一屏，与 gframe 1200帧×4px 节奏更接近） */
+    private static final float DANMAKU_SPEED_DP_PER_MS = 0.04f;
     /** 首帧未布局时的最大重试次数（每次 post 约一帧，≈ 2 秒），防止窗口 token
      *  不可用时无限 post 黑洞堆消息 */
     private static final int DANMAKU_MAX_LAYOUT_RETRIES = 120;
@@ -157,10 +158,6 @@ class FieldChatBoard {
             }
             showType = 10;                        // 对齐 gframe：归一为隐藏名桶
         }
-        android.util.Log.d("ChatRoute", "appendChat: type=" + playerType + " showType=" + showType
-                + " lobbyChatMode=" + lobbyChatMode
-                + " duelUiStarted=" + duelUiStarted()
-                + " state=" + (ctl.engine == null ? "null" : String.valueOf(ctl.engine.getState())));
         // 大厅（player waiting）模式：全部消息——玩家(0-3)与系统/脚本错误/隐藏名/
         // 观战(8/9/10/11-19，含归一后的 7)——一律进 lobbyChatContainer 静态纵列，
         // 严格对齐 drawing.cpp DrawChatMsg 的 !dInfo.isStarted 分支：等待界面下所有
@@ -174,8 +171,6 @@ class FieldChatBoard {
         // 决斗尚未开始（连接中/等待界面未弹出）：非玩家消息不进弹幕，缓存待
         // enterLobbyChatMode 回灌静态列表；玩家消息(0-3)维持原路径不受影响
         if (playerType >= 4 && !duelUiStarted()) {
-            android.util.Log.d("ChatRoute", "appendChat: type=" + playerType
-                    + " 缓存进 pendingLobbyMsgs（决斗界面未就绪）size=" + (pendingLobbyMsgs.size() + 1));
             pendingLobbyMsgs.addLast(new PendingLobbyMsg(showType, message));
             while (pendingLobbyMsgs.size() > MAX_LOBBY_CHAT_LINES) {
                 pendingLobbyMsgs.removeFirst();
@@ -711,10 +706,12 @@ class FieldChatBoard {
         int bandHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 DANMAKU_ROW_HEIGHT_DP * DANMAKU_MAX_ROWS,
                 ctl.activity.getResources().getDisplayMetrics());
-        // 带顶 = 我方 LP 血条底边（窗口坐标，与分侧聊天行容器同一锚定基准 bar[1]+bar[3]）：
-        // 整条弹幕带全屏宽，消息自屏幕右缘入场、匀速左移，直至整个文本完全从屏幕
-        // 最左侧离场后移除（见下方 distance = parent宽 + 自身宽的动画）。
-        int bandTop = bar[1] + bar[3];
+        // 带顶 = 我方 LP 血条顶边（窗口坐标 bar[1]）：对齐 gframe drawing.cpp 弹幕画在
+        // 屏幕顶部玩家信息带（与血条同行）；横屏双方血条同在顶部横排、竖屏我方血条
+        // 也在决斗区上排，故取 bar[1] 即把整条弹幕带抬到血条所在行（旧锚 bar[1]+bar[3]
+        // 血条底边）。消息自屏幕右缘入场、匀速左移，直至整个
+        // 文本完全从最左侧离场后移除。
+        int bandTop = bar[1];
         FrameLayout layer = overlay != null ? overlay.obtainDanmakuLayer(bandHeight, bandTop) : null;
         final FrameLayout parent = layer != null ? layer : ctl.layoutDanmaku;
         if (parent == null) {
@@ -769,42 +766,19 @@ class FieldChatBoard {
         parent.addView(tv, lp);
         tv.setTranslationX(parent.getWidth());        // 起点：屏幕右缘之外（仅平移，不改布局宽）
         danmakuViews.add(tv);
-        // ChatRoute/Danmaku 追踪：弹幕已成功入场。root/token 用于判定宿主 PopupWindow 实况：
-        // root 尺寸≈屏幕则窗口已正常添加；token=null 说明窗口被 dismiss 只剩残影
-        android.util.Log.d("Danmaku", "spawn ok: host=" + (layer != null ? "drawspec" : "layout_danmaku")
-                + " bandTop=" + bandTop + " parent=" + parent.getWidth() + "x" + parent.getHeight()
-                + " visible=" + parent.isShown() + " row=" + row
-                + " root=" + parent.getRootView().getWidth() + "x" + parent.getRootView().getHeight()
-                + " token=" + (parent.getWindowToken() != null)
-                + " winVis=" + parent.getWindowVisibility());
         float density = ctl.activity.getResources().getDisplayMetrics().density;
         tv.post(() -> {
             // 匀速：总路程 = 宿主层宽度 + 自身宽度（从屏幕右缘外入场，到完全从最左侧离场）；
             // 终点 translationX = -自身宽（leftMargin 已为 0，不能再按旧公式多减一个宿主宽）
             int distance = parent.getWidth() + tv.getWidth();
             long duration = Math.max(1, (long) (distance / (DANMAKU_SPEED_DP_PER_MS * density)));
-            android.util.Log.d("Danmaku", "anim start: tv=" + tv.getWidth() + "x" + tv.getHeight()
-                    + " distance=" + distance + " duration=" + duration + "ms");
             tv.animate().translationX(-tv.getWidth()).setDuration(duration)
                     .withEndAction(() -> {
-                        android.util.Log.d("Danmaku", "anim end (完全离场)");
                         danmakuViews.remove(tv);
                         parent.removeView(tv);
                         // 最后一条弹幕离场且无特效在播 → 覆盖层自行关闭（不占消息闸门）
                         if (layer != null) overlay.notifyDanmakuRemoved();
                     }).start();
-            // 入场 2 秒后的可见性探针：getGlobalVisibleRect 只考察视图链裁剪/布局，
-            // 不感知其他窗口遮挡——onScreen=true 而肉眼不可见 ⇒ 断在窗口层级
-            //（PopupWindow 被 GL SurfaceView setZOrderOnTop/更高级窗口压在下层）；
-            // onScreen=false ⇒ 断在视图链（尺寸/裁剪/意外平移）
-            tv.postDelayed(() -> {
-                android.graphics.Rect r = new android.graphics.Rect();
-                boolean onScreen = tv.getGlobalVisibleRect(r);
-                android.util.Log.d("Danmaku", "probe@2s: attached=" + (tv.getParent() != null)
-                        + " globalVisible=" + onScreen + " rect=" + r
-                        + " tx=" + tv.getTranslationX() + " alpha=" + tv.getAlpha()
-                        + " tvSize=" + tv.getWidth() + "x" + tv.getHeight());
-            }, 2000);
         });
     }
 

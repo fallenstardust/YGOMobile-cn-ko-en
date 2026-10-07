@@ -56,11 +56,6 @@ public class DuelStocHandler implements DuelClient.ClientListener {
 
     @Override
     public void onChatMessage(int playerType, String message) {
-        // ChatRoute 追踪：服务端包已抵达本机并解析成功（若主机侧有 server relay 日志而
-        // 此处无，则断在 socket/链路；若此处有而 appendChat 无，则断在 UI 投递）
-        Log.d("ChatRoute", "client recv STOC_CHAT: type=" + playerType
-                + " len=" + (message == null ? -1 : message.length())
-                + " state=" + engine.getState() + " spectator=" + engine.isSpectator());
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onChatReceived(playerType, message);
         });

@@ -775,11 +775,6 @@ public final class GameRoom implements YGOProtocol {
         byte[] payload = chatPayload(dp.type, msg);
         // 中继统一走 sendToAllPresent：solo 模式下 players[1] == players[0] 为同一连接，
         // 按连接身份去重，避免同一条聊天被双发（历史缺陷：双端收到重复消息/重复弹幕）
-        // ChatRoute 追踪：决斗中观战发言(type=7→客户端归一10)是弹幕的主要实时来源
-        //（startDuel 已 stopListen，新客户端决斗中途连不进来，不会产生「加入观战」type=8）
-        Log.d("ChatRoute", "server relay CTOS_CHAT->STOC_CHAT: senderType=" + dp.type
-                + " stage=" + duelStage + " p0=" + (players[0] != null) + " p1=" + (players[1] != null)
-                + " observers=" + observers.size());
         sendToAllPresent(STOC_CHAT, payload);
         // 录像：对局中把玩家/观战发言录为 0xF1 伪帧，使纯消息流回放血条下按时间线重现；
         // 与引擎消息同处单线程房间执行器，追加顺序即时序。playerType 取 dp.type（与实时
@@ -915,8 +910,6 @@ public final class GameRoom implements YGOProtocol {
      * 客户端在等待界面与对局中均以「[System]: 内容」弹幕展示。
      */
     void broadcastSystemChat(String text) {
-        Log.d("ChatRoute", "server broadcastSystemChat(type=8): " + text
-                + " stage=" + duelStage + " observers=" + observers.size());
         sendToAllPresent(STOC_CHAT, chatPayload(CHAT_PLAYER_TYPE_SYSTEM, text));
     }
 
