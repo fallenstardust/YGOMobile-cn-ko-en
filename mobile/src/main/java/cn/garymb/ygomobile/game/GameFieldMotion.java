@@ -582,8 +582,9 @@ class GameFieldMotion {
             if (c == null) continue;
             float[] loc = field.getCardLocation(c);
             // 正在移动/淡入淡出的卡不打断：淡入卡（pl==0 登场）保持自己的淡入节奏，
-            // 位置由手牌布局重排动画接管会在下次重排时自然对齐
-            if (c.is_moving || c.is_fading) continue;
+            // 位置由手牌布局重排动画接管会在下次重排时自然对齐；冻结待码的入手卡
+            // （pendingFaceupAdd，客机遮蔽入手等确认码）保持在卡组顶坐标不被拽入手牌
+            if (c.is_moving || c.is_fading || c.pendingFaceupAdd) continue;
             if (frame > 0 && (Math.abs(loc[0] - c.curX) > 0.001f
                     || Math.abs(loc[1] - c.curY) > 0.001f)) {
                 moveCardAnimated(c, frame);

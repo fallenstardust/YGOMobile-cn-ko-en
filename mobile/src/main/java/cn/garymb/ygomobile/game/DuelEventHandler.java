@@ -444,7 +444,8 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         }
         engine.field.addCard(p, handLoc, 0, pcard);
         for (GameField.ClientCard hc : engine.field.players[p].hand) {
-            if (hc != null) engine.field.moveCardAnimated(hc, 10);
+            // 冻结待码的入手卡不参与让位重排，避免被提前拽离卡组顶坐标
+            if (hc != null && !hc.pendingFaceupAdd) engine.field.moveCardAnimated(hc, 10);
         }
         engine.soundManager.playSoundEffect(SoundManager.SFX.DRAW);
         engine.mainHandler.post(() -> {

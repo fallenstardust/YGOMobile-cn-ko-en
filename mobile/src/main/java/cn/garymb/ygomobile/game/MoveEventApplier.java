@@ -136,11 +136,23 @@ class MoveEventApplier {
                 engine.field.moveOverlayMaterials(card, 10);
                 engine.field.moveCardAnimated(card, 10, 10);
             } else {
-                // 飞行起点兜底：异常/新建路径的卡从未定位过（cur*=0）时先从旧区域
-                // 落位，避免从世界原点飞向墓地/除外而无可见飞行过程
-                if (card.curX == 0f && card.curY == 0f && card.curZ == 0f && oldLoc != 0)
-                    engine.field.setCardPosForMove(card, oldCtrl, oldLoc & 0x7f, oldSeq);
-                engine.field.moveCardAnimated(card, 10);
+                // 对方「非手卡→手卡」且消息与卡对象均无卡码（遮蔽型服务器的卡组/未知来源入手）：
+                // 真实卡码由紧随其后的 MSG_CONFIRM_CARDS 送达。此时不启动飞行动画（也不关动画闸门，
+                // 使确认消息尽快派发），把卡冻结在卡组顶坐标等待写码后直接正面飞入；
+                // 已有卡码（本端主机解遮蔽/墓地等公开区来源）仍走正常揭示飞行，行为不变
+                boolean freezeForConfirm = newLoc == CardLocation.Hand.value()
+                        && (oldLoc & 0x7f) != CardLocation.Hand.value()
+                        && code == 0 && card.code == 0 && newCtrl == 1
+                        && !engine.field.instantPlace;
+                if (freezeForConfirm) {
+                    card.pendingFaceupAdd = true;
+                } else {
+                    // 飞行起点兜底：异常/新建路径的卡从未定位过（cur*=0）时先从旧区域
+                    // 落位，避免从世界原点飞向墓地/除外而无可见飞行过程
+                    if (card.curX == 0f && card.curY == 0f && card.curZ == 0f && oldLoc != 0)
+                        engine.field.setCardPosForMove(card, oldCtrl, oldLoc & 0x7f, oldSeq);
+                    engine.field.moveCardAnimated(card, 10);
+                }
             }
         }
 
@@ -164,7 +176,26 @@ class MoveEventApplier {
                 // 只对本次入手的那张卡揭示：对方卡从卡背翻到正面供对手确认、我方卡本就正面
                 // 不翻给对方看，两者均施加行进蚂蚁线高亮，展示结束后由引擎的洗切接管
                 GameField.ClientCard arriving = engine.field.getCard(newCtrl, newLocBase, newSeq);
-                engine.deckMotion.applyMoveToHandReveal(newCtrl, arriving);
+                if (arriving != null && arriving.pendingFaceupAdd) {
+                    // 冻结待码中：揭示窗口交给写入卡码的 MSG_CONFIRM_CARDS 触发（见
+                    // applyMoveToHandReveal 释放分支）；部分服务器不发确认时 350ms 超时兜底，
+                    // 释放冻结照旧背面入位，卡不致卡在卡组顶
+                    arriving.revealHeld = true;
+                    final GameField.ClientCard frozen = arriving;
+                    final int viewSeat = newCtrl;
+                    engine.mainHandler.postDelayed(() -> {
+                        if (!frozen.pendingFaceupAdd) return;
+                        frozen.pendingFaceupAdd = false;
+                        frozen.revealHeld = false;
+                        engine.field.moveCardAnimated(frozen, 6);
+                        engine.field.updateHandLayout(viewSeat, 6);
+                        engine.mainHandler.post(() -> {
+                            if (engine.listener != null) engine.listener.onFieldChanged();
+                        });
+                    }, 350);
+                } else {
+                    engine.deckMotion.applyMoveToHandReveal(newCtrl, arriving);
+                }
             }
         }
         // 音效严格对齐 duelclient.cpp MSG_MOVE L2952-2957：仅在真正发生移动（pl!=cl）时，

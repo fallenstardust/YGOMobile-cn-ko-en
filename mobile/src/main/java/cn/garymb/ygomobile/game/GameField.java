@@ -169,6 +169,13 @@ public class GameField {
          * 同法保护，窗口结束后恢复正常遮蔽语义。
          */
         public boolean revealHeld;
+        /**
+         * 遮蔽入手冻结待码：客机加入遮蔽型服务器时，对方「卡组→手卡」的 MSG_MOVE 卡码为 0，
+         * 而真实卡码由紧随其后的 MSG_CONFIRM_CARDS 送达。本标记的卡已入手但冻结在卡组顶坐标
+         * 不动（不参与手牌重排/飞入），等写入卡码后由 applyMoveToHandReveal 直接以正面飞入
+         * 手卡，消除「背面入手→翻开」两步观感；无确认消息时超时兜底释放照旧背面入位。
+         */
+        public boolean pendingFaceupAdd;
 
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;

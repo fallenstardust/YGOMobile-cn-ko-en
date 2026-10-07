@@ -9,6 +9,7 @@ import java.util.List;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
 import ocgcore.DataManager;
+import ocgcore.enums.CardLocation;
 
 /**
  * === 卡组 / 手卡堆动画（对齐 gframe duelclient.cpp 的 CONFIRM_DECKTOP / CONFIRM_CARDS /
@@ -66,8 +67,26 @@ public class DeckHandMotionManager {
         int start = data.position();
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
-            data.position(data.position() + 3);
+            int ctrl = data.get() & 0xFF;
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
             DuelLogDialog.addLog("*[" + DataManager.get().getName(code) + "]", code);
+            // 对齐 duelclient.cpp MSG_CONFIRM_CARDS L2542-2544：确认消息自带真实卡码，必须
+            // 写回卡对象。客机加入遮蔽型外部服务器时「卡组→手卡」的 MSG_MOVE 卡码为 0，
+            // 真实卡码只由本消息（入手后公开确认，loc=手卡，服务器向双方转发）送达；旧实现
+            // 只记日志不写码，对方手卡因缺码不翻面，随后 MSG_SHUFFLE_HAND 直接洗切盖回卡背
+            int lp = engine.localPlayer(ctrl);
+            GameField.ClientCard pcard = engine.field.getCard(lp, loc, seq);
+            if (pcard != null && code != 0) {
+                boolean newlyKnown = pcard.code == 0;
+                pcard.setCode(code);
+                // 首次经确认拿到卡码的手卡补翻面揭示（对齐 C++ L2577-2578 手卡高亮展示）；
+                // 卡码已在 MSG_MOVE 路径已知（本端主机解遮蔽/公开区来源）时揭示窗口已开，
+                // 不重复播放，本机作为主机的既有观感保持不变
+                if (newlyKnown && loc == CardLocation.Hand.value() && !engine.field.instantPlace) {
+                    applyMoveToHandReveal(lp, pcard, false);
+                }
+            }
         }
         // 日志读取后回退缓冲位置，供下方确认面板复用条目数据
         data.position(start);
@@ -183,6 +202,12 @@ public class DeckHandMotionManager {
         int maxTotal = 0;
         for (GameField.ClientCard c : hand) {
             if (c == null) continue;
+            // 洗切接管：仍处于冻结待码的入手卡（确认码未到达）释放冻结，随洗切动画
+            // 从卡组坐标归位到手牌，不致卡在卡组顶
+            if (c.pendingFaceupAdd) {
+                c.pendingFaceupAdd = false;
+                c.revealHeld = false;
+            }
             engine.field.startHandShuffle(c);
             maxTotal = Math.max(maxTotal, c.animTotalFrame);
         }
@@ -237,7 +262,21 @@ public class DeckHandMotionManager {
      * 即关闭并 break，所以连续的 MSG_MOVE 天然串行，无需旧版的 50ms 去抖批次。
      */
     public void applyMoveToHandReveal(int localPlayer, GameField.ClientCard arrivingCard) {
+        applyMoveToHandReveal(localPlayer, arrivingCard, true);
+    }
+
+    /** playSound=false 供 MSG_CONFIRM_CARDS 复用：确认消息入口已播过 REVEAL 音效，不再叠加 */
+    public void applyMoveToHandReveal(int localPlayer, GameField.ClientCard arrivingCard, boolean playSound) {
         if (arrivingCard == null || engine.field.instantPlace) return;
+        // 冻结待码释放：本卡自 MSG_MOVE 起停在卡组顶坐标等码，现卡码已由
+        // MSG_CONFIRM_CARDS 写入——直接以正面从卡组位飞入手卡（翻面进度置满，不走
+        // 卡背翻开），消除「背面入手→翻开」两步观感
+        boolean faceupEntry = arrivingCard.pendingFaceupAdd;
+        if (faceupEntry) {
+            arrivingCard.pendingFaceupAdd = false;
+            if (arrivingCard.code != 0) arrivingCard.handFlipT = 1f;
+            engine.field.moveCardAnimated(arrivingCard, 10);
+        }
         // 揭示持闸窗口开启：窗口内本卡免疫遮蔽零码刷新（见 ClientCard.revealHeld），
         // 确保无论服务端是否解除 MSG_MOVE→HAND 遮蔽，已拿到的卡码都能支撑完整翻面确认
         arrivingCard.revealHeld = true;
@@ -247,9 +286,10 @@ public class DeckHandMotionManager {
             engine.field.revealHighlightCards.add(arrivingCard);
         }
         // 揭示只把对方卡的翻面进度归零（卡背起手），5 帧内由 updateHandFlip 依卡码翻到正面；
+        // 正面飞入（faceupEntry）的卡全程保持正面，不再归零翻面；
         // 不打断卡片飞入手牌的 is_moving 动画，于是观感为「飞进来 + 边落位边翻开」
-        engine.field.startHandReveal(arrivingCard, flip);
-        if (!engine.replaySkip)
+        engine.field.startHandReveal(arrivingCard, flip && !faceupEntry);
+        if (playSound && !engine.replaySkip)
             engine.soundManager.playSoundEffect(SoundManager.SFX.REVEAL);
         
         // 对齐 C++ L2669-2681：对方手卡先进行一次整体聚拢 + 卡背朝外的翻面动画
