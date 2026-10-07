@@ -509,10 +509,13 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         // 双兼容合并（读包线程顺序保证：本局全部 MSG 帧先于 STOC_REPLAY 入队）：
         // 取最早已完结的逐局录制段 FIFO 配对，把引擎 MSG 尾段并入原录像字节，
         // 产物 libygo（ocgcore+script 重跑）与 MsgStreamReplaySource（无引擎）均可播放；
-        // 无本地段/已是 V2/合并失败时原样返回（见 ReplayMsgMerger）
+        // 无本地段/已是 V2/合并失败时原样返回（见 ReplayMsgMerger）。
+        // 客机/观战身份下逐局段是服务端遮蔽视角（对方暗区零码），置 GUEST_VIEW 位
+        // 使回放侧优先引擎重跑恢复全量信息（公开双方手卡），无引擎时退回按流播放
         final byte[] merged = ReplayMsgMerger.appendMsgFrames(data,
                 activity.engine != null ? activity.engine.takeRecordedMsgSegment()
-                        : java.util.Collections.emptyList());
+                        : java.util.Collections.emptyList(),
+                activity.engine != null && !activity.engine.isHost);
         activity.runOnUiThread(() -> {
             pendingReplays.add(merged);
             // 决斗结束流程中通讯仍在补发录像：重置等待窗口，确保队列收全后再开始处理

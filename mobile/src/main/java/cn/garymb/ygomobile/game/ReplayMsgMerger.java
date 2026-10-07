@@ -53,11 +53,15 @@ public final class ReplayMsgMerger {
     /**
      * 把一段逐局引擎消息（每帧 = 完整消息含首字节消息号）以 V2 尾段形式并入 .yrp 字节。
      *
-     * @param yrp     通讯发来的原始 .yrp 包体
-     * @param frames  本局录制消息帧；为空或文件已含 V2 段时原样返回
+     * @param yrp       通讯发来的原始 .yrp 包体
+     * @param frames    本局录制消息帧；为空或文件已含 V2 段时原样返回
+     * @param guestView 本端为客机/观战（非主机）：逐局段是本机收到的<b>遮蔽视角</b>流
+     *                  （对方暗区卡码被服务端置零），额外置
+     *                  {@link YrpWriter#REPLAY_MSG_GUEST_VIEW} 位，回放侧据此优先引擎重跑
+     *                  恢复全量信息（公开双方手卡）
      * @return 双兼容 .yrp 字节（失败时为原始字节，调用方无需回退逻辑）
      */
-    public static byte[] appendMsgFrames(byte[] yrp, List<byte[]> frames) {
+    public static byte[] appendMsgFrames(byte[] yrp, List<byte[]> frames, boolean guestView) {
         if (yrp == null || yrp.length < BASE_HEADER_SIZE + 1 || frames == null || frames.isEmpty()) {
             return yrp;
         }
@@ -145,7 +149,11 @@ public final class ReplayMsgMerger {
             byte[] header = Arrays.copyOf(yrp, headerSize);
             ByteBuffer hb = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN);
             hb.position(8);
-            hb.putInt(flag | YrpWriter.REPLAY_MSG_STREAM_V2);
+            int newFlag = flag | YrpWriter.REPLAY_MSG_STREAM_V2;
+            if (guestView) {
+                newFlag |= YrpWriter.REPLAY_MSG_GUEST_VIEW;
+            }
+            hb.putInt(newFlag);
             hb.position(16);
             hb.putInt(newRaw.length);
 

@@ -287,13 +287,32 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             }
             // 回放源（用户规格）：文件内含 MSG 流（V2 逐帧 / V1 原始流）就恒直接播流——
             // 脱离 ocgcore/scripts 即可播放，不做引擎重跑；仅无流的旧格式才重跑引擎复现消息流。
-            // 对方手卡正面改由回放遮蔽保留支撑（GameField.preserveMaskedHandCode）：流内
-            // MSG_DRAW/MSG_MOVE 已写入的真实卡码不再被遮蔽零块覆盖，合并的客户端视角文件
-            // 照样正面显示手卡（文件本身保持原样不改写，C++ libygomobile.so 重跑兼容不受影响）
-            source = (replayData.msgFrames != null || replayData.msgBuffer != null)
-                    ? new MsgStreamReplaySource(this)
-                    : new EngineReplaySource(this);
-            if (!source.open()) {
+            // 例外：REPLAY_MSG_GUEST_VIEW 文件（客机/观战把自身遮蔽视角逐帧并入服务端 .yrp）——
+            // 遮蔽流里对方入手/抽卡卡码为 0，直接播流无法公开双方手卡；而文件本身的
+            // seed+双方卡组+响应是权威素材（ReplayReader 已把 replayBuffer 收缩为纯响应段），
+            // 优先引擎重跑重现全量信息；引擎不可用时仍退回播流，保住「无引擎也能播」底线；
+            // 重跑播完由 finishSession 转码固化全量帧并清除该位，此后纯流播放也公开手卡。
+            // 对方手卡正面另由回放遮蔽保留支撑（GameField.preserveMaskedHandCode）：流内
+            // MSG_DRAW/MSG_MOVE 已写入的真实卡码不再被遮蔽零块覆盖（文件本身不改写，
+            // C++ libygomobile.so 重跑兼容不受影响）
+            boolean sourceOpened = false;
+            if (replayData.msgFrames != null || replayData.msgBuffer != null) {
+                if (replayData.hasFlag(ReplayReader.REPLAY_MSG_GUEST_VIEW)) {
+                    ReplaySource engineSource = new EngineReplaySource(this);
+                    if (engineSource.open()) {
+                        source = engineSource;
+                        sourceOpened = true;    // 已开过源，不得二次 open（startDuel 重复重建会泄漏 pduel）
+                    } else {
+                        closeSourceQuietly(engineSource);
+                        source = new MsgStreamReplaySource(this);
+                    }
+                } else {
+                    source = new MsgStreamReplaySource(this);
+                }
+            } else {
+                source = new EngineReplaySource(this);
+            }
+            if (!sourceOpened && !source.open()) {
                 fail(source.getLastError() == null ? "录像数据源初始化失败" : source.getLastError());
                 return;
             }
@@ -888,6 +907,15 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     private void closeSourceQuietly() {
         try {
             if (source != null) source.close();
+        } catch (Throwable t) {
+            Log.w(TAG, "close source failed", t);
+        }
+    }
+
+    /** 回退路径专用：关闭开源失败的引擎源（释放已创建的 pduel 等原生资源），不影响后续改用的流源 */
+    private void closeSourceQuietly(ReplaySource s) {
+        try {
+            if (s != null) s.close();
         } catch (Throwable t) {
             Log.w(TAG, "close source failed", t);
         }

@@ -215,17 +215,18 @@ public class DeckHandMotionManager {
         postFieldChanged();
     }
 
-    /** 洗切换面写码：回放遮蔽保护态下，合并流里对方手卡的洗后码全为遮蔽零——
-     *  不用零码盖掉流内已揭示的真实卡码（实况遮蔽语义不变，开关仅随回放会话置位） */
+    /** 洗切换面写码：回放遮蔽保护态、或入手揭示持闸窗口内的对方手卡，洗后码为遮蔽零时
+     *  不用零码盖掉已揭示的真实卡码（实况遮蔽语义不变，窗口结束自动恢复） */
     private static void setHandCode(GameField.ClientCard c, int newCode) {
-        if (newCode == 0 && GameField.preserveMaskedHandCode && c.code != 0) return;
+        if (newCode == 0 && (GameField.preserveMaskedHandCode || c.revealHeld) && c.code != 0) return;
         c.setCode(newCode);
     }
 
     /**
      * 卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡（引擎对此类移动发 MSG_MOVE 而非
      * MSG_DRAW）：把入手的卡亮出到手牌并施加行进蚂蚁线高亮；<b>对方</b>卡额外做「卡背→正面」
-     * 翻面以供对手确认（服务端已对 MSG_MOVE→HAND 解除遮蔽，对手拿得到真实卡码），
+     * 翻面以供对手确认（新版服务端已对 MSG_MOVE→HAND 解除遮蔽，对手拿得到真实卡码；
+     * 旧版/第三方仍遮蔽时，公开区来源的卡码由本端自行保留，持闸窗口内遮蔽零刷新不再盖码），
      * <b>己方</b>卡本就正面、不翻给对方看，只高亮展示。
      *
      * <p>洗切不在这里合成：引擎随后会为「非抽卡入手」发出 MSG_SHUFFLE_HAND，由
@@ -237,6 +238,9 @@ public class DeckHandMotionManager {
      */
     public void applyMoveToHandReveal(int localPlayer, GameField.ClientCard arrivingCard) {
         if (arrivingCard == null || engine.field.instantPlace) return;
+        // 揭示持闸窗口开启：窗口内本卡免疫遮蔽零码刷新（见 ClientCard.revealHeld），
+        // 确保无论服务端是否解除 MSG_MOVE→HAND 遮蔽，已拿到的卡码都能支撑完整翻面确认
+        arrivingCard.revealHeld = true;
         // localPlayer 已由调用方经 engine.localPlayer 转为本地视角索引：1 即对方席位
         final boolean flip = localPlayer == 1 && !engine.replayMode;
         if (!engine.field.revealHighlightCards.contains(arrivingCard)) {
@@ -264,7 +268,9 @@ public class DeckHandMotionManager {
         engine.animHoldUntilMs = System.currentTimeMillis() + hold;
         final GameField.ClientCard card = arrivingCard;
         engine.mainHandler.postDelayed(() -> {
-            // 展示结束：清除行进蚂蚁线，否则 revealHighlightCards 不清空 → 蚂蚁线一直跟着该卡
+            // 展示结束：解除持闸保护，手卡遮蔽语义恢复正常；清除行进蚂蚁线，
+            // 否则 revealHighlightCards 不清空 → 蚂蚁线一直跟着该卡
+            card.revealHeld = false;
             engine.field.revealHighlightCards.remove(card);
             if (engine.listener != null) engine.listener.onFieldChanged();
         }, hold);

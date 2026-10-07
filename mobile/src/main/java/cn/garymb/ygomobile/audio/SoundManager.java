@@ -210,7 +210,7 @@ public class SoundManager {
 
     /**
      * 扫描召唤主题歌目录（对齐 C++ RefreshChantsList 扫 ./sound/chants；
-     * 按需求支持 sound/BGM/chants，两个目录都扫）。文件名（去扩展名）解析为
+     * 支持 sound/BGM/chants，两个目录都扫）。文件名（去扩展名）解析为
      * int 卡码/alias 存入曲表；非数字文件名忽略。
      */
     private void refreshChantsList() {

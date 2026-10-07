@@ -160,6 +160,15 @@ public class GameField {
          * 手卡走相机 billboard 不读 curRot*，只有本值驱动的 X 轴挤压+正/背面贴图切换才能真正翻面；效果入手时把对方手卡置 0 供其确认，洗切清零后自动翻回卡背。
          */
         public float handFlipT = -1f;
+        /**
+         * 入手揭示持闸窗口内：本卡正处于「非抽卡入手向对手翻面确认」的展示期
+         * （DeckHandMotionManager.applyMoveToHandReveal 置位，展示结束即清除）。
+         * 实况联机加入遮蔽式服务端时，MSG_MOVE 解除遮蔽带来的真实卡码会被紧随的
+         * 手卡遮蔽刷新（MSG_UPDATE_DATA/MSG_UPDATE_CARD/MSG_SHUFFLE_HAND 零码块）
+         * 打回 0，翻面确认半途变回卡背；持闸窗口内与回放态 preserveMaskedHandCode
+         * 同法保护，窗口结束后恢复正常遮蔽语义。
+         */
+        public boolean revealHeld;
 
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
@@ -270,16 +279,18 @@ public class GameField {
             if (buf.remaining() < 4) return;
             int flag = buf.getInt();
             if (flag == 0) {
-                // 回放遮蔽保护：整块清零的遮蔽刷新不清掉手卡区已有的真实卡码
-                if (!(preserveMaskedHandCode && (location & 0x02) != 0 && code != 0)) {
+                // 遮蔽保护（回放态 preserveMaskedHandCode / 实况入手揭示持闸 revealHeld）：
+                // 整块清零的遮蔽刷新不清掉手卡区已有的真实卡码
+                if (!((preserveMaskedHandCode || revealHeld) && (location & 0x02) != 0 && code != 0)) {
                     clearData();
                 }
                 return;
             }
             if ((flag & QUERY_CODE) != 0 && buf.remaining() >= 4) {
                 int pdata = buf.getInt();
-                // 回放遮蔽保护：仅卡码被服务器置零的手卡块——保留流内已揭示的真实卡码
-                if (pdata == 0 && preserveMaskedHandCode && (location & 0x02) != 0 && code != 0) {
+                // 遮蔽保护：仅卡码被服务器置零的手卡块——保留已揭示的真实卡码
+                // （回放态或入手揭示持闸窗口内）
+                if (pdata == 0 && (preserveMaskedHandCode || revealHeld) && (location & 0x02) != 0 && code != 0) {
                     // 跳过 clearData/setCode(0)，其余字段照旧解析
                 } else {
                     if (pdata == 0) clearData();

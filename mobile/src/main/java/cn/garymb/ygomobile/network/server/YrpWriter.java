@@ -35,6 +35,14 @@ public final class YrpWriter {
     public static final int REPLAY_MSG_STREAM = 0x20;
     /** 自定义扩展位 V2：响应记录流之后含逐帧成帧的主机视角 MSG 流 + [uint32 总长] 尾部自描述（C++ 不读尾部，天然透明） */
     public static final int REPLAY_MSG_STREAM_V2 = 0x40;
+    /**
+     * 自定义扩展位：尾段 MSG 流是<b>客机/观战视角</b>（遮蔽式服务端下发的零码流），而非主机
+     * 权威视角。仅由 {@code ReplayMsgMerger} 在客机并入本地录制段时置位：回放侧优先引擎重跑
+     * （seed+双方卡组+响应足够重现全量信息，公开双方手卡），无引擎时才退回按遮蔽流播放；
+     * 重跑成功后转码固化会写回全量帧并清除本位，此后纯流播放也公开手卡。
+     * 本端主机 YrpWriter 产物恒为主机视角，不置本位。
+     */
+    public static final int REPLAY_MSG_GUEST_VIEW = 0x80;
     /** 回放聊天伪帧消息号：ocgcore 消息号表之外（0xF1，引擎永不产出），本工程专用，
      *  与 {@code cn.garymb.ygomobile.game.GameEngine.REPLAY_CHAT_FRAME} 对偶（帧体 [playerType(1B)][UTF-8]） */
     public static final int REPLAY_CHAT_FRAME = 0xF1;

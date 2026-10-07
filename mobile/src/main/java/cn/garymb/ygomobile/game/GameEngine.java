@@ -636,7 +636,6 @@ public class GameEngine {
     public void enqueueGameMsg(int msgType, ByteBuffer data) {
         data.order(ByteOrder.LITTLE_ENDIAN);
         // 询问自愈：只要收到挂给本席位的询问或「等对方」提示，就说明服务端仍在正常推进对局，
-        // 看门狗的求援计时就此作废（否则一次正常的长考会被误认为卡死）
         if (AskWatchdog.isAskOrWaitingMessage(msgType)) {
             askWatchdog.notifyAskReceived();
         }

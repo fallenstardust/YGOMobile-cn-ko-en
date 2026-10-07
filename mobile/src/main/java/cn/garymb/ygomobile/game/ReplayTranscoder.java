@@ -45,8 +45,11 @@ class ReplayTranscoder {
                                     byte[] responses, List<byte[]> frames) throws IOException {
         File file = new File(path);
         if (!file.isFile()) return;
+        // 客机/观战视角位（REPLAY_MSG_GUEST_VIEW）随转码清除：本函数写入的帧列表来自
+        // 引擎重跑的全量消息（双方暗区卡码齐备），固化后纯流播放即可公开双方手卡，
+        // 不再需要重跑恢复；其余标志（COMPRESSED/UNIFORM 等）原样保留
         YrpWriter w = new YrpWriter(d.header.seedSequence, d.header.base.version,
-                d.header.base.flag, d.header.base.startTime);
+                d.header.base.flag & ~ReplayReader.REPLAY_MSG_GUEST_VIEW, d.header.base.startTime);
         // 扩展头尾字段原样保留（header_version/value1..3）：C++（libygomobile.so 的
         // ocgcore+script 重跑）侧只按位检查已知 flag、顺序消费响应不读尾部，种子序列/
         // 参数/卡组/响应与原文件逐字节一致即可照常重跑——转码产物同时支持

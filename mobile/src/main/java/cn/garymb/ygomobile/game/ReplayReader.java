@@ -26,6 +26,9 @@ public class ReplayReader {
     public static final int REPLAY_MSG_STREAM = 0x20;
     /** 自定义扩展位 V2（与 YrpWriter.REPLAY_MSG_STREAM_V2 对偶）：响应流之后为逐帧 MSG 流 + [uint32 总长] 尾部自描述 */
     public static final int REPLAY_MSG_STREAM_V2 = 0x40;
+    /** 自定义扩展位（与 YrpWriter.REPLAY_MSG_GUEST_VIEW 对偶）：尾段 MSG 流为客机/观战遮蔽视角，
+     *  回放侧优先引擎重跑以恢复全量信息（公开双方手卡），无引擎时退回按流播放 */
+    public static final int REPLAY_MSG_GUEST_VIEW = 0x80;
     public static final int REPLAY_ID_YRP1 = 0x31707279;
     public static final int REPLAY_ID_YRP2 = 0x32707279;
 
