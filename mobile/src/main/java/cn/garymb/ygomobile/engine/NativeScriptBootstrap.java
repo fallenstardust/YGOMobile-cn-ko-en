@@ -52,6 +52,19 @@ public final class NativeScriptBootstrap {
             NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
             String rootPath = options.mWorkPath;
             ensureScriptsExtracted(rootPath);
+            // 诊断：内置引擎（LAN 建主/残局/旧格式回放）的真实脚本根目录——卡片 lua 脚本
+            // 优先读 <root>/script/，其次 <root>/expansions/script/
+            //（ygo_engine_jni.cpp engineScriptReader 两级查找）；改其它位置的服务端
+            // 脚本目录（如 PC 服务器）对本机建主对局无效；另 scripts.zip 指纹变化时
+            // ensureScriptsExtracted 会用 zip 内容覆写散文件（手改的脚本会被冲掉）
+            Log.i(TAG, "engine bootstrap root=" + rootPath
+                    + " script/init.lua exists=" + new File(new File(rootPath,
+                    Constants.CORE_SCRIPT_PATH), "init.lua").exists()
+                    + " expansions/script/init.lua exists=" + new File(new File(rootPath,
+                    Constants.CORE_EXPANSIONS + "/" + Constants.CORE_SCRIPT_PATH),
+                    "init.lua").exists()
+                    + " scripts.zip exists=" + new File(rootPath,
+                    Constants.CORE_SCRIPTS_ZIP).exists());
             if (rootPath.equals(sInitedRootPath)) {
                 return true;
             }

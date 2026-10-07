@@ -633,6 +633,11 @@ public class GameMessageParser {
     }
 
     public void onHint(int type, int player, int data) {
+        // 诊断：所有 MSG_HINT 落盘一条（ocgcore libduel.cpp duel_hint 对未定义 lua 常量
+        // 的 Duel.Hint 会 lua_tointeger(nil)=0 静默降级 type=0，如旧版 script/constant.lua
+        // 无 HINT_ZONE 定义，此处可见真实收到的 type 以便定位脚本包问题）
+        Log.i(TAG, "hint type=" + type + " player=" + player
+                + " data=0x" + Integer.toHexString(data));
         String hintText = "";
         switch (type) {
             // HINT_EVENT（对齐 duelclient.cpp L1445-1447）：静默写入 event_string=GetDesc(data)，不弹提示
@@ -680,7 +685,30 @@ public class GameMessageParser {
                 showActionMessage(acText);
                 return;
             }
-            // 其余 HINT（HINT_CARD=10/HINT_ZONE=11 及未知类型）：桌面端为图标动画/
+            // HINT_ZONE（对齐 duelclient.cpp L1529-1572）：脚本以
+            // Duel.Hint(HINT_ZONE, tp, mask) 宣告区域——无限泡影效果处理成功时发
+            // 0x1<<(seq+8)（自身所在列的 SZONE 位；发动失败/被无效/手卡发动均不发，
+            // 故天然满足「仅效果正常处理后才标注」）。桌面端只做 40 帧瞬时高亮
+            //（selectable_field），本工程把掩码按 LocalPlayer 交换两半（L1531-1532）后
+            // 展开为同纵列两张魔陷格存入 hintZoneMask，渲染层以玫红呼吸标注，
+            // 直至下一个 MSG_NEW_TURN（同类无效效果均携 RESET_PHASE+PHASE_END 于回合结束失效）。
+            // case 0 为兼容分支：服务端 script/constant.lua 旧版无 HINT_ZONE 定义时，
+            // Duel.Hint(HINT_ZONE=undefined→nil, ...) 经 lua_tointeger 降级为 type=0 下发，
+            // 掩码数据不变（各版 core 的 HINT 类型 0 均未定义用途，不会误判）
+            case 0:
+            case 11: {
+                int zones = data;
+                Log.i(TAG, "HINT_ZONE player=" + player + " raw=0x" + Integer.toHexString(zones)
+                        + " local=" + engine.localPlayer(player));
+                if (engine.localPlayer(player) == 1)
+                    zones = (zones >>> 16) | (zones << 16);
+                engine.field.applyHintZone(zones);
+                engine.mainHandler.post(() -> {
+                    if (engine.listener != null) engine.listener.onFieldChanged();
+                });
+                return;
+            }
+            // 其余 HINT（HINT_CARD=10 及未知类型）：桌面端为图标动画/
             // 区域高亮/日志（GetSysString 取自 strings.conf），不弹调试文本
             default:
                 Log.d(TAG, "Unhandled hint type=" + type + " data=" + data);

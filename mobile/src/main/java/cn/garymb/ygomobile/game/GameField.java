@@ -56,6 +56,10 @@ public class GameField {
 
     /** client_field.h STATUS_PROC_COMPLETE：以正规程序特殊召唤过的标记 */
     public static final int STATUS_PROC_COMPLETE = 0x0008;
+    /** ocgcore common.h STATUS_DISABLED：效果被无效（无限泡影类） */
+    public static final int STATUS_DISABLED = 0x0001;
+    /** ocgcore common.h STATUS_FORBIDDEN：表示形式/行动被禁止（技能抽取类） */
+    public static final int STATUS_FORBIDDEN = 0x04000000;
     /** duelclient.cpp MSG_CARD_HINT L4104 CHINT_DESC_ADD：为卡片追加一条效果文字提示 */
     public static final int CHINT_DESC_ADD = 6;
     /** duelclient.cpp MSG_CARD_HINT L4106 CHINT_DESC_REMOVE：移除一条提示，计数归零才真正删除 */
@@ -188,6 +192,22 @@ public class GameField {
             return location == CardLocation.Overlay.value();
         }
 
+        /**
+         * 展示用卡码（对齐 event_handler.cpp L1673 hover 只判 mcard->code 的语义扩展）：
+         * 场上里侧表示卡一旦被公开（POS_REVEAL 解遮蔽 / 无限泡影等 MSG_POS_CHANGE 携真实码），
+         * 后续遮蔽型零码查询即便把 code 洗回 0，setCode(0) 也已把原公开码备份进 chain_code
+         * （client_card.cpp SetCode L37-48 同款备份，本为飞行途中继续绘卡面而设），
+         * 点击详情 / 长按悬浮 / 渲染层浮现卡图一律经本方法取「已公开的最新卡码」。
+         */
+        public int displayCode() {
+            return code != 0 ? code : chain_code;
+        }
+
+        /** 本卡码是否属于「已公开过卡码的场上里侧卡」（reveal-once-stay-known 保码判据） */
+        public boolean isRevealedFieldFaceDown() {
+            return (location & 0x0C) != 0 && !isFaceUp() && code != 0;
+        }
+
         public boolean isAttack() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceDownAttack.value())) != 0;
         }
@@ -287,8 +307,10 @@ public class GameField {
             int flag = buf.getInt();
             if (flag == 0) {
                 // 遮蔽保护（回放态 preserveMaskedHandCode / 实况入手揭示持闸 revealHeld）：
-                // 整块清零的遮蔽刷新不清掉手卡区已有的真实卡码
-                if (!((preserveMaskedHandCode || revealHeld) && (location & 0x02) != 0 && code != 0)) {
+                // 整块清零的遮蔽刷新不清掉手卡区已有的真实卡码；场上里侧卡一经公开
+                //（POS_REVEAL 解遮蔽 / 泡影类 POS_CHANGE 携码）同样保留，不洗回 0
+                if (!((preserveMaskedHandCode || revealHeld) && (location & 0x02) != 0 && code != 0)
+                        && !isRevealedFieldFaceDown()) {
                     clearData();
                 }
                 return;
@@ -296,9 +318,11 @@ public class GameField {
             if ((flag & QUERY_CODE) != 0 && buf.remaining() >= 4) {
                 int pdata = buf.getInt();
                 // 遮蔽保护：仅卡码被服务器置零的手卡块——保留已揭示的真实卡码
-                // （回放态或入手揭示持闸窗口内）
-                if (pdata == 0 && (preserveMaskedHandCode || revealHeld) && (location & 0x02) != 0 && code != 0) {
+                // （回放态或入手揭示持闸窗口内）；场上已公开的里侧卡同理保码
+                if (pdata == 0 && ((preserveMaskedHandCode || revealHeld) && (location & 0x02) != 0 && code != 0)) {
                     // 跳过 clearData/setCode(0)，其余字段照旧解析
+                } else if (pdata == 0 && isRevealedFieldFaceDown()) {
+                    // 场上里侧已公开：跳过洗码，姿态等其余字段照旧解析
                 } else {
                     if (pdata == 0) clearData();
                     setCode(pdata);
@@ -521,6 +545,15 @@ public class GameField {
     final List<PendingOverlay> pendingOverlays = new ArrayList<>();
     public int[] extraPCount = new int[2];
     public long disabledField;
+    /**
+     * HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与
+     * disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）。
+     * 无限泡影类脚本效果处理成功时 Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身
+     * 所在列，本端把每个来位标到同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧
+     * 镜像 SZONE 格（4-seq，aux.GetColumn 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。
+     * 效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。
+     */
+    public int hintZoneMask;
     public boolean deckReversed;
     public boolean cantCheckGrave;
     public boolean tagSurrender;
@@ -668,6 +701,7 @@ public class GameField {
         displayCards.clear();
         contiAct = false;
         disabledField = 0;
+        hintZoneMask = 0;
         deckReversed = false;
         cantCheckGrave = false;
         tagSurrender = false;
@@ -678,6 +712,33 @@ public class GameField {
         extraPCount[0] = 0;
         extraPCount[1] = 0;
         eventString = "";
+    }
+
+    /**
+     * 接收 HINT_ZONE 掩码（已换算为本地视角）并展开为魔陷格标注集存入 hintZoneMask：
+     * 每个来位（不论源自 MZ bit0-6 还是 SZ bit8-15，高 16 位为对侧）只标注同纵列的
+     * 两张魔法陷阱格：同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq）；
+     * 仅主列 seq 0-4（额外灵摆/共用连接格 5/6 无魔陷对应列）
+     */
+    public void applyHintZone(int zones) {
+        for (int bit = 0; bit < 32; bit++) {
+            if ((zones & (1 << bit)) == 0) continue;
+            markSpellColumn(bit >= 16 ? 1 : 0, (bit & 7));
+        }
+    }
+
+    private void markSpellColumn(int seat, int seq) {
+        if (seq < 0 || seq > 4) return;
+        hintZoneMask |= 1 << (seat * 16 + 8 + seq);
+        hintZoneMask |= 1 << ((1 - seat) * 16 + 8 + (4 - seq));
+    }
+
+    /** 该本地座位的场上格子是否被 HINT_ZONE 纵列标注（location 为已去叠加位的 0x04/0x08） */
+    public boolean isZoneColumnMarked(int seat, int location, int sequence) {
+        if (seat < 0 || seat > 1) return false;
+        boolean mz = location == CardLocation.MonsterZone.value();
+        if (!mz && location != CardLocation.SpellZone.value()) return false;
+        return (hintZoneMask & (1 << (seat * 16 + (mz ? sequence : 8 + sequence)))) != 0;
     }
 
     /**

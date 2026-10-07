@@ -185,7 +185,17 @@ class FieldCardRenderer {
             // 卡背自身正面朝相机，贴图方向与 gframe 一致且不与任何面共面
             System.arraycopy(view.mModel, 0, view.mModelTmp, 0, 16);
             Matrix.rotateM(view.mModelTmp, 0, 180f, 0f, 1f, 0f);
-            drawCoverQuad(view.mModelTmp, c.owner != 0, alpha, 1f, 0f);
+            // 已公开卡码的场上里侧卡：卡背与卡图交替半透明
+            //（波峰：卡背淡至 60%、卡图浮现至 40%；波谷：卡背恢复实显、卡图隐去），
+            // 幅度与频率均收敛（频率为格子呼吸的一半）避免造成「卡被翻开/发动」的错觉，
+            // 一眼可辨这是一张背面卡
+            boolean reveal = isBreathRevealCard(c);
+            float wave = reveal ? revealWave() : 1f;
+            drawCoverQuad(view.mModelTmp, c.owner != 0,
+                    alpha * (reveal ? 1f - 0.4f * wave : 1f), 1f, 0f);
+            if (reveal) {
+                drawBreathReveal(c, code, alpha, wave);
+            }
         } else if (faceUp && code > 0) {
             int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
             if (tex > 0) {
@@ -215,6 +225,38 @@ class FieldCardRenderer {
             view.quad.drawQuadTex(model, coverTex, alpha, flipU, flipV);
         } else {
             view.quad.drawQuadColor(model, 0.24f, 0.18f, 0.13f, alpha);
+        }
+    }
+
+    /**
+     * 里侧卡交替呼吸波：频率为格子呼吸脉冲（FieldBoardRenderer.drawZoneSlots
+     * 的 {@code sin(animTimeMs * 0.002)}）的一半（乘数 0.002→0.001），
+     * 更缓的明灭不致误读为翻开发动；animTimeMs 为大数值绝对时间戳，必须先以
+     * double 求正弦再降回 float，防 float 丢精度使动画恒灭
+     */
+    private float revealWave() {
+        return 0.5f + 0.5f * (float) Math.sin((double) view.animTimeMs * 0.001);
+    }
+
+    /** 本卡是否为应浮现卡图的「已公开卡码的场上里侧卡」（不含手卡/堆叠区/移动中卡片） */
+    private static boolean isBreathRevealCard(GameField.ClientCard c) {
+        return (c.location & 0x0C) != 0 && !c.isFaceUp() && !c.isOverlayMaterial()
+                && !c.is_moving && c.displayCode() > 0;
+    }
+
+    /**
+     * 已公开里侧卡的呼吸卡图叠加：画在卡背之前 0.004 的共面平面上（双翻转模型的局部
+     * +z 经两次 180° 后等于世界 +z，即朝相机侧：卡背恒全 alpha 时叠在其后的卡图会被
+     * 深度剔除，必须更近视点才能透出），alpha 随 reveal 呼吸波在 0↔0.4 摆动，
+     * 与卡背的 1→0.6 淡出此消彼长（频率为格子呼吸的一半，见 {@link #revealWave()}）
+     */
+    private void drawBreathReveal(GameField.ClientCard c, int code, float alpha, float wave) {
+        System.arraycopy(view.mModel, 0, view.mModelTmp, 0, 16);
+        Matrix.rotateM(view.mModelTmp, 0, 180f, 0f, 1f, 0f);
+        Matrix.translateM(view.mModelTmp, 0, 0f, 0f, 0.004f);
+        int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
+        if (tex > 0) {
+            view.quad.drawQuadTex(view.mModelTmp, tex, alpha * 0.4f * wave, 1f, 0f);
         }
     }
 

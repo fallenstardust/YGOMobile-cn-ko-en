@@ -283,12 +283,14 @@ class FieldSelectManager {
         if (ctl.engine.replayMode && isPile && showReplayPileView(field, player, location)) {
             return;
         }
-        if (isPile && card != null && card.code > 0) {
+        // 卡码门槛统一用 displayCode：场上里侧卡一经公开（POS_REVEAL 解遮蔽 / 泡影类
+        // POS_CHANGE 携码）后即便被遮蔽刷新洗回 code，仍按 chain_code 备份弹详情
+        if (isPile && card != null && card.displayCode() > 0) {
             ctl.activity.showCardInfoPanel(card);
             return;
         }
         // 场上卡片点击：查看信息
-        if (card != null && card.code > 0) {
+        if (card != null && card.displayCode() > 0) {
             ctl.activity.showCardInfoPanel(card);
         }
     }

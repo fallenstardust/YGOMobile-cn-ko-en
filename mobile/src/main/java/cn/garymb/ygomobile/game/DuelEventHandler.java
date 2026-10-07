@@ -200,6 +200,10 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         }
         engine.field.currentPlayer = engine.localPlayer(player);
         engine.field.turnCount++;
+        // HINT_ZONE 纵列玫红标注清除：无限泡影类无效效果均携 RESET_PHASE+PHASE_END 于
+        // 发动回合结束时失效，而客户端无显式失效通讯，下一个 MSG_NEW_TURN 即已跨过
+        // 该 End Phase，此刻清除与效果寿命对齐（duelclient.cpp 仅瞬时高亮 40 帧，无持久态可照抄）
+        engine.field.hintZoneMask = 0;
         // tag 队友切换（对齐 duelclient.cpp MSG_NEW_TURN L2879-2885：isTag 且非首回合时，
         // 该队每过一回合在主力/队友间轮换；player 为协议索引即队伍索引，不做 LocalPlayer 换算）
         if (engine.field.isTag && engine.field.turnCount != 1) {

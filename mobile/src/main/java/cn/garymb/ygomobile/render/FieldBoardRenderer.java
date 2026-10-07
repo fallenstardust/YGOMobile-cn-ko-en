@@ -150,23 +150,22 @@ final class FieldBoardRenderer {
         for (int p = 0; p < 2; p++) {
             for (int i = 0; i < (mr4 ? 7 : 5); i++) {
                 float[] c = FieldGeometry.zoneCenter(p, 0x04, i);
-                view.quad.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
-                        FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, 0f, 0.78f, 0.94f, pulse);
+                drawZoneSlot(f, p, 0x04, i, c[0], c[1],
+                        FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, pulse);
             }
             for (int i = 0; i <= 5; i++) {
                 float[] c = FieldGeometry.zoneCenter(p, 0x08, i);
                 // 场地区（seq5）绘制为与墓地一致的长方形（PILE_W×PILE_H），其余魔陷格保持方格
                 float zw = (i == 5) ? FieldGeometry.PILE_W : FieldGeometry.ZONE_W;
                 float zh = (i == 5) ? FieldGeometry.PILE_H : FieldGeometry.ZONE_H;
-                view.quad.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
-                        zw, zh, 0f, 0.78f, 0.94f, pulse);
+                drawZoneSlot(f, p, 0x08, i, c[0], c[1], zw, zh, pulse);
             }
             if (!mr4) {
                 // MR<4：field2 底板额外魔法陷阱格（左下/右下，几何真值见 GameFieldGeometry s==6/7 分支）
                 for (int i = 6; i <= 7; i++) {
                     float[] c = FieldGeometry.zoneCenter(p, 0x08, i);
-                    view.quad.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
-                            FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, 0f, 0.78f, 0.94f, pulse);
+                    drawZoneSlot(f, p, 0x08, i, c[0], c[1],
+                            FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, pulse);
                 }
             }
             for (int loc : new int[]{0x01, 0x10, 0x20, 0x40}) {
@@ -175,6 +174,24 @@ final class FieldBoardRenderer {
                 view.quad.drawFlatQuad(FieldGeometry.mirrorX(c[0]), c[1], 0.004f,
                         FieldGeometry.PILE_W, FieldGeometry.PILE_H, 0f, 0.78f, 0.94f, pulse);
             }
+        }
+    }
+
+    /**
+     * 单格呼吸槽：该格处于 HINT_ZONE 纵列标注集（hintZoneMask，无限泡影类脚本
+     * 效果处理成功时 Duel.Hint(HINT_ZONE) 宣告的同纵列两张魔陷格）时，呼吸颜色由
+     * 常态青色变为同透明度的玫红色（仅换色，不加强振幅、不另叠加层，格上有卡时
+     * 仅卡四周露出玫红脉冲环，不遮挡卡面）；仍画在卡面之下 z=0.004，
+     * 视觉作用是「格子」而非卡片本身
+     */
+    private void drawZoneSlot(GameField f, int p, int loc, int seq,
+                              float cx, float cy, float zw, float zh, float pulse) {
+        if (f.isZoneColumnMarked(p, loc, seq)) {
+            view.quad.drawFlatQuad(FieldGeometry.mirrorX(cx), cy, 0.004f, zw, zh,
+                    0.95f, 0.20f, 0.55f, pulse);
+        } else {
+            view.quad.drawFlatQuad(FieldGeometry.mirrorX(cx), cy, 0.004f, zw, zh,
+                    0f, 0.78f, 0.94f, pulse);
         }
     }
 

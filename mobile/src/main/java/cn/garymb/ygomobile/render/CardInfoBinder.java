@@ -156,14 +156,21 @@ class CardInfoBinder {
     }
 
     void showCard(GameField.ClientCard clientCard) {
+        // 卡码经 displayCode 取：场上里侧卡一旦被公开（POS_REVEAL 解遮蔽 / 泡影类 POS_CHANGE 携码），
+        // 后续遮蔽零码查询即便洗回 code 也留有 chain_code 备份，仍按公开码显示详情
+        //（对齐 event_handler.cpp L1673 hover 只判 mcard->code 即 ShowCardInfo 的语义）
         // code<=0 视为未知/暗卡：对齐 event_handler.cpp L1130-1133 ClearCardInfo 显示卡背，
         // 而不是走 getCard(0) 失败后误报「???」；unknown 仅保留给 code>0 但卡表查无此卡
-        if (clientCard == null || clientCard.code <= 0) {
+        if (clientCard == null) {
+            showDefault();
+            return;
+        }
+        int code = clientCard.displayCode();
+        if (code <= 0) {
             showDefault();
             return;
         }
 
-        int code = clientCard.code;
         Card cardData = DataManager.get().getCardManager().getCard(code);
         if (cardData == null) {
             showUnknownCard();

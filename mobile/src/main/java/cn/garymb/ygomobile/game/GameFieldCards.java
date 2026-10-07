@@ -528,6 +528,8 @@ class GameFieldCards {
             ch.controler = 1 - ch.controler;
         }
         field.disabledField = (field.disabledField >> 16) | (field.disabledField << 16);
+        // HINT_ZONE 纵列标注与 disabledField 同位布局，换视角同样交换两半
+        field.hintZoneMask = (field.hintZoneMask >>> 16) | (field.hintZoneMask << 16);
     }
 
     public static boolean clientCardSort(ClientCard c1, ClientCard c2) {

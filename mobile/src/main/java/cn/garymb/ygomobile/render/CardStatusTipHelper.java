@@ -338,8 +338,12 @@ public class CardStatusTipHelper {
         if (card == null) return null;
         DataManager dm = DataManager.get();
         StringBuilder sb = new StringBuilder();
-        if (card.code != 0) {
-            String name0 = dm.getName(card.code);
+        // 卡名用 displayCode：场上里侧卡一经公开（泡影类 POS_CHANGE 携码 / POS_REVEAL 解遮蔽）
+        // 即可报出通讯卡名，遮蔽刷新洗回 code 后仍有 chain_code 备份
+        //（对齐 event_handler.cpp L1673 mcard->code 恒可 hover 的语义）
+        int cardCode = card.displayCode();
+        if (cardCode != 0) {
+            String name0 = dm.getName(cardCode);
             sb.append(name0);
             // 通讯中该卡当前被视为的卡名（QUERY_ALIAS）：与卡表本名不同才补一行「(别名)」，
             // 镜像 event_handler.cpp L1680-1683 / L1704-1707 的 GetName(alias) 括号显示
@@ -354,7 +358,7 @@ public class CardStatusTipHelper {
             appendStatDiffLines(sb, dm, card);
             if (card.overlayTarget != null) {
                 appendLine(sb, dm.formatSystemString(225, "叠放于[%s](%d)下",
-                        dm.getName(card.overlayTarget.code), card.overlayTarget.sequence + 1));
+                        dm.getName(card.overlayTarget.displayCode()), card.overlayTarget.sequence + 1));
             }
             if ((card.status & GameField.STATUS_PROC_COMPLETE) != 0
                     && (card.type & SP_SUMMON_TYPE_MASK) != 0) {
@@ -376,7 +380,7 @@ public class CardStatusTipHelper {
                     if (chit.chainCard != null && chit.targets != null
                             && chit.targets.contains(card)) {
                         appendLine(sb, dm.formatSystemString(217, "被连锁%d的[%s]选择为对象",
-                                i + 1, dm.getName(chit.chainCard.code)));
+                                i + 1, dm.getName(chit.chainCard.displayCode())));
                     }
                 }
             }
@@ -392,8 +396,9 @@ public class CardStatusTipHelper {
     private static void appendStatDiffLines(StringBuilder sb, DataManager dm,
                                             GameField.ClientCard card) {
         // type==0 表示未收到该卡 query（暗卡等），无可比对
-        if (card.code == 0 || card.type == 0) return;
-        Card cd = dm.getCardManager().getCard(card.code);
+        int cardCode = card.displayCode();
+        if (cardCode == 0 || card.type == 0) return;
+        Card cd = dm.getCardManager().getCard(cardCode);
         if (cd == null || !cd.isType(CardType.Monster)) return;
         StringManager sm = dm.getStringManager();
         // 等级 / 阶级 / LINK 数值（对应 C++ lvstring / linkstring）
