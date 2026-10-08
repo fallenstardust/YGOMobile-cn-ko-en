@@ -60,9 +60,13 @@
             android:src="@drawable/ic_failed"/>
     </LinearLayout>
 
+    <!-- 列表区高度由 Java 侧按 layout_game_right 区域高解算后面板总高固定，本处用 weight 精确
+         占满「面板高 - 标题行 - 根内边距」的剩余空间：条目全部装得下时一屏完整显示无滚动，
+         装不下时可视区恰为剩余高度，滚动条可一直滚到最后一张卡（不再被窗口下沿裁掉） -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_keyword_card_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:scrollbars="vertical" />
 </LinearLayout>
