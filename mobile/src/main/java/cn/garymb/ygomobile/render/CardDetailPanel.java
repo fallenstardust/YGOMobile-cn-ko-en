@@ -431,6 +431,13 @@ public class CardDetailPanel {
 
     public void closeGameButtons() {
         // 对齐 game.cpp Game::CloseGameButtons() L2395-2400：隐藏时点按钮、取消/完成与洗切手卡按钮
+        // 决斗/回放结束额外复位时点三态逻辑标志（用户规格：本场无论选过哪个时点按钮，
+        // 结束后全部回到默认未按下）：hideChainButtons 只清视图 selected 态，不清三个 boolean，
+        // 下一局 STOC_GAME_START 的 onDuelStarted → updateChainButtons 会把残留按下态还原显示；
+        // 默认态=全不按下（未勾选 chkDefaultShowChain 时），勾选则下一局 onDuelStarted 照常置起
+        ignoreChain = false;
+        alwaysChain = false;
+        chainWhenAvail = false;
         hideChainButtons();
         hideCancelOrFinishButton();
         updateShuffleButton(false);
