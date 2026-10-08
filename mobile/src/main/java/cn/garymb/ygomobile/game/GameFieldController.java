@@ -71,6 +71,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private View layoutTopInfo;
     /** 竖屏顶部 HUD 缩放容器（横屏无此节点，恒 null） */
     private View layoutHudTop;
+    /** 聊天输入框（et_chat_input）：横屏浮于决斗场底部，其顶边作为相机纵向下锚线，
+     *  使决斗场/场上卡片/我方手卡整体下移到输入框上方而不被遮挡 */
+    private View etChatInput;
 
     /** 正在显示的模态对话框集合（是/否、卡片选择/确认、命令菜单）。
      *  非空时禁用决斗场三个阶段按钮，全部隐藏后恢复。 */
@@ -137,23 +140,28 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         chat.ivOpponentEmoteBubble = activity.findViewById(R.id.iv_opponent_emote_bubble);
         layoutTopInfo = activity.findViewById(R.id.layout_top_info);
         layoutHudTop = activity.findViewById(R.id.layout_hud_top);
+        etChatInput = activity.findViewById(R.id.et_chat_input);
     }
 
     /**
      * 问题1：把 gameTopInfo 实测高度喂给相机作为顶部内缩（对方手卡不遮挡顶部条），
-     * 并在相机每次重建后把聊天信息 + 中央提示文本重新锚定到「对方手卡正上方」。
-     * 顶部条高度变化 / 屏幕旋转 / 折叠屏切换都会经 OnLayoutChange 与相机回调自适应。
+     * 并以下锚线（聊天输入框顶边）+ 提示栏间隙把决斗场整体下移，并在相机每次重建后把
+     * 聊天信息 + 中央提示文本重新锚定到「对方手卡正上方」。
+     * 顶部条/输入框高度变化 / 屏幕旋转 / 折叠屏切换都会经 OnLayoutChange 与相机回调自适应。
      */
     private void setupOverlayAnchoring() {
         if (viewController == null) return;
-        final View.OnLayoutChangeListener insetListener =
-                (v, l, t, r, b, ol, ot, or, ob) -> updateCameraTopInset();
+        final View.OnLayoutChangeListener insetListener = (v, l, t, r, b, ol, ot, or, ob) -> {
+            updateCameraTopInset();
+            updateCameraBottomInset();
+        };
         if (layoutTopInfo != null) layoutTopInfo.addOnLayoutChangeListener(insetListener);
         // 竖屏顶部流容器 layout_top_stack（gameTopInfo 血条行→聊天/提示行）：聊天行数
         // 变化等把 HUD 内容撑高时靠 stack 布局变更重算（顶部 1/3 面板在 layout_game_right
         // 之外，其显隐直接改变决斗场区域尺寸并由 onSurfaceChanged 重解相机，无需内缩补偿）
         View stack = activity.findViewById(R.id.layout_top_stack);
         if (stack != null) stack.addOnLayoutChangeListener(insetListener);
+        if (etChatInput != null) etChatInput.addOnLayoutChangeListener(insetListener);
         viewController.setOnCameraChangedListener(this::anchorChatAboveOpponentHand);
     }
 
@@ -176,6 +184,30 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             hgt = (int) (rawH * scale);
         }
         if (hgt > 0) viewController.setTopInsetPx(hgt);
+    }
+
+    /** 相机底部内缩 = 决斗场视图底边→聊天输入框顶边的距离（再加 4dp 间隙，使我方手卡底缘
+     *  只比输入框高一点）：横屏作为纵向下锚线使决斗场整体下移；输入框隐藏/不存在时内缩归零 */
+    private void updateCameraBottomInset() {
+        if (viewController == null) return;
+        View field = activity.findViewById(R.id.game_field_view);
+        if (etChatInput == null || field == null
+                || etChatInput.getVisibility() != View.VISIBLE
+                || etChatInput.getHeight() <= 0 || field.getHeight() <= 0) {
+            viewController.setBottomInsetPx(0f);
+            return;
+        }
+        int[] a = new int[2];
+        int[] b = new int[2];
+        etChatInput.getLocationInWindow(a);
+        field.getLocationInWindow(b);
+        int inset = (b[1] + field.getHeight()) - a[1];
+        if (inset <= 0) {
+            viewController.setBottomInsetPx(0f);
+            return;
+        }
+        float gap = 4f * activity.getResources().getDisplayMetrics().density;
+        viewController.setBottomInsetPx(inset + gap);
     }
 
     private void anchorChatAboveOpponentHand() {

@@ -155,8 +155,12 @@ final class FieldCamera {
      * 任何俯仰角下都不会遮挡魔法陷阱区（固定后移量做不到这点）；</li>
      * <li>纵向取景锚点 = 对方手卡屏幕上缘 / 我方手卡屏幕下缘（billboard 极值，随俯仰角与手卡行变化），
      * FOV 取两锚点夹角 × 裕量；</li>
-     * <li>横向按「可交互内容」逐行求 max(半宽/该行深度)，已满足即停 → 保留尽量近的视点，
-     * 卡片尽可能大；宽高比过小（折叠屏展开/竖屏）后退也无法容纳时放大 FOV 兜底，任何宽高比都不丢格子。</li>
+     * <li>视点距离恒定于配置值（仅由俯仰角决定透视），**不再后退 D**（后退会把 D 推到上限、
+     * 拉平透视使卡片整体缩小，横屏视觉上决斗场比 C++ 偏小的根因）。横屏取影视锥半高 hh
+     * = max(横向贴边 hhFillW, 上下锚线恰好容纳 hhFit)：hhFillW 保证可交互内容左右不裁且随
+     * GameFieldView 实际布局宽自适应，hhFit 保证双方手卡装满「血条底边→聊天输入框顶边」
+     * 两条锚线之间（不裁顶也不裁底）；离轴量 c 以**下锚线**为基准，使我方手卡底缘贴聊天输入框
+     * 上方、宽度主导时的纵向富余全部留在顶部（对方手卡降到提示栏下方），避免决斗场视觉偏高。</li>
      * </ol>
      */
     CameraSolve solveCamera(int w, int h) {
@@ -169,6 +173,7 @@ final class FieldCamera {
         final float fieldZoom = view.fieldZoom;
         final float handSelfYShift = view.handSelfYShift;
         final float topInsetPx = portrait ? 0f : view.topInsetPx;
+        final float bottomInsetPx = portrait ? 0f : view.bottomInsetPx;
         float aspect = (float) w / h;
         float th = (float) Math.toRadians(cameraElevationDeg);
         float cth = (float) Math.cos(th), sth = (float) Math.sin(th);
@@ -214,14 +219,10 @@ final class FieldCamera {
             dY = by / bl;
             dZ = bz / bl;
             s.valid = true;
-            // 竖屏（corners 贴边取景路径）：视点绝不退让——退让循环在竖屏纵横比下恒不满足，
-            // 会把 D 一路推到 MAX_CAM_D 拉平透视、卡片整体缩小（用户反馈「缩得太小」根因）。
-            // 取景尺寸由下方横向贴边公式唯一决定，不再纵向兜底放大。
+            // 视点距离恒定于配置值（仅由俯仰角决定透视），不再后退 D：后退会把 D 推到上限
+            // 拉平透视使卡片整体缩小（与竖屏同构的历史根因）。横屏取景尺寸由下方 else 分支
+            // 依据「实际布局宽 + 血条下线→视图底边可用高」解算，tanV 保持为双方手卡锚点半角。
             if (corners != null) break;
-            float needH = contentHalfTan(eyeY, eyeZ, dY, dZ);
-            if (needH * fieldZoom <= tanV * aspect) break;
-            if (D >= MAX_CAM_D - 1e-3f) break;
-            D = Math.min(MAX_CAM_D, D * 1.35f);
         }
         if (!s.valid) return s;
 
@@ -239,18 +240,28 @@ final class FieldCamera {
             hh = corners[1] * fieldZoom / depthCorner / aspect;
             c = 0f;
         } else {
-            float need = contentHalfTan(eyeY, eyeZ, dY, dZ) * fieldZoom;
-            if (need / aspect > tanV) tanV = need / aspect;
-            if (tanV > 1.6f) tanV = 1.6f;
-
-            // 顶部内缩（问题1）：用离轴视锥把「对方手卡上缘」锚到屏幕顶部内缩线 ndcTop 之下，
-            // 我方手卡下缘仍锚到 ndc=-1（屏幕底），从而在不裁掉任何一方的前提下为 gameTopInfo 让出顶部空间。
-            // 由对称半角 tanV 解离轴参数：hh = 2·tanV/(1+ndcTop)，c = hh - tanV（推导见类注释）。
-            float inset = Math.max(0f, Math.min(topInsetPx, h * 0.45f));
-            float ndcTop = (h > 1f) ? (1f - 2f * inset / h) : 1f;
+            // 横屏纵向双锚线取景（用户规格）：上锚线 = 血条底边（topInsetPx），下锚线 = 聊天
+            // 输入框顶边（bottomInsetPx）——双方手卡完整落在两条锚线之间（不裁顶也不裁底）。
+            // 半高 hh 取「横向贴边」与「上下锚线恰好容纳」之较大者：宽度合适时通常由横向贴边
+            // 主导，hh > hhFit ⇒ 纵向有富余；此时以下锚线为基准解离轴量 c（我方手卡底缘贴聊天
+            // 输入框上方），把富余全部留在顶部 → 决斗场/场上卡片/双方手卡整体下移，对方手卡上缘
+            // 落到提示栏之下（旧实现以血条下线为基准，富余堆在底部，视觉上决斗场偏高）。
+            float topIns = Math.max(0f, Math.min(topInsetPx, h * 0.45f));
+            float botIns = Math.max(0f, Math.min(bottomInsetPx, h * 0.45f));
+            float ndcTop = (h > 1f) ? (1f - 2f * topIns / h) : 1f;    // 上锚线 NDC y（1=视图顶，-1=底）
+            float ndcBot = (h > 1f) ? (-1f + 2f * botIns / h) : -1f;  // 下锚线 NDC y
             if (ndcTop < 0.05f) ndcTop = 0.05f;
-            hh = 2f * tanV / (1f + ndcTop);
-            c = hh - tanV;
+            if (ndcBot > ndcTop - 0.1f) ndcBot = ndcTop - 0.1f;       // 两条锚线至少留 5% 屏高可用跨度
+            // 横向贴边：可交互内容左右恰触边所需的 hh（fRight = hh·aspect·near 承担横向）
+            float hhFillW = contentHalfTan(eyeY, eyeZ, dY, dZ) * fieldZoom / aspect;
+            // 上下锚线恰好容纳：双方手卡锚点跨度 2tanV 装满 [ndcBot, ndcTop] 所需的 hh（更窄则必裁）
+            float hhFit = 2f * tanV / (ndcTop - ndcBot);
+            hh = Math.max(hhFillW, hhFit);
+            if (hh > 1.6f) hh = 1.6f;
+            // 下锚线基准：我方手卡下缘（锚点 -tanV）精确落到 ndcBot，由 (-tanV-c)/hh=ndcBot 解 c；
+            // 对方手卡上缘落在 ndcBot + 2tanV/hh ≤ ndcTop（hh≥hhFit 保证），恒在血条下线之内。
+            // ndcBot<1 且 hh≥hhFit 保证 c>-hh，fTop=(c+hh)·near 恒正，视锥不翻转。
+            c = -tanV - hh * ndcBot;
         }
         s.frustumHH = hh;
         s.frustumC = c;

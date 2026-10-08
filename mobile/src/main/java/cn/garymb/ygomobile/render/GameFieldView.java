@@ -135,6 +135,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     volatile int viewW = 1, viewH = 1;
     // 顶部内缩像素（问题1）：由控制器传入 gameTopInfo 实测高度，FieldCamera 据此把对方手卡压到其下
     volatile float topInsetPx = 0f;
+    // 底部内缩像素：由控制器传入聊天输入框（et_chat_input）顶边距视图底边的高度，
+    // 横屏作为纵向取景的下锚线（我方手卡底缘不得低于此），使决斗场整体下移而不被输入框遮挡
+    volatile float bottomInsetPx = 0f;
     // 相机重建通知（GL 线程重建相机后，覆盖层需重新锚定阶段按钮位置）
     volatile Runnable onCameraChangedListener;
 
@@ -414,6 +417,21 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         float v = Math.max(0f, px);
         if (Math.abs(v - topInsetPx) < 0.5f) return;
         topInsetPx = v;
+        cameraDirty = true;
+        requestRender();
+        Runnable l = onCameraChangedListener;
+        if (l != null) post(l);
+    }
+
+    /**
+     * 底部内缩像素：传入聊天输入框顶边距决斗场视图底边的高度（可另加少量间隙），
+     * 横屏相机以此为下锚线，使我方手卡底缘落在输入框上方、纵向富余留在顶部（决斗场下移）。
+     * 输入框高度变化 / 旋转 / 折叠屏切换都会再次调用而自适应重建相机；竖屏解算忽略该值。
+     */
+    public void setBottomInsetPx(float px) {
+        float v = Math.max(0f, px);
+        if (Math.abs(v - bottomInsetPx) < 0.5f) return;
+        bottomInsetPx = v;
         cameraDirty = true;
         requestRender();
         Runnable l = onCameraChangedListener;

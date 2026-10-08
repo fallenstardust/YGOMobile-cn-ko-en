@@ -171,6 +171,11 @@ public class GameFieldViewController
         if (fieldView != null) fieldView.setTopInsetPx(px);
     }
 
+    /** 底部内缩像素：传入聊天输入框顶边距视图底边的高度，横屏作为纵向下锚线（决斗场整体下移） */
+    public void setBottomInsetPx(float px) {
+        if (fieldView != null) fieldView.setBottomInsetPx(px);
+    }
+
     /** 对方手卡屏幕上缘 y（像素）：供聊天/中央提示锚定在其正上方（问题1） */
     public float getOpponentHandTopScreenY() {
         return fieldView != null ? fieldView.getOpponentHandTopScreenY() : 0f;
