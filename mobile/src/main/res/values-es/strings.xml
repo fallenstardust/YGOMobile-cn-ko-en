@@ -188,6 +188,7 @@
     <string name="donation">Apóyanos</string>
     <string name="refresh">Actualizar</string>
     <string name="select_deck">Elige un deck</string>
+    <string name="solo_mode">Modo solo</string>
     <string name="quit_deck_tip">El deck no está guardado, ¿Salir de la aplicación?</string>
     <string name="deck_delete_text">Arrastra aquí para eliminar</string>
     <string name="question_keep_cur_deck">¿Mantener las cartas actuales?</string>

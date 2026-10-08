@@ -1,0 +1,421 @@
+package cn.garymb.ygomobile.ui.dialogs;
+
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.material.tabs.TabLayout;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
+import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
+import cn.garymb.ygomobile.utils.BotUtil;
+import cn.garymb.ygomobile.utils.DialogScale;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.PuzzleUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
+import ocgcore.DataManager;
+import ocgcore.StringManager;
+
+public class SingleModeDialog {
+
+    private Context context;
+    private PopupWindow popupWindow;
+    private DraggablePopupHelper draggableHelper;
+    // dismiss 闩锁：内部跳转（hideForNavigation）关闭时不上报外部 dismiss 回调，
+    // 避免误触发 restoreMainMenu（同 PlayerWaitingDialog/LanModeDialog 模式）
+    private boolean suppressDismiss = false;
+    private PopupWindow.OnDismissListener externalDismissListener;
+    private final PopupWindow.OnDismissListener internalDismissListener = () -> {
+        if (suppressDismiss) {
+            suppressDismiss = false;
+            return;
+        }
+        if (externalDismissListener != null) externalDismissListener.onDismiss();
+    };
+    private final StringManager mStringManager = DataManager.get().getStringManager();
+
+    public interface OnSingleModeListener {
+        void onStartBotDuel(String botCommand, String deckFile,
+                            int duelRule, boolean noCheckDeck, boolean noShuffleDeck);
+
+        void onStartSingleMode(String luaFilePath, boolean noShuffleToDeck);
+    }
+
+    private OnSingleModeListener listener;
+
+    private String selectedDeckPath = "";
+    private String selectedDeckCategory = "";
+    private String selectedDeckName = "";
+
+    public SingleModeDialog(Context context, OnSingleModeListener listener) {
+        this.context = context;
+        this.listener = listener;
+    }
+
+    public void show(View anchorView, List<BotUtil.BotInfo> botList, List<PuzzleUtil.PuzzleInfo> puzzleList) {
+        float density = context.getResources().getDisplayMetrics().density;
+
+        // 本弹窗含 Material TabLayout，必须用 Activity（AppCompat）原始 Context 填充：
+        // DialogScale.wrap 走 createConfigurationContext 返回的是脱离 AppCompat delegate 的裸
+        // ContextImpl，会丢失委派主题/ViewFactory 导致 TabLayout 构造抛 InflateException。
+        // 等比缩放改由下方 popupWidth/Height（density×factor）配合布局根 match_parent+weight 实现，
+        // 内容随放大后的窗口按比例填满。
+        View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_bot_duel, null);
+
+        TabLayout tabLayoutMode = customView.findViewById(R.id.tab_layout_mode);
+        ListView lvBotList = customView.findViewById(R.id.lv_bot_list);
+        TextView tvBotDesc = customView.findViewById(R.id.tv_bot_desc);
+        TextView tvBotInfoHeader = customView.findViewById(R.id.tv_bot_info_header);
+        Button btnSelectDeck = customView.findViewById(R.id.btn_select_deck);
+        Spinner spinnerRule = customView.findViewById(R.id.spinner_rule);
+        CheckBox chkAiOnlyScissors = customView.findViewById(R.id.chk_ai_only_scissors);
+        CheckBox chkNoCheckDeck = customView.findViewById(R.id.chk_no_check_deck);
+        CheckBox chkNoShuffleDeck = customView.findViewById(R.id.chk_no_shuffle_deck);
+        CheckBox chkReturnToTop = customView.findViewById(R.id.chk_return_to_top);
+        // 人机/残局设置项与按钮文字统一复用 gframe 既有系统字符串（对齐 game.cpp tabBot / wSingle）：
+        // 1382 人机信息：(tvBotInfoHeader) / 1384 AI只出剪刀(chkBotHand) / 1229 不检查卡组 / 1230 不洗切卡组
+        // / 1238 不洗切时回卡组改为回顶端 / 1211 确定(btnStartBot) / 1210 退出(btnBotCancel)
+        if (tvBotInfoHeader != null) tvBotInfoHeader.setText(mStringManager.getSystemString(1382, "人机信息："));
+        chkAiOnlyScissors.setText(mStringManager.getSystemString(1384, "AI只出剪刀"));
+        chkNoCheckDeck.setText(mStringManager.getSystemString(1229, "不检查卡组"));
+        chkNoShuffleDeck.setText(mStringManager.getSystemString(1230, "不洗切卡组"));
+        // 设置残局模式的 checkbox 文本
+        chkReturnToTop.setText(mStringManager.getSystemString(1238, "不洗切时回卡组改为回顶端"));
+        Button btnStartBotDuel = customView.findViewById(R.id.btn_start_bot_duel);
+        Button btnExitBot = customView.findViewById(R.id.btn_exit_bot);
+        btnStartBotDuel.setText(mStringManager.getSystemString(1211, "确定"));
+        btnExitBot.setText(mStringManager.getSystemString(1210, "退出"));
+
+        List<SimpleSpinnerItem> ruleItems = new ArrayList<>();
+        ruleItems.add(new SimpleSpinnerItem(5, mStringManager.getSystemString(1264, "大师规则（2020）")));
+        ruleItems.add(new SimpleSpinnerItem(4, mStringManager.getSystemString(1263, "新大师规则")));
+        ruleItems.add(new SimpleSpinnerItem(3, mStringManager.getSystemString(1262, "大师规则3")));
+
+        SimpleSpinnerAdapter ruleAdapter = new SimpleSpinnerAdapter(context);
+        ruleAdapter.set(ruleItems);
+        spinnerRule.setAdapter(ruleAdapter);
+        spinnerRule.setSelection(0);
+
+        final int[] currentMode = {0};
+        final int[] selectedPosition = {-1};
+
+        List<String> botNames = new ArrayList<>();
+        for (BotUtil.BotInfo bot : botList) {
+            botNames.add(bot.toString());
+        }
+        List<String> puzzleNames = new ArrayList<>();
+        for (PuzzleUtil.PuzzleInfo puzzle : puzzleList) {
+            puzzleNames.add(puzzle.toString());
+        }
+
+        final SimpleListAdapter botAdapter = new SimpleListAdapter(context);
+        botAdapter.set(botNames);
+        final SimpleListAdapter puzzleAdapter = new SimpleListAdapter(context);
+        puzzleAdapter.set(puzzleNames);
+
+        tabLayoutMode.addTab(tabLayoutMode.newTab().setText(mStringManager.getSystemString(1380, "人机模式(双方无禁)")));
+        tabLayoutMode.addTab(tabLayoutMode.newTab().setText(mStringManager.getSystemString(1381, "残局模式(含教学局)")));
+
+        lvBotList.setAdapter(botAdapter);
+        tvBotDesc.setText(mStringManager.getSystemString(1382, "请选择一个AI查看信息"));
+        btnSelectDeck.setVisibility(View.INVISIBLE);
+        btnStartBotDuel.setEnabled(false);
+        btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
+        spinnerRule.setVisibility(View.VISIBLE);
+        chkAiOnlyScissors.setVisibility(View.VISIBLE);
+        chkNoCheckDeck.setVisibility(View.VISIBLE);
+        chkNoShuffleDeck.setVisibility(View.VISIBLE);
+        // 初始即人机模式（首个 tab）：残局专属"不洗切时回卡顶"复选框直接隐藏，
+        // 无需等到切到残局再切回人机才触发隐藏逻辑
+        chkReturnToTop.setVisibility(View.GONE);
+
+        loadLastDeckInfo(btnSelectDeck);
+
+        btnSelectDeck.setOnClickListener(v -> {
+            DeckSelectorDialog deckDialog = new DeckSelectorDialog(context);
+            deckDialog.setDisableOperationButtons(true);
+            deckDialog.setOnDeckSelectedListener(new DeckSelectorDialog.OnDeckSelectedListener() {
+
+                @Override
+                public void onDeckSelected(String deckPath, String deckName, String categoryName) {
+                    selectedDeckPath = deckPath;
+                    selectedDeckName = deckName;
+                    selectedDeckCategory = categoryName;
+                    AppsSettings.get().setLastDeckPath(deckPath);
+                    updateDeckButtonText(btnSelectDeck);
+                }
+
+                @Override
+                public void onCancelled() {
+                }
+            });
+            deckDialog.show(anchorView);
+        });
+
+        lvBotList.setOnItemClickListener((parent, view, position, id) -> {
+            selectedPosition[0] = position;
+            btnStartBotDuel.setEnabled(true);
+            btnStartBotDuel.setTextColor(YGOUtil.c(R.color.white));
+            if (currentMode[0] == 0) {
+                botAdapter.setSelectedPosition(position);
+                puzzleAdapter.setSelectedPosition(-1);
+                if (position >= 0 && position < botList.size()) {
+                    BotUtil.BotInfo bot = botList.get(position);
+                    tvBotDesc.setText(bot.description != null ? bot.description : "");
+                    btnSelectDeck.setVisibility(bot.supportsDeckSelection ? View.VISIBLE : View.INVISIBLE);
+                }
+            } else {
+                puzzleAdapter.setSelectedPosition(position);
+                botAdapter.setSelectedPosition(-1);
+                if (position >= 0 && position < puzzleList.size()) {
+                    PuzzleUtil.PuzzleInfo puzzle = puzzleList.get(position);
+                    tvBotDesc.setText(puzzle.description != null ? puzzle.description : "无描述");
+                }
+            }
+        });
+
+        tabLayoutMode.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int position = tab.getPosition();
+                currentMode[0] = position;
+                selectedPosition[0] = -1;
+
+                if (position == 0) {
+                    lvBotList.setAdapter(botAdapter);
+                    botAdapter.setSelectedPosition(-1);
+                    puzzleAdapter.setSelectedPosition(-1);
+                    tvBotDesc.setText(mStringManager.getSystemString(1382, "请选择一个AI查看信息"));
+                    btnSelectDeck.setVisibility(View.INVISIBLE);
+                    btnStartBotDuel.setEnabled(false);
+                    btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
+                    spinnerRule.setVisibility(View.VISIBLE);
+                    chkAiOnlyScissors.setVisibility(View.VISIBLE);
+                    chkNoCheckDeck.setVisibility(View.VISIBLE);
+                    chkNoShuffleDeck.setVisibility(View.VISIBLE);
+                    // 残局专属选项在人机模式隐藏
+                    chkReturnToTop.setVisibility(View.GONE);
+                } else {
+                    lvBotList.setAdapter(puzzleAdapter);
+                    puzzleAdapter.setSelectedPosition(-1);
+                    botAdapter.setSelectedPosition(-1);
+                    tvBotDesc.setText("选择一个残局开始挑战。");
+                    btnSelectDeck.setVisibility(View.INVISIBLE);
+                    btnStartBotDuel.setEnabled(false);
+                    btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
+                    // 残局模式：规则下拉与"回卡顶"复选框同行，下拉直接隐藏（GONE）让复选框占满整行，
+                    // 避免半行留白并保证较长文本完整显示
+                    spinnerRule.setVisibility(View.GONE);
+                    chkAiOnlyScissors.setVisibility(View.GONE);
+                    chkNoCheckDeck.setVisibility(View.GONE);
+                    chkNoShuffleDeck.setVisibility(View.GONE);
+                    chkReturnToTop.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+
+        int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
+        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
+        
+        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏保持正方形样式
+        final android.app.Activity act = context instanceof android.app.Activity
+                ? (android.app.Activity) context : null;
+        if (act != null && act.getWindow() != null && act.getWindow().getAttributes() != null) {
+            DisplayMetrics screen = new DisplayMetrics();
+            act.getWindowManager().getDefaultDisplay().getRealMetrics(screen);
+            // 判断横屏还是竖屏
+            boolean isLandscape = screen.widthPixels >= screen.heightPixels;
+            if (isLandscape) {
+                // 横屏：宽度取屏幕宽度的 2/3
+                int maxWidth = (int) (screen.widthPixels * 0.66f);
+                int[] fitted = DraggablePopupHelper.fitSizeToScreen(context, popupWidth, popupHeight);
+                if (fitted[0] > maxWidth) {
+                    // 按比例缩小高度
+                    float ratio = (float) maxWidth / fitted[0];
+                    fitted[0] = maxWidth;
+                    fitted[1] = (int) (fitted[1] * ratio);
+                }
+                popupWidth = fitted[0];
+                popupHeight = fitted[1];
+            }
+            // 竖屏：保持原有设计尺寸不变（已适配正方形）
+        }
+        // 传设计尺寸给 setupDraggablePopup：由其按当前屏宽统一限宽，并在屏幕旋转后按新屏宽重新解算
+        popupWindow = new PopupWindow(customView, popupWidth, popupHeight, true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setOutsideTouchable(false);
+        popupWindow.setFocusable(false);
+        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        popupWindow.setTouchInterceptor((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+                return true;
+            }
+            return false;
+        });
+        popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+
+        draggableHelper = new DraggablePopupHelper(context, "single_mode_dialog");
+        // 竖屏交换宽高比为高大于宽（与横屏宽大于高对称），旋转自动恢复（用户规格）
+        draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
+
+        btnStartBotDuel.setOnClickListener(v -> {
+            if (currentMode[0] == 0) {
+                if (selectedPosition[0] >= botList.size()) {
+                    Toast.makeText(context, mStringManager.getSystemString(1421, "无效的AI选择"), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                BotUtil.BotInfo selectedBot = botList.get(selectedPosition[0]);
+                String botCommand = selectedBot.command;
+                // 参考 menu_handler.cpp BUTTON_BOT_START：勾选后为 WindBot 追加 Hand 参数
+                if (chkAiOnlyScissors.isChecked()) {
+                    botCommand += " Hand=1";
+                }
+                // 仅支持自选卡组(SELECT_DECKFILE)的 AI 才把所选卡组作为 P2 卡组传出，
+                // 其余 AI 使用其在bot.conf 中通过 Deck= 指定的内置卡组。
+                String deckFile = selectedBot.supportsDeckSelection ? selectedDeckPath : "";
+                int duelRule = (int) SimpleSpinnerAdapter.getSelect(spinnerRule);
+                boolean noCheckDeck = chkNoCheckDeck.isChecked();
+                boolean noShuffleDeck = chkNoShuffleDeck.isChecked();
+
+                // 人机对战建主：内部跳转关闭本弹窗并抑制 dismiss → restoreMainMenu，
+                // 否则主菜单会在玩家等待界面上层误显示
+                hideForNavigation();
+                if (listener != null) {
+                    listener.onStartBotDuel(botCommand, deckFile, duelRule, noCheckDeck, noShuffleDeck);
+                }
+            } else {
+                if (selectedPosition[0] >= puzzleList.size()) {
+                    Toast.makeText(context, mStringManager.getSystemString(1421, "无效的残局选择"), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                PuzzleUtil.PuzzleInfo selectedPuzzle = puzzleList.get(selectedPosition[0]);
+                // 残局开局属内部跳转：抑制 dismiss → restoreMainMenu，否则主菜单会
+                // 叠在残局决斗界面上层再次弹出（与 bot 分支同一处理）
+                hideForNavigation();
+                if (listener != null) {
+                    listener.onStartSingleMode(selectedPuzzle.filePath, chkReturnToTop.isChecked());
+                }
+            }
+        });
+
+        btnExitBot.setOnClickListener(v -> popupWindow.dismiss());
+
+        anchorView.setVisibility(View.GONE);
+        draggableHelper.showPopup(popupWindow, anchorView);
+    }
+
+    private void loadLastDeckInfo(Button btnSelectDeck) {
+        AppsSettings settings = AppsSettings.get();
+        selectedDeckCategory = settings.getLastCategory();
+        selectedDeckName = settings.getLastDeckName();
+        selectedDeckPath = settings.getLastDeckPath();
+        updateDeckButtonText(btnSelectDeck);
+    }
+
+    private void updateDeckButtonText(Button btnSelectDeck) {
+        if (selectedDeckName != null && !selectedDeckName.isEmpty()) {
+            String uncatName = context.getString(R.string.category_Uncategorized);
+            if (selectedDeckCategory != null && !selectedDeckCategory.isEmpty()
+                    && !selectedDeckCategory.equals(uncatName)) {
+                btnSelectDeck.setText(selectedDeckCategory + "/" + selectedDeckName);
+            } else {
+                btnSelectDeck.setText(selectedDeckName);
+            }
+        } else {
+            btnSelectDeck.setText(mStringManager.getSystemString(1254, "选择卡组"));
+        }
+    }
+
+    public void dismiss() {
+        if (popupWindow != null && popupWindow.isShowing()) {
+            popupWindow.dismiss();
+        }
+    }
+
+    /** 内部跳转（人机对战建主进入玩家等待界面）：抑制外部 dismiss 回调后关闭，
+     * 避免误触发 restoreMainMenu 在等待界面上层弹出主菜单 */
+    public void hideForNavigation() {
+        if (popupWindow == null || !popupWindow.isShowing()) return;
+        suppressDismiss = true;
+        popupWindow.dismiss();
+    }
+
+    public void setOnDismissListener(PopupWindow.OnDismissListener listener) {
+        this.externalDismissListener = listener;
+        if (popupWindow != null) {
+            popupWindow.setOnDismissListener(internalDismissListener);
+        }
+    }
+
+    // === 静态入口：由 YGOProActivity 调用 ===
+
+    public static void showSingleModeDialog(YGOProActivity activity) {
+        activity.getMainMenuDialog().hideMainMenu();
+        File botConfFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH);
+        List<BotUtil.BotInfo> botList = BotUtil.parseBotConfig(botConfFile);
+
+        File singleDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_SINGLE_PATH);
+        List<PuzzleUtil.PuzzleInfo> puzzleList = PuzzleUtil.loadPuzzleFiles(singleDir);
+
+        SingleModeDialog dialog = new SingleModeDialog(activity, new SingleModeDialog.OnSingleModeListener() {
+            @Override
+            public void onStartBotDuel(String botCommand, String deckFile,
+                                       int duelRule, boolean noCheckDeck, boolean noShuffleDeck) {
+                GameEngine engine = activity.getEngine();
+                engine.setBotMode(true);
+                engine.setPlayerName(Constants.PlayerName);
+                // 1. 建立局域网主机：参数对齐 duelclient.cpp 中 bot_mode 的 CTOS_CreateGame
+                //    rule=5(放开卡池) mode=0(单局) lflist=0 LP=8000 起手=5 抽卡=1 无时限；
+                //    duel_rule / no_check_deck / no_shuffle_deck 取自人机对战面板设置
+                engine.startLocalServerWithSettings(0, 5, 0, duelRule,
+                        noCheckDeck, noShuffleDeck,
+                        8000, 5, 1, 0,
+                        "Bot Game", "");
+                // 2. 切换进入 LAN 界面的 player waiting 页面（作为主机）
+                PlayerWaitingDialog.showPlayerWaitingForBotHost(activity);
+                // 3. 启动 WindBot 连接本地主机并加入；deckFile 为 P2 指定卡组
+                engine.launchWindBot("127.0.0.1", 7911, botCommand, deckFile);
+            }
+
+            @Override
+            public void onStartSingleMode(String luaFilePath, boolean noShuffleToDeck) {
+                activity.getEngine().startSingleMode(luaFilePath, noShuffleToDeck);
+            }
+        });
+        dialog.show(activity.getDialogContainer(), botList, puzzleList);
+        dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+    }
+}

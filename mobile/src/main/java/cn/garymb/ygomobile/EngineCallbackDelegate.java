@@ -1,0 +1,927 @@
+package cn.garymb.ygomobile;
+
+import android.util.Log;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ReplayMsgMerger;
+import cn.garymb.ygomobile.game.ReplayReader;
+import cn.garymb.ygomobile.game.ShowDialogUtil;
+import cn.garymb.ygomobile.render.SpecEffectOverlay;
+import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
+import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
+import ocgcore.enums.DuelPhase;
+
+/**
+ * 引擎回调委托类（由 YGOProActivity 按 // === 分栏拆分而来）：承载 GameEngine.EngineListener
+ * 的全部回调实现（状态/字段/阶段/选择/结果/录像/动画/玩家等待转发），并内聚与其强相关的
+ * 决斗结束录像处理队列、居中特效覆盖层（SpecEffectOverlay）、阶段文字码与本地玩家显示名解析。
+ * 与门面同包，通过包级私有直连 YGOProActivity 的共享状态字段与 UI 编排方法，不引入 Context 对象。
+ */
+class EngineCallbackDelegate implements GameEngine.EngineListener {
+
+    private static final String TAG = "YGONativeGame";
+
+    private final YGOProActivity activity;
+
+    EngineCallbackDelegate(YGOProActivity activity) {
+        this.activity = activity;
+    }
+
+    // === 决斗结束 / 录像处理状态（随回调内聚于本类） ===
+    private final List<byte[]> pendingReplays = new ArrayList<>();
+    private boolean duelEndHandling = false;
+    // 显式退出等待界面时置位：本次 DISCONNECTED 回调跳过 returnToLanMain，
+    // 返回导航由退出入口独占（bot→SingleModeDialog / LAN→LanModeDialog），
+    // 避免 LanModeDialog 与 MainMenuDialog 连带弹出
+    private boolean suppressDisconnectedReturn = false;
+    private YesOrNoDialog resultDialog;
+    private ReplaySaveDialog replaySaveDialog;
+    // STOC_REPLAY 紧随 STOC_DUEL_END 下发：录像处理延迟到该窗口内无新数据到达再启动，
+    // 避免在录像数据尚未收齐时就走到「决斗结束」弹窗
+    private static final long REPLAY_ARRIVAL_WAIT_MS = 800;
+    /** 观战结算前动画排空等待：轮询间隔与超时兜底（异常/卡死时不再无限等待） */
+    private static final long ANIM_SETTLE_POLL_MS = 100L;
+    private static final long ANIM_SETTLE_TIMEOUT_MS = 20000L;
+    /** 本次决斗结束等待动画排空的截止时间戳（DUEL_END 置位，processPendingReplays 轮询至空或超时） */
+    private long animSettleDeadlineMs = 0L;
+    /** 决斗结束时本端是否观战（在 disconnect 前捕获，避免断开后身份丢失）：
+     *  观战结算前才需等待动画排空（需求4），对战玩家不等待 */
+    private boolean duelEndedAsSpectator = false;
+    private final Runnable duelEndReplayProcessor = new Runnable() {
+        @Override
+        public void run() {
+            processPendingReplays();
+        }
+    };
+
+    // === 居中特效覆盖层（随回调内聚于本类） ===
+    private SpecEffectOverlay specEffectOverlay;
+
+    // 回合归属（本地视角：0=我方），由 onPhaseChanged/onTurnStarted 维护
+    private boolean isMyTurn = false;
+
+    // === EngineListener ===
+
+    @Override
+    public void onStateChanged(GameEngine.GameState newState) {
+        Log.i(TAG, "State: " + newState);
+        switch (newState) {
+            case LOBBY:
+                duelEndHandling = false;
+                // 已通过 PlayerWaitingDialog 显示玩家等待界面时无需处理；否则隐藏主菜单
+                if (activity.playerWaitingDialog == null || !activity.playerWaitingDialog.isShowing()) {
+                    activity.getMainMenuDialog().hideMainMenu();
+                }
+                break;
+            case DECK_SELECT:
+                activity.getDialogUtil().showDeckSelectDialog();
+                break;
+            case HAND_SELECT:
+                activity.enterDuelingUI();
+                activity.getDialogUtil().resetRpsResultState();
+                activity.getDialogUtil().showHandSelectDialog();
+                break;
+            case TP_SELECT:
+                activity.enterDuelingUI();
+                activity.getDialogUtil().showTPSelectDialog();
+                break;
+            case DUELING:
+                // 回放中收到状态切换（防带流录像经实况管线残留路径）：不弹底部行动区/
+                // 时点按钮，左侧面板保持录像控制条；onStart 已在回放侧拦截 setState，
+                // 此处为二道防线
+                if (activity.engine.replayMode) {
+                    pendingReplays.clear();
+                    break;
+                }
+                activity.enterDuelingUI();
+                int selfSeat = activity.engine.getClient().selfType;
+                if (selfSeat >= 7) {
+                    // 观战者（NETPLAYER_TYPE_OBSERVER）：不显示底部行动区与时点按钮，
+                    // 左侧面板常驻专用观战控制集（跳到当前/切换视角/退出，需求5）
+                    //（对齐 event_handler.cpp BUTTON_REPLAY_SWAP / BUTTON_LEAVE_GAME 观战分支）
+                    activity.cardDetailPanel.showSpectatorControls();
+                } else {
+                    activity.cardDetailPanel.showBottomActions();
+                    // 对齐 duelclient.cpp L912-916：STOC_GAME_START 按 chkDefaultShowChain 初始化时点三态
+                    activity.cardDetailPanel.onDuelStarted();
+                    // 进入决斗后仅对战玩家显示投降按钮；猜拳/选先后阶段保持隐藏
+                    //（onGameUIShown 已默认隐藏）；残局恒为我方参战，直接显示
+                    activity.cardDetailPanel.setSurrenderVisible(selfSeat >= 0
+                            || activity.engine.isSingleMode);
+                    // 撤回入口已移到顶部信息条中央回合数下方（iv_undo），进决斗时按当前
+                    // 可撤回状态点亮；能否真的回退由服务端裁决（无锚点 → STOC_UNDO_ACK=DENIED）
+                    if (activity.topInfoManager != null) {
+                        activity.topInfoManager.setUndoPrompt(activity.engine.isUndoPromptActive());
+                    }
+                }
+                pendingReplays.clear();
+                duelEndHandling = false;
+                break;
+            case SIDING:
+                applySidingScreen();
+                break;
+            case DUEL_END:
+                // 决斗结束：先清除仍在显示的蚂蚁线（选格 mask/选择态列表），
+                // 再走结算/录像/断开流程，避免结算窗背后残留可选高亮
+                activity.fieldCtl.clearSelectionVisuals();
+                activity.cardDetailPanel.closeGameButtons();
+                duelEndHandling = true;
+                if (activity.dialogUtil != null) activity.dialogUtil.dismissOpenGameDialogs();
+                if (resultDialog != null) {
+                    resultDialog.dismiss();
+                    resultDialog = null;
+                }
+                // 断开前捕获观战身份（需求4：观战结算前需等所有 msg 对应动画排空）
+                duelEndedAsSpectator = activity.engine != null && activity.engine.isSpectator();
+                if (activity.engine != null) activity.engine.disconnect();
+                // 观战结算前先置动画排空等待截止（processPendingReplays 轮询至消息队列空闲
+                // 且无动画在播再弹保存录像 dialog，超时兜底防卡死；对战玩家无此等待）
+                animSettleDeadlineMs = System.currentTimeMillis() + ANIM_SETTLE_TIMEOUT_MS;
+                // 顺序：先处理通讯发来的录像（保存/取消），全部完成后再弹「决斗结束」对话框
+                scheduleReplayProcessing();
+                break;
+            case DISCONNECTED:
+                // 断开通讯同样立即清除残留蚂蚁线（包括早退分支，
+                // 后续界面切换不依赖选择态高亮）
+                activity.fieldCtl.clearSelectionVisuals();
+                if (duelEndHandling) break; // 决斗结束流程已接管返回逻辑，避免重复
+                if (suppressDisconnectedReturn) {
+                    suppressDisconnectedReturn = false; // 退出入口已接管导航，单次消费
+                    break;
+                }
+                activity.returnToLanMain(activity.isGameStarted ? "与服务器连接已断开" : null);
+                break;
+        }
+    }
+
+    /**
+     * 进入 / 重入换 side 界面：打开卡组编辑器；solo 下按席位顺序 soloSideSession
+     * 载入对应席位卡组，再进入副卡组替换模式。
+     *
+     * <p>调用点：① 首次进入 SIDING（服务端 duelEndProc 下发的一条 CHANGE_SIDE →
+     * {@code onStateChanged} 的 SIDING 分支）载入席位 0；② solo 后续席位由客户端本地逐席位
+     * 驱动——{@code DeckEditorViewHost.onSideDeckFinished} 提交一份后直接经 mainHandler 投递
+     * 本方法载入下一席位，不再依赖服务端每提交一份回一条 CHANGE_SIDE 的跨端回环。
+     */
+    void applySidingScreen() {
+        activity.showDeckEditorView();              // 打开卡组编辑器
+        if (activity.deckEditorManager == null) return;
+        boolean solo = activity.engine != null && activity.engine.soloMode;
+        if (solo) {
+            // Solo match 换 side：客户端本地逐席位驱动，按席位顺序 soloSideSession
+            // 载入对应席位卡组，再进入 side 编辑。
+            int seat = activity.engine.soloSideSession;
+            String[] paths = activity.engine.soloSeatDeckPaths;
+            if (seat >= 0 && seat < paths.length && paths[seat] != null && !paths[seat].isEmpty()) {
+                activity.deckEditorManager.loadDeckForSideSwap(paths[seat]);
+            }
+        }
+        activity.deckEditorManager.enterSideMode();  // 记录替换前张数并允许编辑
+        if (solo) {
+            activity.engine.soloSideSession++;
+        }
+    }
+
+    /** 抑制下一次 DISCONNECTED 自动 returnToLanMain（由退出等待界面入口在 disconnect 前置位） */
+    void suppressNextDisconnectedReturn() {
+        suppressDisconnectedReturn = true;
+    }
+
+    /** 是否正处于「决斗结束 → 待点确定返回主界面」的收尾流程（弹窗期间旋转须保持决斗 UI 显示） */
+    boolean isDuelEndHandling() {
+        return duelEndHandling;
+    }
+
+    @Override
+    public void onFieldChanged() {
+        activity.fieldCtl.invalidate();
+        activity.runOnUiThread(() -> {
+            activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
+            // 堆叠区查看列表弹窗（观战/录像）即时刷新：任何 field 变化后重拉 supplier，
+            // 将宿主区域最新状态同步到已开着的弹窗（如果有）
+            cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog.refreshLiveDialogs();
+        });
+    }
+
+    @Override
+    public void onPlayerInfoUpdated(int player) {
+        activity.runOnUiThread(() -> {
+            // player 为本地视角索引（0=我方）；playerInfos 已按视角绑定（对战方 STOC_DUEL_START
+            // bindViewNames，回放 ReplayPlayer.startSession），tag 模式当前行动者为队友时
+            // 取其昵称（对齐 drawing.cpp L1036-1049 的 hostname/hostname_tag 分支），
+            // 观战同样走此路径使 topInfo 显示对战双方名字，缺省回退默认名
+            GameField.PlayerField pf = activity.engine.getField().players[player];
+            String defaultName = (player == 0) ? Constants.PlayerName : "Opponent";
+            String engineName = activity.engine.displayName(player);
+            String name = (engineName == null || engineName.isEmpty()) ? defaultName : engineName;
+            activity.topInfoManager.setPlayerDisplay(player, name, String.valueOf(pf.lp));
+            activity.topInfoManager.updateLpBars(activity.engine.getField());
+            activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
+            // LP 变化后重算场景 BGM（胜负未定时按双方 LP 差判定 优势/劣势/决斗，
+            // 对齐 Game::playBGM 的 dInfo.lp 比较分支）
+            activity.updateBGM();
+        });
+    }
+
+    @Override
+    public void onPhaseChanged(int phase) {
+        activity.runOnUiThread(() -> {
+            isMyTurn = (activity.engine.getField().currentPlayer == 0);
+            activity.topInfoManager.updateTurn(activity.engine.getField().turnCount, isMyTurn);
+            activity.fieldCtl.updateActionButtonsForPhase(phase, isMyTurn);
+            // case 101：阶段文字跟随通讯切换（DuelPhase → showcardcode 4~9）；
+            // 回放快进重排期间丢弃（不入 SpecEffectOverlay 队列，避免占用统一动画屏障）
+            int textCode = phaseTextCode(phase);
+            if (textCode > 0 && !activity.engine.replaySkip) specEffect().showText(textCode);
+        });
+    }
+
+    /**
+     * MSG_NEW_TURN（对齐 duelclient.cpp L2865-2877）：
+     * 回合方切换的第一时间同步 LPBarFrame 彩色/灰色（drawing.cpp L996-1003），
+     * 并显示左侧面板的三个时点按钮、刷新其按下态
+     */
+    @Override
+    public void onTurnStarted(int player) {
+        activity.runOnUiThread(() -> {
+            // player 为本地视角索引（GameEngine.onNewTurn 已做 localPlayer 转换）：0=我方回合
+            isMyTurn = (player == 0);
+            activity.topInfoManager.updateTurn(activity.engine.getField().turnCount, isMyTurn);
+            // 回放：MSG_NEW_TURN 同样经实况管线投递到此处，但时点按钮只属于真实对局；
+            // 回放左侧面板常驻的是录像控制条（底部行动区未显示时子按钮不可见，
+            // 此处直接不置 VISIBLE 以免带流回放/后续场景露出时点按钮）
+            if (activity.engine.replayMode) return;
+            // 观战者：时点三键属于对战玩家（观战控制面板为左侧「切换视角/退出」，
+            // 见 showSpectatorControls），不点亮；视角交换后本回调重刷回合方高亮亦经此拦截
+            if (activity.engine.getClient().selfType >= 7) return;
+            if (activity.cardDetailPanel != null) activity.cardDetailPanel.showChainButtons();
+        });
+    }
+
+    @Override
+    public void onChatReceived(int playerType, String message) {
+        // 决斗中的聊天/观战发言以 0xF1 伪帧录入当前 MSG 段（回放模式与决斗外场景自动丢弃，
+        // 见 GameEngine::recordChatFrame），保存录像时随 V2 尾段并入 yrp，无引擎回放按时间线重现；
+        // libygo 不读尾段，兼容性不受影响
+        if (activity.engine != null) activity.engine.recordChatFrame(playerType, message);
+        activity.runOnUiThread(() -> activity.fieldCtl.appendChat(playerType, message));
+    }
+
+    /** 回放 rewind 重排（上一步/从头重放）：聊天随消息流重新流入，先清空现有显示防重复 */
+    @Override
+    public void onReplayChatReset() {
+        activity.runOnUiThread(() -> activity.fieldCtl.clearChatMessages());
+    }
+
+    /** 观战/录像切换视角：与 gametopinfo 昵称左右对调同步，把双方聊天内容也左右对调 */
+    @Override
+    public void onViewpointSwapped() {
+        activity.runOnUiThread(() -> activity.fieldCtl.swapChatSides());
+    }
+
+    /**
+     * 服务端可撤回状态变更（STOC_UNDO_STATE）：驱动顶部回合数下方 ic_undo 的闪动发光。
+     * 与房间能力（isHost / serverCapsUndo）、非残局、非回放一并判定，避免观战与回放误亮。
+     */
+    @Override
+    public void onUndoStateChanged(boolean available) {
+        activity.runOnUiThread(() -> {
+            if (activity.topInfoManager != null)
+                activity.topInfoManager.setUndoPrompt(available
+                        && activity.engine != null && activity.engine.isUndoPromptActive());
+        });
+    }
+
+    /**
+     * 局域网撤回被服务端接受（STOC_UNDO_ACK = OK/REBUILT）：被撤回的那条询问已不存在，
+     * 服务端接下来会下发 MSG_RELOAD_FIELD + 各区域 refresh + 重新挂回回退点的询问。
+     * 本方法由 {@code GameEngine.onUndoAck} 在主线程**同步**调用，故严格早于重同步那一批包
+     * 的派发：此处先把仍在显示的询问/选择弹窗、选择态蚂蚁线与进行中的交互会话关掉，
+     * 避免旧询问的应答（点击、选格、连锁索引）打到回退后的新局面上。
+     */
+    @Override
+    public void onUndoResync() {
+        activity.runOnUiThread(() -> {
+            if (activity.dialogUtil != null) activity.dialogUtil.dismissOpenGameDialogs();
+            if (activity.cardDetailPanel != null) activity.cardDetailPanel.dismissOpenDialogs();
+            // 连锁必发标志：旧强制连锁询问遗留它会使「取消操作」被吞掉（handleChainCancel 直接 return）
+            YesOrNoDialog.setChainForcedMode(false);
+            // 连锁询问窗静态引用作废：被撤销的那次询问的窗体已被 dismiss，但静态引用还在，
+            // handleChainCancel 会把它当成“还挂着”而去 show 一个已死弹窗，或直接放弃处理使取消无效
+            YesOrNoDialog.setChainQueryDialog(null);
+            if (activity.cardDetailPanel != null) {
+                // 面板的选择上下文必须一并作废：「取消操作 / 完成选择」按钮按 currentSelectType
+                // 直接编码应答（case 16 连锁→ -1、case 15/20/23/26 → confirm/‑1），撤回后新询问
+                // 已到达、应答屏障已放行，此时误触这个旧按钮就是把一份旧询问的答复打到新局面上，
+                // 连锁项与引擎期望对不上 → retry 风暴或直接走偏，决斗再也推不下去
+                activity.cardDetailPanel.setSelectType(-1);
+                activity.cardDetailPanel.hideCancelOrFinishButton();
+                activity.cardDetailPanel.setCurrentDialog(null);
+                activity.cardDetailPanel.setCardSelectDialog(null);
+                activity.cardDetailPanel.setCardDisplayDialog(null);
+            }
+            if (activity.fieldCtl != null) {
+                activity.fieldCtl.abortPendingSelectSessions();
+                activity.fieldCtl.clearSelectionVisuals();
+                activity.fieldCtl.invalidate();
+            }
+        });
+    }
+
+    @Override
+    public void onSelectRequired(int selectType, ByteBuffer data) {
+        // 询问代次推进（撤回应答屏障的唯一放行点）：必须在投给 UI 之前同步执行。
+        // 撤回布防记下的是「被撤销的那次询问」的代次，唯有本次新询问把代次推过屏障下界，
+        // 界面上的选择/命令应答才会重新发往服务端；屏障只压住新询问到达之前那一段
+        if (activity.engine != null) activity.engine.onQuestionDispatched();
+        activity.runOnUiThread(() -> {
+            // 结束阶段按钮仅在通讯允许进入 EP 时有效：
+            // 空闲指令(11)/战斗指令(10) 路径内会按指令可用性重新启用；其余请求一律隐藏
+            activity.fieldCtl.setEpButtonAllowed(selectType == 10 || selectType == 11);
+            activity.cardDetailPanel.setSelectType(selectType);
+            ShowDialogUtil showDialogUtil = activity.getDialogUtil();
+            switch (selectType) {
+                case 0:
+                    showDialogUtil.showHandSelectDialog();
+                    break;
+                case 1:
+                    showDialogUtil.showTPSelectDialog();
+                    break;
+                case 10:
+                    showDialogUtil.showBattleCmdDialog(data);
+                    break;
+                case 11:
+                    showDialogUtil.showIdleCmdDialog(data);
+                    break;
+                case 12:
+                    showDialogUtil.showEffectYnDialog(data);
+                    break;
+                case 13:
+                    showDialogUtil.showYesNoDialog(data);
+                    break;
+                case 14:
+                    showDialogUtil.showOptionDialog(data);
+                    break;
+                case 15:
+                    showDialogUtil.showCardSelectDialog(data);
+                    break;
+                case 16:
+                    showDialogUtil.showChainSelectDialog(data);
+                    break;
+                case 18:
+                    // 对齐 gframe MSG_SELECT_PLACE：先按 chkMAutoPos/chkSTAutoPos 尝试自动放置，失败再弹选择框
+                    if (!activity.fieldCtl.tryAutoPlaceSelect()) {
+                        showDialogUtil.showPlaceSelectDialog(false);
+                    }
+                    break;
+                case 19:
+                    showDialogUtil.showPositionSelectDialog(data);
+                    break;
+                case 20:
+                    showDialogUtil.showTributeSelectDialog(data);
+                    break;
+                case 21:
+                    showDialogUtil.showSortChainDialog(data);
+                    break;
+                case 22:
+                    showDialogUtil.showCounterSelectDialog(data);
+                    break;
+                case 23:
+                    showDialogUtil.showSumSelectDialog(data);
+                    break;
+                case 24:
+                    showDialogUtil.showPlaceSelectDialog(true);
+                    break;
+                case 25:
+                    showDialogUtil.showSortCardDialog(data);
+                    break;
+                case 26:
+                    showDialogUtil.showUnselectCardDialog(data);
+                    break;
+                case 27:
+                    showDialogUtil.showConfirmCardsDialog(data);
+                    break;
+                case 140:
+                    showDialogUtil.showAnnounceRaceDialog(data);
+                    break;
+                case 141:
+                    showDialogUtil.showAnnounceAttribDialog(data);
+                    break;
+                case 142:
+                    showDialogUtil.showAnnounceCardDialog(data);
+                    break;
+                case 143:
+                    showDialogUtil.showAnnounceNumberDialog(data);
+                    break;
+                default:
+                    Log.w(TAG, "Unhandled select type: " + selectType);
+                    break;
+            }
+        });
+    }
+
+    @Override
+    public void onDuelResult(int winner, int reason) {
+        activity.topInfoManager.stopTimer();
+        // MSG_WIN 结算即清除场上所有蚂蚁线高亮（选择态列表 + 格子 mask），
+        // 胜负文字/结算窗照常展示；多局制下一局结束时也不残留上局高亮
+        activity.runOnUiThread(() -> activity.fieldCtl.clearSelectionVisuals());
+        // 观战「跳到当前」瞬间排空期间：丢弃各局胜负文字覆盖与胜负 BGM 覆盖（对齐其他动画回调
+        // 的 replaySkip 抑制），多局制下不逐局回显 you win/you lose，直接落位到当前最终局面
+        if (activity.engine != null && activity.engine.replaySkip) return;
+        activity.runOnUiThread(() -> {
+            boolean selfWon = winner != 2 && activity.engine.isSelfSide(winner);
+            int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
+                    : (selfWon ? SpecEffectOverlay.TEXT_YOU_WIN
+                       : SpecEffectOverlay.TEXT_YOU_LOSE);
+            // 对齐 duelclient.cpp MSG_WIN："[X] 原因" 前缀里的 X 是【败方】昵称
+            //（duelclient.cpp STOC_DUEL_START：hostname=我方 self、clientname=对方；
+            //  LocalPlayer(winner)==0 即我方胜 → 用 clientname(对方=败者)；否则我方负 → 用 hostname(我方=败者)）。
+            // 之前误传胜者名，后攻时表现为一胜一负名字对调。playerDisplayName(0)=我方、(1)=对方。
+            String vicName = (winner == 2) ? null
+                    : playerDisplayName(selfWon ? 1 : 0);
+            specEffect().showWinText(code, reason, vicName);
+
+            // BGM 切至胜负场景（对齐 Game::playBGM 的 dInfo.isFinished && showcardcode==1/2/3）；
+            // 平局（winner==2）不改场景，仍按决斗处理；
+            // 观战不设胜负覆盖：观战者无「我方胜/负」语义，BGM 继续按 LP 差切
+            // 优势/劣势/决斗曲（是否随场景切歌由 chkSwitchBGM 在 SoundManager 层控制）
+            if (winner != 2 && !activity.engine.isSpectator()) activity.setBgmDuelResult(selfWon);
+        });
+    }
+
+    /**
+     * 取本地视角玩家（0=我方，1=对方）的显示名，复用 onPlayerInfoUpdated 的座位映射逻辑，
+     * 用于 MSG_WIN 胜利说明的 "[败者名] 原因" 前缀（对齐 duelclient.cpp L1586-1599）
+     */
+    private String playerDisplayName(int localIndex) {
+        String defaultName = (localIndex == 0) ? Constants.PlayerName : "Opponent";
+        // 统一走视角绑定的显示名（含 tag 队友切换与观战名字），空回退默认
+        String name = activity.engine.displayName(localIndex);
+        return (name == null || name.isEmpty()) ? defaultName : name;
+    }
+
+    /**
+     * tag 模式队友请求投降（对齐 STOC_TEAMMATE_SURRENDER + sysString 1355）：
+     * 弹出询问框，本方同意后再次发送 CTOS_SURRENDER，
+     * 服务器（tag_duel.cpp Surrender）检测到双方均投降才会判定 MSG_WIN
+     */
+    @Override
+    public void onTeammateSurrenderRequest() {
+        if (activity.isFinishing() || activity.isDestroyed()) return;
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setMessage(activity.mStringManager.getSystemString(1355, "投降(1/2)"))
+                .setType(YesOrNoDialog.TYPE_YES_NO)
+                .setPositiveButtonText(activity.mStringManager.getSystemString(1213, "是"))
+                .setNegativeButtonText(activity.mStringManager.getSystemString(1214, "否"))
+                .setPositiveButton(v -> {
+                    if (activity.engine != null) activity.engine.sendSurrender();
+                })
+                .setNegativeButton(v -> { /* 拒绝：保持对局，双方未全部同意，服务器不会判定投降 */ })
+                .setCenterInView(activity.layoutGameRight)
+                .setCancelable(false);
+        dialog.show();
+    }
+
+    @Override
+    public void onHintMessage(String hint) {
+        activity.runOnUiThread(() -> activity.fieldCtl.showHint(hint, 2000));
+    }
+
+    /**
+     * MSG_HINT 居中消息文本动画（对齐 duelclient.cpp L1463-1521 的 wACMessage 弹出）：
+     * 将宣言文本交 SpecEffectOverlay.showActionMessage 在 layout_game_right 中央以
+     * 12sp 小字 + 展开动画展示 40 帧（不再走阶段文字 EFFECT_TEXT 的大字横向划过）；
+     * 回放快进重排期间丢弃（不占用统一动画屏障）
+     */
+    @Override
+    public void onActionMessage(String text) {
+        if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃居中消息文本
+        if (text == null || text.isEmpty()) return;
+        activity.runOnUiThread(() -> specEffect().showActionMessage(text));
+    }
+
+    @Override
+    public void onDuelHint(String hint) {
+        activity.runOnUiThread(() -> activity.fieldCtl.showDuelHint(hint));
+    }
+
+    @Override
+    public void onDuelHintHide() {
+        activity.runOnUiThread(() -> activity.fieldCtl.hideDuelHint());
+    }
+
+    @Override
+    public void onReplayData(byte[] data) {
+        Log.i(TAG, "Replay data received, size=" + data.length);
+        // 双兼容合并（读包线程顺序保证：本局全部 MSG 帧先于 STOC_REPLAY 入队）：
+        // 取最早已完结的逐局录制段 FIFO 配对，把引擎 MSG 尾段并入原录像字节，
+        // 产物 libygo（ocgcore+script 重跑）与 MsgStreamReplaySource（无引擎）均可播放；
+        // 无本地段/已是 V2/合并失败时原样返回（见 ReplayMsgMerger）。
+        // 客机/观战身份下逐局段是服务端遮蔽视角（对方暗区零码），置 GUEST_VIEW 位
+        // 使回放侧优先引擎重跑恢复全量信息（公开双方手卡），无引擎时退回按流播放
+        final byte[] merged = ReplayMsgMerger.appendMsgFrames(data,
+                activity.engine != null ? activity.engine.takeRecordedMsgSegment()
+                        : java.util.Collections.emptyList(),
+                activity.engine != null && !activity.engine.isHost);
+        activity.runOnUiThread(() -> {
+            pendingReplays.add(merged);
+            // 决斗结束流程中通讯仍在补发录像：重置等待窗口，确保队列收全后再开始处理
+            if (duelEndHandling) {
+                scheduleReplayProcessing();
+            }
+        });
+    }
+
+    @Override
+    public void onTimeLimitUpdate(int player, int leftTime) {
+        activity.runOnUiThread(() -> activity.topInfoManager.onTimeLimitUpdate(player, leftTime, activity.engine.getGameTimeLimit()));
+    }
+
+    @Override
+    public void onChainAnimation(int code, int controler, int location, int sequence) {
+        if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃发动大图
+        activity.runOnUiThread(() -> {
+            activity.fieldCtl.selectCardWithAutoClear(controler, location, sequence, 1500);
+            specEffect().showActivate(code);          // case 1：发动卡片大图
+        });
+    }
+
+    @Override
+    public void onSummonAnimation(int code, int summonType) {
+        if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃召唤大图
+        activity.runOnUiThread(() -> {
+            if (summonType == GameEngine.SUMMON_SPECIAL) {
+                specEffect().showSpecialSummon(code); // case 5：特殊召唤，放大 + 淡入
+            } else {
+                specEffect().showSummon(code);        // case 7：通常/反转召唤，翻面进入
+            }
+        });
+    }
+
+    @Override
+    public void onNegatedAnimation(int code) {
+        if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃无效大图
+        // case 3：效果无效（破坏被无效即"不会被破坏"），居中卡片 + 无效图标
+        activity.runOnUiThread(() -> specEffect().showNegated(code));
+    }
+
+    @Override
+    public boolean isSpecEffectBusy() {
+        // 统一动画屏障的特效侧查询：直接读字段（不用 specEffect() 以免按需创建），
+        // 覆盖层未创建即视为空闲，供 GameEngine 判断居中特效是否仍在播放
+        return specEffectOverlay != null && specEffectOverlay.isBusy();
+    }
+
+    @Override
+    public void onHandResult(int myHand, int oppHand) {
+        activity.runOnUiThread(() -> activity.getDialogUtil().onHandResult(myHand, oppHand));
+    }
+
+    // === 玩家等待界面转发（引擎回调 → playerWaitingDialog.handleXxx） ===
+
+    @Override
+    public void onPlayerEnter(String name, int pos) {
+        activity.runOnUiThread(() -> {
+            if (activity.playerWaitingDialog != null) activity.playerWaitingDialog.handlePlayerEnter(name, pos);
+        });
+    }
+
+    @Override
+    public void onPlayerChange(int status) {
+        activity.runOnUiThread(() -> {
+            if (activity.playerWaitingDialog != null) activity.playerWaitingDialog.handlePlayerChange(status);
+        });
+    }
+
+    @Override
+    public void onWatchChange(int watchCount) {
+        activity.runOnUiThread(() -> {
+            if (activity.playerWaitingDialog != null) activity.playerWaitingDialog.handleWatchChange(watchCount);
+        });
+    }
+
+    @Override
+    public void onJoinGame(int lflist, int rule, int mode, int duelRule,
+                           int noCheckDeck, int noShuffleDeck,
+                           int startLp, int startHand, int drawCount, int timeLimit) {
+        // 对齐 gframe duelclient.cpp L737：STOC_JOIN_GAME 到达即写入 duel_rule/start_lp，
+        // 早于 MSG_START（猜拳之前），让场地贴图 field/field2/field3 与格子布局按 rule 提前分流
+        activity.engine.field.dInfo.duelRule = duelRule;
+        activity.engine.field.dInfo.startLp = startLp;
+        activity.runOnUiThread(() -> {
+            if (activity.playerWaitingDialog != null)
+                activity.playerWaitingDialog.handleJoinGame(lflist, rule, mode, duelRule,
+                        noCheckDeck, noShuffleDeck, startLp, startHand, drawCount, timeLimit);
+        });
+    }
+
+    @Override
+    public void onTypeChange(int type) {
+        activity.runOnUiThread(() -> {
+            if (activity.playerWaitingDialog != null) {
+                boolean isTag = activity.engine.getGameMode() == 2;
+                activity.playerWaitingDialog.handleTypeChange(type, isTag);
+            }
+        });
+    }
+
+    @Override
+    public void onDeckError(int errorType, int cardCode) {
+        activity.runOnUiThread(() -> {
+            if (activity.playerWaitingDialog != null)
+                activity.playerWaitingDialog.handleDeckError(errorType, cardCode);
+        });
+    }
+
+    // === 决斗结束录像处理 ===
+
+    /**
+     * 决斗结束提示框：仅显示「确定」按钮（TYPE_MESSAGE）。
+     * 弹窗时机已调整为：通讯发来的录像全部确认保存或取消之后（见 processPendingReplays），
+     * 点击确定后隐藏决斗 UI 并重新显示 LanModeDialog
+     */
+    private void showDuelEndDialog() {
+        if (activity.isFinishing() || activity.isDestroyed()) return;
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        dialog.setMessage(activity.mStringManager.getSystemString(1500, "決斗结束。"))
+                .setType(YesOrNoDialog.TYPE_MESSAGE)
+                .setPositiveButtonText(activity.mStringManager.getSystemString(1211, "确定"))
+                .setPositiveButton(v -> activity.returnToLanMain(null))
+                .setCenterInView(activity.layoutGameRight)
+                .setCancelable(false);
+        dialog.show();
+    }
+
+    /**
+     * 延迟启动录像处理：先取消上一次调度，窗口内若有新录像到达（onReplayData）会再次重置，
+     * 直到通讯不再发送录像才真正开始逐个弹出录像保存对话框
+     */
+    private void scheduleReplayProcessing() {
+        activity.mainHandler.removeCallbacks(duelEndReplayProcessor);
+        activity.mainHandler.postDelayed(duelEndReplayProcessor, REPLAY_ARRIVAL_WAIT_MS);
+    }
+
+    /**
+     * 逐个处理通讯发来的录像：有待保存项则弹出录像保存对话框；
+     * 全部处理完毕（保存或取消跳过）后才弹出「决斗结束」对话框
+     */
+    private void processPendingReplays() {
+        // 防止延迟调度与队列内递归调用重叠执行
+        activity.mainHandler.removeCallbacks(duelEndReplayProcessor);
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            pendingReplays.clear();
+            return;
+        }
+        // 观战：已收的全部通讯 msg 可能仍在按动画序列逐个播放（统一闸门串行化），
+        // 等到消息队列排空且无任何动画在播——观战者视觉上决斗确实结束后，再弹保存录像 dialog；
+        // 超时兜底防动画卡死时无限等待（对齐需求：动画未完不弹、播完先弹录像后弹决斗结束）
+        GameEngine eng = activity.engine;
+        if (eng != null && duelEndedAsSpectator
+                && (eng.hasPendingMsgs() || !eng.isMsgQueueIdle() || eng.isAnyAnimationBusy())
+                && System.currentTimeMillis() < animSettleDeadlineMs) {
+            activity.mainHandler.postDelayed(duelEndReplayProcessor, ANIM_SETTLE_POLL_MS);
+            return;
+        }
+        if (pendingReplays.isEmpty()) {
+            showDuelEndDialog();
+            return;
+        }
+        final byte[] replayData = pendingReplays.remove(0);
+        // 对齐 gframe duelclient.cpp STOC_REPLAY：勾选自动保存录像时不弹窗，
+        // 直接以录像开始时间命名自动保存（对应提示 1367）
+        if (AppsSettings.get().getIntSettings("chkAutoSaveReplay", 0) == 1) {
+            saveReplayFile(replayData, getReplayDefaultName(replayData), true);
+            activity.mainHandler.post(this::processPendingReplays);
+            return;
+        }
+        replaySaveDialog = new ReplaySaveDialog(activity);
+        replaySaveDialog.setDefaultName(getReplayDefaultName(replayData))
+                .setCenterInView(activity.layoutGameRight)
+                .setOnReplayActionListener(new ReplaySaveDialog.OnReplayActionListener() {
+                    @Override
+                    public void onSave(String fileName) {
+                        saveReplayFile(replayData, fileName, false);
+                        activity.mainHandler.post(() -> processPendingReplays());
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        // 对齐 gframe duelclient.cpp STOC_REPLAY L1080-1082：
+                        // 点「否」(actionParam==0) 时仍将最近一局静默保存为 _LastReplay.yrp
+                        saveLastReplay(replayData);
+                        // 继续检查通讯是否还发来了其它录像文件
+                        activity.mainHandler.post(() -> processPendingReplays());
+                    }
+                });
+        replaySaveDialog.show();
+    }
+
+    /**
+     * 从通讯发来的录像数据中解析默认文件名，
+     * 与 gframe duelclient.cpp STOC_REPLAY 一致：录像开始时间 %Y-%m-%d %H-%M-%S
+     */
+    private String getReplayDefaultName(byte[] data) {
+        try {
+            if (data == null || data.length < 24) return "_LastReplay";
+            ByteBuffer buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+            int id = buf.getInt();
+            if (id != ReplayReader.REPLAY_ID_YRP1 && id != ReplayReader.REPLAY_ID_YRP2) {
+                return "_LastReplay";
+            }
+            buf.getInt(); // version
+            int flag = buf.getInt();
+            int seed = buf.getInt();
+            buf.getInt(); // datasize
+            int startTime = buf.getInt();
+            long ts = ((flag & ReplayReader.REPLAY_UNIFORM) != 0)
+                    ? Integer.toUnsignedLong(startTime)
+                    : Integer.toUnsignedLong(seed);
+            return new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US)
+                    .format(new Date(ts * 1000L));
+        } catch (Exception e) {
+            return "_LastReplay";
+        }
+    }
+
+    private void saveReplayFile(byte[] data, String fileName, boolean autoSave) {
+        String safeName = sanitizeReplayName(fileName);
+        try {
+            File dir = new File(AppsSettings.get().getReplayDir());
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, safeName + Constants.YRP_FILE_EX);
+            FileOutputStream fos = new FileOutputStream(file);
+            try {
+                fos.write(data);
+                fos.flush();
+            } finally {
+                fos.close();
+            }
+            Log.i(TAG, "Replay saved: " + file.getAbsolutePath());
+            if (autoSave) {
+                // 对齐 gframe 自動保存提示（系统字符串 1367「リプレイ自動保存 %ls.yrp」）：
+                // 将 %ls 占位替换为实际保存的录像文件名
+                String template = activity.mStringManager
+                        .getSystemString(1367, "リプレイ自動保存 %ls.yrp");
+                Toast.makeText(activity, template.replace("%ls", safeName), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(activity, activity.mStringManager
+                        .getSystemString(1335, "保存成功"), Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save replay", e);
+            Toast.makeText(activity, "录像保存失败: " + safeName, Toast.LENGTH_SHORT).show();
+            // 对齐 gframe duelclient.cpp STOC_REPLAY L1078-1079：保存失败时兜底存为 _LastReplay.yrp
+            saveLastReplay(data);
+        }
+    }
+
+    /**
+     * 静默保存最近一局为 _LastReplay.yrp（不弹任何提示）：
+     * 对应 gframe duelclient.cpp STOC_REPLAY 中点「否」与保存失败两条
+     * new_replay.SaveReplay(L"_LastReplay") 路径
+     */
+    private void saveLastReplay(byte[] data) {
+        try {
+            File dir = new File(AppsSettings.get().getReplayDir());
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, "_LastReplay" + Constants.YRP_FILE_EX);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(data);
+                fos.flush();
+            }
+            Log.i(TAG, "Last replay saved: " + file.getAbsolutePath());
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save last replay", e);
+        }
+    }
+
+    private String sanitizeReplayName(String name) {
+        String n = (name == null) ? "" : name.trim();
+        if (n.toLowerCase(Locale.US).endsWith(Constants.YRP_FILE_EX)) {
+            n = n.substring(0, n.length() - Constants.YRP_FILE_EX.length());
+        }
+        n = n.replaceAll("[\\\\/:*?\"<>|]", "").trim();
+        if (n.isEmpty()) n = "_LastReplay";
+        return n;
+    }
+
+    /**
+     * 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因（供门面 public showReplayResult 转发）。
+     * 回放为观战视角，约定 player 0 胜=YOU WIN、player 1 胜=YOU LOSE、player 2=平局；
+     * winner<0 表示回放自然播放完毕（无 MSG_WIN 判定），不显示胜负文字。
+     */
+    void showReplayResult(int winner, int reason, String winnerName) {
+        if (winner < 0) return;
+        int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
+                : (winner == 0 ? SpecEffectOverlay.TEXT_YOU_WIN
+                   : SpecEffectOverlay.TEXT_YOU_LOSE);
+        specEffect().showWinText(code, reason, winnerName);
+    }
+
+    // === 门面生命周期 / 返回流程对录像状态的复位 ===
+
+    /** returnToLanMain：断线/决斗结束返回时清空待处理录像与相关标志 */
+    void resetDuelEndState() {
+        duelEndHandling = false;
+        duelEndedAsSpectator = false;
+        animSettleDeadlineMs = 0L;
+        pendingReplays.clear();
+        if (replaySaveDialog != null) {
+            replaySaveDialog.dismiss();
+            replaySaveDialog = null;
+        }
+    }
+
+    /** onDestroy：取消尚未触发的录像处理调度 */
+    void cancelReplayProcessing() {
+        activity.mainHandler.removeCallbacks(duelEndReplayProcessor);
+    }
+
+    // === 居中特效覆盖层 / 阶段文字码 ===
+
+    private SpecEffectOverlay specEffect() {
+        if (specEffectOverlay == null) {
+            specEffectOverlay = new SpecEffectOverlay(activity);
+            // 特效队列排空 → 通知引擎重开消息闸门，实现「召唤/发动动画播完后再弹询问框」的串行序列
+            specEffectOverlay.setOnIdleListener(() -> {
+                if (activity.engine != null) activity.engine.notifySpecEffectIdle();
+            });
+        }
+        return specEffectOverlay;
+    }
+
+    /** drawspec 覆盖层按需创建（供 YGOProActivity 弹幕入口转发；与特效回调共用同一实例与 idle 闸门接线） */
+    SpecEffectOverlay ensureSpecOverlay() {
+        return specEffect();
+    }
+
+    /** 已存在的覆盖层实例（不创建）：弹幕移除后的空闲收口用 */
+    SpecEffectOverlay peekSpecOverlay() {
+        return specEffectOverlay;
+    }
+
+    /**
+     * 屏幕旋转重建前释放 drawspec 覆盖层：其 PopupWindow 锚在旧视图树上，
+     * setContentView 后必须整层释放并置空，下一次特效/弹幕经 specEffect() 懒建新实例；
+     * 特效队列被中断不会排空 idle 回调，同步通知引擎解除动画闸门防卡死
+     */
+    void releaseSpecOverlayForRebuild() {
+        if (specEffectOverlay != null) {
+            specEffectOverlay.release();
+            specEffectOverlay = null;
+        }
+        if (activity.engine != null) activity.engine.notifySpecEffectIdle();
+    }
+
+    /**
+     * 动画速度倍率（对齐 quick_animation）：居中特效（召唤/发动/阶段文字）时长同倍缩放；
+     * specEffect() 仅创建实例不弹窗，启动时预置速度无副作用
+     */
+    void setAnimationSpeed(float multiplier) {
+        specEffect().setAnimationSpeed(multiplier);
+    }
+
+    /** 录像回放的召唤/连锁/无效大图与阶段文字：回放走实况管线，
+     *  直接经下方 onSummonAnimation / onChainAnimation / onNegatedAnimation / onPhaseChanged
+     *  派发，无需为回放单独开入口（旧 ReplayListener 的四个 showReplay*Animation 转发已删） */
+
+    /**
+     * MSG_NEW_PHASE 的 phase 値 → DrawSpec case 101 的 showcardcode（对齐 duelclient.cpp L2905-2929）：
+     * Draw→4, Standby→5, Main1→6, BattleStart→7, Main2→8, End→9；
+     * 战斗子阶段等无独立提示文字的相位返回 0（不显示阶段文字）
+     */
+    private int phaseTextCode(int phase) {
+        DuelPhase dp = DuelPhase.valueOf(phase);
+        if (dp == null) return 0;
+        switch (dp) {
+            case Draw:
+                return SpecEffectOverlay.TEXT_DRAW_PHASE;
+            case Standby:
+                return SpecEffectOverlay.TEXT_STANDBY_PHASE;
+            case Main1:
+                return SpecEffectOverlay.TEXT_MAIN_PHASE_1;
+            case BattleStart:
+                return SpecEffectOverlay.TEXT_BATTLE_PHASE;
+            case Main2:
+                return SpecEffectOverlay.TEXT_MAIN_PHASE_2;
+            case End:
+                return SpecEffectOverlay.TEXT_END_PHASE;
+            default:
+                return 0;
+        }
+    }
+}

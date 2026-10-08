@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 决斗日志列表项（对齐 lstLog 条目；携带卡代码的条目高亮，点击查看卡信息） -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tv_duel_log_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="4dp"
+    android:paddingVertical="3dp"
+    android:textColor="@color/white"
+    android:background="@color/ygopro_line_color"
+    android:textSize="9sp" />

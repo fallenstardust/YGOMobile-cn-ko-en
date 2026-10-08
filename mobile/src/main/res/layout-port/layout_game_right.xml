@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 竖屏决斗场区域（主流程下方 2/3，顶部 1/3 为 layout_game_top_panel）：
+     GameFieldView 满铺本区域（竖屏仰角 90°/贴边取景由 FieldCamera 按区域尺寸解算，onSurfaceChanged 自动重解居中），
+     顶部流＝gameTopInfo（双方血条 5:1:5 行 + 其正下方聊天/提示行，与横屏同构；血条面板高度由
+     GameTopInfoManager 按 lpbarf 305:70 宽高比反推、头像/文字随同放大）；
+     弹幕回退层/表情气泡锚血条下方；底部＝聊天输入行（输入框占满整行宽度），
+     其下一行为全部功能按钮（聊天/设置/日志/声音/速度/表情，横向、全部正方形）。
+     决斗背景图仅平铺显示于本区域（YGOProActivity.updateFieldRegionBackground →
+     RightAlignedTiledDrawable，右对齐平铺、左侧超屏部分忽略）。
+     卡片详情栏与时点/录像/卡组按钮行已迁至 layout_game_top_panel.xml（同 ID 结构不变）。
+     全部控件 ID 与横屏版一致（CardDetailPanel/GameTopInfoManager/GameFieldController 依赖） -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_game_right"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="false">
+
+    <!-- 决斗场区域：GameFieldView 3D 渲染 -->
+    <cn.garymb.ygomobile.render.GameFieldView
+        android:id="@+id/game_field_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:field_camera_elevation="52"
+        app:field_camera_distance="7.6"
+        app:field_zoom="1.0"
+        app:field_hand_shift="0"
+        app:field_preview_zones="true"
+        app:field_preview_hand="true"
+        app:field_preview_labels="true" />
+
+    <!-- 顶部流容器：gameTopInfo（血条行 + 聊天/提示行），自上而下顺序排布、互不遮挡 -->
+    <LinearLayout
+        android:id="@+id/layout_top_stack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:clipChildren="false"
+        android:orientation="vertical">
+
+        <!-- 顶部 HUD 容器：双方血条行 + 聊天/提示行（血条面板高度由 applyPortraitLpBarSize
+             按 lpbarf 305:70 比例反推，头像/昵称/LP数字/卡数/倒计时随同放大；
+             聊天/提示文字相应缩小到 8sp） -->
+        <LinearLayout
+            android:id="@+id/layout_hud_top"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:clipChildren="false"
+            android:orientation="vertical">
+
+            <!-- 顶部玩家信息区（与横屏 layout_top_info 同构：我方5 : 回合计数器1 : 对方5） -->
+            <LinearLayout
+                android:id="@+id/layout_top_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:orientation="horizontal">
+
+                <!-- 我方信息面板（左上）：底层头像框+血条框（lpbarf 拆分为头像框/血条框两部分，
+                     头像框单独适配头像尺寸、血条框自由拉伸），顶层名字/总卡数/倒计时。
+                     面板高度由 GameTopInfoManager 按 lpbarf(305:70) 由屏宽反推，wrap_content 仅作缺省 -->
+                <FrameLayout
+                    android:id="@+id/layout_player_panel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="5">
+
+                    <!-- 底层：头像框 + 血条框 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                    <!-- 头像框容器：头像贴图 + 叠加其上的头像框（lpbarf 行首 64px 镂空框），
+                         容器尺寸由 GameTopInfoManager 按面板高度与 64:70 比例设定 -->
+                        <FrameLayout
+                            android:id="@+id/layout_player_avatar_box"
+                            android:layout_width="44dp"
+                            android:layout_height="match_parent">
+
+                            <ImageView
+                                android:id="@+id/iv_player_avatar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:padding="3dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/avatar" />
+
+                            <ImageView
+                                android:id="@+id/iv_player_avatar_frame"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="fitXY" />
+                        </FrameLayout>
+
+                        <!-- 血条框容器：LP 血条填充 + 叠加其上的血条框（lpbarf 行尾 241px 中段，自由拉伸）。
+                             LP 血条（drawing.cpp tLPBar，我方自左向右填充） -->
+                        <FrameLayout
+                            android:id="@+id/layout_player_bar_box"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1">
+
+                            <ImageView
+                                android:id="@+id/iv_player_lp_bar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginVertical="4dp"
+                                android:layout_marginStart="2dp"
+                                android:layout_marginEnd="4dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/ygopro_selected_background" />
+
+                            <ImageView
+                                android:id="@+id/iv_player_lp_bar_layer"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginVertical="4dp"
+                                android:layout_marginStart="2dp"
+                                android:layout_marginEnd="4dp"
+                                android:scaleType="fitXY"
+                                android:visibility="gone" />
+
+                            <ImageView
+                                android:id="@+id/iv_player_bar_frame"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="fitXY" />
+                        </FrameLayout>
+                    </LinearLayout>
+
+                    <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（字号/留白随面板高度由 Java 等比放大） -->
+                    <LinearLayout
+                        android:id="@+id/layout_player_info_col"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:paddingStart="44dp"
+                        android:paddingEnd="5dp">
+
+                        <TextView
+                            android:id="@+id/tv_player_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="0dp"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="0"
+                            android:shadowDy="0"
+                            android:shadowRadius="4"
+                            android:text="Knight of Hanoi"
+                            android:textColor="@color/white"
+                            android:textSize="10sp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tv_player_lp_number"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:shadowColor="@color/black"
+                                android:shadowDx="2"
+                                android:shadowDy="2"
+                                android:shadowRadius="1"
+                                android:text="8000"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="2dp"
+                                android:gravity="right|center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/iv_player_card_back"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="10sp"
+                                    android:adjustViewBounds="true"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/unknown" />
+
+                                <TextView
+                                    android:id="@+id/tv_player_card_count"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="2dp"
+                                    android:gravity="center_vertical"
+                                    android:text="0"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="10sp" />
+
+                                <TextView
+                                    android:id="@+id/tv_player_time"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginHorizontal="5dp"
+                                    android:gravity="center_vertical"
+                                    android:text="0"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="10sp"
+                                    android:visibility="visible" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </FrameLayout>
+
+                <!-- 中央回合计数器（与横屏一致占行内权重 1，字号随面板高度等比放大）：
+                     外层 FrameLayout 承接背景，撤回提示图标叠加在回合数字下方 -->
+                <FrameLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginHorizontal="2dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/veil_mid_vertical"
+                    android:clipChildren="false">
+
+                    <TextView
+                        android:id="@+id/tv_turn_counter"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:shadowColor="@color/white"
+                        android:shadowDx="-2"
+                        android:shadowDy="-1"
+                        android:shadowRadius="1"
+                        android:text="99"
+                        android:textColor="@color/ygopro_list_background"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
+
+                    <!-- 局域网撤回入口（尺寸随 applyPortraitLpBarSize 的 f 系数放大） -->
+                    <ImageView
+                        android:id="@+id/iv_undo"
+                        android:layout_width="26dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:layout_marginBottom="1dp"
+                        android:background="@drawable/undo_glow"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_undo"
+                        android:visibility="invisible" />
+                </FrameLayout>
+
+                <!-- 对方信息面板（右上，镜像我方：血条在左、头像在右） -->
+                <FrameLayout
+                    android:id="@+id/layout_opponent_panel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="5">
+
+                    <!-- 底层：血条框 + 头像框（镜像我方：血条框在左、头像框在右，match_parent 填满面板高度） -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <!-- 血条框容器：LP 血条填充 + 叠加其上的血条框（lpbarf 行首 241px 中段，自由拉伸） -->
+                        <FrameLayout
+                            android:id="@+id/layout_opponent_bar_box"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1">
+
+                            <ImageView
+                                android:id="@+id/iv_opponent_lp_bar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginVertical="4dp"
+                                android:layout_marginStart="4dp"
+                                android:layout_marginEnd="2dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/ygopro_selected_background" />
+
+                            <ImageView
+                                android:id="@+id/iv_opponent_lp_bar_layer"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginVertical="4dp"
+                                android:layout_marginStart="4dp"
+                                android:layout_marginEnd="2dp"
+                                android:scaleType="fitXY"
+                                android:visibility="gone" />
+
+                            <ImageView
+                                android:id="@+id/iv_opponent_bar_frame"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="fitXY" />
+                        </FrameLayout>
+
+                        <!-- 头像框容器：头像贴图 + 叠加其上的头像框（lpbarf 行尾 64px 镂空框） -->
+                        <FrameLayout
+                            android:id="@+id/layout_opponent_avatar_box"
+                            android:layout_width="44dp"
+                            android:layout_height="match_parent">
+
+                            <ImageView
+                                android:id="@+id/iv_opponent_avatar"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:padding="3dp"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/avatar" />
+
+                            <ImageView
+                                android:id="@+id/iv_opponent_avatar_frame"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="fitXY" />
+                        </FrameLayout>
+                    </LinearLayout>
+
+                    <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（镜像我方） -->
+                    <LinearLayout
+                        android:id="@+id/layout_opponent_info_col"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:paddingStart="5dp"
+                        android:paddingEnd="44dp">
+
+                        <TextView
+                            android:id="@+id/tv_opponent_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="0dp"
+                            android:layout_gravity="end"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="0"
+                            android:shadowDy="0"
+                            android:shadowRadius="4"
+                            android:text="Opponent"
+                            android:textColor="@color/white"
+                            android:textSize="10sp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="2dp"
+                                android:gravity="left|center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/tv_opponent_time"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginHorizontal="5dp"
+                                    android:gravity="center_vertical"
+                                    android:text="0"
+                                    android:textColor="@color/white"
+                                    android:textSize="10sp"
+                                    android:visibility="visible" />
+
+                                <ImageView
+                                    android:id="@+id/iv_opponent_card_back"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="10sp"
+                                    android:adjustViewBounds="true"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/unknown" />
+
+                                <TextView
+                                    android:id="@+id/tv_opponent_card_count"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="2dp"
+                                    android:gravity="center_vertical"
+                                    android:text="0"
+                                    android:textColor="@color/white"
+                                    android:textSize="10sp" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tv_opponent_lp_number"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:shadowColor="@color/black"
+                                android:shadowDx="2"
+                                android:shadowDy="2"
+                                android:shadowRadius="1"
+                                android:text="8000"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </FrameLayout>
+            </LinearLayout>
+
+            <!-- 聊天消息区域（与横屏同构：左我方/右对方/中央操作提示，位于双方血条行正下方；
+                 竖屏空间紧凑，文字相应缩小到 8sp） -->
+            <FrameLayout
+                android:id="@+id/layout_chat_messages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|top"
+                android:clipChildren="false"
+                android:orientation="horizontal"
+                android:visibility="visible">
+
+                <TextView
+                    android:id="@+id/tv_chat_message_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_marginStart="50dp"
+                    android:maxLines="5"
+                    android:ellipsize="end"
+                    android:background="@color/blackLinght"
+                    android:textColor="@color/white"
+                    android:textSize="7sp"
+                    android:visibility="gone" />
+
+                <!-- 提示信息 -->
+                <TextView
+                    android:id="@+id/tv_hint_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|top"
+                    android:background="@drawable/btn_sci_fi_bg"
+                    android:padding="2dp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:visibility="invisible" />
+
+                <TextView
+                    android:id="@+id/tv_chat_message_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:background="@color/blackLinght"
+                    android:layout_marginEnd="50dp"
+                    android:maxLines="5"
+                    android:ellipsize="end"
+                    android:textColor="@color/white"
+                    android:textSize="7sp"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </LinearLayout><!-- /layout_hud_top -->
+    </LinearLayout><!-- /layout_top_stack -->
+
+    <!-- 系统/观战消息弹幕回退层（正常弹幕宿主是 SpecEffectOverlay PopupWindow 层，已按
+         layout_game_right 区域定位，不受 GL 曲面遮挡）。marginTop≈血条面板高（44dp 基准），
+         位于 HUD 之下；实际垂直位置由 FieldChatBoard 按血条坐标运行时校正 -->
+    <FrameLayout
+        android:id="@+id/layout_danmaku"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginTop="46dp"
+        android:clipChildren="false" />
+
+    <!-- 表情气泡（对齐 gframe drawing.cpp DrawEmoticon）：双方头像均在顶部 HUD 行内，
+         marginTop≈面板高(44)锚头像下方；竖屏空间紧凑，气泡相应缩小为 36×42dp -->
+    <ImageView
+        android:id="@+id/iv_player_emote_bubble"
+        android:layout_width="36dp"
+        android:layout_height="42dp"
+        android:layout_gravity="start|top"
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="46dp"
+        android:background="@drawable/bg_emote_bubble"
+        android:contentDescription="@null"
+        android:paddingStart="2dp"
+        android:paddingTop="9dp"
+        android:paddingEnd="2dp"
+        android:paddingBottom="2dp"
+        android:scaleType="fitCenter"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/iv_opponent_emote_bubble"
+        android:layout_width="36dp"
+        android:layout_height="42dp"
+        android:layout_gravity="end|top"
+        android:layout_marginEnd="3dp"
+        android:layout_marginTop="46dp"
+        android:background="@drawable/bg_emote_bubble"
+        android:contentDescription="@null"
+        android:paddingStart="2dp"
+        android:paddingTop="9dp"
+        android:paddingEnd="2dp"
+        android:paddingBottom="2dp"
+        android:scaleType="fitCenter"
+        android:visibility="gone" />
+
+    <!-- 底部功能行（贴本区域底缘，同一行）：前 5 个功能按钮（设置/记录/音乐/加速/表情）
+         统一移到聊天开关左侧，6 按钮成组按 weight 恰好占总宽一半，聊天输入框占另一半 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:clipChildren="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- 6 按钮组：与输入框各权重 1，恰好共占一半总宽；组内每键再等分，
+             图标 fitCenter 缩放保持近正方形外观 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_settings"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/setting" />
+
+            <ImageButton
+                android:id="@+id/btn_note"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_note" />
+
+            <ImageButton
+                android:id="@+id/btn_sound"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_volume_on" />
+
+            <ImageButton
+                android:id="@+id/btn_speed"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_speed" />
+
+            <ImageButton
+                android:id="@+id/btn_emote"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_emoticon" />
+
+            <ImageButton
+                android:id="@+id/btn_chat"
+                android:layout_width="0dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:adjustViewBounds="true"
+                android:background="@drawable/btn_sci_fi_bg"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/rename" />
+        </LinearLayout>
+
+        <!-- 聊天输入框：与按钮组同占该行另外一半宽度 -->
+        <EditText
+            android:id="@+id/et_chat_input"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/ygopro_base_background"
+            android:gravity="center_vertical"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:imeOptions="actionSend|flagNoExtractUi"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="9sp" />
+    </LinearLayout>
+</FrameLayout>
