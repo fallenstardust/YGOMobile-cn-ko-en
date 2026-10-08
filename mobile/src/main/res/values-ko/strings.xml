@@ -502,4 +502,12 @@
     <string name="duel_ranking">듀얼 순위</string>
     <string name="card_ranking">카드 순위</string>
     <string name="deck_dist_pie_analysis">덱 분포 원형 차트 분석</string>
+
+    <!-- 资源分享相关 -->
+    <string name="resource_share_title">리소스 공유 요청</string>
+    <string name="resource_share_message">%s 님이 다음 리소스의 공유를 요청했습니다:\n%s</string>
+    <string name="resource_cdb">· 카드 데이터베이스</string>
+    <string name="resource_lflist">· 금지리스트</string>
+    <string name="resource_strings">· 텍스트 및 설정</string>
+    <string name="resource_pics">· 카드 이미지 압축 파일</string>
 </resources>

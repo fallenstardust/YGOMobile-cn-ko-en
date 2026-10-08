@@ -483,6 +483,14 @@
     <string name="duel_ranking">Ranking Duelos</string>
     <string name="card_ranking">Ranking Cartas</string>
     <string name="deck_dist_pie_analysis">Análisis de distribución de mazos en gráfico circular</string>
+
+    <!-- 资源分享相关 -->
+    <string name="resource_share_title">Solicitud de compartir recursos</string>
+    <string name="resource_share_message">%s solicita compartir los siguientes recursos:\n%s</string>
+    <string name="resource_cdb">· Base de datos de cartas</string>
+    <string name="resource_lflist">· Lista de prohibidas</string>
+    <string name="resource_strings">· Configuración de textos</string>
+    <string name="resource_pics">· Archivo de imágenes de cartas</string>
 </resources>
 
 
