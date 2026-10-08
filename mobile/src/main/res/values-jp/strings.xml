@@ -485,4 +485,12 @@
     <string name="duel_ranking">デュエル順位</string>
     <string name="card_ranking">カード順位</string>
     <string name="deck_dist_pie_analysis">デッキ分布円グラフ分析</string>
+
+    <!-- 资源分享相关 -->
+    <string name="resource_share_title">リソース共有のリクエスト</string>
+    <string name="resource_share_message">%s が以下のリソースの共有を請求しています:\n%s</string>
+    <string name="resource_cdb">· カードデータベース</string>
+    <string name="resource_lflist">· リミットレギュレーション</string>
+    <string name="resource_strings">· 文字列などの設定</string>
+    <string name="resource_pics">· カード画像アーカイブ</string>
 </resources>
