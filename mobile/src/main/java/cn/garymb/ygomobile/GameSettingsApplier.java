@@ -80,6 +80,11 @@ class GameSettingsApplier {
         soundManager.enableSounds(!muted);
         soundManager.enableMusic(!muted);
         if (activity.cardDetailPanel != null) activity.cardDetailPanel.updateSoundIcon(!muted);
+        // 恢复音乐后必须重算场景重新起播：enableMusic 仅恢复开关标志，不会自行选曲，
+        // 缺此调用则点击静音再点开声音后 BGM 不再播放（对齐 apply() 里同名的 updateBGM 收尾）。
+        // updateBGM 依 BgmSceneController 按当前场景（决斗/优势/劣势/胜利/失败/卡组/菜单）选曲；
+        // 静音态下调用无副作用，playBGM 首行 !musicEnabled 直接返回
+        activity.updateBGM();
     }
 
     /**

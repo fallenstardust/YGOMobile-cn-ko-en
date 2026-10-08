@@ -465,7 +465,13 @@ public class SoundManager {
 
     public void enableMusic(boolean enable) {
         this.musicEnabled = enable;
-        if (!enable) stopBGM();
+        if (!enable) {
+            stopBGM();
+            // 静音停曲同时清掉场景锁：否则 bgmScene 残留旧场景，恢复音乐时
+            // playBGM 的"同场景且播放器仍在播则不切歌"判定基于旧状态，
+            // 清锁后恢复即按当前场景强制重新选曲起播
+            bgmScene = null;
+        }
     }
 
     /** 「按场景切换音乐」开关（chkMusicMode，strings.conf 1281）：
