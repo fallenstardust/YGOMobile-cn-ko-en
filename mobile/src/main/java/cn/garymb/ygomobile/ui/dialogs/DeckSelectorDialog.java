@@ -865,8 +865,8 @@ public class DeckSelectorDialog {
         adapter.set(otherNames);
 
         ListView listView = new ListView(context);
-        listView.setBackgroundColor(0xFF1A3A4A);
-        listView.setDivider(new android.graphics.drawable.ColorDrawable(0xFF3A5A6B));
+        listView.setBackgroundColor(YGOUtil.c(R.color.FallGreen));
+        listView.setDivider(new android.graphics.drawable.ColorDrawable(YGOUtil.c(R.color.deck_list_divider)));
         listView.setDividerHeight(1);
         listView.setAdapter(adapter);
 
@@ -927,8 +927,8 @@ public class DeckSelectorDialog {
         adapter.set(otherNames);
 
         ListView listView = new ListView(context);
-        listView.setBackgroundColor(0xFF1A3A4A);
-        listView.setDivider(new android.graphics.drawable.ColorDrawable(0xFF3A5A6B));
+        listView.setBackgroundColor(YGOUtil.c(R.color.FallGreen));
+        listView.setDivider(new android.graphics.drawable.ColorDrawable(YGOUtil.c(R.color.deck_list_divider)));
         listView.setDividerHeight(1);
         listView.setAdapter(adapter);
 

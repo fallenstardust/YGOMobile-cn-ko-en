@@ -7,7 +7,9 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class HostListAdapter extends BaseAdapterPlus<LanDiscoveryManager.HostEntry> {
 
@@ -41,7 +43,7 @@ public class HostListAdapter extends BaseAdapterPlus<LanDiscoveryManager.HostEnt
 
         TextView tvDetail = new TextView(context);
         tvDetail.setId(android.R.id.text2);
-        tvDetail.setTextColor(0xAAFFFFFF);
+        tvDetail.setTextColor(YGOUtil.c(R.color.white_aa));
         tvDetail.setTextSize(11f);
         tvDetail.setPadding(0, 4, 0, 0);
         layout.addView(tvDetail, new LinearLayout.LayoutParams(
@@ -63,7 +65,7 @@ public class HostListAdapter extends BaseAdapterPlus<LanDiscoveryManager.HostEnt
         }
 
         if (position == selectedPosition) {
-            view.setBackgroundColor(0x5587CEEB);
+            view.setBackgroundColor(YGOUtil.c(R.color.list_selected_sky));
         } else {
             view.setBackgroundColor(Color.TRANSPARENT);
         }

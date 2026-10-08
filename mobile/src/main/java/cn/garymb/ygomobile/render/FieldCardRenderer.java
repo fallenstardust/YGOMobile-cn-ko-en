@@ -5,6 +5,8 @@ import android.opengl.Matrix;
 import java.util.List;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
  * 卡片绘制核心（自 GameFieldView 平移，逻辑零改）：位置取 getCardLocation 动画值并做 X 镜像，
@@ -16,6 +18,11 @@ class FieldCardRenderer {
 
     // 选中手卡抬高量
     private static final float HAND_LIFT = 0.3f;
+
+    // 卡片光晕色（每帧每卡调用，类级缓存资源色值）
+    private static final int GLOW_YELLOW = YGOUtil.c(R.color.yellow);
+    private static final int GLOW_CYAN = YGOUtil.c(R.color.pure_cyan);
+    private static final int GLOW_RED = YGOUtil.c(R.color.glow_red);
 
     private final GameFieldView view;
 
@@ -261,10 +268,10 @@ class FieldCardRenderer {
     }
 
     private int pickGlowColor(GameField.ClientCard c) {
-        if (isSelectedCard(c)) return 0xFFFFFF00;
-        if (c.is_selected) return 0xFFFFFF00;
-        if (c.is_highlighting) return 0xFF00FFFF;
-        if (c.is_showequip || c.is_showtarget || c.is_showchaintarget) return 0xFFFF4444;
+        if (isSelectedCard(c)) return GLOW_YELLOW;
+        if (c.is_selected) return GLOW_YELLOW;
+        if (c.is_highlighting) return GLOW_CYAN;
+        if (c.is_showequip || c.is_showtarget || c.is_showchaintarget) return GLOW_RED;
         // is_selectable 不再绘制金色脉冲外框：候选/可发动高亮统一改由
         // SelectionOutlineRenderer.drawCardSelectOutlines 的黄色蚂蚁线轮廓承担
         return 0;

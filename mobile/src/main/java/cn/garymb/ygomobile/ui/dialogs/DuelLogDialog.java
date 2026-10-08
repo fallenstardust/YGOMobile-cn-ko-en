@@ -23,6 +23,7 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -281,8 +282,8 @@ public class DuelLogDialog {
 
     private static class LogAdapter extends BaseAdapter {
         /** 携带卡代码的条目高亮显示（暗示可点击查看卡信息） */
-        private static final int COLOR_CARD = 0xFFFFD27F;
-        private static final int COLOR_NORMAL = 0xFFFFFFFF;
+        private static final int COLOR_CARD = YGOUtil.c(R.color.duel_log_card_text);
+        private static final int COLOR_NORMAL = YGOUtil.c(R.color.white);
 
         /** 当前点击选中的条目位置；-1 表示无选中 */
         private int selectedPosition = -1;

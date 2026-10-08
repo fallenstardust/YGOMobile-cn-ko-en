@@ -20,6 +20,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.CrashHandler;
 
 /**
@@ -676,7 +677,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
             preview.drawEditPreview(canvas);
         } catch (Throwable t) {
             Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-            p.setColor(0xFFFF8080);
+            p.setColor(YGOUtil.c(R.color.preview_error_salmon));
             p.setTextSize(12f * getResources().getDisplayMetrics().density);
             canvas.drawText("GameFieldView preview error: " + t, 8f, 16f, p);
         }

@@ -20,6 +20,7 @@ import java.util.Map;
 
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -57,7 +58,7 @@ public class CardStatusTipHelper {
     /**
      * 标签背景：game.cpp L1409 stCardListTip 背景 0x6011113d（CARD_LIST_SELECTED_BACKGROUND_COLOR）
      */
-    private static final int TIP_BACKGROUND = 0x6011113D;
+    private static final int TIP_BACKGROUND = YGOUtil.c(R.color.card_list_selected_bg);
     private static final float TIP_TEXT_SIZE_SP = 11f;
     /** 场上/手卡悬浮气泡字体：比列表内 cardtip 小一号 */
     private static final float FIELD_TIP_TEXT_SIZE_SP = TIP_TEXT_SIZE_SP - 1f;

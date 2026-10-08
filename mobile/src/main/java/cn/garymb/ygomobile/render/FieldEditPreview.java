@@ -4,6 +4,9 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
+
 import java.util.Locale;
 
 /**
@@ -31,7 +34,7 @@ final class FieldEditPreview {
         if (w <= 1 || h <= 1) return;
         float density = view.getResources().getDisplayMetrics().density;
         // 设计时底色（运行期为透明 GL 面透出背景；预览用实色底保证可读性）
-        canvas.drawColor(0xFF0B1118);
+        canvas.drawColor(YGOUtil.c(R.color.preview_bg));
         EditCamera cam = computeEditCamera(w, h);
         if (cam == null) return;
 
@@ -43,15 +46,15 @@ final class FieldEditPreview {
         // 场地底板（运行期 drawFieldBoard 的兜底底色同色系）
         float boardCX = (FieldGeometry.FIELD_X_MIN + FieldGeometry.FIELD_X_MAX) / 2f;
         float boardW = FieldGeometry.FIELD_X_MAX - FieldGeometry.FIELD_X_MIN, boardH = FieldGeometry.FIELD_Y_MAX - FieldGeometry.FIELD_Y_MIN;
-        fill.setColor(0xFF14212C);
+        fill.setColor(YGOUtil.c(R.color.preview_field_fill));
         drawWorldQuad(canvas, fill, cam, w, h, boardCX, 0f, 0f, boardW, boardH);
-        line.setColor(0xFF2E4A5E);
+        line.setColor(YGOUtil.c(R.color.preview_grid_line));
         drawWorldQuad(canvas, line, cam, w, h, boardCX, 0f, 0f, boardW, boardH);
 
         if (view.previewShowZones) {
             // 区域槽位：与运行期 drawZoneSlots 同一套区域遍历（每方 怪兽7 + 魔陷6 + 堆叠区4）
-            fill.setColor(0x3300C8F0);
-            line.setColor(0x8800C8F0);
+            fill.setColor(YGOUtil.c(R.color.preview_zone_fill));
+            line.setColor(YGOUtil.c(R.color.preview_zone_stroke));
             for (int p = 0; p < 2; p++) {
                 for (int i = 0; i < 7; i++) {
                     float[] c = FieldGeometry.zoneCenter(p, 0x04, i);
@@ -74,7 +77,7 @@ final class FieldEditPreview {
 
         if (view.previewShowLabels) {
             Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
-            text.setColor(0xCCFFFFFF);
+            text.setColor(YGOUtil.c(R.color.white_cc));
             text.setTextSize(8f * density);
             text.setTextAlign(Paint.Align.CENTER);
             drawLabel(canvas, text, cam, w, h, FieldGeometry.pileCenter(0, 0x01), "卡组");
@@ -95,15 +98,15 @@ final class FieldEditPreview {
             float spacing = 0.95f;
             for (int i = 0; i < 5; i++) {
                 drawHandCard(canvas, cam, w, h, 3.95f - spacing * 2f + i * spacing,
-                        FieldCamera.SELF_HAND_Y - cam.selfHandShift, FieldCamera.HAND_Z, 0xFF33516E);
+                        FieldCamera.SELF_HAND_Y - cam.selfHandShift, FieldCamera.HAND_Z, YGOUtil.c(R.color.preview_hand_self));
                 drawHandCard(canvas, cam, w, h, 3.95f + spacing * 2f - i * spacing,
-                        FieldCamera.OPP_HAND_Y, FieldCamera.HAND_Z, 0xFF5C4433);
+                        FieldCamera.OPP_HAND_Y, FieldCamera.HAND_Z, YGOUtil.c(R.color.preview_hand_opp));
             }
         }
 
         // 参数读数：调整 XML 属性时便于对照
         Paint info = new Paint(Paint.ANTI_ALIAS_FLAG);
-        info.setColor(0xAAFFFFFF);
+        info.setColor(YGOUtil.c(R.color.white_aa));
         info.setTextSize(9f * density);
         canvas.drawText(String.format(Locale.US,
                         "GameFieldView 设计预览  俯仰角=%.0f° 视点距离=%.2f 场地倍率=%.2f 手卡后移=%.3f(解算) 视高=%.1f°",
@@ -129,7 +132,7 @@ final class FieldEditPreview {
         canvas.drawRoundRect(c[0] - halfW, c[1] - halfH, c[0] + halfW, c[1] + halfH, radius, radius, fill);
         Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
         line.setStyle(Paint.Style.STROKE);
-        line.setColor(0xAAFFFFFF);
+        line.setColor(YGOUtil.c(R.color.white_aa));
         line.setStrokeWidth(Math.max(1f, view.getResources().getDisplayMetrics().density * 0.75f));
         canvas.drawRoundRect(c[0] - halfW, c[1] - halfH, c[0] + halfW, c[1] + halfH, radius, radius, line);
     }

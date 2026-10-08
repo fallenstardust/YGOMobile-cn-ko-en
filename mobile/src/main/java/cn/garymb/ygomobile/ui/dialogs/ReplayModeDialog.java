@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.ui.activities.ShareFileActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.Constants;
 import ocgcore.DataManager;
 
@@ -66,6 +67,9 @@ public class ReplayModeDialog {
     private Button btnRenameReplay;
     private Button btnExitReplay;
     private EditText etStartTurn;
+    // 列表/信息栏字段化：reshow 复用实例时刷新文件列表需引用同一视图
+    private ListView lvReplayListView;
+    private TextView tvReplayInfoView;
 
     public interface OnReplaySelectedListener {
         void onReplaySelected(String replayFilePath, int startTurn);
@@ -84,6 +88,8 @@ public class ReplayModeDialog {
 
         ListView lvReplayList = customView.findViewById(R.id.lv_replay_list);
         TextView tvReplayInfo = customView.findViewById(R.id.tv_replay_info);
+        this.lvReplayListView = lvReplayList;
+        this.tvReplayInfoView = tvReplayInfo;
         etStartTurn = customView.findViewById(R.id.et_start_turn);
         btnShareReplay = customView.findViewById(R.id.btn_share_replay);
         btnExtractDeck = customView.findViewById(R.id.btn_extract_deck);
@@ -262,7 +268,7 @@ public class ReplayModeDialog {
     }
 
     private void updateControlsState(boolean enabled) {
-        int textColor = enabled ? 0xFFFFFFFF : 0x88FFFFFF;
+        int textColor = enabled ? YGOUtil.c(R.color.white) : YGOUtil.c(R.color.white_88);
         
         btnShareReplay.setEnabled(enabled);
         btnShareReplay.setTextColor(textColor);
@@ -282,9 +288,9 @@ public class ReplayModeDialog {
         etStartTurn.setEnabled(enabled);
         etStartTurn.setTextColor(textColor);
         if (!enabled) {
-            etStartTurn.setHintTextColor(0x88FFFFFF);
+            etStartTurn.setHintTextColor(YGOUtil.c(R.color.white_88));
         } else {
-            etStartTurn.setHintTextColor(0x88FFFFFF);
+            etStartTurn.setHintTextColor(YGOUtil.c(R.color.white_88));
         }
     }
 
@@ -434,8 +440,8 @@ public class ReplayModeDialog {
         EditText editText = new EditText(DialogScale.wrap(context));
         editText.setText(replayFile.getName().replace(".yrp", ""));
         editText.selectAll();
-        editText.setTextColor(0xFFFFFFFF);
-        editText.setHintTextColor(0x88FFFFFF);
+        editText.setTextColor(YGOUtil.c(R.color.white));
+        editText.setHintTextColor(YGOUtil.c(R.color.white_88));
 
         YesOrNoDialog dialog = new YesOrNoDialog(context);
         dialog.setTitle("重命名录像")
@@ -516,6 +522,60 @@ public class ReplayModeDialog {
         }
     }
 
+    public boolean isShowing() {
+        return popupWindow != null && popupWindow.isShowing();
+    }
+
+    /** 弹窗已创建且当前未显示即视为“隐藏待复用”（彻底销毁只在 onDestroy，那里紧接置空） */
+    public boolean canReshow() {
+        return popupWindow != null && !popupWindow.isShowing();
+    }
+
+    /**
+     * 重新显示此前隐藏的对话框：不重新 inflate，保留起始回合输入与选中状态；
+     * 仅刷新录像文件列表（决斗保存的新录像需可见）并按路径回配选中项
+     */
+    public void reshow(View anchorView) {
+        if (popupWindow == null || draggableHelper == null || popupWindow.isShowing()) return;
+        refreshListPreservingSelection();
+        draggableHelper.showPopup(popupWindow, anchorView);
+    }
+
+    private void refreshListPreservingSelection() {
+        if (replayAdapter == null) return;
+        String selPath = selectedReplayFile != null ? selectedReplayFile.getAbsolutePath() : null;
+        File[] files = getReplayFiles();
+        List<String> nameList = new ArrayList<>();
+        if (files != null && files.length > 0) {
+            for (File f : files) {
+                nameList.add(f.getName());
+            }
+        } else {
+            nameList.add("（暂无录像文件）");
+        }
+        replayAdapter.set(nameList);
+        int idx = -1;
+        if (selPath != null && files != null) {
+            for (int i = 0; i < files.length; i++) {
+                if (selPath.equals(files[i].getAbsolutePath())) {
+                    idx = i;
+                    break;
+                }
+            }
+        }
+        if (idx >= 0) {
+            selectedReplayFile = files[idx];
+            replayAdapter.setSelectedPosition(idx);
+            if (tvReplayInfoView != null) updateReplayInfo(tvReplayInfoView, selectedReplayFile);
+            updateControlsState(true);
+            if (lvReplayListView != null) lvReplayListView.setSelection(idx);
+        } else {
+            selectedReplayFile = null;
+            replayAdapter.setSelectedPosition(-1);
+            updateControlsState(false);
+        }
+    }
+
     public void setOnDismissListener(PopupWindow.OnDismissListener listener) {
         if (popupWindow != null) {
             popupWindow.setOnDismissListener(listener);
@@ -525,13 +585,24 @@ public class ReplayModeDialog {
     // === 静态入口：由 YGOProActivity 调用 ===
 
     public static void showReplayModeDialog(YGOProActivity activity) {
+        ReplayModeDialog existing = activity.getReplayModeDialog();
+        // 已在显示中：忽略重复点击
+        if (existing != null && existing.isShowing()) return;
         activity.getMainMenuDialog().hideMainMenu();
+        // 此前初始化过：原样重显，保留关闭前的选中/起始回合状态；只起播时 loadReplay
+        // 曾摘除 dismiss 回调，重显需重新挂上（关闭本窗后才能恢复主菜单）
+        if (existing != null && existing.canReshow()) {
+            existing.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+            existing.reshow(activity.getDialogContainer());
+            return;
+        }
         File replayDir = new File(AppsSettings.get().getResourcePath(), Constants.CORE_REPLAY_PATH);
         ReplayModeDialog dialog = new ReplayModeDialog(activity, (replayPath, startTurn) -> {
             ReplayModeDialog.startReplayPlayback(activity, replayPath, startTurn);
         });
         dialog.show(activity.getDialogContainer(), replayDir);
         dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+        activity.setReplayModeDialog(dialog);
     }
 
     /**

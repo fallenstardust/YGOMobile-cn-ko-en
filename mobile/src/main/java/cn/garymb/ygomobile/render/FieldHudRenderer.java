@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
  * 屏幕像素正交 HUD 通道绘制（GameFieldView「区域数字 / 多色自适应宽度 HUD 文字」分栏）：
@@ -21,6 +23,15 @@ import cn.garymb.ygomobile.game.GameField;
  * {@link FieldTextureManager} 缓存与门面屏幕绘制原语。
  */
 final class FieldHudRenderer {
+
+    // HUD 文字色（每帧引用）：原 0xFFRRGGBB 硬编码集中到 colors.xml（R.color.*），类级缓存
+    private static final int HUD_YELLOW = YGOUtil.c(R.color.yellow);
+    private static final int HUD_WHITE = YGOUtil.c(R.color.white);
+    private static final int STAT_CYAN_LIGHT = YGOUtil.c(R.color.stat_cyan_light);
+    private static final int XYZ_PINK = YGOUtil.c(R.color.xyz_level_pink);
+    private static final int STAT_DOWN_PINK = YGOUtil.c(R.color.stat_decrease_pink);
+    private static final int SHADOW_C0 = YGOUtil.c(R.color.black_c0);
+    private static final int SHADOW_BLACK = YGOUtil.c(R.color.black);
 
     private final GameFieldView view;
 
@@ -84,7 +95,7 @@ final class FieldHudRenderer {
                 // 锚点从近端外侧 0.14 改为贴进本堆近端内侧 0.05：数字紧跟自己的堆叠，
                 // 不再压向场地中心方向相邻堆的上缘造成视觉误判
                 float[] anchor = view.projectWorldPoint(FieldGeometry.mirrorX(r[0]), nearY - 0.05f, 0.02f);
-                drawScreenNumber(anchor, pileCountLabel(f, p, loc, cnt), 0xFFFFFF00, hpx);
+                drawScreenNumber(anchor, pileCountLabel(f, p, loc, cnt), HUD_YELLOW, hpx);
             }
         }
         boolean mr4 = f.dInfo.duelRule >= 4;
@@ -210,11 +221,11 @@ final class FieldHudRenderer {
         boolean[] boldFlags;
         if (c.isLink()) {
             parts = new String[]{nz(c.atkString), "/", nz(c.linkString)};
-            colors = new int[]{statValueColor(c.attack, c.baseAttack), 0xFFFFFFFF, 0xFF99FFFF};
+            colors = new int[]{statValueColor(c.attack, c.baseAttack), HUD_WHITE, STAT_CYAN_LIGHT};
             boldFlags = new boolean[]{true, false, false};
         } else {
             parts = new String[]{nz(c.atkString), "/", nz(c.defString)};
-            colors = new int[]{statValueColor(c.attack, c.baseAttack), 0xFFFFFFFF,
+            colors = new int[]{statValueColor(c.attack, c.baseAttack), HUD_WHITE,
                     statValueColor(c.defense, c.baseDefense)};
             boldFlags = defense ? new boolean[]{false, false, true}
                                : new boolean[]{true, false, false};
@@ -235,8 +246,8 @@ final class FieldHudRenderer {
                 corner = nearL;
                 align = ALIGN_LEFT;
             }
-            int lvColor = (c.type & TYPE_XYZ) != 0 ? 0xFFFF80FF
-                    : (c.type & TYPE_TUNER) != 0 ? 0xFFFFFF00 : 0xFFFFFFFF;
+            int lvColor = (c.type & TYPE_XYZ) != 0 ? XYZ_PINK
+                    : (c.type & TYPE_TUNER) != 0 ? HUD_YELLOW : HUD_WHITE;
             drawScreenTextAligned(corner[0], corner[1],
                     new String[]{c.lvString}, new int[]{lvColor}, hpx, align);
         }
@@ -281,7 +292,7 @@ final class FieldHudRenderer {
         int align = screenLeft ? ALIGN_LEFT : ALIGN_RIGHT;
         // 刻度白色（对齐 drawing.cpp 灵摆刻度 0xffffffff）
         drawScreenTextAligned(corner[0], corner[1] - hpx * SCALE_TOP_LIFT,
-                new String[]{txt}, new int[]{0xFFFFFFFF}, hpx, align);
+                new String[]{txt}, new int[]{HUD_WHITE}, hpx, align);
     }
 
     private void drawScreenNumber(float[] screenXY, String text, int color, float heightPx) {
@@ -318,7 +329,7 @@ final class FieldHudRenderer {
         if (tw > w * 0.92f) p.setTextSize(44f * (w * 0.92f) / tw);
         p.setColor(color | 0xFF000000);
         p.setTextAlign(Paint.Align.CENTER);
-        p.setShadowLayer(3f, 1f, 1f, 0xC0000000);
+        p.setShadowLayer(3f, 1f, 1f, SHADOW_C0);
         cv.drawText(text, w / 2f, h / 2f - (p.ascent() + p.descent()) / 2f, p);
         return bmp;
     }
@@ -382,7 +393,7 @@ final class FieldHudRenderer {
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas cv = new Canvas(bmp);
         p.setTextAlign(Paint.Align.LEFT);
-        p.setShadowLayer(3f, 1f, 1f, 0xFF000000);
+        p.setShadowLayer(3f, 1f, 1f, SHADOW_BLACK);
         p.setFakeBoldText(true);
         float baseline = h / 2f - (p.ascent() + p.descent()) / 2f;
         float x = (w - tw) / 2f;
@@ -422,9 +433,9 @@ final class FieldHudRenderer {
 
     /** 攻/守数值颜色（对齐 drawing.cpp DrawStatus：高于原值黄、低于原值粉、等于白） */
     private static int statValueColor(int cur, int base) {
-        if (cur > base) return 0xFFFFFF00;
-        if (cur < base) return 0xFFFF2090;
-        return 0xFFFFFFFF;
+        if (cur > base) return HUD_YELLOW;
+        if (cur < base) return STAT_DOWN_PINK;
+        return HUD_WHITE;
     }
 
     private static String nz(String s) {

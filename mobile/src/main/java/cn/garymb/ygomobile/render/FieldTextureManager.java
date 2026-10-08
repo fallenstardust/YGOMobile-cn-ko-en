@@ -6,6 +6,9 @@ import android.graphics.Paint;
 import android.opengl.GLES30;
 import android.opengl.GLUtils;
 
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -166,7 +169,7 @@ final class FieldTextureManager {
                         b = src.copy(Bitmap.Config.ARGB_8888, false);
                 } catch (Throwable ignored) {
                 }
-                if (b == null) b = makeSolidBitmap(opponent ? 0xFF3A2820 : 0xFF28303A);
+                if (b == null) b = makeSolidBitmap(opponent ? YGOUtil.c(R.color.cover_fallback_opp) : YGOUtil.c(R.color.cover_fallback_self));
                 pendingUploads.offer(new PendingUpload(key, b, true));
             });
         } catch (Throwable t) {
@@ -244,7 +247,7 @@ final class FieldTextureManager {
                     }
                     bmp = (u != null && !u.isRecycled())
                             ? u.copy(Bitmap.Config.ARGB_8888, false)
-                            : makeSolidBitmap(0xFF555560);
+                            : makeSolidBitmap(YGOUtil.c(R.color.tex_missing_gray));
                     pendingUploads.offer(new PendingUpload(key, bmp, true));
                 } else {
                     // 尚未到最后一次：释放请求标记，等限频窗口过后重试
@@ -281,9 +284,9 @@ final class FieldTextureManager {
         }
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setTextSize(bmp.getWidth() * 0.2f);
-        p.setColor(0xFF40E0FF);
+        p.setColor(YGOUtil.c(R.color.scale_number_cyan));
         p.setFakeBoldText(true);
-        p.setShadowLayer(3f, 1f, 1f, 0xFF000000);
+        p.setShadowLayer(3f, 1f, 1f, YGOUtil.c(R.color.black));
         if (left) {
             p.setTextAlign(Paint.Align.LEFT);
             cv.drawText(String.valueOf(scale), bmp.getWidth() * 0.12f, bmp.getHeight() * 0.13f, p);

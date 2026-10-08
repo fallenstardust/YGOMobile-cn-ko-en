@@ -20,6 +20,7 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.enums.CardType;
 
@@ -799,7 +800,7 @@ public class CmdMenuDialog {
     private Button createItemButton(String text) {
         Button btn = new Button(activity);
         btn.setText(text);
-        btn.setTextColor(0xFFFFFFFF);
+        btn.setTextColor(YGOUtil.c(R.color.white));
         btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         btn.setAllCaps(false);
         btn.setBackgroundResource(R.drawable.button3_bg);

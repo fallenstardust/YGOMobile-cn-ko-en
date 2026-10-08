@@ -12,6 +12,9 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
+
 public class SciFiRenderer {
 
     private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -20,9 +23,9 @@ public class SciFiRenderer {
     private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textGlowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);    private final Paint cardShadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    private static final int CYAN_GLOW =0xFF00E5FF;
-    private static final int DARK_BG = 0xCC001020;
-    private static final int PANEL_BG = 0xDD001830;
+    private static final int CYAN_GLOW = YGOUtil.c(R.color.scifi_cyan);
+    private static final int DARK_BG = YGOUtil.c(R.color.scifi_dark_bg);
+    private static final int PANEL_BG = YGOUtil.c(R.color.scifi_panel_bg);
 
     public SciFiRenderer() {
         glowPaint.setStyle(Paint.Style.STROKE);
@@ -36,13 +39,13 @@ public class SciFiRenderer {
 
         bgPaint.setStyle(Paint.Style.FILL);
 
-        shadowPaint.setColor(0x80000000);
+        shadowPaint.setColor(YGOUtil.c(R.color.black_80));
         shadowPaint.setMaskFilter(new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL));
 
         textGlowPaint.setColor(Color.WHITE);
         textGlowPaint.setShadowLayer(4, 0, 0, CYAN_GLOW);
 
-        cardShadowPaint.setColor(0x60000000);
+        cardShadowPaint.setColor(YGOUtil.c(R.color.black_60));
         cardShadowPaint.setMaskFilter(new BlurMaskFilter(6, BlurMaskFilter.Blur.NORMAL));
     }
 
@@ -56,7 +59,7 @@ public class SciFiRenderer {
 
         canvas.drawRoundRect(rect, cornerRadius, cornerRadius, glowPaint);
 
-        borderPaint.setColor(0x8000E5FF);
+        borderPaint.setColor(YGOUtil.c(R.color.scifi_cyan_50));
         canvas.drawRoundRect(rect, cornerRadius, cornerRadius, borderPaint);
         canvas.restore();
     }
@@ -77,7 +80,7 @@ public class SciFiRenderer {
         Paint innerGlow = new Paint(Paint.ANTI_ALIAS_FLAG);
         innerGlow.setStyle(Paint.Style.STROKE);
         innerGlow.setStrokeWidth(1f);
-        innerGlow.setColor(0x40FFFFFF);
+        innerGlow.setColor(YGOUtil.c(R.color.white_40));
         canvas.drawRect(x + 1, y + 1, x + w - 1, y + h - 1, innerGlow);
     }
 
@@ -88,7 +91,7 @@ public class SciFiRenderer {
         canvas.restore();
     }
 
-    public void drawStarfieldBackground(Canvas canvas, float width, float height, long timeMs) { bgPaint.setColor(0xFF000814);
+    public void drawStarfieldBackground(Canvas canvas, float width, float height, long timeMs) { bgPaint.setColor(YGOUtil.c(R.color.scifi_starfield_bg));
         canvas.drawRect(0, 0, width, height, bgPaint);
 
         Paint starPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -109,12 +112,12 @@ public class SciFiRenderer {
         Paint nebulaPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         nebulaPaint.setShader(new RadialGradient(
                 width * 0.3f, height * 0.4f, width * 0.5f,
-                0x15004080, 0x00000000, Shader.TileMode.CLAMP));
+                YGOUtil.c(R.color.scifi_glow_a15), YGOUtil.c(R.color.transparent), Shader.TileMode.CLAMP));
         canvas.drawRect(0, 0, width, height, nebulaPaint);
 
         nebulaPaint.setShader(new RadialGradient(
                 width * 0.7f, height * 0.6f, width * 0.4f,
-                0x10002060, 0x00000000, Shader.TileMode.CLAMP));
+                YGOUtil.c(R.color.scifi_glow_a10), YGOUtil.c(R.color.transparent), Shader.TileMode.CLAMP));
         canvas.drawRect(0, 0, width, height, nebulaPaint);
     }
 
@@ -165,12 +168,12 @@ public class SciFiRenderer {
     }
 
     public int getCardBorderColor(int cardType, boolean isFaceUp) {
-        if (!isFaceUp) return 0xFF4A3728;        if ((cardType & 0x01) != 0) return 0xFFFFD700;
-        if ((cardType & 0x02) != 0) return 0xFF00FF88;
-        if ((cardType & 0x04) != 0) return 0xFFFF6600;
-        if ((cardType & 0x40) != 0) return 0xFFAA00FF;
-        if ((cardType & 0x80) != 0) return 0xFF00CCFF;
-        if ((cardType & 0x800000) != 0) return 0xFF0088FF;
- return 0xFF00E5FF;
+        if (!isFaceUp) return YGOUtil.c(R.color.card_frame_back);        if ((cardType & 0x01) != 0) return YGOUtil.c(R.color.classic_gold);
+        if ((cardType & 0x02) != 0) return YGOUtil.c(R.color.card_frame_effect);
+        if ((cardType & 0x04) != 0) return YGOUtil.c(R.color.card_frame_fusion);
+        if ((cardType & 0x40) != 0) return YGOUtil.c(R.color.card_frame_ritual);
+        if ((cardType & 0x80) != 0) return YGOUtil.c(R.color.card_frame_synchro);
+        if ((cardType & 0x800000) != 0) return YGOUtil.c(R.color.card_frame_link);
+ return CYAN_GLOW;
     }
 }

@@ -32,6 +32,7 @@ import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -462,7 +463,7 @@ public class PlayerWaitingDialog {
     /** 席位有人加入时的半透明背景色
      * （对齐 gframe duelclient.cpp STOC_HS_PLAYER_ENTER L1175 /
      *  STOC_HS_PLAYER_CHANGE L1198：stHostPrepDuelist[pos]->setBackgroundColor(0x60045f6a)） */
-    private static final int SEAT_OCCUPIED_COLOR = 0x60045F6A;
+    private static final int SEAT_OCCUPIED_COLOR = YGOUtil.c(R.color.seat_occupied_teal);
 
     public void setPlayerName(int pos, String name) {
         TextView seat = null;

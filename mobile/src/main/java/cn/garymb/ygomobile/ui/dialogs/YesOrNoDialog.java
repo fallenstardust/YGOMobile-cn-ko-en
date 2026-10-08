@@ -42,6 +42,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -52,9 +53,9 @@ public class YesOrNoDialog {
     public static final int TYPE_YES_NO = 1;
 
     // 卡片名字着色（对齐 YGO 卡框配色：怪兽=黄、魔法=淡绿、陷阱=淡粉）
-    private static final int CARD_NAME_COLOR_MONSTER = 0xFFFFD700; // 怪兽卡：黄色
-    private static final int CARD_NAME_COLOR_SPELL = 0xFF90EE90;   // 魔法卡：淡绿色
-    private static final int CARD_NAME_COLOR_TRAP = 0xFFFFB6C1;    // 陷阱卡：淡粉色
+    private static final int CARD_NAME_COLOR_MONSTER = YGOUtil.c(R.color.classic_gold); // 怪兽卡：黄色
+    private static final int CARD_NAME_COLOR_SPELL = YGOUtil.c(R.color.card_name_spell_green);   // 魔法卡：淡绿色
+    private static final int CARD_NAME_COLOR_TRAP = YGOUtil.c(R.color.card_name_trap_pink);    // 陷阱卡：淡粉色
 
     private final Context context;
     private PopupWindow popupWindow;
@@ -201,7 +202,7 @@ public class YesOrNoDialog {
         if (optionsContainer == null) setOptionsContentView();
         Button btn = new Button(DialogScale.wrap(context));
         btn.setText(text);
-        btn.setTextColor(0xFFFFFFFF);
+        btn.setTextColor(YGOUtil.c(R.color.white));
         btn.setBackgroundColor(backgroundColor);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -636,7 +637,7 @@ public class YesOrNoDialog {
         dialog.setTitle("选择卡组").setOptionsContentView();
         for (int i = 0; i < deckNames.size(); i++) {
             final int pos = i;
-            dialog.addOption(deckNames.get(i), 0xFF335577, () -> {
+            dialog.addOption(deckNames.get(i), YGOUtil.c(R.color.option_bg_blue), () -> {
                 if (finalDeckFiles != null && pos < finalDeckFiles.length) {
                     activity.getDialogUtil().loadAndSendDeck(finalDeckFiles[pos]);
                 }
@@ -688,7 +689,7 @@ public class YesOrNoDialog {
         dialog.setTitle(title).setOptionsContentView();
         for (int i = 0; i < chainOptions.size(); i++) {
             final int idx = i;
-            int bg = (chainFlags.get(i) & 0x100) != 0 ? 0xFFAA3333 : 0xFF335577;
+            int bg = (chainFlags.get(i) & 0x100) != 0 ? YGOUtil.c(R.color.option_bg_red) : YGOUtil.c(R.color.option_bg_blue);
             dialog.addOption(chainOptions.get(i), bg, () -> {
                 activity.getDialogUtil().clearChainSelect();
                 panel(activity).setSelectType(-1);
@@ -766,7 +767,7 @@ public class YesOrNoDialog {
         dialog.setTitle(title).setOptionsContentView();
         for (int i = 1; i <= counterCount; i++) {
             final int val = i;
-            dialog.addOption(String.valueOf(i), 0xFF335577, () -> sendCounterResponse(activity, cardCounters, val));
+            dialog.addOption(String.valueOf(i), YGOUtil.c(R.color.option_bg_blue), () -> sendCounterResponse(activity, cardCounters, val));
         }
         dialog.setCancelable(false).setCenterInView(gameDialogRegion(activity));
         dialog.show();

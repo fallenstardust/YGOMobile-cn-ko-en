@@ -15,7 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.BitmapUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
  * Canvas 逐帧绘制视图：内部状态对应 gframe 的 showcard / showcardcode / showcarddif / showcardp，
@@ -436,7 +438,7 @@ class SpecEffectView extends View {
             bmpPaint.setAlpha(a);
             RectF box = new RectF(cx - subW / 2f, subY - subSize, cx + subW / 2f, subY + subSize * 0.6f);
             Paint boxPaint = new Paint();
-            boxPaint.setColor(0xA0000000);
+            boxPaint.setColor(YGOUtil.c(R.color.black_a0));
             boxPaint.setAlpha((int) (a * 0.63f));
             canvas.drawRect(box, boxPaint);
             shadowPaint.setTextSize(subSize);

@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.enums.CardLocation;
@@ -24,6 +26,11 @@ import ocgcore.enums.CardLocation;
 public class DuelEventHandler implements GameMessageParser.MessageHandler {
     // 保持拆分前日志标识，便于与旧版日志比对
     private static final String TAG = "GameEngine";
+
+    // LP 变化飘字色（gframe 红=扣血 绿=回复 蓝=代价）：硬编码集中到 colors.xml
+    private static final int LP_DAMAGE_RED = YGOUtil.c(R.color.pure_red);
+    private static final int LP_RECOVER_GREEN = YGOUtil.c(R.color.pure_green);
+    private static final int LP_COST_BLUE = YGOUtil.c(R.color.pure_blue);
 
     private final GameEngine engine;
     // 重实现块已平移同包协作类（持 engine 反向引用），门面留一行委托
@@ -464,7 +471,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         int p = engine.localPlayer(player & 1);
         int fin = Math.max(0, engine.field.players[p].lp - amount);
         engine.field.players[p].lp = fin;
-        engine.field.startLpChange(p, fin, 0xFFFF0000, "-" + amount, true);
+        engine.field.startLpChange(p, fin, LP_DAMAGE_RED, "-" + amount, true);
         engine.soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
         engine.hintManager.setEventString(p == 0 ? 1613 : 1614, p == 0 ? "我方受到%d伤害" : "对方受到%d伤害", amount);
         engine.mainHandler.post(() -> {
@@ -477,7 +484,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         int p = engine.localPlayer(player & 1);
         int fin = engine.field.players[p].lp + amount;
         engine.field.players[p].lp = fin;
-        engine.field.startLpChange(p, fin, 0xFF00FF00, "+" + amount, true);
+        engine.field.startLpChange(p, fin, LP_RECOVER_GREEN, "+" + amount, true);
         engine.soundManager.playSoundEffect(SoundManager.SFX.RECOVER);
         engine.hintManager.setEventString(p == 0 ? 1615 : 1616, p == 0 ? "我方回复%d基本分" : "对方回复%d基本分", amount);
         engine.mainHandler.post(() -> {
@@ -574,7 +581,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         // WaitFrameSignal(30)+lpframe=10+WaitFrameSignal(11)——支付基本分同样先浮字再扣减；startLpChange(showText=true)
         // 同步置 lpPending，统一动画屏障据此暂缓后续消息（如随后场上怪兽被破坏离场的 MSG_MOVE）
         engine.soundManager.playSoundEffect(SoundManager.SFX.DAMAGE);
-        engine.field.startLpChange(p, fin, 0xFF0000FF, "-" + cost, true);
+        engine.field.startLpChange(p, fin, LP_COST_BLUE, "-" + cost, true);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onPlayerInfoUpdated(p);
         });

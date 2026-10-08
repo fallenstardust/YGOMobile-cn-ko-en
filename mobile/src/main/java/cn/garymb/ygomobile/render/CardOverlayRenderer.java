@@ -11,8 +11,10 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.List;
 
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
  * 场上卡片状态叠加图标 / 连锁图标 / 攻击宣言绿色弧形流动动画（GameFieldView「场上卡片状态图标」分栏）。
@@ -80,11 +82,17 @@ final class CardOverlayRenderer {
     // 绿点尺寸：小圆点（程序化生成的圆点纹理），直径为固定世界尺寸，圆心正落在
     // 卡片自身朝向的右上角直角点上（局部坐标 (0.5,0.5)），比旧版内缩的方块更靠右上角。
     private static final long ACT_DOT_TEX_KEY = -57L;
+    // 颜色细致区分（用户规格）：菜单含「发动」按钮（cmdFlag 置 COMMAND_ACTIVATE）→ 绿点；
+    // 不含发动但仍有其他命令按钮（召唤/特殊召唤）→ 蓝点，两套圆点纹理按位选贴图
+    private static final long ACT_DOT_TEX_KEY_BLUE = -58L;
     // 直径由旧 0.055f 适度增大，使手卡/场上/灵摆卡的可发动提示更醒目。
     private static final float ACT_DOT_DIAM = 0.1f;
     private static final float ACT_DOT_LIFT = 0.02f;
     private static final float ACT_DOT_BREATH_RAD_PER_MS = 0.006f;
-    private static final int ACT_DOT_COLOR = 0xFF26FF4D;
+    // 色值取荧光色资源（colors.xml）：绿点 neon_green 荧光绿、蓝点 neon_blue 荧光蓝，
+    // 高饱和亮色在手卡/场图上对比度最高（用户规格：最醒目的荧光蓝/荧光绿）
+    private static final int ACT_DOT_COLOR = YGOUtil.c(R.color.neon_green);
+    private static final int ACT_DOT_COLOR_BLUE = YGOUtil.c(R.color.neon_blue);
 
     // === 攻击宣言绿色弧形流动动画（materials.cpp GenArrow + drawing.cpp L1504-1513）===
     // 逐顶点 3D 位置 + RGBA 颜色，用透视 mVP 绘制一条从攻击者越过目标、拱起于场地上方的绿带，
@@ -196,9 +204,11 @@ final class CardOverlayRenderer {
     }
 
     /**
-     * 可发动 / 特殊召唤卡片右上角的呼吸绿点：遍历双方手卡与场上（怪兽区/魔陷区），
-     * 对 cmdFlag 含 COMMAND_ACTIVATE|COMMAND_SPSUMMON（即点击会弹「发动」或「特殊召唤」按钮）
-     * 的卡片，在其屏幕右上顶点直角点上绘一枚随时间呼吸的绿色小圆点（灵摆带屏幕右侧卡除外）。
+     * 可发动 / 特殊召唤卡片右上角的呼吸提示点：遍历双方手卡与场上（怪兽区/魔陷区），
+     * 对 cmdFlag 含 COMMAND_ACTIVATE|COMMAND_SPSUMMON（手卡另纳入 COMMAND_SUMMON，
+     * 即点击会弹 CmdMenuDialog 按钮）的卡片，在其屏幕右上顶点直角点上绘一枚随时间呼吸的
+     * 小圆点（灵摆带屏幕右侧卡除外）；颜色按菜单内容区分：含「发动」按钮→绿，
+     * 仅召唤/特殊召唤等其他按钮→蓝。
      */
     void drawActivatableDots(GameField f) {
         if (f == null) return;
@@ -232,14 +242,18 @@ final class CardOverlayRenderer {
         }
     }
 
-    /** 单卡角位呼吸绿点：复用 buildCardModel 得到卡片姿态（含手卡 billboard），
+    /** 单卡角位呼吸提示点（含「发动」→绿纹理，否则蓝纹理）：复用 buildCardModel 得到卡片姿态（含手卡 billboard），
      *  把一枚小圆点纹理的圆心平移到卡片矩形的角位顶点上：手卡贴屏幕左上顶点，
      *  场上卡默认贴屏幕右上顶点；灵摆魔陷带屏幕右侧的卡为例外（刻度文字占右上顶点），绿点改贴左上顶点。
      *  卡片局部空间非等比（CARD_W×CARD_H），按 1/CARD_W、1/CARD_H 反向缩放 x/y 使屏幕上呈正圆；
      *  抬升沿世界 +z（相机恒在上方）而非卡片局部 +z，保证盖放/竖立卡不被卡面遮挡。 */
     private void drawActivatableDot(GameField.ClientCard c, float alpha,
                                     boolean spellZone, boolean mr4) {
-        int tex = obtainActivatableDotTexture();
+        // 颜色按菜单内容细致区分（用户规格）：cmdFlag 含 COMMAND_ACTIVATE 时点击菜单必出
+        // 「发动」（buildCardCommandMenu 以该位收集 activateList），绿点；不含发动而有
+        // 「召唤/特殊召唤」等其他按钮时蓝点
+        boolean hasActivate = (c.cmdFlag & GameEngine.COMMAND_ACTIVATE) != 0;
+        int tex = obtainActivatableDotTexture(hasActivate);
         if (tex <= 0) return;
         final float[] m = dotModel;
         view.card.buildCardModel(c, m);
@@ -636,22 +650,25 @@ final class CardOverlayRenderer {
     }
 
     /**
-     * 可发动 / 特殊召唤卡片右上角呼吸绿点的圆点纹理：程序化绘一张带镖齿的纯绿色实心圆
-     *（透明背景）异步上传，RGB 烘入位图，呼吸 alpha 经 drawQuadTex 的 tint 控制。
+     * 卡片角位呼吸提示点的圆点纹理：程序化绘一张带镖齿的实心圆（透明背景）异步上传，
+     * 绿/蓝两套独立键（纯 RGB 烘入位图，呼吸 alpha 经 drawQuadTex 的 tint 控制）；
+     * green=菜单含「发动」，否则取蓝纹理。
      */
-    private int obtainActivatableDotTexture() {
+    private int obtainActivatableDotTexture(boolean green) {
+        final long key = green ? ACT_DOT_TEX_KEY : ACT_DOT_TEX_KEY_BLUE;
+        final int color = green ? ACT_DOT_COLOR : ACT_DOT_COLOR_BLUE;
         FieldTextureManager tex = view.tex;
-        Integer id = tex.texCache().get(ACT_DOT_TEX_KEY);
+        Integer id = tex.texCache().get(key);
         if (id != null) return id;
-        if (!tex.beginRequest(ACT_DOT_TEX_KEY)) return -1;
+        if (!tex.beginRequest(key)) return -1;
         try {
             tex.texExecutor().execute(() -> {
-                Bitmap b = makeCircleBitmap(64, ACT_DOT_COLOR);
-                if (b != null) tex.offerUpload(new FieldTextureManager.PendingUpload(ACT_DOT_TEX_KEY, b, true));
-                else tex.cancelRequest(ACT_DOT_TEX_KEY);
+                Bitmap b = makeCircleBitmap(64, color);
+                if (b != null) tex.offerUpload(new FieldTextureManager.PendingUpload(key, b, true));
+                else tex.cancelRequest(key);
             });
         } catch (Throwable t) {
-            tex.cancelRequest(ACT_DOT_TEX_KEY);
+            tex.cancelRequest(key);
         }
         return -1;
     }

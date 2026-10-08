@@ -206,9 +206,9 @@ public class DraggablePopupHelper {
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(0xE0303030);
+        bg.setColor(YGOUtil.c(R.color.popup_frame_fill));
         bg.setCornerRadius(dp(context, 6));
-        bg.setStroke(dp(context, 1), 0xFF7A7A7A);
+        bg.setStroke(dp(context, 1), YGOUtil.c(R.color.popup_frame_stroke));
         bar.setBackground(bg);
         bar.setClickable(true);
         int padH = dp(context, 8);

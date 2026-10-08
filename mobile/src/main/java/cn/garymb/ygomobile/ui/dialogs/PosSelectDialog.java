@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.TextureLoader;
 
@@ -510,9 +511,9 @@ public class PosSelectDialog {
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(0xE0303030);
+        bg.setColor(YGOUtil.c(R.color.popup_frame_fill));
         bg.setCornerRadius(dp2px(6));
-        bg.setStroke(dp2px(1), 0xFF7A7A7A);
+        bg.setStroke(dp2px(1), YGOUtil.c(R.color.popup_frame_stroke));
         bar.setBackground(bg);
         bar.setClickable(true);
         int padH = dp2px(8);

@@ -15,6 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
 
@@ -86,11 +88,14 @@ class FieldChatBoard {
     private static final float DANMAKU_ROW_HEIGHT_DP = 16f;
     /** 观战弹幕颜色，逐一对齐 drawing.cpp chatColor[11..19]（11=红 12=绿 13=蓝 14=青 15=品红 16=黄 17=白 18=灰 19=深灰） */
     private static final int[] DANMAKU_OBS_COLORS = {
-            0xFFFF4040, 0xFF40FF40, 0xFF4040FF, 0xFF40FFFF, 0xFFFF40FF,
-            0xFFFFFF40, 0xFFFFFFFF, 0xFF808080, 0xFF404040
+            YGOUtil.c(R.color.chat_color_red), YGOUtil.c(R.color.chat_color_green),
+            YGOUtil.c(R.color.chat_color_blue), YGOUtil.c(R.color.chat_color_cyan),
+            YGOUtil.c(R.color.chat_color_magenta), YGOUtil.c(R.color.chat_color_yellow),
+            YGOUtil.c(R.color.white), YGOUtil.c(R.color.chat_color_gray),
+            YGOUtil.c(R.color.chat_color_dark_gray)
     };
     /** 聊天消息半透明黑底（对齐 drawing.cpp L1597 draw2DRectangle 0xa0000000） */
-    private static final int CHAT_BG_COLOR = 0xA0000000;
+    private static final int CHAT_BG_COLOR = YGOUtil.c(R.color.black_a0);
 
     private int danmakuRowIndex = 0;
     private final List<TextView> danmakuViews = new ArrayList<>();
@@ -133,8 +138,7 @@ class FieldChatBoard {
         // · 0-3 决斗座位与 8 系统消息受 chkIgnore1（本端 chkDisableChatting）管辖；
         // · 11-19 观战编号不受任何屏蔽开关管辖（原样透传，弹幕用观战配色）；
         // · 其余全部非玩家类型（4-7/9/10/20+，含内置服务端的观战 type=7）受 chkIgnore2
-        //   （本端 chkMuteSpectators）管辖，通过门控后归一为 10，显示为「[Spectator] 名字: 」（名
-        //   字由内置服务端中继时拼入文本，见 GameRoom.chat；gframe 原型为星号遮罩 [********])。
+        //   （本端 chkMuteSpectators）管辖，通过门控后归一为 10，显示为隐藏名「[********]: 」。
         // 历史缺陷修复点①：旧实现在决斗态先用 chkDisableChatting 丢弃“全部”消息，
         // 系统/观战消息被一并吞掉；②：观战发言 type=7 既不落 11-19 判定区间，也无归一
         // 分支，颜色与前缀都不对；③：服务端从不下发 8/9/10，故这些分支永不触发
@@ -424,13 +428,13 @@ class FieldChatBoard {
         TextView tv = new TextView(ctl.activity);
         tv.setText(entry.text);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与系统弹幕/大厅聊天统一 9sp
-        tv.setTextColor(0xFFFFFFFF);                     // chatColor[0..3] 玩家消息白色
+        tv.setTextColor(YGOUtil.c(R.color.white));                     // chatColor[0..3] 玩家消息白色
         tv.setMaxLines(2);
         tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
         tv.setBackgroundColor(CHAT_BG_COLOR);            // 半透明黑底，对齐 drawing.cpp 0xa0000000
         int hPadding = (int) (3 * density);
         tv.setPadding(hPadding, 0, hPadding, 0);
-        tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
+        tv.setShadowLayer(1f, 1f, 1f, YGOUtil.c(R.color.black));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = (int) (2 * density);
@@ -510,7 +514,7 @@ class FieldChatBoard {
     private void flushSideChatPendingToDanmaku(boolean selfSide) {
         LinkedList<TimedLine> pending = selfSide ? myChatPending : opChatPending;
         if (pending.isEmpty()) return;
-        for (TimedLine entry : pending) showDanmakuLine(entry.text, 0xFFFFFFFF, 0);
+        for (TimedLine entry : pending) showDanmakuLine(entry.text, YGOUtil.c(R.color.white), 0);
         pending.clear();
     }
 
@@ -614,28 +618,28 @@ class FieldChatBoard {
         if (playerType >= 0 && playerType < 4) {
             // 玩家消息：昵称: 内容（颜色对齐 chatColor[0..3] 白色）
             text = chatNickname(playerType) + ": " + message;
-            color = 0xFFFFFFFF;
+            color = YGOUtil.c(R.color.white);
         } else if (playerType == 8) {
             text = "[System]: " + message;
-            color = 0xFF8080FF;                       // chatColor[8]
+            color = YGOUtil.c(R.color.chat_color_lavender);                       // chatColor[8]
         } else if (playerType == 9) {
             text = "[Script Error]: " + message;
-            color = 0xFFFF4040;                       // chatColor[9]
+            color = YGOUtil.c(R.color.chat_color_red);                       // chatColor[9]
         } else if (playerType == 10) {
-            text = "[Spectator] " + message;
-            color = 0xFFFF4040;                       // chatColor[10]
+            text = "[********]: " + message;
+            color = YGOUtil.c(R.color.chat_color_red);                       // chatColor[10]
         } else {
             // 观战者 11-19（无前缀）与其他未知类型
             text = message;
             color = (playerType >= 11 && playerType <= 19)
-                    ? DANMAKU_OBS_COLORS[playerType - 11] : 0xFFFFFFFF;
+                    ? DANMAKU_OBS_COLORS[playerType - 11] : YGOUtil.c(R.color.white);
         }
         TextView tv = new TextView(ctl.activity);
         tv.setText(text);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);  // 与 tv_chat_message 统一 9sp
         tv.setTextColor(color);
         tv.setBackgroundColor(CHAT_BG_COLOR);               // 对齐 drawing.cpp draw2DRectangle 0xa0000000
-        tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
+        tv.setShadowLayer(1f, 1f, 1f, YGOUtil.c(R.color.black));
         float density = ctl.activity.getResources().getDisplayMetrics().density;
         int hPadding = (int) (3 * density);
         tv.setPadding(hPadding, 0, hPadding, 0);
@@ -653,9 +657,9 @@ class FieldChatBoard {
      * 系统/脚本错误/观战消息以弹幕形式横向滚动显示：
      * 对齐 drawing.cpp L1587-1593：chatType>=4 时 offsetX = (1200 - chatTiming[i]) * 4，
      * 消息自右向左匀速移动直至离场消失；颜色对齐 chatColor[chatType]：
-     * 8 系统=0xFF8080FF，9 脚本错误/10 隐藏名=0xFFFF4040，11-19 观战=chatColor[11..19] 轮换。
-     * 前缀对齐 game.cpp AddChatMsg：8→"[System]: "、9→"[Script Error]: "、10→"[Spectator] 名字: "
-     *（观战名由内置服务端拼入文本）、观战 11-19 无前缀（default 分支不追加）。
+     * 8 系统=chat_color_lavender，9 脚本错误/10 隐藏名=chat_color_red，11-19 观战=chatColor[11..19] 轮换。
+     * 前缀对齐 game.cpp AddChatMsg：8→"[System]: "、9→"[Script Error]: "、10→"[********]: "、
+     * 观战 11-19 无前缀（default 分支不追加）。
      * 弹幕宿主取 drawspec 覆盖层（SpecEffectOverlay 的 PopupWindow 层，不受 GameFieldView
      * setZOrderOnTop 的 GL 曲面遮挡）：双方 LP 血条正下方的全屏宽横带，高 = 3 行 × 行高，
      * 不再依赖 layout_top_info 的布局状态（历史上该依赖导致弹幕落回被遮挡的回退层而永不可见）。
@@ -666,19 +670,17 @@ class FieldChatBoard {
         int color;
         if (playerType == 8) {
             text = "[System]: " + message;
-            color = 0xFF8080FF;                       // chatColor[8]
+            color = YGOUtil.c(R.color.chat_color_lavender);                       // chatColor[8]
         } else if (playerType == 9) {
             text = "[Script Error]: " + message;
-            color = 0xFFFF4040;                       // chatColor[9]
+            color = YGOUtil.c(R.color.chat_color_red);                       // chatColor[9]
         } else if (playerType == 10) {
-            // 观战发言：内置服务端中继时已把观战名拼进文本（GameRoom.chat），
-            // 前缀改为 [Spectator] 后接发言者名字；不再用 gframe 的星号遮罩固定串
-            text = "[Spectator] " + message;
-            color = 0xFFFF4040;                       // chatColor[10]
+            text = "[********]: " + message;
+            color = YGOUtil.c(R.color.chat_color_red);                       // chatColor[10]
         } else {
             text = message;
             color = (playerType >= 11 && playerType <= 19)
-                    ? DANMAKU_OBS_COLORS[playerType - 11] : 0xFFFFFFFF;
+                    ? DANMAKU_OBS_COLORS[playerType - 11] : YGOUtil.c(R.color.white);
         }
         showDanmakuLine(text, color, 0);
     }
@@ -744,7 +746,7 @@ class FieldChatBoard {
         int hPadding = (int) (3 * ctl.activity.getResources().getDisplayMetrics().density);
         tv.setPadding(hPadding, 0, hPadding, 0);
         // 对齐 drawing.cpp shadowloc：黑色 1px 偏移阴影，保证血条背景上可读
-        tv.setShadowLayer(1f, 1f, 1f, 0xFF000000);
+        tv.setShadowLayer(1f, 1f, 1f, YGOUtil.c(R.color.black));
         int row = danmakuRowIndex % DANMAKU_MAX_ROWS; // 超过 3 行循环回第 1 行
         danmakuRowIndex++;
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(

@@ -8,6 +8,9 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
+
 /**
  * 蚂蚁线高亮描边：在按钮四周绘制一圈持续「行进」的绿色虚线圆角矩形，
  * 作为「完成选择 / 取消」按钮的视觉高亮（对齐 gframe drawing.cpp DrawSelectionLine
@@ -50,11 +53,11 @@ public class MarchingAntsDrawable extends Drawable {
 
         mFore.setStyle(Paint.Style.STROKE);
         mFore.setStrokeWidth(stroke);
-        mFore.setColor(0xFF3CFF5A);       // 亮绿
+        mFore.setColor(YGOUtil.c(R.color.ants_fore_green));       // 亮绿
 
         mBack.setStyle(Paint.Style.STROKE);
         mBack.setStrokeWidth(stroke);
-        mBack.setColor(0xE6001A00);       // 深绿描边（垫底形成蚂蚁线双色）
+        mBack.setColor(YGOUtil.c(R.color.ants_back_green));       // 深绿描边（垫底形成蚂蚁线双色）
 
         applyPhase();
     }

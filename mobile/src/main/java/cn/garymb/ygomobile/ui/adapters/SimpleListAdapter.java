@@ -10,10 +10,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class SimpleListAdapter extends BaseAdapterPlus<String> {
 
-    private static final int SELECTED_BG_COLOR = 0x5587CEEB;
+    private static final int SELECTED_BG_COLOR = YGOUtil.c(R.color.list_selected_sky);
     private int selectedPosition = -1;
     private Set<Integer> multiSelectedPositions = new HashSet<>();
     private boolean isMultiSelectMode = false;

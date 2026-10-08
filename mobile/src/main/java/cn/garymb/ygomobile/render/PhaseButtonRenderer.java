@@ -6,6 +6,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
+
 import java.util.HashMap;
 
 /**
@@ -195,9 +198,9 @@ final class PhaseButtonRenderer {
         p.setFakeBoldText(true);
         float tw = p.measureText(text);
         if (tw > w * 0.9f) p.setTextSize(54f * (w * 0.9f) / tw);
-        p.setColor(0xFFFFFFFF);
+        p.setColor(YGOUtil.c(R.color.white));
         p.setTextAlign(Paint.Align.CENTER);
-        p.setShadowLayer(3f, 1f, 1f, 0xC0000000);
+        p.setShadowLayer(3f, 1f, 1f, YGOUtil.c(R.color.black_c0));
         cv.drawText(text, w / 2f, h / 2f - (p.ascent() + p.descent()) / 2f, p);
         return bmp;
     }

@@ -29,6 +29,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardStatusTipHelper;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 
@@ -41,8 +42,8 @@ public class CardDisplayDialog {
     // 对话框宽度取 layout_game_right 实际宽度的四分之三
     private static final float DIALOG_WIDTH_RATIO = 0.75f;
     // 位置标签配色，映射 client_field.h CARD_LIST_* 常量
-    private static final int COLOR_DEFAULT = 0xFF2196F3;   // CARD_LIST_DEFAULT_BACKGROUND_COLOR
-    private static final int COLOR_OPPONENT = 0xFF5A5A5A;  // CARD_LIST_OPPONENT_BACKGROUND_COLOR
+    private static final int COLOR_DEFAULT = YGOUtil.c(R.color.colorMain);   // CARD_LIST_DEFAULT_BACKGROUND_COLOR
+    private static final int COLOR_OPPONENT = YGOUtil.c(R.color.card_list_opponent_gray);  // CARD_LIST_OPPONENT_BACKGROUND_COLOR
 
     public static class CardItem {
         public final int code;

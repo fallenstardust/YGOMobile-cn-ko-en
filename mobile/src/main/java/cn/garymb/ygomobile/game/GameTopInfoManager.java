@@ -842,13 +842,21 @@ public class GameTopInfoManager {
         }
     }
 
+    // 限时倒计时文字色（与 GameFieldMotion.refreshTimeDisplay 同源阈值）：
+    // 原 0xFFRRGGBB 硬编码集中到 colors.xml，类级缓存避免逐次查资源
+    private static final int TIME_GREEN = YGOUtil.c(R.color.pure_green);
+    private static final int TIME_YELLOW = YGOUtil.c(R.color.yellow);
+    private static final int TIME_ORANGE = YGOUtil.c(R.color.timer_orange);
+    private static final int TIME_RED = YGOUtil.c(R.color.pure_red);
+    private static final int TIME_WHITE = YGOUtil.c(R.color.white);
+
     private int getTimeColor(int player) {
         if (duelTimeLeft[player] > 0 && duelTimeLimit > 0) {
-            if (duelTimeLeft[player] >= duelTimeLimit / 2) return 0xFF00FF00;
-            if (duelTimeLeft[player] >= duelTimeLimit / 3) return 0xFFFFFF00;
-            if (duelTimeLeft[player] >= duelTimeLimit / 6) return 0xFFFF7F00;
-            return 0xFFFF0000;
+            if (duelTimeLeft[player] >= duelTimeLimit / 2) return TIME_GREEN;
+            if (duelTimeLeft[player] >= duelTimeLimit / 3) return TIME_YELLOW;
+            if (duelTimeLeft[player] >= duelTimeLimit / 6) return TIME_ORANGE;
+            return TIME_RED;
         }
-        return 0xFFFFFFFF;
+        return TIME_WHITE;
     }
 }

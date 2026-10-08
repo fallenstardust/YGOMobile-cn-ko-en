@@ -5,7 +5,9 @@ import java.util.Random;
 
 import ocgcore.enums.CardPosition;
 
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.game.GameField.ClientCard;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
  * GameField 的动画 / HUD 协作类：LP 变化动画状态机（Game::lpframe/lpplayer/lpd/...）、
@@ -51,6 +53,17 @@ class GameFieldMotion {
         field.lpPending = true;
     }
 
+    // 限时/卡数/攻击力对比色：原 0xFFRRGGBB 硬编码集中到 colors.xml（R.color.*），
+    // 本类每帧刷新故缓存为类级常量，避免逐帧重复查资源
+    private static final int TIME_GREEN = YGOUtil.c(R.color.pure_green);
+    private static final int TIME_YELLOW = YGOUtil.c(R.color.yellow);
+    private static final int TIME_ORANGE = YGOUtil.c(R.color.timer_orange);
+    private static final int TIME_RED = YGOUtil.c(R.color.pure_red);
+    private static final int TIME_WHITE = YGOUtil.c(R.color.white);
+    private static final int COUNT_AHEAD = TIME_YELLOW;
+    private static final int COUNT_BEHIND = YGOUtil.c(R.color.alert_red_orange);
+    private static final int COUNT_EQUAL = TIME_WHITE;
+
     /** 每帧调用（等价 DrawMisc L974-979 的推进） */
     public void updateLpAnimation() {
         if (!field.lpPending) return;
@@ -82,15 +95,15 @@ class GameFieldMotion {
         for (int i = 0; i < 2; i++) {
             if (field.dInfo.timeLeft[i] > 0 && field.dInfo.timeLimit > 0) {
                 if (field.dInfo.timeLeft[i] >= field.dInfo.timeLimit / 2)
-                    field.dInfo.timeColor[i] = 0xFF00FF00;
+                    field.dInfo.timeColor[i] = TIME_GREEN;
                 else if (field.dInfo.timeLeft[i] >= field.dInfo.timeLimit / 3)
-                    field.dInfo.timeColor[i] = 0xFFFFFF00;
+                    field.dInfo.timeColor[i] = TIME_YELLOW;
                 else if (field.dInfo.timeLeft[i] >= field.dInfo.timeLimit / 6)
-                    field.dInfo.timeColor[i] = 0xFFFF7F00;
+                    field.dInfo.timeColor[i] = TIME_ORANGE;
                 else
-                    field.dInfo.timeColor[i] = 0xFFFF0000;
+                    field.dInfo.timeColor[i] = TIME_RED;
             } else {
-                field.dInfo.timeColor[i] = 0xFFFFFFFF;
+                field.dInfo.timeColor[i] = TIME_WHITE;
             }
         }
     }
@@ -139,24 +152,24 @@ class GameFieldMotion {
             field.dInfo.totalAttack[p] = total;
         }
         if (field.dInfo.cardCount[0] > field.dInfo.cardCount[1]) {
-            field.dInfo.cardCountColor[0] = 0xFFFFFF00;
-            field.dInfo.cardCountColor[1] = 0xFFFF2A00;
+            field.dInfo.cardCountColor[0] = TIME_YELLOW;
+            field.dInfo.cardCountColor[1] = COUNT_BEHIND;
         } else if (field.dInfo.cardCount[1] > field.dInfo.cardCount[0]) {
-            field.dInfo.cardCountColor[1] = 0xFFFFFF00;
-            field.dInfo.cardCountColor[0] = 0xFFFF2A00;
+            field.dInfo.cardCountColor[1] = TIME_YELLOW;
+            field.dInfo.cardCountColor[0] = COUNT_BEHIND;
         } else {
-            field.dInfo.cardCountColor[0] = 0xFFFFFFFF;
-            field.dInfo.cardCountColor[1] = 0xFFFFFFFF;
+            field.dInfo.cardCountColor[0] = TIME_WHITE;
+            field.dInfo.cardCountColor[1] = TIME_WHITE;
         }
         if (field.dInfo.totalAttack[0] > field.dInfo.totalAttack[1]) {
-            field.dInfo.totalAttackColor[0] = 0xFFFFFF00;
-            field.dInfo.totalAttackColor[1] = 0xFFFF2A00;
+            field.dInfo.totalAttackColor[0] = TIME_YELLOW;
+            field.dInfo.totalAttackColor[1] = COUNT_BEHIND;
         } else if (field.dInfo.totalAttack[1] > field.dInfo.totalAttack[0]) {
-            field.dInfo.totalAttackColor[1] = 0xFFFFFF00;
-            field.dInfo.totalAttackColor[0] = 0xFFFF2A00;
+            field.dInfo.totalAttackColor[1] = TIME_YELLOW;
+            field.dInfo.totalAttackColor[0] = COUNT_BEHIND;
         } else {
-            field.dInfo.totalAttackColor[0] = 0xFFFFFFFF;
-            field.dInfo.totalAttackColor[1] = 0xFFFFFFFF;
+            field.dInfo.totalAttackColor[0] = TIME_WHITE;
+            field.dInfo.totalAttackColor[1] = TIME_WHITE;
         }
     }
 

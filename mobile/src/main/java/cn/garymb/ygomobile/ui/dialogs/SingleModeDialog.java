@@ -365,6 +365,25 @@ public class SingleModeDialog {
         }
     }
 
+    public boolean isShowing() {
+        return popupWindow != null && popupWindow.isShowing();
+    }
+
+    /**
+     * 是否可原样重显：弹窗已创建且当前未显示即视为“隐藏待复用”——本窗唯一持有者是
+     * Activity 字段，彻底销毁只在 onDestroy（那里紧接置空引用），无需额外隐藏标志；
+     * 关闭（退出按钮/返回键）仅 dismiss 弹窗，视图与选择状态全部保留在 contentView 上
+     */
+    public boolean canReshow() {
+        return popupWindow != null && !popupWindow.isShowing();
+    }
+
+    /** 重新显示此前隐藏的对话框：不重新 inflate/不重读 bot、残局列表，回到关闭前选择状态 */
+    public void reshow(View anchorView) {
+        if (popupWindow == null || draggableHelper == null || popupWindow.isShowing()) return;
+        draggableHelper.showPopup(popupWindow, anchorView);
+    }
+
     /** 内部跳转（人机对战建主进入玩家等待界面）：抑制外部 dismiss 回调后关闭，
      * 避免误触发 restoreMainMenu 在等待界面上层弹出主菜单 */
     public void hideForNavigation() {
@@ -383,7 +402,15 @@ public class SingleModeDialog {
     // === 静态入口：由 YGOProActivity 调用 ===
 
     public static void showSingleModeDialog(YGOProActivity activity) {
+        SingleModeDialog existing = activity.getSingleModeDialog();
+        // 已在显示中：忽略重复点击
+        if (existing != null && existing.isShowing()) return;
         activity.getMainMenuDialog().hideMainMenu();
+        // 此前初始化过：原样重显，保留关闭前的 tab/列表选中/复选框/卡组选择状态
+        if (existing != null && existing.canReshow()) {
+            existing.reshow(activity.getDialogContainer());
+            return;
+        }
         File botConfFile = new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH);
         List<BotUtil.BotInfo> botList = BotUtil.parseBotConfig(botConfFile);
 
@@ -417,5 +444,6 @@ public class SingleModeDialog {
         });
         dialog.show(activity.getDialogContainer(), botList, puzzleList);
         dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+        activity.setSingleModeDialog(dialog);
     }
 }

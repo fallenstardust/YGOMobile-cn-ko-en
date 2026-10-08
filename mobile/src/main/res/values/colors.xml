@@ -44,4 +44,112 @@
     <color name="ygopro_list_background">#0A5C5C</color>
     <color name="ygopro_line_color">#FFA2D8F4</color>
     <color name="ygopro_background_color">#aa11113d</color>
+
+    <!-- ===== 决斗界面集中调色板（原 Java 侧硬编码 ARGB 字面量统一入资源，便于全局微调） ===== -->
+    <!-- 可发动呼吸提示点（CardOverlayRenderer）：含发动→荧光绿，仅其他命令→荧光蓝 -->
+    <color name="neon_green">#39FF14</color>
+    <color name="neon_blue">#00BFFF</color>
+    <!-- 基础纯色（gframe 聊天/高亮/时点用高饱和色） -->
+    <color name="pure_red">#FF0000</color>
+    <color name="pure_green">#00FF00</color>
+    <color name="pure_blue">#0000FF</color>
+    <color name="pure_cyan">#00FFFF</color>
+    <color name="classic_gold">#FFD700</color>
+    <!-- 白/黑带透明度变体（阴影、半透底、hint 文字） -->
+    <color name="white_aa">#AAFFFFFF</color>
+    <color name="white_cc">#CCFFFFFF</color>
+    <color name="white_88">#88FFFFFF</color>
+    <color name="white_40">#40FFFFFF</color>
+    <color name="black_a0">#A0000000</color>
+    <color name="black_c0">#C0000000</color>
+    <color name="black_80">#80000000</color>
+    <color name="black_60">#60000000</color>
+    <color name="black_bc">#BC000000</color>
+    <!-- LP 变化 / 限时 / 告警（DuelEventHandler、GameFieldMotion、GameTopInfoManager） -->
+    <color name="timer_orange">#FF7F00</color>
+    <color name="alert_red_orange">#FF2A00</color>
+    <color name="glow_red">#FF4444</color>
+    <!-- 场上 HUD（FieldHudRenderer、FieldTextureManager、GameFieldView） -->
+    <color name="stat_cyan_light">#99FFFF</color>
+    <color name="xyz_level_pink">#FF80FF</color>
+    <color name="stat_decrease_pink">#FF2090</color>
+    <color name="scale_number_cyan">#40E0FF</color>
+    <color name="cover_fallback_opp">#3A2820</color>
+    <color name="cover_fallback_self">#28303A</color>
+    <color name="tex_missing_gray">#555560</color>
+    <color name="preview_error_salmon">#FF8080</color>
+    <!-- 弹幕/大厅聊天文字色，对齐 gframe drawing.cpp chatColor（FieldChatBoard） -->
+    <color name="chat_color_red">#FF4040</color>
+    <color name="chat_color_green">#40FF40</color>
+    <color name="chat_color_blue">#4040FF</color>
+    <color name="chat_color_cyan">#40FFFF</color>
+    <color name="chat_color_magenta">#FF40FF</color>
+    <color name="chat_color_yellow">#FFFF40</color>
+    <color name="chat_color_gray">#808080</color>
+    <color name="chat_color_dark_gray">#404040</color>
+    <color name="chat_color_lavender">#8080FF</color>
+    <!-- 蚂蚁线选择框（MarchingAntsDrawable） -->
+    <color name="ants_fore_green">#3CFF5A</color>
+    <color name="ants_back_green">#E6001A00</color>
+    <!-- 科幻风 UI（SciFiRenderer） -->
+    <color name="scifi_cyan">#00E5FF</color>
+    <color name="scifi_cyan_50">#8000E5FF</color>
+    <color name="scifi_dark_bg">#CC001020</color>
+    <color name="scifi_panel_bg">#DD001830</color>
+    <color name="scifi_starfield_bg">#000814</color>
+    <color name="scifi_glow_a15">#15004080</color>
+    <color name="scifi_glow_a10">#10002060</color>
+    <color name="card_frame_back">#4A3728</color>
+    <color name="card_frame_effect">#00FF88</color>
+    <color name="card_frame_fusion">#FF6600</color>
+    <color name="card_frame_ritual">#AA00FF</color>
+    <color name="card_frame_synchro">#00CCFF</color>
+    <color name="card_frame_link">#0088FF</color>
+    <!-- 布局编辑器预览（FieldEditPreview） -->
+    <color name="preview_bg">#0B1118</color>
+    <color name="preview_field_fill">#14212C</color>
+    <color name="preview_grid_line">#2E4A5E</color>
+    <color name="preview_zone_fill">#3300C8F0</color>
+    <color name="preview_zone_stroke">#8800C8F0</color>
+    <color name="preview_hand_self">#33516E</color>
+    <color name="preview_hand_opp">#5C4433</color>
+    <!-- 列表/弹窗（HostListAdapter、OptionDialog/PosSelectDialog/DraggablePopupHelper 等） -->
+    <color name="list_selected_sky">#5587CEEB</color>
+    <color name="popup_frame_fill">#E0303030</color>
+    <color name="popup_frame_stroke">#7A7A7A</color>
+    <color name="seat_occupied_teal">#60045F6A</color>
+    <color name="option_bg_blue">#335577</color>
+    <color name="option_bg_red">#AA3333</color>
+    <color name="card_name_spell_green">#90EE90</color>
+    <color name="card_name_trap_pink">#FFB6C1</color>
+    <color name="card_list_selected_bg">#6011113D</color>
+    <color name="card_list_opponent_gray">#5A5A5A</color>
+    <color name="deck_list_divider">#3A5A6B</color>
+    <color name="duel_log_card_text">#FFD27F</color>
+    <!-- 卡组饼图 12 系列色（DeckPieChartView） -->
+    <color name="material_green">#4CAF50</color>
+    <color name="material_orange">#FF9800</color>
+    <color name="material_pink">#E91E63</color>
+    <color name="material_yellow">#FFEB3B</color>
+    <color name="material_purple">#9C27B0</color>
+    <color name="material_cyan">#00BCD4</color>
+    <color name="material_deep_orange">#FF5722</color>
+    <color name="material_brown">#795548</color>
+    <color name="material_blue_gray">#607D8B</color>
+    <color name="material_light_green">#8BC34A</color>
+    <color name="material_lime">#CDDC39</color>
+    <array name="deck_pie_series_colors">
+        <item>@color/material_green</item>
+        <item>@color/colorMain</item>
+        <item>@color/material_orange</item>
+        <item>@color/material_pink</item>
+        <item>@color/material_yellow</item>
+        <item>@color/material_purple</item>
+        <item>@color/material_cyan</item>
+        <item>@color/material_deep_orange</item>
+        <item>@color/material_brown</item>
+        <item>@color/material_blue_gray</item>
+        <item>@color/material_light_green</item>
+        <item>@color/material_lime</item>
+    </array>
 </resources>

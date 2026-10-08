@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.enums.CardLocation;
 import ocgcore.enums.CardPosition;
 import ocgcore.enums.CardType;
@@ -609,11 +611,11 @@ public class GameField {
         public int timeLimit;// 秒，0=无限时
         public int[] timeLeft = new int[2];
         public int timePlayer = -1;
-        public int[] timeColor = {0xFFFFFFFF, 0xFFFFFFFF};
+        public int[] timeColor = {YGOUtil.c(R.color.white), YGOUtil.c(R.color.white)};
         public int[] cardCount = new int[2];
-        public int[] cardCountColor = {0xFFFFFFFF, 0xFFFFFFFF};
+        public int[] cardCountColor = {YGOUtil.c(R.color.white), YGOUtil.c(R.color.white)};
         public int[] totalAttack = new int[2];
-        public int[] totalAttackColor = {0xFFFFFFFF, 0xFFFFFFFF};
+        public int[] totalAttackColor = {YGOUtil.c(R.color.white), YGOUtil.c(R.color.white)};
     }
 
     public final DuelInfo dInfo = new DuelInfo();
