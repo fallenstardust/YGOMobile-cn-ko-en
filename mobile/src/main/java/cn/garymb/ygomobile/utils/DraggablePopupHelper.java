@@ -563,6 +563,11 @@ public class DraggablePopupHelper {
         private View collapseTitleView;
         private boolean collapsible;
         private boolean collapsed;
+        /** 收缩前对话框被拖拽的整层平移量：收缩时暂存并归零，让横条统一锚定到
+         *  layout_game_right 底部中央、与聊天输入框同高同位；展开时还原以保持对话框
+         *  被拖到的位置（横竖屏、任意拖拽位置一致，用户规格） */
+        private float preCollapseTX;
+        private float preCollapseTY;
         /** 本次手势 DOWN 是否落在收缩横条/把手上：是则整体禁用拖拽逻辑 */
         private boolean touchOnCollapseWidget;
         /** 收缩横条的布局补偿监听目标（旋转重建后聊天输入框/区域尚未布局时挂一次性重锚，按实例去重） */
@@ -669,7 +674,19 @@ public class DraggablePopupHelper {
             if (!collapsible || getChildCount() == 0) return;
             View content = getChildAt(0);
             if (doCollapse) {
+                // 收缩一律归零拖拽残留的整层平移：包装层被拖到任意位置后，横条若随层一起平移，
+                // refreshCollapseAnchors 的横向居中虽按整层屏幕坐标补偿、但纵向用 bottomMargin 相对
+                // 已平移的层底边锚定，会把横条偏离 layout_game_right 底部中央与聊天输入框（尤其纵向）。
+                // 故先记下平移量再归零，让横条在净零平移下精确锚定到底部中央/与聊天输入框同高同位；
+                // 展开时还原平移，对话框仍回到被拖到的原位置（横竖屏一致，用户规格）
+                preCollapseTX = getTranslationX();
+                preCollapseTY = getTranslationY();
+                setTranslationX(0f);
+                setTranslationY(0f);
                 refreshCollapseAnchors();
+            } else {
+                setTranslationX(preCollapseTX);
+                setTranslationY(preCollapseTY);
             }
             collapsed = doCollapse;
             content.setVisibility(doCollapse ? GONE : VISIBLE);
@@ -815,6 +832,9 @@ public class DraggablePopupHelper {
             // 否则旧方向的平移叠加新 margin 会把内容与把手推出可视区（标题缺顶、「▼」消失、询问窗无法取消）
             setTranslationX(0f);
             setTranslationY(0f);
+            // 旋转已丢弃拖拽位置，收缩前平移快照同步作废，避免展开时把内容/横条恢复到旧方向的失效平移
+            preCollapseTX = 0f;
+            preCollapseTY = 0f;
             // 子视图尺寸依赖外部解算的弹窗（如选卡/卡片确认按区域宽烘焙卡图）→ 交由自定义重排全权处理
             if (customRelayout != null) {
                 customRelayout.run();
