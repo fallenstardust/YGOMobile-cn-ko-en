@@ -510,4 +510,12 @@
     <string name="resource_lflist">· 금지리스트</string>
     <string name="resource_strings">· 텍스트 및 설정</string>
     <string name="resource_pics">· 카드 이미지 압축 파일</string>
+
+    <string name="settings_native_game_mode">네이티브 UI 게임 모드</string>
+    <string name="settings_native_game_mode_summary">Irrlicht 엔진 대신 Android 네이티브 UI 사용 (실험적)</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">현재로 이동</string>
+    <string name="refresh_lan_button">LAN 새로고침</string>
+    <string name="mode_single_duel_solo">솔로 모드</string>
 </resources>

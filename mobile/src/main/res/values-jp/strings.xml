@@ -494,4 +494,12 @@
     <string name="resource_lflist">· リミットレギュレーション</string>
     <string name="resource_strings">· 文字列などの設定</string>
     <string name="resource_pics">· カード画像アーカイブ</string>
+
+    <string name="settings_native_game_mode">ネイティブUIゲームモード</string>
+    <string name="settings_native_game_mode_summary">Irrlichtエンジンの代わりにAndroidネイティブUIを使用（試験的）</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">現在へ移動</string>
+    <string name="refresh_lan_button">LANを更新</string>
+    <string name="mode_single_duel_solo">ソロモード</string>
 </resources>

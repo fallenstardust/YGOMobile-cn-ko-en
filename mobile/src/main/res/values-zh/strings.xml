@@ -498,4 +498,9 @@
     <string name="resource_lflist">· 禁卡表</string>
     <string name="resource_strings">· 字段等配置</string>
     <string name="resource_pics">· 卡图压缩包</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">跳到当前</string>
+    <string name="refresh_lan_button">刷新局域网</string>
+    <string name="mode_single_duel_solo">单人模式</string>
 </resources>

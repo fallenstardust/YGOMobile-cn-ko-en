@@ -521,7 +521,7 @@
     <string name="resource_pics">• Card Images Pack</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->
-    <string name="create_host_button">Create Host</string>
+    <string name="spectator_skip_to_current">to Current</string>
     <string name="refresh_lan_button">Refresh LAN</string>
     <string name="mode_single_duel_solo">Solo Mode</string>
 </resources>

@@ -491,6 +491,14 @@
     <string name="resource_lflist">· Lista de prohibidas</string>
     <string name="resource_strings">· Configuración de textos</string>
     <string name="resource_pics">· Archivo de imágenes de cartas</string>
+
+    <string name="settings_native_game_mode">Modo de juego UI nativa</string>
+    <string name="settings_native_game_mode_summary">Usa la interfaz nativa de Android en lugar del motor Irrlicht (experimental)</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">Al actual</string>
+    <string name="refresh_lan_button">Actualizar LAN</string>
+    <string name="mode_single_duel_solo">Modo solo</string>
 </resources>
 
 
