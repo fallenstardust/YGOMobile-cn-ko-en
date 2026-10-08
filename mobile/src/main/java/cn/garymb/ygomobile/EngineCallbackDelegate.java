@@ -52,6 +52,14 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     // STOC_REPLAY 紧随 STOC_DUEL_END 下发：录像处理延迟到该窗口内无新数据到达再启动，
     // 避免在录像数据尚未收齐时就走到「决斗结束」弹窗
     private static final long REPLAY_ARRIVAL_WAIT_MS = 800;
+    /** 观战结算前动画排空等待：轮询间隔与超时兜底（异常/卡死时不再无限等待） */
+    private static final long ANIM_SETTLE_POLL_MS = 100L;
+    private static final long ANIM_SETTLE_TIMEOUT_MS = 20000L;
+    /** 本次决斗结束等待动画排空的截止时间戳（DUEL_END 置位，processPendingReplays 轮询至空或超时） */
+    private long animSettleDeadlineMs = 0L;
+    /** 决斗结束时本端是否观战（在 disconnect 前捕获，避免断开后身份丢失）：
+     *  观战结算前才需等待动画排空（需求4），对战玩家不等待 */
+    private boolean duelEndedAsSpectator = false;
     private final Runnable duelEndReplayProcessor = new Runnable() {
         @Override
         public void run() {
@@ -102,7 +110,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 int selfSeat = activity.engine.getClient().selfType;
                 if (selfSeat >= 7) {
                     // 观战者（NETPLAYER_TYPE_OBSERVER）：不显示底部行动区与时点按钮，
-                    // 左侧面板常驻录像控制条的「切换视角/退出」两项
+                    // 左侧面板常驻专用观战控制集（跳到当前/切换视角/退出，需求5）
                     //（对齐 event_handler.cpp BUTTON_REPLAY_SWAP / BUTTON_LEAVE_GAME 观战分支）
                     activity.cardDetailPanel.showSpectatorControls();
                 } else {
@@ -136,7 +144,12 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                     resultDialog.dismiss();
                     resultDialog = null;
                 }
+                // 断开前捕获观战身份（需求4：观战结算前需等所有 msg 对应动画排空）
+                duelEndedAsSpectator = activity.engine != null && activity.engine.isSpectator();
                 if (activity.engine != null) activity.engine.disconnect();
+                // 观战结算前先置动画排空等待截止（processPendingReplays 轮询至消息队列空闲
+                // 且无动画在播再弹保存录像 dialog，超时兜底防卡死；对战玩家无此等待）
+                animSettleDeadlineMs = System.currentTimeMillis() + ANIM_SETTLE_TIMEOUT_MS;
                 // 顺序：先处理通讯发来的录像（保存/取消），全部完成后再弹「决斗结束」对话框
                 scheduleReplayProcessing();
                 break;
@@ -185,6 +198,11 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     /** 抑制下一次 DISCONNECTED 自动 returnToLanMain（由退出等待界面入口在 disconnect 前置位） */
     void suppressNextDisconnectedReturn() {
         suppressDisconnectedReturn = true;
+    }
+
+    /** 是否正处于「决斗结束 → 待点确定返回主界面」的收尾流程（弹窗期间旋转须保持决斗 UI 显示） */
+    boolean isDuelEndHandling() {
+        return duelEndHandling;
     }
 
     @Override
@@ -421,6 +439,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         // MSG_WIN 结算即清除场上所有蚂蚁线高亮（选择态列表 + 格子 mask），
         // 胜负文字/结算窗照常展示；多局制下一局结束时也不残留上局高亮
         activity.runOnUiThread(() -> activity.fieldCtl.clearSelectionVisuals());
+        // 观战「跳到当前」瞬间排空期间：丢弃各局胜负文字覆盖与胜负 BGM 覆盖（对齐其他动画回调
+        // 的 replaySkip 抑制），多局制下不逐局回显 you win/you lose，直接落位到当前最终局面
+        if (activity.engine != null && activity.engine.replaySkip) return;
         activity.runOnUiThread(() -> {
             boolean selfWon = winner != 2 && activity.engine.isSelfSide(winner);
             int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
@@ -665,6 +686,16 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             pendingReplays.clear();
             return;
         }
+        // 观战：已收的全部通讯 msg 可能仍在按动画序列逐个播放（统一闸门串行化），
+        // 等到消息队列排空且无任何动画在播——观战者视觉上决斗确实结束后，再弹保存录像 dialog；
+        // 超时兜底防动画卡死时无限等待（对齐需求：动画未完不弹、播完先弹录像后弹决斗结束）
+        GameEngine eng = activity.engine;
+        if (eng != null && duelEndedAsSpectator
+                && (eng.hasPendingMsgs() || !eng.isMsgQueueIdle() || eng.isAnyAnimationBusy())
+                && System.currentTimeMillis() < animSettleDeadlineMs) {
+            activity.mainHandler.postDelayed(duelEndReplayProcessor, ANIM_SETTLE_POLL_MS);
+            return;
+        }
         if (pendingReplays.isEmpty()) {
             showDuelEndDialog();
             return;
@@ -806,6 +837,8 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     /** returnToLanMain：断线/决斗结束返回时清空待处理录像与相关标志 */
     void resetDuelEndState() {
         duelEndHandling = false;
+        duelEndedAsSpectator = false;
+        animSettleDeadlineMs = 0L;
         pendingReplays.clear();
         if (replaySaveDialog != null) {
             replaySaveDialog.dismiss();

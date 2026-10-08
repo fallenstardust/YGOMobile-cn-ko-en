@@ -65,11 +65,13 @@ public class DeckHandMotionManager {
         DuelLogDialog.addLog(DuelLogDialog.sysFormat(208, "确认%d张卡：", count));
 
         int start = data.position();
+        int panelCount = 0; // 面板确认卡数（loc&0x41，对齐 duelclient.cpp L2546-2566 与 CardSelectController 过滤）
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
             int ctrl = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
+            if ((loc & 0x41) != 0) panelCount++;
             DuelLogDialog.addLog("*[" + DataManager.get().getName(code) + "]", code);
             // 对齐 duelclient.cpp MSG_CONFIRM_CARDS L2542-2544：确认消息自带真实卡码，必须
             // 写回卡对象。客机加入遮蔽型外部服务器时「卡组→手卡」的 MSG_MOVE 卡码为 0，
@@ -95,8 +97,19 @@ public class DeckHandMotionManager {
         packed.put((byte) skipPanel);
         packed.put(data);
         packed.flip();
+        // 对齐 duelclient.cpp L2610-2620：将弹确认面板（!skip_panel && panel 卡≥、且非观战/非快进）时，
+        // 在派发链上同步持有消息闸门，使 drainPendingMsgs 处理完本条 MSG_CONFIRM_CARDS 后立即断链，
+        // 后续 msg 挂起直到对话框确认释放（C++ actionSignal.Wait() 的 Java 等价）。
+        // 判定条件与 CardSelectController.showConfirmCardsDialog 的显示条件一致；弹不出时由其释放。
+        if (skipPanel == 0 && panelCount > 1
+                && !engine.replaySkip && !engine.isSpectator()) {
+            engine.holdMsgGateForDialog();
+        }
         engine.mainHandler.post(() -> {
-            if (engine.replaySkip) return; // 回放快进重排：不叠加确认面板（落点后无需回补，gframe 回放同款面板非必需）
+            if (engine.replaySkip) { // 回放快进重排：不叠加确认面板（落点后无需回补，gframe 回放同款面板非必需）
+                engine.releaseMsgGateForDialog(); // 不会弹：释放上方可能已同步持有的闸门，避免永久挂起
+                return;
+            }
             if (engine.listener != null) engine.listener.onSelectRequired(27, packed);
         });
     }

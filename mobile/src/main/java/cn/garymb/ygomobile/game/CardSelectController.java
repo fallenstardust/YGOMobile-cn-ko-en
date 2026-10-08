@@ -656,6 +656,7 @@ class CardSelectController {
         // 纯展示：OK 仅关闭（无响应数据），对齐 C++ BUTTON_CARD_SEL_OK 的 actionSignal.Set()
         if (data == null || data.remaining() < 1) {
             util.panel().hideCancelOrFinishButton();
+            util.engine().releaseMsgGateForDialog(); // 弹不出：释放 applyConfirmCards 的同步持闸
             return;
         }
         int skipPanel = data.get() & 0xFF;
@@ -674,6 +675,14 @@ class CardSelectController {
         // skip_panel 或面板卡不足 2 张（单张走场上翻卡动画路径）时不弹面板
         if (skipPanel != 0 || items.size() <= 1) {
             util.panel().hideCancelOrFinishButton();
+            util.engine().releaseMsgGateForDialog(); // 弹不出：释放 applyConfirmCards 的同步持闸
+            return;
+        }
+        // 对齐 duelclient.cpp L2610：观战者（player_type==7）不弹确认卡片面板，
+        // 也不持闸阻塞消息线程——观战只跟随实况动画推进
+        if (util.engine().isSpectator()) {
+            util.panel().hideCancelOrFinishButton();
+            util.engine().releaseMsgGateForDialog(); // 观战不弹：防御性释放（applyConfirmCards 已按观战不持闸）
             return;
         }
         CardDisplayDialog dialog = new CardDisplayDialog(util.activity, util.imageLoader);
@@ -686,8 +695,12 @@ class CardSelectController {
                 .setOnDismissListener(() -> {
                     util.panel().hideCancelOrFinishButton();
                     util.panel().setCardDisplayDialog(null);
+                    // 对齐 C++ BUTTON_CARD_SEL_OK → actionSignal.Set()：确认后释放闸门继续派发后续消息
+                    util.engine().releaseMsgGateForDialog();
                 })
                 .show();
+        // 对齐 C++ MSG_CONFIRM_CARDS 显示面板后 actionSignal.Wait()：持闸暂停决斗进度，直到点确定
+        util.engine().holdMsgGateForDialog();
     }
 
     public void showCardInfoFromItem(CardDisplayDialog.CardItem item) {

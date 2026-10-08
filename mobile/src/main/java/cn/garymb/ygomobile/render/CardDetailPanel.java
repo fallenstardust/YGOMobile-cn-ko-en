@@ -49,6 +49,10 @@ public class CardDetailPanel {
 
     private LinearLayout layoutReplayControl;
     private Button btnReplayPlay, btnReplayPause, btnReplayNext, btnReplayLast, btnReplayShuffle, btnReplayQuit;
+    // 观战控制集（需求5）：平时隐藏、仅观战时显示，代替录像控制条的切换视角/退出，
+    // 额外提供「跳到当前」（横竖屏两套 XML 均有同 ID 控件）
+    private LinearLayout layoutSpectatorControl;
+    private Button btnSpectatorSkip, btnSpectatorSwap, btnSpectatorQuit;
     private LinearLayout layoutDeckControl;
 
     /** 观战模式：左侧面板常驻录像控制条但只显示「切换视角/退出」（播控按钮 INVISIBLE），
@@ -126,11 +130,18 @@ public class CardDetailPanel {
         btnReplayLast = activity.findViewById(R.id.btn_replay_last);
         btnReplayShuffle = activity.findViewById(R.id.btn_replay_shuffle);
         btnReplayQuit = activity.findViewById(R.id.btn_replay_quit);
+        layoutSpectatorControl = activity.findViewById(R.id.layout_spectator_control);
+        btnSpectatorSkip = activity.findViewById(R.id.btn_spectator_skip);
+        btnSpectatorSwap = activity.findViewById(R.id.btn_spectator_swap);
+        btnSpectatorQuit = activity.findViewById(R.id.btn_spectator_quit);
         layoutDeckControl = activity.findViewById(R.id.layout_deck_control);
 
         // 录像控制按钮文字复用 gframe 既有系统字符串（对齐 game.cpp wReplayControl）：
         // 播放 1343 / 暂停 1344 / 下一步 1345 / 上一步 1360 / 切换视角 1346 / 退出 1347
         applyReplayButtonTitles();
+        // 观战控制集文字：切换视角 1346 / 退出 1347 复用 gframe 系统字符串，
+        // 跳到当前无对应索引，走 XML 的 @string/spectator_skip_to_current（需求5用户指定）
+        applySpectatorButtonTitles();
         // 时点三键文字在此先行着色（对齐 game.cpp 1292/1293/1294），MSG_NEW_TURN 的 showChainButtons 会再次刷新
         applyChainButtonTitles();
 
@@ -343,6 +354,29 @@ public class CardDetailPanel {
                 else activity.quitReplay();
             });
         }
+
+        // 观战控制集（需求5）：与录像控制条同位互斥，仅观战时可见
+        if (btnSpectatorSkip != null) {
+            btnSpectatorSkip.setOnClickListener(v -> {
+                playButtonSound();
+                // 跳到当前：无视动画直接落到最后一条 msg 的决斗局面
+                activity.onSpectatorSkipToCurrent();
+            });
+        }
+        if (btnSpectatorSwap != null) {
+            btnSpectatorSwap.setOnClickListener(v -> {
+                playButtonSound();
+                // 切换视角（与录像条 shuffle 观战分支一致，功能不变）
+                activity.onSpectatorSwapField();
+            });
+        }
+        if (btnSpectatorQuit != null) {
+            btnSpectatorQuit.setOnClickListener(v -> {
+                playButtonSound();
+                // 退出观战（与录像条 quit 观战分支一致，功能不变）
+                activity.quitSpectator();
+            });
+        }
     }
 
     /** 当前回放播放器（GameEngine 协作件，恒存在；仅在真正有回放会话时返回） */
@@ -449,6 +483,16 @@ public class CardDetailPanel {
             btnReplayShuffle.setText(mStringManager.getSystemString(1346, "切换视角"));
         if (btnReplayQuit != null)
             btnReplayQuit.setText(mStringManager.getSystemString(1347, "退出"));
+    }
+
+    /** 观战控制集按钮文字：切换视角/退出复用 gframe 系统字符串 1346/1347（与录像条同源），
+     *  跳到当前无对应系统字符串索引，保留 XML 的 @string 资源文本不做 getSystemString 覆盖 */
+    private void applySpectatorButtonTitles() {
+        mStringManager = DataManager.get().getStringManager();
+        if (btnSpectatorSwap != null)
+            btnSpectatorSwap.setText(mStringManager.getSystemString(1346, "切换视角"));
+        if (btnSpectatorQuit != null)
+            btnSpectatorQuit.setText(mStringManager.getSystemString(1347, "退出"));
     }
 
     /** 按钮文字取自 strings.conf（对齐 game.cpp L1348/1350/1352 的 GetSysString(1292/1293/1294)） */
@@ -788,6 +832,7 @@ public class CardDetailPanel {
         showDefault();
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
+        if (layoutSpectatorControl != null) layoutSpectatorControl.setVisibility(View.GONE);
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.VISIBLE);
     }
 
@@ -815,6 +860,7 @@ public class CardDetailPanel {
     public void showReplayControls() {
         spectatorMode = false;
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
+        if (layoutSpectatorControl != null) layoutSpectatorControl.setVisibility(View.GONE);
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.VISIBLE);
         if (btnReplayShuffle != null) btnReplayShuffle.setVisibility(View.VISIBLE);
         if (btnReplayQuit != null) btnReplayQuit.setVisibility(View.VISIBLE);
@@ -824,8 +870,8 @@ public class CardDetailPanel {
 
     /**
      * 观战控制面板（对齐 event_handler.cpp：观战无行动/时点权限，btnSwapY 与退出可用）：
-     * 隐藏底部行动区与时点三键，左侧面板常驻录像控制条但只显示「切换视角/退出」，
-     * 播控四键（播放/暂停/上一步/下一步）保持 INVISIBLE 占位不跳变
+     * 隐藏底部行动区与时点三键，用专用观战控制集（跳到当前/切换视角/退出，需求5）
+     * 代替录像控制条；与录像条同位互斥，进观战时隐藏录像条、显示观战集
      */
     public void showSpectatorControls() {
         spectatorMode = true;
@@ -834,14 +880,8 @@ public class CardDetailPanel {
         updateShuffleButton(false);
         setSurrenderVisible(false);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.GONE);
-        if (layoutReplayControl == null) return;
-        layoutReplayControl.setVisibility(View.VISIBLE);
-        if (btnReplayPlay != null) btnReplayPlay.setVisibility(View.INVISIBLE);
-        if (btnReplayPause != null) btnReplayPause.setVisibility(View.INVISIBLE);
-        if (btnReplayNext != null) btnReplayNext.setVisibility(View.INVISIBLE);
-        if (btnReplayLast != null) btnReplayLast.setVisibility(View.INVISIBLE);
-        if (btnReplayShuffle != null) btnReplayShuffle.setVisibility(View.VISIBLE);
-        if (btnReplayQuit != null) btnReplayQuit.setVisibility(View.VISIBLE);
+        if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
+        if (layoutSpectatorControl != null) layoutSpectatorControl.setVisibility(View.VISIBLE);
     }
 
     /** 当前是否处于观战控制面板模式 */
@@ -873,6 +913,7 @@ public class CardDetailPanel {
     public void hideReplayControls() {
         spectatorMode = false;
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
+        if (layoutSpectatorControl != null) layoutSpectatorControl.setVisibility(View.GONE);
     }
 
 }

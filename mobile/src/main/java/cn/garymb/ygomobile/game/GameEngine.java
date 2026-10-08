@@ -139,7 +139,11 @@ public class GameEngine {
     boolean animGateClosed = false;    // 动画播放期间关闭闸门，暂缓后续消息
     /** 闸门兜底超时：万一特效队列因异常未排空，超时后强制重开，避免消息永久卡死 */
     private static final long ANIM_GATE_TIMEOUT_MS = 8000L;
+    /** 确认卡片对话框持闸（对齐 C++ MSG_CONFIRM_CARDS 显示面板后 actionSignal.Wait() 阻塞消息线程）：
+     *  置位期间轮询器/超时兜底/idle 快路径一律不得重开闸门继续派发，直到对话框确认释放 */
+    private volatile boolean dialogGateHeld = false;
     final Runnable animGateFailsafe = () -> {
+        if (dialogGateHeld) return; // 对话框持闸优先于超时兜底，不得提前放行后续消息
         animGateClosed = false;
         drainPendingMsgs();
     };
@@ -753,6 +757,10 @@ public class GameEngine {
                     closeAnimGate();
                     break;
                 }
+                // 确认卡片对话框持闸（MSG_CONFIRM_CARDS 在派发链上同步 holdMsgGateForDialog）：闸门已关
+                // 但无卡片动画在播，循环不会经上面分支退出，此处据 animGateClosed 断链——对齐 C++
+                // panel_confirm 显示后 actionSignal.Wait() 阻塞消息线程，不点确定后续 msg 一律不派发
+                if (animGateClosed) break;
             }
         } finally {
             dispatchingMsg = false;
@@ -772,6 +780,29 @@ public class GameEngine {
     /** 重开动画闸门：清轮询器与超时兜底，继续派发被暂缓的后续消息 */
     private void reopenAnimGate() {
         if (!animGateClosed) return;
+        if (dialogGateHeld) return; // 对话框持闸期间不得因动画空闲/特效 idle 回调而重开
+        animGateClosed = false;
+        mainHandler.removeCallbacks(animGatePoller);
+        mainHandler.removeCallbacks(animGateFailsafe);
+        drainPendingMsgs();
+    }
+
+    /**
+     * 确认卡片对话框显示时持有消息闸门：对齐 C++ duelclient.cpp MSG_CONFIRM_CARDS
+     *（player_type!=7 显示面板后 actionSignal.Reset(); actionSignal.Wait();）——不点确定
+     * 则后续通讯一律挂起，决斗进度暂停。关闭轮询器/超时兜底，避免动画播完后自动重开。
+     */
+    public void holdMsgGateForDialog() {
+        dialogGateHeld = true;
+        mainHandler.removeCallbacks(animGatePoller);
+        mainHandler.removeCallbacks(animGateFailsafe);
+        animGateClosed = true;
+    }
+
+    /** 确认卡片对话框点确定后释放闸门：解除持闸标志并重开，继续派发被暂缓的后续消息 */
+    public void releaseMsgGateForDialog() {
+        if (!dialogGateHeld) return;
+        dialogGateHeld = false;
         animGateClosed = false;
         mainHandler.removeCallbacks(animGatePoller);
         mainHandler.removeCallbacks(animGateFailsafe);
@@ -831,6 +862,47 @@ public class GameEngine {
         if (!animGateClosed) return;
         if (isAnyAnimationBusy()) return;
         reopenAnimGate();
+    }
+
+    /**
+     * 观战「跳到当前」：无视动画，将当前已收到的全部 pendingMsgs 一次性即时落位到最后一条
+     * msg 对应的决斗局面，让观战者无需再看前面的回放/特效动画。
+     * 复用回放快进语义（{@code replaySkip} + {@code field.instantPlace} + 音效静默）令闸门不阻塞、
+     * 队列单帧排空；与 {@code ReplayPlayer.beginInstantSkip}/{@code endInstantSkip} 同构。
+     * 仅观战生效；排空后恢复常规节奏，后续新到消息仍按正常动画播放。
+     */
+    public void spectatorSkipToCurrent() {
+        if (!isSpectator()) return;
+        mainHandler.post(() -> {
+            dialogGateHeld = false; // 观战本就不持确认卡片闸门，防御性复位
+            replaySkip = true;
+            field.instantPlace = true;
+            if (soundManager != null) soundManager.setEffectsSuppressed(true);
+            animGateClosed = false;
+            animHoldUntilMs = 0;
+            mainHandler.removeCallbacks(animGatePoller);
+            mainHandler.removeCallbacks(animGateFailsafe);
+            // 一次性排空当前队列（忽略动画占用），落到最新局面
+            dispatchingMsg = true;
+            try {
+                Runnable r;
+                while ((r = pendingMsgs.poll()) != null) r.run();
+            } finally {
+                dispatchingMsg = false;
+            }
+            // 还原正常播放节奏
+            replaySkip = false;
+            field.instantPlace = false;
+            if (soundManager != null) soundManager.setEffectsSuppressed(false);
+            animHoldUntilMs = 0;
+            // 按最终局面的坐标强制对齐所有卡面（instantPlace 已直接落位，此处重刷避免残留插值坐标）
+            field.refreshAllCards();
+            if (listener != null) {
+                listener.onFieldChanged();
+                listener.onPlayerInfoUpdated(0);
+                listener.onPlayerInfoUpdated(1);
+            }
+        });
     }
 
     // === 对局状态标志与视角换算 ===

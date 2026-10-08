@@ -269,8 +269,12 @@ public class YGOProActivity extends AppCompatActivity {
         GameEngine eng = engine;
         boolean replaySessionActive = eng != null && eng.replayMode
                 && eng.replayPlayer != null && eng.replayPlayer.hasActiveSession();
+        // 决斗结束弹窗（待点确定返回主界面）期间 engine.disconnect 已令 isStarted/isSpectator 等
+        // 全部为假，但「决斗结束」dialog 仍居中于 layout_game_right，旋转不得隐藏它（用户规格：
+        // 保持显示到点确定按钮后才隐藏，隐藏由 returnToLanMain 走非决斗分支完成）
+        boolean duelEndPending = engineCallback != null && engineCallback.isDuelEndHandling();
         boolean duelContext = eng != null && (eng.isStarted() || eng.isSiding()
-                || eng.isSingleMode || eng.isSpectator() || replaySessionActive);
+                || eng.isSingleMode || eng.isSpectator() || replaySessionActive) || duelEndPending;
         boolean lobbyChat = !deckEditorVisible && !duelContext
                 && playerWaitingDialog != null && playerWaitingDialog.isShowing();
         boolean duelUiVisible = !deckEditorVisible && duelContext && !lobbyChat
@@ -348,10 +352,19 @@ public class YGOProActivity extends AppCompatActivity {
             if (cardDetailPanel != null) {
                 boolean replayActive = engine != null && engine.replayMode
                         && engine.replayPlayer != null && engine.replayPlayer.hasActiveSession();
+                // 决斗结束弹窗期间旋转：onGameUIShown 会复位 spectatorMode 并隐藏控制条，
+                // 先快照结束前的观战态以便回显观战控制集（用户规格：保持显示到点确定）
+                boolean wasSpectatorPanel = cardDetailPanel.isSpectatorMode();
                 cardDetailPanel.onGameUIShown(); // 先复位按钮组到默认态再按模式覆盖
                 if (replayActive) {
                     cardDetailPanel.showReplayControls();
                     cardDetailPanel.updateReplayButtonStates(engine.replayPlayer.isPaused());
+                } else if (duelEndPending) {
+                    // 决斗结束弹窗期间旋转：场面保持显示，控制面板沿用结束前状态——观战保留观战
+                    // 控制集，对战玩家隐藏底部行动/时点按钮（对齐 DUEL_END 的 closeGameButtons），
+                    // 直到点确定返回主界面才整体隐藏
+                    if (wasSpectatorPanel) cardDetailPanel.showSpectatorControls();
+                    else cardDetailPanel.closeGameButtons();
                 } else if (engine != null && engine.isSpectator()) {
                     cardDetailPanel.showSpectatorControls();
                 } else if (isGameStarted) {
@@ -679,6 +692,14 @@ public class YGOProActivity extends AppCompatActivity {
      */
     public void onSpectatorSwapField() {
         if (engine != null) engine.requestSpectatorSwap();
+    }
+
+    /**
+     * 观战「跳到当前」（需求5）：无视动画将当前已收到的全部通讯 msg 一次性即时落位到最后
+     * 一条 msg 的决斗局面，让观战者无需再看前面的回放/特效动画。
+     */
+    public void onSpectatorSkipToCurrent() {
+        if (engine != null) engine.spectatorSkipToCurrent();
     }
 
     /**

@@ -181,6 +181,49 @@
                     android:textColor="@color/white"
                     android:textSize="10sp" />
             </LinearLayout>
+            <!-- 观战控制按钮集：平时隐藏，仅观战时显示（代替录像控制条的切换视角/退出），
+                 含跳到当前/切换视角/退出（对齐需求5：观战者可一键跳到最新决斗局面） -->
+            <LinearLayout
+                android:id="@+id/layout_spectator_control"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="2dp"
+                android:layout_toEndOf="@id/iv_card_image"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/btn_spectator_skip"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginBottom="2dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button3_bg"
+                    android:text="@string/spectator_skip_to_current"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btn_spectator_swap"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginBottom="2dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button3_bg"
+                    android:text="切换视角"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btn_spectator_quit"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button3_bg"
+                    android:text="退出"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+            </LinearLayout>
             <!-- 卡组操作按钮 -->
             <LinearLayout
                 android:id="@+id/layout_deck_control"
