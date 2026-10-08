@@ -20,6 +20,8 @@ final class FieldBoardRenderer {
     private static final long TOTAL_ATK_KEY = -3L;
     // 区域发动 / conti_act 旋转提示图标（materials: act.png），对齐 drawing.cpp DrawMisc 的 tAct + act_rot
     private static final long ACT_TEX_KEY = -4L;
+    // HINT_ZONE 玫红标注格下方的半透明无效徽记（materials: negated.png，tNegated）
+    private static final long NEGATED_TEX_KEY = -5L;
     // conti_cards 隐形格子最多堆叠显示层数（对齐 drawing.cpp 中部场地空隙的可视堆叠）
     private static final int MAX_CONTI_LAYERS = 5;
 
@@ -187,6 +189,17 @@ final class FieldBoardRenderer {
     private void drawZoneSlot(GameField f, int p, int loc, int seq,
                               float cx, float cy, float zw, float zh, float pulse) {
         if (f.isZoneColumnMarked(p, loc, seq)) {
+            // 标注格下方叠加半透明 negated 徽记（透明度 50%）：z=0.002 低于格槽(0.004)
+            // 且先于格槽绘制，透过玫红呼吸色层可见，永不遮挡卡面（卡 z≥0.01 后绘）；
+            // hintZoneMask 于 MSG_NEW_TURN 清除时随标注一同消失
+            int neg = obtainNegatedTexture();
+            if (neg > 0) {
+                float isz = Math.min(zw, zh) * 0.6f;
+                Matrix.setIdentityM(view.mModel, 0);
+                Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(cx), cy, 0.002f);
+                Matrix.scaleM(view.mModel, 0, isz, isz, 1f);
+                view.quad.drawQuadTex(view.mModel, neg, 0.5f);
+            }
             view.quad.drawFlatQuad(FieldGeometry.mirrorX(cx), cy, 0.004f, zw, zh,
                     0.95f, 0.20f, 0.55f, pulse);
         } else {
@@ -419,6 +432,29 @@ final class FieldBoardRenderer {
             });
         } catch (Throwable t) {
             tex.cancelRequest(ACT_TEX_KEY);
+        }
+        return -1;
+    }
+
+    /** negated 无效徽记纹理（negated.png）：与 obtainActTexture 同一异步上传模式，未就绪返回 -1 */
+    private int obtainNegatedTexture() {
+        FieldTextureManager tex = view.tex;
+        Integer id = tex.texCache().get(NEGATED_TEX_KEY);
+        if (id != null) return id;
+        if (!tex.beginRequest(NEGATED_TEX_KEY)) return -1;
+        try {
+            tex.texExecutor().execute(() -> {
+                Bitmap b = null;
+                try {
+                    Bitmap src = TextureLoader.get().getNegatedTexture();
+                    if (src != null && !src.isRecycled()) b = src.copy(Bitmap.Config.ARGB_8888, false);
+                } catch (Throwable ignored) {
+                }
+                if (b != null) tex.offerUpload(new FieldTextureManager.PendingUpload(NEGATED_TEX_KEY, b, true));
+                else tex.cancelRequest(NEGATED_TEX_KEY);
+            });
+        } catch (Throwable t) {
+            tex.cancelRequest(NEGATED_TEX_KEY);
         }
         return -1;
     }

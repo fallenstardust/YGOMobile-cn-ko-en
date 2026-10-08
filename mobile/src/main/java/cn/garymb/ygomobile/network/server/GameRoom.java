@@ -772,19 +772,23 @@ public final class GameRoom implements YGOProtocol {
         if (lastChar != 0) {
             return;
         }
-        byte[] payload = chatPayload(dp.type, msg);
+        // 观战发言（type=7）：STOC_CHAT 协议只携 [chat_player_type][文本]，无独立昵称字段，
+        // 客户端观战弹幕历史上只能显示固定星号遮罩「[********]」；中继时把观战名拼进文本
+        //（无名字时兜底 Watcher），客户端前缀为「[Spectator] 名字: 内容」；玩家(0-3)不变，
+        // 仍由客户端按座位号自取 seatNames 拼前缀
+        String text = utf16Text(msg);
+        if (dp.type == NETPLAYER_TYPE_OBSERVER) {
+            String who = (dp.name == null || dp.name.isEmpty()) ? "Watcher" : dp.name;
+            text = who + ": " + text;
+        }
+        byte[] payload = chatPayload(dp.type, text);
         // 中继统一走 sendToAllPresent：solo 模式下 players[1] == players[0] 为同一连接，
         // 按连接身份去重，避免同一条聊天被双发（历史缺陷：双端收到重复消息/重复弹幕）
         sendToAllPresent(STOC_CHAT, payload);
         // 录像：对局中把玩家/观战发言录为 0xF1 伪帧，使纯消息流回放血条下按时间线重现；
         // 与引擎消息同处单线程房间执行器，追加顺序即时序。playerType 取 dp.type（与实时
-        // STOC_CHAT 首字节同值，回放分侧/命名一致）；文本取 UTF-16LE 并去除尾部 NUL 码元。
+        // STOC_CHAT 首字节同值，回放分侧/命名一致）；文本含观战名（回放弹幕同样可见）。
         if (isDueling() && duel != null && duel.replay != null) {
-            int units = msg.length / 2;
-            while (units > 0 && ((msg[units * 2 - 2] & 0xFF) | ((msg[units * 2 - 1] & 0xFF) << 8)) == 0) {
-                units--;
-            }
-            String text = new String(msg, 0, units * 2, java.nio.charset.StandardCharsets.UTF_16LE);
             duel.replay.writeChatFrame(dp.type, text);
             // 录制验证落点：每条对局聊天录为 0xF1 伪帧均留痕，logcat 过滤 "GameRoom" 即可
             // 确认聊天已落盘；回放开场信息另标注文件内聊天帧总条数（ReplayPlayer.buildReplayInfo）
@@ -793,6 +797,15 @@ public final class GameRoom implements YGOProtocol {
             Log.d(TAG, "chat not recorded (dueling=" + isDueling()
                     + " duel=" + (duel != null) + "): stage not in-duel");
         }
+    }
+
+    /** 解码 UTF-16LE 聊天文本并去除尾部 NUL 码元（GameRoom.chat 入参已校验以 0 结尾） */
+    private static String utf16Text(byte[] msg) {
+        int units = msg.length / 2;
+        while (units > 0 && ((msg[units * 2 - 2] & 0xFF) | ((msg[units * 2 - 1] & 0xFF) << 8)) == 0) {
+            units--;
+        }
+        return new String(msg, 0, units * 2, java.nio.charset.StandardCharsets.UTF_16LE);
     }
 
     // ==================================================================

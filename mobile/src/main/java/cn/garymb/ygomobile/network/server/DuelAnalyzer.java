@@ -189,10 +189,17 @@ final class DuelAnalyzer implements YGOProtocol {
                         case 7:
                         case 8:
                         case 9:
-                        case 11:
                             sendToPlayer(room.players[1 - player], slice);
                             sendToObservers(slice);
                             break;
+                        // HINT_ZONE(11)：掩码自带双方座位列位，标注须双方与观战同见；
+                        // 旧规则只发 players[1-player] 使人机局发动方本人收不到格色标注
+                        //（纯单人 players[1]==players[0] 同连接才碰巧可见）。case 0 为兼容：
+                        // 服务端 constant.lua 缺 HINT_ZONE 常量时 lua_tointeger(nil) 降级
+                        // 以 type=0 下发（旧规则落 default 被整体丢弃）。broadcastMsg 对
+                        // solo 同连接按身份去重，并经 sendToPlayer(players[0]) 录入录像帧
+                        case 0:
+                        case 11:
                         case 10:
                             broadcastMsg(slice);
                             break;

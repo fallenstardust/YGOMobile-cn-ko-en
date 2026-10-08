@@ -133,7 +133,8 @@ class FieldChatBoard {
         // · 0-3 决斗座位与 8 系统消息受 chkIgnore1（本端 chkDisableChatting）管辖；
         // · 11-19 观战编号不受任何屏蔽开关管辖（原样透传，弹幕用观战配色）；
         // · 其余全部非玩家类型（4-7/9/10/20+，含内置服务端的观战 type=7）受 chkIgnore2
-        //   （本端 chkMuteSpectators）管辖，通过门控后归一为 10，显示为隐藏名「[********]: 」。
+        //   （本端 chkMuteSpectators）管辖，通过门控后归一为 10，显示为「[Spectator] 名字: 」（名
+        //   字由内置服务端中继时拼入文本，见 GameRoom.chat；gframe 原型为星号遮罩 [********])。
         // 历史缺陷修复点①：旧实现在决斗态先用 chkDisableChatting 丢弃“全部”消息，
         // 系统/观战消息被一并吞掉；②：观战发言 type=7 既不落 11-19 判定区间，也无归一
         // 分支，颜色与前缀都不对；③：服务端从不下发 8/9/10，故这些分支永不触发
@@ -621,7 +622,7 @@ class FieldChatBoard {
             text = "[Script Error]: " + message;
             color = 0xFFFF4040;                       // chatColor[9]
         } else if (playerType == 10) {
-            text = "[********]: " + message;
+            text = "[Spectator] " + message;
             color = 0xFFFF4040;                       // chatColor[10]
         } else {
             // 观战者 11-19（无前缀）与其他未知类型
@@ -653,8 +654,8 @@ class FieldChatBoard {
      * 对齐 drawing.cpp L1587-1593：chatType>=4 时 offsetX = (1200 - chatTiming[i]) * 4，
      * 消息自右向左匀速移动直至离场消失；颜色对齐 chatColor[chatType]：
      * 8 系统=0xFF8080FF，9 脚本错误/10 隐藏名=0xFFFF4040，11-19 观战=chatColor[11..19] 轮换。
-     * 前缀对齐 game.cpp AddChatMsg：8→"[System]: "、9→"[Script Error]: "、10→"[********]: "、
-     * 观战 11-19 无前缀（default 分支不追加）。
+     * 前缀对齐 game.cpp AddChatMsg：8→"[System]: "、9→"[Script Error]: "、10→"[Spectator] 名字: "
+     *（观战名由内置服务端拼入文本）、观战 11-19 无前缀（default 分支不追加）。
      * 弹幕宿主取 drawspec 覆盖层（SpecEffectOverlay 的 PopupWindow 层，不受 GameFieldView
      * setZOrderOnTop 的 GL 曲面遮挡）：双方 LP 血条正下方的全屏宽横带，高 = 3 行 × 行高，
      * 不再依赖 layout_top_info 的布局状态（历史上该依赖导致弹幕落回被遮挡的回退层而永不可见）。
@@ -670,7 +671,9 @@ class FieldChatBoard {
             text = "[Script Error]: " + message;
             color = 0xFFFF4040;                       // chatColor[9]
         } else if (playerType == 10) {
-            text = "[********]: " + message;
+            // 观战发言：内置服务端中继时已把观战名拼进文本（GameRoom.chat），
+            // 前缀改为 [Spectator] 后接发言者名字；不再用 gframe 的星号遮罩固定串
+            text = "[Spectator] " + message;
             color = 0xFFFF4040;                       // chatColor[10]
         } else {
             text = message;
