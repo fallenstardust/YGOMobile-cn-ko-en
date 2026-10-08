@@ -107,6 +107,10 @@ public class YGOProActivity extends AppCompatActivity {
     private MainMenuDialog mainMenuDialog;
     LanModeDialog lanModeDialog;
     CreateHostDialog createHostDialog;
+    // 单机/录像选择窗同样持实例跨关闭复用：首次 show 初始化后关闭仅隐藏，重新打开走
+    // reshow 回到关闭前的选择状态（用户规格，与 LanModeDialog/CreateHostDialog 同模式）
+    SingleModeDialog singleModeDialog;
+    ReplayModeDialog replayModeDialog;
     PlayerWaitingDialog playerWaitingDialog;
 
     EditText etChatInput;
@@ -740,6 +744,22 @@ public class YGOProActivity extends AppCompatActivity {
         return lanModeDialog;
     }
 
+    public void setSingleModeDialog(SingleModeDialog dialog) {
+        singleModeDialog = dialog;
+    }
+
+    public SingleModeDialog getSingleModeDialog() {
+        return singleModeDialog;
+    }
+
+    public void setReplayModeDialog(ReplayModeDialog dialog) {
+        replayModeDialog = dialog;
+    }
+
+    public ReplayModeDialog getReplayModeDialog() {
+        return replayModeDialog;
+    }
+
     public void setPlayerWaitingDialog(PlayerWaitingDialog dialog) {
         playerWaitingDialog = dialog;
         if (playerWaitingDialog != null) {
@@ -840,7 +860,7 @@ public class YGOProActivity extends AppCompatActivity {
         //（恢复决斗场渲染，聊天改回玩家分侧 + 系统/观战弹幕逻辑）
         exitLobbyChatUI();
         showGameUI();
-        dismissAllLanDialogs();
+        hideLanDialogsForDuel();
         isGameStarted = true;
         // Solo 模式：席位上房主代选的卡组名优先写回 GameTopInfo，代替默认玩家昵称展示（
         // 非 TAG solo 仅 slot0/1；TAG solo 同样取 slot0/1 写回两列、slot2/3 留在等待面板上）
@@ -864,11 +884,30 @@ public class YGOProActivity extends AppCompatActivity {
         getMainMenuDialog().hideMainMenu();
         exitLobbyChatUI();
         showGameUI();
-        dismissAllLanDialogs();
+        hideLanDialogsForDuel();
     }
 
     /**
-     * 决斗开始/彻底离开局域网流程时，关闭三个局域网对话框（先清空 dismiss 回调避免误恢复主菜单）
+     * 决斗/回放开场：局域网主界面与建主界面仅隐藏（hideForNavigation 保留 reshow 复用态，
+     * 不触发外部 dismiss 回调），下次重新打开回到关闭前的规则/输入选择状态（用户规格）；
+     * 玩家等待界面维持销毁语义（性能权衡：其房间列表/玩家状态每次都必须重建）
+     */
+    private void hideLanDialogsForDuel() {
+        if (lanModeDialog != null) {
+            lanModeDialog.hideForNavigation();
+        }
+        if (createHostDialog != null) {
+            createHostDialog.hideForNavigation();
+        }
+        if (playerWaitingDialog != null) {
+            playerWaitingDialog.setOnDismissListener(null);
+            playerWaitingDialog.dismiss();
+        }
+    }
+
+    /**
+     * 彻底销毁三个局域网对话框（仅 Activity onDestroy 用：隐藏态 PopupWindow 随窗口销毁会
+     * WindowLeaked，必须真 dismiss；先清空 dismiss 回调避免误恢复主菜单）
      */
     private void dismissAllLanDialogs() {
         if (lanModeDialog != null) {
@@ -902,16 +941,15 @@ public class YGOProActivity extends AppCompatActivity {
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
         setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_MENU);
 
-        // 关闭玩家等待/建主界面，回到局域网主界面
+        // 关闭玩家等待界面（销毁语义不变）；建主界面改为仅隐藏保留实例：下次建主 reshow
+        // 回到上次规则/卡表/输入选择状态（用户规格）
         if (playerWaitingDialog != null) {
             playerWaitingDialog.setOnDismissListener(null);
             playerWaitingDialog.dismiss();
             playerWaitingDialog = null;
         }
         if (createHostDialog != null) {
-            createHostDialog.setOnDismissListener(null);
-            createHostDialog.dismiss();
-            createHostDialog = null;
+            createHostDialog.hideForNavigation();
         }
 
         if (TextUtils.isEmpty(lastJoinHost)) {
@@ -1270,8 +1308,17 @@ public class YGOProActivity extends AppCompatActivity {
         CrashHandler.getInstance().setScene("游戏-销毁中");
         if (engineCallback != null) engineCallback.cancelReplayProcessing();
         DraggablePopupHelper.resetAllPositions(this);
-        // 释放局域网三对话框，避免持有已销毁的窗口/上下文
+        // 释放局域网/单机/录像选择对话框，避免持有已销毁的窗口/上下文
+        //（必须真 dismiss：隐藏态 PopupWindow 随窗口销毁会 WindowLeaked）
         dismissAllLanDialogs();
+        if (singleModeDialog != null) {
+            singleModeDialog.dismiss();
+            singleModeDialog = null;
+        }
+        if (replayModeDialog != null) {
+            replayModeDialog.dismiss();
+            replayModeDialog = null;
+        }
         lanModeDialog = null;
         createHostDialog = null;
         playerWaitingDialog = null;
