@@ -76,7 +76,8 @@ class FieldChatBoard {
 
     // === 系统/观战消息弹幕（对齐 drawing.cpp DrawChatMsg chatType>=4 分支） ===
 
-    /** 弹幕最大行数：屏幕顶部从上往下最多 3 行，超过后循环回第 1 行 */
+    /** 弹幕横带行数（= 一组条数）：血条同行横带自上而下 3 行，观战进场的大量消息按
+     *  「上中下」每 3 条一组入场，整组滑入屏幕后下一组才进（见 pumpDanmakuGroup） */
     private static final int DANMAKU_MAX_ROWS = 3;
     /** 弹幕匀速（dp/ms）：时长 = 总路程 / 速度，所有消息速度一致；
      *  0.04（约 14 秒横滚一屏，与 gframe 1200帧×4px 节奏更接近） */
@@ -97,8 +98,27 @@ class FieldChatBoard {
     /** 聊天消息半透明黑底（对齐 drawing.cpp L1597 draw2DRectangle 0xa0000000） */
     private static final int CHAT_BG_COLOR = YGOUtil.c(R.color.black_a0);
 
-    private int danmakuRowIndex = 0;
     private final List<TextView> danmakuViews = new ArrayList<>();
+    /** 弹幕待入场队列：观战进场会瞬时涌入大量系统/观战消息，逐条即时入场会使同行
+     *  多条以相同起点重叠滚出；故先进队列，由分组闸门按「上中下」每 3 条一组批量放行 */
+    private final LinkedList<DanmakuItem> danmakuQueue = new LinkedList<>();
+    /** 当前是否有一组弹幕正在入场/在屏：为真时后续入队只排队，等本组全部滑入屏幕后由
+     *  {@link #onDanmakuOneEntered()} 放行下一组，实现「一组进完下一组才进」的顺序 */
+    private boolean danmakuGroupRunning = false;
+    /** 本组尚在入场阶段（未完全滑入屏幕）的消息条数，减到 0 即整组入场完毕、放行下一组 */
+    private int danmakuGroupEnterPending = 0;
+    /** 弹幕分组代际：clearDanmaku/旋转清场时自增，使清场前已 postDelayed 的入场完成回调作废，
+     *  避免过期回调驱动新清场后的队列错乱 */
+    private int danmakuPumpGeneration = 0;
+    /** 一条待入场弹幕（文本 + 颜色） */
+    private static final class DanmakuItem {
+        final String text;
+        final int color;
+        DanmakuItem(String text, int color) {
+            this.text = text;
+            this.color = color;
+        }
+    }
 
     /** 大厅（player waiting）聊天模式：全部消息在 layout_danmaku 静态列表显示 */
     private boolean lobbyChatMode = false;
@@ -499,7 +519,10 @@ class FieldChatBoard {
             tv.animate().cancel();
         }
         danmakuViews.clear();
-        danmakuRowIndex = 0;
+        danmakuQueue.clear();
+        danmakuGroupRunning = false;
+        danmakuGroupEnterPending = 0;
+        danmakuPumpGeneration++;
         myChatPending.clear();
         opChatPending.clear();
         // 大厅聊天容器挂在旧 layout_danmaku 上，重建后失效：置空待下次 enterLobbyChatMode 重建
@@ -514,7 +537,7 @@ class FieldChatBoard {
     private void flushSideChatPendingToDanmaku(boolean selfSide) {
         LinkedList<TimedLine> pending = selfSide ? myChatPending : opChatPending;
         if (pending.isEmpty()) return;
-        for (TimedLine entry : pending) showDanmakuLine(entry.text, YGOUtil.c(R.color.white), 0);
+        for (TimedLine entry : pending) enqueueDanmaku(entry.text, YGOUtil.c(R.color.white));
         pending.clear();
     }
 
@@ -534,7 +557,10 @@ class FieldChatBoard {
             else if (ctl.layoutDanmaku != null) ctl.layoutDanmaku.removeView(tv);
         }
         danmakuViews.clear();
-        danmakuRowIndex = 0;
+        danmakuQueue.clear();
+        danmakuGroupRunning = false;
+        danmakuGroupEnterPending = 0;
+        danmakuPumpGeneration++;   // 作废清场前已排队的入场完成回调
         SpecEffectOverlay overlay = ctl.activity.getSpecOverlay();
         if (overlay != null) overlay.clearChatRowLayers();
     }
@@ -682,28 +708,40 @@ class FieldChatBoard {
             color = (playerType >= 11 && playerType <= 19)
                     ? DANMAKU_OBS_COLORS[playerType - 11] : YGOUtil.c(R.color.white);
         }
-        showDanmakuLine(text, color, 0);
+        enqueueDanmaku(text, color);
     }
 
     /**
-     * 弹幕入场（系统/观战消息与分侧聊天行容器的回退路径共用）：带顶锚定我方 LP 血条
-     * 底边（对齐 drawing.cpp DrawChatMsg chatType>=4 分支 y=10 贴玩家信息区的绘制基准；
-     *  obtainDanmakuLayer 设计语义即「血条正下方全屏宽横带」；真机验证过的最终版规格）。
-     * 历史回归：一度改为锚定屏幕正中（heightPixels/2），决斗态弹幕带恰落入居中特效大图/
-     * 决斗弹窗层区域而不可见——决斗中 8/9/10/11-19 「看不到弹幕」的直接根因，改回血条下方。
-     * 血条未布局时经 mainHandler 有限次 post 重试（上限 DANMAKU_MAX_LAYOUT_RETRIES），
-     * 与 rebuildSideChatLayer 同一套就绪等待模式；宿主层未布局时同样有限重试。
+     * 请求显示一条弹幕：先入队，再由分组闸门 {@link #pumpDanmakuGroup(int)} 按「上中下」
+     * 每 3 条一组批量入场。观战进场会瞬时涌入大量系统/观战消息，若逐条即时入场，同一行的
+     * 多条弹幕会以相同起点重叠滚出（用户反馈的「混乱重叠」根因）；入队后一组全部滑入屏幕，
+     * 下一组才从屏幕右缘入场，组间因速度一致保持间距、永不相撞。
      */
-    private void showDanmakuLine(String text, int color, int retries) {
+    private void enqueueDanmaku(String text, int color) {
+        if (text == null || text.isEmpty()) return;
+        danmakuQueue.addLast(new DanmakuItem(text, color));
+        pumpDanmakuGroup(0);
+    }
+
+    /**
+     * 弹幕分组入场闸门：从队列头部取最多 {@link #DANMAKU_MAX_ROWS} 条作为一组，依次落在
+     * 带顶行→中行→底行（row = 组内序号，天然实现「上→中→下」，不再需要行计数器），同批入场；
+     * 本组全部滑入屏幕后由 {@link #onDanmakuOneEntered()} 放行下一组。
+     * 带顶锚定我方 LP 血条顶边 bar[1]（对齐 drawing.cpp DrawChatMsg chatType>=4 与血条同行；
+     * 历史回归：锚屏幕正中会落入居中特效/弹窗区而不可见）。宿主（血条/drawspec 层）未就绪时
+     * 经有限次 post 重试（上限 DANMAKU_MAX_LAYOUT_RETRIES），重试等待期不拆散整组。
+     */
+    private void pumpDanmakuGroup(int retries) {
+        if (danmakuGroupRunning || danmakuQueue.isEmpty()) return;
         int[] bar = ctl.topInfoManager != null
                 ? ctl.topInfoManager.getLpBarRectInWindow(0) : null;
         if (bar == null || bar[2] <= 0 || bar[3] <= 0) {
             // 血条尚未布局（进决斗瞬间/回退路径）：延后重试，不用旧坐标抢先入场
             if (retries < DANMAKU_MAX_LAYOUT_RETRIES) {
                 final int next = retries + 1;
-                ctl.mainHandler.post(() -> showDanmakuLine(text, color, next));
+                ctl.mainHandler.post(() -> pumpDanmakuGroup(next));
             } else {
-                android.util.Log.d("Danmaku", "skip: lp bar not ready, retries=" + retries);
+                android.util.Log.d("Danmaku", "skip group: lp bar not ready, retries=" + retries);
             }
             return;
         }
@@ -711,49 +749,60 @@ class FieldChatBoard {
         int bandHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 DANMAKU_ROW_HEIGHT_DP * DANMAKU_MAX_ROWS,
                 ctl.activity.getResources().getDisplayMetrics());
-        // 带顶 = 我方 LP 血条顶边（窗口坐标 bar[1]）：对齐 gframe drawing.cpp 弹幕画在
-        // 屏幕顶部玩家信息带（与血条同行）；横屏双方血条同在顶部横排、竖屏我方血条
-        // 也在决斗区上排，故取 bar[1] 即把整条弹幕带抬到血条所在行（旧锚 bar[1]+bar[3]
-        // 血条底边）。消息自屏幕右缘入场、匀速左移，直至整个
-        // 文本完全从最左侧离场后移除。
+        // 带顶 = 我方 LP 血条顶边（窗口坐标 bar[1]）：横屏双方血条同在顶部横排、竖屏我方血条
+        // 也在决斗区上排，取 bar[1] 把整条弹幕带抬到血条所在行（旧锚 bar[1]+bar[3] 血条底边）。
         int bandTop = bar[1];
         FrameLayout layer = overlay != null ? overlay.obtainDanmakuLayer(bandHeight, bandTop) : null;
         final FrameLayout parent = layer != null ? layer : ctl.layoutDanmaku;
         if (parent == null) {
-            android.util.Log.d("Danmaku", "skip: no host layer (overlay=" + overlay
+            android.util.Log.d("Danmaku", "skip group: no host layer (overlay=" + overlay
                     + " layoutDanmaku=" + ctl.layoutDanmaku + ")");
+            danmakuQueue.clear();
             return;
         }
         if (parent.getWindowToken() == null || parent.getWidth() <= 0 || parent.getHeight() <= 0) {
             // 窗口未 attach（PopupWindow 正在 showWindow 的 token 重试中）或尚未布局：
-            // 实机铁证 spawn ok 日志 token=false winVis=8 root=0x0——窗口没在屏上，
-            // 弹幕挂进去永不可见。View.post 未 attach 时进挂起队列、attach 后 flush，
-            // 天然等到覆盖层真正显示；重试用尽才丢弃，避免无限 post 黑洞
+            // View.post 未 attach 进挂起队列、attach 后 flush，天然等到覆盖层真正显示
             if (retries < DANMAKU_MAX_LAYOUT_RETRIES) {
                 final int next = retries + 1;
-                parent.post(() -> showDanmakuLine(text, color, next));
+                parent.post(() -> pumpDanmakuGroup(next));
             } else {
-                android.util.Log.d("Danmaku", "skip: host not attached/laid-out, retries=" + retries);
+                android.util.Log.d("Danmaku", "skip group: host not attached/laid-out, retries=" + retries);
             }
             return;
         }
+        // 整组同批入场：最多 3 条，row=组内序号 0/1/2 即上/中/下；running 置位后新入队只排队
+        int groupSize = Math.min(DANMAKU_MAX_ROWS, danmakuQueue.size());
+        danmakuGroupRunning = true;
+        danmakuGroupEnterPending = groupSize;
+        for (int row = 0; row < groupSize; row++) {
+            spawnDanmakuView(parent, layer, overlay, danmakuQueue.removeFirst(), row);
+        }
+    }
+
+    /**
+     * 在 parent 的指定行（row：0=带顶、1=中、2=底）入场一条弹幕：自屏幕右缘起步、匀速左移至
+     * 完全从最左侧离场后移除。起跑点用 translationX（不参与测量）——严禁 leftMargin=父宽，
+     * FrameLayout 对 WRAP_CONTENT 子 View 的 AT_MOST(父宽-左距)=0 会把文字量成 0 宽永不可见。
+     * 同时登记「完全滑入屏幕」到点回调（入场时长 = 自身宽 / 速度），供分组闸门在整组进完后放行下一组。
+     */
+    private void spawnDanmakuView(final FrameLayout parent, final FrameLayout layer,
+                                  final SpecEffectOverlay overlay, DanmakuItem item, int row) {
         TextView tv = new TextView(ctl.activity);
-        tv.setText(text);
+        tv.setText(item.text);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与 tv_chat_message 统一 9sp
-        tv.setTextColor(color);
+        tv.setTextColor(item.color);
         tv.setSingleLine(true);
         tv.setBackgroundColor(CHAT_BG_COLOR); // 对齐 drawing.cpp draw2DRectangle 0xa0000000
         int hPadding = (int) (3 * ctl.activity.getResources().getDisplayMetrics().density);
         tv.setPadding(hPadding, 0, hPadding, 0);
         // 对齐 drawing.cpp shadowloc：黑色 1px 偏移阴影，保证血条背景上可读
         tv.setShadowLayer(1f, 1f, 1f, YGOUtil.c(R.color.black));
-        int row = danmakuRowIndex % DANMAKU_MAX_ROWS; // 超过 3 行循环回第 1 行
-        danmakuRowIndex++;
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.TOP | Gravity.START);
         if (layer != null) {
-            // drawspec 层：宿主即血条下方全屏宽横带，3 行均分其高度（行高等于带高/3），
+            // drawspec 层：宿主即血条同行全屏宽横带，3 行均分其高度（行高 = 带高/3），
             // 容器默认裁剪子 View，弹幕恰以该带为界出入
             lp.topMargin = row * Math.max(1, parent.getHeight() / DANMAKU_MAX_ROWS);
         } else {
@@ -762,22 +811,25 @@ class FieldChatBoard {
             // 回退层：垂直锚定到 LP 血条所在的顶部透明带（历史层级，受 GL 遮挡观感受限）
             lp.topMargin = danmakuRowTopMargin(row, rowHeight);
         }
-        // 历史缺陷终极根因（实机日志 tv=0x43 铁证）：旧实现用 lp.leftMargin=父宽 做起跑点，
-        // FrameLayout 对 WRAP_CONTENT 子 View 的测量约束 = AT_MOST(父宽 - leftMargin) = 0，
-        // 文字宽度被量成 0——弹幕虽已入场、动画也在跑，但视图 0 宽永不可见。起跑点改由
-        // translationX 提供（不参与测量），文本按内容正常量宽；入场后右缘外起步、
-        // 匀速左移至 -文本宽（整个文本完全从最左侧离场）后移除。
         lp.leftMargin = 0;
         parent.addView(tv, lp);
         tv.setTranslationX(parent.getWidth());        // 起点：屏幕右缘之外（仅平移，不改布局宽）
         danmakuViews.add(tv);
-        float density = ctl.activity.getResources().getDisplayMetrics().density;
+        final float density = ctl.activity.getResources().getDisplayMetrics().density;
+        final int gen = danmakuPumpGeneration;
         tv.post(() -> {
-            // 匀速：总路程 = 宿主层宽度 + 自身宽度（从屏幕右缘外入场，到完全从最左侧离场）；
+            if (gen != danmakuPumpGeneration) return;   // 清场后旧视图回调作废
+            int w = tv.getWidth();
+            // 完全滑入屏幕所需时间：右缘由 (父宽+自身宽) 移到父宽，路程 = 自身宽；到点整组进完则放行下一组
+            long enterMs = Math.max(1, (long) (w / (DANMAKU_SPEED_DP_PER_MS * density)));
+            parent.postDelayed(() -> {
+                if (gen == danmakuPumpGeneration) onDanmakuOneEntered();
+            }, enterMs);
+            // 整段匀速：总路程 = 宿主层宽 + 自身宽（右缘外入场到完全从最左侧离场）；
             // 终点 translationX = -自身宽（leftMargin 已为 0，不能再按旧公式多减一个宿主宽）
-            int distance = parent.getWidth() + tv.getWidth();
+            int distance = parent.getWidth() + w;
             long duration = Math.max(1, (long) (distance / (DANMAKU_SPEED_DP_PER_MS * density)));
-            tv.animate().translationX(-tv.getWidth()).setDuration(duration)
+            tv.animate().translationX(-w).setDuration(duration)
                     .withEndAction(() -> {
                         danmakuViews.remove(tv);
                         parent.removeView(tv);
@@ -785,6 +837,14 @@ class FieldChatBoard {
                         if (layer != null) overlay.notifyDanmakuRemoved();
                     }).start();
         });
+    }
+
+    /** 本组一条弹幕完全滑入屏幕：计数减到 0 表示整组已进完，放行下一组「上中下」弹幕入场 */
+    private void onDanmakuOneEntered() {
+        if (danmakuGroupEnterPending > 0) danmakuGroupEnterPending--;
+        if (danmakuGroupEnterPending > 0) return;
+        danmakuGroupRunning = false;
+        pumpDanmakuGroup(0);
     }
 
     /**
