@@ -1,5 +1,5 @@
 <!-- 左侧卡片详情面板（常驻显示） -->
-<LinearLayout android:layout_width="match_parent"
+<LinearLayout android:layout_width="wrap_content"
     android:layout_height="match_parent"
     android:orientation="horizontal"
     xmlns:android="http://schemas.android.com/apk/res/android">
@@ -26,6 +26,8 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/unknown" />
 
+            <!-- 控制按钮限高方案：wrap_content + maxHeight（常规 30dp，投降/退出编辑 50dp）；
+                 不可用 height=0dp+weight，否则 LinearLayout 以 EXACTLY 量高会无视 maxHeight 拉伸 -->
             <!-- 时点按钮（投降/时点控制） -->
             <LinearLayout
                 android:id="@+id/layout_bottom_actions"
@@ -39,9 +41,10 @@
                 <Button
                     android:id="@+id/btn_surrender"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1.2"
+                    android:maxHeight="50dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="投降"
                     android:textColor="@color/white"
@@ -50,9 +53,10 @@
                 <Button
                     android:id="@+id/btn_ignore_timing"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="忽略时点"
                     android:textColor="@color/white"
@@ -62,9 +66,10 @@
                 <Button
                     android:id="@+id/btn_show_timing"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="显示时点"
                     android:textColor="@color/white"
@@ -74,9 +79,10 @@
                 <Button
                     android:id="@+id/btn_available_timing"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="可用时点"
                     android:textColor="@color/white"
@@ -86,8 +92,9 @@
                 <Button
                     android:id="@+id/btn_shuffle_hand"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1.2"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="洗切手卡"
                     android:textColor="@color/white"
@@ -97,8 +104,9 @@
                 <Button
                     android:id="@+id/btn_cancel_or_finish"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1.2"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="完成选择"
                     android:textColor="@color/white"
@@ -119,9 +127,10 @@
                 <Button
                     android:id="@+id/btn_replay_play"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="播放"
                     android:textColor="@color/white"
@@ -130,9 +139,10 @@
                 <Button
                     android:id="@+id/btn_replay_pause"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="暂停"
                     android:textColor="@color/white"
@@ -141,9 +151,10 @@
                 <Button
                     android:id="@+id/btn_replay_next"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="下一步"
                     android:textColor="@color/white"
@@ -152,9 +163,10 @@
                 <Button
                     android:id="@+id/btn_replay_last"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="上一步"
                     android:textColor="@color/white"
@@ -163,9 +175,10 @@
                 <Button
                     android:id="@+id/btn_replay_shuffle"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="切换视角"
                     android:textColor="@color/white"
@@ -174,8 +187,9 @@
                 <Button
                     android:id="@+id/btn_replay_quit"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="退出"
                     android:textColor="@color/white"
@@ -195,9 +209,10 @@
                 <Button
                     android:id="@+id/btn_spectator_skip"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="@string/spectator_skip_to_current"
                     android:textColor="@color/white"
@@ -206,9 +221,10 @@
                 <Button
                     android:id="@+id/btn_spectator_swap"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="切换视角"
                     android:textColor="@color/white"
@@ -217,8 +233,9 @@
                 <Button
                     android:id="@+id/btn_spectator_quit"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="退出"
                     android:textColor="@color/white"
@@ -237,9 +254,10 @@
                 <Button
                     android:id="@+id/btn_deck_exit"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="50dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="@string/quit"
                     android:textColor="@color/white"
@@ -248,9 +266,10 @@
                 <Button
                     android:id="@+id/btn_deck_shuffle"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="@string/unsort"
                     android:textColor="@color/white"
@@ -259,9 +278,10 @@
                 <Button
                     android:id="@+id/btn_deck_sort"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="@string/sort"
                     android:textColor="@color/white"
@@ -270,9 +290,10 @@
                 <Button
                     android:id="@+id/btn_deck_clear"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="@string/clear_deck"
                     android:textColor="@color/white"
@@ -281,9 +302,10 @@
                 <Button
                     android:id="@+id/btn_deck_delete"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="1"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="@string/delete"
                     android:textColor="@color/white"
@@ -368,10 +390,13 @@
 
                 <ImageButton
                     android:id="@+id/btn_settings"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="5dp"
-                    android:layout_weight="1"
+                    android:maxWidth="40dp"
+                    android:maxHeight="40dp"
+                    android:minWidth="30dp"
+                    android:minHeight="30dp"
                     android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
@@ -380,10 +405,13 @@
 
                 <ImageButton
                     android:id="@+id/btn_note"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="5dp"
-                    android:layout_weight="1"
+                    android:maxWidth="40dp"
+                    android:maxHeight="40dp"
+                    android:minWidth="30dp"
+                    android:minHeight="30dp"
                     android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
@@ -392,10 +420,13 @@
 
                 <ImageButton
                     android:id="@+id/btn_sound"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="5dp"
-                    android:layout_weight="1"
+                    android:maxWidth="40dp"
+                    android:maxHeight="40dp"
+                    android:minWidth="30dp"
+                    android:minHeight="30dp"
                     android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
@@ -404,38 +435,57 @@
 
                 <ImageButton
                     android:id="@+id/btn_speed"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="5dp"
-                    android:layout_weight="1"
+                    android:maxWidth="40dp"
+                    android:maxHeight="40dp"
+                    android:minWidth="30dp"
+                    android:minHeight="30dp"
                     android:adjustViewBounds="true"
                     android:background="@drawable/btn_sci_fi_bg"
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_speed" />
 
-                <ImageButton
-                    android:id="@+id/btn_emote"
+                <!-- 表情与聊天开关组成一组，锚定图标列底部 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_marginBottom="5dp"
                     android:layout_weight="1"
-                    android:adjustViewBounds="true"
-                    android:background="@drawable/btn_sci_fi_bg"
-                    android:padding="4dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_emoticon" />
+                    android:layout_gravity="bottom"
+                    android:gravity="bottom"
+                    android:orientation="vertical">
 
-                <ImageButton
-                    android:id="@+id/btn_chat"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:adjustViewBounds="true"
-                    android:background="@drawable/btn_sci_fi_bg"
-                    android:padding="4dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/rename" />
+                    <ImageButton
+                        android:id="@+id/btn_emote"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="5dp"
+                        android:adjustViewBounds="true"
+                        android:background="@drawable/btn_sci_fi_bg"
+                        android:maxWidth="40dp"
+                        android:maxHeight="40dp"
+                        android:minWidth="30dp"
+                        android:minHeight="30dp"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_emoticon" />
+
+                    <ImageButton
+                        android:id="@+id/btn_chat"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
+                        android:background="@drawable/btn_sci_fi_bg"
+                        android:maxWidth="40dp"
+                        android:maxHeight="40dp"
+                        android:minWidth="30dp"
+                        android:minHeight="30dp"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/rename" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

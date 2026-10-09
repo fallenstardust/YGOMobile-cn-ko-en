@@ -201,7 +201,12 @@ class FieldCardRenderer {
             drawCoverQuad(view.mModelTmp, c.owner != 0,
                     alpha * (reveal ? 1f - 0.4f * wave : 1f), 1f, 0f);
             if (reveal) {
-                drawBreathReveal(c, code, alpha, wave);
+                // 呼吸卡图统一取 displayCode()（本卡公开的卡码），与 isBreathRevealCard 的
+                // displayCode()>0 判据及点击详情（CardInfoBinder.showCard）同源。
+                // 不能传上方局部 code：它对已落位的遮蔽洗码卡恒为 0（局部 code 只在
+                // is_moving 时取 chain_code），obtainTexture(0) 会把 unknown 卡图画成呼吸
+                //（用户反馈：观战跳到当前后，里侧公开卡的呼吸动画显示 unknown）
+                drawBreathReveal(c, c.displayCode(), alpha, wave);
             }
         } else if (faceUp && code > 0) {
             int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));

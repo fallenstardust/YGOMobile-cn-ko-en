@@ -356,48 +356,62 @@ class GameFieldMotion {
         return false;
     }
 
+    /**
+     * 全场卡片一次性落定对齐（观战跳到当前 / 回放快进的收尾门面）：所有卡吸附到
+     * 目标布局并退出移动态。同步清零 chain_code 与常规动画收尾（updateCardAnimation
+     * aniFrame 归零分支）、快进落位（moveCardAnimated instantPlace 分支）保持同一语义：
+     * chain_code 只服务飞行途中继续绘旧卡面，落定即失效；不在此兜底则未经过
+     * moveCardAnimated 的残留瞬时码仍会被 displayCode() 回退读到，导致点击详情串卡。
+     */
     public void refreshAllCards() {
         for (int p = 0; p < 2; p++) {
             for (ClientCard c : field.players[p].deck) {
                 if (c != null) {
                     setCardPos(c);
                     c.is_moving = false;
+                    c.chain_code = 0;
                 }
             }
             for (ClientCard c : field.players[p].hand) {
                 if (c != null) {
                     setCardPos(c);
                     c.is_moving = false;
+                    c.chain_code = 0;
                 }
             }
             for (ClientCard c : field.players[p].monsterZone) {
                 if (c != null) {
                     setCardPos(c);
                     c.is_moving = false;
+                    c.chain_code = 0;
                 }
             }
             for (ClientCard c : field.players[p].spellZone) {
                 if (c != null) {
                     setCardPos(c);
                     c.is_moving = false;
+                    c.chain_code = 0;
                 }
             }
             for (ClientCard c : field.players[p].grave) {
                 if (c != null) {
                     setCardPos(c);
                     c.is_moving = false;
+                    c.chain_code = 0;
                 }
             }
             for (ClientCard c : field.players[p].removed) {
                 if (c != null) {
                     setCardPos(c);
                     c.is_moving = false;
+                    c.chain_code = 0;
                 }
             }
             for (ClientCard c : field.players[p].extra) {
                 if (c != null) {
                     setCardPos(c);
                     c.is_moving = false;
+                    c.chain_code = 0;
                 }
             }
         }
@@ -405,6 +419,7 @@ class GameFieldMotion {
             if (c != null) {
                 setCardPos(c);
                 c.is_moving = false;
+                c.chain_code = 0;
             }
         }
     }
@@ -447,6 +462,15 @@ class GameFieldMotion {
             pcard.is_moving = false;
             pcard.animDelayFrame = 0;
             pcard.animJitterX = 0f;
+            // 与常规动画收尾（updateCardAnimation 中 aniFrame 归零分支 pcard.chain_code=0，
+            // 对齐 drawing.cpp DrawCard L604）保持同一落定语义：chain_code 只是飞行途中
+            // （is_moving）继续绘旧卡面的瞬时备份，卡片落定即失效。快进落位不产生 aniFrame，
+            // 若不在此清零，本对象先前一次飞行经 setCode(0) 备份进 chain_code 的卡码会残留到
+            // 落定卡上；观战跳到当前后排空多条 msg、同一对象可能先后承载不同卡，残留的
+            // chain_code 遂成为「别的卡片」的卡码，使落定的里侧卡 displayCode() 取到错码 →
+            // 点击详情显示成另一张卡（呼吸卡图同现 unknown）。真正公开码始终存于 code，
+            // 由 updateQuery 的 isRevealedFieldFaceDown 保护不被遮蔽洗零，清 chain_code 不伤它。
+            pcard.chain_code = 0;
             return;
         }
         float[] loc = field.getCardLocation(pcard);

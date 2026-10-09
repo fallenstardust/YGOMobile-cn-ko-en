@@ -687,14 +687,25 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             return;
         }
         // 观战：已收的全部通讯 msg 可能仍在按动画序列逐个播放（统一闸门串行化），
-        // 等到消息队列排空且无任何动画在播——观战者视觉上决斗确实结束后，再弹保存录像 dialog；
-        // 超时兜底防动画卡死时无限等待（对齐需求：动画未完不弹、播完先弹录像后弹决斗结束）
+        // 等到消息队列排空且无任何动画在播——观战者视觉上决斗确实结束后，再弹保存录像 dialog。
+        //
+        // 需求1 关键：实况观战会「积压」——每条 msg 的动画串行播放，连锁/快速效果下发速度远超
+        // 动画播放速度，故 STOC_REPLAY / STOC_DUEL_END 到达时前面还有大量 msg 的动画没播完。
+        // 只要队列仍有存量（backlog）就无条件继续等待，并每轮刷新兜底截止（backlog 被持续消化
+        // 不是卡死；动画闸门另有 8s failsafe 强制推进，队列必然最终排空，不会无限等待）——
+        // 早前只取 DUEL_END 一次性 20s 截止、不随 backlog 刷新，导致观战积压超 20s 时 dialog 提前
+        // 弹出打断动画，正是本次要修复的根因。队列已空仅剩收尾动画（胜负文字等）时才用超时兜底。
         GameEngine eng = activity.engine;
-        if (eng != null && duelEndedAsSpectator
-                && (eng.hasPendingMsgs() || !eng.isMsgQueueIdle() || eng.isAnyAnimationBusy())
-                && System.currentTimeMillis() < animSettleDeadlineMs) {
-            activity.mainHandler.postDelayed(duelEndReplayProcessor, ANIM_SETTLE_POLL_MS);
-            return;
+        if (eng != null && duelEndedAsSpectator) {
+            if (eng.hasPendingMsgs() || !eng.isMsgQueueIdle()) {
+                animSettleDeadlineMs = System.currentTimeMillis() + ANIM_SETTLE_TIMEOUT_MS;
+                activity.mainHandler.postDelayed(duelEndReplayProcessor, ANIM_SETTLE_POLL_MS);
+                return;
+            }
+            if (eng.isAnyAnimationBusy() && System.currentTimeMillis() < animSettleDeadlineMs) {
+                activity.mainHandler.postDelayed(duelEndReplayProcessor, ANIM_SETTLE_POLL_MS);
+                return;
+            }
         }
         if (pendingReplays.isEmpty()) {
             showDuelEndDialog();
