@@ -377,6 +377,16 @@
     <string name="category_my_online_deck">我的在线卡组</string>
     <string name="privacy_policy_content">隐私政策内容</string>
     <string name="user_privacy_policy">用户隐私政策</string>
+    <string name="follow_bilibili">关注B站动态</string>
+    <string name="scale_original">原始比例</string>
+    <string name="scale_full">全屏</string>
+    <string name="scale_switch_hint">点击任一示意图切换</string>
+    <string name="label_self">我方</string>
+    <string name="label_opponent">对方</string>
+    <string name="quality_low">低</string>
+    <string name="quality_high">高</string>
+    <string name="settings_opengl_version">OpenGL版本</string>
+    <string name="settings_screen_padding_summary">瀑布屏边距</string>
     <string name="agree">同意</string>
     <string name="reject">拒绝</string>
     <string name="privacy_policy_accepted">您已同意隐私政策，感谢您的理解与信任</string>

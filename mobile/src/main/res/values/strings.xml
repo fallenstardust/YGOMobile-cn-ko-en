@@ -78,8 +78,8 @@
     <string name="settings_game_immersive_mode">Optimize not 16:9 resolution</string>
     <string name="settings_game_opengl">OpenGL</string>
     <string name="settings_game_avatar">Game Avatar</string>
-    <string name="settings_author" translatable="false">菜菜、暗星\n浙ICP备2023031884号-2A
-</string>
+    <string name="settings_author" translatable="false">菜菜、暗星</string>
+    <string name="settings_record_number" translatable="false">浙ICP备2023031884号-2A</string>
     <string name="restart_app">"Please restart app！"</string>
     <string-array name="opengl_version">
         <item>OpenGL ES 1.X</item>
@@ -387,6 +387,22 @@
     <string name="fetch_online_deck">Fetching online decks via web</string>
     <string name="privacy_policy_content">privacy content</string>
     <string name="user_privacy_policy">User Privacy Policy</string>
+    <string name="follow_bilibili">Bilibili Feed</string>
+    <string name="data_language_cn" translatable="false">简体中文</string>
+    <string name="data_language_kr" translatable="false">조선말</string>
+    <string name="data_language_en" translatable="false">English</string>
+    <string name="data_language_es" translatable="false">Español</string>
+    <string name="data_language_jp" translatable="false">日本語</string>
+    <string name="data_language_pt" translatable="false">Português</string>
+    <string name="scale_original">Original</string>
+    <string name="scale_full">Full Screen</string>
+    <string name="scale_switch_hint">Tap either preview to switch</string>
+    <string name="label_self">Me</string>
+    <string name="label_opponent">Opponent</string>
+    <string name="quality_low">Low</string>
+    <string name="quality_high">High</string>
+    <string name="settings_opengl_version">OpenGL</string>
+    <string name="settings_screen_padding_summary">Screen Padding</string>
     <string name="about_user_privacy_policy">Explanation of the permissions used by YGOMObile</string>
 
     <!-- Strings used for fragments for navigation -->

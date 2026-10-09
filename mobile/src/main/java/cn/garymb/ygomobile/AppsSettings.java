@@ -181,6 +181,10 @@ public class AppsSettings {
         return mSharedPreferences.getBoolean(PREF_KEEP_SCALE, DEF_PREF_KEEP_SCALE);
     }
 
+    public void setKeepScale(boolean keepScale) {
+        mSharedPreferences.putBoolean(PREF_KEEP_SCALE, keepScale);
+    }
+
     public int getScreenPadding() {
         //ListPreference都是string
         String str = mSharedPreferences.getString(PREF_WINDOW_TOP_BOTTOM, null);
@@ -624,6 +628,10 @@ public class AppsSettings {
      */
     public boolean isImmerSiveMode() {
         return mSharedPreferences.getBoolean(PREF_IMMERSIVE_MODE, PREF_DEF_IMMERSIVE_MODE);
+    }
+
+    public void setImmerSiveMode(boolean immersive) {
+        mSharedPreferences.putBoolean(PREF_IMMERSIVE_MODE, immersive);
     }
 
     public boolean isSensorRefresh() {

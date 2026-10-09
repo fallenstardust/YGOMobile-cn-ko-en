@@ -1,48 +1,34 @@
 package cn.garymb.ygomobile.ui.settings;
 
-import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_AVATAR_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_BG_SIZE;
 import static cn.garymb.ygomobile.Constants.CORE_SKIN_CARD_COVER_SIZE;
-import static cn.garymb.ygomobile.Constants.ID1;
-import static cn.garymb.ygomobile.Constants.ID2;
-import static cn.garymb.ygomobile.Constants.ID3;
 import static cn.garymb.ygomobile.Constants.ORI_EXPANSIONS;
 import static cn.garymb.ygomobile.Constants.ORI_PICS;
 import static cn.garymb.ygomobile.Constants.ORI_REPLAY;
-import static cn.garymb.ygomobile.Constants.PERF_TEST_REPLACE_KERNEL;
 import static cn.garymb.ygomobile.Constants.PREF_CHANGE_LOG;
 import static cn.garymb.ygomobile.Constants.PREF_CHECK_UPDATE;
 import static cn.garymb.ygomobile.Constants.PREF_DATA_LANGUAGE;
-import static cn.garymb.ygomobile.Constants.PREF_DECK_DELETE_DILAOG;
-import static cn.garymb.ygomobile.Constants.PREF_DEL_EX;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_ANTIALIAS;
-import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_GAME_FONT;
-import static cn.garymb.ygomobile.Constants.PREF_GAME_PATH;
-import static cn.garymb.ygomobile.Constants.PREF_IMAGE_QUALITY;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
-import static cn.garymb.ygomobile.Constants.PREF_JOIN_QQ;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
-import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
 import static cn.garymb.ygomobile.Constants.PREF_RESET_GAME_RES;
-import static cn.garymb.ygomobile.Constants.PREF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_START_SERVICEDUELASSISTANT;
-import static cn.garymb.ygomobile.Constants.PREF_USER_PRIVACY_POLICY;
-import static cn.garymb.ygomobile.Constants.PREF_USE_EXTRA_CARD_CARDS;
 import static cn.garymb.ygomobile.Constants.PREF_WINDOW_TOP_BOTTOM;
-import static cn.garymb.ygomobile.Constants.SETTINGS_AVATAR;
-import static cn.garymb.ygomobile.Constants.SETTINGS_CARD_BG;
-import static cn.garymb.ygomobile.Constants.SETTINGS_COVER;
+import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FILE;
+import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_FOLDER;
+import static cn.garymb.ygomobile.Constants.REQUEST_CHOOSE_IMG;
 import static cn.garymb.ygomobile.Constants.URL_BILIBILI_DYNAMIC;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.getDatapath;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -51,21 +37,27 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.preference.CheckBoxPreference;
-import androidx.preference.ListPreference;
-import androidx.preference.Preference;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 
 import com.ourygo.lib.duelassistant.service.DuelAssistantService;
+import com.yuyh.library.imgsel.ISNav;
+import com.yuyh.library.imgsel.config.ISListConfig;
+import com.yuyh.library.imgsel.ui.ISListActivity;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -76,9 +68,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -87,15 +77,18 @@ import java.util.List;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.adapter.DialogImageAdapter;
+import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.ImageItem;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
+import cn.garymb.ygomobile.ui.file.FileActivity;
+import cn.garymb.ygomobile.ui.file.FileOpenType;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
-import cn.garymb.ygomobile.ui.home.MainActivity;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.CurImageInfo;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
@@ -108,228 +101,236 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class SettingFragment extends PreferenceFragmentPlus {
+/**
+ * 设置页：由Preference体系迁移为宫格自定义布局，完全继承BaseFragemnt。
+ * 所有偏好读写沿用原Constants键与AppsSettings的SharedPreferences，保证功能不变。
+ */
+public class SettingFragment extends BaseFragemnt implements View.OnClickListener {
     private static final int TYPE_SETTING_GET_VERSION_OK = 0;
     private static final int TYPE_SETTING_GET_VERSION_FAILED = 1;
     public static String Version;
     public static String Cache_link;
+
+    //皮肤图片预览类型
+    private static final int KIND_AVATAR_ME = 0;
+    private static final int KIND_AVATAR_OPPONENT = 1;
+    private static final int KIND_COVER1 = 2;
+    private static final int KIND_COVER2 = 3;
+    private static final int KIND_BG_GAME = 4;
+    private static final int KIND_BG_MENU = 5;
+    private static final int KIND_BG_DECK = 6;
+    //字体文件选择用途
+    private static final int PURPOSE_FONT = 100;
+
     private AppsSettings mSettings;
     private HomeActivity activity;
-    private boolean isInit = true;
+    private SharedPreferences mSharedPreferences;
     private int FailedCount;
     private PrivacyPolicyCallback privacyPolicyCallback;
+    private boolean updatingUi = false;
+
+    private View rootView;
+    private Switch swReadEx, swDuelAssistant, swImmersive, swLockScreen, swAntiAlias, swPendulum;
+    private TextView tvVersionInfo, tvOpenGLValue, tvPaddingValue;
+    private TextView btnQualityLow, btnQualityHigh;
+    private final TextView[] langViews = new TextView[6];
+    private ImageView imgAvatarMe, imgAvatarOpponent, imgCover1, imgCover2, imgBgGame, imgBgMenu, imgBgDeck;
+    private ImageView imgScaleOriginal, imgScaleFull;
+
+    //文件/图片选择状态（替代原curPreference机制）
+    private CurImageInfo mCurImageInfo;
+    private int mPendingPurpose = -1;//REQUEST_CHOOSE_IMG选中后要刷新的预览类型
+    private int mFileChoosePurpose = -1;//REQUEST_CHOOSE_FILE的用途（字体选择）
 
     public SettingFragment() {
 
     }
 
+    @Nullable
     @Override
-    protected SharedPreferences getSharedPreferences() {
-        return AppsSettings.get().getSharedPreferences();
-    }
-
-    @Override
-    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-        setPreferencesFromResource(R.xml.preference_game, rootKey);
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(false);
-        activity = (HomeActivity) getContext();
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        View view;
+        if (isHorizontal)
+            view = inflater.inflate(R.layout.fragment_settings_grid_horizontal, container, false);
+        else
+            view = inflater.inflate(R.layout.fragment_settings_grid, container, false);
+        rootView = view;
+        activity = (HomeActivity) getActivity();
         mSettings = AppsSettings.get();
-
-        bind(PREF_CHANGE_LOG, SystemUtils.getVersionName(getContext()) + "(" + SystemUtils.getVersion(getContext()) + ")");
-        bind(PREF_CHECK_UPDATE, YGOUtil.s(R.string.settings_about_author_pref) + " : " + YGOUtil.s(R.string.settings_author));
-        bind(PREF_RESET_GAME_RES, YGOUtil.s(R.string.guide_reset));
-        bind(PREF_JOIN_QQ, YGOUtil.s(R.string.about_Join_QQ));
-        bind(PREF_START_SERVICEDUELASSISTANT, mSettings.isServiceDuelAssistant());
-        bind(PREF_LOCK_SCREEN, mSettings.isLockSreenOrientation());
-        bind(PREF_FONT_ANTIALIAS, mSettings.isFontAntiAlias());
-        bind(PREF_IMMERSIVE_MODE, mSettings.isImmerSiveMode());
-        bind(PREF_PENDULUM_SCALE, mSettings.isPendulumScale());
-        bind(PREF_SENSOR_REFRESH, mSettings.isSensorRefresh());
-        bind(PREF_OPENGL_VERSION, mSettings.getOpenglVersion());
-        bind(PREF_IMAGE_QUALITY, mSettings.getCardQuality());
-        bind(PREF_GAME_FONT, mSettings.getFontPath());
-        bind(PREF_READ_EX, mSettings.isReadExpansions());
-        bind(PREF_DEL_EX, YGOUtil.s(R.string.about_delete_ex));
-        bind(PREF_WINDOW_TOP_BOTTOM, "" + mSettings.getScreenPadding());
-        bind(PREF_DATA_LANGUAGE, mSettings.getDataLanguage());
-        Preference preference = findPreference(PREF_READ_EX);
-        if (preference != null) {
-            preference.setSummary(mSettings.getExpansionsPath().getAbsolutePath());
+        mSharedPreferences = mSettings.getSharedPreferences();
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
         }
-        bind(PREF_DECK_DELETE_DILAOG, mSettings.isDialogDelete());
-        //bind(PREF_USE_EXTRA_CARD_CARDS, mSettings.isUseExtraCards());
-        bind(SETTINGS_AVATAR, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath());
-        bind(SETTINGS_COVER, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath());
-        bind(SETTINGS_CARD_BG, new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath());
-        bind(PREF_FONT_SIZE, mSettings.getFontSize());
-        bind(PREF_ONLY_GAME, mSettings.isOnlyGame());
-        bind(PREF_KEEP_SCALE, mSettings.isKeepScale());
-        bind(PREF_USER_PRIVACY_POLICY, YGOUtil.s(R.string.about_user_privacy_policy));
-        isInit = false;
+        initViews(view);
+        syncUiState();
+        refreshSkinPreviews();
+        return view;
+    }
+
+    private void initViews(View view) {
+        //宫格按钮
+        view.findViewById(R.id.cell_reset_res).setOnClickListener(this);
+        view.findViewById(R.id.cell_check_update).setOnClickListener(this);
+        view.findViewById(R.id.cell_check_update).setOnLongClickListener(v -> {
+            //长按选择游戏字体ttf
+            showFileChooser(PURPOSE_FONT, "*.ttf", mSettings.getFontDirPath(), getString(R.string.dialog_select_file));
+            return true;
+        });
+        view.findViewById(R.id.cell_change_log).setOnClickListener(this);
+        view.findViewById(R.id.cell_join_qq).setOnClickListener(this);
+        view.findViewById(R.id.cell_bilibili).setOnClickListener(this);
+        view.findViewById(R.id.cell_opengl).setOnClickListener(this);
+        view.findViewById(R.id.cell_screen_padding).setOnClickListener(this);
+        view.findViewById(R.id.cell_delete_ex).setOnClickListener(this);
+        view.findViewById(R.id.cell_privacy_policy).setOnClickListener(this);
+        tvVersionInfo = view.findViewById(R.id.tv_version_info);
+        tvOpenGLValue = view.findViewById(R.id.tv_opengl_value);
+        tvPaddingValue = view.findViewById(R.id.tv_padding_value);
+
+        //皮肤图片预览
+        imgAvatarMe = view.findViewById(R.id.img_avatar_me);
+        imgAvatarOpponent = view.findViewById(R.id.img_avatar_opponent);
+        imgCover1 = view.findViewById(R.id.img_cover1);
+        imgCover2 = view.findViewById(R.id.img_cover2);
+        imgBgGame = view.findViewById(R.id.img_bg_game);
+        imgBgMenu = view.findViewById(R.id.img_bg_menu);
+        imgBgDeck = view.findViewById(R.id.img_bg_deck);
+        imgAvatarMe.setOnClickListener(this);
+        imgAvatarOpponent.setOnClickListener(this);
+        imgCover1.setOnClickListener(this);
+        imgCover2.setOnClickListener(this);
+        imgBgGame.setOnClickListener(this);
+        imgBgMenu.setOnClickListener(this);
+        imgBgDeck.setOnClickListener(this);
+
+        //原始比例示意图（点击切换）
+        imgScaleOriginal = view.findViewById(R.id.img_scale_original);
+        imgScaleFull = view.findViewById(R.id.img_scale_full);
+        imgScaleOriginal.setOnClickListener(this);
+        imgScaleFull.setOnClickListener(this);
+
+        //开关
+        swReadEx = view.findViewById(R.id.switch_read_ex);
+        swDuelAssistant = view.findViewById(R.id.switch_duel_assistant);
+        swImmersive = view.findViewById(R.id.switch_immersive);
+        swLockScreen = view.findViewById(R.id.switch_lock_screen);
+        swAntiAlias = view.findViewById(R.id.switch_font_antialias);
+        swPendulum = view.findViewById(R.id.switch_pendulum);
+        swReadEx.setOnCheckedChangeListener(this::onSwitchChanged);
+        swDuelAssistant.setOnCheckedChangeListener(this::onSwitchChanged);
+        swImmersive.setOnCheckedChangeListener(this::onSwitchChanged);
+        swLockScreen.setOnCheckedChangeListener(this::onSwitchChanged);
+        swAntiAlias.setOnCheckedChangeListener(this::onSwitchChanged);
+        swPendulum.setOnCheckedChangeListener(this::onSwitchChanged);
+
+        //游戏图片质量：高/低两个按钮切换
+        btnQualityLow = view.findViewById(R.id.btn_quality_low);
+        btnQualityHigh = view.findViewById(R.id.btn_quality_high);
+        btnQualityLow.setOnClickListener(this);
+        btnQualityHigh.setOnClickListener(this);
+
+        //语言圆形单选
+        int[] langIds = new int[]{R.id.lang_0, R.id.lang_1, R.id.lang_2, R.id.lang_3, R.id.lang_4, R.id.lang_5};
+        for (int i = 0; i < langIds.length; i++) {
+            langViews[i] = view.findViewById(langIds[i]);
+            final int code = i;
+            langViews[i].setOnClickListener(v -> changeDataLanguage(code));
+        }
+    }
+
+    /***
+     * 从偏好设置读取全部状态并刷新UI
+     */
+    private void syncUiState() {
+        updatingUi = true;
+        //版本信息与作者显示在检查更新宫格
+        tvVersionInfo.setText(SystemUtils.getVersionName(getContext()) + "(" + SystemUtils.getVersion(getContext()) + ")\n"
+                + YGOUtil.s(R.string.settings_about_author_pref) + " : " + YGOUtil.s(R.string.settings_author));
+        setSwitch(swReadEx, getPrefBool(PREF_READ_EX, Constants.DEF_PREF_READ_EX));
+        setSwitch(swDuelAssistant, mSettings.isServiceDuelAssistant());
+        updateScaleSelection(mSettings.isKeepScale());
+        setSwitch(swImmersive, mSettings.isImmerSiveMode());
+        updateQualitySelection(mSettings.getCardQuality() != 0);
+        setSwitch(swLockScreen, mSettings.isLockSreenOrientation());
+        setSwitch(swAntiAlias, mSettings.isFontAntiAlias());
+        setSwitch(swPendulum, mSettings.isPendulumScale());
+        //OpenGL与瀑布屏边距
+        String[] oglEntries = getResources().getStringArray(R.array.opengl_version);
+        int ogl = Constants.PREF_DEF_OPENGL_VERSION;
+        try {
+            ogl = Integer.parseInt(mSharedPreferences.getString(PREF_OPENGL_VERSION, "" + ogl));
+        } catch (Exception e) {
+            //忽略
+        }
+        tvOpenGLValue.setText(oglEntries.length > ogl ? oglEntries[ogl] : String.valueOf(ogl));
+        String[] padEntries = getResources().getStringArray(R.array.screen_top_bottom_desc);
+        String[] padValues = getResources().getStringArray(R.array.screen_top_bottom_value);
+        String padValue = mSharedPreferences.getString(PREF_WINDOW_TOP_BOTTOM, "" + Constants.DEF_PREF_WINDOW_TOP_BOTTOM);
+        int padIndex = 0;
+        for (int i = 0; i < padValues.length; i++) {
+            if (padValues[i].equals(padValue)) {
+                padIndex = i;
+                break;
+            }
+        }
+        tvPaddingValue.setText(padEntries.length > padIndex ? padEntries[padIndex] : padValue);
+        //语言选中态
+        updateLangSelection(mSettings.getDataLanguage());
+        updatingUi = false;
+    }
+
+    private void setSwitch(Switch sw, boolean checked) {
+        boolean old = updatingUi;
+        updatingUi = true;
+        sw.setChecked(checked);
+        updatingUi = old;
+    }
+
+    private boolean getPrefBool(String key, boolean def) {
+        return mSharedPreferences.getBoolean(key, def);
+    }
+
+    private void putPrefBool(String key, boolean value) {
+        mSharedPreferences.edit().putBoolean(key, value).apply();
+    }
+
+    private void putPrefString(String key, String value) {
+        mSharedPreferences.edit().putString(key, value).apply();
     }
 
     @Override
-    public boolean onPreferenceChange(@NonNull Preference preference, Object value) {
-        super.onPreferenceChange(preference, value);
-        if (!isInit) {
-            /*if (PREF_GAME_VERSION.equals(preference.getKey())) {
-                int v = mSettings.getVersionValue(value.toString());
-                if (v > 0 && v <= mSettings.getVersionValue("0xF99F")) {
-                    mSettings.setGameVersion(v);
-                    super.onPreferenceChange(preference, mSettings.getVersionString(v));
-                    return true;
-                } else {
-                    if (BuildConfig.DEBUG) {
-                        Toast.makeText(getContext(), getString(R.string.error_game_ver) + " " + value.toString(), Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(getContext(), R.string.error_game_ver, Toast.LENGTH_LONG).show();
-                    }
-                    return false;
-                }
-            }*/
-            if (PREF_FONT_SIZE.equals(preference.getKey())) {
-                int size = Constants.DEF_PREF_FONT_SIZE;
-                try {
-                    size = Integer.parseInt(String.valueOf(value));
-                } catch (Exception e) {
-                }
-            }
-            if (preference instanceof CheckBoxPreference) {
-                CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
-                mSharedPreferences.edit().putBoolean(preference.getKey(), checkBoxPreference.isChecked()).apply();
-                //如果是设置额外卡库的选项
-                if (preference.getKey().equals(PREF_READ_EX)) {
-                    //设置使用额外卡库后重新加载卡片数据
-                    DataManager.get().load(true);
-                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPrefChange));
-                    //ServerUtil.initExCardState();
-                }
-                //开关决斗助手
-                if (preference.getKey().equals(PREF_START_SERVICEDUELASSISTANT)) {
-                    if (checkBoxPreference.isChecked()) {
-                        if (!SharedPreferenceUtil.isPrivacyPolicyAgreed()) {
-                            // 设置回调来处理隐私政策结果
-                            privacyPolicyCallback = new PrivacyPolicyCallback() {
-                                @Override
-                                public void onPrivacyPolicyResult(boolean agreed) {
-                                    if (agreed) {
-                                        // 用户同意隐私政策，自动勾选并启动服务
-                                        AppsSettings.get().setServiceDuelAssistant(true);
-                                        // 查找并勾选checkbox
-                                        Preference pref = findPreference(PREF_START_SERVICEDUELASSISTANT);
-                                        if (pref instanceof CheckBoxPreference) {
-                                            ((CheckBoxPreference) pref).setChecked(true);
-                                        }
-                                        getContext().startService(new Intent(getContext(), DuelAssistantService.class));
-                                    } else {
-                                        // 用户拒绝隐私政策，统一处理拒绝操作
-                                        handlePrivacyPolicyRejected();
-                                    }
-                                    privacyPolicyCallback = null; // 清除回调引用
-                                }
-                            };
-                            activity.showPrivacyPolicyDialogWithCallback(privacyPolicyCallback);
-                        } else {
-                            // 已经同意隐私政策，直接启动服务
-                            getContext().startService(new Intent(getContext(), DuelAssistantService.class));
-                        }
-                    } else {
-                        // 取消勾选，停止服务
-                        getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
-                        AppsSettings.get().setServiceDuelAssistant(false);
-                    }
-                }
-                return true;
-            }
-            boolean rs = super.onPreferenceChange(preference, value);
-            if (preference instanceof ListPreference) {
-                ListPreference listPreference = (ListPreference) preference;
-                if (preference.getKey().equals(PREF_DATA_LANGUAGE)) {
-                    if (listPreference.equals(AppsSettings.languageEnum.Chinese.code)) {
-                        try {
-                            mSettings.copyCnData();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (listPreference.equals(AppsSettings.languageEnum.Korean.code)) {
-                        try {
-                            mSettings.copyKorData();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (listPreference.equals(AppsSettings.languageEnum.English.code)) {
-                        try {
-                            mSettings.copyEnData();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (listPreference.equals(AppsSettings.languageEnum.Spanish.code)) {
-                        try {
-                            mSettings.copyEsData();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (listPreference.equals(AppsSettings.languageEnum.Japanese.code)) {
-                        try {
-                            mSettings.copyJpData();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (listPreference.equals(AppsSettings.languageEnum.Portuguese.code)) {
-                        try {
-                            mSettings.copyPtData();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    mSettings.setDataLanguage(Integer.valueOf(listPreference.getValue()));
-                    YGOUtil.showTextToast(R.string.restart_app, Toast.LENGTH_LONG);
-                    DataManager.get().load(true);
-                }
-                mSharedPreferences.edit().putString(preference.getKey(), listPreference.getValue()).apply();
-            } else {
-                mSharedPreferences.edit().putString(preference.getKey(), "" + value).apply();
-            }
-            return rs;
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onPreferenceClick(Preference preference) {
-        String key = preference.getKey();
-        if (PREF_CHANGE_LOG.equals(key)) {
+    public void onClick(View v) {
+        int id = v.getId();
+        if (id == R.id.cell_reset_res) {
+            updateImages();
+        } else if (id == R.id.cell_check_update) {
+            FailedCount = 0;
+            checkUpgrade(URL_HOME_VERSION);
+        } else if (id == R.id.cell_change_log) {
             new DialogPlus(getContext())
                     .setTitleText(getString(R.string.settings_about_change_log))
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
-        }
-        if (PREF_USER_PRIVACY_POLICY.equals(key)) {
+        } else if (id == R.id.cell_join_qq) {
+            String groupkey = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
+            joinQQGroup(groupkey);
+        } else if (id == R.id.cell_bilibili) {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(URL_BILIBILI_DYNAMIC));
+            startActivity(intent);
+        } else if (id == R.id.cell_opengl) {
+            showOpenGLDialog();
+        } else if (id == R.id.cell_screen_padding) {
+            showScreenPaddingDialog();
+        } else if (id == R.id.cell_privacy_policy) {
             // 为隐私政策条目点击也设置回调处理
             PrivacyPolicyCallback policyCallback = new PrivacyPolicyCallback() {
                 @Override
                 public void onPrivacyPolicyResult(boolean agreed) {
                     if (agreed) {
                         // 用户同意隐私政策时，自动勾选服务决斗助手
-                        Preference pref = findPreference(PREF_START_SERVICEDUELASSISTANT);
-                        if (pref instanceof CheckBoxPreference) {
-                            CheckBoxPreference checkBoxPref = (CheckBoxPreference) pref;
-                            checkBoxPref.setChecked(true);
-                            // 更新设置
-                            AppsSettings.get().setServiceDuelAssistant(true);
-                            // 启动服务
-                            getContext().startService(new Intent(getContext(), DuelAssistantService.class));
-                        }
+                        setSwitchChecked(swDuelAssistant, true);
                     } else {
                         // 用户拒绝隐私政策时的特殊处理
                         handlePrivacyPolicyRejected();
@@ -337,152 +338,510 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 }
             };
             activity.showPrivacyPolicyDialogWithCallback(policyCallback);
+        } else if (id == R.id.img_avatar_me) {
+            openImagePicker(KIND_AVATAR_ME);
+        } else if (id == R.id.img_avatar_opponent) {
+            openImagePicker(KIND_AVATAR_OPPONENT);
+        } else if (id == R.id.img_cover1) {
+            openImagePicker(KIND_COVER1);
+        } else if (id == R.id.img_cover2) {
+            openImagePicker(KIND_COVER2);
+        } else if (id == R.id.img_bg_game) {
+            openImagePicker(KIND_BG_GAME);
+        } else if (id == R.id.img_bg_menu) {
+            openImagePicker(KIND_BG_MENU);
+        } else if (id == R.id.img_bg_deck) {
+            openImagePicker(KIND_BG_DECK);
+        } else if (id == R.id.img_scale_original) {
+            setKeepScale(true);
+        } else if (id == R.id.img_scale_full) {
+            setKeepScale(false);
+        } else if (id == R.id.btn_quality_low) {
+            setCardQuality(false);
+        } else if (id == R.id.btn_quality_high) {
+            setCardQuality(true);
+        } else if (id == R.id.cell_delete_ex) {
+            showDeleteExpDialog();
         }
-        if (PREF_RESET_GAME_RES.equals(key)) {
-            updateImages();
-        }
-        if (PREF_JOIN_QQ.equals(key)) {
-            String groupkey = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
-            joinQQGroup(groupkey);
-        }
-        if (PREF_CHECK_UPDATE.equals(key)) {
-            checkUpgrade(URL_HOME_VERSION);
+    }
 
-        }
-        if (PREF_DEL_EX.equals(key)) {
-            File[] ypks = new File(mSettings.getExpansionsPath().getAbsolutePath()).listFiles();
-            List<String> list = new ArrayList<>();
-            for (int i = 0; i < ypks.length; i++) {
-                list.add(ypks[i].getName());
+    /**
+     * 统一开关处理，写入与旧CheckBoxPreference完全相同的键与类型
+     */
+    public void onSwitchChanged(CompoundButton button, boolean checked) {
+        if (updatingUi) return;
+        int id = button.getId();
+        if (id == R.id.switch_read_ex) {
+            putPrefBool(PREF_READ_EX, checked);
+            //设置使用额外卡库后重新加载卡片数据
+            DataManager.get().load(true);
+            EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPrefChange));
+        } else if (id == R.id.switch_duel_assistant) {
+            //开关决斗助手
+            if (checked) {
+                if (!SharedPreferenceUtil.isPrivacyPolicyAgreed()) {
+                    // 设置回调来处理隐私政策结果
+                    privacyPolicyCallback = new PrivacyPolicyCallback() {
+                        @Override
+                        public void onPrivacyPolicyResult(boolean agreed) {
+                            if (agreed) {
+                                // 用户同意隐私政策，自动勾选并启动服务
+                                AppsSettings.get().setServiceDuelAssistant(true);
+                                setSwitchChecked(swDuelAssistant, true);
+                                getContext().startService(new Intent(getContext(), DuelAssistantService.class));
+                            } else {
+                                // 用户拒绝隐私政策，统一处理拒绝操作
+                                handlePrivacyPolicyRejected();
+                            }
+                            privacyPolicyCallback = null; // 清除回调引用
+                        }
+                    };
+                    activity.showPrivacyPolicyDialogWithCallback(privacyPolicyCallback);
+                } else {
+                    // 已经同意隐私政策，直接启动服务
+                    putPrefBool(PREF_START_SERVICEDUELASSISTANT, true);
+                    AppsSettings.get().setServiceDuelAssistant(true);
+                    getContext().startService(new Intent(getContext(), DuelAssistantService.class));
+                }
+            } else {
+                // 取消勾选，停止服务
+                getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
+                AppsSettings.get().setServiceDuelAssistant(false);
             }
-            SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
-            simpleListAdapter.set(list);
-            final DialogPlus dialog = new DialogPlus(getContext());
-            dialog.setTitle(R.string.ypk_delete);
-            dialog.setContentView(R.layout.dialog_edit_and_list);
-            EditText editText = dialog.bind(R.id.room_name);
-            editText.setVisibility(View.GONE);//不显示输入框
-            ListView listView = dialog.bind(R.id.room_list);
-            listView.setAdapter(simpleListAdapter);
-            listView.setOnItemLongClickListener((a, v, i, index) -> {
-                /* 删除先行卡 */
-                String name = simpleListAdapter.getItemById(index);
-                int pos = simpleListAdapter.findItem(name);
-                if (pos >= 0) {
-                    simpleListAdapter.remove(pos);
-                    simpleListAdapter.notifyDataSetChanged();
-                    FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
-                    DataManager.get().load(true);
-                    YGOUtil.showTextToast(R.string.done, Toast.LENGTH_LONG);
-                    if (name.contains(Constants.officialExCardPackageName)) {//如果删除的是官方先行卡ypk，则更新其相关UI状态
-                        SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
-                        ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
-                        EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
+        } else if (id == R.id.switch_immersive) {
+            mSettings.setImmerSiveMode(checked);
+        } else if (id == R.id.switch_lock_screen) {
+            putPrefBool(PREF_LOCK_SCREEN, checked);
+        } else if (id == R.id.switch_font_antialias) {
+            putPrefBool(PREF_FONT_ANTIALIAS, checked);
+        } else if (id == R.id.switch_pendulum) {
+            putPrefBool(PREF_PENDULUM_SCALE, checked);
+            setPendlumScale(checked);
+        }
+    }
+
+    private void setSwitchChecked(Switch sw, boolean checked) {
+        if (sw == null) return;
+        setSwitch(sw, checked);
+    }
+
+    /**
+     * 原始比例开关：点击两张示意图切换，写入与原CheckBoxPreference相同的键
+     */
+    private void setKeepScale(boolean keepScale) {
+        mSettings.setKeepScale(keepScale);
+        updateScaleSelection(keepScale);
+    }
+
+    private void updateScaleSelection(boolean keepScale) {
+        if (imgScaleOriginal == null || imgScaleFull == null) return;
+        imgScaleOriginal.setSelected(keepScale);
+        imgScaleFull.setSelected(!keepScale);
+        imgScaleOriginal.setAlpha(keepScale ? 1f : 0.35f);
+        imgScaleFull.setAlpha(keepScale ? 0.35f : 1f);
+    }
+
+    /**
+     * 游戏图片质量：点击高/低按钮切换，写入与原ListPreference相同的int值（0=低 1=高）
+     */
+    private void setCardQuality(boolean high) {
+        mSettings.setCardQuality(high ? 1 : 0);
+        updateQualitySelection(high);
+    }
+
+    private void updateQualitySelection(boolean high) {
+        if (btnQualityLow == null || btnQualityHigh == null) return;
+        btnQualityLow.setBackgroundResource(high ? R.drawable.radius_p : R.drawable.radius);
+        btnQualityHigh.setBackgroundResource(high ? R.drawable.radius : R.drawable.radius_p);
+    }
+
+    /**
+     * 删除扩展卡包：弹窗列出已安装的ypk文件，长按对应名称删除（沿用原实现逻辑）
+     */
+    private void showDeleteExpDialog() {
+        File dir = mSettings.getExpansionsPath();
+        File[] ypks = dir.listFiles();
+        List<String> list = new ArrayList<>();
+        if (ypks != null) {
+            for (File file : ypks) {
+                list.add(file.getName());
+            }
+        }
+        SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
+        simpleListAdapter.set(list);
+        final DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle(R.string.ypk_delete);
+        dialog.setContentView(R.layout.dialog_edit_and_list);
+        EditText editText = dialog.bind(R.id.room_name);
+        editText.setVisibility(View.GONE);//不显示输入框
+        ListView listView = dialog.bind(R.id.room_list);
+        listView.setAdapter(simpleListAdapter);
+        listView.setOnItemLongClickListener((a, v, i, index) -> {
+            /* 删除先行卡 */
+            String name = simpleListAdapter.getItemById(index);
+            int pos = simpleListAdapter.findItem(name);
+            if (pos >= 0) {
+                simpleListAdapter.remove(pos);
+                simpleListAdapter.notifyDataSetChanged();
+                FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath() + "/" + name);
+                DataManager.get().load(true);
+                YGOUtil.showTextToast(R.string.done, Toast.LENGTH_LONG);
+                if (name.contains(Constants.officialExCardPackageName)) {//如果删除的是官方先行卡ypk，则更新其相关UI状态
+                    SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
+                    ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
+                    EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
+                }
+            }
+            return true;
+        });
+        dialog.show();
+    }
+
+    /***
+     * 统一处理隐私政策拒绝的操作：取消服务决斗助手勾选并停止相关服务
+     */
+    private void handlePrivacyPolicyRejected() {
+        setSwitchChecked(swDuelAssistant, false);
+        // 更新共享偏好设置
+        AppsSettings.get().setServiceDuelAssistant(false);
+        // 停止服务
+        getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
+    }
+
+    // ==================== OpenGL / 屏幕边距 ====================
+
+    private void showOpenGLDialog() {
+        String[] entries = getResources().getStringArray(R.array.opengl_version);
+        String[] values = getResources().getStringArray(R.array.opengl_version_value);
+        int current = mSettings.getOpenglVersion();
+        new AlertDialog.Builder(getContext())
+                .setTitle(R.string.settings_game_opengl)
+                .setSingleChoiceItems(entries, current, (dlg, which) -> {
+                    putPrefString(PREF_OPENGL_VERSION, values[which]);
+                    syncUiState();
+                    dlg.dismiss();
+                })
+                .setNegativeButton(R.string.Cancel, null)
+                .show();
+    }
+
+    private void showScreenPaddingDialog() {
+        String[] entries = getResources().getStringArray(R.array.screen_top_bottom_desc);
+        String[] values = getResources().getStringArray(R.array.screen_top_bottom_value);
+        String padValue = mSharedPreferences.getString(PREF_WINDOW_TOP_BOTTOM, "" + Constants.DEF_PREF_WINDOW_TOP_BOTTOM);
+        int current = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(padValue)) {
+                current = i;
+                break;
+            }
+        }
+        new AlertDialog.Builder(getContext())
+                .setTitle(R.string.settings_screen_padding)
+                .setSingleChoiceItems(entries, current, (dlg, which) -> {
+                    putPrefString(PREF_WINDOW_TOP_BOTTOM, values[which]);
+                    syncUiState();
+                    dlg.dismiss();
+                })
+                .setNegativeButton(R.string.Cancel, null)
+                .show();
+    }
+
+    // ==================== 资料语言 ====================
+
+    private void updateLangSelection(int code) {
+        if (rootView == null) return;
+        for (int i = 0; i < langViews.length; i++) {
+            if (langViews[i] != null) {
+                langViews[i].setBackgroundResource(i == code ? R.drawable.radius : R.drawable.radius_p);
+            }
+        }
+    }
+
+    private void changeDataLanguage(int code) {
+        if (mSettings.getDataLanguage() == code) return;
+        Dialog dlg = DialogPlus.show(getContext(), null, getString(R.string.message));
+        VUiKit.defer().when(() -> {
+            try {
+                AppsSettings.languageEnum lang = AppsSettings.languageEnum.values()[code];
+                if (lang == AppsSettings.languageEnum.Chinese) {
+                    mSettings.copyCnData();
+                } else if (lang == AppsSettings.languageEnum.Korean) {
+                    mSettings.copyKorData();
+                } else if (lang == AppsSettings.languageEnum.English) {
+                    mSettings.copyEnData();
+                } else if (lang == AppsSettings.languageEnum.Spanish) {
+                    mSettings.copyEsData();
+                } else if (lang == AppsSettings.languageEnum.Japanese) {
+                    mSettings.copyJpData();
+                } else if (lang == AppsSettings.languageEnum.Portuguese) {
+                    mSettings.copyPtData();
+                }
+                putPrefString(PREF_DATA_LANGUAGE, String.valueOf(code));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).fail((e) -> {
+            dlg.dismiss();
+            Log.e(Constants.TAG, "change language failed " + e);
+            YGOUtil.showTextToast(R.string.loading_failed);
+        }).done((rs) -> {
+            dlg.dismiss();
+            YGOUtil.showTextToast(R.string.restart_app, Toast.LENGTH_LONG);
+            DataManager.get().load(true);
+            updateLangSelection(mSettings.getDataLanguage());
+        });
+    }
+
+    // ==================== 皮肤图片（头像/卡背/背景） ====================
+
+    private void refreshSkinPreviews() {
+        String skin = mSettings.getCoreSkinPath();
+        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], imgAvatarMe);
+        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], imgAvatarOpponent);
+        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], imgCover1);
+        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], imgCover2);
+        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgGame);
+        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgMenu);
+        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgDeck);
+    }
+
+    private void refreshPreviewByKind(int kind) {
+        String skin = mSettings.getCoreSkinPath();
+        switch (kind) {
+            case KIND_AVATAR_ME:
+                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], imgAvatarMe);
+                break;
+            case KIND_AVATAR_OPPONENT:
+                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], imgAvatarOpponent);
+                break;
+            case KIND_COVER1:
+                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], imgCover1);
+                break;
+            case KIND_COVER2:
+                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], imgCover2);
+                break;
+            case KIND_BG_GAME:
+                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgGame);
+                break;
+            case KIND_BG_MENU:
+                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgMenu);
+                break;
+            case KIND_BG_DECK:
+                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgDeck);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private String outFileOfKind(int kind) {
+        String skin = mSettings.getCoreSkinPath();
+        switch (kind) {
+            case KIND_AVATAR_ME:
+                return new File(skin, Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
+            case KIND_AVATAR_OPPONENT:
+                return new File(skin, Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
+            case KIND_COVER1:
+                return new File(skin, Constants.CORE_SKIN_COVER).getAbsolutePath();
+            case KIND_COVER2:
+                return new File(skin, Constants.CORE_SKIN_COVER2).getAbsolutePath();
+            case KIND_BG_GAME:
+                return new File(skin, Constants.CORE_SKIN_BG).getAbsolutePath();
+            case KIND_BG_MENU:
+                return new File(skin, Constants.CORE_SKIN_BG_MENU).getAbsolutePath();
+            case KIND_BG_DECK:
+                return new File(skin, Constants.CORE_SKIN_BG_DECK).getAbsolutePath();
+            default:
+                return null;
+        }
+    }
+
+    private ImageView imageViewOfKind(int kind) {
+        switch (kind) {
+            case KIND_AVATAR_ME:
+                return imgAvatarMe;
+            case KIND_AVATAR_OPPONENT:
+                return imgAvatarOpponent;
+            case KIND_COVER1:
+                return imgCover1;
+            case KIND_COVER2:
+                return imgCover2;
+            case KIND_BG_GAME:
+                return imgBgGame;
+            case KIND_BG_MENU:
+                return imgBgMenu;
+            case KIND_BG_DECK:
+                return imgBgDeck;
+            default:
+                return null;
+        }
+    }
+
+    private void openImagePicker(int kind) {
+        String imagePath;
+        int[] size;
+        switch (kind) {
+            case KIND_AVATAR_ME:
+            case KIND_AVATAR_OPPONENT:
+                imagePath = mSettings.getAvatarPath();
+                size = CORE_SKIN_AVATAR_SIZE;
+                break;
+            case KIND_COVER1:
+            case KIND_COVER2:
+                imagePath = mSettings.getCoverPath();
+                size = CORE_SKIN_CARD_COVER_SIZE;
+                break;
+            default:
+                imagePath = mSettings.getBgPath();
+                size = CORE_SKIN_BG_SIZE;
+                break;
+        }
+        DialogloadImages(imageViewOfKind(kind), imagePath, size, outFileOfKind(kind), kind);
+    }
+
+    private void DialogloadImages(ImageView imageView, String imagePath, int[] itemWidth_itemHeight, String outFile, int kind) {
+        final DialogPlus dlg = new DialogPlus(getContext());
+        dlg.setContentView(R.layout.dialog_image_select);
+        dlg.setTitle(R.string.dialog_select_image);
+        dlg.show();
+        GridView vImgSel = dlg.bind(R.id.gridView);
+        ArrayList<ImageItem> items = new ArrayList<>();
+        // 添加相册选择item
+        items.add(new ImageItem("album_item", true));
+        File directory = new File(imagePath);
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            for (File file : files) {
+                if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".png"))) {
+                    items.add(new ImageItem(file.getAbsolutePath(), false));
+                }
+            }
+        }
+
+        // 设置适配器
+        DialogImageAdapter dialogImageAdapter = new DialogImageAdapter(dlg, getContext(), imageView, items, itemWidth_itemHeight, outFile, (outFilePath, title, width, height) -> {
+            // 相册入口：跳系统图片选择+裁剪，回调后刷新对应预览
+            showImageCropChooser(title, outFilePath, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1], kind);
+        });
+        vImgSel.setAdapter(dialogImageAdapter);
+    }
+
+    // ==================== 文件/图片选择（原PreferenceFragmentPlus逻辑） ====================
+
+    private void showFileChooser(int purpose, String type, String defPath, String title) {
+        mFileChoosePurpose = purpose;
+        Intent intent = FileActivity.getIntent(getActivity(), title, type, defPath, false, FileOpenType.SelectFile);
+        startActivityForResult(intent, REQUEST_CHOOSE_FILE);
+    }
+
+    protected void showFolderChooser(String defPath, String title) {
+        mFileChoosePurpose = -1;
+        Intent intent = FileActivity.getIntent(getActivity(), title, null, defPath, false, FileOpenType.SelectFolder);
+        startActivityForResult(intent, REQUEST_CHOOSE_FOLDER);
+    }
+
+    private void showImageCropChooser(String title, String outFile, boolean isJpeg, int width, int height, int kind) {
+        mCurImageInfo = new CurImageInfo();
+        mCurImageInfo.mOutFile = outFile;
+        mCurImageInfo.mJpeg = isJpeg;
+        mCurImageInfo.width = width;
+        mCurImageInfo.height = height;
+        mCurImageInfo.mCurTitle = title;
+        mPendingPurpose = kind;
+        ISListConfig config = new ISListConfig.Builder()
+                // 是否多选, 默认true
+                .multiSelect(false)
+                // 是否记住上次选中记录, 仅当multiSelect为true的时候配置，默认为true
+                .rememberSelected(false)
+                // "确定"按钮背景色
+                .btnBgColor(Color.BLACK)
+                // "确定"按钮文字颜色
+                .btnTextColor(Color.WHITE)
+                // 使用沉浸式状态栏
+                .statusBarColor(Color.parseColor("#11113d"))
+                // 返回图标ResId
+                .backResId(R.drawable.ic_back)
+                // 标题
+                .title(getString(R.string.images))
+                // 标题文字颜色
+                .titleColor(Color.WHITE)
+                // TitleBar背景色
+                .titleBgColor(Color.parseColor("#11113d"))
+                .needCrop(true)
+                // 裁剪大小。needCrop为true的时候配置
+                .cropSize(mCurImageInfo.width, mCurImageInfo.height, mCurImageInfo.width, mCurImageInfo.height)
+                // 第一个是否显示相机，默认true
+                .needCamera(false)
+                // 最大选择图片数量，默认9
+                .maxNum(1)
+                .build();
+
+        // 跳转到图片选择器
+        ISNav.getInstance().toListActivity(this, config, REQUEST_CHOOSE_IMG);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CHOOSE_IMG && resultCode == Activity.RESULT_OK && data != null) {
+            ArrayList<String> photos = data.getStringArrayListExtra(ISListActivity.INTENT_RESULT);
+            if (mCurImageInfo != null && photos != null && !photos.isEmpty()) {
+                String cachePath = photos.get(0);
+                try {
+                    FileUtils.copyFile(cachePath, mCurImageInfo.mOutFile);
+                    refreshPreviewByKind(mPendingPurpose);
+                } catch (IOException e) {
+                    YGOUtil.showTextToast(e + "", Toast.LENGTH_LONG);
+                }
+            }
+            mCurImageInfo = null;
+            mPendingPurpose = -1;
+        } else if (requestCode == REQUEST_CHOOSE_FILE) {
+            //选择文件
+            if (data != null) {
+                Uri uri = data.getData();
+                if (uri != null) {
+                    File file = new File(uri.getPath());
+                    if (file.exists()) {
+                        onChooseFileOk(file.getAbsolutePath());
+                        return;
                     }
                 }
-                return true;
-            });
-            /*
-            dialog.setMessage(R.string.ask_delete_ex);
-            dialog.setLeftButtonListener((dlg, s) -> {
-                FileUtils.delFile(mSettings.getExpansionsPath().getAbsolutePath());
-                DataManager.get().load(true);
-                Toast.makeText(getContext(), R.string.done, Toast.LENGTH_LONG).show();
-                dialog.dismiss();
-            });
-            dialog.setRightButtonListener((dlg, s) -> {
-                dialog.dismiss();
-            });*/
-            dialog.show();
-        }
-        if (PREF_PENDULUM_SCALE.equals(key)) {
-            CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
-            setPendlumScale(checkBoxPreference.isChecked());
-        } else if (PREF_GAME_FONT.equals(key)) {
-            //选择ttf字体文件，保存
-            showFileChooser(preference, "*.ttf", mSettings.getFontDirPath(), getString(R.string.dialog_select_file));
-        } else if (SETTINGS_AVATAR.equals(key)) {
-            final DialogPlus dialog = new DialogPlus(getContext());
-            dialog.setContentView(R.layout.dialog_avatar_select);
-            dialog.setTitle(R.string.settings_game_avatar);
-            dialog.show();
-            //显示头像图片对话框
-            View viewDialog = dialog.getContentView();
-            ImageView avatar1 = viewDialog.findViewById(R.id.me);
-            ImageView avatar2 = viewDialog.findViewById(R.id.opponent);
-            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar1);
-            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], avatar2);
-            avatar1.setOnClickListener((v) -> {
-                //打开系统文件相册
-                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
-                DialogloadImages(preference, avatar1, mSettings.getAvatarPath(), CORE_SKIN_AVATAR_SIZE, outFile);
-            });
-            avatar2.setOnClickListener((v) -> {
-                //打开系统文件相册
-                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
-                DialogloadImages(preference, avatar2, mSettings.getAvatarPath(), CORE_SKIN_AVATAR_SIZE, outFile);
-            });
-        } else if (SETTINGS_COVER.equals(key)) {
-            //显示卡背图片对话框
-            final DialogPlus dialog = new DialogPlus(getContext());
-            dialog.setContentView(R.layout.dialog_cover_select);
-            dialog.setTitle(R.string.card_cover);
-            dialog.show();
-            View viewDialog = dialog.getContentView();
-            ImageView cover1 = viewDialog.findViewById(R.id.cover1);
-            ImageView cover2 = viewDialog.findViewById(R.id.cover2);
-            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover1);
-            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], cover2);
-            cover1.setOnClickListener((v) -> {
-                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER).getAbsolutePath();
-                DialogloadImages(preference, cover1, mSettings.getCoverPath(), CORE_SKIN_CARD_COVER_SIZE, outFile);
-            });
-            cover2.setOnClickListener((v) -> {
-                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_COVER2).getAbsolutePath();
-                DialogloadImages(preference, cover2, mSettings.getCoverPath(), CORE_SKIN_CARD_COVER_SIZE, outFile);
-            });
-        } else if (SETTINGS_CARD_BG.equals(key)) {
-            //显示背景图片对话框
-            final DialogPlus dialog = new DialogPlus(getContext());
-            dialog.setContentView(R.layout.dialog_bg_select);
-            dialog.setTitle(R.string.game_bg);
-            dialog.show();
-            View viewDialog = dialog.getContentView();
-            ImageView bg = viewDialog.findViewById(R.id.bg);
-            ImageView bg_menu = viewDialog.findViewById(R.id.bg_menu);
-            ImageView bg_deck = viewDialog.findViewById(R.id.bg_deck);
-            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg);
-            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_menu);
-            mSettings.setImage(mSettings.getCoreSkinPath() + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], bg_deck);
-            bg.setOnClickListener((v) -> {
-                //打开系统文件相册
-                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG).getAbsolutePath();
-                DialogloadImages(preference, bg, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
-            });
-            bg_menu.setOnClickListener((v) -> {
-                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_MENU).getAbsolutePath();
-                DialogloadImages(preference, bg_menu, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
-            });
-            bg_deck.setOnClickListener((v) -> {
-                String outFile = new File(mSettings.getCoreSkinPath(), Constants.CORE_SKIN_BG_DECK).getAbsolutePath();
-                DialogloadImages(preference, bg_deck, mSettings.getBgPath(), CORE_SKIN_BG_SIZE, outFile);
-            });
-        } else if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
-            CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
-            if (checkBoxPreference.isChecked()) {
-                checkBoxPreference.setChecked(false);
-                mSettings.setUseExtraCards(false);
-                showFileChooser(checkBoxPreference, "*.cdb", mSettings.getResourcePath(), getString(R.string.dialog_select_database));
-            } else {
-                mSettings.setUseExtraCards(false);
             }
-        } else if (PREF_GAME_PATH.equals(key)) {
-            showFolderChooser(preference, mSettings.getResourcePath(), getString(R.string.choose_game_path));
-        } else if (PERF_TEST_REPLACE_KERNEL.equals(key)) {
-            showFileChooser(preference, ".so", mSettings.getResourcePath(), "内核文件选择");
+            mFileChoosePurpose = -1;
+        } else if (requestCode == REQUEST_CHOOSE_FOLDER) {
+            //选择文件夹
+            if (data != null) {
+                Uri uri = data.getData();
+                if (uri != null) {
+                    File file = new File(uri.getPath());
+                    if (file.exists()) {
+                        onChooseFolderOk(file.getAbsolutePath());
+                        return;
+                    }
+                }
+            }
+            mFileChoosePurpose = -1;
         }
-        return false;
     }
+
+    private void onChooseFileOk(String file) {
+        if (mFileChoosePurpose == PURPOSE_FONT) {
+            //选择ttf字体：与旧实现一致，写入偏好键并同步字体路径
+            putPrefString(PREF_GAME_FONT, file);
+            mSettings.setFontPath(file);
+            YGOUtil.showTextToast(R.string.restart_app, Toast.LENGTH_LONG);
+        }
+        mFileChoosePurpose = -1;
+    }
+
+    private void onChooseFolderOk(String folder) {
+        //预留：游戏资源目录选择（当前界面无入口，与原注释掉的PREF_GAME_PATH项一致）
+        mFileChoosePurpose = -1;
+    }
+
+    // ==================== 以下功能自旧实现平移 ====================
 
     @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
@@ -505,82 +864,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
 
         }
     };
-
-    @Override
-    protected void onChooseFileFail(Preference preference) {
-        super.onChooseFileFail(preference);
-        //空指针异常
-        if (preference == null) return;
-        String key = preference.getKey();
-        if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
-            mSettings.setUseExtraCards(false);
-            ((CheckBoxPreference) preference).setChecked(false);
-        }
-    }
-
-    @Override
-    protected void onChooseFileOk(Preference preference, String file) {
-        if (preference == null) return;
-        String key = preference.getKey();
-        if (Constants.DEBUG)
-            Log.i("kk", "onChooseFileOk:" + key + ",file=" + file);
-        if (SETTINGS_AVATAR.equals(key) || SETTINGS_COVER.equals(key) || SETTINGS_CARD_BG.equals(key)) {
-            super.onChooseFileOk(preference, file);
-            onPreferenceClick(preference);
-        } else if (PREF_GAME_PATH.equalsIgnoreCase(preference.getKey())) {
-            if (!TextUtils.equals(mSettings.getResourcePath(), file)) {
-//                Toast.makeText(getActivity(), R.string.restart_app, Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(getContext(), MainActivity.class).setAction(ACTION_RELOAD));
-                getActivity().finish();
-            }
-            mSettings.setResourcePath(file);
-            super.onChooseFileOk(preference, file);
-        } else if (PREF_USE_EXTRA_CARD_CARDS.equals(key)) {
-            ((CheckBoxPreference) preference).setChecked(true);
-            mSettings.setUseExtraCards(true);
-            copyDataBase(preference, file);
-
-        } else {
-            super.onChooseFileOk(preference, file);
-        }
-    }
-
-    private void copyDataBase(Preference preference, String file) {
-        CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
-        Dialog dlg = DialogPlus.show(getContext(), null, getString(R.string.copy_databse));
-        VUiKit.defer().when(() -> {
-            File db = new File(mSettings.getResourcePath(), Constants.DATABASE_NAME);
-            InputStream in = null;
-            try {
-                if (!TextUtils.equals(file, db.getAbsolutePath())) {
-                    if (db.exists()) {
-                        db.delete();
-                    }
-                    in = new FileInputStream(file);
-                    //复制
-                    IOUtils.copyToFile(in, db.getAbsolutePath());
-                }
-                //处理数据
-//                ResCheckTask.doSomeTrickOnDatabase(db.getAbsolutePath());
-                return true;
-            } catch (Exception e) {
-
-            } finally {
-                IOUtils.close(in);
-            }
-            return false;
-        }).fail((e) -> {
-            dlg.dismiss();
-            mSettings.setUseExtraCards(false);
-            checkBoxPreference.setChecked(false);
-            YGOUtil.showTextToast(R.string.restart_app);
-        }).done((ok) -> {
-            dlg.dismiss();
-            checkBoxPreference.setChecked(ok);
-            mSettings.setUseExtraCards(ok);
-            YGOUtil.showTextToast(R.string.restart_app);
-        });
-    }
 
     private void setPendlumScale(boolean ok) {
         if (Constants.DEBUG)
@@ -659,10 +942,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
                         mSettings.copyPtData();
                 }
 
-                /*
-                IOUtils.copyFilesFromAssets(this, getDatapath(Constants.CORE_SOUND_PATH),
-                        mSettings.getSoundPath(), false);*/
-
                 /*复制原目录文件
                 if (new File(ORI_DECK).list() != null)
                     FileUtils.copyDir(ORI_DECK, mSettings.getDeckDir(), false);*/
@@ -679,6 +958,7 @@ public class SettingFragment extends PreferenceFragmentPlus {
         }).done((rs) -> {
             YGOUtil.showTextToast(R.string.done);
             dialog.dismiss();
+            refreshSkinPreviews();
         });
     }
 
@@ -752,12 +1032,12 @@ public class SettingFragment extends PreferenceFragmentPlus {
                 }
                 activity.Cache_pre_release_code = sb.toString();
             }
-            if (!TextUtils.isEmpty(activity.Cache_pre_release_code)) {
+            if (activity.Cache_pre_release_code != null && !activity.Cache_pre_release_code.isEmpty()) {
                 activity.pre_code_list.clear();
                 activity.released_code_list.clear();
                 arrangeCodeList(activity.Cache_pre_release_code);
             }
-            if (!TextUtils.isEmpty(Version) && !TextUtils.isEmpty(Cache_link)
+            if (Version != null && !Version.isEmpty() && Cache_link != null && !Cache_link.isEmpty()
                     && Version.compareTo(BuildConfig.VERSION_NAME) > 0) {
                 DialogPlus dialog = new DialogPlus(getContext());
                 dialog.setMessage(R.string.Found_Update);
@@ -776,43 +1056,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
             Log.e(Constants.TAG, "parse version json error: " + e);
             YGOUtil.showTextToast(R.string.Checking_Update_Failed);
         }
-    }
-
-    private void DialogloadImages(Preference preference, ImageView imageView, String imagePath, int[] itemWidth_itemHeight, String outFile) {
-        final DialogPlus dlg = new DialogPlus(getContext());
-        dlg.setContentView(R.layout.dialog_image_select);
-        dlg.setTitle(R.string.dialog_select_image);
-        dlg.show();
-        GridView vImgSel = dlg.findViewById(R.id.gridView);
-        ArrayList<ImageItem> items = new ArrayList<>();
-        // 添加相册选择item
-        items.add(new ImageItem("album_item", true));
-        File directory = new File(imagePath);
-        if (directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            for (File file : files) {
-                if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".png"))) {
-                    items.add(new ImageItem(file.getAbsolutePath(), false));
-                }
-            }
-        }
-
-        // 从Intent中获取传递的图片路径
-        if (imagePath != null) {
-            // 设置适配器
-            DialogImageAdapter dialogImageAdapter = new DialogImageAdapter(dlg, getContext(), imageView, items, itemWidth_itemHeight, outFile, new DialogImageAdapter.OnImageSelectedListener() {
-                @Override
-                public void onImageSelected(String outFilePath, String title, int width, int height) {
-                    showImageCropChooser(preference, title, outFile, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1]);
-                }
-            });
-            vImgSel.setAdapter(dialogImageAdapter);
-
-        } else {
-            dlg.dismiss();
-            showImageCropChooser(preference, getString(R.string.dialog_select_image), outFile, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1]);
-        }
-
     }
 
     private void showBilibiliDialog() {
@@ -837,23 +1080,6 @@ public class SettingFragment extends PreferenceFragmentPlus {
         void onPrivacyPolicyResult(boolean agreed);
     }
 
-    /**
-     * 统一处理隐私政策拒绝的操作
-     * 取消PREF_START_SERVICEDUELASSISTANT的勾选并停止相关服务
-     */
-    private void handlePrivacyPolicyRejected() {
-        // 查找并取消服务决斗助手的checkbox勾选
-        Preference preference = findPreference(PREF_START_SERVICEDUELASSISTANT);
-        if (preference instanceof CheckBoxPreference) {
-            CheckBoxPreference checkBoxPreference = (CheckBoxPreference) preference;
-            checkBoxPreference.setChecked(false);
-            // 更新共享偏好设置
-            AppsSettings.get().setServiceDuelAssistant(false);
-            // 停止服务
-            getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
-        }
-    }
-
     // 添加事件监听类
     public static class PrivacyPolicyAgreedEvent {
         public boolean agreed;
@@ -866,13 +1092,53 @@ public class SettingFragment extends PreferenceFragmentPlus {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onPrivacyPolicyAgreed(PrivacyPolicyAgreedEvent event) {
         if (event.agreed) {
-            // 更新checkbox的显示状态
-            Preference pref = findPreference(PREF_START_SERVICEDUELASSISTANT);
-            if (pref instanceof CheckBoxPreference) {
-                CheckBoxPreference checkBoxPref = (CheckBoxPreference) pref;
-                checkBoxPref.setChecked(true);
-            }
+            // 更新开关的显示状态
+            setSwitchChecked(swDuelAssistant, true);
         }
     }
-}
 
+    @Override
+    public void onDestroyView() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
+        rootView = null;
+        super.onDestroyView();
+    }
+
+    // ==================== BaseFragemnt 生命周期 ====================
+
+    @Override
+    public void onFirstUserVisible() {
+
+    }
+
+    @Override
+    public void onUserVisible() {
+        //页面重新可见时同步最新设置状态
+        if (rootView != null) {
+            syncUiState();
+            refreshSkinPreviews();
+        }
+    }
+
+    @Override
+    public void onFirstUserInvisible() {
+
+    }
+
+    @Override
+    public void onUserInvisible() {
+
+    }
+
+    @Override
+    public void onBackHome() {
+
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        return false;
+    }
+}
