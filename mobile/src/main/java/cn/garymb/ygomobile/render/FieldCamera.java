@@ -25,9 +25,8 @@ final class FieldCamera {
 
     private final GameFieldView view;
 
-    // === 相机参数（俯仰角可由设置调整，默认俯视 52°：比 60° 更平，配合顶部内缩避免对方手卡顶到 gameTopInfo）===
-    // 视点到注视点距离：与俯仰角共同决定相机位置（越高越俯视）
-    private static final float CAMERA_DISTANCE = 7.6f;
+    // === 相机姿态基准（俯仰角 / 视点距离的实际值由 GameFieldView 按 XML/设置提供，本类不硬编默认值）===
+    // 场地横向中轴与注视点 y：与 view.cameraDistance / cameraElevationDeg 共同决定视点位置。
     static final float CAM_X = 3.95f;
     private static final float CAM_LOOK_Y = 0.3f;
 
@@ -35,9 +34,11 @@ final class FieldCamera {
     /** 手卡 billboard 所在平面高度（gframe getCardLocation：LOCATION_HAND z=0.5） */
     static final float HAND_Z = 0.5f;
     /** 我方 / 对方手卡行的场地 y（gframe：4.0 / -3.4；对方行随 GameFieldGeometry 的
-     *  OPP_HAND_PUSH=0.35 整体外推至 -3.75，减少遮挡魔陷区） */
+     *  OPP_HAND_PUSH 整体外推，本值须恒等于 -3.4 − OPP_HAND_PUSH，与几何同源否则裁手卡）。
+     *  注：「对方侧显得远/小」的主调参是相机距离 field_camera_distance，非此处；详见
+     *  layout/layout_game_right.xml 的「决斗场微调参数总览」。 */
     static final float SELF_HAND_Y = 4.0f;
-    static final float OPP_HAND_Y = -3.75f;
+    static final float OPP_HAND_Y = -3.55f;
     /** 我方近端魔陷区外缘 y：由几何真值派生 = szoneCY(0,<5) 中心 + 半格高，
      *  随 ZONE_GAP 统一间隙自动跟随（原硬编码 3.2，现 ≈3.24），手卡屏幕上缘不得越过此线 */
     private static final float SZONE_NEAR_Y = szoneNearY();

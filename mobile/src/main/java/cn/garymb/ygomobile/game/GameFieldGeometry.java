@@ -38,8 +38,10 @@ class GameFieldGeometry {
     }
 
     /** 对方手卡沿纵轴额外向远离场地中心方向平移量（Y 世界单位）：因场地区/魔陷行等
-     *  按 ZONE_GAP 外扩后对方手卡更易遮挡魔陷区格子，按需求整体外推减少遮挡 */
-    private static final float OPP_HAND_PUSH = 0.35f;
+     *  按 ZONE_GAP 外扩后对方手卡更易遮挡魔陷区格子，按需求整体外推减少遮挡。
+     *  横屏决斗场位置调整后本偏移会让对方场上魔陷行与手卡间距显大，按需求收窄至 0.15
+     *  以拉近两者、仅保留少量防遮挡余量；改动需同步 FieldCamera.OPP_HAND_Y(-3.4-本值)。 */
+    private static final float OPP_HAND_PUSH = 0.15f;
 
     /** 手牌触到侧列带宽封顶时的最小可见露出量（世界单位）：极端张数下宁可卡片间
      *  层叠更多，也不允许一张手卡被完全盖住（C++ 无此下限，其 gframe 手卡可完全叠掩） */

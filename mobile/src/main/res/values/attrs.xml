@@ -18,7 +18,10 @@
     <declare-styleable name="GameFieldView">
         <!-- 相机俯仰角（度，35~75）：越大越接近正俯视；在 XML 中显式声明时优先于游戏内保存的设置 -->
         <attr name="field_camera_elevation" format="float" />
-        <!-- 视点到注视点距离：与俯仰角共同决定相机位置（默认 7.6） -->
+        <!-- 视点到注视点距离：与俯仰角共同决定相机位置（默认 7.6）。
+             这是「对方场上卡片显得远/小」的主调参旋钮：值越大→透视越平（近大远小削弱）→
+             对方侧变大变近，取景按宽度自适应回满屏不缩小卡片；横屏取 10.0，竖屏取 7.6。
+             完整微调说明见 layout/layout_game_right.xml 的「决斗场微调参数总览」。 -->
         <attr name="field_camera_distance" format="float" />
         <!-- 场地视觉倍率：1.0 = 场地近端左右边缘精确贴合视图左右缘（默认 1.0） -->
         <attr name="field_zoom" format="float" />
