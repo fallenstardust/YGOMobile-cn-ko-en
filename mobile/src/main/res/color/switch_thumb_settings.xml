@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 启用(勾选)：滑块蓝色 holo_blue_dark -->
+    <item android:color="@android:color/holo_blue_dark" android:state_checked="true" />
+    <!-- 停用(未勾选)：滑块灰色 -->
+    <item android:color="@color/gray" android:state_checked="false" />
+</selector>

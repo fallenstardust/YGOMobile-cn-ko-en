@@ -140,6 +140,11 @@
         <item name="android:thumbTint">@color/switch_thumb_color_selector</item>
         <item name="android:trackTint">@color/switch_track_color_selector</item>
     </style>
+    <!-- 设置页开关：停用滑块灰色 / 启用滑块 holo_blue_dark -->
+    <style name="SettingsSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:thumbTint">@color/switch_thumb_settings</item>
+        <item name="android:trackTint">@color/switch_track_settings</item>
+    </style>
     <!-- 筛选条件栏通用样式 -->
     <style name="Title">
         <item name="android:layout_width">match_parent</item>

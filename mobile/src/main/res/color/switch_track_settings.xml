@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 启用(勾选)：轨道半透明蓝 -->
+    <item android:color="#660099CC" android:state_checked="true" />
+    <!-- 停用(未勾选)：轨道半透明灰 -->
+    <item android:color="#66D0D0D0" android:state_checked="false" />
+</selector>
