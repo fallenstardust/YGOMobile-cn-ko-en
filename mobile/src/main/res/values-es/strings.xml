@@ -492,6 +492,17 @@
     <string name="resource_strings">· Configuración de textos</string>
     <string name="resource_pics">· Archivo de imágenes de cartas</string>
 
+    <!-- ajustes de imagen y pantalla -->
+    <string name="follow_bilibili">Seguir feed de Bilibili</string>
+    <string name="scale_original">Proporción original</string>
+    <string name="scale_full">Pantalla completa</string>
+    <string name="scale_switch_hint">Toca cualquier vista previa para cambiar</string>
+    <string name="label_self">Yo</string>
+    <string name="label_opponent">Rival</string>
+    <string name="quality_low">Baja</string>
+    <string name="quality_high">Alta</string>
+    <string name="settings_opengl_version">Versión de OpenGL</string>
+    <string name="settings_screen_padding_summary">Margen de pantalla</string>
     <string name="settings_native_game_mode">Modo de juego UI nativa</string>
     <string name="settings_native_game_mode_summary">Usa la interfaz nativa de Android en lugar del motor Irrlicht (experimental)</string>
 

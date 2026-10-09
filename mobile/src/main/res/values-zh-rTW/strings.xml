@@ -496,6 +496,17 @@
     <string name="resource_strings">· 字段等配置</string>
     <string name="resource_pics">· 卡圖壓縮包</string>
 
+    <!-- 圖片與螢幕設定 -->
+    <string name="follow_bilibili">關注B站動態</string>
+    <string name="scale_original">原始比例</string>
+    <string name="scale_full">全螢幕</string>
+    <string name="scale_switch_hint">點擊任一示意圖切換</string>
+    <string name="label_self">我方</string>
+    <string name="label_opponent">對方</string>
+    <string name="quality_low">低</string>
+    <string name="quality_high">高</string>
+    <string name="settings_opengl_version">OpenGL版本</string>
+    <string name="settings_screen_padding_summary">瀑布螢幕邊距</string>
     <string name="settings_native_game_mode">原生UI遊戲模式</string>
     <string name="settings_native_game_mode_summary">使用 Android 原生 UI 代替 Irrlicht 引擎（實驗性）</string>
     <string name="solo_mode">純單人模式</string>

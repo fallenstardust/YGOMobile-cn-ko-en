@@ -511,6 +511,17 @@
     <string name="resource_strings">· 텍스트 및 설정</string>
     <string name="resource_pics">· 카드 이미지 압축 파일</string>
 
+    <!-- 이미지 및 화면 설정 -->
+    <string name="follow_bilibili">Bilibili 피드 팔로우</string>
+    <string name="scale_original">원본 비율</string>
+    <string name="scale_full">전체 화면</string>
+    <string name="scale_switch_hint">미리보기 항목을 탭하여 전환</string>
+    <string name="label_self">나</string>
+    <string name="label_opponent">상대</string>
+    <string name="quality_low">낮음</string>
+    <string name="quality_high">높음</string>
+    <string name="settings_opengl_version">OpenGL 버전</string>
+    <string name="settings_screen_padding_summary">화면 여백</string>
     <string name="settings_native_game_mode">네이티브 UI 게임 모드</string>
     <string name="settings_native_game_mode_summary">Irrlicht 엔진 대신 Android 네이티브 UI 사용 (실험적)</string>
 
