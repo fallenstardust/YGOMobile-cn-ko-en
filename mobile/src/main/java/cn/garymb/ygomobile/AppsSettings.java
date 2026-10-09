@@ -634,6 +634,14 @@ public class AppsSettings {
         mSharedPreferences.putBoolean(PREF_IMMERSIVE_MODE, immersive);
     }
 
+    public boolean isNativeGameMode() {
+        return mSharedPreferences.getBoolean(Constants.PREF_NATIVE_GAME_MODE, Constants.PREF_DEF_NATIVE_GAME_MODE);
+    }
+
+    public void setNativeGameMode(boolean enabled) {
+        mSharedPreferences.putBoolean(Constants.PREF_NATIVE_GAME_MODE, enabled);
+    }
+
     public boolean isSensorRefresh() {
         return mSharedPreferences.getBoolean(PREF_SENSOR_REFRESH, PREF_DEF_SENSOR_REFRESH);
     }

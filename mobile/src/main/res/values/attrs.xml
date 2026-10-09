@@ -14,4 +14,21 @@
     <declare-styleable name="ShimmerView">
         <attr name="reflectionColor" format="color" />
     </declare-styleable>
+    <!-- 决斗场渲染视图 GameFieldView：布局参数可在 XML 中调整并在设计时预览中实时查看 -->
+    <declare-styleable name="GameFieldView">
+        <!-- 相机俯仰角（度，35~75）：越大越接近正俯视；在 XML 中显式声明时优先于游戏内保存的设置 -->
+        <attr name="field_camera_elevation" format="float" />
+        <!-- 视点到注视点距离：与俯仰角共同决定相机位置（默认 7.6） -->
+        <attr name="field_camera_distance" format="float" />
+        <!-- 场地视觉倍率：1.0 = 场地近端左右边缘精确贴合视图左右缘（默认 1.0） -->
+        <attr name="field_zoom" format="float" />
+        <!-- 我方手卡沿 +Y 向后平移量（世界单位，默认 0.7）：使手卡底边略高于视图底边 -->
+        <attr name="field_hand_shift" format="float" />
+        <!-- 设计时预览：是否显示区域槽位与堆叠区（默认 true，仅 isInEditMode 生效） -->
+        <attr name="field_preview_zones" format="boolean" />
+        <!-- 设计时预览：是否显示双方示例手卡（默认 true，仅 isInEditMode 生效） -->
+        <attr name="field_preview_hand" format="boolean" />
+        <!-- 设计时预览：是否显示堆叠区名称标签（默认 true，仅 isInEditMode 生效） -->
+        <attr name="field_preview_labels" format="boolean" />
+    </declare-styleable>
 </resources>

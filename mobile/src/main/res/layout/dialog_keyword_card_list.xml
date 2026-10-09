@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 关键词卡片列表贴边面板：点击卡片详情描述中「」/""之间的高亮关键词后，
+     在 layout_game_right 最左侧停靠显示命中该关键词的卡片纵向列表（复用卡组编辑搜索结果同款 item/adapter）。
+     非模态：不遮挡决斗场，决斗可继续；点右上角关闭或点面板外收起 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/keyword_card_list_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/window3"
+    android:orientation="vertical"
+    android:padding="4dp">
+
+    <!-- 顶部标题行：关键词文本 + 命中数量 + 关闭按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="4dp"
+        android:paddingBottom="4dp">
+
+        <ImageButton
+            android:id="@+id/btn_dialog_collapse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_keyboard_arrow_down_24"
+            android:background="@drawable/selected_light"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"/>
+
+        <TextView
+            android:id="@+id/tv_keyword_card_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:layout_marginStart="2dp"
+            android:text="@string/searchresult"
+            android:textColor="@color/white"
+            android:textSize="9sp" />
+
+        <!-- 命中数量：不参与 weight 伸缩、固定完整显示（关键词过长只省略前面的关键词） -->
+        <TextView
+            android:id="@+id/tv_keyword_card_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:maxLines="1"
+            android:textColor="@color/holo_blue_bright"
+            android:textSize="9sp" />
+
+        <ImageButton
+            android:id="@+id/btn_keyword_card_close"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/click_transparent_background"
+            android:contentDescription="@null"
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_failed"/>
+    </LinearLayout>
+
+    <!-- 列表区高度由 Java 侧按 layout_game_right 区域高解算后面板总高固定，本处用 weight 精确
+         占满「面板高 - 标题行 - 根内边距」的剩余空间：条目全部装得下时一屏完整显示无滚动，
+         装不下时可视区恰为剩余高度，滚动条可一直滚到最后一张卡（不再被窗口下沿裁掉） -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_keyword_card_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="vertical" />
+</LinearLayout>

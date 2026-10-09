@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 选项选择弹窗（效仿 gframe game.cpp L828-851 wOptions）：
+     标题文字（系统字符串 555）+ 可滚动选项按钮列表（效仿 btnOption + scrOption），
+     点击选项直接关闭弹窗并发送通讯响应 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/option_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/sdialogl"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingVertical="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageButton
+            android:id="@+id/btn_dialog_collapse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_keyboard_arrow_down_24"
+            android:background="@drawable/selected_light"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:layout_gravity="start"/>
+
+        <TextView
+            android:id="@+id/tv_option_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_marginStart="2dp"
+            android:textColor="@color/white"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+
+    <!-- 选项列表（效仿 wOptions 的 btnOption + scrOption 滚动） -->
+    <ScrollView
+        android:id="@+id/scroll_option"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:maxHeight="300dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/layout_option_items"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical" />
+    </ScrollView>
+</LinearLayout>

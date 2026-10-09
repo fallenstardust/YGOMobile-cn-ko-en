@@ -842,6 +842,50 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- 原生UI游戏模式开关 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="3dp"
+                android:layout_weight="1"
+                android:background="@drawable/dialogshort"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/settings_native_game_mode"
+                    android:textColor="@color/item_title"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:text="@string/settings_native_game_mode_summary"
+                    android:textColor="@color/gray"
+                    android:textSize="9sp" />
+
+                <Switch
+                    style="@style/SettingsSwitch"
+                    android:id="@+id/switch_native_game"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp" />
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- OpenGL版本 / 瀑布屏边距 -->
         <LinearLayout
             android:layout_width="match_parent"

@@ -16,9 +16,12 @@ import ocgcore.enums.LimitType;
  * 3判断某张卡是否属于禁止卡、限制卡、准限制卡
  */
 public class LimitList {
+    private static final int LFLIST_HASH_SEED = 0x7dfcee6a;
     private String name = "?";
     private Integer credit_limits;//GeneSys模式特有的上限值
     private Map<Integer, Integer> credits;//GeneSys模式特有的单张卡ID和其点数
+    private int lfHash = LFLIST_HASH_SEED;
+    private final Map<Integer, Integer> contentMap = new HashMap<>();
     /**
      * 0
      */
@@ -95,16 +98,39 @@ public class LimitList {
         this.name = name;
     }
 
+    public int getLfHash() {
+        return lfHash;
+    }
+
+    public void setLfHash(int hash) {
+        lfHash = hash;
+    }
+
+    private static int updateHash(int hash, int code, int count) {
+        return hash ^ ((code << 18) | (code >>> 14))
+                ^ ((code << (27 + count)) | (code >>> (5 - count)));
+    }
+
+    private void addContentCode(int code, int count) {
+        Integer old = contentMap.put(code, count);
+        if (old != null && old != count) {
+            lfHash = updateHash(lfHash, code, old);
+        }
+        lfHash = updateHash(lfHash, code, count);
+    }
+
     public void addSemiLimit(Integer id) {
         if (!semiLimit.contains(id)) {
             semiLimit.add(id);
         }
+        addContentCode(id, 2);
     }
 
     public void addLimit(Integer id) {
         if (!limit.contains(id)) {
             limit.add(id);
         }
+        addContentCode(id, 1);
     }
 
     public void addCreditLimit(Integer limit) {
@@ -126,6 +152,7 @@ public class LimitList {
         if (!forbidden.contains(id)) {
             forbidden.add(id);
         }
+        addContentCode(id, 0);
     }
 
     public List<Integer> getCodeList() {

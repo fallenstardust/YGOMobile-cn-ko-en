@@ -188,6 +188,7 @@
     <string name="donation">Apóyanos</string>
     <string name="refresh">Actualizar</string>
     <string name="select_deck">Elige un deck</string>
+    <string name="solo_mode">Modo solo</string>
     <string name="quit_deck_tip">El deck no está guardado, ¿Salir de la aplicación?</string>
     <string name="deck_delete_text">Arrastra aquí para eliminar</string>
     <string name="question_keep_cur_deck">¿Mantener las cartas actuales?</string>
@@ -502,6 +503,13 @@
     <string name="quality_high">Alta</string>
     <string name="settings_opengl_version">Versión de OpenGL</string>
     <string name="settings_screen_padding_summary">Margen de pantalla</string>
+    <string name="settings_native_game_mode">Modo de juego UI nativa</string>
+    <string name="settings_native_game_mode_summary">Usa la interfaz nativa de Android en lugar del motor Irrlicht (experimental)</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">Al actual</string>
+    <string name="refresh_lan_button">Actualizar LAN</string>
+    <string name="mode_single_duel_solo">Modo solo</string>
 </resources>
 
 
