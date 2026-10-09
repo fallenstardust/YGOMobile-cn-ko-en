@@ -707,17 +707,8 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         dlg.show();
         GridView vImgSel = dlg.bind(R.id.gridView);
         ArrayList<ImageItem> items = new ArrayList<>();
-        // 添加相册选择item
+        // 先添加相册选择item，保证对话框即时弹出
         items.add(new ImageItem("album_item", true));
-        File directory = new File(imagePath);
-        if (directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            for (File file : files) {
-                if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".png"))) {
-                    items.add(new ImageItem(file.getAbsolutePath(), false));
-                }
-            }
-        }
 
         // 设置适配器
         DialogImageAdapter dialogImageAdapter = new DialogImageAdapter(dlg, getContext(), imageView, items, itemWidth_itemHeight, outFile, (outFilePath, title, width, height) -> {
@@ -725,6 +716,23 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
             showImageCropChooser(title, outFilePath, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1], kind);
         });
         vImgSel.setAdapter(dialogImageAdapter);
+
+        // 本地图片过多时，目录扫描(listFiles)会阻塞主线程导致弹窗卡顿，改到后台线程执行，扫描完再回填
+        final ArrayList<ImageItem> scanned = new ArrayList<>();
+        VUiKit.defer().when(() -> {
+            File directory = new File(imagePath);
+            if (directory.isDirectory()) {
+                File[] files = directory.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        String name = file.getName();
+                        if (file.isFile() && (name.endsWith(".jpg") || name.endsWith(".png"))) {
+                            scanned.add(new ImageItem(file.getAbsolutePath(), false));
+                        }
+                    }
+                }
+            }
+        }).done((re) -> dialogImageAdapter.addItems(scanned));
     }
 
     // ==================== 文件/图片选择（原PreferenceFragmentPlus逻辑） ====================
