@@ -493,4 +493,16 @@
     <string name="resource_lflist">· リミットレギュレーション</string>
     <string name="resource_strings">· 文字列などの設定</string>
     <string name="resource_pics">· カード画像アーカイブ</string>
+
+    <!-- 画像と画面の設定 -->
+    <string name="follow_bilibili">Bilibili のフィードをフォロー</string>
+    <string name="scale_original">元の比率</string>
+    <string name="scale_full">全画面表示</string>
+    <string name="scale_switch_hint">いずれかのプレビューをタップで切り替え</string>
+    <string name="label_self">自分</string>
+    <string name="label_opponent">相手</string>
+    <string name="quality_low">低</string>
+    <string name="quality_high">高</string>
+    <string name="settings_opengl_version">OpenGL バージョン</string>
+    <string name="settings_screen_padding_summary">画面の余白</string>
 </resources>
