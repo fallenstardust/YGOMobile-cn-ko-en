@@ -179,10 +179,27 @@ public class PlayerWaitingDialog {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
         popupWindow.setOnDismissListener(internalDismissListener);
 
-        // 全屏弹窗窗口不得作为 touch-modal：否则等待界面会像一层遮罩截走落在全屏窗口
-        // 范围内的系统窗口（软键盘）交互，导致输入法弹出后无法点击按键；
-        // 置为非模态后输入法窗口始终位于本弹窗之上一层且可正常响应触摸
+        // 全屏弹窗窗口不得作为 touch-modal：置为非模态后窗口边界外的触摸仍会派发给其他窗口。
+        // 但软键盘落在全屏窗口的边界“内”，单靠本设置挡不住键盘区域触摸被全屏层吞掉——
+        // Android 12+ 的分层修复见下方 setInputMethodMode 块
         popupWindow.setTouchModal(false);
+
+        // 输入法分层修复（用户反馈：等待对话框显示时点大厅聊天输入框，输入法弹在 dialog
+        // 下方且按键点不动）：
+        // Android 12(S) 起系统把软键盘改为相对“IME 目标窗口”分层——键盘只垫在目标窗口之上，
+        // 普通非获焦 PopupWindow 不被视为目标，反而压在键盘之上；本弹窗又被 DraggablePopupHelper
+        // 铺成全屏，键盘区域触摸落在全屏层界内、被包装层转发给 Activity decor，IME 收不到事件，
+        // 表现为按键点不动。Android 11 及以下键盘恒在所有应用窗口之上，无此问题亦无需本设置
+        // （旧系统里同组合语义相反：自动补全下拉压键盘）。
+        // 非获焦弹窗置 INPUT_METHOD_NEEDED 使 PopupWindow.computeFlags() 为本窗口加
+        // FLAG_ALT_FOCUSABLE_IM，其官方语义（见 WindowManager.LayoutParams 注释）为
+        // “不可获焦但按输入法目标对待，分层在输入法窗口之下”：键盘显示在 dialog 上方、
+        // 按键直达 IME 窗口；窗口焦点仍留给 Activity，et_chat_input 获焦与输入链路不受影响
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            popupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+            // 弹窗自身不接管输入，不得因键盘触发的窗口 resize 重排内容（整体上移）；键盘只盖在最外层
+            popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+        }
 
         draggableHelper = new DraggablePopupHelper(context, DIALOG_ID);
         // 竖屏宽铺满屏宽且高与宽相等（正方形），转回横屏恢复设计宽高比（用户规格）
