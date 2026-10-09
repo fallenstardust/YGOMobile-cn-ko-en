@@ -112,14 +112,23 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         // 双方聊天记录（历史新建实例导致横竖屏切换后聊天内容全丢失，用户反馈）；
         // bindChatViews 后把保存的聊天行整列回灌到新覆盖层（旧覆盖层随旋转销毁）
         if (chat == null) chat = new FieldChatBoard(this);
-        phaseBar = new FieldPhaseBar(this);
+        // 阶段按钮协作类同样跨旋转复用同一实例：phaseCurrentVisible/Label、phaseNextLabel、
+        // phaseEpVisible 是通讯驱动的纯显示状态，旋转时服务端正等玩家应答、不会再下发
+        // MSG_SELECT_IDLE/BATTLECMD 或阶段切换，新建实例把它们清零后永无重新推送点——
+        // 决斗中横竖屏切换阶段按钮消失且再转也不回来（用户反馈），随实例保留即回显如旧
+        if (phaseBar == null) phaseBar = new FieldPhaseBar(this);
         bindChatViews();
+        // 点击监听重挂到新 viewController（旧视图树随 setContentView 销毁，委托不随实例保留）
         phaseBar.setupPhaseButtons();
         setupOverlayAnchoring();
         chat.retainAcrossRotation();
         if (engine != null && imageLoaderRef != null) {
             viewController.init(engine.getField(), imageLoaderRef, this);
         }
+        // 回灌旋转前的阶段按钮显示状态到新 GameFieldView，并重放模态禁用登记
+        //（activeModalDialogs 在控制器层跨旋转保留，新视图默认 enabled 需按登记重置）
+        phaseBar.pushPhaseDisplay();
+        updatePhaseButtonsEnabled();
     }
 
     /** 旋转重建前的收尾：关闭挂旧视图树上的命令菜单（重建后不再回显） */
