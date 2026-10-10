@@ -385,6 +385,11 @@
     <string name="pre_view">Prévia</string>
     <string name="label_set_No_Setcode">#Sem Card Set incluso</string>
     <string name="tip_credit_max">Excede o limite de %d</string>
+    <string name="tip_drag_main_full" formatted="false">O deck principal está cheio (limite %d)</string>
+    <string name="tip_drag_extra_full" formatted="false">O extra deck está cheio (limite %d)</string>
+    <string name="tip_drag_side_full" formatted="false">O side deck está cheio (limite %d)</string>
+    <string name="tip_drag_extra_in_main">Cartas do extra deck não podem ser colocadas no deck principal</string>
+    <string name="tip_drag_normal_in_extra">Cartas normais não podem ser colocadas no extra deck</string>
     <string name="point_cost">Consumo de pontos</string>
     <string name="credit_limit">Limite de pontos</string>
     <string name="switch_genesys_mode">Modo de GENESYS</string>

@@ -1841,7 +1841,9 @@ void Game::DrawDeckBd() {
 
         // 显示“限”的文字图标
         driver->draw2DImage(imageManager.tGSC, Resize_X_Y(420, 137, 440, 156), irr::core::recti(0, 0, 64, 64), 0, 0, true);
-        int intValue = static_cast<int>(it->second);//获取被选定的genesys禁卡表的上限值，并显示在界面上
+        // 获取被选定的genesys禁卡表的基础上限值（一般是100），
+        // 再根据当前主卡组数量(mainsize)即时计算实际生效的积分上限（配合"$__extra_score__"），并取整显示。
+        int intValue = static_cast<int>(deckBuilder.filterList->GetEffectiveCreditLimit(it->second, mainsize));
         DrawShadowText(guiFont, std::to_wstring(intValue), Resize_X_Y(445, 137, 465, 156), Resize(0, 1, 2, 0), 0xffffffff, 0xff000000, true,true);
 
         //遍历genesys禁卡表的卡片点数表，统计当前卡组点数合计值

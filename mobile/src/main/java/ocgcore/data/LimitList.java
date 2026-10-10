@@ -16,9 +16,14 @@ import ocgcore.enums.LimitType;
  * 3判断某张卡是否属于禁止卡、限制卡、准限制卡
  */
 public class LimitList {
+    // GeneSys: 主卡组少于该数量时不触发 extra_score 加成，与 C++ 端 DECK_MIN_SIZE 保持一致
+    private static final int GENESYS_MIN_MAIN = 40;
     private static final int LFLIST_HASH_SEED = 0x7dfcee6a;
     private String name = "?";
     private Integer credit_limits;//GeneSys模式特有的上限值
+    // GeneSys: 由lflist.conf中的"$__extra_score__"行解析而来，
+    // 表示主卡组超过40张后，每多一张卡可为积分上限提高的分数（小数）。未配置则为null/0。
+    private Double extra_score;
     private Map<Integer, Integer> credits;//GeneSys模式特有的单张卡ID和其点数
     private int lfHash = LFLIST_HASH_SEED;
     private final Map<Integer, Integer> contentMap = new HashMap<>();
@@ -83,6 +88,38 @@ public class LimitList {
 
     public Integer getCreditLimits() {
         return credit_limits;
+    }
+
+    public Double getExtraScore() {
+        return extra_score;
+    }
+
+    public void addExtraScore(Double score) {
+        extra_score = score;
+    }
+
+    /**
+     * 根据当前主卡组数量即时计算实际生效的GeneSys积分上限。
+     * <p>
+     * 规则：主卡组超过40张后，每多一张卡上限提高 extra_score 分；
+     * 主卡组不足40张时不向下扣减，仍为基础上限；
+     * 最终上限取整（丢弃小数部分），例如100.3334仍显示/适用为100。
+     *
+     * @param mainCount 当前主卡组卡片数量
+     * @return 实际生效的积分上限；若未设置基础上限则返回null
+     */
+    public Integer getEffectiveCreditLimit(int mainCount) {
+        if (credit_limits == null) {
+            return null;
+        }
+        if (extra_score == null || extra_score <= 0 || mainCount <= GENESYS_MIN_MAIN) {
+            return credit_limits;
+        }
+        double effective = credit_limits + (double) (mainCount - GENESYS_MIN_MAIN) * extra_score;
+        if (effective < credit_limits) {
+            return credit_limits; // 不做向下扣减保护
+        }
+        return (int) Math.floor(effective); // 丢弃小数部分
     }
 
     public Map<Integer, Integer> getCredits() {
