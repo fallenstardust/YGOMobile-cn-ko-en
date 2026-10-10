@@ -193,6 +193,37 @@ public class LimitList {
     }
 
 
+    /**
+     * 解析一张卡在当前 GeneSys 禁卡表中应对应的点数。
+     * <p>
+     * 本方法是“是否为计分卡”“卡面/搜索结果点数显示”“卡组总分累计”“加卡校验”的
+     * 唯一取值口径，避免各处因使用不同的键而导致行为分叉。
+     * <p>
+     * 取值优先级：
+     * 1) 宽松同名折叠键（等价 {@code CardData.getCode()}：|alias-code|<=20 时取 alias，否则取 code），
+     *    保证同卡异画共享表中同一分值；
+     * 2) 若折叠键未命中但卡片自身 code 在表中命中，则用 code 的分值——
+     *    修复“卡片 code 在表中、但 alias 不在表中(|alias-code|<=20)”时该卡不显示点数的 BUG。
+     *
+     * @return 命中的点数；两键均未命中返回 null（视为不计分卡）
+     */
+    public Integer getGeneSysCredit(Integer code, Integer alias) {
+        if (credits == null || code == null) {
+            return null;
+        }
+        int ali = alias == null ? 0 : alias;
+        int key = (ali > 0 && Math.abs(ali - code) <= 20) ? ali : code;
+        Integer value = credits.get(key);
+        if (value == null && key != code) {
+            value = credits.get(code);
+        }
+        return value;
+    }
+
+    public Integer getGeneSysCredit(Card card) {
+        return card == null ? null : getGeneSysCredit(card.Code, card.Alias);
+    }
+
     public boolean check(Card cardInfo, LimitType type) {
         return check(cardInfo.Code, cardInfo.Alias, type);
     }
@@ -216,7 +247,8 @@ public class LimitList {
         } else if (type == LimitType.Forbidden) {
             return forbidden.contains(code) || forbidden.contains(alias);
         } else if (type == LimitType.GeneSys) {
-            return credits != null && (credits.containsKey(code) || credits.containsKey(alias));
+            // 与分值取值共用同一口径 getGeneSysCredit，保证“判定为计分卡”与“能取到分值”同进同出
+            return getGeneSysCredit(code, alias) != null;
         } else {
             return false;
         }

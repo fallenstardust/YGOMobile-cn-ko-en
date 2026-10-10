@@ -1348,8 +1348,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         }
         //检查卡片（也要判断不在卡组时，所以count是可以为null的情况）意图加入卡组是否会超限制，超过则return false
         if (limitList.check(cardInfo, LimitType.GeneSys)) {// 检查GeneSys信用分限制
-            // 获取当前卡片的信用分值
-            Integer cardCreditValue = limitList.getCredits().get(cardInfo.getCode());//使用getCode而不是getGameCode，因为getCode判断较为宽松，适合规则上视为同名卡但效果不同的卡
+            // 获取当前卡片的信用分值（统一走 getGeneSysCredit，与显示/总分口径一致）
+            Integer cardCreditValue = limitList.getGeneSysCredit(cardInfo);
 
             if (cardCreditValue != null && cardCreditValue > 0) {//genesys表中的卡需要进行检查，否则就是纯普通卡只需遵循最大3的规则
                 // 获取当前禁卡表的信用分上限，一般是100，但可能不同genesys禁卡表给的上限分不同；
@@ -1388,14 +1388,10 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         int totalCredit = 0;
         List<Card> deck_info = deckinfo.getAllCards();
         for (int i = 0; i < deck_info.size(); i++) {
-            int cardId = deck_info.get(i).getCode();// 使用getCode而不是getGameCode，因为getCode判断较为宽松，适合规则上视为同名卡但效果不同的卡
-
-            // 检查这张卡是否是GeneSys卡
-            if (limitList.getCredits() != null && limitList.getCredits().containsKey(cardId)) {
-                Integer creditValue = limitList.getCredits().get(cardId);
-                if (creditValue != null) {
-                    totalCredit += creditValue;
-                }
+            // 统一走 getGeneSysCredit，与卡面显示/加卡校验完全同口径（含“code在表中、但折叠键不在表中”时的回退）
+            Integer creditValue = limitList.getGeneSysCredit(deck_info.get(i));
+            if (creditValue != null) {
+                totalCredit += creditValue;
             }
         }
 

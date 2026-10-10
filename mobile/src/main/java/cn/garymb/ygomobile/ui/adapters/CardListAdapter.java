@@ -314,14 +314,12 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                 tv_limit_num.setTextSize(12);
                 tv_limit_num.setTextColor(YGOUtil.c(R.color.yellow));
             } else if (mLimitList.check(item, LimitType.GeneSys)) {
-                Integer creditValue = 0;
-                if (mLimitList.getCredits() != null) {
-                    creditValue = mLimitList.getCredits().get(item.getCode());
-                    holder.setImageBitmap(R.id.right_top, mImageTop.credits);
-                    tv_limit_num.setText(creditValue == null ? "---" : creditValue.toString());
-                    tv_limit_num.setTextSize(creditValue == null ? 8 : ((creditValue > -10 && creditValue < 100) ? 10 : 8));
-                    tv_limit_num.setTextColor(creditValue == null ? YGOUtil.c(R.color.red) : YGOUtil.c(R.color.holo_blue_bright));
-                }
+                // 统一使用 getGeneSysCredit 取值：与 check(GeneSys) 同口径，命中“宽松同名折叠键”或“卡片自身code”
+                Integer creditValue = mLimitList.getGeneSysCredit(item);
+                holder.setImageBitmap(R.id.right_top, mImageTop.credits);
+                tv_limit_num.setText(creditValue == null ? "---" : creditValue.toString());
+                tv_limit_num.setTextSize(creditValue == null ? 8 : ((creditValue > -10 && creditValue < 100) ? 10 : 8));
+                tv_limit_num.setTextColor(creditValue == null ? YGOUtil.c(R.color.red) : YGOUtil.c(R.color.holo_blue_bright));
             } else {
                 holder.setGone(R.id.right_top, true);
                 holder.setText(R.id.tv_limit_num, "");

@@ -779,11 +779,15 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                             holder.setRightImage(mImageTop.semiLimit);
                             holder.setLimitText("2", YGOUtil.c(R.color.yellow), 10);
                         } else if (mLimitList.check(cardInfo, LimitType.GeneSys)) {
-                            Integer creditValue = 0;
-                            if (mLimitList.getCredits() != null) {
-                                creditValue = mLimitList.getCredits().get(cardInfo.getCode());//使用getCode而不是getGameCode，因为getCode判断较为宽松，适合规则上视为同名卡但效果不同的卡
+                            // 统一使用 getGeneSysCredit 取值：与 check(GeneSys) 同口径，既命中“宽松同名折叠键”，
+                            // 也能在“卡片 code 在表中、但 alias 不在表中(|alias-code|<=20)”时回退到 code 的分值
+                            Integer creditValue = mLimitList.getGeneSysCredit(cardInfo);
+                            if (creditValue != null) {
                                 holder.setRightImage(mImageTop.credits);
                                 holder.setLimitText(creditValue.toString(), YGOUtil.c(R.color.holo_blue_bright), (creditValue > -10 && creditValue < 100) ? 8 : 6);
+                            } else {
+                                holder.setRightImage(null);
+                                holder.setLimitText("", YGOUtil.c(R.color.white), 10);
                             }
                         } else {
                             holder.setRightImage(null);
