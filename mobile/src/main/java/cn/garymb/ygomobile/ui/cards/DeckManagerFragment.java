@@ -874,7 +874,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return;
         }
         if (limitList.getCreditLimits() != null && limitList.getCreditLimits() > 0) {
-            creditLimit = limitList.getCreditLimits();
+            // 根据当前主卡组数量即时计算实际生效的积分上限（配合"$__extra_score__"，取整显示）
+            DeckInfo currentState = mDeckAdapater.getCurrentState();
+            int mainCount = currentState != null ? currentState.getMainCount() : 0;
+            Integer effectiveLimit = limitList.getEffectiveCreditLimit(mainCount);
+            creditLimit = effectiveLimit != null ? effectiveLimit : limitList.getCreditLimits();
             currentCredit = getCreditCount(mDeckAdapater.getCurrentState());
 
             // 当当前点数超过限制时，设置文本为红色
@@ -1256,8 +1260,11 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             Integer cardCreditValue = limitList.getCredits().get(cardInfo.getCode());//使用getCode而不是getGameCode，因为getCode判断较为宽松，适合规则上视为同名卡但效果不同的卡
 
             if (cardCreditValue != null && cardCreditValue > 0) {//genesys表中的卡需要进行检查，否则就是纯普通卡只需遵循最大3的规则
-                // 获取当前禁卡表的信用分上限，一般是100，但可能不同genesys禁卡表给的上限分不同
-                Integer creditLimit = limitList.getCreditLimits();//
+                // 获取当前禁卡表的信用分上限，一般是100，但可能不同genesys禁卡表给的上限分不同；
+                // 再根据当前主卡组数量即时计算实际生效上限（配合"$__extra_score__"，取整适用）
+                DeckInfo currentState = mDeckAdapater.getCurrentState();
+                int mainCount = currentState != null ? currentState.getMainCount() : 0;
+                Integer creditLimit = limitList.getEffectiveCreditLimit(mainCount);//
                 // 计算当前卡组的信用总分
                 int totalCredit = getCreditCount(mDeckAdapater.getCurrentState()) + cardCreditValue;//计算目前卡组信用分合计+当前卡的信用分的和，用于下面和上限值比较
 

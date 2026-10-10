@@ -150,9 +150,10 @@ public class LimitManager implements Closeable {
                             default_res3 = false;
                         }
                     }
-                    // 2.读取扩展卡文件夹中的lflist.conf文件
-                    if (file.isFile() && file.getName().contains(Constants.CORE_LIMIT_PATH)) {
-                        expansion_rs2 = loadFile(file);
+                    // 2.读取扩展卡文件夹中所有文件名包含lflist且以.conf结尾的文件（与压缩包内的匹配规则保持一致，
+                    //    以便像C++一样加载如 genesys_official_lflist.conf、lflist_tcg.conf 等其他禁卡表文件）
+                    if (file.isFile() && file.getName().contains("lflist") && file.getName().endsWith(".conf")) {
+                        expansion_rs2 &= loadFile(file);
                     }
                 }
             }
@@ -213,6 +214,11 @@ public class LimitManager implements Closeable {
                         // 将creditType和creditLimit存储到LimitList对象中
                         if (tmp != null) {
                             tmp.addCreditLimit(creditLimit);
+                        }
+                    } else if (words[0].equals("__extra_score__") && words.length >= 2) {//GeneSys主卡组超40张后每张卡的积分上限加成（小数）
+                        Double extraScore = toDouble(words[1]);
+                        if (tmp != null && extraScore != null) {
+                            tmp.addExtraScore(extraScore);
                         }
                     }
                 } else if (tmp != null) {
@@ -297,6 +303,11 @@ public class LimitManager implements Closeable {
                         if (tmp != null) {
                             tmp.addCreditLimit(creditLimit);
                         }
+                    } else if (words[0].equals("__extra_score__") && words.length >= 2) {//GeneSys主卡组超40张后每张卡的积分上限加成（小数）
+                        Double extraScore = toDouble(words[1]);
+                        if (tmp != null && extraScore != null) {
+                            tmp.addExtraScore(extraScore);
+                        }
                     }
                 } else if (tmp != null) {
                     String[] words = line.trim().split("[\t| ]+");
@@ -346,5 +357,17 @@ public class LimitManager implements Closeable {
 
         }
         return i;
+    }
+
+    /**
+     * 将字符串解析为double，解析失败返回null。
+     * 用于解析"$__extra_score__ 0.3334"这类小数值。
+     */
+    private Double toDouble(String str) {
+        try {
+            return Double.parseDouble(str.trim());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

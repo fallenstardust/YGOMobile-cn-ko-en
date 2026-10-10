@@ -90,14 +90,18 @@ public class CardData implements Parcelable {
 
     /**
      * 规则同名卡，如果有alias则返回alias，否则返回code，判断严格，用于卡组投入最大数量的判断
-     * 出现了规则上视为其他卡的卡片有了异画的情况，此时根据获取的Alias作为Code再查一次是否存在新的Alias
-     * 如果有新的Alias，就将这个异画认为是新的Alias的规则同名卡
+     * 沿 alias 链一直上溯到根卡（Alias==0 的那张），保证所有通过 alias 关联的卡都解析成同一个 code——
+     * 既包含 |alias-code|<=20 的异画卡，也包含 |alias-code|>20 的“同名不同效果”卡：
+     * 只要一张卡的 alias 与另一张已投入满 3 张的卡的 code 相同（或存在嵌套 alias 关系），就视为同一张，共享投入上限。
      */
     public int getGameCode() {
         int id = Alias > 0 ? Alias : Code;
-        int rule_code = DataManager.get().getCardManager().getCard(id).Alias;
-        if (rule_code > 0) {
-            return rule_code;
+        for (int depth = 0; depth < 16; depth++) {
+            int next = DataManager.get().getCardManager().getCard(id).Alias;
+            if (next <= 0 || next == id) {
+                break; // 已到根卡 / 防自环
+            }
+            id = next;
         }
         return id;
     }

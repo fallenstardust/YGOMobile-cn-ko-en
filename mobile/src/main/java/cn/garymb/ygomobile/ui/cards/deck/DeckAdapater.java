@@ -131,9 +131,12 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
             }
         }
 
-        currentState.mainCards = mainCards;
-        currentState.extraCards = extraCards;
-        currentState.sideCards = sideCards;
+        // 必须通过 setMainCards/setExtraCards/setSideCards 赋值，
+        // 以同步刷新 DeckInfo 内部的 mainCount/extraCount/sideCount，
+        // 否则 getMainCount() 会一直是 0，导致积分上限无法随主卡组数量变化。
+        currentState.setMainCards(mainCards);
+        currentState.setExtraCards(extraCards);
+        currentState.setSideCards(sideCards);
         // 通过 mDeckInfo 获取 source
         if (mDeckInfo != null) {
             currentState.source = mDeckInfo.source;

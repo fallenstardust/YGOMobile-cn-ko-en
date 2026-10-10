@@ -97,15 +97,18 @@ void DeckManager::LoadLFListSingle(const char* path) {
                 errno = 0;
                 // 记录数值开始位置
                 char* valuePos = keyPos;
-                // 将字符串转换为无符号长整型
-                auto limitValue = std::strtoul(keyPos, &keyPos, 10);
+                // 将字符串转换为浮点数（genesys上限为整数，extra_score可能为小数，统一按double解析）
+                double limitValue = std::strtod(keyPos, &keyPos);
                 // 如果转换出错或没有读取到数值，则跳过
                 if(errno || valuePos == keyPos)
                     continue;
                 // 将UTF-8编码的关键字转换为宽字符串
                 BufferIO::DecodeUTF8(keybuf, strBuffer);
-                // 在当前列表的信用限制映射中添加键值对
-                cur->credit_limits[strBuffer] = static_cast<uint32_t>(limitValue);
+                // "__extra_score__"行单独存储为double，其余（如genesys）按整数上限存储
+                if(std::wstring(strBuffer) == L"__extra_score__")
+                    cur->extra_score = limitValue;
+                else
+                    cur->credit_limits[strBuffer] = static_cast<uint32_t>(limitValue);
                 continue;
             }
             // 从行的开始位置解析卡牌代码
@@ -262,7 +265,8 @@ uint32_t DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, size_t ru
 			auto credit_limit_it = lflist->credit_limits.find(key);
 			if(credit_limit_it == lflist->credit_limits.end())
 				continue;
-			auto credit_limit = credit_limit_it->second;
+			// 根据当前主卡组数量即时计算实际生效上限（配合"$__extra_score__"）
+			auto credit_limit = lflist->GetEffectiveCreditLimit(credit_limit_it->second, deck.main.size());
 			if(credit_used.find(key) == credit_used.end())
 				credit_used[key] = 0;
 			auto credit_after = credit_used[key] + credit_it.second;
