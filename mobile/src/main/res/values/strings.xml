@@ -175,6 +175,11 @@
     <string name="add_card_tip_fail">add card fail</string>
     <string name="tip_card_max" formatted="false">card max count:%d</string>
     <string name="tip_credit_max" formatted="false">Exceeds %d limit</string>
+    <string name="tip_drag_main_full" formatted="false">Main deck is full (max %d)</string>
+    <string name="tip_drag_extra_full" formatted="false">Extra deck is full (max %d)</string>
+    <string name="tip_drag_side_full" formatted="false">Side deck is full (max %d)</string>
+    <string name="tip_drag_extra_in_main">Extra deck cards can not be placed in the main deck</string>
+    <string name="tip_drag_normal_in_extra">Normal cards can not be placed in the extra deck</string>
     <string name="file_exist">file is exist</string>
     <string name="share_deck">Share Deck</string>
     <string name="no_share_app">no find share app</string>

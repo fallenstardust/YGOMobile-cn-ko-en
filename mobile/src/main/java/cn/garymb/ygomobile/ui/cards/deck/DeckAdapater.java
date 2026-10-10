@@ -188,6 +188,114 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return false;
     }
 
+    /**
+     * 拖拽定点插入的结果：成功 或 各类失败原因（用于toast提示）
+     * 禁限/积分数量限制不在此校验，由调用方先行校验(FAILED_LIMIT)
+     */
+    public enum DragInsertResult {
+        SUCCESS,
+        FAILED_TOKEN,        // 衍生物不能加入卡组
+        WRONG_PLACE_MAIN,    // 额外卡组卡牌不能插入主卡组区域
+        WRONG_PLACE_EXTRA,   // 普通卡牌不能插入额外卡组区域
+        MAIN_FULL,           // 主卡组已满
+        EXTRA_FULL,          // 额外卡组已满
+        SIDE_FULL,           // 副卡组已满
+        FAILED_LIMIT,        // 卡片数量或积分限制（具体原因由校验方提示）
+        FAILED               // 其他失败
+    }
+
+    /**
+     * 将卡片插入到指定卡区的精确位置（拖拽松手后落点卡到停留位置，挤开此处其他卡片）。
+     * 各区域item总数不变：目标区域末尾空格被移除，插入点新增卡片，副产物空格补回区域末尾。
+     *
+     * @param cardInfo 要插入的卡片
+     * @param type     目标卡区类型（MainCard/ExtraCard/SideCard）
+     * @param insertPos 在mItems中的绝对插入位置（分隔栏落点传区域末尾）
+     * @return 插入结果
+     */
+    public DragInsertResult dragInsertAt(Card cardInfo, DeckItemType type, int insertPos) {
+        if (cardInfo == null || type == null) {
+            return DragInsertResult.FAILED;
+        }
+        if (cardInfo.isType(CardType.Token)) {
+            return DragInsertResult.FAILED_TOKEN;
+        }
+        switch (type) {
+            case MainCard: {
+                if (cardInfo.isExtraCard()) {
+                    return DragInsertResult.WRONG_PLACE_MAIN;
+                }
+                int count = getMainCount();
+                if (count >= Constants.DECK_MAIN_MAX) {
+                    return DragInsertResult.MAIN_FULL;
+                }
+                int rel = insertPos - DeckItem.MainStart;
+                if (rel < 0) rel = 0;
+                if (rel > count) rel = count;
+                int pos = DeckItem.MainStart + rel;
+                DeckItem space = removeItem(DeckItem.MainEnd);
+                addItem(pos, new DeckItem(cardInfo, DeckItemType.MainCard));
+                addItem(DeckItem.SideEnd, space);
+                // 主区：末尾空格移除+插入点新增，插入点后的卡依次后移一位；副区末尾新增空格
+                notifyItemRemoved(DeckItem.MainEnd);
+                notifyItemInserted(pos);
+                if (pos + 1 <= DeckItem.MainEnd - 1) {
+                    notifyItemRangeChanged(pos + 1, DeckItem.MainEnd - 1 - pos);
+                }
+                notifyItemChanged(DeckItem.SideEnd);
+                notifyItemChanged(DeckItem.MainLabel);
+                notifyItemChanged(DeckItem.SideLabel);
+                return DragInsertResult.SUCCESS;
+            }
+            case ExtraCard: {
+                if (!cardInfo.isExtraCard()) {
+                    return DragInsertResult.WRONG_PLACE_EXTRA;
+                }
+                int count = getExtraCount();
+                if (count >= Constants.DECK_EXTRA_MAX) {
+                    return DragInsertResult.EXTRA_FULL;
+                }
+                int rel = insertPos - DeckItem.ExtraStart;
+                if (rel < 0) rel = 0;
+                if (rel > count) rel = count;
+                int pos = DeckItem.ExtraStart + rel;
+                DeckItem space = removeItem(DeckItem.ExtraEnd);
+                addItem(pos, new DeckItem(cardInfo, DeckItemType.ExtraCard));
+                addItem(DeckItem.SideEnd, space);
+                // 额外区末尾空格被移除：主区末尾空格前移顶替额外区末尾，副区末尾新增空格
+                notifyItemRemoved(DeckItem.ExtraEnd);
+                notifyItemInserted(pos);
+                notifyItemChanged(DeckItem.MainEnd);
+                if (pos + 1 <= DeckItem.ExtraEnd - 1) {
+                    notifyItemRangeChanged(pos + 1, DeckItem.ExtraEnd - 1 - pos);
+                }
+                notifyItemChanged(DeckItem.SideEnd);
+                notifyItemChanged(DeckItem.ExtraLabel);
+                notifyItemChanged(DeckItem.SideLabel);
+                return DragInsertResult.SUCCESS;
+            }
+            case SideCard: {
+                int count = getSideCount();
+                if (count >= Constants.DECK_SIDE_MAX) {
+                    return DragInsertResult.SIDE_FULL;
+                }
+                int rel = insertPos - DeckItem.SideStart;
+                if (rel < 0) rel = 0;
+                if (rel > count) rel = count;
+                int pos = DeckItem.SideStart + rel;
+                DeckItem space = removeItem(DeckItem.SideEnd);
+                addItem(pos, new DeckItem(cardInfo, DeckItemType.SideCard));
+                // 副卡组后方仅剩尾部占位项，移除+插入已覆盖全部变化
+                notifyItemRemoved(DeckItem.SideEnd);
+                notifyItemInserted(pos);
+                notifyItemChanged(DeckItem.SideLabel);
+                return DragInsertResult.SUCCESS;
+            }
+            default:
+                return DragInsertResult.FAILED;
+        }
+    }
+
     public void unSort() {
         if (mMainCount == 0) return;
         for (int i = 0; i < mMainCount; i++) {

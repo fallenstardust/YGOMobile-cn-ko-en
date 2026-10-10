@@ -93,6 +93,7 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.cards.deck.DeckAdapater;
+import cn.garymb.ygomobile.ui.cards.deck.DeckDragDropHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
@@ -159,6 +160,8 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     private boolean isPackMode;
     private File mPreLoadFile;//预加载卡组，用于外部打开ydk文件或通过卡组广场预览卡组时，值为file。当未通过预加载打开ydk（打开卡组时），值为null
     private DeckItemTouchHelper mDeckItemTouchHelper;
+    // 搜索结果卡片长按拖拽到卡组的浮层拖拽辅助
+    private DeckDragDropHelper mDeckDragHelper;
     private TextView tv_add_1, tv_deck, tv_credit_limit, tv_credit_remain, tv_result_count, tv_credit_count;
     private LinearLayout ll_genesys_scoreboard;
     private AppCompatSpinner mCardSearchLimitSpinner;
@@ -290,6 +293,20 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
         touchHelper.setItemDragListener(this);
         touchHelper.setEnableClickDrag(Constants.DECK_SINGLE_PRESS_DRAG);
         touchHelper.attachToRecyclerView(mRecyclerView);
+
+        // 初始化搜索结果卡片长按拖入卡组的浮层拖拽辅助
+        mDeckDragHelper = new DeckDragDropHelper(getContext(), mDrawerLayout, mRecyclerView,
+                mDeckAdapater, activity.getImageLoader(), new DeckDragDropHelper.OnDeckDropListener() {
+                    @Override
+                    public void onDragBegin() {
+                        // 拖动开始：抽屉即将收起，无需额外处理
+                    }
+
+                    @Override
+                    public void onCardDropped(Card card, DeckDragDropHelper.DropTarget target) {
+                        handleDeckCardDropped(card, target);
+                    }
+                });
 
         // 添加RecyclerView的点击监听器
         mRecyclerView.addOnItemTouchListener(new RecyclerViewItemListener(mRecyclerView, this));
@@ -495,6 +512,16 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     public void onDestroy() {
         //mImageLoader.close();
         super.onDestroy();
+    }
+
+    @Override
+    public void onDestroyView() {
+        // 视图销毁时取消进行中的浮动卡片拖拽，避免浮层残留在根布局上
+        if (mDeckDragHelper != null) {
+            mDeckDragHelper.cancel();
+            mDeckDragHelper = null;
+        }
+        super.onDestroyView();
     }
 
     @Override
@@ -934,7 +961,15 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
     }
 
     protected void onCardLongClick(View view, Card cardInfo, int pos) {
-        //  mCardListAdapater.showMenu(view);
+        // 长按搜索结果列表中的卡片：收起左侧结果抽屉，在手指位置生成可拖动的浮动卡片，
+        // 松手后根据停留位置插入主卡组/额外卡组/副卡组（校验与提示在handleDeckCardDropped中处理）
+        if (cardInfo == null || isPackMode || mDeckDragHelper == null || mDeckDragHelper.isDragging()) {
+            return;
+        }
+        int[] loc = new int[2];
+        view.getLocationOnScreen(loc);
+        // 以卡片item中心作为浮动卡片的初始位置
+        mDeckDragHelper.beginDrag(cardInfo, loc[0] + view.getWidth() / 2f, loc[1] + view.getHeight() / 2f);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -1182,6 +1217,63 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
             return rs;
         }
         return false;
+    }
+
+    /**
+     * 处理搜索结果卡片长按拖动后的松手落点：
+     * 先校验禁限/积分数量限制（checkLimit内部已toast具体原因），
+     * 再按落点卡区执行定点插入，成功则记录历史并刷新计分，失败则toast原因，浮动卡片无论成败均消失
+     *
+     * @param card   被拖动的卡片
+     * @param target 落点解析结果（卡区类型+插入位置）
+     */
+    private void handleDeckCardDropped(Card card, DeckDragDropHelper.DropTarget target) {
+        if (card == null || target == null) {
+            return;
+        }
+        // 卡片数量/积分限制校验（失败原因已由checkLimit内部toast）
+        if (!checkLimit(card)) {
+            return;
+        }
+        DeckAdapater.DragInsertResult result = mDeckAdapater.dragInsertAt(card, target.type, target.insertPos);
+        if (result == DeckAdapater.DragInsertResult.SUCCESS) {
+            YGOUtil.showTextToast(R.string.add_card_tip_ok);
+            addDeckToHistory(mDeckAdapater.getCurrentState());
+            updateUndoRedoButtonVisibility();
+        } else {
+            showDragInsertFailToast(result);
+        }
+    }
+
+    /**
+     * 根据拖拽插入失败原因toast提示
+     */
+    private void showDragInsertFailToast(DeckAdapater.DragInsertResult result) {
+        int msgRes;
+        switch (result) {
+            case WRONG_PLACE_MAIN:
+                msgRes = R.string.tip_drag_extra_in_main;
+                break;
+            case WRONG_PLACE_EXTRA:
+                msgRes = R.string.tip_drag_normal_in_extra;
+                break;
+            case MAIN_FULL:
+                msgRes = R.string.tip_drag_main_full;
+                break;
+            case EXTRA_FULL:
+                msgRes = R.string.tip_drag_extra_full;
+                break;
+            case SIDE_FULL:
+                msgRes = R.string.tip_drag_side_full;
+                break;
+            case FAILED_TOKEN:
+                msgRes = R.string.add_card_tip_fail;
+                break;
+            default:
+                msgRes = R.string.add_card_tip_fail;
+                break;
+        }
+        YGOUtil.showTextToast(getString(msgRes));
     }
 
     public void askBeforeQuit() {
