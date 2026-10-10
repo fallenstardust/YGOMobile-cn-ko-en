@@ -385,6 +385,11 @@
     <string name="like_deck_thumb">Dar like al deck</string>
     <string name="pre_view">Vista previa</string>
     <string name="tip_credit_max">Excede el límite de %d</string>
+    <string name="tip_drag_main_full" formatted="false">El mazo principal está lleno (máx. %d)</string>
+    <string name="tip_drag_extra_full" formatted="false">El mazo extra está lleno (máx. %d)</string>
+    <string name="tip_drag_side_full" formatted="false">El side deck está lleno (máx. %d)</string>
+    <string name="tip_drag_extra_in_main">Las cartas del mazo extra no pueden colocarse en el mazo principal</string>
+    <string name="tip_drag_normal_in_extra">Las cartas normales no pueden colocarse en el mazo extra</string>
     <string name="point_cost">Consumo de puntos</string>
     <string name="credit_limit">Límite de puntos</string>
     <string name="switch_genesys_mode">GENESYS</string>

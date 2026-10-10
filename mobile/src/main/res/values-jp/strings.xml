@@ -388,6 +388,11 @@
     <string name="like_deck_thumb">デッキに「いいね」をつける</string>
     <string name="pre_view">プレビュー</string>
     <string name="tip_credit_max">" %dの上限を超えています"</string>
+    <string name="tip_drag_main_full" formatted="false">メインデッキが上限（%d枚）に達しました</string>
+    <string name="tip_drag_extra_full" formatted="false">エクストラデッキが上限（%d枚）に達しました</string>
+    <string name="tip_drag_side_full" formatted="false">サイドデッキが上限（%d枚）に達しました</string>
+    <string name="tip_drag_extra_in_main">エクストラデッキのカードはメインデッキに置けません</string>
+    <string name="tip_drag_normal_in_extra">通常モンスター・魔法・罠カードはエクストラデッキに置けません</string>
     <string name="point_cost">ポイント消費</string>
     <string name="credit_limit">ポイント上限</string>
     <string name="switch_genesys_mode">起源点数モード</string>
