@@ -58,6 +58,8 @@
     <string name="settings_game_screen_orientation">Lock screen in duel</string>
     <string name="settings_game_font_antialias">Font antialias</string>
     <string name="settings_game_lab_pendulum_scale">Pendulum Scale Images</string>
+    <string name="settings_native_game_mode">Native UI Game Mode</string>
+    <string name="settings_native_game_mode_summary">Use Android native UI instead of Irrlicht engine (experimental)</string>
     <string name="settings_game_font_antialias_summary">Disable this option can increase the frame rate</string>
     <string name="settings_about_author_pref">Author</string>
     <string name="settings_about_version_pref">Version</string>
@@ -192,6 +194,7 @@
     <string name="all">All</string>
     <string name="refresh">Refresh</string>
     <string name="select_deck">Click here to select Deck</string>
+    <string name="solo_mode">Solo Mode</string>
     <string name="quit_deck_tip">Deck has not been saved yet, quit App?</string>
     <string name="deck_delete_text">Drag here to delete</string>
     <string name="question_keep_cur_deck">keep current cards?</string>
@@ -533,8 +536,13 @@
     <!-- 资源分享相关 -->
     <string name="resource_share_title">Resource Sharing Request</string>
     <string name="resource_share_message">%s requests to share the following resources:\n%s</string>
-    <string name="resource_cdb">· Card Database</string>
-    <string name="resource_lflist">· Banlist</string>
-    <string name="resource_strings">· Strings &amp; Config</string>
-    <string name="resource_pics">· Card Images Archive</string>
+    <string name="resource_cdb">• Card Database</string>
+    <string name="resource_lflist">• Forbidden/Limited List</string>
+    <string name="resource_strings">• String Configuration</string>
+    <string name="resource_pics">• Card Images Pack</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">to Current</string>
+    <string name="refresh_lan_button">Refresh LAN</string>
+    <string name="mode_single_duel_solo">Solo Mode</string>
 </resources>

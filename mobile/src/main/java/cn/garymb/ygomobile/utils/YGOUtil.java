@@ -88,6 +88,12 @@ public class YGOUtil {
         });
     }
 
+    public static void show(String str, int gravity) {
+        VUiKit.post(() -> {
+            showTextToast(gravity, str, Toast.LENGTH_SHORT);
+        });
+    }
+
     public static int getScreenWidth() {
         return Resources.getSystem().getDisplayMetrics().widthPixels;
     }

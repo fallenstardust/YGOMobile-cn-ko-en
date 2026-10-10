@@ -2201,7 +2201,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     .setLabel("deckmainGuide")
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(layoutView.findViewById(R.id.deck_menu), HighLight.Shape.CIRCLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {
@@ -2212,7 +2212,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(layoutView.findViewById(R.id.nav_search), HighLight.Shape.CIRCLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {
@@ -2223,7 +2223,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(layoutView.findViewById(R.id.nav_list), HighLight.Shape.CIRCLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {
@@ -2234,7 +2234,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(layoutView.findViewById(R.id.tv_deckmanger), HighLight.Shape.CIRCLE, options2)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {
@@ -2246,7 +2246,7 @@ public class DeckManagerFragment extends BaseFragemnt implements RecyclerViewIte
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(new RectF(screenWidth / 10.0f, screenWidth / 20.0f, screenWidth / 5.0f, screenWidth / 20.0f + screenWidth / 10.0f * 254.0f / 177.0f), HighLight.Shape.RECTANGLE, options2)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener((view, controller) -> {

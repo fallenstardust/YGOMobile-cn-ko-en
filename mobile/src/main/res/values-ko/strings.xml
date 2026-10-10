@@ -198,6 +198,7 @@
     <string name="all">전부</string>
     <string name="refresh">새로 고침</string>
     <string name="select_deck">덱을 선택하세요</string>
+    <string name="solo_mode">순수 싱글 모드</string>
     <string name="quit_deck_tip">덱 저장하지 않고 앱을 종료하겠습니까?</string>
     <string name="deck_delete_text">삭제하려면 여기로 드래그하십시오</string>
     <string name="question_keep_cur_deck">현재 카드를 유지하겠습니까?</string>
@@ -526,4 +527,11 @@
     <string name="quality_high">높음</string>
     <string name="settings_opengl_version">OpenGL 버전</string>
     <string name="settings_screen_padding_summary">화면 여백</string>
+    <string name="settings_native_game_mode">네이티브 UI 게임 모드</string>
+    <string name="settings_native_game_mode_summary">Irrlicht 엔진 대신 Android 네이티브 UI 사용 (실험적)</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">현재로 이동</string>
+    <string name="refresh_lan_button">LAN 새로고침</string>
+    <string name="mode_single_duel_solo">솔로 모드</string>
 </resources>

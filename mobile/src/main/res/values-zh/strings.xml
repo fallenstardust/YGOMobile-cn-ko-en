@@ -55,6 +55,8 @@
     <string name="settings_game_screen_orientation">游戏横屏锁定</string>
     <string name="settings_game_font_antialias">字体抗锯齿</string>
     <string name="settings_game_lab_pendulum_scale">灵摆数字图片</string>
+    <string name="settings_native_game_mode">原生UI游戏模式</string>
+    <string name="settings_native_game_mode_summary">使用Android原生UI替代Irrlicht引擎（实验性功能）</string>
     <string name="settings_game_font_antialias_summary">禁用字体抗锯齿可以提升帧数</string>
     <string name="settings_about_author_pref">作者</string>
     <string name="settings_about_version_pref">版本</string>
@@ -196,6 +198,7 @@
     <string name="donation">支持我们</string>
     <string name="refresh">刷新</string>
     <string name="select_deck">点击选择卡组</string>
+    <string name="solo_mode">纯单人模式</string>
     <string name="quit_deck_tip">卡组未保存，是否退出本应用？</string>
     <string name="deck_delete_text">拖到这里删除</string>
     <string name="question_keep_cur_deck">保留当前卡牌？</string>
@@ -510,4 +513,9 @@
     <string name="resource_lflist">· 禁卡表</string>
     <string name="resource_strings">· 字段等配置</string>
     <string name="resource_pics">· 卡图压缩包</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">跳到当前</string>
+    <string name="refresh_lan_button">刷新局域网</string>
+    <string name="mode_single_duel_solo">单人模式</string>
 </resources>
