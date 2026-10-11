@@ -2001,94 +2001,95 @@ void DeckBuilder::pop_side(int seq) {
  * @return 如果该卡片可以合法地加入卡组（未超出数量限制、信用点足够），则返回 true；否则返回 false。
  */
 bool DeckBuilder::check_limit(const CardDataC* pointer) {
-	// 获取实际用于限制检查的卡片编码：如果存在别名则使用别名，否则使用原ID
-	auto limitcode = pointer->get_duel_code();
+	// 与 Java DeckManagerFragment.checkLimit 的逻辑完全对齐的两段式检查：
+	//   第一段：最大投入数量——按 Java getGameCode() 的"严格同名"统计当前卡组已有张数，
+	//           再对照禁卡表 content（0 禁止 / 1 限制 / 2 准限制 / 缺省 3）判断是否还能投入。
+	//   第二段：geneSys 点数——按 Java getCode() 的"宽松同名"（|alias-code|<=20），
+	//           对卡组内每张卡与"要投入的卡"统一取分累加，超过生效上限（配合 $__extra_score__）则拒绝。
+	// 旧实现把数量与点数耦合在同一个 limit 变量里，且"要投入的卡"用原始 code 而卡组内的卡用 alias 归并，
+	// 两套口径不一致，导致带积分的卡投入后无法再投入与其 alias 同 code 的卡。
 
-	// 默认每张卡最多允许3张
+	// 注意：原生 C++ 加载 cards.cdb 时会把 DB 原始 alias 拆到两个字段（见 data_manager.cpp）：
+	//   异画卡（|alias-code|<=OFFSET）保留在 alias；同名不同效果卡（|alias-code|>OFFSET）移到 rule_code 且把 alias 置 0。
+	// 因此“DB 原始 alias”= alias!=0 ? alias : rule_code，这样 Java getGameCode() 读取的 Alias 在本端就对应此值。
+	auto raw_alias = [](const CardDataC* card) -> uint32_t {
+		return card->alias ? card->alias : card->rule_code;
+	};
+	// 严格同名：用于最大投入数量判断。对应 Java getGameCode()，沿 alias 链一直上溯到根卡（raw_alias==0 的那张），
+	// 保证所有通过 alias 关联的卡都归为同一组共享投入上限——
+	// 既包含 |alias-code|<=20 的异画卡（存于 alias），也包含 |alias-code|>20 的“同名不同效果”卡（存于 rule_code）。
+	auto game_code = [&](const CardDataC* card) -> uint32_t {
+		const auto& datas = dataManager.GetDataTable();
+		uint32_t a = raw_alias(card);
+		uint32_t id = (a > 0) ? a : card->code;
+		for(int depth = 0; depth < 16; ++depth) {
+			auto it = datas.find(id);
+			if(it == datas.end())
+				break; // 找不到
+			uint32_t next = raw_alias(&it->second);
+			if(next == 0 || next == id)
+				break; // 已到根卡 / 防自环
+			id = next;
+		}
+		return id;
+	};
+	// 宽松同名：对应 Java CardData.getCode()（同卡不同卡图，|alias-code|<=20），用于 geneSys 点数取分
+	auto genesys_code = [](const CardDataC* card) -> uint32_t {
+		return (card->alias > 0 && abs(static_cast<int>(card->alias) - static_cast<int>(card->code)) <= 20)
+				? card->alias
+				: card->code;
+	};
+
+	// ===== 第一段：数量限制 =====
+	uint32_t gcode = game_code(pointer);
 	int limit = 3;
-
-	// 查找此卡片是否在禁卡表有数量限制
-	auto flit = filterList->content.find(limitcode);
+	auto flit = filterList->content.find(gcode);
 	if(flit != filterList->content.end())
 		limit = flit->second;
 
-	// 记录已使用的各类信用点数
+	int same_count = 0;
+	auto count_card = [&](const CardDataC* card) {
+		if(game_code(card) == gcode)
+			++same_count;
+	};
+	for(auto& card : deckManager.current_deck.main) count_card(card);
+	for(auto& card : deckManager.current_deck.extra) count_card(card);
+	for(auto& card : deckManager.current_deck.side) count_card(card);
+	if(same_count >= limit)
+		return false; // 禁止卡(limit=0)或超过 1/2/3 张限制
+
+	// ===== 第二段：geneSys 点数限制 =====
+	auto target_it = filterList->credits.find(genesys_code(pointer));
+	if(target_it == filterList->credits.end())
+		return true; // 要投入的卡不是 geneSys 计分卡，只需通过数量限制（与 Java 只在卡有分值时才检查一致）
+
+	// 统计当前卡组各信用类型的总用量（一律用宽松同名 code 取分，与 Java getCreditCount 一致）
 	std::unordered_map<std::wstring, uint32_t> credit_used;
-
-	// Lambda 函数：尝试消费某张卡所需的信用点数，若超限则返回false
-	auto spend_credit = [&](uint32_t code) {
-        ALOGD("spend_credit, code=%d", code);
-		// 查找该卡所需信用点配置
-		auto code_credit_it = filterList->credits.find(code);
-		if(code_credit_it == filterList->credits.end())
-            return limit > 0;// 不在信用点表中的卡再检查是否是常规禁卡，以便实现对特定ID的禁止（geneSys表之下列出了全部灵摆、连接卡的ID做禁止）
-
-		auto code_credit = code_credit_it->second;//过滤一遍卡组中所有卡的点数，把有点数的卡归集一起
-		auto valid = true;
-
-		// 遍历所有需要扣除的点数类型与数值
-		for(auto& credit_it : code_credit) {
-			auto key = credit_it.first;//一般得到的是“genesys”这个识别字符串
-			auto credit_limit_it = filterList->credit_limits.find(key);//按lflist中的“$genesys”识别字符串得到信用分上限，一般是100
-			if(credit_limit_it == filterList->credit_limits.end())
-				continue; // 若没有设定上限，则跳过
-
-			auto credit_limit = credit_limit_it->second;//按lflist中的“genesys”识别字符串得到信用分上限，一般是100
-
-			// 初始化该点数类型的已用量
-			if(credit_used.find(key) == credit_used.end())
-				credit_used[key] = 0;
-
-			// 判断是否会超出点数上限
-			auto credit_after = credit_used[key] + credit_it.second;
-			if(credit_after > credit_limit)
-				valid = false;
-
-			// 更新已用点数量
-			credit_used[key] = credit_after;
-		}
-
-		return valid;
+	auto add_credit = [&](const CardDataC* card) {
+		auto it = filterList->credits.find(genesys_code(card));
+		if(it == filterList->credits.end())
+			return;
+		for(auto& kv : it->second)
+			credit_used[kv.first] += kv.second;
 	};
+	for(auto& card : deckManager.current_deck.main) add_credit(card);
+	for(auto& card : deckManager.current_deck.extra) add_credit(card);
+	for(auto& card : deckManager.current_deck.side) add_credit(card);
 
-	// Lambda 函数：处理单张卡的计数和点数检查
-	auto handle_card = [&](const CardDataC* card) {
-		// 如果是目标卡，则减少其剩余可放数量
-		if (card->get_duel_code() == limitcode) {
-			limit--;
-			if(limit <= 0)
-				return false; // 已达最大数量限制
-		}
+	// 主卡组当前数量（加入前），配合 $__extra_score__ 即时计算生效上限
+	size_t mainsize = deckManager.current_deck.main.size();
 
-		// 获取真实卡号并尝试扣减信用点
-        auto code = (card->alias != 0 &&
-                     abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) > 0 &&
-                     abs(static_cast<int>(card->code) - static_cast<int>(card->alias)) <= 20)
-                    ? card->alias
-                    : card->code;
-        return spend_credit(code);
-	};
-
-	// 遍历主卡组中的所有卡片进行检查
-	for (auto& card : deckManager.current_deck.main) {
-		if(!handle_card(card))
+	// 叠加"要投入的卡"的点数后逐类比较上限
+	for(auto& kv : target_it->second) {
+		auto credit_limit_it = filterList->credit_limits.find(kv.first);
+		if(credit_limit_it == filterList->credit_limits.end())
+			continue; // 未设定该类型上限则不约束
+		uint32_t used = credit_used.count(kv.first) ? credit_used[kv.first] : 0;
+		uint32_t effective = filterList->GetEffectiveCreditLimit(credit_limit_it->second, mainsize);
+		if(used + kv.second > effective)
 			return false;
 	}
-
-	// 遍历额外卡组中的所有卡片进行检查
-	for (auto& card : deckManager.current_deck.extra) {
-		if(!handle_card(card))
-			return false;
-	}
-
-	// 遍历副卡组中的所有卡片进行检查
-	for (auto& card : deckManager.current_deck.side) {
-		if(!handle_card(card))
-			return false;
-	}
-
-	// 最后尝试为当前要插入的卡扣除一次信用点数
-	return spend_credit(pointer->code);
+	return true;
 }
 
 }

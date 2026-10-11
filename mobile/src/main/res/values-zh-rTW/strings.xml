@@ -175,6 +175,11 @@
     <string name="add_card_tip_fail">新增卡片失敗</string>
     <string name="tip_card_max" formatted="false">卡片最大數量:%d</string>
     <string name="tip_credit_max" formatted="false">超過%d上限</string>
+    <string name="tip_drag_main_full" formatted="false">主卡組已滿（上限%d）</string>
+    <string name="tip_drag_extra_full" formatted="false">額外卡組已滿（上限%d）</string>
+    <string name="tip_drag_side_full" formatted="false">副卡組已滿（上限%d）</string>
+    <string name="tip_drag_extra_in_main">額外卡組的卡片不能放入主卡組</string>
+    <string name="tip_drag_normal_in_extra">普通卡片不能放入額外卡組</string>
     <string name="file_exist">檔案已經存在</string>
     <string name="share_deck">分享卡組</string>
     <string name="code_share">卡組碼分享</string>
