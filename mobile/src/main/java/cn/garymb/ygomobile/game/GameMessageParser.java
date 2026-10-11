@@ -349,7 +349,17 @@ public class GameMessageParser {
                 handler.onFlipSummoning(code, ctrl, loc, seq);
                 break;
             }
+            case Summoned:
+                // duelclient.cpp MSG_SUMMONED L3272-3274：无载荷，event_string=sys1604「怪兽召唤成功」。
+                // 此 case 曾缺失，导致召唤成功时点询问（MSG_SELECT_EFFECTYN）无法拼接「怪兽召唤成功」前缀
+                handler.onSummoned();
+                break;
+            case SpSummoned:
+                // duelclient.cpp MSG_SPSUMMONED L3301-3303：无载荷，event_string=sys1606「怪兽特殊召唤成功」
+                handler.onSpSummoned();
+                break;
             case FlipSummoned:
+                // duelclient.cpp MSG_FLIPSUMMONED L3330-3332：无载荷，event_string=sys1608「怪兽反转召唤成功」
                 handler.onFlipSummoned();
                 break;
             case Chaining: {

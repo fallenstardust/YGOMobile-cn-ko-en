@@ -463,22 +463,34 @@ final class CardOverlayRenderer {
             }
             if (ch == null) continue;
             if (ch.solved) break;
-            GameField.ClientCard card = ch.chainCard;
-            if (card == null) {
-                try {
-                    card = f.getCard(ch.controler, ch.location, ch.sequence);
-                } catch (Throwable e) {
-                    card = null;
-                }
-            }
-            if (card == null) continue;
-            // 位置快照：onChained 未捕捉到时（chainCard 当时为 null）首绘时补捕一次，
-            // 此后固定在该处，不随卡片移动（入墓/回手等）而偏移
+            // 图标位置：正常已由 onChained 按 C++ GetChainLocation 捕捉锚点（手卡固定于魔陷区后中央、
+            // 场上/堆叠取区域中心，带堆叠偏移），此后不再跟随卡片；故这里不再无条件取卡片对象——
+            // 手卡发动并离场后卡片对象已飞向墓地/除外，若据其坐标定位会把连锁数字带到落堆处。
+            // 仅当锚点尚未捕捉（onChained 时链卡为 null 的罕见情形）时兜底反推：
+            // 有锚点区域（手卡/场上/堆叠）脱离卡片对象，卡离场图标仍固定；无锚点（超量素材等）才取卡片坐标，
+            // 卡片已被回收则跳过。
             if (!ch.iconPosCaptured) {
-                ch.iconX = card.curX;
-                ch.iconY = card.curY;
-                ch.iconZ = card.curZ;
-                ch.iconPosCaptured = true;
+                float[] anchor = f.getChainLocation(ch.controler, ch.location, ch.sequence);
+                if (anchor != null) {
+                    ch.iconX = anchor[0];
+                    ch.iconY = anchor[1];
+                    ch.iconZ = anchor[2];
+                    ch.iconPosCaptured = true;
+                } else {
+                    GameField.ClientCard card = ch.chainCard;
+                    if (card == null) {
+                        try {
+                            card = f.getCard(ch.controler, ch.location, ch.sequence);
+                        } catch (Throwable e) {
+                            card = null;
+                        }
+                    }
+                    if (card == null) continue;
+                    ch.iconX = card.curX;
+                    ch.iconY = card.curY;
+                    ch.iconZ = card.curZ;
+                    ch.iconPosCaptured = true;
+                }
             }
             float cx = FieldGeometry.mirrorX(ch.iconX);
             float cy = ch.iconY;

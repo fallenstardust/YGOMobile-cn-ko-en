@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +30,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardStatusTipHelper;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -41,6 +43,13 @@ public class CardDisplayDialog {
     private static final float CARD_ASPECT = 254f / 177f;
     // 对话框宽度取 layout_game_right 实际宽度的四分之三
     private static final float DIALOG_WIDTH_RATIO = 0.75f;
+    /**
+     * 竖屏整体放大系数（宽与文本同比）：与 CardSelectDialog 一致。竖屏时 layout_game_right 即整屏宽，按
+     * {@link #DIALOG_WIDTH_RATIO} (0.75) 解算后弹窗与每张卡图明显小于横屏（横屏 layout_game_right 为长边、绝对宽更大）。
+     * 按需求把竖屏弹窗再放大——宽度以整屏两侧收进为准（0.75×1.25≈0.94，两侧各收进约 3%），卡图随宽度变大，
+     * 标题/卡位文本/确定按钮文本按同系数增大，消除旋转后「卡片图和它上面的文本被缩得更小」的观感。横屏恒为 1.0。
+     */
+    private static final float PORTRAIT_SCALE = 1.25f;
     // 位置标签配色，映射 client_field.h CARD_LIST_* 常量
     private static final int COLOR_DEFAULT = YGOUtil.c(R.color.colorMain);   // CARD_LIST_DEFAULT_BACKGROUND_COLOR
     private static final int COLOR_OPPONENT = YGOUtil.c(R.color.card_list_opponent_gray);  // CARD_LIST_OPPONENT_BACKGROUND_COLOR
@@ -121,6 +130,13 @@ public class CardDisplayDialog {
     private final View[] slotViews = new View[SLOT_COUNT];
     private final TextView[] tvPositions = new TextView[SLOT_COUNT];
     private final ImageView[] ivCards = new ImageView[SLOT_COUNT];
+    /**
+     * 标题/卡位文本/确定按钮的基准字号（px，取自 XML，横竖屏 density 相同故一致）：首次 {@link #applyContentScale()}
+     * 时捕获，此后按当前方向系数以绝对字号回写，避免横竖屏来回旋转时系数叠乘使文本越放越大。
+     */
+    private float baseTitlePx;
+    private float basePosPx;
+    private float baseOkPx;
 
     private OnDismissListener dismissListener;
     private OnCardClick cardClickListener;
@@ -299,6 +315,8 @@ public class CardDisplayDialog {
             }
         });
         btnOk.setOnClickListener(v -> dismiss());
+        // 竖屏按系数放大标题/卡位文本/确定按钮字号（横屏 1.0 不变），与已放大的弹窗宽度、卡图同步
+        applyContentScale();
     }
 
     /**
@@ -322,7 +340,34 @@ public class CardDisplayDialog {
         if (w <= 0) {
             w = context.getResources().getDisplayMetrics().widthPixels;
         }
-        return Math.round(w * DIALOG_WIDTH_RATIO);
+        return Math.round(w * DIALOG_WIDTH_RATIO * contentScale());
+    }
+
+    /** 当前方向的内容放大系数：横屏 1.0（行为不变），竖屏 {@link #PORTRAIT_SCALE} */
+    private float contentScale() {
+        return DialogScale.isLandscape(context) ? 1f : PORTRAIT_SCALE;
+    }
+
+    /**
+     * 按当前方向把标题/卡位文本/确定按钮字号回写为「基准 × 系数」的绝对值（系数见 {@link #contentScale()}）。
+     * 首次调用捕获基准（此时视图仍为 XML 原始字号），此后绝对回写，旋转往复不叠乘。build() 与旋转重排均调用。
+     * btnOk 本类声明为 View，仅当其为 TextView 时回写字号。
+     */
+    private void applyContentScale() {
+        if (tvTitle == null || tvPositions[0] == null) return;
+        if (baseTitlePx <= 0) {
+            baseTitlePx = tvTitle.getTextSize();
+            basePosPx = tvPositions[0].getTextSize();
+            if (btnOk instanceof TextView) baseOkPx = ((TextView) btnOk).getTextSize();
+        }
+        float s = contentScale();
+        tvTitle.setTextSize(TypedValue.COMPLEX_UNIT_PX, baseTitlePx * s);
+        for (TextView tv : tvPositions) {
+            if (tv != null) tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, basePosPx * s);
+        }
+        if (btnOk instanceof TextView && baseOkPx > 0) {
+            ((TextView) btnOk).setTextSize(TypedValue.COMPLEX_UNIT_PX, baseOkPx * s);
+        }
     }
 
     /**
@@ -365,6 +410,8 @@ public class CardDisplayDialog {
         Runnable apply = () -> {
             int width = resolveDialogWidth();
             applyCardImageSize(width);
+            // 旋转后按新方向系数回写字号（绝对回写不叠乘），使文本随卡图/弹窗宽同步缩放
+            applyContentScale();
             ViewGroup.LayoutParams raw = inner.getLayoutParams();
             if (raw instanceof android.widget.FrameLayout.LayoutParams) {
                 android.widget.FrameLayout.LayoutParams flp =
