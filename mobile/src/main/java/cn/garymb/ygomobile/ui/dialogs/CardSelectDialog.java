@@ -12,6 +12,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
@@ -164,6 +165,8 @@ public class CardSelectDialog {
     private final View[] slotViews = new View[SLOT_COUNT];
     private final TextView[] tvPositions = new TextView[SLOT_COUNT];
     private final ImageView[] ivCards = new ImageView[SLOT_COUNT];
+    /** 单卡槽步进（px，卡宽 + 左右外边距 4dp×2）：滚动条翻页动画的位移基准，随卡图在 {@link #applyCardImageSize(int)} 烘焙 */
+    private int slotStepPx = 0;
     /**
      * 标题/卡位文本/确定按钮的基准字号（px，取自 XML，横竖屏 density 相同故一致）：首次 {@link #applyContentScale()}
      * 时捕获，此后按当前方向系数以绝对字号回写，避免横竖屏来回旋转时系数叠乘使文本越放越大。
@@ -482,8 +485,10 @@ public class CardSelectDialog {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
+                    int delta = progress - pageOffset;
                     pageOffset = progress;
                     refreshSlots();
+                    animateSlotsShift(delta);
                 }
             }
 
@@ -557,6 +562,7 @@ public class CardSelectDialog {
         int containerW = dialogWidthPx - 2 * dp2px(16);
         int cardW = (containerW - SLOT_COUNT * 2 * dp2px(4)) / SLOT_COUNT;
         if (cardW <= 0) return;
+        slotStepPx = cardW + 2 * dp2px(4);
         int cardH = Math.round(cardW * CARD_ASPECT);
         for (ImageView iv : ivCards) {
             ViewGroup.LayoutParams lp = iv.getLayoutParams();
@@ -566,6 +572,25 @@ public class CardSelectDialog {
                 iv.setLayoutParams(lp);
             }
         }
+    }
+
+    /**
+     * 翻页丝滑过渡：拖动滚动条换卡重绑后，把整行按「翻页数×单卡槽步进」向滑动的反方向
+     * 位移（钳制在 ±2 张内）再减速回零，使窗口内容视觉上随滑块连续滑入，消除瞬时换卡
+     * 的僵硬感；连续快拖取消上一段动画从最新位移重启。Glide 内存缓存命中时卡图立即就位，
+     * 动画期间不会看到占位图。
+     */
+    private void animateSlotsShift(int delta) {
+        if (delta == 0 || slotStepPx <= 0 || slotViews[0] == null
+                || !(slotViews[0].getParent() instanceof View)) {
+            return;
+        }
+        View row = (View) slotViews[0].getParent();
+        float shift = Math.copySign(Math.min(Math.abs(delta), 2) * (float) slotStepPx, delta);
+        row.animate().cancel();
+        row.setTranslationX(shift);
+        row.animate().translationX(0f).setDuration(160)
+                .setInterpolator(new DecelerateInterpolator(1.8f)).start();
     }
 
     private int dp2px(float dp) {

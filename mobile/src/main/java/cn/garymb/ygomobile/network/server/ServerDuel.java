@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.network.server;
 
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -97,7 +98,15 @@ final class ServerDuel implements YGOProtocol {
         // 改到了监听就绪后的后台线程；开局是引擎真正的首个使用时点，在此同步幂等引导
         // 兜底——已就绪立即返回，预热/后台引导仍在进行时阻塞至完成，失败则重试一次，
         // 仍失败终止开局（本方法在单线程房间执行器上串行，短暂阻塞不影响已建立连接）
-        if (!NativeScriptBootstrap.ensureEngineReady()) {
+        long gateStart = SystemClock.uptimeMillis();
+        boolean engineReady = NativeScriptBootstrap.ensureEngineReady();
+        long gateWait = SystemClock.uptimeMillis() - gateStart;
+        if (gateWait > 300) {
+            // 预热未完成：猜拳后同步跑了完整引导（解压/物化/加载），分段耗时见
+            // NativeScriptBootstrap 的「engine bootstrap 耗时」/「引擎 init 完成」日志
+            Log.w(TAG, "startDuel：等待引擎引导 " + gateWait + "ms（预热未完成，开局发牌延迟）");
+        }
+        if (!engineReady) {
             Log.e(TAG, "startDuel：引擎引导失败（脚本解压或卡数据库加载未完成），终止开局");
             room.duelStage = DUEL_STAGE_END;
             return;

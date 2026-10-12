@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.engine;
 
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -44,7 +45,7 @@ import cn.garymb.ygomobile.NativeInitOptions;
  * <ul>
  *   <li>包内 script/ 的 cXXX.lua → {@code <root>/expansions/script/}；</li>
  *   <li>包内全部 *.cdb → {@code <root>/expansions/cdb/<包名>_<序号>.cdb}，由
- *       {@link cn.garymb.ygomobile.AppsSettings#makeCdbList} 纳入引擎列表。</li>
+ *       {@code AppsSettings#makeCdbList} 纳入引擎列表。</li>
  * </ul>
  * 同种数据源的统一读取优先级（高→低）：expansions 散文件 ＞ 卡包 zip/ypk
  *（文件名字典序，靠后的包覆盖靠前的包）＞ 主资源（cards.cdb / scripts.zip / pics.zip）
@@ -63,8 +64,9 @@ public final class NativeScriptBootstrap {
     /** 上次 init/reloadCards 实际使用的 cdb 列表，用于检测卡包物化后的列表变化。 */
     private static volatile String[] sInitedCdbPaths = new String[0];
 
-    /** 卡包物化标记的版本前缀：标记内容=本行指纹+该包历次解出的文件清单，
-     * 旧版单行标记（无前缀）视为未解压，自动重解一次以补齐 cdb 并启用清单清理。 */
+    /** 卡包物化标记的版本前缀：标记内容=本行指纹+该包历次解出的文件清单；
+     * 旧版单行标记（无前缀）指纹一致时走快速路径：脚本只记清单不重写盘，仅补物化
+     * cdb；指纹不符或无标记才全量重解。 */
     private static final String PACK_MARK_PREFIX = "packv2 ";
 
     private NativeScriptBootstrap() {
@@ -84,14 +86,18 @@ public final class NativeScriptBootstrap {
             // 先物化再取 NativeInitOptions：makeCdbList 要扫描卡包物化产物目录
             // <expansions>/cdb/，顺序颠倒会漏掉本轮新增的卡包数据库
             String rootPath = AppsSettings.get().getResourcePath();
+            long t0 = SystemClock.uptimeMillis();
             ensureScriptsExtracted(rootPath);
+            long t1 = SystemClock.uptimeMillis();
             // 扩展卡包物化：ygocore/ 与 expansions/ 下全部 .zip/.ypk 的 script/*.lua →
             // <root>/expansions/script/，包内 *.cdb → <root>/expansions/cdb/；否则
             // 卡包卡片因引擎无数据无脚本只能盖放（见类注释）
             ensureExpansionScriptsExtracted(rootPath);
+            long t2 = SystemClock.uptimeMillis();
             NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
             rootPath = options.mWorkPath;
             String[] cdbPaths = options.mDbList.toArray(new String[0]);
+            long t3 = SystemClock.uptimeMillis();
             // 诊断：内置引擎（LAN 建主/残局/旧格式回放）的真实脚本根目录——卡片 lua 脚本
             // 优先读 <root>/expansions/script/（散调试文件+卡包物化区），其次 <root>/script/
             //（主，scripts.zip 解出）；scripts.zip 指纹变化时 ensureScriptsExtracted 会
@@ -105,16 +111,24 @@ public final class NativeScriptBootstrap {
                     + " packcdb=" + listPackCdbCount(rootPath)
                     + " scripts.zip exists=" + new File(rootPath,
                     Constants.CORE_SCRIPTS_ZIP).exists());
+            // 分段耗时：开局卡顿定位用（预热未完成时 startDuel 闸门会同步等到这里全部结束）
+            Log.i(TAG, "engine bootstrap 耗时(ms) 主脚本解压=" + (t1 - t0)
+                    + " 卡包物化=" + (t2 - t1) + " 选项解算=" + (t3 - t2));
             if (rootPath.equals(sInitedRootPath)) {
                 // 已初始化：卡包增删/变更导致 cdb 列表变化时热重载引擎卡数据
                 if (!Arrays.equals(sInitedCdbPaths, cdbPaths)) {
-                    Log.i(TAG, "卡片数据库列表变化，热重载引擎卡数据");
+                    long r0 = SystemClock.uptimeMillis();
                     OcgDuelEngine.reloadCards(cdbPaths);
                     sInitedCdbPaths = cdbPaths;
+                    Log.i(TAG, "卡片数据库列表变化，热重载引擎卡数据，耗时="
+                            + (SystemClock.uptimeMillis() - r0) + "ms");
                 }
                 return true;
             }
+            long i0 = SystemClock.uptimeMillis();
             if (OcgDuelEngine.init(rootPath, cdbPaths)) {
+                Log.i(TAG, "引擎 init 完成，耗时=" + (SystemClock.uptimeMillis() - i0)
+                        + "ms cdb数=" + cdbPaths.length);
                 sInitedRootPath = rootPath;
                 sInitedCdbPaths = cdbPaths;
                 return true;
@@ -226,7 +240,7 @@ public final class NativeScriptBootstrap {
      *   <li>包内 script/ 的 cXXX.lua（及顶层散 lua）→ {@code <root>/expansions/script/}，
      *       否则卡包卡片效果脚本对引擎不可见（无法召唤/发动）；</li>
      *   <li>包内全部 *.cdb → {@code <root>/expansions/cdb/<包名>_<序号>.cdb}，由
-     *       {@link cn.garymb.ygomobile.AppsSettings#makeCdbList} 按"主库→包 cdb→散 cdb"
+     *       {@code AppsSettings#makeCdbList} 按"主库→包 cdb→散 cdb"
      *       低→高优先级纳入引擎——此前包内 cdb 从未进引擎，卡片 type=0 被规则层
      *       拒绝召唤/发动，是只解脚本仍修不好"只能盖放"的根因。</li>
      * </ul>
@@ -240,8 +254,9 @@ public final class NativeScriptBootstrap {
      * {@code packv2 + 大小:lastModified 指纹}（未变更整体跳过），其后为该包历次解出的
      * 文件清单（s:脚本相对路径 / d:物化 cdb 文件名），包内容变更时按清单删除已
      * 消失的旧产物、包被删除（或 {@code isReadExpansions} 关闭）时由
-     * {@link #pruneOrphanPacks} 据孤儿标记整体清理。旧版单行指纹标记因无 packv2
-     * 前缀视为未解压，自动重解一次以补齐 cdb 并启用清单清理。
+     * {@link #pruneOrphanPacks} 据孤儿标记整体清理。旧版单行指纹标记若指纹一致
+     * 则脚本走快速路径（只记清单不重写盘，仅补物化 cdb），避免升级首轮全量重解
+     * 卡住开局；指纹不符或无标记才整体重解。
      */
     public static void ensureExpansionScriptsExtracted(String resourcePath) {
         if (resourcePath == null || resourcePath.isEmpty()) {
@@ -292,7 +307,8 @@ public final class NativeScriptBootstrap {
     /**
      * 物化单个卡包：.lua 条目（script/ 前缀或顶层散 lua，经 {@link #scriptRelOf} 归一）
      * 解到 scriptOut，全部 *.cdb 条目解到 cdbOut（命名 {@code <包名>_<序号>.cdb}，保证
-     * 按名升序即按包字典序）。逐包 v2 标记命中指纹则整体跳过；成功后按新清单覆写
+     * 按名升序即按包字典序）。逐包 v2 标记命中指纹则整体跳过；旧版单行标记指纹
+     * 一致时脚本走快速路径（盘上已存在则不重写）；成功后按新清单覆写
      * 标记，并删除旧清单中本次不再生成的产物（包内文件被移除时同步清理）。
      *
      * @return {@code {本次落盘 lua 数, 本次落盘 cdb 数}}，跳过/失败时为 {0, 0}
@@ -311,6 +327,12 @@ public final class NativeScriptBootstrap {
         if (!oldLines.isEmpty() && fpLine.equals(oldLines.get(0))) {
             return ret;
         }
+        // v1 快速路径：旧版单行标记且指纹一致（脚本已按同包内容全量解出）时，
+        // lua 条目盘上存在则只记入清单不重写，仅补物化 cdb——消除升级后首轮
+        // 全量重解所有包脚本阻塞 startDuel 闸门、猜拳后发牌卡数秒的问题
+        boolean scriptsAssumedDone = oldLines.size() == 1
+                && !oldLines.get(0).startsWith(PACK_MARK_PREFIX)
+                && oldLines.get(0).equals(zipFingerprint(pack));
         List<String> newLines = new ArrayList<>();
         newLines.add(fpLine);
         Set<String> seen = new HashSet<>();
@@ -342,6 +364,15 @@ public final class NativeScriptBootstrap {
                         continue;
                     }
                     line = "s:" + rel;
+                    if (scriptsAssumedDone) {
+                        File done = new File(scriptOut, rel);
+                        if (done.isFile()) {
+                            if (seen.add(line)) {
+                                newLines.add(line);
+                            }
+                            continue;
+                        }
+                    }
                     out = new File(scriptOut, rel);
                     canonicalBase = scriptCanonical;
                 } else if (lower.endsWith(".cdb")) {
