@@ -119,6 +119,11 @@ public class GameEngine {
         /** 撤回被服务端接受：关旧询问弹窗与蚂陈线，重同步后服务端重挂询问 */
         default void onUndoResync() {}
 
+        /** 撤回被拒：点击撤回时即时隐藏了在显询问弹窗，若屏障期间未丢弃过应答
+         *  （questionRedelivered=false，无重派路径接管），须恢复这批弹窗，
+         *  否则待答询问永久不可见无法应答；丢弃过应答时询问已按新询问重新派发显示 */
+        default void onUndoDenied(boolean questionRedelivered) {}
+
         /** 可撤回状态变更（STOC_UNDO_STATE）：据此控制顶部撤回图标闪动 */
         default void onUndoStateChanged(boolean available) {}
     }

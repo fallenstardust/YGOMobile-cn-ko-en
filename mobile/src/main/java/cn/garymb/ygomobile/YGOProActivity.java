@@ -26,6 +26,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -120,6 +122,12 @@ public class YGOProActivity extends AppCompatActivity {
      * 当前设置弹窗实例：显示中再次点击设置按钮应隐藏它而非叠开新的（横竖屏同一入口）
      */
     private SettingsDialog settingsDialog;
+
+    /**
+     * 点击撤回上一步时被即时隐藏的询问弹窗快照（YesOrNoDialog）：撤回被拒且询问未被
+     * 屏障路径重派时逐个恢复显示；撤回被接受（onUndoResync）时询问已被撤销，快照作废
+     */
+    private final List<YesOrNoDialog> undoHiddenDialogs = new ArrayList<>();
 
     volatile boolean isGameStarted = false;
 
@@ -1121,13 +1129,21 @@ public class YGOProActivity extends AppCompatActivity {
         dialog.show(dialogContainer);
         dialog.setOnDismissListener(() -> {
             if (settingsDialog == dialog) settingsDialog = null;
-            boolean deckEditorShowing = layoutDeckEditor != null
-                    && layoutDeckEditor.getVisibility() == View.VISIBLE;
-            boolean gameRightShowing = layoutGameRight != null
-                    && layoutGameRight.getVisibility() == View.VISIBLE;
-            if (!deckEditorShowing && !gameRightShowing) {
-                getMainMenuDialog().restoreMainMenu();
-            }
+            // 在 Settings 的 PopupWindow.dismiss 同步回调里立即重显主菜单窗时，设置窗尚未
+            // 从 WindowManager 完成移除，主菜单 showAtLocation 偶发因窗口 token 瞬时失效抛异常，
+            // 又被 DraggablePopupHelper.showPopup 静默吞掉 → 界面只剩背景图（按返回键的
+            // 干净上下文调用故能显示）。推迟到下一帧等旧窗彻底移除后再重显，并由
+            // MainMenuDialog 内部对显示失败补一帧重试，双保险消除该竞态。
+            dialogContainer.post(() -> {
+                if (settingsDialog != null) return; // 帧内重新打开了设置弹窗：由其 dismiss 时再重显
+                boolean deckEditorShowing = layoutDeckEditor != null
+                        && layoutDeckEditor.getVisibility() == View.VISIBLE;
+                boolean gameRightShowing = layoutGameRight != null
+                        && layoutGameRight.getVisibility() == View.VISIBLE;
+                if (!deckEditorShowing && !gameRightShowing && !getMainMenuDialog().isShowing()) {
+                    getMainMenuDialog().restoreMainMenu();
+                }
+            });
         });
     }
 
@@ -1227,7 +1243,31 @@ public class YGOProActivity extends AppCompatActivity {
      */
     public void requestUndo() {
         if (engine == null || !engine.isInDuel() || !engine.canUndo()) return;
+        // sendUndo 的防连点闸门一致：本次不会真正发出撤回请求时不隐藏弹窗（隐藏后无人恢复）
+        if (engine.undoBlockedUntilNewAction) return;
+        // 点击撤回瞬间先隐藏全部正在显示的询问弹窗（YesOrNoDialog），不等服务端 ACK：
+        // 回退后旧询问必然失效，留着旧窗只会在 ACK 前误答旧询问。快照存入
+        // undoHiddenDialogs：撤回被拒（onUndoDenied）且询问未被重派时逐个恢复，
+        // 撤回被接受（onUndoResync）时快照作废，服务端重同步后会重新挂回新询问
+        undoHiddenDialogs.clear();
+        for (YesOrNoDialog d : YesOrNoDialog.snapshotShowingDialogs()) {
+            undoHiddenDialogs.add(d);
+            d.dismiss();
+        }
         engine.sendUndo();
+    }
+
+    /** 撤回被拒且询问未被屏障路径重派：恢复点击撤回时隐藏的询问弹窗，避免待答询问永久不可见 */
+    public void restoreUndoHiddenDialogs() {
+        for (YesOrNoDialog d : undoHiddenDialogs) {
+            if (!d.isShowing()) d.show();
+        }
+        undoHiddenDialogs.clear();
+    }
+
+    /** 撤回被接受或询问已按新询问重派：隐藏快照作废，不得再恢复旧窗 */
+    public void clearUndoHiddenDialogs() {
+        undoHiddenDialogs.clear();
     }
 
     public String getCardDisplayName(int code) {

@@ -314,6 +314,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
      */
     @Override
     public void onUndoResync() {
+        // 撤回被接受：点击撤回时即时隐藏的询问弹窗快照作废——被撤销的询问已不存在，
+        // 服务端重同步后会重新挂回回退点的询问并弹窗，旧窗不得再恢复
+        activity.clearUndoHiddenDialogs();
         activity.runOnUiThread(() -> {
             if (activity.dialogUtil != null) activity.dialogUtil.dismissOpenGameDialogs();
             if (activity.cardDetailPanel != null) activity.cardDetailPanel.dismissOpenDialogs();
@@ -337,6 +340,22 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 activity.fieldCtl.abortPendingSelectSessions();
                 activity.fieldCtl.clearSelectionVisuals();
                 activity.fieldCtl.invalidate();
+            }
+        });
+    }
+
+    /**
+     * 撤回被服务端拒绝（STOC_UNDO_ACK = DENIED）：待答询问仍是回退前那一条。屏障期间
+     * 丢弃过应答时询问已按新询问重新派发显示（restorePendingQuestionUi），旧快照必须作废；
+     * 未丢弃时恢复点击撤回瞬间隐藏的询问弹窗，否则询问永久不可见无法应答
+     */
+    @Override
+    public void onUndoDenied(boolean questionRedelivered) {
+        activity.runOnUiThread(() -> {
+            if (questionRedelivered) {
+                activity.clearUndoHiddenDialogs();
+            } else {
+                activity.restoreUndoHiddenDialogs();
             }
         });
     }

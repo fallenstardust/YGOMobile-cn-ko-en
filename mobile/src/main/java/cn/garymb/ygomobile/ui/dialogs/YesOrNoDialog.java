@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -392,6 +393,7 @@ public class YesOrNoDialog {
         });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
         popupWindow.setOnDismissListener(() -> {
+            sShowingDialogs.remove(this);
             // 对话框隐藏后恢复决斗场阶段按钮
             if (context instanceof YGOProActivity) {
                 ((YGOProActivity) context).notifyGameDialogHidden(this);
@@ -451,6 +453,11 @@ public class YesOrNoDialog {
                                 : cn.garymb.ygomobile.audio.SoundManager.SFX.INFO);
                     }
                 }
+                if (popupWindow.isShowing()) {
+                    // 显示成功后登记进「正在显示」集合（PopupWindow.dismiss 回调注销）：
+                    // 询问工厂弹新窗前据此关闭旧窗保证同屏至多一个；撤回点击据此整体隐藏、被拒时恢复
+                    sShowingDialogs.add(this);
+                }
                 // 对话框显示期间禁用决斗场阶段按钮
                 if (context instanceof YGOProActivity) {
                     ((YGOProActivity) context).notifyGameDialogShown(this);
@@ -497,6 +504,26 @@ public class YesOrNoDialog {
     /** 当前连锁是否为强制连锁（chain_forced）：强制时不弹询问窗、不允许取消/放弃 */
     private static boolean chainForcedMode;
 
+    /**
+     * 正在显示的 YesOrNoDialog 实例登记（show 成功后加入，PopupWindow dismiss 时移除）：
+     * ①询问类工厂弹新窗前统一关闭仍在显示的旧询问窗，保证纯单人模式双方各有可发动卡片时
+     * 连锁询问严格按协议到达顺序（当前回合玩家在先、答“否”后才轮到对方）逐个单窗显示，
+     * 不再多窗叠加；②点击撤回上一步时即时隐藏全部在显询问窗，撤回被拒时可整体恢复。
+     */
+    private static final LinkedHashSet<YesOrNoDialog> sShowingDialogs = new LinkedHashSet<>();
+
+    /** 当前正在显示的弹窗快照（调用方可安全遍历/逐个 dismiss） */
+    public static List<YesOrNoDialog> snapshotShowingDialogs() {
+        return new ArrayList<>(sShowingDialogs);
+    }
+
+    /** 关闭全部正在显示的弹窗（询问工厂弹新窗前调用，保证同屏至多一个询问窗） */
+    public static void dismissShowingDialogs() {
+        for (YesOrNoDialog d : snapshotShowingDialogs()) {
+            d.dismiss();
+        }
+    }
+
     public static YesOrNoDialog getChainQueryDialog() { return chainQueryDialog; }
     public static void setChainQueryDialog(YesOrNoDialog dialog) { chainQueryDialog = dialog; }
     public static boolean isChainForcedMode() { return chainForcedMode; }
@@ -541,6 +568,9 @@ public class YesOrNoDialog {
 
     /** 是/否确认弹窗（可带卡名着色）：cardCode>0 且 cardName 非空时按卡片类型着色 */
     public static void showYesNoQuery(YGOProActivity activity, String message, int cardCode, String cardName) {
+        // 单窗询问：弹新询问窗前关闭仍在显示的全部旧询问窗（含上一条连锁询问的残留窗），
+        // 保证同屏至多一个询问，纯单人模式按协议顺序先当前回合玩家、后对方逐个询问
+        dismissShowingDialogs();
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         if (cardCode > 0 && cardName != null && !cardName.isEmpty()) {
             dialog.setMessageWithCardName(message, cardCode, cardName);
@@ -659,6 +689,9 @@ public class YesOrNoDialog {
      * 「是」进入场上点击模式，「否」放弃连锁；chainQueryDialog 保留引用以支持「取消操作」重新弹出。
      */
     public static void showChainQuery(YGOProActivity activity, String queryText) {
+        // 单窗询问：先关闭仍在显示的旧询问窗，再建新窗——服务端对连锁询问按席位串行下发
+        // （当前回合玩家先答，答“否”后才下发对方的），此处保证两窗不叠加、按序逐个弹出
+        dismissShowingDialogs();
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         chainQueryDialog = dialog;
         panel(activity).setCurrentDialog(dialog);
@@ -677,6 +710,8 @@ public class YesOrNoDialog {
      */
     public static void showChainListDialog(YGOProActivity activity, boolean contiExist, boolean selectTrigger,
                                            boolean chainForced, List<String> chainOptions, List<Integer> chainFlags) {
+        // 单窗询问：弹列表窗前关闭仍在显示的旧询问窗，避免与上一条询问的残留窗叠加
+        dismissShowingDialogs();
         String title;
         if (chainForced) {
             title = sysText(contiExist ? 556 : 550,
@@ -724,6 +759,8 @@ public class YesOrNoDialog {
      * 是 → 仅显示「取消操作」按钮；否 → 放弃连锁（应答 -1）。
      */
     public static void showChainEmptyQuery(YGOProActivity activity) {
+        // 单窗询问：先关闭仍在显示的旧询问窗再建新窗
+        dismissShowingDialogs();
         chainForcedMode = false;
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         chainQueryDialog = dialog;

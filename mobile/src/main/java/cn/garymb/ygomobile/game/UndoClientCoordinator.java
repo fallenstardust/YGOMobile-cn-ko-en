@@ -73,6 +73,13 @@ class UndoClientCoordinator {
             releaseUndoResponseBarrier();
             if (droppedWhileArmed) restorePendingQuestionUi();
             postUndoHint("撤回不可用：没有可撤回的操作，或该操作不是你这方做出的");
+            // 通知界面恢复点击撤回时即时隐藏的询问弹窗：丢弃过应答时询问已由上方
+            // restorePendingQuestionUi 按新询问重新派发（旧快照不得再恢复，否则两窗叠加），
+            // 未丢弃时询问仍在原弹窗上待答，不恢复就永久不可见
+            final boolean redelivered = droppedWhileArmed;
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onUndoDenied(redelivered);
+            });
             return;
         }
         engine.invalidateCurrentMsgSegment();

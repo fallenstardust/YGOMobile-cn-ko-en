@@ -66,6 +66,16 @@ public class MainMenuDialog {
         }
         if (!popupWindow.isShowing()) {
             draggableHelper.showPopup(popupWindow, decor);
+            // 另一 PopupWindow 的 dismiss 回调链内重显时，窗口 token 可能瞬时失效，
+            // 异常被 showPopup 静默吞掉 → 主菜单没显示、界面只剩背景图（按返回键才能重显）。
+            // 校验实际显示状态，未显示则下一帧重试一次，覆盖所有调用入口
+            if (!popupWindow.isShowing()) {
+                decor.post(() -> {
+                    if (!popupWindow.isShowing() && decor.getWindowToken() != null) {
+                        draggableHelper.showPopup(popupWindow, decor);
+                    }
+                });
+            }
         }
         activity.hideGameUI();
         activity.updateBGM();
