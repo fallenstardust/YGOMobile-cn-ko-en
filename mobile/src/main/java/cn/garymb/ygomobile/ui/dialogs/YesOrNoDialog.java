@@ -603,12 +603,16 @@ public class YesOrNoDialog {
         String locationName = dm.formatLocation(location, sequence);
         String message;
         if (desc == 0) {
-            // sys200「是否在[%ls]发动[%ls]的效果？」→ FormatLocation(l,s) + 卡名
-            message = sysFormat(200, "是否在[%s]发动[%s]的效果？", locationName, cardName);
+            // duelclient.cpp MSG_SELECT_EFFECTYN L1886-1889：desc==0 → textBuffer = event_string + "\n" + sys200。
+            // event_string 即最近事件的时点文案（召唤之际=sys1603「[%ls]召唤中」、召唤成功=sys1604「怪兽召唤成功」、
+            // 反转召唤成功=sys1608、特殊召唤成功=sys1606…），故询问窗首行按通讯具体显示对应时点，再拼接「是否在[..]发动[..]的效果？」
+            message = prependChainEvent(activity,
+                    sysFormat(200, "是否在[%s]发动[%s]的效果？", locationName, cardName));
         } else if (desc == 221) {
-            // sys221「是否在[%ls]发动[%ls]的诱发类效果？」+ 换行 + sys223
-            message = sysFormat(221, "是否在[%s]发动[%ls]的诱发类效果？", locationName, cardName)
-                    + "\n" + sysText(223, "稍后将询问其他可以发动的效果。");
+            // duelclient.cpp MSG_SELECT_EFFECTYN L1890-1893：desc==221 → event_string + "\n" + sys221 + "\n" + sys223
+            message = prependChainEvent(activity,
+                    sysFormat(221, "是否在[%s]发动[%ls]的诱发类效果？", locationName, cardName)
+                            + "\n" + sysText(223, "稍后将询问其他可以发动的效果。"));
         } else if (SELECT_EFFECTYN_ID.contains(desc)) {
             // sys95/96/97/218/219/220：单个 %ls 填卡名
             message = sysFormat(desc, "是否使用[%s]的效果？", cardName);

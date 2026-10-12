@@ -348,15 +348,49 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         // duelclient.cpp MSG_CHAINED L3408：chains.push_back(current_chain)。
         // C++ 为值拷贝，Java 用引用语义（同一对象入列），使效果处理期追加的目标同样能体现在状态标签上
         if (engine.field.currentChain != null && !engine.field.chains.contains(engine.field.currentChain)) {
-            // 连锁图标位置快照：此刻卡片尚未因结算离开原位，图标此后固定在此处直到连锁消失
-            GameField.ClientCard cc = engine.field.currentChain.chainCard;
-            if (cc != null) {
-                engine.field.currentChain.iconX = cc.curX;
-                engine.field.currentChain.iconY = cc.curY;
-                engine.field.currentChain.iconZ = cc.curZ;
-                engine.field.currentChain.iconPosCaptured = true;
+            // 连锁图标锚点（对齐 duelclient.cpp MSG_CHAINING L3375/L3389-3402）：不再从发动卡当前 xyz
+            // 快照（手卡发动后卡因支付代价飞向墓地/除外/回卡组，卡片对象 curX 随之改变，图标会跟着跑），
+            // 而按 C++ GetChainLocation 取区域/堆叠锚点：手卡固定于「发动方魔陷区后中央」，图标脱离卡片
+            // 对象、卡离场也不移动；同位置多连锁按 chc 堆叠偏移避免重叠。
+            GameField.ChainInfo cur = engine.field.currentChain;
+            float[] anchor = engine.field.getChainLocation(cur.controler, cur.location, cur.sequence);
+            if (anchor != null) {
+                cur.iconX = anchor[0];
+                cur.iconY = anchor[1];
+                cur.iconZ = anchor[2];
+                // 堆叠偏移（对齐 C++ L3389-3402 意图并对手卡作可读性改进）：
+                // 手卡(0x02)按 (controler,location) 计数 chc——同侧所有手卡发动共享同一固定锚点，
+                // 多张沿 Y 向外逐层错开（我方 +、对方 −），序号互不重叠且不越过魔陷行；
+                // 墓地/除外(0x10/0x20)按 (controler,location) 计数；其余（怪兽/魔陷区等）按
+                // (controler,location,sequence) 计数、同格才堆叠，方向与 C++ MSG_CHAINING L3402 一致。
+                int cl = cur.location;
+                boolean isHand = cl == 0x02;
+                boolean byLocOnly = isHand || cl == 0x10 || cl == 0x20;
+                int chc = 0;
+                for (GameField.ChainInfo ch : engine.field.chains) {
+                    if (byLocOnly) {
+                        if (ch.controler == cur.controler && ch.location == cl) chc++;
+                    } else {
+                        if (ch.controler == cur.controler && ch.location == cl && ch.sequence == cur.sequence) chc++;
+                    }
+                }
+                if (isHand) {
+                    cur.iconY += (cur.controler == 0 ? chc * 0.25f : -chc * 0.25f);
+                } else {
+                    cur.iconY += chc * 0.25f;
+                }
+                cur.iconPosCaptured = true;
+            } else {
+                // 无锚点（overlay 等）：此刻卡片尚未因结算离开原位，图标固定在此处直到连锁消失
+                GameField.ClientCard cc = cur.chainCard;
+                if (cc != null) {
+                    cur.iconX = cc.curX;
+                    cur.iconY = cc.curY;
+                    cur.iconZ = cc.curZ;
+                    cur.iconPosCaptured = true;
+                }
             }
-            engine.field.chains.add(engine.field.currentChain);
+            engine.field.chains.add(cur);
         }
     }
 

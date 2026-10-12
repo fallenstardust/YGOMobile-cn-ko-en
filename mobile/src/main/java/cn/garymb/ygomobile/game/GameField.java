@@ -967,6 +967,12 @@ public class GameField {
         return geometry.getCardLocation(pcard);
     }
 
+    /** 连锁图标锚点（移植 ClientField::GetChainLocation）：手卡固定于魔陷区后中央、不随卡离场，
+     *  无对应锚点（OVERLAY 等）返回 null，调用方回退用卡片当前坐标 */
+    public float[] getChainLocation(int controler, int location, int sequence) {
+        return geometry.getChainLocation(controler, location, sequence);
+    }
+
     // === 卡片动画更新 / 落点归位 / 手卡布局（GameFieldMotion）===
 
     public void updateCardAnimation(int frame) {

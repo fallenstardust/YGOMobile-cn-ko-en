@@ -344,4 +344,57 @@ class GameFieldGeometry {
         if (count < 7) return 0.95f;
         return Math.max(0.55f, Math.min(0.72f, 5.0f / count));
     }
+
+    /**
+     * 忠实移植 ClientField::GetChainLocation（client_field.cpp L761-816）：连锁序号 / chain 旋转图标
+     * 的锚点坐标（{x, y, z}，与卡片落点同一 fx 映射的引擎世界坐标，绘制时由 CardOverlayRenderer 统一
+     * mirrorX 翻转）。关键差异——{@code LOCATION_HAND} 用手卡固定锚点而**非发动卡当前 xyz**：
+     * 从手卡发动并支付代价把该卡送去墓地/除外/回卡组等一切使其离开手牌的场合，卡片对象会飞向落堆
+     * 位置，若图标跟随卡片则连锁数字会跟着跑到墓地/除外区；按需求锚定在「发动方魔法陷阱区后中央」
+     * （X=场地中心 fx(3.95)、Y=魔陷行靠本方边缘一侧 3.15、Z=0.03），使图标脱离卡片对象、卡离场也不移动。
+     * 其余区域与 C++ 同源：MZONE/SZONE 取格子矩形中心、Z=0.03；DECK/GRAVE/REMOVED/EXTRA 取堆叠区
+     * 矩形中心、Z=张数×0.01+0.03。location&0x7f 为 0 或 OVERLAY(0x80) 等无对应锚点时返回 null，
+     * 调用方回退用卡片当前坐标。
+     */
+    float[] getChainLocation(int controler, int location, int sequence) {
+        int loc = location & 0x7f;
+        float[] t = new float[3];
+        switch (loc) {
+            case 0x01: { // LOCATION_DECK
+                float[] pr = getPileRect(controler, 0x01);
+                if (pr == null) return null;
+                t[0] = pr[0];
+                t[1] = pr[1];
+                t[2] = field.getCardCount(controler, 0x01) * 0.01f + 0.03f;
+                return t;
+            }
+            case 0x02: { // LOCATION_HAND：固定锚点（魔陷区后中央），不随卡片对象离场移动
+                t[0] = fx(3.95f);
+                t[1] = controler == 0 ? 3.15f : -3.15f;
+                t[2] = 0.03f;
+                return t;
+            }
+            case 0x04: // LOCATION_MZONE
+            case 0x08: { // LOCATION_SZONE
+                float[] zr = getZoneRect(controler, loc, sequence);
+                if (zr == null) return null;
+                t[0] = zr[0];
+                t[1] = zr[1];
+                t[2] = 0.03f;
+                return t;
+            }
+            case 0x10: // LOCATION_GRAVE
+            case 0x20: // LOCATION_REMOVED
+            case 0x40: { // LOCATION_EXTRA
+                float[] pr = getPileRect(controler, loc);
+                if (pr == null) return null;
+                t[0] = pr[0];
+                t[1] = pr[1];
+                t[2] = field.getCardCount(controler, loc) * 0.01f + 0.03f;
+                return t;
+            }
+            default:
+                return null;
+        }
+    }
 }
