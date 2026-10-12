@@ -526,20 +526,37 @@ public class CmdMenuDialog {
     /** 发动 / 特殊召唤列表：单击对应卡片即向通讯发送响应 */
     private void showCmdList(GameField.ClientCard card, GameEngine engine, int cmdContext,
                              List<GameEngine.CmdCardInfo> infos, int mode) {
-        List<CardDisplayDialog.CardItem> items = new ArrayList<>();
-        List<Integer> indices = new ArrayList<>();
+        // 按卡去重保序：gframe sort+unique 语义，同一卡多条命令只展示一次
+        java.util.Map<GameField.ClientCard, List<GameEngine.CmdCardInfo>> byCard =
+                new java.util.LinkedHashMap<>();
         for (GameEngine.CmdCardInfo info : infos) {
-            GameField.ClientCard c = info.card;
-            int code = info.code != 0 ? info.code : (c != null ? c.code : 0);
-            int loc = c != null ? c.location : card.location;
-            int seq = c != null ? c.sequence : card.sequence;
-            items.add(new CardDisplayDialog.CardItem(code, card.controler, loc, seq, 0));
-            indices.add(info.index);
+            if (info.card == null) continue;
+            List<GameEngine.CmdCardInfo> list = byCard.get(info.card);
+            if (list == null) {
+                list = new ArrayList<>();
+                byCard.put(info.card, list);
+            }
+            list.add(info);
         }
+        List<CardDisplayDialog.CardItem> items = new ArrayList<>();
+        final List<List<GameEngine.CmdCardInfo>> cardIndices = new ArrayList<>();
+        for (java.util.Map.Entry<GameField.ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
+            GameField.ClientCard c = e.getKey();
+            int code = c.code;
+            // 优先使用第一条记录的 code（如从额外卡组特殊召唤时由引擎指定码值）
+            for (GameEngine.CmdCardInfo info : e.getValue()) {
+                if (info.code != 0) { code = info.code; break; }
+            }
+            int loc = c.location;
+            int seq = c.sequence;
+            items.add(new CardDisplayDialog.CardItem(code, card.controler, loc, seq, 0));
+            cardIndices.add(e.getValue());
+        }
+        if (items.isEmpty()) return;
         // 特殊召唤列表标题对齐 gframe「选择怪兽」(509)；发动列表沿用「发动」(1150)
         String title = (mode == MODE_SPSUMMON)
                 ? sysString(SYS_SELECT_MONSTER, "选择怪兽") : sysString(SYS_ACTIVATE);
-        showCardListDialog(title, items, indices, mode, cmdContext, engine);
+        showCmdListDialog(title, items, cardIndices, mode, cmdContext, engine);
     }
 
     /**
@@ -740,6 +757,42 @@ public class CmdMenuDialog {
                     if (panel != null) panel.setCardDisplayDialog(null);
                 });
         if (liveSupplier != null) dialog.observeLive(liveSupplier);
+        dialog.show();
+    }
+
+    /**
+     * 按卡去重后的特殊召唤/发动列表：一张卡对应多条命令时，点击后按多效果选项分流
+     */
+    private void showCmdListDialog(String title, List<CardDisplayDialog.CardItem> items,
+                                   List<List<GameEngine.CmdCardInfo>> cardInfos, int mode, int cmdContext, GameEngine engine) {
+        if (items == null || items.isEmpty()) return;
+        ImageLoader loader = activity.getImageLoader();
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        final CardDisplayDialog dialog = new CardDisplayDialog(activity, loader);
+        if (panel != null) panel.setCardDisplayDialog(dialog);
+        dialog.setTitle(title)
+                .setCards(items)
+                .setLocalPlayer(0)
+                .setControlerProtocolSide(false)
+                .setCardClickListener(item -> {
+                    if (mode == MODE_VIEW) {
+                        activity.showCardInfoPanel(clientCardFromItem(item));
+                    } else {
+                        int pos = items.indexOf(item);
+                        if (pos >= 0 && cardInfos != null && pos < cardInfos.size()) {
+                            List<GameEngine.CmdCardInfo> infos = cardInfos.get(pos);
+                            if (infos.size() == 1) {
+                                sendCmdResponse(mode, cmdContext, infos.get(0).index);
+                            } else if (infos.size() > 1) {
+                                showOptionListForMode(cmdContext, infos, mode);
+                            }
+                        }
+                        dialog.dismiss();
+                    }
+                })
+                .setOnDismissListener(() -> {
+                    if (panel != null) panel.setCardDisplayDialog(null);
+                });
         dialog.show();
     }
 
