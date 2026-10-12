@@ -110,6 +110,13 @@ public interface Constants {
     String CORE_EXPANSIONS_IMAGE_PATH = "expansions/pics";
     String CORE_IMAGE_FIELD_PATH = "field";
     String CORE_SCRIPT_PATH = "script";
+    /**
+     * 扩展卡包物化 cdb 目录名（位于 expansions/ 下）：薄 JNI 引擎只认实体文件，
+     * 卡包 zip/ypk 内的 *.cdb 由 NativeScriptBootstrap 解到 <root>/expansions/cdb/，
+     * 再按优先级纳入引擎卡数据库列表（对齐 C++ game.cpp LoadExpansions 读取
+     * 档案内 cdb 的语义；同名卡扩展覆盖主库）
+     */
+    String CORE_PACK_CDB_DIR = "cdb";
     String CORE_REPLAY_PATH = "replay";
     String CORE_SCRIPTS_ZIP = "scripts.zip";
     String CORE_PICS_ZIP = "pics.zip";

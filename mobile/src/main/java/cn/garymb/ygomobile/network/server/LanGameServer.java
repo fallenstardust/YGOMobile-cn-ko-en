@@ -30,8 +30,10 @@ import cn.garymb.ygomobile.utils.CrashHandler;
  *   <li>UDP：bind 7920 收 {@code HostRequest}（identifier=={@link #NETWORK_CLIENT_ID}），
  *       以 {@code room} 的房名/HostInfo 组 72 字节 {@code HostPacket} 单播回请求者 IP:7921，
  *       与客户端 {@code LanDiscoveryManager.parseHostPacket} 严格对偶；</li>
- *   <li>引擎：{@link #start} 前引导 {@link OcgDuelEngine}（读 cards.cdb + script/），
- *       不可用时直接返回 {@code false}，由调用方给出失败反馈。</li>
+ *   <li>引擎：{@link #start} 绑定监听并拉起 accept 线程<b>之后</b>在后台引导
+ *       {@link OcgDuelEngine}（解压脚本 + 读 cards.cdb）：握手/加入/大厅聊天不依赖引擎，
+ *       老设备解压慢不再阻塞 TCP 监听导致 WindBot 探测超时；开局时
+ *       {@link ServerDuel#startDuel} 经幂等引导闸门等待引擎就绪。</li>
  * </ul>
  *
  * <p>路由与 C++ {@code HandleCTOSPacket} 对齐：{@code PLAYER_INFO} 设连接昵称、
@@ -69,11 +71,14 @@ public final class LanGameServer implements YGOProtocol {
     /** 活跃连接，供停止时统一关闭。 */
     private final List<ServerConnection> connections = new CopyOnWriteArrayList<>();
 
+    /** 后台引擎引导已成功（失败时保持 false，开局闸门会重试引导）。 */
+    private volatile boolean engineBootDone;
+
     /**
-     * 启动服务器：引导引擎、打开 TCP/UDP、拉起后台线程。
+     * 启动服务器：打开 TCP/UDP 监听、拉起后台线程，随后在后台引导引擎。
      *
      * @param port 监听端口，&lt;=0 时用 {@link #DEFAULT_PORT}
-     * @return 成功返回 true；引擎不可用/加载失败/端口占用返回 false（已自行清理）
+     * @return 成功返回 true；native 库不可用/端口占用返回 false（已自行清理）
      */
     public boolean start(int port) {
         synchronized (lifecycleLock) {
@@ -83,10 +88,6 @@ public final class LanGameServer implements YGOProtocol {
             serverPort = port > 0 ? port : DEFAULT_PORT;
             if (!OcgDuelEngine.isAvailable()) {
                 Log.e(TAG, "libygoengine.so 不可用，无法建立主机");
-                return false;
-            }
-            if (!bootstrapEngine()) {
-                Log.e(TAG, "引擎卡片/脚本加载失败");
                 return false;
             }
             roomExecutor = Executors.newSingleThreadExecutor(daemonFactory("YgoRoomExec"));
@@ -120,16 +121,43 @@ public final class LanGameServer implements YGOProtocol {
                 udpThread.start();
             }
             Log.i(TAG, "局域网主机已启动，端口 " + serverPort);
+            // 引擎引导改在监听就绪后进行：建房/加入/大厅聊天（含 WindBot 连入）全程不依赖
+            // 引擎，只有真正开局才需要；首次解压 scripts.zip/卡包脚本与加载 cdb 在老设备上
+            // 可达数秒，若像在监听前同步执行，TCP 端口迟迟不 bind，握手会被 WindBot 探测
+            // 超时赶在前面。引导失败不在此反馈：{@link ServerDuel#startDuel} 开局闸门会
+            // 重试并兜底终止开局；与预热/其它建主路径并发时 ensureEngineReady 同步幂等，
+            // 不会重复解压/重复 init。
+            if (!engineBootDone) {
+                Thread boot = new Thread(this::bootstrapEngineInBackground, "LanEngineBoot");
+                boot.setDaemon(true);
+                CrashHandler.getInstance().hookThread(boot, "局域网主机-引擎引导");
+                boot.start();
+            }
             return true;
         }
     }
 
     /** 引导引擎：确保 script/ 已解压并加载卡片数据库。
      * 经 {@link NativeScriptBootstrap#ensureEngineReady()} 幂等引导：相同资源根目录仅首次
-     * 真正 {@code OcgDuelEngine.init}（加载 cdb+脚本，耗时数秒），后续建主直接命中缓存，
-     * 消除“每次建主都重载引擎”的4~5秒延迟（对齐 C++ gframe 启动时一次性加载、多次建主复用）。 */
+     * 真正 {@code OcgDuelEngine.init}（解压脚本+加载 cdb，耗时数秒），后续建主直接命中缓存，
+     * 消除“每次建主都重载引擎”的4~5秒延迟（对齐 C++ gframe 启动时一次性加载、多次建主复用）。
+     * 监听已开启后才在后台执行，开局需求由 {@link ServerDuel#startDuel} 的同步闸门等待。 */
     private boolean bootstrapEngine() {
         return NativeScriptBootstrap.ensureEngineReady();
+    }
+
+    /** 后台引导入口：成功则置 engineBootDone，后续 start() 不再重复拉起引导线程。 */
+    private void bootstrapEngineInBackground() {
+        boolean ok = false;
+        try {
+            ok = bootstrapEngine();
+        } catch (Throwable t) {
+            Log.e(TAG, "后台引擎引导异常", t);
+        }
+        engineBootDone = ok;
+        if (!ok) {
+            Log.e(TAG, "引擎后台引导失败：开局时将重试，仍失败则无法开始决斗");
+        }
     }
 
     // ==================================================================

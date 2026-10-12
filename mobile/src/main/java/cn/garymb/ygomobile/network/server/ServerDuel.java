@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
 import cn.garymb.ygomobile.network.YGOProtocol;
 
@@ -92,6 +93,15 @@ final class ServerDuel implements YGOProtocol {
     // ==================================================================
 
     void startDuel(ServerConnection dp, int tp) {
+        // 引擎就绪闸门：LanGameServer.start 为了握手即时，把解压脚本/加载 cdb 的引导
+        // 改到了监听就绪后的后台线程；开局是引擎真正的首个使用时点，在此同步幂等引导
+        // 兜底——已就绪立即返回，预热/后台引导仍在进行时阻塞至完成，失败则重试一次，
+        // 仍失败终止开局（本方法在单线程房间执行器上串行，短暂阻塞不影响已建立连接）
+        if (!NativeScriptBootstrap.ensureEngineReady()) {
+            Log.e(TAG, "startDuel：引擎引导失败（脚本解压或卡数据库加载未完成），终止开局");
+            room.duelStage = DUEL_STAGE_END;
+            return;
+        }
         GameRoom.HostInfo hi = room.hostInfo;
         boolean tag = room.tagMode;
         room.duelStage = DUEL_STAGE_DUELING;

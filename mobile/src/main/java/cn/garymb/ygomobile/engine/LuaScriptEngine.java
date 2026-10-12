@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
@@ -62,32 +63,77 @@ public class LuaScriptEngine {
         return loadScriptByName(fileName);
     }
 
+    /**
+     * 按统一优先级加载脚本（高→低），与 JNI 侧 engineScriptReader、cdb/pics 保持一致：
+     * <ol>
+     *   <li>{@code <root>/expansions/script/} 散文件——含 NativeScriptBootstrap 物化的卡包
+     *       cXXX.lua 与 expansions 调试散文件（最高，对齐 data_manager.cpp
+     *       prefer_expansion_script=1）；</li>
+     *   <li>expansions 目录内卡包 zip/ypk（按文件名倒序遍历，靠后名包优先）；</li>
+     *   <li>主资源 scripts.zip；</li>
+     *   <li>主散目录 {@code <root>/script/}、{@code <root>/single/}（最低）。</li>
+     * </ol>
+     */
     public byte[] loadScriptByName(String name) {
         if (scriptCache.containsKey(name)) {
             return scriptCache.get(name);
         }
 
-        byte[] data = null;
+        byte[] data;
 
+        //1.expansions/script 散文件（卡包脚本物化区，最高优先级）
+        data = loadFromExpansionsScriptDir(name);
+        if (data != null) {
+            scriptCache.put(name, data);
+            return data;
+        }
+
+        //2.expansions 目录内卡包 zip/ypk（倒序）
         data = loadFromExpansions(name);
         if (data != null) {
             scriptCache.put(name, data);
             return data;
         }
 
-        data = loadFromFile(name);
-        if (data != null) {
-            scriptCache.put(name, data);
-            return data;
-        }
-
+        //3.主资源 scripts.zip
         data = loadFromZip(name);
         if (data != null) {
             scriptCache.put(name, data);
             return data;
         }
 
+        //4.主散目录 script/、single/
+        data = loadFromFile(name);
+        if (data != null) {
+            scriptCache.put(name, data);
+            return data;
+        }
+
         Log.w(TAG, "Script not found: " + name);
+        return null;
+    }
+
+    /**
+     * 读取 {@code <root>/expansions/script/} 下的散 lua（由 {@link NativeScriptBootstrap}
+     * 把卡包 script/*.lua 与顶层散 lua 按包名升序覆写物化而来，已体现“靠后名包优先”，
+     * 此处只需直接查文件）。未物化时目录不存在，返回 null。
+     */
+    private byte[] loadFromExpansionsScriptDir(String name) {
+        String resourcePath = AppsSettings.get().getResourcePath();
+        File scriptFile = new File(new File(new File(resourcePath,
+                Constants.CORE_EXPANSIONS), Constants.CORE_SCRIPT_PATH), name);
+        if (!scriptFile.isFile()) {
+            return null;
+        }
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(scriptFile);
+            return readStream(fis);
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to read expansion script file: " + scriptFile.getAbsolutePath(), e);
+        } finally {
+            IOUtils.close(fis);
+        }
         return null;
     }
 
@@ -98,7 +144,10 @@ public class LuaScriptEngine {
             File[] zipFiles = expansionsDir.listFiles(f ->
                     f.isFile() && (f.getName().endsWith(".zip") || f.getName().endsWith(".ypk")));
             if (zipFiles != null) {
-                for (File zipFile : zipFiles) {
+                //按文件名升序排序后倒序遍历：字典序靠后的包优先（与统一优先级一致）
+                Arrays.sort(zipFiles, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                for (int i = zipFiles.length - 1; i >= 0; i--) {
+                    File zipFile = zipFiles[i];
                     ZipFile zf = null;
                     try {
                         zf = new ZipFile(zipFile);

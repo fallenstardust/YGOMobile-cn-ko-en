@@ -163,7 +163,9 @@ public final class OcgDuelEngine {
      * 初始化引擎。
      *
      * @param rootPath 资源根目录（其下含 script/、single/，可选 expansions/）
-     * @param cdbPaths 卡片数据库绝对路径；主库放最后（覆盖扩展同名卡）
+     * @param cdbPaths 卡片数据库绝对路径，按优先级从低到高排列：主库在前、扩展卡包物化
+     *                 cdb 与 expansions 散 cdb 在后（后加载覆盖同名卡，对齐 C++
+     *                 game.cpp 先主库后 LoadExpansions 的净效果）
      * @return 成功返回 true；库不可用或加载失败返回 false
      */
     public static boolean init(String rootPath, String[] cdbPaths) {

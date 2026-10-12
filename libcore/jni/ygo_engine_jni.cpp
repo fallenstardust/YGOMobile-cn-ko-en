@@ -4,8 +4,11 @@
  * 薄 JNI 决斗引擎封装：仅暴露 ocgcore（ocgapi.h）的干净 C 接口子集给 Java，
  * 不链接 irrlicht / freetype / openal / openssl / libevent 等渲染或网络库。
  * 自带：
- *   - 卡片数据读取（sqlite3 直读 cards.cdb + 扩展 cdb，逻辑对齐 data_manager.cpp::ReadDB）
- *   - Lua 脚本读取（从资源根目录下的 script/ 、single/ 、expansions/script/ 读取）
+ *   - 卡片数据读取（sqlite3 直读 cards.cdb + 扩展 cdb，逻辑对齐 data_manager.cpp::ReadDB；
+ *     cdbPaths 按优先级从低到高传入：主库在前、扩展卡包/散cdb在后，后加载覆盖）
+ *   - Lua 脚本读取（优先级对齐 data_manager.cpp::ScriptReaderEx prefer_expansion_script=1：
+ *     卡片脚本先查 <root>/expansions/script/（expansions 散文件与卡包物化区），
+ *     再查 <root>/script/（主）；非卡片脚本（single/ 等）保持主目录优先）
  * 决斗消息循环由 Java 侧（ServerDuel）驱动，本层只做无状态转发。
  */
 #include <jni.h>
@@ -44,7 +47,9 @@ inline bool is_alternative(uint32_t code, uint32_t alias) {
            && (code < alias + CARD_ARTWORK_VERSIONS_OFFSET);
 }
 
-// 把一个 cdb 文件读入 g_cardData，后加载者覆盖先前同 code 项（扩展卡先、主库后，主库优先）
+// 把一个 cdb 文件读入 g_cardData，后加载者覆盖先前同 code 项
+//（调用方按优先级从低到高排列：主库在前、扩展在后，扩展覆盖主库——对齐 C++
+// game.cpp 先 LoadDB(mDbList) 后 LoadExpansions() 的净效果）
 bool loadCdb(const char* file) {
     sqlite3* db = nullptr;
     if (sqlite3_open_v2(file, &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
@@ -116,20 +121,28 @@ uint32_t engineCardReader(uint32_t code, card_data* data) {
     return 1;
 }
 
-// 把 "./script/c1.lua" / "./single/x.lua" 解析为绝对路径并读取；依次尝试 root 与 root/expansions
+// 把 "./script/c1.lua" / "./single/x.lua" 解析为绝对路径并读取。
+// 卡片脚本（script/ 前缀）优先查 <root>/expansions/，其次 <root>/——对齐
+// data_manager.cpp::ScriptReaderEx（prefer_expansion_script=1）的
+// “expansions 散文件 > 卡包档案 > 主脚本”语义（Java 引导已把卡包 script/*.lua
+// 按包名字典序升序覆写物化进 <root>/expansions/script/，即靠后的包优先）；
+// 其余路径（single/ 等）
+// 保持主目录优先、expansions 兜底，不影响残局脚本既有行为
 byte* engineScriptReader(const char* scriptPath, int* slen) {
     if (!scriptPath || g_rootPath.empty())
         return nullptr;
     const char* rel = scriptPath;
     if (rel[0] == '.' && rel[1] == '/')
         rel += 2;
+    const bool cardScript = std::strncmp(rel, "script/", 7) == 0;
     char full[1024];
-    // 1) root/rel
-    std::snprintf(full, sizeof full, "%s/%s", g_rootPath.c_str(), rel);
-    FILE* fp = std::fopen(full, "rb");
-    if (!fp) {
-        // 2) root/expansions/rel
-        std::snprintf(full, sizeof full, "%s/expansions/%s", g_rootPath.c_str(), rel);
+    FILE* fp = nullptr;
+    for (int pass = 0; pass < 2 && !fp; ++pass) {
+        const bool useExpansions = cardScript ? (pass == 0) : (pass == 1);
+        if (useExpansions)
+            std::snprintf(full, sizeof full, "%s/expansions/%s", g_rootPath.c_str(), rel);
+        else
+            std::snprintf(full, sizeof full, "%s/%s", g_rootPath.c_str(), rel);
         fp = std::fopen(full, "rb");
     }
     if (!fp)
@@ -154,7 +167,8 @@ extern "C" {
 /*
  * class     cn.garymb.ygomobile.engine.OcgDuelEngine
  * 初始化引擎：装载卡片数据并挂上脚本/卡片读取回调。
- * rootPath 为资源根目录（含 script/、single/）；cdbPaths 为主库 + 扩展库（主库放最后覆盖）。
+ * rootPath 为资源根目录（含 script/、single/）；cdbPaths 按优先级从低到高排列
+ * （主库在前，扩展卡包物化 cdb、expansions 散 cdb 在后，后加载覆盖同名卡）。
  */
 JNIEXPORT jboolean JNICALL
 Java_cn_garymb_ygomobile_engine_OcgDuelEngine_nativeInit(JNIEnv* env, jclass /*clazz*/,

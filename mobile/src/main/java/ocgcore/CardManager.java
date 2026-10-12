@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipInputStream;
@@ -144,6 +145,11 @@ public class CardManager {
     /**
      * 清空cardDataHashMap，之后从cdb文件读取卡牌，到cardDataHashMap
      * 如果开启了先行卡，
+     *
+     * <p>读取顺序与引擎侧 {@link cn.garymb.ygomobile.AppsSettings#makeCdbList}、
+     * cdb 统一优先级一致（后读取覆盖同名卡，低→高）：主 cards.cdb → 卡包
+     * zip/ypk（按文件名升序，靠后名包覆盖靠前名包）→ 卡包物化 cdb
+     *（{@code expansions/cdb/}，与包内 cdb 同源）→ expansions 散 cdb（最高）。
      */
     @WorkerThread
     public void loadCards() {
@@ -161,12 +167,16 @@ public class CardManager {
                             return file.isFile() && ((name.endsWith(".cdb") || (name.endsWith(".zip") || name.endsWith(Constants.YPK_FILE_EX))));
                         }
                     });
-                    //读取全部卡片
                     if (files != null) {
+                        //按文件名升序，与 getExpansionFiles/makeCdbList 同一基准
+                        try {
+                            Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                        } catch (Exception e) {
+                            //
+                        }
+                        //1.先读卡包压缩包（升序=靠后名包后读覆盖靠前名包）
                         for (File file : files) {
-                            if (file.getName().endsWith(".cdb")) {
-                                count = readAllCards(file, cardDataHashMap);
-                            } else if (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX)) {
+                            if (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX)) {
                                 Log.e("CardManager", "读取压缩包");
                                 try {
                                     for (File file1 : readZipCdb(file.getAbsolutePath())) {
@@ -177,6 +187,24 @@ public class CardManager {
                                 }
                             }
                             Log.i(TAG, "load " + count + " cdb:" + file);
+                        }
+                        //2.再读卡包物化 cdb 目录（与包内同源，重复读无害；旧版未物化时为空）
+                        File packCdbDir = new File(dir, Constants.CORE_PACK_CDB_DIR);
+                        File[] packed = packCdbDir.listFiles(f -> f.isFile()
+                                && f.getName().toLowerCase().endsWith(".cdb"));
+                        if (packed != null) {
+                            Arrays.sort(packed, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                            for (File file : packed) {
+                                count = readAllCards(file, cardDataHashMap);
+                                Log.i(TAG, "load " + count + " pack cdb:" + file);
+                            }
+                        }
+                        //3.最后读 expansions 散 cdb（最高优先级，覆盖全部同名卡）
+                        for (File file : files) {
+                            if (file.getName().endsWith(".cdb")) {
+                                count = readAllCards(file, cardDataHashMap);
+                                Log.i(TAG, "load " + count + " cdb:" + file);
+                            }
                         }
                     }
                 }

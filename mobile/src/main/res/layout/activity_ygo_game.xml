@@ -46,7 +46,9 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <!-- 左上角 FPS 实时帧率显示（覆盖于决斗场之上，随 GameFieldView 每秒刷新） -->
+    <!-- 左上角 FPS 实时帧率显示（覆盖于决斗场之上，随 GameFieldView 每秒刷新）。
+         默认 GONE：仅决斗进行中（game_field_view 可见）由 YGOProActivity.updateFpsVisibility
+         点亮，主菜单/大厅聊天/卡组编辑/决斗结束返回等场景隐藏 -->
     <TextView
         android:id="@+id/tv_fps"
         android:layout_width="wrap_content"
@@ -56,6 +58,7 @@
         android:background="@drawable/button_radius_black_transparents"
         android:text="FPS --"
         android:textColor="@color/white"
-        android:textSize="5sp" />
+        android:textSize="5sp"
+        android:visibility="gone" />
 
 </FrameLayout>

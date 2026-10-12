@@ -227,7 +227,8 @@ public class ConnectionManager {
                 if (!ensureLocalServer(port, "人机模式")) {
                     return;
                 }
-                try { Thread.sleep(800); } catch (InterruptedException e) { /* ignore */ }
+                // start() 已同步完成 ServerSocket 绑定与 accept 线程拉起（引擎引导改在其后
+                // 后台进行），环回连接可立即建立，不再需要固定缓冲等待
 
                 boolean connected = engine.client.connect(host, port);
                 if (!connected) {
@@ -242,7 +243,20 @@ public class ConnectionManager {
                         8000, 5, 1, 0,
                         "Bot Duel", "");
 
-                try { Thread.sleep(1500); } catch (InterruptedException e) { /* ignore */ }
+                // 等房间就绪（房主已入座）再广播启动 WindBot，替代原固定 1500ms 缓冲：
+                // 快设备即时启动，老设备最多轮询 10 秒（与 launchWindBot 同策略，
+                // 20ms 细粒度），避免 WindBot 在房未建好时连入无房可加撞上探测超时
+                LanGameServer server = localServer;
+                long readyDeadline = System.currentTimeMillis() + 10000L;
+                while (System.currentTimeMillis() < readyDeadline
+                        && (server == null || !server.isRoomReady())) {
+                    try {
+                        Thread.sleep(20);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                    server = localServer;
+                }
 
                 String windbotArgs = "WindBotHost:" + host + " Port:" + port
                         + " Name:WindBot"                    + (botCommand != null && !botCommand.isEmpty() ? " " + botCommand : "");

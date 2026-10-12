@@ -398,10 +398,14 @@ public class YGOProActivity extends AppCompatActivity {
             if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
             if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
             setGameTopPanelVisible(false);
+            // 非决斗分支回显后 FPS 角标随手势/旋转前的决斗态一并隐藏
+            updateFpsVisibility();
         }
         // 聊天输入框/开关在新视图树回显完成后按当前场景重算（卡组编辑分支经 deckEditorHost.show
         // 已算一次，此处覆盖决斗/大厅/菜单各分支，避免旋转后新树默认 VISIBLE 漏显抑制态）
         updateChatUIVisibility();
+        // 新视图树 tv_fps 默认 GONE：决斗/录像分支回显后按决斗场实际可见性统一重算角标
+        updateFpsVisibility();
         // 旋转后新视图树的 layout_game_right 背景随旧树销毁，按最近背景图重贴区域平铺背景
         updateFieldRegionBackground();
         // gameEngine 相关对话框（PopupWindow 独立窗口，不随 setContentView 重建）按新屏宽
@@ -832,6 +836,8 @@ public class YGOProActivity extends AppCompatActivity {
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
         setGameTopPanelVisible(false);
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
+        // 决斗场已隐藏：FPS 角标同步隐藏（用户规格：仅决斗进行中显示）
+        updateFpsVisibility();
         // 离开决斗场后重算聊天 UI：layoutDeckEditor 显隐此时已定型，输入框/开关按场景归位
         updateChatUIVisibility();
         // 离开决斗场后重算场景：duelActive 已置假 → 非卡组编辑则回 MENU（修正结束一局后
@@ -856,6 +862,8 @@ public class YGOProActivity extends AppCompatActivity {
         fieldCtl.show();
         cardDetailPanel.onGameUIShown();
         if (dialogContainer != null) dialogContainer.setVisibility(View.VISIBLE);
+        // 决斗场开始显示：点亮 FPS 角标
+        updateFpsVisibility();
         // 进入决斗场重算聊天 UI（对齐 gframe：回放/残局这些无聊天对象的场景显示 GameUI 时
         // 隐藏 wChat；正常决斗/观战显示），覆盖退出录像后残留的隐藏态
         updateChatUIVisibility();
@@ -1010,6 +1018,8 @@ public class YGOProActivity extends AppCompatActivity {
         // 大厅聊天期间隐藏决斗场 GL 渲染（GLSurfaceView 置 GONE，决斗开始时恢复）
         View gameFieldView = findViewById(R.id.game_field_view);
         if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
+        // 大厅聊天非决斗：决斗场隐藏后 FPS 角标一并隐藏
+        updateFpsVisibility();
         if (topInfoManager != null) topInfoManager.hide();
         fieldCtl.enterLobbyChatMode();
 
@@ -1032,6 +1042,8 @@ public class YGOProActivity extends AppCompatActivity {
         View gameFieldView = findViewById(R.id.game_field_view);
         if (gameFieldView != null) gameFieldView.setVisibility(View.VISIBLE);
         if (fieldCtl != null) fieldCtl.exitLobbyChatMode();
+        // 切回决斗显示：FPS 角标点亮（祖先 layout_game_content 尚未点亮时由 showGameUI 再算）
+        updateFpsVisibility();
 
         // 使用 ChatInputUI 退出大厅聊天模式
         if (chatInputUI != null) {
@@ -1113,6 +1125,20 @@ public class YGOProActivity extends AppCompatActivity {
             layoutGameTopPanel = findViewById(R.id.layout_game_top_panel);
         if (layoutGameTopPanel != null)
             layoutGameTopPanel.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * FPS 角标显隐集中核算（用户规格：仅决斗开始时、即 game_field_view 显示时展示，
+     * 决斗结束后继续隐藏）：以 {@link View#isShown()} 为准——自身与全部祖先（
+     * layout_game_content/layout_game_right）均可见才显示；大厅聊天期间决斗场被显式
+     * GONE 也随之隐藏。isShown() 读可见性标志链，setVisibility 后立即可判不依赖布局帧。
+     * 各决斗场显隐切换点（showGameUI/hideGameUI/进退大厅/旋转回显尾部）统一调用本方法。
+     */
+    void updateFpsVisibility() {
+        TextView tvFps = findViewById(R.id.tv_fps);
+        if (tvFps == null) return;
+        View gv = findViewById(R.id.game_field_view);
+        tvFps.setVisibility(gv != null && gv.isShown() ? View.VISIBLE : View.GONE);
     }
 
 
