@@ -323,9 +323,14 @@ final class FieldCamera {
         // 使场地位于等距（isotropic）视锥内，卡片严格保持 177:254 原始比例；GameFieldView 宽度仍由
         // layout_game_right 决定（match_parent），横向自然留白属正常取景，不再以拉伸换取贴边。
         float near = CAM_NEAR;
-        float fTop = (s.frustumC + s.frustumHH) * near;
-        float fBottom = (s.frustumC - s.frustumHH) * near;
-        float fRight = s.frustumHH * aspect * near;
+        // XML 几何微调（与 FieldEditPreview.computeEditCamera 同步以保证所见即所得）：
+        // field_length 乘算竖向半高（纵向拉伸）、field_height 叠加离轴量 c（整体上下平移）、
+        // field_width 乘算横向半宽（横向拉伸）；三者默认 1.0/0.0/1.0 时与旧取景完全一致。
+        float vHH = s.frustumHH * view.fieldLength;
+        float vc = s.frustumC + view.fieldHeight;
+        float fTop = (vc + vHH) * near;
+        float fBottom = (vc - vHH) * near;
+        float fRight = s.frustumHH * aspect * view.fieldWidth * near;
         Matrix.frustumM(mProj, 0, -fRight, fRight, fBottom, fTop, near, CAM_FAR);
         Matrix.setLookAtM(mView, 0, s.eyeX, s.eyeY, s.eyeZ,
                 s.eyeX, s.eyeY + s.dirY, s.eyeZ + s.dirZ, 0f, 0f, 1f);

@@ -109,8 +109,9 @@ final class FieldEditPreview {
         info.setColor(YGOUtil.c(R.color.white_aa));
         info.setTextSize(9f * density);
         canvas.drawText(String.format(Locale.US,
-                        "GameFieldView 设计预览  俯仰角=%.0f° 视点距离=%.2f 场地倍率=%.2f 手卡后移=%.3f(解算) 视高=%.1f°",
-                        view.cameraElevationDeg, view.cameraDistance, view.fieldZoom, cam.selfHandShift,
+                        "GameFieldView 设计预览  俯仰角=%.0f° 视点距离=%.2f 场地倍率=%.2f 宽度=%.2f 长度=%.2f 上下高=%.3f 手卡后移=%.3f(解算) 视高=%.1f°",
+                        view.cameraElevationDeg, view.cameraDistance, view.fieldZoom, view.fieldWidth,
+                        view.fieldLength, view.fieldHeight, cam.selfHandShift,
                         Math.toDegrees(2.0 * Math.atan(cam.halfH))),
                 6f * density, h - 6f * density, info);
     }
@@ -197,11 +198,12 @@ final class FieldEditPreview {
         cam.ux = 0f;
         cam.uy = -cam.rx * s.dirZ;
         cam.uz = cam.rx * s.dirY;
-        cam.halfH = s.frustumHH;
+        cam.halfH = s.frustumHH * view.fieldLength;
         // 横向半宽与运行期 updateCamera 一致，用与竖向同一基准 frustumHH*aspect（而非 tanV），
-        // 保证设计预览与实机同为等距视锥、卡片矩形不拉伸（所见即所得）
-        cam.halfW = s.frustumHH * aspect;
-        cam.frustumC = s.frustumC;
+        // 再叠加 field_width（横向拉伸）；与竖向 field_length 分别乘算，保证设计预览与实机同构。
+        cam.halfW = s.frustumHH * aspect * view.fieldWidth;
+        // field_height（上下高度）：与运行期一致在离轴量上叠加垂直平移
+        cam.frustumC = s.frustumC + view.fieldHeight;
         cam.selfHandShift = s.selfHandShift;
         return cam;
     }

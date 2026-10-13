@@ -28,6 +28,7 @@ import java.util.zip.ZipFile;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.NativeInitOptions;
+import cn.garymb.ygomobile.utils.CrashHandler;
 
 /**
  * native 决斗引擎（libygoengine.so）的启动引导：脚本与卡包物化 + 引擎初始化。
@@ -53,8 +54,9 @@ import cn.garymb.ygomobile.NativeInitOptions;
  * image_manager.cpp）。
  *
  * <p>局域网主机（LanGameServer 监听就绪后的后台引导）与旧格式录像回放（EngineReplaySource）
- * 均经 {@link #ensureEngineReady()} 完成“解压脚本 → 物化卡包 → OcgDuelEngine.init”引导；
- * 卡包增删/变更后 cdb 列表变化时热重载（{@code reloadCards}），无需重启应用。
+ * 均经 {@link #ensureEngineReady()} 完成“解压脚本∥物化卡包（两子线程并行）→
+ * OcgDuelEngine.init”引导；卡包增删/变更后 cdb 列表变化时热重载（{@code reloadCards}），
+ * 无需重启应用。
  */
 public final class NativeScriptBootstrap {
     private static final String TAG = "NativeScriptBootstrap";
@@ -86,18 +88,58 @@ public final class NativeScriptBootstrap {
             // 先物化再取 NativeInitOptions：makeCdbList 要扫描卡包物化产物目录
             // <expansions>/cdb/，顺序颠倒会漏掉本轮新增的卡包数据库
             String rootPath = AppsSettings.get().getResourcePath();
+            final String extractRoot = rootPath;
             long t0 = SystemClock.uptimeMillis();
-            ensureScriptsExtracted(rootPath);
+            // 脚本解压与卡包物化并行：主 scripts.zip 解到 <root>/script/、卡包物化到
+            // <root>/expansions/，两阶段产物目录/标记文件均无交集，低配设备上用两条
+            // 子线程同时进行，引导墙钟时间从“两者之和”压缩为“两者较大者”。
+            // cdb 列表须在二者全部完成后解算（makeCdbList 扫描物化产物目录）
+            final long[] phaseMs = new long[2];
+            final Throwable[] phaseErr = new Throwable[2];
+            Thread mainScripts = new Thread(() -> {
+                long s = SystemClock.uptimeMillis();
+                try {
+                    ensureScriptsExtracted(extractRoot);
+                } catch (Throwable t) {
+                    phaseErr[0] = t;
+                }
+                phaseMs[0] = SystemClock.uptimeMillis() - s;
+            }, "EngineBootMainScripts");
+            Thread packMaterialize = new Thread(() -> {
+                long s = SystemClock.uptimeMillis();
+                try {
+                    // 扩展卡包物化：ygocore/ 与 expansions/ 下全部 .zip/.ypk 的 script/*.lua →
+                    // <root>/expansions/script/，包内 *.cdb → <root>/expansions/cdb/；否则
+                    // 卡包卡片因引擎无数据无脚本只能盖放（见类注释）。包间字典序升序
+                    // 覆写的优先级在本线程内串行保持，不受并行影响
+                    ensureExpansionScriptsExtracted(extractRoot);
+                } catch (Throwable t) {
+                    phaseErr[1] = t;
+                }
+                phaseMs[1] = SystemClock.uptimeMillis() - s;
+            }, "EngineBootPacks");
+            mainScripts.setDaemon(true);
+            packMaterialize.setDaemon(true);
+            mainScripts.start();
+            packMaterialize.start();
+            try {
+                mainScripts.join();
+                packMaterialize.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TAG, "引擎引导等待解压线程时被中断");
+            }
+            if (phaseErr[0] != null) {
+                Log.e(TAG, "主脚本解压异常", phaseErr[0]);
+            }
+            if (phaseErr[1] != null) {
+                Log.e(TAG, "卡包物化异常", phaseErr[1]);
+            }
             long t1 = SystemClock.uptimeMillis();
-            // 扩展卡包物化：ygocore/ 与 expansions/ 下全部 .zip/.ypk 的 script/*.lua →
-            // <root>/expansions/script/，包内 *.cdb → <root>/expansions/cdb/；否则
-            // 卡包卡片因引擎无数据无脚本只能盖放（见类注释）
-            ensureExpansionScriptsExtracted(rootPath);
-            long t2 = SystemClock.uptimeMillis();
             NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
             rootPath = options.mWorkPath;
             String[] cdbPaths = options.mDbList.toArray(new String[0]);
-            long t3 = SystemClock.uptimeMillis();
+            long t2 = SystemClock.uptimeMillis();
             // 诊断：内置引擎（LAN 建主/残局/旧格式回放）的真实脚本根目录——卡片 lua 脚本
             // 优先读 <root>/expansions/script/（散调试文件+卡包物化区），其次 <root>/script/
             //（主，scripts.zip 解出）；scripts.zip 指纹变化时 ensureScriptsExtracted 会
@@ -111,9 +153,11 @@ public final class NativeScriptBootstrap {
                     + " packcdb=" + listPackCdbCount(rootPath)
                     + " scripts.zip exists=" + new File(rootPath,
                     Constants.CORE_SCRIPTS_ZIP).exists());
-            // 分段耗时：开局卡顿定位用（预热未完成时 startDuel 闸门会同步等到这里全部结束）
-            Log.i(TAG, "engine bootstrap 耗时(ms) 主脚本解压=" + (t1 - t0)
-                    + " 卡包物化=" + (t2 - t1) + " 选项解算=" + (t3 - t2));
+            // 分段耗时：开局卡顿定位用（预热未完成时 startDuel 闸门会同步等到这里全部结束）；
+            // 解压两阶段为并行线程，各自耗时与并行墙钟（取较大者）分别记录
+            Log.i(TAG, "engine bootstrap 耗时(ms) 主脚本解压=" + phaseMs[0]
+                    + " 卡包物化=" + phaseMs[1] + "（并行墙钟=" + (t1 - t0) + "）"
+                    + " 选项解算=" + (t2 - t1));
             if (rootPath.equals(sInitedRootPath)) {
                 // 已初始化：卡包增删/变更导致 cdb 列表变化时热重载引擎卡数据
                 if (!Arrays.equals(sInitedCdbPaths, cdbPaths)) {
@@ -150,11 +194,59 @@ public final class NativeScriptBootstrap {
     }
 
     /**
-     * 资源根目录缺少 {@code script/init.lua}，或 {@code scripts.zip} 自上次解压后已更新
-     * （比对 大小+lastModified 指纹标记）时，把 zip 重新解压到资源根目录（zip 条目自带
-     * script/ 、single/ 前缀，直接按相对路径覆写落盘）。
+     * 后台预热入口：在创建时刻立即起子线程执行 {@link #ensureEngineReady()}
+     * （解压脚本∥物化卡包两线程并行 → cdb 加载），把开局闸门需要等待的引导
+     * 全量提前到进程/界面创建时刻，用后续全部自然操作耗时（资源检查/导航/
+     * 建房/猜拳/选先后攻）覆盖引导总时长。瞬态失败（如首次安装时资源目录
+     * 尚未就绪）每 3 秒重试一次、至多 3 次；native 库缺失（非 ARM ABI/未打包）
+     * 属永久不可用不重试。ensureEngineReady 同步幂等，多个预热点（App 创建/
+     * YGOProActivity 创建/建主引导）并发时串行合并互不重复；失败不阻断任何
+     * 流程，开局闸门仍会作最后一次同步引导。
      *
-     * <p>必须比对指纹而不能只看 init.lua 存在：JNI 侧 engineScriptReader 只认实体文件，而
+     * @param threadName 子线程名（logcat 定位用）
+     * @param scene      崩溃诊断场景锚点（CrashHandler.hookThread）与日志标识
+     */
+    public static void warmUpAsync(String threadName, String scene) {
+        Thread t = new Thread(() -> {
+            Log.i(TAG, "引擎预热开始（" + scene + "，进程启动后 "
+                    + (SystemClock.uptimeMillis() - android.os.Process.getStartUptimeMillis())
+                    + "ms）");
+            for (int attempt = 1; attempt <= 4; attempt++) {
+                if (ensureEngineReady()) {
+                    Log.i(TAG, "引擎预热完成（" + scene + "，第 " + attempt + " 次尝试）");
+                    return;
+                }
+                if (!OcgDuelEngine.isAvailable()) {
+                    Log.e(TAG, "引擎预热取消（" + scene + "）：libygoengine.so 不可用");
+                    return;
+                }
+                Log.w(TAG, "引擎预热第 " + attempt + "/4 次失败（" + scene + "），3 秒后重试");
+                try {
+                    Thread.sleep(3000L);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }, threadName);
+        t.setDaemon(true);
+        CrashHandler.getInstance().hookThread(t, scene);
+        t.start();
+    }
+
+    /**
+     * {@code scripts.zip} 自上次解压后已更新（比对 大小+lastModified 指纹标记）时，把
+     * zip 重新解压到资源根目录（zip 条目自带 script/ 、single/ 前缀，直接按相对路径
+     * 覆写落盘）。
+     *
+     * <p>快速路径仅认指纹标记，<b>不</b>叠加 {@code script/init.lua} 存在条件：部分
+     * 资源包的 scripts.zip 本就不含 init.lua（实测 bootstrap 诊断行 exists=false，
+     * 引擎靠卡脚本+内置常量照样开局），旧判定 {@code initLua.exists() && 指纹一致}
+     * 在此类资源上永不命中，导致每次 ensureEngineReady（预热/建主引导/开局闸门
+     * 各一次）都串行重做全量解压（实测 15039ms/次），开局闸门等待被叠成多次重解
+     * 之和（实测 34875ms）。标记只在解压成功后写入，指纹一致即该 zip 已完整解出
+     * 过；{@code script/} 被手工清空时标记同灭，自愈重解。
+     *
+     * <p>必须比对指纹而不能只看解压过：JNI 侧 engineScriptReader 只认实体文件，而
      * C++ gframe 的 ScriptReaderEx 优先读 zip 挂载——资源升级后若不解压更新，Java 引擎重跑
      * 用的是陈旧脚本、行为与录制时代分叉，是旧格式回放中途 MSG_RETRY 的根因之一。
      */
@@ -173,7 +265,9 @@ public final class NativeScriptBootstrap {
             return;
         }
         File marker = new File(scriptDir, ".scripts_zip_mark");
-        if (initLua.exists() && zipFingerprint(zip).equals(readMarker(marker))) {
+        // 快速路径仅认指纹标记（见方法注释）：旧版叠加的 initLua.exists() 条件在
+        // 不含 init.lua 的资源包上永不命中，每次引导都全量重解压 15s
+        if (zipFingerprint(zip).equals(readMarker(marker))) {
             return;
         }
         ZipFile zf = null;

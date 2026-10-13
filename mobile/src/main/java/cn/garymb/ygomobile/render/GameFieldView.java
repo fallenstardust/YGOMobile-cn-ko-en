@@ -41,8 +41,9 @@ import cn.garymb.ygomobile.utils.CrashHandler;
  * {@link GameFieldViewController} 实现并注册，手势识别（GestureDetector）同样由控制器持有，
  * 本视图仅保留拾取入口（dispatchTap/dispatchLongPress）与回调触发。
  * <p>
- * XML 可调参数（declare-styleable GameFieldView）：field_camera_elevation / field_camera_distance /
- * field_zoom / field_hand_shift 与预览开关。XML 显式声明的值即运行期正式值，所见即所得；
+ * XML 可调参数（declare-styleable GameFieldView）：field_camera_elevation（仰角/倾斜度）/
+ * field_camera_distance（相机距离）/ field_zoom（等比总缩放）/ field_width（横向拉伸）/ field_length（纵向拉伸）/
+ * field_height（上下平移）/ field_hand_shift 与预览开关。XML 显式声明的值即运行期正式值，所见即所得；
  * 布局编辑器（isInEditMode）下无法启动 GL，改由 Canvas 绘制等效透视预览。
  */
 public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Renderer {
@@ -80,8 +81,13 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     // 均匀层高（0.012/层），导致 60/40/15 张视觉厚度几乎相同，故移除该封顶。
 
     // 选中手卡抬高量等手卡动画参数已随卡片绘制核心平移至 FieldCardRenderer
-    // 场地视觉倍率：1.0=全部可交互格子/堆叠区恰好完整入镜；<1 裁掉边缘换取更大的卡片；>1 留更多边距
+    // 场地视觉倍率（等比总缩放）：1.0=全部可交互格子/堆叠区恰好完整入镜；<1 裁掉边缘换取更大的卡片；>1 留更多边距
     private static final float FIELD_ZOOM = 1.0f;
+    // 宽度（横向拉伸）/ 长度（纵向拉伸）：叠加在 field_zoom 上的各向独立乘数，1.0=不额外拉伸（默认画面与旧一致）
+    private static final float FIELD_WIDTH = 1.0f;
+    private static final float FIELD_LENGTH = 1.0f;
+    // 上下高度（整体垂直平移）：叠加在离轴量 c 上的偏移 tan，0=不平移
+    private static final float FIELD_HEIGHT = 0f;
     // 我方手卡手动微调偏置基准（正值=再向场地外侧后移）；基准后移量由 solveCamera 按俯仰角动态解算
     private static final float HAND_SELF_Y_SHIFT = 0f;
 
@@ -96,6 +102,10 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     // === XML 可调参数（declare-styleable GameFieldView，常量兜底默认值）===
     float cameraDistance = CAMERA_DISTANCE;
     float fieldZoom = FIELD_ZOOM;
+    // 宽度（横向拉伸乘数）/ 长度（纵向拉伸乘数）/ 上下高度（垂直平移量），由 FieldCamera 与 FieldEditPreview 直读
+    float fieldWidth = FIELD_WIDTH;
+    float fieldLength = FIELD_LENGTH;
+    float fieldHeight = FIELD_HEIGHT;
     float handSelfYShift = HAND_SELF_Y_SHIFT;
     // XML 是否显式声明了俯仰角（声明时优先于游戏内保存的设置）
     private boolean elevationFromXml = false;
@@ -204,6 +214,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
         try {
             cameraDistance = ta.getFloat(R.styleable.GameFieldView_field_camera_distance, CAMERA_DISTANCE);
             fieldZoom = ta.getFloat(R.styleable.GameFieldView_field_zoom, FIELD_ZOOM);
+            fieldWidth = ta.getFloat(R.styleable.GameFieldView_field_width, FIELD_WIDTH);
+            fieldLength = ta.getFloat(R.styleable.GameFieldView_field_length, FIELD_LENGTH);
+            fieldHeight = ta.getFloat(R.styleable.GameFieldView_field_height, FIELD_HEIGHT);
             handSelfYShift = ta.getFloat(R.styleable.GameFieldView_field_hand_shift, HAND_SELF_Y_SHIFT);
             previewShowZones = ta.getBoolean(R.styleable.GameFieldView_field_preview_zones, true);
             previewShowHand = ta.getBoolean(R.styleable.GameFieldView_field_preview_hand, true);

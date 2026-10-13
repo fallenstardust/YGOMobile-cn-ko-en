@@ -7,15 +7,29 @@
     android:clipChildren="false">
 
     <!-- 决斗场区域：GameFieldView 3D 渲染（场地/区域/场上卡/堆叠区/双方手卡） -->
-    <!-- 以下参数可在 XML 中直接调整，设计预览与运行期同步生效（详见 attrs.xml GameFieldView） -->
+    <!-- 决斗场微调参数图例（可在 XML 直接调整，设计预览与运行期同步生效；详见 attrs.xml GameFieldView）：
+         注：XML 标签内部不允许逐行内联注释，故各属性语义集中列于此，一行对应下方一行 app:
+         field_camera_elevation = 倾斜度：相机俯仰角 35~75°，越大越接近正俯视
+         field_camera_distance  = 摄像头距离：视点到注视点距离，越大透视越平、对方侧越显大
+         field_zoom             = 等比总缩放：横竖同一基准缩放决斗场，1.0=近端左右贴视图缘
+         field_width            = 宽度：横向单独拉伸，>1 左右收窄、<1 横向拉宽
+         field_length           = 长度：纵向单独拉伸，>1 上下留白增多、<1 近远景深拉长
+         field_height           = 上下高度：整体垂直平移，正值下移、负值上移（不缩放）
+         field_hand_shift       = 手卡后移：我方手卡沿 +Y 向后微调量（世界单位）
+         field_preview_zones    = 预览开关：设计时是否显示区域槽位/堆叠区（仅编辑态生效）
+         field_preview_hand     = 预览开关：设计时是否显示双方示例手卡（仅编辑态生效）
+         field_preview_labels   = 预览开关：设计时是否显示堆叠区名称标签（仅编辑态生效） -->
     <cn.garymb.ygomobile.render.GameFieldView
         android:id="@+id/game_field_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:field_camera_elevation="52"
-        app:field_camera_distance="7.6"
-        app:field_zoom="1.0"
-        app:field_hand_shift="0"
+        app:field_camera_distance="8"
+        app:field_zoom="1.1"
+        app:field_width="1.0"
+        app:field_length="1.0"
+        app:field_height="0.0"
+        app:field_hand_shift="0.0"
         app:field_preview_zones="true"
         app:field_preview_hand="true"
         app:field_preview_labels="true" />

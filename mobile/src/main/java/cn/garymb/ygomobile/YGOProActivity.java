@@ -156,6 +156,10 @@ public class YGOProActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 引擎引导放在 onCreate 第一时间拉起：脚本解压、卡包物化、cdb 加载全在
+        // 子线程与界面初始化并行进行，用主菜单/建房/猜拳/选先后攻的全部自然耗时
+        // 覆盖首次引导开销，使 ServerDuel#startDuel 开局闸门即时通过、选完直接发牌
+        warmUpDuelEngine();
         // 启动方向按“游戏横屏锁定”设置决定（见 applyOrientationLock）：
         // 锁定启用→始终横屏（SENSOR_LANDSCAPE 仍可左右横屏对调旋转，不自动转竖屏）；
         // 未启用→SCREEN_ORIENTATION_USER 跟随系统当前屏幕方向直接以对应方向启动
@@ -169,7 +173,6 @@ public class YGOProActivity extends AppCompatActivity {
         initEngine();
         loadData();
         startWindbotListener();
-        warmUpDuelEngine();
         setupBackPressedHandler();
 
         if (!handleDirectIntent(getIntent())) {
@@ -486,18 +489,17 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     /**
-     * 后台预热 native 决斗引擎：提前完成 scripts.zip 解压与 cards.cdb/脚本加载
-     * （{@code OcgDuelEngine.init} 的首次耗时数秒一次性开销），使首次建立局域网主机
-     * 时无需再等待引擎引导，握手即时完成。ensureEngineReady 幂等且同步，与建主线程
-     * 并发时后者会阻塞至预热完成，不会重复加载。
+     * 启动即在子线程引导 native 决斗引擎：scripts.zip 解压、卡包脚本/cdb 物化、
+     * cards.cdb/扩展 cdb 加载（{@code NativeScriptBootstrap#ensureEngineReady} 的全部
+     * 环节，即 {@code OcgDuelEngine.init} 的首次数秒一次性开销）在 Activity 创建的
+     * 第一刻就开始后台进行，与主菜单/建房/猜拳/选先后攻全部并行，使首次建立
+     * 局域网主机与开局发牌都无需再等待引擎引导。预热进程内最早锚点已在
+     * {@code App#onCreate}（AppEngineWarmUp），此处是同幂等方法的重申入口：
+     * App 阶段因资源目录尚未就绪等瞬态原因失败时，本处重试链（含延后重试）
+     * 继续覆盖；已就绪时 ensureEngineReady 毫秒级返回，不重复解压/加载。
      */
     private void warmUpDuelEngine() {
-        Thread t = new Thread(() -> {
-            boolean ready = NativeScriptBootstrap.ensureEngineReady();
-            Log.i(TAG, "Duel engine warm-up " + (ready ? "done" : "skipped/failed"));
-        }, "EngineWarmUp");
-        CrashHandler.getInstance().hookThread(t, "游戏-引擎预热");
-        t.start();
+        NativeScriptBootstrap.warmUpAsync("EngineWarmUp", "游戏-引擎预热");
     }
 
     // === 供三个UI管理类回调的桥接方法 ===
