@@ -26,8 +26,8 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/unknown" />
 
-            <!-- 控制按钮限高方案：wrap_content + maxHeight（常规 30dp，投降/退出编辑 50dp）；
-                 不可用 height=0dp+weight，否则 LinearLayout 以 EXACTLY 量高会无视 maxHeight 拉伸 -->
+            <!-- 控制按钮高度分配方案：每个按钮 0dp+weight=1 均匀分配整列高度（各按钮等高、
+                 铺满按钮列），并声明 maxHeight=30dp 作为高度上限提示；投降/退出编辑等按钮同样等分 -->
             <!-- 时点按钮（投降/时点控制） -->
             <LinearLayout
                 android:id="@+id/layout_bottom_actions"
@@ -41,7 +41,8 @@
                 <Button
                     android:id="@+id/btn_surrender"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="50dp"
                     android:minHeight="0dp"
@@ -53,7 +54,8 @@
                 <Button
                     android:id="@+id/btn_ignore_timing"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -66,7 +68,8 @@
                 <Button
                     android:id="@+id/btn_show_timing"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -79,7 +82,8 @@
                 <Button
                     android:id="@+id/btn_available_timing"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -92,7 +96,8 @@
                 <Button
                     android:id="@+id/btn_shuffle_hand"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
@@ -104,7 +109,8 @@
                 <Button
                     android:id="@+id/btn_cancel_or_finish"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
@@ -127,7 +133,8 @@
                 <Button
                     android:id="@+id/btn_replay_play"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -139,7 +146,8 @@
                 <Button
                     android:id="@+id/btn_replay_pause"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -151,7 +159,8 @@
                 <Button
                     android:id="@+id/btn_replay_next"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -163,7 +172,8 @@
                 <Button
                     android:id="@+id/btn_replay_last"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -175,7 +185,8 @@
                 <Button
                     android:id="@+id/btn_replay_shuffle"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -187,7 +198,8 @@
                 <Button
                     android:id="@+id/btn_replay_quit"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
                     android:background="@drawable/button3_bg"

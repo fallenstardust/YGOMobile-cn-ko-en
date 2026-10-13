@@ -20,6 +20,7 @@ import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.enums.CardType;
@@ -114,13 +115,28 @@ public class CmdMenuDialog {
     }
 
     /**
-     * 以点击位置为菜单左下角显示
+     * 以点击位置为菜单左下角显示（无对应卡片实体时的回退路径，如中央 conti_act 效果处理菜单）。
      *
      * @param anchorView 接收点击的场地 View（用于把触点换算为屏幕坐标）
      * @param tapX       相对 anchorView 的点击 X
      * @param tapY       相对 anchorView 的点击 Y
      */
     public void show(View anchorView, float tapX, float tapY) {
+        show(anchorView, null, tapX, tapY);
+    }
+
+    /**
+     * 弹出命令菜单。传入 {@code card} 时按该卡在 GameFieldView 上的实际绘制位置动态定位：
+     * 垂直上菜单底边落在卡片上半部中横线（向上展开，按钮列出现在卡片上半部）；水平按屏幕朝向分流——
+     * 横屏以卡片视觉中心居中使菜单覆盖卡片，竖屏则左下角贴卡片竖向中轴线向右展开。
+     * {@code card} 为空时回退到以触点为菜单左下角的旧行为。
+     *
+     * @param anchorView 接收点击的场地 View（GameFieldView，用于投影卡片包围盒 / 换算屏幕坐标）
+     * @param card       被点击的卡片；非空时按其实际屏幕位置定位菜单
+     * @param tapX       相对 anchorView 的点击 X（无卡片包围盒时的回退锚点）
+     * @param tapY       相对 anchorView 的点击 Y（无卡片包围盒时的回退锚点）
+     */
+    public void show(View anchorView, GameField.ClientCard card, float tapX, float tapY) {
         if (anchorView == null || anchorView.getWindowToken() == null) return;
         if (popupWindow.isShowing()) {
             popupWindow.dismiss();
@@ -144,17 +160,58 @@ public class CmdMenuDialog {
 
         int[] loc = new int[2];
         anchorView.getLocationOnScreen(loc);
-        int clickX = loc[0] + (int) tapX;
-        int clickY = loc[1] + (int) tapY;
 
-        // 点击点=菜单左下角：底边对齐触点；上方放不下则翻转到触点下方显示，并钳制四边
-        int left = clickX;
-        int top = clickY - menuHeight;
-        if (top < 0) top = clickY;
-        if (left + widthPx > screenW) left = screenW - widthPx;
-        if (left < 0) left = 0;
-        if (top + menuHeight > screenH) top = screenH - menuHeight;
-        if (top < 0) top = 0;
+        // 卡片实际屏幕包围盒：GameFieldView.getCardScreenBounds 返回视图内坐标
+        // {centerX, 视觉顶边, 视觉底边}，加 anchorView 屏幕偏移换算为屏幕坐标；
+        // 取不到（相机未就绪 / 非 GameFieldView / 无卡片）则回退到触点
+        int anchorCX = loc[0] + (int) tapX;
+        int cardTopY = loc[1] + (int) tapY;
+        int cardBottomY = cardTopY;
+        boolean useCardBounds = false;
+        if (card != null && anchorView instanceof GameFieldView) {
+            float[] bounds = ((GameFieldView) anchorView)
+                    .getCardScreenBounds(card.controler, card.location, card.sequence);
+            if (bounds != null && bounds.length >= 3) {
+                anchorCX = loc[0] + (int) bounds[0];
+                cardTopY = loc[1] + (int) bounds[1];
+                cardBottomY = loc[1] + (int) bounds[2];
+                useCardBounds = true;
+            }
+        }
+
+        int left;
+        int top;
+        if (useCardBounds) {
+            // Java GameField 实际几何：垂直统一——菜单底边落在卡片上半部中横线 cardTopY + cardH/4
+            // （cardH = 底边 - 顶边），菜单从该线向上展开，使按钮列出现在卡片上半部。
+            // 水平按屏幕朝向分流（两种朝向卡片/菜单比例不同，同一公式观感不一致）：
+            //  • 横屏：以卡片视觉中心 anchorCX 居中（left = anchorCX - widthPx/2），宽 120dp 的菜单
+            //    完整覆盖在卡片上；靠屏幕左右边时再拉回屏内保证可见。
+            //  • 竖屏：沿用上一次的口径——菜单左下角贴卡片竖向中轴线 anchorCX 向右展开，不做水平 clamp。
+            int cardH = cardBottomY - cardTopY;
+            int anchorY = cardTopY + cardH / 4;
+            boolean portrait = activity.getResources().getConfiguration().orientation
+                    == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            if (portrait) {
+                left = anchorCX;
+            } else {
+                left = anchorCX - widthPx / 2;
+                if (left < 0) left = 0;
+                if (left + widthPx > screenW) left = screenW - widthPx;
+            }
+            top = anchorY - menuHeight;
+            if (top < 0) top = 0;
+        } else {
+            // 回退：无卡片包围盒（如中央 conti_act 堆叠菜单），保留旧行为：以触点为菜单左下角，
+            // 上方不够则翻到触点下方，并保留屏幕边缘 clamp。
+            left = anchorCX;
+            top = cardTopY - menuHeight;
+            if (top < 0) top = cardTopY;
+            if (left + widthPx > screenW) left = screenW - widthPx;
+            if (left < 0) left = 0;
+            if (top + menuHeight > screenH) top = screenH - menuHeight;
+            if (top < 0) top = 0;
+        }
 
         popupWindow.showAtLocation(decor, Gravity.TOP | Gravity.START, left, top);
         // 菜单显示期间禁用决斗场阶段按钮
@@ -221,7 +278,7 @@ public class CmdMenuDialog {
             return;
         }
         setItems(options, actions);
-        show(anchorView, tapX, tapY);
+        show(anchorView, card, tapX, tapY);
     }
 
     /** 单卡命令菜单（非堆叠/超量入口）：按 card.cmdFlag 逐条构建可执行命令 */
@@ -781,7 +838,18 @@ public class CmdMenuDialog {
                         int pos = items.indexOf(item);
                         if (pos >= 0 && cardInfos != null && pos < cardInfos.size()) {
                             List<GameEngine.CmdCardInfo> infos = cardInfos.get(pos);
-                            if (infos.size() == 1) {
+                            // 特殊召唤：同一怪兽若有多种特殊召唤方式，核心的 idlecmd 段会把同一张卡按每个
+                            // EFFECT_SPSUMMON_PROC 多次入列（ocgcore processor.cpp L2185-2191），但该段每条记录
+                            // 都不带 desc（CommandDataParser 写死 0）。应答索引只决定「召唤哪张卡」，真正的召唤
+                            // 方式由核心在收到应答后另发 MSG_SELECT_OPTION，携带各方式 description（脚本 cdb 提示
+                            // 文字或 strings.conf 系统字符串），交 OptionDialog 用 DataManager.getDesc 解析成不同文本。
+                            // 故此处一律取该卡首条记录直接应答，绝不能用 desc 恒为 0 的本段记录弹客户端 OptionDialog
+                            //（那样会显示多个文本相同的「特殊召唤」按钮，玩家无法区分）。对齐 event_handler.cpp
+                            // BUTTON_CARD COMMAND_SPSUMMON 分支 L809-817：while(spsummonable_cards[index]!=card) index++;
+                            // SetResponseI((index<<16)+1)。
+                            if (mode == MODE_SPSUMMON) {
+                                sendCmdResponse(mode, cmdContext, infos.get(0).index);
+                            } else if (infos.size() == 1) {
                                 sendCmdResponse(mode, cmdContext, infos.get(0).index);
                             } else if (infos.size() > 1) {
                                 showOptionListForMode(cmdContext, infos, mode);
