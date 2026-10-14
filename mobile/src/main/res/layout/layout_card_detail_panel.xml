@@ -253,7 +253,9 @@
                     android:textColor="@color/white"
                     android:textSize="10sp" />
             </LinearLayout>
-            <!-- 卡组操作按钮 -->
+            <!-- 卡组操作按钮：与时点/录像列同款高度分配方案，每按钮 0dp+weight=1 均匀排布，
+                 列 weightSum=6 按最大按钮数（6）等分整列高度，5 按钮行尾留一格空白，
+                 使卡组按钮与时点/录像按钮等高一致（对齐竖屏 layout_deck_control 的 weightSum 等分策略） -->
             <LinearLayout
                 android:id="@+id/layout_deck_control"
                 android:layout_width="wrap_content"
@@ -261,12 +263,14 @@
                 android:layout_marginStart="2dp"
                 android:layout_toEndOf="@id/iv_card_image"
                 android:orientation="vertical"
+                android:weightSum="6"
                 android:visibility="gone">
 
                 <Button
                     android:id="@+id/btn_deck_exit"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="50dp"
                     android:minHeight="0dp"
@@ -278,7 +282,8 @@
                 <Button
                     android:id="@+id/btn_deck_shuffle"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -290,7 +295,8 @@
                 <Button
                     android:id="@+id/btn_deck_sort"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -302,7 +308,8 @@
                 <Button
                     android:id="@+id/btn_deck_clear"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:layout_marginBottom="2dp"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
@@ -314,8 +321,8 @@
                 <Button
                     android:id="@+id/btn_deck_delete"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="2dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:maxHeight="30dp"
                     android:minHeight="0dp"
                     android:background="@drawable/button3_bg"

@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile;
 
+import android.content.res.Configuration;
 import android.view.View;
 
 import cn.garymb.ygomobile.game.DeckEditorManager;
@@ -24,6 +25,12 @@ class DeckEditorViewHost {
         this.activity = activity;
     }
 
+    /** 当前是否横屏：决定点亮占位 dock 副本还是悬浮副本（与两套 activity 布局的方向差异对应） */
+    private boolean isLandscape() {
+        return activity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
+    }
+
     void show() {
         activity.setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
         activity.getMainMenuDialog().hideMainMenu();
@@ -35,6 +42,12 @@ class DeckEditorViewHost {
         if (activity.layoutDeckEditor != null) {
             activity.layoutDeckEditor.setVisibility(View.VISIBLE);
         }
+        // 卡组编辑侧边按钮列两副本按方向各点其一（均默认 GONE）：
+        // 横屏亮 layout_game_content 内占位 dock 副本（按钮列在左、卡组布局在右紧贴）；
+        // 竖屏亮 layout_deck_editor 根末尾悬浮副本（横向一行左下角，不挤压版面）
+        View sideButtons = activity.findViewById(isLandscape()
+                ? R.id.layout_deck_side_buttons_dock : R.id.layout_deck_side_buttons);
+        if (sideButtons != null) sideButtons.setVisibility(View.VISIBLE);
 
         // 隐藏右侧决斗场区，让卡组编辑器占据其空间；
         // 竖屏顶部面板保留可见（承载卡片详情栏与 layout_deck_control 卡组操作按钮）
@@ -121,6 +134,11 @@ class DeckEditorViewHost {
     void hide() {
         if (activity.layoutDeckEditor != null) {
             activity.layoutDeckEditor.setVisibility(View.GONE);
+        }
+        // 退出卡组编辑器收起两副本（方向切换后重建仅经 hide 时也不残留）
+        for (int id : new int[]{R.id.layout_deck_side_buttons_dock, R.id.layout_deck_side_buttons}) {
+            View v = activity.findViewById(id);
+            if (v != null) v.setVisibility(View.GONE);
         }
         if (activity.layoutDeckControl != null) activity.layoutDeckControl.setVisibility(View.GONE);
         // 退出卡组编辑：清除关键词导航器，使卡详描述高亮词点击恢复为决斗态的 KeywordCardListDialog 弹窗

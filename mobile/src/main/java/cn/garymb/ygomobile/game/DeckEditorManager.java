@@ -28,6 +28,7 @@ import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.loader.DeckLoader;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.ui.cards.deck.CardTypeImage;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
@@ -109,6 +110,14 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     private Button btnSave, btnSaveAs, btnShuffle, btnSort, btnClear, btnDelete, btnExit;
     private Button btnDeckManager;
     private Button btnSideFinish, btnSideShuffle, btnSideSort, btnSideReset;
+    // 卡组编辑侧边按钮列双副本：横屏占位 dock（activity_ygo_game 的 layout_game_content 内，
+    // id=layout_deck_side_buttons_dock，按钮列在左卡组布局在右）/竖屏悬浮
+    // （layout_deck_editor 根末尾，id=layout_deck_side_buttons，横向一行左下角），
+    // 按方向各点亮其一；按钮同 ID 双副本时全树 findViewById 按 DFS 先命中当前方向的
+    // 可见副本（dock 在水平行内先于 deck_editor），故经 activity 绑定）：
+    // 仅接线 设置/音乐 两键，其余四键 XML 静态 INVISIBLE 占位；用独立 ID
+    // （btn_deck_settings 等）避免与决斗场按钮列同名致全树 findViewById 错绑
+    private ImageView btnDeckSettings, btnDeckSound;
     private ImageTop mImageTop;
     private CardTypeImage mCardTypeImage;
     private ImageView ivMainMonsterType, ivMainSpellType, ivMainTrapType;
@@ -263,6 +272,10 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         btnSideShuffle = root.findViewById(R.id.btn_side_shuffle);
         btnSideSort = root.findViewById(R.id.btn_side_sort);
         btnSideReset = root.findViewById(R.id.btn_side_reset);
+        // 侧边按钮列双副本（横屏 dock 在卡组编辑器子树外），经全树查找：
+        // DFS 先命中当前方向被点亮的可见副本，另一副本恒 GONE 绑定无害
+        btnDeckSettings = activity.findViewById(R.id.btn_deck_settings);
+        btnDeckSound = activity.findViewById(R.id.btn_deck_sound);
     }
 
     private void setupLabels() {
@@ -407,6 +420,36 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
             saveDeckAs();
         });
+        setupDeckSideButtons();
+    }
+
+    /** 卡组编辑侧边按钮列（layout_deck_side_buttons）：设置直开设置对话框、
+     *  音乐开关走与决斗场同款 toggleSoundMute 链路；图标与决斗场侧边按钮列同源纹理
+     *  （tSettings/tPlay/tMute，对齐 CardDetailPanel.bindSideButtonIcons），纹理缺失保留 XML 默认图兜底 */
+    private void setupDeckSideButtons() {
+        if (btnDeckSettings != null) {
+            Bitmap bmp = TextureLoader.get().getSettingsTexture();
+            if (bmp != null) btnDeckSettings.setImageBitmap(bmp);
+            btnDeckSettings.setOnClickListener(v ->
+                    ((cn.garymb.ygomobile.YGOProActivity) activity).showSettingsDialog());
+        }
+        if (btnDeckSound != null) {
+            btnDeckSound.setOnClickListener(v -> {
+                ((cn.garymb.ygomobile.YGOProActivity) activity).toggleSoundMute();
+                updateDeckSoundIcon();
+            });
+            updateDeckSoundIcon();
+        }
+    }
+
+    /** 音乐按钮图标随 chkEnableSound/chkEnableMusic（与 CardDetailPanel imgVol 同语义）；
+     *  设置对话框在卡组编辑中修改声音开关后也需刷新（GameSettingsApplier.apply 回调本方法） */
+    public void updateDeckSoundIcon() {
+        if (btnDeckSound == null) return;
+        boolean soundOn = AppsSettings.get().getIntSettings("chkEnableSound", 1) == 1
+                || AppsSettings.get().getIntSettings("chkEnableMusic", 1) == 1;
+        Bitmap bmp = soundOn ? TextureLoader.get().getPlayTexture() : TextureLoader.get().getMuteTexture();
+        if (bmp != null) btnDeckSound.setImageBitmap(bmp);
     }
 
     private void setClickListener(Button btn, View.OnClickListener l) {

@@ -63,6 +63,9 @@ class GameSettingsApplier {
         applyAnimationSpeed();
         if (activity.deckEditorManager != null) {
             activity.deckEditorManager.refreshLimitList();
+            // 卡组编辑中经设置对话框改声音/音乐开关：同步刷新卡组编辑器侧边
+            // 按钮列的音乐图标（其副本独立于 CardDetailPanel.updateSoundIcon 的绑定对象）
+            activity.deckEditorManager.updateDeckSoundIcon();
         }
     }
 

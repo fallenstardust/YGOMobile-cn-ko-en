@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 卡组编辑器侧边按钮列·竖屏变体（横屏 layout/ 为纵向贴卡组编辑器左缘）：
+     按用户规格竖屏改为和决斗态类似的底部横向一行——设置(btn_deck_settings)/音乐开关
+     (btn_deck_sound) 两键 VISIBLE 靠左紧贴界面左下缘，记录/加速/表情/聊天四键保留占位
+     以 INVISIBLE 隐藏排在两键右侧（横向不占视觉空档，仅保留槽位结构）。
+     与横屏变体同文件名同 ID（btn_deck_*），按方向限定符各自解析；竖屏宿主是
+     layout_deck_editor 根 FrameLayout 末尾的悬浮 include（root id=layout_deck_side_buttons）：
+     横向一行贴界面左下角且不挤压版面（若作为水平 LinearLayout 首格会占列宽致卡组内容
+     左侧大面积空白，历史踩坑）；横屏则由 activity_ygo_game 水平行内占位 dock 副本显示。
+     DeckEditorViewHost / DeckEditorManager 代码经 isLandscape 分流，其余无需方向分支。
+     根节点默认 GONE，进/出卡组编辑器由 DeckEditorViewHost.show/hide 点亮/收起。
+     ID 仍须与决斗场 layout_image_buttons_panel 的 btn_settings 等不同名。
+     点击行为与图标纹理由 DeckEditorManager.setupDeckSideButtons 接线 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_deck_side_buttons"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="bottom|start"
+    android:orientation="horizontal"
+    android:visibility="gone">
+
+    <ImageButton
+        android:id="@+id/btn_deck_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="5dp"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/setting" />
+
+    <ImageButton
+        android:id="@+id/btn_deck_sound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_volume_on" />
+
+    <ImageButton
+        android:id="@+id/btn_deck_note"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="5dp"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_note"
+        android:visibility="invisible" />
+
+    <ImageButton
+        android:id="@+id/btn_deck_speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="5dp"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_speed"
+        android:visibility="invisible" />
+
+    <ImageButton
+        android:id="@+id/btn_deck_emote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="5dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_emoticon"
+        android:visibility="invisible" />
+
+    <ImageButton
+        android:id="@+id/btn_deck_chat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/rename"
+        android:visibility="invisible" />
+</LinearLayout>
