@@ -166,6 +166,8 @@ public class LanModeDialog {
         draggableHelper = new DraggablePopupHelper(context, "lan_mode_dialog");
         // 竖屏交换宽高比为高大于宽（与横屏宽大于高对称），旋转自动恢复（用户规格）
         draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
+        // 用户规格：本 dialog 横竖屏均不可拖动（对齐 C++ 定位弹窗），其他 dialog 仍可拖动
+        draggableHelper.setDragEnabled(popupWindow, false);
 
         btnCreateHost.setOnClickListener(v -> {
             if (listener != null) {

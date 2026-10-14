@@ -148,6 +148,8 @@ public class ReplayModeDialog {
         draggableHelper = new DraggablePopupHelper(context, "replay_mode_dialog");
         // 竖屏宽铺满屏宽（与 Activity 同宽，按钮文字不被挤换行）并按高大于宽比例解算，转回横屏恢复（用户规格）
         draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
+        // 用户规格：本 dialog 横竖屏均不可拖动（对齐 C++ 定位弹窗），其他 dialog 仍可拖动
+        draggableHelper.setDragEnabled(popupWindow, false);
 
         // 初始状态下禁用所有按钮（除了退出按钮）和EditText
         updateControlsState(false);
