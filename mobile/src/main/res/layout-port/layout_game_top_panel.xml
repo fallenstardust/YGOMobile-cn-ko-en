@@ -86,6 +86,24 @@
                     android:textSize="10sp"
                     android:visibility="visible" />
 
+                <!-- 关联卡片入口（与横屏 layout_card_detail_panel 同 ID）：点击后按当前卡的
+                     字段/卡名/描述关键词聚合关联卡，决斗态弹关键词列表、卡组编辑态填搜索结果列表 -->
+                <Button
+                    android:id="@+id/btn_related_cards"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/button3_bg"
+                    android:minHeight="0dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:text="@string/card_related"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:visibility="gone" />
+
                 <ScrollView
                     android:id="@+id/sv_card_desc"
                     android:layout_width="match_parent"

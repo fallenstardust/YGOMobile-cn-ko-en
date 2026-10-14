@@ -9,15 +9,20 @@ import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
+import android.util.SparseArray;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -65,14 +70,43 @@ class CardInfoBinder {
      */
     private KeywordNavigator deckKeywordNavigator;
 
+    /**
+     * 卡组编辑模式下的关联卡片列表展示器（{@code DeckEditorManager} 进入时注入、退出时置空）：
+     * 非空即视为处于卡组编辑态，点击关联卡片按钮不再弹 {@link KeywordCardListDialog}，
+     * 而是把关联卡片列表直接呈现到卡组编辑的搜索结果列表上。
+     */
+    private CardListHandler deckCardListHandler;
+
+    /** 关联卡片入口按钮（横竖屏布局同 ID）：由 CardDetailPanel 注入，仅当前卡有关联卡时显示 */
+    private Button btnRelatedCards;
+    /** 当前卡描述里解析出的「」/"" 关键词，供 relatedCards 匹配（对齐 CardDetail.spanStringList） */
+    private final List<String> spanStringList = new ArrayList<>();
+    /** 当前卡已计算的关联卡列表：随卡详绑定刷新，点击按钮时直接复用避免再次全表扫描 */
+    private List<Card> lastRelatedCards = Collections.emptyList();
+
     /** 关键词点击导航回调（卡组编辑模式复用卡详高亮，点击直接作用到卡组搜索列表） */
     public interface KeywordNavigator {
         void onKeywordClick(String keyword);
     }
 
+    /** 关联卡片列表展示回调（卡组编辑模式复用卡组搜索结果列表展示关联卡，不弹关键词列表弹窗） */
+    public interface CardListHandler {
+        void onShowCardList(List<Card> cards);
+    }
+
     /** 由 CardDetailPanel 转发 DeckEditorManager 的注入：非空即视为处于卡组编辑模式 */
     public void setDeckKeywordNavigator(KeywordNavigator navigator) {
         this.deckKeywordNavigator = navigator;
+    }
+
+    /** 由 CardDetailPanel 转发 DeckEditorManager 的注入：非空即卡组编辑态，关联卡直接进搜索结果列表 */
+    public void setDeckCardListHandler(CardListHandler handler) {
+        this.deckCardListHandler = handler;
+    }
+
+    /** 由 CardDetailPanel.bindViews 注入关联卡片按钮引用（用于随当前卡刷新显隐） */
+    void setRelatedButton(Button button) {
+        this.btnRelatedCards = button;
     }
 
     /** bindViews() 重绑新视图树后注入详情控件（旋转重建场景）；anchor 为关键词卡片列表停靠的 layout_game_right */
@@ -111,6 +145,7 @@ class CardInfoBinder {
     void dismissKeywordListDialog() {
         dismissKeywordDialog();
         currentDisplayCard = null;
+        resetRelatedState();
     }
 
     void showCardInfo(GameField.ClientCard card) {
@@ -123,6 +158,7 @@ class CardInfoBinder {
     void showDefault() {
         currentCardCode = -1;
         currentDisplayCard = null;
+        resetRelatedState();
         // 不在此收起关键词卡片列表弹窗：旋转重建流程会先经 onGameUIShown→showDefault 再回显，
         // 若此处 dismiss 会使命中列表在横竖屏切换时消失（用户要求切换方向不隐藏）。
         if (layout != null) {
@@ -250,6 +286,7 @@ class CardInfoBinder {
     void showUnknownCard() {
         currentCardCode = -1;
         currentDisplayCard = null;
+        resetRelatedState();
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
         }
@@ -383,12 +420,16 @@ class CardInfoBinder {
         if (tvCardDesc == null) return;
         // 记录当前展示的卡，供关键词 queryable 判定（唯一命中即当前卡自身时视为不可查）
         currentDisplayCard = cardData;
+        spanStringList.clear();
         String desc = cardData.Desc;
         if (desc == null || desc.isEmpty()) {
             tvCardDesc.setText("");
         } else {
             setHighlightTextWithClickableSpans(desc);
         }
+        // 描述关键词已解析完毕（spanStringList 就绪），据此计算当前卡关联卡并刷新关联按钮显隐
+        lastRelatedCards = relatedCards(cardData);
+        updateRelatedButtonVisibility();
     }
 
     /**
@@ -426,6 +467,7 @@ class CardInfoBinder {
                             applySpan(spannableString, start, i, quotedText,
                                     KeywordCardListDialog.isQueryable(quotedText, currentDisplayCard)
                                             ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            spanStringList.add(quotedText);
                             currentQuoteType = QuoteType.NONE;
                         }
                     }
@@ -438,6 +480,7 @@ class CardInfoBinder {
                             applySpan(spannableString, start, i, quotedText,
                                     KeywordCardListDialog.isQueryable(quotedText, currentDisplayCard)
                                             ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
+                            spanStringList.add(quotedText);
                             currentQuoteType = QuoteType.NONE;
                         } else {
                             stack.push(i);
@@ -494,6 +537,92 @@ class CardInfoBinder {
             keywordDialog.dismiss();
             keywordDialog = null;
         }
+    }
+
+    // === 关联卡片（参考 CardDetail.relatedCards / relatable / btn_related） ===
+
+    /** 清理关联卡状态并隐藏关联卡片按钮（无当前卡/默认态/未知卡时） */
+    private void resetRelatedState() {
+        spanStringList.clear();
+        lastRelatedCards = Collections.emptyList();
+        updateRelatedButtonVisibility();
+    }
+
+    /** 只要当前展示的是有效卡片就显示按钮（便于测试可见性）；无当前卡/未知卡时 GONE */
+    private void updateRelatedButtonVisibility() {
+        if (btnRelatedCards == null) return;
+        boolean show = currentDisplayCard != null;
+        btnRelatedCards.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    /** 关联卡片按钮点击入口：按当前卡聚合的关联卡列表分流展示（卡组编辑态→搜索结果列表，决斗态→关键词列表弹窗） */
+    void showRelatedCards() {
+        if (currentDisplayCard == null) return;
+        if (lastRelatedCards.isEmpty()) {
+            // 无关联卡：与描述里不可查高亮词点击保持一致的提示，不硬编码文案
+            if (context != null) {
+                YGOUtil.showTextToast(context.getString(R.string.searchresult)
+                        + context.getString(R.string.already_end));
+            }
+            return;
+        }
+        if (deckCardListHandler != null) {
+            // 卡组编辑态：关联卡列表直接呈现到卡组搜索结果列表，不另弹弹窗
+            deckCardListHandler.onShowCardList(new ArrayList<>(lastRelatedCards));
+            return;
+        }
+        if (context == null || anchor == null) return;
+        List<Card> cards = new ArrayList<>(lastRelatedCards);
+        // 排序与卡组编辑搜索结果同源，使两处观感一致
+        Collections.sort(cards, CardSearcherManager.defaultSearchComparator());
+        if (keywordDialog != null) keywordDialog.dismiss();
+        // 条目点击刷新左侧详情面板（this::showCard），弹窗保持打开以便继续链式查看
+        String title = context.getString(R.string.card_related);
+        keywordDialog = new KeywordCardListDialog(context, imageLoader, anchor, cards, title, this::showCard);
+        keywordDialog.show();
+    }
+
+    /**
+     * 计算与给定卡片关联的卡片集合（对齐 {@code CardDetail.relatedCards}）：
+     * 卡名/描述包含当前卡名、与当前卡同字段、与描述关键词完全一致（卡名或「」/""引文）的卡，
+     * 排除与当前卡同名的自身，结果去重。
+     */
+    private List<Card> relatedCards(Card cardInfo) {
+        if (cardInfo == null) return Collections.emptyList();
+        SparseArray<Card> cards = DataManager.get().getCardManager().getAllCards();
+        if (cards == null) return Collections.emptyList();
+        Set<Card> matchingCards = new HashSet<>();
+        List<String> highlightedTexts = new ArrayList<>(spanStringList);
+        Set<Long> cardInfoSetCodes = new HashSet<>();
+        for (long setCode : cardInfo.getSetCode()) {
+            if (setCode != 0) cardInfoSetCodes.add(setCode);
+        }
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.valueAt(i);
+            if (card.Name == null || card.Desc == null) continue;
+            // 卡名或描述包含当前卡名
+            if (!card.Name.equals(cardInfo.Name)) {
+                if (card.Name.contains(cardInfo.Name) || card.Desc.contains(cardInfo.Name)) {
+                    matchingCards.add(card);
+                }
+            }
+            // 与当前卡有相同字段
+            for (long setCode : card.getSetCode()) {
+                if (cardInfoSetCodes.contains(setCode) && !card.Name.equals(cardInfo.Name)) {
+                    matchingCards.add(card);
+                }
+            }
+            // 与描述关键词完全一致（卡名相等或作为引文出现）视为关联卡
+            for (String keyword : highlightedTexts) {
+                boolean nameMatch = card.Name.equals(keyword);
+                boolean descMatch = card.Desc.contains("\u300c" + keyword + "\u300d")
+                        || card.Desc.contains("\"" + keyword + "\"");
+                if ((nameMatch || descMatch) && !card.Name.equals(cardInfo.Name)) {
+                    matchingCards.add(card);
+                }
+            }
+        }
+        return new ArrayList<>(matchingCards);
     }
 
     // 引用文本解析状态（对齐 CardDetail.QuoteType）

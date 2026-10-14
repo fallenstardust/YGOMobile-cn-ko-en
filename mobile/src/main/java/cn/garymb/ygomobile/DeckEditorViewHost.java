@@ -124,7 +124,11 @@ class DeckEditorViewHost {
         }
         if (activity.layoutDeckControl != null) activity.layoutDeckControl.setVisibility(View.GONE);
         // 退出卡组编辑：清除关键词导航器，使卡详描述高亮词点击恢复为决斗态的 KeywordCardListDialog 弹窗
-        if (activity.cardDetailPanel != null) activity.cardDetailPanel.setDeckKeywordNavigator(null);
+        if (activity.cardDetailPanel != null) {
+            activity.cardDetailPanel.setDeckKeywordNavigator(null);
+            // 同步清除关联卡列表展示器，退出后关联卡恢复为决斗态 KeywordCardListDialog 弹窗
+            activity.cardDetailPanel.setDeckCardListHandler(null);
+        }
         activity.cardDetailPanel.exitDeckEditorMode();
         // 卡组编辑器隐藏后重算场景（无其他布局显示 → MENU）
         activity.updateBGM();

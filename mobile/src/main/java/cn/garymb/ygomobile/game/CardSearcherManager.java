@@ -892,6 +892,21 @@ public class CardSearcherManager {
         startFilter();
     }
 
+    /**
+     * 卡组编辑模式下点击关联卡片按钮的展示入口：把已算好的关联卡列表按当前排序直接
+     * 呈现在卡组编辑搜索结果列表（{@code rv_deck_search_results}）上，不再走关键词筛选。取消可能 pending 的
+     * 防抖关键词搜索，并用新搜索代号同步提交，避免与进行中的异步筛选互相覆盖。
+     */
+    public void showRelatedCards(List<Card> cards) {
+        if (pendingKeywordSearch != null) {
+            mainHandler.removeCallbacks(pendingKeywordSearch);
+            pendingKeywordSearch = null;
+        }
+        List<Card> results = cards == null ? new ArrayList<>() : new ArrayList<>(cards);
+        Collections.sort(results, buildSortComparator());
+        applySearchResults(searchGeneration.incrementAndGet(), results);
+    }
+
     public int getFilterMarks() {
         return filterMarks;
     }

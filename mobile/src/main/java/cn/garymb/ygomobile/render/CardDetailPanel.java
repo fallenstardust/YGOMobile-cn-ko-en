@@ -44,6 +44,8 @@ public class CardDetailPanel {
     private LinearLayout layoutBottomActions;
     private Button btnSurrender, btnIgnoreTiming, btnShowTiming, btnAvailableTiming;
     private Button btnCancelOrFinish, btnShuffleHand;
+    // 关联卡片入口：参考 CardDetail.btn_related，点击交由 CardInfoBinder 按当前卡计算关联卡并分流
+    private Button btnRelatedCards;
     // 撤回入口不在本面板：已按用户规格改放顶部信息条中央回合数下方的发光 ic_undo
     //（layout_game_right 的 iv_undo，由 GameTopInfoManager.setUndoPrompt 按 STOC_UNDO_STATE 闪动）
 
@@ -93,6 +95,9 @@ public class CardDetailPanel {
     public void bindViews() {
         layout = activity.findViewById(R.id.layout_card_detail);
         panelRoot = activity.findViewById(R.id.layout_card_detail_panel);
+        btnRelatedCards = activity.findViewById(R.id.btn_related_cards);
+        // 关联卡按钮引用注入 binder：由卡详绑定统一管控显隐（仅当前卡有关联卡时显示）
+        binder.setRelatedButton(btnRelatedCards);
         binder.attachViews(layout, panelRoot,
                 activity.findViewById(R.id.iv_card_image),
                 activity.findViewById(R.id.tv_card_name),
@@ -177,6 +182,14 @@ public class CardDetailPanel {
      */
     public void setDeckKeywordNavigator(CardInfoBinder.KeywordNavigator navigator) {
         binder.setDeckKeywordNavigator(navigator);
+    }
+
+    /**
+     * 注入/清除卡组编辑关联卡片列表展示器（{@code DeckEditorManager} 进入时注入把关联卡填到卡组
+     * 搜索结果列表、退出时置空）：非空时点击关联卡片按钮不再弹关键词列表弹窗，而是直接显示在卡组搜索结果列表。
+     */
+    public void setDeckCardListHandler(CardInfoBinder.CardListHandler handler) {
+        binder.setDeckCardListHandler(handler);
     }
 
     /**
@@ -345,6 +358,15 @@ public class CardDetailPanel {
 
         if (btnCancelOrFinish != null) {
             btnCancelOrFinish.setOnClickListener(v -> cancelOrFinish());
+        }
+
+        // 关联卡片入口（参考 CardDetail.btn_related）：点击交由 binder 计算关联卡并按场景分流
+        //（卡组编辑态填搜索结果列表、决斗态弹 KeywordCardListDialog）
+        if (btnRelatedCards != null) {
+            btnRelatedCards.setOnClickListener(v -> {
+                playButtonSound();
+                binder.showRelatedCards();
+            });
         }
 
         // 洗切手卡（对齐 event_handler.cpp BUTTON_CMD_SHUFFLE L495-499）：点击即隐藏并应答 8，

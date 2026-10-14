@@ -178,6 +178,8 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         // 不再另弹 KeywordCardListDialog；退出卡组编辑（DeckEditorViewHost.hide）时置空恢复决斗态弹窗行为
         if (cardDetailPanel != null) {
             cardDetailPanel.setDeckKeywordNavigator(cardSearcherManager::searchByKeyword);
+            // 卡组编辑态：点击卡详关联卡片按钮把关联卡列表直接填到卡组搜索结果列表，不另弹关键词列表弹窗
+            cardDetailPanel.setDeckCardListHandler(cardSearcherManager::showRelatedCards);
         }
         setupDeckSelectorDialog();
         loadLastDeck();
