@@ -11,7 +11,6 @@ import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.SparseArray;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -77,8 +76,9 @@ class CardInfoBinder {
      */
     private CardListHandler deckCardListHandler;
 
-    /** 关联卡片入口按钮（横竖屏布局同 ID）：由 CardDetailPanel 注入，仅当前卡有关联卡时显示 */
-    private Button btnRelatedCards;
+    /** 关联卡片入口（横竖屏布局同 ID btn_related_cards，ic_related 图标 ImageButton）：
+     *  由 CardDetailPanel 注入，仅当前卡存在关联卡时显示；类型用 View 兼容不同布局容器 */
+    private View btnRelatedCards;
     /** 当前卡描述里解析出的「」/"" 关键词，供 relatedCards 匹配（对齐 CardDetail.spanStringList） */
     private final List<String> spanStringList = new ArrayList<>();
     /** 当前卡已计算的关联卡列表：随卡详绑定刷新，点击按钮时直接复用避免再次全表扫描 */
@@ -104,8 +104,8 @@ class CardInfoBinder {
         this.deckCardListHandler = handler;
     }
 
-    /** 由 CardDetailPanel.bindViews 注入关联卡片按钮引用（用于随当前卡刷新显隐） */
-    void setRelatedButton(Button button) {
+    /** 由 CardDetailPanel.bindViews 注入关联卡片入口引用（用于随当前卡刷新显隐） */
+    void setRelatedButton(View button) {
         this.btnRelatedCards = button;
     }
 
@@ -548,10 +548,10 @@ class CardInfoBinder {
         updateRelatedButtonVisibility();
     }
 
-    /** 只要当前展示的是有效卡片就显示按钮（便于测试可见性）；无当前卡/未知卡时 GONE */
+    /** 仅当前展示卡存在关联卡时显示按钮；无当前卡/未知卡/无关联卡时 GONE */
     private void updateRelatedButtonVisibility() {
         if (btnRelatedCards == null) return;
-        boolean show = currentDisplayCard != null;
+        boolean show = currentDisplayCard != null && !lastRelatedCards.isEmpty();
         btnRelatedCards.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 

@@ -1,5 +1,5 @@
 <!-- 左侧卡片详情面板（常驻显示） -->
-<LinearLayout android:layout_width="wrap_content"
+<LinearLayout android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
     xmlns:android="http://schemas.android.com/apk/res/android">
@@ -353,8 +353,7 @@
 
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_height="wrap_content">
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -378,6 +377,15 @@
                             android:text="[★13] 5000/5000"
                             android:textColor="@color/yellow"
                             android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/tv_card_setname"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="字段：????"
+                            android:textColor="@color/holo_orange_bright"
+                            android:textSize="10sp"
+                            android:visibility="visible" />
                     </LinearLayout>
 
                     <!-- 关联卡片入口：参考 dialog_cardinfo 的 btn_related，点击后按当前卡的字段/卡名/描述
@@ -386,25 +394,11 @@
                         android:id="@+id/btn_related_cards"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:background="@drawable/button3_bg"
-                        android:minHeight="0dp"
-                        android:paddingTop="2dp"
-                        android:paddingBottom="2dp"
-                        android:text="@string/card_related"
-                        android:textColor="@color/white"
-                        android:textSize="10sp"
-                        android:visibility="gone" />
+                        android:layout_gravity="end"
+                        android:src="@drawable/ic_related"
+                        android:background="@drawable/list_item_bg"
+                        android:visibility="visible" />
                 </FrameLayout>
-
-                <TextView
-                    android:id="@+id/tv_card_setname"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="字段：????"
-                    android:textColor="@color/holo_orange_bright"
-                    android:textSize="10sp"
-                    android:visibility="visible" />
 
                 <ScrollView
                     android:id="@+id/sv_card_desc"

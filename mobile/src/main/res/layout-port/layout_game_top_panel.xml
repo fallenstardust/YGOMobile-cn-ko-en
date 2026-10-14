@@ -61,48 +61,53 @@
                 android:background="@drawable/window3"
                 android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tv_card_attr"
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="[怪兽|效果] 种族/属性"
-                    android:textColor="@color/holo_green_bright"
-                    android:textSize="10sp" />
+                    android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/tv_card_level"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="[★13] 5000/5000"
-                    android:textColor="@color/yellow"
-                    android:textSize="10sp" />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="left"
+                        android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tv_card_setname"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="字段：????"
-                    android:textColor="@color/holo_orange_bright"
-                    android:textSize="10sp"
-                    android:visibility="visible" />
+                        <TextView
+                            android:id="@+id/tv_card_attr"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="[怪兽|效果] 种族/属性"
+                            android:textColor="@color/holo_green_bright"
+                            android:textSize="10sp" />
 
-                <!-- 关联卡片入口（与横屏 layout_card_detail_panel 同 ID）：点击后按当前卡的
+                        <TextView
+                            android:id="@+id/tv_card_level"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="[★13] 5000/5000"
+                            android:textColor="@color/yellow"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/tv_card_setname"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="字段：????"
+                            android:textColor="@color/holo_orange_bright"
+                            android:textSize="10sp"
+                            android:visibility="visible" />
+                    </LinearLayout>
+
+                    <!-- 关联卡片入口（与横屏 layout_card_detail_panel 同 ID）：点击后按当前卡的
                      字段/卡名/描述关键词聚合关联卡，决斗态弹关键词列表、卡组编辑态填搜索结果列表 -->
-                <Button
-                    android:id="@+id/btn_related_cards"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:background="@drawable/button3_bg"
-                    android:minHeight="0dp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:text="@string/card_related"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:visibility="gone" />
+                    <ImageButton
+                        android:id="@+id/btn_related_cards"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:background="@drawable/list_item_bg"
+                        android:src="@drawable/ic_related"
+                        android:visibility="gone" />
+                </FrameLayout>
 
                 <ScrollView
                     android:id="@+id/sv_card_desc"
